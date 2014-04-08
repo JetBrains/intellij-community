@@ -42,6 +42,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.indexing.FileBasedIndexProjectHandler;
+import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -307,7 +308,12 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
     if (!myStartupActivityPerformed) return;
 
     if (myDoLogCachesUpdate) LOG.info(new Throwable("sync roots"));
+
     DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
+    dumbService.queueTask(new UnindexedFilesUpdater(myProject, false));
+
+    if (myRootsChangeUpdaters.isEmpty()) return;
+
     if (ourScheduleCacheUpdateInDumbMode) {
       dumbService.queueCacheUpdateInDumbMode(myRootsChangeUpdaters);
     } else {

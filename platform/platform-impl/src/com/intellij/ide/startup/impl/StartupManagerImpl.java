@@ -187,25 +187,32 @@ public class StartupManagerImpl extends StartupManagerEx {
       }
     });
 
-    if (!app.isUnitTestMode() && !myProject.isDisposed()) {
-      if (!app.isHeadlessEnvironment()) {
-        checkProjectRoots();
-        final long sessionId = VirtualFileManager.getInstance().asyncRefresh(null);
-        final MessageBusConnection connection = app.getMessageBus().connect();
-        connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener.Adapter() {
-          @Override
-          public void afterProjectClosed(@NotNull Project project) {
-            RefreshQueue.getInstance().cancelSession(sessionId);
-            connection.disconnect();
-          }
-        });
-      }
-      else {
-        VirtualFileManager.getInstance().syncRefresh();
-      }
-    }
-
     Registry.get("ide.firstStartup").setValue(false);
+  }
+
+  public void scheduleInitialVfsRefresh() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      public void run() {
+        if (myProject.isDisposed()) return;
+
+        Application app = ApplicationManager.getApplication();
+        if (!app.isHeadlessEnvironment()) {
+          checkProjectRoots();
+          final long sessionId = VirtualFileManager.getInstance().asyncRefresh(null);
+          final MessageBusConnection connection = app.getMessageBus().connect();
+          connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener.Adapter() {
+            @Override
+            public void afterProjectClosed(@NotNull Project project) {
+              RefreshQueue.getInstance().cancelSession(sessionId);
+              connection.disconnect();
+            }
+          });
+        }
+        else {
+          VirtualFileManager.getInstance().syncRefresh();
+        }
+      }
+    });
   }
 
   private void checkProjectRoots() {
@@ -239,7 +246,27 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   public void startCacheUpdate() {
     try {
-      DumbServiceImpl.getInstance(myProject).queueCacheUpdateInDumbMode(myCacheUpdaters);
+      DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
+
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        // pre-startup activities have registered dumb tasks that load VFS (scanning files to index)
+        // only after these tasks pass does VFS refresh make sense
+        dumbService.queueTask(new DumbModeTask() {
+          @Override
+          public void performInDumbMode(@NotNull final ProgressIndicator indicator) {
+            UIUtil.invokeLaterIfNeeded(new Runnable() {
+              @Override
+              public void run() {
+                if (!myProject.isDisposed()) {
+                  scheduleInitialVfsRefresh();
+                }
+              }
+            });
+          }
+        });
+      }
+
+      dumbService.queueCacheUpdateInDumbMode(myCacheUpdaters);
     }
     catch (ProcessCanceledException e) {
       throw e;

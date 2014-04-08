@@ -18,7 +18,6 @@ package com.intellij.util.indexing;
 
 import com.intellij.AppTopics;
 import com.intellij.history.LocalHistory;
-import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.lang.ASTNode;
 import com.intellij.notification.NotificationDisplayType;
@@ -229,7 +228,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             LOG.info(e);
           }
         }
-        scheduleIndexRebuild(true);
+        scheduleIndexRebuild();
       }
     });
 
@@ -1327,7 +1326,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           try {
             doClearIndex(indexId);
             if (!cleanupOnly) {
-              scheduleIndexRebuild(false);
+              scheduleIndexRebuild();
             }
           }
           catch (StorageException e) {
@@ -1365,16 +1364,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
   }
 
-  private void scheduleIndexRebuild(boolean forceDumbMode) {
+  private static void scheduleIndexRebuild() {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      final Set<CacheUpdater> updatersToRun = Collections.<CacheUpdater>singleton(new UnindexedFilesUpdater(project, this));
-      final DumbServiceImpl service = DumbServiceImpl.getInstance(project);
-      if (forceDumbMode) {
-        service.queueCacheUpdateInDumbMode(updatersToRun);
-      }
-      else {
-        service.queueCacheUpdate(updatersToRun);
-      }
+      DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project, false));
     }
   }
 
@@ -1669,6 +1661,10 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   public int getNumberOfPendingInvalidations() {
     return myChangedFilesCollector.getNumberOfPendingInvalidations();
+  }
+
+  public int getChangedFileCount() {
+    return myChangedFilesCollector.getAllFilesToUpdate().size();
   }
 
   @NotNull
