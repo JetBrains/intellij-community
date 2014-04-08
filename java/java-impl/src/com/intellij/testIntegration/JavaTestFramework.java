@@ -115,4 +115,8 @@ public abstract class JavaTestFramework implements TestFramework {
     final String templateText = StringUtil.replace(StringUtil.replace(template.getText(), "${BODY}\n", ""), "${NAME}", "setUp");
     return factory.createMethodFromText(templateText, null);
   }
+
+  public FileTemplateDescriptor getTestClassFileTemplateDescriptor() {
+    return null;
+  }
 }

@@ -33,4 +33,5 @@ public interface GroovyTemplates {
   @NonNls String GROOVY_JUNIT_TEST_METHOD_GROOVY = "Groovy JUnit Test Method.groovy";
   @NonNls String GROOVY_JUNIT_SET_UP_METHOD_GROOVY = "Groovy JUnit SetUp Method.groovy";
   @NonNls String GROOVY_JUNIT_TEAR_DOWN_METHOD_GROOVY = "Groovy JUnit TearDown Method.groovy";
+  @NonNls String GROOVY_JUNIT_TEST_CASE_GROOVY = "Groovy JUnit Test Case.groovy";
 }
