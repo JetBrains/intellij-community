@@ -98,11 +98,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
 
   private final EventDispatcher<WindowManagerListener> myEventDispatcher = EventDispatcher.create(WindowManagerListener.class);
 
-  /**
-   * Union of bounds of all available default screen devices.
-   */
-  private final Rectangle myScreenBounds;
-
   private final CommandProcessor myCommandProcessor;
   private final WindowWatcher myWindowWatcher;
   /**
@@ -163,18 +158,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     myProject2Frame = new HashMap<Project, IdeFrameImpl>();
     myDialogsToDispose = new HashMap<Project, Set<JDialog>>();
     myFrameExtendedState = Frame.NORMAL;
-
-    // Calculate screen bounds.
-
-    Rectangle screenBounds = new Rectangle();
-    if (!application.isHeadlessEnvironment()) {
-      final GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-      final GraphicsDevice[] devices = env.getScreenDevices();
-      for (final GraphicsDevice device : devices) {
-        screenBounds = screenBounds.union(device.getDefaultConfiguration().getBounds());
-      }
-    }
-    myScreenBounds = screenBounds;
 
     myActivationListener = new WindowAdapter() {
       @Override
@@ -245,7 +228,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
 
   @Override
   public final Rectangle getScreenBounds() {
-    return myScreenBounds;
+    return ScreenUtil.getAllScreensShape().getBounds();
   }
 
   @Override
@@ -265,16 +248,12 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
 
   @Override
   public final boolean isInsideScreenBounds(final int x, final int y, final int width) {
-    return
-      x >= myScreenBounds.x + 50 - width &&
-      y >= myScreenBounds.y - 50 &&
-      x <= myScreenBounds.x + myScreenBounds.width - 50 &&
-      y <= myScreenBounds.y + myScreenBounds.height - 50;
+    return ScreenUtil.getAllScreensShape().contains(x, y, width, 1);
   }
 
   @Override
   public final boolean isInsideScreenBounds(final int x, final int y) {
-    return myScreenBounds.contains(x, y);
+    return ScreenUtil.getAllScreensShape().contains(x, y);
   }
 
   @Override
