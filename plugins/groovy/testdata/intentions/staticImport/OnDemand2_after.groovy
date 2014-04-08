@@ -1,4 +1,4 @@
-import static Util.*
+import static Util.doSomething
 
 class Util {
   static doSomething(){}
@@ -10,4 +10,4 @@ def doSomethingElse(a){}
 
 doSomething()
 doSomething(2)
-Util.doSomethingElse(2)
+doSomethingElse(2)

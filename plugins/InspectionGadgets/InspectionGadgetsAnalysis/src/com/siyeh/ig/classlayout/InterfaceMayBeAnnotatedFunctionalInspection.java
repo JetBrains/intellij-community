@@ -17,10 +17,7 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
-import com.intellij.psi.LambdaHighlightingUtil;
-import com.intellij.psi.LambdaUtil;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -55,7 +52,7 @@ public class InterfaceMayBeAnnotatedFunctionalInspection extends BaseInspection 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
-    return new DelegatingFix(new AddAnnotationPsiFix(LambdaUtil.JAVA_LANG_FUNCTIONAL_INTERFACE, aClass, PsiNameValuePair.EMPTY_ARRAY));
+    return new DelegatingFix(new AddAnnotationPsiFix(CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, aClass, PsiNameValuePair.EMPTY_ARRAY));
 
   }
 

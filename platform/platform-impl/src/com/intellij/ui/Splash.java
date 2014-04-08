@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -160,9 +160,9 @@ public class Splash extends JDialog implements StartupProgress {
         g.setColor(textColor);
         final String licensedToMessage = provider.getLicensedToMessage();
         final List<String> licenseRestrictionsMessages = provider.getLicenseRestrictionsMessages();
-        g.drawString(licensedToMessage, x + 21, y + height - 49);
+        g.drawString(licensedToMessage, x + 15, y + height - 30);
         if (licenseRestrictionsMessages.size() > 0) {
-          g.drawString(licenseRestrictionsMessages.get(0), x + 21, y + height - 33);
+          g.drawString(licenseRestrictionsMessages.get(0), x + 15, y + height - 14);
         }
       }
       return true;

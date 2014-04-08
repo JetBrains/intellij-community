@@ -115,7 +115,6 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     for (ModuleFixtureBuilder moduleFixtureBuilder : myModuleFixtureBuilders) {
       moduleFixtureBuilder.getFixture().tearDown();
     }
-    ((DirectoryIndexImpl)DirectoryIndex.getInstance(getProject())).assertAncestorConsistent();
 
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override

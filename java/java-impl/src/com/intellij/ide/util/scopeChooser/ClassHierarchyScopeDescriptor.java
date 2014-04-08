@@ -26,11 +26,14 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFunctionalExpression;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedList;
@@ -59,10 +62,18 @@ public class ClassHierarchyScopeDescriptor extends ScopeDescriptor {
       PsiClass aClass = chooser.getSelected();
       if (aClass == null) return null;
 
-      List<PsiElement> classesToSearch = new LinkedList<PsiElement>();
+      final List<PsiElement> classesToSearch = new LinkedList<PsiElement>();
       classesToSearch.add(aClass);
 
       classesToSearch.addAll(ClassInheritorsSearch.search(aClass, true).findAll());
+
+      FunctionalExpressionSearch.search(aClass).forEach(new Processor<PsiFunctionalExpression>() {
+        @Override
+        public boolean process(PsiFunctionalExpression expression) {
+          classesToSearch.add(expression);
+          return true;
+        }
+      });
 
       myCachedScope = new LocalSearchScope(PsiUtilCore.toPsiElementArray(classesToSearch),
                                            IdeBundle.message("scope.hierarchy", ClassPresentationUtil.getNameForClass(aClass, true)));
