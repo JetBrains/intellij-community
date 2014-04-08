@@ -61,8 +61,11 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   private XWatchesViewImpl myWatchesView;
   private final List<XDebugView> myViews = new ArrayList<XDebugView>();
 
-  public XDebugSessionTab(@NotNull final Project project, @NotNull final XDebugSessionImpl session, final @Nullable Icon icon,
-                          ExecutionEnvironment environment, ProgramRunner runner) {
+  public XDebugSessionTab(@NotNull Project project,
+                          @NotNull XDebugSessionImpl session,
+                          @Nullable Icon icon,
+                          @Nullable ExecutionEnvironment environment,
+                          @Nullable ProgramRunner runner) {
     super(project, "Debug", session.getSessionName(), GlobalSearchScope.allScope(project));
     if (environment != null) {
       setEnvironment(environment);
@@ -127,7 +130,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   private void attachToSession(final @NotNull XDebugSessionImpl session, final @Nullable ProgramRunner runner,
-                               final @Nullable ExecutionEnvironment env, final @NotNull XDebugSessionData sessionData,
+                               final @Nullable ExecutionEnvironment environment, final @NotNull XDebugSessionData sessionData,
                                final @NotNull XDebugProcess debugProcess) {
     myUi.addContent(createFramesContent(session), 0, PlaceInGrid.left, false);
     myUi.addContent(createVariablesContent(session), 0, PlaceInGrid.center, false);
@@ -163,8 +166,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     DefaultActionGroup leftToolbar = new DefaultActionGroup();
     final Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
-    if (runner != null && env != null) {
-      RestartAction restartAction = new RestartAction(executor, runner, myRunContentDescriptor, env);
+    if (runner != null && environment != null) {
+      RestartAction restartAction = new RestartAction(executor, runner, myRunContentDescriptor, environment);
       leftToolbar.add(restartAction);
       restartAction.registerShortcut(myUi.getComponent());
 
@@ -220,8 +223,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myUi.getOptions().setLeftToolbar(leftToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
     myUi.getOptions().setTopToolbar(topToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
 
-    if (env != null) {
-      final RunProfile runConfiguration = env.getRunProfile();
+    if (environment != null) {
+      final RunProfile runConfiguration = environment.getRunProfile();
       registerFileMatcher(runConfiguration);
       initLogConsoles(runConfiguration, myRunContentDescriptor.getProcessHandler(), myConsole);
     }

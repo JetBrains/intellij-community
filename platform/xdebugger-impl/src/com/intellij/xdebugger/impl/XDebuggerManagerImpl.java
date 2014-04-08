@@ -173,10 +173,10 @@ public class XDebuggerManagerImpl extends XDebuggerManager
   @Override
   @NotNull
   public XDebugSession startSession(@NotNull final ProgramRunner runner,
-                                    @NotNull final ExecutionEnvironment env,
+                                    @NotNull final ExecutionEnvironment environment,
                                     @Nullable final RunContentDescriptor contentToReuse,
                                     @NotNull final XDebugProcessStarter processStarter) throws ExecutionException {
-    return startSession(contentToReuse, processStarter, new XDebugSessionImpl(env, runner, this));
+    return startSession(contentToReuse, processStarter, new XDebugSessionImpl(environment, runner, this));
   }
 
   @Override
