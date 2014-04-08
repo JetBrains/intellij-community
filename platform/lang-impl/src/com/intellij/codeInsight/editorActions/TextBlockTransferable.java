@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,38 +27,37 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 class TextBlockTransferable implements Transferable {
   private final Collection<TextBlockTransferableData> myExtraData;
   private final RawText myRawText;
   private final String myText;
-  private final DataFlavor[] myTransferDataFlavors;
 
   public TextBlockTransferable(String text, Collection<TextBlockTransferableData> extraData, RawText rawText) {
     myText = text;
     myExtraData = extraData;
     myRawText = rawText;
-
-    List<DataFlavor> dataFlavors = new ArrayList<DataFlavor>();
-    Collections.addAll(dataFlavors, DataFlavor.stringFlavor, DataFlavor.plainTextFlavor);
-    final DataFlavor flavor = RawText.getDataFlavor();
-    if (myRawText != null && flavor != null) {
-      dataFlavors.add(flavor);
-    }
-    for(TextBlockTransferableData data: extraData) {
-      final DataFlavor blockFlavor = data.getFlavor();
-      if (blockFlavor != null) {
-        dataFlavors.add(blockFlavor);
-      }
-    }
-    myTransferDataFlavors = dataFlavors.toArray(new DataFlavor[dataFlavors.size()]);
   }
 
   @Override
   public DataFlavor[] getTransferDataFlavors() {
-    return myTransferDataFlavors;
+    // We don't cache the result to allow certain dataflavors to 'expire'.
+    // This is used e.g. for RTF and HTML flavors to avoid memory leaking.
+    List<DataFlavor> flavors = new ArrayList<DataFlavor>(myExtraData.size() + 3);
+    flavors.add(DataFlavor.stringFlavor);
+    flavors.add(DataFlavor.plainTextFlavor);
+    final DataFlavor flavor = RawText.getDataFlavor();
+    if (myRawText != null && flavor != null) {
+      flavors.add(flavor);
+    }
+    for(TextBlockTransferableData data : myExtraData) {
+      final DataFlavor blockFlavor = data.getFlavor();
+      if (blockFlavor != null) {
+        flavors.add(blockFlavor);
+      }
+    }
+    return flavors.toArray(new DataFlavor[flavors.size()]);
   }
 
   @Override
