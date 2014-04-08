@@ -1183,14 +1183,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     public void run() {
       try {
         check();
-
+        myList.getEmptyText().setText("Searching...");
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
           @Override
           public void run() {
             //noinspection unchecked
             myList.setModel(myListModel);
-            myList.getEmptyText().setText("Searching...");
             myTitleIndexes.clear();
             clearModel();
             myAlreadyAddedFiles.clear();
