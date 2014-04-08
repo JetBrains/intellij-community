@@ -20,6 +20,23 @@ public final class NameResolverTools {
   }
 
   /**
+   * For each provided element checks if FQ element name is one of provided names
+   *
+   * @param elements       element to check
+   * @param namesProviders some enum that has one or more names
+   * @return true if element's fqn is one of names, provided by provider
+   */
+  public static boolean isElementWithName(@NotNull final Collection<? extends PyElement> elements,
+                                          @NotNull final FQNamesProvider... namesProviders) {
+    for (final PyElement element : elements) {
+      if (isName(element, namesProviders)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Checks if FQ element name is one of provided names
    *
    * @param element        element to check
@@ -44,6 +61,7 @@ public final class NameResolverTools {
 
   /**
    * Returns set of names all providers provide
+   *
    * @param providers providers to check
    * @return set of names
    */
