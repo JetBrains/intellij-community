@@ -18,6 +18,7 @@ package com.intellij.openapi.util.registry;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.DumbAware;
 
 public class ShowRegistryAction extends AnAction implements DumbAware {
@@ -37,6 +38,8 @@ public class ShowRegistryAction extends AnAction implements DumbAware {
         myUi = null;
       }
     };
-    myUi.show();
+    if (myUi.show()) {
+      EditorFactory.getInstance().refreshAllEditors();
+    }
   }
 }

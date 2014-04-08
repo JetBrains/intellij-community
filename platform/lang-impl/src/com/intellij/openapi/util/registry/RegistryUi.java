@@ -247,7 +247,7 @@ public class RegistryUi implements Disposable {
     }
   }
 
-  public void show() {
+  public boolean show() {
     DialogWrapper dialog = new DialogWrapper(true) {
       {
         setTitle("Registry");
@@ -301,7 +301,7 @@ public class RegistryUi implements Disposable {
       }
     };
 
-    dialog.show();
+    return dialog.showAndGet();
   }
 
   private void processClose() {
