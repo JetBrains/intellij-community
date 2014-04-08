@@ -244,7 +244,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     if (argumentList == null) return GroovyResolveResult.EMPTY_ARRAY;
 
     if (argumentList.getNamedArguments().length > 0 && argumentList.getExpressionArguments().length == 0) {
-      PsiType mapType = new GrMapType(argumentList, getNamedArguments());
+      PsiType mapType = GrMapType.createFromNamedArgs(argumentList, getNamedArguments());
       GroovyResolveResult[] constructorResults = PsiUtil.getConstructorCandidates(ref, classCandidate, new PsiType[]{mapType}); //one Map parameter, actually
       for (GroovyResolveResult result : constructorResults) {
         final PsiElement resolved = result.getElement();

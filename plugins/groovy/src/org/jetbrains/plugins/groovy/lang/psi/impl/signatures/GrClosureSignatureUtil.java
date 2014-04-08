@@ -873,7 +873,7 @@ public class GrClosureSignatureUtil {
         for (int i = 0, size = arg.args.size(); i < size; i++) {
           args[i] = (GrNamedArgument)arg.args.get(i);
         }
-        return new GrMapType(first, args);
+        return GrMapType.createFromNamedArgs(first, args);
       }
       else {
         for (PsiElement elem : arg.args) {
