@@ -167,6 +167,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private ArrayList<AnAction> myAlreadyAddedActions = new ArrayList<AnAction>();
   private volatile ActionCallback myCurrentWorker = ActionCallback.DONE;
   private int myHistoryIndex = 0;
+  boolean mySkipFocusGain = false;
 
   static {
     IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
@@ -356,10 +357,19 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     myList.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
+        e.consume();
         final int i = myList.locationToIndex(e.getPoint());
         if (i != -1) {
-          myList.setSelectedIndex(i);
-          doNavigate(i);
+          mySkipFocusGain = true;
+          getField().requestFocus();
+          //noinspection SSBasedInspection
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              myList.setSelectedIndex(i);
+              doNavigate(i);
+            }
+          });
         }
       }
     });
@@ -431,12 +441,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
     });
     editor.addFocusListener(new FocusAdapter() {
-      boolean skip = false;
-
       @Override
       public void focusGained(FocusEvent e) {
-        if (skip) {
-          skip = false;
+        if (mySkipFocusGain) {
+          mySkipFocusGain = false;
           return;
         }
         search.setText("");
@@ -467,7 +475,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           return;
         }
         if (myNonProjectCheckBox == e.getOppositeComponent()) {
-          skip = true;
+          mySkipFocusGain = true;
           editor.requestFocus();
           return;
         }
@@ -545,9 +553,15 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       if (actionId != null) {
         final AnAction action = ActionManager.getInstance().getAction(actionId);
         GotoActionAction.openOptionOrPerformAction(action, getField().getText(), project, getField(), myActionEvent);
-        if (myPopup != null && myPopup.isVisible()) {
-          myPopup.cancel();
-        }
+        //noinspection SSBasedInspection
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            if (myPopup != null && myPopup.isVisible()) {
+              myPopup.cancel();
+            }
+          }
+        });
         return;
       }
     }
@@ -1755,33 +1769,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               @Override
               public void dispose() {
                 callback.setDone();
-                if (myBalloon!= null) {
-                  myBalloon.cancel();
-                  myBalloon = null;
-                }
-                myFileModel = null;
-                if (myFileChooseByName != null) {
-                  myFileChooseByName.close(false);
-                  myFileChooseByName = null;
-                }
-                myClassModel = null;
-                myActionModel = null;
-                myActions = null;
-                myFiles = null;
-                myClasses = null;
-                mySymbolsModel = null;
-                mySymbols = null;
-                myConfigurables.clear();
-                myFocusComponent = null;
-                myContextComponent = null;
-                myFocusOwner = null;
-                myRenderer.myProject = null;
-                myCalcThread = null;
-                myPopup = null;
-                myHistoryIndex = 0;
-                myPopupActualWidth = 0;
-                myCurrentWorker = ActionCallback.DONE;
-                showAll.set(false);
+                resetFields();
                 myNonProjectCheckBox.setSelected(false);
                 ActionToolbarImpl.updateAllToolbarsImmediately();
                 if (myActionEvent != null && myActionEvent.getInputEvent() instanceof MouseEvent) {
@@ -1881,6 +1869,37 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       ApplicationManager.getApplication().executeOnPooledThread(this);
       return myDone;
     }
+  }
+
+  protected void resetFields() {
+    if (myBalloon!= null) {
+      myBalloon.cancel();
+      myBalloon = null;
+    }
+    myFileModel = null;
+    if (myFileChooseByName != null) {
+      myFileChooseByName.close(false);
+      myFileChooseByName = null;
+    }
+    myClassModel = null;
+    myActionModel = null;
+    myActions = null;
+    myFiles = null;
+    myClasses = null;
+    mySymbolsModel = null;
+    mySymbols = null;
+    myConfigurables.clear();
+    myFocusComponent = null;
+    myContextComponent = null;
+    myFocusOwner = null;
+    myRenderer.myProject = null;
+    myCalcThread = null;
+    myPopup = null;
+    myHistoryIndex = 0;
+    myPopupActualWidth = 0;
+    myCurrentWorker = ActionCallback.DONE;
+    showAll.set(false);
+    mySkipFocusGain = false;
   }
 
   private void updatePopupBounds() {
