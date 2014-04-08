@@ -197,6 +197,10 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
         pushDownConflicts.getConflicts().putValue(element, RefactoringBundle.message("functional.interface.broken"));
       }
     }
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(myClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE);
+    if (annotation != null && isMoved(LambdaUtil.getFunctionalInterfaceMethod(myClass))) {
+      pushDownConflicts.getConflicts().putValue(annotation, RefactoringBundle.message("functional.interface.broken"));
+    }
     return showConflicts(pushDownConflicts.getConflicts(), usagesIn);
   }
 
