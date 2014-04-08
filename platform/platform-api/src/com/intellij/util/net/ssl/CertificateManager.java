@@ -268,13 +268,23 @@ public class CertificateManager implements ApplicationComponent, PersistentState
   }
 
   public static class Config {
-    // ensure that request's hostname matches certificate's common name (CN)
-    public volatile boolean checkHostname;
-    // ensure that certificate is neither expired nor not yet eligible
-    public volatile boolean checkValidity;
+    /**
+     * Ensure that request's hostname matches certificate's common name (CN).
+     */
+    public boolean CHECK_HOSTNAME = false;
+    /**
+     * Ensure that certificate is neither expired nor not yet eligible.
+     */
+    public boolean CHECK_VALIDITY = false;
+
     @Tag("expired")
     @Property(surroundWithTag = false)
     @AbstractCollection(elementTag = "commonName")
-    public volatile LinkedHashSet<String> brokenCertificates = new LinkedHashSet<String>();
+    public LinkedHashSet<String> BROKEN_CERTIFICATES = new LinkedHashSet<String>();
+
+    /**
+     * Do not show the dialog and accept untrusted certificates automatically.
+     */
+    public boolean ACCEPT_AUTOMATICALLY = false;
   }
 }
