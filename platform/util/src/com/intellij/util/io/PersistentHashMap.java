@@ -17,6 +17,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.ThreadLocalCachedValue;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.CommonProcessors;
@@ -306,10 +307,10 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       myAppendCache.remove(key);
 
       final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
-      if (myFlyweightAppenderStream == null) myFlyweightAppenderStream = new AppendStream();
-      myFlyweightAppenderStream.setOut(bytes);
-      myValueExternalizer.save(myFlyweightAppenderStream, value);
-      myFlyweightAppenderStream.setOut(null);
+      AppendStream appenderStream = ourFlyweightAppenderStream.getValue();
+      appenderStream.setOut(bytes);
+      myValueExternalizer.save(appenderStream, value);
+      appenderStream.setOut(null);
 
       final int id = enumerate(key);
 
@@ -348,17 +349,21 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
   }
 
-  private AppendStream myFlyweightAppenderStream;
+  private static final ThreadLocalCachedValue<AppendStream> ourFlyweightAppenderStream = new ThreadLocalCachedValue<AppendStream>() {
+    @Override
+    protected AppendStream create() {
+      return new AppendStream();
+    }
+  };
 
   protected void doAppendData(Key key, @NotNull ValueDataAppender appender) throws IOException {
     myEnumerator.markDirty(true);
 
-    // we are invoked under myEnumerator lock so it is safe to initialize the field / see its state
-    if (myFlyweightAppenderStream == null) myFlyweightAppenderStream = new AppendStream();
+    AppendStream appenderStream = ourFlyweightAppenderStream.getValue();
     BufferExposingByteArrayOutputStream stream = myAppendCache.get(key);
-    myFlyweightAppenderStream.setOut(stream);
-    appender.append(myFlyweightAppenderStream);
-    myFlyweightAppenderStream.setOut(null);
+    appenderStream.setOut(stream);
+    appender.append(appenderStream);
+    appenderStream.setOut(null);
   }
 
   /**

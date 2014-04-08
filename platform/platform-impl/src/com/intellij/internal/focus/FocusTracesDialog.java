@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ public class FocusTracesDialog extends DialogWrapper {
       final FocusRequestInfo r = requests.get(i);
       data[i] = new String[]{r.getDate(), String.valueOf(r.isForced()), String.valueOf(r.getComponent())};
     }
+    setModal(false);
     myRequestsTable = new JBTable(new DefaultTableModel(data, COLUMNS) {
       @Override
       public boolean isCellEditable(int row, int column) {
