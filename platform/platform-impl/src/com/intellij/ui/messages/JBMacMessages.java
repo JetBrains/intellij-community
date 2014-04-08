@@ -71,7 +71,7 @@ public class JBMacMessages extends MacMessagesEmulation {
       window = getForemostWindow(null);
     }
 
-    Icon icon = errorStyle ? UIUtil.getInformationIcon() : UIUtil.getErrorIcon();
+    Icon icon = errorStyle ? UIUtil.getErrorIcon() : UIUtil.getInformationIcon();
 
     defaultOptionIndex = (defaultOptionIndex == focusedOptionIndex) ? buttons.length - 1 : defaultOptionIndex;
 
