@@ -804,6 +804,29 @@ public class PyUtil {
     return LanguageLevel.getDefault();
   }
 
+  /**
+   * Clone of C# "as" operator.
+   * Checks if expression has correct type and casts it if it has. Returns null otherwise.
+   * It saves coder from "instanceof / cast" chains.
+   *
+   * @param expression expression to check
+   * @param clazz class to cast
+   * @param <T> class to cast
+   * @return expression casted to appropriate type (if could be casted). Null otherwise.
+   */
+  @Nullable
+  @SuppressWarnings("unchecked")
+  public static <T>T as(@Nullable final Object expression, @NotNull final Class<T> clazz) {
+    if (expression == null) {
+      return null;
+    }
+    if (clazz.isAssignableFrom(expression.getClass())) {
+      return (T)expression;
+    }
+    return null;
+
+  }
+
   public static class KnownDecoratorProviderHolder {
     public static PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
 
