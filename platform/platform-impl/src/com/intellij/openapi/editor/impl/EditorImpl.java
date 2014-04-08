@@ -27,7 +27,6 @@ import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -551,10 +550,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     updateHasTabsFlag(document.getImmutableCharSequence());
   }
 
-  public static boolean isPresentationMode(Project project) {
-    return project != null && !project.isDefault() && PropertiesComponent.getInstance(project).isTrueValue("editor.presentation.mode");
-  }
-
   @NotNull
   @Override
   public EditorColorsScheme createBoundColorSchemeDelegate(@Nullable final EditorColorsScheme customGlobalScheme) {
@@ -929,7 +924,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPanel.addComponentListener(new ComponentAdapter() {
       @Override
       public void componentResized(ComponentEvent e) {
-        myGutterComponent.updateSize();
         myMarkupModel.recalcEditorDimensions();
         myMarkupModel.repaint(-1, -1);
       }
@@ -4086,28 +4080,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     int x = myGutterComponent.convertX(e.getX());
 
-    int lineNumberAreaOffset = EditorGutterComponentImpl.getLineNumberAreaOffset();
-    if (x >= lineNumberAreaOffset &&
-        x < lineNumberAreaOffset + myGutterComponent.getLineNumberAreaWidth()) {
-      return EditorMouseEventArea.LINE_NUMBERS_AREA;
-    }
-
-    if (x >= myGutterComponent.getAnnotationsAreaOffset() &&
-        x <= myGutterComponent.getAnnotationsAreaOffset() + myGutterComponent.getAnnotationsAreaWidth()) {
-      return EditorMouseEventArea.ANNOTATIONS_AREA;
-    }
-
-    if (x >= myGutterComponent.getLineMarkerAreaOffset() &&
-        x < myGutterComponent.getLineMarkerAreaOffset() + myGutterComponent.getLineMarkerAreaWidth()) {
-      return EditorMouseEventArea.LINE_MARKERS_AREA;
-    }
-
-    if (x >= myGutterComponent.getFoldingAreaOffset() &&
-        x < myGutterComponent.getFoldingAreaOffset() + myGutterComponent.getFoldingAreaWidth()) {
-      return EditorMouseEventArea.FOLDING_OUTLINE_AREA;
-    }
-
-    return null;
+    return myGutterComponent.getEditorMouseAreaByOffset(x);
   }
 
   private void requestFocus() {
@@ -6694,6 +6667,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  boolean isInDistractionFreeMode() {
+    return Registry.is("editor.distraction.free.mode") && EditorUtil.isRealFileEditor(this);
+  }
+
+  boolean isInPresentationMode() {
+    return UISettings.getInstance().PRESENTATION_MODE && EditorUtil.isRealFileEditor(this);
+  }
+
   @Override
   public void putInfo(@NotNull Map<String, String> info) {
     final VisualPosition visual = getCaretModel().getVisualPosition();
@@ -6703,6 +6684,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private class MyScrollPane extends JBScrollPane {
     private MyScrollPane() {
       setViewportBorder(new EmptyBorder(0, 0, 0, 0));
+    }
+
+    @Override
+    public void layout() {
+      super.layout();
+      if (isInDistractionFreeMode()) {
+        // re-calc gutter extra size after editor size is set
+        // & layout once again to avoid blinking
+        myGutterComponent.updateSize();
+        super.layout();
+      }
     }
 
     @Override
