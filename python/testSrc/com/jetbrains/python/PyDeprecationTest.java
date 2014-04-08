@@ -55,7 +55,13 @@ public class PyDeprecationTest extends PyTestCase {
 
   public void testDeprecatedAsFallback() {
     myFixture.enableInspections(PyDeprecationInspection.class);
-    myFixture.configureByFile("deprecation/deprecatedAsFallback.py");
+    myFixture.configureByFiles("deprecation/deprecatedAsFallback.py", "deprecation/tmp.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  public void testDeprecatedFallback2() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFiles("deprecation/deprecatedFallback2.py", "deprecation/tmp.py", "deprecation/deprecatedAsFallback.py");
     myFixture.checkHighlighting(true, false, false);
   }
 

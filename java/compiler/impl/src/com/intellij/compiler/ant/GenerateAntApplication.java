@@ -23,8 +23,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.roots.impl.DirectoryIndexImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -80,9 +78,6 @@ public class GenerateAntApplication {
 
       logMessage(0, "Loading project...");
       myProject = ProjectManagerEx.getInstanceEx().loadProject(myProjectPath);
-
-      DirectoryIndexImpl dirIndex = (DirectoryIndexImpl)DirectoryIndex.getInstance(myProject);
-      dirIndex.initialize();
 
       logMessageLn(0, " done");
 

@@ -331,6 +331,14 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
     psiElement().withLastChild(psiElement(PyExceptPart.class))
   );
 
+  private static final PsiElementPattern.Capture<PsiElement> AFTER_FINALLY = afterStatement(
+    psiElement().withLastChild(psiElement(PyFinallyPart.class))
+  );
+
+  private static final PsiElementPattern.Capture<PsiElement> AFTER_ELSE = afterStatement(
+    psiElement().withLastChild(psiElement(PyElsePart.class))
+  );
+
   private static final PsiElementPattern.Capture<PsiElement> IN_FINALLY_NO_LOOP =
     psiElement().inside(false, psiElement(PyFinallyPart.class), psiElement(PyLoopStatement.class));
 
@@ -485,13 +493,30 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       .andOr(IN_TRY_BODY, IN_EXCEPT_BODY, AFTER_TRY, IN_ELSE_BODY_OF_TRY)
         //.andNot(RIGHT_AFTER_COLON)
       .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL)
+      .andNot(AFTER_FINALLY)
+      ,
+      new CompletionProvider<CompletionParameters>() {
+        protected void addCompletions(
+          @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
+        ) {
+          putKeyword(PyNames.FINALLY, PyUnindentingInsertHandler.INSTANCE, TailType.CASE_COLON, result);
+        }
+      }
+    );
+    extend(
+      CompletionType.BASIC, psiElement()
+      .withLanguage(PythonLanguage.getInstance())
+      .and(FIRST_ON_LINE)
+      .andOr(IN_TRY_BODY, IN_EXCEPT_BODY, AFTER_TRY, IN_ELSE_BODY_OF_TRY)
+        //.andNot(RIGHT_AFTER_COLON)
+      .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL)
+      .andNot(AFTER_FINALLY).andNot(AFTER_ELSE)
       ,
       new CompletionProvider<CompletionParameters>() {
         protected void addCompletions(
           @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
         ) {
           putKeyword(PyNames.EXCEPT, PyUnindentingInsertHandler.INSTANCE, TailType.NONE, result);
-          putKeyword(PyNames.FINALLY, PyUnindentingInsertHandler.INSTANCE, TailType.CASE_COLON, result);
         }
       }
     );

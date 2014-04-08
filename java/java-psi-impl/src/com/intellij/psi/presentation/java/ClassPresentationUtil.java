@@ -62,7 +62,7 @@ public class ClassPresentationUtil {
     }
   }
 
-  private static String getContextName(@NotNull PsiElement element, boolean qualified) {
+  public static String getContextName(@NotNull PsiElement element, boolean qualified) {
     PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiMember.class, PsiFile.class);
     while(true){
       if (parent == null) return null;
@@ -71,5 +71,9 @@ public class ClassPresentationUtil {
       if (parent instanceof PsiFile) return null;
       parent = parent.getParent();
     }
+  }
+
+  public static String getFunctionalExpressionPresentation(PsiFunctionalExpression functionalExpression, boolean qualified) {
+    return "Functional expression in " + getContextName(functionalExpression, qualified);
   }
 }

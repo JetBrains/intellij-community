@@ -49,5 +49,9 @@ public abstract class DirectoryIndex {
   @Nullable
   public abstract String getPackageName(@NotNull VirtualFile dir);
 
+  /**
+   * @return true
+   */
+  @Deprecated
   public abstract boolean isInitialized();
 }

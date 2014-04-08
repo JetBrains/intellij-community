@@ -37,6 +37,7 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remote.RemoteSdkAdditionalData;
@@ -223,6 +224,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     myProjectSdksModel.apply();
     mySdkListChanged = false;
     myShowMoreCallback.consume(getSelectedSdk());
+    Disposer.dispose(getDisposable());
   }
 
   @Nullable

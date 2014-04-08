@@ -22,6 +22,7 @@ import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBa
 import com.intellij.execution.ConsoleFolding;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.actions.ConsoleActionsPostProcessor;
+import com.intellij.execution.actions.EOFAction;
 import com.intellij.execution.filters.*;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
@@ -906,6 +907,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       registerActionHandler(myEditor, IdeActions.ACTION_EDITOR_PASTE, new PasteHandler());
       registerActionHandler(myEditor, IdeActions.ACTION_EDITOR_BACKSPACE, new BackSpaceHandler());
       registerActionHandler(myEditor, IdeActions.ACTION_EDITOR_DELETE, new DeleteHandler());
+
+      registerActionHandler(myEditor, EOFAction.ACTION_ID, ActionManager.getInstance().getAction(EOFAction.ACTION_ID));
     }
   }
 

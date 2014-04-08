@@ -83,7 +83,7 @@ public class DebuggerSettings implements JDOMExternalizable, NamedComponent, Clo
     return rv;
   }
 
-  void setSteppingFilters(ClassFilter[] steppingFilters) {
+  public void setSteppingFilters(ClassFilter[] steppingFilters) {
     mySteppingFilters = steppingFilters != null ? steppingFilters : ClassFilter.EMPTY_ARRAY;
   }
 

@@ -801,6 +801,8 @@
       <action id="ConsoleView.ClearAll" class="com.intellij.execution.impl.ConsoleViewImpl$ClearAllAction"/>
     </group>
 
+    <action id="SendEOF" class="com.intellij.execution.actions.EOFAction" text="Send EOF"/>
+
     <group>
       <action class="com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction" text="View assertEquals Difference" id="openAssertEqualsDiff"/>
       <separator/>
