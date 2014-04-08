@@ -21,7 +21,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -37,12 +36,17 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     console.flushDeferredText();
     try {
       console.clear();
+      console.print("Hi", ConsoleViewContentType.NORMAL_OUTPUT);
       type(console, '1');
       type(console, '2');
     }
-    finally {
-      Disposer.dispose(console);
+    catch (Exception e) {
+      e.printStackTrace();
     }
+  }
+
+  @Override
+  public void tearDown() throws Exception {
   }
 
   @NotNull
