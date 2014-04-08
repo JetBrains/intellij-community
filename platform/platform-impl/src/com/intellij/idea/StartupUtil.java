@@ -30,7 +30,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.EnvironmentUtil;
-import com.intellij.util.SnappyInitializer;
 import com.intellij.util.lang.UrlClassLoader;
 import com.sun.jna.Native;
 import org.jetbrains.annotations.NonNls;
@@ -277,8 +276,6 @@ public class StartupUtil {
     finally {
       System.setProperty(JAVA_IO_TEMP_DIR, javaTempDir);
     }
-
-    SnappyInitializer.initializeSnappy(log, ideTempDir);
 
     if (SystemInfo.isWin2kOrNewer) {
       IdeaWin32.isAvailable();  // logging is done there
