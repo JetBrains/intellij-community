@@ -583,8 +583,7 @@ public class TypesUtil {
 
   private static boolean checkEmptyMapAndMap(PsiType type1, PsiType type2) {
     if (type1 instanceof GrMapType) {
-      PsiType[] types = ((GrMapType)type1).getAllKeyTypes();
-      if (types.length == 0 && InheritanceUtil.isInheritor(type2, JAVA_UTIL_MAP)) return true;
+      if (((GrMapType)type1).isEmpty() && InheritanceUtil.isInheritor(type2, JAVA_UTIL_MAP)) return true;
     }
 
     return false;
