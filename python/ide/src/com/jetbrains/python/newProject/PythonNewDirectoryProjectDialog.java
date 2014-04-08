@@ -43,6 +43,7 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PyPySdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import icons.PythonIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,6 +78,8 @@ public class PythonNewDirectoryProjectDialog extends NewDirectoryProjectDialog {
         return sdk == preferred;
       }
     });
+    mySdkCombo.setButtonIcon(PythonIcons.Python.InterpreterGear);
+    
     final JLabel label = new JBLabel("Interpreter:", SwingConstants.LEFT) {
       @Override
       public Dimension getMinimumSize() {

@@ -98,7 +98,6 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
       final ProjectJdkImpl sdk = new ProjectJdkImpl(name, PythonSdkType.getInstance());
       sdk.setHomePath(FileUtil.toSystemDependentName(sdkHome.getPath()));
       callback.virtualEnvCreated(sdk, associateWithProject);
-      PythonSdkType.setupSdkPaths(sdk, myProject, null);
     }
   }
 
