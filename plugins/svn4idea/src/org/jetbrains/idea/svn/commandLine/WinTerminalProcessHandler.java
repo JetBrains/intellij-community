@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,6 +56,12 @@ public class WinTerminalProcessHandler extends TerminalProcessHandler {
     text = StringUtil.trimLeading(text, '\r');
 
     return text;
+  }
+
+  @NotNull
+  @Override
+  protected Key resolveOutputType(@NotNull String line, @NotNull Key outputType) {
+    return outputType;
   }
 
   @NotNull
