@@ -507,6 +507,12 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
                                              @NotNull PsiIdentifier identifier,
                                              @NotNull ProgressIndicator progress) {
     if (!myRefCountHolder.isReferenced(parameter) && !isImplicitUsage(myProject, parameter, progress)) {
+      //parameter is defined by functional interface
+      final PsiElement declarationScope = parameter.getDeclarationScope();
+      if (declarationScope instanceof PsiMethod && 
+          myRefCountHolder.isReferencedByMethodReference((PsiMethod)declarationScope)) {
+        return null;
+      }
       String message = JavaErrorMessages.message("parameter.is.not.used", identifier.getText());
       return createUnusedSymbolInfo(identifier, message, HighlightInfoType.UNUSED_SYMBOL);
     }
