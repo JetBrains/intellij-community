@@ -295,17 +295,6 @@ class Foo {
     assertSameElements myFixture.lookupElementStrings, "subSequence", "substring", "substring"
   }
 
-  public void testResolveToStdLib() throws Exception {
-    configureScript """
-@Typed def foo(List<String> l) {
-  l.ea<caret>ch { it.substring(1) }
-}
-"""
-    PsiMethod method = resolveReference().navigationElement as PsiMethod
-    assertEquals "each", method.name
-    assertEquals "groovypp.util.Iterations", method.containingClass.qualifiedName
-  }
-
   public void testResolveToStdLibWithArrayQualifier() throws Exception {
     configureGppScript """
 Integer[] a = []

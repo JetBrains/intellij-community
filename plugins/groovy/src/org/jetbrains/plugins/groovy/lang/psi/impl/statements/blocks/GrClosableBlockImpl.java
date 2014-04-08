@@ -55,6 +55,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.doTreeWalkUp;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.processStaticImports;
 
 /**
  * @author ilyas
@@ -192,7 +194,10 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
                                @NotNull PsiElement place) {
     final PsiElement parent = getParent();
     if (parent == null) return true;
-    return ResolveUtil.doTreeWalkUp(parent, place, processor, nonCodeProcessor, state);
+
+    if (!processStaticImports(processor, getContainingFile(), state, place)) return false;
+
+    return doTreeWalkUp(parent, place, processor, nonCodeProcessor, state);
   }
 
   private boolean isItAlreadyDeclared(@Nullable PsiElement place) {

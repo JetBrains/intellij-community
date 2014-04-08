@@ -60,6 +60,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
@@ -165,8 +166,15 @@ public class ResolveUtil {
     }
     else {
       if (!scope.processDeclarations(plainProcessor, state, lastParent, place)) return false;
+
+      if (scope instanceof GrTypeDefinition || scope instanceof GrClosableBlock) {
+        if (!processStaticImports(plainProcessor, place.getContainingFile(), state, place)) return false;
+      }
     }
-    if (nonCodeProcessor != null && !processScopeNonCodeMethods(place, lastParent, nonCodeProcessor, scope)) return false;
+
+    if (nonCodeProcessor != null) {
+      if (!processScopeNonCodeMethods(place, lastParent, nonCodeProcessor, scope)) return false;
+    }
     return true;
   }
 
@@ -959,6 +967,23 @@ public class ResolveUtil {
   @NotNull
   public static List<Pair<PsiParameter, PsiType>> collectExpectedParamsByArg(@NotNull GrCall call, @NotNull GrExpression arg) {
     return collectExpectedParamsByArg(arg, call.getCallVariants(arg), call.getNamedArguments(), call.getExpressionArguments(), call.getClosureArguments(), arg);
+  }
+
+  public static boolean processStaticImports(@NotNull PsiScopeProcessor resolver,
+                                             @NotNull PsiFile file,
+                                             @NotNull ResolveState state,
+                                             @NotNull PsiElement place) {
+    if (!shouldProcessMethods(resolver.getHint(ClassHint.KEY))) return true;
+
+    return file.processDeclarations(new GrDelegatingScopeProcessorWithHints(resolver, null, ResolverProcessor.RESOLVE_KINDS_METHOD) {
+      @Override
+      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState _state) {
+        if (_state.get(ResolverProcessor.RESOLVE_CONTEXT) instanceof GrImportStatement) {
+          super.execute(element, _state);
+        }
+        return true;
+      }
+    }, state, null, place);
   }
 
   private static class DuplicateVariablesProcessor extends PropertyResolverProcessor {

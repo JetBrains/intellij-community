@@ -10,4 +10,4 @@ def doSomethingElse(a){}
 
 doSomething()
 doSomething(2)
-Util.doSomethingElse(2)
+doSomethingElse(2)
