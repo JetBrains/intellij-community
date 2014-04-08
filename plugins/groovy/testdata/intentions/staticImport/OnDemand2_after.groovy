@@ -1,4 +1,4 @@
-import static Util.doSomething
+import static Util.*
 
 class Util {
   static doSomething(){}
