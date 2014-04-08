@@ -15,17 +15,10 @@
  */
 package com.intellij.openapi.editor.richcopy;
 
-import com.intellij.application.options.OptionsConstants;
 import com.intellij.openapi.diagnostic.Logger;
-import sun.font.CompositeFont;
-import sun.font.Font2D;
-import sun.font.FontManager;
-import sun.font.FontManagerFactory;
 
 import java.awt.*;
-import java.lang.reflect.Field;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -40,7 +33,7 @@ public class FontMapper {
   private static final Map<String, String> logicalToPhysicalMapping = new HashMap<String, String>();
 
   static {
-    try {
+    /*try {
       FontManager fontManager = FontManagerFactory.getInstance();
       for (String logicalFont : logicalFontsToMap) {
         String physicalFont = null;
@@ -63,7 +56,7 @@ public class FontMapper {
     }
     catch (Throwable e) {
       LOG.warn("Failed to determine logical to physical font mappings");
-    }
+    }*/
   }
 
   public static String getPhysicalFontName(String logicalFontName) {
