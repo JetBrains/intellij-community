@@ -193,7 +193,7 @@ public class PullUpTest extends LightRefactoringTestCase {
       assertTrue(interfaces[0].isWritable());
       targetClass = interfaces[0];
     }
-    MemberInfo[] infos = RefactoringTestUtil.findMembers(sourceClass, membersToFind);
+    final MemberInfo[] infos = RefactoringTestUtil.findMembers(sourceClass, membersToFind);
 
     final int[] countMoved = {0};
     final MoveMemberListener listener = new MoveMemberListener() {
