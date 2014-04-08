@@ -158,6 +158,11 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
   }
 
+  public void testFunctionalInterfaceDefaultMethod() throws Exception {
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
+    doSingleFileTest();
+  }
+
   public void testMethodDeepHierarchy() throws Exception {
     doTest("Super");
   }

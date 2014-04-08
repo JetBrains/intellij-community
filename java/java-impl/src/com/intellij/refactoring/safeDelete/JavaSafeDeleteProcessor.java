@@ -485,13 +485,15 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   private static void findFunctionalExpressions(final List<UsageInfo> usages, PsiMethod... methods) {
     for (PsiMethod method : methods) {
       final PsiClass containingClass = method.getContainingClass();
-      FunctionalExpressionSearch.search(containingClass).forEach(new Processor<PsiFunctionalExpression>() {
-        @Override
-        public boolean process(PsiFunctionalExpression expression) {
-          usages.add(new SafeDeleteFunctionalExpressionUsageInfo(expression, containingClass));
-          return true;
-        }
-      });
+      if (LambdaUtil.getFunctionalInterfaceMethod(containingClass) == method) {
+        FunctionalExpressionSearch.search(containingClass).forEach(new Processor<PsiFunctionalExpression>() {
+          @Override
+          public boolean process(PsiFunctionalExpression expression) {
+            usages.add(new SafeDeleteFunctionalExpressionUsageInfo(expression, containingClass));
+            return true;
+          }
+        });
+      }
     }
   }
 
