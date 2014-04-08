@@ -468,7 +468,7 @@ public class BreakpointsDialog extends DialogWrapper {
       }
       for (BreakpointItem item : myTreeController.getSelectedBreakpoints()) {
         Object breakpoint = item.getBreakpoint();
-        if (item.allowedToRemove() && breakpoint instanceof XBreakpointBase) {
+        if (breakpoint instanceof XBreakpointBase) {
           ((XBreakpointBase)breakpoint).setGroup(groupName);
         }
       }
