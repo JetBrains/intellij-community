@@ -31,7 +31,7 @@ public class Test<T> {
     Class value();
 }
 
-class Foo extends PresenterWidget<Foo.Bar> { //no warning as Bar here is not accessible
+class Foo extends PresenterWidget<Foo.Bar> { // warning because Bar can be imported
     interface Bar extends View { }
 }
 
@@ -59,4 +59,13 @@ class MultipleInheritance {
       return null;
     }
   }
+}
+@TestAnnotation(TestOuter.TestInner.TEST_FIELD)
+class TestOuter {
+  public interface TestInner {
+    String TEST_FIELD = "TEST";
+  }
+}
+@interface TestAnnotation {
+  String value();
 }

@@ -53,6 +53,7 @@ import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
+import java.awt.im.InputContext;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
@@ -2883,4 +2884,29 @@ public class UIUtil {
       }
     }).start();
   }
+
+  // Experimental!!!
+  // It seems to work under Windows
+  @Nullable
+  public static String getCurrentKeyboardLayout() {
+    InputContext instance = InputContext.getInstance();
+    Class<? extends InputContext> instanceClass = instance.getClass();
+    if (instanceClass.getSuperclass().getName().equals("sun.awt.im.InputContext")) {
+      try {
+        Field f = instanceClass.getSuperclass().getDeclaredField("inputMethodLocator");
+        f.setAccessible(true);
+        Object o = f.get(instance);
+        f = o.getClass().getDeclaredField("locale");
+        f.setAccessible(true);
+        o = f.get(o);
+        if (o instanceof Locale) {
+          return ((Locale)o).getLanguage().toUpperCase(Locale.getDefault());
+        }
+      }
+      catch (Exception ignored) {
+      }
+    }
+    return null;
+  }
+
 }

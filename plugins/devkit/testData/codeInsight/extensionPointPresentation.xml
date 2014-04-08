@@ -3,7 +3,7 @@
     <id>foo</id>
 
     <extensionPoints>
-        <extensionPoint name="bar"/>
+        <extensionPoint name="bar" interface="bar.MyExtensionPoint"/>
     </extensionPoints>
 
     <extensions defaultExtensionNs="foo">

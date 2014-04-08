@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 public abstract class ClosureMemberContributor extends NonCodeMembersContributor {
   @Override
   public final void processDynamicElements(@NotNull PsiType qualifierType,
-                                     PsiScopeProcessor processor,
-                                     PsiElement place,
-                                     ResolveState state) {
+                                           @NotNull PsiScopeProcessor processor,
+                                           @NotNull PsiElement place,
+                                           @NotNull ResolveState state) {
     if (!(qualifierType instanceof GrClosureType)) return;
 
     final PsiElement context = state.get(ResolverProcessor.RESOLVE_CONTEXT);
@@ -42,7 +42,7 @@ public abstract class ClosureMemberContributor extends NonCodeMembersContributor
   }
 
   protected abstract void processMembers(@NotNull GrClosableBlock closure,
-                                         PsiScopeProcessor processor,
-                                         PsiElement place,
-                                         ResolveState state);
+                                         @NotNull PsiScopeProcessor processor,
+                                         @NotNull PsiElement place,
+                                         @NotNull ResolveState state);
 }

@@ -15,18 +15,15 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve.noncode;
 
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightFieldBuilder;
-import com.intellij.psi.scope.DelegatingScopeProcessor;
-import com.intellij.psi.scope.ElementClassHint;
-import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GrDelegatingScopeProcessorWithHints;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTION;
 
@@ -43,8 +40,8 @@ public class GrCollectionTypeMembersProvider extends NonCodeMembersContributor {
   @Override
   public void processDynamicElements(@NotNull final PsiType qualifierType,
                                      PsiClass aClass,
-                                     final PsiScopeProcessor processor,
-                                     final PsiElement place,
+                                     @NotNull final PsiScopeProcessor processor,
+                                     @NotNull final PsiElement place,
                                      @NotNull final ResolveState state) {
     final PsiType collectionType = PsiUtil.extractIterableTypeParameter(qualifierType, true);
     if (collectionType == null) return;
@@ -54,11 +51,11 @@ public class GrCollectionTypeMembersProvider extends NonCodeMembersContributor {
     ResolveUtil.processAllDeclarations(collectionType, fieldSearcher, state, place);
   }
 
-  private static class FieldSearcher extends DelegatingScopeProcessor implements ClassHint, ElementClassHint {
+  private static class FieldSearcher extends GrDelegatingScopeProcessorWithHints {
     final PsiClass myCollectionClass;
 
     public FieldSearcher(PsiScopeProcessor processor, PsiClass collectionClass) {
-      super(processor);
+      super(processor, null, ResolverProcessor.RESOLVE_KINDS_PROPERTY);
       myCollectionClass = collectionClass;
     }
 
@@ -66,31 +63,14 @@ public class GrCollectionTypeMembersProvider extends NonCodeMembersContributor {
     public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
       if (element instanceof PsiField) {
         final PsiType type = ((PsiField)element).getType();
-        final String typeText =
-          type instanceof PsiClassType ? JAVA_UTIL_COLLECTION + "<" + type.getCanonicalText() + ">" : JAVA_UTIL_COLLECTION;
+        final String typeText = type instanceof PsiClassType ? JAVA_UTIL_COLLECTION + "<" + type.getCanonicalText() + ">"
+                                                             : JAVA_UTIL_COLLECTION;
         LightFieldBuilder lightField = new LightFieldBuilder(((PsiField)element).getName(), typeText, element);
         lightField.setContainingClass(myCollectionClass);
         lightField.setOriginInfo("spread collection field");
         return super.execute(lightField, state);
       }
       return true;
-    }
-
-    @Override
-    public <T> T getHint(@NotNull Key<T> hintKey) {
-      if (hintKey == NameHint.KEY) return super.getHint(hintKey);
-      if (hintKey == ClassHint.KEY || hintKey == ElementClassHint.KEY) return (T)this;
-      return null;
-    }
-
-    @Override
-    public boolean shouldProcess(ResolveKind resolveKind) {
-      return resolveKind == ResolveKind.PROPERTY;
-    }
-
-    @Override
-    public boolean shouldProcess(DeclarationKind kind) {
-      return kind == DeclarationKind.FIELD;
     }
   }
 }

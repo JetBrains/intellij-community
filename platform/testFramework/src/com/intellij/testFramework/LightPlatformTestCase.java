@@ -560,8 +560,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         if (manager instanceof FileDocumentManagerImpl) {
           ((FileDocumentManagerImpl)manager).dropAllUnsavedDocuments();
         }
-
-        ((DirectoryIndexImpl)DirectoryIndex.getInstance(project)).assertAncestorConsistent();
       }
     }.execute().throwException();
 

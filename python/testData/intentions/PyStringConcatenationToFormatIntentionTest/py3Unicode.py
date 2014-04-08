@@ -1,0 +1,2 @@
+
+string = "qwer<caret>" + "asdf"

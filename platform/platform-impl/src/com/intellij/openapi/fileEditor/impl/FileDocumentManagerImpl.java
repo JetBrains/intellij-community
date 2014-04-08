@@ -175,9 +175,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
         return null;
       }
       if (isBinaryWithoutDecompiler(file)) {
-        FileType fileType = file.getFileType();
-        if (fileType == UnknownFileType.INSTANCE) fileType = FileTypeManager.getInstance().detectFileTypeFromContent(file);
-        if (fileType.isBinary()) return null;
+        return null;
       }
       final CharSequence text = LoadTextUtil.loadText(file);
 
@@ -563,11 +561,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     else if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
       Document document = getCachedDocument(file);
       if (document != null) {
-        FileType type = file.getFileType();
-        if (type == UnknownFileType.INSTANCE) {
-          // a file is linked to a document - chances are it is an "unknown text file" now
-          FileTypeManager.getInstance().detectFileTypeFromContent(file);
-        }
+        // a file is linked to a document - chances are it is an "unknown text file" now
         if (isBinaryWithoutDecompiler(file)) {
           file.putUserData(DOCUMENT_KEY, null);
           document.putUserData(FILE_KEY, null);
@@ -750,7 +744,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   public static boolean recomputeFileTypeIfNecessary(@NotNull VirtualFile virtualFile) {
     if (virtualFile.getUserData(MUST_RECOMPUTE_FILE_TYPE) != null) {
-      FileTypeRegistry.getInstance().detectFileTypeFromContent(virtualFile);
+      virtualFile.getFileType();
       virtualFile.putUserData(MUST_RECOMPUTE_FILE_TYPE, null);
       return true;
     }
@@ -759,25 +753,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   @Override
   public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
-    /*
-    if (!event.isFromRefresh()) {
-      VirtualFile file = event.getFile();
-      if (file.getFileSystem() instanceof TempFileSystem) {
-        return; //hack: this fs fails in getChildren during beforeFileDeletion
-      }
-      VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
-        @Override
-        public boolean visitFile(@NotNull VirtualFile file) {
-          Document document = getCachedDocument(file);
-          if (document != null) {
-            removeFromUnsaved(document);
-          }
-          return true;
-        }
-      });
-    }
-    */
-
   }
 
   @Override

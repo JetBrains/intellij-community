@@ -20,49 +20,10 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-
-public class RunnerWinProcess extends Process {
-
-  private final Process myOriginalProcess;
+public class RunnerWinProcess extends ProcessWrapper {
 
   private RunnerWinProcess(@NotNull Process originalProcess) {
-    myOriginalProcess = originalProcess;
-  }
-
-  @Override
-  public OutputStream getOutputStream() {
-    return myOriginalProcess.getOutputStream();
-  }
-
-  @Override
-  public InputStream getInputStream() {
-    return myOriginalProcess.getInputStream();
-  }
-
-  @Override
-  public InputStream getErrorStream() {
-    return myOriginalProcess.getErrorStream();
-  }
-
-  @Override
-  public int waitFor() throws InterruptedException {
-    return myOriginalProcess.waitFor();
-  }
-
-  @Override
-  public int exitValue() {
-    return myOriginalProcess.exitValue();
-  }
-
-  @Override
-  public void destroy() {
-    myOriginalProcess.destroy();
-  }
-
-  public Process getOriginalProcess() {
-    return myOriginalProcess;
+    super(originalProcess);
   }
 
   /**

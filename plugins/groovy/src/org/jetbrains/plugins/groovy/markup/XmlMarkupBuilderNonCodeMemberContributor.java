@@ -38,8 +38,8 @@ public class XmlMarkupBuilderNonCodeMemberContributor extends NonCodeMembersCont
   @Override
   public void processDynamicElements(@NotNull PsiType qualifierType,
                                      PsiClass aClass,
-                                     PsiScopeProcessor processor,
-                                     PsiElement place,
+                                     @NotNull PsiScopeProcessor processor,
+                                     @NotNull PsiElement place,
                                      @NotNull ResolveState state) {
     String nameHint = ResolveUtil.getNameHint(processor);
 

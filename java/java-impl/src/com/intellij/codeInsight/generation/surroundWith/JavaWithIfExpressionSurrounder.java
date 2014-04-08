@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2014 JetBrains s.r.o.
  *
@@ -26,16 +25,22 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class JavaWithIfExpressionSurrounder extends JavaBooleanExpressionSurrounder {
   @Override
   public boolean isApplicable(PsiExpression expr) {
     if (!super.isApplicable(expr)) return false;
     if (!expr.isPhysical()) return false;
-    PsiElement parent = expr.getParent();
-    if (!(parent instanceof PsiExpressionStatement)) return false;
-    final PsiElement element = parent.getParent();
-    if (!(element instanceof PsiCodeBlock) && !(FileTypeUtils.isInServerPageFile(element)  && element instanceof PsiFile)) return false;
+    PsiElement expressionStatement = expr.getParent();
+    if (!(expressionStatement instanceof PsiExpressionStatement)) return false;
+
+    PsiElement statementParent = expressionStatement.getParent();
+    if (!isElseBranch(expr, statementParent) &&
+        !(statementParent instanceof PsiCodeBlock) &&
+        !(FileTypeUtils.isInServerPageFile(statementParent) && statementParent instanceof PsiFile)) {
+      return false;
+    }
     return true;
   }
 
@@ -49,20 +54,37 @@ public class JavaWithIfExpressionSurrounder extends JavaBooleanExpressionSurroun
     PsiIfStatement ifStatement = (PsiIfStatement)factory.createStatementFromText(text, null);
     ifStatement = (PsiIfStatement)codeStyleManager.reformat(ifStatement);
 
-    ifStatement.getCondition().replace(expr);
+    PsiExpression condition = ifStatement.getCondition();
+    if (condition != null) {
+      condition.replace(expr);
+    }
 
     PsiExpressionStatement statement = (PsiExpressionStatement)expr.getParent();
     ifStatement = (PsiIfStatement)statement.replace(ifStatement);
 
-    PsiCodeBlock block = ((PsiBlockStatement)ifStatement.getThenBranch()).getCodeBlock();
-    block = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(block);
-    TextRange range = block.getStatements()[0].getTextRange();
-    editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
-    return new TextRange(range.getStartOffset(), range.getStartOffset());
+    PsiStatement thenBranch = ifStatement.getThenBranch();
+    if (thenBranch != null && thenBranch instanceof PsiBlockStatement) {
+      PsiCodeBlock block = ((PsiBlockStatement)thenBranch).getCodeBlock();
+      block = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(block);
+      TextRange range = block.getStatements()[0].getTextRange();
+      editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
+      return TextRange.from(range.getStartOffset(), 0);
+    }
+    return TextRange.from(editor.getCaretModel().getOffset(), 0);
   }
 
   @Override
   public String getTemplateDescription() {
     return CodeInsightBundle.message("surround.with.if.expression.template");
+  }
+
+  private static boolean isElseBranch(@NotNull PsiExpression expression, @NotNull PsiElement statementParent) {
+    if (statementParent instanceof PsiIfStatement) {
+      PsiStatement elseBranch = ((PsiIfStatement)statementParent).getElseBranch();
+      if (elseBranch != null && elseBranch.getFirstChild() == expression) {
+        return true;
+      }
+    }
+    return false;
   }
 }

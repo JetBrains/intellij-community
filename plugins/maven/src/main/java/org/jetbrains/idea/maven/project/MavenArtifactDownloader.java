@@ -185,6 +185,8 @@ public class MavenArtifactDownloader {
           futures.add(EXECUTOR.submit(new Runnable() {
             public void run() {
               try {
+                if (myProject.isDisposed()) return;
+
                 myProgress.checkCanceled();
                 myProgress.setFraction(((double)downloaded.getAndIncrement()) / finalTotal);
 

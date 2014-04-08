@@ -71,9 +71,12 @@ public class JBMacMessages extends MacMessagesEmulation {
       window = getForemostWindow(null);
     }
 
-    Icon icon = errorStyle ? UIUtil.getInformationIcon() : UIUtil.getErrorIcon();
+    Icon icon = errorStyle ? UIUtil.getErrorIcon() : UIUtil.getInformationIcon();
 
-    SheetMessage sheetMessage = new SheetMessage(window, title, message, icon, buttons, doNotAskDialogOption, buttons[defaultOptionIndex], buttons[focusedOptionIndex]);
+    defaultOptionIndex = (defaultOptionIndex == focusedOptionIndex) ? buttons.length - 1 : defaultOptionIndex;
+
+    SheetMessage sheetMessage = new SheetMessage(window, title, message, icon, buttons, doNotAskDialogOption, buttons[defaultOptionIndex],
+                                                 buttons[focusedOptionIndex]);
     String result = sheetMessage.getResult();
     for (int i = 0; i < buttons.length; i++) {
       if (result.equals(buttons[i])) {
@@ -165,7 +168,7 @@ public class JBMacMessages extends MacMessagesEmulation {
     if (window == null) {
       window = getForemostWindow(null);
     }
-    SheetMessage sheetMessage = new SheetMessage(window, title, message, UIUtil.getQuestionIcon(), new String [] {noButton, yesButton}, null, noButton, yesButton);
+    SheetMessage sheetMessage = new SheetMessage(window, title, message, UIUtil.getQuestionIcon(), new String [] {yesButton, noButton}, null, noButton, yesButton);
     return sheetMessage.getResult().equals(yesButton) ? Messages.YES : Messages.NO;
   }
 
@@ -180,7 +183,7 @@ public class JBMacMessages extends MacMessagesEmulation {
       window = getForemostWindow(null);
     }
     SheetMessage sheetMessage = new SheetMessage(window, title, message, UIUtil.getQuestionIcon(),
-                                                 new String [] {noButton, yesButton}, doNotAskDialogOption, noButton, yesButton);
+                                                 new String [] {yesButton, noButton}, doNotAskDialogOption, noButton, yesButton);
     int result = sheetMessage.getResult().equals(yesButton) ? Messages.YES : Messages.NO;
     if (doNotAskDialogOption != null) {
       doNotAskDialogOption.setToBeShown(sheetMessage.toBeShown(), result);

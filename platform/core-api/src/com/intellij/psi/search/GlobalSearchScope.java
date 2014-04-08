@@ -458,7 +458,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   @NotNull
-  public static GlobalSearchScope getScopeRestrictedByFileTypes (@NotNull GlobalSearchScope scope, final FileType... fileTypes) {
+  public static GlobalSearchScope getScopeRestrictedByFileTypes(@NotNull GlobalSearchScope scope, @NotNull FileType... fileTypes) {
     if (scope == EMPTY_SCOPE) {
       return EMPTY_SCOPE;
     }
@@ -528,6 +528,11 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       int result = super.hashCode();
       result = 31 * result + Arrays.hashCode(myFileTypes);
       return result;
+    }
+
+    @Override
+    public String toString() {
+      return "(" + myBaseScope + " restricted by file types: "+Arrays.asList(myFileTypes)+")";
     }
   }
 

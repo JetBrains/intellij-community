@@ -109,7 +109,7 @@ public abstract class TypeIntention implements IntentionAction {
     if (parentFunction != null) {
       final ASTNode nameNode = parentFunction.getNameNode();
       if (nameNode != null) {
-        final PsiElement prev = elementAt.getPrevSibling();
+        final PsiElement prev = elementAt.getContainingFile().findElementAt(elementAt.getTextOffset()-1);
         if (nameNode.getPsi() == elementAt || nameNode.getPsi() == prev) {
           return !isReturnTypeDefined(parentFunction);
         }

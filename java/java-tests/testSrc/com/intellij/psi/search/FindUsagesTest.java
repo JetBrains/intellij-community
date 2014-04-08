@@ -89,7 +89,7 @@ public class FindUsagesTest extends PsiTestCase{
   public void testLibraryClassUsageFromDecompiledSource() {
     PsiElement decompiled =
       ((PsiCompiledElement)myJavaFacade.findClass("javax.swing.JLabel", GlobalSearchScope.allScope(myProject))).getMirror();
-    assertEquals(2, ReferencesSearch.search(decompiled).findAll().size());
+    assertEquals(2, ReferencesSearch.search(decompiled, GlobalSearchScope.projectScope(myProject)).findAll().size());
   }
 
   public void testImplicitConstructorUsage() throws Throwable {

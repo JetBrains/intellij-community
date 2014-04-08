@@ -194,8 +194,26 @@ public class PythonKeywordCompletionTest extends PyTestCase {
   }
 
   public void testInInFor() {  // PY-10248
-    assertContainsElements(doTestByText("for x <caret>]"), "in");
-    assertContainsElements(doTestByText("for x i<caret>]"), "in");
+    assertContainsElements(doTestByText("for x <caret>"), "in");
+    assertContainsElements(doTestByText("for x i<caret>"), "in");
     assertContainsElements(doTestByText("for x i<caret>n y:\n  pass]"), "in");
+  }
+
+  public void testExceptAfterElse() {
+    assertDoesntContain(doTestByText("try:\n" +
+                                     "    pass\n" +
+                                     "except ArithmeticError:\n" +
+                                     "    pass\n" +
+                                     "else:\n" +
+                                     "    pass\n<caret>"), "except");
+  }
+
+  public void testExceptAfterFinally() {
+    assertDoesntContain(doTestByText("try:\n" +
+                                        "    pass\n" +
+                                        "except ArithmeticError:\n" +
+                                        "    pass\n" +
+                                        "finally:\n" +
+                                        "    pass\n<caret>"), "except");
   }
 }

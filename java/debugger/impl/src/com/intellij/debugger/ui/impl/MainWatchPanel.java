@@ -66,7 +66,7 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
     final WatchDebuggerTree watchTree = getWatchTree();
 
     final AnAction removeWatchesAction = ActionManager.getInstance().getAction(DebuggerActions.REMOVE_WATCH);
-    removeWatchesAction.registerCustomShortcutSet(CommonShortcuts.DELETE, watchTree);
+    removeWatchesAction.registerCustomShortcutSet(CommonShortcuts.getDelete(), watchTree);
 
     final AnAction newWatchAction  = ActionManager.getInstance().getAction(DebuggerActions.NEW_WATCH);
     newWatchAction.registerCustomShortcutSet(CommonShortcuts.INSERT, watchTree);

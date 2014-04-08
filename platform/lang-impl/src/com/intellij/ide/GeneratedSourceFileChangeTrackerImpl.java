@@ -78,7 +78,7 @@ public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileCha
     MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
       @Override
-      public void fileContentReloaded(VirtualFile file, @NotNull Document document) {
+      public void fileContentReloaded(@NotNull VirtualFile file, @NotNull Document document) {
         myFilesToCheck.remove(file);
         if (myEditedGeneratedFiles.remove(file)) {
           myEditorNotifications.updateNotifications(file);

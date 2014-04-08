@@ -49,8 +49,8 @@ public class MavenGroovyPomScriptMemberContributor extends NonCodeMembersContrib
   @Override
   public void processDynamicElements(@NotNull PsiType qualifierType,
                                      PsiClass aClass,
-                                     PsiScopeProcessor processor,
-                                     PsiElement place,
+                                     @NotNull PsiScopeProcessor processor,
+                                     @NotNull PsiElement place,
                                      @NotNull ResolveState state) {
     PsiElement pomElement = aClass.getContainingFile().getContext();
     if (pomElement == null) return;

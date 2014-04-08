@@ -62,6 +62,10 @@ public class DomPatterns {
     });
   }
 
+  public static <T extends DomElement> DomFilePattern.Capture inDomFile(Class<T> rootElementClass) {
+    return new DomFilePattern.Capture(rootElementClass);
+  }
+
   public static XmlTagPattern.Capture tagWithDom(String tagName, Class<? extends DomElement> aClass) {
     return tagWithDom(tagName, domElement(aClass));
   }

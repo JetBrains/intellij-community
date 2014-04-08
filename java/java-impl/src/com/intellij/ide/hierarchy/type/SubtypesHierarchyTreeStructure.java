@@ -19,12 +19,12 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiAnonymousClass;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -45,17 +45,27 @@ public class SubtypesHierarchyTreeStructure extends HierarchyTreeStructure {
 
   @NotNull
   protected final Object[] buildChildren(@NotNull final HierarchyNodeDescriptor descriptor) {
-    final PsiClass psiClass = ((TypeHierarchyNodeDescriptor)descriptor).getPsiClass();
+    final Object element = ((TypeHierarchyNodeDescriptor)descriptor).getPsiClass();
+    if (!(element instanceof PsiClass)) return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    final PsiClass psiClass = (PsiClass)element;
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName())) {
       return new Object[]{IdeBundle.message("node.hierarchy.java.lang.object")};
     }
     if (psiClass instanceof PsiAnonymousClass) return ArrayUtil.EMPTY_OBJECT_ARRAY;
     if (psiClass.hasModifierProperty(PsiModifier.FINAL)) return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    final List<PsiClass> classes = new ArrayList<PsiClass>(ClassInheritorsSearch.search(psiClass, psiClass.getUseScope().intersectWith(getSearchScope(myCurrentScopeType, psiClass)), false).findAll());
-    final HierarchyNodeDescriptor[] descriptors = new HierarchyNodeDescriptor[classes.size()];
-    for (int i = 0; i < classes.size(); i++) {
-      descriptors[i] = new TypeHierarchyNodeDescriptor(myProject, descriptor, classes.get(i), false);
+    final SearchScope searchScope = psiClass.getUseScope().intersectWith(getSearchScope(myCurrentScopeType, psiClass));
+    final List<PsiClass> classes = new ArrayList<PsiClass>(ClassInheritorsSearch.search(psiClass, searchScope, false).findAll());
+    final List<HierarchyNodeDescriptor> descriptors = new ArrayList<HierarchyNodeDescriptor>(classes.size());
+    for (PsiClass aClass : classes) {
+      descriptors.add(new TypeHierarchyNodeDescriptor(myProject, descriptor, aClass, false));
     }
-    return descriptors;
+    FunctionalExpressionSearch.search(psiClass, searchScope).forEach(new Processor<PsiFunctionalExpression>() {
+      @Override
+      public boolean process(PsiFunctionalExpression expression) {
+        descriptors.add(new TypeHierarchyNodeDescriptor(myProject, descriptor, expression, false));
+        return true;
+      }
+    });
+    return descriptors.toArray(new HierarchyNodeDescriptor[descriptors.size()]);
   }
 }

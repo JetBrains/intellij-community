@@ -33,6 +33,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.StringInterner;
+import com.intellij.util.containers.WeakStringInterner;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Document;
@@ -116,7 +117,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myPath;
   }
 
-  private static final StringInterner ourInterner = new StringInterner();
+  private static final StringInterner ourInterner = new WeakStringInterner();
 
   @NotNull
   public static String intern(@NotNull String s) {

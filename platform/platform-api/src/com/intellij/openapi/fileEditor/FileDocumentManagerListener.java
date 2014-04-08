@@ -54,7 +54,9 @@ public interface FileDocumentManagerListener extends EventListener {
   void beforeFileContentReload(VirtualFile file, @NotNull Document document);
 
   void fileWithNoDocumentChanged(@NotNull VirtualFile file);
-  void fileContentReloaded(VirtualFile file, @NotNull Document document);
+
+  void fileContentReloaded(@NotNull VirtualFile file, @NotNull Document document);
+
   void fileContentLoaded(@NotNull VirtualFile file, @NotNull Document document);
 
   void unsavedDocumentsDropped();

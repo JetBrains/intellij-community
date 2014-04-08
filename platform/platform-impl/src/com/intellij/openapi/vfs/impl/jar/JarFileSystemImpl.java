@@ -152,9 +152,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
 
   @Override
   public JarFile getJarFile(@NotNull VirtualFile entryVFile) throws IOException {
-    JarHandler handler = getHandler(entryVFile);
-
-    return handler.getJar();
+    return getHandler(entryVFile).getJar();
   }
 
   @Nullable

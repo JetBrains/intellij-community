@@ -17,8 +17,11 @@ package com.intellij.application.options.colors;
 
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.awt.*;
 
 public interface ImportHandler {
   ExtensionPointName<ImportHandler> EP_NAME = ExtensionPointName.create("com.intellij.colorAndFontOptionsImportHandler");
@@ -26,6 +29,5 @@ public interface ImportHandler {
   @NotNull
   String getTitle();
 
-  @Nullable
-  EditorColorsScheme performImport();
+  void performImport(@NotNull Component parent, @Nullable Consumer<EditorColorsScheme> consumer);
 }

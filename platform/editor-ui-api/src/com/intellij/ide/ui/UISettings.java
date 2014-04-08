@@ -31,6 +31,7 @@ import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -111,6 +112,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   public boolean HIDE_NAVIGATION_ON_FOCUS_LOSS = true;
   public boolean FILE_COLORS_IN_PROJECT_VIEW = false;
   public boolean DEFAULT_AUTOSCROLL_TO_SOURCE = false;
+  @Transient
   public boolean PRESENTATION_MODE = false;
   public int PRESENTATION_MODE_FONT_SIZE = 24;
   public boolean MARK_MODIFIED_TABS_WITH_ASTERISK = false;

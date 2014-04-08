@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.ide.presentation.Presentation;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
 
 import java.util.List;
@@ -63,4 +64,15 @@ public interface ExtensionPoint extends DomElement {
   List<With> getWithElements();
 
   With addWith();
+
+  @NotNull
+  String getEffectiveName();
+
+  /**
+   * Returns EP name prefix (Plugin ID).
+   *
+   * @return {@code null} if {@code qualifiedName} is set.
+   */
+  @Nullable
+  String getNamePrefix();
 }

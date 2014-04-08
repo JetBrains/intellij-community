@@ -48,10 +48,12 @@ public class CollectionUtils {
     s_allCollectionClassesAndInterfaces.add("java.util.AbstractSequentialList");
     s_allCollectionClassesAndInterfaces.add("java.util.AbstractSet");
     s_allCollectionClassesAndInterfaces.add("java.util.ArrayList");
+    s_allCollectionClassesAndInterfaces.add("java.util.ArrayDeque");
     s_allCollectionClassesAndInterfaces.add(CommonClassNames.JAVA_UTIL_COLLECTION);
     s_allCollectionClassesAndInterfaces.add(CommonClassNames.JAVA_UTIL_DICTIONARY);
-    s_allCollectionClassesAndInterfaces.add("java.util.HashMap");
-    s_allCollectionClassesAndInterfaces.add("java.util.HashSet");
+    s_allCollectionClassesAndInterfaces.add("java.util.EnumMap");
+    s_allCollectionClassesAndInterfaces.add(CommonClassNames.JAVA_UTIL_HASH_MAP);
+    s_allCollectionClassesAndInterfaces.add(CommonClassNames.JAVA_UTIL_HASH_SET);
     s_allCollectionClassesAndInterfaces.add("java.util.Hashtable");
     s_allCollectionClassesAndInterfaces.add("java.util.IdentityHashMap");
     s_allCollectionClassesAndInterfaces.add("java.util.LinkedHashMap");
@@ -59,6 +61,7 @@ public class CollectionUtils {
     s_allCollectionClassesAndInterfaces.add("java.util.LinkedList");
     s_allCollectionClassesAndInterfaces.add(CommonClassNames.JAVA_UTIL_LIST);
     s_allCollectionClassesAndInterfaces.add(CommonClassNames.JAVA_UTIL_MAP);
+    s_allCollectionClassesAndInterfaces.add("java.util.PriorityQueue");
     s_allCollectionClassesAndInterfaces.add("java.util.Queue");
     s_allCollectionClassesAndInterfaces.add(CommonClassNames.JAVA_UTIL_SET);
     s_allCollectionClassesAndInterfaces.add("java.util.SortedMap");
@@ -197,9 +200,6 @@ public class CollectionUtils {
       return false;
     }
     final String typeText = type.getCanonicalText();
-    if (typeText == null) {
-      return false;
-    }
     return "java.util.WeakHashMap".equals(typeText);
   }
 

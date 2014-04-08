@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.util.*;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,6 +85,16 @@ public class PsiMethodReferenceUtil {
       }
     }
     return true;
+  }
+
+  @NotNull
+  public static Map<PsiMethodReferenceExpression, PsiType> getFunctionalTypeMap() {
+    Map<PsiMethodReferenceExpression, PsiType> map = ourRefs.get();
+    if (map == null) {
+      map = new HashMap<PsiMethodReferenceExpression, PsiType>();
+      ourRefs.set(map);
+    }
+    return map;
   }
 
   public static class QualifierResolveResult {
@@ -232,6 +243,12 @@ public class PsiMethodReferenceUtil {
     final PsiElement resolve = methodRef.resolve();
 
     if (resolve == null) return null;
+    return checkMethodReferenceContext(methodRef, resolve, methodRef.getFunctionalInterfaceType());
+  }
+
+  public static String checkMethodReferenceContext(PsiMethodReferenceExpression methodRef,
+                                                   PsiElement resolve,
+                                                   PsiType functionalInterfaceType) {
     final PsiClass containingClass = resolve instanceof PsiMethod ? ((PsiMethod)resolve).getContainingClass() : (PsiClass)resolve;
     final boolean isStaticSelector = isStaticallyReferenced(methodRef);
     final PsiElement qualifier = methodRef.getQualifier();
@@ -245,7 +262,7 @@ public class PsiMethodReferenceUtil {
 
       isMethodStatic = method.hasModifierProperty(PsiModifier.STATIC);
       isConstructor = method.isConstructor();
-      receiverReferenced = hasReceiver(methodRef, method);
+      receiverReferenced = hasReceiver(methodRef, method, functionalInterfaceType);
       
       if (method.hasModifierProperty(PsiModifier.ABSTRACT) && qualifier instanceof PsiSuperExpression) {
         return "Abstract method '" + method.getName() + "' cannot be accessed directly";
@@ -285,8 +302,15 @@ public class PsiMethodReferenceUtil {
     return null;
   }
 
-  public static boolean hasReceiver(@NotNull PsiMethodReferenceExpression methodRef, @NotNull PsiMethod method) {
-    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(methodRef.getFunctionalInterfaceType());
+  public static boolean hasReceiver(@NotNull PsiMethodReferenceExpression methodRef,
+                                    @NotNull PsiMethod method) {
+    return hasReceiver(methodRef, method, methodRef.getFunctionalInterfaceType());
+  }
+
+  private static boolean hasReceiver(@NotNull PsiMethodReferenceExpression methodRef,
+                                     @NotNull PsiMethod method,
+                                     PsiType functionalInterfaceType) {
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
     final MethodSignature signature = interfaceMethod != null ? interfaceMethod.getSignature(LambdaUtil.getSubstitutor(interfaceMethod, resolveResult)) : null;
     LOG.assertTrue(signature != null);

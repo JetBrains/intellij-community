@@ -197,7 +197,7 @@ public class SafeDeleteDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    if (myCallback != null) {
+    if (myCallback != null && isSafeDelete()) {
       myCallback.run(this);
     } else {
       super.doOKAction();
@@ -219,5 +219,12 @@ public class SafeDeleteDialog extends DialogWrapper {
         myDelegate.setToSearchForTextOccurrences(myElements[0], isSearchForTextOccurences());
       }
     }
+  }
+
+  private boolean isSafeDelete() {
+    if (isDelete()) {
+      return myCbSafeDelete.isSelected();
+    }
+    return true;
   }
 }

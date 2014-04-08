@@ -41,7 +41,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunCo
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask;
-import com.intellij.openapi.externalSystem.service.notification.ExternalSystemIdeNotificationManager;
+import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager;
 import com.intellij.openapi.externalSystem.service.notification.NotificationSource;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
@@ -138,12 +138,9 @@ public class ExternalSystemUtil {
     if (toolWindowManager == null) {
       return null;
     }
-    final ToolWindow toolWindow = toolWindowManager.getToolWindow(externalSystemId.getReadableName());
+    final ToolWindow toolWindow = ensureToolWindowContentInitialized(project, externalSystemId);
     if (toolWindow == null) {
       return null;
-    }
-    if (toolWindow instanceof ToolWindowImpl) {
-      ((ToolWindowImpl)toolWindow).ensureContentInitialized();
     }
 
     final ContentManager contentManager = toolWindow.getContentManager();
@@ -161,6 +158,20 @@ public class ExternalSystemUtil {
       }
     }
     return null;
+  }
+
+  @Nullable
+  public static ToolWindow ensureToolWindowContentInitialized(@NotNull Project project, @NotNull ProjectSystemId externalSystemId) {
+    final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+    if (toolWindowManager == null) return null;
+
+    final ToolWindow toolWindow = toolWindowManager.getToolWindow(externalSystemId.getReadableName());
+    if (toolWindow == null) return null;
+
+    if (toolWindow instanceof ToolWindowImpl) {
+      ((ToolWindowImpl)toolWindow).ensureContentInitialized();
+    }
+    return toolWindow;
   }
 
   /**
@@ -213,10 +224,8 @@ public class ExternalSystemUtil {
     }
 
     if (!toRefresh.isEmpty()) {
-      ExternalSystemIdeNotificationManager notificationManager = ServiceManager.getService(ExternalSystemIdeNotificationManager.class);
-      if (notificationManager != null) {
-        notificationManager.clearNotificationMessages(project, NotificationSource.PROJECT_SYNC, externalSystemId);
-      }
+      ExternalSystemNotificationManager.getInstance(project)
+        .clearNotifications(null, NotificationSource.PROJECT_SYNC, externalSystemId);
 
       counter[0] = toRefresh.size();
       for (String path : toRefresh) {
@@ -382,11 +391,9 @@ public class ExternalSystemUtil {
           return;
         }
 
-        if(!(callback instanceof MyMultiExternalProjectRefreshCallback)) {
-          ExternalSystemIdeNotificationManager notificationManager = ServiceManager.getService(ExternalSystemIdeNotificationManager.class);
-          if (notificationManager != null) {
-            notificationManager.clearNotificationMessages(project, NotificationSource.PROJECT_SYNC, externalSystemId);
-          }
+        if (!(callback instanceof MyMultiExternalProjectRefreshCallback)) {
+          ExternalSystemNotificationManager.getInstance(project)
+            .clearNotifications(null, NotificationSource.PROJECT_SYNC, externalSystemId);
         }
 
         ExternalSystemResolveProjectTask task
@@ -445,10 +452,8 @@ public class ExternalSystemUtil {
         if (projectSettings == null || !reportRefreshError) {
           return;
         }
-        ExternalSystemIdeNotificationManager notificationManager = ServiceManager.getService(ExternalSystemIdeNotificationManager.class);
-        if (notificationManager != null) {
-          notificationManager.processExternalProjectRefreshError(error, project, projectName, externalSystemId);
-        }
+
+        ExternalSystemNotificationManager.getInstance(project).processExternalProjectRefreshError(error, projectName, externalSystemId);
       }
     };
 

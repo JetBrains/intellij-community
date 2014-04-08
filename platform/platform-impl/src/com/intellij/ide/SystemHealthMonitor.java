@@ -131,6 +131,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
     JobScheduler.getScheduler().schedule(new Runnable() {
       private static final long LOW_DISK_SPACE_THRESHOLD = 50 * 1024 * 1024;
       private static final long MAX_WRITE_SPEED_IN_BPS = 500 * 1024 * 1024;  // 500 MB/sec is near max SSD sequential write speed
+      private volatile NotificationGroup mySystemNotificationGroup;
 
       @Override
       public void run() {
@@ -175,8 +176,10 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
                     restart(timeout);
                   }
                   else {
-                    new NotificationGroup("System", NotificationDisplayType.STICKY_BALLOON, false)
-                      .createNotification(message, file.getPath(), NotificationType.ERROR, null).whenExpired(new Runnable() {
+                    if (mySystemNotificationGroup == null) {
+                      mySystemNotificationGroup = new NotificationGroup("System", NotificationDisplayType.STICKY_BALLOON, false);
+                    }
+                    mySystemNotificationGroup.createNotification(message, file.getPath(), NotificationType.ERROR, null).whenExpired(new Runnable() {
                       @Override
                       public void run() {
                         reported.compareAndSet(true, false);

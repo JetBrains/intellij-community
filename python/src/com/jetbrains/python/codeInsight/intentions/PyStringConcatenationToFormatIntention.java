@@ -140,10 +140,11 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
     int paramCount = 0;
     boolean isUnicode = false;
     final PyClassTypeImpl unicodeType = PyBuiltinCache.getInstance(element).getObjectType("unicode");
+
     for (PyExpression expression : getSimpleExpressions((PyBinaryExpression) element)) {
       if (expression instanceof PyStringLiteralExpression) {
         final PyType type = context.getType(expression);
-        if (PyTypeChecker.match(unicodeType, type, context)) {
+        if (type != null && type.equals(unicodeType)) {
           isUnicode = true;
         }
         if (!quotesDetected) {

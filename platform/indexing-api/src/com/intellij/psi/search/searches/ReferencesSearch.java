@@ -86,7 +86,7 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
   }
 
   public static Query<PsiReference> search(@NotNull PsiElement element) {
-    return search(element, GlobalSearchScope.projectScope(element.getProject()), false);
+    return search(element, GlobalSearchScope.allScope(element.getProject()), false);
   }
 
   public static Query<PsiReference> search(@NotNull PsiElement element, @NotNull SearchScope searchScope) {

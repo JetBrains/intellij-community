@@ -57,8 +57,8 @@ public class SheetMessage {
                       final Icon icon,
                       final String[] buttons,
                       final DialogWrapper.DoNotAskOption doNotAskOption,
-                      final String focusedButton,
-                      final String defaultButton)
+                      final String defaultButton,
+                      final String focusedButton)
   {
     myWindow = new JDialog(owner, "This should not be shown", Dialog.ModalityType.APPLICATION_MODAL);
     myWindow.getRootPane().putClientProperty("apple.awt.draggableWindowBackground", Boolean.FALSE);

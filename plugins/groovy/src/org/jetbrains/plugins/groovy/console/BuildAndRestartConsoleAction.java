@@ -60,6 +60,8 @@ public class BuildAndRestartConsoleAction extends AnAction implements Disposable
   }
 
   private boolean isEnabled() {
+    if (myModule == null) return false;
+
     if (myModule.isDisposed()) return false;
 
     ProcessHandler processHandler = myContentDescriptor.getProcessHandler();

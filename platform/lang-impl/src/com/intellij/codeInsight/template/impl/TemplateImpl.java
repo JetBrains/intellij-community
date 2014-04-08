@@ -104,14 +104,14 @@ public class TemplateImpl extends Template implements SchemeElement {
 
 
 
-  public TemplateImpl(@NotNull String key, String group) {
+  public TemplateImpl(@NotNull String key, @NotNull String group) {
     this(key, null, group);
     toParseSegments = false;
     myTemplateText = "";
     mySegments = new ArrayList<Segment>();
   }
 
-  public TemplateImpl(@NotNull String key, String string, String group) {
+  public TemplateImpl(@NotNull String key, String string, @NotNull String group) {
     myKey = key;
     myString = string;
     myGroupName = group;
@@ -414,7 +414,7 @@ public class TemplateImpl extends Template implements SchemeElement {
   }
 
   @Override
-  public void setGroupName(String groupName) {
+  public void setGroupName(@NotNull String groupName) {
     myGroupName = groupName;
   }
 

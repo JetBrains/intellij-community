@@ -139,7 +139,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
     final String removeText = SvnBundle.message("action.Subversion.integrate.changes.dialog.remove.wc.text");
     myGroup.add(new AnAction(removeText, removeText, PlatformIcons.DELETE_ICON) {
       {
-        registerCustomShortcutSet(CommonShortcuts.DELETE, myWorkingCopiesList);
+        registerCustomShortcutSet(CommonShortcuts.getDelete(), myWorkingCopiesList);
       }
 
       public void update(final AnActionEvent e) {

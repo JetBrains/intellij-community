@@ -24,7 +24,7 @@ import com.siyeh.ig.LightInspectionTestCase;
 public class ClassMayBeInterfaceInspectionTest extends LightInspectionTestCase {
 
   public void testOne() {
-    doTest("abstract class /*'ConvertMe' may be interface*/ConvertMe/**/ {\n" +
+    doTest("abstract class /*Abstract class 'ConvertMe' may be interface*/ConvertMe/**/ {\n" +
            "    public static final String S = \"\";\n" +
            "    public void m() {}\n" +
            "    public static void n() {\n" +

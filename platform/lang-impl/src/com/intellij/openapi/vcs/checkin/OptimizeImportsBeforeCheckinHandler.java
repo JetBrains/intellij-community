@@ -19,6 +19,7 @@ package com.intellij.openapi.vcs.checkin;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -47,7 +48,7 @@ public class OptimizeImportsBeforeCheckinHandler extends CheckinHandler implemen
   @Nullable
   public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
     final JCheckBox optimizeBox = new JCheckBox(VcsBundle.message("checkbox.checkin.options.optimize.imports"));
-
+    TodoCheckinHandler.disableWhenDumb(myProject, optimizeBox, "Impossible until indices are up-to-date");
     return new RefreshableOnComponent() {
       @Override
       public JComponent getComponent() {
@@ -90,7 +91,7 @@ public class OptimizeImportsBeforeCheckinHandler extends CheckinHandler implemen
       }
     };
 
-    if (configuration.OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT) {
+    if (configuration.OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT && !DumbService.isDumb(myProject)) {
       new OptimizeImportsProcessor(myProject, BeforeCheckinHandlerUtil.getPsiFiles(myProject, files), COMMAND_NAME, performCheckoutAction).run();
     }  else {
       finishAction.run();

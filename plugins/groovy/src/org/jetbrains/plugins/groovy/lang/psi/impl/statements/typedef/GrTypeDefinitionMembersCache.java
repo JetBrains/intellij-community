@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.CachedValueProvider;
@@ -48,7 +48,7 @@ public class GrTypeDefinitionMembersCache {
     }
   };
 
-  private final MyModificationTracker myTreeChangeTracker = new MyModificationTracker();
+  private final SimpleModificationTracker myTreeChangeTracker = new SimpleModificationTracker();
 
   private final GrTypeDefinition myDefinition;
 
@@ -169,19 +169,6 @@ public class GrTypeDefinitionMembersCache {
   }
 
   public void dropCaches() {
-    myTreeChangeTracker.inc();
-  }
-
-  private static class MyModificationTracker implements ModificationTracker {
-    private long myCount = 0;
-
-    @Override
-    public long getModificationCount() {
-      return myCount;
-    }
-
-    public void inc() {
-      myCount++;
-    }
+    myTreeChangeTracker.incModificationCount();
   }
 }

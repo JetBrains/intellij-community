@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
@@ -41,7 +42,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
+import javax.swing.*;
 import java.util.Map;
 
 public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase implements PsiMethodReferenceExpression {
@@ -398,12 +399,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
      //        the result of applying capture conversion (5.1.10) to the return type of the invocation type (15.12.2.6) of the chosen declaration is R', 
      //        where R is the target type that may be used to infer R'; neither R nor R' is void; and R' is compatible with R in an assignment context.
 
-    Map<PsiMethodReferenceExpression, PsiType> map = PsiMethodReferenceUtil.ourRefs.get();
-    if (map == null) {
-      map = new HashMap<PsiMethodReferenceExpression, PsiType>();
-      PsiMethodReferenceUtil.ourRefs.set(map);
-    }
-
+    Map<PsiMethodReferenceExpression, PsiType> map = PsiMethodReferenceUtil.getFunctionalTypeMap();
     final JavaResolveResult result;
     try {
       if (map.put(this, left) != null) {
@@ -474,5 +470,11 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       return TypeConversionUtil.isAssignable(interfaceReturnType, methodReturnType, false);
     }
     return false;
+  }
+
+  @Nullable
+  @Override
+  public Icon getIcon(int flags) {
+    return AllIcons.Nodes.AnonymousClass;
   }
 }

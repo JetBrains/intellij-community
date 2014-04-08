@@ -16,13 +16,14 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 class CutLineActionHandler extends EditorWriteActionHandler {
   private final boolean myToLineStart;
@@ -30,21 +31,24 @@ class CutLineActionHandler extends EditorWriteActionHandler {
   private final boolean myCopyToClipboard;
 
   CutLineActionHandler(boolean toLineStart, boolean ignoreSelection, boolean copyToClipboard) {
+    super(!copyToClipboard); // as CutLineEndAction interacts with clipboard, multi-caret support for it needs to be implemented explicitly (todo)
     myToLineStart = toLineStart;
     myIgnoreSelection = ignoreSelection;
     myCopyToClipboard = copyToClipboard;
   }
 
   @Override
-  public void executeWriteAction(Editor editor, DataContext dataContext) {
-    SelectionModel selectionModel = editor.getSelectionModel();
-    if (!myIgnoreSelection && selectionModel.hasSelection()) {
-      delete(editor, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+  public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    if (caret == null) {
+      caret = editor.getCaretModel().getCurrentCaret();
+    }
+    if (!myIgnoreSelection && caret.hasSelection()) {
+      delete(editor, caret, caret.getSelectionStart(), caret.getSelectionEnd());
       return;
     }
     
     final Document doc = editor.getDocument();
-    int caretOffset = editor.getCaretModel().getOffset();
+    int caretOffset = caret.getOffset();
     if ((myToLineStart && (caretOffset == 0)) || (!myToLineStart && (caretOffset >= doc.getTextLength()))) {
       return;
     }
@@ -77,10 +81,10 @@ class CutLineActionHandler extends EditorWriteActionHandler {
       }
     }
 
-    delete(editor, start, end);
+    delete(editor, caret, start, end);
   }
 
-  private void delete(@NotNull Editor editor, int start, int end) {
+  private void delete(@NotNull Editor editor, @NotNull Caret caret, int start, int end) {
     if (myCopyToClipboard) {
       KillRingUtil.copyToKillRing(editor, start, end, true);
     }
@@ -89,7 +93,7 @@ class CutLineActionHandler extends EditorWriteActionHandler {
     }
     editor.getDocument().deleteString(start, end);
 
-    // in case the caret was in the version space, we force it to go back to the real offset
-    editor.getCaretModel().moveToOffset(start);
+    // in case the caret was in the virtual space, we force it to go back to the real offset
+    caret.moveToOffset(start);
   }
 }
