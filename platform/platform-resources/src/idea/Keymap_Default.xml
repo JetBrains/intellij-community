@@ -413,6 +413,9 @@
   <action id="CompareDirs">
     <keyboard-shortcut first-keystroke="control D"/>
   </action>
+  <action id="SendEOF">
+    <keyboard-shortcut first-keystroke="control D"/>
+  </action>
   <action id="EditorToggleCase">
     <keyboard-shortcut first-keystroke="control shift U"/>
   </action>
