@@ -81,6 +81,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private static final int FREE_PAINTERS_AREA_WIDTH = 5;
   private static final int GAP_BETWEEN_ICONS = 3;
   private static final TooltipGroup GUTTER_TOOLTIP_GROUP = new TooltipGroup("GUTTER_TOOLTIP_GROUP", 0);
+  private static final Color COLOR_F0F0 = new Color(0xF0F0F0);
 
   private final EditorImpl myEditor;
   private final FoldingAnchorsOverlayStrategy myAnchorsDisplayStrategy;
@@ -108,14 +109,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       installDnD();
     }
     setOpaque(true);
-    if (isDistractionFreeMode()) {
-      editor.getComponent().addComponentListener(new ComponentAdapter(){
-        @Override
-        public void componentResized(ComponentEvent event) {
-          updateSize();
-        }
-      });
-    }
     myAnchorsDisplayStrategy = new FoldingAnchorsOverlayStrategy(editor);
   }
 
@@ -164,14 +157,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
     int w = getLineNumberAreaWidth() + getLineMarkerAreaWidth() + getFoldingAreaWidth() + getAnnotationsAreaWidth();
 
-    if (w > 0 && UISettings.getInstance().PRESENTATION_MODE) {
-      final Dimension dimension = new Dimension(myEditor.getFontMetrics(Font.PLAIN).getHeight(), myEditor.getPreferredHeight());
-      if (isLineMarkersShown()) {
-        dimension.width += getLineNumberAreaWidth() + getLineMarkerAreaWidth();
-      }
-      return dimension;
-    }
-
     myLastPreferredHeight = myEditor.getPreferredHeight();
     return new Dimension(w, myLastPreferredHeight);
   }
@@ -196,24 +181,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Override
   public void paint(Graphics g) {
-    if (UISettings.getInstance().PRESENTATION_MODE) {
-      g.setColor(myEditor.getColorsScheme().getDefaultBackground());
-      final Rectangle clip = g.getClipBounds();
-
-      if (clip.height >= 0) {
-        g.fillRect(clip.x, clip.y, clip.width, clip.height);
-      }
-
-      paintCaretRowBackground(g, clip.x, clip.width);
-
-      if (isLineNumbersShown()) {
-        UISettings.setupAntialiasing(g);
-        paintLineNumbers(g, clip);
-      }
-
-      return;
-    }
-
     ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
     try {
       Rectangle clip = g.getClipBounds();
@@ -398,13 +365,17 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       EditorColorsScheme colorsScheme = myEditor.getColorsScheme();
       boolean distractionMode = isDistractionFreeMode();
       Color color = distractionMode ? colorsScheme.getDefaultBackground() : colorsScheme.getColor(EditorColors.GUTTER_BACKGROUND);
-      myBackgroundColor = color == null ? new Color(0xF0F0F0) : color;
+      myBackgroundColor = color == null ? COLOR_F0F0 : color;
     }
     return myBackgroundColor;
   }
 
-  private static boolean isDistractionFreeMode() {
-    return Registry.is("editor.distraction.free.mode");
+  private boolean isDistractionFreeMode() {
+    return Registry.is("editor.distraction.free.mode") && EditorUtil.isRealFileEditor(myEditor);
+  }
+
+  private boolean isPresentationMode() {
+    return UISettings.getInstance().PRESENTATION_MODE && EditorUtil.isRealFileEditor(myEditor);
   }
 
   private void doPaintLineNumbers(Graphics g, Rectangle clip) {
@@ -797,7 +768,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   public Color getOutlineColor(boolean isActive) {
     ColorKey key = isActive ? EditorColors.SELECTED_TEARLINE_COLOR : EditorColors.TEARLINE_COLOR;
     Color color = myEditor.getColorsScheme().getColor(key);
-    return color != null ? color : Color.black;
+    return color != null ? color : JBColor.black;
   }
 
   @Override
@@ -1002,7 +973,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @Override
   public boolean isFoldingOutlineShown() {
     return myEditor.getSettings().isFoldingOutlineShown() &&
-           myEditor.getFoldingModel().isFoldingEnabled();
+           myEditor.getFoldingModel().isFoldingEnabled() &&
+           !isPresentationMode();
   }
 
   public int getLineNumberAreaWidth() {

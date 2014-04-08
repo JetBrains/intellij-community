@@ -929,6 +929,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPanel.addComponentListener(new ComponentAdapter() {
       @Override
       public void componentResized(ComponentEvent e) {
+        myGutterComponent.updateSize();
         myMarkupModel.recalcEditorDimensions();
         myMarkupModel.repaint(-1, -1);
       }
