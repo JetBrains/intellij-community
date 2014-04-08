@@ -25,7 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.ui.*;
 import com.intellij.util.*;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.*;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -53,6 +53,7 @@ import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
@@ -68,6 +69,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.*;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -2872,4 +2874,30 @@ public class UIUtil {
     }).start();
   }
 
+  private static Map<String, String> ourRealFontFamilies = null;
+
+  public static String getRealFontFamily(String genericFontFamily) {
+    if (ourRealFontFamilies != null && ourRealFontFamilies.get(genericFontFamily) != null) {
+      return ourRealFontFamilies.get(genericFontFamily);
+    }
+    String pattern = "Real Font Family";
+    List<String> GENERIC = Arrays.asList(Font.DIALOG, Font.DIALOG_INPUT, Font.MONOSPACED, Font.SANS_SERIF, Font.SERIF);
+    int patternSize = 50;
+    BufferedImage image = createImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+    Graphics graphics = image.getGraphics();
+    graphics.setFont(new Font(genericFontFamily, Font.PLAIN, patternSize));
+    Rectangle2D patternBounds = graphics.getFontMetrics().getStringBounds(pattern, graphics);
+    for (String family: GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames()) {
+      if (GENERIC.contains(family)) continue;
+      graphics.setFont(new Font(family, Font.PLAIN, patternSize));
+      if (graphics.getFontMetrics().getStringBounds(pattern, graphics).equals(patternBounds)) {
+        if (ourRealFontFamilies == null) {
+          ourRealFontFamilies = new HashMap<String, String>();
+        }
+        ourRealFontFamilies.put(genericFontFamily, family);
+        return family;
+      }
+    }
+    return genericFontFamily;
+  }
 }
