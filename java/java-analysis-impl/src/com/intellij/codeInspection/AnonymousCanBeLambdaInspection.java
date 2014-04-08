@@ -161,10 +161,14 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
 
         final PsiStatement[] statements = body.getStatements();
         PsiElement copy = body.copy();
-        if (statements.length == 1 && statements[0] instanceof PsiReturnStatement) {
-          PsiExpression value = ((PsiReturnStatement)statements[0]).getReturnValue();
-          if (value != null) {
-            copy = value.copy();
+        if (statements.length == 1) {
+          if (statements[0] instanceof PsiReturnStatement) {
+            PsiExpression value = ((PsiReturnStatement)statements[0]).getReturnValue();
+            if (value != null) {
+              copy = value.copy();
+            }
+          } else if (statements[0] instanceof PsiExpressionStatement) {
+            copy = ((PsiExpressionStatement)statements[0]).getExpression().copy();
           }
         }
 

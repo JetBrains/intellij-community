@@ -4,10 +4,7 @@ class HelloLambda {
 
   HelloLambda() {
     x = 1;
-    Runnable r = () -> {
-      System.out.println(x);
-
-    };
+    Runnable r = () -> System.out.println(x);
 
   }
 
