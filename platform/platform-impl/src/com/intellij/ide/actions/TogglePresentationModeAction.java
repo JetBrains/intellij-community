@@ -28,6 +28,8 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.DesktopLayout;
@@ -46,6 +48,7 @@ import java.util.Map;
  */
 public class TogglePresentationModeAction extends AnAction implements DumbAware {
   private static final Map<Object, Object> ourSavedValues = ContainerUtil.newLinkedHashMap();
+  private static boolean ourSavedDistractionMode;
 
   @Override
   public void update(AnActionEvent e) {
@@ -70,6 +73,14 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
   public static void setPresentationMode(final Project project, final boolean inPresentation) {
     final UISettings settings = UISettings.getInstance();
     settings.PRESENTATION_MODE = inPresentation;
+    RegistryValue value = Registry.get("editor.distraction.free.mode");
+    if (inPresentation) {
+      ourSavedDistractionMode = value.asBoolean();
+      value.setValue(true);
+    }
+    else {
+      value.setValue(ourSavedDistractionMode);
+    }
 
     final boolean layoutStored = storeToolWindows(project);
 
