@@ -36,8 +36,8 @@ import java.util.Collection;
 public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFunctionalExpression, FunctionalExpressionSearch.SearchParameters> {
 
   @Override
-  public boolean execute(@NotNull FunctionalExpressionSearch.SearchParameters queryParameters,
-                         @NotNull Processor<PsiFunctionalExpression> consumer) {
+  public boolean execute(final @NotNull FunctionalExpressionSearch.SearchParameters queryParameters,
+                         final @NotNull Processor<PsiFunctionalExpression> consumer) {
     final PsiClass aClass = queryParameters.getElementToSearch();
     if (!ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
