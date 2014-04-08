@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
@@ -103,6 +104,10 @@ public class PullUpConflictsUtil {
             abstrMethods.add(method);
           }
         }
+      }
+      final PsiFunctionalExpression functionalExpression = FunctionalExpressionSearch.search(superClass).findFirst();
+      if (functionalExpression != null) {
+        conflicts.putValue(functionalExpression, RefactoringBundle.message("functional.interface.broken"));
       }
     }
     RefactoringConflictsUtil.analyzeAccessibilityConflicts(movedMembers, superClass, conflicts, VisibilityUtil.ESCALATE_VISIBILITY, targetRepresentativeElement, abstrMethods);
