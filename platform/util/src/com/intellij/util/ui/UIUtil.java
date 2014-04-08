@@ -2911,6 +2911,8 @@ public class UIUtil {
 
   private static Map<String, String> ourRealFontFamilies = null;
 
+  //Experimental, seems to be reliable under MacOS X only
+
   public static String getRealFontFamily(String genericFontFamily) {
     if (ourRealFontFamilies != null && ourRealFontFamilies.get(genericFontFamily) != null) {
       return ourRealFontFamilies.get(genericFontFamily);
