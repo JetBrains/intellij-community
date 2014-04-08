@@ -6,8 +6,6 @@ class Test {
   }
 
   InOut bind() {
-    return () -> {
-      InOut.foo();
-    };
+    return () -> InOut.foo();
   }
 }

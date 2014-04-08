@@ -7,9 +7,7 @@ class Test {
 
   interface InOutEx extends InOut {
     InOut bind() {
-      return () -> {
-        foo();
-      };
+      return () -> foo();
     }
   }
 }
