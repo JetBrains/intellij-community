@@ -208,7 +208,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @param expectedFile              path to file to check against, relative to the testdata path.
    * @param ignoreTrailingWhitespaces whether trailing whitespaces should be ignored by the comparison.
    */
-  void checkResultByFile(@TestDataFile @NonNls String filePath,
+  void checkResultByFile(@NonNls String filePath,
                          @TestDataFile @NonNls String expectedFile,
                          boolean ignoreTrailingWhitespaces);
 
