@@ -44,6 +44,7 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.indexing.FileBasedIndexProjectHandler;
 import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.messages.MessageBusConnection;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +69,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
   protected final List<CacheUpdater> myRootsChangeUpdaters = new ArrayList<CacheUpdater>();
   protected final List<CacheUpdater> myRefreshCacheUpdaters = new ArrayList<CacheUpdater>();
 
-  private Set<LocalFileSystem.WatchRequest> myRootsToWatch = new HashSet<LocalFileSystem.WatchRequest>();
+  private Set<LocalFileSystem.WatchRequest> myRootsToWatch = new THashSet<LocalFileSystem.WatchRequest>();
   private final boolean myDoLogCachesUpdate;
 
   public ProjectRootManagerComponent(Project project,

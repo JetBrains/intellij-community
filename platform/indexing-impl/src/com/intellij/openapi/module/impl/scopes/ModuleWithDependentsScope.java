@@ -26,7 +26,6 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -48,7 +47,7 @@ public class ModuleWithDependentsScope extends GlobalSearchScope {
     myProjectFileIndex = ProjectRootManager.getInstance(myModule.getProject()).getFileIndex();
     myProjectScope = ProjectScope.getProjectScope(myModule.getProject());
 
-    myModules = new HashSet<Module>();
+    myModules = new THashSet<Module>();
     myModules.add(myModule);
 
     fillModules();

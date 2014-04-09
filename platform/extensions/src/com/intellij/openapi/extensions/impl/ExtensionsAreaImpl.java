@@ -18,6 +18,7 @@ package com.intellij.openapi.extensions.impl;
 import com.intellij.openapi.extensions.*;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.MultiMap;
+import gnu.trove.THashMap;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jdom.Namespace;
@@ -39,7 +40,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   private final LogProvider myLogger;
   public static final String ATTRIBUTE_AREA = "area";
 
-  private static final Map<String,String> ourDefaultEPs = new HashMap<String, String>();
+  private static final Map<String,String> ourDefaultEPs = new THashMap<String, String>();
 
   static {
     ourDefaultEPs.put(EPAvailabilityListenerExtension.EXTENSION_POINT_NAME, EPAvailabilityListenerExtension.class.getName());
@@ -50,14 +51,14 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   private final AreaPicoContainerImpl myPicoContainer;
   private final Throwable myCreationTrace;
   private final Map<String,ExtensionPointImpl> myExtensionPoints = new ConcurrentHashMap<String, ExtensionPointImpl>();
-  private final Map<String,Throwable> myEPTraces = DEBUG_REGISTRATION ? new HashMap<String, Throwable>():null;
+  private final Map<String,Throwable> myEPTraces = DEBUG_REGISTRATION ? new THashMap<String, Throwable>():null;
   private final MultiMap<String, ExtensionPointAvailabilityListener> myAvailabilityListeners = new MultiMap<String, ExtensionPointAvailabilityListener>();
   private final List<Runnable> mySuspendedListenerActions = new ArrayList<Runnable>();
   private boolean myAvailabilityNotificationsActive = true;
 
   private final AreaInstance myAreaInstance;
   private final String myAreaClass;
-  private final Map<Element,ExtensionComponentAdapter> myExtensionElement2extension = new HashMap<Element, ExtensionComponentAdapter>();
+  private final Map<Element,ExtensionComponentAdapter> myExtensionElement2extension = new THashMap<Element, ExtensionComponentAdapter>();
 
   public ExtensionsAreaImpl(String areaClass, AreaInstance areaInstance, PicoContainer parentPicoContainer, @NotNull LogProvider logger) {
     myCreationTrace = DEBUG_REGISTRATION ? new Throwable("Area creation trace") : null;

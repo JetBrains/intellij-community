@@ -179,7 +179,6 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
           else if (buttonModel == patternTest.getModel()) {
             model.setType(TestType.PATTERN);
           }
-          redisplay();
         }
       }
     });
@@ -224,7 +223,11 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
   }
 
   private void evaluateModuleClassPath() {
-    moduleClasspath.setEnabled(!packagesInProject.isSelected());
+    final boolean allPackagesInProject = packagesInProject.isSelected() && packagePanel.isVisible();
+    moduleClasspath.setEnabled(!allPackagesInProject);
+    if (allPackagesInProject) {
+      moduleClasspath.getComponent().setSelectedItem(null);
+    }
   }
 
   private void redisplay() {
@@ -304,6 +307,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     else {
       packagesInProject.setSelected(true);
     }
+    evaluateModuleClassPath();
     alternateJDK.init(config.ALTERNATIVE_JRE_PATH, config.ALTERNATIVE_JRE_PATH_ENABLED);
     propertiesList.clear();
     propertiesList.addAll(data.TEST_PROPERTIES.entrySet());
@@ -509,12 +513,6 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
 
   public void onTypeChanged(TestType type) {
     //LOGGER.info("onTypeChanged with " + type);
-    if (type != TestType.PACKAGE && type != TestType.SUITE) {
-      moduleClasspath.setEnabled(true);
-    }
-    else {
-      evaluateModuleClassPath();
-    }
     if (type == TestType.PACKAGE) {
       packageTest.setSelected(true);
       packageField.setEnabled(true);
@@ -569,6 +567,8 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
       methodField.setEnabled(false);
       groupField.setEnabled(false);
     }
+    redisplay();
+    evaluateModuleClassPath();
   }
 
   private class AddActionButtonRunnable implements AnActionButtonRunnable {
