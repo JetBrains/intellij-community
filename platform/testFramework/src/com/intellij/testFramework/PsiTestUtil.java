@@ -39,13 +39,13 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
+import org.junit.Assert;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -350,7 +350,7 @@ public class PsiTestUtil {
   public static Module addModule(final Project project, final ModuleType type, final String name, final VirtualFile root) {
     return new WriteCommandAction<Module>(project) {
       @Override
-      protected void run(Result<Module> result) throws Throwable {
+      protected void run(@NotNull Result<Module> result) throws Throwable {
         String moduleName;
         ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
         try {
