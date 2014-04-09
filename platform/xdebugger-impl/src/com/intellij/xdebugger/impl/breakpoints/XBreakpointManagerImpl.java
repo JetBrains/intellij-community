@@ -458,7 +458,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
 
   public Set<String> getAllGroups() {
     HashSet<String> res = new HashSet<String>();
-    for (XBreakpointBase breakpoint : myBreakpoints.values()) {
+    for (XBreakpointBase breakpoint : myAllBreakpoints) {
       String group = breakpoint.getGroup();
       if (group != null) {
         res.add(group);
