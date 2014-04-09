@@ -120,5 +120,5 @@ public abstract class AbstractPrintElementsManager implements PrintElementsManag
     return 0; // todo
   }
 
-  public abstract Set<Integer> getSelectedNodes(@NotNull GraphElement graphElement);
+  protected abstract Set<Integer> getSelectedNodes(@NotNull GraphElement graphElement);
 }
