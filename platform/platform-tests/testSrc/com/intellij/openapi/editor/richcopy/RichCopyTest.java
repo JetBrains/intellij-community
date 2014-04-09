@@ -28,6 +28,8 @@ import java.io.InputStream;
 import java.io.Reader;
 
 public class RichCopyTest extends LightPlatformCodeInsightFixtureTestCase {
+  private static final String PLATFORM_SPECIFIC_PLACEHOLDER = "___PLATFORM_SPECIFIC___";
+
   public void testNormalSelection() throws Exception {
     doTest(false);
   }
@@ -48,12 +50,32 @@ public class RichCopyTest extends LightPlatformCodeInsightFixtureTestCase {
     assertTrue(contents.isDataFlavorSupported(HtmlCopyPasteProcessor.FLAVOR));
     String expectedHtml = getFileContents(getTestName(false) + ".html");
     String actualHtml = readFully((Reader)contents.getTransferData(HtmlCopyPasteProcessor.FLAVOR));
-    assertEquals("HTML contents differs", expectedHtml, actualHtml);
+    assertTrue("HTML contents differs", matches(expectedHtml, actualHtml));
 
     assertTrue(contents.isDataFlavorSupported(RtfCopyPasteProcessor.FLAVOR));
     String expectedRtf = getFileContents(getTestName(false) + ".rtf");
     String actualRtf = readFully((InputStream)contents.getTransferData(RtfCopyPasteProcessor.FLAVOR));
-    assertEquals("RTF contents differs", expectedRtf, actualRtf);
+    assertTrue("RTF contents differs", matches(expectedRtf, actualRtf));
+  }
+
+  // matches 'actual' with 'expected' treating PLATFORM_SPECIFIC_PLACEHOLDER in 'expected' as .* in regexp
+  private static boolean matches(String expected, String actual) {
+    int posInExpected = 0;
+    int posInActual = 0;
+    while (posInExpected < expected.length()) {
+      int placeholderPos = expected.indexOf(PLATFORM_SPECIFIC_PLACEHOLDER, posInExpected);
+      if (placeholderPos < 0) {
+        return posInExpected == 0 ? actual.equals(expected) : actual.substring(posInActual).endsWith(expected.substring(posInExpected));
+      }
+      String fixedSubstring = expected.substring(posInExpected, placeholderPos);
+      int matchedPosInActual = actual.indexOf(fixedSubstring, posInActual);
+      if (matchedPosInActual < 0 || posInExpected == 0 && matchedPosInActual > 0) {
+        return false;
+      }
+      posInExpected = placeholderPos + PLATFORM_SPECIFIC_PLACEHOLDER.length();
+      posInActual = matchedPosInActual + fixedSubstring.length();
+    }
+    return true;
   }
 
   private static String readFully(InputStream inputStream) throws IOException {
