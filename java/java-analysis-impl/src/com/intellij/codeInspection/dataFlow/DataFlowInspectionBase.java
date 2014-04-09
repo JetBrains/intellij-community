@@ -291,7 +291,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   private static void reportConstantReferenceValues(ProblemsHolder holder, StandardInstructionVisitor visitor, Set<PsiElement> reportedAnchors) {
     for (Pair<PsiReferenceExpression, DfaConstValue> pair : visitor.getConstantReferenceValues()) {
       PsiReferenceExpression ref = pair.first;
-      if (!reportedAnchors.add(ref)) {
+      if (ref.getParent() instanceof PsiReferenceExpression || !reportedAnchors.add(ref)) {
         continue;
       }
 
