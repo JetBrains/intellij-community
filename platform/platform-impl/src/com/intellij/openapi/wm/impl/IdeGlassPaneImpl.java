@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.util.ui.UIUtil;
@@ -40,7 +41,20 @@ import java.util.*;
 
 public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEventQueue.EventDispatcher, Painter.Listener {
 
-  private final Set<EventListener> myMouseListeners = new LinkedHashSet<EventListener>();
+  private final Set<EventListener> myMouseListeners = new TreeSet<EventListener>(new Comparator<EventListener>() {
+    @Override
+    public int compare(EventListener o1, EventListener o2) {
+      double weight1 = 0;
+      double weight2 = 0;
+      if (o1 instanceof Weighted) {
+        weight1 = ((Weighted)o1).getWeight();
+      }
+      if (o2 instanceof Weighted) {
+        weight2 = ((Weighted)o2).getWeight();
+      }
+      return weight1 > weight2 ? 1 : weight1 < weight2 ? -1 : 0;
+    }
+  });
   private final JRootPane myRootPane;
 
   private final Set<Painter> myPainters = new LinkedHashSet<Painter>();
