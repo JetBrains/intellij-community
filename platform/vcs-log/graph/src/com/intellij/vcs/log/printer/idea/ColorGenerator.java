@@ -13,28 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.newgraph.render;
-
-import com.intellij.vcs.log.newgraph.gpaph.GraphElement;
-import com.intellij.vcs.log.newgraph.render.cell.GraphCell;
-import com.intellij.vcs.log.newgraph.render.cell.SpecialRowElement;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.vcs.log.printer.idea;
 
 import java.awt.*;
 
 /**
  * @author erokhins
  */
-public interface GraphCellPainter {
-
-  void draw(@NotNull Graphics2D g2, @NotNull GraphCell graphCell);
-
-  @Nullable
-  GraphElement mouseOver(@NotNull GraphCell graphCell, int x, int y);
-
-  @Nullable
-  SpecialRowElement mouseOverArrow(@NotNull GraphCell graphCell, int x, int y);
-
+public interface ColorGenerator {
+  Color getColor(int colorId);
 }
-

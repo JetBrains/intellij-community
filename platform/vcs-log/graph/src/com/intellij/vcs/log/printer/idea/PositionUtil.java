@@ -13,15 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.newgraph.render;
+package com.intellij.vcs.log.printer.idea;
 
-import com.intellij.vcs.log.newgraph.gpaph.GraphElement;
-import com.intellij.vcs.log.newgraph.gpaph.Node;
-import com.intellij.vcs.log.newgraph.render.cell.GraphCell;
-import com.intellij.vcs.log.newgraph.render.cell.ShortEdge;
-import com.intellij.vcs.log.newgraph.render.cell.SpecialRowElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -32,21 +26,21 @@ public class PositionUtil {
     return (float)Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
   }
 
-  public static boolean overUpEdge(ShortEdge edge, int x, int y) {
+  public static boolean overUpEdge(int upPosition, int downPosition, int x, int y) {
     float thick = THICK_LINE;
-    int x1 = WIDTH_NODE * edge.getDownPosition() + WIDTH_NODE / 2;
+    int x1 = WIDTH_NODE * downPosition + WIDTH_NODE / 2;
     int y1 = HEIGHT_CELL / 2;
-    int x2 = WIDTH_NODE * edge.getUpPosition() + WIDTH_NODE / 2;
+    int x2 = WIDTH_NODE * upPosition + WIDTH_NODE / 2;
     int y2 = -HEIGHT_CELL / 2;
     //return true;
     return (distance(x1, y1, x, y) + distance(x2, y2, x, y) < distance(x1, y1, x2, y2) + thick);
   }
 
-  public static boolean overDownEdge(ShortEdge edge, int x, int y) {
+  public static boolean overDownEdge(int upPosition, int downPosition, int x, int y) {
     float thick = THICK_LINE;
-    int x1 = WIDTH_NODE * edge.getUpPosition() + WIDTH_NODE / 2;
+    int x1 = WIDTH_NODE * upPosition + WIDTH_NODE / 2;
     int y1 = HEIGHT_CELL / 2;
-    int x2 = WIDTH_NODE * edge.getDownPosition() + WIDTH_NODE / 2;
+    int x2 = WIDTH_NODE * downPosition + WIDTH_NODE / 2;
     int y2 = HEIGHT_CELL + HEIGHT_CELL / 2;
     return distance(x1, y1, x, y) + distance(x2, y2, x, y) < distance(x1, y1, x2, y2) + thick;
   }
@@ -66,17 +60,4 @@ public class PositionUtil {
     return point.y / HEIGHT_CELL;
   }
 
-  @Nullable
-  public static Node getNode(@Nullable GraphCell cell) {
-    if (cell == null) {
-      return null;
-    }
-    for (SpecialRowElement element : cell.getSpecialRowElements()) {
-      GraphElement graphElement = element.getElement();
-      if (graphElement instanceof Node) {
-        return (Node) graphElement;
-      }
-    }
-    return null;
-  }
 }
