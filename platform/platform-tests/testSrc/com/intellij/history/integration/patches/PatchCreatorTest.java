@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ public class PatchCreatorTest extends PatchingTestCase {
 
   public void testRename() throws Exception {
     VirtualFile f = myRoot.createChildData(null, "f.txt");
-    f.setBinaryContent(new byte[]{1});
+    f.setBinaryContent(new byte[]{'x'});
 
     f.rename(null, "ff.txt");
 
@@ -63,7 +63,7 @@ public class PatchCreatorTest extends PatchingTestCase {
     VirtualFile patched = myRoot.findChild("ff.txt");
     assertNull(myRoot.findChild("f.txt"));
     assertNotNull(patched);
-    assertEquals(1, patched.contentsToByteArray()[0]);
+    assertEquals('x', patched.contentsToByteArray()[0]);
   }
 
   public void testReversePatch() throws Exception {

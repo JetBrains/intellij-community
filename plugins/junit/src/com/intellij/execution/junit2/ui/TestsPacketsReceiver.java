@@ -202,7 +202,7 @@ public class TestsPacketsReceiver implements OutputPacketProcessor, Disposable {
     final JUnitRunningModel model = getModel();
     if (model != null) {
       model.getNotifier().fireRunnerStateChanged(new CompletionEvent(true, reader.readInt()));
-      TestStatusListener.notifySuiteFinished(model.getRoot());
+      TestStatusListener.notifySuiteFinished(model.getRoot(), model.getProject());
       terminateStillRunning(model);
     }
   }

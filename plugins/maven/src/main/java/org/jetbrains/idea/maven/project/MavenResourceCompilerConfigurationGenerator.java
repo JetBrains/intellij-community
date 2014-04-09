@@ -116,8 +116,8 @@ public class MavenResourceCompilerConfigurationGenerator {
           resourceConfig.modelMap.put(key, value);
         }
       }
-      addResources(resourceConfig.resources, mavenProject.getResources());
-      addResources(resourceConfig.testResources, mavenProject.getTestResources());
+      addResources(resourceConfig.resources, mavenProject.getResources(), mavenProject);
+      addResources(resourceConfig.testResources, mavenProject.getTestResources(), mavenProject);
 
       addWebResources(module, projectConfig, mavenProject);
       addEjbClientArtifactConfiguration(module, projectConfig, mavenProject);
@@ -205,7 +205,12 @@ public class MavenResourceCompilerConfigurationGenerator {
     return properties;
   }
 
-  private static void addResources(final List<ResourceRootConfiguration> container, Collection<MavenResource> resources) {
+  private static void addResources(final List<ResourceRootConfiguration> container,
+                                   @NotNull Collection<MavenResource> resources,
+                                   @NotNull MavenProject mavenProject) {
+    Element resourceCfg = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
+    final String resourcePluginOutputDirectory = resourceCfg != null ? resourceCfg.getChildTextTrim("outputDirectory") : null;
+
     for (MavenResource resource : resources) {
       final String dir = resource.getDirectory();
       if (dir == null) {
@@ -215,7 +220,7 @@ public class MavenResourceCompilerConfigurationGenerator {
       final ResourceRootConfiguration props = new ResourceRootConfiguration();
       props.directory = FileUtil.toSystemIndependentName(dir);
 
-      final String target = resource.getTargetPath();
+      final String target = resource.getTargetPath() != null ? resource.getTargetPath() : resourcePluginOutputDirectory;
       props.targetPath = target != null ? FileUtil.toSystemIndependentName(target) : null;
 
       props.isFiltered = resource.isFiltered();

@@ -50,8 +50,8 @@ public abstract class AbstractModelBuilderTest {
 
   public static final String GRADLE_v1_9 = "1.9";
   public static final String GRADLE_v1_10 = "1.10";
-  public static final String GRADLE_v1_11 = "1.11-rc-1";
-  public static final String GRADLE_v1_12 = "1.12-20140210235036+0000";
+  public static final String GRADLE_v1_11 = "1.11";
+  public static final String GRADLE_v1_12 = "1.12-20140327133732+0000";
 
   public static final Pattern TEST_METHOD_NAME_PATTERN;
 

@@ -33,6 +33,7 @@ import org.jetbrains.plugins.gradle.tooling.internal.Scopes;
 import java.io.File;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -96,7 +97,7 @@ public class ModelDependenciesBuilderImplHelper {
     final String group = project.hasProperty(GROUP_PROPERTY) ? str(project.property(GROUP_PROPERTY)) : "";
 
     InternalDependencyVersionId versionId =
-      new InternalDependencyVersionId(dependency, project.getName(), null, group, version, null);
+      new InternalDependencyVersionId(dependency, project.getPath(), project.getName(), null, group, version, null);
     Scopes scopes = map.get(versionId);
     if (scopes == null) {
       map.put(versionId, new Scopes(scope));
@@ -134,7 +135,7 @@ public class ModelDependenciesBuilderImplHelper {
     }
 
     InternalDependencyVersionId versionId =
-      new InternalDependencyVersionId(dependency, dependencyId.getName(), dependencyFileName, dependencyId.getGroup(), dependencyId.getVersion(),
+      new InternalDependencyVersionId(dependency, dependencyId.getName(), dependencyId.getName(), dependencyFileName, dependencyId.getGroup(), dependencyId.getVersion(),
                                       classifier);
     Scopes scopes = map.get(versionId);
     if (scopes == null) {
@@ -162,7 +163,7 @@ public class ModelDependenciesBuilderImplHelper {
 
     String path = dependency.getFile().getPath();
     InternalDependencyVersionId versionId =
-      new InternalDependencyVersionId(dependency, path,  dependency.getFile().getName(), "", "", null);
+      new InternalDependencyVersionId(dependency, path, path, dependency.getFile().getName(), "", "", null);
     Scopes scopes = map.get(versionId);
     if (scopes == null) {
       map.put(versionId, new Scopes(scope));
@@ -189,7 +190,7 @@ public class ModelDependenciesBuilderImplHelper {
 
       for (Configuration plus : plusConfigurations) {
         if (plus.getName().equals(configurationName)) {
-          return GradleDependencyScope.fromIdeaMappingName(entry.getKey().toLowerCase());
+          return GradleDependencyScope.fromIdeaMappingName(entry.getKey().toLowerCase(Locale.ENGLISH));
         }
       }
     }

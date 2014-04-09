@@ -26,12 +26,13 @@ public class InternalDependencyVersionId extends DependencyVersionId {
   private final IdeDependenciesExtractor.IdeDependency myIdeDependency;
 
   public InternalDependencyVersionId(IdeDependenciesExtractor.IdeDependency dependency,
+                                     String id,
                                      String name,
                                      String artifactName,
                                      String group,
                                      String version,
                                      String classifier) {
-    super(name, artifactName, group, version, classifier);
+    super(id, name, artifactName, group, version, classifier);
     myIdeDependency = dependency;
   }
 

@@ -229,8 +229,28 @@ public class FileTypesTest extends PlatformTestCase {
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
 
     assertEquals(PlainTextFileType.INSTANCE, vFile.getFileType());
+  }
 
-    //FileBasedIndex.getInstance().ensureUpToDate(IdIndex.NAME, myProject, GlobalSearchScope.allScope(myProject));
-    //assertEquals(PlainTextFileType.INSTANCE, vFile.getFileType()); // type autodetected during indexing
+  public void test7BitBinaryIsNotText() throws IOException {
+    File d = createTempDirectory();
+    File f = new File(d, "xx.asfdasdfas");
+    byte[] bytes = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'x', 'a', 'b'};
+    assertEquals(new CharsetToolkit(bytes).guessFromContent(bytes.length), CharsetToolkit.GuessedEncoding.BINARY);
+    FileUtil.writeToFile(f, bytes);
+
+    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
+
+    assertEquals(UnknownFileType.INSTANCE, vFile.getFileType());
+  }
+
+  public void test7BitIsText() throws IOException {
+    File d = createTempDirectory();
+    File f = new File(d, "xx.asfdasdfas");
+    byte[] bytes = {9, 10, 13, 'x', 'a', 'b'};
+    assertEquals(new CharsetToolkit(bytes).guessFromContent(bytes.length), CharsetToolkit.GuessedEncoding.SEVEN_BIT);
+    FileUtil.writeToFile(f, bytes);
+    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
+
+    assertEquals(PlainTextFileType.INSTANCE, vFile.getFileType());
   }
 }

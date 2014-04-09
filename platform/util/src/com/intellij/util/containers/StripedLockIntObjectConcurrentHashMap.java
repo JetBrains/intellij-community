@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -488,7 +488,7 @@ public class StripedLockIntObjectConcurrentHashMap<V> implements ConcurrentIntOb
     lock();
     try {
       IntHashEntry<V> e = getFirst(key);
-      while (e != null && !(key == e.key)) {
+      while (e != null && key != e.key) {
         e = e.next;
       }
 
@@ -613,7 +613,7 @@ public class StripedLockIntObjectConcurrentHashMap<V> implements ConcurrentIntOb
       int index = key & tab.length - 1;
       IntHashEntry<V> first = tab[index];
       IntHashEntry<V> e = first;
-      while (e != null && !(key == e.key)) {
+      while (e != null && key != e.key) {
         e = e.next;
       }
 
