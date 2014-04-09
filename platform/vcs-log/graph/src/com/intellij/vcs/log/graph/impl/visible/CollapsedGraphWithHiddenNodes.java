@@ -27,7 +27,7 @@ import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.ListenerController;
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
 import com.intellij.vcs.log.graph.utils.impl.SetListenerController;
-import com.intellij.vcs.log.newgraph.utils.DfsUtil;
+import com.intellij.vcs.log.graph.utils.DfsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;

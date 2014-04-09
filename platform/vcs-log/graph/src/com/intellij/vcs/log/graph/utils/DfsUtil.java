@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.vcs.log.newgraph.utils;
+package com.intellij.vcs.log.graph.utils;
 
 import com.intellij.util.containers.IntStack;
 import org.jetbrains.annotations.NotNull;

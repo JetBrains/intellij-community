@@ -22,7 +22,7 @@ import com.intellij.vcs.log.graph.api.PrintedLinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.impl.visible.FragmentGenerator;
 import com.intellij.vcs.log.graph.utils.Flags;
-import com.intellij.vcs.log.newgraph.utils.DfsUtil;
+import com.intellij.vcs.log.graph.utils.DfsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;

@@ -21,7 +21,7 @@ import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.newgraph.SomeGraph;
-import com.intellij.vcs.log.newgraph.utils.DfsUtil;
+import com.intellij.vcs.log.graph.utils.DfsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
