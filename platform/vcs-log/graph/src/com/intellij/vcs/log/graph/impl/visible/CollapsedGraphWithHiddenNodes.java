@@ -23,18 +23,16 @@ import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.LinearGraphWithHiddenNodes;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
+import com.intellij.vcs.log.graph.utils.DfsUtil;
 import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.ListenerController;
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
 import com.intellij.vcs.log.graph.utils.impl.SetListenerController;
-import com.intellij.vcs.log.graph.utils.DfsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import static com.intellij.vcs.log.newgraph.utils.MyUtils.setAllValues;
 
 public class CollapsedGraphWithHiddenNodes implements LinearGraphWithHiddenNodes {
   @NotNull
@@ -134,7 +132,7 @@ public class CollapsedGraphWithHiddenNodes implements LinearGraphWithHiddenNodes
   public void expandAll() {
     upToEdge.clear();
     downToEdge.clear();
-    setAllValues(myVisibleNodes, true);
+    myVisibleNodes.setAll(true);
     callListeners(0, myDelegateGraph.nodesCount() - 1);
   }
 

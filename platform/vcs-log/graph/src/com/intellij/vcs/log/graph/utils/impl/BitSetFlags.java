@@ -59,7 +59,7 @@ public class BitSetFlags implements Flags {
     myBitSet.set(index, value);
   }
 
-  //@Override TODO
+  @Override
   public void setAll(boolean value) {
     myBitSet.set(0, mySize, value);
   }

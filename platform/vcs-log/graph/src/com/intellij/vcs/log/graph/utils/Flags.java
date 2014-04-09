@@ -22,4 +22,5 @@ public interface Flags {
   int size();
   boolean get(int index);
   void set(int index, boolean value);
+  void setAll(boolean value);
 }
