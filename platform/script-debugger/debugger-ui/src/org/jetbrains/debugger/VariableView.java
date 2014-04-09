@@ -418,10 +418,13 @@ public final class VariableView extends XNamedValue implements VariableContext {
     if (fun != null) {
       fun.doWhenDone(new Consumer<FunctionValue>() {
         @Override
-        public void consume(FunctionValue function) {
-          DebuggerViewSupport debugProcess = getDebugProcess();
-          Script script = debugProcess.getVm().getScriptManager().getScript(function);
-          navigatable.setSourcePosition(script == null ? null : debugProcess.getSourceInfo(null, script, function.getOpenParenLine(), function.getOpenParenColumn()));
+        public void consume(final FunctionValue function) {
+          getDebugProcess().getVm().getScriptManager().getOrLoadScript(function).doWhenDone(new Consumer<Script>() {
+            @Override
+            public void consume(Script script) {
+              navigatable.setSourcePosition(script == null ? null : getDebugProcess().getSourceInfo(null, script, function.getOpenParenLine(), function.getOpenParenColumn()));
+            }
+          });
         }
       });
     }
