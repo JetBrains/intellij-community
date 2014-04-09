@@ -39,7 +39,7 @@ public class JiraSoapApi extends JiraRemoteApi {
 
   @NotNull
   @Override
-  public List<Task> findTasks(String query, int max) throws Exception {
+  public List<Task> findTasks(@NotNull String query, int max) throws Exception {
 
     // Unfortunately, both SOAP and XML-RPC interfaces of JIRA don't allow fetching *all* tasks from server, but
     // only filtered by some search term (see http://stackoverflow.com/questions/764282/how-can-jira-soap-api-not-have-this-method).
@@ -85,7 +85,7 @@ public class JiraSoapApi extends JiraRemoteApi {
 
   @Nullable
   @Override
-  public Task findTask(String key) throws Exception {
+  public Task findTask(@NotNull String key) throws Exception {
     try {
       List<Task> tasks = processRSS(new GetMethod(myRepository.getUrl() + RSS_ISSUE_PATH + key + '/' + key + ".xml"));
       return tasks.isEmpty() ? null : tasks.get(0);
@@ -103,12 +103,12 @@ public class JiraSoapApi extends JiraRemoteApi {
   }
 
   @Override
-  public void setTaskState(Task task, TaskState state) throws Exception {
+  public void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception {
     throw new Exception(TaskBundle.message("jira.failure.no.state.update"));
   }
 
   @Override
-  public void updateTimeSpend(LocalTask task, String timeSpent, String comment) throws Exception {
+  public void updateTimeSpend(@NotNull LocalTask task, @NotNull String timeSpent, String comment) throws Exception {
     throw new Exception(TaskBundle.message("jira.failure.no.time.spent"));
   }
 }
