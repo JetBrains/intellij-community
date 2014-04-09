@@ -206,7 +206,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
       list.setSelectedValue(executor, true);
       list.setCellRenderer(new DefaultListCellRenderer() {
         @Override
-        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
           final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
           if (value instanceof Executor) {
             setText(UIUtil.removeMnemonic(((Executor)value).getStartActionText()));
