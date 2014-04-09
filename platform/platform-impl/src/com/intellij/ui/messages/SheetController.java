@@ -44,7 +44,7 @@ public class SheetController {
   private boolean myDoNotAskResult;
 
   private BufferedImage myShadowImage;
-  
+
   private JButton[] buttons;
   private JButton myDefaultButton;
   private JButton myFocusedButton;
@@ -350,7 +350,7 @@ public class SheetController {
 
   private void paintShadowFromParent(Graphics2D g2d) {
     g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, getShadowAlpha()));
-    g2d.drawImage(myShadowImage, 0, - SHEET_HEIGHT, null);
+    g2d.drawImage(myShadowImage, 0, - SHEET_HEIGHT - SHADOW_BORDER, null);
   }
 
   private void layoutButtons(final JButton[] buttons, JPanel panel) {
