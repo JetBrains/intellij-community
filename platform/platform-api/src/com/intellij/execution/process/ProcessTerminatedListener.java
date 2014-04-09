@@ -24,6 +24,8 @@ import com.intellij.openapi.wm.StatusBar;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Locale;
+
 /**
  * @author dyoma
  */
@@ -83,7 +85,7 @@ public class ProcessTerminatedListener extends ProcessAdapter {
     if (SystemInfo.isWindows && exitCode >= 0xC0000000 && exitCode < 0xD0000000) {
       StringBuilder result = new StringBuilder();
       result.append(exitCode);
-      result.append(" (0x").append(Integer.toHexString(exitCode).toUpperCase());
+      result.append(" (0x").append(Integer.toHexString(exitCode).toUpperCase(Locale.ENGLISH));
       if (exitCode == 0xC000013A) {
         // reporting a detailed reason for a well-known exit code
         result.append(": interrupted by Ctrl+C");
