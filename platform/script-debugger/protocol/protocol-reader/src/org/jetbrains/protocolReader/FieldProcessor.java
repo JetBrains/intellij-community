@@ -60,7 +60,7 @@ class FieldProcessor<T> {
 
   private MethodHandler processFieldGetterMethod(Method m, String fieldName) {
     Type genericReturnType = m.getGenericReturnType();
-    ValueReader fieldTypeParser = reader.getFieldTypeParser(genericReturnType, m.getAnnotation(JsonNullable.class) != null, false, m);
+    ValueReader fieldTypeParser = reader.getFieldTypeParser(genericReturnType, m.getAnnotation(JsonNullable.class) != null || (genericReturnType != Boolean.TYPE && m.getAnnotation(JsonOptionalField.class) != null), false, m);
     if (fieldTypeParser != InterfaceReader.VOID_PARSER) {
       fieldLoaders.add(new FieldLoader(fieldName, fieldTypeParser));
     }
