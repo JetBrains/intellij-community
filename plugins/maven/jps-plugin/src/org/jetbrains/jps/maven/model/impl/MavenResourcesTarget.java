@@ -79,10 +79,6 @@ public class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDes
     return result;
   }
 
-  private Collection<ResourceRootConfiguration> getRootConfigurations(BuildDataPaths dataPaths) {
-    return getRootConfigurations(getModuleResourcesConfiguration(dataPaths));
-  }
-
   private Collection<ResourceRootConfiguration> getRootConfigurations(@Nullable MavenModuleResourceConfiguration moduleConfig) {
     if (moduleConfig != null) {
       return isTests() ? moduleConfig.testResources : moduleConfig.resources;
@@ -123,7 +119,7 @@ public class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDes
       getModuleResourcesConfiguration(context.getProjectDescriptor().dataManager.getDataPaths());
     final Set<File> result = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
     final File moduleOutput = getModuleOutputDir();
-    for (ResourceRootConfiguration resConfig : getRootConfigurations(context.getProjectDescriptor().dataManager.getDataPaths())) {
+    for (ResourceRootConfiguration resConfig : getRootConfigurations(configuration)) {
       final File output = getOutputDir(moduleOutput, resConfig, configuration.outputDirectory);
       if (output != null) {
         result.add(output);
