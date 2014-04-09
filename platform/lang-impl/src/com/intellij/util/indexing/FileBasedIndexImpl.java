@@ -514,7 +514,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       index = (MapReduceIndex<K, V, FileContent>)custom;
     }
     else {
-      index = new MapReduceIndex<K, V, FileContent>(indexId, extension.getIndexer(), storage, extension.hasSnapshotMapping() ? extension.getKeyDescriptor() : null);
+      index = new MapReduceIndex<K, V, FileContent>(indexId, extension.getIndexer(), storage);
     }
 
     final KeyDescriptor<K> keyDescriptor = extension.getKeyDescriptor();
