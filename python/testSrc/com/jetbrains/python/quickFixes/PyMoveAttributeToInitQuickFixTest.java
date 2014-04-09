@@ -19,6 +19,7 @@ import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyAttributeOutsideInitInspection;
+import com.jetbrains.python.psi.LanguageLevel;
 
 /**
  * User: ktisha
@@ -56,6 +57,10 @@ public class PyMoveAttributeToInitQuickFixTest extends PyQuickFixTestCase {
 
   public void testPropertyNegative() {
     doInspectionTest(PyAttributeOutsideInitInspection.class);
+  }
+
+  public void testPy3K() {
+    doQuickFixTest(PyAttributeOutsideInitInspection.class, PyBundle.message("QFIX.move.attribute"), LanguageLevel.PYTHON33);
   }
 
 }
