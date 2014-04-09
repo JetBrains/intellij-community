@@ -56,8 +56,6 @@ public class CapturingProcessHandler extends OSProcessHandler {
   
   public ProcessOutput runProcess() {
     startNotify();
-    afterStart();
-
     if (waitFor()) {
       myOutput.setExitCode(getProcess().exitValue());
     }
@@ -88,8 +86,6 @@ public class CapturingProcessHandler extends OSProcessHandler {
     }
     else {
       startNotify();
-      afterStart();
-
       if (waitFor(timeoutInMilliseconds)) {
         myOutput.setExitCode(getProcess().exitValue());
       }
@@ -101,9 +97,6 @@ public class CapturingProcessHandler extends OSProcessHandler {
       }
       return myOutput;
     }
-  }
-
-  protected void afterStart() {
   }
 
   @Override
