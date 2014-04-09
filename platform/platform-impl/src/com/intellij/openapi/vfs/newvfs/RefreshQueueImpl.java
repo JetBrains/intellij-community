@@ -131,6 +131,7 @@ public class RefreshQueueImpl extends RefreshQueue {
     }
   }
 
+  @NotNull
   @Override
   public RefreshSession createSession(boolean async, boolean recursively, @Nullable Runnable finishRunnable, @NotNull ModalityState state) {
     return new RefreshSessionImpl(async, recursively, finishRunnable, state);
