@@ -87,7 +87,7 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
 
   @Override
   public int getVersion() {
-    return 10; // TODO: version should enumerate all word scanner versions and build version upon that set
+    return 11; // TODO: version should enumerate all word scanner versions and build version upon that set
   }
 
   @Override
@@ -132,4 +132,8 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
            CacheBuilderRegistry.getInstance().getCacheBuilder(fileType) != null;
   }
 
+  @Override
+  public boolean hasSnapshotMapping() {
+    return true;
+  }
 }

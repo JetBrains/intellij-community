@@ -102,4 +102,9 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> {
   public int getVersion() {
     return ENABLED ? 2 : 1;
   }
+
+  @Override
+  public boolean hasSnapshotMapping() {
+    return true;
+  }
 }
