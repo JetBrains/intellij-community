@@ -17,10 +17,8 @@ package com.intellij.execution.impl;
 
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -37,16 +35,14 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     try {
       console.clear();
       console.print("Hi", ConsoleViewContentType.NORMAL_OUTPUT);
-      type(console, '1');
-      type(console, '2');
+      assertEquals(2, console.getContentSize());
     }
     catch (Exception e) {
       e.printStackTrace();
     }
-  }
-
-  @Override
-  public void tearDown() throws Exception {
+    finally {
+      Disposer.dispose(console);
+    }
   }
 
   @NotNull
@@ -61,12 +57,6 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     processHandler.startNotify();
     console.attachToProcess(processHandler);
     return console;
-  }
-
-  private static void type(ConsoleViewImpl console, char c) {
-    EditorActionManager actionManager = EditorActionManager.getInstance();
-    TypedAction action = actionManager.getTypedAction();
-    action.actionPerformed(console.getEditor(), c, DataManager.getInstance().getDataContext(console.getComponent()));
   }
 
   private static class MyProcessHandler extends ProcessHandler {
