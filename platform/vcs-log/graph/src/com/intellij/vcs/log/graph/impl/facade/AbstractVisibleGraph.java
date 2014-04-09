@@ -24,6 +24,7 @@ import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.graph.actions.GraphMouseAction;
 import com.intellij.vcs.log.graph.api.LinearGraphWithCommitInfo;
 import com.intellij.vcs.log.graph.api.printer.PrintElementGenerator;
+import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
 import com.intellij.vcs.log.graph.impl.print.PrintElementGeneratorImpl;
 import org.jetbrains.annotations.NotNull;
@@ -89,7 +90,7 @@ public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<Com
   abstract protected void setLinearBranchesExpansion(boolean collapse);
 
   @NotNull
-  abstract protected GraphAnswer<CommitId> clickByElement(@Nullable PrintElement printElement);
+  abstract protected GraphAnswer<CommitId> clickByElement(@Nullable PrintElementWithGraphElement printElement);
 
   protected static class GraphAnswerImpl<CommitId> implements GraphAnswer<CommitId> {
     @Nullable
@@ -122,18 +123,28 @@ public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<Com
     public GraphAnswer<CommitId> performMouseAction(@NotNull GraphMouseAction graphMouseAction) {
       myPrintElementsManager.performOverElement(null);
 
+      PrintElementWithGraphElement printElement = getPrintElementWithGraphElement(graphMouseAction);
       switch (graphMouseAction.getType()) {
         case OVER: {
-          Cursor cursor = myPrintElementsManager.performOverElement(graphMouseAction.getAffectedElement());
+          Cursor cursor = myPrintElementsManager.performOverElement(printElement);
           return new GraphAnswerImpl<CommitId>(null, cursor);
         }
         case CLICK:
-          return AbstractVisibleGraph.this.clickByElement(graphMouseAction.getAffectedElement());
+          return AbstractVisibleGraph.this.clickByElement(printElement);
 
         default: {
           throw new IllegalStateException("Not supported GraphMouseAction type: " + graphMouseAction.getType());
         }
       }
+    }
+
+    @Nullable
+    private PrintElementWithGraphElement getPrintElementWithGraphElement(@NotNull GraphMouseAction graphMouseAction) {
+      PrintElement affectedElement = graphMouseAction.getAffectedElement();
+      if (affectedElement == null)
+        return null;
+
+      return myPrintElementGenerator.toPrintElementWithGraphElement(affectedElement);
     }
 
     @Override

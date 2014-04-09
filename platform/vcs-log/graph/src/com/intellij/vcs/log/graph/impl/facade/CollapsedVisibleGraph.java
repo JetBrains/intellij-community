@@ -25,6 +25,7 @@ import com.intellij.vcs.log.graph.api.LinearGraphWithCommitInfo;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
+import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
 import com.intellij.vcs.log.graph.impl.permanent.PermanentCommitsInfo;
 import com.intellij.vcs.log.graph.impl.visible.CollapsedGraphWithHiddenNodes;
@@ -64,7 +65,7 @@ public class CollapsedVisibleGraph<CommitId> extends AbstractVisibleGraph<Commit
 
   @NotNull
   @Override
-  protected GraphAnswer<CommitId> clickByElement(@Nullable PrintElement printElement) {
+  protected GraphAnswer<CommitId> clickByElement(@Nullable PrintElementWithGraphElement printElement) {
     if (printElement == null) {
       return myCommitIdGraphAnswer;
     }
@@ -72,7 +73,7 @@ public class CollapsedVisibleGraph<CommitId> extends AbstractVisibleGraph<Commit
     if (printElement instanceof SimplePrintElement) {
       SimplePrintElement simplePrintElement = (SimplePrintElement)printElement;
 
-      @NotNull GraphElement graphElement = myPrintElementGenerator.getRelatedGraphElement(printElement);
+      @NotNull GraphElement graphElement = printElement.getGraphElement();
       switch (simplePrintElement.getType()) {
         case NODE:
           assert graphElement instanceof GraphNode;
@@ -92,7 +93,7 @@ public class CollapsedVisibleGraph<CommitId> extends AbstractVisibleGraph<Commit
     }
 
     if (printElement instanceof EdgePrintElement) {
-      GraphElement graphElement = myPrintElementGenerator.getRelatedGraphElement(printElement);
+      GraphElement graphElement = printElement.getGraphElement();
       assert graphElement instanceof GraphEdge; // todo
       return null;
     }
