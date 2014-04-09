@@ -32,10 +32,7 @@ import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.inspections.quickfix.PyAddPropertyForFieldQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyMakePublicQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyRenameElementQuickFix;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
@@ -81,9 +78,20 @@ public class PyProtectedMemberInspection extends PyInspection {
     }
 
     @Override
+    public void visitPyImportElement(PyImportElement node) {
+      final PyStatement statement = node.getContainingImportStatement();
+      if (!(statement instanceof PyFromImportStatement)) return;
+      checkReference(node.getImportReferenceExpression(), ((PyFromImportStatement)statement).getImportSource());
+    }
+
+    @Override
     public void visitPyReferenceExpression(PyReferenceExpression node) {
       final PyExpression qualifier = node.getQualifier();
       if (qualifier == null || PyNames.CANONICAL_SELF.equals(qualifier.getText())) return;
+      checkReference(node, qualifier);
+    }
+
+    private void checkReference(PyReferenceExpression node, PyExpression qualifier) {
       if (myTypeEvalContext.getType(qualifier) instanceof PyNamedTupleType) return;
       final String name = node.getName();
       final List<LocalQuickFix> quickFixes = new ArrayList<LocalQuickFix>();
@@ -111,7 +119,7 @@ public class PyProtectedMemberInspection extends PyInspection {
         final PyClass parentClass = getClassOwner(node);
         if (parentClass != null) {
           if (PyTestUtil.isPyTestClass(parentClass) && ignoreTestFunctions) return;
-          
+
           if (parentClass.isSubclass(resolvedClass))
             return;
 
