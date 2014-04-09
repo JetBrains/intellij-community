@@ -30,6 +30,7 @@ import org.jetbrains.jps.maven.model.JpsMavenExtensionService;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -118,10 +119,12 @@ public class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDes
   @NotNull
   @Override
   public Collection<File> getOutputRoots(CompileContext context) {
+    MavenModuleResourceConfiguration configuration =
+      getModuleResourcesConfiguration(context.getProjectDescriptor().dataManager.getDataPaths());
     final Set<File> result = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
     final File moduleOutput = getModuleOutputDir();
     for (ResourceRootConfiguration resConfig : getRootConfigurations(context.getProjectDescriptor().dataManager.getDataPaths())) {
-      final File output = getOutputDir(moduleOutput, resConfig);
+      final File output = getOutputDir(moduleOutput, resConfig, configuration.outputDirectory);
       if (output != null) {
         result.add(output);
       }
@@ -135,7 +138,11 @@ public class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDes
   }
 
   @Nullable
-  public static File getOutputDir(@Nullable File moduleOutput, ResourceRootConfiguration config) {
+  public static File getOutputDir(@Nullable File moduleOutput, ResourceRootConfiguration config, @Nullable String outputDirectory) {
+    if(outputDirectory != null) {
+      moduleOutput = JpsPathUtil.urlToFile(outputDirectory);
+    }
+
     if (moduleOutput == null) {
       return null;
     }
