@@ -1,16 +1,31 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight;
 
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -19,7 +34,7 @@ import java.io.File;
  * @by maxim
  */
 @SuppressWarnings("ConstantConditions")
-public class XmlDocumentationTest extends DaemonAnalyzerTestCase {
+public class XmlDocumentationTest extends LightPlatformCodeInsightFixtureTestCase {
 
   public void testXmlDoc() throws Exception {
     doOneTest("1.xml", "display-name", false, "web-app_2_3.dtd");
@@ -96,8 +111,14 @@ public class XmlDocumentationTest extends DaemonAnalyzerTestCase {
   }
 
   private void doOneTest(String fileName, String lookupObject, boolean testExternal, String... additional) throws Exception {
-    configureByFiles(null, additional);
+    copyAdditionalFiles(additional);
     doOneTest(fileName, lookupObject, testExternal, true, "web-app_2_4.xsd");
+  }
+
+  private void copyAdditionalFiles(String[] additional) {
+    for (String file : additional) {
+      myFixture.copyFileToProject(file);
+    }
   }
 
   @SuppressWarnings("ConstantConditions")
@@ -108,10 +129,10 @@ public class XmlDocumentationTest extends DaemonAnalyzerTestCase {
     final PsiFile psiFile;
 
     DocumentationTestContext(String... fileNames) throws Exception {
-      configureByFiles(null,fileNames);
-      psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
-      originalElement = psiFile.findElementAt(myEditor.getCaretModel().getOffset());
-      element = DocumentationManager.getInstance(myProject).findTargetElement(myEditor, myFile, originalElement);
+      copyAdditionalFiles(fileNames);
+      psiFile = myFixture.configureByFile(fileNames[0]);
+      originalElement = psiFile.findElementAt(myFixture.getEditor().getCaretModel().getOffset());
+      element = DocumentationManager.getInstance(getProject()).findTargetElement(myFixture.getEditor(), psiFile, originalElement);
 
       if (element == null) {
         element = originalElement;
@@ -132,15 +153,14 @@ public class XmlDocumentationTest extends DaemonAnalyzerTestCase {
 
     @Nullable
     public String generateDocForCompletion(Object completionVariant) {
-      PsiElement lookupItem = documentationProvider.getDocumentationElementForLookupItem(myPsiManager, completionVariant, originalElement);
+      PsiElement lookupItem = documentationProvider.getDocumentationElementForLookupItem(getPsiManager(), completionVariant, originalElement);
       assert lookupItem != null;
       return documentationProvider.generateDoc(lookupItem, originalElement);
     }
   }
 
   private void doOneTest(String fileName, String lookupObject, boolean testExternal, boolean testForElementUnderCaret, String... additional) throws Exception {
-
-    configureByFiles(null, additional);
+    copyAdditionalFiles(additional);
     final DocumentationTestContext context = new DocumentationTestContext(fileName);
 
     if (testForElementUnderCaret) {
@@ -169,6 +189,7 @@ public class XmlDocumentationTest extends DaemonAnalyzerTestCase {
     doQuickDocGenerationTestWithCheckExpectedResult((Object)"apply-imports", "xslCompletion.xsl");
   }
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath() + "/xml/tests/testData/documentation/";
