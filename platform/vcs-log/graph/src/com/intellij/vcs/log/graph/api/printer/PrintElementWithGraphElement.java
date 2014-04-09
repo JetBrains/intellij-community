@@ -13,22 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.vcs.log.graph.api.printer;
 
+import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-
-public interface PrintElementsManager {
-
-  boolean elementIsSelected(@NotNull PrintElementWithGraphElement printElement);
-
-  @Nullable
-  Cursor performOverElement(@Nullable PrintElementWithGraphElement printElement); // return special Cursor for UI
-
-  int getColorId(@NotNull GraphElement element);
-
+/**
+ * @author erokhins
+ */
+public interface PrintElementWithGraphElement extends PrintElement {
+  @NotNull
+  GraphElement getGraphElement();
 }

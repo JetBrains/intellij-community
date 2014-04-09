@@ -22,9 +22,9 @@ import com.intellij.vcs.log.graph.api.PrintedLinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.printer.PrintElementGenerator;
+import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
 import com.intellij.vcs.log.graph.impl.print.elements.EdgePrintElementImpl;
-import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.impl.print.elements.SimplePrintElementImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,56 +50,70 @@ public abstract class AbstractPrintElementGenerator implements PrintElementGener
 
     if (rowIndex < myPrintedLinearGraph.nodesCount() - 1) {
       for (ShortEdge shortEdge : getDownShortEdges(rowIndex)) {
-        result.add(new EdgePrintElementImpl(rowIndex, shortEdge.myUpPosition, shortEdge.myDownPosition, EdgePrintElement.Type.DOWN, shortEdge.myEdge,
-                                            myPrintElementsManager));
+        result.add(createEdgePrintElement(rowIndex, shortEdge, EdgePrintElement.Type.DOWN));
       }
     }
 
     if (rowIndex > 0) {
       for (ShortEdge shortEdge : getDownShortEdges(rowIndex - 1)) {
-        result.add(new EdgePrintElementImpl(rowIndex, shortEdge.myDownPosition, shortEdge.myUpPosition, EdgePrintElement.Type.UP, shortEdge.myEdge,
-                                            myPrintElementsManager));
+        result.add(createEdgePrintElement(rowIndex, shortEdge, EdgePrintElement.Type.UP));
       }
     }
 
     for (SimpleRowElement rowElement : getSimpleRowElements(rowIndex)) {
-      result.add(new SimplePrintElementImpl(rowIndex, rowElement.myPosition, rowElement.myType, rowElement.myElement,
-                                            myPrintElementsManager));
+      result.add(createSimplePrintElement(rowIndex, rowElement));
     }
 
     return result;
   }
 
+  private SimplePrintElementImpl createSimplePrintElement(int rowIndex, SimpleRowElement rowElement) {
+    return new SimplePrintElementImpl(rowIndex, rowElement.myPosition, rowElement.myType, rowElement.myElement, myPrintElementsManager);
+  }
+
+  private EdgePrintElementImpl createEdgePrintElement(int rowIndex, @NotNull ShortEdge shortEdge, @NotNull EdgePrintElement.Type type) {
+    int positionInCurrentRow, positionInOtherRow;
+    if (type == EdgePrintElement.Type.DOWN) {
+      positionInCurrentRow = shortEdge.myUpPosition;
+      positionInOtherRow = shortEdge.myDownPosition;
+    } else {
+      positionInCurrentRow = shortEdge.myDownPosition;
+      positionInOtherRow = shortEdge.myUpPosition;
+    }
+    return new EdgePrintElementImpl(rowIndex, positionInCurrentRow, positionInOtherRow, type, shortEdge.myEdge, myPrintElementsManager);
+  }
+
   @NotNull
   @Override
-  public GraphElement getRelatedGraphElement(@NotNull PrintElement printElement) {
+  public PrintElementWithGraphElement toPrintElementWithGraphElement(@NotNull PrintElement printElement) {
     if (printElement instanceof PrintElementWithGraphElement) {
-      return ((PrintElementWithGraphElement)printElement).getGraphElement();
+      return (PrintElementWithGraphElement)printElement;
     }
 
+    int rowIndex = printElement.getRowIndex();
     if (printElement instanceof SimplePrintElement) {
-      for (SimpleRowElement rowElement : getSimpleRowElements(printElement.getRowIndex())) {
+      for (SimpleRowElement rowElement : getSimpleRowElements(rowIndex)) {
         if (rowElement.myPosition == printElement.getPositionInCurrentRow())
-          return rowElement.myElement;
+          return createSimplePrintElement(rowIndex, rowElement);
       }
     }
 
     if (printElement instanceof EdgePrintElement) {
       EdgePrintElement edgePrintElement = (EdgePrintElement)printElement;
       if (edgePrintElement.getType() == EdgePrintElement.Type.DOWN) {
-        for (ShortEdge shortEdge : getDownShortEdges(printElement.getRowIndex())) {
+        for (ShortEdge shortEdge : getDownShortEdges(rowIndex)) {
           if (shortEdge.myUpPosition == edgePrintElement.getPositionInCurrentRow() &&
             shortEdge.myDownPosition == edgePrintElement.getPositionInOtherRow()) {
-            return shortEdge.myEdge;
+            return createEdgePrintElement(rowIndex, shortEdge, EdgePrintElement.Type.DOWN);
           }
         }
       }
 
-      if (edgePrintElement.getType() == EdgePrintElement.Type.DOWN) {
-        for (ShortEdge shortEdge : getDownShortEdges(printElement.getRowIndex() - 1)) {
+      if (edgePrintElement.getType() == EdgePrintElement.Type.UP) {
+        for (ShortEdge shortEdge : getDownShortEdges(rowIndex - 1)) {
           if (shortEdge.myDownPosition == edgePrintElement.getPositionInCurrentRow() &&
               shortEdge.myUpPosition == edgePrintElement.getPositionInOtherRow()) {
-            return shortEdge.myEdge;
+            return createEdgePrintElement(rowIndex, shortEdge, EdgePrintElement.Type.UP);
           }
         }
       }

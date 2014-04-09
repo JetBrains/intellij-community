@@ -28,7 +28,7 @@ public interface PrintElementGenerator {
   Collection<PrintElement> getPrintElements(int visibleRow);
 
   @NotNull
-  GraphElement getRelatedGraphElement(@NotNull PrintElement printElement);
+  PrintElementWithGraphElement toPrintElementWithGraphElement(@NotNull PrintElement printElement);
 
   boolean areLongEdgesHidden();
   void setLongEdgesHidden(boolean longEdgesHidden);
