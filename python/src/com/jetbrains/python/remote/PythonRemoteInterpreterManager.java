@@ -53,8 +53,7 @@ public abstract class PythonRemoteInterpreterManager {
   public abstract ProcessHandler startRemoteProcess(@Nullable Project project,
                                                     @NotNull PyRemoteSdkCredentials data,
                                                     @NotNull GeneralCommandLine commandLine,
-                                                    @NotNull
-                                                    PathMappingSettings mappingSettings)
+                                                    @NotNull PathMappingSettings mappingSettings)
     throws RemoteSdkException;
 
   public abstract ProcessHandler startRemoteProcessWithPid(@Nullable Project project,
@@ -70,6 +69,7 @@ public abstract class PythonRemoteInterpreterManager {
 
   public abstract ProcessOutput runRemoteProcess(@Nullable Project project,
                                                  RemoteSdkCredentials data,
+                                                 @NotNull PathMappingSettings mappings, 
                                                  String[] command,
                                                  @Nullable String workingDir,
                                                  boolean askForSudo)
@@ -77,7 +77,8 @@ public abstract class PythonRemoteInterpreterManager {
 
   @NotNull
   public abstract RemoteSshProcess createRemoteProcess(@Nullable Project project,
-                                                         @NotNull RemoteSdkCredentials data,
+                                                       @NotNull PyRemoteSdkCredentials data,
+                                                       @NotNull PathMappingSettings mappings,
                                                          @NotNull GeneralCommandLine commandLine, boolean allocatePty)
     throws RemoteSdkException;
 
