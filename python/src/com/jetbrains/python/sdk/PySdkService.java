@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.configuration;
+package com.jetbrains.python.sdk;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -24,22 +24,34 @@ import java.util.HashSet;
 import java.util.Set;
 
 @State(
-  name = "PyRemovedSdkService",
+  name = "PySdkService",
   storages = {
     @Storage(
       file = StoragePathMacros.APP_CONFIG + "/removedInterpreters.xml"
     )}
 )
-public class PyRemovedSdkService implements PersistentStateComponent<PyRemovedSdkService> {
+public class PySdkService implements PersistentStateComponent<PySdkService> {
 
-  public static PyRemovedSdkService getInstance() {
-    return ServiceManager.getService(PyRemovedSdkService.class);
+  public static PySdkService getInstance() {
+    return ServiceManager.getService(PySdkService.class);
   }
 
   public Set<String> REMOVED_SDKS = new HashSet<String>();
+  public Set<String> ADDED_SDKS = new HashSet<String>();
 
   public void removeSdk(@NotNull final Sdk sdk) {
-    REMOVED_SDKS.add(sdk.getHomePath());
+    final String homePath = sdk.getHomePath();
+    if (ADDED_SDKS.contains(homePath))
+      ADDED_SDKS.remove(homePath);
+    REMOVED_SDKS.add(homePath);
+  }
+
+  public void addSdk(@NotNull final Sdk sdk) {
+    ADDED_SDKS.add(sdk.getHomePath());
+  }
+
+  public Set<String> getAddedSdks() {
+    return ADDED_SDKS;
   }
 
   public void restoreSdk(@NotNull final Sdk sdk) {
@@ -54,13 +66,20 @@ public class PyRemovedSdkService implements PersistentStateComponent<PyRemovedSd
     return REMOVED_SDKS.contains(homePath);
   }
 
+  public void solidifySdk(@NotNull final Sdk sdk) {
+    final String homePath = sdk.getHomePath();
+    if (ADDED_SDKS.contains(homePath)) {
+      ADDED_SDKS.remove(homePath);
+    }
+  }
+
   @Override
-  public PyRemovedSdkService getState() {
+  public PySdkService getState() {
     return this;
   }
 
   @Override
-  public void loadState(PyRemovedSdkService state) {
+  public void loadState(PySdkService state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 }
