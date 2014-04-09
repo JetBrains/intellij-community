@@ -439,8 +439,14 @@ public class PsiScopesUtil {
     }
     else if (resolve instanceof PsiClass) {
       PsiExpression qualifier = methodCall.getMethodExpression().getQualifierExpression();
-      if (!(qualifier instanceof PsiSuperExpression) || ((PsiSuperExpression)qualifier).getQualifier() != null && PsiUtil.isLanguageLevel8OrHigher(methodCall)) {
+      if (!(qualifier instanceof PsiSuperExpression)) {
         processor.setAccessClass((PsiClass)PsiUtil.getAccessObjectClass(qualifier).getElement());
+      }
+      else if (((PsiSuperExpression)qualifier).getQualifier() != null && PsiUtil.isLanguageLevel8OrHigher(qualifier)) {
+        final PsiClass accessClass = (PsiClass)PsiUtil.getAccessObjectClass(qualifier).getElement();
+        if (accessClass != null && accessClass.isInterface()) {
+          processor.setAccessClass(accessClass);
+        }
       }
     }
 
