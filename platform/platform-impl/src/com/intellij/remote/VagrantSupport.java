@@ -24,6 +24,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.Collection;
 
 /**
@@ -37,10 +38,12 @@ public abstract class VagrantSupport {
 
   @Nullable
   public abstract Pair<String, RemoteCredentials> getVagrantSettings(Project project);
-  
+
+  @NotNull
   public abstract RemoteCredentials getVagrantSettings(Project project, String vagrantFolder);
 
-  public abstract RemoteCredentials getCredentials(@NotNull String folder);
+  @NotNull
+  public abstract RemoteCredentials getCredentials(@NotNull String folder) throws IOException;
 
   public static void showMissingVagrantSupportMessage(final @Nullable Project project) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {

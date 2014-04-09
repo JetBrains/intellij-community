@@ -28,7 +28,6 @@ import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remote.*;
-import com.intellij.remote.RemoteSdkException;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.PythonHelpersLocator;
@@ -38,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
@@ -156,7 +156,8 @@ public abstract class PythonRemoteInterpreterManager {
     }
   }
 
-  public abstract RemoteCredentials getVagrantRemoteCredentials(VagrantBasedCredentialsHolder data);
+  @Nullable
+  public abstract RemoteCredentials getVagrantRemoteCredentials(VagrantBasedCredentialsHolder data) throws IOException;
 
   public abstract void checkVagrantStatus(VagrantBasedCredentialsHolder data);
 
