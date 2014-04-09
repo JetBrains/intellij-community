@@ -30,7 +30,7 @@ import java.util.List;
 public class ActionsTest extends IntegrationTestCase {
   public void testSavingDocumentBeforeAndAfterAction() throws Exception {
     VirtualFile f = createFile("f.txt", "file1");
-
+    loadContent(f);
     setContent(f, "file2");
 
     setDocumentTextFor(f, "doc1");
