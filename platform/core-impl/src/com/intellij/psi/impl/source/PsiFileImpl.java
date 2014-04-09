@@ -59,7 +59,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedWeakReference;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -347,7 +346,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   private void scheduleDropCachesWithInvalidStubPsi() {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    // invokeLater even if already on EDT, because
+    // we might be inside an index query and write actions might result in deadlocks there (http://youtrack.jetbrains.com/issue/IDEA-123118)
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
