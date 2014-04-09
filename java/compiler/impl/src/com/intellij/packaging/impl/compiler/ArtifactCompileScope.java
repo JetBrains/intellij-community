@@ -17,7 +17,6 @@ package com.intellij.packaging.impl.compiler;
 
 import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.openapi.compiler.CompileScope;
-import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -44,8 +43,7 @@ public class ArtifactCompileScope {
   private static final Key<Boolean> FORCE_ARTIFACT_BUILD = Key.create("force_artifact_build");
   private static final Key<Artifact[]> ARTIFACTS_KEY = Key.create("artifacts");
   private static final Key<Set<Artifact>> CACHED_ARTIFACTS_KEY = Key.create("cached_artifacts");
-  private static final Key<Key<?>> ARTIFACTS_CONTENT_ID_KEY = Key.create("build_artifacts_task");
-
+  
   private ArtifactCompileScope() {
   }
 
@@ -62,23 +60,16 @@ public class ArtifactCompileScope {
   public static CompileScope createArtifactsScope(@NotNull Project project,
                                                   @NotNull Collection<Artifact> artifacts,
                                                   final boolean forceArtifactBuild) {
-    return createScopeWithArtifacts(createScopeForModulesInArtifacts(project, artifacts), artifacts, true, forceArtifactBuild);
+    return createScopeWithArtifacts(createScopeForModulesInArtifacts(project, artifacts), artifacts, forceArtifactBuild);
   }
 
   public static CompileScope createScopeWithArtifacts(final CompileScope baseScope,
-                                                      @NotNull Collection<Artifact> artifacts,
-                                                      boolean useCustomContentId) {
-    return createScopeWithArtifacts(baseScope, artifacts, useCustomContentId, false);
+                                                      @NotNull Collection<Artifact> artifacts) {
+    return createScopeWithArtifacts(baseScope, artifacts, false);
   }
 
-  public static CompileScope createScopeWithArtifacts(final CompileScope baseScope,
-                                                      @NotNull Collection<Artifact> artifacts,
-                                                      boolean useCustomContentId,
-                                                      final boolean forceArtifactBuild) {
+  public static CompileScope createScopeWithArtifacts(final CompileScope baseScope, @NotNull Collection<Artifact> artifacts, final boolean forceArtifactBuild) {
     baseScope.putUserData(ARTIFACTS_KEY, artifacts.toArray(new Artifact[artifacts.size()]));
-    if (useCustomContentId) {
-      baseScope.putUserData(CompilerManager.CONTENT_ID_KEY, ARTIFACTS_CONTENT_ID_KEY);
-    }
     if (forceArtifactBuild) {
       baseScope.putUserData(FORCE_ARTIFACT_BUILD, Boolean.TRUE);
     }

@@ -743,11 +743,6 @@ public class MacMessagesImpl extends MacMessages {
       _window = _window.getOwner();
     }
 
-    if (_window != null && UIUtil.isAncestor(_window, window)) {
-      //if _window is an ancestor of other window it isn't foremost for sure
-      return null;
-    }
-
     return _window;
   }
 

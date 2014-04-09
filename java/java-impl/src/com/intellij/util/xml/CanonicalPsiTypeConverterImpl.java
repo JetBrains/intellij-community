@@ -37,6 +37,7 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
   @NonNls private static final String ARRAY_PREFIX = "[L";
   private static final JavaClassReferenceProvider CLASS_REFERENCE_PROVIDER = new JavaClassReferenceProvider();
 
+  @Override
   public PsiType fromString(final String s, final ConvertContext context) {
     if (s == null) return null;
     try {
@@ -47,10 +48,12 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
     }
   }
 
+  @Override
   public String toString(final PsiType t, final ConvertContext context) {
     return t == null ? null : t.getCanonicalText();
   }
 
+  @Override
   @NotNull
   public PsiReference[] createReferences(final GenericDomValue<PsiType> genericDomValue, final PsiElement element, ConvertContext context) {
     final String typeText = genericDomValue.getStringValue();
@@ -60,7 +63,7 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
     return getReferences(genericDomValue.getValue(), typeText, 0, element);
   }
 
-  public PsiReference[] getReferences(@Nullable PsiType type, String typeText, int startOffsetInText, final PsiElement element) {
+  public PsiReference[] getReferences(@Nullable PsiType type, String typeText, int startOffsetInText, @NotNull final PsiElement element) {
     final ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(element);
     assert manipulator != null;
     String trimmed = typeText.trim();
@@ -80,13 +83,16 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
     final boolean isPrimitiveType = type instanceof PsiPrimitiveType;
 
     return new JavaClassReferenceSet(trimmed, element, offset, false, CLASS_REFERENCE_PROVIDER) {
+      @Override
       @NotNull
       protected JavaClassReference createReference(int refIndex, @NotNull String subRefText, @NotNull TextRange textRange, boolean staticImport) {
         return new JavaClassReference(this, textRange, refIndex, subRefText, staticImport) {
+          @Override
           public boolean isSoft() {
             return true;
           }
 
+          @Override
           @NotNull
           public JavaResolveResult advancedResolve(final boolean incompleteCode) {
             if (isPrimitiveType) {
@@ -96,6 +102,7 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
             return super.advancedResolve(incompleteCode);
           }
 
+          @Override
           public void processVariants(@NotNull final PsiScopeProcessor processor) {
             if (processor instanceof JavaCompletionProcessor) {
               ((JavaCompletionProcessor)processor).setCompletionElements(getVariants());
@@ -104,6 +111,7 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
             }
           }
 
+          @Override
           @NotNull
           public Object[] getVariants() {
             final Object[] variants = super.getVariants();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,6 +74,7 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrMethodStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -162,14 +163,20 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                      @NotNull ResolveState state,
-                                     PsiElement lastParent,
+                                     @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    for (final GrTypeParameter typeParameter : getTypeParameters()) {
-      if (!ResolveUtil.processElement(processor, typeParameter, state)) return false;
+    ClassHint classHint = processor.getHint(ClassHint.KEY);
+
+    if (ResolveUtil.shouldProcessClasses(classHint)) {
+      for (final GrTypeParameter typeParameter : getTypeParameters()) {
+        if (!ResolveUtil.processElement(processor, typeParameter, state)) return false;
+      }
     }
 
-    for (final GrParameter parameter : getParameters()) {
-      if (!ResolveUtil.processElement(processor, parameter, state)) return false;
+    if (ResolveUtil.shouldProcessProperties(classHint)) {
+      for (final GrParameter parameter : getParameters()) {
+        if (!ResolveUtil.processElement(processor, parameter, state)) return false;
+      }
     }
 
     return true;

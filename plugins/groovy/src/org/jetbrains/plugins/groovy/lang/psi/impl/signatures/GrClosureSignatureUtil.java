@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.signatures;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
@@ -57,8 +58,9 @@ import java.util.*;
 /**
  * @author Maxim.Medvedev
  */
-@SuppressWarnings("unchecked")
 public class GrClosureSignatureUtil {
+  private static final Logger LOG = Logger.getInstance(GrClosureSignatureUtil.class);
+
   private GrClosureSignatureUtil() {
   }
 
@@ -110,60 +112,21 @@ public class GrClosureSignatureUtil {
   }
 
   public static GrClosureSignature createSignature(final PsiMethod method, PsiSubstitutor substitutor) {
-    return new GrImmediateClosureSignatureImpl(method.getParameterList().getParameters(), null, substitutor) {
-      @Override
-      public PsiType getReturnType() {
-        return getSubstitutor().substitute(PsiUtil.getSmartReturnType(method));
-      }
-
-      @Override
-      public boolean isValid() {
-        return method.isValid();
-      }
-    };
+    return new GrMethodSignatureImpl(method, substitutor);
   }
 
   public static GrClosureSignature removeParam(final GrClosureSignature signature, int i) {
     final GrClosureParameter[] newParams = ArrayUtil.remove(signature.getParameters(), i);
-    return new GrImmediateClosureSignatureImpl(newParams, null, newParams.length > 0 && signature.isVarargs(), false) {
-      @Override
-      public PsiType getReturnType() {
-        return signature.getReturnType();
-      }
-
-      @Override
-      public boolean isValid() {
-        return signature.isValid();
-      }
-    };
+    return new GrClosureSignatureWithNewParameters(signature, newParams);
   }
 
   public static GrClosureSignature createSignatureWithErasedParameterTypes(final PsiMethod method) {
-    final PsiParameter[] params = method.getParameterList().getParameters();
-    final GrClosureParameter[] closureParams = ContainerUtil.map(params, new Function<PsiParameter, GrClosureParameter>() {
-      @Override
-      public GrClosureParameter fun(PsiParameter parameter) {
-        return GrImmediateClosureParameterImpl.createErasedParameter(parameter);
-      }
-    }, new GrClosureParameter[params.length]);
-
-    return new GrImmediateClosureSignatureImpl(closureParams, null, GrImmediateClosureParameterImpl.isVararg(closureParams), false) {
-      @Override
-      public PsiType getReturnType() {
-        return PsiUtil.getSmartReturnType(method);
-      }
-
-      @Override
-      public boolean isValid() {
-        return method.isValid();
-      }
-    };
+    return new GrMethodSignatureWithErasedTypes(method);
   }
 
   @NotNull
   public static GrClosureSignature createSignatureWithErasedParameterTypes(final GrClosableBlock closure) {
-    final GrClosureSignature signature = createSignature(closure);
-    return rawSignature(signature);
+    return new GrClosableSignatureWithErasedParameters(closure);
   }
 
   @NotNull
@@ -178,17 +141,7 @@ public class GrClosureSignatureUtil {
       }
     }, new GrClosureParameter[params.length]);
 
-    return new GrImmediateClosureSignatureImpl(closureParams, null, GrImmediateClosureParameterImpl.isVararg(closureParams), false) {
-      @Override
-      public PsiType getReturnType() {
-        return signature.getReturnType();
-      }
-
-      @Override
-      public boolean isValid() {
-        return signature.isValid();
-      }
-    };
+    return new GrClosureSignatureWithNewParameters(signature, closureParams);
   }
 
 
@@ -380,6 +333,10 @@ public class GrClosureSignatureUtil {
     }
   }
 
+  public static boolean isVarArgsImpl(@NotNull GrClosureParameter[] parameters) {
+    return parameters.length > 0 && parameters[parameters.length - 1].getType() instanceof PsiArrayType;
+  }
+
   public enum ApplicabilityResult {
     applicable, inapplicable, canBeApplicable, ambiguous;
 
@@ -421,6 +378,8 @@ public class GrClosureSignatureUtil {
                                                                @NotNull Function<Arg, PsiType> typeComputer,
                                                                @NotNull PsiElement context,
                                                                boolean partial) {
+    LOG.assertTrue(signature.isValid(), signature.getClass());
+
     if (checkForOnlyMapParam(signature, args.length)) return ArgInfo.empty_array();
     GrClosureParameter[] params = signature.getParameters();
     if (args.length > params.length && !signature.isVarargs() && !partial) return null;
@@ -914,7 +873,7 @@ public class GrClosureSignatureUtil {
         for (int i = 0, size = arg.args.size(); i < size; i++) {
           args[i] = (GrNamedArgument)arg.args.get(i);
         }
-        return new GrMapType(first, args);
+        return GrMapType.createFromNamedArgs(first, args);
       }
       else {
         for (PsiElement elem : arg.args) {
@@ -1039,7 +998,18 @@ public class GrClosureSignatureUtil {
         final ArrayList<GrClosureParameter> parameters = new ArrayList<GrClosureParameter>(original.length);
 
         for (GrClosureParameter parameter : original) {
-          parameters.add(new GrImmediateClosureParameterImpl(parameter.getType(), parameter.getName(), false, null));
+          parameters.add(new GrDelegatingClosureParameter(parameter) {
+            @Override
+            public boolean isOptional() {
+              return false;
+            }
+
+            @Nullable
+            @Override
+            public GrExpression getDefaultInitializer() {
+              return null;
+            }
+          });
         }
 
         final int pcount = signature.isVarargs() ? signature.getParameterCount() - 2 : signature.getParameterCount() - 1;

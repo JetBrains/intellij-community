@@ -179,6 +179,7 @@ public abstract class QuickFixFactory {
                                                   int minUsagesNumberToShowDialog);
 
   @NotNull public abstract IntentionAction createCreateMethodFromUsageFix(@NotNull PsiMethodCallExpression call);
+  @NotNull public abstract IntentionAction createCreateMethodFromUsageFix(PsiMethodReferenceExpression methodReferenceExpression);
 
   @NotNull public abstract IntentionAction createCreateAbstractMethodFromUsageFix(@NotNull PsiMethodCallExpression call);
 
@@ -227,7 +228,7 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createCreateAnnotationMethodFromUsageFix(@NotNull PsiNameValuePair pair);
 
   @NotNull
-  public abstract IntentionAction createOptimizeImportsFix();
+  public abstract IntentionAction createOptimizeImportsFix(boolean onTheFly);
 
   public abstract void registerFixesForUnusedParameter(@NotNull PsiParameter parameter, @NotNull Object highlightInfo);
 

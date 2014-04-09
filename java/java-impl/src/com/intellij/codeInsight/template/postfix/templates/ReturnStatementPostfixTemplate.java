@@ -15,22 +15,13 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class ReturnStatementPostfixTemplate extends PostfixTemplate {
+public class ReturnStatementPostfixTemplate extends NonVoidPostfixTemplate {
   public ReturnStatementPostfixTemplate() {
     super("return", "Returns value from containing method", "return expr;");
-  }
-
-  @Override
-  public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
-    PsiExpression expr = getTopmostExpression(context);
-    if (expr == null) return false;
-    PsiType type = expr.getType();
-    return type != null && !PsiType.VOID.equals(type);
   }
 
   @Override

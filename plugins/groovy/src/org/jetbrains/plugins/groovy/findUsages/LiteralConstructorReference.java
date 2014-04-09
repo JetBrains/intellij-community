@@ -17,8 +17,7 @@ package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,12 +43,9 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
  * @author peter
  */
 public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrMap> {
-  @NotNull
-  private final PsiClassType myExpectedType;
 
-  public LiteralConstructorReference(@NotNull GrListOrMap element, @NotNull PsiClassType constructedClassType) {
+  public LiteralConstructorReference(@NotNull GrListOrMap element) {
     super(element, TextRange.from(0, 0), false);
-    myExpectedType = constructedClassType;
   }
 
   @Override
@@ -62,10 +58,35 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
     return getElement();
   }
 
-  @NotNull
+  @Nullable
   public PsiClassType getConstructedClassType() {
-    return myExpectedType;
+    return CachedValuesManager.getCachedValue(getElement(), new CachedValueProvider<PsiClassType>() {
+      @Nullable
+      @Override
+      public Result<PsiClassType> compute() {
+        return Result.create(inferConversionType(), PsiModificationTracker.MODIFICATION_COUNT);
+      }
+    });
   }
+
+  @Nullable
+  private PsiClassType inferConversionType() {
+    GrListOrMap map = getElement();
+    final PsiClassType conversionType = getTargetConversionType(map);
+    if (conversionType == null) return null;
+
+    PsiType type = map.getType();
+    PsiType ownType = type instanceof PsiClassType ? ((PsiClassType)type).rawType() : type;
+    if (ownType != null && TypesUtil.isAssignableWithoutConversions(conversionType.rawType(), ownType, map)) return null;
+
+    final PsiClass resolved = conversionType.resolve();
+    if (resolved != null) {
+      if (InheritanceUtil.isInheritor(resolved, CommonClassNames.JAVA_UTIL_SET)) return null;
+      if (InheritanceUtil.isInheritor(resolved, CommonClassNames.JAVA_UTIL_LIST)) return null;
+    }
+    return conversionType;
+  }
+
 
   @Nullable
   public static PsiClassType getTargetConversionType(@NotNull final GrExpression expression) {
@@ -163,10 +184,12 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
   @NotNull
   @Override
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-    final PsiClassType.ClassResolveResult classResolveResult = myExpectedType.resolveGenerics();
+    PsiClassType type = getConstructedClassType();
+    if (type == null) return GroovyResolveResult.EMPTY_ARRAY;
 
-    final GroovyResolveResult[] constructorCandidates =
-      PsiUtil.getConstructorCandidates(myExpectedType, getCallArgumentTypes(), getElement());
+    final PsiClassType.ClassResolveResult classResolveResult = type.resolveGenerics();
+
+    final GroovyResolveResult[] constructorCandidates = PsiUtil.getConstructorCandidates(type, getCallArgumentTypes(), getElement());
 
     if (constructorCandidates.length == 0 && classResolveResult.getElement() != null) {
       return new GroovyResolveResult[]{new GroovyResolveResultImpl(classResolveResult)};

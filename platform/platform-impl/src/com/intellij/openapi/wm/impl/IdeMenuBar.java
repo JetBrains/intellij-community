@@ -154,14 +154,14 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   @Override
   public void doLayout() {
     super.doLayout();
-    if (myClockPanel != null) {
+    if (myClockPanel != null && myButton != null) {
       if (myState != State.EXPANDED) {
         myClockPanel.setVisible(true);
         myButton.setVisible(true);
-        Dimension preferredSize = myClockPanel.getPreferredSize();
-        myClockPanel.setBounds(getBounds().width - preferredSize.width, 0, preferredSize.width, preferredSize.height);
-        preferredSize = myButton.getPreferredSize();
-        myButton.setBounds(getBounds().width - preferredSize.width * 2 - myClockPanel.getWidth(), 0, preferredSize.width, preferredSize.height);
+        Dimension preferredSize = myButton.getPreferredSize();
+        myButton.setBounds(getBounds().width - preferredSize.width, 0, preferredSize.width, preferredSize.height);
+        preferredSize = myClockPanel.getPreferredSize();
+        myClockPanel.setBounds(getBounds().width - preferredSize.width - myButton.getWidth(), 0, preferredSize.width, preferredSize.height);
       }
       else {
         myClockPanel.setVisible(false);

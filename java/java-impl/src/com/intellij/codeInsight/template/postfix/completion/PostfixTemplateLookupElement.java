@@ -47,6 +47,7 @@ public class PostfixTemplateLookupElement extends CustomLiveTemplateLookupElemen
     }
     else {
       presentation.setTypeText(myTemplate.getExample());
+      presentation.setTypeGrayed(true);
     }
   }
 

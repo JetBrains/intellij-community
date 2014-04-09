@@ -333,6 +333,10 @@ public class JavaSdkImpl extends JavaSdk {
     if(sources != null){
       sdkModificator.addRoot(sources, OrderRootType.SOURCES);
     }
+    final VirtualFile javaFxSources = findSources(jdkHome, "javafx-src");
+    if (javaFxSources != null) {
+      sdkModificator.addRoot(javaFxSources, OrderRootType.SOURCES);
+    }
     if(docs != null){
       sdkModificator.addRoot(docs, JavadocOrderRootType.getInstance());
     }
@@ -493,10 +497,16 @@ public class JavaSdkImpl extends JavaSdk {
   @Nullable
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static VirtualFile findSources(File file) {
+    return findSources(file, "src");
+  }
+
+  @Nullable
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public static VirtualFile findSources(File file, final String srcName) {
     File srcDir = new File(file, "src");
-    File jarFile = new File(file, "src.jar");
+    File jarFile = new File(file, srcName + ".jar");
     if (!jarFile.exists()) {
-      jarFile = new File(file, "src.zip");
+      jarFile = new File(file, srcName + ".zip");
     }
 
     if (jarFile.exists()) {

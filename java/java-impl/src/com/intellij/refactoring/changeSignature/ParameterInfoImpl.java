@@ -33,8 +33,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ParameterInfoImpl implements JavaParameterInfo {
-  public static final ParameterInfoImpl[] EMPTY_ARRAY = {};
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ParameterInfoImpl");
 
   public int oldParameterIndex;

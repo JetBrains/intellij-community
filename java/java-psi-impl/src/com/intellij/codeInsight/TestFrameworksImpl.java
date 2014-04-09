@@ -100,4 +100,13 @@ public class TestFrameworksImpl extends TestFrameworks {
     }
     return false;
   }
+
+  @Override
+  public boolean isTestMethod(PsiMethod method) {
+    final TestFramework[] testFrameworks = Extensions.getExtensions(TestFramework.EXTENSION_NAME);
+    for (TestFramework framework : testFrameworks) {
+      if (framework.isTestMethod(method)) return true;
+    }
+    return false;
+  }
 }

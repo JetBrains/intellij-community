@@ -26,9 +26,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Collections;
 
 public class SurroundWithEmmetAction extends BaseCodeInsightAction {
   public SurroundWithEmmetAction() {
@@ -37,7 +36,7 @@ public class SurroundWithEmmetAction extends BaseCodeInsightAction {
 
   @Override
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return EmmetOptions.getInstance().isEmmetEnabled() && new ZenCodingTemplate().isApplicable(file, editor.getCaretModel().getOffset(), true);
+    return EmmetOptions.getInstance().isEmmetEnabled() && new ZenCodingTemplate().isApplicable(file, editor.getSelectionModel().getSelectionStart(), true);
   }
 
   @NotNull
@@ -56,7 +55,7 @@ public class SurroundWithEmmetAction extends BaseCodeInsightAction {
 
       ZenCodingTemplate emmetCustomTemplate = CustomLiveTemplate.EP_NAME.findExtension(ZenCodingTemplate.class);
       if (emmetCustomTemplate != null) {
-        new WrapWithCustomTemplateAction(emmetCustomTemplate, editor, file, Collections.<Character>emptySet()).actionPerformed(null);
+        new WrapWithCustomTemplateAction(emmetCustomTemplate, editor, file, ContainerUtil.<Character>newHashSet()).actionPerformed(null);
       }
       else if (!ApplicationManager.getApplication().isUnitTestMode()) {
         HintManager.getInstance().showErrorHint(editor, "Cannot invoke Surround with Emmet in the current context");

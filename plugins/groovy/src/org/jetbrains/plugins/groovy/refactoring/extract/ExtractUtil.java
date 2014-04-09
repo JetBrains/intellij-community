@@ -329,9 +329,7 @@ public class ExtractUtil {
     buffer.append("\n}");
 
     String methodText = buffer.toString();
-    GrMethod method = factory.createMethodFromText(methodText);
-    LOG.assertTrue(method != null);
-    return method;
+    return factory.createMethodFromText(methodText, helper.getContext());
   }
 
   public static void appendName(@NotNull final StringBuilder buffer, @NotNull final String name) {

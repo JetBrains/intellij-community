@@ -54,7 +54,7 @@ public class DfaPsiUtil {
       codeBlock = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
     }
     else {
-      codeBlock = PsiTreeUtil.getParentOfType(context, PsiCodeBlock.class);
+      codeBlock = getTopmostBlockInSameClass(context);
     }
     while (codeBlock != null) {
       PsiAnonymousClass anon = PsiTreeUtil.getParentOfType(codeBlock, PsiAnonymousClass.class);

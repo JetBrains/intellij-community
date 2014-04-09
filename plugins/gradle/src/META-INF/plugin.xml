@@ -39,6 +39,7 @@
 
   <depends>com.intellij.modules.lang</depends>
   <depends>org.intellij.groovy</depends>
+  <depends>JUnit</depends>
   <depends optional="true" config-file="gradle-javaee-plugin.xml">com.intellij.javaee</depends>
   <depends optional="true" config-file="gradle-maven-integration.xml">org.jetbrains.idea.maven</depends>
 
@@ -62,7 +63,6 @@
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleSourceSetsContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleImplicitContributor"/>
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.BaseGradleProjectResolverExtension"/>
-    <projectResolve implementation="org.jetbrains.plugins.gradle.integrations.scala.ScalaGradleProjectResolverExtension"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -70,6 +70,14 @@
     <postStartupActivity implementation="org.jetbrains.plugins.gradle.service.project.GradleStartupActivity"/>
 
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <testActionProvider implementation="org.jetbrains.plugins.gradle.execution.test.runner.OpenGradleTestResultActionProvider"/>
+    <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.test.runner.AllInPackageGradleConfigurationProducer"
+                              order="first"/>
+    <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer"
+                              order="first"/>
+    <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfigurationProducer"
+                              order="first"/>
+    <externalSystemExecutionConsoleManager implementation="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsoleManager"/>
     <projectImportProvider implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportProvider"/>
     <projectImportBuilder implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportBuilder"/>
     <moduleBuilder builderClass="org.jetbrains.plugins.gradle.service.project.wizard.GradleModuleBuilder"/>
@@ -87,6 +95,7 @@
     <externalSystemConfigLocator implementation="org.jetbrains.plugins.gradle.service.settings.GradleConfigLocator"/>
     <externalSystemManager implementation="org.jetbrains.plugins.gradle.GradleManager"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.BuildClasspathModuleGradleDataService"/>
+    <externalSystemNotificationExtension implementation="org.jetbrains.plugins.gradle.service.notification.GradleNotificationExtension" order="last"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleInstallationManager"/>
 

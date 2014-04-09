@@ -190,33 +190,33 @@ public class MavenDomGutterAnnotator implements Annotator {
   private static String generateTooltip(MavenDomDependency dependency) {
     StringBuilder res = new StringBuilder();
 
-    res.append("&lt;dependency&gt;\n");
-    res.append("&nbsp;&nbsp;&nbsp;&nbsp;&lt;groupId&gt;").append(dependency.getGroupId().getStringValue()).append("&lt;/groupId&gt;\n");
-    res.append("&nbsp;&nbsp;&nbsp;&nbsp;&lt;artifactId&gt;").append(dependency.getArtifactId().getStringValue()).append("&lt;/artifactId&gt;\n");
+    res.append("<dependency>\n");
+    res.append("    <groupId>").append(dependency.getGroupId().getStringValue()).append("</groupId>\n");
+    res.append("    <artifactId>").append(dependency.getArtifactId().getStringValue()).append("</artifactId>\n");
 
     if (dependency.getType().getXmlElement() != null) {
-      res.append("&nbsp;&nbsp;&nbsp;&nbsp;&lt;type&gt;").append(dependency.getType().getStringValue()).append("&lt;/type&gt;\n");
+      res.append("    <type>").append(dependency.getType().getStringValue()).append("</type>\n");
     }
 
     if (dependency.getClassifier().getXmlElement() != null) {
-      res.append("&nbsp;&nbsp;&nbsp;&nbsp;&lt;classifier&gt;").append(dependency.getClassifier().getStringValue()).append("&lt;/classifier&gt;\n");
+      res.append("    <classifier>").append(dependency.getClassifier().getStringValue()).append("</classifier>\n");
     }
 
     if (dependency.getScope().getXmlElement() != null) {
-      res.append("&nbsp;&nbsp;&nbsp;&nbsp;&lt;scope&gt;").append(dependency.getScope().getStringValue()).append("&lt;/scope&gt;\n");
+      res.append("    <scope>").append(dependency.getScope().getStringValue()).append("</scope>\n");
     }
 
     if (dependency.getOptional().getXmlElement() != null) {
-      res.append("&nbsp;&nbsp;&nbsp;&nbsp;&lt;optional&gt;").append(dependency.getOptional().getStringValue()).append("&lt;/optional&gt;\n");
+      res.append("    <optional>").append(dependency.getOptional().getStringValue()).append("</optional>\n");
     }
 
     if (dependency.getVersion().getXmlElement() != null) {
-      res.append("&nbsp;&nbsp;&nbsp;&nbsp;&lt;version&gt;").append(dependency.getVersion().getStringValue()).append("&lt;/version&gt;\n");
+      res.append("    <version>").append(dependency.getVersion().getStringValue()).append("</version>\n");
     }
 
-    res.append("&lt;/dependency&gt;");
+    res.append("</dependency>");
 
-    return res.toString();
+    return StringUtil.escapeXml(res.toString()).replace(" ", "&nbsp;");
   }
 
   private static class MyListCellRenderer extends PsiElementListCellRenderer<XmlTag> {

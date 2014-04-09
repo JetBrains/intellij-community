@@ -83,66 +83,68 @@ public class JavacMain {
     final Collection<String> _options = prepareOptions(options, compilingTool);
 
     try {
-      fileManager.setOutputDirectories(outputDirToRoots);
-    }
-    catch (IOException e) {
-      fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
-      return false;
-    }
-
-    if (!classpath.isEmpty()) {
-      try {
-        fileManager.setLocation(StandardLocation.CLASS_PATH, classpath);
-        if (!usingJavac && !isOptionSet(options, "-processorpath")) {
-          // for non-javac file manager ensure annotation processor path defaults to classpath
-          fileManager.setLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH, classpath);
-        }
-      }
-      catch (IOException e) {
-        fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
-        return false;
-      }
-    }
-    if (!platformClasspath.isEmpty()) {
-      try {
-        fileManager.setLocation(StandardLocation.PLATFORM_CLASS_PATH, buildPlatformClasspath(platformClasspath, _options));
-      }
-      catch (IOException e) {
-        fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
-        return false;
-      }
-    }
-    try {
-    // ensure the source path is set;
-    // otherwise, if not set, javac attempts to search both classes and sources in classpath;
-    // so if some classpath jars contain sources, it will attempt to compile them
-      fileManager.setLocation(StandardLocation.SOURCE_PATH, sourcePath);
-    }
-    catch (IOException e) {
-      fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
-      return false;
-    }
-
-    //noinspection IOResourceOpenedButNotSafelyClosed
-    final LineOutputWriter out = new LineOutputWriter() {
-      protected void lineAvailable(String line) {
-        if (usingJavac) {
-          diagnosticConsumer.outputLineAvailable(line);
-        }
-        else {
-          // todo: filter too verbose eclipse output?
-        }
-      }
-    };
-
-    try {
-
       // to be on the safe side, we'll have to apply all options _before_ calling any of manager's methods
       // i.e. getJavaFileObjectsFromFiles()
       // This way the manager will be properly initialized. Namely, the encoding will be set correctly
+      // Note that due to lazy initialization in various components inside javac, handleOption() should be called before setLocation() and others
       for (Iterator<String> iterator = _options.iterator(); iterator.hasNext(); ) {
         fileManager.handleOption(iterator.next(), iterator);
       }
+
+      try {
+        fileManager.setOutputDirectories(outputDirToRoots);
+      }
+      catch (IOException e) {
+        fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
+        return false;
+      }
+
+      if (!classpath.isEmpty()) {
+        try {
+          fileManager.setLocation(StandardLocation.CLASS_PATH, classpath);
+          if (!usingJavac && !isOptionSet(options, "-processorpath")) {
+            // for non-javac file manager ensure annotation processor path defaults to classpath
+            fileManager.setLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH, classpath);
+          }
+        }
+        catch (IOException e) {
+          fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
+          return false;
+        }
+      }
+      
+      if (!platformClasspath.isEmpty()) {
+        try {
+          fileManager.setLocation(StandardLocation.PLATFORM_CLASS_PATH, buildPlatformClasspath(platformClasspath, _options));
+        }
+        catch (IOException e) {
+          fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
+          return false;
+        }
+      }
+      
+      try {
+        // ensure the source path is set;
+        // otherwise, if not set, javac attempts to search both classes and sources in classpath;
+        // so if some classpath jars contain sources, it will attempt to compile them
+        fileManager.setLocation(StandardLocation.SOURCE_PATH, sourcePath);
+      }
+      catch (IOException e) {
+        fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
+        return false;
+      }
+
+      //noinspection IOResourceOpenedButNotSafelyClosed
+      final LineOutputWriter out = new LineOutputWriter() {
+        protected void lineAvailable(String line) {
+          if (usingJavac) {
+            diagnosticConsumer.outputLineAvailable(line);
+          }
+          else {
+            // todo: filter too verbose eclipse output?
+          }
+        }
+      };
 
       final JavaCompiler.CompilationTask task = compiler.getTask(
         out, fileManager, diagnosticConsumer, _options, null, fileManager.getJavaFileObjectsFromFiles(sources)
@@ -232,7 +234,7 @@ public class JavacMain {
     if (argsMap.isEmpty()) {
       return platformClasspath;
     }
-    
+
     final List<File> result = new ArrayList<File>();
     appendFiles(argsMap, PathOption.PREPEND_CP, result, false);
     appendFiles(argsMap, PathOption.ENDORSED, result, true);
@@ -270,7 +272,7 @@ public class JavacMain {
   }
 
   enum PathOption {
-    PREPEND_CP("-Xbootclasspath/p:"), 
+    PREPEND_CP("-Xbootclasspath/p:"),
     ENDORSED("-endorseddirs"), D_ENDORSED("-Djava.endorsed.dirs="),
     APPEND_CP("-Xbootclasspath/a:"),
     EXTDIRS("-extdirs"), D_EXTDIRS("-Djava.ext.dirs=");
@@ -327,7 +329,7 @@ public class JavacMain {
             final Constructor<StandardJavaFileManager> constructor = optimizedManagerClass.getConstructor();
             // if optimizedManagerClass is loaded by another classloader, cls.newInstance() will not work
             // that's why we need to call setAccessible() to ensure access
-            constructor.setAccessible(true); 
+            constructor.setAccessible(true);
             optimizedManager = constructor.newInstance();
             cacheClearMethod = ClasspathBootstrap.getOptimizedFileManagerCacheClearMethod();
           }
@@ -433,7 +435,7 @@ public class JavacMain {
     try {
       final Field freelistField = NameTableCleanupDataHolder.freelistField;
       final Object emptyList = NameTableCleanupDataHolder.emptyList;
-        // both parameters should be non-null if properly initialized
+      // both parameters should be non-null if properly initialized
       if (freelistField != null && emptyList != null) {
         freelistField.set(null, emptyList);
       }

@@ -44,11 +44,9 @@ public class ExternalResourcesRootsProvider extends IndexableSetContributor {
       Set<String> set = new HashSet<String>();
       for (Map<String, ExternalResourceManagerImpl.Resource> map : resources) {
         for (ExternalResourceManagerImpl.Resource resource : map.values()) {
-          ExternalResourceManagerImpl.Resource dir = new ExternalResourceManagerImpl.Resource();
-          int i = resource.file.lastIndexOf('/');
-          dir.file = i > 0 ? resource.file.substring(0, i) : resource.file;
-          dir.classLoader = resource.classLoader;
-          dir.clazz = resource.clazz;
+          ExternalResourceManagerImpl.Resource dir = new ExternalResourceManagerImpl.Resource(
+            resource.directoryName(), resource);
+
           if (dirs.add(dir)) {
             String url = resource.getResourceUrl();
             if (url != null) {

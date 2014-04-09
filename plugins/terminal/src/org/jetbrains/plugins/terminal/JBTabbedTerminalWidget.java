@@ -29,6 +29,7 @@ import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.TabLabel;
+import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.ui.*;
 import com.jediterm.terminal.ui.settings.SettingsProvider;
 import org.jetbrains.annotations.NotNull;
@@ -346,6 +347,9 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
                 return new Dimension(minimalWidth + 10, size.height);
               }
             };
+            if (myTabs.useSmallLabels()) {
+              textField.setFont(com.intellij.util.ui.UIUtil.getFont(UIUtil.FontSize.SMALL, textField.getFont()));
+            }
             textField.setOpaque(true);
             return textField;
           }

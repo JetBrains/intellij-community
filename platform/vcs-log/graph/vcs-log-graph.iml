@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="vcs-log-api" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="testFramework" scope="TEST" />
   </component>
 </module>
 

@@ -288,13 +288,13 @@ public class CvsChangeProvider implements ChangeProvider {
       return;
     }
     final CvsInfo info = myEntriesManager.getCvsInfoFor(dir);
-    if (info.getIgnoreFilter().shouldBeIgnored(dir.getName())) {
-      builder.processIgnoredFile(dir);
-      return;
-    }
     if (info.getRepository() == null) {
-      // don't report unversioned directories as switched (IDEADEV-17178)
-      builder.processUnversionedFile(dir);
+      if (info.getIgnoreFilter().shouldBeIgnored(dir.getName())) {
+        builder.processIgnoredFile(dir);
+      }
+      else {
+        builder.processUnversionedFile(dir);
+      }
       return;
     }
     final String dirTag = info.getStickyTag();

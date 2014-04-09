@@ -37,9 +37,10 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.remote.RemoteCredentials;
+import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.NullableConsumer;
@@ -54,8 +55,10 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.*;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class PythonSdkDetailsDialog extends DialogWrapper {
   private JPanel myMainPanel;
@@ -221,6 +224,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     myProjectSdksModel.apply();
     mySdkListChanged = false;
     myShowMoreCallback.consume(getSelectedSdk());
+    Disposer.dispose(getDisposable());
   }
 
   @Nullable
@@ -294,7 +298,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   private void editSdk() {
     final Sdk currentSdk = getSelectedSdk();
     if (currentSdk != null) {
-      if (currentSdk.getSdkAdditionalData() instanceof RemoteCredentials) {
+      if (currentSdk.getSdkAdditionalData() instanceof RemoteSdkAdditionalData) {
         editRemoteSdk(currentSdk);
       }
       else {

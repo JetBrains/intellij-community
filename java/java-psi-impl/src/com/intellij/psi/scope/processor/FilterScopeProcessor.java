@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public class FilterScopeProcessor<T> extends BaseScopeProcessor {
   }
 
   @Override
-  public void handleEvent(PsiScopeProcessor.Event event, Object associated) {
+  public void handleEvent(@NotNull PsiScopeProcessor.Event event, Object associated) {
     if (myProcessor != null) {
       myProcessor.handleEvent(event, associated);
     }
@@ -67,7 +67,7 @@ public class FilterScopeProcessor<T> extends BaseScopeProcessor {
   }
 
   @Override
-  public boolean execute(@NotNull PsiElement element, ResolveState state) {
+  public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
     if (myFilter.isAcceptable(element, myCurrentDeclarationHolder)) {
       if (myProcessor != null) {
         return myProcessor.execute(element, state);
@@ -77,13 +77,13 @@ public class FilterScopeProcessor<T> extends BaseScopeProcessor {
     return true;
   }
 
-  protected void add(PsiElement element, PsiSubstitutor substitutor) {
+  protected void add(@NotNull PsiElement element, @NotNull PsiSubstitutor substitutor) {
     //noinspection unchecked
     myResults.add((T)element);
   }
 
   @Override
-  public <T> T getHint(@NotNull Key<T> hintKey) {
+  public <K> K getHint(@NotNull Key<K> hintKey) {
     if (myProcessor != null) {
       return myProcessor.getHint(hintKey);
     }

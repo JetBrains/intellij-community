@@ -121,6 +121,7 @@ public class PortableStatus extends SVNStatus {
         return null;
       }
     };
+    setCommittedRevision(SVNRevision.UNDEFINED);
   }
 
   @Override

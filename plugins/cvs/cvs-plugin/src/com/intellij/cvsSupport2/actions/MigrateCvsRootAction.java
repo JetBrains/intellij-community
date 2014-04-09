@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,7 +39,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MigrateCvsRootAction extends AnAction {
+public class MigrateCvsRootAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.actions.MigrateCvsRootAction");
   private final CvsActionVisibility myVisibility = new CvsActionVisibility();
 

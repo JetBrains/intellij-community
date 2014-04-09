@@ -279,15 +279,15 @@ public class PythonSdkType extends SdkType {
 
   public void showCustomCreateUI(SdkModel sdkModel, final JComponent parentComponent, final Consumer<Sdk> sdkCreatedCallback) {
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent));
-    final Point point = parentComponent.getMousePosition();
-    SwingUtilities.convertPointToScreen(point, parentComponent);
+    final PointerInfo pointerInfo = MouseInfo.getPointerInfo();
+    if (pointerInfo == null) return;
+    final Point point = pointerInfo.getLocation();
     PythonSdkDetailsStep
       .show(project, sdkModel.getSdks(), null, parentComponent, point, new NullableConsumer<Sdk>() {
         @Override
         public void consume(@Nullable Sdk sdk) {
           if (sdk != null) {
             sdk.putUserData(SDK_CREATOR_COMPONENT_KEY, new WeakReference<Component>(parentComponent));
-            sdkCreatedCallback.consume(sdk);
           }
         }
       });

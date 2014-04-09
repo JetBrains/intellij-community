@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 /**
  * @author Maxim.Medvedev
@@ -51,8 +52,11 @@ public class ImportStaticIntention extends Intention {
 
     final PsiClass containingClass = ((PsiMember)resolved).getContainingClass();
     if (containingClass == null) return;
+
+    String originalName = ((PsiMember)resolved).getName();
+    final String name = resolved instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)resolved) ? GroovyPropertyUtils.getPropertyName((PsiMethod)resolved)
+                                                                                                                           : originalName;
     final String qname = containingClass.getQualifiedName();
-    final String name = ((PsiMember)resolved).getName();
     if (name == null) return;
 
     final PsiFile containingFile = element.getContainingFile();

@@ -15,8 +15,9 @@
  */
 package com.intellij.uiDesigner.binding;
 
-import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.PropertiesFileType;
+import com.intellij.lang.properties.PropertiesUtil;
+import com.intellij.lang.properties.PropertiesUtilBase;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -53,7 +54,7 @@ public final class ResourceBundleFileReference extends ReferenceInForm {
     if (module == null) {
       return null;
     }
-    PropertiesFile propertiesFile = PropertiesUtil.getPropertiesFile(getRangeText(), module, null);
+    PropertiesFile propertiesFile = PropertiesUtilBase.getPropertiesFile(getRangeText(), module, null);
     return propertiesFile == null ? null : propertiesFile.getContainingFile();
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,14 +43,14 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
   }
 
   @Override
-  public void add(PsiElement element, PsiSubstitutor substitutor) {
+  public void add(@NotNull PsiElement element, @NotNull PsiSubstitutor substitutor) {
     if (element instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)element;
       addMethod(method, substitutor, isInStaticScope() && !method.hasModifierProperty(PsiModifier.STATIC));
     }
   }
 
-  public void addMethod(final PsiMethod method, final PsiSubstitutor substitutor, final boolean staticProblem) {
+  public void addMethod(@NotNull PsiMethod method, final PsiSubstitutor substitutor, final boolean staticProblem) {
     final boolean isAccessible = JavaResolveUtil.isAccessible(method, method.getContainingClass(), method.getModifierList(),
                                                               myPlace, myAccessClass, myCurrentFileContext, myPlaceFile) &&
                                  !isShadowed(method);
@@ -67,7 +67,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     return false;
   }
 
-  protected MethodCandidateInfo createCandidateInfo(final PsiMethod method, final PsiSubstitutor substitutor,
+  protected MethodCandidateInfo createCandidateInfo(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor,
                                                     final boolean staticProblem, final boolean accessible, final boolean varargs) {
     final PsiExpressionList argumentList = getArgumentList();
     return new MethodCandidateInfo(method, substitutor, !accessible, staticProblem, argumentList, myCurrentFileContext,

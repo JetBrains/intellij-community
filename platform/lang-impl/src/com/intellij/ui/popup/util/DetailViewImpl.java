@@ -164,7 +164,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
       getEditor().setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
 
       clearHightlighting();
-      if (lineAttributes != null && positionToNavigate != null) {
+      if (lineAttributes != null && positionToNavigate != null && positionToNavigate.line < getEditor().getDocument().getLineCount()) {
         myHighlighter = getEditor().getMarkupModel().addLineHighlighter(positionToNavigate.line, HighlighterLayer.SELECTION - 1,
                                                                         lineAttributes);
       }

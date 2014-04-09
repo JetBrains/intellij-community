@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInsight.template.postfix.completion.PostfixTemplateLookupElement;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
 import com.intellij.codeInsight.template.postfix.util.Aliases;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -91,6 +92,11 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     return computeTemplateKeyWithoutContextChecking(editor.getDocument().getCharsSequence(), editor.getCaretModel().getOffset());
   }
 
+  @Override
+  public boolean supportsMultiCaret() {
+    return false;
+  }
+
   @Nullable
   public String computeTemplateKeyWithoutContextChecking(@NotNull CharSequence documentContent, int currentOffset) {
     int startOffset = currentOffset;
@@ -115,6 +121,8 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   public void expand(@NotNull final String key, @NotNull final CustomTemplateCallback callback) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.postfix");
+
     final PostfixTemplate template = getTemplateByKey(key);
     final Editor editor = callback.getEditor();
     final PsiFile file = callback.getContext().getContainingFile();
@@ -124,7 +132,8 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
       newContext = addSemicolonIfNeeded(editor, editor.getDocument(), newContext, currentOffset - key.length());
       expandTemplate(template, editor, newContext);
     }
-    else {
+    // don't care about errors in multiCaret mode
+    else if (editor.getCaretModel().getAllCarets().size() == 1) {
       LOG.error("Template not found by key: " + key);
     }
   }
@@ -170,7 +179,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   @Override
   public Collection<? extends CustomLiveTemplateLookupElement> getLookupElements(@NotNull PsiFile file, @NotNull Editor editor, int offset) {
     String key = computeTemplateKeyWithoutContextChecking(editor.getDocument().getCharsSequence(), offset);
-    if (key != null) {
+    if (key != null && editor.getCaretModel().getCaretCount() == 1) {
       Map<String, CustomLiveTemplateLookupElement> result = ContainerUtil.newHashMap();
       Condition<PostfixTemplate> isApplicationTemplateFunction = createIsApplicationTemplateFunction(key, file, editor);
       for (Map.Entry<String, PostfixTemplate> entry : myTemplates.entrySet()) {

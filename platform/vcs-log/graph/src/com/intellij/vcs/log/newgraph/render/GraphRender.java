@@ -25,8 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
-import static com.intellij.vcs.log.graph.render.PrintParameters.HEIGHT_CELL;
-import static com.intellij.vcs.log.graph.render.PrintParameters.WIDTH_NODE;
+import static com.intellij.vcs.log.printer.idea.PrintParameters.HEIGHT_CELL;
+import static com.intellij.vcs.log.printer.idea.PrintParameters.WIDTH_NODE;
 
 public class GraphRender {
 

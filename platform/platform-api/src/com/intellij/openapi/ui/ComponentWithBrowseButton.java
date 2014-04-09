@@ -45,7 +45,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.List;
 
 public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel implements Disposable {
   private final Comp myComponent;
@@ -191,7 +190,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     private final String myDescription;
     protected ComponentWithBrowseButton<T> myTextComponent;
     private final TextComponentAccessor<T> myAccessor;
-    private final Project myProject;
+    private Project myProject;
     protected final FileChooserDescriptor myFileChooserDescriptor;
 
     public BrowseFolderActionListener(@Nullable String title, @Nullable String description, ComponentWithBrowseButton<T> textField, @Nullable Project project, FileChooserDescriptor fileChooserDescriptor, TextComponentAccessor<T> accessor) {
@@ -203,20 +202,32 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
       myAccessor = accessor;
     }
 
+    @Nullable
+    protected Project getProject() {
+      return myProject;
+    }
+
+    protected void setProject(@Nullable Project project) {
+      myProject = project;
+    }
+
     @Override
-    public void actionPerformed(ActionEvent e){
-      FileChooserDescriptor fileChooserDescriptor = (FileChooserDescriptor)myFileChooserDescriptor.clone();
-      if (myTitle != null) {
-        fileChooserDescriptor.setTitle(myTitle);
-      }
-      if (myDescription != null) {
-        fileChooserDescriptor.setDescription(myDescription);
+    public void actionPerformed(ActionEvent e) {
+      FileChooserDescriptor fileChooserDescriptor = myFileChooserDescriptor;
+      if (myTitle != null || myDescription != null) {
+        fileChooserDescriptor = (FileChooserDescriptor)myFileChooserDescriptor.clone();
+        if (myTitle != null) {
+          fileChooserDescriptor.setTitle(myTitle);
+        }
+        if (myDescription != null) {
+          fileChooserDescriptor.setDescription(myDescription);
+        }
       }
 
-      FileChooser.chooseFiles(fileChooserDescriptor, myProject, getInitialFile(), new Consumer<List<VirtualFile>>() {
+      FileChooser.chooseFile(fileChooserDescriptor, getProject(), getInitialFile(), new Consumer<VirtualFile>() {
         @Override
-        public void consume(List<VirtualFile> files) {
-          onFileChoosen(files.get(0));
+        public void consume(VirtualFile file) {
+          onFileChoosen(file);
         }
       });
     }
@@ -229,13 +240,18 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
       }
 
       directoryName = FileUtil.toSystemIndependentName(directoryName);
-      VirtualFile path = LocalFileSystem.getInstance().findFileByPath(directoryName);
+      VirtualFile path = LocalFileSystem.getInstance().findFileByPath(expandPath(directoryName));
       while (path == null && directoryName.length() > 0) {
         int pos = directoryName.lastIndexOf('/');
         if (pos <= 0) break;
         directoryName = directoryName.substring(0, pos);
         path = LocalFileSystem.getInstance().findFileByPath(directoryName);
       }
+      return path;
+    }
+
+    @NotNull
+    protected String expandPath(@NotNull String path) {
       return path;
     }
 

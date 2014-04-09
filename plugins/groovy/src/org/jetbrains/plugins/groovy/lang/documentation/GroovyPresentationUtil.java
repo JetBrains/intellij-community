@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ public class GroovyPresentationUtil {
     else {
       builder.append(parameter.getName());
       final Set<String> structural = Collections.synchronizedSet(new LinkedHashSet<String>());
-      ReferencesSearch.search(parameter).forEach(new Processor<PsiReference>() {
+      ReferencesSearch.search(parameter, parameter.getUseScope()).forEach(new Processor<PsiReference>() {
         public boolean process(PsiReference ref) {
           PsiElement parent = ref.getElement().getParent();
           if (parent instanceof GrReferenceExpression) {

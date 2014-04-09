@@ -59,7 +59,7 @@ public class PositionManagerImpl implements PositionManager {
   }
 
   @NotNull
-  public List<Location> locationsOfLine(ReferenceType type, SourcePosition position) throws NoDataException {
+  public List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) throws NoDataException {
     try {
       final int line = position.getLine() + 1;
       return type.locationsOfLine(DebugProcess.JAVA_STRATUM, null, line);
@@ -69,7 +69,7 @@ public class PositionManagerImpl implements PositionManager {
     return Collections.emptyList();
   }
 
-  public ClassPrepareRequest createPrepareRequest(final ClassPrepareRequestor requestor, final SourcePosition position) throws NoDataException {
+  public ClassPrepareRequest createPrepareRequest(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position) throws NoDataException {
     final Ref<String> waitPrepareFor = new Ref<String>(null);
     final Ref<ClassPrepareRequestor> waitRequestor = new Ref<ClassPrepareRequestor>(null);
     ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -197,7 +197,7 @@ public class PositionManagerImpl implements PositionManager {
   }
 
   @NotNull
-  public List<ReferenceType> getAllClasses(final SourcePosition position) throws NoDataException {
+  public List<ReferenceType> getAllClasses(@NotNull final SourcePosition position) throws NoDataException {
     final Ref<String> baseClassNameRef = new Ref<String>(null);
     final Ref<PsiClass> classAtPositionRef = new Ref<PsiClass>(null);
     final Ref<Boolean> isLocalOrAnonymous = new Ref<Boolean>(Boolean.FALSE);

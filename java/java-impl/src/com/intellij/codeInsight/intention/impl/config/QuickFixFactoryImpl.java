@@ -469,6 +469,12 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
+  public IntentionAction createCreateMethodFromUsageFix(PsiMethodReferenceExpression methodReferenceExpression) {
+    return new CreateMethodFromMethodReferenceFix(methodReferenceExpression);
+  }
+
+  @NotNull
+  @Override
   public IntentionAction createCreateAbstractMethodFromUsageFix(@NotNull PsiMethodCallExpression call) {
     return new CreateAbstractMethodFromUsageFix(call);
   }
@@ -600,7 +606,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createOptimizeImportsFix() {
+  public IntentionAction createOptimizeImportsFix(final boolean onTheFly) {
     final OptimizeImportsFix fix = new OptimizeImportsFix();
 
     return new IntentionAction() {
@@ -618,7 +624,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
       @Override
       public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-        return timeToOptimizeImports(file) && fix.isAvailable(project, editor, file);
+        return (!onTheFly || timeToOptimizeImports(file)) && fix.isAvailable(project, editor, file);
       }
 
       @Override

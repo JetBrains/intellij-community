@@ -423,7 +423,9 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     }
 
     private static boolean isNewInstanceInitialingByTuple(GrExpression initializer) {
-      return initializer instanceof GrListOrMap && initializer.getReference() instanceof LiteralConstructorReference;
+      return initializer instanceof GrListOrMap &&
+             initializer.getReference() instanceof LiteralConstructorReference &&
+             ((LiteralConstructorReference)initializer.getReference()).getConstructedClassType() != null;
     }
 
     @Override

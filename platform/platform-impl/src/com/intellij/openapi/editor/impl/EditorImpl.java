@@ -27,7 +27,6 @@ import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -306,6 +305,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private LogicalPosition myLastMousePressedLocation;
   private VisualPosition myTargetMultiSelectionPosition;
   private boolean myMultiSelectionInProgress;
+  private boolean myLastPressCreatedCaret;
+  private boolean myCurrentDragIsSubstantial;
 
   private CaretImpl myPrimaryCaret;
 
@@ -357,6 +358,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged) {
         if (myDocument.isInBulkUpdate()) return; // bulkUpdateFinished() will repaint anything
         int textLength = myDocument.getTextLength();
+
+        clearTextWidthCache();
 
         int start = Math.min(Math.max(highlighter.getAffectedAreaStartOffset(), 0), textLength);
         int end = Math.min(Math.max(highlighter.getAffectedAreaEndOffset(), 0), textLength);
@@ -485,6 +488,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myEditorComponent = new EditorComponentImpl(this);
     myScrollPane = new MyScrollPane();
+    myVerticalScrollBar = (MyScrollBar)myScrollPane.getVerticalScrollBar();
     myPanel = new JPanel();
 
     myPanel.putClientProperty(OrphanGuardian.CLIENT_PROPERTY_KEY, new OrphanGuardian() {
@@ -499,7 +503,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     });
 
     myHeaderPanel = new MyHeaderPanel();
-    myVerticalScrollBar = new MyScrollBar(Adjustable.VERTICAL);
     myGutterComponent = new EditorGutterComponentImpl(this);
     initComponent();
     myScrollingModel = new ScrollingModelImpl(this);
@@ -545,10 +548,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       });
     }
     updateHasTabsFlag(document.getImmutableCharSequence());
-  }
-
-  public static boolean isPresentationMode(Project project) {
-    return project != null && !project.isDefault() && PropertiesComponent.getInstance(project).isTrueValue("editor.presentation.mode");
   }
 
   @NotNull
@@ -809,7 +808,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myGutterComponent.setOpaque(true);
 
-    myScrollPane.setVerticalScrollBar(myVerticalScrollBar);
     myScrollPane.setViewportView(myEditorComponent);
     //myScrollPane.setBorder(null);
     myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
@@ -1272,7 +1270,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       else {
         if (x >= px) {
-          if ((x - px) * 2 < charWidth) column++;
+          if (c != '\n' && (x - px) * 2 < charWidth) column++;
         }
         else {
           int diff = px - x;
@@ -1689,6 +1687,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myScrollPane == null) {
       return;
     }
+
+    clearTextWidthCache();
 
     stopOptimizedScrolling();
     mySelectionModel.removeBlockSelection();
@@ -4080,28 +4080,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     int x = myGutterComponent.convertX(e.getX());
 
-    int lineNumberAreaOffset = EditorGutterComponentImpl.getLineNumberAreaOffset();
-    if (x >= lineNumberAreaOffset &&
-        x < lineNumberAreaOffset + myGutterComponent.getLineNumberAreaWidth()) {
-      return EditorMouseEventArea.LINE_NUMBERS_AREA;
-    }
-
-    if (x >= myGutterComponent.getAnnotationsAreaOffset() &&
-        x <= myGutterComponent.getAnnotationsAreaOffset() + myGutterComponent.getAnnotationsAreaWidth()) {
-      return EditorMouseEventArea.ANNOTATIONS_AREA;
-    }
-
-    if (x >= myGutterComponent.getLineMarkerAreaOffset() &&
-        x < myGutterComponent.getLineMarkerAreaOffset() + myGutterComponent.getLineMarkerAreaWidth()) {
-      return EditorMouseEventArea.LINE_MARKERS_AREA;
-    }
-
-    if (x >= myGutterComponent.getFoldingAreaOffset() &&
-        x < myGutterComponent.getFoldingAreaOffset() + myGutterComponent.getFoldingAreaWidth()) {
-      return EditorMouseEventArea.FOLDING_OUTLINE_AREA;
-    }
-
-    return null;
+    return myGutterComponent.getEditorMouseAreaByOffset(x);
   }
 
   private void requestFocus() {
@@ -4224,7 +4203,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       else {
         if (isColumnMode() || e.isAltDown()) {
           if (myCaretModel.supportsMultipleCarets()) {
-            selectionModel.setBlockSelection(myLastMousePressedLocation, newLogicalCaret);
+            if (myLastMousePressedLocation != null && (myCurrentDragIsSubstantial || !newLogicalCaret.equals(myLastMousePressedLocation))) {
+              selectionModel.setBlockSelection(myLastMousePressedLocation, newLogicalCaret);
+              myCurrentDragIsSubstantial = true;
+            }
           } else {
             final LogicalPosition blockStart = selectionModel.hasBlockSelection() ? selectionModel.getBlockStart() : oldLogicalCaret;
             selectionModel.setBlockSelection(blockStart, getCaretModel().getLogicalPosition());
@@ -4267,6 +4249,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
 
           if (!myMousePressedInsideSelection) {
+            if (myCaretModel.supportsMultipleCarets() && myLastMousePressedLocation != null) {
+              oldSelectionStart = logicalPositionToOffset(myLastMousePressedLocation);
+              oldVisLeadSelectionStart = logicalToVisualPosition(myLastMousePressedLocation);
+            }
             // There is a possible case that lead selection position should be adjusted in accordance with the mouse move direction.
             // E.g. consider situation when user selects the whole line by clicking at 'line numbers' area. 'Line end' is considered
             // to be lead selection point then. However, when mouse is dragged down we want to consider 'line start' to be
@@ -4757,7 +4743,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 return;
               }
 
-              if (myMultiSelectionInProgress) {
+              if (myMultiSelectionInProgress && myLastMousePressedLocation != null) {
                 myTargetMultiSelectionPosition = pos;
                 LogicalPosition newLogicalPosition = visualToLogicalPosition(pos);
                 getScrollingModel().scrollTo(newLogicalPosition, ScrollType.RELATIVE);
@@ -4838,11 +4824,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (myRepaintCallback != null) {
         myRepaintCallback.call(g);
       }
-    }
-
-    @Override
-    public boolean isOpaque() {
-      return true;
     }
 
     /**
@@ -5045,7 +5026,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     else {
       myScrollPane.setLayout(new ScrollPaneLayout());
     }
-    ((JBScrollPane)myScrollPane).setupCorners();
     myScrollingModel.scrollHorizontally(currentHorOffset);
   }
 
@@ -5497,6 +5477,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     private void runMousePressedCommand(@NotNull final MouseEvent e) {
       myLastMousePressedLocation = xyToLogicalPosition(e.getPoint());
+      myCurrentDragIsSubstantial = false;
 
       final int clickOffset = logicalPositionToOffset(myLastMousePressedLocation);
       putUserData(EditorActionUtil.EXPECTED_CARET_OFFSET, clickOffset);
@@ -5669,22 +5650,31 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       final int oldStart = mySelectionModel.getSelectionStart();
       final int oldEnd = mySelectionModel.getSelectionEnd();
 
+      boolean toggleCaret = myCaretModel.supportsMultipleCarets() && e.getSource() != myGutterComponent && isToggleCaretEvent(e);
+      boolean lastPressCreatedCaret = myLastPressCreatedCaret;
+      if (e.getClickCount() == 1) {
+        myLastPressCreatedCaret = false;
+      }
       // Don't move caret on mouse press above gutter line markers area (a place where break points, 'override', 'implements' etc icons
       // are drawn) and annotations area. E.g. we don't want to change caret position if a user sets new break point (clicks
       // at 'line markers' area).
       if (e.getSource() != myGutterComponent
           || (eventArea != EditorMouseEventArea.LINE_MARKERS_AREA && eventArea != EditorMouseEventArea.ANNOTATIONS_AREA))
       {
-        boolean toggleCaret = myCaretModel.supportsMultipleCarets() && e.getSource() != myGutterComponent && isToggleCaretEvent(e);
         LogicalPosition pos = getLogicalPositionForScreenPos(x, y, true);
         if (toggleCaret) {
           VisualPosition visualPosition = logicalToVisualPosition(pos);
           Caret caret = getCaretModel().getCaretAt(visualPosition);
-          if (caret == null) {
-            getCaretModel().addCaret(visualPosition);
+          if (e.getClickCount() == 1) {
+            if (caret == null) {
+              myLastPressCreatedCaret = getCaretModel().addCaret(visualPosition) != null;
+            }
+            else {
+              getCaretModel().removeCaret(caret);
+            }
           }
-          else {
-            getCaretModel().removeCaret(caret);
+          else if (e.getClickCount() == 3 && lastPressCreatedCaret) {
+            getCaretModel().moveToLogicalPosition(pos);
           }
         }
         else {
@@ -5754,7 +5744,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
         else {
           if (!e.isPopupTrigger()
-              && (eventArea == EditorMouseEventArea.EDITING_AREA || eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA))
+              && (eventArea == EditorMouseEventArea.EDITING_AREA || eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA)
+              && (!toggleCaret || lastPressCreatedCaret))
           {
             switch (e.getClickCount()) {
               case 2:
@@ -6676,6 +6667,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  boolean isInDistractionFreeMode() {
+    return Registry.is("editor.distraction.free.mode") && EditorUtil.isRealFileEditor(this);
+  }
+
+  boolean isInPresentationMode() {
+    return UISettings.getInstance().PRESENTATION_MODE && EditorUtil.isRealFileEditor(this);
+  }
+
   @Override
   public void putInfo(@NotNull Map<String, String> info) {
     final VisualPosition visual = getCaretModel().getVisualPosition();
@@ -6685,6 +6684,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private class MyScrollPane extends JBScrollPane {
     private MyScrollPane() {
       setViewportBorder(new EmptyBorder(0, 0, 0, 0));
+    }
+
+    @Override
+    public void layout() {
+      super.layout();
+      if (isInDistractionFreeMode()) {
+        // re-calc gutter extra size after editor size is set
+        // & layout once again to avoid blinking
+        myGutterComponent.updateSize();
+        super.layout();
+      }
     }
 
     @Override
@@ -6709,7 +6719,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     @Override
-    public void setupCorners() {
+    protected void setupCorners() {
       super.setupCorners();
 
       setBorder(new TablessBorder());

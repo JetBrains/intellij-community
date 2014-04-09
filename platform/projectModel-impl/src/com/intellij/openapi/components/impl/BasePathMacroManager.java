@@ -112,7 +112,7 @@ public class BasePathMacroManager extends PathMacroManager {
   }
 
   @Override
-  public String collapsePath(final String path) {
+  public String collapsePath(@Nullable String path) {
     return getReplacePathMap().substitute(path, SystemInfo.isFileSystemCaseSensitive);
   }
 
@@ -177,7 +177,7 @@ public class BasePathMacroManager extends PathMacroManager {
     }
 
     @Override
-    public String collapsePath(final String path) {
+    public String collapsePath(@Nullable String path) {
       return getReplacePathMap().substitute(path, SystemInfo.isFileSystemCaseSensitive);
     }
 

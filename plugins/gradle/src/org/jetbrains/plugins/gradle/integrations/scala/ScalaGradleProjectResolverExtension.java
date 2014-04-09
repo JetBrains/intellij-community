@@ -31,7 +31,6 @@ import org.jetbrains.plugins.gradle.model.data.ScalaCompileOptionsData;
 import org.jetbrains.plugins.gradle.model.data.ScalaModelData;
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.util.Collections;
 import java.util.Set;
@@ -44,12 +43,8 @@ import java.util.Set;
 public class ScalaGradleProjectResolverExtension extends AbstractProjectResolverExtension {
   private static final Logger LOG = Logger.getInstance(ScalaGradleProjectResolverExtension.class);
 
-  private static final boolean scalaPluginPresent = GradleUtil.isPluginPresent("org.intellij.scala");
-
   @Override
   public void populateModuleExtraModels(@NotNull IdeaModule gradleModule, @NotNull DataNode<ModuleData> ideModule) {
-    if (!scalaPluginPresent) return;
-
     ScalaModel scalaModel = resolverCtx.getExtraProject(gradleModule, ScalaModel.class);
     if (scalaModel != null) {
       ScalaModelData scalaModelData = create(scalaModel);
@@ -62,7 +57,7 @@ public class ScalaGradleProjectResolverExtension extends AbstractProjectResolver
   @NotNull
   @Override
   public Set<Class> getExtraProjectModelClasses() {
-    return scalaPluginPresent ? Collections.<Class>singleton(ScalaModel.class) : Collections.<Class>emptySet();
+    return Collections.<Class>singleton(ScalaModel.class);
   }
 
 

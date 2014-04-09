@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -218,7 +218,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     final List<PyImportElement> visibleImports = new ArrayList<PyImportElement>();
     PyResolveUtil.scopeCrawlUp(new PsiScopeProcessor() {
       @Override
-      public boolean execute(@NotNull PsiElement element, ResolveState state) {
+      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
         if (element instanceof PyImportElement) {
           visibleImports.add((PyImportElement)element);
         }
@@ -232,7 +232,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       }
 
       @Override
-      public void handleEvent(Event event, @Nullable Object associated) {
+      public void handleEvent(@NotNull Event event, @Nullable Object associated) {
       }
     }, owner, null, null);
     return visibleImports;

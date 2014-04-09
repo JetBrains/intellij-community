@@ -15,16 +15,18 @@
  */
 package com.siyeh.ig.dataflow;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.xmlb.XmlSerializer;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -162,11 +164,17 @@ public class UnnecessaryLocalVariableInspectionBase extends BaseInspection {
           VariableAccessUtils.variableIsAssigned(initialization, containingScope, false)) {
         return false;
       }
-      if (!initialization.hasModifierProperty(PsiModifier.FINAL) && variable.hasModifierProperty(PsiModifier.FINAL)) {
-        if (VariableAccessUtils.variableIsUsedInInnerClass(variable, containingScope)) {
-          return false;
+
+      if (!initialization.hasModifierProperty(PsiModifier.FINAL) && variable.hasModifierProperty(PsiModifier.FINAL) ||
+          PsiUtil.isLanguageLevel8OrHigher(initialization) && !HighlightControlFlowUtil.isEffectivelyFinal(initialization, containingScope, null) && HighlightControlFlowUtil.isEffectivelyFinal(variable, containingScope, null)) {
+        for (PsiReference ref : ReferencesSearch.search(variable, new LocalSearchScope(containingScope))) {
+          final PsiElement element = PsiTreeUtil.getParentOfType(ref.getElement(), PsiClass.class, PsiLambdaExpression.class);
+          if (element != null && PsiTreeUtil.isAncestor(containingScope, element, true)) {
+            return false;
+          }
         }
       }
+
       return !TypeConversionUtil.boxingConversionApplicable(variable.getType(), initialization.getType());
     }
 

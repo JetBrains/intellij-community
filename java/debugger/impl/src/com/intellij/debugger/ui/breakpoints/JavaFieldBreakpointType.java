@@ -46,6 +46,11 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
     super("java-field", DebuggerBundle.message("field.watchpoints.tab.title"));
   }
 
+  @Override
+  public boolean isAddBreakpointButtonVisible() {
+    return true;
+  }
+
   @NotNull
   @Override
   public Icon getEnabledIcon() {

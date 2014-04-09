@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.actions.generate.GroovyGenerationInfo;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
@@ -35,10 +36,11 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 public class GrFieldMember extends PsiElementClassMember<PsiField> implements EncapsulatableClassMember {
   private static final int FIELD_OPTIONS = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.TYPE_AFTER;
 
-  protected GrFieldMember(final PsiField field) {
+  protected GrFieldMember(@NotNull PsiField field) {
     super(field, PsiFormatUtil.formatVariable(field, FIELD_OPTIONS, PsiSubstitutor.EMPTY));
   }
 
+  @Override
   @Nullable
   public GroovyGenerationInfo<GrMethod> generateGetter() {
     PsiField field = getElement();
@@ -52,6 +54,7 @@ public class GrFieldMember extends PsiElementClassMember<PsiField> implements En
     return existing == null || existing instanceof GrAccessorMethod ? template : null;
   }
 
+  @Override
   @Nullable
   public GroovyGenerationInfo<GrMethod> generateSetter() {
     PsiField field = getElement();

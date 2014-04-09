@@ -20,6 +20,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated use {@link com.intellij.openapi.project.DumbModeTask}
+ * to be removed in IDEA 15
+ */
 public interface CacheUpdater {
   int getNumberOfPendingUpdateJobs();
 

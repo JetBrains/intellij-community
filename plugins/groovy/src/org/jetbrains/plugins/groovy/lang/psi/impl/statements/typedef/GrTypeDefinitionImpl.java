@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -572,7 +573,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   //hack to get runnable icon for all classes that can be run by Groovy
   private int getFlagsInner() {
-    return GroovyRunnerUtil.isRunnable(this) ? ElementPresentationUtil.FLAGS_RUNNABLE : 0;
+    return !DumbService.isDumb(getProject()) && GroovyRunnerUtil.isRunnable(this) ? ElementPresentationUtil.FLAGS_RUNNABLE : 0;
   }
 
   private Icon getIconInner() {

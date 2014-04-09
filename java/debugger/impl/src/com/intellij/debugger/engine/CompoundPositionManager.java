@@ -21,6 +21,7 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.sun.jdi.Location;
@@ -34,6 +35,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class CompoundPositionManager extends PositionManagerEx {
+  private static final Logger LOG = Logger.getInstance(CompoundPositionManager.class);
+
   private final ArrayList<PositionManager> myPositionManagers = new ArrayList<PositionManager>();
 
   @SuppressWarnings("UnusedDeclaration")
@@ -57,18 +60,24 @@ public class CompoundPositionManager extends PositionManagerEx {
       }
       catch (NoDataException ignored) {
       }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
     return null;
   }
 
   @Override
   @NotNull
-  public List<ReferenceType> getAllClasses(SourcePosition classPosition) {
+  public List<ReferenceType> getAllClasses(@NotNull SourcePosition classPosition) {
     for (PositionManager positionManager : myPositionManagers) {
       try {
         return positionManager.getAllClasses(classPosition);
       }
       catch (NoDataException ignored) {
+      }
+      catch (Exception e) {
+        LOG.error(e);
       }
     }
     return Collections.emptyList();
@@ -76,24 +85,30 @@ public class CompoundPositionManager extends PositionManagerEx {
 
   @Override
   @NotNull
-  public List<Location> locationsOfLine(ReferenceType type, SourcePosition position) {
+  public List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) {
     for (PositionManager positionManager : myPositionManagers) {
       try {
         return positionManager.locationsOfLine(type, position);
       }
       catch (NoDataException ignored) {
       }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
     return Collections.emptyList();
   }
 
   @Override
-  public ClassPrepareRequest createPrepareRequest(ClassPrepareRequestor requestor, SourcePosition position) {
+  public ClassPrepareRequest createPrepareRequest(@NotNull ClassPrepareRequestor requestor, @NotNull SourcePosition position) {
     for (PositionManager positionManager : myPositionManagers) {
       try {
         return positionManager.createPrepareRequest(requestor, position);
       }
       catch (NoDataException ignored) {
+      }
+      catch (Exception e) {
+        LOG.error(e);
       }
     }
 
@@ -105,9 +120,14 @@ public class CompoundPositionManager extends PositionManagerEx {
   public XStackFrame createStackFrame(@NotNull StackFrameProxyImpl frame, @NotNull DebugProcessImpl debugProcess, @NotNull Location location) {
     for (PositionManager positionManager : myPositionManagers) {
       if (positionManager instanceof PositionManagerEx) {
-        XStackFrame xStackFrame = ((PositionManagerEx)positionManager).createStackFrame(frame, debugProcess, location);
-        if (xStackFrame != null) {
-          return xStackFrame;
+        try {
+          XStackFrame xStackFrame = ((PositionManagerEx)positionManager).createStackFrame(frame, debugProcess, location);
+          if (xStackFrame != null) {
+            return xStackFrame;
+          }
+        }
+        catch (Throwable e) {
+          LOG.error(e);
         }
       }
     }
@@ -121,9 +141,14 @@ public class CompoundPositionManager extends PositionManagerEx {
                                       @NotNull String expression) {
     for (PositionManager positionManager : myPositionManagers) {
       if (positionManager instanceof PositionManagerEx) {
-        ThreeState result = ((PositionManagerEx)positionManager).evaluateCondition(context, frame, location, expression);
-        if (result != ThreeState.UNSURE) {
-          return result;
+        try {
+          ThreeState result = ((PositionManagerEx)positionManager).evaluateCondition(context, frame, location, expression);
+          if (result != ThreeState.UNSURE) {
+            return result;
+          }
+        }
+        catch (Throwable e) {
+          LOG.error(e);
         }
       }
     }

@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
@@ -31,6 +32,7 @@ import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
@@ -42,6 +44,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.EventListener;
 import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -56,7 +59,12 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
 
   private final FullscreenQueue<Runnable> myFullscreenQueue = new FullscreenQueue<Runnable>();
 
-  private class FullscreenQueue <T extends Runnable> {
+  private final EventDispatcher<FSListener> myDispatcher = EventDispatcher.create(FSListener.class);
+
+  private interface FSListener extends FullScreenListener, EventListener {}
+  private static class FSAdapter extends FullScreenAdapter implements FSListener {}
+
+  private static class FullscreenQueue <T extends Runnable> {
 
     private boolean waitingForAppKit = false;
     private LinkedList<Runnable> queueModel = new LinkedList<Runnable>();
@@ -225,8 +233,29 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
         if (!FULL_SCREEN_AVAILABLE) return;
 
         FullScreenUtilities.setWindowCanFullScreen(frame, true);
+        // Native fullscreen listener can be set only once
+        FullScreenUtilities.addFullScreenListenerTo(frame, new FullScreenListener() {
+          @Override
+          public void windowEnteringFullScreen(AppEvent.FullScreenEvent event) {
+            myDispatcher.getMulticaster().windowEnteringFullScreen(event);
+          }
 
-        FullScreenUtilities.addFullScreenListenerTo(frame, new FullScreenAdapter() {
+          @Override
+          public void windowEnteredFullScreen(AppEvent.FullScreenEvent event) {
+            myDispatcher.getMulticaster().windowEnteredFullScreen(event);
+          }
+
+          @Override
+          public void windowExitingFullScreen(AppEvent.FullScreenEvent event) {
+            myDispatcher.getMulticaster().windowExitingFullScreen(event);
+          }
+
+          @Override
+          public void windowExitedFullScreen(AppEvent.FullScreenEvent event) {
+            myDispatcher.getMulticaster().windowExitedFullScreen(event);
+          }
+        });
+        myDispatcher.addListener(new FSAdapter() {
           @Override
           public void windowEnteredFullScreen(AppEvent.FullScreenEvent event) {
             // We can get the notification when the frame has been disposed
@@ -328,14 +357,27 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
   }
 
   @Override
-  public void toggleFullScreen(final boolean state) {
-    if (!SystemInfo.isMacOSLion || myFrame == null || myInFullScreen == state) return;
+  public ActionCallback toggleFullScreen(final boolean state) {
+    if (!SystemInfo.isMacOSLion || myFrame == null || myInFullScreen == state) return ActionCallback.REJECTED;
+    final ActionCallback callback = new ActionCallback();
+    myDispatcher.addListener(new FSAdapter() {
+      @Override
+      public void windowExitedFullScreen(AppEvent.FullScreenEvent event) {
+        callback.setDone();
+        myDispatcher.removeListener(this);
+      }
+
+      @Override
+      public void windowEnteredFullScreen(AppEvent.FullScreenEvent event) {
+        callback.setDone();
+        myDispatcher.removeListener(this);
+      }
+    });
 
     myFullscreenQueue.runOrEnqueue( new Runnable() {
       @Override
       public void run() {
-        if (SystemInfo.isJavaVersionAtLeast("1.7")) {
-          try {
+        try {
             requestToggleFullScreenMethod.invoke(Application.getApplication(),myFrame);
           }
           catch (IllegalAccessException e) {
@@ -344,18 +386,9 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
           catch (InvocationTargetException e) {
             LOG.error(e);
           }
-        } else {
-          final ID window = MacUtil.findWindowForTitle(myFrame.getTitle());
-          if (window == null) return;
-          Foundation.executeOnMainThread(new Runnable() {
-            @Override
-            public void run() {
-              invoke(window, "toggleFullScreen:", window);
-            }
-          }, true, true);
-        }
       }
     });
+    return callback;
   }
 
 }

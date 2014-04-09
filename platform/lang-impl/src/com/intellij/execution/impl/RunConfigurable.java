@@ -27,10 +27,12 @@ import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.ListPopupStep;
+import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -42,7 +44,8 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.config.StorageAccessors;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.EmptyIcon;
@@ -64,7 +67,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.*;
-import java.util.HashSet;
 import java.util.List;
 
 import static com.intellij.execution.impl.RunConfigurable.NodeKind.*;
@@ -74,7 +76,7 @@ class RunConfigurable extends BaseConfigurable {
 
   private static final Icon ADD_ICON = IconUtil.getAddIcon();
   private static final Icon REMOVE_ICON = IconUtil.getRemoveIcon();
-  private static final Icon SHARED_ICON = IconLoader.getTransparentIcon(AllIcons.Nodes.Symlink, .6f);
+  private static final Icon SHARED_ICON = AllIcons.Nodes.Shared;
   private static final Icon NON_SHARED_ICON = EmptyIcon.ICON_16;
   @NonNls private static final String DIVIDER_PROPORTION = "dividerProportion";
   @NonNls private static final Object DEFAULTS = new Object() {
@@ -200,9 +202,7 @@ class RunConfigurable extends BaseConfigurable {
           }
           if (shared != null) {
             Icon icon = getIcon();
-            LayeredIcon layeredIcon = new LayeredIcon(2);
-            layeredIcon.setIcon(icon, 0, 0, 0);
-            layeredIcon.setIcon(shared ? SHARED_ICON : NON_SHARED_ICON, 1, 8, 0);
+            LayeredIcon layeredIcon = new LayeredIcon(icon, shared ? SHARED_ICON : NON_SHARED_ICON);
             setIcon(layeredIcon);
             setIconTextGap(0);
           } else {
@@ -411,6 +411,9 @@ class RunConfigurable extends BaseConfigurable {
         }
         else if (userObject1 == DEFAULTS && userObject2 instanceof ConfigurationType) {
           return 1;
+        }
+        else if (userObject2 == DEFAULTS && userObject1 instanceof ConfigurationType) {
+          return -1;
         }
 
         return 0;
@@ -1214,7 +1217,7 @@ class RunConfigurable extends BaseConfigurable {
     public MyRemoveAction() {
       super(ExecutionBundle.message("remove.run.configuration.action.name"),
             ExecutionBundle.message("remove.run.configuration.action.name"), REMOVE_ICON);
-      registerCustomShortcutSet(CommonShortcuts.DELETE, myTree);
+      registerCustomShortcutSet(CommonShortcuts.getDelete(), myTree);
     }
 
     @Override

@@ -39,13 +39,13 @@ import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.*;
-import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.search.searches.MethodReferencesSearch;
-import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.search.searches.*;
 import com.intellij.psi.targets.AliasingPsiTarget;
 import com.intellij.psi.targets.AliasingPsiTargetMapper;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.refactoring.util.JavaNonCodeSearchElementDescriptionProvider;
 import com.intellij.refactoring.util.NonCodeSearchDescriptionLocation;
@@ -346,6 +346,13 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         }
         else if (classOptions.isImplementingClasses){
           if (!addImplementingClasses(psiClass, processor, classOptions)) return false;
+          FunctionalExpressionSearch.search(psiClass, classOptions.searchScope).forEach(new PsiElementProcessorAdapter<PsiFunctionalExpression>(
+            new PsiElementProcessor<PsiFunctionalExpression>() {
+              @Override
+              public boolean execute(@NotNull PsiFunctionalExpression expression) {
+                return addResult(processor, expression, options);
+              }
+            }));
         }
       }
       else if (classOptions.isDerivedClasses) {
@@ -364,6 +371,13 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       final JavaMethodFindUsagesOptions methodOptions = (JavaMethodFindUsagesOptions)options;
       if (isAbstract && methodOptions.isImplementingMethods || methodOptions.isOverridingMethods) {
         if (!processOverridingMethods(psiMethod, processor, methodOptions)) return false;
+        FunctionalExpressionSearch.search(psiMethod, methodOptions.searchScope).forEach(new PsiElementProcessorAdapter<PsiFunctionalExpression>(
+          new PsiElementProcessor<PsiFunctionalExpression>() {
+            @Override
+            public boolean execute(@NotNull PsiFunctionalExpression expression) {
+              return addResult(processor, expression, options);
+            }
+          }));
       }
     }
 

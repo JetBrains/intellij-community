@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.UnsupportedEncodingException;
@@ -165,7 +166,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
   }
 
   @Override
-  protected byte[] key(@Nullable final Project project) throws PasswordSafeException {
+  protected byte[] key(@Nullable final Project project, @NotNull final Class requestor) throws PasswordSafeException {
     ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
     if (!isTestMode() && application.isHeadlessEnvironment()) {
       throw new MasterPasswordUnavailableException("The provider is not available in headless environment");
@@ -193,12 +194,12 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
                   throw new MasterPasswordUnavailableException("Master password must be specified in test mode.");
                 }
                 if (database.isEmpty()) {
-                  if (!ResetPasswordDialog.newPassword(project, MasterKeyPasswordSafe.this)) {
+                  if (!MasterPasswordDialog.resetMasterPasswordDialog(project, MasterKeyPasswordSafe.this, requestor).showAndGet()) {
                     throw new MasterPasswordUnavailableException("Master password is required to store passwords in the database.");
                   }
                 }
                 else {
-                  MasterPasswordDialog.askPassword(project, MasterKeyPasswordSafe.this);
+                  MasterPasswordDialog.askPassword(project, MasterKeyPasswordSafe.this, requestor);
                 }
               }
               catch (PasswordSafeException e) {
@@ -224,18 +225,18 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
    * {@inheritDoc}
    */
   @Override
-  public String getPassword(@Nullable Project project, Class requester, String key) throws PasswordSafeException {
+  public String getPassword(@Nullable Project project, @NotNull Class requestor, String key) throws PasswordSafeException {
     if (database.isEmpty()) {
       return null;
     }
-    return super.getPassword(project, requester, key);
+    return super.getPassword(project, requestor, key);
   }
 
   /**
    * {@inheritDoc}
    */
   @Override
-  public void removePassword(@Nullable Project project, Class requester, String key) throws PasswordSafeException {
+  public void removePassword(@Nullable Project project, @NotNull Class requester, String key) throws PasswordSafeException {
     if (database.isEmpty()) {
       return;
     }

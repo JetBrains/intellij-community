@@ -14,6 +14,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.*;
+import com.intellij.vcs.log.graph.ChangeCursorActionRequest;
+import com.intellij.vcs.log.graph.ClickGraphAction;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.impl.VcsLogImpl;
 import com.intellij.vcs.log.ui.frame.MainFrame;
@@ -43,6 +45,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   @NotNull private final VcsLogColorManager myColorManager;
   @NotNull private final VcsLogFilterer myFilterer;
   @NotNull private final VcsLog myLog;
+  @NotNull private final VcsLogUiProperties myUiProperties;
 
   @NotNull private final Collection<VcsLogFilterChangeListener> myFilterChangeListeners = ContainerUtil.newArrayList();
 
@@ -53,6 +56,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     myLogDataHolder = logDataHolder;
     myProject = project;
     myColorManager = manager;
+    myUiProperties = uiProperties;
     myDataPack = initialDataPack;
     Disposer.register(logDataHolder, this);
 
@@ -134,8 +138,14 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     runUnderModalProgress("Expanding linear branches...", new Runnable() {
       @Override
       public void run() {
-        handleAnswer(myDataPack.getGraphFacade().performAction(LinearBranchesExpansionAction.EXPAND));
-        jumpToRow(0);
+        final GraphAnswer answer = myDataPack.getGraphFacade().performAction(LinearBranchesExpansionAction.EXPAND);
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            handleAnswer(answer);
+            jumpToRow(0);
+          }
+        });
       }
     });
   }
@@ -144,14 +154,21 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     runUnderModalProgress("Collapsing linear branches...", new Runnable() {
       @Override
       public void run() {
-        handleAnswer(myDataPack.getGraphFacade().performAction(LinearBranchesExpansionAction.COLLAPSE));
-        jumpToRow(0);
+        final GraphAnswer answer = myDataPack.getGraphFacade().performAction(LinearBranchesExpansionAction.COLLAPSE);
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            handleAnswer(answer);
+            jumpToRow(0);
+          }
+        });
       }
     });
   }
 
   public void setLongEdgeVisibility(boolean visibility) {
     handleAnswer(myDataPack.getGraphFacade().performAction(LongEdgesAction.valueOf(visibility)));
+    myUiProperties.setLongEdgesVisibility(visibility);
   }
 
   public boolean areLongEdgesHidden() {
@@ -197,7 +214,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
       jumpToRow(row);
     }
     else if (actionRequest instanceof ChangeCursorActionRequest) {
-      myMainFrame.setCursor(((ChangeCursorActionRequest)actionRequest).getCursor());
+      myMainFrame.getGraphTable().setCursor(((ChangeCursorActionRequest)actionRequest).getCursor());
     }
   }
 
@@ -282,12 +299,13 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
       public void run() {
         final TIntHashSet previouslySelected = getSelectedCommits();
         final AbstractVcsLogTableModel newModel = myFilterer.applyFiltersAndUpdateUi(dataPack, getFilters());
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           @Override
           public void run() {
             myDataPack = dataPack;
             setModel(newModel, myDataPack, previouslySelected);
             myMainFrame.updateDataPack(myDataPack);
+            setLongEdgeVisibility(myUiProperties.areLongEdgesVisible());
             fireFilterChangeEvent();
             repaintUI();
 

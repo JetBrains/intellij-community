@@ -53,6 +53,7 @@ public class ReorderJarsMain {
         final JBZipFile zipFile = new JBZipFile(jarFile);
         final List<JBZipEntry> entries = zipFile.getEntries();
         final List<String> orderedEntries = toReorder.get(jarUrl);
+        assert orderedEntries.size() <= Short.MAX_VALUE : jarUrl;
         Collections.sort(entries, new Comparator<JBZipEntry>() {
           @Override
           public int compare(JBZipEntry o1, JBZipEntry o2) {

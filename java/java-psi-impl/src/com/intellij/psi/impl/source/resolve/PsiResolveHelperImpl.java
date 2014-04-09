@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
   }
 
   @Nullable
-  private PsiVariable resolveVar(final String referenceText, final PsiElement context, final boolean[] problemWithAccess) {
+  private PsiVariable resolveVar(@NotNull String referenceText, final PsiElement context, final boolean[] problemWithAccess) {
     final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(myManager.getProject()).getParserFacade();
     try {
       final PsiJavaCodeReferenceElement ref = parserFacade.createReferenceFromText(referenceText, context);
@@ -127,11 +127,18 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return JavaResolveUtil.isAccessible(member, containingClass, modifierList, place, accessObjectClass, currentFileResolveScope);
   }
 
-  @Override
   @NotNull
-  public CandidateInfo[] getReferencedMethodCandidates(@NotNull PsiCallExpression expr, boolean dummyImplicitConstructor) {
+  @Override
+  public CandidateInfo[] getReferencedMethodCandidates(@NotNull PsiCallExpression expr,
+                                                       boolean dummyImplicitConstructor,
+                                                       final boolean checkVarargs) {
     PsiFile containingFile = expr.getContainingFile();
-    final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(expr, containingFile);
+    final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(expr, containingFile) {
+      @Override
+      protected boolean acceptVarargs() {
+        return checkVarargs;
+      }
+    };
     try {
       PsiScopesUtil.setupAndRunProcessor(processor, expr, dummyImplicitConstructor);
     }
@@ -139,6 +146,12 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       return CandidateInfo.EMPTY_ARRAY;
     }
     return processor.getCandidates();
+  }
+
+  @NotNull
+  @Override
+  public CandidateInfo[] getReferencedMethodCandidates(@NotNull PsiCallExpression call, boolean dummyImplicitConstructor) {
+    return getReferencedMethodCandidates(call, dummyImplicitConstructor, false);
   }
 
   @Override

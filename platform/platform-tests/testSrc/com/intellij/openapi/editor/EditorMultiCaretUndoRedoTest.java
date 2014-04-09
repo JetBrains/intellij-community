@@ -85,7 +85,7 @@ public class EditorMultiCaretUndoRedoTest extends AbstractEditorTest {
     type('b');
     undo();
     executeAction("EditorRightWithSelection");
-    verifyCaretsAndSelections(0, 3, 0, 2, 0, 3);
+    verifyCaretsAndSelections(0, 3, 2, 3);
   }
 
   public void testBlockSelectionStateAfterUndo2() throws Exception {
@@ -94,7 +94,7 @@ public class EditorMultiCaretUndoRedoTest extends AbstractEditorTest {
     mouse().clickAt(0, 0).dragTo(0, 2).release();
     type('b');
     undo();
-    verifyCaretsAndSelections(0, 2, 0, 0, 0, 2);
+    verifyCaretsAndSelections(0, 2, 0, 2);
   }
 
   public void testPrimaryCaretPositionAfterUndo() throws Exception {

@@ -356,6 +356,10 @@ public class ManagePackagesDialog extends DialogWrapper {
     myFilter = new MyPackageFilter();
   }
 
+  public void setOptionsText(@NotNull String optionsText) {
+    myOptionsField.setText(optionsText);
+  }
+
   public class MyPackageFilter extends FilterComponent {
 
     public MyPackageFilter() {

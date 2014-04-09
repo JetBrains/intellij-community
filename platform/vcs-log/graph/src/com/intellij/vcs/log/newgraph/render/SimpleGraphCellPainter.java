@@ -16,7 +16,7 @@
 package com.intellij.vcs.log.newgraph.render;
 
 import com.intellij.ui.JBColor;
-import com.intellij.vcs.log.graph.render.PrintParameters;
+import com.intellij.vcs.log.printer.idea.PrintParameters;
 import com.intellij.vcs.log.newgraph.gpaph.Edge;
 import com.intellij.vcs.log.newgraph.gpaph.GraphElement;
 import com.intellij.vcs.log.newgraph.gpaph.Node;

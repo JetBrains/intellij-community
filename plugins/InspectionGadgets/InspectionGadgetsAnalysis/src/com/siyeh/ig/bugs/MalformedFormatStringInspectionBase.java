@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,7 +167,7 @@ public class MalformedFormatStringInspectionBase extends BaseInspection {
         if (argumentType == null) {
           continue;
         }
-        if (!validator.valid(argumentType)) {
+        if (validator != null && !validator.valid(argumentType)) {
           registerError(formatArgument, validators, Integer.valueOf(argumentCount));
           return;
         }

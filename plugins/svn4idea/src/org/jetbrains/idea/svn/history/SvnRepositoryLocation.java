@@ -33,10 +33,17 @@ import java.io.File;
  * @author yole
  */
 public class SvnRepositoryLocation implements RepositoryLocation {
-  private final String myURL;
 
-  public SvnRepositoryLocation(final String URL) {
-    myURL = URL;
+  private final String myURL;
+  @Nullable private final FilePath myRoot;
+
+  public SvnRepositoryLocation(final String url) {
+    this(url, null);
+  }
+
+  public SvnRepositoryLocation(String url, @Nullable FilePath root) {
+    myURL = url;
+    myRoot = root;
   }
 
   public String toString() {
@@ -53,6 +60,11 @@ public class SvnRepositoryLocation implements RepositoryLocation {
 
   public String getKey() {
     return myURL;
+  }
+
+  @Nullable
+  public FilePath getRoot() {
+    return myRoot;
   }
 
   @Override

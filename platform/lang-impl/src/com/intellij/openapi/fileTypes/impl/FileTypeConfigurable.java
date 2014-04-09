@@ -657,7 +657,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
         final Object at = myPatternsList.getModel().getElementAt(i);
         if (at instanceof String) {
           final FileNameMatcher matcher = FileTypeManager.parseFromString((String)at);
-          if (matcher != null && matcher.accept(pattern)) {
+          if (FileNameMatcherEx.acceptsCharSequence(matcher, pattern)) {
             ListScrollingUtil.selectItem(myPatternsList, i);
             return;
           }

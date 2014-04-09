@@ -1426,8 +1426,8 @@ def bar
 ''')
   }
 
- void testFinalFieldRewrite() {
-   testHighlighting('''\
+  void testFinalFieldRewrite() {
+    testHighlighting('''\
 class A {
   final foo = 1
 
@@ -1442,7 +1442,7 @@ class A {
 
 new A().foo = 2 //no error
 ''')
- }
+  }
 
   void testStaticFinalFieldRewrite() {
     testHighlighting('''\
@@ -1799,5 +1799,23 @@ foo(<caret>)
 ''')
 
     myFixture.getAvailableIntention("Static Import Method 'A.foo'")
+  }
+
+  void testInaccessibleWithCompileStatic() {
+    addCompileStatic()
+    testHighlighting('''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+class PrivateTest {
+    void doTest() {
+        Target.<error descr="Access to 'callMe' exceeds its access rights">callMe</error>()
+    }
+}
+
+class Target {
+    private static void callMe() {}
+}
+''')
   }
 }

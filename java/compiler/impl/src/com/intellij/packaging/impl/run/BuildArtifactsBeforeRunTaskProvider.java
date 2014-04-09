@@ -20,6 +20,7 @@ import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.ConfigurationSettingsEditorWrapper;
+import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -164,7 +165,7 @@ public class BuildArtifactsBeforeRunTaskProvider extends BeforeRunTaskProvider<B
 
   public boolean executeTask(DataContext context,
                              RunConfiguration configuration,
-                             ExecutionEnvironment env,
+                             final ExecutionEnvironment env,
                              final BuildArtifactsBeforeRunTask task) {
     final Ref<Boolean> result = Ref.create(false);
     final Semaphore finished = new Semaphore();
@@ -195,7 +196,9 @@ public class BuildArtifactsBeforeRunTaskProvider extends BeforeRunTaskProvider<B
       public void run() {
         final CompilerManager manager = CompilerManager.getInstance(myProject);
         finished.down();
-        manager.make(ArtifactCompileScope.createArtifactsScope(myProject, artifacts), compilerFilter, callback);
+        final CompileScope scope = ArtifactCompileScope.createArtifactsScope(myProject, artifacts);
+        ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.set(scope, ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(env));
+        manager.make(scope, compilerFilter, callback);
       }
     }, ModalityState.NON_MODAL);
 

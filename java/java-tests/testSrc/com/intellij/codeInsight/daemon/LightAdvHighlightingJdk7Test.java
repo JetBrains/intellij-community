@@ -165,6 +165,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testUncheckedWarningIDEA26738() { doTest(true, false); }
   public void testUncheckedWarningIDEA99536() { doTest(true, false); }
   public void testEnclosingInstance() { doTest(false, false); }
+  public void testIDEA122519EnclosingInstance() { doTest(false, false); }
   public void testWrongArgsAndUnknownTypeParams() { doTest(false, false); }
   public void testAmbiguousMethodCallIDEA97983() { doTest(false, false); }
   public void testAmbiguousMethodCallIDEA100314() { doTest(false, false); }
@@ -180,4 +181,5 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testIDEA78916() { doTest(false, false); }
   public void testIDEA111420() { doTest(false, false); }
   public void testIDEA111450() { doTest(true, false); }
+  public void testExternalizable() { doTest(true, false); }
 }

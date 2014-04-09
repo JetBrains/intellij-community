@@ -43,7 +43,7 @@ public class HgGetDiffForDirTest extends HgPlatformTest {
     touch("B.txt");
     hg("add B.txt");
     hg("commit -m 2files_added");
-    File dirFile = new File(mkdir("dir"));
+    File dirFile = mkdir("dir");
     cd("dir");
     touch("C.txt");
     touch("D.txt");

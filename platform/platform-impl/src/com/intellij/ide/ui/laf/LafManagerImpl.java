@@ -521,6 +521,13 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     updateToolWindows();
 
     for (Frame frame : Frame.getFrames()) {
+      // OSX/Aqua fix: Some image caching components like ToolWindowHeader use
+      // com.apple.laf.AquaNativeResources$CColorPaintUIResource
+      // a Java wrapper for ObjC MagicBackgroundColor class (Java RGB values ignored).
+      // MagicBackgroundColor always reports current Frame background.
+      // So we need to set frames background to exact and correct value.
+      frame.setBackground(new Color(UIUtil.getPanelBackground().getRGB()));
+
       updateUI(frame);
     }
     fireLookAndFeelChanged();

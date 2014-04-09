@@ -36,6 +36,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.Place;
@@ -72,6 +73,8 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
 
   @Override
   protected void collectInformationWithProgress(@NotNull final ProgressIndicator progress) {
+    if (!Registry.is("editor.injected.highlighting.enabled", true)) return;
+
     final Set<HighlightInfo> gotHighlights = new THashSet<HighlightInfo>(100);
 
     final List<PsiElement> inside = new ArrayList<PsiElement>();

@@ -17,6 +17,7 @@ package com.intellij.lang.properties.editor;
 
 import com.intellij.ide.structureView.FileEditorPositionListener;
 import com.intellij.ide.structureView.ModelListener;
+import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.smartTree.Filter;
 import com.intellij.ide.util.treeView.smartTree.Grouper;
@@ -30,16 +31,16 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author max
  */
-public class ResourceBundleStructureViewModel implements PropertiesGroupingStructureViewModel {
-  private final Project myProject;
+public class ResourceBundleStructureViewModel implements PropertiesGroupingStructureViewModel, StructureViewModel.ExpandInfoProvider {
   private final ResourceBundle myResourceBundle;
   private final GroupByWordPrefixes myGroupByWordPrefixes;
+  private final StructureViewTreeElement myRoot;
 
   public ResourceBundleStructureViewModel(final Project project, ResourceBundle root) {
-    myProject = project;
     myResourceBundle = root;
     String separator = PropertiesSeparatorManager.getInstance().getSeparator(project, new ResourceBundleAsVirtualFile(myResourceBundle));
     myGroupByWordPrefixes = new GroupByWordPrefixes(separator);
+    myRoot = new ResourceBundleFileStructureViewElement(project, myResourceBundle);
   }
 
   public void setSeparator(String separator) {
@@ -53,7 +54,7 @@ public class ResourceBundleStructureViewModel implements PropertiesGroupingStruc
 
   @NotNull
   public StructureViewTreeElement getRoot() {
-    return new ResourceBundleFileStructureViewElement(myProject, myResourceBundle);
+    return myRoot;
   }
 
   @NotNull
@@ -96,6 +97,26 @@ public class ResourceBundleStructureViewModel implements PropertiesGroupingStruc
   }
 
   public boolean shouldEnterElement(final Object element) {
+    return false;
+  }
+
+  @Override
+  public boolean isAlwaysShowsPlus(final StructureViewTreeElement element) {
+    return false;
+  }
+
+  @Override
+  public boolean isAlwaysLeaf(final StructureViewTreeElement element) {
+    return element instanceof ResourceBundlePropertyStructureViewElement;
+  }
+
+  @Override
+  public boolean isAutoExpand(@NotNull StructureViewTreeElement element) {
+    return getRoot() == element;
+  }
+
+  @Override
+  public boolean isSmartExpand() {
     return false;
   }
 }

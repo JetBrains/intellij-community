@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,8 @@ public class ResolveProcessor implements PsiScopeProcessor {
     return PyUtil.nvl(myName) + ", " + PyUtil.nvl(myResult);
   }
 
-  public boolean execute(@NotNull PsiElement element, ResolveState substitutor) {
+  @Override
+  public boolean execute(@NotNull PsiElement element, @NotNull ResolveState substitutor) {
     if (element instanceof PyFile) {
       final VirtualFile file = ((PyFile)element).getVirtualFile();
       if (file != null) {
@@ -173,12 +174,14 @@ public class ResolveProcessor implements PsiScopeProcessor {
     return definer.getElementNamed(myName);
   }
 
+  @Override
   @Nullable
   public <T> T getHint(@NotNull Key<T> hintKey) {
     return null;
   }
 
-  public void handleEvent(Event event, Object associated) {
+  @Override
+  public void handleEvent(@NotNull Event event, Object associated) {
   }
 
   private boolean setResult(PsiElement result, @Nullable PsiElement definer) {

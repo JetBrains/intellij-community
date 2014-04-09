@@ -24,9 +24,9 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
@@ -90,22 +90,18 @@ public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(new Runnable() {
-          @Override
-          public void run() {
-            ProjectPlainTextFileTypeManager projectPlainTextFileTypeManager = ProjectPlainTextFileTypeManager.getInstance(project);
-            for (VirtualFile file : files) {
-              if (projectPlainTextFileTypeManager.hasProjectContaining(file)) {
-                ensureProjectFileSetAdded(project, projectPlainTextFileTypeManager);
-                if (isAdded ?
-                    projectPlainTextFileTypeManager.addFile(file) :
-                    projectPlainTextFileTypeManager.removeFile(file)) {
-                  FileBasedIndex.getInstance().requestReindex(file);
-                }
-              }
+        ProjectPlainTextFileTypeManager projectPlainTextFileTypeManager = ProjectPlainTextFileTypeManager.getInstance(project);
+        for (VirtualFile file : files) {
+          if (projectPlainTextFileTypeManager.hasProjectContaining(file)) {
+            ensureProjectFileSetAdded(project, projectPlainTextFileTypeManager);
+            if (isAdded ?
+                projectPlainTextFileTypeManager.addFile(file) :
+                projectPlainTextFileTypeManager.removeFile(file)) {
+              FileBasedIndex.getInstance().requestReindex(file);
             }
           }
-        }, false, true);
+        }
+        FileContentUtilCore.reparseFiles(files);
       }
     });
   }

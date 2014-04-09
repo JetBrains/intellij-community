@@ -19,12 +19,13 @@ import com.intellij.ide.browsers.BrowserLauncher;
 import com.intellij.ide.browsers.UrlOpener;
 import com.intellij.ide.browsers.WebBrowser;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 final class DefaultUrlOpener extends UrlOpener {
   @Override
   public boolean openUrl(@NotNull WebBrowser browser, @NotNull String url, @Nullable Project project) {
-    return BrowserLauncher.getInstance().browseUsingPath(url, null, browser, project);
+    return BrowserLauncher.getInstance().browseUsingPath(url, null, browser, project, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 }

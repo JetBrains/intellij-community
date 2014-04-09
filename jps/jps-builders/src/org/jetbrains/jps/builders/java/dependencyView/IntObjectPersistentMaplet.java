@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,6 +120,7 @@ public class IntObjectPersistentMaplet<V> extends IntObjectMaplet<V>{
     }
   }
 
+  @Override
   public void flush(boolean memoryCachesOnly) {
     if (memoryCachesOnly) {
       if (myMap.isDirty()) {
@@ -139,7 +140,7 @@ public class IntObjectPersistentMaplet<V> extends IntObjectMaplet<V>{
         public boolean process(Integer key) {
           try {
             final V value = myMap.get(key);
-            return value == null? proc.execute(key, null) : proc.execute(key, value);
+            return proc.execute(key, value);
           }
           catch (IOException e) {
             throw new BuildDataCorruptedException(e);

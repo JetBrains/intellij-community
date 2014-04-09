@@ -81,4 +81,9 @@ public class HgTagDialog extends DialogWrapper {
   private boolean validateOptions() {
     return !StringUtil.isEmptyOrSpaces(tagTxt.getText());
   }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return tagTxt;
+  }
 }

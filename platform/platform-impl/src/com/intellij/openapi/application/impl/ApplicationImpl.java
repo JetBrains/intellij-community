@@ -110,7 +110,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private int myInEditorPaintCounter = 0;
   private long myStartTime = 0;
   @Nullable
-  private Splash mySplash;
+  private final Splash mySplash;
   private boolean myDoNotSave;
   private volatile boolean myDisposeInProgress = false;
 
@@ -818,7 +818,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     }
 
     int exitCode = 0;
-    if (restart) {
+    if (restart && Restarter.isSupported()) {
       try {
         exitCode = Restarter.scheduleRestart();
       }
@@ -1026,7 +1026,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     if (myHeadlessMode) return;
     if (!isReadAccessAllowed()) {
       LOG.error(
-        "Read access is allowed from event dispatch thread or inside read-action only (see com.intellij.openapi.application.Application.runReadAction())",
+        "Read access is allowed from event dispatch thread or inside read-action only" +
+        " (see com.intellij.openapi.application.Application.runReadAction())",
         "Current thread: " + describe(Thread.currentThread()), "Our dispatch thread:" + describe(ourDispatchThread),
         "SystemEventQueueThread: " + describe(getEventQueueThread()));
     }
@@ -1035,7 +1036,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @NonNls
   private static String describe(Thread o) {
     if (o == null) return "null";
-    return o.toString() + " " + System.identityHashCode(o);
+    return o + " " + System.identityHashCode(o);
   }
 
   @Nullable
@@ -1334,6 +1335,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   public boolean isWriteAccessAllowed() {
     return myLock.writeLock().isHeldByCurrentThread();
+  }
+
+  @Override
+  public boolean isWriteActionInProgress() {
+    return myLock.writeLock().getHoldCount() != 0;
   }
 
   public void editorPaintStart() {

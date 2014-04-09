@@ -43,7 +43,7 @@ public class AddAllMembersProcessor extends BaseScopeProcessor {
   }
 
   @Override
-  public boolean execute(@NotNull PsiElement element, ResolveState state) {
+  public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
     PsiMember member = (PsiMember)element;
     if (!isInteresting(element)) return true;
     if (myPsiClass.isInterface() && isObjectMember(element)) return true;

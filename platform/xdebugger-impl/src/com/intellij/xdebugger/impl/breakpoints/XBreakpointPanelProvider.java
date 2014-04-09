@@ -32,12 +32,12 @@ import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
+import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointCustomGroupingRule;
 import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule;
 import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointGroupingByTypeRule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -52,6 +52,7 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
   public void createBreakpointsGroupingRules(Collection<XBreakpointGroupingRule> rules) {
     rules.add(new XBreakpointGroupingByTypeRule());
     rules.add(new XBreakpointFileGroupingRule());
+    rules.add(new XBreakpointCustomGroupingRule());
   }
 
   @Override
@@ -111,17 +112,6 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
       }
     }
     return null;
-  }
-
-  @Override
-  public AnAction[] getAddBreakpointActions(@NotNull Project project) {
-    List<AnAction> result = new ArrayList<AnAction>();
-    for (XBreakpointType<?, ?> type : XBreakpointUtil.getBreakpointTypes()) {
-      if (type.isAddBreakpointButtonVisible()) {
-        result.add(new AddXBreakpointAction(type));
-      }
-    }
-    return result.toArray(new AnAction[result.size()]);
   }
 
   public void onDialogClosed(final Project project) {

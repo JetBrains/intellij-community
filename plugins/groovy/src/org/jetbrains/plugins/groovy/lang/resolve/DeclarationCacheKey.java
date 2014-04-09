@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.CachedValueProvider;
@@ -30,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GrScopeProcessorWithHints;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -132,15 +131,14 @@ class DeclarationCacheKey {
   }
 
   private DeclarationHolder collectScopeDeclarations(PsiElement scope, PsiElement lastParent) {
-    MyCollectProcessor plainCollector = new MyCollectProcessor(scope);
-    MyCollectProcessor nonCodeCollector = new MyCollectProcessor(scope);
+    MyCollectProcessor plainCollector = new MyCollectProcessor();
+    MyCollectProcessor nonCodeCollector = new MyCollectProcessor();
     ResolveUtil.doProcessDeclarations(place, lastParent, scope, plainCollector, nonCode ? nonCodeCollector : null, ResolveState.initial());
     return new DeclarationHolder(scope, plainCollector.declarations, nonCodeCollector.declarations);
   }
 
   private List<DeclarationHolder> getAllDeclarations(PsiElement place) {
-    ConcurrentMap<DeclarationCacheKey, List<DeclarationHolder>> cache =
-      CachedValuesManager.getCachedValue(place, VALUE_PROVIDER);
+    ConcurrentMap<DeclarationCacheKey, List<DeclarationHolder>> cache = CachedValuesManager.getCachedValue(place, VALUE_PROVIDER);
     List<DeclarationHolder> declarations = cache.get(this);
     if (declarations == null) {
       declarations = collectDeclarations(place);
@@ -194,15 +192,15 @@ class DeclarationCacheKey {
     }
   }
 
-  private class MyCollectProcessor extends ResolverProcessor {
+  private class MyCollectProcessor extends GrScopeProcessorWithHints {
     final List<Pair<PsiElement, ResolveState>> declarations = ContainerUtil.newArrayList();
 
-    public MyCollectProcessor(PsiElement scope) {
-      super(DeclarationCacheKey.this.name, DeclarationCacheKey.this.kinds, scope, PsiType.EMPTY_ARRAY);
+    public MyCollectProcessor() {
+      super(DeclarationCacheKey.this.name, DeclarationCacheKey.this.kinds);
     }
 
     @Override
-    public boolean execute(@NotNull PsiElement element, ResolveState state) {
+    public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
       declarations.add(Pair.create(element, state));
       return true;
     }

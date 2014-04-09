@@ -82,7 +82,6 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Override
   public boolean isIgnored(@NotNull VirtualFile file) {
     if (myFileTypeRegistry.isFileIgnored(file)) return true;
-    if (myExclusionManager != null && myExclusionManager.isExcluded(file)) return true;
     VirtualFile dir = file.isDirectory() ? file : file.getParent();
     if (dir == null) return false;
 
@@ -198,13 +197,14 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   private class ContentFilter implements VirtualFileFilter {
     @Override
     public boolean accept(@NotNull VirtualFile file) {
+      DirectoryInfo info = getInfoForFileOrDirectory(file);
+      if (info == null || info.getModule() == null) return false;
+      
       if (file.isDirectory()) {
-        DirectoryInfo info = getInfoForFileOrDirectory(file);
-        return info != null && info.getModule() != null;
+        return true;
       }
       else {
-        return (myExclusionManager == null || !myExclusionManager.isExcluded(file))
-               && !myFileTypeRegistry.isFileIgnored(file);
+        return !myFileTypeRegistry.isFileIgnored(file);
       }
     }
   }

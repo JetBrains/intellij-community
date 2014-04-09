@@ -164,6 +164,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   private Dimension myDefaultPrefSize;
   private final ActionListener myClickHandler;
   private final boolean myCloseOnClick;
+  private int myShadowSize = Registry.intValue("ide.balloon.shadow.size");
 
   private final CopyOnWriteArraySet<JBPopupListener> myListeners = new CopyOnWriteArraySet<JBPopupListener>();
   private boolean myVisible;
@@ -303,6 +304,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     }
 
     myShadow = shadow;
+    myShadowSize = Registry.intValue("ide.balloon.shadow.size");
     myContainerInsets = contentInsets;
 
     myFadeoutTime = fadeoutTime;
@@ -501,8 +503,12 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       myComp.removeAll();
       myLayeredPane.remove(myComp);
 
-      myForcedBounds = rec;
       createComponent();
+      if (!new Rectangle(myLayeredPane.getSize()).contains(new Rectangle(myComp.getSize()))) { // Balloon is bigger than window, don't show it at all.
+        myLayeredPane = null;
+        hide();
+        return;
+      }
     }
 
     for (JBPopupListener each : myListeners) {
@@ -651,8 +657,12 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     }
   }
 
-  private int getShadowBorderSize() {
-    return myShadow && Registry.is("ide.balloon.shadowEnabled") ? Registry.intValue("ide.balloon.shadow.size") : 0;
+  public int getShadowBorderSize() {
+    return hasShadow() ? myShadowSize : 0;
+  }
+
+  public boolean hasShadow() {
+    return myShadow && Registry.is("ide.balloon.shadowEnabled");
   }
 
   @Override
@@ -848,6 +858,10 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     if (myPosition != null) {
       myPosition.updateBounds(this);
     }
+  }
+
+  public void setShadowSize(int shadowSize) {
+    myShadowSize = shadowSize;
   }
 
   @Override
@@ -1458,7 +1472,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         int iconHeight = AllIcons.General.BalloonClose.getIconHeight();
         Rectangle r = new Rectangle(lpBounds.x + lpBounds.width - iconWidth + (int)(iconWidth * 0.3), lpBounds.y - (int)(iconHeight * 0.3), iconWidth, iconHeight);
 
-        r.y += getShadowBorderSize();
+        r.y -= getShadowBorderSize();
         r.x -= getShadowBorderSize();
 
         myCloseRec.setBounds(r);

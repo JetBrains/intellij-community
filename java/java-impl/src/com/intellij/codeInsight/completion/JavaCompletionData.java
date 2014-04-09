@@ -514,8 +514,7 @@ public class JavaCompletionData extends JavaAwareCompletionData {
     addUnfinishedMethodTypeParameters(position, result);
 
     if (JavaSmartCompletionContributor.INSIDE_EXPRESSION.accepts(position) &&
-        !AFTER_DOT.accepts(position) &&
-        !(position.getParent() instanceof PsiLiteralExpression)) {
+        !AFTER_DOT.accepts(position)) {
       addExpectedTypeMembers(parameters, result);
       if (SameSignatureCallParametersProvider.IN_CALL_ARGUMENT.accepts(position)) {
         new SameSignatureCallParametersProvider().addCompletions(parameters, new ProcessingContext(), result);

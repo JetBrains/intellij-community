@@ -331,7 +331,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
 
   @Override
   protected int getFeatures() {
-    return super.getFeatures() | TIME_MANAGEMENT;
+    return super.getFeatures() | TIME_MANAGEMENT | STATE_UPDATING;
   }
 
   public void setCustomStateNames(Map<TaskState, String> customStateNames) {

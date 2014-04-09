@@ -30,22 +30,19 @@ import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.RetinaImage;
 import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.TextStyle;
-import com.jediterm.terminal.display.BackBuffer;
-import com.jediterm.terminal.display.StyleState;
+import com.jediterm.terminal.model.StyleState;
+import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.ui.TerminalPanel;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.List;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -55,18 +52,49 @@ import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
 import java.io.IOException;
-import java.util.*;
+import java.util.List;
 
 public class JBTerminalPanel extends TerminalPanel implements FocusListener, TerminalSettingsListener, Disposable,
                                                               IdeEventQueue.EventDispatcher {
-  private static final String[] ACTIONS_TO_SKIP = new String[]{"ActivateTerminalToolWindow", "ShowSettings"};
+  private static final String[] ACTIONS_TO_SKIP = new String[]{
+    "ActivateTerminalToolWindow",
+    "ActivateMessagesToolWindow",
+    "ActivateFavoritesToolWindow",
+    "ActivateFindToolWindow",
+    "ActivateRunToolWindow",
+    "ActivateDebugToolWindow",
+    "ActivateTODOToolWindow",
+    "ActivateStructureToolWindow",
+    "ActivateHierarchyToolWindow",
+    "ActivateChangesToolWindow",
+
+    "ShowBookmarks",
+    "GotoBookmark0",
+    "GotoBookmark1",
+    "GotoBookmark2",
+    "GotoBookmark3",
+    "GotoBookmark4",
+    "GotoBookmark5",
+    "GotoBookmark6",
+    "GotoBookmark7",
+    "GotoBookmark8",
+    "GotoBookmark9",
+    
+    "GotoAction",
+    "GotoFile",
+    "GotoClass",
+    "GotoSymbol",
+    
+    "ShowSettings"
+  };
+
 
   private final JBTerminalSystemSettingsProvider mySettingsProvider;
 
-  private java.util.List<AnAction> myActionsToSkip;
+  private List<AnAction> myActionsToSkip;
 
   public JBTerminalPanel(@NotNull JBTerminalSystemSettingsProvider settingsProvider,
-                         @NotNull BackBuffer backBuffer,
+                         @NotNull TerminalTextBuffer backBuffer,
                          @NotNull StyleState styleState) {
     super(settingsProvider, backBuffer, styleState);
 
@@ -80,9 +108,46 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
       }
     });
 
+    registerKeymapActions(this);
+
     addFocusListener(this);
 
     mySettingsProvider.addListener(this);
+  }
+
+  private static void registerKeymapActions(final TerminalPanel terminalPanel) {
+
+    ActionManager actionManager = ActionManager.getInstance();
+    for (String actionId : ACTIONS_TO_SKIP) {
+      final AnAction action = actionManager.getAction(actionId);
+      if (action != null) {
+        AnAction a = new DumbAwareAction() {
+          @Override
+          public void actionPerformed(AnActionEvent e) {
+            if (e.getInputEvent() instanceof KeyEvent) {
+              AnActionEvent event =
+                new AnActionEvent(e.getInputEvent(), e.getDataContext(), e.getPlace(), new Presentation(), e.getActionManager(),
+                                  e.getModifiers());
+              action.update(event);
+              if (event.getPresentation().isEnabled()) {
+                action.actionPerformed(event);
+              }
+              else {
+                terminalPanel.handleKeyEvent((KeyEvent)event.getInputEvent());
+              }
+
+              event.getInputEvent().consume();
+            }
+          }
+        };
+        for (Shortcut sc : action.getShortcutSet().getShortcuts()) {
+          if (sc.isKeyboard() && sc instanceof KeyboardShortcut) {
+            KeyboardShortcut ksc = (KeyboardShortcut)sc;
+            a.registerCustomShortcutSet(ksc.getFirstKeyStroke().getKeyCode(), ksc.getFirstKeyStroke().getModifiers(), terminalPanel);
+          }
+        }
+      }
+    }
   }
 
   @Override
@@ -99,13 +164,13 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
       return false;
     }
     int kc = e.getKeyCode();
-    return kc == KeyEvent.VK_ESCAPE || skipAction(e);
+    return kc == KeyEvent.VK_ESCAPE || skipAction(e, myActionsToSkip);
   }
 
-  private boolean skipAction(KeyEvent e) {
-    if (myActionsToSkip != null) {
+  private static boolean skipAction(KeyEvent e, List<AnAction> actionsToSkip) {
+    if (actionsToSkip != null) {
       final KeyboardShortcut eventShortcut = new KeyboardShortcut(KeyStroke.getKeyStrokeForEvent(e), null);
-      for (AnAction action : myActionsToSkip) {
+      for (AnAction action : actionsToSkip) {
         for (Shortcut sc : action.getShortcutSet().getShortcuts()) {
           if (sc.isKeyboard() && sc.startsWith(eventShortcut)) {
             return true;
@@ -203,11 +268,14 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     }
   }
 
-  private static java.util.List<AnAction> setupActionsToSkip() {
-    java.util.List<AnAction> res = Lists.newArrayList();
+  private static List<AnAction> setupActionsToSkip() {
+    List<AnAction> res = Lists.newArrayList();
     ActionManager actionManager = ActionManager.getInstance();
     for (String actionId : ACTIONS_TO_SKIP) {
-      res.add(actionManager.getAction(actionId));
+      AnAction action = actionManager.getAction(actionId);
+      if (action != null) {
+        res.add(action);
+      }
     }
     return res;
   }

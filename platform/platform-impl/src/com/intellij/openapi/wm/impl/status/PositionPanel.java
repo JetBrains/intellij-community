@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.List;
 
 public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, StatusBarWidget.TextPresentation, CaretListener, SelectionListener {
   private String myText;
@@ -165,21 +164,16 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
         );
       }
       else {
-        List<Caret> carets = editor.getCaretModel().getAllCarets();
-        if (carets.size() > 1) {
-          message.append(carets.size()).append(" carets (");
-          appendLogicalPosition(carets.get(0).getLogicalPosition(), message);
-          message.append('-');
-          appendLogicalPosition(carets.get(carets.size() - 1).getLogicalPosition(), message);
-          message.append(')');
+        int caretCount = editor.getCaretModel().getCaretCount();
+        if (caretCount > 1) {
+          message.append(caretCount).append(" carets");
         }
         else {
-          Caret caret = carets.get(0);
-          LogicalPosition caretPosition = caret.getLogicalPosition();
+          LogicalPosition caret = editor.getCaretModel().getLogicalPosition();
 
-          appendLogicalPosition(caretPosition, message);
-          if (caret.hasSelection()) {
-            int len = Math.abs(caret.getSelectionStart() - caret.getSelectionEnd());
+          appendLogicalPosition(caret, message);
+          if (selectionModel.hasSelection()) {
+            int len = Math.abs(selectionModel.getSelectionStart() - selectionModel.getSelectionEnd());
             if (len != 0) message.append("/").append(len);
           }
         }

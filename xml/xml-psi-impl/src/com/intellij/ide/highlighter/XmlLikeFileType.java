@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public abstract class XmlLikeFileType extends LanguageFileType {
     super(language);
   }
   @Override
-  public String getCharset(@NotNull VirtualFile file, final byte[] content) {
+  public String getCharset(@NotNull VirtualFile file, @NotNull final byte[] content) {
     String charset = XmlCharsetDetector.extractXmlEncodingFromProlog(content);
     return charset == null ? CharsetToolkit.UTF8 : charset;
   }

@@ -21,6 +21,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfileWithCompileBeforeLaunchOption;
+import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.remote.RemoteConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.icons.AllIcons;
@@ -152,6 +153,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
           if (!myProject.isDisposed()) {
             scope.putUserData(RUN_CONFIGURATION, configuration);
             scope.putUserData(RUN_CONFIGURATION_TYPE_ID, configuration.getType().getId());
+            ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.set(scope, ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(env));
             compilerManager.make(scope, callback);
           }
           else {

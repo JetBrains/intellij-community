@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiImportHolder;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -49,21 +50,28 @@ public interface GroovyFileBase extends PsiFile, GrVariableDeclarationOwner, GrS
       "java.math.BigDecimal",
   };
 
+  @NotNull
   GrTypeDefinition[] getTypeDefinitions();
 
+  @NotNull
   GrTopLevelDefinition[] getTopLevelDefinitions();
 
+  @NotNull
   GrMethod[] getCodeMethods();
 
+  @NotNull
   GrMethod[] getMethods();
 
+  @NotNull
   GrTopStatement[] getTopStatements();
 
-  GrImportStatement addImportForClass(PsiClass aClass) throws IncorrectOperationException;
+  @Nullable
+  GrImportStatement addImportForClass(@NotNull PsiClass aClass) throws IncorrectOperationException;
 
-  void removeImport(GrImportStatement importStatement) throws IncorrectOperationException;
+  void removeImport(@NotNull GrImportStatement importStatement) throws IncorrectOperationException;
 
-  GrImportStatement addImport(GrImportStatement statement) throws IncorrectOperationException;
+  @NotNull
+  GrImportStatement addImport(@NotNull GrImportStatement statement) throws IncorrectOperationException;
 
   boolean isScript();
 

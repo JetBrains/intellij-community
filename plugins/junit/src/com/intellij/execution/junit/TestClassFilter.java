@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -54,10 +55,13 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
-        return aClass.getQualifiedName() != null &&
-               ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS.value(aClass) &&
-               (aClass.isInheritor(myBase, true) || JUnitUtil.isTestClass(aClass))
-               && !CompilerConfiguration.getInstance(getProject()).isExcludedFromCompilation(PsiUtilCore.getVirtualFile(aClass)); 
+        if (aClass.getQualifiedName() != null && ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS.value(aClass) &&
+            (aClass.isInheritor(myBase, true) || JUnitUtil.isTestClass(aClass))) {
+          final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(getProject());
+          final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(aClass);
+          return !compilerConfiguration.isExcludedFromCompilation(virtualFile) && !compilerConfiguration.isResourceFile(virtualFile);
+        }
+        return false;
       }
     });
   }

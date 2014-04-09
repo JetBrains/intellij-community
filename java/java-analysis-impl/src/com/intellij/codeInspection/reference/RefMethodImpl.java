@@ -157,7 +157,10 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     if (MethodSignatureUtil.areSignaturesEqual(psiMethod, appMainPattern)) return true;
 
     PsiMethod appPremainPattern = ((RefMethodImpl)refMethod).getRefJavaManager().getAppPremainPattern();
-    return MethodSignatureUtil.areSignaturesEqual(psiMethod, appPremainPattern);
+    if (MethodSignatureUtil.areSignaturesEqual(psiMethod, appPremainPattern)) return true;
+
+    PsiMethod appAgentmainPattern = ((RefMethodImpl)refMethod).getRefJavaManager().getAppAgentmainPattern();
+    return MethodSignatureUtil.areSignaturesEqual(psiMethod, appAgentmainPattern);
   }
 
   private void checkForSuperCall(PsiMethod method) {

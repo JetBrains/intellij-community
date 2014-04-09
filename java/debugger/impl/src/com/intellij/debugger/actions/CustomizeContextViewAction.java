@@ -72,7 +72,7 @@ public class CustomizeContextViewAction extends DebuggerAction{
 
       @Override
       public String getHelpTopic() {
-        return null;
+        return "reference.debug.customize.data.view";
       }
 
       @Override

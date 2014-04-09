@@ -65,7 +65,7 @@ public class TrelloUtil {
           try {
               return ISO8601_DATETIME_FORMAT.parse(dateString);
           } catch (ParseException e) {
-              throw new JsonParseException("Error parsing date: " + dateString, e);
+              throw null;
           }
       }
   }

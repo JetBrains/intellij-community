@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,14 +43,14 @@ public class SymbolCollectingProcessor extends BaseScopeProcessor implements Ele
   }
 
   @Override
-  public void handleEvent(PsiScopeProcessor.Event event, Object associated) {
+  public void handleEvent(@NotNull PsiScopeProcessor.Event event, Object associated) {
     if (event == JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT) {
       myCurrentFileContext = (PsiElement)associated;
     }
   }
 
   @Override
-  public boolean execute(@NotNull PsiElement element, ResolveState state) {
+  public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
     if (element instanceof PsiNamedElement) {
       PsiNamedElement named = (PsiNamedElement)element;
       String name = named.getName();

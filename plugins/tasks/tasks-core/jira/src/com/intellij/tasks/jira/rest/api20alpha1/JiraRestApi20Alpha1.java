@@ -73,7 +73,7 @@ public class JiraRestApi20Alpha1 extends JiraRestApi {
 
   @Override
   public void updateTimeSpend(LocalTask task, String timeSpent, String comment) throws Exception {
-    throw new Exception(TaskBundle.message("jira.failure.no.state.update"));
+    throw new Exception(TaskBundle.message("jira.failure.no.time.spent"));
   }
 
   @NotNull

@@ -127,6 +127,7 @@ public class ImportMavenRepositoriesTask implements Runnable {
     MavenProjectIndicesManager.getInstance(myProject).scheduleUpdateIndicesList(new Consumer<List<MavenIndex>>() {
       @Override
       public void consume(List<MavenIndex> indexes) {
+        if(myProject.isDisposed()) return;
         for (MavenIndex mavenIndex : indexes) {
           if (mavenIndex.getUpdateTimestamp() == -1 &&
               MavenRepositoriesHolder.getInstance(myProject).contains(mavenIndex.getRepositoryId())) {

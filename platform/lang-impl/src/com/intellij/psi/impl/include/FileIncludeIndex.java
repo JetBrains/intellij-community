@@ -82,7 +82,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
     return new DataIndexer<Key, List<FileIncludeInfoImpl>, FileContent>() {
       @Override
       @NotNull
-      public Map<Key, List<FileIncludeInfoImpl>> map(FileContent inputData) {
+      public Map<Key, List<FileIncludeInfoImpl>> map(@NotNull FileContent inputData) {
 
         Map<Key, List<FileIncludeInfoImpl>> map = new FactoryMap<Key, List<FileIncludeInfoImpl>>() {
           @Override
@@ -131,7 +131,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
       @Override
       public Key read(@NotNull DataInput in) throws IOException {
         boolean isInclude = in.readBoolean();
-        return isInclude ? IncludeKey.read(in) : new FileKey(in.readInt());
+        return isInclude ? new IncludeKey(IOUtil.readUTF(in)) : new FileKey(in.readInt());
       }
     };
   }
@@ -144,10 +144,10 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
       public void save(@NotNull DataOutput out, List<FileIncludeInfoImpl> value) throws IOException {
         out.writeInt(value.size());
         for (FileIncludeInfoImpl info : value) {
-          out.writeUTF(info.path);
+          IOUtil.writeUTF(out, info.path);
           out.writeInt(info.offset);
           out.writeBoolean(info.runtimeOnly);
-          out.writeUTF(info.providerId);
+          IOUtil.writeUTF(out, info.providerId);
         }
       }
 
@@ -156,7 +156,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
         int size = in.readInt();
         ArrayList<FileIncludeInfoImpl> infos = new ArrayList<FileIncludeInfoImpl>(size);
         for (int i = 0; i < size; i++) {
-          infos.add(new FileIncludeInfoImpl(in.readUTF(), in.readInt(), in.readBoolean(), in.readUTF()));
+          infos.add(new FileIncludeInfoImpl(IOUtil.readUTF(in), in.readInt(), in.readBoolean(), IOUtil.readUTF(in)));
         }
         return infos;
       }
@@ -196,7 +196,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
 
   @Override
   public int getVersion() {
-    return 3;
+    return 4;
   }
 
   interface Key {
@@ -206,7 +206,6 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
   }
 
   private static class IncludeKey implements Key {
-    private static final byte[] myBuffer = IOUtil.allocReadWriteUTFBuffer();
     private final String myFileName;
 
     public IncludeKey(String fileName) {
@@ -220,9 +219,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
 
     @Override
     public void writeValue(DataOutput out) throws IOException {
-      synchronized (myBuffer) {
-        IOUtil.writeUTFFast(myBuffer, out, myFileName);
-      }
+      IOUtil.writeUTF(out, myFileName);
     }
 
     @Override
@@ -233,12 +230,6 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
     @Override
     public boolean equals(Object obj) {
       return obj instanceof IncludeKey && ((IncludeKey)obj).myFileName.equals(myFileName);
-    }
-
-    static Key read(DataInput in) throws IOException {
-      synchronized (myBuffer){
-        return new IncludeKey(IOUtil.readUTFFast(myBuffer, in));
-      }
     }
   }
 

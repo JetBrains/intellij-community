@@ -18,6 +18,7 @@ package com.intellij.util.lang;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.TimedComputable;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,14 +32,11 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 class JarLoader extends Loader {
+  private static final Logger LOG = Logger.getInstance(JarLoader.class);
+
   private final URL myURL;
   private SoftReference<JarMemoryLoader> myMemoryLoader;
   private final boolean myCanLockJar;
-  private static final boolean myDebugTime = false;
-  private static int misses;
-  private static int hits;
-
-  private static final Logger LOG = Logger.getInstance(JarLoader.class);
 
   private final TimedComputable<ZipFile> myZipFileRef = new TimedComputable<ZipFile>(null) {
     @Override
@@ -55,12 +53,8 @@ class JarLoader extends Loader {
     }
   };
 
-  @NonNls private static final String JAR_PROTOCOL = "jar";
-  @NonNls private static final String FILE_PROTOCOL = "file";
-  private static final long NS_THRESHOLD = 10000000;
-
   JarLoader(URL url, boolean canLockJar, int index) throws IOException {
-    super(new URL(JAR_PROTOCOL, "", -1, url + "!/"), index);
+    super(new URL(URLUtil.JAR_PROTOCOL, "", -1, url + "!/"), index);
     myURL = url;
     myCanLockJar = canLockJar;
   }
@@ -110,7 +104,7 @@ class JarLoader extends Loader {
 
   @Nullable
   private ZipFile doGetZipFile() throws IOException {
-    if (FILE_PROTOCOL.equals(myURL.getProtocol())) {
+    if (URLUtil.FILE_PROTOCOL.equals(myURL.getProtocol())) {
       String s = FileUtil.unquote(myURL.getFile());
       if (!new File(s).exists()) {
         throw new FileNotFoundException(s);
@@ -129,8 +123,8 @@ class JarLoader extends Loader {
     try {
       zipFile = acquireZipFile();
       if (zipFile == null) return;
-      final Enumeration<? extends ZipEntry> entries = zipFile.entries();
 
+      final Enumeration<? extends ZipEntry> entries = zipFile.entries();
       while (entries.hasMoreElements()) {
         ZipEntry zipEntry = entries.nextElement();
         String name = zipEntry.getName();
@@ -146,29 +140,20 @@ class JarLoader extends Loader {
   @Override
   @Nullable
   Resource getResource(String name, boolean flag) {
-    final long started = myDebugTime ? System.nanoTime():0;
     JarMemoryLoader loader = com.intellij.reference.SoftReference.dereference(myMemoryLoader);
     if (loader != null) {
       Resource resource = loader.getResource(name);
       if (resource != null) return resource;
     }
+
     ZipFile file = null;
     try {
       file = acquireZipFile();
       if (file == null) return null;
       ZipEntry entry = file.getEntry(name);
       if (entry != null) {
-        ++hits;
-        if (hits % 1000 == 0 && ClasspathCache.doDebug) {
-          ClasspathCache.LOG.debug("Exists jar loader: misses:" + misses + ", hits:" + hits);
-        }
         return new MyResource(entry, new URL(getBaseURL(), name));
       }
-
-      if (misses % 1000 == 0 && ClasspathCache.doDebug) {
-        ClasspathCache.LOG.debug("Missed " + name + " from jar:" + myURL);
-      }
-      ++misses;
     }
     catch (Exception e) {
       return null;
@@ -177,12 +162,7 @@ class JarLoader extends Loader {
       try {
         releaseZipFile(file);
       }
-      catch (IOException ignored) {
-      }
-      final long doneFor = myDebugTime ? System.nanoTime() - started :0;
-      if (doneFor > NS_THRESHOLD) {
-        ClasspathCache.LOG.debug(doneFor/1000000 + " ms for jar loader get resource:"+name);
-      }
+      catch (IOException ignored) { }
     }
 
     return null;
@@ -230,9 +210,11 @@ class JarLoader extends Loader {
           releaseZipFile(file);
           return null; // if entry was not found
         }
+
         final ZipFile finalFile = file;
         return new FilterInputStream(inputStream) {
           private boolean myClosed = false;
+
           @Override
           public void close() throws IOException {
             super.close();

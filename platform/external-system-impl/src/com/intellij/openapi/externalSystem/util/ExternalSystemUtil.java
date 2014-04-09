@@ -41,7 +41,8 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunCo
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask;
-import com.intellij.openapi.externalSystem.service.notification.ExternalSystemIdeNotificationManager;
+import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager;
+import com.intellij.openapi.externalSystem.service.notification.NotificationSource;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
@@ -62,7 +63,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowEP;
@@ -138,12 +138,9 @@ public class ExternalSystemUtil {
     if (toolWindowManager == null) {
       return null;
     }
-    final ToolWindow toolWindow = toolWindowManager.getToolWindow(externalSystemId.getReadableName());
+    final ToolWindow toolWindow = ensureToolWindowContentInitialized(project, externalSystemId);
     if (toolWindow == null) {
       return null;
-    }
-    if (toolWindow instanceof ToolWindowImpl) {
-      ((ToolWindowImpl)toolWindow).ensureContentInitialized();
     }
 
     final ContentManager contentManager = toolWindow.getContentManager();
@@ -161,6 +158,20 @@ public class ExternalSystemUtil {
       }
     }
     return null;
+  }
+
+  @Nullable
+  public static ToolWindow ensureToolWindowContentInitialized(@NotNull Project project, @NotNull ProjectSystemId externalSystemId) {
+    final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+    if (toolWindowManager == null) return null;
+
+    final ToolWindow toolWindow = toolWindowManager.getToolWindow(externalSystemId.getReadableName());
+    if (toolWindow == null) return null;
+
+    if (toolWindow instanceof ToolWindowImpl) {
+      ((ToolWindowImpl)toolWindow).ensureContentInitialized();
+    }
+    return toolWindow;
   }
 
   /**
@@ -199,92 +210,8 @@ public class ExternalSystemUtil {
     final ProjectDataManager projectDataManager = ServiceManager.getService(ProjectDataManager.class);
     final int[] counter = new int[1];
 
-    ExternalProjectRefreshCallback callback = new ExternalProjectRefreshCallback() {
-
-      @NotNull
-      private final Set<String> myExternalModulePaths = ContainerUtilRt.newHashSet();
-
-      @Override
-      public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
-        if (externalProject == null) {
-          return;
-        }
-        Collection<DataNode<ModuleData>> moduleNodes = ExternalSystemApiUtil.findAll(externalProject, ProjectKeys.MODULE);
-        for (DataNode<ModuleData> node : moduleNodes) {
-          myExternalModulePaths.add(node.getData().getLinkedExternalProjectPath());
-        }
-        ExternalSystemApiUtil.executeProjectChangeAction(true, new DisposeAwareProjectChange(project) {
-          @Override
-          public void execute() {
-            ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(new Runnable() {
-              @Override
-              public void run() {
-                projectDataManager.importData(externalProject.getKey(), Collections.singleton(externalProject), project, true);
-              }
-            });
-
-            processOrphanProjectLibraries();
-          }
-        });
-        if (--counter[0] <= 0) {
-          processOrphanModules();
-        }
-      }
-
-      @Override
-      public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
-        counter[0] = Integer.MAX_VALUE; // Don't process orphan modules if there was an error on refresh.
-      }
-
-      private void processOrphanModules() {
-        if(ExternalSystemDebugEnvironment.DEBUG_ORPHAN_MODULES_PROCESSING) {
-          LOG.info(String.format(
-            "Checking for orphan modules. External paths returned by external system: '%s'", myExternalModulePaths
-          ));
-        }
-        PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
-        List<Module> orphanIdeModules = ContainerUtilRt.newArrayList();
-        String externalSystemIdAsString = externalSystemId.toString();
-
-        for (Module module : platformFacade.getModules(project)) {
-          String s = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
-          String p = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
-          if(ExternalSystemDebugEnvironment.DEBUG_ORPHAN_MODULES_PROCESSING) {
-            LOG.info(String.format(
-              "IDE module: EXTERNAL_SYSTEM_ID_KEY - '%s', LINKED_PROJECT_PATH_KEY - '%s'.", s, p
-            ));
-          }
-          if (externalSystemIdAsString.equals(s) && !myExternalModulePaths.contains(p)) {
-            orphanIdeModules.add(module);
-            if(ExternalSystemDebugEnvironment.DEBUG_ORPHAN_MODULES_PROCESSING) {
-              LOG.info(String.format(
-                "External paths doesn't contain IDE module LINKED_PROJECT_PATH_KEY anymore => add to orphan IDE modules."
-              ));
-            }
-          }
-        }
-
-        if (!orphanIdeModules.isEmpty()) {
-          ruleOrphanModules(orphanIdeModules, project, externalSystemId);
-        }
-      }
-
-      private void processOrphanProjectLibraries() {
-        PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
-        List<Library> orphanIdeLibraries = ContainerUtilRt.newArrayList();
-
-        LibraryTable projectLibraryTable = platformFacade.getProjectLibraryTable(project);
-        for (Library library : projectLibraryTable.getLibraries()) {
-          if (!ExternalSystemApiUtil.isExternalSystemLibrary(library, externalSystemId)) continue;
-          if (ProjectStructureHelper.isOrphanProjectLibrary(library, platformFacade.getModules(project))) {
-            orphanIdeLibraries.add(library);
-          }
-        }
-        for (Library orphanIdeLibrary : orphanIdeLibraries) {
-          projectLibraryTable.removeLibrary(orphanIdeLibrary);
-        }
-      }
-    };
+    ExternalProjectRefreshCallback callback =
+      new MyMultiExternalProjectRefreshCallback(project, projectDataManager, counter, externalSystemId);
 
     Map<String, Long> modificationStamps = manager.getLocalSettingsProvider().fun(project).getExternalConfigModificationStamps();
     Set<String> toRefresh = ContainerUtilRt.newHashSet();
@@ -297,6 +224,9 @@ public class ExternalSystemUtil {
     }
 
     if (!toRefresh.isEmpty()) {
+      ExternalSystemNotificationManager.getInstance(project)
+        .clearNotifications(null, NotificationSource.PROJECT_SYNC, externalSystemId);
+
       counter[0] = toRefresh.size();
       for (String path : toRefresh) {
         refreshProject(project, externalSystemId, path, callback, false, progressExecutionMode);
@@ -461,6 +391,11 @@ public class ExternalSystemUtil {
           return;
         }
 
+        if (!(callback instanceof MyMultiExternalProjectRefreshCallback)) {
+          ExternalSystemNotificationManager.getInstance(project)
+            .clearNotifications(null, NotificationSource.PROJECT_SYNC, externalSystemId);
+        }
+
         ExternalSystemResolveProjectTask task
           = new ExternalSystemResolveProjectTask(externalSystemId, project, externalProjectPath, isPreviewMode);
 
@@ -517,10 +452,8 @@ public class ExternalSystemUtil {
         if (projectSettings == null || !reportRefreshError) {
           return;
         }
-        ExternalSystemIdeNotificationManager notificationManager = ServiceManager.getService(ExternalSystemIdeNotificationManager.class);
-        if (notificationManager != null) {
-          notificationManager.processExternalProjectRefreshError(error, project, projectName, externalSystemId);
-        }
+
+        ExternalSystemNotificationManager.getInstance(project).processExternalProjectRefreshError(error, projectName, externalSystemId);
       }
     };
 
@@ -765,5 +698,108 @@ public class ExternalSystemUtil {
   
   private interface TaskUnderProgress {
     void execute(@NotNull ProgressIndicator indicator);
+  }
+
+  private static class MyMultiExternalProjectRefreshCallback implements ExternalProjectRefreshCallback {
+
+    @NotNull
+    private final Set<String> myExternalModulePaths;
+    private final Project myProject;
+    private final ProjectDataManager myProjectDataManager;
+    private final int[] myCounter;
+    private final ProjectSystemId myExternalSystemId;
+
+    public MyMultiExternalProjectRefreshCallback(Project project,
+                                                 ProjectDataManager projectDataManager,
+                                                 int[] counter,
+                                                 ProjectSystemId externalSystemId) {
+      myProject = project;
+      myProjectDataManager = projectDataManager;
+      myCounter = counter;
+      myExternalSystemId = externalSystemId;
+      myExternalModulePaths = ContainerUtilRt.newHashSet();
+    }
+
+    @Override
+    public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
+      if (externalProject == null) {
+        return;
+      }
+      Collection<DataNode<ModuleData>> moduleNodes = ExternalSystemApiUtil.findAll(externalProject, ProjectKeys.MODULE);
+      for (DataNode<ModuleData> node : moduleNodes) {
+        myExternalModulePaths.add(node.getData().getLinkedExternalProjectPath());
+      }
+      ExternalSystemApiUtil.executeProjectChangeAction(true, new DisposeAwareProjectChange(myProject) {
+        @Override
+        public void execute() {
+          ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(new Runnable() {
+            @Override
+            public void run() {
+              myProjectDataManager.importData(externalProject.getKey(), Collections.singleton(externalProject), myProject, true);
+            }
+          });
+
+          processOrphanProjectLibraries();
+        }
+      });
+      if (--myCounter[0] <= 0) {
+        processOrphanModules();
+      }
+    }
+
+    @Override
+    public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
+      myCounter[0] = Integer.MAX_VALUE; // Don't process orphan modules if there was an error on refresh.
+    }
+
+    private void processOrphanModules() {
+      if(myProject.isDisposed()) return;
+      if(ExternalSystemDebugEnvironment.DEBUG_ORPHAN_MODULES_PROCESSING) {
+        LOG.info(String.format(
+          "Checking for orphan modules. External paths returned by external system: '%s'", myExternalModulePaths
+        ));
+      }
+      PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
+      List<Module> orphanIdeModules = ContainerUtilRt.newArrayList();
+      String externalSystemIdAsString = myExternalSystemId.toString();
+
+      for (Module module : platformFacade.getModules(myProject)) {
+        String s = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
+        String p = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
+        if(ExternalSystemDebugEnvironment.DEBUG_ORPHAN_MODULES_PROCESSING) {
+          LOG.info(String.format(
+            "IDE module: EXTERNAL_SYSTEM_ID_KEY - '%s', LINKED_PROJECT_PATH_KEY - '%s'.", s, p
+          ));
+        }
+        if (externalSystemIdAsString.equals(s) && !myExternalModulePaths.contains(p)) {
+          orphanIdeModules.add(module);
+          if(ExternalSystemDebugEnvironment.DEBUG_ORPHAN_MODULES_PROCESSING) {
+            LOG.info(String.format(
+              "External paths doesn't contain IDE module LINKED_PROJECT_PATH_KEY anymore => add to orphan IDE modules."
+            ));
+          }
+        }
+      }
+
+      if (!orphanIdeModules.isEmpty()) {
+        ruleOrphanModules(orphanIdeModules, myProject, myExternalSystemId);
+      }
+    }
+
+    private void processOrphanProjectLibraries() {
+      PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
+      List<Library> orphanIdeLibraries = ContainerUtilRt.newArrayList();
+
+      LibraryTable projectLibraryTable = platformFacade.getProjectLibraryTable(myProject);
+      for (Library library : projectLibraryTable.getLibraries()) {
+        if (!ExternalSystemApiUtil.isExternalSystemLibrary(library, myExternalSystemId)) continue;
+        if (ProjectStructureHelper.isOrphanProjectLibrary(library, platformFacade.getModules(myProject))) {
+          orphanIdeLibraries.add(library);
+        }
+      }
+      for (Library orphanIdeLibrary : orphanIdeLibraries) {
+        projectLibraryTable.removeLibrary(orphanIdeLibrary);
+      }
+    }
   }
 }

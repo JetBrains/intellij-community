@@ -132,43 +132,15 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
       }
     }
     else {
-      final PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(context);
-      if (psiFile != null) {
-        return OpenInBrowserRequest.create(psiFile);
+      PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(context);
+      VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(context);
+      Project project = CommonDataKeys.PROJECT.getData(context);
+      if (virtualFile != null && !virtualFile.isDirectory() && virtualFile.isValid() && project != null && project.isInitialized()) {
+        psiFile = PsiManager.getInstance(project).findFile(virtualFile);
       }
 
-      final VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(context);
-      final Project project = CommonDataKeys.PROJECT.getData(context);
-      if (virtualFile != null && !virtualFile.isDirectory() && virtualFile.isValid() && project != null && project.isInitialized()) {
-        return new OpenInBrowserRequest() {
-          @NotNull
-          @Override
-          public VirtualFile getVirtualFile() {
-            return virtualFile;
-          }
-
-          @NotNull
-          @Override
-          public Project getProject() {
-            return project;
-          }
-
-          @NotNull
-          @Override
-          public PsiElement getElement() {
-            return getFile();
-          }
-
-          @NotNull
-          @Override
-          public PsiFile getFile() {
-            if (file == null) {
-              file = PsiManager.getInstance(getProject()).findFile(virtualFile);
-              LOG.assertTrue(file != null, virtualFile.getPath());
-            }
-            return file;
-          }
-        };
+      if (psiFile != null) {
+        return OpenInBrowserRequest.create(psiFile);
       }
     }
     return null;

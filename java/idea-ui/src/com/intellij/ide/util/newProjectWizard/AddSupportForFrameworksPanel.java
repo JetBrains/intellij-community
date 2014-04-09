@@ -86,7 +86,8 @@ public class AddSupportForFrameworksPanel implements Disposable {
     myLibrariesContainer = model.getLibrariesContainer();
 
     myLabel.setVisible(!vertical);
-    Splitter splitter = vertical ? new Splitter(true, 0.6f) : new Splitter(false, 0.3f, 0.1f, 0.7f);
+    Splitter splitter = vertical ? new Splitter(true, 0.6f) : new Splitter(false, 0.3f, 0.3f, 0.7f);
+    splitter.setHonorComponentsMinimumSize(true);
     myFrameworksTree = new FrameworksTree(model) {
       @Override
       protected void onNodeStateChanged(CheckedTreeNode node) {
@@ -108,7 +109,6 @@ public class AddSupportForFrameworksPanel implements Disposable {
         ((DefaultTreeModel)myFrameworksTree.getModel()).nodeChanged(getSelectedNode());
       }
     }, this);
-    setProviders(providers);
 
     myFrameworksTree.addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
@@ -119,14 +119,18 @@ public class AddSupportForFrameworksPanel implements Disposable {
     JPanel treePanel = new JPanel(new BorderLayout());
     treePanel.add(ScrollPaneFactory.createScrollPane(myFrameworksTree), BorderLayout.CENTER);
     treePanel.add(myAssociatedFrameworksPanel, BorderLayout.NORTH);
+    treePanel.setMinimumSize(new Dimension(200, 300));
 
     splitter.setFirstComponent(treePanel);
     myOptionsPanel = new JPanel(new CardLayout());
-    myOptionsPanel.add(EMPTY_CARD, new JPanel());
+    JPanel emptyCard = new JPanel();
+    emptyCard.setPreferredSize(new Dimension(400, 100));
+    myOptionsPanel.add(EMPTY_CARD, emptyCard);
 
     splitter.setSecondComponent(myOptionsPanel);
     myFrameworksPanel.add(splitter, BorderLayout.CENTER);
 
+    setProviders(providers);
   }
 
   public void setProviders(List<FrameworkSupportInModuleProvider> providers) {
@@ -223,7 +227,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
       panel = component.getMainPanel();
       myInitializedGroupPanels.put(group, panel);
       if (addToOptions) {
-        myOptionsPanel.add(group.getId(), panel);
+        myOptionsPanel.add(group.getId(), wrapInScrollPane(panel));
       }
     }
     return panel;
@@ -249,11 +253,16 @@ public class AddSupportForFrameworksPanel implements Disposable {
       component = new FrameworkSupportOptionsComponent(myModel, myLibrariesContainer, this,
                                                        node.getUserObject(), node.getConfigurable());
       if (addToOptions) {
-        myOptionsPanel.add(node.getId(), component.getMainPanel());
+        myOptionsPanel.add(node.getId(), wrapInScrollPane(component.getMainPanel()));
       }
       myInitializedOptionsComponents.put(node, component);
     }
     return component;
+  }
+
+  private static JScrollPane wrapInScrollPane(JPanel panel) {
+    return ScrollPaneFactory.createScrollPane(panel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                              ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
   }
 
   private void showCard(String cardName) {

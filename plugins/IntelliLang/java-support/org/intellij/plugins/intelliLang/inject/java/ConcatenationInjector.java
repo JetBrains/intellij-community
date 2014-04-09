@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,26 +19,20 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.ConcatenationAwareInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.injection.ReferenceInjector;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.PatternValuesIndex;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
@@ -46,7 +40,6 @@ import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
-import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.ContextComputationProcessor;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
@@ -61,8 +54,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
   private final Configuration myConfiguration;
   private final Project myProject;
   private final TemporaryPlacesRegistry myTemporaryPlacesRegistry;
-  private final CachedValue<Collection<String>> myAnnoIndex;
-  private final CachedValue<Collection<String>> myXmlIndex;
+
   private final LanguageInjectionSupport mySupport;
 
 
@@ -71,54 +63,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     myProject = project;
     myTemporaryPlacesRegistry = temporaryPlacesRegistry;
     mySupport = InjectorUtils.findNotNullInjectionSupport(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID);
-    myXmlIndex = CachedValuesManager.getManager(myProject).createCachedValue(new CachedValueProvider<Collection<String>>() {
-      public Result<Collection<String>> compute() {
-        final Map<ElementPattern<?>, BaseInjection> map = new THashMap<ElementPattern<?>, BaseInjection>();
-        for (BaseInjection injection : myConfiguration.getInjections(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID)) {
-          for (InjectionPlace place : injection.getInjectionPlaces()) {
-            if (!place.isEnabled() || place.getElementPattern() == null) continue;
-            map.put(place.getElementPattern(), injection);
-          }
-        }
-        final Set<String> stringSet = PatternValuesIndex.buildStringIndex(map.keySet());
-        return new Result<Collection<String>>(stringSet, myConfiguration);
-      }
-    }, false);
-    myAnnoIndex = CachedValuesManager.getManager(myProject).createCachedValue(new CachedValueProvider<Collection<String>>() {
-      public Result<Collection<String>> compute() {
-        final String annotationClass = myConfiguration.getAdvancedConfiguration().getLanguageAnnotationClass();
-        final Collection<String> result = new THashSet<String>();
-        final ArrayList<String> annoClasses = new ArrayList<String>(3);
-        annoClasses.add(StringUtil.getShortName(annotationClass));
-        for (int cursor = 0; cursor < annoClasses.size(); cursor++) {
-          final String annoClass = annoClasses.get(cursor);
-          for (PsiAnnotation annotation : JavaAnnotationIndex.getInstance().get(annoClass, myProject, GlobalSearchScope.allScope(myProject))) {
-            final PsiElement modList = annotation.getParent();
-            if (!(modList instanceof PsiModifierList)) continue;
-            final PsiElement element = modList.getParent();
-            if (element instanceof PsiParameter) {
-              final PsiElement scope = ((PsiParameter)element).getDeclarationScope();
-              if (scope instanceof PsiNamedElement) {
-                ContainerUtil.addIfNotNull(((PsiNamedElement)scope).getName(), result);
-              }
-              else {
-                ContainerUtil.addIfNotNull(((PsiNamedElement)element).getName(), result);
-              }
-            }
-            else if (element instanceof PsiNamedElement) {
-              if (element instanceof PsiClass && ((PsiClass)element).isAnnotationType()) {
-                final String s = ((PsiClass)element).getName();
-                if (!annoClasses.contains(s)) annoClasses.add(s);
-              }
-              else {
-                ContainerUtil.addIfNotNull(((PsiNamedElement)element).getName(), result);
-              }
-            }
-          }
-        }
-        return new Result<Collection<String>>(result, PsiModificationTracker.MODIFICATION_COUNT, myConfiguration);
-      }
-    }, false);
+
   }
 
   public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull PsiElement... operands) {
@@ -418,7 +363,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
         else {
           if (!(curHost instanceof PsiLiteralExpression)) {
             TextRange textRange = ElementManipulators.getManipulator(curHost).getRangeInElement(curHost);
-            ProperTextRange.assertProperRange(textRange, injection);
+            TextRange.assertProperRange(textRange, injection);
             result.add(Trinity.create(curHost, InjectedLanguage.create(injection.getInjectedLanguageId(), curPrefix, curSuffix, true),
                                       textRange));
           }
@@ -426,7 +371,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
             final List<TextRange> injectedArea = injection.getInjectedArea(curHost);
             for (int j = 0, injectedAreaSize = injectedArea.size(); j < injectedAreaSize; j++) {
               TextRange textRange = injectedArea.get(j);
-              ProperTextRange.assertProperRange(textRange, injection);
+              TextRange.assertProperRange(textRange, injection);
               result.add(Trinity.create(
                 curHost, InjectedLanguage.create(injection.getInjectedLanguageId(),
                                                  (separateFiles || j == 0 ? curPrefix : ""),
@@ -477,10 +422,10 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
 
   public Collection<String> getAnnotatedElementsValue() {
     // note: external annotations not supported
-    return myAnnoIndex.getValue();
+    return InjectionCache.getInstance(myProject).getAnnoIndex();
   }
 
   private Collection<String> getXmlAnnotatedElementsValue() {
-    return myXmlIndex.getValue();
+    return InjectionCache.getInstance(myProject).getXmlIndex();
   }
 }

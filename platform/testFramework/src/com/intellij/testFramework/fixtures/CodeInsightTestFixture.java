@@ -17,6 +17,7 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.Lookup;
@@ -32,7 +33,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,11 +53,9 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- *
- * @see IdeaTestFixtureFactory#createCodeInsightFixture(IdeaProjectTestFixture)
- * @link http://confluence.jetbrains.net/display/IDEADEV/Testing+IntelliJ+IDEA+Plugins
- *
  * @author Dmitry Avdeev
+ * @link http://confluence.jetbrains.net/display/IDEADEV/Testing+IntelliJ+IDEA+Plugins
+ * @see IdeaTestFixtureFactory#createCodeInsightFixture(IdeaProjectTestFixture)
  */
 public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
@@ -104,7 +102,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * Copies a file from the testdata directory to the specified path in the test project directory.
    *
    * @param sourceFilePath path to the source file, relative to the testdata path.
-   * @param targetPath path to the destination, relative to the source root of the test project.
+   * @param targetPath     path to the destination, relative to the source root of the test project.
    * @return the VirtualFile for the copied file in the test project directory.
    */
   VirtualFile copyFileToProject(@TestDataFile @NonNls String sourceFilePath, @NonNls String targetPath);
@@ -113,7 +111,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * Copies a directory from the testdata directory to the specified path in the test project directory.
    *
    * @param sourceFilePath path to the source directory, relative to the testdata path.
-   * @param targetPath path to the destination, relative to the source root of the test project.
+   * @param targetPath     path to the destination, relative to the source root of the test project.
    * @return the VirtualFile for the copied directory in the test project directory.
    */
   VirtualFile copyDirectoryToProject(@NonNls String sourceFilePath, @NonNls String targetPath);
@@ -148,7 +146,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * editor.
    *
    * @param fileType the file type according to which which the text is interpreted.
-   * @param text the text to load into the in-memory editor.
+   * @param text     the text to load into the in-memory editor.
    * @return the PSI file created from the specified text.
    */
   PsiFile configureByText(FileType fileType, @NonNls String text);
@@ -158,7 +156,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * editor.
    *
    * @param fileName the name of the file (which is used to determine the file type based on the registered filename patterns).
-   * @param text the text to load into the in-memory editor.
+   * @param text     the text to load into the in-memory editor.
    * @return the PSI file created from the specified text.
    */
   PsiFile configureByText(String fileName, @NonNls String text);
@@ -182,8 +180,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * Creates a file with the specified path and contents in the test project directory.
    *
    * @param relativePath the path for the file to create, relative to the test project source root.
-   * @param fileText the text to put into the created file.
-   *
+   * @param fileText     the text to put into the created file.
    * @return the PSI file for the created file.
    */
   PsiFile addFileToProject(@NonNls String relativePath, @NonNls String fileText);
@@ -199,7 +196,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   /**
    * Compares the contents of the in-memory editor with the specified file, optionally ignoring trailing whitespaces.
    *
-   * @param expectedFile path to file to check against, relative to the testdata path.
+   * @param expectedFile              path to file to check against, relative to the testdata path.
    * @param ignoreTrailingWhitespaces whether trailing whitespaces should be ignored by the comparison.
    */
   void checkResultByFile(@TestDataFile @NonNls String expectedFile, boolean ignoreTrailingWhitespaces);
@@ -207,11 +204,13 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   /**
    * Compares a file in the test project with a file in the testdata directory.
    *
-   * @param filePath path to file to be checked, relative to the source root of the test project.
-   * @param expectedFile path to file to check against, relative to the testdata path.
+   * @param filePath                  path to file to be checked, relative to the source root of the test project.
+   * @param expectedFile              path to file to check against, relative to the testdata path.
    * @param ignoreTrailingWhitespaces whether trailing whitespaces should be ignored by the comparison.
    */
-  void checkResultByFile(@NonNls String filePath, @TestDataFile @NonNls String expectedFile, boolean ignoreTrailingWhitespaces);
+  void checkResultByFile(@NonNls String filePath,
+                         @TestDataFile @NonNls String expectedFile,
+                         boolean ignoreTrailingWhitespaces);
 
   /**
    * Enables inspections for highlighting tests.
@@ -240,21 +239,27 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * Runs highlighting test for the given files.
    * Checks for {@link #ERROR_MARKER} markers by default.
    *
-   * @param checkWarnings enables {@link #WARNING_MARKER} support.
-   * @param checkInfos enables {@link #INFO_MARKER} support.
+   * @param checkWarnings     enables {@link #WARNING_MARKER} support.
+   * @param checkInfos        enables {@link #INFO_MARKER} support.
    * @param checkWeakWarnings enables {@link #INFORMATION_MARKER} support.
-   * @param filePaths the first file is tested only; the others are just copied along the first.
-   *
+   * @param filePaths         the first file is tested only; the others are just copied along the first.
    * @return highlighting duration in milliseconds.
    */
   long testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, @TestDataFile @NonNls String... filePaths);
 
-  long testHighlightingAllFiles(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, @TestDataFile @NonNls String... filePaths);
+  long testHighlightingAllFiles(boolean checkWarnings,
+                                boolean checkInfos,
+                                boolean checkWeakWarnings,
+                                @TestDataFile @NonNls String... filePaths);
 
-  long testHighlightingAllFiles(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, @TestDataFile @NonNls VirtualFile... files);
+  long testHighlightingAllFiles(boolean checkWarnings,
+                                boolean checkInfos,
+                                boolean checkWeakWarnings,
+                                @TestDataFile @NonNls VirtualFile... files);
 
   /**
    * Check highlighting of file already loaded by configure* methods
+   *
    * @return duration
    */
   long checkHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings);
@@ -266,12 +271,12 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * The same as {@link #testHighlighting(boolean, boolean, boolean, String...)} with all options set.
    *
    * @param filePaths the first file is tested only; the others are just copied along with the first.
-   *
    * @return highlighting duration in milliseconds
    */
   long testHighlighting(@TestDataFile @NonNls String... filePaths);
 
   long testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, VirtualFile file);
+
   HighlightTestInfo testFile(@NonNls @NotNull String... filePath);
 
   void testInspection(@NotNull String testDir, @NotNull InspectionToolWrapper toolWrapper);
@@ -289,7 +294,6 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * Finds the reference in position marked by {@link #CARET_MARKER}.
    *
    * @return null if no reference found.
-   *
    * @see #getReferenceAtCaretPositionWithAssertion(String...)
    */
   @Nullable
@@ -300,7 +304,6 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * Asserts that the reference exists.
    *
    * @return founded reference
-   *
    * @see #getReferenceAtCaretPosition(String...)
    */
   @NotNull
@@ -314,10 +317,10 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @see #CARET_MARKER
    */
   @NotNull
-  List<IntentionAction> getAvailableIntentions(@NonNls String... filePaths);
+  List<IntentionAction> getAvailableIntentions(@NonNls @TestDataFile String... filePaths);
 
   @NotNull
-  List<IntentionAction> getAllQuickFixes(@NonNls String... filePaths);
+  List<IntentionAction> getAllQuickFixes(@NonNls @TestDataFile String... filePaths);
 
   @NotNull
   List<IntentionAction> getAvailableIntentions();
@@ -344,11 +347,11 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * in the in-memory editor and returns an intention action or quickfix with the name exactly matching the specified text.
    *
    * @param intentionName the text that the intention text should be equal to.
-   * @param filePaths the list of file path to copy to the test project directory.
+   * @param filePaths     the list of file path to copy to the test project directory.
    * @return the first found intention or quickfix, or null if no matching intention actions are found.
    */
   @Nullable
-  IntentionAction getAvailableIntention(final String intentionName, final String... filePaths);
+  IntentionAction getAvailableIntention(final String intentionName, @TestDataFile final String... filePaths);
 
   /**
    * Launches the given action. Use {@link #checkResultByFile(String)} to check the result.
@@ -367,11 +370,15 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   void testCompletion(@TestDataFile @NonNls String fileBefore, @TestDataFile @NonNls String fileAfter, final String... additionalFiles);
 
-  void testCompletionTyping(@TestDataFile @NonNls String fileBefore, String toType, @TestDataFile @NonNls String fileAfter, final String... additionalFiles);
+  void testCompletionTyping(@TestDataFile @NonNls String fileBefore,
+                            String toType,
+                            @TestDataFile @NonNls String fileAfter,
+                            final String... additionalFiles);
 
   /**
    * Runs basic completion in caret position in fileBefore.
    * Checks that lookup is shown and it contains items with given lookup strings
+   *
    * @param items most probably will contain > 1 items
    */
   void testCompletionVariants(@TestDataFile @NonNls String fileBefore, @NonNls String... items);
@@ -380,22 +387,22 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * Launches renaming refactoring and checks the result.
    *
    * @param fileBefore original file path. Use {@link #CARET_MARKER} to mark the element to rename.
-   * @param fileAfter result file to be checked against.
-   * @param newName new name for the element.
+   * @param fileAfter  result file to be checked against.
+   * @param newName    new name for the element.
    * @see #testRename(String, String)
    */
   void testRename(@TestDataFile @NonNls String fileBefore,
                   @TestDataFile @NonNls String fileAfter, @NonNls String newName, final String... additionalFiles);
 
-  void testRename(String fileAfter, String newName);
+  void testRename(@TestDataFile String fileAfter, String newName);
 
   Collection<UsageInfo> testFindUsages(@TestDataFile @NonNls String... fileNames);
 
   Collection<UsageInfo> findUsages(final PsiElement to);
 
-  RangeHighlighter[] testHighlightUsages(String... files);
+  RangeHighlighter[] testHighlightUsages(@TestDataFile String... files);
 
-  void moveFile(@NonNls String filePath, @NonNls String to, final String... additionalFiles);
+  void moveFile(@NonNls @TestDataFile String filePath, @NonNls String to, final String... additionalFiles);
 
   /**
    * Returns gutter renderer at the caret position.
@@ -431,7 +438,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   Document getDocument(PsiFile file);
 
   @NotNull
-  Collection<GutterMark> findAllGutters(String filePath);
+  Collection<GutterMark> findAllGutters(@TestDataFile String filePath);
 
   void type(final char c);
 
@@ -441,13 +448,14 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   /**
    * If the action is visible and enabled, perform it
+   *
    * @param action
    * @return updated action's presentation
    */
   Presentation testAction(AnAction action);
 
   @Nullable
-  List<String> getCompletionVariants(String... filesBefore);
+  List<String> getCompletionVariants(@TestDataFile String... filesBefore);
 
   /**
    * @return null if the only item was auto-completed
@@ -476,13 +484,14 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   void allowTreeAccessForAllFiles();
 
   void renameElement(PsiElement element,
-                             String newName,
-                             boolean searchInComments,
-                             boolean searchTextOccurrences);
+                     String newName,
+                     boolean searchInComments,
+                     boolean searchTextOccurrences);
 
   <T extends PsiElement> T findElementByText(String text, Class<T> elementClass);
 
   void testFolding(String fileName);
+
   void testFoldingWithCollapseStatus(String fileName);
 
   void assertPreferredCompletionItems(int selected, @NonNls String... expected);

@@ -2,6 +2,7 @@ package com.intellij.openapi.roots;
 
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -104,6 +105,8 @@ public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
 
   @Nullable
   private static StructureConfigurableContext getProjectStructureContext(Project project) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return null;
+
     final ProjectStructureConfigurable structureConfigurable = ProjectStructureConfigurable.getInstance(project);
     return structureConfigurable.isUiInitialized() ? structureConfigurable.getContext() : null;
   }

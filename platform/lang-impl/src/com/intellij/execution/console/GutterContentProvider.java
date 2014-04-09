@@ -28,7 +28,7 @@ public abstract class GutterContentProvider {
 
   public abstract void doAction(int line, @NotNull Editor editor);
 
-  public abstract void drawIcon(int line, @NotNull Graphics g, int y, @NotNull Editor editor);
+  public abstract boolean drawIcon(int line, @NotNull Graphics g, int y, @NotNull Editor editor);
 
   public boolean isShowSeparatorLine(int line, @NotNull Editor editor) {
     return true;

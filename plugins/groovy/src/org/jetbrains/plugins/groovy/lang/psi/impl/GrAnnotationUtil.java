@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
@@ -101,5 +102,12 @@ public class GrAnnotationUtil {
       }
     }
     return null;
+  }
+
+  public static PsiElement getActualOwner(GrAnnotation annotation) {
+    PsiAnnotationOwner owner = annotation.getOwner();
+    if (owner instanceof PsiModifierList) return ((PsiModifierList)owner).getParent();
+
+    return (PsiElement)owner;
   }
 }

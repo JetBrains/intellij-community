@@ -19,9 +19,11 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogHighlighter;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.graph.ClickGraphAction;
+import com.intellij.vcs.log.graph.MouseOverAction;
 import com.intellij.vcs.log.graph.*;
-import com.intellij.vcs.log.graph.render.GraphCommitCell;
-import com.intellij.vcs.log.graph.render.PositionUtil;
+import com.intellij.vcs.log.ui.render.GraphCommitCell;
+import com.intellij.vcs.log.newgraph.render.PositionUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRender;
 import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
@@ -40,8 +42,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.intellij.vcs.log.graph.render.PrintParameters.HEIGHT_CELL;
+import static com.intellij.vcs.log.printer.idea.PrintParameters.HEIGHT_CELL;
 
 public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, CopyProvider {
 
@@ -55,7 +58,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   private final GraphCommitCellRender myGraphCommitCellRender;
 
   private boolean myColumnsSizeInitialized = false;
-  private volatile boolean myRepaintFreezed;
+  private final AtomicInteger myRepaintFreezedCounter = new AtomicInteger();
 
   @NotNull private final Collection<VcsLogHighlighter> myHighlighters = ContainerUtil.newArrayList();
 
@@ -169,7 +172,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
   @Override
   protected void paintComponent(Graphics g) {
-    if (myRepaintFreezed) {
+    if (myRepaintFreezedCounter.get() > 0) {
       return;
     }
     super.paintComponent(g);
@@ -179,12 +182,12 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
    * Freeze repaint to avoid repainting during changing the Graph.
    */
   public void executeWithoutRepaint(@NotNull Runnable action) {
-    myRepaintFreezed = true;
+    myRepaintFreezedCounter.incrementAndGet();
     try {
       action.run();
     }
     finally {
-      myRepaintFreezed = false;
+      myRepaintFreezedCounter.decrementAndGet();
     }
   }
 

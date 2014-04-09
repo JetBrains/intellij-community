@@ -59,7 +59,7 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
   public void addBrowseFolderListener(@NotNull TextBrowseFolderListener listener) {
     listener.setOwnerComponent(this);
     addBrowseFolderListener(null, listener, true);
-    installPathCompletion(listener.gFileChooserDescriptor());
+    installPathCompletion(listener.getFileChooserDescriptor());
   }
 
   protected void installPathCompletion(final FileChooserDescriptor fileChooserDescriptor) {

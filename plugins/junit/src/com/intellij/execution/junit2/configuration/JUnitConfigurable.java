@@ -50,6 +50,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.IconUtil;
 import com.intellij.util.TextFieldCompletionProvider;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -214,7 +215,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
       }
     });
 
-    //myCommonJavaParameters.getProgramParametersComponent().setVisible(false);
+    UIUtil.setEnabled(myCommonJavaParameters.getProgramParametersComponent(), false, true);
 
     setAnchor(mySearchForTestsLabel);
     myModule.setAnchor(myAlternativeJREPanel.getCbEnabled());

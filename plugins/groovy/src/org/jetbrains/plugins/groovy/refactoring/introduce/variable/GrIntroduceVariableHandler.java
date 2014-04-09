@@ -124,12 +124,15 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     // Generating variable declaration
 
     GrVariable insertedVar = processExpression(context, settings);
-
-    if (context.getEditor() != null && getPositionMarker() != null) {
-      context.getEditor().getCaretModel().moveToOffset(getPositionMarker().getEndOffset());
-      context.getEditor().getSelectionModel().removeSelection();
-    }
+    moveOffsetToPositionMarker(context.getEditor());
     return insertedVar;
+  }
+
+  private void moveOffsetToPositionMarker(Editor editor) {
+    if (editor != null && getPositionMarker() != null) {
+      editor.getSelectionModel().removeSelection();
+      editor.getCaretModel().moveToOffset(getPositionMarker().getEndOffset());
+    }
   }
 
   @Override
@@ -158,6 +161,12 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
         else {
           return addVariable(context, settings);
         }
+      }
+
+      @Override
+      protected void performPostIntroduceTasks() {
+        super.performPostIntroduceTasks();
+        moveOffsetToPositionMarker(contextRef.get().getEditor());
       }
     };
   }

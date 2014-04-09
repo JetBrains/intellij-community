@@ -26,6 +26,7 @@ import com.intellij.compiler.CompilerMessageImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.make.DependencyCache;
 import com.intellij.compiler.progress.CompilerTask;
+import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
@@ -99,7 +100,13 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     myIsAnnotationProcessorsEnabled = CompilerConfiguration.getInstance(project).isAnnotationProcessorsEnabled();
 
     if (compilerSession != null) {
-      compilerSession.setContentIdKey(compileScope.getUserData(CompilerManager.CONTENT_ID_KEY));
+      final Object sessionId = ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(compileScope);
+      if (sessionId != null) {
+        // in case compilation is started as a part of some execution session, 
+        // all compilation tasks should have the same sessionId in order for successive task not to clean messages 
+        // from previous compilation tasks run within this execution session
+        compilerSession.setSessionId(sessionId);
+      }
     }
     recalculateOutputDirs();
     final CompilerWorkspaceConfiguration workspaceConfig = CompilerWorkspaceConfiguration.getInstance(myProject);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.wm.impl.FocusRequestInfo;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.JBSplitter;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,9 +41,8 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class FocusTracesDialog extends DialogWrapper {
-  private JTextPane myStacktrace;
-  private JBTable myRequestsTable;
-  private JPanel myRootPanel;
+  private final JTextPane myStacktrace = new JTextPane();
+  private final JBTable myRequestsTable;
   private final List<FocusRequestInfo> myRequests;
   private static final String[] COLUMNS = {"Time", "Forced", "Component"};
 
@@ -49,19 +50,25 @@ public class FocusTracesDialog extends DialogWrapper {
     super(project);
     myRequests = requests;
     setTitle("Focus Traces");
-    init();
     final String[][] data = new String[requests.size()][];
     for (int i = 0; i < data.length; i++) {
       final FocusRequestInfo r = requests.get(i);
       data[i] = new String[]{r.getDate(), String.valueOf(r.isForced()), String.valueOf(r.getComponent())};
     }
-    myRequestsTable.setModel(new DefaultTableModel(data, COLUMNS));
+    setModal(false);
+    myRequestsTable = new JBTable(new DefaultTableModel(data, COLUMNS) {
+      @Override
+      public boolean isCellEditable(int row, int column) {
+        return false;
+      }
+    });
     final ListSelectionListener selectionListener = new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
         final int index = myRequestsTable.getSelectedRow();
         if (-1 < index && index < myRequests.size()) {
           myStacktrace.setText(myRequests.get(index).getStackTrace());
+          myStacktrace.setCaretPosition(0);
         }
         else {
           myStacktrace.setText("");
@@ -70,12 +77,15 @@ public class FocusTracesDialog extends DialogWrapper {
     };
     myRequestsTable.getSelectionModel().addListSelectionListener(selectionListener);
     final TableColumnModel columnModel = myRequestsTable.getColumnModel();
+    columnModel.getColumn(0).setMinWidth(120);
     columnModel.getColumn(0).setMaxWidth(120);
+    columnModel.getColumn(0).setPreferredWidth(120);
+    columnModel.getColumn(1).setMinWidth(60);
     columnModel.getColumn(1).setMaxWidth(60);
-    columnModel.getSelectionModel().addListSelectionListener(selectionListener);
-    columnModel.setColumnSelectionAllowed(false);
+    columnModel.getColumn(1).setPreferredWidth(60);
     myRequestsTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myRequestsTable.changeSelection(0, 0, false, true);
+    init();
   }
 
   @Override
@@ -85,7 +95,13 @@ public class FocusTracesDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    return myRootPanel;
+    JPanel panel = new JPanel(new BorderLayout());
+    JBSplitter splitter = new JBSplitter(true, .5F, .2F, .8F);
+    splitter.setFirstComponent(new JBScrollPane(myRequestsTable, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER));
+    splitter.setSecondComponent(
+      new JBScrollPane(myStacktrace, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER));
+    panel.add(splitter, BorderLayout.CENTER);
+    return panel;
   }
 
   @Override

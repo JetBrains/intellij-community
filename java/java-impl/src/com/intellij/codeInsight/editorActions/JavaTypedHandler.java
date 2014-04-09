@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.JavaClassReferenceCompletionContributor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
@@ -132,7 +131,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
         return Result.CONTINUE;
       }
       if (PsiTreeUtil.getParentOfType(leaf, PsiCodeBlock.class, false, PsiMember.class) != null) {
-        EditorModificationUtil.insertStringAtCaret(editor, "{", false, true);
+        EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(editor, "{");
         TypedHandler.indentOpenedBrace(project, editor);
         return Result.STOP;
       }
@@ -170,8 +169,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     char charAt = editor.getDocument().getCharsSequence().charAt(offset);
     if (charAt != ';') return false;
 
-    editor.getCaretModel().moveToOffset(offset + 1);
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    EditorModificationUtil.moveAllCaretsRelatively(editor, 1);
     return true;
   }
 
@@ -211,8 +209,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     }
 
     if (balance == 0) {
-      editor.getCaretModel().moveToOffset(offset + 1);
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      EditorModificationUtil.moveAllCaretsRelatively(editor, 1);
       return true;
     }
 
@@ -251,7 +248,12 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     }
 
     if (balance == 1) {
-      editor.getDocument().insertString(offset, ">");
+      if (editor.getCaretModel().supportsMultipleCarets()) {
+        EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(editor, ">", 0);
+      }
+      else {
+        editor.getDocument().insertString(offset, ">");
+      }
     }
   }
 

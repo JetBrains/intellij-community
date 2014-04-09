@@ -20,26 +20,24 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.gpp.GppClosureParameterTypeProvider;
-import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author ven
@@ -52,7 +50,7 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
 
   private final boolean myAllVariants;
 
-  protected final Set<GroovyResolveResult> myInapplicableCandidates = new LinkedHashSet<GroovyResolveResult>();
+  private Set<GroovyResolveResult> myInapplicableCandidates = null;
 
   private final boolean myIsConstructor;
 
@@ -61,8 +59,6 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
   private final boolean myByShape;
 
   private final SubstitutorComputer mySubstitutorComputer;
-
-  private final boolean myTypedContext;
 
   public MethodResolverProcessor(@Nullable String name,
                                  @NotNull PsiElement place,
@@ -89,7 +85,6 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
     myByShape = byShape;
 
     mySubstitutorComputer = new SubstitutorComputer(myThisType, myArgumentTypes, typeArguments, myPlace, myPlace.getParent());
-    myTypedContext = GppTypeConverter.hasTypedContext(myPlace);
   }
 
 
@@ -119,11 +114,18 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
         addCandidate(candidate);
       }
       else {
-        myInapplicableCandidates.add(candidate);
+        addInapplicableCandidate(candidate);
       }
     }
 
     return true;
+  }
+
+  protected boolean addInapplicableCandidate(@NotNull GroovyResolveResult candidate) {
+    if (myInapplicableCandidates == null) {
+      myInapplicableCandidates = ContainerUtil.newLinkedHashSet();
+    }
+    return myInapplicableCandidates.add(candidate);
   }
 
   @NotNull
@@ -138,12 +140,12 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
   @Override
   @NotNull
   public GroovyResolveResult[] getCandidates() {
-    if (!myAllVariants && super.hasCandidates()) {
+    if (!myAllVariants && hasApplicableCandidates()) {
       return filterCandidates();
     }
-    if (!myInapplicableCandidates.isEmpty()) {
-      final Set<GroovyResolveResult> resultSet =
-        myAllVariants ? myInapplicableCandidates : filterCorrectParameterCount(myInapplicableCandidates);
+    if (myInapplicableCandidates != null && !myInapplicableCandidates.isEmpty()) {
+      Set<GroovyResolveResult> resultSet = myAllVariants ? myInapplicableCandidates
+                                                         : filterCorrectParameterCount(myInapplicableCandidates);
       return ResolveUtil.filterSameSignatureCandidates(resultSet);
     }
     return GroovyResolveResult.EMPTY_ARRAY;
@@ -180,10 +182,11 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
         PsiMethod currentMethod = (PsiMethod) currentElement;
         for (Iterator<GroovyResolveResult> iterator = result.iterator(); iterator.hasNext();) {
           final GroovyResolveResult otherResolveResult = iterator.next();
-          PsiElement element = otherResolveResult.getElement();
-          if (element instanceof PsiMethod) {
-            PsiMethod method = (PsiMethod) element;
-            final int res = compareMethods(currentMethod, resolveResult.getSubstitutor(), method, otherResolveResult.getSubstitutor());
+          PsiElement other = otherResolveResult.getElement();
+          if (other instanceof PsiMethod) {
+            PsiMethod otherMethod = (PsiMethod) other;
+            int res = compareMethods(currentMethod, resolveResult.getSubstitutor(), resolveResult.getCurrentFileResolveContext(),
+                                     otherMethod, otherResolveResult.getSubstitutor(), otherResolveResult.getCurrentFileResolveContext());
             if (res > 0) {
               continue Outer;
             }
@@ -200,76 +203,42 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
     return result.toArray(new GroovyResolveResult[result.size()]);
   }
 
-  private int compareMethods(PsiMethod method1,
-                             PsiSubstitutor substitutor1,
-                             PsiMethod method2,
-                             PsiSubstitutor substitutor2) {
+  /**
+   *
+   * @return 1 if second is more preferable
+   *         0 if methods are equal
+   *        -1 if first is more preferable
+   */
+  private int compareMethods(@NotNull PsiMethod method1,
+                             @NotNull PsiSubstitutor substitutor1,
+                             @Nullable PsiElement resolveContext1,
+                             @NotNull PsiMethod method2,
+                             @NotNull PsiSubstitutor substitutor2,
+                             @Nullable PsiElement resolveContext2) {
     if (!method1.getName().equals(method2.getName())) return 0;
 
-    if (myTypedContext) {
-      if (isMoreConcreteThan(method2, substitutor2, method1, substitutor1, (GroovyPsiElement)myPlace)) {
-        return 1;
-      }
-
-      if (isMoreConcreteThan(method1, substitutor1, method2, substitutor2, (GroovyPsiElement)myPlace)) {
-        return -1;
-      }
-    }
-
-    if (dominated(method1, substitutor1, method2, substitutor2)) {
-      if (dominated(method2, substitutor2, method1, substitutor1)) {
+    if (secondMethodIsPreferable(method1, substitutor1, resolveContext1, method2, substitutor2, resolveContext2)) {
+      if (secondMethodIsPreferable(method2, substitutor2, resolveContext2, method1, substitutor1, resolveContext1)) {
         if (method2 instanceof GrGdkMethod && !(method1 instanceof GrGdkMethod)) {
           return -1;
         }
       }
       return 1;
     }
-    if (dominated(method2, substitutor2, method1, substitutor1)) {
+    if (secondMethodIsPreferable(method2, substitutor2, resolveContext2, method1, substitutor1, resolveContext1)) {
       return -1;
     }
 
     return 0;
   }
 
-  private static boolean isMoreConcreteThan(@NotNull PsiMethod method,
-                                            @NotNull final PsiSubstitutor substitutor,
-                                            @NotNull PsiMethod another,
-                                            @NotNull PsiSubstitutor anotherSubstitutor,
-                                            @NotNull GroovyPsiElement context) {
-    if (another instanceof GrGdkMethodImpl && another.getName().equals(method.getName())) {
-      final PsiParameter[] plusParameters = method.getParameterList().getParameters();
-      final PsiParameter[] defParameters = another.getParameterList().getParameters();
-
-      final PsiType[] paramTypes = PsiType.createArray(plusParameters.length);
-      for (int i = 0; i < paramTypes.length; i++) {
-        paramTypes[i] = eliminateOneMethodInterfaces(plusParameters[i], defParameters, i);
-
-      }
-
-      final GrClosureSignature gdkSignature = GrClosureSignatureUtil.createSignature(another, anotherSubstitutor);
-      if (GrClosureSignatureUtil.isSignatureApplicable(gdkSignature, paramTypes, context)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static PsiType eliminateOneMethodInterfaces(PsiParameter plusParameter, PsiParameter[] gdkParameters, int i) {
-    PsiType type = plusParameter.getType();
-    if (i < gdkParameters.length &&
-        gdkParameters[i].getType().equalsToText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE) &&
-        GppClosureParameterTypeProvider.findSingleAbstractMethodSignature(type) != null) {
-      return gdkParameters[i].getType();
-    }
-    return type;
-  }
-
-
   //method1 has more general parameter types thn method2
-  private boolean dominated(PsiMethod method1,
-                            PsiSubstitutor substitutor1,
-                            PsiMethod method2,
-                            PsiSubstitutor substitutor2) {
+  private boolean secondMethodIsPreferable(@NotNull PsiMethod method1,
+                                           @NotNull PsiSubstitutor substitutor1,
+                                           @Nullable PsiElement resolveContext1,
+                                           @NotNull PsiMethod method2,
+                                           @NotNull PsiSubstitutor substitutor2,
+                                           @Nullable PsiElement resolveContext2) {
     if (!method1.getName().equals(method2.getName())) return false;
 
     final Boolean custom = GrMethodComparator.checkDominated(method1, substitutor1, method2, substitutor2, this);
@@ -326,6 +295,15 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
       }
 
       if (!typesAgree(TypeConversionUtil.erasure(ptype1), TypeConversionUtil.erasure(ptype2))) return false;
+
+      if (resolveContext1 != null && resolveContext2 == null) {
+        return !(TypesUtil.resolvesTo(type1, CommonClassNames.JAVA_LANG_OBJECT) &&
+                 TypesUtil.resolvesTo(type2, CommonClassNames.JAVA_LANG_OBJECT));
+      }
+
+      if (resolveContext1 == null && resolveContext2 != null) {
+        return true;
+      }
     }
 
     if (!(method1 instanceof SyntheticElement) && !(method2 instanceof SyntheticElement)) {
@@ -357,7 +335,7 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
 
   @Override
   public boolean hasCandidates() {
-    return super.hasCandidates() || !myInapplicableCandidates.isEmpty();
+    return hasApplicableCandidates() || myInapplicableCandidates != null && !myInapplicableCandidates.isEmpty();
   }
 
   public boolean hasApplicableCandidates() {
@@ -377,9 +355,9 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
   }
 
   @Override
-  public void handleEvent(Event event, Object associated) {
+  public void handleEvent(@NotNull Event event, Object associated) {
     super.handleEvent(event, associated);
-    if (JavaScopeProcessorEvent.CHANGE_LEVEL == event && super.hasCandidates()) {
+    if (JavaScopeProcessorEvent.CHANGE_LEVEL == event && hasApplicableCandidates()) {
       myStopExecuting = true;
     }
   }

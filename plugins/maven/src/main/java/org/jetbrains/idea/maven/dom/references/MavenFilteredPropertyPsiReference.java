@@ -39,7 +39,7 @@ public class MavenFilteredPropertyPsiReference extends MavenPropertyPsiReference
     PsiElement result = super.doResolve();
     if (result != null) return result;
 
-    for (String each : myMavenProject.getFilters()) {
+    for (String each : myMavenProject.getFilterPropertiesFiles()) {
       VirtualFile file = LocalFileSystem.getInstance().findFileByPath(each);
       if (file == null) continue;
       IProperty property = MavenDomUtil.findProperty(myProject, file, myText);
@@ -53,7 +53,7 @@ public class MavenFilteredPropertyPsiReference extends MavenPropertyPsiReference
   protected void collectVariants(List<Object> result, Set<String> variants) {
     super.collectVariants(result, variants);
 
-    for (String each : myMavenProject.getFilters()) {
+    for (String each : myMavenProject.getFilterPropertiesFiles()) {
       VirtualFile file = LocalFileSystem.getInstance().findFileByPath(each);
       if (file == null) continue;
       collectPropertiesFileVariants(MavenDomUtil.getPropertiesFile(myProject, file), null, result, variants);

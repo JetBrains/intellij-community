@@ -86,7 +86,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         if (((IStubFileElementType)elementType).shouldBuildStubFor(file)) {
           return true;
         }
-        if (IndexingStamp.isFileIndexed(file, INDEX_ID, IndexInfrastructure.getIndexCreationStamp(INDEX_ID))) {
+        if (IndexingStamp.isFileIndexedStateCurrent(file, INDEX_ID)) {
           return true;
         }
       }

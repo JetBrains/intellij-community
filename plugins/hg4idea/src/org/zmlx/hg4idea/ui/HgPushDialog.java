@@ -163,12 +163,13 @@ public class HgPushDialog extends DialogWrapper {
     final Collection<String> branches = repo.getOpenedBranches();
     final Collection<String> bookmarkNames = HgUtil.getNamesWithoutHashes(repo.getBookmarks());
     branchComboBox.setModel(new DefaultComboBoxModel(branches.toArray()));
+    branchComboBox.setSelectedItem(repo.getCurrentBranch());
     myBookmarkComboBox.setModel(new DefaultComboBoxModel(bookmarkNames.toArray()));
   }
 
   private void updateRepositoryUrlText(String defaultPath) {
     if (defaultPath != null) {
-      myRepositoryURL.setText(defaultPath);
+      myRepositoryURL.setSelectedItem(defaultPath);
       update();
     }
   }
@@ -177,7 +178,6 @@ public class HgPushDialog extends DialogWrapper {
     setOKActionEnabled(validateOptions());
     revisionTxt.setEnabled(revisionCbx.isSelected());
     branchComboBox.setEnabled(branchCheckBox.isSelected());
-    newBranchCheckBox.setEnabled(branchCheckBox.isSelected());
     myBookmarkComboBox.setEnabled(myBookmarkCheckBox.isSelected());
   }
 

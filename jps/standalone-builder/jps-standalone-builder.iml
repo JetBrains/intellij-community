@@ -22,6 +22,7 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="jps-plugin-system" />
   </component>
 </module>
 

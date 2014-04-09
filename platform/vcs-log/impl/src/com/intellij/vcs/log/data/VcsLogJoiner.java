@@ -34,6 +34,9 @@ import java.util.*;
 public class VcsLogJoiner {
   private final static int BOUND_SAVED_LOG = 10000;
 
+  public final static String NOT_ENOUGH_FIRST_BLOCK = "Not enough first block";
+  public final static String ILLEGAL_DATA_RELOAD_ALL = "All data is illegal - request reload all";
+
   /**
    * Attaches the block of latest commits, which was read from the VCS, to the existing log structure.
    *
@@ -50,17 +53,11 @@ public class VcsLogJoiner {
                                                            @NotNull Collection<VcsRef> newRefs) {
     Set<Hash> previousRefsHashes = toHashes(previousRefs);
     Set<Hash> newRefsHashes = toHashes(newRefs);
-    Pair<Integer, Set<Hash>> redCommitsAndSavedRedIndex =
-      getRedCommitsAndSavedRedIndex(savedLog, previousRefsHashes, firstBlock, newRefsHashes);
     Pair<Integer, Set<TimedVcsCommit>> newCommitsAndSavedGreenIndex =
       getNewCommitsAndSavedGreenIndex(savedLog, previousRefsHashes, firstBlock, newRefsHashes);
+    Pair<Integer, Set<Hash>> redCommitsAndSavedRedIndex =
+      getRedCommitsAndSavedRedIndex(savedLog, previousRefsHashes, firstBlock, newRefsHashes);
 
-    if (redCommitsAndSavedRedIndex.first == -1) { // firstBlock not enough or remove old commits
-      throw new IllegalStateException(); //todo
-    }
-    else if (newCommitsAndSavedGreenIndex.first == -1) {
-      throw new IllegalStateException(); // todo
-    }
     Set<Hash> removeCommits = redCommitsAndSavedRedIndex.second;
     Set<TimedVcsCommit> allNewsCommits = newCommitsAndSavedGreenIndex.second;
 
@@ -85,7 +82,6 @@ public class VcsLogJoiner {
     return hashes;
   }
 
-  // return Pair(-1, null) if something bad :'(
   @NotNull
   private static Pair<Integer, Set<TimedVcsCommit>> getNewCommitsAndSavedGreenIndex(@NotNull List<? extends TimedVcsCommit> savedLog,
                                                                                     @NotNull Collection<Hash> previousRefs,
@@ -93,8 +89,9 @@ public class VcsLogJoiner {
                                                                                     @NotNull Collection<Hash> newRefs) {
     Set<Hash> allUnresolvedLinkedHashes = new HashSet<Hash>(newRefs);
     allUnresolvedLinkedHashes.removeAll(previousRefs);
-    // in this moment allUnresolvedLinkedHashes contains only NEW refs
+    // at this moment allUnresolvedLinkedHashes contains only NEW refs
     for (VcsCommit commit : firstBlock) {
+      allUnresolvedLinkedHashes.add(commit.getHash());
       allUnresolvedLinkedHashes.addAll(commit.getParents());
     }
     for (VcsCommit commit : firstBlock) {
@@ -103,28 +100,28 @@ public class VcsLogJoiner {
       }
     }
     int saveGreenIndex = getFirstUnTrackedIndex(savedLog, allUnresolvedLinkedHashes);
-    if (saveGreenIndex == -1)
-      return new Pair<Integer, Set<TimedVcsCommit>>(-1, null);
 
     return new Pair<Integer, Set<TimedVcsCommit>>(saveGreenIndex, getAllNewCommits(savedLog.subList(0, saveGreenIndex), firstBlock));
   }
 
   private static int getFirstUnTrackedIndex(@NotNull List<? extends TimedVcsCommit> commits, @NotNull Set<Hash> searchHashes) {
-    int lastIndex = 0;
-    for (VcsCommit commit : commits) {
+    int lastIndex;
+    for (lastIndex = 0; lastIndex < commits.size(); lastIndex++) {
+      VcsCommit commit = commits.get(lastIndex);
       if (searchHashes.size() == 0)
         return lastIndex;
       if (lastIndex > BOUND_SAVED_LOG)
-        return -1;
+        throw new IllegalStateException(ILLEGAL_DATA_RELOAD_ALL);
       searchHashes.remove(commit.getHash());
-      lastIndex++;
     }
-    return searchHashes.size() == 0 ? lastIndex : -1;
+    if (searchHashes.size() != 0)
+      throw new IllegalStateException(ILLEGAL_DATA_RELOAD_ALL);
+    return lastIndex;
   }
 
   private static Set<TimedVcsCommit> getAllNewCommits(@NotNull List<? extends TimedVcsCommit> unsafeGreenPartSavedLog,
                                                       @NotNull List<? extends TimedVcsCommit> firstBlock) {
-    Set<Hash> existedCommitHashes = new HashSet<Hash>();
+    Set<Hash> existedCommitHashes = ContainerUtil.newHashSet();
     for (VcsCommit commit : unsafeGreenPartSavedLog) {
       existedCommitHashes.add(commit.getHash());
     }
@@ -137,7 +134,6 @@ public class VcsLogJoiner {
     return allNewsCommits;
   }
 
-  // return Pair(-1, null) if something bad :'(
   @NotNull
   private static Pair<Integer, Set<Hash>> getRedCommitsAndSavedRedIndex(@NotNull List<? extends TimedVcsCommit> savedLog,
                                                                      @NotNull Collection<Hash> previousRefs,
@@ -152,8 +148,6 @@ public class VcsLogJoiner {
     }
     RedGreenSorter sorter = new RedGreenSorter(startRedCommits, startGreenNodes, savedLog);
     int saveRegIndex = sorter.getFirstSaveIndex();
-    if (saveRegIndex == -1)
-      return new Pair<Integer, Set<Hash>>(-1, null);
 
     return new Pair<Integer, Set<Hash>>(saveRegIndex, sorter.getAllRedCommit());
   }
@@ -172,31 +166,31 @@ public class VcsLogJoiner {
     }
 
     private void markRealRedNode(@NotNull Hash node) {
-      assert currentRed.remove(node) : "Red node isn't marked as red";
+      if (!currentRed.remove(node))
+        throw new IllegalStateException(NOT_ENOUGH_FIRST_BLOCK);
       allRedCommit.add(node);
     }
 
-    // return -1 if something bad
     private int getFirstSaveIndex() {
-      int lastIndex = 0;
-      for (TimedVcsCommit commit : savedLog) {
+      for (int lastIndex = 0; lastIndex < savedLog.size(); lastIndex++) {
+        TimedVcsCommit commit = savedLog.get(lastIndex);
         if (lastIndex > BOUND_SAVED_LOG)
-          return -1;
+          throw new IllegalStateException(ILLEGAL_DATA_RELOAD_ALL);
 
-        boolean isGreen = currentGreen.remove(commit.getHash());
+        boolean isGreen = currentGreen.contains(commit.getHash());
         if (isGreen) {
           currentRed.remove(commit.getHash());
           currentGreen.addAll(commit.getParents());
-        } else {
+        }
+        else {
           markRealRedNode(commit.getHash());
           currentRed.addAll(commit.getParents());
         }
 
-        lastIndex++;
         if (currentRed.isEmpty())
-          return lastIndex;
+          return lastIndex + 1;
       }
-      return -1;
+      throw new IllegalStateException(ILLEGAL_DATA_RELOAD_ALL);
     }
 
     public Set<Hash> getAllRedCommit() {
@@ -205,7 +199,7 @@ public class VcsLogJoiner {
   }
 
 
-  /*package*/ static class NewCommitIntegrator<Commit extends TimedVcsCommit> {
+  static class NewCommitIntegrator<Commit extends TimedVcsCommit> {
     private final List<Commit> list;
     private final Map<Hash, Commit> newCommitsMap;
 
@@ -255,6 +249,7 @@ public class VcsLogJoiner {
       }
     }
 
+    @NotNull
     public List<Commit> getResultList() {
       insertAllUseStack();
       return list;

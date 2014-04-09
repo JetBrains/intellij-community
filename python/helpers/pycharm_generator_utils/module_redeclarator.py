@@ -529,7 +529,9 @@ class ModuleRedeclarator(object):
             out(indent, "def ", spec, ": # ", sig_note)
             out_doc_attr(out, p_func, indent + 1, p_class)
         elif sys.platform == 'cli' and is_clr_type(p_class):
-            spec, sig_note = restore_clr(p_name, p_class)
+            is_static, spec, sig_note = restore_clr(p_name, p_class)
+            if is_static:
+                out(indent, "@staticmethod")
             if not spec: return
             if sig_note:
                 out(indent, "def ", spec, ": #", sig_note)

@@ -273,7 +273,7 @@ public class DomUtil {
   }
 
   private static boolean checkHasXml(XmlElement psi, DomElement dom) {
-    if (dom != null && dom.getXmlElement() == null) {
+    if (dom != null && !hasXml(dom)) {
       LOG.error("No xml for dom " + dom + "; attr=" + psi + ", physical=" + psi.isPhysical());
       return false;
     }
@@ -477,7 +477,7 @@ public class DomUtil {
   }
 
   public static boolean hasXml(@NotNull DomElement element) {
-    return element.getXmlElement() != null;
+    return element.exists();
   }
 
   public static Pair<TextRange, PsiElement> getProblemRange(final XmlTag tag) {

@@ -40,6 +40,7 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -103,16 +104,27 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
 
     myEditorMouseListener = new MyEditorMouseListener();
 
-    myConnection = project.getMessageBus().connect();
-    myConnection.subscribe(FileTypeManager.TOPIC, new MyFileTypeListener());
-
-    myVirtualFileListener = new MyVirtualFileListener();
-    myFile.getFileSystem().addVirtualFileListener(myVirtualFileListener);
     myEditor = createEditor();
     add(myEditor.getComponent(), BorderLayout.CENTER);
     myModified = isModifiedImpl();
     myValid = isEditorValidImpl();
     LOG.assertTrue(myValid);
+
+    myVirtualFileListener = new MyVirtualFileListener();
+    myFile.getFileSystem().addVirtualFileListener(myVirtualFileListener);
+    myConnection = project.getMessageBus().connect();
+    myConnection.subscribe(FileTypeManager.TOPIC, new MyFileTypeListener());
+    myConnection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+      @Override
+      public void enteredDumbMode() {
+        updateHighlighters();
+      }
+
+      @Override
+      public void exitDumbMode() {
+        updateHighlighters();
+      }
+    });
   }
 
   /**
@@ -330,7 +342,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
    */
   private final class MyFileTypeListener extends FileTypeListener.Adapter {
     @Override
-    public void fileTypesChanged(final FileTypeEvent event) {
+    public void fileTypesChanged(@NotNull final FileTypeEvent event) {
       assertThread();
       // File can be invalid after file type changing. The editor should be removed
       // by the FileEditorManager if it's invalid.

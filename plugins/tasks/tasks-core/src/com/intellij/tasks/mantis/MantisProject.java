@@ -1,57 +1,103 @@
 package com.intellij.tasks.mantis;
 
+import com.intellij.tasks.mantis.model.ProjectData;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * User: evgeny.zakrevsky
  * Date: 9/24/12
  */
-public class MantisProject {
-  public final static MantisProject ALL_PROJECTS = new MantisProject(0, "All Projects");
-  public static final ArrayList<MantisFilter> EMPTY_LIST = new ArrayList<MantisFilter>();
+public final class MantisProject {
+  // Used for "All projects" option in settings
+  public static final int UNSPECIFIED_PROJECT_ID = 0;
 
-  private List<MantisFilter> myFilters;
+  public static MantisProject newUndefined() {
+    return new MantisProject(0, "-- from all projects --");
+  }
 
-  private int id;
-  private String name;
+  private List<MantisFilter> myFilters = new ArrayList<MantisFilter>();
+
+  private int myId;
+  private String myName;
 
   @SuppressWarnings({"UnusedDeclaration"})
   public MantisProject() {
+    // empty
   }
 
-  public MantisProject(final int id, final String name) {
-    this.id = id;
-    this.name = name;
+  public MantisProject(int id, @NotNull String name) {
+    this.myId = id;
+    this.myName = name;
   }
 
+  public MantisProject(@NotNull ProjectData data) {
+    myId = data.getId().intValue();
+    myName = data.getName();
+  }
+
+  @Attribute("id")
   public int getId() {
-    return id;
+    return myId;
   }
 
   public void setId(final int id) {
-    this.id = id;
+    this.myId = id;
   }
 
+  @Attribute("name")
+  @NotNull
   public String getName() {
-    return name;
+    return myName;
   }
 
-  public void setName(final String name) {
-    this.name = name;
+  public void setName(@NotNull String name) {
+    this.myName = name;
   }
 
+
+  public final boolean isUnspecified() {
+    return getId() == UNSPECIFIED_PROJECT_ID;
+  }
+
+  //@OptionTag(tag = "filters", nameAttribute = "")
+  //@AbstractCollection(surroundWithTag = false)
+
+  /**
+   * Filters here are used only to simplify combo boxes management and are refreshed every time when settings
+   * are opened or user hit "Login" button. Thus they are not persisted in settings.
+   */
+  @Transient
+  @NotNull
   public List<MantisFilter> getFilters() {
-    return myFilters == null ? EMPTY_LIST : myFilters;
+    return myFilters == null? Collections.<MantisFilter>emptyList() : myFilters;
   }
 
-  public void setFilters(final List<MantisFilter> filters) {
+  public void setFilters(@NotNull List<MantisFilter> filters) {
     myFilters = filters;
   }
 
+
   @Override
-  public boolean equals(final Object obj) {
-    return obj != null && obj instanceof MantisProject && ((MantisProject)obj).getId() == getId();
+  public final boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    MantisProject project = (MantisProject)o;
+
+    if (myId != project.myId) return false;
+
+    return true;
+  }
+
+  @Override
+  public final int hashCode() {
+    return myId;
   }
 
   @Override

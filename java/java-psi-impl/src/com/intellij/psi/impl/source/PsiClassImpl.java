@@ -500,13 +500,15 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
           final NameHint nameHint = processor.getHint(NameHint.KEY);
           final ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
           String nameToSearch = nameHint == null ? null : nameHint.getName(state);
-          if (VALUES_METHOD.equals(nameToSearch) &&
+          if ((nameToSearch == null || VALUES_METHOD.equals(nameToSearch)) &&
               (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.METHOD))) {
-            if (!processor.execute(getValuesMethod(), ResolveState.initial())) return false;
+            PsiMethod method = getValuesMethod();
+            if (method != null && !processor.execute(method, ResolveState.initial())) return false;
           }
-          if (VALUE_OF_METHOD.equals(nameToSearch) &&
+          if ((nameToSearch == null || VALUE_OF_METHOD.equals(nameToSearch)) &&
               (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.METHOD))) {
-            if (!processor.execute(getValueOfMethod(), ResolveState.initial())) return false;
+            PsiMethod method = getValueOfMethod();
+            if (method != null && !processor.execute(method, ResolveState.initial())) return false;
           }
         }
         catch (IncorrectOperationException e) {
@@ -679,9 +681,8 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   @Nullable
   public PsiQualifiedNamedElement getContainer() {
     final PsiFile file = getContainingFile();
-    final PsiDirectory dir;
-    return file == null ? null : (dir = file.getContainingDirectory()) == null
-                                 ? null : JavaDirectoryService.getInstance().getPackage(dir);
+    final PsiDirectory dir = file.getContainingDirectory();
+    return dir == null ? null : JavaDirectoryService.getInstance().getPackage(dir);
   }
 
   @Override

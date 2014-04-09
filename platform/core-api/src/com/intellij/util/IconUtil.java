@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 
 
@@ -367,5 +368,34 @@ public class IconUtil {
     public int getIconHeight() {
       return myCrop.height;
     }
+  }
+
+  public static Icon scale(@NotNull final Icon source, double _scale) {
+    final double scale = Math.min(32, Math.max(.1, _scale));
+    return new Icon() {
+      @Override
+      public void paintIcon(Component c, Graphics g, int x, int y) {
+        Graphics2D g2d = (Graphics2D)g.create();
+        try {
+          AffineTransform transform = AffineTransform.getScaleInstance(scale, scale);
+          transform.preConcatenate(g2d.getTransform());
+          g2d.setTransform(transform);
+          source.paintIcon(c, g2d, x, y);
+        } finally {
+          g2d.dispose();
+        }
+      }
+
+      @Override
+      public int getIconWidth() {
+        return (int)(source.getIconWidth() * scale);
+      }
+
+      @Override
+      public int getIconHeight() {
+        return (int)(source.getIconHeight() * scale);
+      }
+    };
+
   }
 }

@@ -10,7 +10,6 @@ import java.util.List;
  * @author traff
  */
 public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implements RemoteSdkCredentials {
-  public static final String SSH_PREFIX = "ssh://";
 
   @NotNull
   private final RemoteSdkPropertiesHolder myRemoteSdkProperties;
@@ -19,8 +18,8 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
     myRemoteSdkProperties = new RemoteSdkPropertiesHolder(defaultHelpersDirName);
   }
 
-  public static String constructSshCredentialsSdkFullPath(RemoteSdkCredentials cred) {
-    return SSH_PREFIX + cred.getUserName() + "@" + cred.getHost() + ":" + cred.getPort() + cred.getInterpreterPath();
+  public static String constructSshCredentialsSdkFullPath(@NotNull RemoteSdkCredentials cred) {
+    return getCredentialsString(cred) + cred.getInterpreterPath();
   }
 
   /**

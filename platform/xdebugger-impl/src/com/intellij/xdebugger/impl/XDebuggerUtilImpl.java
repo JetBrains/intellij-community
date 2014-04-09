@@ -19,13 +19,14 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -43,6 +44,7 @@ import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueContainer;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule;
+import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
@@ -75,7 +77,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   }
 
   @Override
-  public XLineBreakpoint toggleLineBreakpoint(@NotNull final Project project, @NotNull final VirtualFile file, final int line, boolean temporary) {
+  public void toggleLineBreakpoint(@NotNull final Project project, @NotNull final VirtualFile file, final int line, boolean temporary) {
     XLineBreakpointType<?> typeWinner = null;
     for (XLineBreakpointType<?> type : getLineBreakpointTypes()) {
       if (type.canPutAt(file, line, project) && (typeWinner == null || type.getPriority() > typeWinner.getPriority())) {
@@ -83,9 +85,8 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       }
     }
     if (typeWinner != null) {
-      return toggleLineBreakpoint(project, typeWinner, file, line, temporary);
+      toggleLineBreakpoint(project, typeWinner, file, line, temporary);
     }
-    return null;
   }
 
   @Override
@@ -99,15 +100,22 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   }
 
   @Override
-  public <P extends XBreakpointProperties> XLineBreakpoint toggleLineBreakpoint(@NotNull final Project project,
+  public <P extends XBreakpointProperties> void toggleLineBreakpoint(@NotNull final Project project,
                                                                      @NotNull final XLineBreakpointType<P> type,
                                                                      @NotNull final VirtualFile file,
                                                                      final int line,
                                                                      final boolean temporary) {
-    final Ref<XLineBreakpoint> res = new Ref<XLineBreakpoint>();
-    new WriteAction() {
+    toggleAndReturnLineBreakpoint(project, type, file, line, temporary);
+  }
+
+  public static <P extends XBreakpointProperties> XLineBreakpoint toggleAndReturnLineBreakpoint(@NotNull final Project project,
+                                                                                                @NotNull final XLineBreakpointType<P> type,
+                                                                                                @NotNull final VirtualFile file,
+                                                                                                final int line,
+                                                                                                final boolean temporary) {
+    return new WriteAction<XLineBreakpoint>() {
       @Override
-      protected void run(@NotNull final Result result) {
+      protected void run(@NotNull final Result<XLineBreakpoint> result) {
         XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
         XLineBreakpoint<P> breakpoint = breakpointManager.findBreakpointAtLine(type, file, line);
         if (breakpoint != null) {
@@ -115,11 +123,10 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         }
         else {
           P properties = type.createBreakpointProperties(file, line);
-          res.set(breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary));
+          result.setResult(breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary));
         }
       }
-    }.execute();
-    return res.get();
+    }.execute().getResultObject();
   }
 
   @Override
@@ -181,6 +188,27 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     final int line = editor.getCaretModel().getLogicalPosition().line;
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     return XSourcePositionImpl.create(file, line);
+  }
+
+  @NotNull
+  public static Collection<XSourcePosition> getAllCaretsPositions(@NotNull Project project, DataContext context) {
+    Editor editor = getEditor(project, context);
+    if (editor == null) {
+      return Collections.emptyList();
+    }
+
+    final Document document = editor.getDocument();
+    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    Collection<XSourcePosition> res = new ArrayList<XSourcePosition>();
+    List<Caret> carets = editor.getCaretModel().getAllCarets();
+    for (Caret caret : carets) {
+      int line = caret.getLogicalPosition().line;
+      XSourcePositionImpl position = XSourcePositionImpl.create(file, line);
+      if (position != null) {
+        res.add(position);
+      }
+    }
+    return res;
   }
 
   @Nullable
@@ -311,5 +339,15 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       }
     }
     return result;
+  }
+
+  @Override
+  public void disableValueLookup(@NotNull Editor editor) {
+    ValueLookupManager.DISABLE_VALUE_LOOKUP.set(editor, Boolean.TRUE);
+  }
+
+  @Nullable
+  public static Editor createEditor(@NotNull OpenFileDescriptor descriptor) {
+    return descriptor.canNavigate() ? FileEditorManager.getInstance(descriptor.getProject()).openTextEditor(descriptor, false) : null;
   }
 }

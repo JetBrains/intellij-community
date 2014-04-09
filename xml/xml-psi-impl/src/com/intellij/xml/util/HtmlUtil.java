@@ -49,6 +49,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
+import com.intellij.xml.util.documentation.MimeTypeDictionary;
 import com.intellij.xml.util.documentation.HtmlDescriptorsTable;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -75,34 +76,17 @@ public class HtmlUtil {
 
   public static final String SCRIPT_TAG_NAME = "script";
 
-  public static final String[] CONTENT_TYPES =
-    {"application/activemessage", "application/andrew-inset", "application/applefile", "application/atomicmail", "application/dca-rft",
-      "application/dec-dx", "application/mac-binhex40"
-      , "application/mac-compactpro", "application/macwriteii", "application/msword", "application/news-message-id",
-      "application/news-transmission", "application/octet-stream"
-      , "application/oda", "application/pdf", "application/postscript", "application/powerpoint", "application/remote-printing",
-      "application/rtf"
-      , "application/slate", "application/wita", "application/wordperfect5.1", "application/x-bcpio", "application/x-cdlink",
-      "application/x-compress"
-      , "application/x-cpio", "application/x-csh", "application/x-director", "application/x-dvi", "application/x-gtar", "application/x-gzip"
-      , "application/x-hdf", "application/x-httpd-cgi", "application/x-koan", "application/x-latex", "application/x-mif",
-      "application/x-netcdf"
-      , "application/x-sh", "application/x-shar", "application/x-stuffit", "application/x-sv4cpio", "application/x-sv4crc",
-      "application/x-tar"
-      , "application/x-tcl", "application/x-tex", "application/x-texinfo", "application/x-troff", "application/x-troff-man",
-      "application/x-troff-me"
-      , "application/x-troff-ms", "application/x-ustar", "application/x-wais-source", "application/zip", "audio/basic", "audio/mpeg"
-      , "audio/x-aiff", "audio/x-pn-realaudio", "audio/x-pn-realaudio-plugin", "audio/x-realaudio", "audio/x-wav", "chemical/x-pdb"
-      , "image/gif", "image/ief", "image/jpeg", "image/png", "image/tiff", "image/x-cmu-raster"
-      , "image/x-portable-anymap", "image/x-portable-bitmap", "image/x-portable-graymap", "image/x-portable-pixmap", "image/x-rgb",
-      "image/x-xbitmap"
-      , "image/x-xpixmap", "image/x-xwindowdump", "message/external-body", "message/news", "message/partial", "message/rfc822"
-      , "multipart/alternative", "multipart/appledouble", "multipart/digest", "multipart/mixed", "multipart/parallel", "text/html"
-      , "text/plain", "text/richtext", "text/tab-separated-values", "text/x-setext", "text/x-sgml", "video/mpeg"
-      , "video/quicktime", "video/x-msvideo", "video/x-sgi-movie", "x-conference/x-cooltalk", "x-world/x-vrml"};
+  public static final String[] CONTENT_TYPES = ArrayUtil.toStringArray(MimeTypeDictionary.getContentTypes());
 
   @NonNls public static final String MATH_ML_NAMESPACE = "http://www.w3.org/1998/Math/MathML";
   @NonNls public static final String SVG_NAMESPACE = "http://www.w3.org/2000/svg";
+
+  public static final String[] RFC2616_HEADERS = new String[]{"Accept", "Accept-Charset", "Accept-Encoding", "Accept-Language",
+    "Accept-Ranges", "Age", "Allow", "Authorization", "Cache-Control", "Connection", "Content-Encoding", "Content-Language",
+    "Content-Length", "Content-Location", "Content-MD5", "Content-Range", "Content-Type", "Date", "ETag", "Expect", "Expires", "From",
+    "Host", "If-Match", "If-Modified-Since", "If-None-Match", "If-Range", "If-Unmodified-Since", "Last-Modified", "Location",
+    "Max-Forwards", "Pragma", "Proxy-Authenticate", "Proxy-Authorization", "Range", "Referer", "Refresh", "Retry-After", "Server", "TE",
+    "Trailer", "Transfer-Encoding", "Upgrade", "User-Agent", "Vary", "Via", "Warning", "WWW-Authenticate"};
 
   private HtmlUtil() {
   }
@@ -143,7 +127,7 @@ public class HtmlUtil {
   private static final Set<String> POSSIBLY_INLINE_TAGS_MAP = new THashSet<String>();
 
   @NonNls private static final String[] HTML5_TAGS = {
-    "article", "aside", "audio", "canvas", "command", "datalist", "details", "embed", "figcaption", "figure", "footer", "header", "hgroup",
+    "article", "aside", "audio", "canvas", "command", "datalist", "details", "embed", "figcaption", "figure", "footer", "header",
     "keygen", "mark", "meter", "nav", "output", "progress", "rp", "rt", "ruby", "section", "source", "summary", "time", "video", "wbr",
     "main"
   };

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,8 @@ public class CompletionProcessor extends ResolverProcessor {
     super(name, resolveTargets, place, PsiType.EMPTY_ARRAY);
   }
 
-  public boolean execute(@NotNull PsiElement element, ResolveState substitutor) {
+  @Override
+  public boolean execute(@NotNull PsiElement element, @NotNull ResolveState substitutor) {
     if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) {
       return true;
     }
@@ -54,6 +55,7 @@ public class CompletionProcessor extends ResolverProcessor {
     return new CompletionProcessor(place, RESOLVE_KINDS_CLASS_PACKAGE, null);
   }
 
+  @Override
   @NotNull
   public GroovyResolveResult[] getCandidates() {
     if (!super.hasCandidates()) return GroovyResolveResult.EMPTY_ARRAY;

@@ -43,7 +43,7 @@ public class DomFileIndex extends ScalarIndexExtension<String>{
     myDataIndexer = new DataIndexer<String, Void, FileContent>() {
       @Override
       @NotNull
-      public Map<String, Void> map(final FileContent inputData) {
+      public Map<String, Void> map(@NotNull final FileContent inputData) {
         final Set<String> namespaces = new THashSet<String>();
         final XmlFileHeader header = NanoXmlUtil.parseHeader(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()));
         ContainerUtil.addIfNotNull(header.getPublicId(), namespaces);

@@ -182,7 +182,7 @@ class EventLogConsole {
       lineColors.add(lineHighlighter);
     }
 
-    myProjectModel.removeHandlers.put(notification, new Runnable() {
+    final Runnable removeHandler = new Runnable() {
       @Override
       public void run() {
         for (RangeHighlighter color : lineColors) {
@@ -202,7 +202,13 @@ class EventLogConsole {
           }
         }
       }
-    });
+    };
+    if (!notification.isExpired()) {
+      myProjectModel.removeHandlers.put(notification, removeHandler);
+    }
+    else {
+      removeHandler.run();
+    }
   }
 
   public Editor getConsoleEditor() {

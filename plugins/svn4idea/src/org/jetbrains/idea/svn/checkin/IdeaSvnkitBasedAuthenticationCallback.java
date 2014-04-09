@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.checkin;
 
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -169,7 +170,9 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
           }
         };
 
-        WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(command);
+        // Use ModalityState.any() as currently ssh credentials in terminal mode are requested in the thread that reads output and not in
+        // the thread that started progress
+        WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(command, ModalityState.any());
 
         return new Pair<String, Boolean>(answer.get(), !save.isNull() && save.get());
       }

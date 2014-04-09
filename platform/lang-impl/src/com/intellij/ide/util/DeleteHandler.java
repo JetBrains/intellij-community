@@ -46,6 +46,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.safeDelete.SafeDeleteDialog;
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
@@ -124,9 +125,9 @@ public class DeleteHandler {
     final boolean dumb = DumbService.getInstance(project).isDumb();
     if (safeDeleteApplicable && !dumb) {
       final Ref<Boolean> exit = Ref.create(false);
-      DeleteDialog dialog = new DeleteDialog(project, elements, new DeleteDialog.Callback() {
+      final SafeDeleteDialog dialog = new SafeDeleteDialog(project, elements, new SafeDeleteDialog.Callback() {
         @Override
-        public void run(final DeleteDialog dialog) {
+        public void run(final SafeDeleteDialog dialog) {
           if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements), true)) return;
           SafeDeleteProcessor.createInstance(project, new Runnable() {
             @Override
@@ -134,9 +135,14 @@ public class DeleteHandler {
               exit.set(true);
               dialog.close(DialogWrapper.OK_EXIT_CODE);
             }
-          }, elements, dialog.isSearchInComments(), dialog.isSearchInNonJava(), true).run();
+          }, elements, dialog.isSearchInComments(), dialog.isSearchForTextOccurences(), true).run();
         }
-      });
+      }) {
+        @Override
+        protected boolean isDelete() {
+          return true;
+        }
+      };
       if (needConfirmation) {
         dialog.show();
         if (!dialog.isOK() || exit.get()) return;

@@ -20,6 +20,7 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import org.intellij.lang.annotations.Language
@@ -92,7 +93,7 @@ public abstract class GroovyResolveTestCase extends LightGroovyTestCase {
   }
 
   @Nullable
-  protected <T extends PsiElement> T resolveByText(String text, Class<T> type = null) {
+  protected <T extends PsiElement> T resolveByText(@Language("Groovy") String text, Class<T> type = null) {
     final ref = configureByText(text)
     assertNotNull(ref)
     final resolved = ref.resolve()
@@ -107,4 +108,23 @@ public abstract class GroovyResolveTestCase extends LightGroovyTestCase {
     return ((GrReferenceExpression)ref).advancedResolve();
   }
 
+  protected PsiClass addBaseScript() {
+    myFixture.addClass("package groovy.transform; public @interface BaseScript {}")
+  }
+
+  protected PsiClass addImmutable() {
+    myFixture.addClass("package groovy.lang; public @interface Immutable {}")
+  }
+
+  protected PsiClass addTupleConstructor() {
+    myFixture.addClass("package groovy.transform; public @interface TupleConstructor {}")
+  }
+
+  protected PsiClass addCanonical() {
+    myFixture.addClass("package groovy.transform; public @interface Canonical {}")
+  }
+
+  protected PsiClass addInheritConstructor() {
+    myFixture.addClass("package groovy.transform; public @interface InheritConstructors {}")
+  }
 }

@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring;
 
-import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.*;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
@@ -24,22 +23,13 @@ import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 
 /**
  * @author dsl
  */
-public class ChangeSignatureTest extends LightRefactoringTestCase {
-  private PsiElementFactory myFactory;
-
-  public void setUp() throws Exception {
-    super.setUp();
-    myFactory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-  }
+public class ChangeSignatureTest extends ChangeSignatureBaseTest {
 
   public void testSimple() {
     doTest(null, null, null, new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
@@ -392,7 +382,7 @@ public class ChangeSignatureTest extends LightRefactoringTestCase {
   }
 
   public void testPropagateParameter() {
-    String basePath = "/refactoring/changeSignature/" + getTestName(false);
+    String basePath = getRelativePath() + getTestName(false);
     configureByFile(basePath + ".java");
     final PsiElement targetElement = TargetElementUtilBase.findTargetElement(getEditor(), TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
     assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
@@ -413,102 +403,14 @@ public class ChangeSignatureTest extends LightRefactoringTestCase {
     checkResultByFile(basePath + "_after.java");
   }
 
+  public void testTypeAnnotationsAllAround() {
+    //String[] ps = {"@TA(1) int @TA(2) []", "java.util.@TA(4) List<@TA(5) Class<@TA(6) ?>>", "@TA(7) String @TA(8) ..."};
+    //String[] ex = {"@TA(42) IllegalArgumentException", "java.lang.@TA(43) IllegalStateException"};
+    //doTest("java.util.@TA(0) List<@TA(1) C.@TA(1) Inner>", ps, ex, false);
+    String[] ps = {"@TA(2) int @TA(3) []", "@TA(4) List<@TA(5) Class<@TA(6) ?>>", "@TA(7) String @TA(8) ..."};
+    String[] ex = {};
+    doTest("@TA(0) List<@TA(1) Inner>", ps, ex, false);
+  }
+
   /* workers */
-
-  private void doTest(@Nullable String newReturnType, ParameterInfoImpl[] parameterInfos, boolean generateDelegate) {
-    doTest(null, null, newReturnType, parameterInfos, new ThrownExceptionInfo[0], generateDelegate);
-  }
-
-  private void doTest(@PsiModifier.ModifierConstant @Nullable String newVisibility,
-                      @Nullable String newName,
-                      @Nullable String newReturnType,
-                      ParameterInfoImpl[] parameterInfo,
-                      ThrownExceptionInfo[] exceptionInfo,
-                      boolean generateDelegate) {
-    doTest(newVisibility, newName, newReturnType, new SimpleParameterGen(parameterInfo), new SimpleExceptionsGen(exceptionInfo), generateDelegate);
-  }
-
-  private void doTest(@PsiModifier.ModifierConstant @Nullable String newVisibility,
-                      @Nullable String newName,
-                      @Nullable @NonNls String newReturnType,
-                      GenParams gen,
-                      boolean generateDelegate) {
-    doTest(newVisibility, newName, newReturnType, gen, new SimpleExceptionsGen(), generateDelegate);
-  }
-
-  private void doTest(@PsiModifier.ModifierConstant @Nullable String newVisibility,
-                      @Nullable String newName,
-                      @Nullable String newReturnType,
-                      GenParams genParams,
-                      GenExceptions genExceptions,
-                      boolean generateDelegate) {
-    String basePath = "/refactoring/changeSignature/" + getTestName(false);
-    configureByFile(basePath + ".java");
-    PsiElement targetElement = TargetElementUtilBase.findTargetElement(getEditor(), TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
-    assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
-    PsiMethod method = (PsiMethod)targetElement;
-    PsiType newType = newReturnType != null ? myFactory.createTypeFromText(newReturnType, method) : method.getReturnType();
-    new ChangeSignatureProcessor(getProject(), method, generateDelegate, newVisibility,
-                                 newName != null ? newName : method.getName(),
-                                 newType, genParams.genParams(method), genExceptions.genExceptions(method)).run();
-    checkResultByFile(basePath + "_after.java");
-  }
-
-  private interface GenParams {
-    ParameterInfoImpl[] genParams(PsiMethod method) throws IncorrectOperationException;
-  }
-
-  private static class SimpleParameterGen implements GenParams {
-    private ParameterInfoImpl[] myInfos;
-
-    private SimpleParameterGen() { }
-
-    private SimpleParameterGen(ParameterInfoImpl[] infos) {
-      myInfos = infos;
-    }
-
-    @Override
-    public ParameterInfoImpl[] genParams(PsiMethod method) {
-      if (myInfos == null) {
-        myInfos = new ParameterInfoImpl[method.getParameterList().getParametersCount()];
-        for (int i = 0; i < myInfos.length; i++) {
-          myInfos[i] = new ParameterInfoImpl(i);
-        }
-      }
-      for (ParameterInfoImpl info : myInfos) {
-        info.updateFromMethod(method);
-      }
-      return myInfos;
-    }
-  }
-
-  private interface GenExceptions {
-    ThrownExceptionInfo[] genExceptions(PsiMethod method) throws IncorrectOperationException;
-  }
-
-  private static class SimpleExceptionsGen implements GenExceptions {
-    private final ThrownExceptionInfo[] myInfos;
-
-    public SimpleExceptionsGen() {
-      myInfos = new ThrownExceptionInfo[0];
-    }
-
-    private SimpleExceptionsGen(ThrownExceptionInfo[] infos) {
-      myInfos = infos;
-    }
-
-    @Override
-    public ThrownExceptionInfo[] genExceptions(PsiMethod method) {
-      for (ThrownExceptionInfo info : myInfos) {
-        info.updateFromMethod(method);
-      }
-      return myInfos;
-    }
-  }
-
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
-  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -295,17 +295,6 @@ class Foo {
     assertSameElements myFixture.lookupElementStrings, "subSequence", "substring", "substring"
   }
 
-  public void testResolveToStdLib() throws Exception {
-    configureScript """
-@Typed def foo(List<String> l) {
-  l.ea<caret>ch { it.substring(1) }
-}
-"""
-    PsiMethod method = resolveReference().navigationElement as PsiMethod
-    assertEquals "each", method.name
-    assertEquals "groovypp.util.Iterations", method.containingClass.qualifiedName
-  }
-
   public void testResolveToStdLibWithArrayQualifier() throws Exception {
     configureGppScript """
 Integer[] a = []
@@ -418,7 +407,7 @@ class Point {
     myFixture.addClass(""" class Point { }""")
 
     configureGppScript "def p = <caret>[]"
-    assertNull findReference()
+    assertNull findReference().resolve()
   }
 
   public void testHighlightInapplicableLiteralConstructor() throws Exception {

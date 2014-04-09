@@ -18,6 +18,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.Patches;
 import com.intellij.ide.FrameStateManager;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
@@ -57,6 +58,7 @@ import com.intellij.ui.switcher.QuickAccessSettings;
 import com.intellij.ui.switcher.SwitchManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -69,7 +71,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.EventListenerList;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
@@ -89,7 +90,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   private final Project myProject;
   private final WindowManagerEx myWindowManager;
-  private final EventListenerList myListenerList;
+  private final EventDispatcher<ToolWindowManagerListener> myDispatcher = EventDispatcher.create(ToolWindowManagerListener.class);
   private final DesktopLayout myLayout;
   private final Map<String, InternalDecorator> myId2InternalDecorator;
   private final Map<String, FloatingDecorator> myId2FloatingDecorator;
@@ -163,7 +164,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myWindowManager = windowManagerEx;
     myFileEditorManager = fem;
     myLafManager = lafManager;
-    myListenerList = new EventListenerList();
 
     if (!project.isDefault()) {
       actionManager.addAnActionListener(new AnActionListener() {
@@ -570,13 +570,13 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   @Override
-  public void addToolWindowManagerListener(@NotNull final ToolWindowManagerListener l) {
-    myListenerList.add(ToolWindowManagerListener.class, l);
+  public void addToolWindowManagerListener(@NotNull ToolWindowManagerListener l) {
+    myDispatcher.addListener(l);
   }
 
   @Override
-  public void removeToolWindowManagerListener(@NotNull final ToolWindowManagerListener l) {
-    myListenerList.remove(ToolWindowManagerListener.class, l);
+  public void removeToolWindowManagerListener(@NotNull ToolWindowManagerListener l) {
+    myDispatcher.removeListener(l);
   }
 
   /**
@@ -1172,8 +1172,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     // Create decorator
 
-    final ToolWindowImpl toolWindow = new ToolWindowImpl(this, id, canCloseContent, component);
-    final InternalDecorator decorator = new InternalDecorator(myProject, info.copy(), toolWindow);
+    ToolWindowImpl toolWindow = new ToolWindowImpl(this, id, canCloseContent, component);
+    InternalDecorator decorator = new InternalDecorator(myProject, info.copy(), toolWindow);
+    ActivateToolWindowAction.ensureToolWindowActionRegistered(toolWindow);
     myId2InternalDecorator.put(id, decorator);
     decorator.addInternalDecoratorListener(myInternalDecoratorListener);
     toolWindow.addPropertyChangeListener(myToolWindowPropertyChangeListener);
@@ -1395,7 +1396,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final ToolWindowImpl window = getInternalDecorator(toolWindowId).getToolWindow();
     if (!window.isAvailable()) {
       window.setPlaceholderMode(true);
-      stripe.updateState();
+      stripe.updatePresentation();
       stripe.revalidate();
       stripe.repaint();
     }
@@ -1439,7 +1440,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       @Override
       public void dispose() {
         window.setPlaceholderMode(false);
-        stripe.updateState();
+        stripe.updatePresentation();
         stripe.revalidate();
         stripe.repaint();
         myWindow2Balloon.remove(toolWindowId);
@@ -1662,17 +1663,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private void fireToolWindowRegistered(final String id) {
-    final ToolWindowManagerListener[] listeners = myListenerList.getListeners(ToolWindowManagerListener.class);
-    for (ToolWindowManagerListener listener : listeners) {
-      listener.toolWindowRegistered(id);
-    }
+    myDispatcher.getMulticaster().toolWindowRegistered(id);
   }
 
   private void fireStateChanged() {
-    final ToolWindowManagerListener[] listeners = myListenerList.getListeners(ToolWindowManagerListener.class);
-    for (ToolWindowManagerListener listener : listeners) {
-      listener.stateChanged();
-    }
+    myDispatcher.getMulticaster().stateChanged();
   }
 
   boolean isToolWindowActive(final String id) {
@@ -2077,12 +2072,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private final class EditorComponentFocusWatcher extends FocusWatcher {
     @Override
     protected void focusedComponentChanged(final Component component, final AWTEvent cause) {
-      if (myWindowManager.getCommandProcessor().getCommandCount() > 0 || component == null) {
-        return;
-      }
-
       final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
       final Component owner = mgr.getFocusOwner();
+
+      if (myWindowManager.getCommandProcessor().getCommandCount() > 0 || component == null || component== owner) {
+        return;
+      }
 
       IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(myProject) {
         @Override
@@ -2146,13 +2141,16 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private final class MyToolWindowPropertyChangeListener implements PropertyChangeListener {
     @Override
     public void propertyChange(final PropertyChangeEvent e) {
-      final ToolWindowImpl toolWindow = (ToolWindowImpl)e.getSource();
+      ToolWindowImpl toolWindow = (ToolWindowImpl)e.getSource();
       if (ToolWindowEx.PROP_AVAILABLE.equals(e.getPropertyName())) {
         final WindowInfoImpl info = getInfo(toolWindow.getId());
         if (!toolWindow.isAvailable() && info.isVisible()) {
           hideToolWindow(toolWindow.getId(), false);
         }
       }
+      StripeButton button = myId2StripeButton.get(toolWindow.getId());
+      if (button != null) button.updatePresentation();
+      ActivateToolWindowAction.updateToolWindowActionPresentation(toolWindow);
     }
   }
 

@@ -17,6 +17,7 @@ package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,7 +28,6 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
-import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.service.ParametersEnhancer;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
@@ -37,22 +37,22 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.PathUtil;
-import com.intellij.util.PathsList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -119,6 +119,15 @@ public class ExternalSystemApiUtil {
       return ((Comparable)o1).compareTo(o2);
     }
   };
+
+  @NotNull private static final TransferToEDTQueue<Runnable> TRANSFER_TO_EDT_QUEUE =
+    new TransferToEDTQueue<Runnable>("External System queue", new Processor<Runnable>() {
+      @Override
+      public boolean process(Runnable runnable) {
+        runnable.run();
+        return true;
+      }
+    }, Condition.FALSE, 300);
 
   private ExternalSystemApiUtil() {
   }
@@ -379,6 +388,26 @@ public class ExternalSystemApiUtil {
     }
     else {
       UIUtil.invokeLaterIfNeeded(task);
+    }
+  }
+
+  /**
+  * Adds runnable to Event Dispatch Queue
+  * if we aren't in UnitTest of Headless environment mode
+  *
+  * @param runnable Runnable
+  */
+  public static void addToInvokeLater(final Runnable runnable) {
+    final Application application = ApplicationManager.getApplication();
+    final boolean unitTestMode = application.isUnitTestMode();
+    if (unitTestMode) {
+      UIUtil.invokeLaterIfNeeded(runnable);
+    }
+    else if (application.isHeadlessEnvironment() || application.isDispatchThread()) {
+      runnable.run();
+    }
+    else {
+      TRANSFER_TO_EDT_QUEUE.offer(runnable);
     }
   }
 

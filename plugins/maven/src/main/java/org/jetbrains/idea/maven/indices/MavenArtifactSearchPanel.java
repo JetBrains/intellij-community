@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.AbstractLayoutManager;
@@ -346,14 +347,11 @@ public class MavenArtifactSearchPanel extends JPanel {
           Insets insets = tree.getInsets();
           w -= insets.left + insets.right;
 
-          Container parent = tree.getParent();
-          if (parent != null) {
-            Container parentParent = parent.getParent();
-            if (parentParent instanceof JScrollPane) {
-              JScrollBar sb = ((JScrollPane)parentParent).getVerticalScrollBar();
-              if (sb != null) {
-                w -= sb.getWidth();
-              }
+          JScrollPane scrollPane = JBScrollPane.findScrollPane(tree);
+          if (scrollPane != null) {
+            JScrollBar sb = scrollPane.getVerticalScrollBar();
+            if (sb != null) {
+              w -= sb.getWidth();
             }
           }
           return w;

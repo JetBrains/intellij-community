@@ -207,7 +207,7 @@ public class CompileDriver {
       compileScope = projectScope;
     }
     else {
-      CompileScope scopeWithArtifacts = ArtifactCompileScope.createScopeWithArtifacts(projectScope, ArtifactUtil.getArtifactWithOutputPaths(myProject), false);
+      CompileScope scopeWithArtifacts = ArtifactCompileScope.createScopeWithArtifacts(projectScope, ArtifactUtil.getArtifactWithOutputPaths(myProject));
       compileScope = addAdditionalRoots(scopeWithArtifacts, ALL_EXCEPT_SOURCE_PROCESSING);
     }
     doRebuild(callback, null, true, compileScope);
@@ -280,7 +280,9 @@ public class CompileDriver {
           }
           finally {
             result.set(COMPILE_SERVER_BUILD_STATUS.get(compileContext));
-            CompilerCacheManager.getInstance(myProject).flushCaches();
+            if (!myProject.isDisposed()) {
+              CompilerCacheManager.getInstance(myProject).flushCaches();
+            }
           }
         }
       };
@@ -488,7 +490,11 @@ public class CompileDriver {
     final Collection<String> paths = CompileScopeUtil.fetchFiles(compileContext);
     List<TargetTypeBuildScope> scopes = new ArrayList<TargetTypeBuildScope>();
     final boolean forceBuild = !compileContext.isMake();
-    if (!compileContext.isRebuild() && !CompileScopeUtil.allProjectModulesAffected(compileContext)) {
+    List<TargetTypeBuildScope> explicitScopes = CompileScopeUtil.getBaseScopeForExternalBuild(scope);
+    if (explicitScopes != null) {
+      scopes.addAll(explicitScopes);
+    }
+    else if (!compileContext.isRebuild() && !CompileScopeUtil.allProjectModulesAffected(compileContext)) {
       CompileScopeUtil.addScopesForModules(Arrays.asList(scope.getAffectedModules()), scopes, forceBuild);
     }
     else {

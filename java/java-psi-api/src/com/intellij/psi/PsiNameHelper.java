@@ -27,7 +27,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
 
 /**
@@ -279,17 +278,23 @@ public abstract class PsiNameHelper {
   }
 
   public static boolean appendAnnotations(@NotNull StringBuilder sb, @NotNull List<PsiAnnotation> annotations, boolean canonical) {
+    boolean updated = false;
     for (PsiAnnotation annotation : annotations) {
-      sb.append('@');
       if (canonical) {
-        sb.append(annotation.getQualifiedName());
-        sb.append(annotation.getParameterList().getText());
+        String name = annotation.getQualifiedName();
+        if (name != null) {
+          sb.append('@').append(name).append(annotation.getParameterList().getText()).append(' ');
+          updated = true;
+        }
       }
       else {
-        sb.append(assertNotNull(annotation.getNameReferenceElement()).getText());
+        PsiJavaCodeReferenceElement refElement = annotation.getNameReferenceElement();
+        if (refElement != null) {
+          sb.append('@').append(refElement.getText()).append(' ');
+          updated = true;
+        }
       }
-      sb.append(' ');
     }
-    return !annotations.isEmpty();
+    return updated;
   }
 }

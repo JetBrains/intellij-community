@@ -1,5 +1,6 @@
 package com.intellij.openapi.util;
 
+import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -7,6 +8,16 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class AsyncValueLoader<T> {
   private final AtomicReference<AsyncResult<T>> ref = new AtomicReference<AsyncResult<T>>();
+
+  private volatile long modificationCount;
+  private volatile long loadedModificationCount;
+
+  private final Runnable doneHandler = new Runnable() {
+    @Override
+    public void run() {
+      loadedModificationCount = modificationCount;
+    }
+  };
 
   @NotNull
   public final AsyncResult<T> get() {
@@ -35,6 +46,9 @@ public abstract class AsyncValueLoader<T> {
   }
 
   protected void disposeResult(@NotNull T result) {
+    if (result instanceof Disposable) {
+      Disposer.dispose((Disposable)result, false);
+    }
   }
 
   public final boolean has() {
@@ -55,7 +69,7 @@ public abstract class AsyncValueLoader<T> {
       return asyncResult;
     }
     else if (asyncResult.isDone()) {
-      if (!checkFreshness || checkFreshness(asyncResult.getResult())) {
+      if (!checkFreshness || isUpToDate(asyncResult.getResult())) {
         return asyncResult;
       }
 
@@ -86,22 +100,24 @@ public abstract class AsyncValueLoader<T> {
     return false;
   }
 
-  private void callLoad(final AsyncResult<T> asyncResult) {
+  private void callLoad(final @NotNull AsyncResult<T> result) {
     if (isCancelOnReject()) {
-      asyncResult.doWhenRejected(new Runnable() {
+      result.doWhenRejected(new Runnable() {
         @Override
         public void run() {
-          ref.compareAndSet(asyncResult, null);
+          ref.compareAndSet(result, null);
         }
       });
     }
 
+    result.doWhenDone(doneHandler);
+
     try {
-      load(asyncResult);
+      load(result);
     }
     catch (Throwable e) {
-      ref.compareAndSet(asyncResult, null);
-      rejectAndDispose(asyncResult);
+      ref.compareAndSet(result, null);
+      rejectAndDispose(result);
       //noinspection InstanceofCatchParameter
       throw e instanceof RuntimeException ? ((RuntimeException)e) : new RuntimeException(e);
     }
@@ -109,7 +125,18 @@ public abstract class AsyncValueLoader<T> {
 
   protected abstract void load(@NotNull AsyncResult<T> result) throws IOException;
 
-  protected boolean checkFreshness(@NotNull T result) {
-    return true;
+  protected boolean isUpToDate(@NotNull T result) {
+    return loadedModificationCount == modificationCount;
+  }
+
+  public final void set(@NotNull T result) {
+    AsyncResult<T> oldValue = ref.getAndSet(AsyncResult.done(result));
+    if (oldValue != null) {
+      rejectAndDispose(oldValue);
+    }
+  }
+
+  public final void markDirty() {
+    modificationCount++;
   }
 }

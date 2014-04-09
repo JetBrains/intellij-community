@@ -74,7 +74,7 @@ public class RemoteServerConfigurable extends NamedConfigurable<RemoteServer<?>>
   }
 
   private void testConnection() {
-    final ServerConnection connection = ServerConnectionManager.getInstance().getOrCreateConnection(myServer);
+    final ServerConnection connection = ServerConnectionManager.getInstance().createTemporaryConnection(myServer);
     final AtomicReference<Runnable> showResultRef = new AtomicReference<Runnable>(null);
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
@@ -104,10 +104,17 @@ public class RemoteServerConfigurable extends NamedConfigurable<RemoteServer<?>>
             break;
           }
         }
-        Runnable showResult = showResultRef.get();
-        if (showResult != null) {
-          ApplicationManager.getApplication().invokeLater(showResult);
-        }
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+
+          @Override
+          public void run() {
+            Runnable showResult = showResultRef.get();
+            if (showResult != null) {
+              showResult.run();
+            }
+            connection.disconnect();
+          }
+        });
       }
     }.queue();
   }

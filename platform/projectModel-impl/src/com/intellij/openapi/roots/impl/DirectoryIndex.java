@@ -40,6 +40,7 @@ public abstract class DirectoryIndex {
   public abstract JpsModuleSourceRootType<?> getSourceRootType(@NotNull DirectoryInfo info);
 
   public abstract boolean isProjectExcludeRoot(@NotNull VirtualFile dir);
+  public abstract boolean isModuleExcludeRoot(@NotNull VirtualFile dir);
 
   @NotNull
   public abstract
@@ -48,5 +49,9 @@ public abstract class DirectoryIndex {
   @Nullable
   public abstract String getPackageName(@NotNull VirtualFile dir);
 
+  /**
+   * @return true
+   */
+  @Deprecated
   public abstract boolean isInitialized();
 }

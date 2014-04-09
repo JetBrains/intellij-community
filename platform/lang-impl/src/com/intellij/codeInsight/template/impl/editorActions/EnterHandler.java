@@ -21,6 +21,7 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
@@ -30,6 +31,7 @@ public class EnterHandler extends BaseEnterHandler {
   private final EditorActionHandler myOriginalHandler;
 
   public EnterHandler(EditorActionHandler originalHandler) {
+    super(true);
     myOriginalHandler = originalHandler;
   }
 
@@ -39,7 +41,7 @@ public class EnterHandler extends BaseEnterHandler {
   }
 
   @Override
-  public void executeWriteAction(Editor editor, DataContext dataContext) {
+  public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project != null) {
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
@@ -49,6 +51,6 @@ public class EnterHandler extends BaseEnterHandler {
       }
     }
 
-    myOriginalHandler.execute(editor, dataContext);
+    myOriginalHandler.execute(editor, caret, dataContext);
   }
 }

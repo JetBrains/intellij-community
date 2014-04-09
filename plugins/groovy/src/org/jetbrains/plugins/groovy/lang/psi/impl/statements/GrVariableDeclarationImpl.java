@@ -23,8 +23,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.EmptyStub;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +48,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -190,8 +189,10 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> impl
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                      @NotNull ResolveState state,
-                                     PsiElement lastParent,
+                                     @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
+    if (!ResolveUtil.shouldProcessProperties(processor.getHint(ClassHint.KEY))) return true;
+
     if (lastParent != null && !(getParent() instanceof GrTypeDefinitionBody) && lastParent == getTupleInitializer()) {
       return true;
     }
@@ -207,68 +208,11 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> impl
 
   @Override
   public PsiReference getReference() {
-    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiReference>() {
-      @Nullable
-      @Override
-      public Result<PsiReference> compute() {
-        return Result.create(getReferenceInner(), getContainingFile());
-      }
-    });
-  }
-
-  private PsiReference getReferenceInner() {
     if (getTypeElementGroovy() != null) return null;
-    final TextRange range = getRangeForReference();
-
+    TextRange range = getRangeForReference();
     if (range == null) return null;
 
-    final GrVariable[] variables = getVariables();
-    if (variables.length == 0) return null;
-
-    final GrVariable resolved = variables[0];
-    final PsiType inferredType = resolved.getTypeGroovy();
-    if (inferredType == null) return null;
-
-    if (inferredType instanceof PsiClassType) {
-      return new PsiReferenceBase<GrVariableDeclaration>(this, range, true) {
-        @Nullable
-        @Override
-        public PsiElement resolve() {
-          return ((PsiClassType)inferredType).resolve();
-        }
-
-        @NotNull
-        @Override
-        public Object[] getVariants() {
-          return EMPTY_ARRAY;
-        }
-
-        @Override
-        public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-          return getElement();
-        }
-      };
-    }
-    else {
-      return new PsiReferenceBase<GrVariableDeclaration>(this, range, true) {
-        @Nullable
-        @Override
-        public PsiElement resolve() {
-          return resolved;
-        }
-
-        @NotNull
-        @Override
-        public Object[] getVariants() {
-          return EMPTY_ARRAY;
-        }
-
-        @Override
-        public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-          return getElement();
-        }
-      };
-    }
+    return new GrTypeReference(range);
   }
 
   private TextRange getRangeForReference() {
@@ -281,11 +225,11 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> impl
   private PsiElement findSuitableModifier() {
     final GrModifierList list = getModifierList();
 
-    PsiElement modifier = PsiUtil.findModifierInList(list, GrModifier.DEF);
-    if (modifier != null) return modifier;
+    PsiElement defModifier = PsiUtil.findModifierInList(list, GrModifier.DEF);
+    if (defModifier != null) return defModifier;
 
-    modifier = PsiUtil.findModifierInList(list, PsiModifier.FINAL);
-    if (modifier != null) return modifier;
+    PsiElement finalModifier = PsiUtil.findModifierInList(list, PsiModifier.FINAL);
+    if (finalModifier != null) return finalModifier;
 
     for (PsiElement element : list.getModifiers()) {
       if (!(element instanceof GrAnnotation)) {
@@ -296,11 +240,36 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> impl
     return null;
   }
 
-  @Nullable
-  private static String getTypeText(GrVariable var) {
-    final PsiType type = var.getTypeGroovy();
-    if (type == null) return null;
+  private class GrTypeReference extends PsiReferenceBase<GrVariableDeclaration> {
+    public GrTypeReference(TextRange range) {
+      super(GrVariableDeclarationImpl.this, range, true);
+    }
 
-    return type.getCanonicalText();
+    @Nullable
+    @Override
+    public PsiElement resolve() {
+      GrVariable[] variables = getVariables();
+      if (variables.length == 0) return null;
+
+      GrVariable resolved = variables[0];
+      PsiType typeGroovy = resolved.getTypeGroovy();
+      if (typeGroovy instanceof PsiClassType) {
+        return ((PsiClassType)typeGroovy).resolve();
+      }
+      else {
+        return resolved;
+      }
+    }
+
+    @NotNull
+    @Override
+    public Object[] getVariants() {
+      return EMPTY_ARRAY;
+    }
+
+    @Override
+    public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+      return getElement();
+    }
   }
 }

@@ -54,13 +54,13 @@ public class ClassPath {
   private static PrintStream ourOrder;
   private static long ourOrderSize;
   private static final Set<String> ourOrderedUrls = new HashSet<String>();
-  private static final String HOME = FileUtil.toSystemIndependentName(PathManager.getHomePath());
 
   private final boolean myAcceptUnescapedUrls;
   private final boolean myPreloadJarContents;
 
   private static synchronized void printOrder(Loader loader, String url, Resource resource) {
     if (!ourOrderedUrls.add(url)) return;
+    String home = FileUtil.toSystemIndependentName(PathManager.getHomePath());
     try {
       ourOrderSize += resource.getContentLength();
     }
@@ -73,7 +73,6 @@ public class ClassPath {
         if (!FileUtil.ensureCanCreateFile(orderFile)) return;
         ourOrder = new PrintStream(new FileOutputStream(orderFile, true));
         ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
-          @Override
           public void run() {
             ourOrder.close();
             System.out.println(ourOrderSize);
@@ -88,8 +87,8 @@ public class ClassPath {
     if (ourOrder != null) {
       String jarURL = FileUtil.toSystemIndependentName(loader.getBaseURL().getFile());
       jarURL = StringUtil.trimStart(jarURL, "file:/");
-      if (jarURL.startsWith(HOME)) {
-        jarURL = jarURL.replaceFirst(HOME, "");
+      if (jarURL.startsWith(home)) {
+        jarURL = jarURL.replaceFirst(home, "");
         jarURL = StringUtil.trimEnd(jarURL, "!/");
         ourOrder.println(url + ":" + jarURL);
       }
@@ -304,12 +303,10 @@ public class ClassPath {
       return false;
     }
 
-    @Override
     public boolean hasMoreElements() {
       return next();
     }
 
-    @Override
     public URL nextElement() {
       if (!next()) {
         throw new NoSuchElementException();

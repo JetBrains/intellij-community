@@ -38,12 +38,12 @@ public class TypesDistinctProver {
   protected static boolean provablyDistinct(PsiType type1, PsiType type2, int level) {
     if (type1 instanceof PsiWildcardType) {
       if (type2 instanceof PsiWildcardType) {
-        return provablyDistinct((PsiWildcardType)type1, (PsiWildcardType)type2, true);
+        return provablyDistinct((PsiWildcardType)type1, (PsiWildcardType)type2, true, level);
       }
 
       if (level > 1) return true;
       if (type2 instanceof PsiCapturedWildcardType) {
-        return provablyDistinct((PsiWildcardType)type1, ((PsiCapturedWildcardType)type2).getWildcard(), false);
+        return provablyDistinct((PsiWildcardType)type1, ((PsiCapturedWildcardType)type2).getWildcard(), false, level);
       }
 
       if (type2 instanceof PsiClassType) {
@@ -150,7 +150,7 @@ public class TypesDistinctProver {
     return true;
   }
 
-  public static boolean provablyDistinct(PsiWildcardType type1, PsiWildcardType type2, boolean rejectInconsistentRaw) {
+  public static boolean provablyDistinct(PsiWildcardType type1, PsiWildcardType type2, boolean rejectInconsistentRaw, int level) {
     if (type1.isSuper() && type2.isSuper()) return false;
     if (type1.isExtends() && type2.isExtends()) {
       final PsiType extendsBound1 = type1.getExtendsBound();
@@ -168,7 +168,8 @@ public class TypesDistinctProver {
       }
       return provablyDistinct(extendsBound1, extendsBound2, 1);
     }
-    if (type2.isExtends()) return provablyDistinct(type2, type1, rejectInconsistentRaw);
+    if (type2.isExtends()) return provablyDistinct(type2, type1, rejectInconsistentRaw, level);
+    if (type1.isExtends() && !type2.isBounded() && level > 1) return PsiUtil.resolveClassInType(type1.getExtendsBound()) instanceof PsiTypeParameter;
     if (type1.isExtends() && type2.isSuper()) {
       final PsiType extendsBound = type1.getExtendsBound();
       final PsiType superBound = type2.getSuperBound();

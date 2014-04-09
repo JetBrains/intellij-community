@@ -16,17 +16,16 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class JavaDebugAware {
   static final ExtensionPointName<JavaDebugAware> EP_NAME = ExtensionPointName.create("com.intellij.debugger.javaDebugAware");
 
-  public abstract boolean isBreakpointAware(@NotNull PsiFile psiFile, @NotNull FileType fileType);
+  public abstract boolean isBreakpointAware(@NotNull PsiFile psiFile);
 
   // IDEA-122113, will be removed when Java debugger will be moved to XDebugger API
-  public boolean isActionAware(@NotNull PsiFile psiFile, @NotNull FileType fileType) {
-    return isBreakpointAware(psiFile, fileType);
+  public boolean isActionAware(@NotNull PsiFile psiFile) {
+    return isBreakpointAware(psiFile);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,14 +115,8 @@ public final class IconLoader {
 
   @NotNull
   public static Icon getIcon(@NonNls @NotNull final String path) {
-    int stackFrameCount = 2;
-    Class callerClass = ReflectionUtil.findCallerClass(stackFrameCount);
-    while (callerClass != null && callerClass.getClassLoader() == null) { // looks like a system class
-      callerClass = ReflectionUtil.findCallerClass(++stackFrameCount);
-    }
-    if (callerClass == null) {
-      callerClass = ReflectionUtil.findCallerClass(1);
-    }
+    Class callerClass = ReflectionUtil.getGrandCallerClass();
+
     assert callerClass != null : path;
     return getIcon(path, callerClass);
   }
@@ -147,14 +141,7 @@ public final class IconLoader {
    * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(java.lang.String)}
    */
   public static Icon findIcon(@NonNls @NotNull String path) {
-    int stackFrameCount = 2;
-    Class callerClass = ReflectionUtil.findCallerClass(stackFrameCount);
-    while (callerClass != null && callerClass.getClassLoader() == null) { // looks like a system class
-      callerClass = ReflectionUtil.findCallerClass(++stackFrameCount);
-    }
-    if (callerClass == null) {
-      callerClass = ReflectionUtil.findCallerClass(1);
-    }
+    Class callerClass = ReflectionUtil.getGrandCallerClass();
     if (callerClass == null) return null;
     return findIcon(path, callerClass);
   }
@@ -170,6 +157,10 @@ public final class IconLoader {
 
   public static void activate() {
     ourIsActivated = true;
+  }
+
+  public static void deactivate() {
+    ourIsActivated = false;
   }
 
   private static boolean isLoaderDisabled() {
@@ -211,13 +202,20 @@ public final class IconLoader {
 
   @Nullable
   public static Icon findIcon(URL url) {
+    return findIcon(url, true);
+  }
+
+  @Nullable
+  public static Icon findIcon(URL url, boolean useCache) {
     if (url == null) {
       return null;
     }
     CachedImageIcon icon = ourIconsCache.get(url);
     if (icon == null) {
       icon = new CachedImageIcon(url);
-      icon = ConcurrencyUtil.cacheOrGet(ourIconsCache, url, icon);
+      if (useCache) {
+        icon = ConcurrencyUtil.cacheOrGet(ourIconsCache, url, icon);
+      }
     }
     return icon;
   }

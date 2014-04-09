@@ -60,35 +60,12 @@ public class HashCodeUsesNonFinalVariableInspection
     return new HashCodeUsesNonFinalVariableVisitor();
   }
 
-  private static class HashCodeUsesNonFinalVariableVisitor
-    extends BaseInspectionVisitor {
+  private static class HashCodeUsesNonFinalVariableVisitor extends NonFinalFieldsVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
-      final boolean isHashCode = MethodUtils.isHashCode(method);
-      if (isHashCode) {
-        method.accept(new JavaRecursiveElementVisitor() {
-
-          @Override
-          public void visitClass(PsiClass aClass) {
-            // Do not recurse into.
-          }
-
-          @Override
-          public void visitReferenceExpression(
-            @NotNull PsiReferenceExpression expression) {
-            super.visitReferenceExpression(expression);
-            final PsiElement element = expression.resolve();
-            if (!(element instanceof PsiField)) {
-              return;
-            }
-            final PsiField field = (PsiField)element;
-            if (field.hasModifierProperty(PsiModifier.FINAL)) {
-              return;
-            }
-            registerError(expression, field);
-          }
-        });
+      if (MethodUtils.isHashCode(method)) {
+        checkUsedNonFinalFields(method);
       }
     }
   }

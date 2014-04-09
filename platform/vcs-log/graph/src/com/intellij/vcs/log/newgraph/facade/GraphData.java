@@ -161,7 +161,7 @@ public class GraphData {
 
   public void assertRange(int visibleRowIndex) {
     if (visibleRowIndex < 0 || visibleRowIndex >= getCountVisibleNodes()) {
-      throw new IllegalArgumentException("Row not exist! Request row index: " + visibleRowIndex + ", count rows: " + getCountVisibleNodes());
+      throw new IllegalArgumentException("Row does not exist! Request row index: " + visibleRowIndex + ", count rows: " + getCountVisibleNodes());
     }
   }
 }

@@ -229,7 +229,8 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   @Override
   @NotNull
   public CaretImpl getCurrentCaret() {
-    return ApplicationManager.getApplication().isDispatchThread() && myCurrentCaret != null ? myCurrentCaret : getPrimaryCaret();
+    CaretImpl currentCaret = myCurrentCaret;
+    return ApplicationManager.getApplication().isDispatchThread() && currentCaret != null ? currentCaret : getPrimaryCaret();
   }
 
   @Override
@@ -429,11 +430,11 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       myPerformCaretMergingAfterCurrentOperation = true;
       try {
         runnable.run();
+        mergeOverlappingCaretsAndSelections();
       }
       finally {
         myPerformCaretMergingAfterCurrentOperation = false;
       }
-      mergeOverlappingCaretsAndSelections();
     }
   }
 

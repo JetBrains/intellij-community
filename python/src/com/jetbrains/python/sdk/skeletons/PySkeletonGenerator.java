@@ -29,7 +29,10 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -40,13 +43,30 @@ import static com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker.fromVers
  * @author traff
  */
 public class PySkeletonGenerator {
+
+  // Some flavors need current folder to be passed as param. Here are they.
+  private static final Map<Class<? extends PythonSdkFlavor>, String> ENV_PATH_PARAM =
+    new HashMap<Class<? extends PythonSdkFlavor>, String>();
+
+  static {
+    ENV_PATH_PARAM.put(IronPythonSdkFlavor.class, "IRONPYTHONPATH"); // TODO: Make strategy and move to PythonSdkFlavor?
+  }
+
+
   protected static final Logger LOG = Logger.getInstance("#" + PySkeletonGenerator.class.getName());
 
-  protected final static int MINUTE = 60 * 1000;
 
-  protected final static String GENERATOR3 = "generator3.py";
+  protected static final int MINUTE = 60 * 1000;
+
+  protected static final String GENERATOR3 = "generator3.py";
+  private static final String[] EMPTY_ENVS = new String[0];
 
   private final String mySkeletonsPath;
+  /**
+   * Env variables to be added to skeleton generator
+   */
+  @NotNull
+  private final String[] myEnvs;
 
   public void finishSkeletonsGeneration() {
   }
@@ -65,8 +85,21 @@ public class PySkeletonGenerator {
     }
   }
 
-  public PySkeletonGenerator(String skeletonPath) {
+
+  /**
+   * @param skeletonPath path where skeletons should be generated
+   * @param pySdk SDK
+   * @param currentFolder current folder (some flavors may search for binary files there) or null if unknown
+   */
+  public PySkeletonGenerator(String skeletonPath, @NotNull final Sdk pySdk, @Nullable final String currentFolder) {
     mySkeletonsPath = skeletonPath;
+    final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(pySdk);
+    if ((currentFolder != null) && (flavor != null) && ENV_PATH_PARAM.containsKey(flavor.getClass())) {
+      myEnvs = new String[]{String.format("%s=%s", ENV_PATH_PARAM.get(flavor.getClass()), currentFolder)};
+    }
+    else {
+      myEnvs = EMPTY_ENVS;
+    }
   }
 
   public String getSkeletonsPath() {
@@ -138,8 +171,14 @@ public class PySkeletonGenerator {
     if (modfilename != null) {
       commandLine.add(modfilename);
     }
+    final List<String> envs = new ArrayList<String>(Arrays.asList(myEnvs));
+    final String[] virtualEnvAdditionalEnv = PythonSdkType.getVirtualEnvAdditionalEnv(binaryPath);
+    if (virtualEnvAdditionalEnv != null) {
+      envs.addAll(Arrays.asList(virtualEnvAdditionalEnv));
+    }
 
-    return getProcessOutput(parent_dir, ArrayUtil.toStringArray(commandLine), PythonSdkType.getVirtualEnvAdditionalEnv(binaryPath),
+
+    return getProcessOutput(parent_dir, ArrayUtil.toStringArray(commandLine), envs.toArray(new String[envs.size()]),
                             MINUTE * 10
     );
   }

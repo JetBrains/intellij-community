@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +43,7 @@ public class DefaultExecutionResult implements ExecutionResult {
     myActions = AnAction.EMPTY_ARRAY;
   }
 
-  public DefaultExecutionResult(final ExecutionConsole console, @NotNull final ProcessHandler processHandler) {
+  public DefaultExecutionResult(@Nullable ExecutionConsole console, @NotNull final ProcessHandler processHandler) {
     this(console, processHandler, AnAction.EMPTY_ARRAY);
   }
 

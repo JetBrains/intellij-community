@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   private final Condition<String> myMatcher;
   private final Options myOptions;
   private final Set<PsiField> myNonInitializedFields = new HashSet<PsiField>();
-  private boolean myAllowStaticWithInstanceQualifier;
+  private final boolean myAllowStaticWithInstanceQualifier;
 
   public JavaCompletionProcessor(@NotNull PsiElement element, ElementFilter filter, Options options, @NotNull Condition<String> nameCondition) {
     myOptions = options;
@@ -196,7 +196,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   }
 
   @Override
-  public void handleEvent(Event event, Object associated){
+  public void handleEvent(@NotNull Event event, Object associated){
     if(event == JavaScopeProcessorEvent.START_STATIC){
       myStatic = true;
     }
@@ -209,7 +209,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   }
 
   @Override
-  public boolean execute(@NotNull PsiElement element, ResolveState state) {
+  public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
     //noinspection SuspiciousMethodCalls
     if (myNonInitializedFields.contains(element)) {
       return true;

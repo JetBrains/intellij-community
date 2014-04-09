@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.ui.popup;
 
 import com.intellij.openapi.project.Project;
@@ -37,15 +36,14 @@ import java.util.List;
  * @author max
  */
 public interface ComponentPopupBuilder {
-
   @NotNull
   ComponentPopupBuilder setTitle(String title);
 
   @NotNull
-  ComponentPopupBuilder setResizable(final boolean forceResizable);
+  ComponentPopupBuilder setResizable(boolean forceResizable);
 
   @NotNull
-  ComponentPopupBuilder setMovable(final boolean forceMovable);
+  ComponentPopupBuilder setMovable(boolean forceMovable);
 
   @NotNull
   ComponentPopupBuilder setRequestFocus(boolean requestFocus);
@@ -57,19 +55,13 @@ public interface ComponentPopupBuilder {
   ComponentPopupBuilder setRequestFocusCondition(Project project, Condition<Project> condition);
 
   /**
-   * @deprecated all popups are heavyweight now, lightweight popups no linger supported
-   */
-  @NotNull
-  ComponentPopupBuilder setForceHeavyweight(boolean forceHeavyweight);
-
-  /**
    * @see com.intellij.openapi.util.DimensionService
    */
   @NotNull
-  ComponentPopupBuilder setDimensionServiceKey(@Nullable final Project project, @NonNls final String dimensionServiceKey, final boolean useForXYLocation);
+  ComponentPopupBuilder setDimensionServiceKey(@Nullable Project project, @NonNls String key, boolean useForXYLocation);
 
   @NotNull
-  ComponentPopupBuilder setCancelCallback(final Computable<Boolean> shouldProceed);
+  ComponentPopupBuilder setCancelCallback(Computable<Boolean> shouldProceed);
 
   @NotNull
   ComponentPopupBuilder setCancelOnClickOutside(boolean cancel);
@@ -78,7 +70,7 @@ public interface ComponentPopupBuilder {
   ComponentPopupBuilder addListener(JBPopupListener listener);
 
   @NotNull
-  ComponentPopupBuilder setCancelOnMouseOutCallback(final MouseChecker shouldCancel);
+  ComponentPopupBuilder setCancelOnMouseOutCallback(MouseChecker shouldCancel);
 
   @NotNull
   JBPopup createPopup();
@@ -89,34 +81,48 @@ public interface ComponentPopupBuilder {
   @NotNull
   ComponentPopupBuilder setCancelOnOtherWindowOpen(boolean cancelOnWindow);
 
-  @NotNull ComponentPopupBuilder setTitleIcon(@NotNull ActiveIcon icon);
-  
-  @NotNull ComponentPopupBuilder setCancelKeyEnabled(boolean enabled);
-  
-  @NotNull ComponentPopupBuilder setLocateByContent(boolean byContent);
+  @NotNull
+  ComponentPopupBuilder setTitleIcon(@NotNull ActiveIcon icon);
 
-  @NotNull ComponentPopupBuilder setLocateWithinScreenBounds(boolean within);
+  @NotNull
+  ComponentPopupBuilder setCancelKeyEnabled(boolean enabled);
 
-  @NotNull ComponentPopupBuilder setMinSize(Dimension minSize);
+  @NotNull
+  ComponentPopupBuilder setLocateByContent(boolean byContent);
 
-  @NotNull ComponentPopupBuilder setAlpha(float alpha);
+  @NotNull
+  ComponentPopupBuilder setLocateWithinScreenBounds(boolean within);
 
-  @NotNull ComponentPopupBuilder setBelongsToGlobalPopupStack(boolean isInStack);
+  @NotNull
+  ComponentPopupBuilder setMinSize(Dimension minSize);
 
-  @NotNull ComponentPopupBuilder setProject(Project project);
+  /**
+   * Use this method to customize shape of popup window (e.g. to use bounded corners).
+   */
+  @SuppressWarnings("UnusedDeclaration")//used in 'Presentation Assistant' plugin
+  @NotNull
+  ComponentPopupBuilder setMaskProvider(MaskProvider maskProvider);
 
-  @NotNull ComponentPopupBuilder addUserData(Object object);
+  @NotNull
+  ComponentPopupBuilder setAlpha(float alpha);
 
-  @NotNull ComponentPopupBuilder setModalContext(boolean modal);
+  @NotNull
+  ComponentPopupBuilder setBelongsToGlobalPopupStack(boolean isInStack);
+
+  @NotNull
+  ComponentPopupBuilder setProject(Project project);
+
+  @NotNull
+  ComponentPopupBuilder addUserData(Object object);
+
+  @NotNull
+  ComponentPopupBuilder setModalContext(boolean modal);
 
   @NotNull
   ComponentPopupBuilder setFocusOwners(@NotNull Component[] focusOwners);
 
   /**
    * Adds "advertising" text to the bottom (e.g.: hints in code completion popup).
-   *
-   * @param text Text to set.
-   * @return This.
    */
   @NotNull
   ComponentPopupBuilder setAdText(@Nullable String text);
@@ -124,7 +130,8 @@ public interface ComponentPopupBuilder {
   @NotNull
   ComponentPopupBuilder setAdText(@Nullable String text, int textAlignment);
 
-  @NotNull ComponentPopupBuilder setShowShadow(boolean show);
+  @NotNull
+  ComponentPopupBuilder setShowShadow(boolean show);
 
   @NotNull
   ComponentPopupBuilder setCommandButton(@NotNull ActiveComponent commandButton);
@@ -144,11 +151,11 @@ public interface ComponentPopupBuilder {
   ComponentPopupBuilder setCancelOnWindowDeactivation(boolean cancelOnWindowDeactivation);
 
   /**
-   * Allows to define custom strategy for processing {@link JBPopup#dispatchKeyEvent(KeyEvent)}
-   * 
-   * @param handler  strategy to use
-   * @return         <code>this</code>
+   * Allows to define custom strategy for processing {@link JBPopup#dispatchKeyEvent(KeyEvent)}.
    */
   @NotNull
   ComponentPopupBuilder setKeyEventHandler(@NotNull BooleanFunction<KeyEvent> handler);
+
+  @NotNull
+  ComponentPopupBuilder setShowBorder(boolean show);
 }

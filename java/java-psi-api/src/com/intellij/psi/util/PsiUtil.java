@@ -101,7 +101,7 @@ public final class PsiUtil extends PsiUtilCore {
 
   @NotNull
   public static JavaResolveResult getAccessObjectClass(@NotNull PsiExpression expression) {
-    if (expression instanceof PsiSuperExpression) return JavaResolveResult.EMPTY;
+    if (expression instanceof PsiSuperExpression && !isLanguageLevel8OrHigher(expression)) return JavaResolveResult.EMPTY;
     PsiType type = expression.getType();
     if (type instanceof PsiClassType) {
       return ((PsiClassType)type).resolveGenerics();
@@ -1091,5 +1091,26 @@ public final class PsiUtil extends PsiUtilCore {
       }
     }
     return false;
+  }
+
+  public static PsiReturnStatement[] findReturnStatements(PsiMethod method) {
+    ArrayList<PsiReturnStatement> vector = new ArrayList<PsiReturnStatement>();
+    PsiCodeBlock body = method.getBody();
+    if (body != null) {
+      addReturnStatements(vector, body);
+    }
+    return vector.toArray(new PsiReturnStatement[vector.size()]);
+  }
+
+  private static void addReturnStatements(ArrayList<PsiReturnStatement> vector, PsiElement element) {
+    if (element instanceof PsiReturnStatement) {
+      vector.add((PsiReturnStatement)element);
+    }
+    else if (!(element instanceof PsiClass)) {
+      PsiElement[] children = element.getChildren();
+      for (PsiElement child : children) {
+        addReturnStatements(vector, child);
+      }
+    }
   }
 }

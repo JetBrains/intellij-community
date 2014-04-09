@@ -49,6 +49,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
@@ -307,7 +308,8 @@ public class PsiUtil {
     List<PsiType> result = new ArrayList<PsiType>();
 
     if (namedArgs.length > 0) {
-      result.add(new GrMapType(namedArgs[0], byShape ? new GrNamedArgument[0] : namedArgs));
+      GrNamedArgument context = namedArgs[0];
+      result.add(GrMapType.createFromNamedArgs(context, byShape ? new GrNamedArgument[0] : namedArgs));
     }
 
     for (GrExpression expression : expressions) {
@@ -1069,6 +1071,7 @@ public class PsiUtil {
 
     final PsiElement parent = expr.getParent();
     if (parent instanceof GrControlFlowOwner || parent instanceof GrCaseSection) return true;
+    if (parent instanceof GrLabeledStatement) return true;
     if (parent instanceof GrIfStatement &&
         (expr == ((GrIfStatement)parent).getThenBranch() || expr == ((GrIfStatement)parent).getElseBranch())) {
       return true;
@@ -1244,7 +1247,7 @@ public class PsiUtil {
   }
 
   public static boolean isCompileStatic(PsiElement e) {
-    PsiMember containingMember = PsiTreeUtil.getParentOfType(e, PsiMember.class, false);
+    PsiMember containingMember = PsiTreeUtil.getParentOfType(e, PsiMember.class, false, GrAnnotation.class);
     return containingMember != null && GroovyPsiManager.getInstance(containingMember.getProject()).isCompileStatic(containingMember);
   }
 

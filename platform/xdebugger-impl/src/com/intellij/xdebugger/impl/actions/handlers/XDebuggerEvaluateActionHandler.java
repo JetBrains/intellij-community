@@ -20,10 +20,9 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.evaluation.ExpressionInfo;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XStackFrame;
@@ -46,7 +45,7 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
       return;
     }
 
-    @Nullable Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
 
     String selectedText = editor != null ? editor.getSelectionModel().getSelectedText() : null;
     if (selectedText != null) {
@@ -74,14 +73,25 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
     }
 
     Document document = editor.getDocument();
-    return getExpressionText(evaluator.getExpressionAtOffset(project, document, editor.getCaretModel().getOffset(), true), document);
+    return getExpressionText(evaluator.getExpressionInfoAtOffset(project, document, editor.getCaretModel().getOffset(), true), document);
   }
 
-  public static String getExpressionText(@Nullable Pair<TextRange, String> expressionInfo, @NotNull Document document) {
+  @Nullable
+  public static String getExpressionText(@Nullable ExpressionInfo expressionInfo, @NotNull Document document) {
     if (expressionInfo == null) {
       return null;
     }
-    return expressionInfo.second == null ? document.getText(expressionInfo.first) : expressionInfo.second;
+    String text = expressionInfo.getExpressionText();
+    return text == null ? document.getText(expressionInfo.getTextRange()) : text;
+  }
+
+  @Nullable
+  public static String getDisplayText(@Nullable ExpressionInfo expressionInfo, @NotNull Document document) {
+    if (expressionInfo == null) {
+      return null;
+    }
+    String text = expressionInfo.getDisplayText();
+    return text == null ? document.getText(expressionInfo.getTextRange()) : text;
   }
 
   @Override

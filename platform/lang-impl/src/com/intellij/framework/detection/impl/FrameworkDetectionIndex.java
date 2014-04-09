@@ -68,7 +68,7 @@ public class FrameworkDetectionIndex extends ScalarIndexExtension<Integer> {
     return new DataIndexer<Integer, Void, FileContent>() {
       @NotNull
       @Override
-      public Map<Integer, Void> map(FileContent inputData) {
+      public Map<Integer, Void> map(@NotNull FileContent inputData) {
         final FileType fileType = inputData.getFileType();
         if (!detectors.containsKey(fileType)) {
           return Collections.emptyMap();

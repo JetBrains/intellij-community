@@ -36,7 +36,7 @@ public class GitlabProject {
   }
 
   /**
-   * For serialization purposed only
+   * For serialization purposes only
    */
   public void setId(int id) {
     this.id = id;
@@ -50,5 +50,10 @@ public class GitlabProject {
   @Nullable
   public String getWebUrl() {
     return webUrl;
+  }
+
+  @Override
+  public final String toString() {
+    return getName();
   }
 }

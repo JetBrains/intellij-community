@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ public class MethodResolverProcessor extends MethodCandidatesProcessor {
   }
 
   @Override
-  public void handleEvent(Event event, Object associated) {
+  public void handleEvent(@NotNull Event event, Object associated) {
     if (event == JavaScopeProcessorEvent.CHANGE_LEVEL) {
       if (myHasAccessibleStaticCorrectCandidate) myStopAcceptingCandidates = true;
     }
@@ -60,7 +60,7 @@ public class MethodResolverProcessor extends MethodCandidatesProcessor {
   }
 
   @Override
-  public boolean execute(@NotNull PsiElement element, ResolveState state) {
+  public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
     return !myStopAcceptingCandidates && super.execute(element, state);
   }
 

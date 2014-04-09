@@ -206,6 +206,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
       final PsiStatement statementInside = isNegated(instanceOfExpression) ? null : getExpressionStatementInside(file, editor, instanceOfExpression.getOperand());
       PsiDeclarationStatement decl = createLocalVariableDeclaration(instanceOfExpression, statementInside);
       if (decl == null) return;
+      decl = (PsiDeclarationStatement)CodeStyleManager.getInstance(project).reformat(decl);
       decl = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(decl);
 
       PsiLocalVariable localVariable = (PsiLocalVariable)decl.getDeclaredElements()[0];

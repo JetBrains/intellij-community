@@ -16,6 +16,7 @@
 package com.intellij.util.ui;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,7 +35,7 @@ public class FadeInFadeOut extends JComponent {
   private final BufferedImage myComponentImage;
   private Rectangle myComponentBounds;
 
-  @NotNull
+  @Nullable
   private final Component myIcon;
   private Rectangle myIconBounds;
 
@@ -46,7 +47,7 @@ public class FadeInFadeOut extends JComponent {
   private Runnable myOnDone = null;
 
 
-  public FadeInFadeOut(@NotNull Component component, int timeToComplete, boolean fadeIn, @NotNull Component icon) {
+  public FadeInFadeOut(@NotNull Component component, int timeToComplete, boolean fadeIn, @Nullable Component icon) {
     setFocusable(false);
     myComponent = component;
     myFadeIn = fadeIn;
@@ -81,7 +82,11 @@ public class FadeInFadeOut extends JComponent {
     super.reshape(x, y, w, h);
     if (!myTriggered) {
       myComponentBounds = SwingUtilities.convertRectangle(myComponent.getParent(), myComponent.getBounds(), this);
-      myIconBounds = SwingUtilities.convertRectangle(myIcon.getParent(), myIcon.getBounds(), this);
+      if (myIcon == null) {
+        myIconBounds = myComponentBounds;
+      } else {
+        myIconBounds = SwingUtilities.convertRectangle(myIcon.getParent(), myIcon.getBounds(), this);
+      }
     }
   }
 

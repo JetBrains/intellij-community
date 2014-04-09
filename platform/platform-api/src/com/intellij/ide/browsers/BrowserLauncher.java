@@ -42,5 +42,5 @@ public abstract class BrowserLauncher {
                                           @Nullable String browserPath,
                                           @Nullable WebBrowser browser,
                                           @Nullable Project project,
-                                          @NotNull String... additionalParameters);
+                                          @NotNull String[] additionalParameters);
 }

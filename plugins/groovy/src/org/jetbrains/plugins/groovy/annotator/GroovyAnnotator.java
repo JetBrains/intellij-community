@@ -46,7 +46,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.introduceParameter.ExpressionConverter;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -56,10 +55,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.annotator.checkers.AnnotationChecker;
+import org.jetbrains.plugins.groovy.annotator.checkers.CustomAnnotationChecker;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrModifierFix;
-import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
@@ -96,6 +97,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrAnnotationCollector;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
@@ -314,7 +316,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       LOG.assertTrue(nameElement != null);
       myHolder.createInfoAnnotation(nameElement, null).setTextAttributes(MAP_KEY);
     }
-    else if (GrUnresolvedAccessInspection.isClassReference(referenceExpression)) {
+    else if (GrReferenceResolveUtil.isClassReference(referenceExpression)) {
       PsiElement nameElement = referenceExpression.getReferenceNameElement();
       LOG.assertTrue(nameElement != null);
       myHolder.createInfoAnnotation(nameElement, null).setTextAttributes(KEYWORD);
@@ -846,7 +848,8 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   @Override
   public void visitListOrMap(GrListOrMap listOrMap) {
     final PsiReference constructorReference = listOrMap.getReference();
-    if (constructorReference != null) {
+    if (constructorReference instanceof LiteralConstructorReference &&
+        ((LiteralConstructorReference)constructorReference).getConstructedClassType() != null) {
       final PsiElement startToken = listOrMap.getFirstChild();
       if (startToken != null && startToken.getNode().getElementType() == GroovyTokenTypes.mLBRACK) {
         myHolder.createInfoAnnotation(startToken, null).setTextAttributes(LITERAL_CONVERSION);
@@ -971,7 +974,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
   private static void registerFix(Annotation annotation, LocalQuickFix fix, PsiElement place) {
     final InspectionManager manager = InspectionManager.getInstance(place.getProject());
-    assert !place.getTextRange().isEmpty();
+    assert !place.getTextRange().isEmpty() : place.getContainingFile().getName();
 
     final ProblemDescriptor descriptor = manager.createProblemDescriptor(place, place, annotation.getMessage(),
                                                                          annotation.getHighlightType(), true, LocalQuickFix.EMPTY_ARRAY);
@@ -1448,48 +1451,12 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
   @Override
   public void visitAnnotation(GrAnnotation annotation) {
-    final GrCodeReferenceElement ref = annotation.getClassReference();
-    final PsiElement resolved = ref.resolve();
-
-    if (resolved == null) return;
-    assert resolved instanceof PsiClass;
-
-    PsiClass anno = (PsiClass)resolved;
-    String qname = anno.getQualifiedName();
-    if (!anno.isAnnotationType() && GrAnnotationCollector.findAnnotationCollector(anno) == null) {
-      if (qname != null) {
-        myHolder.createErrorAnnotation(ref, GroovyBundle.message("class.is.not.annotation", qname));
-      }
-      return;
-    }
-
-    for (CustomAnnotationChecker checker : CustomAnnotationChecker.EP_NAME.getExtensions()) {
-      if (checker.checkApplicability(myHolder, annotation)) return;
-    }
-
-    String description = CustomAnnotationChecker.isAnnotationApplicable(annotation, annotation.getParent());
-    if (description != null) {
-      myHolder.createErrorAnnotation(ref, description).registerFix(new GrRemoveAnnotationIntention());
-    }
+    new AnnotationChecker(myHolder).checkApplicability(annotation, annotation.getOwner());
   }
 
   @Override
   public void visitAnnotationArgumentList(GrAnnotationArgumentList annotationArgumentList) {
-    final GrAnnotation annotation = (GrAnnotation)annotationArgumentList.getParent();
-
-    final PsiClass anno = ResolveUtil.resolveAnnotation(annotationArgumentList);
-    if (anno == null) return;
-
-    for (CustomAnnotationChecker checker : CustomAnnotationChecker.EP_NAME.getExtensions()) {
-      if (checker.checkArgumentList(myHolder, annotation)) return;
-    }
-
-    Map<PsiElement, String> errors = ContainerUtil.newHashMap();
-    CustomAnnotationChecker.checkAnnotationArguments(errors, anno, annotation.getClassReference(), annotationArgumentList.getAttributes(),
-                                                     true);
-    for (Map.Entry<PsiElement, String> entry : errors.entrySet()) {
-      myHolder.createErrorAnnotation(entry.getKey(), entry.getValue());
-    }
+    new AnnotationChecker(myHolder).checkAnnotationArgumentList((GrAnnotation)annotationArgumentList.getParent());
   }
 
   @Override
@@ -1501,11 +1468,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
     final PsiType type = annotationMethod.getReturnType();
 
-    Map<PsiElement, String> errors = ContainerUtil.newHashMap();
-    CustomAnnotationChecker.checkAnnotationValueByType(errors, value, type, false);
-    for (Map.Entry<PsiElement, String> entry : errors.entrySet()) {
-      myHolder.createErrorAnnotation(entry.getKey(), entry.getValue());
-    }
+    CustomAnnotationChecker.checkAnnotationValueByType(myHolder, value, type, false);
   }
 
   @Override
@@ -1796,7 +1759,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       if (containingClass != null) {
         final PsiModifierList list = containingClass.getModifierList();
         if (list != null && !list.hasModifierProperty(ABSTRACT)) {
-          registerFix(annotation, new GrModifierFix(containingClass, ABSTRACT, false, true, GrModifierFix.MODIFIER_LIST), list);
+          registerFix(annotation, new GrModifierFix(containingClass, ABSTRACT, false, true, GrModifierFix.MODIFIER_LIST_OWNER), containingClass);
         }
       }
     }
@@ -1961,14 +1924,6 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       if (hasPublic) {
         registerFix(annotation, new GrModifierFix(member, PUBLIC, false, false, GrModifierFix.MODIFIER_LIST), modifierList);
       }
-    }
-    else if (member instanceof PsiMethod &&
-             member.getContainingClass() instanceof GrInterfaceDefinition &&
-             hasPublic &&
-             !GroovyConfigUtils.getInstance().isVersionAtLeast(member, "1.8.4")) {
-      final PsiElement publicModifier = ObjectUtils.assertNotNull(PsiUtil.findModifierInList(modifierList, PUBLIC));
-      final Annotation annotation = holder.createErrorAnnotation(publicModifier, GroovyBundle.message("public.modifier.is.not.allowed.in.interfaces"));
-      registerFix(annotation, new GrModifierFix(member, PUBLIC, false, false, GrModifierFix.MODIFIER_LIST), modifierList);
     }
     else if (member instanceof PsiClass &&
              member.getContainingClass() == null &&

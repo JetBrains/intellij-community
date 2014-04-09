@@ -41,8 +41,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
@@ -108,7 +106,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private final EventDispatcher<XDebugSessionListener> myDispatcher = EventDispatcher.create(XDebugSessionListener.class);
   private final Project myProject;
   private final @Nullable ExecutionEnvironment myEnvironment;
-  private final ProgramRunner myRunner;
+  private final @Nullable ProgramRunner myRunner;
   private boolean myStopped;
   private boolean myPauseActionSupported;
   private boolean myShowTabOnSuspend;
@@ -119,15 +117,19 @@ public class XDebugSessionImpl implements XDebugSession {
   private volatile boolean breakpointsInitialized;
   private boolean autoInitBreakpoints = true;
 
-  public XDebugSessionImpl(final @NotNull ExecutionEnvironment env, final @NotNull ProgramRunner runner,
-                           XDebuggerManagerImpl debuggerManager) {
-    this(env, runner, debuggerManager, env.getRunProfile().getName(), env.getRunProfile().getIcon(), false);
+  public XDebugSessionImpl(@NotNull ExecutionEnvironment environment,
+                           @Nullable ProgramRunner runner,
+                           @NotNull XDebuggerManagerImpl debuggerManager) {
+    this(environment, runner, debuggerManager, environment.getRunProfile().getName(), environment.getRunProfile().getIcon(), false);
   }
 
-  public XDebugSessionImpl(final @Nullable ExecutionEnvironment env, final @Nullable ProgramRunner runner,
-                           XDebuggerManagerImpl debuggerManager, final @NotNull String sessionName,
-                           final @Nullable Icon icon, final boolean showTabOnSuspend) {
-    myEnvironment = env;
+  public XDebugSessionImpl(@Nullable ExecutionEnvironment environment,
+                           @Nullable ProgramRunner runner,
+                           @NotNull XDebuggerManagerImpl debuggerManager,
+                           @NotNull String sessionName,
+                           @Nullable Icon icon,
+                           boolean showTabOnSuspend) {
+    myEnvironment = environment;
     myRunner = runner;
     mySessionName = sessionName;
     myDebuggerManager = debuggerManager;
@@ -754,14 +756,8 @@ public class XDebugSessionImpl implements XDebugSession {
     myDispatcher.getMulticaster().sessionPaused();
   }
 
-  @Nullable
-  private Editor getEditor(@NotNull XSourcePosition position) {
-    OpenFileDescriptor descriptor = XSourcePositionImpl.createOpenFileDescriptor(myProject, position);
-    return descriptor.canNavigate() ? FileEditorManager.getInstance(myProject).openTextEditor(descriptor, false) : null;
-  }
-
   private void adjustMouseTrackingCounter(@NotNull XSourcePosition position, int increment) {
-    final Editor editor = getEditor(position);
+    Editor editor = XDebuggerUtilImpl.createEditor(XSourcePositionImpl.createOpenFileDescriptor(myProject, position));
     if (editor != null) {
       JComponent component = editor.getComponent();
       Object o = component.getClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING);

@@ -106,7 +106,7 @@ public class JavadocEditor extends ModuleElementsEditor {
             TableUtil.selectRows(myTable, new int[]{tableModel.getRowCount() - 1});
           }
         }
-      }).addExtraAction(new AnActionButton(ProjectBundle.message("module.javadoc.add.url.button"), IconUtil.getAddLinkIcon()) {
+      }).addExtraAction(new DumbAwareActionButton(ProjectBundle.message("module.javadoc.add.url.button"), IconUtil.getAddLinkIcon()) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           VirtualFile[] files = new VirtualFile[]{Util.showSpecifyJavadocUrlDialog(myTable)};

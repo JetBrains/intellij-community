@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.compiler
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
-import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor
 import com.intellij.compiler.server.BuildManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.compiler.CompilerMessage
@@ -39,12 +38,6 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
   @Override protected void setUp() {
     super.setUp();
     addGroovyLibrary(myModule);
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    TranslatingCompilerFilesMonitor.ourDebugMode = false
-    super.tearDown()
   }
 
   public void testPlainGroovy() throws Throwable {
@@ -134,8 +127,6 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
   }
 
   public void testTransitiveJavaDependencyThroughGroovy() throws Throwable {
-    TranslatingCompilerFilesMonitor.ourDebugMode = true
-
     myFixture.addClass("public class IFoo { void foo() {} }").getContainingFile().getVirtualFile();
     myFixture.addFileToProject("Foo.groovy", "class Foo {\n" +
                                              "  static IFoo f\n" +
@@ -794,6 +785,38 @@ string
     touch usage.virtualFile
     setFileName(renamed, 'Renamed.java')
     assertEmpty make()
+  }
+
+  public void "test compiling static extension"() {
+    setupTestSources()
+    myFixture.addFileToProject "src/extension/Extension.groovy", """
+package extension
+import groovy.transform.CompileStatic
+
+@CompileStatic class Extension {
+    static <T> T test2(List<T> self) {
+        self.first()
+    }
+}"""
+    myFixture.addFileToProject "src/META-INF/services/org.codehaus.groovy.runtime.ExtensionModule", """
+moduleName=extension-verify
+moduleVersion=1.0-test
+extensionClasses=extension.Extension
+staticExtensionClasses=
+"""
+    myFixture.addFileToProject "tests/AppTest.groovy", """
+class AppTest {
+    @groovy.transform.CompileStatic
+    static main(args) {
+        List<String> list = new ArrayList<>()
+        list.add("b")
+        list.add("c")
+        println list.test2()
+    }
+}
+"""
+    assertEmpty make()
+    assertOutput 'AppTest', 'b'
   }
 
   public static class IdeaModeTest extends GroovyCompilerTest {

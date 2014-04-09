@@ -27,8 +27,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
-* @author irengrig
-*/
+ * @author irengrig
+ */
 public class ShowLineStatusRangeDiffAction extends BaseLineStatusRangeAction {
   public ShowLineStatusRangeDiffAction(final LineStatusTracker lineStatusTracker, final Range range, final Editor editor) {
     super(VcsBundle.message("action.name.show.difference"), AllIcons.Actions.Diff, lineStatusTracker, range);
@@ -54,9 +54,12 @@ public class ShowLineStatusRangeDiffAction extends BaseLineStatusRangeAction {
     return new DiffRequest(myLineStatusTracker.getProject()) {
       @NotNull
       public DiffContent[] getContents() {
-        return new DiffContent[]{createDiffContent(myLineStatusTracker.getUpToDateDocument(),
-                                                   myLineStatusTracker.getUpToDateRangeWithEndSymbol(myRange), null),
-          createDiffContent(myLineStatusTracker.getDocument(), myLineStatusTracker.getCurrentTextRange(myRange),
+        return new DiffContent[]{
+          createDiffContent(myLineStatusTracker.getUpToDateDocument(),
+                            myLineStatusTracker.getUpToDateRangeWithEndSymbol(myRange),
+                            null),
+          createDiffContent(myLineStatusTracker.getDocument(),
+                            myLineStatusTracker.getCurrentTextRangeWithEndSymbol(myRange),
                             myLineStatusTracker.getVirtualFile())};
       }
 

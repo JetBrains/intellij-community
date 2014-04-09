@@ -61,6 +61,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import java.util.*;
 
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.*;
+
 /**
  * @author Maxim.Medvedev
  */
@@ -110,7 +112,10 @@ public class GrClassImplUtil {
   @NotNull
   public static PsiClassType[] getExtendsListTypes(GrTypeDefinition grType) {
     final PsiClassType[] extendsTypes = getReferenceListTypes(grType.getExtendsClause());
-    if (grType.isInterface() /*|| extendsTypes.length > 0*/) return extendsTypes;
+    if (grType.isInterface()) {
+      return extendsTypes;
+    }
+
     for (PsiClassType type : extendsTypes) {
       final PsiClass superClass = type.resolve();
       if (superClass instanceof GrTypeDefinition && !superClass.isInterface() ||
@@ -292,18 +297,16 @@ public class GrClassImplUtil {
       if (!ResolveUtil.processElement(processor, typeParameter, state)) return false;
     }
 
-
-    boolean processInstanceMethods = shouldProcessInstanceMembers(grType, lastParent);
-
     NameHint nameHint = processor.getHint(NameHint.KEY);
-    //todo [DIANA] look more carefully
     String name = nameHint == null ? null : nameHint.getName(state);
     ClassHint classHint = processor.getHint(ClassHint.KEY);
     final PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(place.getProject());
 
+    boolean processInstanceMethods = (shouldProcessMethods(classHint) || shouldProcessProperties(classHint)) && shouldProcessInstanceMembers(grType, lastParent);
+
     LanguageLevel level = PsiUtil.getLanguageLevel(place);
-    if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.PROPERTY)) {
+    if (shouldProcessProperties(classHint)) {
       Map<String, CandidateInfo> fieldsMap = CollectClassMembersUtil.getAllFields(grType);
       if (name != null) {
         CandidateInfo fieldInfo = fieldsMap.get(name);
@@ -322,7 +325,7 @@ public class GrClassImplUtil {
       }
     }
 
-    if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.METHOD)) {
+    if (shouldProcessMethods(classHint)) {
       Map<String, List<CandidateInfo>> methodsMap = CollectClassMembersUtil.getAllMethods(grType, true);
       boolean isPlaceGroovy = place.getLanguage() == GroovyFileType.GROOVY_LANGUAGE;
       if (name == null) {
@@ -348,7 +351,7 @@ public class GrClassImplUtil {
 
     final GrTypeDefinitionBody body = grType.getBody();
     if (body != null) {
-      if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.CLASS)) {
+      if (shouldProcessClasses(classHint)) {
         for (PsiClass innerClass : getInnerClassesForResolve(grType, lastParent, place)) {
           final String innerClassName = innerClass.getName();
           if (nameHint != null && !innerClassName.equals(nameHint.getName(state))) {

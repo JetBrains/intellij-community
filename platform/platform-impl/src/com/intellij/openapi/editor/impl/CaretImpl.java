@@ -1445,7 +1445,19 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     CharSequence text = myEditor.getDocument().getCharsSequence();
     int selectionStart = getSelectionStart();
     int selectionEnd = getSelectionEnd();
-    return text.subSequence(selectionStart, selectionEnd).toString();
+    String selectedText = text.subSequence(selectionStart, selectionEnd).toString();
+    if (isVirtualSelectionEnabled() && myEndVirtualOffset > myStartVirtualOffset) {
+      int padding = myEndVirtualOffset - myStartVirtualOffset;
+      StringBuilder builder = new StringBuilder(selectedText.length() + padding);
+      builder.append(selectedText);
+      for (int i = 0; i < padding; i++) {
+        builder.append(' ');
+      }
+      return builder.toString();
+    }
+    else {
+      return selectedText;
+    }
   }
 
   private void validateContext(boolean isWrite) {

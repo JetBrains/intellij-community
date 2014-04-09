@@ -18,7 +18,7 @@ interface IA2<T> {}
 interface IB2<T> extends IA2<T[]> {}
 
 class A2 {
-    <T extends IA2<Object[]> & IB2<?>> void foo(){}
+    <T extends IA2<Object[]> & IB2<Object>> void foo(){}
 }
 
 

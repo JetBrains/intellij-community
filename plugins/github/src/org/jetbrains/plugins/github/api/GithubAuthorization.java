@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.github.api;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -23,12 +24,16 @@ import java.util.List;
  * @author Aleksey Pivovarov
  */
 public class GithubAuthorization {
+  private final long myId;
+  @Nullable private final String myNote;
   @NotNull private final String myToken;
   @NotNull private final List<String> myScopes;
 
-  public GithubAuthorization(@NotNull String token, @NotNull List<String> scopes) {
+  public GithubAuthorization(long id, @NotNull String token, @NotNull List<String> scopes, @Nullable String note) {
+    myId = id;
     myToken = token;
     myScopes = scopes;
+    myNote = note;
   }
 
   @NotNull
@@ -39,5 +44,14 @@ public class GithubAuthorization {
   @NotNull
   public List<String> getScopes() {
     return myScopes;
+  }
+
+  @Nullable
+  public String getNote() {
+    return myNote;
+  }
+
+  public long getId() {
+    return myId;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -227,26 +227,33 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
 
   @Override
   public <T, E extends Exception> T runProcessWithProgressSynchronously(@NotNull final ThrowableComputable<T, E> process,
-                                                   @NotNull @Nls String progressTitle,
-                                                   boolean canBeCanceled,
-                                                   @Nullable Project project) throws E {
-
+                                                                        @NotNull @Nls String progressTitle,
+                                                                        boolean canBeCanceled,
+                                                                        @Nullable Project project) throws E {
     final Ref<T> result = new Ref<T>();
-    final Ref<E> exceptionRef = new Ref<E>();
-    Task.Modal task = new Task.Modal(project, progressTitle, canBeCanceled) {
+    final Ref<Throwable> exception = new Ref<Throwable>();
+
+    runProcessWithProgressSynchronously(new Task.Modal(project, progressTitle, canBeCanceled) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           T compute = process.compute();
           result.set(compute);
         }
-        catch (Exception e) {
-          exceptionRef.set((E)e);
+        catch (Throwable t) {
+          exception.set(t);
         }
       }
-    };
-    runProcessWithProgressSynchronously(task, null);
-    if (!exceptionRef.isNull()) throw exceptionRef.get();
+    }, null);
+
+    if (!exception.isNull()) {
+      Throwable t = exception.get();
+      if (t instanceof Error) throw (Error)t;
+      if (t instanceof RuntimeException) throw (RuntimeException)t;
+      @SuppressWarnings("unchecked") E e = (E)t;
+      throw e;
+    }
+
     return result.get();
   }
 
@@ -280,7 +287,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
       long time = end - start;
       if (notificationInfo != null && time > 5000) { // show notification only if process took more than 5 secs
         final JFrame frame = WindowManager.getInstance().getFrame(task.getProject());
-        if (!frame.hasFocus()) {
+        if (frame != null && !frame.hasFocus()) {
           systemNotify(notificationInfo);
         }
       }

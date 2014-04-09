@@ -98,7 +98,6 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
       final ProjectJdkImpl sdk = new ProjectJdkImpl(name, PythonSdkType.getInstance());
       sdk.setHomePath(FileUtil.toSystemDependentName(sdkHome.getPath()));
       callback.virtualEnvCreated(sdk, associateWithProject);
-      PythonSdkType.setupSdkPaths(sdk, myProject, null);
     }
   }
 
@@ -244,7 +243,7 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
     myMainPanel.add(myMakeAvailableToAllProjectsCheckbox, c);
     button.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        SdkConfigurationUtil.createSdk(myProject, allSdks.toArray(new Sdk[allSdks.size() - 1]), new NullableConsumer<Sdk>() {
+        SdkConfigurationUtil.createSdk(myProject, allSdks.toArray(new Sdk[allSdks.size()]), new NullableConsumer<Sdk>() {
           @Override
           public void consume(@Nullable Sdk sdk) {
             if (sdk == null) return;

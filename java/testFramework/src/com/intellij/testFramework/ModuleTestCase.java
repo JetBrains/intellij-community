@@ -96,10 +96,19 @@ public abstract class ModuleTestCase extends IdeaTestCase {
   }
 
   protected Module loadModule(final File moduleFile) {
+    return loadModule(moduleFile, false);
+  }
+
+  protected Module loadModule(final File moduleFile, final boolean loadComponentStates) {
     Module module = ApplicationManager.getApplication().runWriteAction(
       new Computable<Module>() {
         @Override
         public Module compute() {
+          ProjectImpl project = (ProjectImpl)myProject;
+          boolean oldOptimiseTestLoadSpeed = project.isOptimiseTestLoadSpeed();
+          if (loadComponentStates) {
+            project.setOptimiseTestLoadSpeed(false);
+          }
           try {
             LocalFileSystem.getInstance().refreshIoFiles(Collections.singletonList(moduleFile));
             return ModuleManager.getInstance(myProject).loadModule(moduleFile.getAbsolutePath());
@@ -107,6 +116,9 @@ public abstract class ModuleTestCase extends IdeaTestCase {
           catch (Exception e) {
             LOG.error(e);
             return null;
+          }
+          finally {
+            project.setOptimiseTestLoadSpeed(oldOptimiseTestLoadSpeed);
           }
         }
       }

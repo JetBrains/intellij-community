@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,11 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/**
- * created at Sep 17, 2001
- * @author Jeka
  */
 package com.intellij.refactoring.changeSignature;
 
@@ -36,6 +31,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +39,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.util.ObjectUtils.assertNotNull;
+
+/**
+ * @author Jeka
+ * @since Sep 17, 2001
+ */
 public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ChangeSignatureProcessor");
 
@@ -99,18 +101,22 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
                                                    ThrownExceptionInfo[] thrownExceptions,
                                                    Set<PsiMethod> propagateParametersMethods,
                                                    Set<PsiMethod> propagateExceptionsMethods) {
-    Set<PsiMethod> myPropagateParametersMethods =
-      propagateParametersMethods != null ? propagateParametersMethods : new HashSet<PsiMethod>();
-    Set<PsiMethod> myPropagateExceptionsMethods =
-      propagateExceptionsMethods != null ? propagateExceptionsMethods : new HashSet<PsiMethod>();
-
     LOG.assertTrue(method.isValid());
+
+    if (propagateParametersMethods == null) {
+      propagateParametersMethods = ContainerUtil.newHashSet();
+    }
+
+    if (propagateExceptionsMethods == null) {
+      propagateExceptionsMethods = ContainerUtil.newHashSet();
+    }
+
     if (newVisibility == null) {
       newVisibility = VisibilityUtil.getVisibilityModifier(method.getModifierList());
     }
 
     return new JavaChangeInfoImpl(newVisibility, method, newName, newType, parameterInfo, thrownExceptions, generateDelegate,
-                                  myPropagateParametersMethods, myPropagateExceptionsMethods);
+                                  propagateParametersMethods, propagateExceptionsMethods);
   }
 
   @NotNull
@@ -177,7 +183,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
       for (UsageInfo usageInfo : usages) {
         if (usageInfo instanceof OverriderUsageInfo) {
           final OverriderUsageInfo info = (OverriderUsageInfo)usageInfo;
-          PsiMethod overrider = info.getElement();
+          PsiMethod overrider = assertNotNull(info.getElement());
           PsiMethod baseMethod = info.getBaseMethod();
           PsiSubstitutor substitutor = calculateSubstitutor(overrider, baseMethod);
           PsiType type;
@@ -212,9 +218,8 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
   }
 
   protected boolean isProcessCovariantOverriders() {
-    return Messages
-             .showYesNoDialog(myProject, RefactoringBundle.message("do.you.want.to.process.overriding.methods.with.covariant.return.type"),
-                              JavaChangeSignatureHandler.REFACTORING_NAME, Messages.getQuestionIcon()) == Messages.YES;
+    String message = RefactoringBundle.message("do.you.want.to.process.overriding.methods.with.covariant.return.type");
+    return Messages.showYesNoDialog(myProject, message, ChangeSignatureHandler.REFACTORING_NAME, Messages.getQuestionIcon()) == Messages.YES;
   }
 
   public static void makeEmptyBody(final PsiElementFactory factory, final PsiMethod delegate) throws IncorrectOperationException {
@@ -229,7 +234,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
   }
 
   @Nullable
-  public static PsiCallExpression addDelegatingCallTemplate(final PsiMethod delegate, final String newName) throws IncorrectOperationException {
+  public static PsiCallExpression addDelegatingCallTemplate(PsiMethod delegate, String newName) throws IncorrectOperationException {
     Project project = delegate.getProject();
     PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
     PsiCodeBlock body = delegate.getBody();
@@ -240,7 +245,8 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
       callStatement = CodeStyleManager.getInstance(project).reformat(callStatement);
       callStatement = body.add(callStatement);
       callExpression = (PsiCallExpression)((PsiExpressionStatement) callStatement).getExpression();
-    } else {
+    }
+    else {
       if (PsiType.VOID.equals(delegate.getReturnType())) {
         PsiElement callStatement = factory.createStatementFromText(newName + "();", null);
         callStatement = CodeStyleManager.getInstance(project).reformat(callStatement);
@@ -261,16 +267,18 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
     PsiSubstitutor substitutor;
     if (derivedMethod.getManager().areElementsEquivalent(derivedMethod, baseMethod)) {
       substitutor = PsiSubstitutor.EMPTY;
-    } else {
-      final PsiClass baseClass = baseMethod.getContainingClass();
-      final PsiClass derivedClass = derivedMethod.getContainingClass();
-      if(baseClass != null && derivedClass != null && InheritanceUtil.isInheritorOrSelf(derivedClass, baseClass, true)) {
-        final PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, derivedClass, PsiSubstitutor.EMPTY);
-        final MethodSignature superMethodSignature = baseMethod.getSignature(superClassSubstitutor);
-        final MethodSignature methodSignature = derivedMethod.getSignature(PsiSubstitutor.EMPTY);
-        final PsiSubstitutor superMethodSubstitutor = MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodSignature, superMethodSignature);
+    }
+    else {
+      PsiClass baseClass = baseMethod.getContainingClass();
+      PsiClass derivedClass = derivedMethod.getContainingClass();
+      if (baseClass != null && derivedClass != null && InheritanceUtil.isInheritorOrSelf(derivedClass, baseClass, true)) {
+        PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, derivedClass, PsiSubstitutor.EMPTY);
+        MethodSignature superMethodSignature = baseMethod.getSignature(superClassSubstitutor);
+        MethodSignature methodSignature = derivedMethod.getSignature(PsiSubstitutor.EMPTY);
+        PsiSubstitutor superMethodSubstitutor = MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodSignature, superMethodSignature);
         substitutor = superMethodSubstitutor != null ? superMethodSubstitutor : superClassSubstitutor;
-      } else {
+      }
+      else {
         substitutor = PsiSubstitutor.EMPTY;
       }
     }

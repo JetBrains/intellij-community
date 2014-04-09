@@ -28,7 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.Url;
 import com.intellij.util.io.UrlConnectionUtil;
-import com.intellij.util.net.ssl.CertificatesManager;
+import com.intellij.util.net.ssl.CertificateManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.net.ssl.HostnameVerifier;
@@ -80,7 +80,7 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
               return true;
             }
           });
-          httpsConnection.setSSLSocketFactory(CertificatesManager.getInstance().createSslContext().getSocketFactory());
+          httpsConnection.setSSLSocketFactory(CertificateManager.getInstance().getSslContext().getSocketFactory());
         }
         catch (Exception e) {
           LOG.warn(e);

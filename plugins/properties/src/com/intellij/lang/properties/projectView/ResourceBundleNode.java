@@ -26,7 +26,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.lang.properties.PropertiesBundle;
-import com.intellij.lang.properties.PropertiesUtil;
+import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -62,7 +62,7 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle>{
   public boolean contains(@NotNull VirtualFile file) {
     if (!file.isValid()) return false;
     PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(file);
-    PropertiesFile propertiesFile = PropertiesUtil.getPropertiesFile(psiFile);
+    PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(psiFile);
     return propertiesFile != null && getValue().getPropertiesFiles(myProject).contains(propertiesFile);
   }
 

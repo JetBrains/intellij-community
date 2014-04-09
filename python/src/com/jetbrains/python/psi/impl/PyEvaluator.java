@@ -24,6 +24,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import java.util.*;
 
 /**
+ * TODO: Merge PythonDataflowUtil, {@link com.jetbrains.python.psi.impl.PyConstantExpressionEvaluator}  and {@link com.jetbrains.python.psi.impl.PyEvaluator} and all its inheritors and improve Abstract Interpretation
  * @author yole
  */
 public class PyEvaluator {

@@ -20,6 +20,7 @@ import com.intellij.ide.passwordSafe.impl.PasswordSafeProvider;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -37,20 +38,21 @@ public abstract class BasePasswordSafeProvider extends PasswordSafeProvider {
    *    Calling this method from the dispatch thread is allowed.</p>
    *
    * @param project the project to use
+   * @param requestor
    * @return the secret key to use
    * @throws PasswordSafeException in case of problems with access to the password database.
    * @throws IllegalStateException if the method is called from the read action.
    */
-  protected abstract byte[] key(@Nullable Project project) throws PasswordSafeException;
+  protected abstract byte[] key(@Nullable Project project, @NotNull Class requestor) throws PasswordSafeException;
 
   /**
    * {@inheritDoc}
    */
   @Nullable
-  public String getPassword(@Nullable Project project, Class requester, String key) throws PasswordSafeException {
-    byte[] k = dbKey(project, requester, key);
+  public String getPassword(@Nullable Project project, @NotNull Class requestor, String key) throws PasswordSafeException {
+    byte[] k = dbKey(project, requestor, key);
     byte[] ct = getEncryptedPassword(k);
-    return ct == null ? null : EncryptionUtil.decryptText(key(project), ct);
+    return ct == null ? null : EncryptionUtil.decryptText(key(project, requestor), ct);
   }
 
   /**
@@ -65,18 +67,18 @@ public abstract class BasePasswordSafeProvider extends PasswordSafeProvider {
    * Get database key
    *
    * @param project
-   * @param requester the requester class
+   * @param requestor the requestor class
    * @param key       the key to use
    * @return the key to use for map
    */
-  private byte[] dbKey(@Nullable Project project, Class requester, String key) throws PasswordSafeException {
-    return EncryptionUtil.dbKey(key(project), requester, key);
+  private byte[] dbKey(@Nullable Project project, Class requestor, String key) throws PasswordSafeException {
+    return EncryptionUtil.dbKey(key(project, requestor), requestor, key);
   }
 
   /**
    * {@inheritDoc}
    */
-  public void removePassword(@Nullable Project project, Class requester, String key) throws PasswordSafeException {
+  public void removePassword(@Nullable Project project, @NotNull Class requester, String key) throws PasswordSafeException {
     byte[] k = dbKey(project, requester, key);
     removeEncryptedPassword(k);
   }
@@ -91,9 +93,9 @@ public abstract class BasePasswordSafeProvider extends PasswordSafeProvider {
   /**
    * {@inheritDoc}
    */
-  public void storePassword(@Nullable Project project, Class requester, String key, String value) throws PasswordSafeException {
-    byte[] k = dbKey(project, requester, key);
-    byte[] ct = EncryptionUtil.encryptText(key(project), value);
+  public void storePassword(@Nullable Project project, @NotNull Class requestor, String key, String value) throws PasswordSafeException {
+    byte[] k = dbKey(project, requestor, key);
+    byte[] ct = EncryptionUtil.encryptText(key(project, requestor), value);
     storeEncryptedPassword(k, ct);
   }
 

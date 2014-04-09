@@ -149,6 +149,11 @@ public class JUnit4Framework extends JavaTestFramework {
   }
 
   @Override
+  public FileTemplateDescriptor getTestClassFileTemplateDescriptor() {
+    return new FileTemplateDescriptor("JUnit4 Test Class.java");
+  }
+
+  @Override
   public boolean isParameterized(PsiClass clazz) {
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(clazz, JUnitUtil.RUN_WITH);
     if (annotation != null) {

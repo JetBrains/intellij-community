@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -29,17 +30,18 @@ public abstract class PsiElementClassMember<T extends PsiDocCommentOwner> extend
   private final T myPsiMember;
   private PsiSubstitutor mySubstitutor;
 
-  protected PsiElementClassMember(final T psiMember, String text) {
+  protected PsiElementClassMember(@NotNull T psiMember, String text) {
     this(psiMember, PsiSubstitutor.EMPTY, text);
   }
 
-  protected PsiElementClassMember(final T psiMember, final PsiSubstitutor substitutor, String text) {
+  protected PsiElementClassMember(@NotNull T psiMember, @NotNull PsiSubstitutor substitutor, String text) {
     super(psiMember, text, psiMember.getIcon(Iconable.ICON_FLAG_VISIBILITY));
     myPsiMember = psiMember;
     mySubstitutor = substitutor;
   }
 
   @Override
+  @NotNull
   public T getElement() {
     return myPsiMember;
   }

@@ -3,7 +3,6 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.VcsRefImpl;
@@ -51,6 +50,39 @@ public class VcsLogJoinerTest {
       asList("a2", "b1"),
       asList("f", "e"),
       "e, f, a2, b1, a1, a"
+    );
+  }
+
+  @Test
+  public void oneNodeTest() {
+    runTest(
+      asList("3|-a1|-"),
+      asList("3|-a1|-"),
+      asList("a1"),
+      asList("a1"),
+      "a1"
+    );
+  }
+
+  @Test
+  public void oneNodeResetTest() {
+    runTest(
+      asList("3|-a1|-a2", "2|-a2|-"),
+      asList("2|-a2|-"),
+      asList("a2", "a1"),
+      asList("a2"),
+      "a2"
+    );
+  }
+
+  @Test
+  public void oneNodeReset2Test() {
+    runTest(
+      asList("3|-a1|-a2", "2|-a2|-"),
+      asList("2|-a2|-"),
+      asList("a1"),
+      asList("a2"),
+      "a2"
     );
   }
 
@@ -110,13 +142,7 @@ public class VcsLogJoinerTest {
   }
 
   private static VcsRef ref(String name, String hash) {
-    return new VcsRefImpl(new NotNullFunction<Hash, Integer>() {
-      @NotNull
-      @Override
-      public Integer fun(Hash hash) {
-        return Integer.parseInt(hash.asString().substring(0, Math.min(4, hash.asString().length())), 16);
-      }
-    }, new SimpleHash(hash), name, new VcsRefType() {
+    return new VcsRefImpl(new SimpleHash(hash), name, new VcsRefType() {
       @Override
       public boolean isBranch() {
         return true;

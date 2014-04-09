@@ -51,6 +51,9 @@
                     id="reference.settings.project.maven.ignored.files" key="maven.tab.ignored.files" bundle="ProjectBundle"/>
       <configurable instance="org.jetbrains.idea.maven.utils.MavenSettings$MyMavenRunnerConfigurable"
                     id="reference.settings.project.maven.runner" key="maven.tab.runner" bundle="RunnerBundle"/>
+      <configurable instance="org.jetbrains.idea.maven.project.MavenTestRunningConfigurable"
+                    id="reference.settings.project.maven.testRunning" key="maven.testRunning" bundle="ProjectBundle"
+                    nonDefaultProject="true"/>
       <configurable instance="org.jetbrains.idea.maven.indices.MavenRepositoriesConfigurable"
                     id="reference.settings.project.maven.repository.indices" key="maven.repositories.title" bundle="IndicesBundle"
                     nonDefaultProject="true"/>
@@ -170,7 +173,7 @@
 
     <projectService serviceImplementation="org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.execution.MavenRunner"/>
-
+    <projectService serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectSettings"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">

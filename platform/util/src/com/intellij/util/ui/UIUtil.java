@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.ui.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,6 +32,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.border.Border;
@@ -49,11 +53,16 @@ import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
+import java.awt.im.InputContext;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
 import java.awt.image.PixelGrabber;
 import java.beans.PropertyChangeListener;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -72,6 +81,23 @@ import java.util.regex.Pattern;
 public class UIUtil {
 
   @NonNls public static final String BORDER_LINE = "<hr size=1 noshade>";
+  private static final StyleSheet DEFAULT_HTML_KIT_CSS;
+
+  static {
+    // save the default JRE CSS and ..
+    HTMLEditorKit kit = new HTMLEditorKit();
+    DEFAULT_HTML_KIT_CSS = kit.getStyleSheet();
+    // .. erase global ref to this CSS so no one can alter it
+    kit.setStyleSheet(null);
+  }
+
+  public static int getMultiClickInterval() {
+    Object property = Toolkit.getDefaultToolkit().getDesktopProperty("awt.multiClickInterval");
+    if (property instanceof Integer) {
+      return (Integer)property;
+    }
+    return 500;
+  }
 
   private static final AtomicNotNullLazyValue<Boolean> X_RENDER_ACTIVE = new AtomicNotNullLazyValue<Boolean>() {
     @NotNull
@@ -242,21 +268,21 @@ public class UIUtil {
             return ourRetina.get();
           }
         } else if (SystemInfo.isJavaVersionAtLeast("1.7.0_40") && SystemInfo.isOracleJvm) {
+          try {
             GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
             final GraphicsDevice device = env.getDefaultScreenDevice();
-            try {
-              Field field = device.getClass().getDeclaredField("scale");
-              if (field != null) {
-                field.setAccessible(true);
-                Object scale = field.get(device);
-                if (scale instanceof Integer && ((Integer)scale).intValue() == 2) {
-                  ourRetina.set(true);
-                  return true;
-                }
+            Field field = device.getClass().getDeclaredField("scale");
+            if (field != null) {
+              field.setAccessible(true);
+              Object scale = field.get(device);
+              if (scale instanceof Integer && ((Integer)scale).intValue() == 2) {
+                ourRetina.set(true);
+                return true;
               }
             }
-            catch (Exception ignore) {
-            }
+          }
+          catch (AWTError ignore) {}
+          catch (Exception ignore) {}
         }
         ourRetina.set(false);
       }
@@ -1739,14 +1765,14 @@ public class UIUtil {
   public static String getCssFontDeclaration(final Font font, @Nullable Color fgColor, @Nullable Color linkColor, @Nullable String liImg) {
     URL resource = liImg != null ? SystemInfo.class.getResource(liImg) : null;
 
-    @NonNls String fontFamilyAndSize = "font-family:" + font.getFamily() + "; font-size:" + font.getSize() + ";";
+    @NonNls String fontFamilyAndSize = "font-family:'" + font.getFamily() + "'; font-size:" + font.getSize() + "pt;";
     @NonNls @Language("HTML")
-    String body = "body, div, td, p {" + fontFamilyAndSize + " " + (fgColor != null ? "color:" + ColorUtil.toHex(fgColor) : "") + "}";
+    String body = "body, div, td, p {" + fontFamilyAndSize + " " + (fgColor != null ? "color:#" + ColorUtil.toHex(fgColor)+";" : "") + "}\n";
     if (resource != null) {
-      body += "ul {list-style-image: " + resource.toExternalForm() + "}";
+      body += "ul {list-style-image:url('" + resource.toExternalForm() + "');}\n";
     }
-    @NonNls String link = linkColor != null ? "a {" + fontFamilyAndSize + " color:" + ColorUtil.toHex(linkColor) + "}" : "";
-    return "<style> " + body + " " + link + "</style>";
+    @NonNls String link = linkColor != null ? "a {" + fontFamilyAndSize + " color:#"+ColorUtil.toHex(linkColor) + ";}\n" : "";
+    return "<style>\n" + body + link + "</style>";
   }
 
   public static boolean isWinLafOnVista() {
@@ -1897,18 +1923,37 @@ public class UIUtil {
     return getBorderColor();
   }
 
-  public static HTMLEditorKit getHTMLEditorKit() {
-    final HTMLEditorKit kit = new HTMLEditorKit();
+  @Nullable
+  public static StyleSheet loadStyleSheet(@Nullable URL url) {
+    if (url == null) return null;
+    try {
+      StyleSheet styleSheet = new StyleSheet();
+      styleSheet.loadRules(new InputStreamReader(url.openStream(), CharsetToolkit.UTF8), url);
+      return styleSheet;
+    }
+    catch (IOException e) {
+      LOG.warn(url + " loading failed", e);
+      return null;
+    }
+  }
 
+  public static HTMLEditorKit getHTMLEditorKit() {
     Font font = getLabelFont();
-    @NonNls String family = font != null ? font.getFamily() : "Tahoma";
+    @NonNls String family = !SystemInfo.isWindows && font != null ? font.getFamily() : "Tahoma";
     int size = font != null ? font.getSize() : 11;
 
-    final StyleSheet styleSheet = kit.getStyleSheet();
-    styleSheet.addRule(String.format("body, div, p { font-family: %s; font-size: %s; } p { margin-top: 0; }", family, size));
-    kit.setStyleSheet(styleSheet);
+    final String customCss = String.format("body, div, p { font-family: %s; font-size: %s; } p { margin-top: 0; }", family, size);
 
-    return kit;
+    final StyleSheet style = new StyleSheet();
+    style.addStyleSheet(isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle") : DEFAULT_HTML_KIT_CSS);
+    style.addRule(customCss);
+
+    return new HTMLEditorKit() {
+      @Override
+      public StyleSheet getStyleSheet() {
+        return style;
+      }
+    };
   }
 
   public static void removeScrollBorder(final Component c) {
@@ -2616,7 +2661,10 @@ public class UIUtil {
   public static void setNotOpaqueRecursively(@NotNull Component component) {
     if (!isUnderAquaLookAndFeel()) return;
 
-    if (component.getBackground().equals(getPanelBackground()) || component instanceof JScrollPane || component instanceof JViewport) {
+    if (component.getBackground().equals(getPanelBackground()) 
+        || component instanceof JScrollPane 
+        || component instanceof JViewport 
+        || component instanceof JLayeredPane) {
       if (component instanceof JComponent) {
         ((JComponent)component).setOpaque(false);
       }
@@ -2804,5 +2852,89 @@ public class UIUtil {
          }
       }
     });
+  }
+
+  public static void playSoundFromResource(final String resourceName) {
+    final Class callerClass = ReflectionUtil.getGrandCallerClass();
+    if (callerClass == null) return;
+    playSoundFromStream(new Factory<InputStream>() {
+      @Override
+      public InputStream create() {
+        return callerClass.getResourceAsStream(resourceName);
+      }
+    });
+  }
+
+  public static void playSoundFromStream(final Factory<InputStream> streamProducer) {
+    new Thread(new Runnable() {
+      // The wrapper thread is unnecessary, unless it blocks on the
+      // Clip finishing; see comments.
+      public void run() {
+        try {
+          Clip clip = AudioSystem.getClip();
+          InputStream stream = streamProducer.create();
+          if (!stream.markSupported()) stream = new BufferedInputStream(stream);
+          AudioInputStream inputStream = AudioSystem.getAudioInputStream(stream);
+          clip.open(inputStream);
+
+          clip.start();
+        } catch (Exception ignore) {
+          LOG.info(ignore);
+        }
+      }
+    }).start();
+  }
+
+  // Experimental!!!
+  // It seems to work under Windows
+  @Nullable
+  public static String getCurrentKeyboardLayout() {
+    InputContext instance = InputContext.getInstance();
+    Class<? extends InputContext> instanceClass = instance.getClass();
+    if (instanceClass.getSuperclass().getName().equals("sun.awt.im.InputContext")) {
+      try {
+        Field f = instanceClass.getSuperclass().getDeclaredField("inputMethodLocator");
+        f.setAccessible(true);
+        Object o = f.get(instance);
+        f = o.getClass().getDeclaredField("locale");
+        f.setAccessible(true);
+        o = f.get(o);
+        if (o instanceof Locale) {
+          return ((Locale)o).getLanguage().toUpperCase(Locale.getDefault());
+        }
+      }
+      catch (Exception ignored) {
+      }
+    }
+    return null;
+  }
+
+  private static Map<String, String> ourRealFontFamilies = null;
+
+  //Experimental, seems to be reliable under MacOS X only
+
+  public static String getRealFontFamily(String genericFontFamily) {
+    if (ourRealFontFamilies != null && ourRealFontFamilies.get(genericFontFamily) != null) {
+      return ourRealFontFamilies.get(genericFontFamily);
+    }
+    String pattern = "Real Font Family";
+    List<String> GENERIC = Arrays.asList(Font.DIALOG, Font.DIALOG_INPUT, Font.MONOSPACED, Font.SANS_SERIF, Font.SERIF);
+    int patternSize = 50;
+    BufferedImage image = createImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+    Graphics graphics = image.getGraphics();
+    graphics.setFont(new Font(genericFontFamily, Font.PLAIN, patternSize));
+    Object patternBounds = graphics.getFontMetrics().getStringBounds(pattern, graphics);
+    for (String family: GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames()) {
+      if (GENERIC.contains(family)) continue;
+      graphics.setFont(new Font(family, Font.PLAIN, patternSize));
+      if (graphics.getFontMetrics().getStringBounds(pattern, graphics).equals(patternBounds)) {
+        if (ourRealFontFamilies == null) {
+          ourRealFontFamilies = new HashMap<String, String>();
+        }
+        ourRealFontFamilies.put(genericFontFamily, family);
+        return family;
+      }
+    }
+    return genericFontFamily;
   }
 }

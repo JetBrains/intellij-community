@@ -53,6 +53,7 @@
     <orderEntry type="library" name="Velocity" level="project" />
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="module" module-name="java-structure-view" exported="" />
+    <orderEntry type="module" module-name="spellchecker" />
   </component>
   <component name="copyright">
     <Base>

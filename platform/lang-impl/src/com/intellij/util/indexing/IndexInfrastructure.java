@@ -21,27 +21,20 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.psi.stubs.StubUpdatingIndex;
-import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
 import java.util.Locale;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class IndexInfrastructure {
-  private static final int VERSION = 9;
-  private static final ConcurrentHashMap<ID<?, ?>, Long> ourIndexIdToCreationStamp = new ConcurrentHashMap<ID<?, ?>, Long>();
   private static final boolean ourUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-  public static final long INVALID_STAMP = -1L;
-  public static final long INVALID_STAMP2 = -2L;
   private static final String STUB_VERSIONS = ".versions";
 
   private IndexInfrastructure() {
@@ -77,68 +70,6 @@ public class IndexInfrastructure {
                : new File(PathManager.getIndexRoot(), dirName);
     indexDir.mkdirs();
     return indexDir;
-  }
-
-  private static volatile long ourLastStamp; // ensure any file index stamp increases
-
-  public static synchronized void rewriteVersion(@NotNull final File file, final int version) throws IOException {
-    final long prevLastModifiedValue = file.lastModified();
-    if (file.exists()) {
-      FileUtil.delete(file);
-    }
-    file.getParentFile().mkdirs();
-    final DataOutputStream os = FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<DataOutputStream, FileNotFoundException>() {
-      @Nullable
-      @Override
-      public DataOutputStream execute(boolean lastAttempt) throws FileNotFoundException {
-        try {
-          return new DataOutputStream(new FileOutputStream(file));
-        } catch (FileNotFoundException ex) {
-          if (lastAttempt) throw ex;
-          return null;
-        }
-      }
-    });
-    assert os != null;
-    try {
-      os.writeInt(version);
-      os.writeInt(VERSION);
-    }
-    finally {
-      ourIndexIdToCreationStamp.clear();
-      os.close();
-      long max = Math.max(System.currentTimeMillis(), Math.max(prevLastModifiedValue, ourLastStamp) + 2000);
-      ourLastStamp = max;
-      file.setLastModified(max);
-    }
-  }
-
-  public static long getIndexCreationStamp(@NotNull ID<?, ?> indexName) {
-    Long version = ourIndexIdToCreationStamp.get(indexName);
-    if (version != null) return version.longValue();
-
-    long stamp = getVersionFile(indexName).lastModified();
-    ourIndexIdToCreationStamp.putIfAbsent(indexName, stamp);
-
-    return stamp;
-  }
-
-  public static boolean versionDiffers(@NotNull File versionFile, final int currentIndexVersion) {
-    try {
-      ourLastStamp = Math.max(ourLastStamp, versionFile.lastModified());
-      final DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(versionFile)));
-      try {
-        final int savedIndexVersion = in.readInt();
-        final int commonVersion = in.readInt();
-        return savedIndexVersion != currentIndexVersion || commonVersion != VERSION;
-      }
-      finally {
-        in.close();
-      }
-    }
-    catch (IOException e) {
-      return true;
-    }
   }
 
   @Nullable

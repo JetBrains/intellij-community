@@ -23,7 +23,6 @@ import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.file.exclude.ProjectFileExclusionManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.*;
@@ -71,7 +70,6 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   private volatile Content myContent;
   private volatile SoftReference<Document> myDocument;
   @NotNull private final Language myBaseLanguage;
-  private final ProjectFileExclusionManager myExclusionManager;
 
   public SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile file) {
     this(manager, file, true);
@@ -90,7 +88,6 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     myPhysical = isEventSystemEnabled() &&
                  !(virtualFile instanceof LightVirtualFile) &&
                  !(virtualFile.getFileSystem() instanceof NonPhysicalFileSystem);
-    myExclusionManager = ProjectFileExclusionManager.SERVICE.getInstance(manager.getProject());
   }
 
   @Override
@@ -108,10 +105,6 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     }
 
     FileType fileType = file.getFileType();
-    // Do not load content
-    if (fileType == UnknownFileType.INSTANCE) {
-      fileType = FileTypeRegistry.getInstance().detectFileTypeFromContent(file);
-    }
     if (fileType.isBinary()) return Language.ANY;
     if (isTooLargeForIntelligence(file)) return PlainTextLanguage.INSTANCE;
 
@@ -265,7 +258,6 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   protected boolean isIgnored() {
     final VirtualFile file = getVirtualFile();
     if (file instanceof LightVirtualFile) return false;
-    if (myExclusionManager != null && myExclusionManager.isExcluded(file)) return true;
     return FileTypeRegistry.getInstance().isFileIgnored(file);
   }
 

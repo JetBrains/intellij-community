@@ -152,9 +152,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
 
   @Override
   public JarFile getJarFile(@NotNull VirtualFile entryVFile) throws IOException {
-    JarHandler handler = getHandler(entryVFile);
-
-    return handler.getJar();
+    return getHandler(entryVFile).getJar();
   }
 
   @Nullable
@@ -309,6 +307,11 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   @Override
   public void renameFile(Object requestor, @NotNull VirtualFile vFile, @NotNull String newName) throws IOException {
     throw new IOException(VfsBundle.message("jar.modification.not.supported.error", vFile.getUrl()));
+  }
+
+  @Override
+  public boolean markNewFilesAsDirty() {
+    return true;
   }
 
   @Override

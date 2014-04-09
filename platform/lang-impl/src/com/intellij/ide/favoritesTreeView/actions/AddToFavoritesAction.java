@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -47,7 +48,7 @@ import java.util.Collections;
  * User: anna
  * Date: Feb 15, 2005
  */
-public class AddToFavoritesAction extends AnAction {
+public class AddToFavoritesAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.favoritesTreeView.actions.AddToFavoritesAction");
 
   private final String myFavoritesListName;

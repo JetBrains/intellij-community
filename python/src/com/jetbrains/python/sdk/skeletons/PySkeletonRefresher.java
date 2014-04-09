@@ -130,7 +130,7 @@ public class PySkeletonRefresher {
     else {
       LOG.info("Refreshing skeletons for " + homePath);
       SkeletonVersionChecker checker = new SkeletonVersionChecker(0); // this default version won't be used
-      final PySkeletonRefresher refresher = new PySkeletonRefresher(project, ownerComponent, sdk, skeletonsPath, indicator);
+      final PySkeletonRefresher refresher = new PySkeletonRefresher(project, ownerComponent, sdk, skeletonsPath, indicator, null);
 
       changeGeneratingSkeletons(1);
       try {
@@ -186,7 +186,8 @@ public class PySkeletonRefresher {
                              @Nullable Component ownerComponent,
                              @NotNull Sdk sdk,
                              @Nullable String skeletonsPath,
-                             @Nullable ProgressIndicator indicator)
+                             @Nullable ProgressIndicator indicator,
+                             @Nullable String folder)
     throws InvalidSdkException {
     myProject = project;
     myIndicator = indicator;
@@ -197,7 +198,7 @@ public class PySkeletonRefresher {
       mySkeletonsGenerator = remoteInterpreterManager.createRemoteSkeletonGenerator(myProject, ownerComponent, sdk, getSkeletonsPath());
     }
     else {
-      mySkeletonsGenerator = new PySkeletonGenerator(getSkeletonsPath());
+      mySkeletonsGenerator = new PySkeletonGenerator(getSkeletonsPath(), mySdk, folder);
     }
   }
 
@@ -221,18 +222,35 @@ public class PySkeletonRefresher {
     }
   }
 
-  private static String calculateExtraSysPath(@NotNull Sdk sdk, @Nullable String skeletonsPath) {
+  private static String calculateExtraSysPath(@NotNull final Sdk sdk, @Nullable final String skeletonsPath) {
+    File canonicalSkeleton = null;
+    File canonicalUserSkeletonsDir = null;
+
+    try {
+      if (skeletonsPath != null) {
+        canonicalSkeleton = new File(skeletonsPath).getCanonicalFile();
+      }
+      final VirtualFile userSkeletonsDir = PyUserSkeletonsUtil.getUserSkeletonsDirectory();
+      if (userSkeletonsDir != null) {
+        canonicalUserSkeletonsDir = new File(userSkeletonsDir.getPath());
+      }
+    }catch (final IOException e) {
+      LOG.error("Error getting real paths", e);
+    }
+
+
     final VirtualFile[] classDirs = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
     final StringBuilder builder = new StringBuilder("");
     int countAddedPaths = 0;
-    final VirtualFile userSkeletonsDir = PyUserSkeletonsUtil.getUserSkeletonsDirectory();
-    for (VirtualFile file : classDirs) {
+    for (final VirtualFile file : classDirs) {
       if (countAddedPaths > 0) {
         builder.append(File.pathSeparator);
       }
       if (file.isInLocalFileSystem()) {
-        final String pathname = file.getPath();
-        if (pathname != null && !pathname.equals(skeletonsPath) && !file.equals(userSkeletonsDir)) {
+        // We compare canonical files, not strings because "c:/some/folder" equals "c:\\some\\bin\\..\\folder\\"
+        final File canonicalFile = new File(file.getPath());
+        if (canonicalFile.exists() && !canonicalFile.equals(canonicalSkeleton) && !canonicalFile.equals(canonicalUserSkeletonsDir)) {
+          final String pathname = file.getPath();
           builder.append(pathname);
           countAddedPaths += 1;
         }

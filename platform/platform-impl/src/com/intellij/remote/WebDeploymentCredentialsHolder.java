@@ -15,6 +15,7 @@
  */
 package com.intellij.remote;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,16 +24,20 @@ import org.jetbrains.annotations.NotNull;
  */
 public class WebDeploymentCredentialsHolder {
   public static final String WEB_SERVER_CONFIG_ID = "WEB_SERVER_CONFIG_ID";
+  public static final String WEB_SERVER_CONFIG_NAME = "WEB_SERVER_CONFIG_NAME";
+
 
   private String myWebServerConfigId;
   private final RemoteCredentialsHolder myRemoteCredentials = new RemoteCredentialsHolder();
+  private String myWebServerConfigName;
 
 
   public WebDeploymentCredentialsHolder() {
   }
 
-  public WebDeploymentCredentialsHolder(@NotNull String webServerConfigId, @NotNull RemoteCredentials remoteCredentials) {
+  public WebDeploymentCredentialsHolder(@NotNull String webServerConfigId, String name, @NotNull RemoteCredentials remoteCredentials) {
     myWebServerConfigId = webServerConfigId;
+    myWebServerConfigName = name;
     myRemoteCredentials.copyFrom(remoteCredentials);
   }
 
@@ -45,13 +50,23 @@ public class WebDeploymentCredentialsHolder {
     myWebServerConfigId = webServerConfigId;
   }
 
+  public String getWebServerConfigName() {
+    return myWebServerConfigName;
+  }
+
+  public void setWebServerConfigName(@NotNull String name) {
+    myWebServerConfigName = name;
+  }
+
   public void load(Element element) {
     myRemoteCredentials.load(element);
     setWebServerConfigId(element.getAttributeValue(WEB_SERVER_CONFIG_ID));
+    setWebServerConfigName(StringUtil.notNullize(element.getAttributeValue(WEB_SERVER_CONFIG_NAME)));
   }
 
   public void save(Element element) {
     element.setAttribute(WEB_SERVER_CONFIG_ID, getWebServerConfigId());
+    element.setAttribute(WEB_SERVER_CONFIG_NAME, getWebServerConfigName());
 
     myRemoteCredentials.save(element);
   }
@@ -60,3 +75,4 @@ public class WebDeploymentCredentialsHolder {
     return myRemoteCredentials;
   }
 }
+

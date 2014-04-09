@@ -45,5 +45,6 @@ class UnsupportedFeatures {
 
   interface I {
     <error descr="Extension methods are not supported at this language level">default void m() { }</error>
+    <error descr="Extension methods are not supported at this language level">static void m() { }</error>
   }
 }

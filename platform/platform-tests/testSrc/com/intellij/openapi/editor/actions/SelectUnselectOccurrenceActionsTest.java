@@ -185,6 +185,15 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
     checkResult("text <selection><caret>text</selection> <selection><caret>text</selection>");
   }
 
+  public void testEscapeReturnsToInitialPosition() throws Exception {
+    init("l<caret>ine\n" +
+         "another line");
+    executeAction();
+    myFixture.performEditorAction("EditorEscape");
+    checkResult("l<caret>ine\n" +
+                "another line");
+  }
+
   private void init(String text) {
     myFixture.configureByText(FileTypes.PLAIN_TEXT, text);
   }

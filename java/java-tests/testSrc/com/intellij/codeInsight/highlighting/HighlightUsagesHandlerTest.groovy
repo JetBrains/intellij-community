@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 package com.intellij.codeInsight.highlighting
-
 import com.intellij.JavaTestUtil
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection
-import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NonNls
 /**
@@ -233,7 +232,7 @@ class Bar {
     try {
       def infos = myFixture.doHighlighting()
       //import highlighted twice: for each overloaded usage target
-      assert infos.findAll { it.severity == HighlightSeverity.INFORMATION && myFixture.file.text.substring(it.startOffset, it.endOffset) == 'foo' }.size() == 3
+      assert infos.findAll { it.severity == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY && myFixture.file.text.substring(it.startOffset, it.endOffset) == 'foo' }.size() == 3
     }
     finally {
       IdentifierHighlighterPassFactory.ourTestingIdentifierHighlighting = false

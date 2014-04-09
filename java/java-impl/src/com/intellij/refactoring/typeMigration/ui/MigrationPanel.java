@@ -367,7 +367,7 @@ public class MigrationPanel extends JPanel implements Disposable {
   private class ExcludeAction extends ExcludeIncludeActionBase {
     public ExcludeAction() {
       super(RefactoringBundle.message("type.migration.exclude.action.text"));
-      registerCustomShortcutSet(CommonShortcuts.DELETE, myRootsTree);
+      registerCustomShortcutSet(CommonShortcuts.getDelete(), myRootsTree);
     }
 
     protected void processUsage(final TypeMigrationUsageInfo usageInfo) {

@@ -47,7 +47,7 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings {
   public boolean SPACE_BEFORE_CLOSURE_LBRACE = true;
   public boolean SPACE_WITHIN_GSTRING_INJECTION_BRACES = false;
   public boolean SPACE_WITHIN_TUPLE_EXPRESSION = false;
-  public boolean INDENT_LABEL_BLOCKS = false;
+  public boolean INDENT_LABEL_BLOCKS = true;
   public boolean SPACE_AROUND_REGEX_OPERATORS = true;
 
   //imports

@@ -786,7 +786,7 @@ public class HighlightClassUtil {
       if (PsiKeyword.THIS.equals(methodCallExpression.getMethodExpression().getReferenceName())) continue;
       PsiReferenceExpression referenceExpression = methodCallExpression.getMethodExpression();
       PsiExpression qualifierExpression = PsiUtil.skipParenthesizedExprDown(referenceExpression.getQualifierExpression());
-      if (!(qualifierExpression instanceof PsiReferenceExpression) && !(qualifierExpression instanceof PsiNewExpression)) return false;
+      if (!(qualifierExpression instanceof PsiReferenceExpression) && !(qualifierExpression instanceof PsiCallExpression)) return false;
       PsiType type = qualifierExpression.getType();
       if (!(type instanceof PsiClassType)) return false;
       PsiClass resolved = ((PsiClassType)type).resolve();

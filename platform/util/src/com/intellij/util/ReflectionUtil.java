@@ -16,12 +16,14 @@
 
 package com.intellij.util;
 
+import com.intellij.Patches;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.reflect.ConstructorAccessor;
 
 import java.lang.reflect.*;
 import java.util.ArrayList;
@@ -347,6 +349,59 @@ public class ReflectionUtil {
     }
   }
 
+  static {
+    // method getConstructorAccessorMethod is not necessary since JDK7, use acquireConstructorAccessor return value instead
+    assert Patches.USE_REFLECTION_TO_ACCESS_JDK7;
+  }
+  private static final Method acquireConstructorAccessorMethod;
+  private static final Method getConstructorAccessorMethod;
+  static {
+    try {
+      Method accessor = Constructor.class.getDeclaredMethod("acquireConstructorAccessor");
+      accessor.setAccessible(true);
+      acquireConstructorAccessorMethod = accessor;
+      Method get = Constructor.class.getDeclaredMethod("getConstructorAccessor");
+      get.setAccessible(true);
+      getConstructorAccessorMethod = get;
+    }
+    catch (NoSuchMethodException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @NotNull
+  public static ConstructorAccessor getConstructorAccessor(@NotNull Constructor constructor) {
+    constructor.setAccessible(true);
+    // it is faster to invoke constructor via sun.reflect.ConstructorAccessor; it avoids AccessibleObject.checkAccess()
+    try {
+      acquireConstructorAccessorMethod.invoke(constructor);
+      return (ConstructorAccessor)getConstructorAccessorMethod.invoke(constructor);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @NotNull
+  public static <T> T createInstanceViaConstructorAccessor(@NotNull ConstructorAccessor constructorAccessor,
+                                                           @NotNull Object... arguments) {
+    try {
+      return (T)constructorAccessor.newInstance(arguments);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+  @NotNull
+  public static <T> T createInstanceViaConstructorAccessor(@NotNull ConstructorAccessor constructorAccessor) {
+    try {
+      return (T)constructorAccessor.newInstance(ArrayUtil.EMPTY_OBJECT_ARRAY);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   @NotNull
   public static <T> T createInstance(@NotNull Constructor<T> constructor, @NotNull Object... args) {
     try {
@@ -366,6 +421,18 @@ public class ReflectionUtil {
     catch (Throwable e) {
       LOG.info(e);
     }
+  }
+
+  public static @Nullable Class getGrandCallerClass() {
+    int stackFrameCount = 3;
+    Class callerClass = findCallerClass(stackFrameCount);
+    while (callerClass != null && callerClass.getClassLoader() == null) { // looks like a system class
+      callerClass = findCallerClass(++stackFrameCount);
+    }
+    if (callerClass == null) {
+      callerClass = findCallerClass(2);
+    }
+    return callerClass;
   }
 
 

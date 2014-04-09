@@ -17,6 +17,7 @@ package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
@@ -59,7 +60,9 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.VMDisconnectedException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -76,7 +79,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class FramesPanel extends UpdatableDebuggerView {
+public class FramesPanel extends UpdatableDebuggerView implements DataProvider {
   private static final Icon FILTER_STACK_FRAMES_ICON = AllIcons.Debugger.Class_filter;
 
   private final JComboBox myThreadsCombo;
@@ -145,6 +148,21 @@ public class FramesPanel extends UpdatableDebuggerView {
   @Override
   public DebuggerStateManager getContextManager() {
     return myStateManager;
+  }
+
+  @Nullable
+  @Override
+  public Object getData(@NonNls String dataId) {
+    if (CommonDataKeys.PSI_FILE.is(dataId)) {
+      DebuggerContextImpl context = myStateManager.getContext();
+      if (context != null) {
+        SourcePosition position = context.getSourcePosition();
+        if (position != null) {
+          return position.getFile();
+        }
+      }
+    }
+    return null;
   }
 
   private class FramesListener implements ListSelectionListener {

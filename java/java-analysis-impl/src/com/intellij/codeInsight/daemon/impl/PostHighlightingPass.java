@@ -83,7 +83,6 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
   private RefCountHolder myRefCountHolder;
   private final PsiFile myFile;
   @Nullable private final Editor myEditor;
-  private final boolean myUnusedImportEnabled;
   @NotNull private final Predicate<PsiElement> myIsEntryPointPredicate;
   private final int myStartOffset;
   private final int myEndOffset;
@@ -104,12 +103,10 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
                               @Nullable Editor editor,
                               @NotNull Document document,
                               @NotNull HighlightInfoProcessor highlightInfoProcessor,
-                              boolean unusedImportEnabled,
                               @NotNull Predicate<PsiElement> isEntryPoint) {
     super(project, document, "Unused symbols", file, editor, file.getTextRange(), true, highlightInfoProcessor);
     myFile = file;
     myEditor = editor;
-    myUnusedImportEnabled = unusedImportEnabled;
     myIsEntryPointPredicate = isEntryPoint;
     myStartOffset = 0;
     myEndOffset = file.getTextLength();
@@ -187,7 +184,7 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
 
   private void optimizeImportsOnTheFly(@NotNull final Editor editor) {
     if (myHasRedundantImports || myHasMissortedImports) {
-      IntentionAction optimizeImportsFix = QuickFixFactory.getInstance().createOptimizeImportsFix();
+      IntentionAction optimizeImportsFix = QuickFixFactory.getInstance().createOptimizeImportsFix(true);
       if (optimizeImportsFix.isAvailable(myProject, editor, myFile) && myFile.isWritable()) {
         optimizeImportsFix.invoke(myProject, editor, myFile);
       }
@@ -246,7 +243,7 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
         }
       }
     }
-    if (myUnusedImportEnabled && myFile instanceof PsiJavaFile && HighlightingLevelManager.getInstance(myProject).shouldHighlight(myFile)) {
+    if (isUnusedImportEnabled(unusedImportKey)) {
       PsiImportList importList = ((PsiJavaFile)myFile).getImportList();
       if (importList != null) {
         final PsiImportStatementBase[] imports = importList.getAllImportStatements();
@@ -262,6 +259,12 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
     }
 
     return errorFound;
+  }
+
+  protected boolean isUnusedImportEnabled(HighlightDisplayKey unusedImportKey) {
+    InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
+    if (!profile.isToolEnabled(unusedImportKey, myFile)) return false;
+    return myFile instanceof PsiJavaFile && HighlightingLevelManager.getInstance(myProject).shouldHighlight(myFile);
   }
 
   @Nullable
@@ -504,6 +507,12 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
                                              @NotNull PsiIdentifier identifier,
                                              @NotNull ProgressIndicator progress) {
     if (!myRefCountHolder.isReferenced(parameter) && !isImplicitUsage(myProject, parameter, progress)) {
+      //parameter is defined by functional interface
+      final PsiElement declarationScope = parameter.getDeclarationScope();
+      if (declarationScope instanceof PsiMethod && 
+          myRefCountHolder.isReferencedByMethodReference((PsiMethod)declarationScope)) {
+        return null;
+      }
       String message = JavaErrorMessages.message("parameter.is.not.used", identifier.getText());
       return createUnusedSymbolInfo(identifier, message, HighlightInfoType.UNUSED_SYMBOL);
     }
@@ -793,7 +802,7 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
       HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.UNUSED_IMPORT).range(importStatement).descriptionAndTooltip(description)
         .create();
 
-    QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createOptimizeImportsFix(), unusedImportKey);
+    QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createOptimizeImportsFix(false), unusedImportKey);
     QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createEnableOptimizeImportsOnTheFlyFix(), unusedImportKey);
     myHasRedundantImports = true;
     return info;

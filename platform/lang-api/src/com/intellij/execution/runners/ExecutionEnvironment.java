@@ -41,6 +41,7 @@ import static com.intellij.openapi.actionSystem.LangDataKeys.*;
 
 
 public class ExecutionEnvironment extends UserDataHolderBase {
+
   private static final AtomicLong myIdHolder = new AtomicLong(1L);
 
   @NotNull private final Project myProject;

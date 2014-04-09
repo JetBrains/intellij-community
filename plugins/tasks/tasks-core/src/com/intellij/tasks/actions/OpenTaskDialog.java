@@ -84,7 +84,7 @@ public class OpenTaskDialog extends DialogWrapper {
 
     TaskRepository repository = task.getRepository();
     myMarkAsInProgressBox.setSelected(manager.getState().markAsInProgress);
-    if (repository == null || !repository.getRepositoryType().getPossibleTaskStates().contains(TaskState.IN_PROGRESS)) {
+    if (!TaskUtil.isStateSupported(repository, TaskState.IN_PROGRESS)) {
       myMarkAsInProgressBox.setVisible(false);
     }
 
@@ -271,7 +271,9 @@ public class OpenTaskDialog extends DialogWrapper {
     else if (myCreateChangelist.isSelected()) {
       return myChangelistName;
     }
-    else return null;
+    else {
+      return null;
+    }
   }
 
   protected JComponent createCenterPanel() {

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.signatures;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -30,6 +31,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
  * @author Maxim.Medvedev
  */
 public class GrImmediateClosureSignatureImpl implements GrClosureSignature {
+  private static final Logger LOG = Logger.getInstance(GrImmediateClosureSignatureImpl.class);
+
   private final boolean myIsVarargs;
   private final boolean myCurried;
   @Nullable private final PsiType myReturnType;
@@ -39,18 +42,16 @@ public class GrImmediateClosureSignatureImpl implements GrClosureSignature {
   public GrImmediateClosureSignatureImpl(@NotNull PsiParameter[] parameters,
                                          @Nullable PsiType returnType,
                                          @NotNull PsiSubstitutor substitutor) {
+    LOG.assertTrue(returnType == null || returnType.isValid());
+    LOG.assertTrue(substitutor.isValid());
+
     myReturnType = substitutor.substitute(returnType);
     final int length = parameters.length;
     myParameters = new GrClosureParameter[length];
     for (int i = 0; i < length; i++) {
       myParameters[i] = new GrImmediateClosureParameterImpl(parameters[i], substitutor);
     }
-    if (length > 0) {
-      myIsVarargs = myParameters[length - 1].getType() instanceof PsiArrayType;
-    }
-    else {
-      myIsVarargs = false;
-    }
+    myIsVarargs = GrClosureSignatureUtil.isVarArgsImpl(myParameters);
     mySubstitutor = substitutor;
     myCurried = false;
   }
@@ -59,7 +60,7 @@ public class GrImmediateClosureSignatureImpl implements GrClosureSignature {
     this(parameters, returnType, PsiSubstitutor.EMPTY);
   }
 
-  GrImmediateClosureSignatureImpl(@NotNull GrClosureParameter[] params, @Nullable PsiType returnType, boolean isVarArgs, boolean isCurried) {
+  public GrImmediateClosureSignatureImpl(@NotNull GrClosureParameter[] params, @Nullable PsiType returnType, boolean isVarArgs, boolean isCurried) {
     myParameters = params;
     myReturnType = returnType;
     myIsVarargs = isVarArgs;
@@ -148,7 +149,7 @@ public class GrImmediateClosureSignatureImpl implements GrClosureSignature {
   }
 
   @Override
-  public void accept(GrSignatureVisitor visitor) {
+  public void accept(@NotNull GrSignatureVisitor visitor) {
     visitor.visitClosureSignature(this);
   }
 }

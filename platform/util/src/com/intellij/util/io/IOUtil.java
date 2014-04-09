@@ -15,10 +15,10 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.openapi.util.ThreadLocalCachedValue;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -79,6 +79,21 @@ public class IOUtil {
     }
   }
 
+  private static final ThreadLocalCachedValue<byte[]> ourReadWriteBuffersCache = new ThreadLocalCachedValue<byte[]>() {
+    @Override
+    protected byte[] create() {
+      return allocReadWriteUTFBuffer();
+    }
+  };
+
+  public static void writeUTF(@NotNull DataOutput storage, @NotNull final String value) throws IOException {
+    writeUTFFast(ourReadWriteBuffersCache.getValue(), storage, value);
+  }
+
+  public static String readUTF(@NotNull DataInput storage) throws IOException {
+    return readUTFFast(ourReadWriteBuffersCache.getValue(), storage);
+  }
+
   @NotNull
   public static byte[] allocReadWriteUTFBuffer() {
     return new byte[STRING_LENGTH_THRESHOLD + STRING_HEADER_SIZE];
@@ -114,7 +129,12 @@ public class IOUtil {
   }
 
   public static final Charset US_ASCII = Charset.forName("US-ASCII");
-  private static final ThreadLocal<SoftReference<char[]>> spareBufferLocal = new ThreadLocal<SoftReference<char[]>>();
+  private static final ThreadLocalCachedValue<char[]> spareBufferLocal = new ThreadLocalCachedValue<char[]>() {
+    @Override
+    protected char[] create() {
+      return new char[STRING_LENGTH_THRESHOLD];
+    }
+  };
 
   public static String readUTFFast(@NotNull byte[] buffer, @NotNull DataInput storage) throws IOException {
     int len = 0xFF & (int)storage.readByte();
@@ -130,12 +150,7 @@ public class IOUtil {
     if (len == 0) return "";
     storage.readFully(buffer, 0, len);
 
-    SoftReference<char[]> reference = spareBufferLocal.get();
-    char[] chars = reference != null ? reference.get() : null;
-    if (chars == null) {
-      chars = new char[STRING_LENGTH_THRESHOLD];
-      spareBufferLocal.set(new SoftReference<char[]>(chars));
-    }
+    char[] chars = spareBufferLocal.getValue();
     for(int i = 0; i < len; ++i) chars[i] = (char)(buffer[i] &0xFF);
     return new String(chars, 0, len);
   }

@@ -582,7 +582,7 @@ public class HighlightControlFlowUtil {
     final PsiElement resolved = reference == null ? null : reference.resolve();
     PsiVariable variable = resolved instanceof PsiVariable ? (PsiVariable)resolved : null;
     if (variable == null || !variable.hasModifierProperty(PsiModifier.FINAL)) return null;
-    final boolean canWrite = canWriteToFinal(variable, expression, reference, containingFile);
+    final boolean canWrite = canWriteToFinal(variable, expression, reference, containingFile) && checkWriteToFinalInsideLambda(variable, reference) == null;
     if (readBeforeWrite || !canWrite) {
       final String name = variable.getName();
       String description = canWrite ?
@@ -661,6 +661,10 @@ public class HighlightControlFlowUtil {
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, innerClass));
       return highlightInfo;
     }
+    return checkWriteToFinalInsideLambda(variable, context);
+  }
+
+  private static HighlightInfo checkWriteToFinalInsideLambda(PsiVariable variable, PsiJavaCodeReferenceElement context) {
     final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(context, PsiLambdaExpression.class);
     if (lambdaExpression != null && !PsiTreeUtil.isAncestor(lambdaExpression, variable, true)) {
       final PsiElement parent = variable.getParent();
@@ -675,7 +679,7 @@ public class HighlightControlFlowUtil {
     return null;
   }
 
-  public static boolean isEffectivelyFinal(PsiVariable variable, PsiElement scope, PsiJavaCodeReferenceElement context) {
+  public static boolean isEffectivelyFinal(PsiVariable variable, PsiElement scope, @Nullable PsiJavaCodeReferenceElement context) {
     boolean effectivelyFinal;
     if (variable instanceof PsiParameter) {
       effectivelyFinal = notAccessedForWriting(variable, new LocalSearchScope(((PsiParameter)variable).getDeclarationScope()));

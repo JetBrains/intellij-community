@@ -24,7 +24,6 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogRefManager;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.RefsModel;
-import com.intellij.vcs.log.graph.render.ColorGenerator;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;

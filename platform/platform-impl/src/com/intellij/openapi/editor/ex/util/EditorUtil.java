@@ -27,6 +27,8 @@ import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.IterationState;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
@@ -45,6 +47,14 @@ public final class EditorUtil {
   private static final Logger LOG = Logger.getInstance(EditorUtil.class);
 
   private EditorUtil() {
+  }
+
+  /**
+   * @return true if the editor is in fact an ordinary file editor;
+   * false if the editor is part of EditorTextField, CommitMessage and etc.
+   */
+  public static boolean isRealFileEditor(@NotNull Editor editor) {
+    return TextEditorProvider.getInstance().getTextEditor(editor) instanceof TextEditorImpl;
   }
 
   public static int getLastVisualLineColumnNumber(@NotNull Editor editor, final int line) {
@@ -718,7 +728,7 @@ public final class EditorUtil {
     LogicalPosition first = editor.visualToLogicalPosition(new VisualPosition(start.line, 0));
     for (
       int line = first.line, offset = document.getLineStartOffset(line);
-      offset > 0;
+      offset >= 0;
       offset = document.getLineStartOffset(line))
     {
       final FoldRegion foldRegion = foldingModel.getCollapsedRegionAtOffset(offset);

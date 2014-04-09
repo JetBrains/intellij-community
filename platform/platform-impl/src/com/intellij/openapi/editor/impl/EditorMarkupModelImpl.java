@@ -412,10 +412,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   private boolean isMirrored() {
-    return myEditor.getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_LEFT;
+    return myEditor.isMirrored();
   }
 
-  private static final Dimension STRIPE_BUTTON_PREFERRED_SIZE = new Dimension(PREFERRED_WIDTH, ERROR_ICON_HEIGHT + 4);
+  private static final Dimension STRIPE_BUTTON_PREFERRED_SIZE = new Dimension(ERROR_ICON_WIDTH + 4, ERROR_ICON_HEIGHT + 4);
 
   private class ErrorStripeButton extends JButton {
     private ErrorStripeButton() {
@@ -427,24 +427,29 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
 
       final Rectangle bounds = getBounds();
+      final Rectangle errorIconBounds = new Rectangle(0, 0, ERROR_ICON_WIDTH, ERROR_ICON_HEIGHT);
+      errorIconBounds.x = bounds.width / 2 - errorIconBounds.width / 2 + 1;
+      errorIconBounds.y = bounds.height / 2 - errorIconBounds.height / 2;
+      
       try {
         if (UISettings.getInstance().PRESENTATION_MODE) {
           g.setColor(getEditor().getColorsScheme().getDefaultBackground());
           g.fillRect(0, 0, bounds.width, bounds.height);
 
           if (myErrorStripeRenderer != null) {
-            myErrorStripeRenderer.paint(this, g, new Rectangle(2, 0, 10, 7));
+            myErrorStripeRenderer.paint(this, g, errorIconBounds);
           }
         } else {
 
           g.setColor(ButtonlessScrollBarUI.getTrackBackground());
           g.fillRect(0, 0, bounds.width, bounds.height);
-
+          
           g.setColor(ButtonlessScrollBarUI.getTrackBorderColor());
-          g.drawLine(0, 0, 0, bounds.height);
+          int borderX = !isMirrored() ? 0 : bounds.width - 1;
+          g.drawLine(borderX, 0, borderX, bounds.height);
 
           if (myErrorStripeRenderer != null) {
-            myErrorStripeRenderer.paint(this, g, new Rectangle(5, 2, ERROR_ICON_WIDTH, ERROR_ICON_HEIGHT));
+            myErrorStripeRenderer.paint(this, g, errorIconBounds);
           }
         }
       }
@@ -455,7 +460,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     public Dimension getPreferredSize() {
-      return UISettings.getInstance().PRESENTATION_MODE ? new Dimension(10,7) : STRIPE_BUTTON_PREFERRED_SIZE;
+      return STRIPE_BUTTON_PREFERRED_SIZE;
     }
   }
 
@@ -468,6 +473,24 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     protected JButton createDecreaseButton(int orientation) {
       myErrorStripeButton = myErrorStripeRenderer == null ? super.createDecreaseButton(orientation) : new ErrorStripeButton();
       return myErrorStripeButton;
+    }
+
+    @Override
+    public boolean alwaysShowTrack() {
+      if (scrollbar.getOrientation() == Adjustable.VERTICAL) return true;
+      return super.alwaysShowTrack();
+    }
+
+    @Override
+    public void installUI(JComponent c) {
+      super.installUI(c);
+      myCachedTrack = null;
+    }
+
+    @Override
+    public void uninstallUI(JComponent c) {
+      super.uninstallUI(c);
+      myCachedTrack = null;
     }
 
     @Override
@@ -504,26 +527,45 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         super.paintThumb(g, c, thumbBounds);
         return;
       }
-      int shift = isMirrored() ? -9 : 9;
-      g.translate(shift, 0);
-      super.paintThumb(g, c, thumbBounds);
-      g.translate(-shift, 0);
+
+      if (isMacOverlayScrollbar()) {
+        if (!isMirrored()) {
+          super.paintThumb(g, c, thumbBounds);
+        }
+        else {
+          Graphics2D g2d = (Graphics2D)g;
+          AffineTransform old = g2d.getTransform();
+
+          AffineTransform tx = AffineTransform.getScaleInstance(-1, 1);
+          tx.translate(-c.getWidth(), 0);
+          g2d.transform(tx);
+          g.translate(1, 0);
+          super.paintThumb(g, c, thumbBounds);
+          g2d.setTransform(old);
+        }
+      }
+      else {
+        int shift = isMirrored() ? -9 : 9;
+        g.translate(shift, 0);
+        super.paintThumb(g, c, thumbBounds);
+        g.translate(-shift, 0);
+      }
     }
 
     @Override
     protected int adjustThumbWidth(int width) {
-      if (UISettings.getInstance().PRESENTATION_MODE) return super.adjustThumbWidth(width);
+      if (isMacOverlayScrollbar() || UISettings.getInstance().PRESENTATION_MODE) return super.adjustThumbWidth(width);
       return width - 2;
     }
 
     @Override
     protected int getThickness() {
       if (UISettings.getInstance().PRESENTATION_MODE) return super.getThickness();
-      return super.getThickness() + 7;
+      return super.getThickness() + (isMacOverlayScrollbar() ? 2 : 7);
     }
 
     @Override
-    protected void paintTrack(Graphics g, JComponent c, Rectangle bounds) {
+    protected void doPaintTrack(Graphics g, JComponent c, Rectangle bounds) {
       if (UISettings.getInstance().PRESENTATION_MODE) {
         g.setColor(getEditor().getColorsScheme().getDefaultBackground());
         g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
@@ -576,6 +618,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected Color adjustColor(Color c) {
+      if (isMacOverlayScrollbar()) return super.adjustColor(c);
+      
       if (UIUtil.isUnderDarcula()) {
         return c;
       }

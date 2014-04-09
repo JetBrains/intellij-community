@@ -15,21 +15,27 @@
  */
 package com.intellij.tasks.mantis;
 
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.tasks.config.BaseRepositoryEditor;
+import com.intellij.tasks.impl.TaskUiUtil;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.UriUtil;
 import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.List;
 
 /**
- * User: evgeny.zakrevsky
+ * @author Mikhail Golubev
+ * @author evgeny.zakrevsky
  * Date: 9/21/12
  */
 public class MantisRepositoryEditor extends BaseRepositoryEditor<MantisRepository> {
@@ -38,46 +44,66 @@ public class MantisRepositoryEditor extends BaseRepositoryEditor<MantisRepositor
   private JBLabel myProjectLabel;
   private JBLabel myFilterLabel;
 
+  private boolean myInitialized = false;
 
-  public MantisRepositoryEditor(final Project project, final MantisRepository repository, final Consumer<MantisRepository> changeListener) {
+  public MantisRepositoryEditor(Project project, MantisRepository repository, Consumer<MantisRepository> changeListener) {
     super(project, repository, changeListener);
+
     myTestButton.setText("Login");
+    myTestButton.setEnabled(myRepository.isConfigured());
+
+    // Populate filters list on project selection
+    myProjectCombobox.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+          // equality check is needed to prevent resetting of combobox with filters
+          // on initial projects update
+          MantisProject project = (MantisProject)myProjectCombobox.getSelectedItem();
+          if (project != null) {
+            //noinspection unchecked
+            myFilterCombobox.setModel(new DefaultComboBoxModel(ArrayUtil.toObjectArray(project.getFilters())));
+            if (!project.equals(myRepository.getCurrentProject())) {
+              // unspecified filter should always be available
+              myFilterCombobox.setSelectedIndex(0);
+              doApply();
+            }
+            else if (!myInitialized) {
+              // matters only on initialization
+              myFilterCombobox.setSelectedItem(myRepository.getCurrentFilter());
+              myInitialized = true;
+            }
+          }
+        }
+      }
+    });
+    installListener(myFilterCombobox);
+
+    // Update the rest of projects in combobox, if repository is already configured
+    if (myRepository.getCurrentProject() != null) {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          new FetchMantisProjects().queue();
+        }
+      });
+    }
   }
 
 
   @Override
   public void apply() {
-    if (!myRepository.getUrl().equals(UriUtil.trimTrailingSlashes(myURLText.getText())) ||
-        !myRepository.getUsername().equals(myUserNameText.getText()) ||
-        !myRepository.getPassword().equals(myPasswordText.getText())) {
-      resetComboBoxes();
-    }
-    else {
-      final Object selectedProjectObject = myProjectCombobox.getModel().getSelectedItem();
-      final Object selectedFilterObject = myFilterCombobox.getModel().getSelectedItem();
-      if (selectedProjectObject != null &&
-          selectedFilterObject != null &&
-          selectedProjectObject instanceof MantisProject &&
-          selectedFilterObject instanceof MantisFilter) {
-        myRepository.setProject((MantisProject)selectedProjectObject);
-        myRepository.setFilter((MantisFilter)selectedFilterObject);
-      }
-    }
     super.apply();
-  }
-
-  private void resetComboBoxes() {
-    myProjectCombobox.setModel(new DefaultComboBoxModel(new Object[]{"Login before"}));
-    myFilterCombobox.setModel(new DefaultComboBoxModel(new Object[]{"Login before"}));
-    myRepository.setProject(null);
-    myRepository.setFilter(null);
+    myRepository.setCurrentProject((MantisProject)myProjectCombobox.getSelectedItem());
+    myRepository.setCurrentFilter((MantisFilter)myFilterCombobox.getSelectedItem());
+    myTestButton.setEnabled(myRepository.isConfigured());
   }
 
   @Override
   protected void afterTestConnection(final boolean connectionSuccessful) {
     super.afterTestConnection(connectionSuccessful);
     if (connectionSuccessful) {
-      updateProjects();
+      new FetchMantisProjects().queue();
     }
   }
 
@@ -93,43 +119,38 @@ public class MantisRepositoryEditor extends BaseRepositoryEditor<MantisRepositor
   protected JComponent createCustomPanel() {
     myProjectLabel = new JBLabel("Project:", SwingConstants.RIGHT);
     myProjectCombobox = new ComboBox(200);
-    myProjectCombobox.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(final ItemEvent e) {
-        updateFilters();
-      }
-    });
-    installListener(myProjectCombobox);
+    myProjectCombobox.setRenderer(new TaskUiUtil.SimpleComboBoxRenderer("Login first"));
     myFilterLabel = new JBLabel("Filter:", SwingConstants.RIGHT);
     myFilterCombobox = new ComboBox(200);
-    installListener(myFilterCombobox);
-    updateProjects();
-    return FormBuilder.createFormBuilder().addLabeledComponent(myProjectLabel, myProjectCombobox)
-      .addLabeledComponent(myFilterLabel, myFilterCombobox).getPanel();
+    myFilterCombobox.setRenderer(new TaskUiUtil.SimpleComboBoxRenderer("Login first"));
+    return FormBuilder.createFormBuilder()
+      .addLabeledComponent(myProjectLabel, myProjectCombobox)
+      .addLabeledComponent(myFilterLabel, myFilterCombobox)
+      .getPanel();
   }
 
-  private void updateProjects() {
-    try {
-      myProjectCombobox.setModel(new DefaultComboBoxModel(myRepository.getProjects().toArray()));
-      if (myRepository.getProject() != null) myProjectCombobox.setSelectedItem(myRepository.getProject());
-      updateFilters();
+  private class FetchMantisProjects extends TaskUiUtil.ComboBoxUpdater<MantisProject> {
+    private FetchMantisProjects() {
+      super(MantisRepositoryEditor.this.myProject, "Downloading Mantis Projects...", myProjectCombobox);
     }
-    catch (Exception e) {
-      resetComboBoxes();
-    }
-  }
 
-  private void updateFilters() {
-    try {
-      final Object selectedItem = myProjectCombobox.getModel().getSelectedItem();
-      if (selectedItem != null && selectedItem instanceof MantisProject) {
-        myFilterCombobox.setModel(new DefaultComboBoxModel(myRepository.getFilters((MantisProject)selectedItem).toArray()));
-        if (myRepository.getFilter() != null) myFilterCombobox.setSelectedItem(myRepository.getFilter());
-        doApply();
-      }
+    @NotNull
+    @Override
+    protected List<MantisProject> fetch(@NotNull ProgressIndicator indicator) throws Exception {
+      myRepository.refreshProjects();
+      return myRepository.getProjects();
     }
-    catch (Exception e) {
-      resetComboBoxes();
+
+    @Nullable
+    @Override
+    public MantisProject getSelectedItem() {
+      return myRepository.getCurrentProject();
+    }
+
+    @Override
+    protected void handleError() {
+      super.handleError();
+      myFilterCombobox.removeAllItems();
     }
   }
 }

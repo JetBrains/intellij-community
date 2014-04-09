@@ -101,7 +101,8 @@ public class ConsoleExecuteAction extends DumbAwareAction {
                       (myExecuteActionHandler.isEmptyCommandExecutionAllowed() || !StringUtil.isEmptyOrSpaces(editor.getDocument().getCharsSequence()));
     if (enabled) {
       Lookup lookup = LookupManager.getActiveLookup(editor);
-      enabled = lookup == null || !lookup.isCompletion();
+      // we should check getCurrentItem() also - fast typing could produce outdated lookup, such lookup reports isCompletion() true
+      enabled = lookup == null || !lookup.isCompletion() || lookup.getCurrentItem() == null;
     }
 
     e.getPresentation().setEnabled(enabled);
@@ -151,11 +152,16 @@ public class ConsoleExecuteAction extends DumbAwareAction {
       return true;
     }
 
-    public void setAddCurrentToHistory(boolean addCurrentToHistory) {
+    public final void setAddCurrentToHistory(boolean addCurrentToHistory) {
       myAddToHistory = addCurrentToHistory;
     }
 
+    protected void beforeExecution(@NotNull LanguageConsoleImpl console) {
+    }
+
     final void runExecuteAction(@NotNull LanguageConsoleImpl console, @Nullable LanguageConsoleView consoleView) {
+      beforeExecution(console);
+
       String text = console.prepareExecuteAction(myAddToHistory, myPreserveMarkup, true);
       ((UndoManagerImpl)UndoManager.getInstance(console.getProject())).invalidateActionsFor(DocumentReferenceManager.getInstance().create(console.getCurrentEditor().getDocument()));
       addToCommandHistoryAndExecute(console, consoleView, text);

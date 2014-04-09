@@ -65,6 +65,7 @@ public class GitMerger {
 
   public void mergeCommit(VirtualFile root) throws VcsException {
     GitSimpleHandler handler = new GitSimpleHandler(myProject, root, GitCommand.COMMIT);
+    handler.setStdoutSuppressed(false);
 
     File gitDir = new File(VfsUtilCore.virtualToIoFile(root), GitUtil.DOT_GIT);
     File messageFile = new File(gitDir, GitRepositoryFiles.MERGE_MSG);

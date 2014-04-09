@@ -86,8 +86,7 @@ public class ZoomingDelegate {
   }
 
   protected void scrollTo(int voffset, int hoffset) {
-    JViewport viewport = (JViewport)myViewportComponent;
-    JScrollPane pane = (JScrollPane)viewport.getParent();
+    JScrollPane pane = JBScrollPane.findScrollPane(myViewportComponent);
     JScrollBar vsb = pane.getVerticalScrollBar();
     vsb.setValue(voffset);
     JScrollBar hsb = pane.getHorizontalScrollBar();

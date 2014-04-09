@@ -66,11 +66,15 @@ public class SubtypingConstraint implements ConstraintFormula {
   @Override
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
     if (myT instanceof PsiWildcardType) {
-      final PsiType tBound = ((PsiWildcardType)myT).getBound();
+      PsiType tBound = ((PsiWildcardType)myT).getBound();
       if (tBound == null) {
         return true;
       }
 
+      if (tBound instanceof PsiCapturedWildcardType) {
+        tBound = ((PsiWildcardType)myT).isExtends() ? ((PsiCapturedWildcardType)tBound).getUpperBound() 
+                                                    : ((PsiCapturedWildcardType)tBound).getLowerBound();
+      }
       if (myS instanceof PsiCapturedWildcardType) {
         myS = ((PsiCapturedWildcardType)myS).getWildcard();
       }
@@ -123,5 +127,10 @@ public class SubtypingConstraint implements ConstraintFormula {
         return true;
       }
     }
+  }
+
+  @Override
+  public String toString() {
+    return myS.getPresentableText() + " <= " + myT.getPresentableText();
   }
 }

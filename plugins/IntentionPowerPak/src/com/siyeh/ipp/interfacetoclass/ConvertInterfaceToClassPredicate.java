@@ -15,6 +15,8 @@
  */
 package com.siyeh.ipp.interfacetoclass;
 
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.SearchScope;
@@ -45,6 +47,6 @@ class ConvertInterfaceToClassPredicate implements PsiElementPredicate {
         return false;
       }
     }
-    return true;
+    return !AnnotationUtil.isAnnotated(aClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, false, true);
   }
 }

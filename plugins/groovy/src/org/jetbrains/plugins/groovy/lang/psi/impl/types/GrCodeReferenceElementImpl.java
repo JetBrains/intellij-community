@@ -24,7 +24,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -466,7 +465,9 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     }
 
     @NotNull
-    private static GroovyResolveResult[] _resolve(GrCodeReferenceElementImpl ref, PsiManager manager, ReferenceKind kind) {
+    private static GroovyResolveResult[] _resolve(@NotNull GrCodeReferenceElementImpl ref,
+                                                  @NotNull PsiManager manager,
+                                                  @NotNull ReferenceKind kind) {
       final String refName = ref.getReferenceName();
       if (refName == null) {
         return GroovyResolveResult.EMPTY_ARRAY;
@@ -514,10 +515,12 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
           else {
             // if ref is an annotation name reference we should not process declarations of annotated elements
             // because inner annotations are not permitted and it can cause infinite recursion
-            PsiElement placeToStartWalking = isAnnotationRef(ref) ? FileContextUtil.getContextFile(ref) : ref;
-            ResolveUtil.treeWalkUp(placeToStartWalking, processor, false);
-            GroovyResolveResult[] candidates = processor.getCandidates();
-            if (candidates.length > 0) return candidates;
+            PsiElement placeToStartWalking = isAnnotationRef(ref) ? getContainingFileSkippingStubFiles(ref) : ref;
+            if (placeToStartWalking != null) {
+              ResolveUtil.treeWalkUp(placeToStartWalking, processor, false);
+              GroovyResolveResult[] candidates = processor.getCandidates();
+              if (candidates.length > 0) return candidates;
+            }
 
             if (kind == CLASS_OR_PACKAGE) {
               PsiPackage pkg = JavaPsiFacade.getInstance(ref.getProject()).findPackage(refName);
@@ -595,6 +598,15 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
       }
 
       return GroovyResolveResult.EMPTY_ARRAY;
+    }
+
+    private static PsiFile getContainingFileSkippingStubFiles(GrCodeReferenceElementImpl ref) {
+      PsiFile file = ref.getContainingFile();
+      while (file != null && !file.isPhysical() && file.getContext() != null) {
+        PsiElement context = file.getContext();
+        file = context.getContainingFile();
+      }
+      return file;
     }
 
     private static boolean isAnnotationRef(GrCodeReferenceElement ref) {

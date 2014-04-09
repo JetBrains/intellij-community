@@ -184,70 +184,70 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
   public void testMoveToSelectionStart() throws Exception {
     init("a");
     mouse().clickAt(0, 2).dragTo(0, 4).release();
-    verifyCaretsAndSelections(0, 4, 0, 2, 0, 4);
+    verifyCaretsAndSelections(0, 4, 2, 4);
 
     executeAction("EditorLeft");
-    verifyCaretsAndSelections(0, 2, 0, 2, 0, 2);
+    verifyCaretsAndSelections(0, 2, 2, 2);
   }
 
   public void testMoveToSelectionEnd() throws Exception {
     init("a");
     mouse().clickAt(0, 4).dragTo(0, 2).release();
-    verifyCaretsAndSelections(0, 2, 0, 2, 0, 4);
+    verifyCaretsAndSelections(0, 2, 2, 4);
 
     executeAction("EditorRight");
-    verifyCaretsAndSelections(0, 4, 0, 4, 0, 4);
+    verifyCaretsAndSelections(0, 4, 4, 4);
   }
 
   public void testReverseBlockSelection() throws Exception {
     init("a");
     mouse().clickAt(0, 4).dragTo(0, 3).release();
-    verifyCaretsAndSelections(0, 3, 0, 3, 0, 4);
+    verifyCaretsAndSelections(0, 3, 3, 4);
 
     executeAction("EditorRightWithSelection");
-    verifyCaretsAndSelections(0, 4, 0, 4, 0, 4);
+    verifyCaretsAndSelections(0, 4, 4, 4);
   }
 
   public void testSelectionWithKeyboardInEmptySpace() throws Exception {
     init("\n\n");
     mouse().clickAt(1, 1);
-    verifyCaretsAndSelections(1, 1, 1, 1, 1, 1);
+    verifyCaretsAndSelections(1, 1, 1, 1);
 
     executeAction("EditorRightWithSelection");
-    verifyCaretsAndSelections(1, 2, 1, 1, 1, 2);
+    verifyCaretsAndSelections(1, 2, 1, 2);
 
     executeAction("EditorDownWithSelection");
-    verifyCaretsAndSelections(1, 2, 1, 1, 1, 2,
-                              2, 2, 2, 1, 2, 2);
+    verifyCaretsAndSelections(1, 2, 1, 2,
+                              2, 2, 1, 2);
 
     executeAction("EditorLeftWithSelection");
-    verifyCaretsAndSelections(1, 1, 1, 1, 1, 1,
-                              2, 1, 2, 1, 2, 1);
+    verifyCaretsAndSelections(1, 1, 1, 1,
+                              2, 1, 1, 1);
 
     executeAction("EditorLeftWithSelection");
-    verifyCaretsAndSelections(1, 0, 1, 0, 1, 1,
-                              2, 0, 2, 0, 2, 1);
+    verifyCaretsAndSelections(1, 0, 0, 1,
+                              2, 0, 0, 1);
 
     executeAction("EditorUpWithSelection");
-    verifyCaretsAndSelections(1, 0, 1, 0, 1, 1);
+    verifyCaretsAndSelections(1, 0, 0, 1);
 
     executeAction("EditorUpWithSelection");
-    verifyCaretsAndSelections(0, 0, 0, 0, 0, 1,
-                              1, 0, 1, 0, 1, 1);
+    verifyCaretsAndSelections(0, 0, 0, 1,
+                              1, 0, 0, 1);
 
     executeAction("EditorRightWithSelection");
-    verifyCaretsAndSelections(0, 1, 0, 1, 0, 1,
-                              1, 1, 1, 1, 1, 1);
+    verifyCaretsAndSelections(0, 1, 1, 1,
+                              1, 1, 1, 1);
 
     executeAction("EditorRightWithSelection");
-    verifyCaretsAndSelections(0, 2, 0, 1, 0, 2,
-                              1, 2, 1, 1, 1, 2);
+    verifyCaretsAndSelections(0, 2, 1, 2,
+                              1, 2, 1, 2);
 
     executeAction("EditorDownWithSelection");
-    verifyCaretsAndSelections(1, 2, 1, 1, 1, 2);
+    verifyCaretsAndSelections(1, 2, 1, 2);
 
     executeAction("EditorLeftWithSelection");
-    verifyCaretsAndSelections(1, 1, 1, 1, 1, 1);
+    verifyCaretsAndSelections(1, 1, 1, 1);
   }
 
   public void testBlockSelection() throws Exception {
@@ -255,9 +255,9 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
          "bbb\n" +
          "ccccc");
     mouse().clickAt(2, 4).dragTo(0, 1).release();
-    verifyCaretsAndSelections(0, 1, 0, 1, 0, 4,
-                              1, 1, 1, 1, 1, 4,
-                              2, 1, 2, 1, 2, 4);
+    verifyCaretsAndSelections(0, 1, 1, 4,
+                              1, 1, 1, 4,
+                              2, 1, 1, 4);
   }
 
   public void testTyping() throws Exception {
@@ -269,6 +269,84 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
     checkResultByText("a S<caret>\n" +
                       "bbS<caret>\n" +
                       "ccS<caret>cc");
+  }
+
+  public void testCopyPasteOfShortLines() throws Exception {
+    init("a\n" +
+         "bbb\n" +
+         "ccccc");
+    mouse().clickAt(0, 2).dragTo(2, 4).release();
+    executeAction("EditorCopy");
+    executeAction("EditorLineStart");
+    executeAction("EditorPaste");
+    checkResultByText("  <caret>a\n" +
+                      "b <caret>bbb\n" +
+                      "cc<caret>ccccc");
+  }
+
+  public void testPasteOfBlockToASingleCaret() throws Exception {
+    init("a\n" +
+         "bbb\n" +
+         "ccccc");
+    mouse().clickAt(1, 2).dragTo(2, 4).release();
+    executeAction("EditorCopy");
+    mouse().clickAt(0, 2);
+    executeAction("EditorPaste");
+    checkResultByText("a b <caret>\n" +
+                      "bbcc<caret>b\n" +
+                      "ccccc");
+  }
+
+  public void testSelectToDocumentStart() throws Exception {
+    init("line1\n" +
+         "line2\n" +
+         "line3\n" +
+         "line4");
+    mouse().clickAt(1, 1).dragTo(2, 2).release();
+    executeAction("EditorTextStartWithSelection");
+    checkResultByText("<selection><caret>l</selection>ine1\n" +
+                      "<selection><caret>l</selection>ine2\n" +
+                      "line3\n" +
+                      "line4");
+  }
+
+  public void testSelectToDocumentEnd() throws Exception {
+    init("line1\n" +
+         "line2\n" +
+         "line3\n" +
+         "line4");
+    mouse().clickAt(1, 1).dragTo(2, 2).release();
+    executeAction("EditorTextEndWithSelection");
+    checkResultByText("line1\n" +
+                      "l<selection>ine2<caret></selection>\n" +
+                      "l<selection>ine3<caret></selection>\n" +
+                      "l<selection>ine4<caret></selection>");
+  }
+
+  public void testToggleCaseToLower() throws Exception {
+    init("a\n" +
+         "BBB\n" +
+         "ccccc");
+    mouse().clickAt(1, 2).dragTo(2, 4).release();
+    executeAction("EditorToggleCase");
+    checkResultByText("a\n" +
+                      "BBb\n" +
+                      "ccccc");
+    verifyCaretsAndSelections(1, 4, 2, 4,
+                              2, 4, 2, 4);
+  }
+
+  public void testToggleCaseToUpper() throws Exception {
+    init("a\n" +
+         "BBb\n" +
+         "ccccc");
+    mouse().clickAt(1, 2).dragTo(2, 4).release();
+    executeAction("EditorToggleCase");
+    checkResultByText("a\n" +
+                      "BBB\n" +
+                      "ccCCc");
+    verifyCaretsAndSelections(1, 4, 2, 4,
+                              2, 4, 2, 4);
   }
 
   private void init(String text) throws IOException {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,18 @@
 package org.jetbrains.plugins.groovy.editor;
 
 import com.intellij.psi.*;
-import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.resolve.DefaultImportContributor;
+import org.jetbrains.plugins.groovy.lang.resolve.PackageSkippingProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import java.util.LinkedHashSet;
 
@@ -48,14 +50,14 @@ public class GroovyImportHelper {
       }
     }
     for (String pkg : getImplicitlyImportedPackages(file)) {
-      if (qname.equals(pkg + "." + expectedName) || pkg.length() == 0 && qname.equals(expectedName)) {
+      if (qname.equals(pkg + "." + expectedName) || pkg.isEmpty() && qname.equals(expectedName)) {
         return true;
       }
     }
     return false;
   }
 
-  public static LinkedHashSet<String> getImplicitlyImportedPackages(GroovyFile file) {
+  public static LinkedHashSet<String> getImplicitlyImportedPackages(@NotNull GroovyFile file) {
     final LinkedHashSet<String> result = new LinkedHashSet<String>();
     ContainerUtil.addAll(result, GroovyFileBase.IMPLICITLY_IMPORTED_PACKAGES);
 
@@ -66,11 +68,11 @@ public class GroovyImportHelper {
     return result;
   }
 
-  public static boolean processImports(ResolveState state,
-                                       PsiElement lastParent,
-                                       PsiElement place,
-                                       PsiScopeProcessor importProcessor,
-                                       GrImportStatement[] importStatements,
+  public static boolean processImports(@NotNull ResolveState state,
+                                       @Nullable PsiElement lastParent,
+                                       @NotNull PsiElement place,
+                                       @NotNull PsiScopeProcessor importProcessor,
+                                       @NotNull GrImportStatement[] importStatements,
                                        boolean shouldProcessOnDemand) {
     for (int i = importStatements.length - 1; i >= 0; i--) {
       final GrImportStatement imp = importStatements[i];
@@ -83,20 +85,15 @@ public class GroovyImportHelper {
   }
 
   public static boolean processImplicitImports(@NotNull PsiScopeProcessor processor,
-                                               ResolveState state,
-                                               PsiElement lastParent,
-                                               PsiElement place,
+                                               @NotNull ResolveState state,
+                                               @Nullable PsiElement lastParent,
+                                               @NotNull PsiElement place,
                                                @NotNull GroovyFile file) {
+    if (!ResolveUtil.shouldProcessClasses(processor.getHint(ClassHint.KEY))) return true;
+
     JavaPsiFacade facade = JavaPsiFacade.getInstance(file.getProject());
 
-    final DelegatingScopeProcessor packageSkipper = new DelegatingScopeProcessor(processor) {
-      @Override
-      public boolean execute(@NotNull PsiElement element, ResolveState state) {
-        if (element instanceof PsiPackage) return true;
-        return super.execute(element, state);
-      }
-    };
-
+    final PsiScopeProcessor packageSkipper = new PackageSkippingProcessor(processor);
 
     for (final String implicitlyImported : getImplicitlyImportedPackages(file)) {
       PsiPackage aPackage = facade.findPackage(implicitlyImported);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -251,7 +251,7 @@ public class GroovyPropertyUtils {
   }
 
   @Nullable
-  public static String getPropertyNameByGetterName(String methodName, boolean canBeBoolean) {
+  public static String getPropertyNameByGetterName(@NotNull String methodName, boolean canBeBoolean) {
     if (methodName.startsWith(GET_PREFIX) && methodName.length() > 3) {
       return decapitalize(methodName.substring(3));
     }
@@ -272,7 +272,7 @@ public class GroovyPropertyUtils {
   }
 
   @Nullable
-  public static String getPropertyNameBySetterName(String methodName) {
+  public static String getPropertyNameBySetterName(@NotNull String methodName) {
     if (methodName.startsWith(SET_PREFIX) && methodName.length() > 3) {
       return StringUtil.decapitalize(methodName.substring(3));
     }

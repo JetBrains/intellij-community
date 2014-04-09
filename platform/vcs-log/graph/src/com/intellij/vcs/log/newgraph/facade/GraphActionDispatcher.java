@@ -19,6 +19,9 @@ package com.intellij.vcs.log.newgraph.facade;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.vcs.log.GraphCommit;
+import com.intellij.vcs.log.graph.ChangeCursorActionRequest;
+import com.intellij.vcs.log.graph.ClickGraphAction;
+import com.intellij.vcs.log.graph.MouseOverAction;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.newgraph.SomeGraph;
 import com.intellij.vcs.log.newgraph.gpaph.Edge;
@@ -169,7 +172,7 @@ public class GraphActionDispatcher {
 
     @NotNull
     public static GraphAnswer jumpToRow(int rowIndex) {
-      return new ActionRequestGraphAnswer(new JumpToRowActionRequest(rowIndex));
+      return new ActionRequestGraphAnswer(new JumpToRowActionRequest(rowIndex), true);
     }
 
     @NotNull
@@ -182,17 +185,29 @@ public class GraphActionDispatcher {
       return new ActionRequestGraphAnswer(new ChangeCursorActionRequest(cursor));
     }
 
+    private final static GraphChange SOME_CHANGE = new GraphChange() {};
+
     @NotNull
     private final GraphActionRequest myGraphActionRequest;
 
+    private final boolean mySomebodyChanged;
+
     private ActionRequestGraphAnswer(@NotNull GraphActionRequest graphActionRequest) {
+      this(graphActionRequest, false);
+    }
+
+    private ActionRequestGraphAnswer(@NotNull GraphActionRequest graphActionRequest, boolean somebodyChanged) {
       myGraphActionRequest = graphActionRequest;
+      mySomebodyChanged = somebodyChanged;
     }
 
     @Nullable
     @Override
     public GraphChange getGraphChange() {
-      return null;
+      if (mySomebodyChanged)
+        return SOME_CHANGE;
+      else
+        return null;
     }
 
     @Nullable

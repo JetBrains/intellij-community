@@ -260,7 +260,8 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     }
 
     boolean allLineCommented = true;
-    boolean commentWithIndent = !CodeStyleSettingsManager.getSettings(myProject).LINE_COMMENT_AT_FIRST_COLUMN;
+    boolean commentWithIndent =
+      !CodeStyleSettingsManager.getSettings(myProject).getCommonSettings(myFile.getLanguage()).LINE_COMMENT_AT_FIRST_COLUMN;
 
     for (int line = myStartLine; line <= myEndLine; line++) {
       Commenter commenter = blockSuitableCommenter != null ? blockSuitableCommenter : findCommenter(line);

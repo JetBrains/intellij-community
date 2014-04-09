@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.nameResolver.FQNamesProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,6 +110,15 @@ public interface PyCallExpression extends PyExpression {
    * @return true if matches, false otherwise
    */
   boolean isCalleeText(@NotNull String... nameCandidates);
+
+
+  /**
+   * Checks if the qualified name of the callee matches any of the specified names provided by provider.
+   * @see com.jetbrains.python.nameResolver
+   * @param name providers that provides one or more names to check
+   * @return true if matches, false otherwise
+   */
+  boolean isCallee(@NotNull FQNamesProvider... name);
 
   /**
    * Couples function with a flag describing the way it is called.

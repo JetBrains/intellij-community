@@ -39,7 +39,7 @@ import java.util.List;
  * @author dyoma
  */
 public abstract class RunConfigurationBase extends UserDataHolderBase
-  implements RunConfiguration, TargetAwareRunProfile, CompatibilityAwareRunProfile {
+  implements RunConfiguration, TargetAwareRunProfile {
   private final ConfigurationFactory myFactory;
   private final Project myProject;
   private String myName = "";
@@ -117,11 +117,6 @@ public abstract class RunConfigurationBase extends UserDataHolderBase
 
   @Override
   public boolean canRunOn(@NotNull ExecutionTarget target) {
-    return true;
-  }
-
-  @Override
-  public boolean isCompatibleWith(@NotNull RunConfiguration configuration) {
     return true;
   }
 

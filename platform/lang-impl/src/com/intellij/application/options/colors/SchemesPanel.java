@@ -25,7 +25,9 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.SchemesManager;
+import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,14 +110,16 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
   private JPanel createSchemePanel() {
     JPanel panel = new JPanel(new GridBagLayout());
 
+    int gridx = 0;
+
     panel.add(new JLabel(ApplicationBundle.message("combobox.scheme.name")),
-              new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0,
-                                     0));
+              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5),
+                                     0, 0));
 
     mySchemeComboBox = new JComboBox();
     panel.add(mySchemeComboBox,
-              new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 10), 0,
-                                     0));
+              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 10),
+                                     0, 0));
 
     JButton saveAsButton = new JButton(ApplicationBundle.message("button.save.as"));
     saveAsButton.addActionListener(new ActionListener() {
@@ -125,8 +129,8 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
       }
     });
     panel.add(saveAsButton,
-              new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0,
-                                     0));
+              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5),
+                                     0, 0));
 
     myDeleteButton = new JButton(ApplicationBundle.message("button.delete"));
     myDeleteButton.addActionListener(new ActionListener() {
@@ -138,7 +142,8 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
       }
     });
     panel.add(myDeleteButton,
-              new GridBagConstraints(3, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+              new GridBagConstraints(gridx++, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0,
+                                     0));
 
     SchemesManager<EditorColorsScheme, EditorColorsSchemeImpl> schemesManager =
       ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).getSchemesManager();
@@ -154,7 +159,8 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
       });
 
       panel.add(myExportButton,
-                new GridBagConstraints(4, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 0, 5, 5), 0, 0));
+                new GridBagConstraints(gridx++, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 0, 5, 5), 0,
+                                       0));
       myExportButton.setMnemonic('S');
 
     }
@@ -182,8 +188,26 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
       });
 
       panel.add(myImportButton,
-                new GridBagConstraints(5, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 0, 5, 5), 0, 0));
+                new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0,
+                                       0));
 
+    }
+    for (final ImportHandler importHandler : Extensions.getExtensions(ImportHandler.EP_NAME)) {
+      final JButton button = new JButton(importHandler.getTitle());
+      button.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          importHandler.performImport(button, new Consumer<EditorColorsScheme>() {
+            @Override
+            public void consume(EditorColorsScheme scheme) {
+              if (scheme != null) myOptions.addImportedScheme(scheme);
+            }
+          });
+        }
+      });
+      panel.add(button,
+                new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0,
+                                       0));
     }
 
     return panel;

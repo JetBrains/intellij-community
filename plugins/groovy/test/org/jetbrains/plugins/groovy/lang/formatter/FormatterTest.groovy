@@ -743,6 +743,7 @@ def bar() {
   }
 
   void testLabels() {
+    groovyCustomSettings.INDENT_LABEL_BLOCKS = false
     checkFormatting('''\
 def foo() {
 abc:foo()
@@ -797,6 +798,8 @@ def foo() {
       commonSettings.indentOptions.LABEL_INDENT_SIZE = labelIndentSize
     }
   }
+
+  void testNoLineFeedsInGString() { doTest() }
 
   private void doGeeseTest() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class)

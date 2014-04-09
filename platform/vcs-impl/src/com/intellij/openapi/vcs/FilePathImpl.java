@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
@@ -71,14 +69,6 @@ public class FilePathImpl implements FilePath {
       return new File(virtualParent.getPath(), name);
     }
     return new File(child.getPath());
-  }
-
-  private static void detectFileType(VirtualFile virtualFile) {
-    if (virtualFile == null || !virtualFile.isValid() || virtualFile.isDirectory()) return;
-    FileType fileType = virtualFile.getFileType();
-    if (fileType == UnknownFileType.INSTANCE) {
-      FileTypeRegistry.getInstance().detectFileTypeFromContent(virtualFile);
-    }
   }
 
   @Heavy
@@ -215,7 +205,6 @@ public class FilePathImpl implements FilePath {
       refresh();
       virtualFile = myVirtualFile;
     }
-    detectFileType(virtualFile);
     return virtualFile;
   }
 

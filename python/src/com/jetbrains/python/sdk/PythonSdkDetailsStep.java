@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.sdk;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -149,7 +151,12 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
 
     final CreateVirtualEnvDialog dialog;
     final List<Sdk> allSdks = Lists.newArrayList(myExistingSdks);
-
+    Iterables.removeIf(allSdks, new Predicate<Sdk>() {
+      @Override
+      public boolean apply(Sdk sdk) {
+        return sdk.getSdkType() instanceof PythonSdkType;
+      }
+    });
     final List<PythonSdkFlavor> flavors = PythonSdkFlavor.getApplicableFlavors(false);
     for (PythonSdkFlavor flavor : flavors) {
       final Collection<String> strings = flavor.suggestHomePaths();

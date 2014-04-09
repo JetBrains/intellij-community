@@ -16,22 +16,28 @@
 package git4idea.branch;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
 import com.intellij.vcs.log.ui.filter.BranchFilterPopupComponent;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
+import java.util.Set;
 
 public class DeepCompareAction extends ToggleAction implements DumbAware {
 
@@ -101,8 +107,19 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    e.getPresentation().setEnabledAndVisible(ui != null);
+    e.getPresentation().setEnabledAndVisible(project != null && ui != null &&
+                                             hasGitRoots(project, ui.getDataPack().getLogProviders().keySet()));
   }
 
+  private static boolean hasGitRoots(@NotNull Project project, @NotNull Set<VirtualFile> roots) {
+    final GitRepositoryManager manager = ServiceManager.getService(project, GitRepositoryManager.class);
+    return ContainerUtil.exists(roots, new Condition<VirtualFile>() {
+      @Override
+      public boolean value(VirtualFile root) {
+        return manager.getRepositoryForRoot(root) != null;
+      }
+    });
+  }
 }

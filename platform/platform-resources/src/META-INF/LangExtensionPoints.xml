@@ -164,6 +164,11 @@
       <with attribute="implementationClass" implements="com.intellij.lang.PsiStructureViewFactory"/>
     </extensionPoint>
 
+    <extensionPoint name="lang.psiElementExternalizer"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.lang.PsiElementExternalizer"/>
+    </extensionPoint>
+
     <extensionPoint name="lang.structureViewExtension"
                     interface="com.intellij.ide.structureView.StructureViewExtension"/>
 
@@ -302,6 +307,7 @@
     <extensionPoint name="liveTemplateOptionalProcessor" interface="com.intellij.codeInsight.template.impl.TemplateOptionalProcessor"/>
     <extensionPoint name="liveTemplatePreprocessor" interface="com.intellij.codeInsight.template.impl.TemplatePreprocessor"/>
     <extensionPoint name="customLiveTemplate" interface="com.intellij.codeInsight.template.CustomLiveTemplate"/>
+    <extensionPoint name="targetElement" interface="com.intellij.codeInsight.TargetElementExtensionPoint"/>
     <extensionPoint name="variableTypeCalculator" interface="com.intellij.codeInsight.template.macro.VariableTypeCalculator"/>
 
     <extensionPoint name="fileTemplateGroup"

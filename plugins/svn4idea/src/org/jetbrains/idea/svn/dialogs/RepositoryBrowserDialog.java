@@ -780,7 +780,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     public DeleteAction(final RepositoryBrowserComponent browserComponent) {
       super("_Delete...");
       myBrowserComponent = browserComponent;
-      registerCustomShortcutSet(CommonShortcuts.DELETE, myBrowserComponent);
+      registerCustomShortcutSet(CommonShortcuts.getDelete(), myBrowserComponent);
     }
 
     public void update(AnActionEvent e) {

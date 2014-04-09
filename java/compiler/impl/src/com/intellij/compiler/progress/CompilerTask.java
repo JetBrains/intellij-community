@@ -71,10 +71,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CompilerTask extends Task.Backgroundable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.progress.CompilerProgressIndicator");
-  private static final Key<Key<?>> CONTENT_ID_KEY = Key.create("CONTENT_ID");
+  private static final Key<Object> CONTENT_ID_KEY = Key.create("CONTENT_ID");
+  private static final Key<Object> SESSION_ID_KEY = Key.create("SESSION_ID");
   private static final String APP_ICON_ID = "compiler";
-  private Key<Key<?>> myContentIdKey = CONTENT_ID_KEY;
-  private final Key<Key<?>> myContentId = Key.create("compile_content");
+  @NotNull
+  private final Object myContentId = new IDObject("content_id");
+  
+  @NotNull
+  private Object mySessionId = myContentId; // by default sessionID should be unique, just as content ID
   private NewErrorTreeViewPanel myErrorTreeView;
   private final Object myMessageViewLock = new Object();
   private final String myContentName;
@@ -107,8 +111,13 @@ public class CompilerTask extends Task.Backgroundable {
     myCompilationStartedAutomatically = compilationStartedAutomatically;
   }
 
-  public void setContentIdKey(Key<Key<?>> contentIdKey) {
-    myContentIdKey = contentIdKey != null? contentIdKey : CONTENT_ID_KEY;
+  @NotNull
+  public Object getSessionId() {
+    return mySessionId;
+  }
+
+  public void setSessionId(@NotNull Object sessionId) {
+    mySessionId = sessionId;
   }
 
   public String getProcessId() {
@@ -189,7 +198,9 @@ public class CompilerTask extends Task.Backgroundable {
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        if (myProject.isDisposed()) return;
+        if (myProject.isDisposed()) {
+          return;
+        }
         synchronized (myMessageViewLock) {
           // clear messages from the previous compilation
           if (myErrorTreeView == null) {
@@ -410,7 +421,8 @@ public class CompilerTask extends Task.Backgroundable {
     
     final MessageView messageView = MessageView.SERVICE.getInstance(myProject);
     final Content content = ContentFactory.SERVICE.getInstance().createContent(component, myContentName, true);
-    content.putUserData(myContentIdKey, myContentId);
+    CONTENT_ID_KEY.set(content, myContentId);
+    SESSION_ID_KEY.set(content, mySessionId);
     messageView.getContentManager().addContent(content);
     myCloseListener.setContent(content, messageView.getContentManager());
     removeAllContents(myProject, content);
@@ -423,7 +435,7 @@ public class CompilerTask extends Task.Backgroundable {
         final MessageView messageView = MessageView.SERVICE.getInstance(myProject);
         Content[] contents = messageView.getContentManager().getContents();
         for (Content content : contents) {
-          if (content.getUserData(myContentIdKey) != null) {
+          if (CONTENT_ID_KEY.get(content) == myContentId) {
             messageView.getContentManager().setSelectedContent(content);
             return;
           }
@@ -442,7 +454,7 @@ public class CompilerTask extends Task.Backgroundable {
       if (content == notRemove) {
         continue;
       }
-      if (content.getUserData(myContentIdKey) != null) { // the content was added by me
+      if (CONTENT_ID_KEY.get(content) == myContentId  || SESSION_ID_KEY.get(content) != mySessionId) { // the content was added by previous compilation
         messageView.getContentManager().removeContent(content, true);
       }
     }
@@ -615,6 +627,18 @@ public class CompilerTask extends Task.Backgroundable {
       if (project.equals(myProject)) {
         myIsApplicationExitingOrProjectClosing = true;
       }
+    }
+  }
+
+  public static final class IDObject {
+    private final String myDisplayName;
+  
+    public IDObject(@NotNull String displayName) {
+      myDisplayName = displayName;
+    }
+  
+    public String toString() {
+      return myDisplayName;
     }
   }
 }

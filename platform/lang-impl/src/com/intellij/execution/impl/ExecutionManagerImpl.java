@@ -18,6 +18,7 @@ package com.intellij.execution.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.execution.*;
+import com.intellij.execution.configuration.CompatibilityAwareRunProfile;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -40,13 +41,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Predicate;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,6 +60,7 @@ import java.util.List;
  * @author dyoma
  */
 public class ExecutionManagerImpl extends ExecutionManager implements ProjectComponent {
+  public static final Key<Object> EXECUTION_SESSION_ID_KEY = Key.create("EXECUTION_SESSION_ID_KEY");
   private static final Logger LOG = Logger.getInstance("com.intellij.execution.impl.ExecutionManagerImpl");
 
   private final Project myProject;
@@ -140,6 +143,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
 
       if (!activeTasks.isEmpty()) {
         final long finalId = id;
+        final Long executionSessionId = new Long(id);
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           /** @noinspection SSBasedInspection*/
           @Override
@@ -155,6 +159,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
               }
               ExecutionEnvironment taskEnvironment = new ExecutionEnvironmentBuilder(env).setContentToReuse(null).build();
               taskEnvironment.setExecutionId(finalId);
+              EXECUTION_SESSION_ID_KEY.set(taskEnvironment, executionSessionId);
               if (!provider.executeTask(projectContext, runConfiguration, taskEnvironment, task)) {
                 if (onCancelRunnable != null) {
                   SwingUtilities.invokeLater(onCancelRunnable);
@@ -481,7 +486,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
       if (names.length() > 0) {
         names.append(", ");
       }
-      names.append(name.equals(null) || name.isEmpty() ? ExecutionBundle.message("run.configuration.no.name")
+      names.append(StringUtil.isEmpty(name) ? ExecutionBundle.message("run.configuration.no.name")
                                                        : String.format("'%s'", name));
     }
 
@@ -515,7 +520,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
         if (runningConfigurationAndSettings == null) return false;
         RunConfiguration runningConfiguration = runningConfigurationAndSettings.getConfiguration();
         if (runningConfiguration == null || !(runningConfiguration instanceof CompatibilityAwareRunProfile)) return false;
-        return !((CompatibilityAwareRunProfile)runningConfiguration).isCompatibleWith(configurationToCheckCompatibility);
+        return ((CompatibilityAwareRunProfile)runningConfiguration).mustBeStoppedToRun(configurationToCheckCompatibility);
       }
     });
   }

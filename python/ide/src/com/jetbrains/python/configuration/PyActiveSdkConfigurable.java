@@ -29,7 +29,6 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
-import com.intellij.openapi.projectRoots.impl.SdkListCellRenderer;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -37,7 +36,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
@@ -73,7 +71,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   private JButton myDetailsButton;
   private static final String SHOW_ALL = "Show All";
   private NullableConsumer<Sdk> myDetailsCallback;
-  private PythonSdkDetailsDialog myMoreDialog;
 
   public PyActiveSdkConfigurable(@NotNull Project project) {
     myModule = null;
@@ -129,13 +126,12 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
         }
       }
     };
-    myMoreDialog = myModule == null ? new PythonSdkDetailsDialog(myProject, myDetailsCallback) :
-                   new PythonSdkDetailsDialog(myModule, myDetailsCallback);
     myDetailsButton.addActionListener(new ActionListener() {
                                         @Override
                                         public void actionPerformed(ActionEvent e) {
                                           PythonSdkDetailsStep.show(myProject, myProjectSdksModel.getSdks(),
-                                                                    myMoreDialog, myMainPanel,
+                                                                    myModule == null ? new PythonSdkDetailsDialog(myProject, myDetailsCallback) :
+                                                                    new PythonSdkDetailsDialog(myModule, myDetailsCallback), myMainPanel,
                                                   myDetailsButton.getLocationOnScreen(),
                                                   new NullableConsumer<Sdk>() {
                                                     @Override
@@ -181,13 +177,23 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
         if (!PySdkListCellRenderer.SEPARATOR.equals(item))
           super.setSelectedItem(item);
       }
+      @Override
+      public void paint(Graphics g) {
+        try {
+          putClientProperty("JComboBox.isTableCellEditor", Boolean.FALSE);
+          super.paint(g);
+        } finally {
+          putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
+        }
+      }
     };
     mySdkCombo.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
-    mySdkCombo.setRenderer(new SdkListCellRenderer("<None>"));
+    mySdkCombo.setRenderer(new PySdkListCellRenderer());
 
     final PackagesNotificationPanel notificationsArea = new PackagesNotificationPanel(myProject);
     final JComponent notificationsComponent = notificationsArea.getComponent();
     final Dimension preferredSize = mySdkCombo.getPreferredSize();
+    mySdkCombo.setPreferredSize(preferredSize);
     notificationsArea.hide();
     myDetailsButton = new FixedSizeButton();
     myDetailsButton.setIcon(PythonIcons.Python.InterpreterGear);
@@ -360,7 +366,8 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     updateSdkList(false);
 
     final Sdk sdk = getSdk();
-    mySdkCombo.setSelectedItem(myProjectSdksModel.getProjectSdks().get(sdk));
+    final Sdk projectSdk = myProjectSdksModel.getProjectSdks().get(sdk);
+    mySdkCombo.setSelectedItem(projectSdk);
   }
 
   private void updateSdkList(boolean preserveSelection) {
@@ -408,7 +415,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   public void disposeUIResources() {
     myProjectSdksModel.removeListener(mySdkModelListener);
     myInterpreterList.disposeModel();
-    Disposer.dispose(myMoreDialog.getDisposable());
   }
 
   private static class MySdkModelListener implements SdkModel.Listener {

@@ -25,10 +25,11 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.ScrollingModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class TextEndWithSelectionAction extends TextComponentEditorAction {
   public TextEndWithSelectionAction() {
@@ -36,17 +37,26 @@ public class TextEndWithSelectionAction extends TextComponentEditorAction {
   }
 
   private static class Handler extends EditorActionHandler {
-    protected Handler() {
-      super(true);
-    }
-
     @Override
-    public void execute(Editor editor, DataContext dataContext) {
-      int selectionStart = editor.getSelectionModel().getLeadSelectionOffset();
-      int offset = editor.getDocument().getTextLength();
-      editor.getCaretModel().moveToOffset(offset);
-      editor.getSelectionModel().setSelection(selectionStart, offset);
-
+    public void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      int endOffset = editor.getDocument().getTextLength();
+      List<Caret> carets = editor.getCaretModel().getAllCarets();
+      if (editor.isColumnMode() && editor.getCaretModel().supportsMultipleCarets()) {
+        if (caret == null) { // normally we're always called with null caret
+          caret = carets.get(0) == editor.getCaretModel().getPrimaryCaret() ? carets.get(carets.size() - 1) : carets.get(0);
+        }
+        LogicalPosition leadSelectionPosition = editor.visualToLogicalPosition(caret.getLeadSelectionPosition());
+        LogicalPosition targetPosition = editor.offsetToLogicalPosition(endOffset);
+        editor.getSelectionModel().setBlockSelection(leadSelectionPosition, targetPosition);
+      }
+      else {
+        if (caret == null) { // normally we're always called with null caret
+          caret = carets.get(0);
+        }
+        int selectionStart = caret.getLeadSelectionOffset();
+        caret.moveToOffset(endOffset);
+        caret.setSelection(selectionStart, endOffset);
+      }
       ScrollingModel scrollingModel = editor.getScrollingModel();
       scrollingModel.disableAnimation();
       scrollingModel.scrollToCaret(ScrollType.CENTER);

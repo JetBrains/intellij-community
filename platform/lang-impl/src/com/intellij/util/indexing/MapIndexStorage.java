@@ -327,11 +327,12 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     assert newFileWithCaches != null;
     DataOutputStream stream = null;
 
+    boolean savedSuccessfully = false;
     try {
       stream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(newFileWithCaches)));
       DataInputOutputUtil.writeINT(stream, hashMaskSet.size());
       final DataOutputStream finalStream = stream;
-      boolean result = hashMaskSet.forEach(new TIntProcedure() {
+      savedSuccessfully = hashMaskSet.forEach(new TIntProcedure() {
         @Override
         public boolean execute(int value) {
           try {
@@ -342,15 +343,14 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
           }
         }
       });
-      if (result) myLastScannedId = largestId;
     }
     catch (IOException ignored) {
-
     }
     finally {
       if (stream != null) {
         try {
           stream.close();
+          if (savedSuccessfully) myLastScannedId = largestId;
         }
         catch (IOException ignored) {}
       }

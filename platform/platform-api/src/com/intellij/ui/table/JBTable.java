@@ -19,6 +19,7 @@ import com.intellij.Patches;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ui.*;
@@ -131,6 +132,45 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
     //noinspection UnusedDeclaration
     boolean marker = Patches.SUN_BUG_ID_4503845; // Don't remove. It's a marker for find usages
+  }
+
+  @Override
+  protected void configureEnclosingScrollPane() {
+    super.configureEnclosingScrollPane();
+    
+    // base class' method doesn't expect layered pane between the viewport and the scrollpane (required for mac scrollbars)
+    JBScrollPane sp = getJBScrollPane();
+    if (sp == null) return;
+
+    JViewport viewport = sp.getViewport();
+    if (viewport == null || viewport.getView() != this) return;
+    sp.setColumnHeaderView(getTableHeader());
+  }
+
+  @Override
+  protected void unconfigureEnclosingScrollPane() {
+    super.unconfigureEnclosingScrollPane();
+    
+    JBScrollPane sp = getJBScrollPane();
+    if (sp == null) return;
+
+    JViewport viewport = sp.getViewport();
+    if (viewport == null || viewport.getView() != this) return;
+    sp.setColumnHeaderView(null);
+  }
+
+  private JBScrollPane getJBScrollPane() {
+    Container p = getParent();
+    if (p instanceof JViewport) {
+      Container gp = p.getParent();
+      if (gp instanceof JLayeredPane) {
+        Container ggp = gp.getParent();
+        if (ggp instanceof JBScrollPane) {
+          return (JBScrollPane)ggp;
+        }
+      }
+    }
+    return null;
   }
 
   @Override

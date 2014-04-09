@@ -19,6 +19,7 @@ package com.intellij.xdebugger;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -47,7 +48,7 @@ public abstract class XDebuggerUtil {
     toggleLineBreakpoint(project, file, line, false);
   }
 
-  public abstract XLineBreakpoint toggleLineBreakpoint(@NotNull Project project,
+  public abstract void toggleLineBreakpoint(@NotNull Project project,
                                             @NotNull VirtualFile file,
                                             int line,
                                             boolean temporary);
@@ -59,7 +60,7 @@ public abstract class XDebuggerUtil {
     toggleLineBreakpoint(project, type, file, line, false);
   }
 
-  public abstract <P extends XBreakpointProperties> XLineBreakpoint toggleLineBreakpoint(@NotNull Project project,
+  public abstract <P extends XBreakpointProperties> void toggleLineBreakpoint(@NotNull Project project,
                                                                               @NotNull XLineBreakpointType<P> type,
                                                                               @NotNull VirtualFile file,
                                                                               int line,
@@ -108,6 +109,11 @@ public abstract class XDebuggerUtil {
    * @param processor processor
    */
   public abstract void iterateLine(@NotNull Project project, @NotNull Document document, int line, @NotNull Processor<PsiElement> processor);
+
+  /**
+   * Disable value lookup in specified editor
+   */
+  public abstract void disableValueLookup(@NotNull Editor editor);
 
   @Nullable
   public abstract PsiElement findContextElement(@NotNull VirtualFile virtualFile, int offset, @NotNull Project project, boolean checkXml);

@@ -67,6 +67,11 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
   }
 
   @NotNull
+  public List<ExternalTaskPojo> getTasksToExecute() {
+    return myTasksToExecute;
+  }
+
+  @NotNull
   private static String getLinkedExternalProjectPath(@NotNull Collection<ExternalTaskPojo> tasks) throws IllegalArgumentException {
     if (tasks.isEmpty()) {
       throw new IllegalArgumentException("Can't execute external tasks. Reason: given tasks list is empty");

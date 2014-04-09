@@ -1,15 +1,15 @@
 package com.intellij.tasks.gitlab;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.gitlab.model.GitlabIssue;
 import com.intellij.tasks.gitlab.model.GitlabProject;
-import com.intellij.tasks.httpclient.NewBaseRepositoryImpl;
-import com.intellij.tasks.impl.TaskUtil;
+import com.intellij.tasks.impl.gson.GsonUtil;
+import com.intellij.tasks.impl.httpclient.NewBaseRepositoryImpl;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -25,8 +25,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.List;
 
-import static com.intellij.tasks.httpclient.ResponseUtil.GsonMultipleObjectsDeserializer;
-import static com.intellij.tasks.httpclient.ResponseUtil.GsonSingleObjectDeserializer;
+import static com.intellij.tasks.impl.httpclient.ResponseUtil.GsonMultipleObjectsDeserializer;
+import static com.intellij.tasks.impl.httpclient.ResponseUtil.GsonSingleObjectDeserializer;
 
 /**
  * @author Mikhail Golubev
@@ -35,7 +35,7 @@ import static com.intellij.tasks.httpclient.ResponseUtil.GsonSingleObjectDeseria
 public class GitlabRepository extends NewBaseRepositoryImpl {
 
   @NonNls public static final String REST_API_PATH_PREFIX = "/api/v3/";
-  public static final Gson GSON = TaskUtil.installDateDeserializer(new GsonBuilder()).create();
+  public static final Gson GSON = GsonUtil.createDefaultBuilder().create();
   public static final TypeToken<List<GitlabProject>> LIST_OF_PROJECTS_TYPE = new TypeToken<List<GitlabProject>>() {};
   public static final TypeToken<List<GitlabIssue>> LIST_OF_ISSUES_TYPE = new TypeToken<List<GitlabIssue>>() {};
   public static final GitlabProject UNSPECIFIED_PROJECT = new GitlabProject() {
@@ -84,11 +84,6 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   }
 
   @Override
-  public int hashCode() {
-    return myCurrentProject != null ? myCurrentProject.hashCode() : 0;
-  }
-
-  @Override
   public GitlabRepository clone() {
     return new GitlabRepository(this);
   }
@@ -120,7 +115,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
         HttpResponse response = getHttpClient().execute(myRequest);
         StatusLine statusLine = response.getStatusLine();
         if (statusLine != null && statusLine.getStatusCode() != HttpStatus.SC_OK) {
-          throw new Exception(statusLine.getReasonPhrase());
+          throw new Exception(TaskBundle.message("failure.http.error", statusLine.getStatusCode(), statusLine.getReasonPhrase()));
         }
       }
 
@@ -188,8 +183,8 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
     };
   }
 
-  public void setCurrentProject(GitlabProject currentProject) {
-    myCurrentProject = currentProject.getId() == -1 ? UNSPECIFIED_PROJECT : currentProject;
+  public void setCurrentProject(@Nullable GitlabProject project) {
+    myCurrentProject = project != null && project.getId() == -1 ? UNSPECIFIED_PROJECT : project;
   }
 
   public GitlabProject getCurrentProject() {

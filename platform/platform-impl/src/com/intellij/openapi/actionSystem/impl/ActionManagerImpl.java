@@ -1283,8 +1283,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   }
 
   private class MyTimer extends Timer implements ActionListener {
-    private final List<TimerListener> myTimerListeners = Collections.synchronizedList(new ArrayList<TimerListener>());
-    private final List<TimerListener> myTransparentTimerListeners = Collections.synchronizedList(new ArrayList<TimerListener>());
+    private final List<TimerListener> myTimerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+    private final List<TimerListener> myTransparentTimerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
     private int myLastTimePerformed;
 
     MyTimer() {
@@ -1312,19 +1312,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
 
     public void addTimerListener(TimerListener listener, boolean transparent){
-      if (transparent) {
-        myTransparentTimerListeners.add(listener);
-      } else {
-        myTimerListeners.add(listener);
-      }
+      (transparent ? myTransparentTimerListeners : myTimerListeners).add(listener);
     }
 
     public void removeTimerListener(TimerListener listener, boolean transparent){
-      if (transparent) {
-       myTransparentTimerListeners.remove(listener);
-      } else {
-        myTimerListeners.remove(listener);
-      }
+      (transparent ? myTransparentTimerListeners : myTimerListeners).remove(listener);
     }
 
     @Override
@@ -1341,7 +1333,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       boolean transparentOnly = myLastTimePerformed == lastEventCount;
 
       try {
-        HashSet<TimerListener> notified = new HashSet<TimerListener>();
+        Set<TimerListener> notified = new HashSet<TimerListener>();
         myTransparentOnlyUpdate = transparentOnly;
         notifyListeners(myTransparentTimerListeners, notified);
 
@@ -1357,13 +1349,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
 
     private void notifyListeners(final List<TimerListener> timerListeners, final Set<TimerListener> notified) {
-      final TimerListener[] listeners = timerListeners.toArray(new TimerListener[timerListeners.size()]);
-      for (TimerListener listener : listeners) {
-        if (timerListeners.contains(listener)) {
-          if (!notified.contains(listener)) {
-            notified.add(listener);
-            runListenerAction(listener);
-          }
+      for (TimerListener listener : timerListeners) {
+        if (notified.add(listener)) {
+          runListenerAction(listener);
         }
       }
     }

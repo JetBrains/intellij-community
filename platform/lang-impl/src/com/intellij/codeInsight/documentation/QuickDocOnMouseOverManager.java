@@ -28,10 +28,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.Alarm;
@@ -170,7 +167,7 @@ public class QuickDocOnMouseOverManager {
     if (hint != null) {
 
       // Skip the event if the control is shown because of explicit 'show quick doc' action call.
-      DocumentationManager manager = SoftReference.dereference(myDocumentationManager);
+      DocumentationManager manager = getDocManager();
       if (manager == null || !manager.isCloseOnSneeze()) {
         return;
       }
@@ -201,7 +198,7 @@ public class QuickDocOnMouseOverManager {
     
     int mouseOffset = editor.logicalPositionToOffset(editor.visualToLogicalPosition(visualPosition));
     PsiElement elementUnderMouse = psiFile.findElementAt(mouseOffset);
-    if (elementUnderMouse == null || elementUnderMouse instanceof PsiWhiteSpace) {
+    if (elementUnderMouse == null || elementUnderMouse instanceof PsiWhiteSpace || elementUnderMouse instanceof PsiPlainText) {
       closeQuickDocIfPossible();
       return;
     }
@@ -220,7 +217,7 @@ public class QuickDocOnMouseOverManager {
     { 
       return;
     }
-    allowUpdateFromContext(false);
+    allowUpdateFromContext(project, false);
     closeQuickDocIfPossible();
     myActiveElements.put(editor, targetElementUnderMouse);
     myDelayedQuickDocInfo = new DelayedQuickDocInfo(documentationManager, editor, targetElementUnderMouse, elementUnderMouse);
@@ -245,9 +242,9 @@ public class QuickDocOnMouseOverManager {
     myDocumentationManager = null;
   }
 
-  private void allowUpdateFromContext(boolean allow) {
+  private void allowUpdateFromContext(Project project, boolean allow) {
     DocumentationManager documentationManager = getDocManager();
-    if (documentationManager != null) {
+    if (documentationManager != null && documentationManager.getProject(null) == project) {
       documentationManager.setAllowContentUpdateFromContext(allow);
     }
   }
@@ -306,7 +303,6 @@ public class QuickDocOnMouseOverManager {
       try {
         info.docManager.showJavaDocInfo(info.editor, info.targetElement, info.originalElement, myHintCloseCallback, true, true);
         myDocumentationManager = new WeakReference<DocumentationManager>(info.docManager);
-        myDocumentationManager = new WeakReference<DocumentationManager>(info.docManager);
       }
       finally {
         info.editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION, null);
@@ -357,7 +353,7 @@ public class QuickDocOnMouseOverManager {
   private class MyCaretListener extends CaretAdapter {
     @Override
     public void caretPositionChanged(CaretEvent e) {
-      allowUpdateFromContext(true);
+      allowUpdateFromContext(e.getEditor().getProject(), true);
       closeQuickDocIfPossible(); 
     }
   }

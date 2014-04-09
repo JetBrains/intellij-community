@@ -17,15 +17,13 @@ package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnApplicationSettings;
-import org.jetbrains.idea.svn.SvnProgressCanceller;
-import org.jetbrains.idea.svn.SvnUtil;
-import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.*;
 import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
@@ -204,17 +202,46 @@ public class CommandRuntime {
   private CommandExecutor newExecutor(@NotNull Command command) {
     final CommandExecutor executor;
 
-    if (!Registry.is("svn.use.terminal")) {
+    if (!(Registry.is("svn.use.terminal") && isForSshRepository(command)) || isLocal(command)) {
       command.putIfNotPresent("--non-interactive");
       executor = new CommandExecutor(exePath, command);
     }
     else {
-      command.put("--force-interactive");
-      executor = new TerminalExecutor(exePath, command);
+      // do not explicitly specify "--force-interactive" as it is not supported in svn 1.7 - commands will be interactive by default as
+      // running under terminal
+      executor = newTerminalExecutor(command);
       ((TerminalExecutor)executor).addInteractiveListener(new TerminalSshModule(this, executor));
     }
 
     return executor;
+  }
+
+  @NotNull
+  private TerminalExecutor newTerminalExecutor(@NotNull Command command) {
+    return SystemInfo.isWindows ? new WinTerminalExecutor(exePath, command) : new TerminalExecutor(exePath, command);
+  }
+
+  private static boolean isLocal(@NotNull Command command) {
+    return SvnCommandName.version.equals(command.getName()) ||
+           SvnCommandName.cleanup.equals(command.getName()) ||
+           SvnCommandName.add.equals(command.getName()) ||
+           // currently "svn delete" is only applied to local files
+           SvnCommandName.delete.equals(command.getName()) ||
+           SvnCommandName.revert.equals(command.getName()) ||
+           SvnCommandName.resolve.equals(command.getName()) ||
+           SvnCommandName.upgrade.equals(command.getName()) ||
+           SvnCommandName.changelist.equals(command.getName()) ||
+           // currently "svn lock" is only applied to local files
+           SvnCommandName.lock.equals(command.getName()) ||
+           // currently "svn unlock" is only applied to local files
+           SvnCommandName.unlock.equals(command.getName()) ||
+           command.isLocalInfo() || command.isLocalStatus() || command.isLocalProperty() || command.isLocalCat();
+  }
+
+  private static boolean isForSshRepository(@NotNull Command command) {
+    SVNURL url = command.getRepositoryUrl();
+
+    return url != null && StringUtil.equalsIgnoreCase(SvnAuthenticationManager.SVN_SSH, url.getProtocol());
   }
 
   @NotNull

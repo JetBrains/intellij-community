@@ -1,6 +1,7 @@
 asm-commons.jar
 asm.jar
 asm4-all.jar
+asm-all.jar
 automaton.jar
 cglib-2.2.2.jar
 cli-parser-1.1.jar
@@ -57,7 +58,7 @@ resolver.jar
 rhino-js-1_7R4.jar
 sanselan-0.98-snapshot.jar
 serviceMessages.jar
-snappy-java-1.0.5.jar
+snappy-in-java-0.3.jar
 swingx-core-1.6.2.jar
 trove4j.jar
 velocity.jar

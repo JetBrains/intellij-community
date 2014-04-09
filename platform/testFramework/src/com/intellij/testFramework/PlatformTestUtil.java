@@ -87,7 +87,6 @@ import static org.junit.Assert.assertNotNull;
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class PlatformTestUtil {
   public static final boolean COVERAGE_ENABLED_BUILD = "true".equals(System.getProperty("idea.coverage.enabled.build"));
-  public static final byte[] EMPTY_JAR_BYTES = {0x50, 0x4b, 0x05, 0x06, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,};
 
   private static final boolean SKIP_HEADLESS = GraphicsEnvironment.isHeadless();
   private static final boolean SKIP_SLOW = Boolean.getBoolean("skip.slow.tests.locally");
@@ -472,7 +471,7 @@ public class PlatformTestUtil {
     public void assertTiming() {
       assert expectedMs != 0 : "Must call .expect() before run test";
       if (COVERAGE_ENABLED_BUILD) return;
-      Timings.getStatistics(); // warmup, measure
+      Timings.getStatistics(); // warm-up, measure
 
       while (true) {
         attempts--;
@@ -748,7 +747,7 @@ public class PlatformTestUtil {
 
   public static void assertElementsEqual(final Element expected, final Element actual) throws IOException {
     if (!JDOMUtil.areElementsEqual(expected, actual)) {
-      junit.framework.Assert.assertEquals(printElement(expected), printElement(actual));
+      assertEquals(printElement(expected), printElement(actual));
     }
   }
 

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.service.impl;
 
+import org.jetbrains.jps.plugin.JpsPluginManager;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.util.*;
@@ -54,11 +55,7 @@ public class JpsServiceManagerImpl extends JpsServiceManager {
   public <T> Iterable<T> getExtensions(Class<T> extensionClass) {
     List<?> cached = myExtensions.get(extensionClass);
     if (cached == null) {
-      final ServiceLoader<T> loader = ServiceLoader.load(extensionClass, extensionClass.getClassLoader());
-      final List<T> extensions = new ArrayList<T>();
-      for (T t : loader) {
-        extensions.add(t);
-      }
+      final List<T> extensions = new ArrayList<T>(JpsPluginManager.getInstance().loadExtensions(extensionClass));
       cached = myExtensions.putIfAbsent(extensionClass, extensions);
       if (cached == null) {
         cached = extensions;

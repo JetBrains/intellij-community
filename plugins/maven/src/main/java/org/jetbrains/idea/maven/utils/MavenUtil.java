@@ -929,8 +929,11 @@ public class MavenUtil {
   }
 
   public static String getArtifactName(String packaging, Module module, boolean exploded) {
-    final String baseName = module.getName() + ":" + packaging;
-    return exploded ? baseName + " exploded" : baseName;
+    return module.getName() + ":" + packaging + (exploded ? " exploded" : "");
+  }
+
+  public static String getEjbClientArtifactName(Module module) {
+    return module.getName() + ":ejb-client";
   }
 
   public static String getIdeaVersionToPassToMavenProcess() {

@@ -33,15 +33,11 @@ import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.repo.HgConfig;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
-import org.zmlx.hg4idea.util.HgHistoryUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-/**
- * @author Nadya Zabrodina
- */
 public class HgLogProvider implements VcsLogProvider {
 
   private static final Logger LOG = Logger.getInstance(HgLogProvider.class);
@@ -50,6 +46,8 @@ public class HgLogProvider implements VcsLogProvider {
   @NotNull private final HgRepositoryManager myRepositoryManager;
   @NotNull private final VcsLogRefManager myRefSorter;
   @NotNull private final VcsLogObjectsFactory myVcsObjectsFactory;
+
+  private static final String RECENT_HEAD = "tip";
 
   public HgLogProvider(@NotNull Project project, @NotNull HgRepositoryManager repositoryManager, @NotNull VcsLogObjectsFactory factory) {
     myProject = project;
@@ -60,9 +58,10 @@ public class HgLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<? extends VcsFullCommitDetails> readFirstBlock(@NotNull VirtualFile root,
-                                                             boolean ordered, int commitCount) throws VcsException {
-    return HgHistoryUtil.history(myProject, root, commitCount, ordered ? Collections.<String>emptyList() : Arrays.asList("-r", "0:tip"));
+  public List<? extends VcsCommitMetadata> readFirstBlock(@NotNull VirtualFile root,
+                                                          @NotNull Requirements requirements) throws VcsException {
+    return HgHistoryUtil.loadMetadata(myProject, root, requirements.getCommitCount(),
+                                      requirements.isOrdered() ? Collections.<String>emptyList() : Arrays.asList("-r", "0:tip"));
   }
 
   @NotNull
@@ -88,6 +87,9 @@ public class HgLogProvider implements VcsLogProvider {
   @Override
   public Collection<VcsRef> readAllRefs(@NotNull VirtualFile root) throws VcsException {
     myRepositoryManager.waitUntilInitialized();
+    if (myProject.isDisposed()) {
+      return Collections.emptyList();
+    }
     HgRepository repository = myRepositoryManager.getRepositoryForRoot(root);
     if (repository == null) {
       LOG.error("Repository not found for root " + root);
@@ -117,7 +119,7 @@ public class HgLogProvider implements VcsLogProvider {
     }
     String currentRevision = repository.getCurrentRevision();
     if (currentRevision != null) { // null => fresh repository
-      refs.add(myVcsObjectsFactory.createRef(myVcsObjectsFactory.createHash(currentRevision), "tip", HgRefManager.HEAD, root));
+      refs.add(myVcsObjectsFactory.createRef(myVcsObjectsFactory.createHash(currentRevision), RECENT_HEAD, HgRefManager.HEAD, root));
     }
     for (HgNameWithHashInfo tagInfo : tags) {
       refs.add(myVcsObjectsFactory.createRef(tagInfo.getHash(), tagInfo.getName(), HgRefManager.TAG, root));
@@ -170,7 +172,7 @@ public class HgLogProvider implements VcsLogProvider {
 
       boolean atLeastOneBranchExists = false;
       for (String branchName : filterCollection.getBranchFilter().getBranchNames()) {
-        if (branchName.equals("tip") ||  branchExists(repository, branchName)) {
+        if (branchName.equals(RECENT_HEAD) || branchExists(repository, branchName)) {
           filterParameters.add(prepareParameter("branch", branchName));
           atLeastOneBranchExists = true;
         }
@@ -244,11 +246,6 @@ public class HgLogProvider implements VcsLogProvider {
   @Override
   public Collection<String> getContainingBranches(@NotNull VirtualFile root, @NotNull Hash commitHash) throws VcsException {
     return HgHistoryUtil.getDescendingHeadsOfBranches(myProject, root, commitHash);
-  }
-
-  @Override
-  public boolean supportsFastUnorderedCommits() {
-    return false;
   }
 
   private static String prepareParameter(String paramName, String value) {

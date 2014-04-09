@@ -80,7 +80,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   private final InvocationCache myInvocationCache;
   private volatile Converter myScalarConverter = null;
   private volatile SmartFMap<Method, Invocation> myAccessorInvocations = SmartFMap.emptyMap();
-  @Nullable protected final Stub myStub;
+  @Nullable protected Stub myStub;
 
   protected DomInvocationHandler(Type type, DomParentStrategy parentStrategy,
                                  @NotNull final EvaluatedXmlName tagName,
@@ -156,7 +156,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     if (other == getProxy()) return;
     assert other.getDomElementType().equals(myType) : "Can't copy from " + other.getDomElementType() + " to " + myType;
 
-    if (!DomUtil.hasXml(other)) {
+    if (other.getXmlElement() == null) {
       undefine();
       return;
     }
@@ -734,6 +734,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   protected final void setXmlElement(final XmlElement element) {
     refreshGenericInfo(element != null && !isAttribute());
+    myStub = null;
     myParentStrategy = element == null ? myParentStrategy.clearXmlElement() : myParentStrategy.setXmlElement(element);
   }
 

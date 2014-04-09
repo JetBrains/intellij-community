@@ -47,18 +47,9 @@ public class DiffOptionsForm implements SearchableConfigurable, Configurable.NoS
   private final ToolPath[] myTools = new ToolPath[3];
 
   public DiffOptionsForm() {
-    myEnableMerge.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        myMergeParameters.setEditable(myEnableMerge.isEnabled());
-        myMergeParameters.setEnabled(myEnableMerge.isEnabled());
-      }
-    });
     myTools[0] = new ToolPath(myEnableFolders, myFoldersTool, null, DiffManagerImpl.FOLDERS_TOOL, DiffManagerImpl.ENABLE_FOLDERS, null);
     myTools[1] = new ToolPath(myEnableFiles, myFilesTool, null, DiffManagerImpl.FILES_TOOL, DiffManagerImpl.ENABLE_FILES, null);
     myTools[2] = new ToolPath(myEnableMerge, myMergeTool, myMergeParameters, DiffManagerImpl.MERGE_TOOL, DiffManagerImpl.ENABLE_MERGE, DiffManagerImpl.MERGE_TOOL_PARAMETERS);
-    myMergeParameters.setEditable(myEnableMerge.isEnabled());
-    myMergeParameters.setEnabled(myEnableMerge.isEnabled());
   }
 
   public JComponent createComponent() {
@@ -134,6 +125,9 @@ public class DiffOptionsForm implements SearchableConfigurable, Configurable.NoS
 
     private void updateEnabledEffect() {
       UIUtil.setEnabled(myTextField, isEnabled(), true);
+      if (myParameters != null) {
+        UIUtil.setEnabled(myParameters, isEnabled(), true);
+      }
     }
 
     public boolean isModifier() {

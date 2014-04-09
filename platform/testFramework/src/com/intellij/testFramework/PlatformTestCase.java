@@ -268,7 +268,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     catch (Exception e) {
       base = " (" + e + " while getting base dir)";
     }
-    return project.toString() + (place != null ? place : "") + base;
+    return project + (place != null ? place : "") + base;
   }
 
   protected void runStartupActivities() {
@@ -402,7 +402,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
 
     try {
-      checkForSettingsDamage();
+      CompositeException damage = checkForSettingsDamage();
+      result.add(damage);
     }
     catch (Throwable e) {
       result.add(e);

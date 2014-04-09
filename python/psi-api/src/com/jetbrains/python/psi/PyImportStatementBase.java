@@ -17,6 +17,8 @@ package com.jetbrains.python.psi;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author yole
  */
@@ -26,4 +28,11 @@ public interface PyImportStatementBase extends PyStatement {
    */
   @NotNull
   PyImportElement[] getImportElements();
+
+  /**
+   * @return qualified names of imported elements regardless way they were imported.
+   * "from bar import foo" or "import bar.foo" or "from bar import foo as spam" are all "bar.foo"
+   */
+  @NotNull
+  List<String> getFullyQualifiedObjectNames();
 }

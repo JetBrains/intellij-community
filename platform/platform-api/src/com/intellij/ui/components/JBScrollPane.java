@@ -19,6 +19,8 @@ import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -30,34 +32,135 @@ import java.awt.event.MouseEvent;
 import java.lang.reflect.Method;
 
 public class JBScrollPane extends JScrollPane {
-
   private int myViewportBorderWidth = -1;
+  private JLayeredPane myLayeredPane;
 
   public JBScrollPane(int viewportWidth) {
+    init(false);
     myViewportBorderWidth = viewportWidth;
     updateViewportBorder();
   }
 
   public JBScrollPane() {
-    setupCorners();
+    init();
   }
 
   public JBScrollPane(Component view) {
     super(view);
-    setupCorners();
+    init();
   }
 
   public JBScrollPane(int vsbPolicy, int hsbPolicy) {
     super(vsbPolicy, hsbPolicy);
-    setupCorners();
+    init();
   }
 
   public JBScrollPane(Component view, int vsbPolicy, int hsbPolicy) {
     super(view, vsbPolicy, hsbPolicy);
-    setupCorners();
+    init();
   }
 
-  public void setupCorners() {
+  public static JScrollPane findScrollPane(Component c) {
+    if (c == null) return null;
+
+    if (!(c instanceof JViewport)) {
+      // if asked for a viewport child, take a viewport.
+      // If not (e.g asked for a scrollbar), go straight to JLayeredPane  
+      Container vp = c.getParent();
+      if (vp instanceof JViewport) c = vp;
+    }
+    
+    c = c.getParent();
+    if (c instanceof JLayeredPane) {
+      c = c.getParent();
+    }
+    if (!(c instanceof JBScrollPane)) return null;
+
+    return (JBScrollPane)c;
+  }
+
+  @Override
+  public void setVerticalScrollBar(JScrollBar c) {
+    JScrollBar old = getVerticalScrollBar();
+    super.setVerticalScrollBar(c);
+    transferToLayeredPane(old, c, ScrollPaneConstants.VERTICAL_SCROLLBAR);
+  }
+
+  @Override
+  public void setHorizontalScrollBar(JScrollBar c) {
+    JScrollBar old = getHorizontalScrollBar();
+    super.setHorizontalScrollBar(c);
+    transferToLayeredPane(old, c, ScrollPaneConstants.HORIZONTAL_SCROLLBAR);
+  }
+
+  @Override
+  public void setColumnHeader(JViewport c) {
+    JViewport old = getColumnHeader();
+    super.setColumnHeader(c);
+    transferToLayeredPane(old, c, ScrollPaneConstants.COLUMN_HEADER);
+  }
+
+  @Override
+  public void setRowHeader(JViewport c) {
+    JViewport old = getRowHeader();
+    super.setRowHeader(c);
+    transferToLayeredPane(old, c, ScrollPaneConstants.ROW_HEADER);
+  }
+
+  @Override
+  public void setViewport(JViewport c) {
+    JViewport old = getViewport();
+    super.setViewport(c);
+    transferToLayeredPane(old, c, ScrollPaneConstants.VIEWPORT);
+  }
+
+  @Override
+  public void setCorner(String key, Component c) {
+    Component old = getCorner(key);
+    super.setCorner(key, c);
+    transferToLayeredPane(old, c, key);
+  }
+
+  private void transferToLayeredPane(Component old, Component c, String key) {
+    JLayeredPane pane = getLayoutPane();
+    LayoutManager layout = getLayout();
+
+    if (old != null && old != c) {
+      pane.remove(old);
+      layout.removeLayoutComponent(old);
+    }
+    
+    if (c != null) {
+      if (ScrollPaneConstants.VERTICAL_SCROLLBAR.equals(key) || ScrollPaneConstants.HORIZONTAL_SCROLLBAR.equals(key)) {
+        pane.setLayer(c, JLayeredPane.PALETTE_LAYER);
+      }
+      pane.add(c);
+      layout.addLayoutComponent(key, c);
+    }
+  }
+
+  @NotNull
+  private JLayeredPane getLayoutPane() {
+    if (myLayeredPane == null) {
+      myLayeredPane = new JLayeredPane();
+    }
+    return myLayeredPane;
+  }
+
+  private void init() {
+    init(true);
+  }
+  
+  private void init(boolean setupCorners) {
+    add(getLayoutPane());
+    setLayout(new ScrollPaneLayout());
+ 
+    if (setupCorners) {
+      setupCorners();
+    }
+  }
+
+  protected void setupCorners() {
     setBorder(IdeBorderFactory.createBorder());
     setCorner(UPPER_RIGHT_CORNER, new Corner(UPPER_RIGHT_CORNER));
     setCorner(UPPER_LEFT_CORNER, new Corner(UPPER_LEFT_CORNER));
@@ -92,6 +195,89 @@ public class JBScrollPane extends JScrollPane {
   @Override
   protected JViewport createViewport() {
     return new JBViewport();
+  }
+
+  @SuppressWarnings("deprecation")
+  @Override
+  public void layout() {
+    super.layout();
+  
+    LayoutManager layout = getLayout();
+    if (layout instanceof ScrollPaneLayout && myLayeredPane != null) {
+      relayoutScrollbars(this, (ScrollPaneLayout)layout, myLayeredPane);
+    }
+  }
+
+  private static void relayoutScrollbars(@NotNull JComponent container,
+                                         @NotNull ScrollPaneLayout layout,
+                                         @NotNull JLayeredPane layeredPane) {
+    JViewport viewport = layout.getViewport();
+    if (viewport == null) return;
+    
+    JScrollBar vsb = layout.getVerticalScrollBar();
+    JScrollBar hsb = layout.getHorizontalScrollBar();
+    JViewport colHead = layout.getColumnHeader();
+    JViewport rowHead = layout.getRowHeader();
+
+    Rectangle viewportBounds = viewport.getBounds();
+
+    boolean extendsViewportUnderVScrollbar = vsb != null && shouldExtendViewportUnderScrollbar(vsb);
+    boolean extendsViewportUnderHScrollbar = hsb != null && shouldExtendViewportUnderScrollbar(hsb);
+    
+    if (extendsViewportUnderVScrollbar) {
+      viewportBounds.x = Math.min(viewportBounds.x, vsb.getX());
+      viewportBounds.width = Math.max(viewportBounds.width, vsb.getX() + vsb.getWidth());
+    }
+    if (extendsViewportUnderHScrollbar) {
+      viewportBounds.y = Math.min(viewportBounds.y, hsb.getY());
+      viewportBounds.height = Math.max(viewportBounds.height, hsb.getY() + hsb.getHeight());
+    }
+ 
+    if (extendsViewportUnderVScrollbar) {
+      if (hsb != null) {
+        Rectangle scrollbarBounds = hsb.getBounds();
+        scrollbarBounds.width = viewportBounds.width - scrollbarBounds.x;
+        hsb.setBounds(scrollbarBounds);
+      }
+      if (colHead != null) {
+        Rectangle headerBounds = colHead.getBounds();
+        headerBounds.width = viewportBounds.width - headerBounds.x;
+        colHead.setBounds(headerBounds);
+      }
+      hideFromView(layout.getCorner(UPPER_RIGHT_CORNER));
+      hideFromView(layout.getCorner(LOWER_RIGHT_CORNER));
+    }
+    if (extendsViewportUnderHScrollbar) {
+      if (vsb != null) {
+        Rectangle scrollbarBounds = vsb.getBounds();
+        scrollbarBounds.height = viewportBounds.height - scrollbarBounds.y;
+        vsb.setBounds(scrollbarBounds);
+      }
+      if (rowHead != null) {
+        Rectangle headerBounds = rowHead.getBounds();
+        headerBounds.height = viewportBounds.height - headerBounds.y;
+        rowHead.setBounds(headerBounds);
+      }
+
+      hideFromView(layout.getCorner(LOWER_LEFT_CORNER));
+      hideFromView(layout.getCorner(LOWER_RIGHT_CORNER));
+    }
+
+    viewport.setBounds(viewportBounds);
+    Insets insets = container.getInsets();
+    if (insets == null) insets = new Insets(0, 0, 0, 0);
+    layeredPane.setBounds(0, 0, container.getWidth() - insets.right, container.getHeight() - insets.bottom);
+  }
+
+  private static boolean shouldExtendViewportUnderScrollbar(@Nullable JScrollBar scrollbar) {
+    if (scrollbar == null || !scrollbar.isVisible()) return false;
+    ScrollBarUI vsbUI = scrollbar.getUI();
+    return vsbUI instanceof ButtonlessScrollBarUI && !((ButtonlessScrollBarUI)vsbUI).alwaysShowTrack();
+  }
+
+  private static void hideFromView(Component component) {
+    if (component == null) return;
+    component.setBounds(-10, -10, 1, 1);
   }
 
   private class MyScrollBar extends ScrollBar implements IdeGlassPane.TopComponent {

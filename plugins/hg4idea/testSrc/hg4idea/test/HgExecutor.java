@@ -54,7 +54,7 @@ public class HgExecutor extends Executor {
     File bin = new File(pluginRoot, FileUtil.toSystemDependentName("testData/bin"));
     File exec = new File(bin, SystemInfo.isWindows ? winExec : unixExec);
     if (exec.exists() && exec.canExecute()) {
-      log("Using " + programName + " from test data");
+      debug("Using " + programName + " from test data");
       return exec.getPath();
     }
     return null;
@@ -63,8 +63,8 @@ public class HgExecutor extends Executor {
   public static String hg(String command) {
     List<String> split = splitCommandInParameters(command);
     split.add(0, HG_EXECUTABLE);
-    log("hg " + command);
-    return run(split);
+    debug("hg " + command);
+    return run(split, true);
   }
 
   public static void updateProject() {

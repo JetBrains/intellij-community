@@ -95,8 +95,7 @@ public interface Filter {
    *     separator at the end.
    *
    * @param entireLength
-   *     The length of the entire text including the line passed
-   *     for filteration.
+   *     The length of the entire text including the line passed for filtration.
    *
    * @return
    *    <tt>null</tt>, if there was no match, otherwise, an instance of {@link Result}

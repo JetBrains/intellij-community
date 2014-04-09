@@ -68,12 +68,22 @@ final class ConfigurableWebBrowser extends WebBrowser {
       else if (checkNameAndPath("Opera")) {
         return AllIcons.Xml.Browsers.Opera16;
       }
+      else if (checkNameAndPath("node-webkit") || checkNameAndPath("nw")) {
+        return AllIcons.Xml.Browsers.Node_webkit16;
+      }
     }
     return family.getIcon();
   }
 
   private boolean checkNameAndPath(@NotNull String what) {
-    return StringUtil.containsIgnoreCase(name, what) || path != null && StringUtil.containsIgnoreCase(path, what);
+    if (StringUtil.containsIgnoreCase(name, what)) {
+      return true;
+    }
+    if (path != null) {
+      int index = path.lastIndexOf('/');
+      return index > 0 ? path.indexOf(what, index + 1) != -1 : path.contains(what);
+    }
+    return false;
   }
 
   @Nullable

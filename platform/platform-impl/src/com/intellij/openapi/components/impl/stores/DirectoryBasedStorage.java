@@ -276,7 +276,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
       assert mySession == this;
 
       if (!myDir.exists()) return getAllStorageFiles();
-      assert myDir.isDirectory();
+      assert myDir.isDirectory() : myDir.getPath();
 
       final List<IFile> filesToSave = new ArrayList<IFile>();
 

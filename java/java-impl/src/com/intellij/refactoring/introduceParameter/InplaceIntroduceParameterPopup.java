@@ -32,6 +32,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -128,7 +129,8 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
 
   @Override
   protected PsiElement checkLocalScope() {
-    return myMethod;
+    final PsiVariable variable = getLocalVariable();
+    return variable == null ? myMethod : PsiTreeUtil.getParentOfType(variable, PsiMethod.class);
   }
 
   @Override

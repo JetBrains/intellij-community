@@ -396,6 +396,7 @@ public class PyStubsTest extends PyTestCase {
     DumbServiceImpl.getInstance(project).setDumb(true);
     try {
       assertEquals(1, ((PyFile) fooPyFile).getTopLevelClasses().size());
+      assertFalse(fooPyFile.isContentsLoaded());
     }
     finally {
       DumbServiceImpl.getInstance(project).setDumb(false);

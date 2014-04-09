@@ -74,7 +74,12 @@ public class EditorHighlighterFactoryImpl extends EditorHighlighterFactory {
           return editorHighlighter;
         }
       }
-      return FileTypeEditorHighlighterProviders.INSTANCE.forFileType(fileType).getEditorHighlighter(project, fileType, vFile, settings);
+      try {
+        return FileTypeEditorHighlighterProviders.INSTANCE.forFileType(fileType).getEditorHighlighter(project, fileType, vFile, settings);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
 
     SyntaxHighlighter highlighter = null;

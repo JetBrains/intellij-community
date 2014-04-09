@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public class VariablesProcessor
 
   /** Always return true since we wanna get all vars in scope */
   @Override
-  public boolean execute(@NotNull PsiElement pe, ResolveState state){
+  public boolean execute(@NotNull PsiElement pe, @NotNull ResolveState state){
     if(pe instanceof PsiVariable){
       final PsiVariable pvar = (PsiVariable)pe;
       final String pvar_name = pvar.getName();
@@ -81,7 +81,7 @@ public class VariablesProcessor
   }
 
   @Override
-  public final void handleEvent(Event event, Object associated){
+  public final void handleEvent(@NotNull Event event, Object associated){
     if(event == JavaScopeProcessorEvent.START_STATIC)
       myStaticScopeFlag = true;
   }

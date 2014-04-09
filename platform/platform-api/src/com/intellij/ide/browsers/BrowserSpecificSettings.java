@@ -30,6 +30,7 @@ public abstract class BrowserSpecificSettings implements Cloneable {
     return Collections.emptyList();
   }
 
+  @Override
   public BrowserSpecificSettings clone() {
     try {
       return (BrowserSpecificSettings)super.clone();

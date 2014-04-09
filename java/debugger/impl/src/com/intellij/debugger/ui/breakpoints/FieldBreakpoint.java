@@ -148,11 +148,11 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
     }
   }
 
-  @Override
-  public boolean moveTo(@NotNull SourcePosition position) {
-    final PsiField field = PositionUtil.getPsiElementAt(getProject(), PsiField.class, position);
-    return field != null && super.moveTo(SourcePosition.createFromElement(field));
-  }
+  //@Override
+  //public boolean moveTo(@NotNull SourcePosition position) {
+  //  final PsiField field = PositionUtil.getPsiElementAt(getProject(), PsiField.class, position);
+  //  return field != null && super.moveTo(SourcePosition.createFromElement(field));
+  //}
 
   @Override
   protected ObjectReference getThisObject(SuspendContextImpl context, LocatableEvent event) throws EvaluateException {
@@ -218,7 +218,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
       locationFileName = location.sourceName();
     }
     catch (AbsentInformationException e) {
-      locationFileName = getSourcePosition().getFile().getName();
+      locationFileName = getFileName();
     }
     final int locationLine = location.lineNumber();
 
@@ -291,10 +291,10 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
     return (FieldBreakpoint)breakpoint.init();
   }
 
-  @Override
-  public boolean canMoveTo(final SourcePosition position) {
-    return super.canMoveTo(position) && PositionUtil.getPsiElementAt(getProject(), PsiField.class, position) != null;
-  }
+  //@Override
+  //public boolean canMoveTo(final SourcePosition position) {
+  //  return super.canMoveTo(position) && PositionUtil.getPsiElementAt(getProject(), PsiField.class, position) != null;
+  //}
 
   @Override
   public boolean isValid() {

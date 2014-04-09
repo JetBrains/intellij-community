@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,22 +39,22 @@ public interface AppLifecycleListener {
   void appClosing();
 
   abstract class Adapter implements AppLifecycleListener {
-    public void appFrameCreated(final String[] commandLineArgs, @NotNull final Ref<Boolean> willOpenProject) {
-    }
+    @Override
+    public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) { }
 
-    public void appStarting(final Project projectFromCommandLine) {
-    }
+    @Override
+    public void appStarting(Project projectFromCommandLine) { }
 
-    public void projectFrameClosed() {
-    }
+    @Override
+    public void projectFrameClosed() { }
 
-    public void projectOpenFailed() {
-    }
+    @Override
+    public void projectOpenFailed() { }
 
-    public void welcomeScreenDisplayed() {
-    }
+    @Override
+    public void welcomeScreenDisplayed() { }
 
-    public void appClosing() {
-    }
+    @Override
+    public void appClosing() { }
   }
 }

@@ -252,27 +252,6 @@ public class RefactoringUtil {
     }
   }
 
-  public static PsiReturnStatement[] findReturnStatements(PsiMethod method) {
-    ArrayList<PsiReturnStatement> vector = new ArrayList<PsiReturnStatement>();
-    PsiCodeBlock body = method.getBody();
-    if (body != null) {
-      addReturnStatements(vector, body);
-    }
-    return vector.toArray(new PsiReturnStatement[vector.size()]);
-  }
-
-  private static void addReturnStatements(ArrayList<PsiReturnStatement> vector, PsiElement element) {
-    if (element instanceof PsiReturnStatement) {
-      vector.add((PsiReturnStatement)element);
-    }
-    else if (!(element instanceof PsiClass)) {
-      PsiElement[] children = element.getChildren();
-      for (PsiElement child : children) {
-        addReturnStatements(vector, child);
-      }
-    }
-  }
-
 
   public static PsiElement getParentStatement(PsiElement place, boolean skipScopingStatements) {
     PsiElement parent = place;
@@ -444,26 +423,7 @@ public class RefactoringUtil {
   }
 
   private static PsiType getTypeByExpression(PsiExpression expr, final PsiElementFactory factory) {
-    PsiType type = expr.getType();
-    if (type == null) {
-      if (expr instanceof PsiArrayInitializerExpression) {
-        PsiExpression[] initializers = ((PsiArrayInitializerExpression)expr).getInitializers();
-        if (initializers.length > 0) {
-          PsiType initType = getTypeByExpression(initializers[0]);
-          if (initType == null) return null;
-          return initType.createArrayType();
-        }
-      }
-
-      if (expr instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand(expr)) {
-        return getTypeByExpression(((PsiAssignmentExpression)expr.getParent()).getRExpression());
-      }
-      return null;
-    }
-    PsiClass refClass = PsiUtil.resolveClassInType(type);
-    if (refClass instanceof PsiAnonymousClass) {
-      type = ((PsiAnonymousClass)refClass).getBaseClassType();
-    }
+    PsiType type = RefactoringChangeUtil.getTypeByExpression(expr);
     if (PsiType.NULL.equals(type)) {
       ExpectedTypeInfo[] infos = ExpectedTypesProvider.getInstance(expr.getProject()).getExpectedTypes(expr, false);
       if (infos.length == 1) {
@@ -474,7 +434,7 @@ public class RefactoringUtil {
       }
     }
 
-    return GenericsUtil.getVariableTypeByExpressionType(type);
+    return type;
   }
 
   public static boolean isAssignmentLHS(PsiElement element) {

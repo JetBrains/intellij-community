@@ -34,7 +34,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -54,6 +53,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
@@ -124,16 +124,11 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   @Override
   protected void reload(PsiFile file) {
     super.reload(file);
-    int offset;
-    final SourcePosition position = getSourcePosition();
+    XSourcePosition position = myXBreakpoint.getSourcePosition();
     if (position != null) {
-      offset = position.getOffset();
+      int offset = position.getOffset();
+      myOwnerMethodName = findOwnerMethod(file, offset);
     }
-    else {
-      final RangeHighlighter highlighter = getHighlighter();
-      offset = highlighter != null? highlighter.getStartOffset() : -1;
-    }
-    myOwnerMethodName = findOwnerMethod(file, offset);
   }
 
   @Override
@@ -347,7 +342,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
 
   private String getDisplayInfoInternal(boolean showPackageInfo, int totalTextLength) {
     if(isValid()) {
-      final int lineNumber = getSourcePosition().getLine() + 1;
+      final int lineNumber = myXBreakpoint.getSourcePosition().getLine() + 1;
       String className = getClassName();
       final boolean hasClassInfo = className != null && className.length() > 0;
       final String methodName = getMethodName();
@@ -356,7 +351,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
       if (hasClassInfo || hasMethodInfo) {
         final StringBuilder info = StringBuilderSpinAllocator.alloc();
         try {
-          boolean isFile = getSourcePosition().getFile().getName().equals(className);
+          boolean isFile = myXBreakpoint.getSourcePosition().getFile().getName().equals(className);
           String packageName = null;
           if (hasClassInfo) {
             final int dotIndex = className.lastIndexOf(".");
@@ -425,7 +420,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
       sourceName = location.sourceName();
     }
     catch (AbsentInformationException e) {
-      sourceName = getSourcePosition().getFile().getName();
+      sourceName = getFileName();
     }
 
     final boolean printFullTrace = Registry.is("debugger.breakpoint.message.full.trace");

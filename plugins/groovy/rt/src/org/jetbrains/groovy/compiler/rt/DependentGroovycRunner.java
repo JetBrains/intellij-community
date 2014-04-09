@@ -29,8 +29,6 @@ import org.codehaus.groovy.tools.javac.JavaAwareCompilationUnit;
 
 import java.io.*;
 import java.lang.reflect.*;
-import java.net.URI;
-import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.*;
@@ -39,6 +37,9 @@ import java.util.*;
  * @author peter
  */
 public class DependentGroovycRunner {
+  public static final String TEMP_RESOURCE_SUFFIX = "___" + new Random().nextInt() + "_neverHappen";
+  public static final String[] RESOURCES_TO_MASK = {"META-INF/services/org.codehaus.groovy.transform.ASTTransformation", "META-INF/services/org.codehaus.groovy.runtime.ExtensionModule"};
+
   public static boolean runGroovyc(boolean forStubs, String argsPath) {
     File argsFile = new File(argsPath);
     final CompilerConfiguration config = new CompilerConfiguration();
@@ -51,8 +52,8 @@ public class DependentGroovycRunner {
     final List<File> srcFiles = new ArrayList<File>();
     final Map<String, File> class2File = new HashMap<String, File>();
 
-    final String[] finalOutput = new String[1];
-    fillFromArgsFile(argsFile, config, patchers, compilerMessages, srcFiles, class2File, finalOutput);
+    final String[] finalOutputRef = new String[1];
+    fillFromArgsFile(argsFile, config, patchers, compilerMessages, srcFiles, class2File, finalOutputRef);
     if (srcFiles.isEmpty()) return true;
 
     if (forStubs) {
@@ -63,23 +64,32 @@ public class DependentGroovycRunner {
     }
 
     System.out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Groovyc: loading sources...");
-    final AstAwareResourceLoader resourceLoader = new AstAwareResourceLoader(class2File);
-    final CompilationUnit unit = createCompilationUnit(forStubs, config, finalOutput[0], buildClassLoaderFor(config, resourceLoader));
-    unit.addPhaseOperation(new CompilationUnit.SourceUnitOperation() {
-      public void call(SourceUnit source) throws CompilationFailedException {
-        File file = new File(source.getName());
-        for (ClassNode aClass : source.getAST().getClasses()) {
-          resourceLoader.myClass2File.put(aClass.getName(), file);
+    String[] finalOutputs = finalOutputRef[0].split(File.pathSeparator);
+    renameResources(finalOutputs, "", TEMP_RESOURCE_SUFFIX);
+
+    final List<GroovyCompilerWrapper.OutputItem> compiledFiles;
+    try {
+      final AstAwareResourceLoader resourceLoader = new AstAwareResourceLoader(class2File);
+      final CompilationUnit unit = createCompilationUnit(forStubs, config, buildClassLoaderFor(config, resourceLoader));
+      unit.addPhaseOperation(new CompilationUnit.SourceUnitOperation() {
+        public void call(SourceUnit source) throws CompilationFailedException {
+          File file = new File(source.getName());
+          for (ClassNode aClass : source.getAST().getClasses()) {
+            resourceLoader.myClass2File.put(aClass.getName(), file);
+          }
         }
-      }
-    }, Phases.CONVERSION);
+      }, Phases.CONVERSION);
 
-    addSources(forStubs, srcFiles, unit);
-    runPatchers(patchers, compilerMessages, unit, resourceLoader, srcFiles);
+      addSources(forStubs, srcFiles, unit);
+      runPatchers(patchers, compilerMessages, unit, resourceLoader, srcFiles);
 
-    System.out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Groovyc: compiling...");
-    final List<GroovyCompilerWrapper.OutputItem> compiledFiles = new GroovyCompilerWrapper(compilerMessages, forStubs).compile(unit);
-    System.out.println(GroovyRtConstants.CLEAR_PRESENTABLE);
+      System.out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Groovyc: compiling...");
+      compiledFiles = new GroovyCompilerWrapper(compilerMessages, forStubs).compile(unit);
+    }
+    finally {
+      renameResources(finalOutputs, TEMP_RESOURCE_SUFFIX, "");
+      System.out.println(GroovyRtConstants.CLEAR_PRESENTABLE);
+    }
 
     System.out.println();
     reportCompiledItems(compiledFiles);
@@ -103,8 +113,19 @@ public class DependentGroovycRunner {
     return false;
   }
 
+  private static void renameResources(String[] finalOutputs, String removeSuffix, String addSuffix) {
+    for (String output : finalOutputs) {
+      for (String res : RESOURCES_TO_MASK) {
+        File file = new File(output, res + removeSuffix);
+        if (file.exists()) {
+          file.renameTo(new File(output, res + addSuffix));
+        }
+      }
+    }
+  }
+
   private static String fillFromArgsFile(File argsFile, CompilerConfiguration compilerConfiguration, List<CompilationUnitPatcher> patchers, List<CompilerMessage> compilerMessages,
-                                         List<File> srcFiles, Map<String, File> class2File, String[] finalOutput) {
+                                         List<File> srcFiles, Map<String, File> class2File, String[] finalOutputs) {
     String moduleClasspath = null;
 
     BufferedReader reader = null;
@@ -157,7 +178,7 @@ public class DependentGroovycRunner {
           compilerConfiguration.setTargetDirectory(reader.readLine());
         }
         else if (line.startsWith(GroovyRtConstants.FINAL_OUTPUTPATH)) {
-          finalOutput[0] = reader.readLine();
+          finalOutputs[0] = reader.readLine();
         }
 
         line = reader.readLine();
@@ -256,30 +277,9 @@ public class DependentGroovycRunner {
 
   private static CompilationUnit createCompilationUnit(final boolean forStubs,
                                                        final CompilerConfiguration config,
-                                                       final String finalOutput, final GroovyClassLoader classLoader) {
+                                                       final GroovyClassLoader classLoader) {
 
-    final GroovyClassLoader transformLoader = new GroovyClassLoader(classLoader) {
-      public Enumeration<URL> getResources(String name) throws IOException {
-        if (name.endsWith("org.codehaus.groovy.transform.ASTTransformation")) {
-          final Enumeration<URL> resources = super.getResources(name);
-          final ArrayList<URL> list = Collections.list(resources);
-          for (Iterator iterator = list.iterator(); iterator.hasNext();) {
-            final URL url = (URL)iterator.next();
-            try {
-              final String file = new File(new URI(url.toString())).getCanonicalPath();
-              if (file.startsWith(finalOutput) || file.startsWith("/" + finalOutput)) {
-                iterator.remove();
-              }
-            }
-            catch (Exception ignored) {
-              System.out.println("Invalid URI syntax: " + url.toString());
-            }
-          }
-          return Collections.enumeration(list);
-        }
-        return super.getResources(name);
-      }
-    };
+    final GroovyClassLoader transformLoader = new GroovyClassLoader(classLoader);
 
     try {
       if (forStubs) {

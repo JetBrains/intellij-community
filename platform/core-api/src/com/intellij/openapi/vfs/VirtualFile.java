@@ -742,4 +742,9 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public void setDetectedLineSeparator(@Nullable String separator) {
     putUserData(DETECTED_LINE_SEPARATOR_KEY, separator);
   }
+
+  @NotNull
+  public CharSequence getNameSequence() {
+    return getName();
+  }
 }

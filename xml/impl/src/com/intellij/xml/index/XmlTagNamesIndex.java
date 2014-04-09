@@ -54,7 +54,7 @@ public class XmlTagNamesIndex extends XmlIndex<Void> {
     return new DataIndexer<String, Void, FileContent>() {
       @Override
       @NotNull
-      public Map<String, Void> map(final FileContent inputData) {
+      public Map<String, Void> map(@NotNull final FileContent inputData) {
         final Collection<String> tags = XsdTagNameBuilder.computeTagNames(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()));
         if (tags != null && !tags.isEmpty()) {
           final HashMap<String, Void> map = new HashMap<String, Void>(tags.size());

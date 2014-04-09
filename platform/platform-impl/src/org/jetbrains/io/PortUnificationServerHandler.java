@@ -104,7 +104,7 @@ class PortUnificationServerHandler extends Decoder {
                          new PortUnificationServerHandler(delegatingHttpRequestHandler, detectSsl, false));
       }
       else if (isHttp(magic1, magic2)) {
-        NettyUtil.initHttpHandlers(pipeline);
+        NettyUtil.addHttpServerCodec(pipeline);
         pipeline.addLast(delegatingHttpRequestHandler);
         if (BuiltInServer.LOG.isDebugEnabled()) {
           pipeline.addLast(new ChannelHandlerAdapter() {

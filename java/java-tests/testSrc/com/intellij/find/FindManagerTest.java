@@ -28,7 +28,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.io.FileUtil;
@@ -302,8 +302,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     }.execute().getResultObject();
     
     assertNull(FileDocumentManager.getInstance().getCachedDocument(custom));
-    assertEquals(FileTypes.UNKNOWN, custom.getFileType());
-    assertFalse(FileTypeManagerImpl.isFileTypeDetectedFromContent(custom));
+    assertEquals(PlainTextFileType.INSTANCE, custom.getFileType());
 
     FindModel findModel = new FindModel();
     findModel.setWholeWordsOnly(true);
@@ -318,7 +317,6 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     // and we should get the same with text loaded
     assertNotNull(FileDocumentManager.getInstance().getDocument(custom));
     assertEquals(FileTypes.PLAIN_TEXT, custom.getFileType());
-    assertTrue(FileTypeManagerImpl.isFileTypeDetectedFromContent(custom));
 
     assertSize(2, findUsages(findModel));
   }
@@ -532,6 +530,22 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
       FindModel findModel = FindManagerTestUtils.configureFindModel("foo");
       findModel.setWholeWordsOnly(true);
       findModel.setCustomScope(new LocalSearchScope(PsiManager.getInstance(myProject).findFile(file)));
+      assertSize(2, findUsages(findModel));
+    }
+    finally {
+      tempDirFixture.tearDown();
+    }
+  }
+
+  public void testFindInDirectoryOutsideProject() throws Exception {
+    final TempDirTestFixture tempDirFixture = new TempDirTestFixtureImpl();
+    tempDirFixture.setUp();
+    try {
+      tempDirFixture.createFile("a.txt", "foo bar foo");
+      FindModel findModel = FindManagerTestUtils.configureFindModel("foo");
+      findModel.setWholeWordsOnly(true);
+      findModel.setProjectScope(false);
+      findModel.setDirectoryName(tempDirFixture.getFile("").getPath());
       assertSize(2, findUsages(findModel));
     }
     finally {

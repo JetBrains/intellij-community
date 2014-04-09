@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
@@ -34,8 +35,7 @@ import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
 
-public class CachedNumberConstructorCallInspection
-  extends BaseInspection {
+public class CachedNumberConstructorCallInspection extends BaseInspection {
 
   private static final Set<String> cachedNumberTypes = new HashSet<String>();
 
@@ -78,15 +78,13 @@ public class CachedNumberConstructorCallInspection
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     final PsiNewExpression expression = (PsiNewExpression)infos[0];
-    final PsiJavaCodeReferenceElement classReference =
-      expression.getClassReference();
+    final PsiJavaCodeReferenceElement classReference = expression.getClassReference();
     assert classReference != null;
     final String className = classReference.getText();
     return new CachedNumberConstructorCallFix(className);
   }
 
-  private static class CachedNumberConstructorCallFix
-    extends InspectionGadgetsFix {
+  private static class CachedNumberConstructorCallFix extends InspectionGadgetsFix {
 
     private final String className;
 
@@ -110,8 +108,8 @@ public class CachedNumberConstructorCallInspection
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
-      final PsiNewExpression expression =
-        (PsiNewExpression)descriptor.getPsiElement();
+      final PsiNewExpression expression = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiNewExpression.class, false);
+      assert expression != null;
       final PsiExpressionList argList = expression.getArgumentList();
       assert argList != null;
       final PsiExpression[] args = argList.getExpressions();
@@ -121,8 +119,7 @@ public class CachedNumberConstructorCallInspection
     }
   }
 
-  private static class LongConstructorVisitor
-    extends BaseInspectionVisitor {
+  private static class LongConstructorVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitNewExpression(
@@ -140,8 +137,7 @@ public class CachedNumberConstructorCallInspection
         return;
       }
       final PsiClass aClass = ClassUtils.getContainingClass(expression);
-      if (aClass != null &&
-          cachedNumberTypes.contains(aClass.getQualifiedName())) {
+      if (aClass != null && cachedNumberTypes.contains(aClass.getQualifiedName())) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
@@ -154,8 +150,7 @@ public class CachedNumberConstructorCallInspection
       }
       final PsiExpression argument = arguments[0];
       final PsiType argumentType = argument.getType();
-      if (argumentType == null ||
-          (ignoreStringArguments && argumentType.equalsToText(CommonClassNames.JAVA_LANG_STRING))) {
+      if (argumentType == null || (ignoreStringArguments && argumentType.equalsToText(CommonClassNames.JAVA_LANG_STRING))) {
         return;
       }
       registerNewExpressionError(expression, expression);

@@ -17,6 +17,7 @@
 package com.intellij.vcs.log.newgraph.impl;
 
 import com.intellij.vcs.log.GraphCommit;
+import com.intellij.vcs.log.facade.graph.permanent.PermanentGraphBuilder;
 import com.intellij.vcs.log.newgraph.AbstractTestWithTextFile;
 import com.intellij.vcs.log.newgraph.GraphFlags;
 import com.intellij.vcs.log.newgraph.PermanentGraph;
@@ -54,8 +55,7 @@ public class ContainingBranchesTest extends AbstractTestWithTextFile {
     int i = in.indexOf(SEPARATOR);
     List<GraphCommit> commits = SimpleCommitListParser.parseCommitList(in.substring(0, i));
 
-    GraphFlags flags = new GraphFlags(commits.size());
-    PermanentGraph graph = PermanentGraphBuilder.build(flags.getSimpleNodeFlags(), commits).first;
+    PermanentGraph graph = PermanentGraphBuilder.build(commits).first;
     ContainingBranchesGetter containingBranchesGetter = new ContainingBranchesGetter(graph,
                                                                                      parseBranchNodeIndex(in.substring(i + SEPARATOR.length())),
                                                                                      new DfsUtil(1000),

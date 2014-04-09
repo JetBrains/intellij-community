@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ public class IdeaTestApplication extends CommandLineApplication implements Dispo
     myDataContext = dataContext;
   }
 
+  @Override
   @Nullable
   public Object getData(String dataId) {
     return myDataContext == null ? null : myDataContext.getData(dataId);
@@ -50,6 +51,7 @@ public class IdeaTestApplication extends CommandLineApplication implements Dispo
       PluginManagerCore.getPlugins();
       final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
       new WriteAction() {
+        @Override
         protected void run(@NotNull Result result) throws Throwable {
           app.load(configPath);
         }

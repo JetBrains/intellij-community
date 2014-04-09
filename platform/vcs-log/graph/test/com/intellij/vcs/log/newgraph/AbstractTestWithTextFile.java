@@ -16,6 +16,7 @@
 
 package com.intellij.vcs.log.newgraph;
 
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 
 import java.io.File;
@@ -28,13 +29,14 @@ public abstract class AbstractTestWithTextFile {
 
   protected final String myDirectory;
 
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   protected AbstractTestWithTextFile(String directory) {
-    this.myDirectory = BASE_DIRECTORY + directory;
+    this.myDirectory = PathManagerEx.findFileUnderCommunityHome(BASE_DIRECTORY + directory).getPath();
   }
 
   protected void doTest(String testName) throws IOException {
-    String in = FileUtil.loadFile(new File(myDirectory + testName + IN_POSTFIX), true);
-    String out = FileUtil.loadFile(new File(myDirectory + testName + OUT_POSTFIX), true);
+    String in = FileUtil.loadFile(new File(myDirectory, testName + IN_POSTFIX), true);
+    String out = FileUtil.loadFile(new File(myDirectory, testName + OUT_POSTFIX), true);
     runTest(in, out);
   }
 

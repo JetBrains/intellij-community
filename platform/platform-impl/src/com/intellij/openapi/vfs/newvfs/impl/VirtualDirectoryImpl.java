@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,13 +60,15 @@ import java.util.*;
  */
 public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl");
+
   public static boolean CHECK = ApplicationManager.getApplication().isUnitTestMode();
 
-  static final VirtualDirectoryImpl NULL_VIRTUAL_FILE = new VirtualDirectoryImpl(FileNameCache.storeName("*?;%NULL"), null, LocalFileSystem.getInstance(), -42, 0) {
-    public String toString() {
-      return "NULL";
-    }
-  };
+  static final VirtualDirectoryImpl NULL_VIRTUAL_FILE =
+    new VirtualDirectoryImpl(FileNameCache.storeName("*?;%NULL"), null, LocalFileSystem.getInstance(), -42, 0) {
+      public String toString() {
+        return "NULL";
+      }
+    };
 
   private final NewVirtualFileSystem myFS;
 
@@ -143,7 +145,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   private static class AdoptedChild extends VirtualFileImpl {
     private final String myName;
-    
+
     private AdoptedChild(String name) {
       super(-1, NULL_VIRTUAL_FILE, -42, -1);
       myName = name;
@@ -151,7 +153,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     @NotNull
     @Override
-    public String getName() {
+    public CharSequence getNameSequence() {
       return myName;
     }
 
@@ -161,7 +163,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
 
     @Override
-    public int compareNameTo(@NotNull String name, boolean ignoreCase) {
+    public int compareNameTo(@NotNull CharSequence name, boolean ignoreCase) {
       return compareNames(myName, name, ignoreCase);
     }
 
@@ -215,6 +217,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       if (name.isEmpty()) return null;
     }
 
+    //noinspection SynchronizeOnThis
     synchronized (this) {
       // maybe another doFindChild() sneaked in the middle
       VirtualFileSystemEntry[] array = myChildren;
@@ -232,7 +235,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       if (id <= 0) {
         return null;
       }
-      VirtualFileSystemEntry child = createChild(FileNameCache.storeName(name), id, delegate); 
+      VirtualFileSystemEntry child = createChild(FileNameCache.storeName(name), id, delegate);
 
       VirtualFileSystemEntry[] after = myChildren;
       if (after != array)  {
@@ -273,7 +276,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   public VirtualFileSystemEntry createChild(String name, int id, @NotNull NewVirtualFileSystem delegate) {
     return createChild(FileNameCache.storeName(name), id, delegate);
   }
-  
+
   @NotNull
   private VirtualFileSystemEntry createChild(int nameId, int id, @NotNull NewVirtualFileSystem delegate) {
     VirtualFileSystemEntry child;
@@ -284,8 +287,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
     else {
       child = new VirtualFileImpl(nameId, this, id, attributes);
-      //noinspection TestOnlyProblems
-      assertAccessInTests(child, delegate);
     }
 
     if (delegate.markNewFilesAsDirty()) {
@@ -296,10 +297,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
 
-  private static final boolean IS_UNDER_TEAMCITY = System.getProperty("bootstrap.testcases") != null;
   private static final boolean SHOULD_PERFORM_ACCESS_CHECK = System.getenv("NO_FS_ROOTS_ACCESS_CHECK") == null;
 
-  private static final Collection<String> ourAdditionalRoots = new THashSet<String>();
+  // we don't want test subclasses to accidentally remove allowed files, added by base classes
+  private static final List<String> ourAdditionalRoots = new ArrayList<String>();
 
   @TestOnly
   public static void allowRootAccess(@NotNull String... roots) {
@@ -318,19 +319,22 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   @TestOnly
   private static void assertAccessInTests(@NotNull VirtualFileSystemEntry child, @NotNull NewVirtualFileSystem delegate) {
     final Application application = ApplicationManager.getApplication();
-    if (IS_UNDER_TEAMCITY &&
-        SHOULD_PERFORM_ACCESS_CHECK &&
+    if (SHOULD_PERFORM_ACCESS_CHECK &&
         application.isUnitTestMode() &&
         application instanceof ApplicationImpl &&
         ((ApplicationImpl)application).isComponentsCreated()) {
       if (delegate != LocalFileSystem.getInstance() && delegate != JarFileSystem.getInstance()) {
         return;
       }
+
       // root' children are loaded always
-      if (child.getParent() == null || child.getParent().getParent() == null) return;
+      if (child.getParent() == null || child.getParent().getParent() == null) {
+        return;
+      }
 
       Set<String> allowed = allowedRoots();
-      boolean isUnder = allowed == null;
+      boolean isUnder = allowed == null || allowed.isEmpty();
+
       if (!isUnder) {
         String childPath = child.getPath();
         if (delegate == JarFileSystem.getInstance()) {
@@ -351,7 +355,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         }
       }
 
-      assert isUnder || allowed.isEmpty() : "File accessed outside allowed roots: " + child + ";\nAllowed roots: " + new ArrayList<String>(allowed);
+      assert isUnder : "File accessed outside allowed roots: " + child + ";\nAllowed roots: " + new ArrayList<String>(allowed);
     }
   }
 
@@ -374,7 +378,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
     catch (URISyntaxException ignored) { }
 
-    allowed.add(FileUtil.toSystemIndependentName(SystemProperties.getJavaHome()));
+    String javaHome = SystemProperties.getJavaHome();
+    allowed.add(FileUtil.toSystemIndependentName(javaHome));
+    if (SystemInfo.isMac && SystemInfo.isAppleJvm) {
+      // Apple SDK has jars in the folder _next_ to the java.home
+      allowed.add(FileUtil.toSystemIndependentName(new File(new File(javaHome).getParent(), "Classes").getPath()));
+    }
     allowed.add(FileUtil.toSystemIndependentName(new File(FileUtil.getTempDirectory()).getParent()));
     allowed.add(FileUtil.toSystemIndependentName(System.getProperty("java.io.tmpdir")));
     allowed.add(FileUtil.toSystemIndependentName(SystemProperties.getUserHome()));
@@ -548,8 +557,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       Arrays.sort(childrenIds, new java.util.Comparator<FSRecords.NameId>() {
         @Override
         public int compare(FSRecords.NameId o1, FSRecords.NameId o2) {
-          String name1 = o1.name;
-          String name2 = o2.name;
+          CharSequence name1 = o1.name;
+          CharSequence name2 = o2.name;
           int cmp = compareNames(name1, name2, ignoreCase);
           if (cmp == 0 && name1 != name2) {
             LOG.error(ourPersistence + " returned duplicate file names("+name1+","+name2+")" +
@@ -706,6 +715,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     appended[i] = file;
     System.arraycopy(array, i, appended, i + 1, array.length - i);
     myChildren = appended;
+
+    if (!file.isDirectory()) {
+      // access check should only be called when child is actually added to the parent, otherwise it may break VirtualFilePointers validity
+      //noinspection TestOnlyProblems
+      assertAccessInTests(file, myFS);
+    }
   }
 
   public synchronized void removeChild(@NotNull VirtualFile file) {

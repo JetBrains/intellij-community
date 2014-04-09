@@ -108,4 +108,9 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
     result = 31 * result + myS.hashCode();
     return result;
   }
+
+  @Override
+  public String toString() {
+    return myS.getPresentableText() + " -> " + myT.getPresentableText();
+  }
 }

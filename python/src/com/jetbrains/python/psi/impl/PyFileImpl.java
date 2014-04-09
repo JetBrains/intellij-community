@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ import java.util.*;
 
 public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   protected PyType myType;
-  private ThreadLocal<List<String>> myFindExportedNameStack = new ArrayListThreadLocal();
+  private final ThreadLocal<List<String>> myFindExportedNameStack = new ArrayListThreadLocal();
 
   //private volatile Boolean myAbsoluteImportEnabled;
   private final Map<FutureFeature, Boolean> myFutureFeatures;
@@ -251,6 +251,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     myModificationTracker = PsiModificationTracker.SERVICE.getInstance(getProject());
   }
 
+  @Override
   @NotNull
   public FileType getFileType() {
     return PythonFileType.INSTANCE;
@@ -260,14 +261,17 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return "PyFile:" + getName();
   }
 
+  @Override
   public PyFunction findTopLevelFunction(String name) {
     return findByName(name, getTopLevelFunctions());
   }
 
+  @Override
   public PyClass findTopLevelClass(String name) {
     return findByName(name, getTopLevelClasses());
   }
 
+  @Override
   public PyTargetExpression findTopLevelAttribute(String name) {
     return findByName(name, getTopLevelAttributes());
   }
@@ -282,6 +286,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return null;
   }
 
+  @Override
   public LanguageLevel getLanguageLevel() {
     if (myOriginalFile != null) {
       return ((PyFileImpl) myOriginalFile).getLanguageLevel();
@@ -297,10 +302,12 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return PyUtil.getLanguageLevelForVirtualFile(getProject(), virtualFile);
   }
 
+  @Override
   public Icon getIcon(int flags) {
     return PythonFileType.INSTANCE.getIcon();
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (isAcceptedFor(visitor.getClass())) {
       if (visitor instanceof PyElementVisitor) {
@@ -334,7 +341,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     final List<String> remainingDunderAll = dunderAll == null ? null : new ArrayList<String>(dunderAll);
     PsiScopeProcessor wrapper = new PsiScopeProcessor() {
       @Override
-      public boolean execute(@NotNull PsiElement element, ResolveState state) {
+      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
         if (!processor.execute(element, state)) return false;
         if (remainingDunderAll != null && element instanceof PyElement) {
           remainingDunderAll.remove(((PyElement) element).getName());
@@ -348,7 +355,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       }
 
       @Override
-      public void handleEvent(Event event, @Nullable Object associated) {
+      public void handleEvent(@NotNull Event event, @Nullable Object associated) {
         processor.handleEvent(event, associated);
       }
     };
@@ -394,6 +401,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return true;
   }
 
+  @Override
   public List<PyStatement> getStatements() {
     List<PyStatement> stmts = new ArrayList<PyStatement>();
     for (PsiElement child : getChildren()) {
@@ -405,14 +413,17 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return stmts;
   }
 
+  @Override
   public List<PyClass> getTopLevelClasses() {
     return PyPsiUtils.collectStubChildren(this, this.getStub(), PyElementTypes.CLASS_DECLARATION, PyClass.class);
   }
 
+  @Override
   public List<PyFunction> getTopLevelFunctions() {
     return PyPsiUtils.collectStubChildren(this, this.getStub(), PyElementTypes.FUNCTION_DECLARATION, PyFunction.class);
   }
 
+  @Override
   public List<PyTargetExpression> getTopLevelAttributes() {
     return PyPsiUtils.collectStubChildren(this, this.getStub(), PyElementTypes.TARGET_EXPRESSION, PyTargetExpression.class);
   }
@@ -502,6 +513,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return null;
   }
 
+  @Override
   @Nullable
   public PsiElement getElementNamed(String name) {
     PsiElement exportedName = findExportedName(name);
@@ -518,6 +530,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return exportedName;
   }
 
+  @Override
   @NotNull
   public Iterable<PyElement> iterateNames() {
     final List<PyElement> result = new ArrayList<PyElement>();
@@ -535,10 +548,12 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return result;
   }
 
+  @Override
   public boolean mustResolveOutside() {
     return false;
   }
 
+  @Override
   @NotNull
   public List<PyImportElement> getImportTargets() {
     List<PyImportElement> ret = new ArrayList<PyImportElement>();
@@ -549,6 +564,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return ret;
   }
 
+  @Override
   @NotNull
   public List<PyFromImportStatement> getFromImports() {
     return PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.FROM_IMPORT_STATEMENT, PyFromImportStatement.class);
@@ -581,7 +597,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     private boolean myFoundDunderAll = false;
 
     // hashlib builds __all__ by concatenating multiple lists of strings, and we want to understand this
-    private Map<String, List<String>> myDunderLike = new HashMap<String, List<String>>();
+    private final Map<String, List<String>> myDunderLike = new HashMap<String, List<String>>();
 
     @Override
     public void visitPyTargetExpression(PyTargetExpression node) {
@@ -654,6 +670,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return null;
   }
 
+  @Override
   public boolean hasImportFromFuture(FutureFeature feature) {
     final StubElement stub = getStub();
     if (stub instanceof PyFileStub) {
@@ -718,6 +735,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
 
+  @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     if (myType == null) myType = new PyModuleType(this);
     return myType;
@@ -741,6 +759,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return DocStringUtil.findDocStringExpression(this);
   }
 
+  @Override
   public void subtreeChanged() {
     super.subtreeChanged();
     ControlFlowCache.clear(this);

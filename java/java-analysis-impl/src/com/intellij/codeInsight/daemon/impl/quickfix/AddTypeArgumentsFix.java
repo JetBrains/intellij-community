@@ -19,7 +19,9 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -94,7 +96,7 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
               methodExpression.setQualifierExpression(qualifierExpression);
             }
 
-            return copy;
+            return (PsiExpression)JavaCodeStyleManager.getInstance(copy.getProject()).shortenClassReferences(copy);
           }
         }
       }
@@ -104,8 +106,7 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
 
     @Override
     public boolean areTypesConvertible(final PsiType exprType, final PsiType parameterType, final PsiElement context) {
-      return !(exprType instanceof PsiPrimitiveType) &&
-             !(parameterType instanceof PsiPrimitiveType);
+      return !(exprType instanceof PsiPrimitiveType) && !(parameterType instanceof PsiPrimitiveType) || TypeConversionUtil.boxingConversionApplicable(exprType, parameterType);
     }
   }
 

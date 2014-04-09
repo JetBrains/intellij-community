@@ -18,6 +18,8 @@ package com.intellij.ide;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.browsers.BrowserLauncher;
+import com.intellij.ide.browsers.BrowserLauncherAppless;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -68,7 +70,7 @@ public class BrowserUtil {
   }
 
   public static void browse(@NotNull File file) {
-    BrowserLauncher.getInstance().browse(file);
+    getBrowserLauncher().browse(file);
   }
 
   public static void browse(@NotNull URL url) {
@@ -85,18 +87,22 @@ public class BrowserUtil {
   }
 
   public static void browse(@NotNull @NonNls String url) {
-    BrowserLauncher.getInstance().browse(url, null);
+    getBrowserLauncher().browse(url, null);
+  }
+
+  private static BrowserLauncher getBrowserLauncher() {
+    return ApplicationManager.getApplication() == null ? new BrowserLauncherAppless() : BrowserLauncher.getInstance();
   }
 
   public static void open(@NotNull @NonNls String url) {
-    BrowserLauncher.getInstance().open(url);
+    getBrowserLauncher().open(url);
   }
 
   /**
    * Main method: tries to launch a browser using every possible way
    */
   public static void browse(@NotNull URI uri) {
-    BrowserLauncher.getInstance().browse(uri);
+    getBrowserLauncher().browse(uri);
   }
 
   @SuppressWarnings("UnusedDeclaration")

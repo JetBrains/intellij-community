@@ -45,52 +45,45 @@ class MethodCallChainPredicate implements PsiElementPredicate {
   }
 
   private static boolean isCallChain(PsiElement element) {
-    PsiClass aClass1 = getQualifierExpressionType(element);
-    if (aClass1 == null) {
+    PsiClassType aClassType1 = getQualifierExpressionType(element);
+    if (aClassType1 == null) {
       return false;
     }
     boolean first = true;
-    while (aClass1 != null) {
+    while (true) {
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
-      PsiClass aClass2 = getQualifierExpressionType(qualifierExpression);
+      PsiClassType expressionType = getQualifierExpressionType(qualifierExpression);
       if (!first) {
-        if (aClass2 == null) {
+        if (expressionType == null) {
+          if (qualifierExpression instanceof PsiMethodCallExpression &&
+              ((PsiMethodCallExpression)qualifierExpression).getMethodExpression().getQualifierExpression() == null) {
+            return false;
+          }
           return true;
         }
       } else {
         first = false;
       }
-      if (!aClass1.equals(aClass2)) {
+      if (!aClassType1.equals(expressionType)) {
         return false;
       }
-      aClass1 = aClass2;
+      aClassType1 = expressionType;
       element = qualifierExpression;
     }
-    return true;
   }
 
   @Nullable
-  private static PsiClass getQualifierExpressionType(PsiElement element) {
+  private static PsiClassType getQualifierExpressionType(PsiElement element) {
     if (!(element instanceof PsiMethodCallExpression)) {
       return null;
     }
+
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
-    final PsiMethod method = methodCallExpression.resolveMethod();
-    if (method != null) {
-      return method.getContainingClass();
-    }
     final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
     final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
-    if (!(qualifierExpression instanceof PsiMethodCallExpression)) {
-      return null;
-    }
-    final PsiType type = qualifierExpression.getType();
-    if (!(type instanceof PsiClassType)) {
-      return null;
-    }
-    final PsiClassType classType = (PsiClassType)type;
-    return classType.resolve();
+    final PsiType type = qualifierExpression != null ? qualifierExpression.getType() : null;
+    return type instanceof PsiClassType ? (PsiClassType)type : null;
   }
 }

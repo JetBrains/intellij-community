@@ -15,6 +15,7 @@
  */
 package com.intellij.remoteServer.util;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfigurationBase;
@@ -52,7 +53,7 @@ public abstract class CloudConnectionTask<
       return;
     }
 
-    final ServerConnection<DC> connection = ServerConnectionManager.getInstance().getOrCreateConnection(myServer);
+    final ServerConnection<DC> connection = ServerConnectionManager.getInstance().createTemporaryConnection(myServer);
     run(connection, semaphore, result);
   }
 
@@ -63,7 +64,18 @@ public abstract class CloudConnectionTask<
 
       @Override
       public void connected(@NotNull ServerRuntimeInstance<DC> serverRuntimeInstance) {
-        run((SR)serverRuntimeInstance, semaphore, result);
+        try {
+          run((SR)serverRuntimeInstance, semaphore, result);
+        }
+        finally {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+
+            @Override
+            public void run() {
+              connection.disconnect();
+            }
+          });
+        }
       }
 
       @Override

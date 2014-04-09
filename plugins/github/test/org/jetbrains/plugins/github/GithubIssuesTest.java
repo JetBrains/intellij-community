@@ -32,7 +32,7 @@ public class GithubIssuesTest extends GithubTest {
   private static final String REPO_NAME = "IssuesTest";
 
   public void testAssigneeIssues1() throws Exception {
-    List<GithubIssue> result = GithubApiUtil.getIssuesAssigned(myAuth, myLogin2, REPO_NAME, myLogin1, 100);
+    List<GithubIssue> result = GithubApiUtil.getIssuesAssigned(myAuth, myLogin2, REPO_NAME, myLogin1, 100, false);
     List<Long> issues = ContainerUtil.map(result, new Function<GithubIssue, Long>() {
       @Override
       public Long fun(GithubIssue githubIssue) {
@@ -46,7 +46,7 @@ public class GithubIssuesTest extends GithubTest {
   }
 
   public void testAssigneeIssues2() throws Exception {
-    List<GithubIssue> result = GithubApiUtil.getIssuesAssigned(myAuth, myLogin2, REPO_NAME, myLogin2, 100);
+    List<GithubIssue> result = GithubApiUtil.getIssuesAssigned(myAuth, myLogin2, REPO_NAME, myLogin2, 100, false);
     List<Long> issues = ContainerUtil.map(result, new Function<GithubIssue, Long>() {
       @Override
       public Long fun(GithubIssue githubIssue) {
@@ -60,7 +60,7 @@ public class GithubIssuesTest extends GithubTest {
   }
 
   public void testAssigneeIssues3() throws Exception {
-    List<GithubIssue> result = GithubApiUtil.getIssuesAssigned(myAuth, myLogin2, REPO_NAME, "", 100);
+    List<GithubIssue> result = GithubApiUtil.getIssuesAssigned(myAuth, myLogin2, REPO_NAME, "", 100, false);
     List<Long> issues = ContainerUtil.map(result, new Function<GithubIssue, Long>() {
       @Override
       public Long fun(GithubIssue githubIssue) {
@@ -73,8 +73,50 @@ public class GithubIssuesTest extends GithubTest {
     assertTrue(Comparing.haveEqualElements(issues, expected));
   }
 
+  public void testAssigneeIssues4() throws Exception {
+    List<GithubIssue> result = GithubApiUtil.getIssuesAssigned(myAuth, myLogin2, REPO_NAME, myLogin1, 100, true);
+    List<Long> issues = ContainerUtil.map(result, new Function<GithubIssue, Long>() {
+      @Override
+      public Long fun(GithubIssue githubIssue) {
+        return githubIssue.getNumber();
+      }
+    });
+
+    List<Long> expected = Arrays.asList(3L, 6L, 7L, 8L);
+
+    assertTrue(Comparing.haveEqualElements(issues, expected));
+  }
+
+  public void testAssigneeIssues5() throws Exception {
+    List<GithubIssue> result = GithubApiUtil.getIssuesAssigned(myAuth, myLogin2, REPO_NAME, myLogin2, 100, true);
+    List<Long> issues = ContainerUtil.map(result, new Function<GithubIssue, Long>() {
+      @Override
+      public Long fun(GithubIssue githubIssue) {
+        return githubIssue.getNumber();
+      }
+    });
+
+    List<Long> expected = Arrays.asList(1L, 2L);
+
+    assertTrue(Comparing.haveEqualElements(issues, expected));
+  }
+
+  public void testAssigneeIssues6() throws Exception {
+    List<GithubIssue> result = GithubApiUtil.getIssuesAssigned(myAuth, myLogin2, REPO_NAME, "", 100, true);
+    List<Long> issues = ContainerUtil.map(result, new Function<GithubIssue, Long>() {
+      @Override
+      public Long fun(GithubIssue githubIssue) {
+        return githubIssue.getNumber();
+      }
+    });
+
+    List<Long> expected = Arrays.asList(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 11L, 12L, 13L, 14L);
+
+    assertTrue(Comparing.haveEqualElements(issues, expected));
+  }
+
   public void testQueriedIssues1() throws Exception {
-    List<GithubIssue> result = GithubApiUtil.getIssuesQueried(myAuth, myLogin2, REPO_NAME, "abracadabra");
+    List<GithubIssue> result = GithubApiUtil.getIssuesQueried(myAuth, myLogin2, REPO_NAME, "abracadabra", true);
     List<Long> issues = ContainerUtil.map(result, new Function<GithubIssue, Long>() {
       @Override
       public Long fun(GithubIssue githubIssue) {
@@ -84,11 +126,11 @@ public class GithubIssuesTest extends GithubTest {
 
     List<Long> expected = Arrays.asList(10L, 12L);
 
-    assertContainsElements(issues, expected);
+    assertTrue(Comparing.haveEqualElements(issues, expected));
   }
 
   public void testQueriedIssues2() throws Exception {
-    List<GithubIssue> result = GithubApiUtil.getIssuesQueried(myAuth, myLogin2, REPO_NAME, "commentary");
+    List<GithubIssue> result = GithubApiUtil.getIssuesQueried(myAuth, myLogin2, REPO_NAME, "commentary", true);
     List<Long> issues = ContainerUtil.map(result, new Function<GithubIssue, Long>() {
       @Override
       public Long fun(GithubIssue githubIssue) {
@@ -98,6 +140,20 @@ public class GithubIssuesTest extends GithubTest {
 
     List<Long> expected = Arrays.asList(11L);
 
-    assertContainsElements(issues, expected);
+    assertTrue(Comparing.haveEqualElements(issues, expected));
+  }
+
+  public void testQueriedIssues3() throws Exception {
+    List<GithubIssue> result = GithubApiUtil.getIssuesQueried(myAuth, myLogin2, REPO_NAME, "abracadabra", false);
+    List<Long> issues = ContainerUtil.map(result, new Function<GithubIssue, Long>() {
+      @Override
+      public Long fun(GithubIssue githubIssue) {
+        return githubIssue.getNumber();
+      }
+    });
+
+    List<Long> expected = Arrays.asList(10L);
+
+    assertTrue(Comparing.haveEqualElements(issues, expected));
   }
 }

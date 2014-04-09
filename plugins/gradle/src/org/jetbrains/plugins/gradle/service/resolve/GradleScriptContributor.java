@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -37,7 +38,7 @@ import java.util.Set;
  */
 public class GradleScriptContributor extends NonCodeMembersContributor {
 
-  public final static Set<String> BUILD_PROJECT_SCRIPT_BLOCKS = ContainerUtil.newHashSet(
+  public static final Set<String> BUILD_PROJECT_SCRIPT_BLOCKS = ContainerUtil.newHashSet(
     "project",
     "configure",
     "subprojects",
@@ -48,14 +49,10 @@ public class GradleScriptContributor extends NonCodeMembersContributor {
 
   @Override
   public void processDynamicElements(@NotNull PsiType qualifierType,
-                                     PsiClass aClass,
-                                     PsiScopeProcessor processor,
-                                     PsiElement place,
-                                     ResolveState state) {
-    if (place == null) {
-      return;
-    }
-
+                                     @Nullable PsiClass aClass,
+                                     @NotNull PsiScopeProcessor processor,
+                                     @NotNull PsiElement place,
+                                     @NotNull ResolveState state) {
     if (!(aClass instanceof GroovyScriptClass)) {
       return;
     }

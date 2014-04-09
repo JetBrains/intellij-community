@@ -112,4 +112,25 @@
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-unboxing</problem_class>
     <description>Auto-unboxing &lt;code&gt;Boolean.TRUE&lt;/code&gt; #loc</description>
   </problem>
+
+  <problem>
+    <file>AutoUnboxing.java</file>
+    <line>71</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-unboxing</problem_class>
+    <description>Auto-unboxing &lt;code&gt;Boolean.valueOf(true)&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>AutoUnboxing.java</file>
+    <line>74</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-unboxing</problem_class>
+    <description>Auto-unboxing &lt;code&gt;Boolean.valueOf(true)&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>AutoUnboxing.java</file>
+    <line>77</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-unboxing</problem_class>
+    <description>Auto-unboxing &lt;code&gt;Boolean.valueOf(false)&lt;/code&gt; #loc</description>
+  </problem>
 </problems>

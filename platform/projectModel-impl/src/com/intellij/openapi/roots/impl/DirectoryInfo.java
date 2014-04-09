@@ -22,8 +22,6 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayFactory;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +33,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public final class DirectoryInfo {
+public class DirectoryInfo {
   public static final int MAX_ROOT_TYPE_ID = (1 << (Byte.SIZE - 2)) - 1;
   private final Module module; // module to which content it belongs or null
   private final VirtualFile libraryClassRoot; // class root in library
@@ -81,7 +79,7 @@ public final class DirectoryInfo {
            Comparing.equal(contentRoot, info.contentRoot) &&
            Comparing.equal(libraryClassRoot, info.libraryClassRoot) &&
            Comparing.equal(module, info.module) &&
-           Arrays.equals(orderEntries, info.orderEntries) &&
+           Arrays.equals(getOrderEntries(), info.getOrderEntries()) &&
            Comparing.equal(sourceRoot, info.sourceRoot);
   }
 
@@ -105,7 +103,7 @@ public final class DirectoryInfo {
            ", libraryClassRoot=" + getLibraryClassRoot() +
            ", contentRoot=" + getContentRoot() +
            ", sourceRoot=" + getSourceRoot() +
-           ", orderEntries=" + Arrays.toString(orderEntries) +
+           ", orderEntries=" + Arrays.toString(getOrderEntries()) +
            "}";
   }
 
@@ -117,10 +115,7 @@ public final class DirectoryInfo {
 
   @Nullable
   OrderEntry findOrderEntryWithOwnerModule(@NotNull Module ownerModule) {
-    OrderEntry[] entries = orderEntries;
-    if (entries == null) {
-      return null;
-    }
+    OrderEntry[] entries = getOrderEntries();
     if (entries.length < 10) {
       for (OrderEntry entry : entries) {
         if (entry.getOwnerModule() == ownerModule) return entry;
@@ -133,10 +128,7 @@ public final class DirectoryInfo {
 
   @NotNull
   List<OrderEntry> findAllOrderEntriesWithOwnerModule(@NotNull Module ownerModule) {
-    OrderEntry[] entries = orderEntries;
-    if (entries == null) {
-      return Collections.emptyList();
-    }
+    OrderEntry[] entries = getOrderEntries();
     if (entries.length == 1) {
       OrderEntry entry = entries[0];
       return entry.getOwnerModule() == ownerModule ? Arrays.asList(entries) : Collections.<OrderEntry>emptyList();
@@ -198,7 +190,7 @@ public final class DirectoryInfo {
       }
 
       @Override
-      public int compareTo(OrderEntry o) {
+      public int compareTo(@NotNull OrderEntry o) {
         throw new IncorrectOperationException();
       }
 
@@ -209,55 +201,6 @@ public final class DirectoryInfo {
     };
   }
 
-  // orderEntries must be sorted BY_OWNER_MODULE
-  OrderEntry[] calcNewOrderEntries(@NotNull OrderEntry[] orderEntries, @Nullable DirectoryInfo parentInfo, @Nullable OrderEntry[] oldParentEntries) {
-    OrderEntry[] newOrderEntries;
-    if (orderEntries.length == 0) {
-      newOrderEntries = null;
-    }
-    else if (this.orderEntries == null) {
-      newOrderEntries = orderEntries;
-    }
-    else if (parentInfo != null && oldParentEntries == this.orderEntries) {
-      newOrderEntries = parentInfo.orderEntries;
-    }
-    else {
-      newOrderEntries = mergeWith(orderEntries);
-    }
-    return newOrderEntries;
-  }
-
-  // entries must be sorted BY_OWNER_MODULE
-  @NotNull
-  private OrderEntry[] mergeWith(@NotNull OrderEntry[] entries) {
-    OrderEntry[] orderEntries = this.orderEntries;
-    OrderEntry[] result = new OrderEntry[orderEntries.length + entries.length];
-    int i=0;
-    int j=0;
-    // remove equals entries in the process
-    int o = 0;
-    while (i != orderEntries.length || j != entries.length) {
-      OrderEntry m = i != orderEntries.length && (j == entries.length || BY_OWNER_MODULE.compare(orderEntries[i], entries[j]) < 0)
-                     ? orderEntries[i++]
-                     : entries[j++];
-      if (o==0 || !m.equals(result[o - 1])) {
-        result[o++] = m;
-      }
-    }
-    if (o != result.length) {
-      result = ArrayUtil.realloc(result, o, ORDER_ENTRY_ARRAY_FACTORY);
-    }
-    return result;
-  }
-
-  private static final ArrayFactory<OrderEntry> ORDER_ENTRY_ARRAY_FACTORY = new ArrayFactory<OrderEntry>() {
-    @NotNull
-    @Override
-    public OrderEntry[] create(int count) {
-      return count == 0 ? OrderEntry.EMPTY_ARRAY : new OrderEntry[count];
-    }
-  };
-
   public static final Comparator<OrderEntry> BY_OWNER_MODULE = new Comparator<OrderEntry>() {
     @Override
     public int compare(OrderEntry o1, OrderEntry o2) {
@@ -267,12 +210,9 @@ public final class DirectoryInfo {
     }
   };
 
+  @Nullable
   public VirtualFile getSourceRoot() {
     return sourceRoot;
-  }
-
-  public boolean hasSourceRoot() {
-    return getSourceRoot() != null;
   }
 
   public VirtualFile getLibraryClassRoot() {
@@ -283,6 +223,7 @@ public final class DirectoryInfo {
     return getLibraryClassRoot() != null;
   }
 
+  @Nullable
   public VirtualFile getContentRoot() {
     return contentRoot;
   }
@@ -297,27 +238,6 @@ public final class DirectoryInfo {
 
   public Module getModule() {
     return module;
-  }
-
-  private static <T> T iff(T value, T defaultValue) {
-    return value == null ? defaultValue : value;
-  }
-
-  @NotNull
-  public DirectoryInfo with(Module module,
-                            VirtualFile contentRoot,
-                            VirtualFile sourceRoot,
-                            VirtualFile libraryClassRoot,
-                            int sourceRootTypeData,
-                            OrderEntry[] orderEntries) {
-    return new DirectoryInfo(iff(module, this.module), iff(contentRoot, this.contentRoot), iff(sourceRoot, this.sourceRoot),
-                             iff(libraryClassRoot, this.libraryClassRoot), sourceRootTypeData == 0 ? this.sourceRootTypeData : (byte)sourceRootTypeData,
-                             iff(orderEntries, this.orderEntries));
-  }
-
-  @NotNull
-  public DirectoryInfo withInternedEntries(@NotNull OrderEntry[] orderEntries) {
-    return new DirectoryInfo(module, contentRoot, sourceRoot, libraryClassRoot, sourceRootTypeData, orderEntries);
   }
 
   @TestOnly

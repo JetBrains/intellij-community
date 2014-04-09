@@ -66,7 +66,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     PsiReferenceExpression ref = call.getMethodExpression();
     String name = ref.getReferenceName();
 
-    if (name == null || !JavaPsiFacade.getInstance(ref.getProject()).getNameHelper().isIdentifier(name)) return false;
+    if (name == null || !PsiNameHelper.getInstance(ref.getProject()).isIdentifier(name)) return false;
     if (hasErrorsInArgumentList(call)) return false;
     setText(getDisplayString(name));
     return true;
@@ -133,7 +133,6 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     if (targetClass == null) return;
     PsiMethodCallExpression expression = getMethodCall();
     if (expression == null) return;
-    final Project project = expression.getProject();
     PsiReferenceExpression ref = expression.getMethodExpression();
 
     if (isValidElement(expression)) return;
@@ -144,28 +143,9 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     String methodName = ref.getReferenceName();
     LOG.assertTrue(methodName != null);
 
-    JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), project);
-    if (factory == null) {
+    PsiMethod method = createMethod(targetClass, parentClass, enclosingContext, methodName);
+    if (method == null) {
       return;
-    }
-
-    PsiMethod method = factory.createMethod(methodName, PsiType.VOID);
-
-    if (targetClass.equals(parentClass)) {
-      method = (PsiMethod)targetClass.addAfter(method, enclosingContext);
-    }
-    else {
-      PsiElement anchor = enclosingContext;
-      while (anchor != null && anchor.getParent() != null && !anchor.getParent().equals(targetClass)) {
-        anchor = anchor.getParent();
-      }
-      if (anchor != null && anchor.getParent() == null) anchor = null;
-      if (anchor != null) {
-        method = (PsiMethod)targetClass.addAfter(method, anchor);
-      }
-      else {
-        method = (PsiMethod)targetClass.add(method);
-      }
     }
 
     if (enclosingContext instanceof PsiMethod && methodName.equals(enclosingContext.getName()) &&
@@ -201,6 +181,36 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
              context);
   }
 
+  protected static PsiMethod createMethod(PsiClass targetClass,
+                                          PsiClass parentClass,
+                                          PsiMember enclosingContext,
+                                          String methodName) {
+    JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), targetClass.getProject());
+    if (factory == null) {
+      return null;
+    }
+
+    PsiMethod method = factory.createMethod(methodName, PsiType.VOID);
+
+    if (targetClass.equals(parentClass)) {
+      method = (PsiMethod)targetClass.addAfter(method, enclosingContext);
+    }
+    else {
+      PsiElement anchor = enclosingContext;
+      while (anchor != null && anchor.getParent() != null && !anchor.getParent().equals(targetClass)) {
+        anchor = anchor.getParent();
+      }
+      if (anchor != null && anchor.getParent() == null) anchor = null;
+      if (anchor != null) {
+        method = (PsiMethod)targetClass.addAfter(method, anchor);
+      }
+      else {
+        method = (PsiMethod)targetClass.add(method);
+      }
+    }
+    return method;
+  }
+
   public static void doCreate(PsiClass targetClass, PsiMethod method, List<Pair<PsiExpression, PsiType>> arguments, PsiSubstitutor substitutor,
                               ExpectedTypeInfo[] expectedTypes, @Nullable PsiElement context) {
     doCreate(targetClass, method, shouldBeAbstractImpl(targetClass), arguments, substitutor, expectedTypes, context);
@@ -227,8 +237,11 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     TemplateBuilderImpl builder = new TemplateBuilderImpl(method);
 
     CreateFromUsageUtils.setupMethodParameters(method, builder, context, substitutor, arguments);
-    new GuessTypeParameters(JavaPsiFacade.getInstance(project).getElementFactory())
-      .setupTypeElement(method.getReturnTypeElement(), expectedTypes, substitutor, builder, context, targetClass);
+    final PsiTypeElement returnTypeElement = method.getReturnTypeElement();
+    if (returnTypeElement != null) {
+      new GuessTypeParameters(JavaPsiFacade.getInstance(project).getElementFactory())
+        .setupTypeElement(returnTypeElement, expectedTypes, substitutor, builder, context, targetClass);
+    }
     PsiCodeBlock body = method.getBody();
     builder.setEndVariableAfter(shouldBeAbstract || body == null ? method : body.getLBrace());
     method = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(method);

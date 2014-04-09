@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.ui;
 
-import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.icons.AllIcons;
@@ -30,7 +30,7 @@ import java.util.Collection;
 
 class XBreakpointGroupingByClassRule<B> extends XBreakpointGroupingRule<B, XBreakpointClassGroup> {
   XBreakpointGroupingByClassRule() {
-    super("XBreakpointGroupingByClassRule", "Group by Class");
+    super("XBreakpointGroupingByClassRule", DebuggerBundle.message("rule.name.group.by.class"));
   }
 
   @Override
@@ -46,8 +46,7 @@ class XBreakpointGroupingByClassRule<B> extends XBreakpointGroupingRule<B, XBrea
   @Override
   public XBreakpointClassGroup getGroup(@NotNull B b, @NotNull Collection<XBreakpointClassGroup> groups) {
     if (b instanceof XBreakpoint) {
-      BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(JavaDebuggerSupport.getCurrentProject()).getBreakpointManager();
-      Breakpoint javaBreakpoint = breakpointManager.findBreakpoint((XBreakpoint)b);
+      Breakpoint javaBreakpoint = BreakpointManager.findBreakpoint((XBreakpoint)b);
       if (javaBreakpoint == null) {
         return null;
       }

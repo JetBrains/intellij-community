@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.HashSet;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -29,6 +30,8 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 /**
  * @author nik
@@ -42,29 +45,28 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
   }
 
   public boolean isEnabled(@NotNull final Project project, final AnActionEvent event) {
-    XSourcePosition position = XDebuggerUtilImpl.getCaretPosition(project, event.getDataContext());
-    if (position == null) return false;
-
     XLineBreakpointType<?>[] breakpointTypes = XDebuggerUtil.getInstance().getLineBreakpointTypes();
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
-    for (XLineBreakpointType<?> breakpointType : breakpointTypes) {
-      final VirtualFile file = position.getFile();
-      final int line = position.getLine();
-      if (breakpointType.canPutAt(file, line, project) || breakpointManager.findBreakpointAtLine(breakpointType, file, line) != null) {
-        return true;
+    for (XSourcePosition position : XDebuggerUtilImpl.getAllCaretsPositions(project, event.getDataContext())) {
+      for (XLineBreakpointType<?> breakpointType : breakpointTypes) {
+        final VirtualFile file = position.getFile();
+        final int line = position.getLine();
+        if (breakpointType.canPutAt(file, line, project) || breakpointManager.findBreakpointAtLine(breakpointType, file, line) != null) {
+          return true;
+        }
       }
     }
     return false;
   }
 
   public void perform(@NotNull final Project project, final AnActionEvent event) {
-    XSourcePosition position = XDebuggerUtilImpl.getCaretPosition(project, event.getDataContext());
-    if (position == null) {
-      return;
-    }
-
     Editor editor = event.getData(CommonDataKeys.EDITOR);
-
-    XBreakpointUtil.toggleLineBreakpoint(project, position.getFile(), editor, position.getLine(), myTemporary, true);
+    // do not toggle more than once on the same line
+    Set<Integer> processedLines = new HashSet<Integer>();
+    for (XSourcePosition position : XDebuggerUtilImpl.getAllCaretsPositions(project, event.getDataContext())) {
+      if (processedLines.add(position.getLine())) {
+        XBreakpointUtil.toggleLineBreakpoint(project, position.getFile(), editor, position.getLine(), myTemporary, true);
+      }
+    }
   }
 }

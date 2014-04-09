@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -227,6 +228,10 @@ public class ActionMenuItem extends JCheckBoxMenuItem {
     public void actionPerformed(final ActionEvent e) {
       final IdeFocusManager fm = IdeFocusManager.findInstanceByContext(myContext);
       final ActionCallback typeAhead = new ActionCallback();
+      final String id = ActionManager.getInstance().getId(myAction.getAction());
+      if (id != null) {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed("context.menu.click.stats." + id.replace(' ', '.'));
+      }
       fm.typeAheadUntil(typeAhead);
       fm.runOnOwnContext(myContext, new Runnable() {
         @Override

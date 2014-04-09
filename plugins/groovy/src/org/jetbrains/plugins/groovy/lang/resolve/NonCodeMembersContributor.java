@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,19 +40,19 @@ public abstract class NonCodeMembersContributor {
 
   private static volatile MultiMap<String, NonCodeMembersContributor> ourClassSpecifiedContributors;
   private static NonCodeMembersContributor[] ourAllTypeContributors;
-  
+
   public void processDynamicElements(@NotNull PsiType qualifierType,
-                                              PsiScopeProcessor processor,
-                                              PsiElement place,
-                                              ResolveState state) {
+                                     @NotNull PsiScopeProcessor processor,
+                                     @NotNull PsiElement place,
+                                     @NotNull ResolveState state) {
     throw new RuntimeException("One of two 'processDynamicElements()' methods must be implemented");
   }
 
   public void processDynamicElements(@NotNull PsiType qualifierType,
                                      PsiClass aClass,
-                                     PsiScopeProcessor processor,
-                                     PsiElement place,
-                                     ResolveState state) {
+                                     @NotNull PsiScopeProcessor processor,
+                                     @NotNull PsiElement place,
+                                     @NotNull ResolveState state) {
     processDynamicElements(qualifierType, processor, place, state);
   }
 
@@ -60,12 +60,12 @@ public abstract class NonCodeMembersContributor {
   protected String getParentClassName() {
     return null;
   }
-  
+
   private static void ensureInit() {
     if (ourClassSpecifiedContributors != null) return;
 
     MultiMap<String, NonCodeMembersContributor> contributorMap = new MultiMap<String, NonCodeMembersContributor>();
-    
+
     for (final NonCodeMembersContributor contributor : EP_NAME.getExtensions()) {
       contributorMap.putValue(contributor.getParentClassName(), contributor);
     }
@@ -74,16 +74,16 @@ public abstract class NonCodeMembersContributor {
     ourAllTypeContributors = allTypeContributors.toArray(new NonCodeMembersContributor[allTypeContributors.size()]);
     ourClassSpecifiedContributors = contributorMap;
   }
-  
-  public static boolean runContributors(@NotNull final PsiType qualifierType,
+
+  public static boolean runContributors(@NotNull PsiType qualifierType,
                                         @NotNull PsiScopeProcessor processor,
-                                        @NotNull final PsiElement place,
-                                        @NotNull final ResolveState state) {
+                                        @NotNull PsiElement place,
+                                        @NotNull ResolveState state) {
 
     MyDelegatingScopeProcessor delegatingProcessor = new MyDelegatingScopeProcessor(processor);
 
     ensureInit();
-    
+
     final PsiClass aClass = PsiTypesUtil.getPsiClass(qualifierType);
 
     if (aClass != null) {
@@ -103,7 +103,7 @@ public abstract class NonCodeMembersContributor {
         return false;
       }
     }
-    
+
     return GroovyDslFileIndex.processExecutors(qualifierType, place, processor, state);
   }
 
@@ -115,7 +115,7 @@ public abstract class NonCodeMembersContributor {
     }
 
     @Override
-    public boolean execute(@NotNull PsiElement element, ResolveState state) {
+    public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
       if (!wantMore) {
         return false;
       }
@@ -123,5 +123,4 @@ public abstract class NonCodeMembersContributor {
       return wantMore;
     }
   }
-
 }

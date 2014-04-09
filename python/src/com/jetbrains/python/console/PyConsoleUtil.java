@@ -112,7 +112,7 @@ public class PyConsoleUtil {
   }
 
   public static boolean detectIPythonImported(@NotNull String text, final ConsoleViewContentType outputType) {
-    return text.contains("PyDev console: using IPython 0.1") && outputType == ConsoleViewContentType.ERROR_OUTPUT;
+    return text.contains("PyDev console: using IPython ") && outputType == ConsoleViewContentType.ERROR_OUTPUT;
   }
 
   public static boolean detectSourcePrinting(@NotNull String text) {

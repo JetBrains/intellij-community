@@ -15,11 +15,13 @@
  */
 package com.intellij.xdebugger;
 
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointAdapter;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -154,6 +156,33 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
       throw new RuntimeException(e);
     }
     assertEmpty(myBreakpointManager.getBreakpoints(MY_LINE_BREAKPOINT_TYPE));
+  }
+
+  public void testConditionConvert() {
+    String condition = "old-style condition";
+    String logExpression = "old-style expression";
+    String oldStyle =
+    "<breakpoint-manager>" +
+    "<breakpoints>" +
+    "<line-breakpoint enabled=\"true\" type=\"" + MY_LINE_BREAKPOINT_TYPE.getId() + "\">" +
+    "      <condition>" + condition + "</condition>" +
+    "      <url>url</url>" +
+    "      <log-expression>" + logExpression + "</log-expression>" +
+    "</line-breakpoint>" +
+    "</breakpoints>" +
+    "<option name=\"time\" value=\"1\" />" +
+    "</breakpoint-manager>";
+    try {
+      Document document = JDOMUtil.loadDocument(oldStyle);
+      load(document.getRootElement());
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+      fail();
+    }
+    XLineBreakpoint<MyBreakpointProperties> breakpoint = assertOneElement(myBreakpointManager.getBreakpoints(MY_LINE_BREAKPOINT_TYPE));
+    assertEquals(condition, breakpoint.getCondition());
+    assertEquals(logExpression, breakpoint.getLogExpression());
   }
 
   private XBreakpoint<MyBreakpointProperties> getSingleBreakpoint() {

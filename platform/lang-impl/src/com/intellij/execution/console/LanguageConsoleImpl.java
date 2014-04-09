@@ -92,6 +92,8 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private String myTitle;
   @Nullable
   private String myPrompt = "> ";
+  private TextAttributes myPromptAttributes = ConsoleViewContentType.USER_INPUT.getAttributes();
+
   private final LightVirtualFile myHistoryFile;
   private Editor myCurrentEditor;
 
@@ -228,6 +230,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myHistoryViewer.getComponent().setPreferredSize(new Dimension(0, 0));
     myHistoryViewer.setCaretEnabled(false);
 
+    myConsoleEditor.setHorizontalScrollbarVisible(true);
     myConsoleEditor.addEditorMouseListener(EditorActionUtil.createEditorPopupHandler(IdeActions.GROUP_CONSOLE_EDITOR_POPUP));
     myConsoleEditor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(myVirtualFile, myConsoleEditor.getColorsScheme(), myProject));
 
@@ -322,6 +325,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   @SuppressWarnings("UnusedDeclaration")
   @NotNull
+  @Deprecated
   public LightVirtualFile getHistoryFile() {
     return myHistoryFile;
   }
@@ -329,6 +333,10 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   @Nullable
   public String getPrompt() {
     return myPrompt;
+  }
+
+  public void setPromptAttributes(@NotNull TextAttributes textAttributes) {
+    myPromptAttributes = textAttributes;
   }
 
   public void setPrompt(@Nullable String prompt) {
@@ -343,7 +351,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        myConsoleEditor.setPrefixTextAndAttributes(prompt, ConsoleViewContentType.USER_INPUT.getAttributes());
+        myConsoleEditor.setPrefixTextAndAttributes(prompt, myPromptAttributes);
         if (myPanel.isVisible()) {
           queueUiUpdate(false);
         }
@@ -539,7 +547,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   protected void doAddPromptToHistory() {
-    addTextToHistory(myPrompt, ConsoleViewContentType.USER_INPUT.getAttributes());
+    addTextToHistory(myPrompt, myPromptAttributes);
   }
 
   // returns the real (cyclic-buffer-aware) start offset of the inserted text
@@ -582,6 +590,9 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   public void queueUiUpdate(boolean forceScrollToEnd) {
     myForceScrollToEnd.compareAndSet(false, forceScrollToEnd);
+    if (myUpdateQueue.isDisposed()) {
+      return;
+    }
     myUpdateQueue.request();
   }
 

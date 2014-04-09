@@ -17,50 +17,104 @@ package git4idea.repo;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsTestUtil;
+import com.intellij.util.LineSeparator;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitStandardRemoteBranch;
-import git4idea.test.GitTestPlatformFacade;
+import git4idea.test.GitPlatformTest;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * @author Kirill Likhodedov
- */
-public class GitConfigTest {
+public class GitConfigTest extends GitPlatformTest {
   
-  @DataProvider(name = "remote")
-  public Object[][] loadRemotes() throws IOException {
-    return VcsTestUtil.loadConfigData(getTestDataFolder("remote"));
+  public Collection<TestSpec> loadRemotes() throws IOException {
+    return loadConfigData(getTestDataFolder("remote"));
   }
   
-  @DataProvider(name = "branch")
-  public Object[][] loadBranches() throws IOException {
-    return VcsTestUtil.loadConfigData(getTestDataFolder("branch"));
+  public Collection<TestSpec> loadBranches() throws IOException {
+    return loadConfigData(getTestDataFolder("branch"));
   }
 
   private static File getTestDataFolder(String subfolder) {
-    File testData = VcsTestUtil.getTestDataFolder();
+    File testData = getTestDataFolder();
     return new File(new File(testData, "config"), subfolder);
   }
 
-  @Test(dataProvider = "remote")
-  public void testRemotes(String testName, File configFile, File resultFile) throws IOException {
-    GitConfig config = GitConfig.read(new GitTestPlatformFacade(), configFile);
-    VcsTestUtil.assertEqualCollections(config.parseRemotes(), readRemoteResults(resultFile));
+  @NotNull
+  public static Collection<TestSpec> loadConfigData(@NotNull File dataFolder) throws IOException {
+    File[] tests = dataFolder.listFiles(new FilenameFilter() {
+      @Override
+      public boolean accept(File dir, String name) {
+        return !name.startsWith(".");
+      }
+    });
+    Collection<TestSpec> data = ContainerUtil.newArrayList();
+    for (File testDir : tests) {
+      File descriptionFile = null;
+      File configFile = null;
+      File resultFile = null;
+      File[] files = testDir.listFiles();
+      assertNotNull("No test specifications found in " + testDir.getPath(), files);
+      for (File file : files) {
+        if (file.getName().endsWith("_desc.txt")) {
+          descriptionFile = file;
+        }
+        else if (file.getName().endsWith("_config.txt")) {
+          configFile = file;
+        }
+        else if (file.getName().endsWith("_result.txt")) {
+          resultFile = file;
+        }
+      }
+      assertNotNull(String.format("description file not found in %s among %s", testDir, Arrays.toString(testDir.list())), descriptionFile);
+      assertNotNull(String.format("config file file not found in %s among %s", testDir, Arrays.toString(testDir.list())), configFile);
+      assertNotNull(String.format("result file file not found in %s among %s", testDir, Arrays.toString(testDir.list())), resultFile);
+
+      String testName = FileUtil.loadFile(descriptionFile).split("\n")[0]; // description is in the first line of the desc-file
+      if (!testName.toLowerCase().startsWith("ignore")) {
+        data.add(new TestSpec(testName, configFile, resultFile));
+      }
+    }
+    return data;
   }
-  
-  @Test(dataProvider = "branch")
-  public void testBranches(String testName, File configFile, File resultFile) throws IOException {
+
+  @NotNull
+  public static File getTestDataFolder() {
+    File pluginRoot = new File(PluginPathManager.getPluginHomePath("git4idea"));
+    return new File(pluginRoot, "testData");
+  }
+
+  public void testRemotes() throws IOException {
+    Collection<TestSpec> objects = loadRemotes();
+    for (TestSpec spec : objects) {
+      doTestRemotes(spec.name, spec.config, spec.result);
+    }
+  }
+
+  public void testBranches() throws IOException {
+    Collection<TestSpec> objects = loadBranches();
+    for (TestSpec spec : objects) {
+      doTestBranches(spec.name, spec.config, spec.result);
+    }
+  }
+
+  private void doTestRemotes(String testName, File configFile, File resultFile) throws IOException {
+    GitConfig config = GitConfig.read(myPlatformFacade, configFile);
+    VcsTestUtil.assertEqualCollections(testName, config.parseRemotes(), readRemoteResults(resultFile));
+  }
+
+  private void doTestBranches(String testName, File configFile, File resultFile) throws IOException {
     Collection<GitBranchTrackInfo> expectedInfos = readBranchResults(resultFile);
     Collection<GitLocalBranch> localBranches = Collections2.transform(expectedInfos, new Function<GitBranchTrackInfo, GitLocalBranch>() {
       @Override
@@ -77,20 +131,20 @@ public class GitConfigTest {
       }
     });
 
-    VcsTestUtil.assertEqualCollections(
-      GitConfig.read(new GitTestPlatformFacade(), configFile).parseTrackInfos(localBranches, remoteBranches),
-      expectedInfos);
+    VcsTestUtil.assertEqualCollections(testName,
+                                       GitConfig.read(myPlatformFacade, configFile).parseTrackInfos(localBranches, remoteBranches),
+                                       expectedInfos);
   }
 
   private static Collection<GitBranchTrackInfo> readBranchResults(File file) throws IOException {
     String content = FileUtil.loadFile(file);
     Collection<GitBranchTrackInfo> remotes = new ArrayList<GitBranchTrackInfo>();
-    String[] remStrings = content.split("BRANCH\n");
+    List<String> remStrings = StringUtil.split(content, "BRANCH");
     for (String remString : remStrings) {
       if (StringUtil.isEmptyOrSpaces(remString)) {
         continue;
       }
-      String[] info = remString.split("\n");
+      String[] info = StringUtil.splitByLines(remString.trim());
       String branch = info[0];
       GitRemote remote = getRemote(info[1]);
       String remoteBranchAtRemote = info[2];
@@ -112,12 +166,12 @@ public class GitConfigTest {
   private static Set<GitRemote> readRemoteResults(File resultFile) throws IOException {
     String content = FileUtil.loadFile(resultFile);
     Set<GitRemote> remotes = new HashSet<GitRemote>();
-    String[] remStrings = content.split("REMOTE\n");
+    List<String> remStrings = StringUtil.split(content, "REMOTE");
     for (String remString : remStrings) {
       if (StringUtil.isEmptyOrSpaces(remString)) {
         continue;
       }
-      String[] info = remString.split("\n");
+      String[] info = StringUtil.splitByLines(remString.trim());
       String name = info[0];
       List<String> urls = getSpaceSeparatedStrings(info[1]);
       Collection<String> pushUrls = getSpaceSeparatedStrings(info[2]);
@@ -138,6 +192,18 @@ public class GitConfigTest {
 
   private static List<String> getSingletonOrEmpty(String[] array, int i) {
     return array.length < i + 1 ? Collections.<String>emptyList() : Collections.singletonList(array[i]);
+  }
+
+  private static class TestSpec {
+    @NotNull String name;
+    @NotNull File config;
+    @NotNull File result;
+
+    public TestSpec(@NotNull String testName, @NotNull File configFile, @NotNull File resultFile) {
+      this.name = testName;
+      this.config = configFile;
+      this.result = resultFile;
+    }
   }
 
 }

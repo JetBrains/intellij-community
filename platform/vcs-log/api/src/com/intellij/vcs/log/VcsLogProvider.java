@@ -20,9 +20,10 @@ public interface VcsLogProvider {
 
   /**
    * Reads the given number of the most recent commits from the log.
+   * @param requirements some limitations on commit data that should be returned.
    */
   @NotNull
-  List<? extends VcsFullCommitDetails> readFirstBlock(@NotNull VirtualFile root, boolean ordered, int commitCount) throws VcsException;
+  List<? extends VcsCommitMetadata> readFirstBlock(@NotNull VirtualFile root, @NotNull Requirements requirements) throws VcsException;
 
   /**
    * <p>Reads the whole history, but only hashes & parents.</p>
@@ -95,10 +96,20 @@ public interface VcsLogProvider {
   @NotNull
   Collection<String> getContainingBranches(@NotNull VirtualFile root, @NotNull Hash commitHash) throws VcsException;
 
-  /**
-   * Return true if the VCS supports some mode in which commits can be received faster, but unordered. <br/>
-   * In this case the VCS Log will order commits manually
-   */
-  boolean supportsFastUnorderedCommits();
+  interface Requirements {
+
+    /**
+     * Returns the number of commits that should be queried from the VCS. <br/>
+     * (of course it may return less commits if the repository is small)
+     */
+    int getCommitCount();
+
+    /**
+     * If true, commits should be returned ordered. <br/>
+     * This is needed only during the initialization procedure or during "simple" refreshes which happen before the full log is built. <br/>
+     * When the log is fully initialized, commits are requested unordered.
+     */
+    boolean isOrdered();
+  }
 
 }

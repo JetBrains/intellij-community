@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 public class LightParameter extends LightVariableBuilder<LightVariableBuilder> implements PsiParameter {
   public static final LightParameter[] EMPTY_ARRAY = new LightParameter[0];
 
-  private final String myName;
   private final PsiElement myDeclarationScope;
   private final boolean myVarArgs;
 
@@ -35,7 +34,6 @@ public class LightParameter extends LightVariableBuilder<LightVariableBuilder> i
 
   public LightParameter(@NotNull String name, @NotNull PsiType type, PsiElement declarationScope, Language language, boolean isVarArgs) {
     super(declarationScope.getManager(), name, type, language);
-    myName = name;
     myDeclarationScope = declarationScope;
     myVarArgs = isVarArgs;
   }
@@ -60,11 +58,5 @@ public class LightParameter extends LightVariableBuilder<LightVariableBuilder> i
   @Override
   public boolean isVarArgs() {
     return myVarArgs;
-  }
-
-  @Override
-  @NotNull
-  public String getName() {
-    return myName;
   }
 }

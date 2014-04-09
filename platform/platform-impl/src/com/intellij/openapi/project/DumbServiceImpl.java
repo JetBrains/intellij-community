@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.project;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.caches.CacheUpdater;
+import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -28,6 +29,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
@@ -45,7 +47,9 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -57,15 +61,49 @@ public class DumbServiceImpl extends DumbService {
   private final Queue<IndexUpdateRunnable> myUpdatesQueue = new Queue<IndexUpdateRunnable>(5);
   private final Queue<Runnable> myRunWhenSmartQueue = new Queue<Runnable>(5);
   private final Project myProject;
+  private final CacheUpdateRunner NULL_ACTION;
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
   public static DumbServiceImpl getInstance(@NotNull Project project) {
     return (DumbServiceImpl)DumbService.getInstance(project);
   }
 
+  @Override
+  public void queueTask(final DumbModeTask task) {
+    CacheUpdater wrapper = new CacheUpdater() {
+      @Override
+      public int getNumberOfPendingUpdateJobs() {
+        return 0;
+      }
+
+      @NotNull
+      @Override
+      public VirtualFile[] queryNeededFiles(@NotNull ProgressIndicator indicator) {
+        task.performInDumbMode(indicator);
+        return new VirtualFile[0];
+      }
+
+      @Override
+      public void processFile(@NotNull FileContent fileContent) {
+
+      }
+
+      @Override
+      public void updatingDone() {
+      }
+
+      @Override
+      public void canceled() {
+
+      }
+    };
+    queueCacheUpdateInDumbMode(Arrays.asList(wrapper));
+  }
+
   public DumbServiceImpl(Project project, MessageBus bus) {
     myProject = project;
     myPublisher = bus.syncPublisher(DUMB_MODE);
+    NULL_ACTION = new CacheUpdateRunner(project, Collections.<CacheUpdater>emptyList());
   }
 
   @Override
@@ -90,7 +128,7 @@ public class DumbServiceImpl extends DumbService {
   }
 
   @Override
-  public void runWhenSmart(Runnable runnable) {
+  public void runWhenSmart(@NotNull Runnable runnable) {
     if (!isDumb()) {
       runnable.run();
     }
@@ -101,15 +139,15 @@ public class DumbServiceImpl extends DumbService {
     }
   }
 
-  public void queueCacheUpdate(Collection<CacheUpdater> updaters) {
+  public void queueCacheUpdate(@NotNull Collection<CacheUpdater> updaters) {
     scheduleCacheUpdate(updaters, false);
   }
 
-  public void queueCacheUpdateInDumbMode(Collection<CacheUpdater> updaters) {
+  public void queueCacheUpdateInDumbMode(@NotNull Collection<CacheUpdater> updaters) {
     scheduleCacheUpdate(updaters, true);
   }
 
-  private void scheduleCacheUpdate(Collection<CacheUpdater> updaters, boolean forceDumbMode) {
+  private void scheduleCacheUpdate(@NotNull Collection<CacheUpdater> updaters, boolean forceDumbMode) {
     // prevent concurrent modifications
     final CacheUpdateRunner runner = new CacheUpdateRunner(myProject, new ArrayList<CacheUpdater>(updaters));
 
@@ -245,7 +283,7 @@ public class DumbServiceImpl extends DumbService {
   }
 
   @Override
-  public void showDumbModeNotification(final String message) {
+  public void showDumbModeNotification(@NotNull final String message) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -257,8 +295,6 @@ public class DumbServiceImpl extends DumbService {
       }
     });
   }
-
-  private static final CacheUpdateRunner NULL_ACTION = new CacheUpdateRunner(null,null);
 
   @Override
   public void waitForSmartMode() {
@@ -305,14 +341,9 @@ public class DumbServiceImpl extends DumbService {
 
   private class IndexUpdateRunnable implements Runnable {
     private final CacheUpdateRunner myAction;
-    private double myProcessedItems;
-    private volatile int myTotalItems;
-    private double myCurrentBaseTotal;
 
     public IndexUpdateRunnable(@NotNull CacheUpdateRunner action) {
       myAction = action;
-      myTotalItems = 0;
-      myCurrentBaseTotal = 0;
     }
 
     @Override
@@ -353,12 +384,7 @@ public class DumbServiceImpl extends DumbService {
             });
           }
 
-          final ProgressIndicator proxy = new DelegatingProgressIndicator(indicator) {
-            @Override
-            public void setFraction(double fraction) {
-              super.setFraction((myProcessedItems + fraction * myCurrentBaseTotal) / myTotalItems);
-            }
-          };
+          final ProgressIndicator proxy = new DelegatingProgressIndicator(indicator);
 
           final ShutDownTracker shutdownTracker = ShutDownTracker.getInstance();
           final Thread self = Thread.currentThread();
@@ -385,16 +411,12 @@ public class DumbServiceImpl extends DumbService {
               indicator.setText(IdeBundle.message("progress.indexing.scanning"));
               int count = updateRunner.queryNeededFiles(indicator);
 
-              myCurrentBaseTotal = count;
-              myTotalItems += count;
-
               indicator.setIndeterminate(false);
               indicator.setText(IdeBundle.message("progress.indexing.updating"));
               if (count > 0) {
                 updateRunner.processFiles(indicator, true);
               }
               updateRunner.updatingDone();
-              myProcessedItems += count;
             }
             catch (ProcessCanceledException ignored) {
             }

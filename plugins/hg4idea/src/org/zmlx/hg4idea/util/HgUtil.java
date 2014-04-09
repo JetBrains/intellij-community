@@ -412,35 +412,39 @@ public abstract class HgUtil {
     return repos;
   }
 
-  public static @NotNull Map<VirtualFile, Collection<VirtualFile>> sortByHgRoots(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
+  @NotNull
+  public static Map<VirtualFile, Collection<VirtualFile>> sortByHgRoots(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
     Map<VirtualFile, Collection<VirtualFile>> sorted = new HashMap<VirtualFile, Collection<VirtualFile>>();
+    HgRepositoryManager repositoryManager = getRepositoryManager(project);
     for (VirtualFile file : files) {
-      VirtualFile repo = VcsUtil.getVcsRootFor(project, file);
+      HgRepository repo = repositoryManager.getRepositoryForFile(file);
       if (repo == null) {
         continue;
       }
-      Collection<VirtualFile> filesForRoot = sorted.get(repo);
+      Collection<VirtualFile> filesForRoot = sorted.get(repo.getRoot());
       if (filesForRoot == null) {
         filesForRoot = new HashSet<VirtualFile>();
-        sorted.put(repo, filesForRoot);
+        sorted.put(repo.getRoot(), filesForRoot);
       }
       filesForRoot.add(file);
     }
     return sorted;
   }
 
-  public static @NotNull Map<VirtualFile, Collection<FilePath>> groupFilePathsByHgRoots(@NotNull Project project,
-                                                                                        @NotNull Collection<FilePath> files) {
+  @NotNull
+  public static Map<VirtualFile, Collection<FilePath>> groupFilePathsByHgRoots(@NotNull Project project,
+                                                                               @NotNull Collection<FilePath> files) {
     Map<VirtualFile, Collection<FilePath>> sorted = new HashMap<VirtualFile, Collection<FilePath>>();
+    HgRepositoryManager repositoryManager = getRepositoryManager(project);
     for (FilePath file : files) {
-      VirtualFile repo = VcsUtil.getVcsRootFor(project, file);
+      HgRepository repo = repositoryManager.getRepositoryForFile(file);
       if (repo == null) {
         continue;
       }
-      Collection<FilePath> filesForRoot = sorted.get(repo);
+      Collection<FilePath> filesForRoot = sorted.get(repo.getRoot());
       if (filesForRoot == null) {
         filesForRoot = new HashSet<FilePath>();
-        sorted.put(repo, filesForRoot);
+        sorted.put(repo.getRoot(), filesForRoot);
       }
       filesForRoot.add(file);
     }
@@ -588,11 +592,16 @@ public abstract class HgUtil {
 
   @Nullable
   public static HgRepository getCurrentRepository(@NotNull Project project) {
-    HgRepositoryManager repositoryManager = getRepositoryManager(project);
     VirtualFile file = DvcsUtil.getSelectedFile(project);
+    return getRepositoryForFile(project, file);
+  }
+
+  @Nullable
+  public static HgRepository getRepositoryForFile(@NotNull Project project, @Nullable VirtualFile file) {
     if (file == null) {
       return null;
     }
+    HgRepositoryManager repositoryManager = getRepositoryManager(project);
     VirtualFile root = getHgRootOrNull(project, file);
     return repositoryManager.getRepositoryForRoot(root);
   }

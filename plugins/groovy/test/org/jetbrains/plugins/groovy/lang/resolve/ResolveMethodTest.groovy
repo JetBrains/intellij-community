@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrRe
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author ven
@@ -260,21 +261,21 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
   }
 
   public void testLangImmutableConstructor() {
-    myFixture.addClass("package groovy.lang; public @interface Immutable {}")
+    addImmutable()
     myFixture.addFileToProject('Classes.groovy', '@Immutable class Foo { int a; int b }')
     def ref = configureByText('new Fo<caret>o(2, 3)')
     assert ((GrNewExpression) ref.element.parent).advancedResolve().element instanceof PsiMethod
   }
 
   public void testTransformImmutableConstructor() {
-    myFixture.addClass("package groovy.transform; public @interface Immutable {}")
+    addImmutable()
     myFixture.addFileToProject('Classes.groovy', '@groovy.transform.Immutable class Foo { int a; int b }')
     def ref = configureByText('new Fo<caret>o(2, 3)')
     assert ((GrNewExpression) ref.element.parent).advancedResolve().element instanceof PsiMethod
   }
 
   public void testTupleConstructor() {
-    myFixture.addClass("package groovy.transform; public @interface TupleConstructor {}")
+    addTupleConstructor()
     myFixture.addFileToProject('Classes.groovy', '@groovy.transform.TupleConstructor class Foo { int a; final int b }')
     def ref = configureByText('new Fo<caret>o(2, 3)')
     def target = ((GrNewExpression) ref.element.parent).advancedResolve().element
@@ -284,14 +285,14 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
   }
 
   public void testCanonicalConstructor() {
-    myFixture.addClass("package groovy.transform; public @interface Canonical {}")
+    addCanonical()
     myFixture.addFileToProject('Classes.groovy', '@groovy.transform.Canonical class Foo { int a; int b }')
     def ref = configureByText('new Fo<caret>o(2, 3)')
     assert ((GrNewExpression) ref.element.parent).advancedResolve().element instanceof PsiMethod
   }
 
   public void testInheritConstructors() {
-    myFixture.addClass("package groovy.transform; public @interface InheritConstructors {}")
+    addInheritConstructor()
     myFixture.addFileToProject('Classes.groovy', '@groovy.transform.InheritConstructors class CustomException extends Exception {}')
     def ref = configureByText('new Cu<caret>stomException("msg")')
     assert ((GrNewExpression) ref.element.parent).advancedResolve().element instanceof PsiMethod
@@ -1903,4 +1904,238 @@ new Foo().f<caret>oo(new File(''))
 
     assertTrue(resolved.hasModifierProperty(PsiModifier.STATIC))
   }
+
+  void testBaseScript() {
+    addBaseScript()
+
+    myFixture.addClass '''
+class CustomScript extends Script {
+  void foo() {}
+}'''
+
+    resolveByText('''
+import groovy.transform.BaseScript
+
+@BaseScript
+CustomScript myScript;
+
+f<caret>oo()
+''', PsiMethod)
+  }
+
+  void testImportStaticVSDGM() {
+    def method = resolveByText('''
+import static Bar.is
+
+class Foo {
+    void foo() {
+        i<caret>s(null)
+    }
+}
+
+class Bar {
+    static boolean is(Class c) {
+        println 'bar'
+        return true
+    }
+}
+''', PsiMethod)
+
+    PsiClass clazz = method.containingClass
+    assertNotNull(clazz)
+    assertEquals('Bar', clazz.qualifiedName)
+
+  }
+
+  void testImportStaticPrint() {
+    def print = resolveByText('''
+import static C.print
+
+new Runnable() {
+    void run() {
+        pri<caret>nt "wow";
+    }
+}.run()
+
+class C {
+    static def print(String s) {print 'hjk'}
+}
+''', PsiMethod)
+
+
+    PsiClass clazz = print.containingClass
+    assertNotNull(clazz)
+    assertEquals("C", clazz.qualifiedName)
+  }
+
+  void testPrintInClosure() {
+    def print = resolveByText('''
+class C {
+    static def print(String s) {prin<caret>t 'hjk'}
+}
+''', PsiMethod)
+
+
+    PsiClass clazz = print.containingClass
+    assertNotNull(clazz)
+    assertEquals("C", clazz.qualifiedName)
+  }
+
+  void testPrint() {
+    def print = resolveByText('''
+import static C.print
+
+def cl = {pr<caret>int 'abc'}
+
+class C {
+    static def print(String s) {print 'hjk'}
+}
+''', PsiMethod)
+
+
+    PsiClass clazz = print.containingClass
+    assertNotNull(clazz)
+    assertEquals("C", clazz.qualifiedName)
+  }
+
+  void testScriptMethodVSStaticImportInsideAnonymous() {
+    def method = resolveByText '''
+import static C.abc
+
+class C {
+    static def abc(c) {
+        print 2
+    }
+}
+new Runnable() {
+    @Override
+    void run() {
+        ab<caret>c '2'
+    }
+}.run()
+
+def abc(String s) { print 'hjk' }
+''', PsiMethod
+    PsiClass clazz = method.containingClass
+    assertNotNull(clazz)
+    assertEquals("C", clazz.qualifiedName)
+  }
+
+
+  void testScriptMethodVSStaticImportInsideClosure() {
+    def method = resolveByText '''
+import static C.abc
+
+class C {
+    static def abc(c) {
+        print 2
+    }
+}
+def cl = {
+    ab<caret>c '2'
+}
+
+def abc(String s) { print 'hjk' }
+''', PsiMethod
+    PsiClass clazz = method.containingClass
+    assertNotNull(clazz)
+    assertEquals("C", clazz.qualifiedName)
+  }
+
+  void testScriptMethodVSStaticImportInsideScript() {
+    def method = resolveByText '''
+import static C.abc
+
+class C {
+    static def abc(c) {
+        print 2
+    }
+}
+
+ab<caret>c '2'
+
+def abc(String s) { print 'hjk' }
+''', PsiMethod
+    PsiClass clazz = method.containingClass
+    assertNotNull(clazz)
+    assertInstanceOf(clazz, GroovyScriptClass)
+  }
+
+
+  void testLocalStringVSDefault() {
+    def clazz = resolveByText('''
+class String {}
+
+new Str<caret>ing()
+''', PsiClass)
+
+    assertEquals("String", clazz.qualifiedName)
+  }
+
+  void testLocalVarVSStaticImport() {
+    resolveByText('''
+import static Abc.foo
+
+class Abc {
+    static def foo() { print 'static' }
+}
+
+def foo =  { print 'closure' }
+
+
+fo<caret>o()
+''', GrVariable)
+  }
+
+  void testInstanceMethodVSStaticImport() {
+    def method = resolveByText('''
+import static C.abc
+
+class C {
+    static def abc(a) {}
+}
+
+class B {
+    def abc(a) {}
+
+    void bar() {
+       a<caret>bc(x)
+    }
+}
+''', PsiMethod)
+    PsiClass clazz = method.containingClass
+    assertNotNull(clazz)
+    assertEquals('C', clazz.qualifiedName)
+  }
+
+  void testUseVSStaticImport() {
+    def method = resolveByText('''
+import static C.abc
+
+class C {
+    static def abc(c) {
+        print 'static '
+    }
+}
+
+class D {
+    static def abc(c, d) {
+        print 'mixin'
+    }
+}
+
+class Fo {
+    def bar() {
+        use(D) {
+            ab<caret>c(2)
+        }
+    }
+}
+''', PsiMethod)
+    PsiClass clazz = method.containingClass
+    assertNotNull(clazz)
+    assertEquals('C', clazz.qualifiedName)
+  }
+
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.util.containers;
 
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.concurrency.AtomicFieldUpdater;
 import gnu.trove.TObjectHashingStrategy;
 import jsr166e.CountedCompleter;
 import jsr166e.ForkJoinPool;
@@ -7137,32 +7138,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * @return a sun.misc.Unsafe
    */
   private static Unsafe getUnsafe() {
-    try {
-      return Unsafe.getUnsafe();
-    }
-    catch (SecurityException tryReflectionInstead) {
-    }
-    try {
-      return AccessController.doPrivileged
-        (new PrivilegedExceptionAction<Unsafe>() {
-          @Override
-          public Unsafe run() throws Exception {
-            Class<Unsafe> k = Unsafe.class;
-            for (Field f : k.getDeclaredFields()) {
-              f.setAccessible(true);
-              Object x = f.get(null);
-              if (k.isInstance(x)) {
-                return k.cast(x);
-              }
-            }
-            throw new NoSuchFieldError("the Unsafe");
-          }
-        });
-    }
-    catch (PrivilegedActionException e) {
-      throw new RuntimeException("Could not initialize intrinsics",
-                                 e.getCause());
-    }
+    return AtomicFieldUpdater.getUnsafe();
   }
 
   ////////////////////// IJ specific

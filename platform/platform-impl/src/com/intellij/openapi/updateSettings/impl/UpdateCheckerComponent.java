@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,13 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
+import com.intellij.ide.AppLifecycleListener;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
@@ -44,14 +47,22 @@ public class UpdateCheckerComponent implements ApplicationComponent {
   };
   private final UpdateSettings mySettings;
 
-  public UpdateCheckerComponent(@NotNull UpdateSettings settings) {
+  public UpdateCheckerComponent(@NotNull Application app, @NotNull UpdateSettings settings) {
     mySettings = settings;
+    app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+      @Override
+      public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
+        scheduleOnStartCheck();
+      }
+    });
   }
 
   @Override
   public void initComponent() {
     PluginsAdvertiser.ensureDeleted();
+  }
 
+  private void scheduleOnStartCheck() {
     if (!mySettings.CHECK_NEEDED) {
       return;
     }

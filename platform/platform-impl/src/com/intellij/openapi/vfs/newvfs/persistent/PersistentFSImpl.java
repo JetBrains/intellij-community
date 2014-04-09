@@ -50,6 +50,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.zip.ZipFile;
 
 /**
  * @author max
@@ -141,7 +142,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     return ContainerUtil.map2Array(nameIds, String.class, new Function<FSRecords.NameId, String>() {
       @Override
       public String fun(FSRecords.NameId id) {
-        return id.name;
+        return id.name.toString();
       }
     });
   }
@@ -172,7 +173,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
     Set<String> toAdd = ContainerUtil.newHashSet(delegateNames);
     for (FSRecords.NameId nameId : current) {
-      toAdd.remove(nameId.name);
+      toAdd.remove(nameId.name.toString());
     }
 
     final TIntArrayList childrenIds = new TIntArrayList(current.length + toAdd.size());
@@ -875,7 +876,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       // optimization: for jar roots do not store base path in the myName field, use local FS file's getPath()
       String parentPath = basePath.substring(0, basePath.indexOf(JarFileSystem.JAR_SEPARATOR));
       VirtualFile parentFile = LocalFileSystem.getInstance().findFileByPath(parentPath);
-      if (parentFile == null) return null;
+      if (parentFile == null || !isValidJar(parentPath)) return null;
       newRoot = new JarRoot(fs, rootId, parentFile);
     }
     else {
@@ -910,6 +911,18 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     LOG.assertTrue(rootId == newRoot.getId(), "root=" + newRoot + " expected=" + rootId + " actual=" + newRoot.getId());
 
     return newRoot;
+  }
+
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  private static boolean isValidJar(@NotNull String path) {
+    try {
+      new ZipFile(path).close();
+      return true;
+    }
+    catch (IOException e) {
+      LOG.warn("invalid .jar: " + path);
+      return false;
+    }
   }
 
   @NotNull
@@ -1276,10 +1289,10 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
     @NotNull
     @Override
-    public abstract String getName();
+    public abstract CharSequence getNameSequence();
 
     @Override
-    public int compareNameTo(@NotNull String name, boolean ignoreCase) {
+    public int compareNameTo(@NotNull CharSequence name, boolean ignoreCase) {
       return VirtualFileSystemEntry.compareNames(getName(), name, ignoreCase);
     }
 
@@ -1309,7 +1322,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
     @NotNull
     @Override
-    public String getName() {
+    public CharSequence getNameSequence() {
       return myParentLocalFile.getName();
     }
 
@@ -1332,7 +1345,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
     @NotNull
     @Override
-    public String getName() {
+    public CharSequence getNameSequence() {
       return myName;
     }
 

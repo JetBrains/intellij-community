@@ -183,14 +183,11 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     if (node == null) {
       return;
     }
-    if (surroundedText == null) {
-      if (node instanceof TemplateNode) {
-        if (key.equals(((TemplateNode)node).getTemplateToken().getKey()) && callback.findApplicableTemplates(key).size() > 1) {
-          callback.startTemplate();
-          return;
-        }
+    if (surroundedText == null && node instanceof TemplateNode) {
+      if (key.equals(((TemplateNode)node).getTemplateToken().getKey()) && callback.findApplicableTemplates(key).size() > 1) {
+        callback.startTemplate();
+        return;
       }
-      callback.deleteTemplateKey(key);
     }
 
     PsiElement context = callback.getContext();
@@ -198,6 +195,12 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     List<ZenCodingFilter> filters = getFilters(node, context);
     filters.addAll(extraFilters);
 
+
+    if (surroundedText == null) {
+      callback.deleteTemplateKey(key);
+      // commit is required. otherwise injections placed after caret will be broken
+      PsiDocumentManager.getInstance(callback.getProject()).commitDocument(callback.getEditor().getDocument());
+    }
     expand(node, generator, filters, surroundedText, callback, expandPrimitiveAbbreviations);
   }
 
@@ -377,7 +380,8 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
   static boolean checkTemplateKey(String inputString, CustomTemplateCallback callback) {
     ZenCodingGenerator generator = findApplicableDefaultGenerator(callback.getContext(), true);
     if (generator == null) {
-      LOG.error("Emmet is disabled for context for file " + callback.getFileType().getName(),
+      int offset = callback.getEditor().getCaretModel().getOffset();
+      LOG.error("Emmet is disabled for context for file " + callback.getFileType().getName() + " in offset: " + offset,
                 AttachmentFactory.createAttachment(callback.getEditor().getDocument()));
       return false;
     }

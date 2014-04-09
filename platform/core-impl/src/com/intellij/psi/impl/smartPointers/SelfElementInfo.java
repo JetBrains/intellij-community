@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
@@ -48,7 +49,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
 
   protected SelfElementInfo(@NotNull Project project, @NotNull PsiElement anchor) {
     this(project, ProperTextRange.create(anchor.getTextRange()), anchor.getClass(), anchor.getContainingFile(),
-         anchor.getContainingFile().getLanguage());
+         LanguageUtil.getRootLanguage(anchor));
   }
   public SelfElementInfo(@NotNull Project project,
                          @NotNull ProperTextRange range,

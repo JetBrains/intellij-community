@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,12 +93,18 @@ public class BalloonLayoutImpl implements BalloonLayout {
       final ArrayList<Balloon> eachColumn = columns.get(i);
       final Integer eachWidth = columnWidths.get(i);
       eachCoumnX -= eachWidth.intValue();
-      int eachY = layoutRec.y;
+      int eachY = layoutRec.y + 47; //todo[kb] calculate Y offset so balloon places exactly editor's top-right corner
       for (Balloon eachBalloon : eachColumn) {
         final Rectangle eachRec = new Rectangle();
         final Dimension eachPrefSize = eachBalloon.getPreferredSize();
         eachRec.setSize(eachPrefSize);
-        eachRec.setLocation(eachCoumnX + eachWidth.intValue() - eachRec.width, eachY);
+        if (((BalloonImpl)eachBalloon).hasShadow()) {
+          final int shadowSize = ((BalloonImpl)eachBalloon).getShadowBorderSize();
+          eachRec.width += 2 * shadowSize;
+          eachRec.height += 2 * shadowSize;
+        }
+        eachY+=2; //space between two notifications
+        eachRec.setLocation(eachCoumnX + eachWidth.intValue() - eachRec.width - 14, eachY);
         eachBalloon.setBounds(eachRec);
         eachY += eachRec.height;
       }

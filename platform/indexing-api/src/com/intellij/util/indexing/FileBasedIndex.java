@@ -126,8 +126,6 @@ public abstract class FileBasedIndex implements BaseComponent {
 
   public abstract void requestReindex(@NotNull VirtualFile file);
 
-  public abstract void requestReindexExcluded(@NotNull VirtualFile file);
-
   public abstract <K, V> boolean getFilesWithKey(@NotNull ID<K, V> indexId,
                                                  @NotNull Set<K> dataKeys,
                                                  @NotNull Processor<VirtualFile> processor,

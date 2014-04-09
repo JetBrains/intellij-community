@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util;
 
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -37,6 +38,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.StringReader;
@@ -71,12 +76,6 @@ public class TipUIUtil {
 
   public static void openTipInBrowser(@Nullable TipAndTrickBean tip, JEditorPane browser) {
     if (tip == null) return;
-    /* TODO: detect that file is not present
-    if (!file.exists()) {
-      browser.read(new StringReader("Tips for '" + feature.getDisplayName() + "' not found.  Make sure you installed IntelliJ IDEA correctly."), null);
-      return;
-    }
-    */
     try {
       PluginDescriptor pluginDescriptor = tip.getPluginDescriptor();
       ClassLoader tipLoader = pluginDescriptor == null ? TipUIUtil.class.getClassLoader() :
@@ -199,5 +198,31 @@ public class TipUIUtil {
       }
     }
     return null;
+  }
+
+  @NotNull
+  public static JEditorPane createTipBrowser() {
+    JEditorPane browser = new JEditorPane();
+    browser.setEditable(false);
+    browser.setBackground(UIUtil.getTextFieldBackground());
+    browser.addHyperlinkListener(
+      new HyperlinkListener() {
+        public void hyperlinkUpdate(HyperlinkEvent e) {
+          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+            BrowserUtil.browse(e.getURL());
+          }
+        }
+      }
+    );
+    URL resource = ResourceUtil.getResource(TipUIUtil.class, "/tips/css/", UIUtil.isUnderDarcula() ? "tips_darcula.css" : "tips.css");
+    final StyleSheet styleSheet = UIUtil.loadStyleSheet(resource);
+    HTMLEditorKit kit = new HTMLEditorKit() {
+      @Override
+      public StyleSheet getStyleSheet() {
+        return styleSheet != null ? styleSheet : super.getStyleSheet();
+      }
+    };
+    browser.setEditorKit(kit);
+    return browser;
   }
 }

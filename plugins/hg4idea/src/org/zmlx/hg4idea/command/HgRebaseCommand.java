@@ -14,12 +14,14 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.repo.HgRepository;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 public class HgRebaseCommand {
 
@@ -31,15 +33,28 @@ public class HgRebaseCommand {
     this.repo = repo;
   }
 
-  public HgCommandResult continueRebase() {
-    HgCommandResult result = new HgCommandExecutor(project).executeInCurrentThread(repo.getRoot(), "rebase", Arrays.asList("--continue"), null);
+  @Nullable
+  public HgCommandResult startRebase() {
+    HgCommandResult result =
+      new HgCommandExecutor(project).executeInCurrentThread(repo.getRoot(), "rebase", Collections.<String>emptyList(), null);
     repo.update();
     project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
     return result;
   }
 
+  @Nullable
+  public HgCommandResult continueRebase() {
+    HgCommandResult result =
+      new HgCommandExecutor(project).executeInCurrentThread(repo.getRoot(), "rebase", Arrays.asList("--continue"), null);
+    repo.update();
+    project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
+    return result;
+  }
+
+  @Nullable
   public HgCommandResult abortRebase() {
-    HgCommandResult result = new HgCommandExecutor(project).executeInCurrentThread(repo.getRoot(), "rebase", Arrays.asList("--abort"), null);
+    HgCommandResult result =
+      new HgCommandExecutor(project).executeInCurrentThread(repo.getRoot(), "rebase", Arrays.asList("--abort"), null);
     repo.update();
     project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
     return result;

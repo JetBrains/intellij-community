@@ -930,7 +930,7 @@ public class MavenProjectsTree {
         updateCrc(crc, getFilterExclusions(mavenProject).hashCode());
         updateCrc(crc, mavenProject.getProperties().hashCode());
 
-        for (String each : mavenProject.getFilters()) {
+        for (String each : mavenProject.getFilterPropertiesFiles()) {
           File file = new File(each);
           updateCrc(crc, file.lastModified());
         }

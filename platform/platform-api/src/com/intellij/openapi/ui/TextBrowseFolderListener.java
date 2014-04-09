@@ -35,7 +35,7 @@ public class TextBrowseFolderListener extends ComponentWithBrowseButton.BrowseFo
     myTextComponent = component;
   }
 
-  FileChooserDescriptor gFileChooserDescriptor() {
+  FileChooserDescriptor getFileChooserDescriptor() {
     return myFileChooserDescriptor;
   }
 }

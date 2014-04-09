@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,28 +15,12 @@
  */
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
 import java.io.IOException;
 
 public class FileTypeManagerTest extends LightPlatformCodeInsightFixtureTestCase {
-  public void testAutoDetectTextFileFromContents() throws IOException {
-    VirtualFile vFile = myFixture.getTempDirFixture().createFile("test.xxxxxxxx");
-    VfsUtil.saveText(vFile, "text");
-
-    FileType type = vFile.getFileType();
-    assertEquals(UnknownFileType.INSTANCE, type);
-
-    PsiFile psiFile = ((PsiManagerEx)PsiManager.getInstance(myFixture.getProject())).getFileManager().findFile(vFile); // autodetect text file if needed
-    assertNotNull(psiFile);
-    assertEquals(PlainTextFileType.INSTANCE, vFile.getFileType());
-  }
-
   public void testIgnoredFiles() throws IOException {
     VirtualFile vFile = myFixture.getTempDirFixture().createFile(".svn", "");
     assertTrue(FileTypeManager.getInstance().isFileIgnored(vFile));

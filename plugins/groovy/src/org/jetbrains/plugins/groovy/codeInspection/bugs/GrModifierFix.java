@@ -33,7 +33,7 @@ public class GrModifierFix extends GroovyFix {
     @Override
     public PsiModifierList fun(ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      assert element instanceof PsiImportList : element;
+      assert element instanceof PsiModifierList : element;
       return (PsiModifierList)element;
     }
   };

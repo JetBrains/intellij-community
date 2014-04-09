@@ -24,7 +24,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.*;
@@ -99,11 +98,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
 
   private final EventDispatcher<WindowManagerListener> myEventDispatcher = EventDispatcher.create(WindowManagerListener.class);
 
-  /**
-   * Union of bounds of all available default screen devices.
-   */
-  private final Rectangle myScreenBounds;
-
   private final CommandProcessor myCommandProcessor;
   private final WindowWatcher myWindowWatcher;
   /**
@@ -129,10 +123,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
 
   /**
    * invoked by reflection
-   * @param dataManager
-   * @param applicationInfoEx
-   * @param actionManager
-   * @param uiSettings
    */
   public WindowManagerImpl(DataManager dataManager,
                            ApplicationInfoEx applicationInfoEx,
@@ -169,19 +159,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     myDialogsToDispose = new HashMap<Project, Set<JDialog>>();
     myFrameExtendedState = Frame.NORMAL;
 
-    // Calculate screen bounds.
-
-    Rectangle screenBounds = new Rectangle();
-    if (!application.isHeadlessEnvironment()) {
-      final GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-      final GraphicsDevice[] devices = env.getScreenDevices();
-      for (final GraphicsDevice device : devices) {
-        screenBounds = screenBounds.union(device.getDefaultConfiguration().getBounds());
-      }
-    }
-    myScreenBounds = screenBounds;
-
     myActivationListener = new WindowAdapter() {
+      @Override
       public void windowActivated(WindowEvent e) {
         Window activeWindow = e.getWindow();
         if (activeWindow instanceof IdeFrameImpl) { // must be
@@ -224,6 +203,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     }
   }
 
+  @Override
   @NotNull
   public IdeFrameImpl[] getAllProjectFrames() {
     final Collection<IdeFrameImpl> ideFrames = myProject2Frame.values();
@@ -241,12 +221,14 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     myEventDispatcher.addListener(listener);
   }
 
+  @Override
   public void removeListener(final WindowManagerListener listener) {
     myEventDispatcher.removeListener(listener);
   }
 
+  @Override
   public final Rectangle getScreenBounds() {
-    return myScreenBounds;
+    return ScreenUtil.getAllScreensShape().getBounds();
   }
 
   @Override
@@ -264,18 +246,17 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     return null;
   }
 
+  @Override
   public final boolean isInsideScreenBounds(final int x, final int y, final int width) {
-    return
-      x >= myScreenBounds.x + 50 - width &&
-      y >= myScreenBounds.y - 50 &&
-      x <= myScreenBounds.x + myScreenBounds.width - 50 &&
-      y <= myScreenBounds.y + myScreenBounds.height - 50;
+    return ScreenUtil.getAllScreensShape().contains(x, y, width, 1);
   }
 
+  @Override
   public final boolean isInsideScreenBounds(final int x, final int y) {
-    return myScreenBounds.contains(x, y);
+    return ScreenUtil.getAllScreensShape().contains(x, y);
   }
 
+  @Override
   public final boolean isAlphaModeSupported() {
     if (myAlphaModeSupported == null) {
       myAlphaModeSupported = calcAlphaModelSupported();
@@ -295,6 +276,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     }
   }
 
+  @Override
   public final void setAlphaModeRatio(final Window window, final float ratio) {
     if (!window.isDisplayable() || !window.isShowing()) {
       throw new IllegalArgumentException("window must be displayable and showing. window=" + window);
@@ -333,6 +315,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     }
   }
 
+  @Override
   public void setWindowMask(final Window window, @Nullable final Shape mask) {
     try {
       if (AWTUtilitiesWrapper.isTranslucencySupported(AWTUtilitiesWrapper.PERPIXEL_TRANSPARENT)) {
@@ -356,6 +339,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     }
   }
 
+  @Override
   public void resetWindow(final Window window) {
     try {
       if (!isAlphaModeSupported()) return;
@@ -369,6 +353,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     }
   }
 
+  @Override
   public final boolean isAlphaModeEnabled(final Window window) {
     if (!window.isDisplayable() || !window.isShowing()) {
       throw new IllegalArgumentException("window must be displayable and showing. window=" + window);
@@ -376,12 +361,14 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     return isAlphaModeSupported();
   }
 
+  @Override
   public final void setAlphaModeEnabled(final Window window, final boolean state) {
     if (!window.isDisplayable() || !window.isShowing()) {
       throw new IllegalArgumentException("window must be displayable and showing. window=" + window);
     }
   }
 
+  @Override
   public void hideDialog(JDialog dialog, Project project) {
     if (project == null) {
       dialog.dispose();
@@ -409,7 +396,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
       if (popup != null) {
         if (oldSize.height < newSize.height) {
           Dimension size = popup.getSize();
-          size.height += (newSize.height - oldSize.height);
+          size.height += newSize.height - oldSize.height;
           popup.setSize(size);
           popup.moveToFitScreen();
         }
@@ -417,24 +404,30 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     }
   }
 
+  @Override
   public final void disposeComponent() {}
 
+  @Override
   public final void initComponent() {
   }
 
+  @Override
   public final void doNotSuggestAsParent(final Window window) {
     myWindowWatcher.doNotSuggestAsParent(window);
   }
 
+  @Override
   public final void dispatchComponentEvent(final ComponentEvent e) {
     myWindowWatcher.dispatchComponentEvent(e);
   }
 
+  @Override
   @Nullable
   public final Window suggestParentWindow(@Nullable final Project project) {
     return myWindowWatcher.suggestParentWindow(project);
   }
 
+  @Override
   @Nullable
   public final StatusBar getStatusBar(final Project project) {
     if (!myProject2Frame.containsKey(project)) {
@@ -467,6 +460,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     return null;
   }
 
+  @Override
   public IdeFrame findFrameFor(@Nullable final Project project) {
     IdeFrame frame = null;
     if (project != null) {
@@ -510,12 +504,14 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     return candidate;
   }
 
+  @Override
   public final IdeFrameImpl getFrame(@Nullable final Project project) {
     // no assert! otherwise WindowWatcher.suggestParentWindow fails for default project
     //LOG.assertTrue(myProject2Frame.containsKey(project));
     return myProject2Frame.get(project);
   }
 
+  @Override
   public IdeFrame getIdeFrame(@Nullable final Project project) {
     if (project != null) {
       return getFrame(project);
@@ -594,6 +590,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     return myProject2Frame.get(null);
   }
 
+  @Override
   public final IdeFrameImpl allocateFrame(final Project project) {
     LOG.assertTrue(!myProject2Frame.containsKey(project));
 
@@ -605,8 +602,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
       frame.setProject(project);
     }
     else {
-      frame = new IdeFrameImpl((ApplicationInfoEx)ApplicationInfo.getInstance(), ActionManagerEx.getInstanceEx(), UISettings.getInstance(),
-                               DataManager.getInstance(), ApplicationManager.getApplication());
+      frame = new IdeFrameImpl(myApplicationInfoEx, myActionManager, myUiSettings,
+                               myDataManager, ApplicationManager.getApplication());
 
       final Rectangle bounds = ProjectFrameBounds.getInstance(project).getBounds();
 
@@ -649,6 +646,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     dialogs.add(dialog);
   }
 
+  @Override
   public final void releaseFrame(final IdeFrameImpl frame) {
 
     myEventDispatcher.getMulticaster().beforeFrameReleased(frame);
@@ -683,14 +681,17 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     }
   }
 
+  @Override
   public final Window getMostRecentFocusedWindow() {
     return myWindowWatcher.getFocusedWindow();
   }
 
+  @Override
   public final Component getFocusedComponent(@NotNull final Window window) {
     return myWindowWatcher.getFocusedComponent(window);
   }
 
+  @Override
   @Nullable
   public final Component getFocusedComponent(@Nullable final Project project) {
     return myWindowWatcher.getFocusedComponent(project);
@@ -699,6 +700,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
   /**
    * Private part
    */
+  @Override
   @NotNull
   public final CommandProcessor getCommandProcessor() {
     return myCommandProcessor;
@@ -812,14 +814,17 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     return frameElement;
   }
 
+  @Override
   public final DesktopLayout getLayout() {
     return myLayout;
   }
 
+  @Override
   public final void setLayout(final DesktopLayout layout) {
     myLayout.copyFrom(layout);
   }
 
+  @Override
   @NotNull
   public final String getComponentName() {
     return "WindowManager";
@@ -843,6 +848,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     public SUN_BUG_ID_4218084_Patch() {
       myAlarm = new Alarm();
       myClearSelectedPathRunnable = new Runnable() {
+        @Override
         public void run() {
           if (myInitialFocusedWindow != myLastFocusedWindow) {
             MenuSelectionManager.defaultManager().clearSelectedPath();
@@ -851,6 +857,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
       };
     }
 
+    @Override
     public void propertyChange(final PropertyChangeEvent e) {
       if (myAlarm.getActiveRequestCount() == 0) {
         myInitialFocusedWindow = (Window)e.getOldValue();
@@ -887,6 +894,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     return myWindowWatcher;
   }
 
+  @Override
   public boolean isFullScreenSupportedInCurrentOS() {
     return SystemInfo.isMacOSLion || SystemInfo.isWindows || SystemInfo.isXWindow && X11UiUtil.isFullScreenSupported();
   }

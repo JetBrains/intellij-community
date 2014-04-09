@@ -196,13 +196,6 @@ public class DebuggerUIUtil {
       }
     });
 
-    if (point == null) {
-      balloon.showInCenterOf(component);
-    }
-    else {
-      balloon.show(new RelativePoint(component, point), Balloon.Position.atRight);
-    }
-
     breakpointManager.addBreakpointListener(breakpointListener);
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override

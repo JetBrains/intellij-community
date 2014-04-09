@@ -47,6 +47,7 @@ String patchAppDescriptor(String targetDirectory) {
 def layoutFull(String home, String targetDirectory, String patchedDescriptorDir = null) {
   projectBuilder.stage("layout to $targetDirectory")
 
+  List<String> jpsCommonModules = ["jps-model-impl", "jps-model-serialization"]
   List<String> openapiModules = [platformApiModules,
     "compiler-openapi",
     "debugger-openapi",
@@ -70,7 +71,6 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     "execution-impl",
     "external-system-impl",
     "idea-ui",
-    "instrumentation-util",
     "java-analysis-impl",
     "java-indexing-impl",
     "java-impl",
@@ -83,7 +83,9 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     "remote-servers-java-impl",
     "testFramework",
     "tests_bootstrap",
-          ].flatten()
+    "ui-designer-core"
+  ].flatten()
+  implementationModules.removeAll(jpsCommonModules) //todo[nik] remove jps modules from platformImplementationModules instead and update layouts of minor IDEs accordingly
 
   ant.patternset(id: "resources.included") {
     include(name: "**/*.properties")
@@ -109,6 +111,9 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     dir("lib") {
       dir("rt") {
         fileset(dir: "${home}/lib/rt", includesfile: "${home}/lib/rt/required_for_dist.txt")
+        jar("jps-plugin-system.jar") {
+          module("jps-plugin-system")
+        }
       }
 
       dir("libpty") {
@@ -177,6 +182,9 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
         module("instrumentation-util")
       }
 
+      jar("jps-model.jar") {
+        jpsCommonModules.each { module it }
+      }
       jar("jps-server.jar") {
         module("jps-builders")
       }
@@ -680,15 +688,7 @@ def layoutAndroid(String androidHome) {
 
     dir("android-designer") {
       dir("lib") {
-        jar("resources_en.jar") {
-          module("ui-designer-core") {
-            patternset(refid: "resources.included")
-          }
-        }
         jar("android-designer.jar") {
-          module("ui-designer-core") {
-            patternset(refid: "resources.excluded")
-          }
           module("android-designer")
         }
       }
@@ -696,74 +696,78 @@ def layoutAndroid(String androidHome) {
   }
 }
 
-def layoutCommunityJps(String home, String target) {
-  layout(target) {
-    jar("util.jar") {
-      module("annotations")
-      module("util-rt")
-      module("util")
-    }
-    
-    jar("jps-launcher.jar") {
-      module("jps-launcher") 
-    }
-    
-    jar("jps-model.jar") {
-      module("jps-model-api")
-      module("jps-model-impl")
-      module("jps-model-serialization")
-    }
-    jar("jps-builders.jar") {
-      module("forms_rt")
-      module("forms-compiler")
-      module("instrumentation-util")
-      module("jps-builders")
-      module("jps-standalone-builder")
-      module("java-runtime")
-    }
-    jar("groovy-jps-plugin.jar") {
-      module("groovy-jps-plugin")
-      module("groovy-rt-constants")
-    }
-    jar("groovy_rt.jar") {
-      module("groovy_rt")
-    }
-    jar("ui-designer-jps-plugin.jar") { module("ui-designer-jps-plugin") }
-
-
-    jar("maven-jps-plugin.jar") { module("maven-jps-plugin") }
-    fileset(dir: "$home/plugins/maven/maven3-server-impl/lib/maven3/lib") {include(name: "plexus-utils-*.jar")}
-
-    jar("eclipse-jps-plugin.jar") {
-      module("common-eclipse-util")
-      module("eclipse-jps-plugin")
-    }
-    jar("devkit-jps-plugin.jar") { module("devkit-jps-plugin") }
-    jar("intellilang-jps-plugin.jar") { module("intellilang-jps-plugin") }
-    fileset(dir: "$home/lib") {
-      include(name: "jdom.jar")
-      include(name: "jna.jar")
-      include(name: "trove4j.jar")
-      include(name: "asm4-all.jar")
-      include(name: "nanoxml-*.jar")
-      include(name: "protobuf-*.jar")
-      include(name: "cli-parser-*.jar")
-      include(name: "log4j.jar")
-      include(name: "jgoodies-forms.jar")
-      include(name: "ecj*.jar")
-      include(name: "jsr166e.jar")
-    }
-    fileset(dir: "$home/jps/lib") {
-      include(name: "optimizedFileManager.jar")
-    }
-    dir("test") {
-      jar("jps-build-test.jar") {
-        moduleTests("jps-builders")
-        moduleTests("jps-model-tests")
-        moduleTests("jps-serialization-tests")
+def layoutJps(String home, String targetDir, String buildNumber, Closure additionalJars) {
+  layout(targetDir) {
+    zip("standalone-jps-${buildNumber}.zip") {
+      jar("util.jar") {
+        module("annotations")
+        module("util-rt")
+        module("util")
       }
+
+      jar("jps-launcher.jar") {
+        module("jps-launcher")
+      }
+
+      jar("jps-model.jar") {
+        module("jps-model-api")
+        module("jps-model-impl")
+        module("jps-model-serialization")
+      }
+      jar("jps-builders.jar") {
+        module("forms_rt")
+        module("forms-compiler")
+        module("instrumentation-util")
+        module("jps-builders")
+        module("jps-standalone-builder")
+        module("java-runtime")
+      }
+      jar("jps-plugin-system.jar") {
+        module("jps-plugin-system")
+      }
+      jar("groovy-jps-plugin.jar") {
+        module("groovy-jps-plugin")
+        module("groovy-rt-constants")
+      }
+      jar("groovy_rt.jar") {
+        module("groovy_rt")
+      }
+      jar("ui-designer-jps-plugin.jar") { module("ui-designer-jps-plugin") }
+
+
+      jar("maven-jps-plugin.jar") { module("maven-jps-plugin") }
+      fileset(dir: "$home/plugins/maven/maven3-server-impl/lib/maven3/lib") {include(name: "plexus-utils-*.jar")}
+
+      jar("eclipse-jps-plugin.jar") {
+        module("common-eclipse-util")
+        module("eclipse-jps-plugin")
+      }
+      jar("devkit-jps-plugin.jar") { module("devkit-jps-plugin") }
+      jar("intellilang-jps-plugin.jar") { module("intellilang-jps-plugin") }
+      fileset(dir: "$home/lib") {
+        include(name: "jdom.jar")
+        include(name: "jna.jar")
+        include(name: "trove4j.jar")
+        include(name: "asm4-all.jar")
+        include(name: "nanoxml-*.jar")
+        include(name: "protobuf-*.jar")
+        include(name: "cli-parser-*.jar")
+        include(name: "log4j.jar")
+        include(name: "jgoodies-forms.jar")
+        include(name: "ecj*.jar")
+        include(name: "jsr166e.jar")
+      }
+      fileset(dir: "$home/jps/lib") {
+        include(name: "optimizedFileManager.jar")
+      }
+      jar("ant-jps-plugin.jar") { module("ant-jps-plugin") }
+      additionalJars()
     }
-    jar("ant-jps-plugin.jar") { module("ant-jps-plugin") }
+    jar("jps-build-test-${buildNumber}.jar") {
+      moduleTests("jps-builders")
+      moduleTests("jps-model-tests")
+      moduleTests("jps-serialization-tests")
+    }
   }
 }
 
@@ -791,7 +795,7 @@ def layout_core(String home, String target) {
       include(name: "asm.jar")
       include(name: "asm-commons.jar")
       include(name: "cli-parser-1.1.jar")
-      include(name: "snappy-java-1.0.5.jar")
+      include(name: "snappy-in-java-0.3.jar")
       include(name: "jayatana-1.2.4.jar")
     }
   }

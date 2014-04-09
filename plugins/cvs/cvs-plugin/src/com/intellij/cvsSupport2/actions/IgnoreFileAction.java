@@ -29,6 +29,7 @@ import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -48,7 +49,7 @@ import java.util.*;
 /**
  * author: lesya
  */
-public class IgnoreFileAction extends AnAction {
+public class IgnoreFileAction extends AnAction implements DumbAware {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.actions.IgnoreFileAction");
 

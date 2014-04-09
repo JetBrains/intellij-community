@@ -55,7 +55,7 @@ public class RemoteDebugger implements ProcessDebugger {
   private final List<RemoteDebuggerCloseListener> myCloseListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private DebuggerReader myDebuggerReader;
 
-  public RemoteDebugger(final IPyDebugProcess debugProcess, final ServerSocket serverSocket, final int timeout) {
+  public RemoteDebugger(final IPyDebugProcess debugProcess, @NotNull final ServerSocket serverSocket, final int timeout) {
     myDebugProcess = debugProcess;
     myServerSocket = serverSocket;
     myConnectionTimeout = timeout;

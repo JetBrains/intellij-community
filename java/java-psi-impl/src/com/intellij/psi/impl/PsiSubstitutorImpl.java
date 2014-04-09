@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -394,7 +394,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       if (erasure != null) {
         final PsiType[] boundTypes = typeParameter.getExtendsListTypes();
         for (PsiType boundType : boundTypes) {
-          if (TypeConversionUtil.isAssignable(boundType, erasure) || TypeConversionUtil.isAssignable(erasure, boundType)) {
+          if (TypeConversionUtil.isAssignable(erasure, boundType)) {
             return boundType;
           }
         }
@@ -511,7 +511,8 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
         buffer.append(" of ");
         buffer.append(((PsiMethod)owner).getName());
         buffer.append(" in ");
-        buffer.append(((PsiMethod)owner).getContainingClass().getQualifiedName());
+        PsiClass aClass = ((PsiMethod)owner).getContainingClass();
+        buffer.append(aClass != null ? aClass.getQualifiedName() : "<no class>");
       }
       buffer.append(" -> ");
       if (entry.getValue() != null) {

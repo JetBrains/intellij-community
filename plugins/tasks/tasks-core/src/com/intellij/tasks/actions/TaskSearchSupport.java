@@ -63,12 +63,12 @@ public class TaskSearchSupport {
 
   public static List<Task> getRepositoriesTasks(final TaskManager myManager,
                                                 String pattern,
-                                                int max,
-                                                long since,
+                                                int offset,
+                                                int limit,
                                                 boolean forceRequest,
                                                 final boolean withClosed,
                                                 @NotNull final ProgressIndicator cancelled) {
-    List<Task> tasks = myManager.getIssues(pattern, max, since, forceRequest, withClosed, cancelled);
+    List<Task> tasks = myManager.getIssues(pattern, offset, limit, withClosed, cancelled, forceRequest);
     ContainerUtil.sort(tasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
     return tasks;
   }

@@ -74,8 +74,15 @@ public class InferenceVariable {
     next:
     for (InferenceVariable variable : session.getInferenceVariables()) {
       if (!dependencies.contains(variable) && variable != this) {
+        nextBound:
         for (InferenceBound inferenceBound : InferenceBound.values()) {
-          for (PsiType bound : getBounds(inferenceBound)) {
+          final List<PsiType> bounds = getBounds(inferenceBound); //todo
+          for (PsiType bound : bounds) {
+            if (session.isProperType(bound)) {
+              continue nextBound;
+            }
+          }
+          for (PsiType bound : bounds) {
             Set<InferenceVariable> deps = new HashSet<InferenceVariable>();
             session.collectDependencies(bound, deps);
             if (deps.contains(this)) {

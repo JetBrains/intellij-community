@@ -32,6 +32,7 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
@@ -301,15 +302,12 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     }
 
     final String qname = psiType.getCanonicalText();
-    if (qname == null) {
-      return true;
-    }
 
     final PsiFile placeFile = place.getContainingFile().getOriginalFile();
 
     final DelegatingScopeProcessor nameChecker = new DelegatingScopeProcessor(processor) {
       @Override
-      public boolean execute(@NotNull PsiElement element, ResolveState state) {
+      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
         if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) {
           return processor.execute(element, state);
         }
@@ -505,7 +503,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
     @Override
     @NotNull
-    public Map<String, Void> map(final FileContent inputData) {
+    public Map<String, Void> map(@NotNull final FileContent inputData) {
       return Collections.singletonMap(OUR_KEY, null);
     }
   }
@@ -516,8 +514,8 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     }
 
     @Override
-    public boolean acceptInput(@NotNull final VirtualFile file) {
-      return "gdsl".equals(file.getExtension());
+    public boolean acceptInput(final VirtualFile file) {
+      return StringUtil.endsWith(file.getNameSequence(), ".gdsl");
     }
   }
 

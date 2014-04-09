@@ -70,11 +70,9 @@ public class ExtendsListBlock extends AbstractJavaBlock{
           }
           result.add(createJavaBlock(child, mySettings, myJavaSettings, myChildIndent, arrangeChildWrap(child, childWrap), alignment));
         } else {
-          if (myAlignmentStrategy != null) {
-            Alignment candidate = myAlignmentStrategy.getAlignment(child.getElementType());
-            if (candidate != null) {
-              alignment = myChildAlignment = candidate;
-            }
+          Alignment candidate = myAlignmentStrategy.getAlignment(child.getElementType());
+          if (candidate != null) {
+            alignment = myChildAlignment = candidate;
           }
           processChild(elementsExceptKeyword, child, myChildAlignment, childWrap, myChildIndent);
         }

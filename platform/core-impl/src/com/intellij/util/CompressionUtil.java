@@ -15,14 +15,15 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.util.ThreadLocalCachedValue;
 import com.intellij.util.io.DataInputOutputUtil;
-import org.xerial.snappy.Snappy;
+import org.iq80.snappy.CorruptionException;
+import org.iq80.snappy.Snappy;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
-import java.lang.reflect.Field;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 
@@ -30,35 +31,20 @@ import java.nio.charset.Charset;
  * @author Maxim.Mossienko
  */
 public class CompressionUtil {
-  private static final boolean ourCanUseSnappy;
-
-  static {
-    boolean canUseSnappy = false;
-    try {
-      if (!SnappyInitializer.NO_SNAPPY) {
-        Field impl = Snappy.class.getDeclaredField("impl");
-        impl.setAccessible(true);
-        canUseSnappy = impl.get(null) != null;
-      }
-    }
-    catch (Throwable ignored) { }
-
-    ourCanUseSnappy = canUseSnappy;
-  }
-
   private static final int COMPRESSION_THRESHOLD = 64;
   private static final ThreadLocal<SoftReference<byte[]>> spareBufferLocal = new ThreadLocal<SoftReference<byte[]>>();
 
   public static int writeCompressed(DataOutput out, byte[] bytes, int length) throws IOException {
-    if (length > COMPRESSION_THRESHOLD && ourCanUseSnappy) {
+    if (length > COMPRESSION_THRESHOLD) {
       SoftReference<byte[]> reference = spareBufferLocal.get();
       byte[] compressedOutputBuffer = com.intellij.reference.SoftReference.dereference(reference);
-      int maxCompressedSize = 32 + length + length / 6; // snappy.cc#MaxCompressedLength
+      int maxCompressedSize = Snappy.maxCompressedLength(length);
+
       if (compressedOutputBuffer == null || compressedOutputBuffer.length < maxCompressedSize) {
         compressedOutputBuffer = new byte[maxCompressedSize];
         spareBufferLocal.set(new SoftReference<byte[]>(compressedOutputBuffer));
       }
-      int compressedSize = Snappy.rawCompress(bytes, 0, length, compressedOutputBuffer, 0);
+      int compressedSize = Snappy.compress(bytes, 0, length, compressedOutputBuffer, 0);
       DataInputOutputUtil.writeINT(out, -compressedSize);
       out.write(compressedOutputBuffer, 0, compressedSize);
       return compressedSize;
@@ -76,8 +62,7 @@ public class CompressionUtil {
     if (size >= 0) {
       return bytes;
     } else {
-      if (!ourCanUseSnappy) throw new IOException("Can not read compressed data");
-      return Snappy.uncompress(bytes);
+      return Snappy.uncompress(bytes, 0, bytes.length);
     }
   }
 
@@ -87,22 +72,23 @@ public class CompressionUtil {
     if (string instanceof CharSequence) return (CharSequence)string;
     byte[] b = (byte[])string;
     try {
-      return Snappy.uncompressString(b, charset);
-    } catch (Exception ex) {
+      byte[] bytes = Snappy.uncompress(b, 0, b.length);
+      return new String(bytes, charset);
+    } catch (CorruptionException ex) {
       throw new RuntimeException(ex);
     }
   }
 
   public static Object compressCharSequence(CharSequence string, Charset charset) {
-    if (!ourCanUseSnappy || string.length() < STRING_COMPRESSION_THRESHOLD) {
+    if (string.length() < STRING_COMPRESSION_THRESHOLD) {
       if (string instanceof CharBuffer && ((CharBuffer)string).capacity() > STRING_COMPRESSION_THRESHOLD) {
         string = string.toString();   // shrink to size
       }
       return string;
     }
     try {
-      return Snappy.compress(string.toString(), charset);
-    } catch (IOException ex) {
+      return Snappy.compress(string.toString().getBytes(charset));
+    } catch (CorruptionException ex) {
       ex.printStackTrace();
       return string;
     }

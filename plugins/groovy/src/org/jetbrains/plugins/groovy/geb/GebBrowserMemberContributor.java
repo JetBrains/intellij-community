@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,9 +37,9 @@ public class GebBrowserMemberContributor extends NonCodeMembersContributor {
   @Override
   public void processDynamicElements(@NotNull PsiType qualifierType,
                                      PsiClass aClass,
-                                     PsiScopeProcessor processor,
-                                     PsiElement place,
-                                     ResolveState state) {
+                                     @NotNull PsiScopeProcessor processor,
+                                     @NotNull PsiElement place,
+                                     @NotNull ResolveState state) {
     PsiClass pageClass = GroovyPsiManager.getInstance(aClass.getProject()).findClassWithCache("geb.Page", place.getResolveScope());
 
     if (pageClass != null) {

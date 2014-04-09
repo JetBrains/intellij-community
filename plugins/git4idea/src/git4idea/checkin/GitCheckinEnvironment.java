@@ -329,6 +329,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     // perform merge commit
     try {
       GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.COMMIT);
+      handler.setStdoutSuppressed(false);
       handler.addParameters("-F", messageFile.getAbsolutePath());
       if (author != null) {
         handler.addParameters("--author=" + author);
@@ -474,6 +475,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     boolean amend = nextCommitAmend;
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
       GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.COMMIT);
+      handler.setStdoutSuppressed(false);
       if (amend) {
         handler.addParameters("--amend");
       }

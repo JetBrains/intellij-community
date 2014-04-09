@@ -15,7 +15,6 @@
  */
 package com.intellij.platform.templates;
 
-import com.intellij.ide.util.projectWizard.WizardInputField;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
@@ -34,8 +33,6 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Collections;
-import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -50,9 +47,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
 
   private final URL myArchivePath;
   private final ModuleType myModuleType;
-  private List<WizardInputField> myInputFields = Collections.emptyList();
   private Icon myIcon;
-  private List<String> myFrameworks = Collections.emptyList();
 
   public LocalArchivedTemplate(@NotNull URL archivePath,
                                @NotNull ClassLoader classLoader) {
@@ -144,18 +139,6 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
   @Override
   protected ModuleType getModuleType() {
     return myModuleType;
-  }
-
-  @NotNull
-  @Override
-  public List<WizardInputField> getInputFields() {
-    return myInputFields;
-  }
-
-  @NotNull
-  @Override
-  public List<String> getFrameworks() {
-    return myFrameworks;
   }
 
   @Override

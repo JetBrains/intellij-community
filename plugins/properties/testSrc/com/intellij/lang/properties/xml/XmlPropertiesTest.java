@@ -1,8 +1,8 @@
 package com.intellij.lang.properties.xml;
 
 import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.PropertiesReferenceManager;
-import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.PsiFile;
@@ -24,13 +24,13 @@ public class XmlPropertiesTest extends LightPlatformCodeInsightFixtureTestCase {
     PropertiesFile file = files.get(0);
     assertEquals(1, file.findPropertiesByKey("foo").size());
 
-    List<IProperty> properties = PropertiesUtil.findPropertiesByKey(getProject(), "foo");
+    List<IProperty> properties = PropertiesImplUtil.findPropertiesByKey(getProject(), "foo");
     assertEquals(1, properties.size());
   }
 
   public void testWrongFile() throws Exception {
     PsiFile psiFile = myFixture.configureByFile("wrong.xml");
-    PropertiesFile file = PropertiesUtil.getPropertiesFile(psiFile);
+    PropertiesFile file = PropertiesImplUtil.getPropertiesFile(psiFile);
     assertNull(file);
   }
 

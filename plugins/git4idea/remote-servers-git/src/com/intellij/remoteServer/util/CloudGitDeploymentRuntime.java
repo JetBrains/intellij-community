@@ -272,6 +272,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
       if (GitUtil.hasLocalChanges(true, getProject(), myContentRoot)) {
         GitSimpleHandler handler = new GitSimpleHandler(getProject(), myContentRoot, GitCommand.COMMIT);
         handler.setSilent(false);
+        handler.setStdoutSuppressed(false);
         handler.addParameters("-m", "Deploy");
         handler.endOptions();
         handler.run();
@@ -423,6 +424,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
     public void doClone(File cloneDirParent, String cloneDirName, String gitUrl) throws ServerRuntimeException {
       final GitLineHandler handler = new GitLineHandler(getProject(), cloneDirParent, GitCommand.CLONE);
       handler.setSilent(false);
+      handler.setStdoutSuppressed(false);
       handler.setUrl(gitUrl);
       handler.addParameters("--progress");
       handler.addParameters(gitUrl);

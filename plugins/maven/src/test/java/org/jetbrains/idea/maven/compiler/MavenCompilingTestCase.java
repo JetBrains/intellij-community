@@ -137,4 +137,8 @@ public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
   protected void assertDirectory(String relativePath, TestFileSystemBuilder fileSystemBuilder) {
     fileSystemBuilder.build().assertDirectoryEqual(new File(myProjectPom.getParent().getPath(), relativePath));
   }
+
+  protected void assertJar(String relativePath, TestFileSystemBuilder fileSystemBuilder) {
+    fileSystemBuilder.build().assertFileEqual(new File(myProjectPom.getParent().getPath(), relativePath));
+  }
 }

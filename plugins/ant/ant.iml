@@ -27,6 +27,7 @@
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="ant-jps-plugin" />
     <orderEntry type="module" module-name="dom-impl" />
+    <orderEntry type="module" module-name="properties-psi-api" />
   </component>
   <component name="copyright">
     <Base>

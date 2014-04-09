@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,9 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiType;
-import com.intellij.util.containers.ContainerUtil;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -34,9 +32,7 @@ class FormatDecode {
 
   private static final Pattern fsPattern = Pattern.compile(FORMAT_SPECIFIER);
 
-  private FormatDecode() {
-    super();
-  }
+  private FormatDecode() {}
 
   private static final Validator ALL_VALIDATOR = new AllValidator();
 
@@ -47,28 +43,6 @@ class FormatDecode {
   private static final Validator INT_VALIDATOR = new IntValidator();
 
   private static final Validator FLOAT_VALIDATOR = new FloatValidator();
-
-  /**
-   * Holds information about validator replacement rules, i.e. allows to answer if validator of particular type may be
-   * safely replaced by validator of another particular type.
-   * <p/>
-   * For example, validator of type {@link AllValidator#type() 'all'} may be safely replaced by validator of any other
-   * type, e.g. {@link DateValidator#type() Date/Time} or {@link CharValidator#type() 'char validator'} may be replaced
-   * by {@link IntValidator#type() 'int validator'} because {@link Formatter java formatter} knows how to
-   * {@link Formatter.FormatSpecifier#printCharacter(Object) print character from integer} etc.
-   * <p/>
-   * Generally, current collection holds set of mappings where the key is type of validator that may be safely replaced
-   * by validator of type that is contained at <code>'values'</code> collection.
-   */
-  private static final Map<String, Set<String>> REPLACEABLE_VALIDATOR_TYPES = new HashMap<String, Set<String>>();
-
-  static {
-    REPLACEABLE_VALIDATOR_TYPES.put(
-      ALL_VALIDATOR.type(),
-      ContainerUtil.set(DATE_VALIDATOR.type(), CHAR_VALIDATOR.type(), INT_VALIDATOR.type(), FLOAT_VALIDATOR.type())
-    );
-    REPLACEABLE_VALIDATOR_TYPES.put(CHAR_VALIDATOR.type(), ContainerUtil.set(INT_VALIDATOR.type()));
-  }
 
   public static Validator[] decode(String formatString, int argumentCount) {
     final ArrayList<Validator> parameters = new ArrayList<Validator>();
@@ -125,34 +99,35 @@ class FormatDecode {
             throw new UnknownFormatException(matcher.group());
         }
       }
-      argAt(allowed, pos, parameters, argumentCount);
+      storeValidator(allowed, pos, parameters, argumentCount);
     }
 
     return parameters.toArray(new Validator[parameters.size()]);
   }
 
-  private static void argAt(Validator val, int pos,
-                            ArrayList<Validator> parameters,
-                            int argumentCount) {
+  private static void storeValidator(Validator validator, int pos,
+                                     ArrayList<Validator> parameters,
+                                     int argumentCount) {
     if (pos < parameters.size()) {
-      final Validator old = parameters.get(pos);
-      Set<String> replaceableTypes = REPLACEABLE_VALIDATOR_TYPES.get(old.type());
-      if (replaceableTypes != null && replaceableTypes.contains(val.type())) {
-        parameters.set(pos, val);
+      final Validator existing = parameters.get(pos);
+      if (existing == null) {
+        parameters.set(pos, validator);
       }
-      // it's OK to overwrite ALL with something more specific
-      // it's OK to ignore overwrite of something else with ALL or itself
-      else if (val != ALL_VALIDATOR && val != old) {
-        throw new DuplicateFormatFlagsException(
-          "requires both " + old.type() + " and " + val.type());
+      else if (existing instanceof MultiValidator) {
+        ((MultiValidator)existing).addValidator(validator);
+      }
+      else if (existing != validator) {
+        final MultiValidator multiValidator = new MultiValidator();
+        multiValidator.addValidator(existing);
+        multiValidator.addValidator(validator);
+        parameters.set(pos, multiValidator);
       }
     }
     else {
-      while (pos > parameters.size() &&
-             argumentCount > parameters.size()) {
-        parameters.add(ALL_VALIDATOR);
+      while (pos > parameters.size() && argumentCount > parameters.size()) {
+        parameters.add(null);
       }
-      parameters.add(val);
+      parameters.add(validator);
     }
   }
 
@@ -163,23 +138,11 @@ class FormatDecode {
     }
   }
 
-  public static class DuplicateFormatFlagsException extends RuntimeException {
-
-    public DuplicateFormatFlagsException(String message) {
-      super(message);
-    }
-  }
-
   private static class AllValidator implements Validator {
 
     @Override
     public boolean valid(PsiType type) {
       return true;
-    }
-
-    @Override
-    public String type() {
-      return "any";
     }
   }
 
@@ -194,25 +157,20 @@ class FormatDecode {
              CommonClassNames.JAVA_UTIL_DATE.equals(text) ||
              CommonClassNames.JAVA_UTIL_CALENDAR.equals(text);
     }
-
-    @Override
-    public String type() {
-      return "Date/Time";
-    }
   }
 
   private static class CharValidator implements Validator {
 
     @Override
     public boolean valid(PsiType type) {
+      if (PsiType.CHAR.equals(type) || PsiType.BYTE.equals(type) || PsiType.SHORT.equals(type) || PsiType.INT.equals(type)) {
+        return true;
+      }
       final String text = type.getCanonicalText();
-      return PsiType.CHAR.equals(type) ||
-             CommonClassNames.JAVA_LANG_CHARACTER.equals(text);
-    }
-
-    @Override
-    public String type() {
-      return "char";
+      return CommonClassNames.JAVA_LANG_CHARACTER.equals(text) ||
+             CommonClassNames.JAVA_LANG_BYTE.equals(text) ||
+             CommonClassNames.JAVA_LANG_SHORT.equals(text) ||
+             CommonClassNames.JAVA_LANG_INTEGER.equals(text);
     }
   }
 
@@ -231,11 +189,6 @@ class FormatDecode {
              CommonClassNames.JAVA_LANG_BYTE.equals(text) ||
              "java.math.BigInteger".equals(text);
     }
-
-    @Override
-    public String type() {
-      return "integer type";
-    }
   }
 
   private static class FloatValidator implements Validator {
@@ -249,10 +202,23 @@ class FormatDecode {
              CommonClassNames.JAVA_LANG_FLOAT.equals(text) ||
              "java.math.BigDecimal".equals(text);
     }
+  }
+
+  private static class MultiValidator implements Validator {
+    private final Set<Validator> validators = new HashSet<Validator>(3);
 
     @Override
-    public String type() {
-      return "floating point";
+    public boolean valid(PsiType type) {
+      for (Validator validator : validators) {
+        if (!validator.valid(type)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    public void addValidator(Validator validator) {
+      validators.add(validator);
     }
   }
 }

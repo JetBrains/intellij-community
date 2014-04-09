@@ -606,7 +606,7 @@ public class JavaDocInfoGenerator {
           String text = o.toString();
           PsiType type = variable.getType();
           if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-            text = "\"" + StringUtil.trimLog(text, 120) + "\"";
+            text = "\"" + StringUtil.shortenPathWithEllipsis(text, 120) + "\"";
           }
           else if (type.equalsToText("char")) text = "'" + text + "'";
           try {

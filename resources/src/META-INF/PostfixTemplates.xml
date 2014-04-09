@@ -23,6 +23,8 @@
     <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.AssertStatementPostfixTemplate"/>
     <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.SynchronizedStatementPostfixTemplate"/>
     <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.InstanceofExpressionPostfixTemplate"/>
+    <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.SoutPostfixTemplate"/>
+    <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.FormatPostfixTemplate"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -16,51 +16,94 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.notification.EventLog;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.SizedIcon;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
-public class ActivateToolWindowAction extends AnAction implements DumbAware {
+/**
+ * Toggles tool window visibility.
+ * Usually shown in View|Tool-windows sub-menu.
+ * Dynamically registered in Settings|Keymap for each newly-registered tool window.
+ */
+public class ActivateToolWindowAction extends DumbAwareAction {
   private final String myToolWindowId;
 
-  /**
-   * Creates an action which activates tool window with specified <code>toolWindowId</code>.
-   */
-  protected ActivateToolWindowAction(final String toolWindowId, final String text, final Icon icon){
-    super(text, IdeBundle.message("action.activate.tool.window", toolWindowId), icon);
-    myToolWindowId=toolWindowId;
+  private ActivateToolWindowAction(@NotNull String toolWindowId) {
+    myToolWindowId = toolWindowId;
   }
 
-  public void update(AnActionEvent event){
-    Presentation presentation = event.getPresentation();
-    Project project = event.getData(CommonDataKeys.PROJECT);
+  @NotNull
+  public String getToolWindowId() {
+    return myToolWindowId;
+  }
+
+  public static void ensureToolWindowActionRegistered(@NotNull ToolWindowImpl toolWindow) {
+    ActionManager actionManager = ActionManager.getInstance();
+    String actionId = getActionIdForToolWindow(toolWindow.getId());
+    AnAction action = actionManager.getAction(actionId);
+    if (action == null) {
+      ActivateToolWindowAction newAction = new ActivateToolWindowAction(toolWindow.getId());
+      newAction.updatePresentation(newAction.getTemplatePresentation(), toolWindow);
+      actionManager.registerAction(actionId, newAction);
+    }
+  }
+
+  public static void updateToolWindowActionPresentation(@NotNull ToolWindowImpl toolWindow) {
+    ActionManager actionManager = ActionManager.getInstance();
+    String actionId = getActionIdForToolWindow(toolWindow.getId());
+    AnAction action = actionManager.getAction(actionId);
+    if (action instanceof ActivateToolWindowAction) {
+      ((ActivateToolWindowAction)action).updatePresentation(action.getTemplatePresentation(), toolWindow);
+    }
+  }
+
+  public void update(AnActionEvent e) {
+    Project project = getEventProject(e);
+    Presentation presentation = e.getPresentation();
     if (project == null || project.isDisposed()) {
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
+      presentation.setEnabledAndVisible(false);
       return;
     }
-    ToolWindow toolWindow=ToolWindowManager.getInstance(project).getToolWindow(myToolWindowId);
-    presentation.setEnabled(toolWindow!=null&&toolWindow.isAvailable());
-    presentation.setVisible(toolWindow!=null);
-    if (toolWindow != null) {
-      Icon icon = toolWindow.getIcon();
-      presentation.setIcon(icon == null ? null : new SizedIcon(icon, icon.getIconHeight(), icon.getIconHeight()));
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(myToolWindowId);
+    if (toolWindow == null) {
+      presentation.setEnabledAndVisible(false);
+    }
+    else {
+      presentation.setVisible(true);
+      presentation.setEnabled(toolWindow.isAvailable());
+      updatePresentation(presentation, toolWindow);
     }
   }
 
-  public void actionPerformed(AnActionEvent e){
-    Project project = e.getData(CommonDataKeys.PROJECT);
+  private void updatePresentation(@NotNull Presentation presentation, @NotNull ToolWindow toolWindow) {
+    String title = toolWindow.getStripeTitle();
+    presentation.setText(title);
+    presentation.setDescription(IdeBundle.message("action.activate.tool.window", title));
+    Icon icon = toolWindow.getIcon();
+    if (EventLog.LOG_TOOL_WINDOW_ID.equals(myToolWindowId)) {
+      icon = AllIcons.Ide.Info_notifications;
+    }
+    presentation.setIcon(icon == null ? null : new SizedIcon(icon, icon.getIconHeight(), icon.getIconHeight()));
+  }
+
+  public void actionPerformed(AnActionEvent e) {
+    Project project = getEventProject(e);
+    if (project == null) return;
     ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
     if (windowManager.isEditorComponentActive() || !myToolWindowId.equals(windowManager.getActiveToolWindowId())) {
       windowManager.getToolWindow(myToolWindowId).activate(null);
@@ -70,18 +113,15 @@ public class ActivateToolWindowAction extends AnAction implements DumbAware {
     }
   }
 
-  public String getToolWindowId() {
-    return myToolWindowId;
-  }
-
   /**
    * This is the "rule" method constructs <code>ID</code> of the action for activating tool window
    * with specified <code>ID</code>.
+   *
    * @param id <code>id</code> of tool window to be activated.
    */
   @NonNls
-  public static String getActionIdForToolWindow(String id){
-    return "Activate"+id.replaceAll(" ","")+"ToolWindow";
+  public static String getActionIdForToolWindow(String id) {
+    return "Activate" + id.replaceAll(" ", "") + "ToolWindow";
   }
 
   /**
@@ -90,14 +130,13 @@ public class ActivateToolWindowAction extends AnAction implements DumbAware {
    * Mac OS X user, because Alt+digit types strange characters into the
    * editor.
    */
-  public static int getMnemonicForToolWindow(String id){
-    Keymap activeKeymap=KeymapManager.getInstance().getActiveKeymap();
+  public static int getMnemonicForToolWindow(String id) {
+    Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
     Shortcut[] shortcuts = activeKeymap.getShortcuts(getActionIdForToolWindow(id));
-    for (int i = 0; i < shortcuts.length; i++) {
-      Shortcut shortcut = shortcuts[i];
+    for (Shortcut shortcut : shortcuts) {
       if (shortcut instanceof KeyboardShortcut) {
         KeyStroke keyStroke = ((KeyboardShortcut)shortcut).getFirstKeyStroke();
-        int modifiers=keyStroke.getModifiers();
+        int modifiers = keyStroke.getModifiers();
         if (
           modifiers == (InputEvent.ALT_DOWN_MASK | InputEvent.ALT_MASK) ||
           modifiers == InputEvent.ALT_MASK ||
@@ -105,10 +144,10 @@ public class ActivateToolWindowAction extends AnAction implements DumbAware {
           modifiers == (InputEvent.META_DOWN_MASK | InputEvent.META_MASK) ||
           modifiers == InputEvent.META_MASK ||
           modifiers == InputEvent.META_DOWN_MASK
-        ) {
+          ) {
           int keyCode = keyStroke.getKeyCode();
           if (KeyEvent.VK_0 <= keyCode && keyCode <= KeyEvent.VK_9) {
-            char c = (char) ('0' + keyCode - KeyEvent.VK_0);
+            char c = (char)('0' + keyCode - KeyEvent.VK_0);
             return (int)c;
           }
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +48,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
@@ -58,6 +58,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GrDelegatingScopeProcessorWithHints;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.List;
@@ -98,12 +99,40 @@ public class GdkMethodUtil {
     if (call == null) return true;
 
     final GrClosableBlock[] closures = call.getClosureArguments();
-    final GrExpression[] args = call.getExpressionArguments();
+    GrExpression[] args = call.getExpressionArguments();
     if (!(placeEqualsSingleClosureArg(place, closures) || placeEqualsLastArg(place, args))) return true;
 
     if (!(call.resolveMethod() instanceof GrGdkMethod)) return true;
 
     state = state.put(ResolverProcessor.RESOLVE_CONTEXT, call);
+
+    if ((args.length == 1 || args.length == 2 && placeEqualsLastArg(place, args))) {
+      PsiType type = args[0].getType();
+      if (type instanceof GrTupleType) {
+        return processTypesFromTuple((GrTupleType)type, processor, state, place);
+      }
+    }
+    return processTypesFomArgs(args, processor, state, place);
+  }
+
+  private static boolean processTypesFromTuple(@NotNull GrTupleType type,
+                                               @NotNull PsiScopeProcessor processor,
+                                               @NotNull ResolveState state,
+                                               @NotNull GrClosableBlock place) {
+    for (PsiType component : type.getComponentTypes()) {
+      PsiType clazz = PsiUtil.substituteTypeParameter(component, CommonClassNames.JAVA_LANG_CLASS, 0, false);
+      PsiClass aClass = PsiTypesUtil.getPsiClass(clazz);
+      if (aClass != null) {
+        if (!processCategoryMethods(place, processor, state, aClass)) return false;
+      }
+    }
+    return true;
+  }
+
+  private static boolean processTypesFomArgs(@NotNull GrExpression[] args,
+                                             @NotNull PsiScopeProcessor processor,
+                                             @NotNull ResolveState state,
+                                             @NotNull GrClosableBlock place) {
     for (GrExpression arg : args) {
       if (arg instanceof GrReferenceExpression) {
         final PsiElement resolved = ((GrReferenceExpression)arg).resolve();
@@ -134,9 +163,9 @@ public class GdkMethodUtil {
                                                final PsiScopeProcessor processor,
                                                @NotNull final ResolveState state,
                                                @NotNull final PsiClass categoryClass) {
-    final DelegatingScopeProcessor delegate = new DelegatingScopeProcessor(processor) {
+    final PsiScopeProcessor delegate = new GrDelegatingScopeProcessorWithHints(processor, null, ResolverProcessor.RESOLVE_KINDS_METHOD) {
       @Override
-      public boolean execute(@NotNull PsiElement element, ResolveState delegateState) {
+      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState delegateState) {
         if (element instanceof PsiMethod && isCategoryMethod((PsiMethod)element, null, null, null)) {
           PsiMethod method = (PsiMethod)element;
           return processor.execute(GrGdkMethodImpl.createGdkMethod(method, false, generateOriginInfo(method)), delegateState);

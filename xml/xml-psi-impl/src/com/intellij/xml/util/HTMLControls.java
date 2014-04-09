@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -91,13 +92,13 @@ public class HTMLControls {
     @Nullable
     @Override
     public TagState fromString(@NotNull String value) {
-      return TagState.valueOf(value.toUpperCase());
+      return TagState.valueOf(value.toUpperCase(Locale.US));
     }
 
     @NotNull
     @Override
     public String toString(@NotNull TagState state) {
-      return state.name().toLowerCase();
+      return state.name().toLowerCase(Locale.US);
     }
   }
 

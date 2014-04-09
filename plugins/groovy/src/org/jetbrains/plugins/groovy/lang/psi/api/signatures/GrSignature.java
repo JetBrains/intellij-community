@@ -29,5 +29,5 @@ public interface GrSignature {
   @Nullable
   GrSignature curry(@NotNull PsiType[] args, int position, @NotNull PsiElement context);
 
-  void accept(GrSignatureVisitor visitor);
+  void accept(@NotNull GrSignatureVisitor visitor);
 }

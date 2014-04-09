@@ -12,6 +12,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.graph.GraphFacade;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
@@ -41,15 +42,21 @@ public class VcsLogFilterer {
 
   @NotNull
   public AbstractVcsLogTableModel applyFiltersAndUpdateUi(@NotNull DataPack dataPack, @NotNull VcsLogFilterCollection filters) {
+    resetFilters(dataPack);
     List<VcsLogDetailsFilter> detailsFilters = filters.getDetailsFilters();
-
     applyGraphFilters(dataPack, filters.getBranchFilter());
     return applyDetailsFilter(dataPack, detailsFilters);
   }
 
+  private static void resetFilters(@NotNull DataPack dataPack) {
+    GraphFacade facade = dataPack.getGraphFacade();
+    facade.setVisibleBranches(null);
+    facade.setFilter(null);
+  }
+
   private AbstractVcsLogTableModel applyDetailsFilter(DataPack dataPack, List<VcsLogDetailsFilter> detailsFilters) {
     if (!detailsFilters.isEmpty()) {
-      List<Hash> filteredCommits = filterByDetails(dataPack, detailsFilters);
+      List<Hash> filteredCommits = filterInMemory(dataPack, detailsFilters);
       if (filteredCommits.isEmpty()) {
         return new EmptyTableModel(dataPack, myLogDataHolder, myUI, LoadMoreStage.INITIAL);
       }
@@ -120,33 +127,28 @@ public class VcsLogFilterer {
   }
 
   private void applyGraphFilters(@NotNull final DataPack dataPack, @Nullable final VcsLogBranchFilter branchFilter) {
-    myUI.getTable().executeWithoutRepaint(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          dataPack.getGraphFacade().setVisibleBranches(branchFilter != null ? getMatchingHeads(dataPack, branchFilter) : null);
-        }
-        catch (InvalidRequestException e) {
-          if (!myLogDataHolder.isFullLogShowing()) {
-            myLogDataHolder.showFullLog(EmptyRunnable.getInstance());
-            throw new ProcessCanceledException();
-          }
-          else {
-            throw e;
-          }
-        }
+    try {
+      dataPack.getGraphFacade().setVisibleBranches(branchFilter != null ? getMatchingHeads(dataPack, branchFilter) : null);
+    }
+    catch (InvalidRequestException e) {
+      if (!myLogDataHolder.isFullLogShowing()) {
+        myLogDataHolder.showFullLog(EmptyRunnable.getInstance());
+        throw new ProcessCanceledException();
       }
-    });
+      else {
+        throw e;
+      }
+    }
   }
 
   @NotNull
-  private static Collection<Integer> getMatchingHeads(@NotNull DataPack dataPack, @NotNull VcsLogBranchFilter branchFilter) {
+  private Collection<Integer> getMatchingHeads(@NotNull DataPack dataPack, @NotNull VcsLogBranchFilter branchFilter) {
     final Collection<String> branchNames = new HashSet<String>(branchFilter.getBranchNames());
     return ContainerUtil.mapNotNull(dataPack.getRefsModel().getAllRefs(), new Function<VcsRef, Integer>() {
       @Override
       public Integer fun(VcsRef ref) {
         if (branchNames.contains(ref.getName())) {
-          return ref.getCommitIndex();
+          return myLogDataHolder.getCommitIndex(ref.getCommitHash());
         }
         return null;
       }
@@ -154,44 +156,42 @@ public class VcsLogFilterer {
   }
 
   @NotNull
-  private List<Hash> filterByDetails(@NotNull DataPack dataPack, @NotNull List<VcsLogDetailsFilter> detailsFilters) {
+  private List<Hash> filterInMemory(@NotNull DataPack dataPack, @NotNull List<VcsLogDetailsFilter> detailsFilters) {
     List<Hash> result = ContainerUtil.newArrayList();
-    int topCommits = myLogDataHolder.getSettings().getRecentCommitsCount();
-    List<Integer> visibleCommits = VcsLogUtil.getVisibleCommits(dataPack.getGraphFacade());
-    for (int i = 0; i < topCommits && i < visibleCommits.size(); i++) {
-      int commitIndex = visibleCommits.get(i);
-      final VcsFullCommitDetails details = getDetailsFromCache(commitIndex);
-      if (details == null) {
-        // Details for recent commits should be available in the cache.
-        // However if they are not there for some reason, we stop filtering.
-        // If we continue, if this commit without details matches filters,
-        // if details of an older commit are found in the cache, and if this older commit matches the filter,
-        // then we will return the list which incorrectly misses some matching commit in the middle.
-        // => Instead we rather will return a smaller list: this is not a problem,
-        // because the VCS will be requested for filtered details if there are not enough of them.
-        LOG.debug("No details found for a recent commit " + myLogDataHolder.getHash(commitIndex));
+    for (int visibleCommit : VcsLogUtil.getVisibleCommits(dataPack.getGraphFacade())) {
+      VcsCommitMetadata data = getDetailsFromCache(visibleCommit);
+      if (data == null) {
+        // no more continuous details in the cache
         break;
       }
-      boolean allFiltersMatch = !ContainerUtil.exists(detailsFilters, new Condition<VcsLogDetailsFilter>() {
-        @Override
-        public boolean value(VcsLogDetailsFilter filter) {
-          return !filter.matches(details);
-        }
-      });
-      if (allFiltersMatch) {
-        result.add(details.getHash());
+      if (matchesAllFilters(data, detailsFilters)) {
+        result.add(data.getHash());
       }
     }
     return result;
   }
 
+  private static boolean matchesAllFilters(@NotNull final VcsCommitMetadata commit, @NotNull List<VcsLogDetailsFilter> detailsFilters) {
+    return !ContainerUtil.exists(detailsFilters, new Condition<VcsLogDetailsFilter>() {
+      @Override
+      public boolean value(VcsLogDetailsFilter filter) {
+        return !filter.matches(commit);
+      }
+    });
+  }
+
   @Nullable
-  private VcsFullCommitDetails getDetailsFromCache(final int commitIndex) {
-    final Ref<VcsFullCommitDetails> ref = Ref.create();
+  private VcsCommitMetadata getDetailsFromCache(final int commitIndex) {
+    final Hash hash = myLogDataHolder.getHash(commitIndex);
+    VcsCommitMetadata details = myLogDataHolder.getTopCommitDetails(hash);
+    if (details != null) {
+      return details;
+    }
+    final Ref<VcsCommitMetadata> ref = Ref.create();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        ref.set(myLogDataHolder.getCommitDetailsGetter().getCommitDataIfAvailable(myLogDataHolder.getHash(commitIndex)));
+        ref.set(myLogDataHolder.getCommitDetailsGetter().getCommitDataIfAvailable(hash));
       }
     });
     return ref.get();

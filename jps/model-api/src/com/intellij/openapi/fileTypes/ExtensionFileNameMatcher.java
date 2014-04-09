@@ -16,13 +16,14 @@
 
 package com.intellij.openapi.fileTypes;
 
+import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
  */
-public class ExtensionFileNameMatcher implements FileNameMatcher {
+public class ExtensionFileNameMatcher extends FileNameMatcherEx {
   private final String myExtension;
   private final String myDotExtension;
 
@@ -31,8 +32,9 @@ public class ExtensionFileNameMatcher implements FileNameMatcher {
     myDotExtension = "." + myExtension;
   }
 
-  public boolean accept(@NotNull @NonNls String fileName) {
-    return fileName.regionMatches(true, fileName.length() - myDotExtension.length(), myDotExtension, 0, myDotExtension.length());
+  @Override
+  public boolean acceptsCharSequence(@NonNls @NotNull CharSequence fileName) {
+    return StringUtilRt.endsWithIgnoreCase(fileName, myDotExtension);
   }
 
   @NonNls

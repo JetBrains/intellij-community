@@ -341,6 +341,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
       myRepositoryForAnnotationsListener = new GitRepositoryForAnnotationsListener(myProject);
     }
     ((GitCommitsSequentialIndex) ServiceManager.getService(GitCommitsSequentially.class)).activate();
+    ServiceManager.getService(myProject, GitUserRegistry.class).activate();
   }
 
   private void checkExecutableAndVersion() {

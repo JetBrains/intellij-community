@@ -73,10 +73,6 @@ public class GradleTaskManager extends AbstractExternalSystemTaskManager<GradleE
                            @Nullable final String debuggerSetup,
                            @NotNull final ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
 
-//    if (settings != null) {
-//      myHelper.ensureInstalledWrapper(id, projectPath, settings, listener);
-//    }
-
     // TODO add support for external process mode
     if (ExternalSystemApiUtil.isInProcessMode(GradleConstants.SYSTEM_ID)) {
       for (GradleTaskManagerExtension gradleTaskManagerExtension : GradleTaskManagerExtension.EP_NAME.getExtensions()) {
@@ -85,6 +81,9 @@ public class GradleTaskManager extends AbstractExternalSystemTaskManager<GradleE
           return;
         }
       }
+    }
+    if(!scriptParameters.contains("--tests") && taskNames.contains("test")) {
+      ContainerUtil.addAll(scriptParameters, "--tests", "*");
     }
 
     Function<ProjectConnection, Void> f = new Function<ProjectConnection, Void>() {

@@ -17,22 +17,28 @@ package com.jetbrains.python.projectView;
 
 import com.intellij.ide.projectView.SelectableTreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElementNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrSdkOrderEntry;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,14 +51,25 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
   @NotNull
   @Override
   public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent, @NotNull Collection<AbstractTreeNode> children, ViewSettings settings) {
-    if (parent instanceof NamedLibraryElementNode) {
-      return hideSkeletons((NamedLibraryElementNode)parent, children);
+    final Project project = parent.getProject();
+    final Sdk sdk = getPythonSdk(parent);
+    if (sdk != null && project != null) {
+      final Collection<AbstractTreeNode> newChildren = hideSkeletons(children);
+      final PySkeletonsNode skeletonsNode = PySkeletonsNode.create(project, sdk, settings);
+      if (skeletonsNode != null) {
+        newChildren.add(skeletonsNode);
+      }
+      final PyUserSkeletonsNode userSkeletonsNode = PyUserSkeletonsNode.create(project, settings);
+      if (userSkeletonsNode != null) {
+        newChildren.add(userSkeletonsNode);
+      }
+      return newChildren;
     }
     if (settings.isShowMembers()) {
       List<AbstractTreeNode> newChildren = new ArrayList<AbstractTreeNode>();
       for (AbstractTreeNode child : children) {
         if (child instanceof PsiFileNode && ((PsiFileNode)child).getValue() instanceof PyFile) {
-          newChildren.add(new PyFileNode(parent.getProject(), ((PsiFileNode)child).getValue(), settings));
+          newChildren.add(new PyFileNode(project, ((PsiFileNode)child).getValue(), settings));
         }
         else {
           newChildren.add(child);
@@ -63,23 +80,41 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
     return children;
   }
 
-  protected Collection<AbstractTreeNode> hideSkeletons(NamedLibraryElementNode parent, Collection<AbstractTreeNode> children) {
-    LibraryOrSdkOrderEntry orderEntry = parent.getValue().getOrderEntry();
-    if (orderEntry instanceof JdkOrderEntry) {
-      List<AbstractTreeNode> newChildren = new ArrayList<AbstractTreeNode>();
-      for (AbstractTreeNode child : children) {
-        if (child instanceof PsiDirectoryNode) {
-          PsiDirectory directory = ((PsiDirectoryNode)child).getValue();
-          PsiDirectory dirParent = directory.getParent();
-          if (dirParent != null && dirParent.getName().equals(PythonSdkType.SKELETON_DIR_NAME)) {
-            continue;
+  @Nullable
+  private static Sdk getPythonSdk(@NotNull AbstractTreeNode node) {
+    if (node instanceof NamedLibraryElementNode) {
+      final NamedLibraryElement value = ((NamedLibraryElementNode)node).getValue();
+      if (value != null) {
+        final LibraryOrSdkOrderEntry entry = value.getOrderEntry();
+        if (entry instanceof JdkOrderEntry) {
+          final Sdk sdk = ((JdkOrderEntry)entry).getJdk();
+          final SdkTypeId type = sdk.getSdkType();
+          if (type instanceof PythonSdkType) {
+            return sdk;
           }
         }
-        newChildren.add(child);
       }
-      return newChildren;
     }
-    return children;
+    return null;
+  }
+
+  @NotNull
+  private static Collection<AbstractTreeNode> hideSkeletons(@NotNull Collection<AbstractTreeNode> children) {
+    List<AbstractTreeNode> newChildren = new ArrayList<AbstractTreeNode>();
+    for (AbstractTreeNode child : children) {
+      if (child instanceof PsiDirectoryNode) {
+        PsiDirectory directory = ((PsiDirectoryNode)child).getValue();
+        if (directory.getVirtualFile().equals(PyUserSkeletonsUtil.getUserSkeletonsDirectory())) {
+          continue;
+        }
+        PsiDirectory dirParent = directory.getParent();
+        if (dirParent != null && dirParent.getName().equals(PythonSdkType.SKELETON_DIR_NAME)) {
+          continue;
+        }
+      }
+      newChildren.add(child);
+    }
+    return newChildren;
   }
 
   @Override

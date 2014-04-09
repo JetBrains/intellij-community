@@ -19,6 +19,8 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
@@ -112,6 +114,28 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
     verifySplitting(false,
                     new Segment(0, 1, DEFAULT_BACKGROUND).plus(1, DEFAULT_BACKGROUND).plus(1, SELECTION_BACKGROUND),
                     new Segment(1, 1, null).plus(1, CARET_ROW_BACKGROUND).plus(1, SELECTION_BACKGROUND));
+  }
+
+  public void testColumnModeSelectionWithCurrentBreakpointHighlighting() {
+    init("line1\n" +
+         "line2");
+    setColumnModeOn();
+
+    Color breakpointColor = Color.RED;
+    myFixture.getEditor().getMarkupModel().addLineHighlighter(0,
+                                                              HighlighterLayer.SYNTAX + 1,
+                                                              new TextAttributes(null, breakpointColor, null, null, 0));
+    Color currentDebuggingLineColor = Color.CYAN;
+    myFixture.getEditor().getMarkupModel().addLineHighlighter(0,
+                                                              HighlighterLayer.SELECTION - 1,
+                                                              new TextAttributes(null, currentDebuggingLineColor, null, null, 0));
+
+    mouse().clickAt(0, 4).dragTo(0, 6).release();
+    verifySplitting(false,
+                    new Segment(0, 4, currentDebuggingLineColor),
+                    new Segment(4, 5, SELECTION_BACKGROUND),
+                    new Segment(5, 6, currentDebuggingLineColor).plus(1, SELECTION_BACKGROUND),
+                    new Segment(6, 11, DEFAULT_BACKGROUND));
   }
 
   private void verifySplitting(boolean checkForegroundColor, Segment... expectedSegments) {

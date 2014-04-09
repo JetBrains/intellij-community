@@ -18,6 +18,7 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.AtomicNullableLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
@@ -39,7 +40,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   private final PsiElement myParent;
   private final String myTypeText;
   private final char myVariance;
-  private final AtomicNullableLazyValue<ClsElementImpl> myChild;
+  private final NullableLazyValue<ClsElementImpl> myChild;
   private final NotNullLazyValue<PsiType> myCachedType;
 
   public ClsTypeElementImpl(@NotNull PsiElement parent, @NotNull String typeText, char variance) {

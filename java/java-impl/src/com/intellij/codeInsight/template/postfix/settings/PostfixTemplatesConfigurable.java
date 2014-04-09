@@ -34,8 +34,8 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.util.Arrays;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 
 public class PostfixTemplatesConfigurable implements SearchableConfigurable, EditorOptionsProvider, Configurable.NoScroll {
   @Nullable
@@ -61,7 +61,14 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
     }
 
     myTemplatesSettings = settings;
-    myTemplatesListPanel = new PostfixTemplatesListPanel(Arrays.asList(PostfixTemplate.EP_NAME.getExtensions()));
+    List<PostfixTemplate> templates = Arrays.asList(PostfixTemplate.EP_NAME.getExtensions());
+    ContainerUtil.sort(templates, new Comparator<PostfixTemplate>() {
+      @Override
+      public int compare(PostfixTemplate o1, PostfixTemplate o2) {
+        return o1.getKey().compareTo(o2.getKey());
+      }
+    });
+    myTemplatesListPanel = new PostfixTemplatesListPanel(templates);
     myTemplatesListPanelContainer.setLayout(new BorderLayout());
     myTemplatesListPanelContainer.add(myTemplatesListPanel.getComponent(), BorderLayout.CENTER);
     myPostfixTemplatesEnabled.addChangeListener(new ChangeListener() {
@@ -90,7 +97,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
   @Nls
   @Override
   public String getDisplayName() {
-    return "Postfix Templates";
+    return "Postfix Completion";
   }
 
   @Nullable

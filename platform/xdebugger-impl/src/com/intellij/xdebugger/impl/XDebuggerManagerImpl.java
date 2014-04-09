@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl;
 
+import com.intellij.AppTopics;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -27,17 +28,16 @@ import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.execution.ui.RunContentWithExecutorListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -81,12 +81,19 @@ public class XDebuggerManagerImpl extends XDebuggerManager
     mySessionTabs = new THashMap<RunContentDescriptor, XDebugSessionTab>();
     mySessions = new LinkedHashMap<ProcessHandler, XDebugSessionImpl>();
     myExecutionPointHighlighter = new ExecutionPointHighlighter(project);
-    messageBus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
+
+    MessageBusConnection messageBusConnection = messageBus.connect();
+    messageBusConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
       @Override
-      public void fileOpened(@NotNull final FileEditorManager source, @NotNull final VirtualFile file) {
-        if (file instanceof HttpVirtualFile && file.equals(myExecutionPointHighlighter.getCurrentFile())) {
+      public void fileContentLoaded(@NotNull VirtualFile file, @NotNull Document document) {
+        if (file.equals(myExecutionPointHighlighter.getCurrentFile())) {
           myExecutionPointHighlighter.update();
         }
+      }
+
+      @Override
+      public void fileContentReloaded(@NotNull VirtualFile file, @NotNull Document document) {
+        myExecutionPointHighlighter.update();
       }
     });
     myBreakpointManager.addBreakpointListener(new XBreakpointAdapter<XBreakpoint<?>>() {
@@ -103,7 +110,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
       }
     });
 
-    messageBus.connect().subscribe(RunContentManagerImpl.RUN_CONTENT_TOPIC, new RunContentWithExecutorListener() {
+    messageBusConnection.subscribe(RunContentManagerImpl.RUN_CONTENT_TOPIC, new RunContentWithExecutorListener() {
       @Override
       public void contentSelected(RunContentDescriptor descriptor, @NotNull Executor executor) {
         if (executor.equals(DefaultDebugExecutor.getDebugExecutorInstance())) {
@@ -166,10 +173,10 @@ public class XDebuggerManagerImpl extends XDebuggerManager
   @Override
   @NotNull
   public XDebugSession startSession(@NotNull final ProgramRunner runner,
-                                    @NotNull final ExecutionEnvironment env,
+                                    @NotNull final ExecutionEnvironment environment,
                                     @Nullable final RunContentDescriptor contentToReuse,
                                     @NotNull final XDebugProcessStarter processStarter) throws ExecutionException {
-    return startSession(contentToReuse, processStarter, new XDebugSessionImpl(env, runner, this));
+    return startSession(contentToReuse, processStarter, new XDebugSessionImpl(environment, runner, this));
   }
 
   @Override

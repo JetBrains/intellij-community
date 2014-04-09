@@ -354,6 +354,17 @@ public class DuplicatesFinder {
         return false;
       }
 
+      if (qualifier1 == null && qualifier2 == null) {
+        final PsiClass patternClass = RefactoringChangeUtil.getThisClass(pattern);
+        final PsiClass candidateClass = RefactoringChangeUtil.getThisClass(candidate);
+        if (resolveResult1 == resolveResult2 &&
+            resolveResult1 instanceof PsiMember &&
+           !InheritanceUtil.isInheritorOrSelf(candidateClass, patternClass, true) &&
+            InheritanceUtil.isInheritorOrSelf(candidateClass, ((PsiMember)resolveResult1).getContainingClass(), true)) {
+          return false;
+        }
+      }
+
     }
 
     if (pattern instanceof PsiTypeCastExpression) {

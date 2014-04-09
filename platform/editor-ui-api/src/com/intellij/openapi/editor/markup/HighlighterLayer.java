@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ public interface HighlighterLayer {
   int GUARDED_BLOCKS = 3500;
   int WARNING = 4000;
   int ERROR = 5000;
+  int ELEMENT_UNDER_CARET = 5500;
   int SELECTION = 6000;
 
   int FIRST = CARET_ROW;

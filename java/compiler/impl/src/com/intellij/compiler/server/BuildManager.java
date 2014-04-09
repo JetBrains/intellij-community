@@ -72,6 +72,7 @@ import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
+import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
@@ -935,6 +936,7 @@ public class BuildManager implements ApplicationComponent{
     cmdLine.addParameter(launcherClass.getName());
 
     final List<String> cp = ClasspathBootstrap.getBuildProcessApplicationClasspath(true);
+    cp.add(getJpsPluginSystemClassesPath());
     cp.addAll(myClasspathManager.getBuildProcessPluginsClasspath(project));
     if (isProfilingMode) {
       cp.add(new File(workDirectory, "yjp-controller-api-redist.jar").getPath());
@@ -958,6 +960,17 @@ public class BuildManager implements ApplicationComponent{
         return true;
       }
     };
+  }
+
+  private static String getJpsPluginSystemClassesPath() {
+    File classesRoot = new File(PathUtil.getJarPathForClass(BuildManager.class));
+    if (classesRoot.isDirectory()) {
+      //running from sources: load classes from .../out/production/jps-plugin-system
+      return new File(classesRoot.getParentFile(), "jps-plugin-system").getAbsolutePath();
+    }
+    else {
+      return new File(classesRoot.getParentFile(), "rt/jps-plugin-system.jar").getAbsolutePath();
+    }
   }
 
   public File getBuildSystemDirectory() {
@@ -1253,7 +1266,7 @@ public class BuildManager implements ApplicationComponent{
     @Override
     public String getValue() {
       if (myPath.length == 1) {
-        final String name = FileNameCache.getVFileName(myPath[0]);
+        final String name = FileNameCache.getVFileName(myPath[0]).toString();
         // handle case of windows drive letter
         return name.length() == 2 && name.endsWith(":")? name + "/" : name;
       }

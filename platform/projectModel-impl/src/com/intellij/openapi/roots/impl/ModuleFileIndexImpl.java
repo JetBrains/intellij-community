@@ -114,7 +114,6 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
         return info != null && myModule.equals(info.getModule());
       }
       else {
-        if(myExclusionManager != null && myExclusionManager.isExcluded(file)) return false;
         return !myFileTypeRegistry.isFileIgnored(file);
       }
     }

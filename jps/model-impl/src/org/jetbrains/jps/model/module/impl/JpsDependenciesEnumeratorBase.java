@@ -25,7 +25,7 @@ import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.module.*;
 
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -91,7 +91,7 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
   @NotNull
   @Override
   public Set<JpsModule> getModules() {
-    Set<JpsModule> result = new HashSet<JpsModule>();
+    Set<JpsModule> result = new LinkedHashSet<JpsModule>();
     processModules(new CollectConsumer<JpsModule>(result));
     return result;
   }
@@ -178,7 +178,7 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
   @NotNull
   @Override
   public Set<JpsLibrary> getLibraries() {
-    Set<JpsLibrary> libraries = new HashSet<JpsLibrary>();
+    Set<JpsLibrary> libraries = new LinkedHashSet<JpsLibrary>();
     processLibraries(new CollectConsumer<JpsLibrary>(libraries));
     return libraries;
   }

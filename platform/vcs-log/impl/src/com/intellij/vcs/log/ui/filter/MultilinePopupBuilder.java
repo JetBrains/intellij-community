@@ -52,9 +52,10 @@ class MultilinePopupBuilder {
 
   @NotNull private final EditorTextField myTextField;
 
-  MultilinePopupBuilder(@NotNull Project project, @NotNull final Collection<String> values) {
+  MultilinePopupBuilder(@NotNull Project project, @NotNull final Collection<String> values, @NotNull String initialValue) {
     myTextField = createTextField(project);
     new MyCompletionProvider(values).apply(myTextField);
+    myTextField.setText(initialValue);
   }
 
   @NotNull
@@ -95,10 +96,11 @@ class MultilinePopupBuilder {
 
   @NotNull
   Collection<String> getSelectedValues() {
-    return ContainerUtil.map(StringUtil.tokenize(myTextField.getText(), new String(SEPARATORS)), new Function<String, String>() {
+    return ContainerUtil.mapNotNull(StringUtil.tokenize(myTextField.getText(), new String(SEPARATORS)), new Function<String, String>() {
       @Override
       public String fun(String value) {
-        return value.trim();
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
       }
     });
   }

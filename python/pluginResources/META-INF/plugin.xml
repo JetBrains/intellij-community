@@ -4,9 +4,9 @@
 
   <id>PythonCore</id>
   <name>Python Community Edition</name>
-  <idea-version since-build="134.1007" until-build="136.*"/>
+  <idea-version since-build="135.406" until-build="136.*"/>
   <description>Smart editing for Python scripts</description>
-  <version>3.1.1.136.@@BUILD_NUMBER@@</version>
+  <version>3.4.Beta.135.@@BUILD_NUMBER@@</version>
   <depends>com.intellij.modules.java</depends>
 
 

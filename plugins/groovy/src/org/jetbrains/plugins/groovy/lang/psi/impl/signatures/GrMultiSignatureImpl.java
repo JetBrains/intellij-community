@@ -67,7 +67,7 @@ public class GrMultiSignatureImpl implements GrMultiSignature {
   }
 
   @Override
-  public void accept(GrSignatureVisitor visitor) {
+  public void accept(@NotNull GrSignatureVisitor visitor) {
     visitor.visitMultiSignature(this);
   }
 }

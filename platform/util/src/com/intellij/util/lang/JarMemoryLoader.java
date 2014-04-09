@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.lang;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -18,11 +33,11 @@ import java.util.zip.ZipInputStream;
  *         Date: 7/12/11
  */
 public class JarMemoryLoader {
-
   public static final String SIZE_ENTRY = "META-INF/jb/$$size$$";
-  //private static final Logger LOG = Logger.getInstance(JarMemoryLoader.class);
 
   private final Map<String, Resource> myResources = new THashMap<String, Resource>();
+
+  private JarMemoryLoader() { }
 
   public Resource getResource(String entryName) {
     return myResources.remove(entryName);
@@ -32,12 +47,7 @@ public class JarMemoryLoader {
   public static JarMemoryLoader load(File file, URL baseUrl) throws IOException {
     FileInputStream inputStream = new FileInputStream(file);
     try {
-//      long start = System.currentTimeMillis();
-      JarMemoryLoader loader = load(inputStream, baseUrl);
-//      if (loader != null) {
-//        LOG.info(loader.myResources.size() + " classes from " + file.getName() + " preloaded in " + (System.currentTimeMillis() - start) + " ms");
-//      }
-      return loader;
+      return load(inputStream, baseUrl);
     }
     finally {
       inputStream.close();
@@ -69,7 +79,6 @@ public class JarMemoryLoader {
   }
 
   private static class MyResource extends Resource {
-
     private String myName;
     private URL myUrl;
     private final byte[] myContent;

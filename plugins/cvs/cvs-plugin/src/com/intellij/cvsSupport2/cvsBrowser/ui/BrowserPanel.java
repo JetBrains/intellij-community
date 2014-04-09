@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -94,7 +95,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
     return result;
   }
 
-  private static class EditSourceAction extends AnAction {
+  private static class EditSourceAction extends AnAction implements DumbAware {
     public EditSourceAction() {
       super(ActionsBundle.actionText("EditSource"),
             ActionsBundle.actionDescription("EditSource"),
@@ -114,7 +115,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
     }
   }
 
-  private class MyCheckoutAction extends AnAction {
+  private class MyCheckoutAction extends AnAction implements DumbAware {
     public MyCheckoutAction() {
       super(CvsBundle.message("operation.name.check.out"), null, AllIcons.Actions.CheckOut);
     }
@@ -153,7 +154,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
     }
   }
 
-  private class MyAnnotateAction extends AnAction {
+  private class MyAnnotateAction extends AnAction implements DumbAware {
     public MyAnnotateAction() {
       super(CvsBundle.message("operation.name.annotate"), null, AllIcons.Actions.Annotate);
     }
@@ -184,7 +185,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
     }
   }
 
-  private class BrowseChangesAction extends AnAction {
+  private class BrowseChangesAction extends AnAction implements DumbAware {
     public BrowseChangesAction() {
       super(VcsBundle.message("browse.changes.action"), "", AllIcons.Actions.ShowChangesOnly);
     }

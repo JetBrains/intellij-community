@@ -20,9 +20,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.source.tree.java.PsiLocalVariableImpl;
-import com.intellij.psi.scope.ElementClassHint;
-import com.intellij.psi.scope.NameHint;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -41,7 +38,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.Res
 /**
  * @author ven
  */
-public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint, ElementClassHint {
+public class ResolverProcessor extends GrScopeProcessorWithHints {
   public static final Key<PsiElement> RESOLVE_CONTEXT = Key.create("RESOLVE_CONTEXT");
 
   public static final EnumSet<ResolveKind> RESOLVE_KINDS_CLASS_PACKAGE = EnumSet.of(CLASS, PACKAGE);
@@ -50,12 +47,9 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   public static final EnumSet<ResolveKind> RESOLVE_KINDS_METHOD_PROPERTY = EnumSet.of(METHOD, PROPERTY);
   public static final EnumSet<ResolveKind> RESOLVE_KINDS_PROPERTY = EnumSet.of(PROPERTY);
 
-  protected String myName;
-  private final EnumSet<ResolveKind> myResolveTargetKinds;
   private Set<String> myProcessedClasses;
-  protected PsiElement myPlace;
-  private
-  @NotNull final PsiType[] myTypeArguments;
+  protected final PsiElement myPlace;
+  private final PsiType[] myTypeArguments;
 
   private List<GroovyResolveResult> myCandidates;
 
@@ -63,12 +57,12 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
                               @NotNull EnumSet<ResolveKind> resolveTargets,
                               @NotNull PsiElement place,
                               @NotNull PsiType[] typeArguments) {
-    myName = name;
-    myResolveTargetKinds = resolveTargets;
+    super(name, resolveTargets);
     myPlace = place;
     myTypeArguments = typeArguments;
   }
 
+  @Override
   public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
     if (element instanceof PsiLocalVariableImpl) { //todo a better hack
       return true; // the debugger creates a Java code block context and our expressions to evaluate resolve there
@@ -78,7 +72,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
       //hack for resolve of java local vars and parameters
       //don't check field for name because they can be aliased imported
       if (element instanceof PsiVariable && !(element instanceof PsiField) &&
-          myName != null && !myName.equals(((PsiVariable)element).getName())) {
+          getName() != null && !getName().equals(((PsiVariable)element).getName())) {
         return true;
       }
       PsiNamedElement namedElement = (PsiNamedElement)element;
@@ -173,44 +167,8 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
     return myCandidates.toArray(new GroovyResolveResult[myCandidates.size()]);
   }
 
-  @SuppressWarnings({"unchecked"})
-  public <T> T getHint(@NotNull Key<T> hintKey) {
-    if ((NameHint.KEY == hintKey && myName != null) || ClassHint.KEY == hintKey || ElementClassHint.KEY == hintKey) {
-      return (T)this;
-    }
-
-    return null;
-  }
-
-  public void handleEvent(Event event, Object associated) {
-  }
-
-  public String getName() {
-    return myName;
-  }
-
-  public boolean shouldProcess(ResolveKind resolveKind) {
-    return myResolveTargetKinds.contains(resolveKind);
-  }
-
-  public boolean shouldProcess(DeclarationKind kind) {
-    switch (kind) {
-      case CLASS:
-        return shouldProcess(CLASS);
-
-      case ENUM_CONST:
-      case VARIABLE:
-      case FIELD:
-        return shouldProcess(PROPERTY);
-
-      case METHOD:
-        return shouldProcess(METHOD);
-
-      case PACKAGE:
-        return shouldProcess(PACKAGE);
-    }
-
-    return false;
+  @Override
+  public void handleEvent(@NotNull Event event, Object associated) {
   }
 
   public boolean hasCandidates() {
@@ -226,14 +184,10 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
     return null;
   }
 
-  public String getName(ResolveState state) {
-    return myName;
-  }
-
   @Override
   public String toString() {
     return "NameHint: '" +
-           myName +
+           getName() +
            "', " +
            myResolveTargetKinds.toString() +
            ", Candidates: " +

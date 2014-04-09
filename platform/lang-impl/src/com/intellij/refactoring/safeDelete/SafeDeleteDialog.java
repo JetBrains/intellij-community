@@ -26,11 +26,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
+import com.intellij.ui.StateRestoringCheckBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * @author dsl
@@ -39,8 +42,11 @@ public class SafeDeleteDialog extends DialogWrapper {
   private final PsiElement[] myElements;
   private final Callback myCallback;
 
-  private JCheckBox myCbSearchInComments;
-  private JCheckBox myCbSearchTextOccurrences;
+  private StateRestoringCheckBox myCbSearchInComments;
+  private StateRestoringCheckBox myCbSearchTextOccurrences;
+
+  private JCheckBox myCbSafeDelete;
+
   private final SafeDeleteProcessorDelegate myDelegate;
 
   public interface Callback {
@@ -83,7 +89,8 @@ public class SafeDeleteDialog extends DialogWrapper {
     final JPanel panel = new JPanel(new GridBagLayout());
     final GridBagConstraints gbc = new GridBagConstraints();
 
-    final String warningMessage = DeleteUtil.generateWarningMessage(IdeBundle.message("search.for.usages.and.delete.elements"), myElements);
+    final String promptKey = isDelete() ? "prompt.delete.elements" : "search.for.usages.and.delete.elements";
+    final String warningMessage = DeleteUtil.generateWarningMessage(IdeBundle.message(promptKey), myElements);
 
     gbc.insets = new Insets(4, 8, 4, 8);
     gbc.weighty = 1;
@@ -95,17 +102,34 @@ public class SafeDeleteDialog extends DialogWrapper {
     gbc.anchor = GridBagConstraints.WEST;
     panel.add(new JLabel(warningMessage), gbc);
 
+    if (isDelete()) {
+      gbc.gridy++;
+      gbc.gridx = 0;
+      gbc.weightx = 0.0;
+      gbc.gridwidth = 1;
+      gbc.insets = new Insets(4, 8, 0, 8);
+      myCbSafeDelete = new JCheckBox(IdeBundle.message("checkbox.safe.delete.with.usage.search"));
+      panel.add(myCbSafeDelete, gbc);
+      myCbSafeDelete.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          updateControls(myCbSearchInComments);
+          updateControls(myCbSearchTextOccurrences);
+        }
+      });
+    }
+
     gbc.gridy++;
     gbc.gridx = 0;
     gbc.weightx = 0.0;
     gbc.gridwidth = 1;
-    myCbSearchInComments = new JCheckBox();
+    myCbSearchInComments = new StateRestoringCheckBox();
     myCbSearchInComments.setText(RefactoringBundle.getSearchInCommentsAndStringsText());
     panel.add(myCbSearchInComments, gbc);
 
     if (needSearchForTextOccurrences()) {
       gbc.gridx++;
-      myCbSearchTextOccurrences = new JCheckBox();
+      myCbSearchTextOccurrences = new StateRestoringCheckBox();
       myCbSearchTextOccurrences.setText(RefactoringBundle.getSearchForTextOccurrencesText());
       panel.add(myCbSearchTextOccurrences, gbc);
     }
@@ -116,13 +140,32 @@ public class SafeDeleteDialog extends DialogWrapper {
       if (myCbSearchTextOccurrences != null) {
         myCbSearchTextOccurrences.setSelected(refactoringSettings.SAFE_DELETE_SEARCH_IN_NON_JAVA);
       }
+      if (myCbSafeDelete != null) {
+        myCbSafeDelete.setSelected(refactoringSettings.SAFE_DELETE_WHEN_DELETE);
+      }
     } else {
       myCbSearchInComments.setSelected(myDelegate.isToSearchInComments(myElements[0]));
       if (myCbSearchTextOccurrences != null) {
         myCbSearchTextOccurrences.setSelected(myDelegate.isToSearchForTextOccurrences(myElements[0]));
       }
     }
+    updateControls(myCbSearchTextOccurrences);
+    updateControls(myCbSearchInComments);
     return panel;
+  }
+
+  private void updateControls(@Nullable StateRestoringCheckBox checkBox) {
+    if (checkBox == null) return;
+    if (myCbSafeDelete == null || myCbSafeDelete.isSelected()) {
+      checkBox.makeSelectable();
+    }
+    else {
+      checkBox.makeUnselectable(false);
+    }
+  }
+
+  protected boolean isDelete() {
+    return false;
   }
 
   @Nullable
@@ -154,7 +197,7 @@ public class SafeDeleteDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    if (myCallback != null) {
+    if (myCallback != null && isSafeDelete()) {
       myCallback.run(this);
     } else {
       super.doOKAction();
@@ -166,6 +209,9 @@ public class SafeDeleteDialog extends DialogWrapper {
       if (myCbSearchTextOccurrences != null) {
         refactoringSettings.SAFE_DELETE_SEARCH_IN_NON_JAVA = isSearchForTextOccurences();
       }
+      if (myCbSafeDelete != null) {
+        refactoringSettings.SAFE_DELETE_WHEN_DELETE = myCbSafeDelete.isSelected();
+      }
     } else {
       myDelegate.setToSearchInComments(myElements[0], isSearchInComments());
 
@@ -173,5 +219,12 @@ public class SafeDeleteDialog extends DialogWrapper {
         myDelegate.setToSearchForTextOccurrences(myElements[0], isSearchForTextOccurences());
       }
     }
+  }
+
+  private boolean isSafeDelete() {
+    if (isDelete()) {
+      return myCbSafeDelete.isSelected();
+    }
+    return true;
   }
 }
