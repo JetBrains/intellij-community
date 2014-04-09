@@ -4230,7 +4230,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       else {
         if (isColumnMode() || e.isAltDown()) {
           if (myCaretModel.supportsMultipleCarets()) {
-            if (myCurrentDragIsSubstantial || !newLogicalCaret.equals(myLastMousePressedLocation)) {
+            if (myLastMousePressedLocation != null && (myCurrentDragIsSubstantial || !newLogicalCaret.equals(myLastMousePressedLocation))) {
               selectionModel.setBlockSelection(myLastMousePressedLocation, newLogicalCaret);
               myCurrentDragIsSubstantial = true;
             }
@@ -4276,7 +4276,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
 
           if (!myMousePressedInsideSelection) {
-            if (myCaretModel.supportsMultipleCarets()) {
+            if (myCaretModel.supportsMultipleCarets() && myLastMousePressedLocation != null) {
               oldSelectionStart = logicalPositionToOffset(myLastMousePressedLocation);
               oldVisLeadSelectionStart = logicalToVisualPosition(myLastMousePressedLocation);
             }
@@ -4770,7 +4770,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 return;
               }
 
-              if (myMultiSelectionInProgress) {
+              if (myMultiSelectionInProgress && myLastMousePressedLocation != null) {
                 myTargetMultiSelectionPosition = pos;
                 LogicalPosition newLogicalPosition = visualToLogicalPosition(pos);
                 getScrollingModel().scrollTo(newLogicalPosition, ScrollType.RELATIVE);
