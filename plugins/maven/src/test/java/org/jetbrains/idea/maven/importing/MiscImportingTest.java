@@ -17,21 +17,30 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.ProjectTopics;
 import com.intellij.idea.Bombed;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectChanges;
+import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask;
+import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.MavenServerManagerHelper;
 
 import java.io.File;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 public class MiscImportingTest extends MavenImportingTestCase {
   private int beforeRootsChangedCount;
@@ -282,7 +291,6 @@ public class MiscImportingTest extends MavenImportingTestCase {
     MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "plugins");
     setRepositoryPath(helper.getTestDataPath("plugins"));
     getMavenGeneralSettings().setWorkOffline(true);
-    MavenServerManagerHelper.connectToMaven3Server();
 
     importProjectWithMaven3("<groupId>test</groupId>" +
                             "<artifactId>project</artifactId>" +
@@ -372,6 +380,46 @@ public class MiscImportingTest extends MavenImportingTestCase {
     });
   }
 
+  public void testUserPropertiesCanBeCustomizedByMavenImportersForMaven3() throws Exception {
+    NameSettingMavenImporter extension = new NameSettingMavenImporter("name-from-properties");
+    ExtensionPoint<MavenImporter> extensionPoint = Extensions.getRootArea().getExtensionPoint(MavenImporter.EXTENSION_POINT_NAME);
+    extensionPoint.registerExtension(extension);
+
+    try {
+      importProjectWithMaven3("<groupId>test</groupId>" +
+                              "<artifactId>project</artifactId>" +
+                              "<version>1</version>" +
+                              "<name>${myName}</name>");
+    }
+    finally {
+      extensionPoint.unregisterExtension(extension);
+    }
+
+    MavenProject project = myProjectsManager.findProject(new MavenId("test", "project", "1"));
+    assertNotNull(project);
+    assertEquals("name-from-properties", project.getName());
+  }
+
+  public void testUserPropertiesCanBeCustomizedByMavenImportersForMaven2() throws Exception {
+    NameSettingMavenImporter extension = new NameSettingMavenImporter("name-from-properties");
+    ExtensionPoint<MavenImporter> extensionPoint = Extensions.getRootArea().getExtensionPoint(MavenImporter.EXTENSION_POINT_NAME);
+    extensionPoint.registerExtension(extension);
+
+    try {
+      importProject("<groupId>test</groupId>" +
+                    "<artifactId>project</artifactId>" +
+                    "<version>1</version>" +
+                    "<name>${myName}</name>");
+    }
+    finally {
+      extensionPoint.unregisterExtension(extension);
+    }
+
+    MavenProject project = myProjectsManager.findProject(new MavenId("test", "project", "1"));
+    assertNotNull(project);
+    assertEquals("name-from-properties", project.getName());
+  }
+
   private void assertRootsChanged(int count) {
     assertEquals(count, rootsChangedCount);
     assertEquals(rootsChangedCount, beforeRootsChangedCount);
@@ -384,6 +432,43 @@ public class MiscImportingTest extends MavenImportingTestCase {
     }
     finally {
       MavenServerManagerHelper.disconnectFromServer();
+    }
+  }
+
+  private static class NameSettingMavenImporter extends MavenImporter {
+    private final String myName;
+
+    public NameSettingMavenImporter(String name) {
+      super("gid", "id");
+      myName = name;
+    }
+
+    @Override
+    public void customizeUserProperties(Project project, MavenProject mavenProject, Properties properties) {
+      properties.setProperty("myName", myName);
+    }
+
+    @Override
+    public boolean isApplicable(MavenProject mavenProject) {
+      return true;
+    }
+
+    @Override
+    public void preProcess(Module module,
+                           MavenProject mavenProject,
+                           MavenProjectChanges changes,
+                           MavenModifiableModelsProvider modifiableModelsProvider) {
+    }
+
+    @Override
+    public void process(MavenModifiableModelsProvider modifiableModelsProvider,
+                        Module module,
+                        MavenRootModelAdapter rootModel,
+                        MavenProjectsTree mavenModel,
+                        MavenProject mavenProject,
+                        MavenProjectChanges changes,
+                        Map<MavenProject, String> mavenProjectToModuleName,
+                        List<MavenProjectsProcessorTask> postTasks) {
     }
   }
 }

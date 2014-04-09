@@ -26,7 +26,7 @@ public class MavenServerManagerHelper {
     ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
     MavenServerManager msm = MavenServerManager.getInstance(); // do this first, it won't work outside of unit test mode
 
-    msm.cleanup(); // in case we were previously connected to maven2
+    msm.shutdown(true); // in case we were previously connected to maven2
 
     boolean oldUnitTestMode = application.isUnitTestMode();
     application.setUnitTestMode(false);
@@ -40,6 +40,6 @@ public class MavenServerManagerHelper {
 
   public static void disconnectFromServer() {
     MavenServerManager msm = MavenServerManager.getInstance();
-    msm.cleanup();
+    msm.shutdown(true);
   }
 }
