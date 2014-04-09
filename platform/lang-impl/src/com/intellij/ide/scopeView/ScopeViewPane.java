@@ -209,6 +209,7 @@ public class ScopeViewPane extends AbstractProjectViewPane {
     if ((packageSet instanceof PackageSetBase && ((PackageSetBase)packageSet).contains(psiFileSystemItem.getVirtualFile(), myProject, holder)) ||
         (psiFileSystemItem instanceof PsiFile && packageSet.contains((PsiFile)psiFileSystemItem, holder))) {
       if (!name.equals(getSubId())) {
+        if (!requestFocus) return true;
         myProjectView.changeView(getId(), name);
       }
       myViewPanel.selectNode(element, psiFileSystemItem, requestFocus);
