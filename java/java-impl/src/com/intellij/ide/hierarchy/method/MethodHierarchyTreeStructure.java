@@ -172,7 +172,7 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
       descriptors.add(d);
     }
 
-    FunctionalExpressionSearch.search(psiClass).forEach(new Processor<PsiFunctionalExpression>() {
+    FunctionalExpressionSearch.search(getBaseMethod()).forEach(new Processor<PsiFunctionalExpression>() {
       @Override
       public boolean process(PsiFunctionalExpression expression) {
         descriptors.add(new MethodHierarchyNodeDescriptor(myProject, descriptor, expression, false, MethodHierarchyTreeStructure.this));

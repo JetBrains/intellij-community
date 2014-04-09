@@ -880,6 +880,10 @@
     <lang.foldingBuilder language="TEXT" implementationClass="com.intellij.ide.highlighter.custom.impl.CustomFileTypeFoldingBuilder"/>
 
     <virtualFileSystem key="scratchpad" implementationClass="com.intellij.ide.scratch.ScratchpadFileSystem"/>
+
+    <copyPastePostProcessor implementation="com.intellij.openapi.editor.richcopy.TextWithMarkupProcessor"/>
+    <copyPastePostProcessor implementation="com.intellij.openapi.editor.richcopy.RtfCopyPasteProcessor"/>
+    <copyPastePostProcessor implementation="com.intellij.openapi.editor.richcopy.HtmlCopyPasteProcessor"/>
   </extensions>
 </idea-plugin>
 

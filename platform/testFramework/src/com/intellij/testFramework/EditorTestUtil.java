@@ -34,7 +34,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,9 +46,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 /**
- * User: Maxim.Mossienko
- * Date: 15.03.2010
- * Time: 21:00:49
+ * @author Maxim.Mossienko
  */
 public class EditorTestUtil {
   public static final String CARET_TAG = "<caret>";

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.containers.hash.LinkedHashMap;
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import java.util.List;
 import java.util.Map;

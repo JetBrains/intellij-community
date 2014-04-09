@@ -18,7 +18,7 @@ package com.intellij.xdebugger.impl.breakpoints.ui.tree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
 
-class BreakpointsGroupNode<G extends XBreakpointGroup> extends CheckedTreeNode {
+public class BreakpointsGroupNode<G extends XBreakpointGroup> extends CheckedTreeNode {
   private final G myGroup;
   private final int myLevel;
 

@@ -42,6 +42,11 @@ public class TerminalExecutor extends CommandExecutor {
   }
 
   @Override
+  public Boolean wasError() {
+    return Boolean.FALSE;
+  }
+
+  @Override
   protected void startHandlingStreams() {
     for (InteractiveCommandListener listener : myInteractiveListeners) {
       ((TerminalProcessHandler)myHandler).addInteractiveListener(listener);

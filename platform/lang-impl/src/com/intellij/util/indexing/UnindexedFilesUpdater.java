@@ -18,6 +18,7 @@ package com.intellij.util.indexing;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -60,7 +61,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     LOG.info("Indexable files iterated in " + (System.currentTimeMillis() - l) + " ms");
     List<VirtualFile> files = finder.getFiles();
 
-    if (myOnStartup) {
+    if (myOnStartup && !ApplicationManager.getApplication().isUnitTestMode()) {
       // full VFS refresh makes sense only after it's loaded, i.e. after scanning files to index is finished
       ((StartupManagerImpl)StartupManager.getInstance(myProject)).scheduleInitialVfsRefresh();
     }

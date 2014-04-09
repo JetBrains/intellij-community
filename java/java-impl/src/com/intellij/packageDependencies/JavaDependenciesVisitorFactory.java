@@ -74,7 +74,9 @@ public class JavaDependenciesVisitorFactory extends DependenciesVisitorFactory {
           if (returnType != null) {
             PsiClass psiClass = PsiUtil.resolveClassInType(returnType);
             if (psiClass != null) {
-              processor.process(expression, psiClass);
+              if (!(psiClass instanceof PsiTypeParameter)) {
+                processor.process(expression, psiClass);
+              }
             }
           }
         }

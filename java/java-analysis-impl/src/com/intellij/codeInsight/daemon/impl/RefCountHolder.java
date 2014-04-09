@@ -203,6 +203,26 @@ public class RefCountHolder {
     return usedStatus == Boolean.TRUE;
   }
 
+  public boolean isReferencedByMethodReference(@NotNull PsiMethod method) {
+    if (!PsiUtil.isLanguageLevel8OrHigher(method)) return false;
+
+    List<PsiReference> array;
+    synchronized (myLocalRefsMap) {
+      array = myLocalRefsMap.getKeysByValue(method);
+    }
+
+    if (array != null && !array.isEmpty()) {
+      for (PsiReference reference : array) {
+        final PsiElement element = reference.getElement();
+        if (element != null && element instanceof PsiMethodReferenceExpression) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
   private static boolean isParameterUsedRecursively(@NotNull PsiElement element, @NotNull List<PsiReference> array) {
     if (!(element instanceof PsiParameter)) return false;
     PsiParameter parameter = (PsiParameter)element;

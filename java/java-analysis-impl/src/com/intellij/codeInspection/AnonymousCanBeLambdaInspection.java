@@ -30,6 +30,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.AnalysisCanceledException;
 import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
@@ -160,10 +161,14 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
 
         final PsiStatement[] statements = body.getStatements();
         PsiElement copy = body.copy();
-        if (statements.length == 1 && statements[0] instanceof PsiReturnStatement) {
-          PsiExpression value = ((PsiReturnStatement)statements[0]).getReturnValue();
-          if (value != null) {
-            copy = value.copy();
+        if (statements.length == 1) {
+          if (statements[0] instanceof PsiReturnStatement) {
+            PsiExpression value = ((PsiReturnStatement)statements[0]).getReturnValue();
+            if (value != null) {
+              copy = value.copy();
+            }
+          } else if (statements[0] instanceof PsiExpressionStatement) {
+            copy = ((PsiExpressionStatement)statements[0]).getExpression().copy();
           }
         }
 
@@ -304,6 +309,17 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
     }
   }
 
+  public static boolean functionalInterfaceMethodReferenced(PsiMethod psiMethod, PsiAnonymousClass anonymClass) {
+    if (psiMethod != null && !psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
+      final PsiClass containingClass = psiMethod.getContainingClass();
+      if (InheritanceUtil.isInheritorOrSelf(anonymClass, containingClass, true) &&
+          !InheritanceUtil.hasEnclosingInstanceInScope(containingClass, anonymClass.getParent(), true, true)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private static class ForbiddenRefsChecker extends JavaRecursiveElementWalkingVisitor {
     private boolean myBodyContainsForbiddenRefs;
     private final Set<PsiLocalVariable> myLocals = ContainerUtilRt.newHashSet(5);
@@ -324,6 +340,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       super.visitMethodCallExpression(methodCallExpression);
       final PsiMethod psiMethod = methodCallExpression.resolveMethod();
       if (psiMethod == myMethod ||
+          functionalInterfaceMethodReferenced(psiMethod, myAnonymClass) ||
           psiMethod != null &&
           !methodCallExpression.getMethodExpression().isQualified() &&
           "getClass".equals(psiMethod.getName()) &&

@@ -1,10 +1,26 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight;
 
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -14,7 +30,7 @@ import com.intellij.xml.impl.dtd.XmlNSDescriptorImpl;
 /**
  * @author Mike
  */
-public class XmlDtdTest extends PsiTestCase {
+public class XmlDtdTest extends LightPlatformTestCase {
   public void testDocumentDescriptor1() throws Exception {
     XmlNSDescriptor NSDescriptor = createDescriptor("<!ELEMENT principals (#PCDATA)><!ELEMENT data-sources (#PCDATA)>");
 
@@ -294,7 +310,7 @@ public class XmlDtdTest extends PsiTestCase {
   }
 
   public void testEmbeddedDtd1() throws Exception {
-    XmlFile xmlFile = (XmlFile)createDummyFile("test.xml",
+    XmlFile xmlFile = (XmlFile)createFile("test.xml",
       "<!DOCTYPE tv [ <!ELEMENT tv (date)*> <!ELEMENT date (#PCDATA)> ]> <tv></tv>");
 
     final XmlTag tag = xmlFile.getDocument().getRootTag();
@@ -307,16 +323,16 @@ public class XmlDtdTest extends PsiTestCase {
     assertEquals("date", elements[0].getName());
   }
 
-  private XmlNSDescriptor createDescriptor(String dtdText) throws Exception {
-    PsiFile dtdFile = createDummyFile("test.dtd", dtdText);
+  private static XmlNSDescriptor createDescriptor(String dtdText) throws Exception {
+    PsiFile dtdFile = createLightFile("test.dtd", dtdText);
 
     XmlNSDescriptorImpl descriptor = new XmlNSDescriptorImpl();
     descriptor.init(dtdFile);
     return descriptor;
   }
 
-  private XmlTag tag(String tagName) throws Exception {
-    XmlFile file = (XmlFile)PsiFileFactory.getInstance(myPsiManager.getProject()).createFileFromText("tag.xml", "<" + tagName + "/>");
+  private static XmlTag tag(String tagName) throws Exception {
+    XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText("tag.xml", StdFileTypes.XML, "<" + tagName + "/>");
     return file.getDocument().getRootTag();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,12 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
+import com.intellij.openapi.editor.richcopy.settings.RichCopySettings;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -38,8 +41,10 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
@@ -91,6 +96,10 @@ public class EditorOptionsPanel {
   private JBCheckBox   myCbShowQuickDocOnMouseMove;
   private JBLabel      myQuickDocDelayLabel;
   private JTextField   myQuickDocDelayTextField;
+  private JComboBox    myRichCopyColorSchemeComboBox;
+  private JCheckBox    myRichCopyStripWhitespaceCheckBox;
+
+  private static final String ACTIVE_COLOR_SCHEME = ApplicationBundle.message("combobox.richcopy.color.scheme.active");
 
   private final ErrorHighlightingPanel myErrorHighlightingPanel = new ErrorHighlightingPanel();
   private final MyConfigurable myConfigurable;
@@ -112,6 +121,20 @@ public class EditorOptionsPanel {
 
 
     myCbRenameLocalVariablesInplace.setVisible(OptionsApplicabilityFilter.isApplicable(OptionId.RENAME_IN_PLACE));
+
+    myRichCopyColorSchemeComboBox.setRenderer(new ListCellRendererWrapper<String>() {
+      @Override
+      public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
+        final String textToUse;
+        if (RichCopySettings.ACTIVE_GLOBAL_SCHEME_MARKER.equals(value)) {
+          textToUse = ACTIVE_COLOR_SCHEME;
+        }
+        else {
+          textToUse = value;
+        }
+        setText(textToUse);
+      }
+    });
 
     myConfigurable = new MyConfigurable();
     initQuickDocProcessing();
@@ -189,6 +212,20 @@ public class EditorOptionsPanel {
     myShowOptimizeImportsDialogCheckBox.setSelected(editorSettings.getOptions().SHOW_OPIMIZE_IMPORTS_DIALOG);
 
     myErrorHighlightingPanel.reset();
+
+    RichCopySettings settings = RichCopySettings.getInstance();
+    myRichCopyColorSchemeComboBox.removeAllItems();
+    EditorColorsScheme[] schemes = EditorColorsManager.getInstance().getAllSchemes();
+    myRichCopyColorSchemeComboBox.addItem(RichCopySettings.ACTIVE_GLOBAL_SCHEME_MARKER);
+    for (EditorColorsScheme scheme : schemes) {
+      myRichCopyColorSchemeComboBox.addItem(scheme.getName());
+    }
+    String toSelect = settings.getSchemeName();
+    if (!StringUtil.isEmpty(toSelect)) {
+      myRichCopyColorSchemeComboBox.setSelectedItem(toSelect);
+    }
+
+    myRichCopyStripWhitespaceCheckBox.setSelected(settings.isStripIndents());
   }
 
   public void apply() throws ConfigurationException {
@@ -289,6 +326,14 @@ public class EditorOptionsPanel {
     uiSettings.CONSOLE_COMMAND_HISTORY_LIMIT = StringUtil.parseInt(myCommandsHistoryLimitField.getText(), uiSettings.CONSOLE_COMMAND_HISTORY_LIMIT);
 
     myErrorHighlightingPanel.apply();
+
+    RichCopySettings settings = RichCopySettings.getInstance();
+    Object item = myRichCopyColorSchemeComboBox.getSelectedItem();
+    if (item instanceof String) {
+      settings.setSchemeName(item.toString());
+    }
+    settings.setStripIndents(myRichCopyStripWhitespaceCheckBox.isSelected());
+
     restartDaemons();
   }
 
@@ -406,6 +451,11 @@ public class EditorOptionsPanel {
     isModified |= isModified(myShowOptimizeImportsDialogCheckBox, editorSettings.getOptions().SHOW_OPIMIZE_IMPORTS_DIALOG);
 
     isModified |= myErrorHighlightingPanel.isModified();
+
+    RichCopySettings settings = RichCopySettings.getInstance();
+    isModified |= !Comparing.equal(settings.getSchemeName(), myRichCopyColorSchemeComboBox.getSelectedItem());
+    isModified |= isModified(myRichCopyStripWhitespaceCheckBox, settings.isStripIndents());
+
     return isModified;
   }
 

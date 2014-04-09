@@ -18,7 +18,6 @@ package com.jetbrains.python.inspections.quickfix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyElementGenerator;
@@ -41,8 +40,8 @@ public class PyRemoveStatementQuickFix implements LocalQuickFix {
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement statement = descriptor.getPsiElement();
-    if (statement instanceof PyStatement) {
+    final PyStatement statement = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PyStatement.class, false);
+    if (statement != null) {
       final PyStatementList statementList = PsiTreeUtil.getParentOfType(statement, PyStatementList.class);
       if (statementList != null) {
         if (statementList.getStatements().length == 1) {
