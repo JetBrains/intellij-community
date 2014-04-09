@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package com.intellij.vcs.log.newgraph.facade;
+package com.intellij.vcs.log.graph.impl.facade;
 
-import com.intellij.vcs.log.newgraph.PermanentGraph;
+import com.intellij.vcs.log.graph.api.LinearGraph;
+import com.intellij.vcs.log.graph.utils.Flags;
+import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
 import com.intellij.vcs.log.newgraph.utils.DfsUtil;
-import com.intellij.vcs.log.facade.utils.Flags;
 import com.intellij.vcs.log.newgraph.utils.MyUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,28 +28,25 @@ import java.util.Set;
 
 public class ContainingBranchesGetter {
   @NotNull
-  private final PermanentGraph myPermanentGraph;
+  private final LinearGraph myPermanentGraph;
 
   @NotNull
   private final Set<Integer> myBranchNodeIndexes;
 
   @NotNull
-  private final DfsUtil myDfsUtil;
+  private final DfsUtil myDfsUtil = new DfsUtil();
 
   @NotNull
   private final Flags myTempFlags;
 
-  public ContainingBranchesGetter(@NotNull PermanentGraph permanentGraph,
-                                  @NotNull Set<Integer> branchNodeIndexes,
-                                  @NotNull DfsUtil dfsUtil,
-                                  @NotNull Flags tempFlags) {
+  public ContainingBranchesGetter(@NotNull LinearGraph permanentGraph,
+                                  @NotNull Set<Integer> branchNodeIndexes) {
     myPermanentGraph = permanentGraph;
     myBranchNodeIndexes = branchNodeIndexes;
-    myDfsUtil = dfsUtil;
-    myTempFlags = tempFlags;
+    myTempFlags = new BitSetFlags(permanentGraph.nodesCount());
   }
 
-  public Set<Integer> getBranchHashIndexes(int nodeIndex) {
+  public Set<Integer> getBranchNodeIndexes(int nodeIndex) {
     final Set<Integer> result = new HashSet<Integer>();
 
     MyUtils.setAllValues(myTempFlags, false);
@@ -74,6 +72,6 @@ public class ContainingBranchesGetter {
 
   private void checkAndAdd(int nodeIndex, Set<Integer> result) {
     if (myBranchNodeIndexes.contains(nodeIndex))
-      result.add(myPermanentGraph.getHashIndex(nodeIndex));
+      result.add(nodeIndex);
   }
 }
