@@ -44,6 +44,10 @@ import java.util.regex.Pattern;
 public class PyPep8NamingInspection extends PyInspection {
   public boolean ignoreOverriddenFunctions = true;
   public boolean ignoreTestFunctions = false;
+  private static Pattern LOWERCASE_REGEX = Pattern.compile("[_\\p{javaLowerCase}][_\\p{javaLowerCase}0-9]*");
+  private static Pattern UPPERCASE_REGEX = Pattern.compile("[_\\p{javaUpperCase}][_\\p{javaUpperCase}0-9]*");
+  private static Pattern MIXEDCASE_REGEX = Pattern.compile("_?[\\p{javaUpperCase}][\\p{javaLowerCase}\\p{javaUpperCase}0-9]*");
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
@@ -55,10 +59,6 @@ public class PyPep8NamingInspection extends PyInspection {
   }
 
   public class Visitor extends PyInspectionVisitor {
-    Pattern LOWERCASE_REGEX = Pattern.compile("[_a-z][_a-z0-9]*");
-    Pattern UPPERCASE_REGEX = Pattern.compile("[_A-Z][_A-Z0-9]*");
-    Pattern MIXEDCASE_REGEX = Pattern.compile("_?[A-Z][a-zA-Z0-9]*");
-
     private final Map<PyFunction, Boolean> myHasSupers = new HashMap<PyFunction, Boolean>();
 
     public Visitor(@NotNull final ProblemsHolder holder, LocalInspectionToolSession session) {

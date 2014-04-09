@@ -20,22 +20,29 @@ package org.jetbrains.plugins.gradle.tooling.internal;
  * @since 11/25/13
  */
 public class DependencyVersionId {
+  private final String myId;
   private final String myName;
   private final String myArtifactName;
   private final String myGroup;
   private final String myVersion;
   private final String myClassifier;
 
-  public DependencyVersionId(String name,
+  public DependencyVersionId(String id,
+                             String name,
                              String artifactName,
                              String group,
                              String version,
                              String classifier) {
+    myId = id;
     myName = name;
     myArtifactName = artifactName;
     myGroup = group;
     myVersion = version;
     myClassifier = classifier;
+  }
+
+  public String getId() {
+    return myId;
   }
 
   public String getName() {
@@ -65,6 +72,7 @@ public class DependencyVersionId {
 
     DependencyVersionId id = (DependencyVersionId)o;
 
+    if (myId != null ? !myId.equals(id.myId) : id.myId != null) return false;
     if (myGroup != null ? !myGroup.equals(id.myGroup) : id.myGroup != null) return false;
     if (myName != null ? !myName.equals(id.myName) : id.myName != null) return false;
     if (myArtifactName != null ? !myArtifactName.equals(id.myArtifactName) : id.myArtifactName != null) return false;
@@ -76,7 +84,8 @@ public class DependencyVersionId {
 
   @Override
   public int hashCode() {
-    int result = myName != null ? myName.hashCode() : 0;
+    int result = myId != null ? myId.hashCode() : 0;
+    result = 31 * result + (myName != null ? myName.hashCode() : 0);
     result = 31 * result + (myArtifactName != null ? myArtifactName.hashCode() : 0);
     result = 31 * result + (myGroup != null ? myGroup.hashCode() : 0);
     result = 31 * result + (myVersion != null ? myVersion.hashCode() : 0);
@@ -87,7 +96,8 @@ public class DependencyVersionId {
   @Override
   public String toString() {
     return "DependencyVersionId{" +
-           "name='" + myName + '\'' +
+           "id='" + myId + '\'' +
+           ", name='" + myName + '\'' +
            ", artifactName='" + myArtifactName + '\'' +
            ", group='" + myGroup + '\'' +
            ", version='" + myVersion + '\'' +

@@ -2075,7 +2075,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
       final Component owner = mgr.getFocusOwner();
 
-      if (myWindowManager.getCommandProcessor().getCommandCount() > 0 || component == null || component== owner) {
+      if (myWindowManager.getCommandProcessor().getCommandCount() > 0 || component == null || component == owner) {
         return;
       }
 

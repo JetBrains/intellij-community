@@ -272,7 +272,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   private void addCreatedSdk(@Nullable final Sdk sdk, boolean newVirtualEnv) {
     if (sdk != null) {
-      final PyRemovedSdkService sdkService = PyRemovedSdkService.getInstance();
+      final PySdkService sdkService = PySdkService.getInstance();
       sdkService.restoreSdk(sdk);
 
       boolean isVirtualEnv = PythonSdkType.isVirtualEnv(sdk);
@@ -385,7 +385,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   private void removeSdk() {
     final Sdk currentSdk = getSelectedSdk();
     if (currentSdk != null) {
-      final PyRemovedSdkService sdkService = PyRemovedSdkService.getInstance();
+      final PySdkService sdkService = PySdkService.getInstance();
       sdkService.removeSdk(currentSdk);
       myProjectSdksModel.removeSdk(currentSdk);
       if (myModificators.containsKey(currentSdk)) {

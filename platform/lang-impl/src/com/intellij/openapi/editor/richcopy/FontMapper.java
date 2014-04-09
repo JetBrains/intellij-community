@@ -16,9 +16,13 @@
 package com.intellij.openapi.editor.richcopy;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -28,24 +32,32 @@ import java.util.Map;
 public class FontMapper {
   private static final Logger LOG = Logger.getInstance("#" + FontMapper.class.getName());
 
-  private static final String MAC_OS_FONT_CLASS = "sun.font.CFont";
   private static final String[] logicalFontsToMap = {Font.DIALOG, Font.DIALOG_INPUT, Font.MONOSPACED, Font.SERIF, Font.SANS_SERIF};
   private static final Map<String, String> logicalToPhysicalMapping = new HashMap<String, String>();
 
   static {
-    /*try {
-      FontManager fontManager = FontManagerFactory.getInstance();
+    try {
+      Object fontManager = null;
+      try {
+        fontManager = Class.forName("sun.font.FontManagerFactory").getMethod("getInstance").invoke(null);
+      }
+      catch (ClassNotFoundException e) {
+        // expected for JRE 1.6. FontManager.findFont2D method is static there, so leaving fontManager value as null will work
+      }
+      Method findFontMethod = Class.forName("sun.font.FontManager").getMethod("findFont2D", String.class, int.class, int.class);
       for (String logicalFont : logicalFontsToMap) {
         String physicalFont = null;
-        Font2D font2D = fontManager.findFont2D(logicalFont, OptionsConstants.DEFAULT_EDITOR_FONT_SIZE, 0);
+        Object font2D = findFontMethod.invoke(fontManager, logicalFont, Font.PLAIN, 0);
         if (font2D == null) {
           continue;
         }
-        else if (font2D instanceof CompositeFont && ((CompositeFont)font2D).getNumSlots() > 0) {
-          physicalFont = ((CompositeFont)font2D).getSlotFont(0).getFamilyName(Locale.getDefault());
+        String fontClassName = font2D.getClass().getName();
+        if ("sun.font.CompositeFont".equals(fontClassName)) { // Windows and Linux case
+          Object physicalFontObject = Class.forName("sun.font.CompositeFont").getMethod("getSlotFont", int.class).invoke(font2D, 0);
+          physicalFont = (String)Class.forName("sun.font.Font2D").getMethod("getFamilyName", Locale.class).invoke(physicalFontObject, Locale.getDefault());
         }
-        else if (font2D.getClass().getName().equals(MAC_OS_FONT_CLASS)) {
-          Field field = Class.forName(MAC_OS_FONT_CLASS).getDeclaredField("nativeFontName");
+        else if ("sun.font.CFont".equals(fontClassName)) { // MacOS case
+          Field field = Class.forName("sun.font.CFont").getDeclaredField("nativeFontName");
           field.setAccessible(true);
           physicalFont = (String)field.get(font2D);
         }
@@ -56,10 +68,12 @@ public class FontMapper {
     }
     catch (Throwable e) {
       LOG.warn("Failed to determine logical to physical font mappings");
-    }*/
+    }
   }
 
-  public static String getPhysicalFontName(String logicalFontName) {
+  public static
+  @NotNull
+  String getPhysicalFontName(@NotNull String logicalFontName) {
     String mapped = logicalToPhysicalMapping.get(logicalFontName);
     return mapped == null ? logicalFontName : mapped;
   }

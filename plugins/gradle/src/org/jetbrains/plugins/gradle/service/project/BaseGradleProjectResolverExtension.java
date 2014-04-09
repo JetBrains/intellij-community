@@ -62,10 +62,7 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.net.URL;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * {@link BaseGradleProjectResolverExtension} provides base implementation of Gradle project resolver.
@@ -526,6 +523,6 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   }
 
   private static boolean isIdeaTask(final String taskName) {
-    return taskName.toLowerCase().contains("idea");
+    return taskName.toLowerCase(Locale.ENGLISH).contains("idea");
   }
 }

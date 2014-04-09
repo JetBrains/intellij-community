@@ -92,7 +92,7 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
         if (relPath == null) {
           continue;
         }
-        final File outputDir = MavenResourcesTarget.getOutputDir(target.getModuleOutputDir(), rd.getConfiguration());
+        final File outputDir = MavenResourcesTarget.getOutputDir(target.getModuleOutputDir(), rd.getConfiguration(), config.outputDirectory);
         if (outputDir == null) {
           continue;
         }
