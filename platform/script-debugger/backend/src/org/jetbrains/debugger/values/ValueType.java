@@ -1,5 +1,8 @@
 package org.jetbrains.debugger.values;
 
+/**
+ * Don't forget to update NashornDebuggerSupport.ValueType respectively also
+ */
 public enum ValueType {
   OBJECT,
   NUMBER,
