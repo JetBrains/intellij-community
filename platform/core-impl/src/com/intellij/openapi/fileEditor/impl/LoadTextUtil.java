@@ -108,10 +108,6 @@ public final class LoadTextUtil {
     return Pair.create(result, detectedLineSeparator);
   }
 
-  private static Charset detectCharset(@NotNull VirtualFile virtualFile, @NotNull byte[] content) {
-    return detectCharset(virtualFile, content, virtualFile.getFileType());
-  }
-
   public static Charset detectCharset(@NotNull VirtualFile virtualFile, @NotNull byte[] content, @NotNull FileType fileType) {
     Charset charset = null;
 
@@ -183,7 +179,9 @@ public final class LoadTextUtil {
           detectedFromBytes = "auto-detected from bytes";
           return Trinity.create(CharsetToolkit.UTF8_CHARSET, guessed, null); //UTF detected, ignore all directives
         }
-        return Trinity.create(null, guessed,null);
+        if (guessed == CharsetToolkit.GuessedEncoding.SEVEN_BIT) {
+          return Trinity.create(null, guessed, null);
+        }
       }
       return null;
     }

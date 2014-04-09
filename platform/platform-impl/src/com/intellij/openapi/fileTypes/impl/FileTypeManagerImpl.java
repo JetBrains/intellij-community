@@ -72,6 +72,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private static final int VERSION = 11;
   private static final Key<FileType> FILE_TYPE_KEY = Key.create("FILE_TYPE_KEY");
   private static final Key<FileType> DETECTED_FROM_CONTENT_FILE_TYPE_KEY = Key.create("DETECTED_FROM_CONTENT_FILE_TYPE_KEY");
+  private static final int DETECT_BUFFER_SIZE = 8192; // the number of bytes to read from the file to feed to the file type detector
 
   private final Set<FileType> myDefaultTypes = new THashSet<FileType>();
   private final List<FileTypeIdentifiableByVirtualFile> mySpecialFileTypes = new ArrayList<FileTypeIdentifiableByVirtualFile>();
@@ -444,9 +445,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return type;
   }
 
-  private static final AtomicInteger DETECTED_COUNT = new AtomicInteger();
-  private static final int DETECT_BUFFER_SIZE = 8192;
-
   private static boolean isDetectable(@NotNull final VirtualFile file) {
     if (file.isDirectory() || !file.isValid() || file.is(VFileProperty.SPECIAL) || file.getLength() == 0) {
       // for empty file there is still hope its type will change
@@ -501,7 +499,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       FileType fileType = result.get();
 
       if (LOG.isDebugEnabled()) {
-        LOG.debug(file + "; type=" + fileType.getDescription() + "; " + DETECTED_COUNT.incrementAndGet());
+        LOG.debug(file + "; type=" + fileType.getDescription() + "; " + counterAutoDetect);
       }
 
       cacheAutoDetectedFileType(file, fileType);
@@ -527,7 +525,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
     // use wild guess
     CharsetToolkit.GuessedEncoding guess = guessed.second;
-    return guess != null && guess != CharsetToolkit.GuessedEncoding.INVALID_UTF8;
+    return guess != null && (guess == CharsetToolkit.GuessedEncoding.VALID_UTF8 || guess == CharsetToolkit.GuessedEncoding.SEVEN_BIT);
   }
 
   @Override
