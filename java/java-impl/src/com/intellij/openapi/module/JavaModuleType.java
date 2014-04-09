@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import org.jetbrains.annotations.NonNls;
@@ -95,15 +94,6 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
 
   private static Icon getJavaModuleNodeIconClosed() {
     return AllIcons.Nodes.Module;
-  }
-
-  private static class WizardIconHolder {
-    private static final Icon WIZARD_ICON = IconLoader.getIcon("/addmodulewizard.png");
-  }
-
-  private static Icon getWizardIcon() {
-
-    return WizardIconHolder.WIZARD_ICON;
   }
 
   @Override

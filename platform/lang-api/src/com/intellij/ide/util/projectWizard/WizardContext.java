@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.util.SystemProperties;
@@ -35,8 +34,8 @@ import java.io.File;
 import java.util.List;
 
 public class WizardContext extends UserDataHolderBase {
-  private static final Icon NEW_PROJECT_ICON = IconLoader.getIcon("/newprojectwizard.png");
-  private static final Icon NEW_MODULE_ICON = IconLoader.getIcon("/addmodulewizard.png");
+  private static final Icon NEW_PROJECT_ICON = null;
+  private static final Icon NEW_MODULE_ICON = null;
   /**
    * a project where the module should be added, can be null => the wizard creates a new project
    */
