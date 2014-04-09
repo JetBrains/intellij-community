@@ -56,7 +56,7 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
     editor.getSelectionModel().setBlockSelection(blockSelectionStartPosition, blockSelectionEndPosition);
 
     verifySyntaxInfo(
-      new Foreground(1), new FontFamilyName(1), new FontStyle(Font.BOLD), new FontSize(12), new Text(60, 71), // 'public int '
+      new Foreground(1), new FontFamilyName(1), new FontStyle(Font.BOLD), new FontSize(getFontSize()), new Text(60, 71), // 'public int '
       new Foreground(2), new FontStyle(Font.PLAIN), new Text(71, 83), // 'getField() {'
       new Text('\n'), // '\n'
       new Text(88, 92), // '    ' - indent before 'return field;'
@@ -92,7 +92,7 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
     editor.getSelectionModel().setBlockSelection(blockSelectionStartPosition, blockSelectionEndPosition);
 
     verifySyntaxInfo(
-      new Foreground(1), new FontFamilyName(1), new FontStyle(Font.BOLD), new FontSize(12), new Text(60, 71), // 'public int '
+      new Foreground(1), new FontFamilyName(1), new FontStyle(Font.BOLD), new FontSize(getFontSize()), new Text(60, 71), // 'public int '
       new Foreground(2), new FontStyle(Font.PLAIN), new Text(71, 83), // 'getField() {'
       new Text('\n'), // '\n'
       new Text(88, 92), // '    ' - indent before 'return field;'
@@ -122,7 +122,7 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
     editor.getSelectionModel().setBlockSelection(blockSelectionStartPosition, blockSelectionEndPosition);
 
     verifySyntaxInfo(
-      new Foreground(1), new FontFamilyName(1), new FontStyle(Font.BOLD), new FontSize(12), new Text(30, 34), // 'int '
+      new Foreground(1), new FontFamilyName(1), new FontStyle(Font.BOLD), new FontSize(getFontSize()), new Text(30, 34), // 'int '
       new Foreground(2), new Text(34, 39), // 'field'
       new Foreground(3), new FontStyle(Font.PLAIN), new Text(39, 40), // ';'
       new Text('\n'), // '\n'
@@ -154,7 +154,7 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
     selectionModel.setSelection(selectionStart, selectionEnd);
 
     List<OutputInfo> expected = Arrays.asList(
-      new Foreground(1), new FontFamilyName(1), new FontStyle(Font.BOLD), new FontSize(12), new Text(60, 71), // 'public int '
+      new Foreground(1), new FontFamilyName(1), new FontStyle(Font.BOLD), new FontSize(getFontSize()), new Text(60, 71), // 'public int '
       new Foreground(2), new FontStyle(Font.PLAIN), new Text(71, 84), // 'getField() {\n'
       new Text(88, 92), // '    ' - indent before 'return field;'
       new Foreground(1), new FontStyle(Font.BOLD), new Text(92, 99), // 'return '
@@ -176,7 +176,7 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
     init("\"tr\" #> <selection>template.statusList.sortBy</selection>(_.index).map(fromStatus =>");
 
     verifySyntaxInfo(
-      new FontFamilyName(1), new FontStyle(Font.PLAIN), new FontSize(12), new Text(8, 34)
+      new FontFamilyName(1), new FontStyle(Font.PLAIN), new FontSize(getFontSize()), new Text(8, 34)
     );
   }
 
@@ -197,7 +197,7 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
       "}"
     );
     verifySyntaxInfo(
-      new Foreground(1), new FontFamilyName(1), new FontStyle(Font.ITALIC), new FontSize(12), new Text(44, 48),
+      new Foreground(1), new FontFamilyName(1), new FontStyle(Font.ITALIC), new FontSize(getFontSize()), new Text(44, 48),
       new Text(48, 59),
       new Background(2), new Text(59, 65),
       new Background(3), new Text(65, 69),
@@ -221,7 +221,7 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
          "}</selection>");
     verifySyntaxInfo(
       new Text(20, 22), // '  '
-      new Foreground(1), new FontFamilyName(1), new FontStyle(Font.BOLD), new FontSize(12), new Text(22, 26), // 'int '
+      new Foreground(1), new FontFamilyName(1), new FontStyle(Font.BOLD), new FontSize(getFontSize()), new Text(22, 26), // 'int '
       new Foreground(2), new Text(26, 31), // 'field'
       new Foreground(3), new FontStyle(Font.PLAIN), new Text(31, 33), // ';\n'
       new Text(33, 34) // '}'
@@ -233,7 +233,7 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
          "<selection>  int field;\n" +
          "</selection>}");
     verifySyntaxInfo(
-      new Foreground(1), new FontFamilyName(1), new FontStyle(Font.BOLD), new FontSize(12), new Text(22, 26), // 'int '
+      new Foreground(1), new FontFamilyName(1), new FontStyle(Font.BOLD), new FontSize(getFontSize()), new Text(22, 26), // 'int '
       new Foreground(2), new Text(26, 31), // 'field'
       new Foreground(3), new FontStyle(Font.PLAIN), new Text(31, 33) // ';\n'
     );
@@ -267,6 +267,10 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
 
   private void verifySyntaxInfo(OutputInfo... infos) {
     assertEquals(Arrays.asList(infos), getSyntaxInfo().getOutputInfos());
+  }
+
+  private int getFontSize() {
+    return myFixture.getEditor().getColorsScheme().getEditorFontSize();
   }
 
   @Override

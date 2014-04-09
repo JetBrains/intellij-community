@@ -24,7 +24,6 @@ import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.ContentIterator;
@@ -36,7 +35,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.util.Consumer;
-import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,18 +118,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
   public static DumbModeTask createChangedFilesIndexingTask(final Project project) {
     final FileBasedIndexImpl index = (FileBasedIndexImpl)FileBasedIndex.getInstance();
 
-    if (index.getChangedFileCount() + index.getNumberOfPendingInvalidations() < 20 && !DumbService.isDumb(project)) {
-      // the changed set is small, process it immediately without entering dumb mode
-      // invalidation tasks are also processed and may take some time => take them into account
-      try {
-        HeavyProcessLatch.INSTANCE.processStarted();
-        final Collection<VirtualFile> files = index.getFilesToUpdate(project);
-        reindexRefreshedFiles(new EmptyProgressIndicator(), files, project, index);
-      }
-      finally {
-        HeavyProcessLatch.INSTANCE.processFinished();
-      }
-
+    if (index.getChangedFileCount() + index.getNumberOfPendingInvalidations() < 20) {
       return null;
     }
 

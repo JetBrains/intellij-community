@@ -97,6 +97,35 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     assertCopied("target/classes/foo/dir/file.properties");
   }
 
+  public void testResourcesPluginCustomTargetPath() throws Exception {
+    createProjectSubFile("res/dir/file.properties");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <artifactId>maven-resources-plugin</artifactId>" +
+                  "      <version>2.6</version>" +
+                  "      <configuration>" +
+                  "        <outputDirectory>${basedir}/target/resourceOutput</outputDirectory>" +
+                  "      </configuration>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>res</directory>" +
+                  "      <targetPath>foo</targetPath>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+
+    compileModules("project");
+    assertCopied("target/resourceOutput/foo/dir/file.properties");
+  }
+
   public void testAbsoluteCustomTargetPath() throws Exception {
     createProjectSubFile("res/foo/file.properties");
 

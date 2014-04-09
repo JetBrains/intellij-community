@@ -9,10 +9,7 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
-import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.RangeMarkerImpl;
@@ -315,7 +312,6 @@ public final class LanguageConsoleBuilder {
         EditorEx editor = getHistoryViewer();
         int endOffset = getDocument().getTextLength();
         lineSeparatorPainter = new LineSeparatorPainter(editor, endOffset);
-        editor.getMarkupModel().addRangeHighlighter(lineSeparatorPainter, 0, endOffset, false, false, HighlighterLayer.ADDITIONAL_SYNTAX);
       }
 
       private DocumentEx getDocument() {
@@ -419,8 +415,13 @@ public final class LanguageConsoleBuilder {
         }
       };
 
+      private final MarkupModelEx markupModel;
+
       public LineSeparatorPainter(@NotNull EditorEx editor, int endOffset) {
         super(editor.getDocument(), 0, endOffset, false);
+
+        markupModel = editor.getMarkupModel();
+        registerInTree(0, endOffset, false, false, HighlighterLayer.ADDITIONAL_SYNTAX);
       }
 
       @Override
@@ -569,6 +570,22 @@ public final class LanguageConsoleBuilder {
       @Override
       public RangeHighlighterEx get() {
         return this;
+      }
+
+      @Override
+      protected void registerInTree(int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
+        markupModel.addRangeHighlighter(this, start, end, greedyToLeft, greedyToRight, layer);
+      }
+
+      @Override
+      protected boolean unregisterInTree() {
+        if (!isValid()) {
+          return false;
+        }
+
+        // we store highlighters in MarkupModel
+        markupModel.removeHighlighter(this);
+        return true;
       }
     }
   }

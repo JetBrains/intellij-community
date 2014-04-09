@@ -55,6 +55,7 @@ public class RevisionsAndDiffsTest extends IntegrationTestCase {
   public void testIncludingCurrentVersionIntoRevisionsAfterPurge() throws Exception {
     Clock.setTime(10);
     VirtualFile f = createFile("file.txt", "content");
+    loadContent(f);
     getVcs().getChangeListInTests().purgeObsolete(0);
 
     List<Revision> rr = getRevisionsFor(f);
@@ -90,6 +91,7 @@ public class RevisionsAndDiffsTest extends IntegrationTestCase {
   public void testIncludingVersionBeforeFirstChangeAfterPurge() throws IOException {
     Clock.setTime(10);
     VirtualFile f = createFile("file.txt", "one");
+    loadContent(f);
     Clock.setTime(20);
     setContent(f, "two");
 
@@ -158,8 +160,10 @@ public class RevisionsAndDiffsTest extends IntegrationTestCase {
 
   public void testRevisionsForFileCreatedWithSameNameAsDeletedOne() throws IOException {
     VirtualFile f = createFile("file.txt", "old");
+    loadContent(f);
     f.delete(this);
     f = createFile("file.txt", "new");
+    loadContent(f);
 
     List<Revision> rr = getRevisionsFor(f);
     assertEquals(4, rr.size());
@@ -285,6 +289,7 @@ public class RevisionsAndDiffsTest extends IntegrationTestCase {
 
   public void testGettingDifferenceBetweenRevisions() throws IOException {
     VirtualFile f = createFile("file.txt", "one");
+    loadContent(f);
     setContent(f, "two");
 
     List<Revision> rr = getRevisionsFor(f);
