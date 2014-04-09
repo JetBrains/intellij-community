@@ -18,7 +18,6 @@ package com.intellij.vcs.log.graph.impl.visible;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
-import com.intellij.vcs.log.newgraph.SomeGraph;
 import com.intellij.vcs.log.graph.utils.DfsUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,7 +55,7 @@ public class CurrentBranches {
         @Override
         public int fun(int currentNode) {
           for (int downNode : myPermanentGraph.getDownNodes(currentNode)) {
-            if (downNode != SomeGraph.NOT_LOAD_COMMIT && !myVisibleNodesInBranches.get(downNode)) {
+            if (downNode != LinearGraph.NOT_LOAD_COMMIT && !myVisibleNodesInBranches.get(downNode)) {
               myVisibleNodesInBranches.set(downNode, true);
               return downNode;
             }

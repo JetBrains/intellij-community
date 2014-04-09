@@ -18,9 +18,9 @@ package com.intellij.vcs.log.graph.impl.permanent;
 
 import com.intellij.util.SmartList;
 import com.intellij.vcs.log.graph.GraphCommit;
+import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
-import com.intellij.vcs.log.newgraph.SomeGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,7 +105,7 @@ public class PermanentLinearGraphBuilder<CommitId> {
     for (int edgeIndex = myNodeToEdgeIndex[upNodeIndex]; edgeIndex < myNodeToEdgeIndex[upNodeIndex + 1]; edgeIndex++) {
       if (myLongEdges[edgeIndex] == -1) {
         addCommitWithNotLoadParent(upNodeIndex);
-        myLongEdges[edgeIndex] = SomeGraph.NOT_LOAD_COMMIT;
+        myLongEdges[edgeIndex] = LinearGraph.NOT_LOAD_COMMIT;
         return;
       }
     }

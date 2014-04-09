@@ -20,7 +20,6 @@ import com.intellij.vcs.log.graph.utils.IntList;
 import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.GraphLayout;
-import com.intellij.vcs.log.newgraph.SomeGraph;
 import com.intellij.vcs.log.graph.utils.DfsUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -79,7 +78,7 @@ public class GraphLayoutBuilder {
 
         int childWithoutLayoutIndex = -1;
         for (int childNodeIndex : myGraph.getDownNodes(currentNode)) {
-          if (childNodeIndex != SomeGraph.NOT_LOAD_COMMIT && myLayoutIndex[childNodeIndex] == 0) {
+          if (childNodeIndex != LinearGraph.NOT_LOAD_COMMIT && myLayoutIndex[childNodeIndex] == 0) {
             childWithoutLayoutIndex = childNodeIndex;
             break;
           }
