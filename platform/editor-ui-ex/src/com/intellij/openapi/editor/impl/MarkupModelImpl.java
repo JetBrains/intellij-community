@@ -37,7 +37,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Consumer;
-import com.intellij.util.DocumentUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +70,8 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
       throw new IndexOutOfBoundsException("lineNumber:" + lineNumber + ". Must be in [0, " + (getDocument().getLineCount() - 1) + "]");
     }
 
-    int offset = DocumentUtil.getFirstNonSpaceCharOffset(getDocument(), lineNumber);
+    // IDEA-121445 - editor doesn't support LINES_IN_RANGE
+    int offset = getDocument().getLineStartOffset(lineNumber);
     return addRangeHighlighter(offset, offset, layer, textAttributes, HighlighterTargetArea.LINES_IN_RANGE);
   }
 
@@ -82,7 +82,8 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
       return null;
     }
 
-    int offset = DocumentUtil.getFirstNonSpaceCharOffset(getDocument(), lineNumber);
+    // IDEA-121445 - editor doesn't support LINES_IN_RANGE
+    int offset = getDocument().getLineStartOffset(lineNumber);
     return addRangeHighlighter(PersistentRangeHighlighterImpl.create(this, offset, layer, HighlighterTargetArea.LINES_IN_RANGE, textAttributes, false), null);
   }
 
