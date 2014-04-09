@@ -544,7 +544,7 @@ public class PsiImplUtil {
     PsiClass aClass = member.getContainingClass();
     if (aClass instanceof PsiAnonymousClass) {
       //member from anonymous class can be called from outside the class
-      PsiElement methodCallExpr = PsiUtil.isLanguageLevel8OrHigher(aClass) ? PsiTreeUtil.getParentOfType(aClass, PsiMember.class) 
+      PsiElement methodCallExpr = PsiUtil.isLanguageLevel8OrHigher(aClass) ? PsiTreeUtil.getTopmostParentOfType(aClass, PsiStatement.class) 
                                                                            : PsiTreeUtil.getParentOfType(aClass, PsiMethodCallExpression.class);
       return new LocalSearchScope(methodCallExpr != null ? methodCallExpr : aClass);
     }
