@@ -36,7 +36,7 @@ public class ArgumentList implements GroovyElementTypes {
                                                           kFOR, kFINALLY, kIF, kIMPLEMENTS, kIMPORT,
                                                           kINTERFACE, kNATIVE, kPACKAGE, kPRIVATE, kPROTECTED, kPUBLIC,
                                                           kRETURN, kSTATIC, kSTRICTFP, kSWITCH, kSYNCHRONIZED,
-                                                          kTHROW, kTHROWS, kTRANSIENT, kTRY, kVOLATILE, kWHILE);
+                                                          kTHROW, kTHROWS, kTRAIT, kTRANSIENT, kTRY, kVOLATILE, kWHILE);
 
 
   public static void parseArgumentList(PsiBuilder builder, IElementType closingBrace, GroovyParser parser) {

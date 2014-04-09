@@ -276,6 +276,10 @@ public abstract class GroovyElementVisitor {
     visitTypeDefinition(annotationTypeDefinition);
   }
 
+  public void visitTraitDefinition(GrTraitTypeDefinition traitTypeDefinition) {
+    visitTypeDefinition(traitTypeDefinition);
+  }
+
   public void visitExtendsClause(GrExtendsClause extendsClause) {
     visitElement(extendsClause);
   }

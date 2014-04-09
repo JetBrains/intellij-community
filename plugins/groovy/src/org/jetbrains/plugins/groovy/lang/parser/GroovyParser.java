@@ -453,6 +453,7 @@ public class GroovyParser implements PsiParser {
     return kCLASS == builder.getTokenType() ||               //class
            kINTERFACE == builder.getTokenType() ||           //interface
            kENUM == builder.getTokenType() ||                //enum
+           kTRAIT == builder.getTokenType() ||               //trait
            ParserUtils.lookAhead(builder, mAT, kINTERFACE);  //@interface
   }
 

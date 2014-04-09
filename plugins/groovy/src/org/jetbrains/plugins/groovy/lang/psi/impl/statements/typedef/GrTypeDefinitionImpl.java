@@ -259,6 +259,11 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     return false;
   }
 
+  @Override
+  public boolean isTrait() {
+    return false;
+  }
+
   @Nullable
   @Override
   public PsiReferenceList getExtendsList() {

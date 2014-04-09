@@ -34,6 +34,7 @@ public class GrTypeDefinitionStub extends StubBase<GrTypeDefinition> implements 
   private static final int ANNOTATION = 0x08;
   private static final int IS_IN_QUALIFIED_NEW = 0x10;
   private static final int DEPRECATED_BY_DOC = 0x20;
+  private static final int TRAIT = 0x40;
 
   private final StringRef myName;
   private final String[] mySuperClasses;
@@ -92,6 +93,10 @@ public class GrTypeDefinitionStub extends StubBase<GrTypeDefinition> implements 
     return (myFlags & ENUM) != 0;
   }
 
+  public boolean isTrait() {
+    return (myFlags & TRAIT) != 0;
+  }
+
   public byte getFlags() {
     return myFlags;
   }
@@ -112,6 +117,7 @@ public class GrTypeDefinitionStub extends StubBase<GrTypeDefinition> implements 
     if (typeDefinition.isAnnotationType()) flags |= ANNOTATION;
     if (typeDefinition.isInterface()) flags |= INTERFACE;
     if (typeDefinition.isEnum()) flags |= ENUM;
+    if (typeDefinition.isTrait()) flags |= TRAIT;
     if (PsiImplUtil.isDeprecatedByDocTag(typeDefinition)) flags |= DEPRECATED_BY_DOC;
     return flags;
   }

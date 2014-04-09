@@ -199,6 +199,7 @@ public interface GroovyTokenTypes extends GroovyDocElementTypes {
   IElementType kTHIS = new GroovyElementType("this");
   IElementType kTHROW = new GroovyElementType("throw");
   IElementType kTHROWS = new GroovyElementType("throws");
+  IElementType kTRAIT = new GroovyElementType("trait");
   IElementType kTRANSIENT = new GroovyElementType("transient");
   IElementType kTRUE = new GroovyElementType("true");
   IElementType kTRY = new GroovyElementType("try");

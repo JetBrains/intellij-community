@@ -50,6 +50,8 @@ public interface GrTypeDefinition
     }
   };
 
+  boolean isTrait();
+
   @Nullable
   GrTypeDefinitionBody getBody();
 
