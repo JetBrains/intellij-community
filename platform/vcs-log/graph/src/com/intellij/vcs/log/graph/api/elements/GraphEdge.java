@@ -18,7 +18,7 @@ package com.intellij.vcs.log.graph.api.elements;
 
 import org.jetbrains.annotations.NotNull;
 
-public class GraphEdge implements GraphElement {
+public final class GraphEdge implements GraphElement {
   private final int myUpNodeIndex;
   private final int myDownNodeIndex;
   @NotNull
@@ -41,6 +41,28 @@ public class GraphEdge implements GraphElement {
   @NotNull
   public Type getType() {
     return myType;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    GraphEdge graphEdge = (GraphEdge)o;
+
+    if (myDownNodeIndex != graphEdge.myDownNodeIndex) return false;
+    if (myUpNodeIndex != graphEdge.myUpNodeIndex) return false;
+    if (myType != graphEdge.myType) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myUpNodeIndex;
+    result = 31 * result + myDownNodeIndex;
+    result = 31 * result + myType.hashCode();
+    return result;
   }
 
   public enum Type {

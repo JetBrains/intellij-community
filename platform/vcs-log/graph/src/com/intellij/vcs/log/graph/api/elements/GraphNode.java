@@ -18,10 +18,14 @@ package com.intellij.vcs.log.graph.api.elements;
 
 import org.jetbrains.annotations.NotNull;
 
-public class GraphNode implements GraphElement {
+public final class GraphNode implements GraphElement {
   private final int myNodeIndex;
   @NotNull
   private final Type myType;
+
+  public GraphNode(int nodeIndex) {
+    this(nodeIndex, Type.USUAL);
+  }
 
   public GraphNode(int nodeIndex, @NotNull Type type) {
     myNodeIndex = nodeIndex;
@@ -35,6 +39,26 @@ public class GraphNode implements GraphElement {
   @NotNull
   public Type getType() {
     return myType;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    GraphNode graphNode = (GraphNode)o;
+
+    if (myNodeIndex != graphNode.myNodeIndex) return false;
+    if (myType != graphNode.myType) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myNodeIndex;
+    result = 31 * result + myType.hashCode();
+    return result;
   }
 
   public enum Type {
