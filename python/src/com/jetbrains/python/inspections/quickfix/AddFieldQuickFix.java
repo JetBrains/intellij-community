@@ -194,11 +194,14 @@ public class AddFieldQuickFix implements LocalQuickFix {
         if (cls.isNewStyleClass()) {
           // form the super() call
           sb.append("super(");
-          sb.append(cls.getName());
+          if (!LanguageLevel.forElement(cls).isPy3K()) {
+            sb.append(cls.getName());
 
-          // NOTE: assume that we have at least the first param
-          String self_name = params[0].getName();
-          sb.append(", ").append(self_name).append(").").append(PyNames.INIT).append("(");
+            // NOTE: assume that we have at least the first param
+            String self_name = params[0].getName();
+            sb.append(", ").append(self_name);
+          }
+          sb.append(").").append(PyNames.INIT).append("(");
         }
         else {
           sb.append(ancestorClass.getName());
