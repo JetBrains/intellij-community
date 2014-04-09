@@ -182,7 +182,7 @@ public class AsyncResult<T> extends ActionCallback {
   }
 
   @NotNull
-  public static <R> AsyncResult<R> done(@NotNull R result) {
+  public static <R> AsyncResult<R> done(@Nullable R result) {
     return new AsyncResult<R>().setDone(result);
   }
 

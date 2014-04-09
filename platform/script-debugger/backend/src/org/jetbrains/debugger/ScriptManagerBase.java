@@ -8,6 +8,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.Url;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.debugger.values.FunctionValue;
 
 public abstract class ScriptManagerBase<SCRIPT extends ScriptBase> implements ScriptManager {
   @SuppressWarnings("unchecked")
@@ -55,5 +56,11 @@ public abstract class ScriptManagerBase<SCRIPT extends ScriptBase> implements Sc
 
   public static boolean isSpecial(@NotNull Url url) {
     return !url.isInLocalFileSystem() && (url.getScheme() == null || url.getScheme().equals(ScriptManager.VM_SCHEME) || url.getAuthority() == null);
+  }
+
+  @NotNull
+  @Override
+  public AsyncResult<Script> getOrLoadScript(@NotNull FunctionValue function) {
+    return AsyncResult.done(getScript(function));
   }
 }
