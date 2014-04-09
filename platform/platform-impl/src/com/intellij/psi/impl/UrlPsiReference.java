@@ -25,6 +25,10 @@ public class UrlPsiReference extends PsiReferenceBase<PsiElement> {
     super(element);
   }
 
+  protected String getUrl() {
+    return getValue();
+  }
+
   public PsiElement resolve() {
     return new FakePsiElement() {
       public PsiElement getParent() {
@@ -33,12 +37,12 @@ public class UrlPsiReference extends PsiReferenceBase<PsiElement> {
 
       @Override
       public String getName() {
-        return getValue();
+        return getUrl();
       }
 
       @Override
       public void navigate(boolean requestFocus) {
-        BrowserUtil.browse(getValue());
+        BrowserUtil.browse(getUrl());
       }
     };
   }
