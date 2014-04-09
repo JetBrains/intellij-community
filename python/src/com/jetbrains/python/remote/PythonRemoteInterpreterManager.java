@@ -158,7 +158,7 @@ public abstract class PythonRemoteInterpreterManager {
   }
 
   @Nullable
-  public abstract RemoteCredentials getVagrantRemoteCredentials(VagrantBasedCredentialsHolder data);
+  public abstract RemoteCredentials getVagrantRemoteCredentials(VagrantBasedCredentialsHolder data) throws IOException;
 
   public abstract void checkVagrantStatus(VagrantBasedCredentialsHolder data);
 

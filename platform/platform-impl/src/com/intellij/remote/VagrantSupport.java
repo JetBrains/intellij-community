@@ -43,7 +43,7 @@ public abstract class VagrantSupport {
   public abstract RemoteCredentials getVagrantSettings(Project project, String vagrantFolder);
 
   @NotNull
-  public abstract RemoteCredentials getCredentials(@NotNull String folder);
+  public abstract RemoteCredentials getCredentials(@NotNull String folder) throws IOException;
 
   public static void showMissingVagrantSupportMessage(final @Nullable Project project) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
