@@ -76,6 +76,7 @@ public class JiraRepository extends BaseRepositoryImpl {
   }
 
 
+  @NotNull
   public JiraRepository clone() {
     return new JiraRepository(this);
   }
@@ -99,7 +100,7 @@ public class JiraRepository extends BaseRepositoryImpl {
 
   @Nullable
   @Override
-  public Task findTask(String id) throws Exception {
+  public Task findTask(@NotNull String id) throws Exception {
     ensureApiVersionDiscovered();
     return myApiVersion.findTask(id);
   }
@@ -253,7 +254,7 @@ public class JiraRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public void setTaskState(Task task, TaskState state) throws Exception {
+  public void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception {
     myApiVersion.setTaskState(task, state);
   }
 
