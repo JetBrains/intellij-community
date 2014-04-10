@@ -69,10 +69,12 @@ NSString *WorkingDir;
 
 
 void appendBundle(NSString *path, NSMutableArray *sink) {
+    NSLog(@"running appendBundle, path: %@", path);
     if ([path hasSuffix:@".jdk"] || [path hasSuffix:@".jre"]) {
         NSBundle *bundle = [NSBundle bundleWithPath:path];
         if (bundle != nil) {
             [sink addObject:bundle];
+            NSLog(@"running appendBundle jdkbundle added");
         }
     }
 }
@@ -117,9 +119,10 @@ NSArray *allVms() {
     }
     else {
         NSBundle *bundle = [NSBundle mainBundle];
-        NSString *appDir = bundle.bundlePath;
+        NSString *appDir = [bundle.bundlePath stringByAppendingPathComponent:@"Contents"];
+        NSLog(@"Running allVms. appDir define as: %@", appDir);
 
-        appendJvmBundlesAt([appDir stringByAppendingPathComponent:@"jre"], jvmBundlePaths);
+        appendJvmBundlesAt([appDir stringByAppendingPathComponent:@"/jre"], jvmBundlePaths);
         if (jvmBundlePaths.count > 0) return jvmBundlePaths;
 
         appendJvmBundlesAt([NSHomeDirectory() stringByAppendingPathComponent:@"Library/Java/JavaVirtualMachines"], jvmBundlePaths);
@@ -187,6 +190,8 @@ NSBundle *findMatchingVm() {
 }
 
 CFBundleRef NSBundle2CFBundle(NSBundle *bundle) {
+    NSLog(@"--- NSBundle2CFBundle");
+    debugLog([bundle bundlePath]);
     CFURLRef bundleURL = (CFURLRef) ([NSURL fileURLWithPath:bundle.bundlePath]);
     return CFBundleCreate(kCFAllocatorDefault, bundleURL);
 }
@@ -347,6 +352,8 @@ NSDictionary *parseProperties() {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
     JVMOptions = getJavaKey();
     NSBundle *vm = findMatchingVm();
+    NSLog(@"--- launch");
+    debugLog([vm bundlePath]);
     if (vm == nil) {
         NSString *old_launcher = [self expandMacros:@"$APP_PACKAGE/Contents/MacOS/idea_appLauncher"];
         execv([old_launcher fileSystemRepresentation], self->argv);
@@ -362,6 +369,8 @@ NSDictionary *parseProperties() {
         exit(-1);
     }
 
+    NSLog(@"--- launch");
+    debugLog([vm bundlePath]);
     CFBundleRef cfvm = NSBundle2CFBundle(vm);
 
     fun_ptr_t_CreateJavaVM create_vm = CFBundleGetFunctionPointerForName(cfvm, CFSTR("JNI_CreateJavaVM"));
