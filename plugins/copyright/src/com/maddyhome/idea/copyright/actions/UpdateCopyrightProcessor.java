@@ -31,6 +31,7 @@ import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.psi.UpdateCopyright;
 import com.maddyhome.idea.copyright.psi.UpdateCopyrightFactory;
+import com.maddyhome.idea.copyright.psi.UpdatePsiFileCopyright;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 
 public class UpdateCopyrightProcessor extends AbstractFileProcessor
@@ -62,7 +63,7 @@ public class UpdateCopyrightProcessor extends AbstractFileProcessor
         setup(project, module);
     }
 
-    protected Runnable preprocessFile(final PsiFile file) throws IncorrectOperationException
+    protected Runnable preprocessFile(final PsiFile file, final boolean allowReplacement) throws IncorrectOperationException
     {
         VirtualFile vfile = file.getVirtualFile();
         if (vfile == null) return EmptyRunnable.getInstance();
@@ -92,8 +93,11 @@ public class UpdateCopyrightProcessor extends AbstractFileProcessor
                 {
                     try
                     {
+                      if (update instanceof UpdatePsiFileCopyright) {
+                        ((UpdatePsiFileCopyright)update).complete(allowReplacement);
+                      } else {
                         update.complete();
-
+                      }
                     }
                     catch (Exception e)
                     {
