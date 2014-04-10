@@ -15,162 +15,93 @@
  */
 package com.intellij.openapi.editor.richcopy;
 
-import com.intellij.openapi.editor.richcopy.model.*;
 import com.intellij.openapi.editor.richcopy.view.ReaderTransferableData;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Denis Zhdanov
  * @since 3/28/13 1:05 PM
  */
-public class HtmlCopyPasteProcessor extends BaseTextWithMarkupCopyPasteProcessor<ReaderTransferableData> implements OutputInfoVisitor {
+public class HtmlCopyPasteProcessor extends BaseTextWithMarkupCopyPasteProcessor<ReaderTransferableData> {
   @NotNull public static final DataFlavor FLAVOR = new DataFlavor("text/html;class=java.io.Reader", "HTML text");
 
-  private StringBuilder    myResultBuffer;
-  private CharSequence     myRawText;
-  private ColorRegistry    myColorRegistry;
-  private FontNameRegistry myFontNameRegistry;
-  private TIntObjectHashMap<String> myColors = new TIntObjectHashMap<String>();
+  private Map<Color, String> myRenderedColors = new HashMap<Color, String>();
 
-  private int     myForeground;
-  private int     myBackground;
-  private int     myFontFamily;
-  private int     myFontSize;
+  private Color   myForeground;
+  private Color   myBackground;
+  private String  myFontFamily;
   private boolean myBold;
   private boolean myItalic;
-  private boolean myIgnoreFontSize;
 
   public HtmlCopyPasteProcessor(TextWithMarkupProcessor processor) {
     super(processor);
   }
 
   @Override
-  protected void buildStringRepresentation(@NotNull StringBuilder buffer,
-                                           @NotNull CharSequence rawText,
-                                           @NotNull SyntaxInfo syntaxInfo,
-                                           int maxLength) {
-    myResultBuffer = buffer;
-    myRawText = rawText;
-    myColorRegistry = syntaxInfo.getColorRegistry();
-    myFontNameRegistry = syntaxInfo.getFontNameRegistry();
-    buildColorMap();
-    try {
-      myResultBuffer.append("<div style=\"border:1px inset;padding:2%;\">")
-        .append("<pre style=\"margin:0;padding:6px;background-color:");
-      //              .append("<pre style='height:30%;overflow:auto;margin:0;padding:6px;background-color:")
-      appendColor(myResultBuffer, syntaxInfo.getDefaultBackground());
-      myResultBuffer.append(';');
-      if (myFontNameRegistry.size() == 1) {
-        appendFontFamilyRule(myResultBuffer, myFontNameRegistry.getAllIds()[0]);
-        myFontNameRegistry = null;
-      }
-      int fontSize = syntaxInfo.getSingleFontSize();
-      if (fontSize > 0) {
-        appendFontSizeRule(myResultBuffer, fontSize);
-        myIgnoreFontSize = true;
-      }
-      myResultBuffer.append("\" bgcolor=\"");
-      appendColor(myResultBuffer, syntaxInfo.getDefaultBackground());
-      myResultBuffer.append("\">");
-
-      for (OutputInfo info : syntaxInfo.getOutputInfos()) {
-        info.invite(this);
-        if (myResultBuffer.length() > maxLength) {
-          myResultBuffer.append("... truncated ...");
-          break;
-        }
-      }
-      myResultBuffer.append("</pre></div>");
-    }
-    finally {
-      myResultBuffer = null;
-      myRawText = null;
-      myColorRegistry = null;
-      myFontNameRegistry = null;
-      myColors.clear();
-      myForeground = 0;
-      myBackground = 0;
-      myFontFamily = 0;
-      myFontSize = 0;
-      myBold = false;
-      myItalic = false;
-      myIgnoreFontSize = false;
-    }
-  }
-
-  private void defineForeground(int id, @NotNull StringBuilder styleBuffer, @NotNull StringBuilder closeTagBuffer) {
-    myResultBuffer.append("<font color=\"");
-    appendColor(myResultBuffer, id);
-    myResultBuffer.append("\">");
-    styleBuffer.append("color:");
-    appendColor(styleBuffer, id);
-    styleBuffer.append(";");
-    closeTagBuffer.insert(0, "</font>");
-  }
-
-  private void defineBackground(int id, @NotNull StringBuilder styleBuffer, @NotNull StringBuilder closeTagBuffer) {
-    myResultBuffer.append("<font bgcolor=\"");
-    appendColor(myResultBuffer, id);
-    myResultBuffer.append("\">");
-    styleBuffer.append("background-color:");
-    appendColor(styleBuffer, id);
-    styleBuffer.append(";");
-    closeTagBuffer.insert(0, "</font>");
-  }
-
-  private void defineBold(@NotNull StringBuilder styleBuffer, @NotNull StringBuilder closeTagBuffer) {
-    myResultBuffer.append("<b>");
-    styleBuffer.append("font-weight:bold;");
-    closeTagBuffer.insert(0, "</b>");
-  }
-
-  private void defineItalic(@NotNull StringBuilder styleBuffer, @NotNull StringBuilder closeTagBuffer) {
-    myResultBuffer.append("<i>");
-    styleBuffer.append("font-style:italic;");
-    closeTagBuffer.insert(0, "</i>");
-  }
-
-  private void buildColorMap() {
-    for (int id : myColorRegistry.getAllIds()) {
-      StringBuilder b = new StringBuilder("#");
-      UIUtil.appendColor(myColorRegistry.dataById(id), b);
-      myColors.put(id, b.toString());
-    }
-  }
-
-  private void appendColor(StringBuilder builder, int id) {
-    builder.append(myColors.get(id));
-  }
-
-  private void appendFontFamilyRule(@NotNull StringBuilder styleBuffer, int fontFamilyId) {
-    styleBuffer.append("font-family:'").append(myFontNameRegistry.dataById(fontFamilyId)).append("';");
-  }
-
-  private static void appendFontSizeRule(@NotNull StringBuilder styleBuffer, int fontSize) {
-    styleBuffer.append("font-size:").append(fontSize).append(';');
+  protected void doInit() {
+    myForeground = null;
+    myBackground = null;
+    myFontFamily = null;
+    myBold = false;
+    myItalic = false;
+    myBuilder.append("<div style=\"border:1px inset;padding:2%;\"><pre style=\"margin:0;padding:6px;background-color:");
+    appendColor(myBuilder, myDefaultBackground);
+    myBuilder.append(';');
+    appendFontFamilyRule(myBuilder, myDefaultFontFamily);
+    myBuilder.append("font-size:").append(myFontSize).append(';');
+    myBuilder.append("\" bgcolor=\"");
+    appendColor(myBuilder, myDefaultBackground);
+    myBuilder.append("\">");
   }
 
   @Override
-  public void visit(@NotNull Text text) {
-    boolean formattedText = myForeground > 0 || myBackground > 0 || myFontFamily > 0 || myFontSize > 0 || myBold || myItalic;
+  protected void doComplete() {
+    myBuilder.append("</pre></div>");
+  }
+
+  @Override
+  public void setFontFamily(String fontFamily) {
+    myFontFamily = myDefaultFontFamily.equals(fontFamily) ? null : fontFamily;
+  }
+
+  @Override
+  public void setFontStyle(int fontStyle) {
+    myBold = (Font.BOLD & fontStyle) != 0;
+    myItalic = (Font.ITALIC & fontStyle) != 0;
+  }
+
+  @Override
+  public void setForeground(Color foreground) {
+    myForeground = foreground;
+  }
+
+  @Override
+  public void setBackground(Color background) {
+    myBackground = myDefaultBackground.equals(background) ? null : background;
+  }
+
+  @Override
+  public void addTextFragment(CharSequence charSequence, int startOffset, int endOffset) {
+    boolean formattedText = myForeground != null || myBackground != null || myFontFamily != null || myBold || myItalic;
     if (!formattedText) {
-      escapeAndAdd(text);
+      escapeAndAdd(charSequence, startOffset, endOffset);
       return;
     }
 
     StringBuilder styleBuffer = StringBuilderSpinAllocator.alloc();
     StringBuilder closeTagBuffer = StringBuilderSpinAllocator.alloc();
     try {
-      if (myForeground > 0) {
+      if (myForeground != null) {
         defineForeground(myForeground, styleBuffer, closeTagBuffer);
       }
-      if (myBackground > 0) {
+      if (myBackground != null) {
         defineBackground(myBackground, styleBuffer, closeTagBuffer);
       }
       if (myBold) {
@@ -179,18 +110,15 @@ public class HtmlCopyPasteProcessor extends BaseTextWithMarkupCopyPasteProcessor
       if (myItalic) {
         defineItalic(styleBuffer, closeTagBuffer);
       }
-      if (myFontFamily > 0) {
+      if (myFontFamily != null) {
         appendFontFamilyRule(styleBuffer, myFontFamily);
       }
-      if (myFontSize > 0) {
-        appendFontSizeRule(styleBuffer, myFontSize);
-      }
-      myResultBuffer.append("<span style=\"");
-      myResultBuffer.append(styleBuffer);
-      myResultBuffer.append("\">");
-      escapeAndAdd(text);
-      myResultBuffer.append("</span>");
-      myResultBuffer.append(closeTagBuffer);
+      myBuilder.append("<span style=\"");
+      myBuilder.append(styleBuffer);
+      myBuilder.append("\">");
+      escapeAndAdd(charSequence, startOffset, endOffset);
+      myBuilder.append("</span>");
+      myBuilder.append(closeTagBuffer);
     }
     finally {
       StringBuilderSpinAllocator.dispose(styleBuffer);
@@ -198,47 +126,68 @@ public class HtmlCopyPasteProcessor extends BaseTextWithMarkupCopyPasteProcessor
     }
   }
 
-  private void escapeAndAdd(Text text) {
-    int start = text.getStartOffset();
-    int end = text.getEndOffset();
-    for (int i = start; i < end; i++) {
-      char c = text.getCharAt(myRawText, i);
-      switch (c) {
-        case '<': myResultBuffer.append("&lt;"); break;
-        case '>': myResultBuffer.append("&gt;"); break;
-        case '&': myResultBuffer.append("&amp;"); break;
-        default: myResultBuffer.append(c);
+  private void defineForeground(Color foreground, @NotNull StringBuilder styleBuffer, @NotNull StringBuilder closeTagBuffer) {
+    myBuilder.append("<font color=\"");
+    appendColor(myBuilder, foreground);
+    myBuilder.append("\">");
+    styleBuffer.append("color:");
+    appendColor(styleBuffer, foreground);
+    styleBuffer.append(";");
+    closeTagBuffer.insert(0, "</font>");
+  }
+
+  private void defineBackground(Color background, @NotNull StringBuilder styleBuffer, @NotNull StringBuilder closeTagBuffer) {
+    myBuilder.append("<font bgcolor=\"");
+    appendColor(myBuilder, background);
+    myBuilder.append("\">");
+    styleBuffer.append("background-color:");
+    appendColor(styleBuffer, background);
+    styleBuffer.append(";");
+    closeTagBuffer.insert(0, "</font>");
+  }
+
+  private void defineBold(@NotNull StringBuilder styleBuffer, @NotNull StringBuilder closeTagBuffer) {
+    myBuilder.append("<b>");
+    styleBuffer.append("font-weight:bold;");
+    closeTagBuffer.insert(0, "</b>");
+  }
+
+  private void defineItalic(@NotNull StringBuilder styleBuffer, @NotNull StringBuilder closeTagBuffer) {
+    myBuilder.append("<i>");
+    styleBuffer.append("font-style:italic;");
+    closeTagBuffer.insert(0, "</i>");
+  }
+
+  private void appendColor(StringBuilder builder, Color color) {
+    String colorAsString = myRenderedColors.get(color);
+    if (colorAsString == null) {
+      StringBuilder b = StringBuilderSpinAllocator.alloc();
+      try {
+        b.append('#');
+        UIUtil.appendColor(color, b);
+        colorAsString = b.toString();
+        myRenderedColors.put(color, colorAsString);
+      }
+      finally {
+        StringBuilderSpinAllocator.dispose(b);
       }
     }
+    builder.append(colorAsString);
   }
 
-  @Override
-  public void visit(@NotNull Foreground color) {
-    myForeground = color.getId();
+  private static void appendFontFamilyRule(@NotNull StringBuilder styleBuffer, String fontFamily) {
+    styleBuffer.append("font-family:'").append(fontFamily).append("';");
   }
 
-  @Override
-  public void visit(@NotNull Background color) {
-    myBackground = color.getId();
-  }
-
-  @Override
-  public void visit(@NotNull FontFamilyName name) {
-    if (myFontNameRegistry != null) {
-      myFontFamily = name.getId();
-    }
-  }
-
-  @Override
-  public void visit(@NotNull FontStyle style) {
-    myBold = (Font.BOLD & style.getStyle()) != 0;
-    myItalic = (Font.ITALIC & style.getStyle()) != 0;
-  }
-
-  @Override
-  public void visit(@NotNull FontSize size) {
-    if (!myIgnoreFontSize) {
-      myFontSize = size.getSize();
+  private void escapeAndAdd(CharSequence charSequence, int start, int end) {
+    for (int i = start; i < end; i++) {
+      char c = charSequence.charAt(i);
+      switch (c) {
+        case '<': myBuilder.append("&lt;"); break;
+        case '>': myBuilder.append("&gt;"); break;
+        case '&': myBuilder.append("&amp;"); break;
+        default: myBuilder.append(c);
+      }
     }
   }
 
