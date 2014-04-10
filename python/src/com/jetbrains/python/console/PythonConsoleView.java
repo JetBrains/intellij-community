@@ -76,7 +76,7 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
   private boolean myHyperlink;
 
   private final LanguageConsoleViewImpl myLanguageConsoleView;
-  
+
   private Disposable mySplitDisposable;
 
   public PythonConsoleView(final Project project, final String title, final Sdk sdk) {
@@ -92,6 +92,7 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
     languageConsole.initComponents();
 
     myLanguageConsoleView = new LanguageConsoleViewImpl(languageConsole);
+    Disposer.register(this, myLanguageConsoleView);
 
     add(myLanguageConsoleView.getComponent(), BorderLayout.CENTER);
 
@@ -372,7 +373,7 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
 
   @Override
   public void dispose() {
-    myLanguageConsoleView.dispose();
+    Disposer.dispose(this);
   }
 
   @Override
@@ -414,7 +415,7 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
     p.add(myLanguageConsoleView.getComponent(), JSplitPane.LEFT);
     mySplitDisposable = componentDisposable;
     p.add(component, JSplitPane.RIGHT);
-    p.setDividerLocation((int)getSize().getWidth()*2/3);
+    p.setDividerLocation((int)getSize().getWidth() * 2 / 3);
     add(p, BorderLayout.CENTER);
 
     validate();
