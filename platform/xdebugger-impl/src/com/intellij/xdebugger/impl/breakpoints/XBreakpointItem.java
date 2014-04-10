@@ -18,6 +18,7 @@ package com.intellij.xdebugger.impl.breakpoints;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -56,6 +57,10 @@ class XBreakpointItem extends BreakpointItem {
     final SimpleTextAttributes attributes =
       myBreakpoint.isEnabled() ? SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES;
     renderer.append(getDisplayText(), attributes);
+    String description = ((XBreakpointBase)myBreakpoint).getUserDescription();
+    if (!StringUtil.isEmpty(description)) {
+      renderer.append(" (" + description + ")", SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES);
+    }
   }
 
   public String getDisplayText() {

@@ -38,6 +38,10 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
   private XBreakpointDependencyState myDependencyState;
   @Tag("group")
   private String myGroup;
+
+  @Tag("description")
+  private String myDescription;
+
   private long myTimeStamp;
 
   public BreakpointState() {
@@ -109,6 +113,14 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
 
   public void setGroup(String group) {
     myGroup = group;
+  }
+
+  public String getDescription() {
+    return myDescription;
+  }
+
+  public void setDescription(String description) {
+    myDescription = description;
   }
 
   @Transient
