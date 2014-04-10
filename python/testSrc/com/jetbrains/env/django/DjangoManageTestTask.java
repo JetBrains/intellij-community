@@ -56,6 +56,7 @@ public abstract class DjangoManageTestTask extends PyExecutionFixtureTestTask {
   private ProcessHandler myProcessHandler;
   private ExecutionConsole myConsoleView;
   private Sdk mySdk;
+  private RunContentExecutor myRunContentExecutor;
 
   @Override
   protected abstract String getTestDataPath();
@@ -88,6 +89,9 @@ public abstract class DjangoManageTestTask extends PyExecutionFixtureTestTask {
           if (myDescriptor != null) {
             Disposer.dispose(myDescriptor);
             myDescriptor = null;
+          }
+          if (myRunContentExecutor != null) {
+            Disposer.dispose(myRunContentExecutor);
           }
           DjangoManageTestTask.super.tearDown();
         }
@@ -165,7 +169,8 @@ public abstract class DjangoManageTestTask extends PyExecutionFixtureTestTask {
       UIUtil.invokeAndWaitIfNeeded(new Runnable() {
         public void run() {
           final Project project = myFixture.getProject();
-          new RunContentExecutor(project, myProcessHandler)
+          myRunContentExecutor = new RunContentExecutor(project, myProcessHandler);
+          myRunContentExecutor
             .withFilter(new PythonTracebackFilter(project))
             .run();
         }
