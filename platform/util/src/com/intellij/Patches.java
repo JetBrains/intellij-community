@@ -136,9 +136,9 @@ public class Patches {
 
   /**
    * No BindException when another program is using the port.
-   * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=7179799
+   * See https://bugs.openjdk.java.net/browse/JDK-7179799.
    */
-  public static final boolean SUN_BUG_ID_7179799 = true;
+  public static final boolean SUN_BUG_ID_7179799 = SystemInfo.isWindows && !SystemInfo.isJavaVersionAtLeast("1.8");
 
   /**
    * Marker field to find all usages of the reflective access to JDK 7-specific methods
