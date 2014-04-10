@@ -1,12 +1,8 @@
 package com.intellij.vcs.log.parser;
 
-import com.intellij.util.ArrayUtil;
-import com.intellij.vcs.log.GraphCommit;
-import com.intellij.vcs.log.SimpleCommit;
+import com.intellij.openapi.util.Pair;
+import com.intellij.vcs.log.graph.GraphCommit;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author erokhins
@@ -28,20 +24,25 @@ public class CommitParser {
    *             123|-             // no parent
    */
   @NotNull
-  public static GraphCommit parseCommitParents(@NotNull String line) {
+  public static Pair<String, String[]> parseCommitParents(@NotNull String line) {
     int separatorIndex = nextSeparatorIndex(line, 0);
     String commitHashStr = line.substring(0, separatorIndex);
-    int commitHash = createHash(commitHashStr);
 
     String parentHashStr = line.substring(separatorIndex + 2, line.length());
     String[] parentsHashes = parentHashStr.split("\\s");
-    List<Integer> hashes = new ArrayList<Integer>(parentsHashes.length);
-    for (String aParentsStr : parentsHashes) {
-      if (aParentsStr.length() > 0) {
-        hashes.add(createHash(aParentsStr));
-      }
-    }
-    return new SimpleCommit(commitHash, ArrayUtil.toIntArray(hashes));
+    return new Pair<String, String[]>(commitHashStr, parentsHashes);
+  }
+
+  @NotNull
+  public static GraphCommit<String> parseCommitParentsAsString(@NotNull String line) {
+    Pair<String, String[]> stringPair = parseCommitParents(line);
+    return SimpleCommit.asStringCommit(stringPair.first, stringPair.second);
+  }
+
+  @NotNull
+  public static GraphCommit<Integer> parseCommitParentsAsInteger(@NotNull String line) {
+    Pair<String, String[]> stringPair = parseCommitParents(line);
+    return SimpleCommit.asIntegerCommit(stringPair.first, stringPair.second);
   }
 
   public static int createHash(@NotNull String s) {

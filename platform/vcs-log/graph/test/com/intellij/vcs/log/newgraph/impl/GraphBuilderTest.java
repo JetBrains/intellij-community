@@ -16,13 +16,10 @@
 
 package com.intellij.vcs.log.newgraph.impl;
 
-import com.intellij.openapi.util.Pair;
-import com.intellij.vcs.log.GraphCommit;
-import com.intellij.vcs.log.facade.graph.permanent.PermanentGraphBuilder;
-import com.intellij.vcs.log.facade.graph.permanent.PermanentGraphImpl;
+import com.intellij.vcs.log.graph.GraphCommit;
+import com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphBuilder;
+import com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphImpl;
 import com.intellij.vcs.log.newgraph.AbstractTestWithTextFile;
-import com.intellij.vcs.log.newgraph.PermanentGraph;
-import com.intellij.vcs.log.parser.SimpleCommitListParser;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -30,31 +27,31 @@ import java.util.List;
 import java.util.Map;
 
 import static com.intellij.vcs.log.newgraph.GraphStrUtils.commitsWithNotLoadParentMapToStr;
-import static com.intellij.vcs.log.newgraph.GraphStrUtils.permanentGraphTorStr;
+import static com.intellij.vcs.log.newgraph.GraphStrUtils.linearGraphToStr;
 import static org.junit.Assert.assertEquals;
 
-public class GraphBuilderTest extends AbstractTestWithTextFile {
+public abstract class GraphBuilderTest<CommitId extends Comparable<CommitId>> extends AbstractTestWithTextFile {
   public GraphBuilderTest() {
     super("graphBuilder/");
   }
 
   @Override
   protected void runTest(String in, String out) {
-    List<GraphCommit> commits = SimpleCommitListParser.parseCommitList(in);
-    Pair<PermanentGraphImpl,Map<Integer,GraphCommit>> graphAndCommitsWithNotLoadParent = PermanentGraphBuilder
-      .build(commits);
-    Map<Integer, GraphCommit> commitsWithNotLoadParent = graphAndCommitsWithNotLoadParent.second;
-    PermanentGraph graph = graphAndCommitsWithNotLoadParent.first;
+    List<GraphCommit<CommitId>> commits = getCommitIdManager().parseCommitList(in);
 
-    String actual = permanentGraphTorStr(graph);
+    PermanentLinearGraphBuilder<CommitId> graphBuilder = PermanentLinearGraphBuilder.newInstance(commits);
+    PermanentLinearGraphImpl graph = graphBuilder.build();
+
+    String actual = linearGraphToStr(graph);
+    Map<CommitId, GraphCommit<CommitId>> commitsWithNotLoadParent = graphBuilder.getCommitsWithNotLoadParent();
     if (!commitsWithNotLoadParent.isEmpty()) {
       actual += "\nNOT LOAD MAP:\n";
-      actual += commitsWithNotLoadParentMapToStr(commitsWithNotLoadParent);
+      actual += commitsWithNotLoadParentMapToStr(commitsWithNotLoadParent, getCommitIdManager().getToStrFunction());
     }
     assertEquals(out, actual);
   }
 
-
+  protected abstract CommitIdManager<CommitId> getCommitIdManager();
 
   @Test
   public void simple() throws IOException {
@@ -99,5 +96,19 @@ public class GraphBuilderTest extends AbstractTestWithTextFile {
   @Test
   public void duplicateParents() throws IOException {
     doTest("duplicateParents");
+  }
+
+  public static class StringTest extends GraphBuilderTest<String> {
+    @Override
+    protected CommitIdManager<String> getCommitIdManager() {
+      return CommitIdManager.STRING_COMMIT_ID_MANAGER;
+    }
+  }
+
+  public static class IntegerTest extends GraphBuilderTest<Integer> {
+    @Override
+    protected CommitIdManager<Integer> getCommitIdManager() {
+      return CommitIdManager.INTEGER_COMMIT_ID_MANAGER;
+    }
   }
 }

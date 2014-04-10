@@ -75,4 +75,8 @@ public class PermanentCommitsInfo<CommitId> {
     return myCommitIdIndexes.indexOf(commitId);
   }
 
+  public int size() {
+    return myCommitIdIndexes.size();
+  }
+
 }

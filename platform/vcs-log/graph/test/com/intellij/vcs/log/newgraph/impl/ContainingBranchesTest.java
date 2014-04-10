@@ -16,14 +16,11 @@
 
 package com.intellij.vcs.log.newgraph.impl;
 
-import com.intellij.vcs.log.GraphCommit;
-import com.intellij.vcs.log.facade.graph.permanent.PermanentGraphBuilder;
+import com.intellij.vcs.log.graph.GraphCommit;
+import com.intellij.vcs.log.graph.api.LinearGraph;
+import com.intellij.vcs.log.graph.impl.facade.ContainingBranchesGetter;
+import com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphBuilder;
 import com.intellij.vcs.log.newgraph.AbstractTestWithTextFile;
-import com.intellij.vcs.log.newgraph.GraphFlags;
-import com.intellij.vcs.log.newgraph.PermanentGraph;
-import com.intellij.vcs.log.newgraph.facade.ContainingBranchesGetter;
-import com.intellij.vcs.log.newgraph.utils.DfsUtil;
-import com.intellij.vcs.log.parser.SimpleCommitListParser;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -34,7 +31,7 @@ import java.util.Set;
 import static com.intellij.vcs.log.newgraph.GraphStrUtils.containingBranchesGetterToStr;
 import static org.junit.Assert.assertEquals;
 
-public class ContainingBranchesTest extends AbstractTestWithTextFile {
+public abstract class ContainingBranchesTest<CommitId> extends AbstractTestWithTextFile {
   private final static String SEPARATOR = "\nBRANCH NODES:\n";
 
   public ContainingBranchesTest() {
@@ -49,20 +46,19 @@ public class ContainingBranchesTest extends AbstractTestWithTextFile {
     return result;
   }
 
-
   @Override
   protected void runTest(String in, String out) {
     int i = in.indexOf(SEPARATOR);
-    List<GraphCommit> commits = SimpleCommitListParser.parseCommitList(in.substring(0, i));
+    List<GraphCommit<CommitId>> commits = getCommitIdManager().parseCommitList(in.substring(0, i));
 
-    PermanentGraph graph = PermanentGraphBuilder.build(commits).first;
+    LinearGraph graph = PermanentLinearGraphBuilder.newInstance(commits).build();
     ContainingBranchesGetter containingBranchesGetter = new ContainingBranchesGetter(graph,
-                                                                                     parseBranchNodeIndex(in.substring(i + SEPARATOR.length())),
-                                                                                     new DfsUtil(),
-                                                                                     new GraphFlags(graph.nodesCount()).getTempFlags());
+                                                                                     parseBranchNodeIndex(in.substring(i + SEPARATOR.length())));
 
     assertEquals(out, containingBranchesGetterToStr(containingBranchesGetter, graph.nodesCount()));
   }
+
+  protected abstract CommitIdManager<CommitId> getCommitIdManager();
 
   @Test
   public void simple() throws IOException {
@@ -89,4 +85,17 @@ public class ContainingBranchesTest extends AbstractTestWithTextFile {
     doTest("oneNodeNotFullGraph");
   }
 
+  public static class StringTest extends ContainingBranchesTest<String> {
+    @Override
+    protected CommitIdManager<String> getCommitIdManager() {
+      return CommitIdManager.STRING_COMMIT_ID_MANAGER;
+    }
+  }
+
+  public static class IntegerTest extends ContainingBranchesTest<Integer> {
+    @Override
+    protected CommitIdManager<Integer> getCommitIdManager() {
+      return CommitIdManager.INTEGER_COMMIT_ID_MANAGER;
+    }
+  }
 }

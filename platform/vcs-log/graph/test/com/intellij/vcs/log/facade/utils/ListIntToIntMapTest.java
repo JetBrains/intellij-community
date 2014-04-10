@@ -17,7 +17,8 @@
 package com.intellij.vcs.log.facade.utils;
 
 import com.intellij.util.BooleanFunction;
-import com.intellij.vcs.log.facade.utils.impl.ListIntToIntMap;
+import com.intellij.vcs.log.graph.utils.UpdatableIntToIntMap;
+import com.intellij.vcs.log.graph.utils.impl.ListIntToIntMap;
 import org.jetbrains.annotations.NotNull;
 
 public class ListIntToIntMapTest extends UpdatableIntToIntMapTest {

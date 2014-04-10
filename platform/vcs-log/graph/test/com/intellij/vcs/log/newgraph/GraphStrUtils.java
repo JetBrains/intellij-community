@@ -16,15 +16,21 @@
 
 package com.intellij.vcs.log.newgraph;
 
-import com.intellij.vcs.log.GraphCommit;
-import com.intellij.vcs.log.newgraph.facade.ContainingBranchesGetter;
+import com.intellij.util.Function;
+import com.intellij.vcs.log.graph.GraphCommit;
+import com.intellij.vcs.log.graph.api.GraphLayout;
+import com.intellij.vcs.log.graph.api.LinearGraph;
+import com.intellij.vcs.log.graph.impl.facade.ContainingBranchesGetter;
+import com.intellij.vcs.log.graph.impl.permanent.PermanentCommitsInfo;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
 public class GraphStrUtils {
-
 
   public static <T extends Comparable<? super T>> void appendSortList(List<T> list, StringBuilder s) {
     ArrayList<T> sorted = new ArrayList<T>(list);
@@ -46,7 +52,7 @@ public class GraphStrUtils {
     }
   }
 
-  public static String permanentGraphTorStr(PermanentGraph graph) {
+  public static String linearGraphToStr(LinearGraph graph) {
     StringBuilder s = new StringBuilder();
     for (int nodeIndex = 0; nodeIndex < graph.nodesCount(); nodeIndex++) {
       if (nodeIndex != 0)
@@ -63,8 +69,9 @@ public class GraphStrUtils {
     return s.toString();
   }
 
-  public static String commitsWithNotLoadParentMapToStr(Map<Integer, GraphCommit> commitMap) {
-    List<Integer> hashes = new ArrayList<Integer>(commitMap.keySet());
+  public static <CommitId extends Comparable<CommitId>> String commitsWithNotLoadParentMapToStr(Map<CommitId, GraphCommit<CommitId>> commitMap,
+                                                                                                Function<CommitId, String> toStr) {
+    List<CommitId> hashes = new ArrayList<CommitId>(commitMap.keySet());
     Collections.sort(hashes);
 
     StringBuilder s = new StringBuilder();
@@ -72,33 +79,39 @@ public class GraphStrUtils {
       if (i != 0)
         s.append("\n");
 
-      Integer hash = hashes.get(i);
-      GraphCommit commit = commitMap.get(hash);
-      assertEquals(Integer.toHexString(hash), Integer.toHexString(commit.getIndex()));
+      CommitId hash = hashes.get(i);
+      GraphCommit<CommitId> commit = commitMap.get(hash);
+      assertEquals(toStr.fun(hash), toStr.fun(commit.getId()));
 
-      s.append(Integer.toHexString(hash)).append("|-");
-      int[] parentIndices = commit.getParentIndices();
-      for (int j = 0 ; j < parentIndices.length; j++) {
+      s.append(toStr.fun(hash)).append("|-");
+      List<CommitId> parentIndices = commit.getParents();
+      for (int j = 0 ; j < parentIndices.size(); j++) {
         if (j > 0)
           s.append(" ");
-        s.append(Integer.toHexString(parentIndices[j]));
+        s.append(toStr.fun(parentIndices.get(j)));
       }
     }
     return s.toString();
   }
 
-  public static String permanentGraphToHashIndex(PermanentGraph graph) {
+  public static <CommitId> String commitsInfoToStr(PermanentCommitsInfo<CommitId> commitsInfo, Function<CommitId, String> toStr) {
     StringBuilder s = new StringBuilder();
-    for (int nodeIndex = 0; nodeIndex < graph.nodesCount(); nodeIndex++) {
-      if (nodeIndex != 0)
+    for (int i = 0; i < commitsInfo.size(); i++) {
+      if (i != 0)
         s.append("\n");
 
-      s.append(Integer.toHexString(graph.getHashIndex(nodeIndex)));
+      CommitId commitId = commitsInfo.getCommitId(i);
+      int commitIndex = commitsInfo.getPermanentNodeIndex(commitId);
+      long timestamp = commitsInfo.getTimestamp(i);
+
+      s.append(commitIndex).append("|-");
+      s.append(toStr.fun(commitId)).append("|-");
+      s.append(timestamp);
     }
     return s.toString();
   }
 
-  public static String permanentGraphLayoutModelToStr(PermanentGraphLayout graphLayout, int nodesCount) {
+  public static String permanentGraphLayoutModelToStr(GraphLayout graphLayout, int nodesCount) {
     StringBuilder s = new StringBuilder();
     for (int nodeIndex = 0; nodeIndex < nodesCount; nodeIndex++) {
       if (nodeIndex != 0)
@@ -115,21 +128,21 @@ public class GraphStrUtils {
       if (nodeIndex != 0)
         s.append("\n");
 
-      List<Integer> branchHashIndexes = new ArrayList<Integer>(containingBranchesGetter.getBranchHashIndexes(nodeIndex));
-      if (branchHashIndexes.isEmpty()) {
+      List<Integer> branchNodeIndexes = new ArrayList<Integer>(containingBranchesGetter.getBranchNodeIndexes(nodeIndex));
+      if (branchNodeIndexes.isEmpty()) {
         s.append("none");
         continue;
       }
 
-      Collections.sort(branchHashIndexes);
+      Collections.sort(branchNodeIndexes);
       boolean first = true;
-      for (int hashIndex : branchHashIndexes) {
+      for (int branchNodeIndex : branchNodeIndexes) {
         if (first)
           first = false;
         else
           s.append(" ");
 
-        s.append(Integer.toHexString(hashIndex));
+        s.append(branchNodeIndex);
       }
     }
     return s.toString();

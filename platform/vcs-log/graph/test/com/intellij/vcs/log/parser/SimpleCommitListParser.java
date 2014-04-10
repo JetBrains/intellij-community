@@ -1,7 +1,7 @@
 package com.intellij.vcs.log.parser;
 
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.GraphCommit;
+import com.intellij.vcs.log.graph.GraphCommit;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
@@ -13,29 +13,37 @@ import java.util.List;
  * @author erokhins
  */
 public class SimpleCommitListParser {
-  public static List<GraphCommit> parseCommitList(@NotNull String input) {
-    SimpleCommitListParser parser = new SimpleCommitListParser(new StringReader(input));
+
+  @NotNull
+  public static List<GraphCommit<String>> parseStringCommitList(@NotNull String input) {
+    BufferedReader bufferedReader = new BufferedReader(new StringReader(input));
     try {
-      return parser.readAllCommits();
+      String line;
+      List<GraphCommit<String>> vcsCommitParentses = ContainerUtil.newArrayList();
+      while ((line = bufferedReader.readLine()) != null) {
+        vcsCommitParentses.add(CommitParser.parseCommitParentsAsString(line));
+      }
+      return vcsCommitParentses;
     }
     catch (IOException e) {
       throw new IllegalStateException();
     }
   }
 
-  private final BufferedReader bufferedReader;
-
-  public SimpleCommitListParser(StringReader bufferedReader) {
-    this.bufferedReader = new BufferedReader(bufferedReader);
-  }
-
-  public List<GraphCommit> readAllCommits() throws IOException {
-    String line;
-    List<GraphCommit> vcsCommitParentses = ContainerUtil.newArrayList();
-    while ((line = bufferedReader.readLine()) != null) {
-      vcsCommitParentses.add(CommitParser.parseCommitParents(line));
+  @NotNull
+  public static List<GraphCommit<Integer>> parseIntegerCommitList(@NotNull String input) {
+    BufferedReader bufferedReader = new BufferedReader(new StringReader(input));
+    try {
+      String line;
+      List<GraphCommit<Integer>> vcsCommitParentses = ContainerUtil.newArrayList();
+      while ((line = bufferedReader.readLine()) != null) {
+        vcsCommitParentses.add(CommitParser.parseCommitParentsAsInteger(line));
+      }
+      return vcsCommitParentses;
     }
-    return vcsCommitParentses;
+    catch (IOException e) {
+      throw new IllegalStateException();
+    }
   }
 
 }

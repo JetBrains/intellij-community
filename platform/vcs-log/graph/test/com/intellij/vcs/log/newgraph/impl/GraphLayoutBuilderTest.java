@@ -16,15 +16,12 @@
 
 package com.intellij.vcs.log.newgraph.impl;
 
-import com.intellij.vcs.log.GraphCommit;
-import com.intellij.vcs.log.facade.graph.permanent.PermanentGraphBuilder;
-import com.intellij.vcs.log.facade.graph.permanent.PermanentGraphLayoutBuilder;
+import com.intellij.vcs.log.graph.GraphCommit;
+import com.intellij.vcs.log.graph.api.GraphLayout;
+import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutBuilder;
+import com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphBuilder;
+import com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphImpl;
 import com.intellij.vcs.log.newgraph.AbstractTestWithTextFile;
-import com.intellij.vcs.log.newgraph.PermanentGraph;
-import com.intellij.vcs.log.newgraph.PermanentGraphLayout;
-import com.intellij.vcs.log.newgraph.utils.DfsUtil;
-import com.intellij.vcs.log.parser.SimpleCommitListParser;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -34,27 +31,31 @@ import java.util.List;
 import static com.intellij.vcs.log.newgraph.GraphStrUtils.permanentGraphLayoutModelToStr;
 import static org.junit.Assert.assertEquals;
 
-public class GraphLayoutBuilderTest extends AbstractTestWithTextFile {
+public abstract class GraphLayoutBuilderTest<CommitId> extends AbstractTestWithTextFile {
   public GraphLayoutBuilderTest() {
     super("layoutBuilder/");
   }
 
   @Override
   protected void runTest(String in, String out) {
-    List<GraphCommit> commits = SimpleCommitListParser.parseCommitList(in);
-    final PermanentGraph graph = PermanentGraphBuilder.build(commits).first;
+    final CommitIdManager<CommitId> idManager = getCommitIdManager();
+    final List<GraphCommit<CommitId>> commits = idManager.parseCommitList(in);
 
-    DfsUtil dfsUtil = new DfsUtil();
-    PermanentGraphLayout graphLayout = PermanentGraphLayoutBuilder.build(dfsUtil, graph, new Comparator<Integer>() {
+    PermanentLinearGraphBuilder<CommitId> graphBuilder = PermanentLinearGraphBuilder.newInstance(commits);
+    PermanentLinearGraphImpl graph = graphBuilder.build();
+
+    GraphLayout graphLayout = GraphLayoutBuilder.build(graph, new Comparator<Integer>() {
       @Override
-      public int compare(@NotNull Integer o1, @NotNull Integer o2) {
-        Integer hashIndex1 = graph.getHashIndex(o1);
-        return hashIndex1.compareTo(graph.getHashIndex(o2));
+      public int compare(Integer o1, Integer o2) {
+        CommitId id1 = commits.get(o1).getId();
+        CommitId id2 = commits.get(o2).getId();
+        return idManager.toStr(id1).compareTo(idManager.toStr(id2));
       }
     });
-
     assertEquals(out, permanentGraphLayoutModelToStr(graphLayout, graph.nodesCount()));
   }
+
+  protected abstract CommitIdManager<CommitId> getCommitIdManager();
 
   @Test
   public void manyNodes() throws IOException {
@@ -80,4 +81,19 @@ public class GraphLayoutBuilderTest extends AbstractTestWithTextFile {
   public void headsOrder() throws IOException {
     doTest("headsOrder");
   }
+
+  public static class StringTest extends GraphLayoutBuilderTest<String> {
+    @Override
+    protected CommitIdManager<String> getCommitIdManager() {
+      return CommitIdManager.STRING_COMMIT_ID_MANAGER;
+    }
+  }
+
+  public static class IntegerTest extends GraphLayoutBuilderTest<Integer> {
+    @Override
+    protected CommitIdManager<Integer> getCommitIdManager() {
+      return CommitIdManager.INTEGER_COMMIT_ID_MANAGER;
+    }
+  }
+
 }

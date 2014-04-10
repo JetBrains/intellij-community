@@ -16,20 +16,18 @@
 
 package com.intellij.vcs.log.newgraph.impl;
 
-import com.intellij.vcs.log.GraphCommit;
-import com.intellij.vcs.log.facade.graph.permanent.PermanentGraphBuilder;
+import com.intellij.vcs.log.graph.GraphCommit;
+import com.intellij.vcs.log.graph.impl.permanent.PermanentCommitsInfo;
 import com.intellij.vcs.log.newgraph.AbstractTestWithTextFile;
-import com.intellij.vcs.log.newgraph.PermanentGraph;
-import com.intellij.vcs.log.parser.SimpleCommitListParser;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.util.List;
 
-import static com.intellij.vcs.log.newgraph.GraphStrUtils.permanentGraphToHashIndex;
+import static com.intellij.vcs.log.newgraph.GraphStrUtils.commitsInfoToStr;
 import static org.junit.Assert.assertEquals;
 
-public class GraphBuilderHashIndexTest extends AbstractTestWithTextFile {
+public abstract class GraphBuilderHashIndexTest<CommitId> extends AbstractTestWithTextFile {
 
   public GraphBuilderHashIndexTest() {
     super("graphHashIndex/");
@@ -37,11 +35,13 @@ public class GraphBuilderHashIndexTest extends AbstractTestWithTextFile {
 
   @Override
   protected void runTest(String in, String out) {
-    List<GraphCommit> commits = SimpleCommitListParser.parseCommitList(in);
-    PermanentGraph graph = PermanentGraphBuilder.build(commits).first;
+    final List<GraphCommit<CommitId>> commits = getCommitIdManager().parseCommitList(in);
+    PermanentCommitsInfo<CommitId> commitsInfo = PermanentCommitsInfo.newInstance(commits);
 
-    assertEquals(out, permanentGraphToHashIndex(graph));
+    assertEquals(out, commitsInfoToStr(commitsInfo, getCommitIdManager().getToStrFunction()));
   }
+
+  protected abstract CommitIdManager<CommitId> getCommitIdManager();
 
   @Test
   public void simple() throws IOException {
@@ -68,4 +68,17 @@ public class GraphBuilderHashIndexTest extends AbstractTestWithTextFile {
     doTest("oneNodeNotFullGraph");
   }
 
+  public static class StringTest extends GraphBuilderHashIndexTest<String> {
+    @Override
+    protected CommitIdManager<String> getCommitIdManager() {
+      return CommitIdManager.STRING_COMMIT_ID_MANAGER;
+    }
+  }
+
+  public static class IntegerTest extends GraphBuilderHashIndexTest<Integer> {
+    @Override
+    protected CommitIdManager<Integer> getCommitIdManager() {
+      return CommitIdManager.INTEGER_COMMIT_ID_MANAGER;
+    }
+  }
 }
