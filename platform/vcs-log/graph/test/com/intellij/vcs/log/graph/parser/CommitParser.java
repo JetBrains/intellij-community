@@ -12,10 +12,12 @@ import java.util.List;
  */
 public class CommitParser {
 
+  public static final String SEPARATOR = "|-";
+
   public static int nextSeparatorIndex(@NotNull String line, int startIndex) {
-    int nextIndex = line.indexOf("|-", startIndex);
+    int nextIndex = line.indexOf(SEPARATOR, startIndex);
     if (nextIndex == -1) {
-      throw new IllegalArgumentException("not found separator \"|-\", with startIndex=" + startIndex +
+      throw new IllegalArgumentException("not found separator \"" + SEPARATOR + "\", with startIndex=" + startIndex +
                                          ", in line: " + line);
     }
     return nextIndex;

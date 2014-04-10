@@ -19,8 +19,13 @@ package com.intellij.vcs.log.graph;
 import com.intellij.util.Function;
 import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.api.LinearGraph;
+import com.intellij.vcs.log.graph.api.LinearGraphWithElementInfo;
+import com.intellij.vcs.log.graph.api.elements.GraphEdge;
+import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.impl.facade.ContainingBranchesGetter;
 import com.intellij.vcs.log.graph.impl.permanent.PermanentCommitsInfo;
+import com.intellij.vcs.log.graph.parser.CommitParser;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -59,10 +64,10 @@ public class GraphStrUtils {
 
       s.append(nodeIndex);
 
-      s.append("|-");
+      s.append(CommitParser.SEPARATOR);
       appendSortList(graph.getUpNodes(nodeIndex), s);
 
-      s.append("|-");
+      s.append(CommitParser.SEPARATOR);
       appendList(graph.getDownNodes(nodeIndex), s);
     }
     return s.toString();
@@ -82,7 +87,7 @@ public class GraphStrUtils {
       GraphCommit<CommitId> commit = commitMap.get(hash);
       assertEquals(toStr.fun(hash), toStr.fun(commit.getId()));
 
-      s.append(toStr.fun(hash)).append("|-");
+      s.append(toStr.fun(hash)).append(CommitParser.SEPARATOR);
       List<CommitId> parentIndices = commit.getParents();
       for (int j = 0 ; j < parentIndices.size(); j++) {
         if (j > 0)
@@ -103,8 +108,8 @@ public class GraphStrUtils {
       int commitIndex = commitsInfo.getPermanentNodeIndex(commitId);
       long timestamp = commitsInfo.getTimestamp(i);
 
-      s.append(commitIndex).append("|-");
-      s.append(toStr.fun(commitId)).append("|-");
+      s.append(commitIndex).append(CommitParser.SEPARATOR);
+      s.append(toStr.fun(commitId)).append(CommitParser.SEPARATOR);
       s.append(timestamp);
     }
     return s.toString();
@@ -116,7 +121,7 @@ public class GraphStrUtils {
       if (nodeIndex != 0)
         s.append("\n");
 
-      s.append(graphLayout.getLayoutIndex(nodeIndex)).append("|-").append(graphLayout.getOneOfHeadNodeIndex(nodeIndex));
+      s.append(graphLayout.getLayoutIndex(nodeIndex)).append(CommitParser.SEPARATOR).append(graphLayout.getOneOfHeadNodeIndex(nodeIndex));
     }
     return s.toString();
   }
@@ -142,6 +147,45 @@ public class GraphStrUtils {
           s.append(" ");
 
         s.append(branchNodeIndex);
+      }
+    }
+    return s.toString();
+  }
+  
+  private static char toChar(GraphNode.Type type) {
+    switch (type) {
+      case USUAL:
+        return 'U';
+      default:
+        throw new IllegalStateException("Unexpected graph node type: " + type);
+    }
+  }
+  
+  private static char toChar(GraphEdge.Type type) {
+    switch (type) {
+      case USUAL:
+        return 'U';
+      case HIDE:
+        return 'H';
+      default:
+        throw new IllegalStateException("Unexpected graph edge type: " + type);
+    }
+  }
+  
+  public static String linearGraphWithElementInfoToStr(@NotNull LinearGraphWithElementInfo graph) {
+    StringBuilder s = new StringBuilder();
+    for (int i = 0; i < graph.nodesCount(); i++) {
+      if (i > 0)
+        s.append("\n");
+      s.append(i).append('_').append(toChar(graph.getNodeType(i)));
+      s.append(CommitParser.SEPARATOR);
+      boolean first = true;
+      for (int downNode : graph.getDownNodes(i)) {
+        if (first)
+          first = false;
+        else
+          s.append(" ");
+        s.append(downNode).append('_').append(toChar(graph.getEdgeType(i, downNode)));
       }
     }
     return s.toString();
