@@ -39,6 +39,8 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
 
   public static final String MODULE_NAME = ProjectBundle.message("module.type.java.name");
   public static final String JAVA_GROUP = "Java";
+  public static final String BUILD_TOOLS_GROUP = "Build Tools";
+  public static final String MOBILE_GROUP = "Mobile Java";
   private static final String JAVA_MODULE = ModuleTypeId.JAVA_MODULE;
 
   public JavaModuleType() {
