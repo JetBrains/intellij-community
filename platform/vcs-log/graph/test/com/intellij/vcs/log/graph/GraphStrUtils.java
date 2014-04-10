@@ -16,6 +16,7 @@
 
 package com.intellij.vcs.log.graph;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.api.LinearGraph;
@@ -24,13 +25,11 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.impl.facade.ContainingBranchesGetter;
 import com.intellij.vcs.log.graph.impl.permanent.PermanentCommitsInfo;
+import com.intellij.vcs.log.graph.impl.print.EdgesInRowGenerator;
 import com.intellij.vcs.log.graph.parser.CommitParser;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 
@@ -189,5 +188,39 @@ public class GraphStrUtils {
       }
     }
     return s.toString();
+  }
+
+  public static String edgesInRowToStr(@NotNull EdgesInRowGenerator edgesInRowGenerator, int nodesCount) {
+    StringBuilder s = new StringBuilder();
+    for (int i = 0; i < nodesCount; i++) {
+      if (i > 0)
+        s.append("\n");
+      Set<GraphEdge> edgesInRow = edgesInRowGenerator.getEdgesInRow(i);
+      s.append(edgesToStr(edgesInRow));
+    }
+    return s.toString();
+  }
+
+  public static String edgesToStr(@NotNull Set<GraphEdge> edges) {
+    if (edges.isEmpty())
+      return "none";
+
+    List<GraphEdge> sortedEdges = new ArrayList<GraphEdge>(edges);
+    Collections.sort(sortedEdges, new Comparator<GraphEdge>() {
+      @Override
+      public int compare(@NotNull GraphEdge o1, @NotNull GraphEdge o2) {
+        if (o1.getUpNodeIndex() == o2.getUpNodeIndex())
+          return o1.getDownNodeIndex() - o2.getDownNodeIndex();
+        else
+          return o1.getUpNodeIndex() - o2.getUpNodeIndex();
+      }
+    });
+
+    return StringUtil.join(sortedEdges, new Function<GraphEdge, String>() {
+      @Override
+      public String fun(GraphEdge graphEdge) {
+        return graphEdge.getUpNodeIndex() + "_" + graphEdge.getDownNodeIndex() + "_" + toChar(graphEdge.getType());
+      }
+    }, " ");
   }
 }

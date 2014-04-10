@@ -17,7 +17,7 @@ package com.intellij.vcs.log.graph.impl.print;
 
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.SLRUMap;
-import com.intellij.vcs.log.graph.api.PrintedLinearGraph;
+import com.intellij.vcs.log.graph.api.LinearGraphWithElementInfo;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,17 +32,17 @@ public class EdgesInRowGenerator {
   private final int WALK_SIZE;
 
   @NotNull
-  private final PrintedLinearGraph myGraph;
+  private final LinearGraphWithElementInfo myGraph;
 
   @NotNull
   private final SLRUMap<Integer, GraphEdges> cacheNU = new SLRUMap<Integer, GraphEdges>(CACHE_SIZE, CACHE_SIZE * 2);
   private final SLRUMap<Integer, GraphEdges> cacheND = new SLRUMap<Integer, GraphEdges>(CACHE_SIZE, CACHE_SIZE * 2);
 
-  public EdgesInRowGenerator(@NotNull PrintedLinearGraph graph) {
+  public EdgesInRowGenerator(@NotNull LinearGraphWithElementInfo graph) {
     this(graph, 1000);
   }
 
-  public EdgesInRowGenerator(@NotNull PrintedLinearGraph graph, int walk_size) {
+  public EdgesInRowGenerator(@NotNull LinearGraphWithElementInfo graph, int walk_size) {
     myGraph = graph;
     WALK_SIZE = walk_size;
   }
@@ -82,7 +82,7 @@ public class EdgesInRowGenerator {
 
   @NotNull
   private GraphEdges getNeighborD(int rowIndex) {
-    int downNeighborIndex = getUpNeighborIndex(rowIndex) + 1;
+    int downNeighborIndex = getUpNeighborIndex(rowIndex) + BLOCK_SIZE;
 
     if (downNeighborIndex >= myGraph.nodesCount()) {
       return new GraphEdges(myGraph.nodesCount() - 1);
@@ -127,8 +127,8 @@ public class EdgesInRowGenerator {
     Set<GraphEdge> edgesInCurrentRow = graphEdges.myEdges;
     int currentRow = graphEdges.myRow;
 
-    edgesInCurrentRow.removeAll(createUpEdges(currentRow + 1));
     edgesInCurrentRow.addAll(createDownEdges(currentRow));
+    edgesInCurrentRow.removeAll(createUpEdges(currentRow + 1));
 
     return new GraphEdges(edgesInCurrentRow, currentRow + 1);
   }
@@ -138,8 +138,8 @@ public class EdgesInRowGenerator {
     Set<GraphEdge> edgesInCurrentRow = graphEdges.myEdges;
     int currentRow = graphEdges.myRow;
 
-    edgesInCurrentRow.removeAll(createDownEdges(currentRow - 1));
     edgesInCurrentRow.addAll(createUpEdges(currentRow));
+    edgesInCurrentRow.removeAll(createDownEdges(currentRow - 1));
     return new GraphEdges(edgesInCurrentRow, currentRow - 1);
   }
 
