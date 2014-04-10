@@ -10,7 +10,6 @@ import org.jetbrains.debugger.values.ValueManager;
 import java.util.List;
 
 public abstract class DeclarativeScope<VALUE_LOADER extends ValueManager> extends ScopeBase {
-  @SuppressWarnings("unchecked")
   private static final AsyncValueLoaderManager<DeclarativeScope, List<? extends Variable>> VARIABLES_LOADER =
     new AsyncValueLoaderManager<DeclarativeScope, List<? extends Variable>>(DeclarativeScope.class) {
       @Override

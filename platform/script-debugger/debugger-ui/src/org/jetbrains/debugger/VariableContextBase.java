@@ -21,4 +21,10 @@ public abstract class VariableContextBase implements VariableContext {
   public MemberFilter getMemberFilter() {
     return getDebugProcess();
   }
+
+  @Nullable
+  @Override
+  public Scope getScope() {
+    return null;
+  }
 }

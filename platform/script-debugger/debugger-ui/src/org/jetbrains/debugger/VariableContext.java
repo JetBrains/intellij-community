@@ -7,6 +7,9 @@ public interface VariableContext {
   @NotNull
   EvaluateContext getEvaluateContext();
 
+  /**
+   * Parent variable name if this context is {@link org.jetbrains.debugger.VariableView}
+   */
   @Nullable
   String getName();
 
@@ -20,4 +23,7 @@ public interface VariableContext {
 
   @NotNull
   MemberFilter getMemberFilter();
+
+  @Nullable
+  Scope getScope();
 }
