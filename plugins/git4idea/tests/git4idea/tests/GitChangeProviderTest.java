@@ -72,7 +72,7 @@ public abstract class GitChangeProviderTest extends GitSingleRepoTest {
     }
     catch (Exception e) {
       super.tearDown();
-      e.printStackTrace();
+      throw e;
     }
   }
 
