@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.ZipUtil;
 import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
@@ -14,6 +15,7 @@ import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -31,16 +33,22 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
     super.setUp();
 
     myTempDir = new File(myProjectRoot.getPath(), "test");
-    myTempDir.mkdir();
 
     File pluginRoot = new File(PluginPathManager.getPluginHomePath("git4idea"));
     myDataDir = new File(new File(pluginRoot, "testData"), "repo");
   }
 
   private void prepareTest(File testDir) throws IOException {
+    assertTrue("Temp directory was not created", myTempDir.mkdir());
     FileUtil.copyDir(testDir, myTempDir);
     myGitDir = new File(myTempDir, ".git");
-    FileUtil.rename(new File(myTempDir, "dot_git"), myGitDir);
+    File dotGit = new File(myTempDir, "dot_git");
+    if (!dotGit.exists()) {
+      File dotGitZip = new File(myTempDir, "dot_git.zip");
+      assertTrue("Neither dot_git nor dot_git.zip were found", dotGitZip.exists());
+      ZipUtil.extract(dotGitZip, myTempDir, null);
+    }
+    FileUtil.rename(dotGit, myGitDir);
     TestCase.assertTrue(myGitDir.exists());
     myRepositoryReader = new GitRepositoryReader(myGitDir);
   }
@@ -51,13 +59,21 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
   }
 
   private void doTest(@NotNull ResultConsumer test) throws Exception {
-    for (File dir : myDataDir.listFiles()) {
-      if (!dir.isDirectory()) {
-        continue;
+    File[] files = myDataDir.listFiles(new FileFilter() {
+      @Override
+      public boolean accept(File file) {
+        return file.isDirectory();
       }
+    });
+    for (File dir : files) {
       prepareTest(dir);
       test.consume(dir);
+      cleanupTest();
     }
+  }
+
+  private void cleanupTest() {
+    FileUtil.delete(myTempDir);
   }
 
   @NotNull
