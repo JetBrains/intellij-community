@@ -45,6 +45,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
@@ -631,9 +632,10 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         }
       }
       try {
-        fail("Unreleased editors: " + allEditors.length);
+        ((EditorImpl)allEditors[0]).throwDisposalError("Unreleased editors: " + allEditors.length);
       }
       catch (Throwable e) {
+        e.printStackTrace();
         result.add(e);
       }
     }
