@@ -5,6 +5,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.UsefulTestCase;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
 
 import java.util.List;
@@ -18,7 +19,7 @@ public class PyEnvSufficiencyTest extends PyEnvTestCase {
     ImmutableList.<String>builder().add("python3", "django", "jython", "ipython", "ipython011", "ipython012", "nose", "pytest").build();
 
   public void testSufficiency() {
-    if (IS_UNDER_TEAMCITY && IS_ENV_CONFIGURATION) {
+    if (UsefulTestCase.IS_UNDER_TEAMCITY && IS_ENV_CONFIGURATION) {
       Set<String> tags = Sets.newHashSet();
       List<String> roots = getPythonRoots();
       if (roots.size() == 0) {

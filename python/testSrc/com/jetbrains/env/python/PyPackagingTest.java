@@ -4,6 +4,7 @@ import com.google.common.collect.Sets;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.testFramework.UsefulTestCase;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
 import com.jetbrains.env.python.debug.PyExecutionFixtureTestTask;
 import com.jetbrains.env.python.debug.PyTestTask;
@@ -27,7 +28,7 @@ import java.util.Set;
 public class PyPackagingTest extends PyEnvTestCase {
   @Override
   public void runPythonTest(PyTestTask testTask) {
-    if (PyEnvTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
+    if (UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
       return; //Don't run under Windows as after deleting from created virtualenvs original interpreter got spoiled
     }
 

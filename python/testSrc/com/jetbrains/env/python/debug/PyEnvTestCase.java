@@ -30,10 +30,8 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
   private static final Logger LOG = Logger.getInstance(PyEnvTestCase.class.getName());
 
   private static final String TAGS_FILE = "tags.txt";
-  public static final String PYCHARM_PYTHON_ENVS = "PYCHARM_PYTHON_ENVS";
+  private static final String PYCHARM_PYTHON_ENVS = "PYCHARM_PYTHON_ENVS";
   private static final String PYCHARM_PYTHON_VIRTUAL_ENVS = "PYCHARM_PYTHON_VIRTUAL_ENVS";
-
-  public static final boolean IS_UNDER_TEAMCITY = System.getProperty("bootstrap.testcases") != null;
 
   protected static final boolean IS_ENV_CONFIGURATION = System.getProperty("pycharm.env") != null;
 
@@ -271,7 +269,7 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
   }
 
   public static boolean notEnvConfiguration() {
-    return IS_UNDER_TEAMCITY && !IS_ENV_CONFIGURATION;
+    return UsefulTestCase.IS_UNDER_TEAMCITY && !IS_ENV_CONFIGURATION;
   }
 
   public static List<String> getPythonRoots() {
