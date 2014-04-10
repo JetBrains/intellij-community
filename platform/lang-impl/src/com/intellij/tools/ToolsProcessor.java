@@ -64,7 +64,7 @@ abstract public class ToolsProcessor<T extends Tool> extends BaseSchemeProcessor
       throw new InvalidDataException();
     }
 
-    String groupName = StringUtil.notNullize(root.getAttributeValue(ATTRIBUTE_NAME));
+    String groupName = StringUtil.notNullize(root.getAttributeValue(ATTRIBUTE_NAME), Tool.DEFAULT_GROUP_NAME);
     ToolsGroup<T> result = createToolsGroup(groupName);
 
     final PathMacroManager macroManager = PathMacroManager.getInstance(ApplicationManager.getApplication());
