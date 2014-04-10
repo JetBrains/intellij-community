@@ -46,7 +46,7 @@ public class PermanentLinearGraphBuilder<CommitId> {
       CommitId nextCommitHashIndex = nextCommitHashIndex(graphCommits, nodeIndex);
 
       List parents = commit.getParents();
-      if (parents.size() == 1 && parents.get(0) == nextCommitHashIndex) {
+      if (parents.size() == 1 && parents.get(0).equals(nextCommitHashIndex)) {
         simpleNodes.set(nodeIndex, true);
       } else {
         longEdgesCount += parents.size();
@@ -119,7 +119,7 @@ public class PermanentLinearGraphBuilder<CommitId> {
     List<CommitId> parentHashIndices = upCommit.getParents();
 
     for (int i = 0; i < parentHashIndices.size(); i++) {
-      if (parentHashIndices.get(i) == downCommitId) {
+      if (parentHashIndices.get(i).equals(downCommitId)) {
         int offset = parentHashIndices.size() - i;
         int edgeIndex = end - offset;
 
