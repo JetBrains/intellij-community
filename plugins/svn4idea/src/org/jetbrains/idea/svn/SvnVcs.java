@@ -952,31 +952,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return getInfo(new File(path));
   }
 
-  // TODO: Most likely make getInfo(File) correspond to getInfo(File, SVNRevision.UNDEFINED)
-  // TODO: And create special method that tries also to resolve HEAD revision - to be used only in special code paths
   @Nullable
   public SVNInfo getInfo(@NotNull File ioFile) {
-    SVNInfo result = null;
-    SvnWcClientI client = getFactory(ioFile).createInfoClient();
-
-    try {
-      // applying such behavior only when info requested w/o explicitly specifying revision
-      // TODO: logs should be analyzed and decision taken if we need it or just need to explicitly specify HEAD revision in certain calls
-      result = client.doInfo(ioFile, SVNRevision.UNDEFINED);
-      SVNInfo localInfo = result;
-      if (result == null || result.getRepositoryRootURL() == null) {
-        LOG.info("Failed to get local info for " + ioFile + ". Trying to get HEAD info.");
-        result = client.doInfo(ioFile, SVNRevision.HEAD);
-        if (result != null) {
-          LOG.info("Local info was " + localInfo + ", HEAD info was " + result);
-        }
-      }
-    }
-    catch (SVNException e) {
-      handleInfoException(e);
-    }
-
-    return result;
+    return getInfo(ioFile, SVNRevision.UNDEFINED);
   }
 
   public void collectInfo(@NotNull Collection<File> files, @Nullable ISVNInfoHandler handler) {
