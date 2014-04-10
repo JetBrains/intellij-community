@@ -36,4 +36,9 @@ public class GroovyHashBangFileTypeDetector implements FileTypeRegistry.FileType
 
     return null;
   }
+
+  @Override
+  public int getVersion() {
+    return 1;
+  }
 }
