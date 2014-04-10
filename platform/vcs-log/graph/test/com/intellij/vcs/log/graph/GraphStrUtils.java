@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package com.intellij.vcs.log.newgraph;
+package com.intellij.vcs.log.graph;
 
 import com.intellij.util.Function;
-import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.impl.facade.ContainingBranchesGetter;

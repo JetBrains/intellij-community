@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.parser;
+package com.intellij.vcs.log.graph.parser;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.intellij.vcs.log.parser.CommitParser.createHash;
 
 /**
  *
@@ -28,11 +26,11 @@ import static com.intellij.vcs.log.parser.CommitParser.createHash;
 public class SimpleCommit<CommitId> implements com.intellij.vcs.log.graph.GraphCommit<CommitId> {
   @NotNull
   public static SimpleCommit<Integer> asIntegerCommit(@NotNull String commitHash, @NotNull String[] parentsHashes) {
-    int intCommitHash = createHash(commitHash);
+    int intCommitHash = CommitParser.createHash(commitHash);
     List<Integer> parents = new ArrayList<Integer>();
     for (String parentsHash : parentsHashes) {
       if (parentsHash.length() > 0) {
-        parents.add(createHash(parentsHash));
+        parents.add(CommitParser.createHash(parentsHash));
       }
     }
     return new SimpleCommit<Integer>(intCommitHash, parents, intCommitHash);
@@ -40,7 +38,7 @@ public class SimpleCommit<CommitId> implements com.intellij.vcs.log.graph.GraphC
 
   @NotNull
   public static SimpleCommit<String> asStringCommit(@NotNull String commitHash, @NotNull String[] parentsHashes) {
-    int timestamp = createHash(commitHash);
+    int timestamp = CommitParser.createHash(commitHash);
     List<String> parents = new ArrayList<String>();
     for (String parentsHash : parentsHashes) {
       if (parentsHash.length() > 0) {

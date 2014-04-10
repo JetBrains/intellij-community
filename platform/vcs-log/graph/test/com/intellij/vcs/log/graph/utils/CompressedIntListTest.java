@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.vcs.log.facade.utils;
+package com.intellij.vcs.log.graph.utils;
 
 import com.intellij.vcs.log.graph.utils.IntList;
 import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.intellij.vcs.log.newgraph.impl;
+package com.intellij.vcs.log.graph.impl;
 
 import com.intellij.util.Function;
 import com.intellij.vcs.log.graph.GraphCommit;
-import com.intellij.vcs.log.parser.SimpleCommitListParser;
+import com.intellij.vcs.log.graph.parser.SimpleCommitListParser;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

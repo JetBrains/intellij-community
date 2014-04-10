@@ -14,31 +14,48 @@
  * limitations under the License.
  */
 
-package com.intellij.vcs.log.newgraph.impl;
+package com.intellij.vcs.log.graph.impl.permanent;
 
 import com.intellij.vcs.log.graph.GraphCommit;
-import com.intellij.vcs.log.graph.impl.permanent.PermanentCommitsInfo;
-import com.intellij.vcs.log.newgraph.AbstractTestWithTextFile;
+import com.intellij.vcs.log.graph.api.LinearGraph;
+import com.intellij.vcs.log.graph.impl.CommitIdManager;
+import com.intellij.vcs.log.graph.impl.facade.ContainingBranchesGetter;
+import com.intellij.vcs.log.graph.AbstractTestWithTextFile;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-import static com.intellij.vcs.log.newgraph.GraphStrUtils.commitsInfoToStr;
+import static com.intellij.vcs.log.graph.GraphStrUtils.containingBranchesGetterToStr;
 import static org.junit.Assert.assertEquals;
 
-public abstract class GraphBuilderHashIndexTest<CommitId> extends AbstractTestWithTextFile {
+public abstract class ContainingBranchesTest<CommitId> extends AbstractTestWithTextFile {
+  private final static String SEPARATOR = "\nBRANCH NODES:\n";
 
-  public GraphBuilderHashIndexTest() {
-    super("graphHashIndex/");
+  public ContainingBranchesTest() {
+    super("containingBranches/");
+  }
+
+  private static Set<Integer> parseBranchNodeIndex(String str) {
+    Set<Integer> result = new HashSet<Integer>();
+    for (String subStr : str.split("\\s")) {
+      result.add(Integer.parseInt(subStr));
+    }
+    return result;
   }
 
   @Override
   protected void runTest(String in, String out) {
-    final List<GraphCommit<CommitId>> commits = getCommitIdManager().parseCommitList(in);
-    PermanentCommitsInfo<CommitId> commitsInfo = PermanentCommitsInfo.newInstance(commits);
+    int i = in.indexOf(SEPARATOR);
+    List<GraphCommit<CommitId>> commits = getCommitIdManager().parseCommitList(in.substring(0, i));
 
-    assertEquals(out, commitsInfoToStr(commitsInfo, getCommitIdManager().getToStrFunction()));
+    LinearGraph graph = PermanentLinearGraphBuilder.newInstance(commits).build();
+    ContainingBranchesGetter containingBranchesGetter = new ContainingBranchesGetter(graph,
+                                                                                     parseBranchNodeIndex(in.substring(i + SEPARATOR.length())));
+
+    assertEquals(out, containingBranchesGetterToStr(containingBranchesGetter, graph.nodesCount()));
   }
 
   protected abstract CommitIdManager<CommitId> getCommitIdManager();
@@ -68,14 +85,14 @@ public abstract class GraphBuilderHashIndexTest<CommitId> extends AbstractTestWi
     doTest("oneNodeNotFullGraph");
   }
 
-  public static class StringTest extends GraphBuilderHashIndexTest<String> {
+  public static class StringTest extends ContainingBranchesTest<String> {
     @Override
     protected CommitIdManager<String> getCommitIdManager() {
       return CommitIdManager.STRING_COMMIT_ID_MANAGER;
     }
   }
 
-  public static class IntegerTest extends GraphBuilderHashIndexTest<Integer> {
+  public static class IntegerTest extends ContainingBranchesTest<Integer> {
     @Override
     protected CommitIdManager<Integer> getCommitIdManager() {
       return CommitIdManager.INTEGER_COMMIT_ID_MANAGER;

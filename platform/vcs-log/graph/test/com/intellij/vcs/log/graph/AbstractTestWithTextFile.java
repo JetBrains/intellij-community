@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.vcs.log.newgraph;
+package com.intellij.vcs.log.graph;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;

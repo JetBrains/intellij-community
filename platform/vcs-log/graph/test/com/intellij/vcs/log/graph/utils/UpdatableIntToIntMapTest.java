@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.vcs.log.facade.utils;
+package com.intellij.vcs.log.graph.utils;
 
 import com.intellij.util.BooleanFunction;
 import com.intellij.vcs.log.graph.utils.UpdatableIntToIntMap;

@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-package com.intellij.vcs.log.facade.utils;
+package com.intellij.vcs.log.graph.utils;
 
 import com.intellij.util.BooleanFunction;
-import com.intellij.vcs.log.graph.utils.UpdatableIntToIntMap;
-import com.intellij.vcs.log.graph.utils.impl.TreeIntToIntMap;
+import com.intellij.vcs.log.graph.utils.impl.ListIntToIntMap;
 import org.jetbrains.annotations.NotNull;
 
-public class TreeIntToIntMapTest extends UpdatableIntToIntMapTest {
-
+public class ListIntToIntMapTest extends UpdatableIntToIntMapTest {
   @Override
   protected UpdatableIntToIntMap createUpdatableIntToIntMap(@NotNull BooleanFunction<Integer> thisIsVisible, int longSize) {
-    return TreeIntToIntMap.newInstance(thisIsVisible, longSize);
+    return ListIntToIntMap.newInstance(thisIsVisible, longSize, 3);
   }
-
 }

@@ -1,4 +1,4 @@
-package com.intellij.vcs.log.parser;
+package com.intellij.vcs.log.graph.parser;
 
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.GraphCommit;

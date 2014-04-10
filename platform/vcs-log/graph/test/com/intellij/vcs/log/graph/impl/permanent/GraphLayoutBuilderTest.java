@@ -14,21 +14,19 @@
  * limitations under the License.
  */
 
-package com.intellij.vcs.log.newgraph.impl;
+package com.intellij.vcs.log.graph.impl.permanent;
 
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.api.GraphLayout;
-import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutBuilder;
-import com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphBuilder;
-import com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphImpl;
-import com.intellij.vcs.log.newgraph.AbstractTestWithTextFile;
+import com.intellij.vcs.log.graph.impl.CommitIdManager;
+import com.intellij.vcs.log.graph.AbstractTestWithTextFile;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
 
-import static com.intellij.vcs.log.newgraph.GraphStrUtils.permanentGraphLayoutModelToStr;
+import static com.intellij.vcs.log.graph.GraphStrUtils.permanentGraphLayoutModelToStr;
 import static org.junit.Assert.assertEquals;
 
 public abstract class GraphLayoutBuilderTest<CommitId> extends AbstractTestWithTextFile {
