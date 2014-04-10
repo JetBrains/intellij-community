@@ -27,7 +27,8 @@ import javax.swing.*;
 import java.awt.*;
 
 public abstract class ModuleWizardStep extends StepAdapter {
-  public static final ModuleWizardStep[] EMPTY_ARRAY = new ModuleWizardStep[0];
+
+  public static final ModuleWizardStep[] EMPTY_ARRAY = {};
 
   @Override
   public abstract JComponent getComponent();
