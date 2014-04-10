@@ -21,6 +21,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.RunConfigurationModule;
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.junit2.info.TestInfo;
@@ -72,6 +73,13 @@ public class TestMethods extends TestMethod {
     final GlobalSearchScope searchScope = myConfiguration.getConfigurationModule().getSearchScope();
     for (AbstractTestProxy failedTest : myFailedTests) {
       Location location = failedTest.getLocation(project, searchScope);
+      if (location instanceof PsiMemberParameterizedLocation) {
+        final PsiElement element = location.getPsiElement();
+        if (element instanceof PsiMethod) {
+          location = MethodLocation.elementInClass(((PsiMethod)element), 
+                                                   ((PsiMemberParameterizedLocation)location).getContainingClass());
+        }
+      }
       if (!(location instanceof MethodLocation)) continue;
       PsiElement psiElement = location.getPsiElement();
       LOG.assertTrue(psiElement instanceof PsiMethod);
