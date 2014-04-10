@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
  */
 package com.intellij.codeInsight.template.emmet.generators;
 
+import com.intellij.application.options.emmet.EmmetOptions;
+import com.intellij.codeInsight.template.CustomLiveTemplateBase;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
+import com.intellij.codeInsight.template.impl.CustomLiveTemplateLookupElement;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
@@ -76,4 +79,16 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
                                                int totalIterations, @Nullable String surroundedText);
 
   public abstract boolean isMyContext(@NotNull PsiElement context, boolean wrapping);
+
+  @Override
+  public CustomLiveTemplateLookupElement createLookupElement(@NotNull CustomLiveTemplateBase customLiveTemplate,
+                                                             @NotNull final TemplateImpl template) {
+    return new CustomLiveTemplateLookupElement(customLiveTemplate, template.getKey(), template.getDescription(), "", false, true);
+  }
+
+  @Override
+  public boolean hasCompletionItem() {
+    EmmetOptions emmetOptions = EmmetOptions.getInstance();
+    return emmetOptions.isEmmetEnabled() && emmetOptions.isPreviewEnabled();
+  }
 }

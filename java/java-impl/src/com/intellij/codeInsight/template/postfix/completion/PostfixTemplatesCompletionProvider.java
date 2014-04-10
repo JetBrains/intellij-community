@@ -18,13 +18,11 @@ package com.intellij.codeInsight.template.postfix.completion;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionProvider;
 import com.intellij.codeInsight.completion.CompletionResultSet;
-import com.intellij.codeInsight.template.CustomTemplateCallback;
+import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
 import com.intellij.codeInsight.template.postfix.templates.PostfixLiveTemplate;
-import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.patterns.StandardPatterns;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,17 +41,7 @@ class PostfixTemplatesCompletionProvider extends CompletionProvider<CompletionPa
 
     PostfixLiveTemplate postfixLiveTemplate = getPostfixLiveTemplate(parameters.getOriginalFile(), parameters.getEditor());
     if (postfixLiveTemplate != null) {
-      PsiFile file = parameters.getPosition().getContainingFile();
-      final CustomTemplateCallback callback = new CustomTemplateCallback(parameters.getEditor(), file, false);
-      String computedKey = postfixLiveTemplate.computeTemplateKey(callback);
-      if (computedKey != null) {
-        PostfixTemplate template = postfixLiveTemplate.getTemplateByKey(computedKey);
-        if (template != null) {
-          result = result.withPrefixMatcher(computedKey);
-          result.addElement(new PostfixTemplateLookupElement(postfixLiveTemplate, template, computedKey, true));
-        }
-      }
-
+      postfixLiveTemplate.addCompletions(parameters, result.withPrefixMatcher(new MyPrefixMatcher(result.getPrefixMatcher().getPrefix())));
       CharSequence documentContent = parameters.getEditor().getDocument().getCharsSequence();
       String possibleKey = postfixLiveTemplate.computeTemplateKeyWithoutContextChecking(documentContent, parameters.getOffset());
       if (possibleKey != null) {
@@ -74,5 +62,22 @@ class PostfixTemplatesCompletionProvider extends CompletionProvider<CompletionPa
     }
 
     return true;
+  }
+
+  private static class MyPrefixMatcher extends PrefixMatcher {
+    protected MyPrefixMatcher(String prefix) {
+      super(prefix);
+    }
+
+    @Override
+    public boolean prefixMatches(@NotNull String name) {
+      return name.equalsIgnoreCase(myPrefix);
+    }
+
+    @NotNull
+    @Override
+    public PrefixMatcher cloneWithPrefix(@NotNull String prefix) {
+      return new MyPrefixMatcher(prefix);
+    }
   }
 }

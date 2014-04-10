@@ -185,7 +185,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
       for (Map.Entry<String, PostfixTemplate> entry : myTemplates.entrySet()) {
         PostfixTemplate postfixTemplate = entry.getValue();
         if (entry.getKey().startsWith(key) && isApplicationTemplateFunction.value(postfixTemplate)) {
-          result.put(postfixTemplate.getKey(), new PostfixTemplateLookupElement(this, postfixTemplate, postfixTemplate.getKey(), false));
+          result.put(postfixTemplate.getKey(), new PostfixTemplateLookupElement(this, postfixTemplate, entry.getKey(), false));
         }
       }
       return result.values();

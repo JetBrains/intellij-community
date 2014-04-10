@@ -18,12 +18,12 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
+import com.intellij.codeInsight.template.CustomLiveTemplateBase;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiFile;
@@ -32,13 +32,13 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-
-import static com.intellij.codeInsight.template.impl.ListTemplatesHandler.listApplicableCustomTemplates;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author peter
@@ -69,18 +69,17 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
         final List<TemplateImpl> templates = listApplicableTemplates(file, offset);
         Editor editor = parameters.getEditor();
         if (showAllTemplates()) {
-          final MultiMap<String, CustomLiveTemplateLookupElement> customTemplates = listApplicableCustomTemplates(editor, file, offset);
-          final Ref<Boolean> templatesShown = Ref.create(false);
+          final AtomicBoolean templatesShown = new AtomicBoolean(false);
           final CompletionResultSet finalResult = result;
           result.runRemainingContributors(parameters, new Consumer<CompletionResult>() {
             @Override
             public void consume(CompletionResult completionResult) {
               finalResult.passResult(completionResult);
-              ensureTemplatesShown(templatesShown, templates, customTemplates, finalResult);
+              ensureTemplatesShown(templatesShown, templates, parameters, finalResult);
             }
           });
 
-          ensureTemplatesShown(templatesShown, templates, customTemplates, result);
+          ensureTemplatesShown(templatesShown, templates, parameters, result);
           return;
         }
 
@@ -104,20 +103,20 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
     return shouldShowAllTemplates();
   }
 
-  private static void ensureTemplatesShown(Ref<Boolean> templatesShown,
+  private static void ensureTemplatesShown(AtomicBoolean templatesShown,
                                            List<TemplateImpl> templates,
-                                           MultiMap<String, CustomLiveTemplateLookupElement> customTemplates,
+                                           CompletionParameters parameters, 
                                            CompletionResultSet result) {
-    if (!templatesShown.get()) {
-      templatesShown.set(true);
+    if (!templatesShown.getAndSet(true)) {
       for (final TemplateImpl possible : templates) {
         result.addElement(new LiveTemplateLookupElementImpl(possible, false));
       }
 
-      for (Map.Entry<String, Collection<CustomLiveTemplateLookupElement>> entry : customTemplates.entrySet()) {
-        Collection<CustomLiveTemplateLookupElement> value = entry.getValue();
-        if (!value.isEmpty()) {
-          result.withPrefixMatcher(entry.getKey()).addAllElements(value);
+      PsiFile file = parameters.getPosition().getContainingFile();
+      Editor editor = parameters.getEditor();
+      for (CustomLiveTemplate customLiveTemplate : CustomLiveTemplate.EP_NAME.getExtensions()) {
+        if (customLiveTemplate instanceof CustomLiveTemplateBase && TemplateManagerImpl.isApplicable(customLiveTemplate, editor, file)) {
+          ((CustomLiveTemplateBase)customLiveTemplate).addCompletions(parameters, result);
         }
       }
     }
