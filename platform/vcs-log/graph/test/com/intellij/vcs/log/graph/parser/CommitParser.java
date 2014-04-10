@@ -4,6 +4,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.vcs.log.graph.GraphCommit;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author erokhins
  */
@@ -47,6 +50,17 @@ public class CommitParser {
 
   public static int createHash(@NotNull String s) {
     return Integer.parseInt(s, 16);
+  }
+
+  public static List<String> toLines(@NotNull String in) {
+    String[] split = in.split("\n");
+    List<String> result = new ArrayList<String>();
+    for (String line : split) {
+      if (!line.isEmpty()) {
+        result.add(line);
+      }
+    }
+    return result;
   }
 
 }
