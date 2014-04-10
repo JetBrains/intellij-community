@@ -101,4 +101,10 @@ public final class CallFrameView extends StackFrameImplBase implements VariableC
   public MemberFilter getMemberFilter() {
     return debugProcess;
   }
+
+  @Nullable
+  @Override
+  public Scope getScope() {
+    return null;
+  }
 }
