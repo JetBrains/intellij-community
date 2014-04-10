@@ -254,12 +254,8 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
 
     protected void addEnvVars(final JavaParameters params) {
       Map<String, String> envVars = new HashMap<String, String>(envs);
-
-      Map<String, String> oldEnv = params.getEnv();
-      if (oldEnv != null) {
-        envVars.putAll(oldEnv);
-      }
-
+      envVars.putAll(params.getEnv());
+      
       params.setupEnvs(envVars, passParentEnv);
       
       MvcFramework.addJavaHome(params, myModule);

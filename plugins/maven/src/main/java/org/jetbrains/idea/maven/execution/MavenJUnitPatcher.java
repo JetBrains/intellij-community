@@ -85,7 +85,7 @@ public class MavenJUnitPatcher extends JUnitPatcher {
         for (Element element : environmentVariables.getChildren()) {
           String variableName = element.getName();
 
-          if (javaParameters.getEnv() == null || !javaParameters.getEnv().containsKey(variableName)) {
+          if (!javaParameters.getEnv().containsKey(variableName)) {
             String value = resolveSurefireProperties(element.getValue());
             if (isResolved(value)) {
               javaParameters.addEnv(variableName, value);
