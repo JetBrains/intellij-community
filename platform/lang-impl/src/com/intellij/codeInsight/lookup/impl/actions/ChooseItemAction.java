@@ -153,11 +153,6 @@ public abstract class ChooseItemAction extends EditorAction {
     return liveTemplateLookup.getTemplateShortcut() == shortcutChar;
   }
 
-  public static class Always extends ChooseItemAction {
-    public Always() {
-      super(new Handler(false, Lookup.NORMAL_SELECT_CHAR));
-    }
-  }
   public static class FocusedOnly extends ChooseItemAction {
     public FocusedOnly() {
       super(new Handler(true, Lookup.NORMAL_SELECT_CHAR));
