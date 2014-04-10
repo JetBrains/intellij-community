@@ -518,9 +518,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     myLastPreferredHeight = myEditor.getPreferredHeight();
     calcIconAreaWidth();
     calcAnnotationsSize();
-    if (myEditor.isInDistractionFreeMode() && !isMirrored()) {
-      centerEditorByAnnotationArea();
-    }
+    calcAnnotationExtraSize();
   }
 
   private int sizeHash() {
@@ -550,11 +548,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
   }
 
-  private void centerEditorByAnnotationArea() {
+  private void calcAnnotationExtraSize() {
+    myTextAnnotationExtraSize = 0;
+    if (!myEditor.isInDistractionFreeMode() || isMirrored()) return;
+
     Window frame = SwingUtilities.getWindowAncestor(myEditor.getComponent());
     if (frame == null) return;
 
-    myTextAnnotationExtraSize = 0;
     EditorSettings settings = myEditor.getSettings();
     int rightMargin = settings.getRightMargin(myEditor.getProject());
     if (rightMargin <= 0) return;
