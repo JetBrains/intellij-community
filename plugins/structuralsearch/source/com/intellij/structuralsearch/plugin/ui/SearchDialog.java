@@ -11,6 +11,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -27,12 +28,14 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.*;
@@ -475,11 +478,20 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   }
 
   protected final void addOrReplaceSelectionForEditor(final String selection, Editor editor) {
-    UIUtil.setContent(editor, selection, 0, -1, searchContext.getProject());
-    editor.getSelectionModel().setSelection(
-      0,
-      selection.length()
-    );
+    final Project project = searchContext.getProject();
+    UIUtil.setContent(editor, selection, 0, -1, project);
+    final Document document = editor.getDocument();
+    editor.getSelectionModel().setSelection(0, document.getTextLength());
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    documentManager.commitDocument(document);
+    final PsiFile file = documentManager.getPsiFile(document);
+    if (file == null) return;
+
+    new WriteCommandAction(project, file) {
+      @Override protected void run(@NotNull Result result) throws Throwable {
+        CodeStyleManager.getInstance(project).adjustLineIndent(file, new TextRange(0, document.getTextLength()));
+      }
+    }.execute();
   }
 
   protected void runAction(final Configuration config, final SearchContext searchContext) {
