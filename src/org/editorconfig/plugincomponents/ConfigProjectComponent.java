@@ -1,9 +1,11 @@
 package org.editorconfig.plugincomponents;
 
 import com.intellij.AppTopics;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.messages.MessageBus;
@@ -44,9 +46,14 @@ public class ConfigProjectComponent implements ProjectComponent {
     public void projectOpened() {
         // called when project is opened
         IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
-        Window window = (Window)frame;
+        final Window window = (Window)frame;
         window.addWindowFocusListener(codeStyleManager);
-
+        Disposer.register(project, new Disposable() {
+            @Override
+            public void dispose() {
+                window.removeWindowFocusListener(codeStyleManager);
+            }
+        });
     }
 
     public void projectClosed() {
