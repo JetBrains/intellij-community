@@ -286,6 +286,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       else {
         throw e;
       }
+    } catch (AssertionError ae) {
+      forceRebuild(ae);
     }
 
     return true;

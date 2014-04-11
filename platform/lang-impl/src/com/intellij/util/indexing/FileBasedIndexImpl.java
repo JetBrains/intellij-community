@@ -910,6 +910,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       else {
         throw e;
       }
+    } catch(AssertionError ae) {
+      scheduleRebuild(indexId, ae);
     }
     return null;
   }
@@ -1247,6 +1249,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       else {
         throw e;
       }
+    } catch (AssertionError ae) {
+      scheduleRebuild(indexId, ae);
     }
     return true;
   }
