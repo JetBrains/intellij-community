@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
@@ -49,6 +50,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
+import org.jetbrains.plugins.groovy.lang.resolve.KnownRecursionManager;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
@@ -333,7 +335,12 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
 
   @Nullable
   public PsiType getReturnType() {
-    return TypeInferenceHelper.getCurrentContext().getExpressionType(this, ourTypesCalculator);
+    return KnownRecursionManager.getInstance().run(this, new Computable<PsiType>() {
+      @Override
+      public PsiType compute() {
+        return TypeInferenceHelper.getCurrentContext().getExpressionType(GrClosableBlockImpl.this, ourTypesCalculator);
+      }
+    }, getAllParameters());
   }
 
   @Override
