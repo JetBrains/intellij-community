@@ -23,7 +23,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -83,19 +82,16 @@ public class BuildAndRestartConsoleAction extends AnAction implements Disposable
                             final @NotNull GroovyShellActionBase action,
                             final @NotNull Executor executor) {
     ExecutionManager.getInstance(project).getContentManager().removeRunContent(executor, contentDescriptor);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (contentDescriptor.getProcessHandler() != null && contentDescriptor.getProcessHandler().isProcessTerminated()) {
-          CompilerManager.getInstance(project).compile(module, new CompileStatusNotification() {
-            @Override
-            public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
-              action.doRunShell(module);
-            }
-          });
+    if (contentDescriptor.getProcessHandler() != null && contentDescriptor.getProcessHandler().isProcessTerminated()) {
+      CompilerManager.getInstance(project).compile(module, new CompileStatusNotification() {
+        @Override
+        public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
+          if (!module.isDisposed()) {
+            action.doRunShell(module);
+          }
         }
-      }
-    });
+      });
+    }
   }
 
   @Override
