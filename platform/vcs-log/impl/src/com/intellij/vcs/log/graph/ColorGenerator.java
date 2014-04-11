@@ -1,5 +1,6 @@
 package com.intellij.vcs.log.graph;
 
+import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,11 +12,15 @@ import java.util.Map;
  */
 public class ColorGenerator {
 
-  private static final Map<Integer, Color> ourColorMap = ContainerUtil.newHashMap();
+  private static final Map<Integer, JBColor> ourColorMap = ContainerUtil.newHashMap();
+
+  static {
+    ourColorMap.put(GraphColorManagerImpl.DEFAULT_COLOR, JBColor.BLACK);
+  }
 
   @NotNull
-  public static Color getColor(int branchNumber) {
-    Color color = ourColorMap.get(branchNumber);
+  public static JBColor getColor(int branchNumber) {
+    JBColor color = ourColorMap.get(branchNumber);
     if (color == null) {
       color = calcColor(branchNumber);
       ourColorMap.put(branchNumber, color);
@@ -28,12 +33,13 @@ public class ColorGenerator {
   }
 
   @NotNull
-  private static Color calcColor(int indexColor) {
+  private static JBColor calcColor(int indexColor) {
     int r = indexColor * 200 + 30;
     int g = indexColor * 130 + 50;
     int b = indexColor * 90 + 100;
     try {
-      return new Color(rangeFix(r), rangeFix(g), rangeFix(b));
+      Color color = new Color(rangeFix(r), rangeFix(g), rangeFix(b));
+      return new JBColor(color, color);
     }
     catch (IllegalArgumentException a) {
       throw new IllegalArgumentException("indexColor: " + indexColor + " " + r % 256 + " " + (g % 256) + " " + (b % 256));

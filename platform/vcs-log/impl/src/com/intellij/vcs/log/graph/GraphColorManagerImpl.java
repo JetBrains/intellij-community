@@ -17,7 +17,6 @@ package com.intellij.vcs.log.graph;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.JBColor;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
@@ -27,14 +26,13 @@ import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.RefsModel;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.util.Collection;
 import java.util.Map;
 
-public class GraphColorManagerImpl implements GraphColorManager {
+public class GraphColorManagerImpl implements GraphColorManager<Integer> {
 
   private static final Logger LOG = Logger.getInstance(GraphColorManagerImpl.class);
-  private static final JBColor DEFAULT_COLOR = JBColor.BLACK;
+  static final int DEFAULT_COLOR = 0;
 
   @NotNull private final RefsModel myRefsModel;
   @NotNull private final NotNullFunction<Integer, Hash> myHashGetter;
@@ -55,17 +53,15 @@ public class GraphColorManagerImpl implements GraphColorManager {
     myRefManagers = refManagers;
   }
 
-  @NotNull
   @Override
-  public JBColor getColorOfBranch(int headCommit) {
+  public int getColorOfBranch(int headCommit) {
     Collection<VcsRef> refs = myRefsModel.refsToCommit(headCommit);
     if (isEmptyRefs(refs, headCommit)) {
       return DEFAULT_COLOR;
     }
     VcsRef firstRef = getRefManager(refs).sort(refs).get(0);
-    Color color = ColorGenerator.getColor(firstRef.getName().hashCode());
     // TODO dark variant
-    return new JBColor(color, color);
+    return firstRef.getName().hashCode();
   }
 
   private boolean isEmptyRefs(@NotNull Collection<VcsRef> refs, int head) {
@@ -79,16 +75,14 @@ public class GraphColorManagerImpl implements GraphColorManager {
     return false;
   }
 
-  @NotNull
   @Override
-  public JBColor getColorOfFragment(int headCommit, int magicIndex) {
-    Color color = ColorGenerator.getColor(magicIndex);
-    return new JBColor(color, color);
+  public int getColorOfFragment(int headCommit, int magicIndex) {
+    return magicIndex;
   }
 
   @Override
-  public int compareHeads(int head1, int head2) {
-    if (head1 == head2) {
+  public int compareHeads(Integer head1, Integer head2) {
+    if (head1.equals(head2)) {
       return 0;
     }
 
