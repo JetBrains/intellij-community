@@ -45,10 +45,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -80,8 +77,11 @@ public class TaskUtil {
   }
 
   public static String formatTask(@NotNull Task task, String format) {
-    return format.replace("{id}", task.getId()).replace("{number}", task.getNumber())
-      .replace("{project}", task.getProject() == null ? "" : task.getProject()).replace("{summary}", task.getSummary());
+    return format
+      .replace("{id}", task.getId())
+      .replace("{number}", task.getNumber())
+      .replace("{project}", StringUtil.notNullize(task.getProject()))
+      .replace("{summary}", task.getSummary());
   }
 
   @Nullable
@@ -254,7 +254,7 @@ public class TaskUtil {
       try {
         String content = ResponseUtil.getResponseContentAsString(response);
         Header header = response.getRequestHeader(HTTP.CONTENT_TYPE);
-        String contentType = header == null ? "text/plain" : header.getElements()[0].getName().toLowerCase();
+        String contentType = header == null ? "text/plain" : header.getElements()[0].getName().toLowerCase(Locale.ENGLISH);
         if (contentType.contains("xml")) {
           prettyFormatXmlToLog(logger, content);
         }
@@ -276,7 +276,7 @@ public class TaskUtil {
       try {
         String content = ResponseUtil.getResponseContentAsString(response);
         org.apache.http.Header header = response.getEntity().getContentType();
-        String contentType = header == null ? "text/plain" : header.getElements()[0].getName().toLowerCase();
+        String contentType = header == null ? "text/plain" : header.getElements()[0].getName().toLowerCase(Locale.ENGLISH);
         if (contentType.contains("xml")) {
           prettyFormatXmlToLog(logger, content);
         }
