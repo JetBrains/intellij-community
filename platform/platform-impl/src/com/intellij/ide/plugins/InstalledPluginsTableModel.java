@@ -158,10 +158,10 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     final JDOMExternalizableStringList pluginHosts = UpdateSettings.getInstance().myPluginHosts;
     for (String host : pluginHosts) {
       try {
-        final ArrayList<PluginDownloader> downloaded = new ArrayList<PluginDownloader>();
+        final Map<PluginId, PluginDownloader> downloaded = new HashMap<PluginId, PluginDownloader>();
         UpdateChecker.checkPluginsHost(host, downloaded, false, null);
-        for (PluginDownloader downloader : downloaded) {
-          myPlugin2host.put(downloader.getPluginId(), host);
+        for (PluginId pluginId : downloaded.keySet()) {
+          myPlugin2host.put(pluginId.getIdString(), host);
         }
       }
       catch (Exception ignored) {

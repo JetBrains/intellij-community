@@ -170,6 +170,10 @@ public abstract class Property<T extends PropertiesContainer> {
   @Nullable
   public abstract PropertyEditor getEditor();
 
+  public boolean isEditable(@Nullable T component) {
+    return getEditor() != null;
+  }
+
   //////////////////////////////////////////////////////////////////////////////////////////
   //
   // Javadoc

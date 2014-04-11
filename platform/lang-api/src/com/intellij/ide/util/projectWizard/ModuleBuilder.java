@@ -359,6 +359,8 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     return null;
   }
 
+  public int getWeight() { return 0; }
+
   public boolean isTemplate() {
     return false;
   }

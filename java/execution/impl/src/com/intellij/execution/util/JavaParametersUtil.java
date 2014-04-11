@@ -56,10 +56,8 @@ public class JavaParametersUtil {
     if (vmParameters != null) {
       vmParameters = ProgramParametersUtil.expandPath(vmParameters, module, project);
 
-      if (parameters.getEnv() != null) {
-        for (Map.Entry<String, String> each : parameters.getEnv().entrySet()) {
-          vmParameters = StringUtil.replace(vmParameters, "$" + each.getKey() + "$", each.getValue(), false); //replace env usages
-        }
+      for (Map.Entry<String, String> each : parameters.getEnv().entrySet()) {
+        vmParameters = StringUtil.replace(vmParameters, "$" + each.getKey() + "$", each.getValue(), false); //replace env usages
       }
     }
 

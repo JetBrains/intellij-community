@@ -25,12 +25,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * The generic password dialog. Use it to ask a password from user with option to remember it.
@@ -38,54 +40,46 @@ import java.util.concurrent.atomic.AtomicReference;
 public class PasswordSafePromptDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(PasswordSafePromptDialog.class.getName());
 
-  private JPasswordField myPasswordField;
-  private JCheckBox myRememberPasswordCheckBox;
-  private JPanel myRootPanel;
-  private JLabel myMessageLabel;
-  private JLabel myPromptLabel;
-
+  private final PasswordPromptComponent myComponent;
 
   /**
    * The private constructor. Note that it does not do init on dialog.
    *
    * @param project      the project
-   * @param passwordSafe the passwordSafe instance
    * @param title        the dialog title
    * @param message      the message on the dialog
+   * @param type
    */
-  private PasswordSafePromptDialog(@Nullable Project project, @NotNull PasswordSafeImpl passwordSafe, String title, String message) {
+  private PasswordSafePromptDialog(@Nullable Project project, @NotNull String title, @NotNull PasswordPromptComponent component) {
     super(project, true);
     setTitle(title);
-    myMessageLabel.setText(message);
-    switch (passwordSafe.getSettings().getProviderType()) {
-      case MASTER_PASSWORD:
-        myRememberPasswordCheckBox.setEnabled(true);
-        myRememberPasswordCheckBox.setSelected(true);
-        myRememberPasswordCheckBox.setToolTipText("The password will be stored between application sessions.");
-        break;
-      case MEMORY_ONLY:
-        myRememberPasswordCheckBox.setEnabled(true);
-        myRememberPasswordCheckBox.setSelected(true);
-        myRememberPasswordCheckBox.setToolTipText("The password will be stored only during this application session.");
-        break;
-      case DO_NOT_STORE:
-        myRememberPasswordCheckBox.setEnabled(false);
-        myRememberPasswordCheckBox.setSelected(false);
-        myRememberPasswordCheckBox.setToolTipText("The password storing is disabled.");
-        break;
-      default:
-        LOG.error("Unknown policy type: " + passwordSafe.getSettings().getProviderType());
-    }
+    myComponent = component;
+    setResizable(false);
+    init();
+  }
+
+  public PasswordPromptComponent getComponent() {
+    return myComponent;
   }
 
   @Override
   protected JComponent createCenterPanel() {
-    return myRootPanel;
+    return myComponent.getComponent();
   }
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myPasswordField;
+    return myComponent.getPreferredFocusedComponent();
+  }
+
+  @Nullable
+  public static Pair<String, String> showUserPasswordDialog(Project project, String title, String message, String defUser) {
+    PasswordPromptComponent component = new PasswordPromptComponent(PasswordSafeSettings.ProviderType.DO_NOT_STORE, message, true, null, null);
+    component.setUserName(StringUtil.notNullize(defUser));
+    if (new PasswordSafePromptDialog(project, title, component).showAndGet()) {
+      return Pair.create(component.getUserName(), new String(component.getPassword()));
+    }
+    return null;
   }
 
   /**
@@ -206,28 +200,22 @@ public class PasswordSafePromptDialog extends DialogWrapper {
         LOG.debug("Failed to retrieve or reset password", ex);
       }
     }
-    final AtomicReference<String> pw = new AtomicReference<String>(null);
+    final Ref<String> ref = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       public void run() {
-        final PasswordSafePromptDialog d = new PasswordSafePromptDialog(project, ps, title, message);
-        if (promptLabel != null) {
-          d.myPromptLabel.setText(promptLabel);
-        }
-        if (checkboxLabel != null) {
-          d.myRememberPasswordCheckBox.setText(checkboxLabel);
-        }
-        d.init();
+        PasswordSafeSettings.ProviderType type = ps.getSettings().getProviderType();
+        final PasswordPromptComponent component = new PasswordPromptComponent(type, message, false, promptLabel, checkboxLabel);
+        PasswordSafePromptDialog d = new PasswordSafePromptDialog(project, title, component);
+
         d.setErrorText(error);
-        d.show();
-        if (d.isOK()) {
-          String p = new String(d.myPasswordField.getPassword());
-          pw.set(p);
+        if (d.showAndGet()) {
+          ref.set(new String(component.getPassword()));
           try {
-            if (d.myRememberPasswordCheckBox.isSelected()) {
-              ps.storePassword(project, requestor, key, p);
+            if (component.isRememberChecked()) {
+              ps.storePassword(project, requestor, key, ref.get());
             }
-            else if (!ps.getSettings().getProviderType().equals(PasswordSafeSettings.ProviderType.DO_NOT_STORE)) {
-              ps.getMemoryProvider().storePassword(project, requestor, key, p);
+            else if (!type.equals(PasswordSafeSettings.ProviderType.DO_NOT_STORE)) {
+              ps.getMemoryProvider().storePassword(project, requestor, key, ref.get());
             }
           }
           catch (PasswordSafeException e) {
@@ -239,7 +227,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
         }
       }
     }, modalityState == null ? ModalityState.defaultModalityState() : modalityState);
-    return pw.get();
+    return ref.get();
   }
 }
 

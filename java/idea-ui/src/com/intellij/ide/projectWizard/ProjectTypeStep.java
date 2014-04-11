@@ -45,6 +45,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.ListItemDescriptor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -53,9 +54,12 @@ import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplateEP;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.platform.templates.*;
-import com.intellij.ui.*;
+import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SingleSelectionModel;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.*;
@@ -127,7 +131,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     myWizard = wizard;
 
     myTemplatesMap = new ConcurrentMultiMap<TemplatesGroup, ProjectTemplate>();
-    List<TemplatesGroup> groups = fillTemplatesMap(context);
+    final List<TemplatesGroup> groups = fillTemplatesMap(context);
 
     myProjectTypeList.setModel(new CollectionListModel<TemplatesGroup>(groups));
     myProjectTypeList.setSelectionModel(new SingleSelectionModel());
@@ -137,22 +141,49 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
         updateSelection();
       }
     });
-    myProjectTypeList.setCellRenderer(new ColoredListCellRenderer<TemplatesGroup>() {
+    myProjectTypeList.setCellRenderer(new GroupedItemsListRenderer(new ListItemDescriptor<TemplatesGroup>() {
+      @Nullable
       @Override
-      protected void customizeCellRenderer(JList list, TemplatesGroup value, int index, boolean selected, boolean hasFocus) {
-        Font font = list.getFont();
-        if (value.getParentGroup() != null) {
-          setFont(font);
-          append("         ");
-        }
-        else {
-          setBorder(IdeBorderFactory.createEmptyBorder(2, 10, 2, 5));
-          setIcon(value.getIcon());
-          setFont(font.deriveFont(Font.BOLD));
-        }
-        append(value.getName());
+      public String getTextFor(TemplatesGroup value) {
+        return value.getName();
+      }
+
+      @Nullable
+      @Override
+      public String getTooltipFor(TemplatesGroup value) {
+        return value.getDescription();
+      }
+
+      @Nullable
+      @Override
+      public Icon getIconFor(TemplatesGroup value) {
+        return value.getIcon();
+      }
+
+      @Override
+      public boolean hasSeparatorAboveOf(TemplatesGroup value) {
+        int index = groups.indexOf(value);
+        if (index < 1) return false;
+        TemplatesGroup upper = groups.get(index - 1);
+        if (upper.getParentGroup() == null && value.getParentGroup() == null) return true;
+        return !Comparing.equal(upper.getParentGroup(), value.getParentGroup()) &&
+               !Comparing.equal(upper.getName(), value.getParentGroup());
+      }
+
+      @Nullable
+      @Override
+      public String getCaptionAboveOf(TemplatesGroup value) {
+        return null;
+      }
+    }) {
+      @Override
+      protected JComponent createItemComponent() {
+        JComponent component = super.createItemComponent();
+        myTextLabel.setBorder(IdeBorderFactory.createEmptyBorder(3));
+        return component;
       }
     });
+
     new ListSpeedSearch(myProjectTypeList) {
       @Override
       protected String getElementText(Object element) {
@@ -292,15 +323,14 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
         if (u != 0) return u;
         int i1 = moduleTypes.get(getModuleType(o2)).size() - moduleTypes.get(getModuleType(o1)).size();
         if (i1 != 0) return i1;
-        int i = myTemplatesMap.get(o2).size() - myTemplatesMap.get(o1).size();
-        return i != 0 ? i : o1.compareTo(o2);
+        return o1.compareTo(o2);
       }
     });
 
     Set<String> groupNames = ContainerUtil.map2Set(groups, new Function<TemplatesGroup, String>() {
       @Override
       public String fun(TemplatesGroup group) {
-        return group.getName();
+        return group.getParentGroup();
       }
     });
 
@@ -309,7 +339,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     for (ListIterator<TemplatesGroup> iterator = groups.listIterator(); iterator.hasNext(); ) {
       TemplatesGroup group = iterator.next();
       String parentGroup = group.getParentGroup();
-      if (parentGroup != null && groupNames.contains(parentGroup) && !group.getName().equals(parentGroup)) {
+      if (parentGroup != null && groupNames.contains(parentGroup) && !group.getName().equals(parentGroup) && groupMap.containsKey(parentGroup)) {
         subGroups.putValue(parentGroup, group);
         iterator.remove();
       }

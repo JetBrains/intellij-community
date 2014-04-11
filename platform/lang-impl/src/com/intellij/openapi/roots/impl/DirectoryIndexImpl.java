@@ -34,7 +34,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.util.CollectionQuery;
 import com.intellij.util.Query;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -116,7 +115,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   @Override
   @NotNull
   public Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
-    return new CollectionQuery<VirtualFile>(getRootIndex().getDirectoriesByPackageName(packageName, includeLibrarySources));
+    return getRootIndex().getDirectoriesByPackageName(packageName, includeLibrarySources);
   }
 
   @NotNull
@@ -132,11 +131,6 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   @TestOnly
   public void checkConsistency() {
     getRootIndex().checkConsistency();
-  }
-
-  @Override
-  public boolean isInitialized() {
-    return true;
   }
 
   @Override

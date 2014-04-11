@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import junit.framework.ComparisonFailure;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.Transferable;
@@ -50,32 +51,36 @@ public class RichCopyTest extends LightPlatformCodeInsightFixtureTestCase {
     assertTrue(contents.isDataFlavorSupported(HtmlCopyPasteProcessor.FLAVOR));
     String expectedHtml = getFileContents(getTestName(false) + ".html");
     String actualHtml = readFully((Reader)contents.getTransferData(HtmlCopyPasteProcessor.FLAVOR));
-    assertTrue("HTML contents differs", matches(expectedHtml, actualHtml));
+    assertMatches("HTML contents differs", expectedHtml, actualHtml);
 
     assertTrue(contents.isDataFlavorSupported(RtfCopyPasteProcessor.FLAVOR));
     String expectedRtf = getFileContents(getTestName(false) + ".rtf");
     String actualRtf = readFully((InputStream)contents.getTransferData(RtfCopyPasteProcessor.FLAVOR));
-    assertTrue("RTF contents differs", matches(expectedRtf, actualRtf));
+    assertMatches("RTF contents differs", expectedRtf, actualRtf);
   }
 
   // matches 'actual' with 'expected' treating PLATFORM_SPECIFIC_PLACEHOLDER in 'expected' as .* in regexp
-  private static boolean matches(String expected, String actual) {
+  private static void assertMatches(String message, String expected, String actual) {
     int posInExpected = 0;
     int posInActual = 0;
     while (posInExpected < expected.length()) {
       int placeholderPos = expected.indexOf(PLATFORM_SPECIFIC_PLACEHOLDER, posInExpected);
       if (placeholderPos < 0) {
-        return posInExpected == 0 ? actual.equals(expected) : actual.substring(posInActual).endsWith(expected.substring(posInExpected));
+        if (posInExpected == 0 ? actual.equals(expected) : actual.substring(posInActual).endsWith(expected.substring(posInExpected))) {
+          return;
+        }
+        else {
+          throw new ComparisonFailure(message, expected, actual);
+        }
       }
       String fixedSubstring = expected.substring(posInExpected, placeholderPos);
       int matchedPosInActual = actual.indexOf(fixedSubstring, posInActual);
       if (matchedPosInActual < 0 || posInExpected == 0 && matchedPosInActual > 0) {
-        return false;
+        throw new ComparisonFailure(message, expected, actual);
       }
       posInExpected = placeholderPos + PLATFORM_SPECIFIC_PLACEHOLDER.length();
       posInActual = matchedPosInActual + fixedSubstring.length();
     }
-    return true;
   }
 
   private static String readFully(InputStream inputStream) throws IOException {

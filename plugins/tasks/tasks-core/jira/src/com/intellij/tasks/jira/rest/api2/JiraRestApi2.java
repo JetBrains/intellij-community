@@ -81,7 +81,7 @@ public class JiraRestApi2 extends JiraRestApi {
   }
 
   @Override
-  public void updateTimeSpend(LocalTask task, String timeSpent, String comment) throws Exception {
+  public void updateTimeSpend(@NotNull LocalTask task, @NotNull String timeSpent, String comment) throws Exception {
     LOG.debug(String.format("Time spend: %s, comment: %s", timeSpent, comment));
     PostMethod method = new PostMethod(myRepository.getRestUrl("issue", task.getId(), "worklog"));
     String request;

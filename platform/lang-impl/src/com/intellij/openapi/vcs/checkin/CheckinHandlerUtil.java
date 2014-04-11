@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -30,16 +31,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 
 /**
  * @author oleg
  */
-public class BeforeCheckinHandlerUtil {
-
-  private BeforeCheckinHandlerUtil() {
-  }
+public class CheckinHandlerUtil {
 
   public static PsiFile[] getPsiFiles(final Project project, final Collection<VirtualFile> selectedFiles) {
     ArrayList<PsiFile> result = new ArrayList<PsiFile>();
@@ -78,5 +77,11 @@ public class BeforeCheckinHandlerUtil {
     else {
       return index.isInContent(file) && !index.isInLibrarySource(file) ;
     }
+  }
+
+  static void disableWhenDumb(@NotNull Project project, @NotNull JCheckBox checkBox, @NotNull String tooltip) {
+    boolean dumb = DumbService.isDumb(project);
+    checkBox.setEnabled(!dumb);
+    checkBox.setToolTipText(dumb ? tooltip : "");
   }
 }

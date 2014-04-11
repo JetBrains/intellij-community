@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,11 @@ public class IndentSelectionActionTest extends LightPlatformCodeInsightFixtureTe
 
   public void testWithInlineSelection() throws Exception {
     verifyAction("some <selection>text</selection>",
+                 "    some <selection>text</selection>");
+  }
+
+  public void testWithInlineWhitespaceOnlySelection() throws Exception {
+    verifyAction("some<selection> </selection>text",
                  null);
   }
 

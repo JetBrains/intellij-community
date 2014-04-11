@@ -50,9 +50,10 @@ import java.util.Arrays;
 public class Tool implements SchemeElement {
   @NonNls public static final String ACTION_ID_PREFIX = "Tool_";
 
+  public static final String DEFAULT_GROUP_NAME = "External Tools";
   private String myName;
   private String myDescription;
-  @NotNull private String myGroup;
+  @NotNull private String myGroup = DEFAULT_GROUP_NAME;
   private boolean myShownInMainMenu;
   private boolean myShownInEditor;
   private boolean myShownInProjectViews;
@@ -135,7 +136,7 @@ public class Tool implements SchemeElement {
   }
 
   void setGroup(@NotNull String group) {
-    myGroup = group;
+    myGroup = StringUtil.isEmpty(group)?DEFAULT_GROUP_NAME:group;
   }
 
   void setShownInMainMenu(boolean shownInMainMenu) {

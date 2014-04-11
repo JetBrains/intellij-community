@@ -116,7 +116,7 @@ public class CloudGitChooseAccountStep<DC extends CloudDeploymentNameConfigurati
     return super.validate();
   }
 
-  private void createRunConfiguration(Module module, String applicationName) {
+  public void createRunConfiguration(Module module, String applicationName) {
     DC deploymentConfiguration = myDetector.createDeploymentConfiguration();
 
     boolean defaultName = module.getName().equals(applicationName);

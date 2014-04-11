@@ -74,6 +74,7 @@ public class MantisRepository extends BaseRepositoryImpl {
     myAllProjectsAvailable = other.myAllProjectsAvailable;
   }
 
+  @NotNull
   @Override
   public BaseRepository clone() {
     return new MantisRepository(this);
@@ -81,7 +82,7 @@ public class MantisRepository extends BaseRepositoryImpl {
 
   @Nullable
   @Override
-  public String extractId(String taskName) {
+  public String extractId(@NotNull String taskName) {
     Matcher matcher = ID_PATTERN.matcher(taskName);
     return matcher.find() ? matcher.group() : null;
   }
@@ -138,7 +139,7 @@ public class MantisRepository extends BaseRepositoryImpl {
 
   @Nullable
   @Override
-  public Task findTask(String id) throws Exception {
+  public Task findTask(@NotNull String id) throws Exception {
     IssueData data = fetchIssueById(createSoap(), id);
     // sanity check
     if (data == null || data.getId() == null || data.getSummary() == null) {

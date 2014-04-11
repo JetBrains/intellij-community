@@ -8,13 +8,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.Variable;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 public abstract class ObjectValueBase<VALUE_LOADER extends ValueManager> extends ValueBase implements ObjectValue {
   @SuppressWarnings("unchecked")
   private static final AsyncValueLoaderManager<ObjectValueBase, List<? extends Variable>> PROPERTIES_LOADER =
-    new AsyncValueLoaderManager<ObjectValueBase, List<? extends Variable>>(
-      ((AtomicReferenceFieldUpdater)AtomicReferenceFieldUpdater.newUpdater(ObjectValueBase.class, AsyncResult.class, "properties"))) {
+    new AsyncValueLoaderManager<ObjectValueBase, List<? extends Variable>>(ObjectValueBase.class) {
       @Override
       public boolean isUpToDate(@NotNull ObjectValueBase host, @NotNull List<? extends Variable> data) {
         return host.valueManager.getCacheStamp() == host.cacheStamp;

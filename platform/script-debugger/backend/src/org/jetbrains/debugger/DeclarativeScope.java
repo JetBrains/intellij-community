@@ -8,13 +8,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.values.ValueManager;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 public abstract class DeclarativeScope<VALUE_LOADER extends ValueManager> extends ScopeBase {
-  @SuppressWarnings("unchecked")
   private static final AsyncValueLoaderManager<DeclarativeScope, List<? extends Variable>> VARIABLES_LOADER =
-    new AsyncValueLoaderManager<DeclarativeScope, List<? extends Variable>>(
-      ((AtomicReferenceFieldUpdater)AtomicReferenceFieldUpdater.newUpdater(DeclarativeScope.class, AsyncResult.class, "variables"))) {
+    new AsyncValueLoaderManager<DeclarativeScope, List<? extends Variable>>(DeclarativeScope.class) {
       @Override
       public boolean isUpToDate(@NotNull DeclarativeScope host, @NotNull List<? extends Variable> data) {
         return host.valueManager.getCacheStamp() == host.cacheStamp;

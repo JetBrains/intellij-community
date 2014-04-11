@@ -519,7 +519,7 @@ public class TypesUtil {
           components3[i] = getLeastUpperBound(c1, c2, manager);
         }
       }
-      return new GrTupleTypeImpl(components3, JavaPsiFacade.getInstance(manager.getProject()), tuple1.getScope().intersectWith(tuple2.getResolveScope()));
+      return new GrImmediateTupleType(components3, JavaPsiFacade.getInstance(manager.getProject()), tuple1.getScope().intersectWith(tuple2.getResolveScope()));
     }
     else if (checkEmptyListAndList(type1, type2)) {
       return genNewListBy(type2, manager);
@@ -841,7 +841,8 @@ public class TypesUtil {
   }
 
   public static PsiType getTupleByAnnotationArrayInitializer(final GrAnnotationArrayInitializer value) {
-    return new GrTupleTypeWithLazyComponents(value.getResolveScope(), JavaPsiFacade.getInstance(value.getProject())) {
+    return new GrTupleType(value.getResolveScope(), JavaPsiFacade.getInstance(value.getProject())) {
+      @NotNull
       @Override
       protected PsiType[] inferComponents() {
         final GrAnnotationMemberValue[] initializers = value.getInitializers();

@@ -61,6 +61,7 @@ import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.PsiTreeChangePreprocessor;
+import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.EverythingGlobalScope;
@@ -141,7 +142,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   private final ConcurrentHashSet<Project> myProjectsBeingUpdated = new ConcurrentHashSet<Project>();
 
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"}) private volatile boolean myInitialized;
-  // need this variable for memory barrier
+    // need this variable for memory barrier
 
   public FileBasedIndexImpl(@SuppressWarnings("UnusedParameters") VirtualFileManager vfManager,
                             FileDocumentManager fdm,
@@ -514,7 +515,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       index = (MapReduceIndex<K, V, FileContent>)custom;
     }
     else {
-      index = new MapReduceIndex<K, V, FileContent>(indexId, extension.getIndexer(), storage);
+      index = new MapReduceIndex<K, V, FileContent>(indexId, extension.getIndexer(), storage, extension.hasSnapshotMapping() && IdIndex.ourSnapshotMappingsEnabled ? extension.getKeyDescriptor() : null);
     }
 
     final KeyDescriptor<K> keyDescriptor = extension.getKeyDescriptor();
@@ -542,37 +543,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     final AtomicBoolean isBufferingMode = new AtomicBoolean();
     final TIntObjectHashMap<Collection<K>> tempMap = new TIntObjectHashMap<Collection<K>>();
 
-    final DataExternalizer<Collection<K>> dataExternalizer = new DataExternalizer<Collection<K>>() {
-      @Override
-      public void save(@NotNull DataOutput out, @NotNull Collection<K> value) throws IOException {
-        try {
-          DataInputOutputUtil.writeINT(out, value.size());
-          for (K key : value) {
-            keyDescriptor.save(out, key);
-          }
-        }
-        catch (IllegalArgumentException e) {
-          throw new IOException("Error saving data for index " + indexId, e);
-        }
-      }
-
-      @NotNull
-      @Override
-      public Collection<K> read(@NotNull DataInput in) throws IOException {
-        try {
-          final int size = DataInputOutputUtil.readINT(in);
-          final List<K> list = new ArrayList<K>(size);
-          for (int idx = 0; idx < size; idx++) {
-            list.add(keyDescriptor.read(in));
-          }
-          return list;
-        }
-        catch (IllegalArgumentException e) {
-          throw new IOException("Error reading data for index " + indexId, e);
-        }
-      }
-    };
-
     // Important! Update IdToDataKeysIndex depending on the sate of "buffering" flag from the MemoryStorage.
     // If buffering is on, all changes should be done in memory (similar to the way it is done in memory storage).
     // Otherwise data in IdToDataKeysIndex will not be in sync with the 'main' data in the index on disk and index updates will be based on the
@@ -580,7 +550,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     // cleared properly before updating (removed data will still be present on disk). See IDEA-52223 for illustration of possible effects.
 
     final PersistentHashMap<Integer, Collection<K>> map = new PersistentHashMap<Integer, Collection<K>>(
-      indexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, dataExternalizer
+      indexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, new InputIndexDataExternalizer<K>(keyDescriptor, indexId)
     ) {
 
       @Override

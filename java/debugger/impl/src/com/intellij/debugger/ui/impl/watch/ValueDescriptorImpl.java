@@ -56,6 +56,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   private EvaluateException myValueException;
   protected EvaluationContextImpl myStoredEvaluationContext = null;
 
+  private String myValueText;
   private String myValueLabel;
   @Nullable
   private Icon myValueIcon;
@@ -301,6 +302,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   @Override
   public String setValueLabel(String label) {
+    myValueText = label;
     final String customLabel = getCustomLabel(label);
     myValueLabel = customLabel;
     return setLabel(calcValueName() + " = " + customLabel);
@@ -438,6 +440,10 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   public String getValueLabel() {
     return myValueLabel;
+  }
+
+  public String getValueText() {
+    return myValueText;
   }
 
   //Context is set to null

@@ -92,12 +92,12 @@ public class GroovyAwareModuleBuilder extends JavaModuleBuilder {
 
   @Override
   public String getParentGroup() {
-    return getModuleTypeName();
+    return "Groovy";
   }
 
   @Override
-  public boolean isTemplateBased() {
-    return true;
+  public int getWeight() {
+    return 60;
   }
 
   @Nullable

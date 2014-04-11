@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,14 @@
  */
 package com.intellij.codeInsight.template.emmet.generators;
 
+import com.intellij.codeInsight.template.CustomLiveTemplateBase;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.emmet.EmmetParser;
 import com.intellij.codeInsight.template.emmet.XmlEmmetParser;
 import com.intellij.codeInsight.template.emmet.ZenCodingTemplate;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.emmet.tokens.ZenCodingToken;
+import com.intellij.codeInsight.template.impl.CustomLiveTemplateLookupElement;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -182,5 +184,9 @@ public abstract class ZenCodingGenerator {
 
   public boolean hasCompletionItem() {
     return false;
+  }
+  
+  public CustomLiveTemplateLookupElement createLookupElement(@NotNull CustomLiveTemplateBase customLiveTemplate, @NotNull TemplateImpl template) {
+    return new CustomLiveTemplateLookupElement(customLiveTemplate, template.getKey(), template.getKey(), template.getDescription(), true, true);
   }
 }

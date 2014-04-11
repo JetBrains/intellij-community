@@ -55,6 +55,13 @@ public abstract class TaskRepository {
    */
   public static final int NATIVE_SEARCH = 0x0010;
 
+  /**
+   * URL of the server to be used in requests. For more human-readable name of repository (e.g. some imaginary URL containing name of
+   * selected project), that will be used in settings, use {@link #getPresentableName()}.
+   *
+   * @return URL of the server
+   * @see #getPresentableName()
+   */
   @Attribute("url")
   public String getUrl() {
     return trimTrailingSlashes(myUrl);
@@ -68,6 +75,11 @@ public abstract class TaskRepository {
     return StringUtil.isNotEmpty(getUrl());
   }
 
+  /**
+   * Shared repositories will be visible in visible in other projects, but only their URL will be initialized there.
+   *
+   * @return whether repository is shared
+   */
   @Attribute("shared")
   public boolean isShared() {
     return myShared;
@@ -158,17 +170,24 @@ public abstract class TaskRepository {
    * @throws Exception
    */
   @Nullable
-  public abstract Task findTask(String id) throws Exception;
+  public abstract Task findTask(@NotNull String id) throws Exception;
 
+  @NotNull
   public abstract TaskRepository clone();
 
   @Nullable
-  public abstract String extractId(String taskName);
+  public abstract String extractId(@NotNull String taskName);
 
   /**
+   * Update state of the task on server. Don't forget to add {@link #STATE_UPDATING} in {@link #getFeatures()} and
+   * supported states in {@link TaskRepositoryType#getPossibleTaskStates()}.
+   *
+   * @param task  issue to update
+   * @param state new state of the issue
    * @see com.intellij.tasks.TaskRepositoryType#getPossibleTaskStates()
+   * @see com.intellij.tasks.TaskRepository#getFeatures()
    */
-  public void setTaskState(Task task, TaskState state) throws Exception {
+  public void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception {
     throw new UnsupportedOperationException("Setting task to state " + state + " is not supported");
   }
 
@@ -232,7 +251,7 @@ public abstract class TaskRepository {
     return myCommitMessageFormat;
   }
 
-  public void setCommitMessageFormat(final String commitMessageFormat) {
+  public void setCommitMessageFormat(@NotNull String commitMessageFormat) {
     myCommitMessageFormat = commitMessageFormat;
   }
 
@@ -250,7 +269,7 @@ public abstract class TaskRepository {
   }
 
   @Nullable
-  public String getTaskComment(Task task) {
+  public String getTaskComment(@NotNull Task task) {
     return isShouldFormatCommitMessage()
            ? myCommitMessageFormat.replace("{id}", task.getId()).replace("{summary}", task.getSummary())
            : null;

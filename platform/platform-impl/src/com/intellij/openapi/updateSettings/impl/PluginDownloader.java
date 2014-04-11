@@ -43,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.HttpURLConnection;
-import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.List;
@@ -84,6 +83,8 @@ public class PluginDownloader {
     myPluginName = pluginName;
   }
 
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
   public boolean prepareToInstall() throws IOException {
     return prepareToInstall(new ProgressIndicatorBase());
   }

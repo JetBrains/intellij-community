@@ -16,11 +16,9 @@
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
-import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.options.ConfigurationException;
@@ -98,7 +96,12 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
 
   @Override
   public String getParentGroup() {
-    return getModuleTypeName();
+    return JavaModuleType.BUILD_TOOLS_GROUP;
+  }
+
+  @Override
+  public int getWeight() {
+    return JavaModuleBuilder.BUILD_SYSTEM_WEIGHT;
   }
 
   @Override

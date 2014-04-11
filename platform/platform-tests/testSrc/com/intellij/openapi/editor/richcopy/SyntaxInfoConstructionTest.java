@@ -19,14 +19,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.richcopy.model.*;
-import com.intellij.openapi.util.Ref;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.ui.JBColor;
 import junit.framework.TestCase;
 
 import java.awt.*;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author Denis Zhdanov
@@ -55,17 +52,17 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
       editor.offsetToLogicalPosition(text.indexOf('{', blockSelectionStartOffset)).column + 1);
     editor.getSelectionModel().setBlockSelection(blockSelectionStartPosition, blockSelectionEndPosition);
 
-    verifySyntaxInfo(
-      new Foreground(1), new FontFamilyName(1), new FontStyle(Font.BOLD), new FontSize(getFontSize()), new Text(60, 71), // 'public int '
-      new Foreground(2), new FontStyle(Font.PLAIN), new Text(71, 83), // 'getField() {'
-      new Text('\n'), // '\n'
-      new Text(88, 92), // '    ' - indent before 'return field;'
-      new Foreground(1), new FontStyle(Font.BOLD), new Text(92, 99), // 'return '
-      new Foreground(3), new Text(99, 104), // 'field';
-      new Foreground(2), new FontStyle(Font.PLAIN), new Text(104, 105), // ';'
-      new Text('\n'), // '\n'
-      new Text(110, 111) // '}'
-    );
+    verifySyntaxInfo("foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=public int \n" +
+                     "foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=getField() {\n" +
+                     "text=\n" +
+                     "\n" +
+                     "text=    \n" +
+                     "foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=return \n" +
+                     "foreground=java.awt.Color[r=102,g=14,b=122],text=field\n" +
+                     "foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=;\n" +
+                     "text=\n" +
+                     "\n" +
+                     "text=}\n");
   }
 
   public void testColumnModeBlockSelection() {
@@ -91,17 +88,17 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
       editor.offsetToLogicalPosition(text.indexOf('{', blockSelectionStartOffset)).column + 1);
     editor.getSelectionModel().setBlockSelection(blockSelectionStartPosition, blockSelectionEndPosition);
 
-    verifySyntaxInfo(
-      new Foreground(1), new FontFamilyName(1), new FontStyle(Font.BOLD), new FontSize(getFontSize()), new Text(60, 71), // 'public int '
-      new Foreground(2), new FontStyle(Font.PLAIN), new Text(71, 83), // 'getField() {'
-      new Text('\n'), // '\n'
-      new Text(88, 92), // '    ' - indent before 'return field;'
-      new Foreground(1), new FontStyle(Font.BOLD), new Text(92, 99), // 'return '
-      new Foreground(3), new Text(99, 104), // 'field';
-      new Foreground(2), new FontStyle(Font.PLAIN), new Text(104, 105), // ';'
-      new Text('\n'), // '\n'
-      new Text(110, 111) // '}'
-    );
+    verifySyntaxInfo("foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=public int \n" +
+                     "foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=getField() {\n" +
+                     "text=\n" +
+                     "\n" +
+                     "text=    \n" +
+                     "foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=return \n" +
+                     "foreground=java.awt.Color[r=102,g=14,b=122],text=field\n" +
+                     "foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=;\n" +
+                     "text=\n" +
+                     "\n" +
+                     "text=}\n");
   }
 
   public void testColumnModeBlockSelectionWithGaps() {
@@ -121,16 +118,16 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
     LogicalPosition blockSelectionEndPosition = new LogicalPosition(blockSelectionStartPosition.line + 2, blockSelectionStartPosition.column + 16);
     editor.getSelectionModel().setBlockSelection(blockSelectionStartPosition, blockSelectionEndPosition);
 
-    verifySyntaxInfo(
-      new Foreground(1), new FontFamilyName(1), new FontStyle(Font.BOLD), new FontSize(getFontSize()), new Text(30, 34), // 'int '
-      new Foreground(2), new Text(34, 39), // 'field'
-      new Foreground(3), new FontStyle(Font.PLAIN), new Text(39, 40), // ';'
-      new Text('\n'), // '\n'
-      new Text('\n'), // '\n'
-      new Foreground(1), new FontStyle(Font.BOLD), new Text(46, 50), // 'int '
-      new Foreground(2), new Text(50, 60), // 'otherField';
-      new Foreground(3), new FontStyle(Font.PLAIN), new Text(60, 61) // ';'
-    );
+    verifySyntaxInfo("foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=int \n" +
+                     "foreground=java.awt.Color[r=102,g=14,b=122],text=field\n" +
+                     "foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=;\n" +
+                     "text=\n" +
+                     "\n" +
+                     "text=\n" +
+                     "\n" +
+                     "foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=int \n" +
+                     "foreground=java.awt.Color[r=102,g=14,b=122],text=otherField\n" +
+                     "foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=;\n");
   }
 
   public void testRegularSelection() {
@@ -153,31 +150,29 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
     SelectionModel selectionModel = myFixture.getEditor().getSelectionModel();
     selectionModel.setSelection(selectionStart, selectionEnd);
 
-    List<OutputInfo> expected = Arrays.asList(
-      new Foreground(1), new FontFamilyName(1), new FontStyle(Font.BOLD), new FontSize(getFontSize()), new Text(60, 71), // 'public int '
-      new Foreground(2), new FontStyle(Font.PLAIN), new Text(71, 84), // 'getField() {\n'
-      new Text(88, 92), // '    ' - indent before 'return field;'
-      new Foreground(1), new FontStyle(Font.BOLD), new Text(92, 99), // 'return '
-      new Foreground(3), new Text(99, 104), // 'field'
-      new Foreground(2), new FontStyle(Font.PLAIN), new Text(104, 106), // ';\n'
-      new Text(110, 111) // '}'
-    );
-    
-    TestCase.assertEquals(expected, getSyntaxInfo().getOutputInfos());
+    String expected = "foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=public int \n" +
+                      "foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=getField() {\n" +
+                      "\n" +
+                      "text=    \n" +
+                      "foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=return \n" +
+                      "foreground=java.awt.Color[r=102,g=14,b=122],text=field\n" +
+                      "foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=;\n" +
+                      "\n" +
+                      "text=}\n";
+
+    TestCase.assertEquals(expected, getSyntaxInfo());
     
     selectionModel.setSelection(selectionStart - 2, selectionEnd);
-    TestCase.assertEquals(expected, getSyntaxInfo().getOutputInfos());
+    TestCase.assertEquals(expected, getSyntaxInfo());
 
     selectionModel.setSelection(selectionStart - 4, selectionEnd);
-    TestCase.assertEquals(expected, getSyntaxInfo().getOutputInfos());
+    TestCase.assertEquals(expected, getSyntaxInfo());
   }
 
   public void testIncorrectFirstLineCalculationOffset() {
     init("\"tr\" #> <selection>template.statusList.sortBy</selection>(_.index).map(fromStatus =>");
 
-    verifySyntaxInfo(
-      new FontFamilyName(1), new FontStyle(Font.PLAIN), new FontSize(getFontSize()), new Text(8, 34)
-    );
+    verifySyntaxInfo("fontStyle=0,text=template.statusList.sortBy\n");
   }
 
   public void testJavadoc() {
@@ -196,68 +191,100 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
       "    T getValue();\n" +
       "}"
     );
-    verifySyntaxInfo(
-      new Foreground(1), new FontFamilyName(1), new FontStyle(Font.ITALIC), new FontSize(getFontSize()), new Text(44, 48),
-      new Text(48, 59),
-      new Background(2), new Text(59, 65),
-      new Background(3), new Text(65, 69),
-      new Background(2), new Text(69, 76),
-      new Background(3), new Text(76, 77),
-      new Text(77, 80),
-      new Background(2), new Text(80, 88),
-      new Background(3), new Text(88, 90),
-      new Background(2), new Text(90, 99),
-      new Background(3), new Text(99, 104),
-      new Text(104, 107),
-      new FontStyle(Font.BOLD + Font.ITALIC), new Text(107, 114),
-      new Foreground(4), new Text(114, 118),
-      new Text(118, 119)
-    );
+    verifySyntaxInfo("foreground=java.awt.Color[r=128,g=128,b=128],fontStyle=2,text=/**\n" +
+                     "\n" +
+                     "text= * Code in \n" +
+                     "background=java.awt.Color[r=226,g=255,b=226],text=<code>\n" +
+                     "background=java.awt.Color[r=255,g=255,b=255],text=here\n" +
+                     "background=java.awt.Color[r=226,g=255,b=226],text=</code>\n" +
+                     "background=java.awt.Color[r=255,g=255,b=255],text=\n" +
+                     "\n" +
+                     "text= * \n" +
+                     "background=java.awt.Color[r=226,g=255,b=226],text=<strong>\n" +
+                     "background=java.awt.Color[r=255,g=255,b=255],text=Hi\n" +
+                     "background=java.awt.Color[r=226,g=255,b=226],text=</strong>\n" +
+                     "background=java.awt.Color[r=255,g=255,b=255],text= man\n" +
+                     "\n" +
+                     "text= * \n" +
+                     "fontStyle=3,text=@param \n" +
+                     "foreground=java.awt.Color[r=61,g=61,b=61],text=<T>\n" +
+                     "\n" +
+                     "text= \n");
   }
 
   public void testIndentStrippingWhenFirstLineIsMostIndented() throws Exception {
     init("public class Test {\n" +
          "<selection>  int field;\n" +
          "}</selection>");
-    verifySyntaxInfo(
-      new Text(20, 22), // '  '
-      new Foreground(1), new FontFamilyName(1), new FontStyle(Font.BOLD), new FontSize(getFontSize()), new Text(22, 26), // 'int '
-      new Foreground(2), new Text(26, 31), // 'field'
-      new Foreground(3), new FontStyle(Font.PLAIN), new Text(31, 33), // ';\n'
-      new Text(33, 34) // '}'
-    );
+    verifySyntaxInfo("text=  \n" +
+                     "foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=int \n" +
+                     "foreground=java.awt.Color[r=102,g=14,b=122],text=field\n" +
+                     "foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=;\n" +
+                     "\n" +
+                     "text=}\n");
   }
 
   public void testIndentStrippingWhenSelectionEndIsBeforeNonWsCharactersOnTheLine() throws Exception {
     init("public class Test {\n" +
          "<selection>  int field;\n" +
          "</selection>}");
-    verifySyntaxInfo(
-      new Foreground(1), new FontFamilyName(1), new FontStyle(Font.BOLD), new FontSize(getFontSize()), new Text(22, 26), // 'int '
-      new Foreground(2), new Text(26, 31), // 'field'
-      new Foreground(3), new FontStyle(Font.PLAIN), new Text(31, 33) // ';\n'
-    );
+    verifySyntaxInfo("foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=int \n" +
+                     "foreground=java.awt.Color[r=102,g=14,b=122],text=field\n" +
+                     "foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=;\n" +
+                     "\n");
   }
 
-  private SyntaxInfo getSyntaxInfo() {
-    final Ref<SyntaxInfo> syntaxInfo = new Ref<SyntaxInfo>();
+  private String getSyntaxInfo() {
+    final StringBuilder syntaxInfo = new StringBuilder();
     Editor editor = myFixture.getEditor();
 
     TextWithMarkupProcessor processor = new TextWithMarkupProcessor();
     processor.addBuilder(new TextWithMarkupBuilder() {
       @Override
-      public void reset() {
+      public void init(Color defaultForeground, Color defaultBackground, String defaultFontFamily, int fontSize) {
+        assertEquals(JBColor.BLACK, defaultForeground);
+        assertEquals(JBColor.WHITE, defaultBackground);
+        assertEquals(getFontSize(), fontSize);
       }
 
       @Override
-      public void build(CharSequence charSequence, SyntaxInfo info) {
-        syntaxInfo.set(info);
+      public boolean isOverflowed() {
+        return false;
+      }
+
+      @Override
+      public void setFontFamily(String fontFamily) {
+      }
+
+      @Override
+      public void setFontStyle(int fontStyle) {
+        syntaxInfo.append("fontStyle=").append(fontStyle).append(',');
+      }
+
+      @Override
+      public void setForeground(Color foreground) {
+        syntaxInfo.append("foreground=").append(foreground).append(',');
+      }
+
+      @Override
+      public void setBackground(Color background) {
+        syntaxInfo.append("background=").append(background).append(',');
+      }
+
+      @Override
+      public void addTextFragment(CharSequence charSequence, int startOffset, int endOffset) {
+        syntaxInfo.append("text=").append(charSequence.subSequence(startOffset, endOffset)).append('\n');
+      }
+
+      @Override
+      public void complete() {
+
       }
     });
     SelectionModel selectionModel = editor.getSelectionModel();
     processor.collectTransferableData(myFixture.getFile(), editor, selectionModel.getBlockSelectionStarts(), selectionModel.getBlockSelectionEnds());
 
-    return syntaxInfo.get();
+    return syntaxInfo.toString();
   }
 
   private void init(String text) {
@@ -265,8 +292,8 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
     myFixture.doHighlighting();
   }
 
-  private void verifySyntaxInfo(OutputInfo... infos) {
-    assertEquals(Arrays.asList(infos), getSyntaxInfo().getOutputInfos());
+  private void verifySyntaxInfo(String info) {
+    assertEquals(info, getSyntaxInfo());
   }
 
   private int getFontSize() {

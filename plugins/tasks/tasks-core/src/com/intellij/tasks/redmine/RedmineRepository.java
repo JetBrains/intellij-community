@@ -88,6 +88,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     return true;
   }
 
+  @NotNull
   @Override
   public RedmineRepository clone() {
     return new RedmineRepository(this);
@@ -155,7 +156,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
 
   @Nullable
   @Override
-  public Task findTask(String id) throws Exception {
+  public Task findTask(@NotNull String id) throws Exception {
     HttpGet method = new HttpGet(getRestApiUrl("issues", id + ".json"));
     IssueWrapper wrapper = getHttpClient().execute(method, new GsonSingleObjectDeserializer<IssueWrapper>(GSON, IssueWrapper.class));
     if (wrapper == null) {
@@ -196,7 +197,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
 
   @Nullable
   @Override
-  public String extractId(String taskName) {
+  public String extractId(@NotNull String taskName) {
     return taskName;
   }
 

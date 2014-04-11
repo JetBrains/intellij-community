@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.ide.highlighter.HtmlFileType;
+import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.openapi.fileTypes.FileType;
 
 public class XmlAutopopupTest extends CompletionAutoPopupTestCase {
@@ -27,12 +28,20 @@ public class XmlAutopopupTest extends CompletionAutoPopupTestCase {
     doTestPopup(HtmlFileType.INSTANCE, "<div><caret></div>", "<");
   }
 
+  public void testDoNotShowPopupInTextXhtml() throws Exception {
+    doTestNoPopup(XHtmlFileType.INSTANCE, "<div><caret></div>", "p");
+  }
+
+  public void testAfterTagOpenXhtml() throws Exception {
+    doTestPopup(XHtmlFileType.INSTANCE, "<div><caret></div>", "<");
+  }
+
   private void doTestPopup(FileType fileType, String fileText, String typeString) {
     myFixture.configureByText(fileType, fileText);
     type(typeString);
     assertNotNull(getLookup());
   }
-  
+
   private void doTestNoPopup(FileType fileType, String fileText, String typeString) {
     myFixture.configureByText(fileType, fileText);
     type(typeString);

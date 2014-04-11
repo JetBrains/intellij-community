@@ -166,7 +166,7 @@ public final class UpdateChecker {
     }
 
     boolean platformUpdate = newChannelReady(result.getChannelToPropose()) || result.getUpdatedChannel() != null;
-    final List<PluginDownloader> updatedPlugins = platformUpdate ? null : updatePlugins(manualCheck, project, hostsConfigurable, indicator);
+    final Collection<PluginDownloader> updatedPlugins = platformUpdate ? null : updatePlugins(manualCheck, project, hostsConfigurable, indicator);
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
@@ -179,11 +179,11 @@ public final class UpdateChecker {
     });
   }
 
-  private static List<PluginDownloader> updatePlugins(boolean manualCheck,
-                                                      @Nullable Project project,
-                                                      @Nullable PluginHostsConfigurable hostsConfigurable,
-                                                      @Nullable ProgressIndicator indicator) {
-    final List<PluginDownloader> downloaded = new ArrayList<PluginDownloader>();
+  private static Collection<PluginDownloader> updatePlugins(boolean manualCheck,
+                                                            @Nullable Project project,
+                                                            @Nullable PluginHostsConfigurable hostsConfigurable,
+                                                            @Nullable ProgressIndicator indicator) {
+    final Map<PluginId, PluginDownloader> downloaded = new HashMap<PluginId, PluginDownloader>();
     final Set<String> failed = new HashSet<String>();
     for (String host : getPluginHosts(hostsConfigurable)) {
       try {
@@ -206,8 +206,8 @@ public final class UpdateChecker {
       }
     }
 
-    for (Iterator<PluginDownloader> iterator = downloaded.iterator(); iterator.hasNext(); ) {
-      if (!toUpdate.containsKey(iterator.next().getPluginId())) {
+    for (Iterator<PluginId> iterator = downloaded.keySet().iterator(); iterator.hasNext(); ) {
+      if (!toUpdate.containsKey(iterator.next().getIdString())) {
         iterator.remove();
       }
     }
@@ -237,11 +237,11 @@ public final class UpdateChecker {
           if (!toUpdate.containsKey(idString)) continue;
           final IdeaPluginDescriptor installedPlugin = toUpdate.get(idString);
           if (installedPlugin == null) {
-            prepareToInstall(downloaded, loadedPlugin);
+            prepareToInstall(downloaded, loadedPlugin, indicator);
           } else if (StringUtil.compareVersionNumbers(loadedPlugin.getVersion(), installedPlugin.getVersion()) > 0) {
             updateSettings.myOutdatedPlugins.add(idString);
             if (!disabledPlugins.contains(idString)) {
-              prepareToInstall(downloaded, loadedPlugin);
+              prepareToInstall(downloaded, loadedPlugin, indicator);
             }
           }
         }
@@ -258,13 +258,19 @@ public final class UpdateChecker {
       showErrorMessage(manualCheck, project, IdeBundle.message("updates.error.plugin.description.failed", StringUtil.join(failed, ",")));
     }
 
-    return downloaded.isEmpty() ? null : downloaded;
+    return downloaded.isEmpty() ? null : downloaded.values();
   }
 
-  private static void prepareToInstall(List<PluginDownloader> downloaded, IdeaPluginDescriptor loadedPlugin) throws IOException {
-    final PluginDownloader downloader = PluginDownloader.createDownloader(loadedPlugin);
-    if (downloader.prepareToInstall()) {
-      downloaded.add(downloader);
+  private static void prepareToInstall(Map<PluginId, PluginDownloader> downloaded,
+                                       IdeaPluginDescriptor loadedPlugin,
+                                       ProgressIndicator indicator) throws IOException {
+    final PluginId pluginId = loadedPlugin.getPluginId();
+    //prefer plugins from plugin hosts
+    if (!downloaded.containsKey(pluginId)) {
+      final PluginDownloader downloader = PluginDownloader.createDownloader(loadedPlugin);
+      if (downloader.prepareToInstall(indicator)) {
+        downloaded.put(pluginId, downloader);
+      }
     }
   }
 
@@ -297,7 +303,7 @@ public final class UpdateChecker {
     return hosts;
   }
 
-  public static boolean checkPluginsHost(final String host, final List<PluginDownloader> downloaded) throws Exception {
+  public static boolean checkPluginsHost(final String host, final Map<PluginId, PluginDownloader> downloaded) throws Exception {
     try {
       return checkPluginsHost(host, downloaded, true, null);
     }
@@ -307,7 +313,7 @@ public final class UpdateChecker {
   }
 
   public static boolean checkPluginsHost(final String host,
-                                         final List<PluginDownloader> downloaded,
+                                         final Map<PluginId, PluginDownloader> downloaded,
                                          final boolean collectToUpdate, @Nullable ProgressIndicator indicator) throws Exception {
     InputStream inputStream = loadVersionInfo(host);
     if (inputStream == null) return false;
@@ -324,7 +330,7 @@ public final class UpdateChecker {
     final List<IdeaPluginDescriptor> descriptors = RepositoryHelper.loadPluginsFromDescription(inputStream, indicator);
     for (IdeaPluginDescriptor descriptor : descriptors) {
       ((PluginNode)descriptor).setRepositoryName(host);
-      downloaded.add(PluginDownloader.createDownloader(descriptor));
+      downloaded.put(descriptor.getPluginId(), PluginDownloader.createDownloader(descriptor));
     }
 
     boolean success = true;
@@ -372,8 +378,8 @@ public final class UpdateChecker {
                 progressIndicator.setText2(finalPluginUrl);
               }
               final PluginDownloader downloader = new PluginDownloader(pluginId, finalPluginUrl, pluginVersion);
-              if (downloader.prepareToInstall()) {
-                downloaded.add(downloader);
+              if (downloader.prepareToInstall(progressIndicator)) {
+                downloaded.put(PluginId.getId(pluginId), downloader);
               }
             }
             catch (IOException e) {
@@ -392,7 +398,7 @@ public final class UpdateChecker {
         final PluginDownloader downloader = new PluginDownloader(pluginId, pluginUrl, pluginVersion);
         downloader.setDescription(description);
         downloader.setDepends(dependsPlugins);
-        downloaded.add(downloader);
+        downloaded.put(PluginId.getId(pluginId), downloader);
       }
     }
     return success;
@@ -447,7 +453,7 @@ public final class UpdateChecker {
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   private static void showUpdateResult(@Nullable final Project project,
                                        final CheckForUpdateResult checkForUpdateResult,
-                                       final List<PluginDownloader> updatedPlugins,
+                                       final Collection<PluginDownloader> updatedPlugins,
                                        final boolean enableLink,
                                        final boolean alwaysShowResults) {
     final UpdateChannel channelToPropose = checkForUpdateResult.getChannelToPropose();
@@ -649,7 +655,7 @@ public final class UpdateChecker {
     return "";
   }
 
-  public static boolean install(List<PluginDownloader> downloaders) {
+  public static boolean install(Collection<PluginDownloader> downloaders) {
     boolean installed = false;
     for (PluginDownloader downloader : downloaders) {
       if (getDisabledToUpdatePlugins().contains(downloader.getPluginId())) continue;

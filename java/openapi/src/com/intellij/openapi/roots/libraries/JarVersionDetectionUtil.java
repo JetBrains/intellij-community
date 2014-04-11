@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.roots.libraries;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -35,47 +35,32 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 public class JarVersionDetectionUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.libraries.JarVersionDetectionUtil");
-
-  private JarVersionDetectionUtil() {
-  }
+  private JarVersionDetectionUtil() { }
 
   @Nullable
-  public static String detectJarVersion(@NotNull final String detectionClass, @NotNull Module module) {
-    try {
-      return detectJarVersion(getDetectionJar(detectionClass, module));
-    }
-    catch (IOException e) {
-      return null;
-    }
-  }
-
-  @Nullable
-  public static String detectJarVersion(@NotNull String detectionClass, @NotNull List<VirtualFile> files) {
-    final VirtualFile jar = LibrariesHelper.getInstance().findRootByClass(files, detectionClass);
-    if (jar != null && jar.getFileSystem() instanceof JarFileSystem) {
-      final VirtualFile manifestFile = jar.findFileByRelativePath(JarFile.MANIFEST_NAME);
-      if (manifestFile != null) {
-        try {
-          final InputStream input = manifestFile.getInputStream();
-          try {
-            return new Manifest(input).getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
-          }
-          finally {
-            input.close();
-          }
-        }
-        catch (IOException e) {
-          LOG.debug(e);
-          return null;
+  public static String detectJarVersion(@NotNull String detectionClass, @NotNull Module module) {
+    for (OrderEntry library : ModuleRootManager.getInstance(module).getOrderEntries()) {
+      if (library instanceof LibraryOrderEntry) {
+        VirtualFile jar = LibrariesHelper.getInstance().findJarByClass(((LibraryOrderEntry)library).getLibrary(), detectionClass);
+        if (jar != null && jar.getFileSystem() instanceof JarFileSystem) {
+          return JdkUtil.getJarMainAttribute(jar, Attributes.Name.IMPLEMENTATION_VERSION);
         }
       }
     }
+
     return null;
   }
 
   @Nullable
-  public static String detectJarVersion(com.intellij.openapi.vfs.JarFile zipFile) {
+  public static String detectJarVersion(@NotNull String detectionClass, @NotNull List<VirtualFile> files) {
+    VirtualFile jarRoot = LibrariesHelper.getInstance().findRootByClass(files, detectionClass);
+    return jarRoot != null && jarRoot.getFileSystem() instanceof JarFileSystem ?
+           JdkUtil.getJarMainAttribute(jarRoot, Attributes.Name.IMPLEMENTATION_VERSION) : null;
+  }
+
+  /** @deprecated use {@link JarUtil#getJarAttribute(File, Attributes.Name)} (to remove in IDEA 15) */
+  @SuppressWarnings("UnusedDeclaration")
+  public static String detectJarVersion(@Nullable com.intellij.openapi.vfs.JarFile zipFile) {
     if (zipFile == null) {
       return null;
     }
@@ -94,40 +79,17 @@ public class JarVersionDetectionUtil {
     }
   }
 
-  @Nullable
-  private static com.intellij.openapi.vfs.JarFile getDetectionJar(final String detectionClass, Module module) throws IOException {
-      for (OrderEntry library : ModuleRootManager.getInstance(module).getOrderEntries()) {
-        if (library instanceof LibraryOrderEntry) {
-          VirtualFile file = LibrariesHelper.getInstance().findJarByClass(((LibraryOrderEntry)library).getLibrary(), detectionClass);
-          if (file != null && file.getFileSystem() instanceof JarFileSystem) {
-            return JarFileSystem.getInstance().getJarFile(file);
-          }
-        }
-      }
-    return null;
-  }
-
-  private static String getJarAttribute(@NotNull File jar, @NotNull String attributeName, @Nullable String entryName) throws IOException {
-    JarFile runJar = new JarFile(jar);
-    try {
-      Attributes attributes = entryName == null ? runJar.getManifest().getMainAttributes() : runJar.getManifest().getAttributes(entryName);
-      return attributes.getValue(attributeName);
-    }
-    finally {
-      runJar.close();
-    }
-  }
-
   public static String getBundleVersion(@NotNull File jar) throws IOException {
-    return getJarAttribute(jar, "Bundle-Version", null);
+    return JarUtil.getJarAttribute(jar, new Attributes.Name("Bundle-Version"));
   }
 
   public static String getImplementationVersion(@NotNull File jar) throws IOException {
-    return getJarAttributeVersion(jar, Attributes.Name.IMPLEMENTATION_VERSION, null);
+    return JarUtil.getJarAttribute(jar, Attributes.Name.IMPLEMENTATION_VERSION);
   }
 
-  public static String getJarAttributeVersion(@NotNull File jar, @NotNull Attributes.Name attributeName, @Nullable String entryName) throws IOException {
-    return getJarAttribute(jar, attributeName.toString(), entryName);
+  /** @deprecated use {@link JarUtil#getJarAttribute(File, Attributes.Name)} (to remove in IDEA 15) */
+  @SuppressWarnings("UnusedDeclaration")
+  public static String getJarAttributeVersion(@NotNull File jar, @NotNull Attributes.Name attribute, @Nullable String entryName) {
+    return entryName != null ? JarUtil.getJarAttribute(jar, entryName, attribute) : JarUtil.getJarAttribute(jar, attribute);
   }
 }
-

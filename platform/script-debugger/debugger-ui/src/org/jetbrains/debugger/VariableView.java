@@ -1,7 +1,6 @@
 package org.jetbrains.debugger;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
@@ -408,15 +407,13 @@ public final class VariableView extends XNamedValue implements VariableContext {
 
   @Override
   public boolean canNavigateToSource() {
-    // todo WEB-4369
-    return value.getType() == ValueType.FUNCTION;
+    return value instanceof FunctionValue || getDebugProcess().canNavigateToSource(variable, context);
   }
 
   @Override
   public void computeSourcePosition(@NotNull final XNavigatable navigatable) {
-    AsyncResult<FunctionValue> fun = value instanceof FunctionValue ? ((FunctionValue)value).resolve() : null;
-    if (fun != null) {
-      fun.doWhenDone(new Consumer<FunctionValue>() {
+    if (value instanceof FunctionValue) {
+      ((FunctionValue)value).resolve().doWhenDone(new Consumer<FunctionValue>() {
         @Override
         public void consume(final FunctionValue function) {
           getDebugProcess().getVm().getScriptManager().getOrLoadScript(function).doWhenDone(new Consumer<Script>() {
@@ -427,6 +424,9 @@ public final class VariableView extends XNamedValue implements VariableContext {
           });
         }
       });
+    }
+    else {
+      getDebugProcess().computeSourcePosition(variable, context, navigatable);
     }
   }
 
@@ -472,5 +472,11 @@ public final class VariableView extends XNamedValue implements VariableContext {
         }
       }).doWhenRejected(createErrorMessageConsumer(callback));
     }
+  }
+
+  @Nullable
+  @Override
+  public Scope getScope() {
+    return context.getScope();
   }
 }

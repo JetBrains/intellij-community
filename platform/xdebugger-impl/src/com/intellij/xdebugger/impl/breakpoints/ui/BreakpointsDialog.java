@@ -245,8 +245,12 @@ public class BreakpointsDialog extends DialogWrapper {
         List<AnAction> res = new ArrayList<AnAction>();
         res.add(group);
         Object component = tree.getLastSelectedPathComponent();
-        if (component instanceof BreakpointsGroupNode && ((BreakpointsGroupNode)component).getGroup() instanceof XBreakpointCustomGroup) {
+        if (tree.getSelectionCount() == 1 && component instanceof BreakpointsGroupNode &&
+            ((BreakpointsGroupNode)component).getGroup() instanceof XBreakpointCustomGroup) {
           res.add(new SetAsDefaultGroupAction((XBreakpointCustomGroup)((BreakpointsGroupNode)component).getGroup()));
+        }
+        if (tree.getSelectionCount() == 1 && component instanceof BreakpointItemNode) {
+          res.add(new EditDescriptionAction((XBreakpointBase)((BreakpointItemNode)component).getBreakpointItem().getBreakpoint()));
         }
         return res.toArray(new AnAction[res.size()]);
       }
@@ -495,6 +499,25 @@ public class BreakpointsDialog extends DialogWrapper {
     @Override
     public void actionPerformed(AnActionEvent e) {
       getBreakpointManager().setDefaultGroup(myName);
+      myTreeController.rebuildTree(myBreakpointItems);
+    }
+  }
+
+  private class EditDescriptionAction extends AnAction {
+    private final XBreakpointBase myBreakpoint;
+
+    private EditDescriptionAction(XBreakpointBase breakpoint) {
+      super("Edit description");
+      myBreakpoint = breakpoint;
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      String description = Messages.showInputDialog("", "Edit Description", null, myBreakpoint.getUserDescription(), null);
+      if (description == null) {
+        return;
+      }
+      myBreakpoint.setUserDescription(description);
       myTreeController.rebuildTree(myBreakpointItems);
     }
   }
