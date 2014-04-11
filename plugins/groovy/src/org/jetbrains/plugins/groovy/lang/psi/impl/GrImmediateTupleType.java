@@ -16,9 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
@@ -26,15 +24,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ven
  */
-public class GrTupleTypeImpl extends GrTupleType {
+public class GrImmediateTupleType extends GrTupleType {
   private final PsiType[] myComponentTypes;
 
-  public GrTupleTypeImpl(PsiType[] componentTypes, JavaPsiFacade facade, GlobalSearchScope scope) {
-    this(componentTypes, facade, scope, LanguageLevel.JDK_1_5);
-  }
-
-  public GrTupleTypeImpl(PsiType[] componentTypes, JavaPsiFacade facade, GlobalSearchScope scope, LanguageLevel languageLevel) {
-    super(scope, facade, languageLevel);
+  public GrImmediateTupleType(@NotNull PsiType[] componentTypes, @NotNull JavaPsiFacade facade, @NotNull GlobalSearchScope scope) {
+    super(scope, facade);
     myComponentTypes = componentTypes;
   }
 
@@ -46,12 +40,13 @@ public class GrTupleTypeImpl extends GrTupleType {
     return true;
   }
 
-  @Override
   @NotNull
-  public PsiClassType setLanguageLevel(@NotNull final LanguageLevel languageLevel) {
-    return new GrTupleTypeImpl(myComponentTypes, myFacade, myScope, languageLevel);
+  @Override
+  protected PsiType[] inferComponents() {
+    return myComponentTypes;
   }
 
+  @NotNull
   @Override
   public PsiType[] getComponentTypes() {
     return myComponentTypes;
