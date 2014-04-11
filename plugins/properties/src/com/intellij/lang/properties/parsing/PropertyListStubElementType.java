@@ -19,8 +19,6 @@
  */
 package com.intellij.lang.properties.parsing;
 
-import com.intellij.lang.LighterAST;
-import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.properties.psi.PropertiesList;
 import com.intellij.lang.properties.psi.PropertiesListStub;
 import com.intellij.lang.properties.psi.impl.PropertiesListImpl;
@@ -30,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public class PropertyListStubElementType extends ILightStubElementType<PropertiesListStub, PropertiesList> {
+public class PropertyListStubElementType extends IStubElementType<PropertiesListStub, PropertiesList> {
   public PropertyListStubElementType() {
     super("PROPERTIES_LIST", PropertiesElementTypes.LANG);
   }
@@ -57,10 +55,5 @@ public class PropertyListStubElementType extends ILightStubElementType<Propertie
   }
 
   public void indexStub(@NotNull final PropertiesListStub stub, @NotNull final IndexSink sink) {
-  }
-
-  @Override
-  public PropertiesListStub createStub(LighterAST tree, LighterASTNode node, StubElement parentStub) {
-    return new PropertiesListStubImpl(parentStub);
   }
 }
