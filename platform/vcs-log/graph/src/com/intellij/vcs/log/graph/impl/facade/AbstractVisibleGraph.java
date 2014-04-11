@@ -16,13 +16,15 @@
 
 package com.intellij.vcs.log.graph.impl.facade;
 
-import com.intellij.vcs.log.graph.PrintElement;
-import com.intellij.vcs.log.graph.RowInfo;
-import com.intellij.vcs.log.graph.VisibleGraph;
+import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.graph.actions.ActionController;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.graph.actions.GraphMouseAction;
+import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.LinearGraphWithCommitInfo;
+import com.intellij.vcs.log.graph.api.elements.GraphEdge;
+import com.intellij.vcs.log.graph.api.elements.GraphElement;
+import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.api.printer.PrintElementGenerator;
 import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
@@ -32,20 +34,26 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Collection;
+import java.util.Map;
 
 public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<CommitId> {
   @NotNull
-  protected final LinearGraphWithCommitInfo<CommitId> myLinearGraphWithCommitInfo;
+  protected final GraphAnswerImpl<CommitId> COMMIT_ID_GRAPH_ANSWER = new GraphAnswerImpl<CommitId>(null, null);
 
+  @NotNull
+  protected final LinearGraphWithCommitInfo<CommitId> myLinearGraphWithCommitInfo;
   @NotNull
   protected final PrintElementGenerator myPrintElementGenerator;
-
   @NotNull
   protected final PrintElementsManager myPrintElementsManager;
+  @NotNull
+  protected final Map<CommitId, GraphCommit<CommitId>> myCommitsWithNotLoadParent;
 
   protected AbstractVisibleGraph(@NotNull LinearGraphWithCommitInfo<CommitId> linearGraphWithCommitInfo,
+                                 @NotNull Map<CommitId, GraphCommit<CommitId>> commitsWithNotLoadParent,
                                  @NotNull PrintElementsManager printElementsManager) {
     myLinearGraphWithCommitInfo = linearGraphWithCommitInfo;
+    myCommitsWithNotLoadParent = commitsWithNotLoadParent;
     myPrintElementsManager = printElementsManager;
     myPrintElementGenerator = new PrintElementGeneratorImpl(linearGraphWithCommitInfo, printElementsManager);
   }
@@ -90,7 +98,54 @@ public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<Com
   abstract protected void setLinearBranchesExpansion(boolean collapse);
 
   @NotNull
-  abstract protected GraphAnswer<CommitId> clickByElement(@Nullable PrintElementWithGraphElement printElement);
+  abstract protected GraphAnswer<CommitId> clickByElement(@NotNull GraphElement graphElement);
+
+  @NotNull
+  protected GraphAnswer<CommitId> clickByElement(@Nullable PrintElementWithGraphElement printElement) {
+    if (printElement == null) {
+      return COMMIT_ID_GRAPH_ANSWER;
+    }
+
+    if (printElement instanceof SimplePrintElement) {
+      SimplePrintElement simplePrintElement = (SimplePrintElement)printElement;
+
+      int upNodeIndex, downNodeIndex;
+      @NotNull GraphElement graphElement = printElement.getGraphElement();
+      switch (simplePrintElement.getType()) {
+        case NODE:
+          assert graphElement instanceof GraphNode;
+          return clickByElement(graphElement);
+        case UP_ARROW:
+          assert graphElement instanceof GraphEdge;
+          upNodeIndex = ((GraphEdge)graphElement).getUpNodeIndex();
+          return new GraphAnswerImpl<CommitId>(myLinearGraphWithCommitInfo.getHashIndex(upNodeIndex), null);
+        case DOWN_ARROW:
+          assert graphElement instanceof GraphEdge;
+          downNodeIndex = ((GraphEdge)graphElement).getDownNodeIndex();
+          if (downNodeIndex != LinearGraph.NOT_LOAD_COMMIT)
+            return new GraphAnswerImpl<CommitId>(myLinearGraphWithCommitInfo.getHashIndex(downNodeIndex), null);
+          else {
+            upNodeIndex = ((GraphEdge)graphElement).getUpNodeIndex();
+            int edgeIndex = myLinearGraphWithCommitInfo.getDownNodes(upNodeIndex).indexOf(LinearGraph.NOT_LOAD_COMMIT);
+
+            GraphCommit<CommitId> commitIdGraphCommit =
+              myCommitsWithNotLoadParent.get(myLinearGraphWithCommitInfo.getHashIndex(upNodeIndex));
+            CommitId jumpTo = commitIdGraphCommit.getParents().get(edgeIndex);
+            return new GraphAnswerImpl<CommitId>(jumpTo, null);
+          }
+        default:
+          throw new IllegalStateException("Unsupported SimplePrintElement type: " + simplePrintElement.getType());
+      }
+    }
+
+    if (printElement instanceof EdgePrintElement) {
+      GraphElement graphElement = printElement.getGraphElement();
+      assert graphElement instanceof GraphEdge;
+      return clickByElement(graphElement);
+    }
+
+    return COMMIT_ID_GRAPH_ANSWER;
+  }
 
   protected static class GraphAnswerImpl<CommitId> implements GraphAnswer<CommitId> {
     @Nullable

@@ -16,46 +16,45 @@
 
 package com.intellij.vcs.log.graph.impl.facade;
 
-import com.intellij.vcs.log.graph.EdgePrintElement;
-import com.intellij.vcs.log.graph.PrintElement;
-import com.intellij.vcs.log.graph.SimplePrintElement;
+import com.intellij.openapi.util.Condition;
+import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
-import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.LinearGraphWithCommitInfo;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
-import com.intellij.vcs.log.graph.api.elements.GraphNode;
-import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
-import com.intellij.vcs.log.graph.impl.permanent.PermanentCommitsInfo;
+import com.intellij.vcs.log.graph.impl.print.AbstractPrintElementsManager;
 import com.intellij.vcs.log.graph.impl.visible.CollapsedGraphWithHiddenNodes;
+import com.intellij.vcs.log.graph.impl.visible.FragmentGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
 import java.util.Set;
 
 public class CollapsedVisibleGraph<CommitId> extends AbstractVisibleGraph<CommitId> {
 
   @NotNull
-  public static <CommitId> CollapsedVisibleGraph<CommitId> newInstance(@NotNull LinearGraph permanentGraph,
-                                                                       @NotNull PermanentCommitsInfo<CommitId> permanentCommitsInfo,
+  public static <CommitId> CollapsedVisibleGraph<CommitId> newInstance(@NotNull PermanentGraphImpl<CommitId> permanentGraph,
                                                                        @Nullable Set<CommitId> heads) {
     return null;
   }
 
-
-  @NotNull
-  private final GraphAnswerImpl<CommitId> myCommitIdGraphAnswer = new GraphAnswerImpl<CommitId>(null, null);
-
   @NotNull
   private final CollapsedGraphWithHiddenNodes myGraphWithHiddenNodes;
 
+  @NotNull
+  private final FragmentGenerator myFragmentGenerator;
+
 
   private CollapsedVisibleGraph(@NotNull LinearGraphWithCommitInfo<CommitId> linearGraphWithCommitInfo,
-                               @NotNull CollapsedGraphWithHiddenNodes graphWithHiddenNodes,
-                               @NotNull PrintElementsManager printElementsManager) {
-    super(linearGraphWithCommitInfo, printElementsManager);
+                                @NotNull CollapsedGraphWithHiddenNodes graphWithHiddenNodes,
+                                @NotNull Map<CommitId, GraphCommit<CommitId>> commitsWithNotLoadParent,
+                                @NotNull PrintElementsManager printElementsManager,
+                                @NotNull Condition<Integer> thisNodeCantBeInMiddle) {
+    super(linearGraphWithCommitInfo, commitsWithNotLoadParent, printElementsManager);
     myGraphWithHiddenNodes = graphWithHiddenNodes;
+    myFragmentGenerator = new FragmentGenerator(myGraphWithHiddenNodes, thisNodeCantBeInMiddle);
   }
 
   @Override
@@ -64,40 +63,7 @@ public class CollapsedVisibleGraph<CommitId> extends AbstractVisibleGraph<Commit
   }
 
   @NotNull
-  @Override
-  protected GraphAnswer<CommitId> clickByElement(@Nullable PrintElementWithGraphElement printElement) {
-    if (printElement == null) {
-      return myCommitIdGraphAnswer;
-    }
-
-    if (printElement instanceof SimplePrintElement) {
-      SimplePrintElement simplePrintElement = (SimplePrintElement)printElement;
-
-      @NotNull GraphElement graphElement = printElement.getGraphElement();
-      switch (simplePrintElement.getType()) {
-        case NODE:
-          assert graphElement instanceof GraphNode;
-          int nodeIndex = ((GraphNode)graphElement).getNodeIndex(); // todo
-          return null;
-        case UP_ARROW:
-          assert graphElement instanceof GraphEdge;
-          int upNodeIndex = ((GraphEdge)graphElement).getUpNodeIndex();
-          return new GraphAnswerImpl<CommitId>(myLinearGraphWithCommitInfo.getHashIndex(upNodeIndex), null);
-        case DOWN_ARROW:
-          assert graphElement instanceof GraphEdge;
-          int downNodeIndex = ((GraphEdge)graphElement).getDownNodeIndex();
-          return new GraphAnswerImpl<CommitId>(myLinearGraphWithCommitInfo.getHashIndex(downNodeIndex), null);
-        default:
-          throw new IllegalStateException("Unsupported SimplePrintElement type: " + simplePrintElement.getType());
-      }
-    }
-
-    if (printElement instanceof EdgePrintElement) {
-      GraphElement graphElement = printElement.getGraphElement();
-      assert graphElement instanceof GraphEdge; // todo
-      return null;
-    }
-
-    return myCommitIdGraphAnswer;
+  protected GraphAnswer<CommitId> clickByElement(@NotNull GraphElement graphElement) {
+    return null;
   }
 }
