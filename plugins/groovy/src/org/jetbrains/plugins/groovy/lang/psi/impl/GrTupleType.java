@@ -16,12 +16,13 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
  * @author ven
  */
 public abstract class GrTupleType extends GrLiteralClassType {
-  private final AtomicNotNullLazyValue<PsiType[]> myParameters = new AtomicNotNullLazyValue<PsiType[]>() {
+  private final VolatileNotNullLazyValue<PsiType[]> myParameters = new VolatileNotNullLazyValue<PsiType[]>() {
     @NotNull
     @Override
     protected PsiType[] compute() {
@@ -40,6 +41,14 @@ public abstract class GrTupleType extends GrLiteralClassType {
       final PsiType leastUpperBound = getLeastUpperBound(types);
       if (leastUpperBound == PsiType.NULL) return EMPTY_ARRAY;
       return new PsiType[]{leastUpperBound};
+    }
+  };
+
+  private final VolatileNotNullLazyValue<PsiType[]> myComponents = new VolatileNotNullLazyValue<PsiType[]>() {
+    @NotNull
+    @Override
+    protected PsiType[] compute() {
+      return inferComponents();
     }
   };
 
@@ -122,5 +131,17 @@ public abstract class GrTupleType extends GrLiteralClassType {
     return super.isAssignableFrom(type);
   }
 
-  public abstract PsiType[] getComponentTypes();
+  @NotNull
+  public PsiType[] getComponentTypes() {
+    return myComponents.getValue();
+  }
+
+  @NotNull
+  protected abstract  PsiType[] inferComponents();
+
+  @NotNull
+  @Override
+  public PsiClassType setLanguageLevel(@NotNull LanguageLevel languageLevel) {
+    return new GrImmediateTupleType(getComponentTypes(), myFacade, getResolveScope());
+  }
 }
