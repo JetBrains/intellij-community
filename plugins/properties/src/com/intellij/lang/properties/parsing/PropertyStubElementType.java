@@ -19,18 +19,23 @@
  */
 package com.intellij.lang.properties.parsing;
 
+import com.intellij.lang.LighterAST;
+import com.intellij.lang.LighterASTNode;
+import com.intellij.lang.LighterASTTokenNode;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.PropertyKeyIndex;
 import com.intellij.lang.properties.psi.PropertyStub;
 import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.lang.properties.psi.impl.PropertyStubImpl;
+import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.stubs.*;
+import com.intellij.util.CharTable;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public class PropertyStubElementType extends IStubElementType<PropertyStub, Property> {
+public class PropertyStubElementType extends ILightStubElementType<PropertyStub, Property> {
   public PropertyStubElementType() {
     super("PROPERTY", PropertiesElementTypes.LANG);
   }
@@ -60,5 +65,17 @@ public class PropertyStubElementType extends IStubElementType<PropertyStub, Prop
 
   public void indexStub(@NotNull final PropertyStub stub, @NotNull final IndexSink sink) {
     sink.occurrence(PropertyKeyIndex.KEY, PropertyImpl.unescape(stub.getKey()));
+  }
+
+  @Override
+  public PropertyStub createStub(LighterAST tree, LighterASTNode node, StubElement parentStub) {
+    LighterASTNode keyNode = LightTreeUtil.firstChildOfType(tree, node, PropertiesTokenTypes.KEY_CHARACTERS);
+    String key = intern(tree.getCharTable(), keyNode);
+    return new PropertyStubImpl(parentStub, key);
+  }
+  
+  public static String intern(@NotNull CharTable table, @NotNull LighterASTNode node) {
+    assert node instanceof LighterASTTokenNode : node;
+    return table.intern(((LighterASTTokenNode)node).getText()).toString();
   }
 }
