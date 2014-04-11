@@ -51,7 +51,7 @@ public class GroovyAwareModuleBuilder extends JavaModuleBuilder {
 
   @Nullable
   @Override
-  public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
+  public ModuleWizardStep modifyProjectTypeStep(@NotNull SettingsStep settingsStep) {
     return new GroovySdkForNewModuleWizardStep(this, settingsStep.getContext(), getFramework(), settingsStep);
   }
 
