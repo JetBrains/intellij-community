@@ -95,8 +95,8 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   }
 
   @Override
-  public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
-    return ContainerUtil.map2Array(fetchIssues(), GitlabTask.class, new Function<GitlabIssue, GitlabTask>() {
+  public Task[] getIssues(@Nullable String query, int offset, int limit, boolean withClosed) throws Exception {
+    return ContainerUtil.map2Array(fetchIssues((offset / limit) + 1, limit), GitlabTask.class, new Function<GitlabIssue, GitlabTask>() {
       @Override
       public GitlabTask fun(GitlabIssue issue) {
         return new GitlabTask(GitlabRepository.this, issue);
@@ -156,7 +156,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   }
 
   @NotNull
-  public List<GitlabIssue> fetchIssues() throws Exception {
+  public List<GitlabIssue> fetchIssues(int pageNumber, int pageSize) throws Exception {
     ensureProjectsDiscovered();
     ResponseHandler<List<GitlabIssue>> handler = new GsonMultipleObjectsDeserializer<GitlabIssue>(GSON, LIST_OF_ISSUES_TYPE);
     return getHttpClient().execute(new HttpGet(getIssuesUrl()), handler);
@@ -169,6 +169,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
     return getRestApiUrl("issues");
   }
 
+  @SuppressWarnings("UnusedDeclaration")
   @Nullable
   public GitlabIssue fetchIssue(int id) throws Exception {
     ensureProjectsDiscovered();
