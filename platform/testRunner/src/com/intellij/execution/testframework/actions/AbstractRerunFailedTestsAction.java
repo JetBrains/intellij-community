@@ -177,7 +177,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     final Executor executor = isDebug ? DefaultDebugExecutor.getDebugExecutorInstance() : DefaultRunExecutor.getRunExecutorInstance();
 
     final InputEvent event = e.getInputEvent();
-    if (!(event instanceof MouseEvent)) {
+    if (!(event instanceof MouseEvent) || !event.isShiftDown()) {
       final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), profile);
       LOG.assertTrue(runner != null);
       performAction(runner, profile, myEnvironment.getExecutor());
