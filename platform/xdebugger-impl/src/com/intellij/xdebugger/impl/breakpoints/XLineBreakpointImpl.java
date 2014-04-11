@@ -109,6 +109,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
       highlighter.setGutterIconRenderer(createGutterIconRenderer());
       highlighter.putUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY, Boolean.TRUE);
       highlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
+      highlighter.setErrorStripeMarkColor(attributes.getBackgroundColor());
       myHighlighter = highlighter;
     }
     else {
