@@ -33,7 +33,7 @@ public class IfCanBeSwitchInspectionTest extends IGInspectionTestCase {
   public void test() throws Exception {
     final IfCanBeSwitchInspection inspection = new IfCanBeSwitchInspection();
     inspection.suggestIntSwitches = true;
-    inspection.onlySuggestNullSafe = true;
+    inspection.setOnlySuggestNullSafe(true);
     doTest("com/siyeh/igtest/migration/if_switch", new LocalInspectionToolWrapper(inspection));
   }
 }
