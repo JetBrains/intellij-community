@@ -16,14 +16,16 @@ import com.intellij.util.xmlb.annotations.Tag;
 import org.apache.http.*;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HttpContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import static com.intellij.tasks.impl.httpclient.ResponseUtil.GsonMultipleObjectsDeserializer;
 import static com.intellij.tasks.impl.httpclient.ResponseUtil.GsonSingleObjectDeserializer;
@@ -35,9 +37,13 @@ import static com.intellij.tasks.impl.httpclient.ResponseUtil.GsonSingleObjectDe
 public class GitlabRepository extends NewBaseRepositoryImpl {
 
   @NonNls public static final String REST_API_PATH_PREFIX = "/api/v3/";
+  private static final Pattern ID_PATTERN = Pattern.compile("\\d+");
+
   public static final Gson GSON = GsonUtil.createDefaultBuilder().create();
-  public static final TypeToken<List<GitlabProject>> LIST_OF_PROJECTS_TYPE = new TypeToken<List<GitlabProject>>() {};
-  public static final TypeToken<List<GitlabIssue>> LIST_OF_ISSUES_TYPE = new TypeToken<List<GitlabIssue>>() {};
+  public static final TypeToken<List<GitlabProject>> LIST_OF_PROJECTS_TYPE = new TypeToken<List<GitlabProject>>() {
+  };
+  public static final TypeToken<List<GitlabIssue>> LIST_OF_ISSUES_TYPE = new TypeToken<List<GitlabIssue>>() {
+  };
   public static final GitlabProject UNSPECIFIED_PROJECT = new GitlabProject() {
     @Override
     public String getName() {
@@ -49,9 +55,8 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
       return -1;
     }
   };
-
-
   private GitlabProject myCurrentProject;
+  private List<GitlabProject> myProjects = null;
 
   /**
    * Serialization constructor
@@ -94,7 +99,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
     return ContainerUtil.map2Array(fetchIssues(), GitlabTask.class, new Function<GitlabIssue, GitlabTask>() {
       @Override
       public GitlabTask fun(GitlabIssue issue) {
-        return new GitlabTask(GitlabRepository.this, myCurrentProject, issue);
+        return new GitlabTask(GitlabRepository.this, issue);
       }
     });
   }
@@ -102,7 +107,11 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   @Nullable
   @Override
   public Task findTask(@NotNull String id) throws Exception {
-    return new GitlabTask(this, myCurrentProject, fetchIssue(Integer.parseInt(id)));
+    // doesn't work now, because Gitlab's REST API doesn't provide endpoint to find task
+    // by its global ID, only by project ID and task's local ID (iid).
+    //GitlabIssue issue = fetchIssue(Integer.parseInt(id));
+    //return issue == null ? null : new GitlabTask(this, issue);
+    return null;
   }
 
   @Nullable
@@ -128,22 +137,27 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
     };
   }
 
+  /**
+   * Always forcibly attempts do fetch new projects from server.
+   */
   @NotNull
-  List<GitlabProject> fetchProjects() throws Exception {
+  public List<GitlabProject> fetchProjects() throws Exception {
     HttpGet request = new HttpGet(getRestApiUrl("projects"));
     ResponseHandler<List<GitlabProject>> handler = new GsonMultipleObjectsDeserializer<GitlabProject>(GSON, LIST_OF_PROJECTS_TYPE);
-    return getHttpClient().execute(request, handler);
+    myProjects = getHttpClient().execute(request, handler);
+    return Collections.unmodifiableList(myProjects);
   }
 
   @SuppressWarnings("UnusedDeclaration")
   @NotNull
-  GitlabProject fetchProject(int id) throws Exception {
+  public GitlabProject fetchProject(int id) throws Exception {
     HttpGet request = new HttpGet(getRestApiUrl("project", id));
     return getHttpClient().execute(request, new GsonSingleObjectDeserializer<GitlabProject>(GSON, GitlabProject.class));
   }
 
   @NotNull
-  List<GitlabIssue> fetchIssues() throws Exception {
+  public List<GitlabIssue> fetchIssues() throws Exception {
+    ensureProjectsDiscovered();
     ResponseHandler<List<GitlabIssue>> handler = new GsonMultipleObjectsDeserializer<GitlabIssue>(GSON, LIST_OF_ISSUES_TYPE);
     return getHttpClient().execute(new HttpGet(getIssuesUrl()), handler);
   }
@@ -155,11 +169,27 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
     return getRestApiUrl("issues");
   }
 
-  @NotNull
-  GitlabIssue fetchIssue(int id) throws Exception {
+  @Nullable
+  public GitlabIssue fetchIssue(int id) throws Exception {
+    ensureProjectsDiscovered();
     HttpGet request = new HttpGet(getRestApiUrl("issues", id));
     ResponseHandler<GitlabIssue> handler = new GsonSingleObjectDeserializer<GitlabIssue>(GSON, GitlabIssue.class);
     return getHttpClient().execute(request, handler);
+  }
+
+  @Override
+  public String getPresentableName() {
+    String name = getUrl();
+    if (myCurrentProject != null && myCurrentProject != UNSPECIFIED_PROJECT) {
+      name += "/" + myCurrentProject.getName();
+    }
+    return name;
+  }
+
+  @Nullable
+  @Override
+  public String extractId(@NotNull String taskName) {
+    return ID_PATTERN.matcher(taskName).matches() ? taskName : null;
   }
 
   @Override
@@ -179,7 +209,8 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
     return new HttpRequestInterceptor() {
       @Override
       public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
-        request.addHeader(new BasicHeader("PRIVATE-TOKEN", myPassword));
+        request.addHeader("PRIVATE-TOKEN", myPassword);
+        //request.addHeader("Accept", "application/json");
       }
     };
   }
@@ -190,5 +221,30 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
 
   public GitlabProject getCurrentProject() {
     return myCurrentProject;
+  }
+
+  /**
+   * May return cached projects or make request to receive new ones.
+   */
+  @NotNull
+  public List<GitlabProject> getProjects() {
+    try {
+      ensureProjectsDiscovered();
+    }
+    catch (Exception ignored) {
+      return Collections.emptyList();
+    }
+    return Collections.unmodifiableList(myProjects);
+  }
+
+  private void ensureProjectsDiscovered() throws Exception {
+    if (myProjects == null) {
+      fetchProjects();
+    }
+  }
+
+  @TestOnly
+  public void setCachedProjects(@NotNull List<GitlabProject> projects) {
+    myProjects = projects;
   }
 }
