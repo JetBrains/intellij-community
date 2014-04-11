@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -268,21 +269,8 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
       final String methodReferenceName = methodExpression.getReferenceName();
       if (qualifierExpression != null) {
         boolean isReceiverType = PsiMethodReferenceUtil.isReceiverType(functionalInterfaceType, containingClass, psiMethod);
-        final String qualifier;
-        if (isReceiverType) {
-          final PsiMethod nonAmbiguousMethod = ensureNonAmbiguousMethod(parameters, psiMethod);
-          LOG.assertTrue(nonAmbiguousMethod != null);
-          final PsiClass nonAmbiguousContainingClass = nonAmbiguousMethod.getContainingClass();
-          if (!containingClass.equals(nonAmbiguousContainingClass)) {
-            qualifier = getClassReferenceName(nonAmbiguousContainingClass);
-          } else {
-            final PsiType qualifierExpressionType = qualifierExpression.getType();
-            qualifier = qualifierExpressionType != null ? qualifierExpressionType.getCanonicalText() : getClassReferenceName(nonAmbiguousContainingClass);
-          }
-        }
-        else {
-          qualifier = qualifierExpression.getText();
-        }
+        final String qualifier = isReceiverType ? composeReceiverQualifierText(parameters, psiMethod, containingClass, qualifierExpression) 
+                                                : qualifierExpression.getText();
         methodRefText = qualifier + "::" + ((PsiMethodCallExpression)element).getTypeArgumentList().getText() + methodReferenceName;
       }
       else {
@@ -328,6 +316,28 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
       }
     }
     return methodRefText;
+  }
+
+  private static String composeReceiverQualifierText(PsiParameter[] parameters,
+                                                     PsiMethod psiMethod,
+                                                     PsiClass containingClass,
+                                                     @NotNull PsiExpression qualifierExpression) {
+    final PsiMethod nonAmbiguousMethod = ensureNonAmbiguousMethod(parameters, psiMethod);
+    LOG.assertTrue(nonAmbiguousMethod != null);
+    final PsiClass nonAmbiguousContainingClass = nonAmbiguousMethod.getContainingClass();
+    if (!containingClass.equals(nonAmbiguousContainingClass)) {
+      return getClassReferenceName(nonAmbiguousContainingClass);
+    }
+
+    if (nonAmbiguousContainingClass.isPhysical() && qualifierExpression instanceof PsiReferenceExpression) {
+      final PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
+      if (resolve instanceof PsiParameter && ArrayUtil.find(parameters, resolve) > -1 && ((PsiParameter)resolve).getTypeElement() == null) {
+        return getClassReferenceName(nonAmbiguousContainingClass);
+      }
+    }
+
+    final PsiType qualifierExpressionType = qualifierExpression.getType();
+    return qualifierExpressionType != null ? qualifierExpressionType.getCanonicalText() : getClassReferenceName(nonAmbiguousContainingClass);
   }
 
   private static String getClassReferenceName(PsiClass containingClass) {
