@@ -99,7 +99,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
       return super.getTypeGroovy();
     }
     else if (parent instanceof GrCatchClause) {
-      return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, this);
+      return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_EXCEPTION, this);
     }
 
     return KnownRecursionManager.getInstance().run(this, new Computable<PsiType>() {
