@@ -646,6 +646,7 @@
           <option name="BACKGROUND" value="ff"/>
           <option name="FOREGROUND" value="ffffff"/>
           <option name="EFFECT_COLOR"/>
+          <option name="ERROR_STRIPE_COLOR" value="ff" />
         </value>
       </option>
 
@@ -668,6 +669,7 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="ffc8c8"/>
           <option name="EFFECT_COLOR"/>
+          <option name="ERROR_STRIPE_COLOR" value="ffc8c8" />
         </value>
       </option>
 
