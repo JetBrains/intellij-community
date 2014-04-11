@@ -1,7 +1,7 @@
 package org.jetbrains.debugger.values;
 
 /**
- * Don't forget to update NashornDebuggerSupport.ValueType respectively also
+ * Don't forget to update NashornDebuggerSupport.ValueType and debuggerSupport.js respectively also
  */
 public enum ValueType {
   OBJECT,
@@ -11,8 +11,6 @@ public enum ValueType {
   BOOLEAN,
 
   ARRAY,
-  REGEXP,
-  DATE,
   NODE,
 
   /**
@@ -31,6 +29,6 @@ public enum ValueType {
    * not a {@link ObjectValue}
    */
   public boolean isObjectType() {
-    return this == OBJECT || this == ARRAY || this == FUNCTION || this == REGEXP || this == DATE || this == NODE;
+    return this == OBJECT || this == ARRAY || this == FUNCTION || this == NODE;
   }
 }
