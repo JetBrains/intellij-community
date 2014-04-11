@@ -85,6 +85,10 @@ public class MoveInnerTest extends MultiFileTestCase {
     doTest(createAction("p.A.B", "B", false, null, false, false, null));
   }
 
+  public void testConstructorUtilClassVisibility() throws Exception {
+    doTest(createAction("p.A.B", "B", false, null, false, false, null));
+  }
+
   public void testFieldAccessInSuper() throws Exception {
     doTest(createAction("p.A.B", "B", true, "a", false, false, null));
   }

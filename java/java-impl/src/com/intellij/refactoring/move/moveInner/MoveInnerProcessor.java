@@ -250,6 +250,23 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
         reference.bindToElement(newClass);
       }
 
+      for (UsageInfo usage : usages) {
+        final PsiElement element = usage.getElement();
+        final PsiElement parent = element != null ? element.getParent() : null;
+        if (parent instanceof PsiNewExpression) {
+          final PsiMethod resolveConstructor = ((PsiNewExpression)parent).resolveConstructor();
+          for (PsiMethod method : newClass.getConstructors()) {
+            if (resolveConstructor == method) {
+              final PsiElement place = usage.getElement();
+              if (place != null) {
+                VisibilityUtil.escalateVisibility(method, place);
+              }
+              break;
+            }
+          }
+        }
+      }
+
       if (field != null) {
         final PsiExpression paramAccessExpression = factory.createExpressionFromText(myParameterNameOuterClass, null);
         for (final PsiMethod constructor : newClass.getConstructors()) {
