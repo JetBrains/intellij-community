@@ -15,6 +15,9 @@
  */
 package com.intellij.codeInsight.template;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
@@ -33,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author Eugene.Kudelevsky
@@ -43,10 +47,14 @@ public class CustomTemplateCallback {
   private final PsiFile myFile;
   private final int myOffset;
   private final Project myProject;
-
   private final boolean myInInjectedFragment;
-
-  private FileType myFileType;
+  
+  private final LoadingCache<TemplateImpl, Boolean> myAvailabilityCache = CacheBuilder.newBuilder().weakKeys().build(new CacheLoader<TemplateImpl, Boolean>() {
+    @Override
+    public Boolean load(@NotNull TemplateImpl template) throws Exception {
+      return isAvailableTemplate(template);
+    }
+  });
 
   public CustomTemplateCallback(@NotNull Editor editor, @NotNull PsiFile file, boolean wrapping) {
     myProject = file.getProject();
@@ -95,11 +103,20 @@ public class CustomTemplateCallback {
   public List<TemplateImpl> filterApplicableCandidates(Collection<? extends TemplateImpl> candidates) {
     List<TemplateImpl> result = new ArrayList<TemplateImpl>();
     for (TemplateImpl candidate : candidates) {
-      if (!candidate.isDeactivated() && TemplateManagerImpl.isApplicable(myFile, myOffset, candidate)) {
-        result.add(candidate);
+      try {
+        if (myAvailabilityCache.get(candidate)) {
+          result.add(candidate);
+        }
+      }
+      catch (ExecutionException ignore) {
+        // filter error
       }
     }
     return result;
+  }
+
+  public boolean isAvailableTemplate(TemplateImpl template) {
+    return !template.isDeactivated() && TemplateManagerImpl.isApplicable(myFile, myOffset, template);
   }
 
   public void startTemplate(Template template, Map<String, String> predefinedValues, TemplateEditingListener listener) {
@@ -136,10 +153,7 @@ public class CustomTemplateCallback {
 
   @NotNull
   public FileType getFileType() {
-    if (myFileType == null) {
-      myFileType = myFile.getFileType();
-    }
-    return myFileType;
+    return myFile.getFileType();
   }
 
   public Project getProject() {
