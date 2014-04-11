@@ -23,7 +23,9 @@ import com.intellij.vcs.log.graph.utils.impl.IntTimestampGetter;
 import com.intellij.vcs.log.graph.GraphCommit;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public class PermanentCommitsInfo<CommitId> {
 
@@ -77,6 +79,37 @@ public class PermanentCommitsInfo<CommitId> {
 
   public int size() {
     return myCommitIdIndexes.size();
+  }
+
+  @NotNull
+  public List<CommitId> convertToCommitIdList(@NotNull Collection<Integer> commitIndexes) {
+    return ContainerUtil.map(commitIndexes, new Function<Integer, CommitId>() {
+      @Override
+      public CommitId fun(Integer integer) {
+        return getCommitId(integer);
+      }
+    });
+  }
+
+  @NotNull
+  public Set<CommitId> convertToCommitIdSet(@NotNull Collection<Integer> commitIndexes) {
+    return ContainerUtil.map2Set(commitIndexes, new Function<Integer, CommitId>() {
+      @Override
+      public CommitId fun(Integer integer) {
+        return getCommitId(integer);
+      }
+    });
+  }
+
+  // todo optimise for branches CommitId
+  @NotNull
+  public Set<Integer> convertToCommitIndexes(@NotNull Collection<CommitId> commitIds) {
+    return ContainerUtil.map2Set(commitIds, new Function<CommitId, Integer>() {
+      @Override
+      public Integer fun(CommitId commitId) {
+        return getPermanentNodeIndex(commitId);
+      }
+    });
   }
 
 }
