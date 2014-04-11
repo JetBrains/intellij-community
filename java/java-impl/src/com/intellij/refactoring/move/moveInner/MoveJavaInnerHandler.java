@@ -28,7 +28,7 @@ public class MoveJavaInnerHandler implements MoveInnerHandler {
 
     PsiClass newClass;
     if (options.getTargetContainer() instanceof PsiDirectory) {
-      newClass = JavaDirectoryService.getInstance().createClass((PsiDirectory)options.getTargetContainer(), options.getNewClassName());
+      newClass = createNewClass(options);
       PsiDocComment defaultDocComment = newClass.getDocComment();
       if (defaultDocComment != null && innerClass.getDocComment() == null) {
         innerClass = (PsiClass)innerClass.addAfter(defaultDocComment, null).getParent();
@@ -50,6 +50,10 @@ public class MoveJavaInnerHandler implements MoveInnerHandler {
     newClass.setName(options.getNewClassName());
 
     return newClass;
+  }
+
+  protected PsiClass createNewClass(MoveInnerOptions options) {
+    return JavaDirectoryService.getInstance().createClass((PsiDirectory)options.getTargetContainer(), options.getNewClassName());
   }
 
   protected static boolean needPublicAccess(final PsiClass outerClass, final PsiElement targetContainer) {
