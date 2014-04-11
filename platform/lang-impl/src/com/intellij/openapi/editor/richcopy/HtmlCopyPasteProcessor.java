@@ -55,7 +55,7 @@ public class HtmlCopyPasteProcessor extends BaseTextWithMarkupCopyPasteProcessor
     appendColor(myBuilder, myDefaultBackground);
     myBuilder.append(';');
     appendFontFamilyRule(myBuilder, myDefaultFontFamily);
-    myBuilder.append("font-size:").append(myFontSize).append(';');
+    myBuilder.append("font-size:").append(myFontSize).append("pt;");
     myBuilder.append("\" bgcolor=\"");
     appendColor(myBuilder, myDefaultBackground);
     myBuilder.append("\">");
