@@ -25,10 +25,7 @@ import com.intellij.ide.util.newProjectWizard.FrameworkSupportNode;
 import com.intellij.ide.util.newProjectWizard.TemplatesGroup;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.ide.util.newProjectWizard.modes.CreateFromTemplateMode;
-import com.intellij.ide.util.projectWizard.EmptyModuleBuilder;
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.ide.util.projectWizard.*;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
@@ -63,6 +60,7 @@ import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.*;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -82,7 +80,7 @@ import java.util.List;
  *         Date: 04.09.13
  */
 @SuppressWarnings("unchecked")
-public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
+public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, Disposable {
 
   private static final String TEMPLATES_CARD = "templates card";
   private static final String FRAMEWORKS_CARD = "frameworks card";
@@ -107,12 +105,16 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
   private JBList myProjectTypeList;
   private ProjectTemplateList myTemplatesList;
   private JPanel myFrameworksPanelPlaceholder;
+  private JPanel myHeaderPanel;
 
   private final WizardContext myContext;
   private final NewProjectWizard myWizard;
   private final ModulesProvider myModulesProvider;
   private final AddSupportForFrameworksPanel myFrameworksPanel;
   private final ModuleBuilder.ModuleConfigurationUpdater myConfigurationUpdater;
+  @Nullable
+  private ModuleWizardStep mySettingsStep;
+
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final FactoryMap<ProjectTemplate, ModuleBuilder> myBuilders = new FactoryMap<ProjectTemplate, ModuleBuilder>() {
@@ -202,7 +204,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
         return StringUtil.notNullize(builder.getContentEntryPath());
       }
     };
-    myFrameworksPanel = new AddSupportForFrameworksPanel(Collections.<FrameworkSupportInModuleProvider>emptyList(), model, true);
+    myFrameworksPanel = new AddSupportForFrameworksPanel(Collections.<FrameworkSupportInModuleProvider>emptyList(), model, true, myHeaderPanel);
     Disposer.register(this, myFrameworksPanel);
     myFrameworksPanelPlaceholder.add(myFrameworksPanel.getMainPanel());
 
@@ -364,6 +366,13 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     if (group == null) return;
     PropertiesComponent.getInstance().setValue(PROJECT_WIZARD_GROUP, group.getId() );
     ModuleBuilder groupModuleBuilder = group.getModuleBuilder();
+
+    mySettingsStep = null;
+    myHeaderPanel.removeAll();
+    if (groupModuleBuilder != null && groupModuleBuilder.getModuleType() != null) {
+      mySettingsStep = groupModuleBuilder.modifyProjectTypeStep(this);
+    }
+
     if (groupModuleBuilder == null || groupModuleBuilder.isTemplateBased()) {
       showTemplates(group);
     }
@@ -398,6 +407,21 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
 
       showCard(FRAMEWORKS_CARD);
     }
+
+    myHeaderPanel.setVisible(myHeaderPanel.getComponentCount() > 0);
+    // align header labels
+    List<JLabel> labels = UIUtil.findComponentsOfType(myHeaderPanel, JLabel.class);
+    int width = 0;
+    for (JLabel label : labels) {
+      int width1 = label.getPreferredSize().width;
+      width = Math.max(width, width1);
+    }
+    for (JLabel label : labels) {
+      label.setPreferredSize(new Dimension(width, label.getPreferredSize().height));
+    }
+    myHeaderPanel.revalidate();
+    myHeaderPanel.repaint();
+
     updateSelection();
   }
 
@@ -519,10 +543,16 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     if (step != null) {
       step.updateDataModel();
     }
+    if (mySettingsStep != null) {
+      mySettingsStep.updateDataModel();
+    }
   }
 
   @Override
   public boolean validate() throws ConfigurationException {
+    if (mySettingsStep != null) {
+      if (!mySettingsStep.validate()) return false;
+    }
     ModuleWizardStep step = getCustomStep();
     return step != null ? step.validate() : super.validate();
   }
@@ -629,5 +659,34 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
   @TestOnly
   public AddSupportForFrameworksPanel getFrameworksPanel() {
     return myFrameworksPanel;
+  }
+
+  @Override
+  public WizardContext getContext() {
+    return myContext;
+  }
+
+  @Override
+  public void addSettingsField(@NotNull String label, @NotNull JComponent field) {
+    ProjectSettingsStep.addField(label, field, myHeaderPanel);
+  }
+
+  @Override
+  public void addSettingsComponent(@NotNull JComponent component) {
+  }
+
+  @Override
+  public void addExpertPanel(@NotNull JComponent panel) {
+
+  }
+
+  @Override
+  public void addExpertField(@NotNull String label, @NotNull JComponent field) {
+
+  }
+
+  @Override
+  public JTextField getModuleNameField() {
+    return null;
   }
 }
