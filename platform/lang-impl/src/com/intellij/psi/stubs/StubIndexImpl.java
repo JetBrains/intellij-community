@@ -428,7 +428,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   public <K> void updateIndex(@NotNull StubIndexKey key, int fileId, @NotNull final Map<K, StubIdList> oldValues, @NotNull Map<K, StubIdList> newValues) {
     try {
       final MyIndex<K> index = (MyIndex<K>)myIndices.get(key);
-      index.updateWithMap(fileId, newValues, new NotNullComputable<Collection<K>>() {
+      index.updateWithMap(fileId, fileId, newValues, new NotNullComputable<Collection<K>>() {
         @NotNull
         @Override
         public Collection<K> compute() {
@@ -449,9 +449,9 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
     @Override
     public void updateWithMap(final int inputId,
-                              @NotNull final Map<K, StubIdList> newData,
+                              int savedInputId, @NotNull final Map<K, StubIdList> newData,
                               @NotNull NotNullComputable<Collection<K>> oldKeysGetter) throws StorageException {
-      super.updateWithMap(inputId, newData, oldKeysGetter);
+      super.updateWithMap(inputId, savedInputId, newData, oldKeysGetter);
     }
   }
 

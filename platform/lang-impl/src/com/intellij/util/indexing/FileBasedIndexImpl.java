@@ -61,6 +61,7 @@ import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.PsiTreeChangePreprocessor;
+import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.EverythingGlobalScope;
@@ -141,7 +142,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   private final ConcurrentHashSet<Project> myProjectsBeingUpdated = new ConcurrentHashSet<Project>();
 
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"}) private volatile boolean myInitialized;
-  // need this variable for memory barrier
+    // need this variable for memory barrier
 
   public FileBasedIndexImpl(@SuppressWarnings("UnusedParameters") VirtualFileManager vfManager,
                             FileDocumentManager fdm,
@@ -514,7 +515,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       index = (MapReduceIndex<K, V, FileContent>)custom;
     }
     else {
-      index = new MapReduceIndex<K, V, FileContent>(indexId, extension.getIndexer(), storage);
+      index = new MapReduceIndex<K, V, FileContent>(indexId, extension.getIndexer(), storage, extension.hasSnapshotMapping() && IdIndex.ourSnapshotMappingsEnabled ? extension.getKeyDescriptor() : null);
     }
 
     final KeyDescriptor<K> keyDescriptor = extension.getKeyDescriptor();

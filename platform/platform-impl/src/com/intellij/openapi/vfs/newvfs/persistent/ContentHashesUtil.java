@@ -59,7 +59,7 @@ public class ContentHashesUtil {
 
   public static class HashEnumerator extends PersistentBTreeEnumerator<byte[]> {
     public HashEnumerator(File contentsHashesFile, PagedFileStorage.StorageLockContext storageLockContext) throws IOException {
-      super(contentsHashesFile, new ContentHashesDescriptor(), 1024 * 1024, storageLockContext);
+      super(contentsHashesFile, new ContentHashesDescriptor(), 64 * 1024, storageLockContext);
     }
 
     @Override

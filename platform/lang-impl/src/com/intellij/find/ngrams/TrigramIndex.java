@@ -21,6 +21,7 @@ package com.intellij.find.ngrams;
 
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
@@ -100,7 +101,7 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> {
 
   @Override
   public int getVersion() {
-    return ENABLED ? 2 : 1;
+    return ENABLED ? 2 + (IdIndex.ourSnapshotMappingsEnabled ? 0xFF:0) : 1;
   }
 
   @Override
