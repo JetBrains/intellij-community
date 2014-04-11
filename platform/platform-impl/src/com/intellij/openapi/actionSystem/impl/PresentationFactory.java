@@ -31,14 +31,21 @@ public class PresentationFactory {
   public final Presentation getPresentation(@NotNull AnAction action){
     Presentation presentation = myAction2Presentation.get(action);
     if (presentation == null || !action.isDefaultIcon()){
-      presentation = action.getTemplatePresentation().clone();
-      myAction2Presentation.put(action, processPresentation(presentation));
+      Presentation templatePresentation = action.getTemplatePresentation();
+      if (presentation == null) {
+        presentation = templatePresentation.clone();
+        myAction2Presentation.put(action, presentation);
+      }
+      if (!action.isDefaultIcon()) {
+        presentation.setIcon(templatePresentation.getIcon());
+        presentation.setDisabledIcon(templatePresentation.getDisabledIcon());
+      }
+      processPresentation(presentation);
     }
     return presentation;
   }
 
-  protected Presentation processPresentation(Presentation presentation) {
-    return presentation;
+  protected void processPresentation(Presentation presentation) {
   }
 
   public void reset() {
