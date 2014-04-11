@@ -1,6 +1,7 @@
 package com.intellij.tasks.impl.httpclient;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -22,6 +23,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -98,15 +100,22 @@ public class ResponseUtil {
     @Override
     public T handleResponse(HttpResponse response) throws IOException {
       int statusCode = response.getStatusLine().getStatusCode();
+      LOG.info("Status code: " + statusCode);
       if (statusCode >= 400 && statusCode < 500) {
         return null;
       }
-      if (LOG.isDebugEnabled()) {
-        String content = getResponseContentAsString(response);
-        TaskUtil.prettyFormatJsonToLog(LOG, content);
-        return myGson.fromJson(content, myClass);
+      try {
+        if (LOG.isDebugEnabled()) {
+          String content = getResponseContentAsString(response);
+          TaskUtil.prettyFormatJsonToLog(LOG, content);
+          return myGson.fromJson(content, myClass);
+        }
+        return myGson.fromJson(getResponseContentAsReader(response), myClass);
       }
-      return myGson.fromJson(getResponseContentAsReader(response), myClass);
+      catch (JsonSyntaxException e) {
+        LOG.warn("Malformed server response", e);
+        return null;
+      }
     }
   }
 
@@ -120,12 +129,23 @@ public class ResponseUtil {
 
     @Override
     public List<T> handleResponse(HttpResponse response) throws IOException {
-      if (LOG.isDebugEnabled()) {
-        String content = getResponseContentAsString(response);
-        TaskUtil.prettyFormatJsonToLog(LOG, content);
-        return myGson.fromJson(content, myTypeToken.getType());
+      int statusCode = response.getStatusLine().getStatusCode();
+      if (statusCode >= 400 && statusCode < 500) {
+        return Collections.emptyList();
       }
-      return myGson.fromJson(getResponseContentAsReader(response), myTypeToken.getType());
+      LOG.info("Status code: " + statusCode);
+      try {
+        if (LOG.isDebugEnabled()) {
+          String content = getResponseContentAsString(response);
+          TaskUtil.prettyFormatJsonToLog(LOG, content);
+          return myGson.fromJson(content, myTypeToken.getType());
+        }
+        return myGson.fromJson(getResponseContentAsReader(response), myTypeToken.getType());
+      }
+      catch (JsonSyntaxException e) {
+        LOG.warn("Malformed server response", e);
+        return Collections.emptyList();
+      }
     }
   }
 }
