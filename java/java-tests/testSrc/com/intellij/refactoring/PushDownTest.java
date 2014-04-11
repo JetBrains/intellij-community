@@ -60,6 +60,8 @@ public class PushDownTest extends LightRefactoringTestCase {
   public void testFunctionalInterface() { doTest(true);}
   public void testFunctionalExpressionDefaultMethod() { doTest();}
 
+  public void testInterfaceConstants() { doTest();}
+
   private void doTest() {
     doTest(false);
   }
