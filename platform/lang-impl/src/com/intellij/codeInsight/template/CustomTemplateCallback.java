@@ -41,7 +41,7 @@ public class CustomTemplateCallback {
   private final TemplateManager myTemplateManager;
   private final Editor myEditor;
   private final PsiFile myFile;
-  private int myOffset;
+  private final int myOffset;
   private final Project myProject;
 
   private final boolean myInInjectedFragment;
@@ -52,14 +52,12 @@ public class CustomTemplateCallback {
     myProject = file.getProject();
     myTemplateManager = TemplateManager.getInstance(myProject);
 
-    int offset = getOffset(wrapping, editor);
-    PsiElement element = InjectedLanguageUtil.findInjectedElementNoCommit(file, offset);
+    myOffset = getOffset(wrapping, editor);
+    PsiElement element = InjectedLanguageUtil.findInjectedElementNoCommit(file, myOffset);
     myFile = element != null ? element.getContainingFile() : file;
 
     myInInjectedFragment = InjectedLanguageManager.getInstance(myProject).isInjectedFragment(myFile);
-    myEditor = myInInjectedFragment ? InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file, offset) : editor;
-
-    fixInitialState(wrapping);
+    myEditor = myInInjectedFragment ? InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file, myOffset) : editor;
   }
 
   @NotNull
@@ -67,8 +65,8 @@ public class CustomTemplateCallback {
     return getContext(myFile, myOffset);
   }
 
-  public void fixInitialState(boolean wrapping) {
-    myOffset = getOffset(wrapping, myEditor);
+  public int getOffset() {
+    return myOffset;
   }
 
   private static int getOffset(boolean wrapping, Editor editor) {
@@ -88,7 +86,7 @@ public class CustomTemplateCallback {
   }
 
   @NotNull
-  public List<TemplateImpl> findApplicableTemplates(String key) {
+  public List<TemplateImpl> findApplicableTemplates(@NotNull String key) {
     List<TemplateImpl> templates = getMatchingTemplates(key);
     templates = filterApplicableCandidates(templates);
     return templates;
