@@ -211,7 +211,8 @@ public abstract class DebuggerUtils {
     }
   }
 
-  protected static ArrayClass getArrayClass(String className) {
+  @Nullable
+  protected static ArrayClass getArrayClass(@NotNull String className) {
     boolean searchBracket = false;
     int dims = 0;
     int pos;
@@ -241,7 +242,7 @@ public abstract class DebuggerUtils {
     return new ArrayClass(className.substring(0, pos + 1), dims);
   }
 
-  public static boolean instanceOf(String subType, String superType, Project project) {
+  public static boolean instanceOf(@NotNull String subType ,@NotNull String superType, @Nullable Project project) {
     if(project == null) {
       return subType.equals(superType);
     }
@@ -348,7 +349,7 @@ public abstract class DebuggerUtils {
   }
 
   @Nullable
-  public static PsiClass findClass(final String className, Project project, final GlobalSearchScope scope) {
+  public static PsiClass findClass(@NotNull final String className, @NotNull Project project, final GlobalSearchScope scope) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     final PsiManager psiManager = PsiManager.getInstance(project);
     final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(psiManager.getProject());
@@ -381,7 +382,8 @@ public abstract class DebuggerUtils {
     return aClass;
   }
 
-  public static PsiType getType(String className, Project project) {
+  @Nullable
+  public static PsiType getType(@NotNull String className, @NotNull Project project) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     final PsiManager psiManager = PsiManager.getInstance(project);
