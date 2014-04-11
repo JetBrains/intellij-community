@@ -416,7 +416,6 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
           public void run() {
             callback.getEditor().getCaretModel().runForEachCaret(new CaretAction() {
               public void perform(Caret caret) {
-                callback.fixInitialState(true);
                 String selectedText = callback.getEditor().getSelectionModel().getSelectedText();
                 if (selectedText != null) {
                   String selection = selectedText.trim();
@@ -460,10 +459,14 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
 
   @Override
   public void addCompletions(CompletionParameters parameters, CompletionResultSet result) {
-    PsiFile file = parameters.getOriginalFile();
+    if (!parameters.isAutoPopup()) {
+      return;
+    }
+
+    PsiFile file = parameters.getPosition().getContainingFile();
     int offset = parameters.getOffset();
     Editor editor = parameters.getEditor();
-    
+
     ZenCodingGenerator generator = findApplicableDefaultGenerator(CustomTemplateCallback.getContext(file, offset), false);
     if (generator != null && generator.hasCompletionItem()) {
       final Ref<TemplateImpl> generatedTemplate = new Ref<TemplateImpl>();
@@ -481,7 +484,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
       };
 
       String templatePrefix = computeTemplateKeyWithoutContextChecking(callback);
-      
+
       if (templatePrefix != null) {
         if (LiveTemplateCompletionContributor.findApplicableTemplate(file, offset, templatePrefix) == null) {
           // exclude perfect matches with existing templates because LiveTemplateCompletionContributor handles it
