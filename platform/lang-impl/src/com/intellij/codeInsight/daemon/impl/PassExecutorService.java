@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -539,6 +540,7 @@ public abstract class PassExecutorService implements Disposable {
   private static void saveException(Throwable e, DaemonProgressIndicator indicator) {
     indicator.putUserDataIfAbsent(THROWABLE_KEY, e);
   }
+  @TestOnly
   public static Throwable getSavedException(DaemonProgressIndicator indicator) {
     return indicator.getUserData(THROWABLE_KEY);
   }
@@ -556,6 +558,9 @@ public abstract class PassExecutorService implements Disposable {
       return false;
     }
     catch (InterruptedException e) {
+      return true;
+    }
+    catch (CancellationException e) {
       return true;
     }
     catch (ExecutionException e) {
