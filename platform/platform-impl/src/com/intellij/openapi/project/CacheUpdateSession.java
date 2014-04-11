@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,7 +32,6 @@ import java.util.*;
 
 public class CacheUpdateSession {
   private static final Logger LOG = Logger.getInstance("#" + CacheUpdateSession.class.getName());
-  private static final Key<Boolean> FAILED_TO_INDEX = Key.create(CacheUpdateSession.class.getSimpleName() + ".FAILED_TO_INDEX");
   private final List<VirtualFile> myFilesToUpdate;
   private final int myJobsToDo;
   private final List<Pair<CacheUpdater, Collection<VirtualFile>>> myUpdatersWithFiles = new ArrayList<Pair<CacheUpdater, Collection<VirtualFile>>>();
@@ -94,13 +92,14 @@ public class CacheUpdateSession {
     VirtualFile file = content.getVirtualFile();
     boolean isValid = file.isValid() && !file.isDirectory();
 
+    Throwable exception = null;
     while (true) {
       Pair<CacheUpdater, Collection<VirtualFile>> pair = getPair(file);
-      if (pair == null) return;
+      if (pair == null) break;
       CacheUpdater eachUpdater = pair.getFirst();
       Collection<VirtualFile> eachFiles = pair.getSecond();
       try {
-        if (isValid && !Boolean.TRUE.equals(file.getUserData(FAILED_TO_INDEX))) {
+        if (isValid && exception == null) {
           eachUpdater.processFile(content);
         }
       }
@@ -108,11 +107,13 @@ public class CacheUpdateSession {
         throw e;
       }
       catch (Throwable e) {
-        LOG.error("Error while indexing " + file.getPresentableUrl() + "\n" + "To reindex this file IDEA has to be restarted", e);
-        file.putUserData(FAILED_TO_INDEX, Boolean.TRUE);
+        exception = e;
       }
       removeFile(file, eachUpdater, eachFiles);
     }
+    if (exception instanceof RuntimeException) throw (RuntimeException)exception;
+    if (exception instanceof Error) throw (Error)exception;
+    if (exception != null) throw new RuntimeException(exception);
   }
 
   private synchronized void removeFile(@NotNull VirtualFile file, @NotNull CacheUpdater eachUpdater, @NotNull Collection<VirtualFile> eachFiles) {

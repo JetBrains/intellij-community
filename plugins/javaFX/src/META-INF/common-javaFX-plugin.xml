@@ -52,6 +52,7 @@
     <completion.contributor implementationClass="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxCompletionContributor" language="XML" order="before xmlNonFirst"/>
     <manifest.parser.provider implementation="org.jetbrains.plugins.javaFX.manifest.JavaFxManifestHeaderParsers"/>
     <projectTemplate projectType="Java FX" templatePath="resources/projectTemplates/Java/JavaFX Application.zip" category="true"/>
+    <javaMainMethodProvider implementation="org.jetbrains.plugins.javaFX.JavaFXApplicationMainMethodProvider"/>
   </extensions>
 
   <actions>

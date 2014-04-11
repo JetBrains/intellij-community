@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.keymap.impl;
 
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -24,7 +25,6 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.testFramework.LightPlatformTestCase;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.MouseEvent;
 
 public class IdeMouseEventDispatcherTest extends LightPlatformTestCase {
@@ -34,7 +34,7 @@ public class IdeMouseEventDispatcherTest extends LightPlatformTestCase {
 
   private KeymapImpl keymap;
   private Keymap mySavedKeymap;
-  private Component myEventSource;
+  private JFrame myEventSource;
   private int myActionExecutionCount;
 
   public void setUp() throws Exception {
@@ -49,12 +49,13 @@ public class IdeMouseEventDispatcherTest extends LightPlatformTestCase {
     mySavedKeymap = KeymapManagerEx.getInstanceEx().getActiveKeymap();
     KeymapManagerEx.getInstanceEx().setActiveKeymap(keymap);
 
-    myEventSource = new JPanel();
+    myEventSource = new JFrame();
     myEventSource.setSize(1,1);
   }
 
   @Override
   public void tearDown() throws Exception {
+    myEventSource.dispose();
     KeymapManagerEx.getInstanceEx().getSchemesManager().removeScheme(keymap);
     KeymapManagerEx.getInstanceEx().setActiveKeymap(mySavedKeymap);
     ActionManager.getInstance().unregisterAction(OUR_TEST_ACTION);
@@ -70,11 +71,13 @@ public class IdeMouseEventDispatcherTest extends LightPlatformTestCase {
     assertEquals(1, myActionExecutionCount);
   }
 
-  public void testActionSuppressionAfterDrag() throws Exception {
+  public void testActionBlocking() throws Exception {
     IdeMouseEventDispatcher dispatcher = new IdeMouseEventDispatcher();
 
     assertFalse(dispatcher.dispatchMouseEvent(new MouseEvent(myEventSource, MouseEvent.MOUSE_PRESSED, 0, 0, 0, 0, 1, false, MouseEvent.BUTTON2)));
-    assertFalse(dispatcher.dispatchMouseEvent(new MouseEvent(myEventSource, MouseEvent.MOUSE_DRAGGED, 0, 0, 0, 0, 0, false, MouseEvent.BUTTON2)));
+    MouseEvent dragEvent = new MouseEvent(myEventSource, MouseEvent.MOUSE_DRAGGED, 0, 0, 0, 0, 0, false, MouseEvent.BUTTON2);
+    assertFalse(dispatcher.dispatchMouseEvent(dragEvent));
+    dispatcher.blockNextEvents(dragEvent, IdeEventQueue.BlockMode.ACTIONS);
     assertFalse(dispatcher.dispatchMouseEvent(new MouseEvent(myEventSource, MouseEvent.MOUSE_RELEASED, 0, 0, 0, 0, 1, false, MouseEvent.BUTTON2)));
     assertEquals(0, myActionExecutionCount);
   }

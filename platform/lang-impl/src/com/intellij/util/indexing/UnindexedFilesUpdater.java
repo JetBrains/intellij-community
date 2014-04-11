@@ -26,6 +26,7 @@ import com.intellij.openapi.project.CacheUpdateRunner;
 import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CollectingContentIterator;
+import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -50,6 +51,8 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   }
 
   private void updateUnindexedFiles(ProgressIndicator indicator) {
+    PushedFilePropertiesUpdater.getInstance(myProject).performPushTasks(indicator);
+
     indicator.setIndeterminate(true);
     indicator.setText(IdeBundle.message("progress.indexing.scanning"));
 

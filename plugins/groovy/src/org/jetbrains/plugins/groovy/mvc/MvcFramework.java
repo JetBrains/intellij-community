@@ -425,13 +425,7 @@ public abstract class MvcFramework {
     if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
       String path = StringUtil.trimEnd(sdk.getHomePath(), File.separator);
       if (StringUtil.isNotEmpty(path)) {
-        Map<String, String> env = params.getEnv();
-        if (env == null) {
-          env = new HashMap<String, String>();
-          params.setEnv(env);
-        }
-
-        env.put("JAVA_HOME", FileUtil.toSystemDependentName(path));
+        params.addEnv("JAVA_HOME", FileUtil.toSystemDependentName(path));
       }
     }
   }

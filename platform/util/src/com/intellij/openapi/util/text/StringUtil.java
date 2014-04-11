@@ -1700,6 +1700,13 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Nullable
+  public static String substringBefore(@NotNull String text, @NotNull String subString) {
+    int i = text.indexOf(subString);
+    if (i == -1) return null;
+    return text.substring(0, i);
+  }
+
+  @Nullable
   public static String substringAfter(@NotNull String text, @NotNull String subString) {
     int i = text.indexOf(subString);
     if (i == -1) return null;
