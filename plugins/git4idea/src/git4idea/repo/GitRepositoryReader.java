@@ -427,7 +427,10 @@ class GitRepositoryReader {
   @Nullable
   private static HashAndName parsePackedRefsLine(@NotNull String line) {
     line = line.trim();
-    char firstChar = line.isEmpty() ? 0 : line.charAt(0);
+    if (line.isEmpty()) {
+      return null;
+    }
+    char firstChar = line.charAt(0);
     if (firstChar == '#') { // ignoring comments
       return null;
     }
@@ -444,9 +447,14 @@ class GitRepositoryReader {
         break;
       }
     }
+    if (hash == null) {
+      LOG.warn("Ignoring invalid packed-refs line: [" + line + "]");
+      return null;
+    }
+
     String branch = null;
     int start = i;
-    if (hash != null && start < line.length() && line.charAt(start++) == ' ') {
+    if (start < line.length() && line.charAt(start++) == ' ') {
       for (i = start; i < line.length(); i++) {
         char c = line.charAt(i);
         if (Character.isWhitespace(c)) {
@@ -456,12 +464,11 @@ class GitRepositoryReader {
       branch = line.substring(start, i);
     }
 
-    if (hash != null && branch != null) {
-      return new HashAndName(shortBuffer(hash.trim()), shortBuffer(branch));
+    if (branch == null) {
+      LOG.warn("Ignoring invalid packed-refs line: [" + line + "]");
+      return null;
     }
-
-    LOG.info("Ignoring invalid packed-refs line: [" + line + "]");
-    return null;
+    return new HashAndName(shortBuffer(hash.trim()), shortBuffer(branch));
   }
 
   @NotNull
