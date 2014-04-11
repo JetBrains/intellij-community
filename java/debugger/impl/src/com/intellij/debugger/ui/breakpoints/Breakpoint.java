@@ -62,25 +62,13 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   final XBreakpoint<P> myXBreakpoint;
   protected final Project myProject;
 
-  //private boolean ENABLED = true;
-  //private boolean LOG_ENABLED = false;
-  //private boolean LOG_EXPRESSION_ENABLED = false;
-  //private boolean REMOVE_AFTER_HIT = false;
-  //private TextWithImports  myLogMessage; // an expression to be evaluated and printed
   @NonNls private static final String LOG_MESSAGE_OPTION_NAME = "LOG_MESSAGE";
   public static final Breakpoint[] EMPTY_ARRAY = new Breakpoint[0];
   protected boolean myCachedVerifiedState = false;
-  //private TextWithImportsImpl myLogMessage;
 
   protected Breakpoint(@NotNull Project project, XBreakpoint<P> xBreakpoint) {
-    //super(project);
     myProject = project;
     myXBreakpoint = xBreakpoint;
-    //myLogMessage = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "");
-    //noinspection AbstractMethodCallInConstructor
-    //final BreakpointDefaults defaults = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().getBreakpointDefaults(getCategory());
-    //SUSPEND_POLICY = defaults.getSuspendPolicy();
-    //CONDITION_ENABLED = defaults.isConditionEnabled();
   }
 
   public Project getProject() {
@@ -468,16 +456,6 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     catch (Exception ignored) {
     }
   }
-
-  //@Override
-  //public void writeExternal(Element parentNode) throws WriteExternalException {
-    //super.writeExternal(parentNode);
-    //JDOMExternalizerUtil.writeField(parentNode, LOG_MESSAGE_OPTION_NAME, getLogMessage().toExternalForm());
-  //}
-
-  //public void setLogMessage(TextWithImports logMessage) {
-  //  myLogMessage = logMessage;
-  //}
 
   @Nullable
   public abstract PsiElement getEvaluationElement();

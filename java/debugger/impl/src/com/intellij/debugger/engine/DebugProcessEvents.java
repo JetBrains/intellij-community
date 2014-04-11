@@ -317,7 +317,6 @@ public class DebugProcessEvents extends DebugProcessImpl {
       threadDeathRequest.setSuspendPolicy(EventRequest.SUSPEND_NONE);
       threadDeathRequest.enable();
 
-      DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().setInitialBreakpointsState();
       myDebugProcessDispatcher.getMulticaster().processAttached(this);
 
       final String addressDisplayName = DebuggerBundle.getAddressDisplayName(getConnection());
