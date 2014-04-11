@@ -165,7 +165,7 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
   @Nullable
   @Override
   public String getHelpTopic() {
-    return null;
+    return "reference.idesettings.server.certificates";
   }
 
   @Nullable
