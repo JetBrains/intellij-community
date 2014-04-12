@@ -255,8 +255,8 @@ class StateMerger {
     
     result = ContainerUtil.newLinkedHashSet();
     for (EqClass eqClass : state.getNonTrivialEqClasses()) {
-      DfaConstValue constant = eqClass.findConstant(true);
-      List<DfaVariableValue> vars = eqClass.getVariables();
+      DfaValue constant = eqClass.findConstant(true);
+      List<DfaVariableValue> vars = eqClass.getVariables(false);
       for (DfaVariableValue var : vars) {
         if (constant != null) {
           result.add(Fact.createEqualityFact(var, constant, true));
@@ -270,8 +270,8 @@ class StateMerger {
     }
     
     for (UnorderedPair<EqClass> classPair : state.getDistinctClassPairs()) {
-      List<DfaVariableValue> vars1 = classPair.first.getVariables();
-      List<DfaVariableValue> vars2 = classPair.second.getVariables();
+      List<DfaVariableValue> vars1 = classPair.first.getVariables(false);
+      List<DfaVariableValue> vars2 = classPair.second.getVariables(false);
       
       LinkedHashSet<DfaValue> firstSet = new LinkedHashSet<DfaValue>(vars1);
       ContainerUtil.addIfNotNull(firstSet, classPair.first.findConstant(true));
