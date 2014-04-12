@@ -15,9 +15,6 @@
  */
 package com.intellij.codeInsight.template;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
@@ -33,10 +30,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
+import java.util.Set;
 
 /**
  * @author Eugene.Kudelevsky
@@ -48,13 +44,7 @@ public class CustomTemplateCallback {
   private final int myOffset;
   private final Project myProject;
   private final boolean myInInjectedFragment;
-  
-  private final LoadingCache<TemplateImpl, Boolean> myAvailabilityCache = CacheBuilder.newBuilder().weakKeys().build(new CacheLoader<TemplateImpl, Boolean>() {
-    @Override
-    public Boolean load(@NotNull TemplateImpl template) throws Exception {
-      return isAvailableTemplate(template);
-    }
-  });
+  private Set<TemplateContextType> myApplicableContextTypes;
 
   public CustomTemplateCallback(@NotNull Editor editor, @NotNull PsiFile file, boolean wrapping) {
     myProject = file.getProject();
@@ -66,6 +56,10 @@ public class CustomTemplateCallback {
 
     myInInjectedFragment = InjectedLanguageManager.getInstance(myProject).isInjectedFragment(myFile);
     myEditor = myInInjectedFragment ? InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file, myOffset) : editor;
+  }
+
+  public PsiFile getFile() {
+    return myFile;
   }
 
   @NotNull
@@ -95,28 +89,20 @@ public class CustomTemplateCallback {
 
   @NotNull
   public List<TemplateImpl> findApplicableTemplates(@NotNull String key) {
-    List<TemplateImpl> templates = getMatchingTemplates(key);
-    templates = filterApplicableCandidates(templates);
-    return templates;
-  }
-
-  public List<TemplateImpl> filterApplicableCandidates(Collection<? extends TemplateImpl> candidates) {
     List<TemplateImpl> result = new ArrayList<TemplateImpl>();
-    for (TemplateImpl candidate : candidates) {
-      try {
-        if (myAvailabilityCache.get(candidate)) {
-          result.add(candidate);
-        }
-      }
-      catch (ExecutionException ignore) {
-        // filter error
+    for (TemplateImpl candidate : getMatchingTemplates(key)) {
+      if (isAvailableTemplate(candidate)) {
+        result.add(candidate);
       }
     }
     return result;
   }
 
-  public boolean isAvailableTemplate(TemplateImpl template) {
-    return !template.isDeactivated() && TemplateManagerImpl.isApplicable(myFile, myOffset, template);
+  private boolean isAvailableTemplate(TemplateImpl template) {
+    if (myApplicableContextTypes == null) {
+      myApplicableContextTypes = TemplateManagerImpl.getApplicableContextTypes(myFile, myOffset);  
+    }
+    return !template.isDeactivated() && TemplateManagerImpl.isApplicable(template, myApplicableContextTypes);
   }
 
   public void startTemplate(Template template, Map<String, String> predefinedValues, TemplateEditingListener listener) {

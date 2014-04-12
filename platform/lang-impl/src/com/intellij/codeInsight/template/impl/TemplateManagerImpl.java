@@ -39,6 +39,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -564,6 +565,18 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
       }
     }
     return false;
+  }
+
+  public static List<TemplateImpl> listApplicableTemplates(PsiFile file, int offset) {
+    Set<TemplateContextType> contextTypes = getApplicableContextTypes(file, offset);
+
+    final ArrayList<TemplateImpl> result = ContainerUtil.newArrayList();
+    for (final TemplateImpl template : TemplateSettings.getInstance().getTemplates()) {
+      if (!template.isDeactivated() && isApplicable(template, contextTypes)) {
+        result.add(template);
+      }
+    }
+    return result;
   }
 
   public static Set<TemplateContextType> getApplicableContextTypes(PsiFile file, int offset) {
