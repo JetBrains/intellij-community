@@ -48,12 +48,12 @@ import java.util.List;
 /**
  * @author traff
  */
-class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider implements Disposable {
+public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider implements Disposable {
   private Set<TerminalSettingsListener> myListeners = Sets.newHashSet();
 
   private final MyColorSchemeDelegate myColorScheme;
 
-  JBTerminalSystemSettingsProvider() {
+  public JBTerminalSystemSettingsProvider() {
     myColorScheme = createBoundColorSchemeDelegate(null);
 
     UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
