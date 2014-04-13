@@ -20,6 +20,7 @@ import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -28,13 +29,16 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.vcs.AbstractJunitVcsTestCase;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
 import cucumber.annotation.After;
 import cucumber.annotation.Before;
 import cucumber.annotation.Order;
+import cucumber.runtime.ScenarioResult;
 import git4idea.commands.Git;
 import git4idea.commands.GitHttpAuthService;
 import git4idea.config.GitVcsSettings;
@@ -68,6 +72,10 @@ import static org.junit.Assume.assumeTrue;
  */
 public class GitCucumberWorld {
 
+  static {
+    Logger.setFactory(TestLoggerFactory.class);
+  }
+
   public static String myTestRoot;
   public static String myProjectRoot;
   public static VirtualFile myProjectDir;
@@ -89,7 +97,9 @@ public class GitCucumberWorld {
 
   private static Collection<Future> myAsyncTasks;
 
+  private final Logger LOG = Logger.getInstance(GitCucumberWorld.class);
   private IdeaProjectTestFixture myProjectFixture;
+  private String myTestName;
 
   @Before
   @Order(0)
@@ -97,8 +107,8 @@ public class GitCucumberWorld {
     PlatformTestCase.initPlatformLangPrefix();
     IdeaTestApplication.getInstance(null);
 
-    String tempFileName = getClass().getName() + "-" + new Random().nextInt();
-    myProjectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(tempFileName).getFixture();
+    myTestName = createTestName();
+    myProjectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(myTestName).getFixture();
 
     edt(new ThrowableRunnable<Exception>() {
       @Override
@@ -139,10 +149,20 @@ public class GitCucumberWorld {
     Assert.assertEquals(1, vcsManager.getRootsUnderVcs(vcs).length);
 
     assumeSupportedGitVersion();
+    LOG.info(getStartTestMarker());
+  }
+
+  private String getStartTestMarker() {
+    return "Starting " + myTestName;
   }
 
   private static void assumeSupportedGitVersion() {
     assumeTrue(myVcs.getVersion().isSupported());
+  }
+
+  // TODO should take actual feature name once we migrate to more recent cucumber lib
+  private String createTestName() {
+    return getClass().getName() + "-" + new Random().nextInt();
   }
 
   @Before("@remote")
@@ -166,9 +186,12 @@ public class GitCucumberWorld {
   }
 
   @After
-  public void tearDown() throws Throwable {
+  public void tearDown(@NotNull ScenarioResult result) throws Throwable {
     waitForPendingTasks();
     nullifyStaticFields();
+    if (result.isFailed()) {
+      AbstractJunitVcsTestCase.dumpLogToStdout(getStartTestMarker());
+    }
     edt(new ThrowableRunnable<Exception>() {
       @Override
       public void run() throws Exception {
