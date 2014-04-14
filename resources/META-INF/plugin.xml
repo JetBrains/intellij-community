@@ -8,6 +8,7 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <fileEditorProvider implementation="org.jetbrains.plugins.ipnb.IpnbEditorProvider"/>
+        <fileTypeFactory implementation="org.jetbrains.plugins.ipnb.IpnbFileTypeFactory"/>
 
         <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     </extensions>
