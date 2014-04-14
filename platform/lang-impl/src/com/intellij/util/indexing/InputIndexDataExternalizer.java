@@ -30,7 +30,7 @@ import java.util.List;
 /**
 * Created by Maxim.Mossienko on 4/7/2014.
 */
-class InputIndexDataExternalizer<K> implements DataExternalizer<Collection<K>> {
+public class InputIndexDataExternalizer<K> implements DataExternalizer<Collection<K>> {
   private final KeyDescriptor<K> myKeyDescriptor;
   private final ID<K, ?> myIndexId;
 

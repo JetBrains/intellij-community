@@ -517,13 +517,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     else {
       index = new MapReduceIndex<K, V, FileContent>(indexId, extension.getIndexer(), storage, extension.hasSnapshotMapping() && IdIndex.ourSnapshotMappingsEnabled ? extension.getKeyDescriptor() : null);
     }
-
-    final KeyDescriptor<K> keyDescriptor = extension.getKeyDescriptor();
     index.setInputIdToDataKeysIndex(new Factory<PersistentHashMap<Integer, Collection<K>>>() {
       @Override
       public PersistentHashMap<Integer, Collection<K>> create() {
         try {
-          return createIdToDataKeysIndex(indexId, keyDescriptor, storage);
+          return createIdToDataKeysIndex(extension, storage);
         }
         catch (IOException e) {
           throw new RuntimeException(e);
@@ -535,10 +533,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   @NotNull
-  public static <K> PersistentHashMap<Integer, Collection<K>> createIdToDataKeysIndex(@NotNull final ID<K, ?> indexId,
-                                                                                      @NotNull final KeyDescriptor<K> keyDescriptor,
+  public static <K> PersistentHashMap<Integer, Collection<K>> createIdToDataKeysIndex(@NotNull FileBasedIndexExtension <K, ?> extension,
                                                                                       @NotNull MemoryIndexStorage<K, ?> storage)
     throws IOException {
+    ID<K, ?> indexId = extension.getName();
+    KeyDescriptor<K> keyDescriptor = extension.getKeyDescriptor();
     final File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile(indexId);
     final AtomicBoolean isBufferingMode = new AtomicBoolean();
     final TIntObjectHashMap<Collection<K>> tempMap = new TIntObjectHashMap<Collection<K>>();
@@ -549,8 +548,15 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     // wrong sets of keys for the given file. This will lead to unpredictable results in main index because it will not be
     // cleared properly before updating (removed data will still be present on disk). See IDEA-52223 for illustration of possible effects.
 
+    DataExternalizer<Collection<K>> externalizer;
+    if (extension instanceof CustomInputsIndexFileBasedIndexExtension) {
+      externalizer = ((CustomInputsIndexFileBasedIndexExtension<K>)extension).createExternalizer();
+    } else {
+      externalizer = new InputIndexDataExternalizer<K>(keyDescriptor, indexId);
+    }
+
     final PersistentHashMap<Integer, Collection<K>> map = new PersistentHashMap<Integer, Collection<K>>(
-      indexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, new InputIndexDataExternalizer<K>(keyDescriptor, indexId)
+      indexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, externalizer
     ) {
 
       @Override
