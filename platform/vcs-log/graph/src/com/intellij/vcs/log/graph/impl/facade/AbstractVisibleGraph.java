@@ -29,14 +29,30 @@ import com.intellij.vcs.log.graph.api.printer.PrintElementGenerator;
 import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
 import com.intellij.vcs.log.graph.impl.print.PrintElementGeneratorImpl;
+import com.intellij.vcs.log.graph.impl.visible.CurrentBranches;
+import com.intellij.vcs.log.graph.impl.visible.adapters.LinearGraphAsGraphWithHiddenNodes;
+import com.intellij.vcs.log.graph.utils.Flags;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<CommitId> {
+  @NotNull
+  protected static <CommitId> LinearGraphAsGraphWithHiddenNodes createBranchesGraph(@NotNull final PermanentGraphImpl<CommitId> permanentGraph,
+                                                                  @Nullable Set<CommitId> heads) {
+    if (heads == null) {
+      return new LinearGraphAsGraphWithHiddenNodes(permanentGraph.getPermanentLinearGraph());
+    } else {
+      Set<Integer> headIndexes = permanentGraph.getPermanentCommitsInfo().convertToCommitIndexes(heads);
+      Flags visibleNodes = CurrentBranches.getVisibleNodes(permanentGraph.getPermanentLinearGraph(), headIndexes);
+      return new LinearGraphAsGraphWithHiddenNodes(permanentGraph.getPermanentLinearGraph(), visibleNodes);
+    }
+  }
+
   @NotNull
   protected final GraphAnswerImpl<CommitId> COMMIT_ID_GRAPH_ANSWER = new GraphAnswerImpl<CommitId>(null, null);
 

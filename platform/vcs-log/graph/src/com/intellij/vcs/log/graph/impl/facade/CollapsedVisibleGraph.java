@@ -24,11 +24,9 @@ import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
 import com.intellij.vcs.log.graph.impl.print.AbstractPrintElementsManager;
 import com.intellij.vcs.log.graph.impl.print.PrintElementsManagerImpl;
 import com.intellij.vcs.log.graph.impl.visible.CollapsedGraphWithHiddenNodes;
-import com.intellij.vcs.log.graph.impl.visible.CurrentBranches;
 import com.intellij.vcs.log.graph.impl.visible.FragmentGenerator;
 import com.intellij.vcs.log.graph.impl.visible.adapters.GraphWithHiddenNodesAsGraphWithCommitInfo;
 import com.intellij.vcs.log.graph.impl.visible.adapters.LinearGraphAsGraphWithHiddenNodes;
-import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.IntToIntMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,14 +39,7 @@ public class CollapsedVisibleGraph<CommitId> extends AbstractVisibleGraph<Commit
   @NotNull
   public static <CommitId> CollapsedVisibleGraph<CommitId> newInstance(@NotNull PermanentGraphImpl<CommitId> permanentGraph,
                                                                        @Nullable Set<CommitId> heads) {
-    LinearGraphAsGraphWithHiddenNodes branchesGraph;
-    if (heads == null) {
-      branchesGraph = new LinearGraphAsGraphWithHiddenNodes(permanentGraph.getPermanentLinearGraph());
-    } else {
-      Set<Integer> headIndexes = permanentGraph.getPermanentCommitsInfo().convertToCommitIndexes(heads);
-      Flags visibleNodes = CurrentBranches.getVisibleNodes(permanentGraph.getPermanentLinearGraph(), headIndexes);
-      branchesGraph = new LinearGraphAsGraphWithHiddenNodes(permanentGraph.getPermanentLinearGraph(), visibleNodes);
-    }
+    LinearGraphAsGraphWithHiddenNodes branchesGraph = createBranchesGraph(permanentGraph, heads);
     CollapsedGraphWithHiddenNodes collapsedGraph = new CollapsedGraphWithHiddenNodes(branchesGraph);
     GraphWithHiddenNodesAsGraphWithCommitInfo<CommitId> graphWithCommitInfo =
       new GraphWithHiddenNodesAsGraphWithCommitInfo<CommitId>(collapsedGraph, permanentGraph.getPermanentGraphLayout(),

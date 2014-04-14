@@ -22,7 +22,10 @@ import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.graph.api.LinearGraphWithCommitInfo;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
+import com.intellij.vcs.log.graph.impl.print.FilterPrintElementsManager;
 import com.intellij.vcs.log.graph.impl.visible.FilterGraphWithHiddenNodes;
+import com.intellij.vcs.log.graph.impl.visible.adapters.GraphWithHiddenNodesAsGraphWithCommitInfo;
+import com.intellij.vcs.log.graph.impl.visible.adapters.LinearGraphAsGraphWithHiddenNodes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,10 +35,26 @@ import java.util.Set;
 public class FilterVisibleGraph<CommitId> extends AbstractVisibleGraph<CommitId> {
 
   @NotNull
-  public static <CommitId> FilterVisibleGraph<CommitId> newInstance(@NotNull PermanentGraphImpl<CommitId> permanentGraph,
+  public static <CommitId> FilterVisibleGraph<CommitId> newInstance(@NotNull final PermanentGraphImpl<CommitId> permanentGraph,
                                                                        @Nullable Set<CommitId> heads,
-                                                                       @NotNull Condition<CommitId> filter) {
-    return null;
+                                                                       @NotNull final Condition<CommitId> filter) {
+    LinearGraphAsGraphWithHiddenNodes branchesGraph = createBranchesGraph(permanentGraph, heads);
+    Condition<Integer> isVisibleNode = new Condition<Integer>() {
+      @Override
+      public boolean value(Integer integer) {
+        CommitId commitId = permanentGraph.getPermanentCommitsInfo().getCommitId(integer);
+        return filter.value(commitId);
+      }
+    };
+    FilterGraphWithHiddenNodes filterGraphWithHiddenNodes = new FilterGraphWithHiddenNodes(branchesGraph, isVisibleNode);
+
+    GraphWithHiddenNodesAsGraphWithCommitInfo<CommitId> graphWithCommitInfo =
+      new GraphWithHiddenNodesAsGraphWithCommitInfo<CommitId>(filterGraphWithHiddenNodes, permanentGraph.getPermanentGraphLayout(),
+                                                              permanentGraph.getPermanentCommitsInfo());
+
+    FilterPrintElementsManager printElementsManager = new FilterPrintElementsManager(graphWithCommitInfo);
+    return new FilterVisibleGraph<CommitId>(graphWithCommitInfo, filterGraphWithHiddenNodes, permanentGraph.getCommitsWithNotLoadParent(),
+                                            printElementsManager);
   }
 
   @NotNull

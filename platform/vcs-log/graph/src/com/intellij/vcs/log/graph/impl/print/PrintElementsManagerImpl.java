@@ -72,6 +72,7 @@ public class PrintElementsManagerImpl extends AbstractPrintElementsManager {
     });
   }
 
+  @NotNull
   protected Set<Integer> getSelectedNodes(@NotNull GraphElement graphElement) {
     FragmentGenerator.GraphFragment fragment = myFragmentGenerator.getPartLongFragment(graphElement);
     if (fragment == null)
