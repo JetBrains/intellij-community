@@ -16,11 +16,10 @@
 
 package com.intellij.vcs.log.graph.api;
 
-import org.jetbrains.annotations.NotNull;
-
 public interface PrintedLinearGraph extends LinearGraphWithElementInfo {
 
-  @NotNull
-  GraphLayout getGraphLayout();
+  int getLayoutIndex(int nodeIndex);
+
+  int getHeadLayoutIndex(int nodeIndex);
 
 }

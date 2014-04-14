@@ -48,6 +48,8 @@ public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<Com
       return new LinearGraphAsGraphWithHiddenNodes(permanentGraph.getPermanentLinearGraph());
     } else {
       Set<Integer> headIndexes = permanentGraph.getPermanentCommitsInfo().convertToCommitIndexes(heads);
+      if (headIndexes.contains(-1))
+        throw new IllegalStateException();
       Flags visibleNodes = CurrentBranches.getVisibleNodes(permanentGraph.getPermanentLinearGraph(), headIndexes);
       return new LinearGraphAsGraphWithHiddenNodes(permanentGraph.getPermanentLinearGraph(), visibleNodes);
     }
@@ -92,8 +94,7 @@ public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<Com
       @NotNull
       @Override
       public CommitId getOneOfHeads() {
-        int oneOfHeadNodeIndex = myLinearGraphWithCommitInfo.getGraphLayout().getOneOfHeadNodeIndex(visibleRow);
-        return myLinearGraphWithCommitInfo.getHashIndex(oneOfHeadNodeIndex);
+        return myLinearGraphWithCommitInfo.getOneOfHeads(visibleRow);
       }
 
       @NotNull

@@ -45,6 +45,12 @@ public class GraphWithHiddenNodesAsGraphWithCommitInfo<CommitId> extends GraphWi
   }
 
   @Override
+  public CommitId getOneOfHeads(int nodeIndex) {
+    int oneOfHeadNodeIndex = myPermanentGraphLayout.getOneOfHeadNodeIndex(getIndexInPermanentGraph(nodeIndex));
+    return myPermanentCommitsInfo.getCommitId(oneOfHeadNodeIndex);
+  }
+
+  @Override
   public int getNodeIndex(CommitId commitId) {
     int permanentNodeIndex = myPermanentCommitsInfo.getPermanentNodeIndex(commitId);
     return myIntToIntMap.getShortIndex(permanentNodeIndex);

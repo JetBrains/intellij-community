@@ -251,7 +251,7 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
     }
 
     private int getLayoutIndex(int nodeIndex) {
-      return myPrintedLinearGraph.getGraphLayout().getLayoutIndex(nodeIndex);
+      return myPrintedLinearGraph.getLayoutIndex(nodeIndex);
     }
   }
 }

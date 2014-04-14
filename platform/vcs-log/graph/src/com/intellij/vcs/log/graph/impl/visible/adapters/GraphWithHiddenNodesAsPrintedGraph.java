@@ -61,27 +61,15 @@ public class GraphWithHiddenNodesAsPrintedGraph implements PrintedLinearGraph {
     });
   }
 
-  @NotNull
   @Override
-  public GraphLayout getGraphLayout() {
-    return new GraphLayout() {
-      @Override
-      public int getLayoutIndex(int nodeIndex) {
-        return myPermanentGraphLayout.getLayoutIndex(getIndexInPermanentGraph(nodeIndex));
-      }
+  public int getLayoutIndex(int nodeIndex) {
+    return myPermanentGraphLayout.getLayoutIndex(getIndexInPermanentGraph(nodeIndex));
+  }
 
-      @Override
-      public int getOneOfHeadNodeIndex(int nodeIndex) {
-        int indexInPermanentGraph = myPermanentGraphLayout.getOneOfHeadNodeIndex(getIndexInPermanentGraph(nodeIndex));
-        return myIntToIntMap.getShortIndex(indexInPermanentGraph);
-      }
-
-      @Override
-      public int getHeadNodeIndex(int layoutIndex) {
-        int indexInPermanentGraph = myPermanentGraphLayout.getOneOfHeadNodeIndex(layoutIndex);
-        return myIntToIntMap.getShortIndex(indexInPermanentGraph);
-      }
-    };
+  @Override
+  public int getHeadLayoutIndex(int nodeIndex) {
+    int headNodeIndex = myPermanentGraphLayout.getOneOfHeadNodeIndex(getIndexInPermanentGraph(nodeIndex));
+    return myPermanentGraphLayout.getLayoutIndex(headNodeIndex);
   }
 
   @NotNull

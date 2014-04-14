@@ -24,6 +24,8 @@ public interface LinearGraphWithCommitInfo<CommitId> extends PrintedLinearGraph 
   CommitId getHashIndex(int nodeIndex);
   long getTimestamp(int nodeIndex);
 
+  CommitId getOneOfHeads(int nodeIndex);
+
   int getNodeIndex(CommitId commitId);
 
 }

@@ -19,7 +19,6 @@ package com.intellij.vcs.log.graph.impl.print;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.GraphColorManager;
 import com.intellij.vcs.log.graph.SimplePrintElement;
-import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.LinearGraphWithCommitInfo;
 import com.intellij.vcs.log.graph.api.LinearGraphWithElementInfo;
@@ -124,8 +123,6 @@ public abstract class AbstractPrintElementsManager<CommitId> implements PrintEle
 
   @Override
   public int getColorId(@NotNull GraphElement element) {
-    GraphLayout graphLayout = myPrintedLinearGraph.getGraphLayout();
-
     int upNodeIndex, downNodeIndex;
     if (element instanceof GraphNode) {
       upNodeIndex = ((GraphNode)element).getNodeIndex();
@@ -138,16 +135,15 @@ public abstract class AbstractPrintElementsManager<CommitId> implements PrintEle
     if (downNodeIndex == LinearGraph.NOT_LOAD_COMMIT)
       downNodeIndex = upNodeIndex;
 
-    int upLayoutIndex = graphLayout.getLayoutIndex(upNodeIndex);
-    int downLayoutIndex = graphLayout.getLayoutIndex(downNodeIndex);
+    int upLayoutIndex = myPrintedLinearGraph.getLayoutIndex(upNodeIndex);
+    int downLayoutIndex = myPrintedLinearGraph.getLayoutIndex(downNodeIndex);
 
-    int headNodeIndex = graphLayout.getOneOfHeadNodeIndex(upNodeIndex);
-    CommitId headCommitId = myPrintedLinearGraph.getHashIndex(headNodeIndex);
+    CommitId headCommitId = myPrintedLinearGraph.getOneOfHeads(upNodeIndex);
     if (upLayoutIndex != downLayoutIndex) {
       return myColorManager.getColorOfFragment(headCommitId, upLayoutIndex * downLayoutIndex);
     }
 
-    if (upLayoutIndex == graphLayout.getLayoutIndex(headNodeIndex))
+    if (upLayoutIndex == myPrintedLinearGraph.getHeadLayoutIndex(upNodeIndex))
       return myColorManager.getColorOfBranch(headCommitId);
     else
       return myColorManager.getColorOfFragment(headCommitId, upLayoutIndex);
