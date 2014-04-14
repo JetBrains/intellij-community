@@ -167,6 +167,7 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
   @Override
   public void setLongEdgesHidden(boolean longEdgesHidden) {
     showLongEdges = !longEdgesHidden;
+    invalidate();
   }
 
   @Override

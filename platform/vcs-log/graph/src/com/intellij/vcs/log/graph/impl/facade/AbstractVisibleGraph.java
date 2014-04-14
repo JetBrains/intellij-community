@@ -168,6 +168,7 @@ public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<Com
   }
 
   protected GraphAnswer<CommitId> createJumpAnswer(int nodeIndex) {
+    myPrintElementGenerator.invalidate();
     return new GraphAnswerImpl<CommitId>(myLinearGraphWithCommitInfo.getHashIndex(nodeIndex), null);
   }
 

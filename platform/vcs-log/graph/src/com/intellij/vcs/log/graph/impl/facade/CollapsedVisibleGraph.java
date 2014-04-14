@@ -16,6 +16,7 @@
 
 package com.intellij.vcs.log.graph.impl.facade;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
@@ -37,15 +38,22 @@ import java.util.Set;
 public class CollapsedVisibleGraph<CommitId> extends AbstractVisibleGraph<CommitId> {
 
   @NotNull
-  public static <CommitId> CollapsedVisibleGraph<CommitId> newInstance(@NotNull PermanentGraphImpl<CommitId> permanentGraph,
+  public static <CommitId> CollapsedVisibleGraph<CommitId> newInstance(@NotNull final PermanentGraphImpl<CommitId> permanentGraph,
                                                                        @Nullable Set<CommitId> heads) {
     LinearGraphAsGraphWithHiddenNodes branchesGraph = createBranchesGraph(permanentGraph, heads);
     CollapsedGraphWithHiddenNodes collapsedGraph = new CollapsedGraphWithHiddenNodes(branchesGraph);
-    GraphWithHiddenNodesAsGraphWithCommitInfo<CommitId> graphWithCommitInfo =
+    final GraphWithHiddenNodesAsGraphWithCommitInfo<CommitId> graphWithCommitInfo =
       new GraphWithHiddenNodesAsGraphWithCommitInfo<CommitId>(collapsedGraph, permanentGraph.getPermanentGraphLayout(),
                                                               permanentGraph.getPermanentCommitsInfo());
 
-    FragmentGenerator fragmentGeneratorForPrinterGraph = new FragmentGenerator(graphWithCommitInfo, permanentGraph.getNotCollapsedNodes());
+    final Condition<Integer> notCollapsedNodes = permanentGraph.getNotCollapsedNodes();
+    FragmentGenerator fragmentGeneratorForPrinterGraph = new FragmentGenerator(graphWithCommitInfo, new Condition<Integer>() {
+      @Override
+      public boolean value(Integer integer) {
+        int longIndex = graphWithCommitInfo.getIntToIntMap().getLongIndex(integer);
+        return notCollapsedNodes.value(longIndex);
+      }
+    });
 
     PrintElementsManagerImpl printElementsManager = new PrintElementsManagerImpl<CommitId>(graphWithCommitInfo,
                                                                                            fragmentGeneratorForPrinterGraph,
@@ -84,16 +92,16 @@ public class CollapsedVisibleGraph<CommitId> extends AbstractVisibleGraph<Commit
   protected GraphAnswer<CommitId> clickByElement(@NotNull GraphElement graphElement) {
     GraphEdge graphEdge = AbstractPrintElementsManager.containedCollapsedEdge(graphElement, myLinearGraphWithCommitInfo);
     if (graphEdge != null) {
-      int upShortIndex = myIntToIntMap.getShortIndex(graphEdge.getUpNodeIndex());
-      int downShortIndex = myIntToIntMap.getShortIndex(graphEdge.getDownNodeIndex());
+      int upShortIndex = myIntToIntMap.getLongIndex(graphEdge.getUpNodeIndex());
+      int downShortIndex = myIntToIntMap.getLongIndex(graphEdge.getDownNodeIndex());
       myCollapsedGraph.expand(upShortIndex, downShortIndex);
       return createJumpAnswer(graphEdge.getUpNodeIndex());
     }
 
-    FragmentGenerator.GraphFragment relativeFragment = myFragmentGeneratorForPrinterGraph.getRelativeFragment(graphElement);
+    FragmentGenerator.GraphFragment relativeFragment = myFragmentGeneratorForPrinterGraph.getLongFragment(graphElement);
     if (relativeFragment != null) {
-      int upShortIndex = myIntToIntMap.getShortIndex(relativeFragment.upNodeIndex);
-      int downShortIndex = myIntToIntMap.getShortIndex(relativeFragment.downNodeIndex);
+      int upShortIndex = myIntToIntMap.getLongIndex(relativeFragment.upNodeIndex);
+      int downShortIndex = myIntToIntMap.getLongIndex(relativeFragment.downNodeIndex);
       myCollapsedGraph.collapse(upShortIndex, downShortIndex);
       return createJumpAnswer(relativeFragment.upNodeIndex);
     }
