@@ -213,7 +213,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
 
   @Override
   protected int getFeatures() {
-    return super.getFeatures() | BASIC_HTTP_AUTHORIZATION;
+    return super.getFeatures() & ~NATIVE_SEARCH | BASIC_HTTP_AUTHORIZATION;
   }
 
   @Nullable
