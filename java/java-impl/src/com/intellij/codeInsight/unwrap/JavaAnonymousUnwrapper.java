@@ -43,7 +43,24 @@ public class JavaAnonymousUnwrapper extends JavaUnwrapper {
   protected void doUnwrap(PsiElement element, Context context) throws IncorrectOperationException {
     PsiElement from = findElementToExtractFrom(element);
 
-    for (PsiMethod m : ((PsiAnonymousClass)element).getMethods()) {
+    final PsiMethod[] methods = ((PsiAnonymousClass)element).getMethods();
+
+    if (from instanceof PsiDeclarationStatement && methods.length == 1) {
+      final PsiCodeBlock body = methods[0].getBody();
+      if (body != null) {
+        final PsiStatement[] statements = body.getStatements();
+        if (statements.length == 1 && statements[0] instanceof PsiReturnStatement) {
+          final PsiElement[] declaredElements = ((PsiDeclarationStatement)from).getDeclaredElements();
+          if (declaredElements.length == 1 && declaredElements[0] instanceof PsiVariable) {
+            context.setInitializer((PsiVariable)declaredElements[0], 
+                                   ((PsiReturnStatement)statements[0]).getReturnValue());
+            return;
+          }
+        }
+      }
+    }
+
+    for (PsiMethod m : methods) {
       context.extractFromCodeBlock(m.getBody(), from);
     }
 

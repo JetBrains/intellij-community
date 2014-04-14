@@ -65,5 +65,19 @@ public abstract class JavaUnwrapper extends AbstractUnwrapper<JavaUnwrapper.Cont
       PsiElementFactory factory = JavaPsiFacade.getInstance(e.getProject()).getElementFactory();
       return factory.createStatementFromText(e.getText(), null);
     }
+
+    public void setInitializer(PsiVariable variable, PsiExpression returnValue) {
+      PsiExpression toExtract = returnValue;
+      if (myIsEffective) {
+        final PsiExpression initializer = JavaPsiFacade.getElementFactory(variable.getProject()).createExpressionFromText(returnValue.getText(), null);
+        if (variable instanceof PsiLocalVariable) {
+          ((PsiLocalVariable)variable).setInitializer(initializer);
+        } else if (variable instanceof PsiField) {
+          ((PsiField)variable).setInitializer(initializer);
+        }
+        toExtract = variable.getInitializer();
+      }
+      addElementToExtract(toExtract);
+    }
   }
 }
