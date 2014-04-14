@@ -43,4 +43,10 @@ public class GraphWithHiddenNodesAsGraphWithCommitInfo<CommitId> extends GraphWi
   public long getTimestamp(int nodeIndex) {
     return myPermanentCommitsInfo.getTimestamp(getIndexInPermanentGraph(nodeIndex));
   }
+
+  @Override
+  public int getNodeIndex(CommitId commitId) {
+    int permanentNodeIndex = myPermanentCommitsInfo.getPermanentNodeIndex(commitId);
+    return myIntToIntMap.getShortIndex(permanentNodeIndex);
+  }
 }

@@ -30,6 +30,8 @@ public interface VisibleGraph<CommitId> {
   @NotNull
   RowInfo<CommitId> getRowInfo(int visibleRow);
 
+  int getVisibleRowIndex(@NotNull CommitId commitId);
+
   @NotNull
   ActionController<CommitId> getActionController();
 

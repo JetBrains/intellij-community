@@ -105,6 +105,11 @@ public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<Com
     };
   }
 
+  @Override
+  public int getVisibleRowIndex(@NotNull CommitId commitId) {
+    return myLinearGraphWithCommitInfo.getNodeIndex(commitId);
+  }
+
   @NotNull
   @Override
   public ActionController<CommitId> getActionController() {
