@@ -114,6 +114,25 @@ public class JarFileSystemTest extends PlatformLangTestCase {
     assertNotNull(classFile);
   }
 
+  public void testJarRootForLocalFile() throws Exception {
+    String javaHome = System.getProperty("java.home");
+    String rtJarPath = javaHome + "/lib/rt.jar";
+
+    VirtualFile rtJarFile = LocalFileSystem.getInstance().findFileByPath(rtJarPath);
+    assertNotNull(rtJarFile);
+    VirtualFile rtJarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(rtJarFile);
+    assertNotNull(rtJarRoot);
+
+    VirtualFile entryFile = findByPath(rtJarPath + JarFileSystem.JAR_SEPARATOR + "java/lang/Object.class");
+    VirtualFile entryRoot = JarFileSystem.getInstance().getJarRootForLocalFile(entryFile);
+    assertNull(entryRoot);
+
+    VirtualFile nonJarFile = LocalFileSystem.getInstance().findFileByPath(javaHome + "/lib/calendars.properties");
+    assertNotNull(nonJarFile);
+    VirtualFile nonJarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(nonJarFile);
+    assertNull(nonJarRoot);
+  }
+
   private static VirtualFile findByPath(String path) {
     VirtualFile file = JarFileSystem.getInstance().findFileByPath(path);
     assertNotNull(file);
