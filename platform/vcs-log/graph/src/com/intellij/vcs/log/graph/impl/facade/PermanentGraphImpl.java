@@ -34,6 +34,8 @@ import java.util.*;
 
 public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId> {
 
+  private final Set<Integer> myBranchNodeIndexes;
+
   @NotNull
   public static <CommitId> PermanentGraphImpl<CommitId> newInstance(@NotNull List<? extends GraphCommit<CommitId>> graphCommits,
                                                                     @NotNull final GraphColorManager<CommitId> graphColorManager,
@@ -84,7 +86,8 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId> {
     myGraphColorManager = graphColorManager;
     myBranchesCommitId = branchesCommitId;
     myCommitsWithNotLoadParent = commitsWithNotLoadParent;
-    myBranchesGetter = new ContainingBranchesGetter(permanentLinearGraph, permanentCommitsInfo.convertToCommitIndexes(branchesCommitId));
+    myBranchNodeIndexes = permanentCommitsInfo.convertToCommitIndexes(branchesCommitId);
+    myBranchesGetter = new ContainingBranchesGetter(permanentLinearGraph, myBranchNodeIndexes);
   }
 
   @NotNull
@@ -155,6 +158,19 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId> {
   @NotNull
   public Set<CommitId> getBranchesCommitId() {
     return myBranchesCommitId;
+  }
+
+  public Set<Integer> getBranchNodeIndexes() {
+    return myBranchNodeIndexes;
+  }
+
+  public Condition<Integer> getNotCollapsedNodes() {
+    return new Condition<Integer>() {
+      @Override
+      public boolean value(Integer integer) {
+        return myBranchNodeIndexes.contains(integer);
+      }
+    };
   }
 
   @NotNull
