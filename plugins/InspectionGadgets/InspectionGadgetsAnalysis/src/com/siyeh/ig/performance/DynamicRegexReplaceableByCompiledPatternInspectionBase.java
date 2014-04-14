@@ -16,12 +16,13 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -64,6 +65,13 @@ public class DynamicRegexReplaceableByCompiledPatternInspectionBase extends Base
   @Override
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel("Ignore for String.split() optimizations (since Java 7)", this, "ignoreForSplitOptimization");
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    if (!ignoreForSplitOptimization) {
+      node.addContent(new Element("option").setAttribute("name", "ignoreForSplitOptimization").setAttribute("value", "false"));
+    }
   }
 
   @Override
