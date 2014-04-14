@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 public class IpnbEditorProvider implements FileEditorProvider, DumbAware {
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
-    return true;
+    return file.getFileType() == IpnbFileType.INSTANCE;
   }
 
   @NotNull
