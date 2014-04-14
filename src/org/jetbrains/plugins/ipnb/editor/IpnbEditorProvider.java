@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.ipnb;
+package org.jetbrains.plugins.ipnb.editor;
 
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorPolicy;
@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.ipnb.IpnbFileType;
 
 /**
  * @author traff
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 public class IpnbEditorProvider implements FileEditorProvider, DumbAware {
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
-    return true;
+    return file.getFileType() == IpnbFileType.INSTANCE;
   }
 
   @NotNull

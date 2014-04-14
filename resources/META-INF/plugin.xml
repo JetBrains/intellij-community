@@ -1,0 +1,15 @@
+<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <name>IPython Notebook</name>
+    <id>org.jetbrains.plugins.ipnb</id>
+    <version>0.1</version>
+    <vendor>JetBrains</vendor>
+    <description>IPython Notebook support</description>
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <fileEditorProvider implementation="org.jetbrains.plugins.ipnb.editor.IpnbEditorProvider"/>
+        <fileTypeFactory implementation="org.jetbrains.plugins.ipnb.IpnbFileTypeFactory"/>
+
+        <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    </extensions>
+</idea-plugin>

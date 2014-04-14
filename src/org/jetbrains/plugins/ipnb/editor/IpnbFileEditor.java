@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.ipnb;
+package org.jetbrains.plugins.ipnb.editor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
@@ -157,7 +157,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
   private static FileEditorProvider getProvider(Project project, VirtualFile vFile) {
     FileEditorProvider[] providers = FileEditorProviderManagerImpl.getInstance().getProviders(project, vFile);
     for (FileEditorProvider provider : providers) {
-      if (!(provider instanceof IpnbFileEditor)) {
+      if (!(provider instanceof IpnbEditorProvider)) {
         return provider;
       }
     }
