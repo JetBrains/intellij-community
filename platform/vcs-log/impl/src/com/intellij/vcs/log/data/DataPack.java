@@ -6,11 +6,15 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.graph.GraphColorManagerImpl;
+import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.GraphFacade;
-import com.intellij.vcs.log.newgraph.facade.GraphFacadeImpl;
+import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl;
+import com.intellij.vcs.log.printer.idea.ColorGenerator;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public class DataPack implements VcsLogDataPack {
 
@@ -19,7 +23,7 @@ public class DataPack implements VcsLogDataPack {
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
 
   @NotNull
-  public static DataPack build(@NotNull List<? extends GraphCommit> commits,
+  public static DataPack build(@NotNull List<? extends GraphCommit<Integer>> commits,
                                @NotNull Collection<VcsRef> allRefs,
                                @NotNull ProgressIndicator indicator,
                                @NotNull NotNullFunction<Hash, Integer> indexGetter,
@@ -29,8 +33,15 @@ public class DataPack implements VcsLogDataPack {
     final RefsModel refsModel = new RefsModel(allRefs, indexGetter);
     GraphColorManagerImpl colorManager = new GraphColorManagerImpl(refsModel, hashGetter, getRefManagerMap(providers));
     if (!commits.isEmpty()) {
-      return new DataPack(refsModel, GraphFacadeImpl.newInstance(commits, getBranchCommitHashIndexes(allRefs, indexGetter), colorManager),
-                          providers);
+      Set<Integer> branches = getBranchCommitHashIndexes(allRefs, indexGetter);
+      PermanentGraphImpl<Integer> permanentGraph = PermanentGraphImpl.newInstance(commits, colorManager, branches);
+      ColorGenerator colorGenerator = new ColorGenerator() {
+        @Override
+        public Color getColor(int colorId) {
+          return com.intellij.vcs.log.graph.ColorGenerator.getColor(colorId);
+        }
+      };
+      return new DataPack(refsModel, new DelegateGraphFacade(permanentGraph, colorGenerator), providers);
     }
     else {
       return new DataPack(refsModel, new EmptyGraphFacade(), providers);
