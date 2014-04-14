@@ -74,4 +74,9 @@ public class EdgesInRowTest extends AbstractTestWithTextFile {
     doTest("notFullGraph");
   }
 
+  @Test
+  public void longGraph() throws IOException {
+    doTest("longGraph");
+  }
+
 }

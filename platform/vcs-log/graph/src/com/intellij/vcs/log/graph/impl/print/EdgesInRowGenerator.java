@@ -27,7 +27,7 @@ import java.util.Set;
 
 public class EdgesInRowGenerator {
   private static final int CACHE_SIZE = 10;
-  private static final int BLOCK_SIZE = 10;
+  private static final int BLOCK_SIZE = 40;
 
   private final int WALK_SIZE;
 
@@ -55,8 +55,8 @@ public class EdgesInRowGenerator {
     }
 
     GraphEdges neighborD = getNeighborD(rowIndex);
-    while (neighborU.myRow > rowIndex) {
-      neighborU = oneUpStep(neighborU);
+    while (neighborD.myRow > rowIndex) {
+      neighborD = oneUpStep(neighborD);
     }
 
     Set<GraphEdge> result = neighborU.myEdges;
@@ -77,7 +77,7 @@ public class EdgesInRowGenerator {
       graphEdges = getUCorrectEdges(upNeighborIndex);
       cacheNU.put(upNeighborIndex, graphEdges);
     }
-    return graphEdges;
+    return graphEdges.newInstance();
   }
 
   @NotNull
@@ -91,9 +91,9 @@ public class EdgesInRowGenerator {
     GraphEdges graphEdges = cacheND.get(downNeighborIndex);
     if (graphEdges == null) {
       graphEdges = getDCorrectEdges(downNeighborIndex);
-      cacheNU.put(downNeighborIndex, graphEdges);
+      cacheND.put(downNeighborIndex, graphEdges);
     }
-    return graphEdges;
+    return graphEdges.newInstance();
   }
 
   private static int getUpNeighborIndex(int rowIndex) {
@@ -174,6 +174,11 @@ public class EdgesInRowGenerator {
     private GraphEdges(@NotNull Set<GraphEdge> edges, int row) {
       myEdges = edges;
       myRow = row;
+    }
+
+    @NotNull
+    GraphEdges newInstance() {
+      return new GraphEdges(new HashSet<GraphEdge>(myEdges), myRow);
     }
   }
 }
