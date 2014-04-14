@@ -515,7 +515,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       index = (MapReduceIndex<K, V, FileContent>)custom;
     }
     else {
-      index = new MapReduceIndex<K, V, FileContent>(indexId, extension.getIndexer(), storage, extension.hasSnapshotMapping() && IdIndex.ourSnapshotMappingsEnabled ? extension.getKeyDescriptor() : null);
+      DataExternalizer<Collection<K>> externalizer =
+        extension.hasSnapshotMapping() && IdIndex.ourSnapshotMappingsEnabled
+        ? createInputsIndexExternalizer(extension, indexId, extension.getKeyDescriptor())
+        : null;
+      index = new MapReduceIndex<K, V, FileContent>(indexId, extension.getIndexer(), storage, externalizer);
     }
     index.setInputIdToDataKeysIndex(new Factory<PersistentHashMap<Integer, Collection<K>>>() {
       @Override
@@ -548,15 +552,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     // wrong sets of keys for the given file. This will lead to unpredictable results in main index because it will not be
     // cleared properly before updating (removed data will still be present on disk). See IDEA-52223 for illustration of possible effects.
 
-    DataExternalizer<Collection<K>> externalizer;
-    if (extension instanceof CustomInputsIndexFileBasedIndexExtension) {
-      externalizer = ((CustomInputsIndexFileBasedIndexExtension<K>)extension).createExternalizer();
-    } else {
-      externalizer = new InputIndexDataExternalizer<K>(keyDescriptor, indexId);
-    }
-
     final PersistentHashMap<Integer, Collection<K>> map = new PersistentHashMap<Integer, Collection<K>>(
-      indexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, externalizer
+      indexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, createInputsIndexExternalizer(extension, indexId, keyDescriptor)
     ) {
 
       @Override
@@ -607,6 +604,18 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
     });
     return map;
+  }
+
+  private static <K> DataExternalizer<Collection<K>> createInputsIndexExternalizer(FileBasedIndexExtension<K, ?> extension,
+                                                                                  ID<K, ?> indexId,
+                                                                                  KeyDescriptor<K> keyDescriptor) {
+    DataExternalizer<Collection<K>> externalizer;
+    if (extension instanceof CustomInputsIndexFileBasedIndexExtension) {
+      externalizer = ((CustomInputsIndexFileBasedIndexExtension<K>)extension).createExternalizer();
+    } else {
+      externalizer = new InputIndexDataExternalizer<K>(keyDescriptor, indexId);
+    }
+    return externalizer;
   }
 
   @Override

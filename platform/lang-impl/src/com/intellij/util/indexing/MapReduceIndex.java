@@ -22,10 +22,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
-import com.intellij.util.io.EnumeratorIntegerDescriptor;
-import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.PersistentHashMap;
+import com.intellij.util.io.*;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectObjectProcedure;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +48,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   private final DataIndexer<Key, Value, Input> myIndexer;
   @NotNull protected final IndexStorage<Key, Value> myStorage;
   private final boolean myHasSnapshotMapping;
-  private final KeyDescriptor<Key> myKeyDescriptorForSnapshotIndex;
+  private final DataExternalizer<Collection<Key>> mySnapshotIndexExternalizer;
 
   private PersistentHashMap<Integer, Collection<Key>> myInputsIndex;
   private PersistentHashMap<Integer, Collection<Key>> mySnapshotMapping;
@@ -70,12 +67,12 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   public MapReduceIndex(@Nullable final ID<Key, Value> indexId,
                         DataIndexer<Key, Value, Input> indexer,
                         @NotNull IndexStorage<Key, Value> storage,
-                        KeyDescriptor<Key> keyDescriptorForSnapshotIndex) {
+                        DataExternalizer<Collection<Key>> snapshotIndexExternalizer) {
     myIndexId = indexId;
     myIndexer = indexer;
     myStorage = storage;
-    myHasSnapshotMapping = keyDescriptorForSnapshotIndex != null;
-    myKeyDescriptorForSnapshotIndex = keyDescriptorForSnapshotIndex;
+    myHasSnapshotMapping = snapshotIndexExternalizer != null;
+    mySnapshotIndexExternalizer = snapshotIndexExternalizer;
   }
 
   @NotNull
@@ -253,11 +250,10 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   private PersistentHashMap<Integer, Collection<Key>> createSnapshotMappingIndex() throws IOException {
     assert myIndexId != null;
     final File hashIdToKeysFile = new File(IndexInfrastructure.getIndexRootDir(myIndexId), "hashIdToKeys");
-    final InputIndexDataExternalizer<Key> externalizer = new InputIndexDataExternalizer<Key>(myKeyDescriptorForSnapshotIndex, myIndexId);
     return IOUtil.openCleanOrResetBroken(new ThrowableComputable<PersistentHashMap<Integer, Collection<Key>>, IOException>() {
       @Override
       public PersistentHashMap<Integer, Collection<Key>> compute() throws IOException {
-        return new PersistentHashMap<Integer, Collection<Key>>(hashIdToKeysFile, EnumeratorIntegerDescriptor.INSTANCE, externalizer);
+        return new PersistentHashMap<Integer, Collection<Key>>(hashIdToKeysFile, EnumeratorIntegerDescriptor.INSTANCE, mySnapshotIndexExternalizer);
       }
     }, hashIdToKeysFile);
   }
