@@ -147,6 +147,10 @@ public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<Com
     return COMMIT_ID_GRAPH_ANSWER;
   }
 
+  protected GraphAnswer<CommitId> createJumpAnswer(int nodeIndex) {
+    return new GraphAnswerImpl<CommitId>(myLinearGraphWithCommitInfo.getHashIndex(nodeIndex), null);
+  }
+
   protected static class GraphAnswerImpl<CommitId> implements GraphAnswer<CommitId> {
     @Nullable
     private final CommitId myCommitId;

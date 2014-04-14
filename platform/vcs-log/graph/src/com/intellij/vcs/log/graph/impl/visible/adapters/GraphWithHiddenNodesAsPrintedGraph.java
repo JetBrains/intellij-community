@@ -21,6 +21,7 @@ import com.intellij.vcs.log.graph.api.LinearGraphWithHiddenNodes;
 import com.intellij.vcs.log.graph.api.PrintedLinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
+import com.intellij.vcs.log.graph.utils.IntToIntMap;
 import com.intellij.vcs.log.graph.utils.UpdatableIntToIntMap;
 import com.intellij.vcs.log.graph.utils.impl.ListIntToIntMap;
 import com.intellij.vcs.log.graph.api.GraphLayout;
@@ -101,15 +102,20 @@ public class GraphWithHiddenNodesAsPrintedGraph implements PrintedLinearGraph {
     return myIntToIntMap.shortSize();
   }
 
+  protected int getIndexInPermanentGraph(int nodeIndex) {
+    return myIntToIntMap.getLongIndex(nodeIndex);
+  }
+
+  @NotNull
+  public IntToIntMap getIntToIntMap() {
+    return myIntToIntMap;
+  }
+
   @NotNull
   @Override
   public List<Integer> getUpNodes(int nodeIndex) {
     List<Integer> upDelegateNodes = myDelegateGraph.getUpNodes(getIndexInPermanentGraph(nodeIndex));
     return new ShortNodeIndexList(upDelegateNodes);
-  }
-
-  protected int getIndexInPermanentGraph(int nodeIndex) {
-    return myIntToIntMap.getLongIndex(nodeIndex);
   }
 
   @NotNull
