@@ -154,7 +154,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
         return;
       }
       if (inlineLocalDialog.isInlineThis()) {
-        refsToInlineList = Collections.singletonList(refExpr);
+        refsToInlineList = Collections.<PsiElement>singletonList(refExpr);
         inlineAll.set(false);
       }
     }
