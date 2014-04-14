@@ -118,8 +118,13 @@ public class DefUseInspection extends DefUseInspectionBase {
         else if (res == RemoveUnusedVariableUtil.MAKE_STATEMENT) {
           final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
           final PsiStatement statementFromText = factory.createStatementFromText(psiInitializer.getText() + ";", null);
-          declaration.getParent().addAfter(statementFromText, declaration);
-          elementToDelete.delete();
+          final PsiElement parent = elementToDelete.getParent();
+          if (parent instanceof PsiExpressionStatement) {
+            parent.replace(statementFromText);
+          } else {
+            declaration.getParent().addAfter(statementFromText, declaration);
+            elementToDelete.delete();
+          }
         }
       }
       catch (IncorrectOperationException e) {
