@@ -745,6 +745,10 @@
       <category>Declaration</category>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.JoinDeclarationAndAssignmentAction</className>
+      <category>Declaration</category>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.PushConditionInCallAction</className>
       <category>Declaration</category>
     </intentionAction>

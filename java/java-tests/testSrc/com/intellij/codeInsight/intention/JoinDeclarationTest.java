@@ -17,10 +17,10 @@ package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 
-public class SplitDeclarationTest extends LightQuickFixParameterizedTestCase {
+public class JoinDeclarationTest extends LightQuickFixParameterizedTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/splitDeclaration";
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/joinDeclaration";
   }
 }
