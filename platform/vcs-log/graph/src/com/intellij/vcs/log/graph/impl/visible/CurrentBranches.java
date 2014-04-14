@@ -45,7 +45,7 @@ public class CurrentBranches {
 
   public CurrentBranches(@NotNull LinearGraph permanentGraph) {
     myPermanentGraph = permanentGraph;
-    myVisibleNodesInBranches = new BitSetFlags(permanentGraph.nodesCount(), true);
+    myVisibleNodesInBranches = new BitSetFlags(permanentGraph.nodesCount(), false);
   }
 
   private void selectAllVisibleNodes(@NotNull Set<Integer> startedNodes) {
