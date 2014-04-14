@@ -47,7 +47,9 @@ public class CollapsedVisibleGraph<CommitId> extends AbstractVisibleGraph<Commit
 
     FragmentGenerator fragmentGeneratorForPrinterGraph = new FragmentGenerator(graphWithCommitInfo, permanentGraph.getNotCollapsedNodes());
 
-    PrintElementsManagerImpl printElementsManager = new PrintElementsManagerImpl(graphWithCommitInfo, fragmentGeneratorForPrinterGraph);
+    PrintElementsManagerImpl printElementsManager = new PrintElementsManagerImpl<CommitId>(graphWithCommitInfo,
+                                                                                           fragmentGeneratorForPrinterGraph,
+                                                                                           permanentGraph.getGraphColorManager());
     return new CollapsedVisibleGraph<CommitId>(graphWithCommitInfo, collapsedGraph, permanentGraph.getCommitsWithNotLoadParent(),
                                                printElementsManager, fragmentGeneratorForPrinterGraph);
   }

@@ -54,7 +54,7 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
   }
 
   @Override
-  public int getColorOfBranch(int headCommit) {
+  public int getColorOfBranch(Integer headCommit) {
     Collection<VcsRef> refs = myRefsModel.refsToCommit(headCommit);
     if (isEmptyRefs(refs, headCommit)) {
       return DEFAULT_COLOR;
@@ -76,7 +76,7 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
   }
 
   @Override
-  public int getColorOfFragment(int headCommit, int magicIndex) {
+  public int getColorOfFragment(Integer headCommit, int magicIndex) {
     return magicIndex;
   }
 

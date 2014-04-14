@@ -17,18 +17,19 @@
 package com.intellij.vcs.log.graph.impl.print;
 
 import com.intellij.util.containers.HashSet;
+import com.intellij.vcs.log.graph.GraphColorManager;
 import com.intellij.vcs.log.graph.api.LinearGraph;
-import com.intellij.vcs.log.graph.api.PrintedLinearGraph;
+import com.intellij.vcs.log.graph.api.LinearGraphWithCommitInfo;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.impl.visible.FragmentGenerator;
-import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.DfsUtil;
+import com.intellij.vcs.log.graph.utils.Flags;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.Set;
 
-public class PrintElementsManagerImpl extends AbstractPrintElementsManager {
+public class PrintElementsManagerImpl<CommitId> extends AbstractPrintElementsManager<CommitId> {
 
   @NotNull
   private final FragmentGenerator myFragmentGenerator;
@@ -36,8 +37,10 @@ public class PrintElementsManagerImpl extends AbstractPrintElementsManager {
   @NotNull
   private final DfsUtil myDfsUtil = new DfsUtil();
 
-  public PrintElementsManagerImpl(@NotNull PrintedLinearGraph printedLinearGraph, @NotNull FragmentGenerator fragmentGenerator) {
-    super(printedLinearGraph);
+  public PrintElementsManagerImpl(@NotNull LinearGraphWithCommitInfo<CommitId> printedLinearGraph,
+                                  @NotNull FragmentGenerator fragmentGenerator,
+                                  @NotNull GraphColorManager<CommitId> colorManager) {
+    super(printedLinearGraph, colorManager);
     myFragmentGenerator = fragmentGenerator;
   }
 

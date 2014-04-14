@@ -17,9 +17,11 @@
 package com.intellij.vcs.log.graph.impl.print;
 
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.graph.GraphColorManager;
 import com.intellij.vcs.log.graph.SimplePrintElement;
+import com.intellij.vcs.log.graph.api.GraphLayout;
+import com.intellij.vcs.log.graph.api.LinearGraphWithCommitInfo;
 import com.intellij.vcs.log.graph.api.LinearGraphWithElementInfo;
-import com.intellij.vcs.log.graph.api.PrintedLinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
@@ -32,7 +34,7 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.Set;
 
-public abstract class AbstractPrintElementsManager implements PrintElementsManager {
+public abstract class AbstractPrintElementsManager<CommitId> implements PrintElementsManager {
 
   @Nullable
   public static GraphEdge containedCollapsedEdge(@NotNull GraphElement element, @NotNull LinearGraphWithElementInfo graphWithElementsInfo) {
@@ -60,7 +62,10 @@ public abstract class AbstractPrintElementsManager implements PrintElementsManag
   private static final Cursor HAND_CURSOR = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
 
   @NotNull
-  protected final PrintedLinearGraph myPrintedLinearGraph;
+  protected final LinearGraphWithCommitInfo<CommitId> myPrintedLinearGraph;
+
+  @NotNull
+  protected final GraphColorManager<CommitId> myColorManager;
 
   @Nullable
   private PrintElementWithGraphElement mySpecialSelectedPrintElement = null;
@@ -68,8 +73,9 @@ public abstract class AbstractPrintElementsManager implements PrintElementsManag
   @NotNull
   private Set<Integer> mySelectedNodes = Collections.emptySet();
 
-  protected AbstractPrintElementsManager(@NotNull PrintedLinearGraph printedLinearGraph) {
+  protected AbstractPrintElementsManager(@NotNull LinearGraphWithCommitInfo<CommitId> printedLinearGraph, @NotNull GraphColorManager<CommitId> colorManager) {
     myPrintedLinearGraph = printedLinearGraph;
+    myColorManager = colorManager;
   }
 
   @Override
@@ -117,7 +123,30 @@ public abstract class AbstractPrintElementsManager implements PrintElementsManag
 
   @Override
   public int getColorId(@NotNull GraphElement element) {
-    return 0; // todo
+    GraphLayout graphLayout = myPrintedLinearGraph.getGraphLayout();
+
+    int upNodeIndex, downNodeIndex;
+    if (element instanceof GraphNode) {
+      upNodeIndex = ((GraphNode)element).getNodeIndex();
+      downNodeIndex = upNodeIndex;
+    } else {
+      GraphEdge edge = (GraphEdge)element;
+      upNodeIndex = edge.getUpNodeIndex();
+      downNodeIndex = edge.getDownNodeIndex();
+    }
+    int upLayoutIndex = graphLayout.getLayoutIndex(upNodeIndex);
+    int downLayoutIndex = graphLayout.getLayoutIndex(downNodeIndex);
+
+    int headNodeIndex = graphLayout.getOneOfHeadNodeIndex(upNodeIndex);
+    CommitId headCommitId = myPrintedLinearGraph.getHashIndex(headNodeIndex);
+    if (upLayoutIndex != downLayoutIndex) {
+      return myColorManager.getColorOfFragment(headCommitId, upLayoutIndex * downLayoutIndex);
+    }
+
+    if (upLayoutIndex == graphLayout.getLayoutIndex(headNodeIndex))
+      return myColorManager.getColorOfBranch(headCommitId);
+    else
+      return myColorManager.getColorOfFragment(headCommitId, upLayoutIndex);
   }
 
   @NotNull

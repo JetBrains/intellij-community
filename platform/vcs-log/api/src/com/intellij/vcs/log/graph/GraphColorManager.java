@@ -21,7 +21,7 @@ public interface GraphColorManager<CommitId> {
    * Returns the color which should be used to draw the given branch.
    * @param headCommit branch head commit index.
    */
-  int getColorOfBranch(int headCommit);
+  int getColorOfBranch(CommitId headCommit);
 
   /**
    * Returns the color which should be used to draw a not-main fragment of a branch
@@ -33,7 +33,7 @@ public interface GraphColorManager<CommitId> {
    * @param magicIndex some magic index identifying the fragment (we don't know which one - it is some Graph internal thing).
    * @return the colorId which should be used to draw this fragment.
    */
-  int getColorOfFragment(int headCommit, int magicIndex);
+  int getColorOfFragment(CommitId headCommit, int magicIndex);
 
   /**
    * Returns 1, 0 or -1 if branch identified by commit {@code head1} is "more powerful", "equally powerful" or "less powerful"

@@ -16,16 +16,18 @@
 
 package com.intellij.vcs.log.graph.impl.print;
 
-import com.intellij.vcs.log.graph.api.PrintedLinearGraph;
+import com.intellij.vcs.log.graph.GraphColorManager;
+import com.intellij.vcs.log.graph.api.LinearGraphWithCommitInfo;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.Set;
 
-public class FilterPrintElementsManager extends AbstractPrintElementsManager {
-  public FilterPrintElementsManager(@NotNull PrintedLinearGraph printedLinearGraph) {
-    super(printedLinearGraph);
+public class FilterPrintElementsManager<CommitId> extends AbstractPrintElementsManager<CommitId> {
+  public FilterPrintElementsManager(@NotNull LinearGraphWithCommitInfo<CommitId> printedLinearGraph,
+                                    @NotNull GraphColorManager<CommitId> colorManager) {
+    super(printedLinearGraph, colorManager);
   }
 
   @NotNull
