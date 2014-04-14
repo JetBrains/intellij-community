@@ -71,6 +71,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     }
 
     if (files.isEmpty()) {
+      processChangedFiles();
       return;
     }
 
@@ -83,6 +84,10 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     indexFiles(indicator, files);
     LOG.info("Unindexed files update done in " + (System.currentTimeMillis() - started) + " ms");
 
+    processChangedFiles();
+  }
+
+  private void processChangedFiles() {
     DumbModeTask task = FileBasedIndexProjectHandler.createChangedFilesIndexingTask(myProject);
     if (task != null) {
       DumbService.getInstance(myProject).queueTask(task);
