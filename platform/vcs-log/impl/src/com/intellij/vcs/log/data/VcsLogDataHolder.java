@@ -34,6 +34,7 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.impl.RequirementsImpl;
 import com.intellij.vcs.log.util.StopWatch;
 import org.jetbrains.annotations.NotNull;
@@ -291,7 +292,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
             StopWatch sw = StopWatch.start("readAllHashes for " + root.getName());
             List<TimedVcsCommit> allCommits = logProvider.readAllHashes(root, userRegistry);
             sw.report();
-            logs.put(root, compactHashes(allCommits));
+            logs.put(root, allCommits);
             refs.put(root, logProvider.readAllRefs(root));
           }
           DataPack existingDataPack = myLogData.getDataPack();
@@ -305,18 +306,6 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
         }
       }
     }, "Loading log structure...");
-  }
-
-  @NotNull
-  private List<CompactCommit> compactHashes(@NotNull List<? extends TimedVcsCommit> commits) {
-    List<CompactCommit> compactedHashes = ContainerUtil.map(commits, new Function<TimedVcsCommit, CompactCommit>() {
-      @Override
-      public CompactCommit fun(final TimedVcsCommit commit) {
-        return commit instanceof CompactCommit ? (CompactCommit)commit : new CompactCommit(commit);
-      }
-    });
-    myHashMap.flush();
-    return compactedHashes;
   }
 
   /**
@@ -366,8 +355,41 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     }, "Building full log...");
   }
 
-  private List<? extends GraphCommit> convertToGraphCommits(List<? extends TimedVcsCommit> log) {
-    return compactHashes(log);
+  private List<? extends GraphCommit<Integer>> convertToGraphCommits(final List<? extends TimedVcsCommit> log) {
+    return new AbstractList<GraphCommit<Integer>>() {
+      @Override
+      public GraphCommit<Integer> get(int index) {
+        final TimedVcsCommit commit = log.get(index);
+        return new GraphCommit<Integer>() {
+          @NotNull
+          @Override
+          public Integer getId() {
+            return getCommitIndex(commit.getId());
+          }
+
+          @NotNull
+          @Override
+          public List<Integer> getParents() {
+            return ContainerUtil.map(commit.getParents(), new Function<Hash, Integer>() {
+              @Override
+              public Integer fun(Hash hash) {
+                return getCommitIndex(hash);
+              }
+            });
+          }
+
+          @Override
+          public long getTimestamp() {
+            return commit.getTimestamp();
+          }
+        };
+      }
+
+      @Override
+      public int size() {
+        return log.size();
+      }
+    };
   }
 
   public boolean isFullLogShowing() {
@@ -641,7 +663,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     List<TimedVcsCommit> commits = ContainerUtil.map(firstBlockDetails, new Function<VcsCommitMetadata, TimedVcsCommit>() {
       @Override
       public TimedVcsCommit fun(VcsCommitMetadata details) {
-        return new CompactCommit(details.getId(), details.getParents(), details.getTimestamp());
+        return details;
       }
     });
     myHashMap.flush();
@@ -832,103 +854,6 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     @NotNull
     public List<? extends TimedVcsCommit> getTopCommits() {
       return myCompoundTopCommits;
-    }
-  }
-
-  private class CompactCommit implements TimedVcsCommit, GraphCommit {
-    private final int myHashIndex;
-    private final int myParent; // there is almost always one parent
-    private final int[] myOtherParents;
-    private final long myTime;
-
-    public CompactCommit(TimedVcsCommit commit) {
-      this(commit.getId(), commit.getParents(), commit.getTimestamp());
-    }
-
-    public CompactCommit(Hash hash, List<Hash> parents, long time) {
-      myHashIndex = getCommitIndex(hash);
-      myTime = time;
-
-      if (!parents.isEmpty()) {
-        myParent = getCommitIndex(parents.get(0));
-        if (parents.size() > 1) {
-          myOtherParents = new int[parents.size() - 1];
-          for (int i = 0; i < parents.size() - 1; i++) {
-            myOtherParents[i]= getCommitIndex(parents.get(i + 1));
-          }
-        }
-        else {
-          myOtherParents = null;
-        }
-      }
-      else {
-        myParent = -1;
-        myOtherParents = null;
-      }
-    }
-
-    @Override
-    public long getTimestamp() {
-      return myTime;
-    }
-
-    @NotNull
-    @Override
-    public Hash getId() {
-      return VcsLogDataHolder.this.getHash(myHashIndex);
-    }
-
-    @NotNull
-    @Override
-    public List<Hash> getParents() {
-      List<Hash> parents = new SmartList<Hash>();
-      if (myParent > -1) {
-        parents.add(VcsLogDataHolder.this.getHash(myParent));
-      }
-      if (myOtherParents != null) {
-        for (int parent : myOtherParents) {
-          parents.add(VcsLogDataHolder.this.getHash(parent));
-        }
-      }
-      return parents;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      CompactCommit commit = (CompactCommit)o;
-
-      if (myHashIndex != commit.myHashIndex) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return myHashIndex;
-    }
-
-    @Override
-    public int getIndex() {
-      return myHashIndex;
-    }
-
-    @Override
-    public int[] getParentIndices() {
-      if (myParent < 0) {
-        return ArrayUtil.EMPTY_INT_ARRAY;
-      }
-      else if (myOtherParents == null) {
-        return new int[]{myParent};
-      }
-      else {
-        int[] parents = new int[myOtherParents.length + 1];
-        parents[0] = myParent;
-        System.arraycopy(myOtherParents, 0, parents, 1, myOtherParents.length);
-        return parents;
-      }
     }
   }
 

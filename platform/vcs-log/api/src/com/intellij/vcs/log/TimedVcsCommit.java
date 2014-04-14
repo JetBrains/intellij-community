@@ -29,7 +29,7 @@ import java.util.List;
  * and {@code hashcode()} so that they consider only the Hash</b>, i.e. two TimedVcsCommits are equal if and only if they have equal
  * hash codes. The VCS Log framework heavily relies on this fact.
  */
-public interface TimedVcsCommit extends VcsCommit {
+public interface TimedVcsCommit extends VcsCommit, GraphCommit<Hash> {
 
   /**
    * <p>Returns the timestamp indicating the date & time when this commit was made.</p>
