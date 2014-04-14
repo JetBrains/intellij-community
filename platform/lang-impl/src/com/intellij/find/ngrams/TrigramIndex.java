@@ -148,14 +148,14 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> implements Custo
       @Override
       public Collection<Integer> read(@NotNull DataInput in) throws IOException {
         byte[] originalBuffer;
+        int size;
         Deflater deflater = new Deflater(Deflater.HUFFMAN_ONLY);
         DeflaterInputStream is = new DeflaterInputStream((DataInputStream)in, deflater);
-
         try {
-          int size = DataInputOutputUtil.readINT(in);
+          size = DataInputOutputUtil.readINT(in);
           originalBuffer = spareBufferLocal.getBuffer(size);
-          int read = is.read(originalBuffer);
-          assert read == size;
+          //noinspection ResultOfMethodCallIgnored
+          is.read(originalBuffer, 0, size);
         }
         finally {
           try {
@@ -164,7 +164,7 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> implements Custo
           deflater.end();
         }
 
-        return super.read(new DataInputStream(new UnsyncByteArrayInputStream(originalBuffer)));
+        return super.read(new DataInputStream(new UnsyncByteArrayInputStream(originalBuffer, 0, size)));
       }
     };
   }
