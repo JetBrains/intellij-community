@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vfs;
+package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.IoTestUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.PlatformLangTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -34,9 +36,9 @@ import java.util.jar.JarFile;
 
 import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
 
-public class JarFileSystemTest extends IdeaTestCase {
+public class JarFileSystemTest extends PlatformLangTestCase {
   public void testFindFile() throws IOException {
-    String rtJarPath = getJdkRtPath("src.zip");
+    String rtJarPath = System.getProperty("java.home") + "/lib/rt.jar";
 
     VirtualFile jarRoot = findByPath(rtJarPath + JarFileSystem.JAR_SEPARATOR);
     assertTrue(jarRoot.isDirectory());
@@ -47,7 +49,7 @@ public class JarFileSystemTest extends IdeaTestCase {
     VirtualFile file3 = jarRoot.findChild("java");
     assertEquals(file2, file3);
 
-    VirtualFile file4 = findByPath(rtJarPath + JarFileSystem.JAR_SEPARATOR + "java/lang/Object.java");
+    VirtualFile file4 = findByPath(rtJarPath + JarFileSystem.JAR_SEPARATOR + "java/lang/Object.class");
     assertTrue(!file4.isDirectory());
 
     byte[] bytes = file4.contentsToByteArray();
@@ -56,7 +58,7 @@ public class JarFileSystemTest extends IdeaTestCase {
   }
 
   public void testMetaInf() {
-    String rtJarPath = getJdkRtPath("jre/lib/rt.jar");
+    String rtJarPath = System.getProperty("java.home") + "/lib/rt.jar";
 
     VirtualFile jarRoot = findByPath(rtJarPath + JarFileSystem.JAR_SEPARATOR);
     assertTrue(jarRoot.isDirectory());
@@ -66,6 +68,7 @@ public class JarFileSystemTest extends IdeaTestCase {
 
     VirtualFile[] children = metaInf.getChildren();
     assertEquals(1, children.length);
+    assertEquals("MANIFEST.MF", children[0].getName());
   }
 
   public void testJarRefresh() throws IOException {
@@ -105,18 +108,10 @@ public class JarFileSystemTest extends IdeaTestCase {
     String jarPath = PathManagerEx.getTestDataPath() + "/vfs/maven-toolchain-1.0.jar";
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(jarPath);
     assertNotNull(vFile);
-    VirtualFile manifest = findByPath(jarPath + JarFileSystem.JAR_SEPARATOR + java.util.jar.JarFile.MANIFEST_NAME);
+    VirtualFile manifest = findByPath(jarPath + JarFileSystem.JAR_SEPARATOR + JarFile.MANIFEST_NAME);
     assertNotNull(manifest);
     VirtualFile classFile = findByPath(jarPath + JarFileSystem.JAR_SEPARATOR + "org/apache/maven/toolchain/java/JavaToolChain.class");
     assertNotNull(classFile);
-  }
-
-  private String getJdkRtPath(String relativePath) {
-    Sdk jdk = ModuleRootManager.getInstance(myModule).getSdk();
-    assertNotNull(jdk);
-    VirtualFile jdkHome = jdk.getHomeDirectory();
-    assertNotNull(jdkHome);
-    return jdkHome.getPath() + "/" + relativePath;
   }
 
   private static VirtualFile findByPath(String path) {
