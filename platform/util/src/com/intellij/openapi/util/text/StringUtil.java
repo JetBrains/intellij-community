@@ -2079,6 +2079,8 @@ public class StringUtil extends StringUtilRt {
   }
 
   public static int compareVersionNumbers(@Nullable String v1, @Nullable String v2) {
+    // todo duplicates com.intellij.util.text.VersionComparatorUtil.compare
+    // todo please refactor next time you make changes here
     if (v1 == null && v2 == null) {
       return 0;
     }
