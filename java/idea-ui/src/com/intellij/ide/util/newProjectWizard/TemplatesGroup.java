@@ -92,6 +92,10 @@ public class TemplatesGroup implements Comparable<TemplatesGroup> {
     return true;
   }
 
+  public int getWeight() {
+    return myWeight;
+  }
+
   @Override
   public int hashCode() {
     return myName.hashCode();

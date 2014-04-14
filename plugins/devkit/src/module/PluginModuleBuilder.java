@@ -59,4 +59,9 @@ public class PluginModuleBuilder extends JavaModuleBuilder{
   public String getParentGroup() {
     return JavaModuleType.JAVA_GROUP;
   }
+
+  @Override
+  public int getWeight() {
+    return 0;
+  }
 }
