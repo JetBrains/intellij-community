@@ -48,14 +48,17 @@ public class LogMessage extends AbstractMessage {
       header = aEvent.getMessage();
     }
 
-    if (myThrowable != null && StringUtil.isNotEmpty(myThrowable.getMessage())) {
-      if (header != null) {
-        if (header.endsWith(":")) header += " ";
-        else if (!header.endsWith(": ")) header += ": ";
-        header += myThrowable.getMessage();
-      }
-      else {
-        header = myThrowable.getMessage();
+    if (myThrowable != null) {
+      String message = myThrowable.getMessage();
+      if (StringUtil.isNotEmpty(message) && (header == null || !header.startsWith(message))) {
+        if (header != null) {
+          if (header.endsWith(":")) header += " ";
+          else if (!header.endsWith(": ")) header += ": ";
+          header += message;
+        }
+        else {
+          header = message;
+        }
       }
     }
 
