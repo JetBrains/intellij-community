@@ -70,6 +70,7 @@ public class DelegateGraphFacade implements GraphFacade {
     for (PrintElement printElement : printElements) {
       maxIndex = Math.max(maxIndex, printElement.getPositionInCurrentRow());
     }
+    maxIndex++;
     final BufferedImage image =
       UIUtil.createImage(PrintParameters.WIDTH_NODE * (maxIndex + 4), PrintParameters.HEIGHT_CELL, BufferedImage.TYPE_INT_ARGB);
     Graphics2D g2 = image.createGraphics();
