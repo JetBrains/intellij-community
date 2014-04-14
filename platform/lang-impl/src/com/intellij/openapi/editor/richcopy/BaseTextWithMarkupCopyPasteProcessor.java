@@ -20,7 +20,6 @@ import com.intellij.codeInsight.editorActions.TextBlockTransferableData;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.richcopy.model.SyntaxInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
@@ -29,12 +28,20 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.awt.datatransfer.Transferable;
 
 public abstract class BaseTextWithMarkupCopyPasteProcessor<T extends TextBlockTransferableData> implements CopyPastePostProcessor<T>, TextWithMarkupBuilder {
   private static final Logger LOG = Logger.getInstance("#" + BaseTextWithMarkupCopyPasteProcessor.class.getName());
+  private static final String TRUNCATED_MESSAGE = "... truncated ...";
 
   private T myData;
+  private int mySizeLimit;
+  protected StringBuilder myBuilder;
+  protected String myDefaultFontFamily;
+  protected Color myDefaultForeground;
+  protected Color myDefaultBackground;
+  protected int myFontSize;
 
   protected BaseTextWithMarkupCopyPasteProcessor(TextWithMarkupProcessor processor) {
     processor.addBuilder(this);
@@ -46,7 +53,10 @@ public abstract class BaseTextWithMarkupCopyPasteProcessor<T extends TextBlockTr
     if (!Registry.is("editor.richcopy.enable")) {
       return null;
     }
-    return myData;
+    releaseBuilder(); // to avoid leakage in case 'complete' method wasn't called due to some exception
+    T data = myData;
+    myData = null;
+    return data;
   }
 
   @Nullable
@@ -66,30 +76,58 @@ public abstract class BaseTextWithMarkupCopyPasteProcessor<T extends TextBlockTr
   }
 
   @Override
-  public void build(CharSequence charSequence, SyntaxInfo syntaxInfo) {
-    String stringRepresentation = null;
-    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-    try {
-      buildStringRepresentation(buffer, charSequence, syntaxInfo, Registry.intValue("editor.richcopy.max.size.megabytes") * 1048576);
-      stringRepresentation = buffer.toString();
-      if (Registry.is("editor.richcopy.debug")) {
-        LOG.info("Resulting text: \n'" + stringRepresentation + "'");
-      }
-    }
-    catch (Exception e){
-      LOG.error(e);
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
-    }
-    myData = stringRepresentation == null ? null : createTransferable(stringRepresentation);
+  public void init(Color defaultForeground, Color defaultBackground, String defaultFontFamily, int fontSize) {
+    myData = null;
+    myDefaultForeground = defaultForeground;
+    myDefaultBackground = defaultBackground;
+    myDefaultFontFamily = defaultFontFamily;
+    myFontSize = fontSize;
+    allocateBuilder();
+    mySizeLimit = Registry.intValue("editor.richcopy.max.size.megabytes") * 1048576;
+    doInit();
   }
 
   @Override
-  public void reset() {
-    myData = null;
+  public boolean isOverflowed() {
+    boolean overflowed = myBuilder.length() > mySizeLimit;
+    if (overflowed) {
+      setFontFamily(myDefaultFontFamily);
+      setForeground(myDefaultForeground);
+      setBackground(myDefaultBackground);
+      addTextFragment(TRUNCATED_MESSAGE, 0, TRUNCATED_MESSAGE.length());
+    }
+    return overflowed;
   }
 
-  protected abstract void buildStringRepresentation(@NotNull StringBuilder buffer, @NotNull CharSequence rawText, @NotNull SyntaxInfo syntaxInfo, int maxLength);
+  @Override
+  public void complete() {
+    try {
+      doComplete();
+      String data = myBuilder.toString();
+      if (Registry.is("editor.richcopy.debug")) {
+        LOG.info("Resulting text: \n" + data);
+      }
+      myData = createTransferable(data);
+    }
+    finally {
+      releaseBuilder();
+    }
+  }
+
   protected abstract T createTransferable(@NotNull String data);
+  protected abstract void doInit();
+  protected abstract void doComplete();
+
+  private void allocateBuilder() {
+    if (myBuilder == null) {
+      myBuilder = StringBuilderSpinAllocator.alloc();
+    }
+  }
+
+  private void releaseBuilder() {
+    if (myBuilder != null) {
+      StringBuilderSpinAllocator.dispose(myBuilder);
+      myBuilder = null;
+    }
+  }
 }

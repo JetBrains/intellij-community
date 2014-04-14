@@ -402,11 +402,14 @@ public class DateFormatUtil {
 
   @SuppressWarnings("SpellCheckingInspection")
   private interface Kernel32 extends StdCallLibrary {
+    String LOCALE_NAME_USER_DEFAULT = null;
+
     int LOCALE_SSHORTDATE  = 0x0000001F;
     int LOCALE_SSHORTTIME  = 0x00000079;
     int LOCALE_STIMEFORMAT = 0x00001003;
 
     int GetLocaleInfoEx(String localeName, int lcType, Pointer lcData, int dataSize);
+    int GetLastError();
   }
 
   private static boolean getWindowsFormats(DateFormat[] formats) {
@@ -414,16 +417,16 @@ public class DateFormatUtil {
     int dataSize = 128, rv;
     Memory data = new Memory(dataSize);
 
-    rv = kernel32.GetLocaleInfoEx(null, Kernel32.LOCALE_SSHORTDATE, data, dataSize);
-    assert rv > 1 : rv;
+    rv = kernel32.GetLocaleInfoEx(Kernel32.LOCALE_NAME_USER_DEFAULT, Kernel32.LOCALE_SSHORTDATE, data, dataSize);
+    assert rv > 1 : kernel32.GetLastError();
     String shortDate = new String(data.getCharArray(0, rv - 1));
 
-    rv = kernel32.GetLocaleInfoEx(null, Kernel32.LOCALE_SSHORTTIME, data, dataSize);
-    assert rv > 1 : rv;
+    rv = kernel32.GetLocaleInfoEx(Kernel32.LOCALE_NAME_USER_DEFAULT, Kernel32.LOCALE_SSHORTTIME, data, dataSize);
+    assert rv > 1 : kernel32.GetLastError();
     String shortTime = StringUtil.replace(new String(data.getCharArray(0, rv - 1)), "tt", "a");
 
-    rv = kernel32.GetLocaleInfoEx(null, Kernel32.LOCALE_STIMEFORMAT, data, dataSize);
-    assert rv > 1 : rv;
+    rv = kernel32.GetLocaleInfoEx(Kernel32.LOCALE_NAME_USER_DEFAULT, Kernel32.LOCALE_STIMEFORMAT, data, dataSize);
+    assert rv > 1 : kernel32.GetLastError();
     String mediumTime = StringUtil.replace(new String(data.getCharArray(0, rv - 1)), "tt", "a");
 
     formats[0] = new SimpleDateFormat(shortDate);

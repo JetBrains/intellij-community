@@ -41,7 +41,8 @@ public class InvokeTemplateAction extends AnAction {
   private final Project myProject;
 
   public InvokeTemplateAction(TemplateImpl template, Editor editor, Project project, Set<Character> usedMnemonicsSet) {
-    super(extractMnemonic(template.getKey(), usedMnemonicsSet) + ". " + template.getDescription());
+    super(extractMnemonic(template.getKey(), usedMnemonicsSet) +
+          (StringUtil.isEmptyOrSpaces(template.getDescription()) ? "" : ". " + template.getDescription()));
     myTemplate = template;
     myProject = project;
     myEditor = editor;

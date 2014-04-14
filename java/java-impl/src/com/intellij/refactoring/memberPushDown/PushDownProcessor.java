@@ -431,6 +431,11 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
       PsiMember newMember = null;
       if (member instanceof PsiField) {
         ((PsiField)member).normalizeDeclaration();
+        if (myClass.isInterface() && !targetClass.isInterface()) {
+          PsiUtil.setModifierProperty(member, PsiModifier.PUBLIC, true);
+          PsiUtil.setModifierProperty(member, PsiModifier.STATIC, true);
+          PsiUtil.setModifierProperty(member, PsiModifier.FINAL, true);
+        }
         newMember = (PsiMember)targetClass.add(member);
       }
       else if (member instanceof PsiMethod) {

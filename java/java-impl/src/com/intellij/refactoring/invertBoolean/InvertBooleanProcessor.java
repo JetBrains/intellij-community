@@ -271,6 +271,10 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
         }
       }
     }
+
+    if (myElement instanceof PsiField && ((PsiField)myElement).getInitializer() == null) {
+      ((PsiField)myElement).setInitializer(JavaPsiFacade.getElementFactory(myProject).createExpressionFromText("true", myElement));
+    }
   }
 
   @Override

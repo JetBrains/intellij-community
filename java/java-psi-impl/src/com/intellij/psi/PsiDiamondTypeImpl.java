@@ -183,7 +183,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     final PsiResolveHelper resolveHelper = facade.getResolveHelper();
     final JavaResolveResult result =
-      resolveHelper.resolveConstructor(facade.getElementFactory().createType(containingClass), argumentList, argumentList);
+      resolveHelper.resolveConstructor(facade.getElementFactory().createType(containingClass, PsiSubstitutor.EMPTY), argumentList, argumentList);
     return (PsiMethod)result.getElement();
   }
 

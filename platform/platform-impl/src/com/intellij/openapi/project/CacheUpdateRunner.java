@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressWrapper;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -40,6 +41,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CacheUpdateRunner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.CacheUpdateRunner");
+  private static final Key<Boolean> FAILED_TO_INDEX = Key.create("FAILED_TO_INDEX");
   private static final int PROC_COUNT = Runtime.getRuntime().availableProcessors();
   private final Project myProject;
   private final Collection<CacheUpdater> myUpdaters;
@@ -251,9 +253,18 @@ public class CacheUpdateRunner {
               myInnerIndicator.checkCanceled();
               if (!myProject.isDisposed()) {
                 final VirtualFile file = fileContent.getVirtualFile();
-                if (file.isValid()) {
+                try {
                   myProgressUpdater.consume(file);
-                  myProcessor.consume(fileContent);
+                  if (file.isValid() && !file.isDirectory() && !Boolean.TRUE.equals(file.getUserData(FAILED_TO_INDEX))) {
+                    myProcessor.consume(fileContent);
+                  }
+                }
+                catch (ProcessCanceledException e) {
+                  throw e;
+                }
+                catch (Throwable e) {
+                  LOG.error("Error while indexing " + file.getPresentableUrl() + "\n" + "To reindex this file IDEA has to be restarted", e);
+                  file.putUserData(FAILED_TO_INDEX, Boolean.TRUE);
                 }
               }
             }

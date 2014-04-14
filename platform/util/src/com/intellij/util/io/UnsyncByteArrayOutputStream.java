@@ -15,8 +15,6 @@
  */
 package com.intellij.util.io;
 
-import com.intellij.util.ArrayUtil;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
@@ -31,7 +29,10 @@ public class UnsyncByteArrayOutputStream extends OutputStream {
   }
 
   public UnsyncByteArrayOutputStream(int size) {
-    myBuffer = new byte[size];
+    this(new byte[size]);
+  }
+  public UnsyncByteArrayOutputStream(byte[] buffer) {
+    myBuffer = buffer;
   }
 
   @Override

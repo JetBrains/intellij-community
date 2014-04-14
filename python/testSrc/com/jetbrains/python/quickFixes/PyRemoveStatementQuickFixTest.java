@@ -19,6 +19,7 @@ import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyReturnFromInitInspection;
+import com.jetbrains.python.inspections.PyUnusedLocalInspection;
 
 @TestDataPath("$CONTENT_ROOT/../testData//quickFixes/PyRemoveStatementQuickFixTest/")
 public class PyRemoveStatementQuickFixTest extends PyQuickFixTestCase {
@@ -29,6 +30,14 @@ public class PyRemoveStatementQuickFixTest extends PyQuickFixTestCase {
 
   public void testLastStatement() {
     doQuickFixTest(PyReturnFromInitInspection.class, PyBundle.message("QFIX.NAME.remove.statement"));
+  }
+
+  public void testFunction() {
+    doQuickFixTest(PyUnusedLocalInspection.class, PyBundle.message("QFIX.NAME.remove.statement"));
+  }
+
+  public void testVariable() {
+    doQuickFixTest(PyUnusedLocalInspection.class, PyBundle.message("QFIX.NAME.remove.statement"));
   }
 
 }

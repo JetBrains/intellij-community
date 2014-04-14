@@ -18,6 +18,7 @@
   <vendor url="http://svn.jetbrains.org/idea/Trunk/bundled/git4idea/" logo="/general/ijLogo.png">JetBrains</vendor>
 
   <depends>com.intellij.modules.vcs</depends>
+  <depends optional="true" config-file="remote-servers-specific.xml">com.intellij.modules.ultimate</depends>
 
   <actions>
 

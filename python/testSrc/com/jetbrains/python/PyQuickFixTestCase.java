@@ -17,6 +17,8 @@ package com.jetbrains.python;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,6 +32,16 @@ public abstract class PyQuickFixTestCase extends PyTestCase {
   @NonNls
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath() + "/quickFixes/" + getClass().getSimpleName();
+  }
+
+  protected void doQuickFixTest(final Class inspectionClass, final String hint, LanguageLevel languageLevel) {
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
+    try {
+      doQuickFixTest(inspectionClass, hint);
+    }
+    finally {
+      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
+    }
   }
 
   protected void doQuickFixTest(final Class inspectionClass, final String hint) {

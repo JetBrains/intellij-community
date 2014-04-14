@@ -237,17 +237,18 @@ public class GithubRepository extends BaseRepositoryImpl {
   }
 
   @Nullable
-  public String extractId(String taskName) {
+  public String extractId(@NotNull String taskName) {
     Matcher matcher = myPattern.matcher(taskName);
     return matcher.find() ? matcher.group(1) : null;
   }
 
   @Nullable
   @Override
-  public Task findTask(String id) throws Exception {
+  public Task findTask(@NotNull String id) throws Exception {
     return createTask(GithubApiUtil.getIssue(getAuthData(), getRepoAuthor(), getRepoName(), id));
   }
 
+  @NotNull
   @Override
   public BaseRepository clone() {
     return new GithubRepository(this);

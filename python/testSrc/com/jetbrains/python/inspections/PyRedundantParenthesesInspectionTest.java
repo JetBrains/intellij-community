@@ -79,4 +79,8 @@ public class PyRedundantParenthesesInspectionTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON27);
   }
 
+  public void testBinaryInBinary() {       //PY-10420
+    doTest();
+  }
+
 }

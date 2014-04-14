@@ -87,7 +87,7 @@ class ModuleRedeclarator(object):
         self.ret_type_cache = {}
         self.used_imports = emptylistdict() # qual_mod_name -> [imported_names,..]: actually used imported names
 
-    def _initializeQApp(self):
+    def _initializeQApp4(self):
         try:  # QtGui should be imported _before_ QtCore package.
             # This is done for the QWidget references from QtCore (such as QSignalMapper). Known bug in PyQt 4.7+
             # Causes "TypeError: C++ type 'QWidget*' is not supported as a native Qt signal type"
@@ -103,9 +103,12 @@ class ModuleRedeclarator(object):
             return
         except ImportError:
             pass
+
+    def _initializeQApp5(self):
         try:
             from PyQt5.QtCore import QCoreApplication
             self.app = QCoreApplication([])
+            return
         except ImportError:
             pass
 
@@ -817,8 +820,10 @@ class ModuleRedeclarator(object):
         """
         action("redoing header of module %r %r", p_name, str(self.module))
 
-        if "pyqt" in p_name.lower():   # qt specific patch
-            self._initializeQApp()
+        if "pyqt4" in p_name.lower():   # qt4 specific patch
+            self._initializeQApp4()
+        elif "pyqt5" in p_name.lower():   # qt5 specific patch
+            self._initializeQApp5()
 
         self.redo_simple_header(p_name)
 

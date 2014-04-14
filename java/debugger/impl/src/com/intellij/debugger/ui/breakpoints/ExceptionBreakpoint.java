@@ -23,12 +23,8 @@ package com.intellij.debugger.ui.breakpoints;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
-import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -61,7 +57,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
   protected final static String READ_NO_CLASS_NAME = DebuggerBundle.message("error.absent.exception.breakpoint.class.name");
   public static final @NonNls Key<ExceptionBreakpoint> CATEGORY = BreakpointCategory.lookup("exception_breakpoints");
 
-  public ExceptionBreakpoint(Project project, XBreakpoint xBreakpoint) {
+  public ExceptionBreakpoint(Project project, XBreakpoint<JavaExceptionBreakpointProperties> xBreakpoint) {
     super(project, xBreakpoint);
   }
 
@@ -69,7 +65,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
     return CATEGORY;
   }
 
-  protected ExceptionBreakpoint(Project project, String qualifiedName, String packageName, XBreakpoint xBreakpoint) {
+  protected ExceptionBreakpoint(Project project, String qualifiedName, String packageName, XBreakpoint<JavaExceptionBreakpointProperties> xBreakpoint) {
     super(project, xBreakpoint);
     setQualifiedName(qualifiedName);
     if (packageName == null) {
@@ -80,7 +76,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
     }
   }
 
-  private String calcPackageName(String qualifiedName) {
+  private static String calcPackageName(String qualifiedName) {
     if (qualifiedName == null) {
       return null;
     }
@@ -99,7 +95,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
   public PsiClass getPsiClass() {
     return PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(new Computable<PsiClass>() {
       public PsiClass compute() {
-        return getQualifiedName() != null ? DebuggerUtilsEx.findClass(getQualifiedName(), myProject, GlobalSearchScope.allScope(myProject)) : null;
+        return getQualifiedName() != null ? DebuggerUtils.findClass(getQualifiedName(), myProject, GlobalSearchScope.allScope(myProject)) : null;
       }
     });
   }
@@ -127,7 +123,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
 
     SourcePosition classPosition = PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(new Computable<SourcePosition>() {
       public SourcePosition compute() {
-        PsiClass psiClass = DebuggerUtilsEx.findClass(getQualifiedName(), myProject, debugProcess.getSearchScope());
+        PsiClass psiClass = DebuggerUtils.findClass(getQualifiedName(), myProject, debugProcess.getSearchScope());
 
         return psiClass != null ? SourcePosition.createFromElement(psiClass) : null;
       }
@@ -176,12 +172,12 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
         exceptionName = exceptionEvent.exception().type().name();
         threadName = exceptionEvent.thread().name();
       }
-      catch (Exception e) {
+      catch (Exception ignore) {
       }
     }
     final Location location = event.location();
     final String locationQName = location.declaringType().name() + "." + location.method().name();
-    String locationFileName = "";
+    String locationFileName;
     try {
       locationFileName = location.sourceName();
     }
@@ -240,11 +236,11 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
 
     try {
       getProperties().NOTIFY_CAUGHT = Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "NOTIFY_CAUGHT"));
-    } catch (Exception e) {
+    } catch (Exception ignore) {
     }
     try {
       getProperties().NOTIFY_UNCAUGHT = Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "NOTIFY_UNCAUGHT"));
-    } catch (Exception e) {
+    } catch (Exception ignore) {
     }
 
     //noinspection HardCodedStringLiteral

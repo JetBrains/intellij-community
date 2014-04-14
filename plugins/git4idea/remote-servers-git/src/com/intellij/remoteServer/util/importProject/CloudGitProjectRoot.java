@@ -17,6 +17,7 @@ package com.intellij.remoteServer.util.importProject;
 
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.remoteServer.util.CloudGitDeploymentDetector;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -26,19 +27,26 @@ import java.io.File;
  */
 public class CloudGitProjectRoot extends DetectedProjectRoot {
 
+  public static String getProjectRootTypeName(CloudGitDeploymentDetector detector) {
+    return detector.getCloudType().getPresentableName();
+  }
+
+  public static String getJavaSourceRootTypeName(CloudGitDeploymentDetector detector) {
+    return "Java/" + getProjectRootTypeName(detector);
+  }
+
   private final String myRootTypeName;
   private final String myJavaSourceRootTypeName;
   private final VirtualFile myRepositoryRoot;
   private final String myApplicationName;
 
-  public CloudGitProjectRoot(String rootTypeName,
-                             String javaSourceRootTypeName,
+  public CloudGitProjectRoot(CloudGitDeploymentDetector detector,
                              @NotNull File directory,
                              @NotNull VirtualFile repositoryRoot,
                              String applicationName) {
     super(directory);
-    myRootTypeName = rootTypeName;
-    myJavaSourceRootTypeName = javaSourceRootTypeName;
+    myRootTypeName = getProjectRootTypeName(detector);
+    myJavaSourceRootTypeName = getJavaSourceRootTypeName(detector);
     myRepositoryRoot = repositoryRoot;
     myApplicationName = applicationName;
   }
@@ -60,5 +68,9 @@ public class CloudGitProjectRoot extends DetectedProjectRoot {
 
   public VirtualFile getRepositoryRoot() {
     return myRepositoryRoot;
+  }
+
+  public String getJavaSourceRootTypeName() {
+    return myJavaSourceRootTypeName;
   }
 }

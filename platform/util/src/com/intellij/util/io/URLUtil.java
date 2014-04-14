@@ -109,18 +109,35 @@ public class URLUtil {
       };
   }
 
+  /**
+   * Splits .jar URL along a separator and strips "jar" and "file" prefixes if any.
+   * Returns a pair of path to a .jar file and entry name inside a .jar, or null if the URL does not contain a separator.
+   *
+   * E.g. "jar:file:///path/to/jar.jar!/resource.xml" is converted into ["/path/to/jar.jar", "resource.xml"].
+   */
   @Nullable
-  public static Pair<String, String> splitJarUrl(@NotNull String fullPath) {
-    int delimiter = fullPath.indexOf(JAR_SEPARATOR);
-    if (delimiter >= 0) {
-      String resourcePath = fullPath.substring(delimiter + 2);
-      String jarPath = fullPath.substring(0, delimiter);
-      if (StringUtil.startsWithConcatenation(jarPath, FILE_PROTOCOL, ":")) {
-        jarPath = jarPath.substring(FILE_PROTOCOL.length() + 1);
-        return Pair.create(jarPath, resourcePath);
+  public static Pair<String, String> splitJarUrl(@NotNull String url) {
+    int pivot = url.indexOf(JAR_SEPARATOR);
+    if (pivot < 0) return null;
+
+    String resourcePath = url.substring(pivot + 2);
+    String jarPath = url.substring(0, pivot);
+
+    if (StringUtil.startsWithConcatenation(jarPath, JAR_PROTOCOL, ":")) {
+      jarPath = jarPath.substring(JAR_PROTOCOL.length() + 1);
+    }
+
+    if (jarPath.startsWith(FILE_PROTOCOL)) {
+      jarPath = jarPath.substring(FILE_PROTOCOL.length());
+      if (jarPath.startsWith(SCHEME_SEPARATOR)) {
+        jarPath = jarPath.substring(SCHEME_SEPARATOR.length());
+      }
+      else if (StringUtil.startsWithChar(jarPath, ':')) {
+        jarPath = jarPath.substring(1);
       }
     }
-    return null;
+
+    return Pair.create(jarPath, resourcePath);
   }
 
   @NotNull

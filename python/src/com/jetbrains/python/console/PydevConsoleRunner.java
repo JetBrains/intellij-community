@@ -61,11 +61,11 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.remote.RemoteSdkCredentials;
 import com.intellij.remote.RemoteSshProcess;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.PathMappingSettings;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.ui.UIUtil;
@@ -75,6 +75,7 @@ import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.debugger.PySourcePosition;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
+import com.jetbrains.python.remote.PyRemoteSdkCredentials;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.run.ProcessRunner;
 import com.jetbrains.python.run.PythonCommandLineState;
@@ -343,10 +344,11 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     myCommandLine = commandLine.getCommandLineString();
 
     try {
-      RemoteSdkCredentials remoteCredentials = data.getRemoteSdkCredentials();
+      PyRemoteSdkCredentials remoteCredentials = data.getRemoteSdkCredentials();
+      PathMappingSettings mappings = manager.setupMappings(getProject(), data, null);
 
       RemoteSshProcess remoteProcess =
-        manager.createRemoteProcess(getProject(), remoteCredentials, commandLine, true);
+        manager.createRemoteProcess(getProject(), remoteCredentials, mappings, commandLine, true);
 
 
       Pair<Integer, Integer> remotePorts = getRemotePortsFromProcess(remoteProcess);

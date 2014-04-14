@@ -49,31 +49,7 @@ public enum GradleDependencyScope {
   /**
    * the same scope as the runtime scope dependencies, except that they are not added to the WAR archive.
    */
-  PROVIDED_RUNTIME("providedRuntime", "provided", false, true, false, true),
-
-  // Groovy Plugin Scopes
-  /**
-   * Compiles production Groovy source files.
-   */
-  COMPILE_GROOVY("compileGroovy", "compile", true, true, true, true),
-  /**
-   * Compiles test Groovy source files.
-   */
-  COMPILE_TEST_GROOVY("compileTestGroovy", "test", false, false, true, true),
-
-  // Scala Plugin Scopes
-  /**
-   * Compiles production Scala source files.
-   */
-  COMPILE_SCALA("compileScala", "compile", true, true, true, true),
-  /**
-   * Compiles test Scala source files.
-   */
-  COMPILE_TEST_SCALA("compileTestScala", "test", false, false, true, true),
-
-  // Implicit scopes
-  PROVIDED("provided", "provided", true, true, true, true),
-  OPTIONAL("optional", "compile", true, true, true, true),;
+  PROVIDED_RUNTIME("providedRuntime", "provided", false, true, false, true);
 
   private final String myGradleName;
   private final String myIdeaMappingName;

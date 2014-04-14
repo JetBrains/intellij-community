@@ -33,6 +33,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
@@ -193,7 +194,7 @@ public class PsiConcurrencyStressTest extends PsiTestCase {
   }
 
   @Override
-  protected void invokeTestRunnable(final Runnable runnable) throws Exception {
+  protected void invokeTestRunnable(@NotNull final Runnable runnable) throws Exception {
     runnable.run();
   }
 }

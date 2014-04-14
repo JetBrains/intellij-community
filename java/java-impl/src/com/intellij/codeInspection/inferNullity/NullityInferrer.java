@@ -17,7 +17,6 @@ package com.intellij.codeInspection.inferNullity;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -27,6 +26,7 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
@@ -145,49 +145,40 @@ public class NullityInferrer {
   public void apply(final Project project) {
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
     for (SmartPsiElementPointer<? extends PsiModifierListOwner> pointer : myNullableSet) {
-      annotateNullable(project, manager, pointer);
+      annotateNullable(project, manager, pointer.getElement());
     }
 
     for (SmartPsiElementPointer<? extends PsiModifierListOwner> pointer : myNotNullSet) {
-      annotateNotNull(project, manager, pointer);
+      annotateNotNull(project, manager, pointer.getElement());
     }
 
-    nothingFoundMessage(project);
-  }
-
-  public boolean nothingFoundMessage(final Project project) {
     if (myNullableSet.isEmpty() && myNotNullSet.isEmpty()) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        throw new RuntimeException(NOTHING_FOUND_TO_INFER);
-      }
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          Messages.showInfoMessage(project, "No places found to infer @Nullable/@NotNull", "Infer Nullity Results");
-        }
-      });
-      return true;
+      throw new RuntimeException(NOTHING_FOUND_TO_INFER);
     }
-    return false;
   }
 
-  private void annotateNotNull(Project project,
-                               NullableNotNullManager manager,
-                               SmartPsiElementPointer<? extends PsiModifierListOwner> pointer) {
-    final PsiModifierListOwner element = pointer.getElement();
+  public static void nothingFoundMessage(final Project project) {
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        Messages.showInfoMessage(project, "No places found to infer @Nullable/@NotNull", "Infer Nullity Results");
+      }
+    });
+  }
+
+  private static void annotateNotNull(Project project,
+                                      NullableNotNullManager manager,
+                                      final PsiModifierListOwner element) {
     if (element != null) {
-      if (shouldIgnore(element)) return;
       if (element instanceof PsiField && ((PsiField)element).hasInitializer() && element.hasModifierProperty(PsiModifier.FINAL)) return;
       invoke(project, element, manager.getDefaultNotNull(), manager.getDefaultNullable());
     }
   }
 
-  private void annotateNullable(Project project,
-                                NullableNotNullManager manager,
-                                SmartPsiElementPointer<? extends PsiModifierListOwner> pointer) {
-    final PsiModifierListOwner element = pointer.getElement();
+  private static void annotateNullable(Project project,
+                                       NullableNotNullManager manager,
+                                       final PsiModifierListOwner element) {
     if (element != null) {
-      if (shouldIgnore(element)) return;
       invoke(project, element, manager.getDefaultNullable(), manager.getDefaultNotNull());
     }
   }
@@ -207,12 +198,11 @@ public class NullityInferrer {
     return myNotNullSet.size() + myNullableSet.size();
   }
 
-  public void apply(int i, Project project, NullableNotNullManager manager) {
-    if (i < myNullableSet.size()) {
-      annotateNullable(project, manager, myNullableSet.get(i));
-    } else {
-      i -= myNullableSet.size();
-      annotateNotNull(project, manager, myNotNullSet.get(i));
+  public static void apply(Project project, NullableNotNullManager manager, UsageInfo info) {
+    if (info instanceof NullableUsageInfo) {
+      annotateNullable(project, manager, (PsiModifierListOwner)info.getElement());
+    } else if (info instanceof NotNullUsageInfo) {
+      annotateNotNull(project, manager, (PsiModifierListOwner)info.getElement());
     }
   }
 
@@ -241,6 +231,33 @@ public class NullityInferrer {
       myNotNullSet.add(methodPointer);
     }
     numAnnotationsAdded++;
+  }
+
+  private static class NullableUsageInfo extends UsageInfo {
+    public NullableUsageInfo(@NotNull PsiElement element) {
+      super(element);
+    }
+  }
+
+  private static class NotNullUsageInfo extends UsageInfo {
+    private NotNullUsageInfo(@NotNull PsiElement element) {
+      super(element);
+    }
+  }
+
+  public void collect(List<UsageInfo> usages) {
+    collect(usages, true);
+    collect(usages, false);
+  }
+
+  private void collect(List<UsageInfo> usages, boolean nullable) {
+    final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> set = nullable ? myNullableSet : myNotNullSet;
+    for (SmartPsiElementPointer<? extends PsiModifierListOwner> elementPointer : set) {
+      final PsiModifierListOwner element = elementPointer.getElement();
+      if (element != null && !shouldIgnore(element)) {
+        usages.add(nullable ? new NullableUsageInfo(element) : new NotNullUsageInfo(element));
+      }
+    }
   }
 
   private class ExpressionIsNeverNullVisitor extends JavaElementVisitor {

@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.NullableComponent;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.awt.RelativePoint;
@@ -31,7 +32,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 
-public abstract class MouseDragHelper implements MouseListener, MouseMotionListener, KeyEventDispatcher {
+public abstract class MouseDragHelper implements MouseListener, MouseMotionListener, KeyEventDispatcher, Weighted {
 
   public static final int DRAG_START_DEADZONE = 7;
 
@@ -109,6 +110,11 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
       KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(this);
       myGlassPane = null;
     }
+  }
+
+  @Override
+  public double getWeight() {
+    return 2;
   }
 
   public void mousePressed(final MouseEvent e) {

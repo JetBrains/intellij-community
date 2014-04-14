@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,12 @@
  */
 package com.intellij.html;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiElement;
+import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
-public class HtmlDocumentationTest extends CodeInsightTestCase {
+public class HtmlDocumentationTest extends LightPlatformCodeInsightTestCase {
   public void testQuickDocumentationHtml5Tag() throws Exception {
     doTest("<!DOCTYPE html>\n" +
            "<html>\n" +
@@ -65,8 +64,8 @@ public class HtmlDocumentationTest extends CodeInsightTestCase {
            "</html>");
   }
 
-  private void doTest(String text) throws Exception {
-    configureByText(StdFileTypes.HTML, text);
+  private static void doTest(String text) throws Exception {
+    configureFromFileText("test.html", text);
     PsiElement originalElement = getFile().findElementAt(myEditor.getCaretModel().getOffset());
     PsiElement element = DocumentationManager.getInstance(getProject()).findTargetElement(getEditor(), getFile());
     DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(originalElement);

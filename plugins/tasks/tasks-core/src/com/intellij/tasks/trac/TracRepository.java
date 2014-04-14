@@ -106,7 +106,7 @@ public class TracRepository extends BaseRepositoryImpl {
 
   @Nullable
   @Override
-  public Task findTask(String id) throws Exception {
+  public Task findTask(@NotNull String id) throws Exception {
     return getTask(Integer.parseInt(id), getRpcClient(), new Transport());
   }
 
@@ -230,6 +230,7 @@ public class TracRepository extends BaseRepositoryImpl {
     };
   }
 
+  @NotNull
   @Override
   public BaseRepository clone() {
     return new TracRepository(this);

@@ -29,6 +29,7 @@ public abstract class TestFrameworks {
   }
 
   public abstract boolean isTestClass(PsiClass psiClass);
+  public abstract boolean isPotentialTestClass(PsiClass psiClass);
 
   @Nullable
   public abstract PsiMethod findOrCreateSetUpMethod(PsiClass psiClass);

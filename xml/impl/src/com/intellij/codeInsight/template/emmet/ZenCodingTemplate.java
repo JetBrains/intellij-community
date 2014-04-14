@@ -17,6 +17,8 @@ package com.intellij.codeInsight.template.emmet;
 
 import com.intellij.application.options.emmet.EmmetOptions;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.emmet.filters.SingleLineEmmetFilter;
 import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
@@ -26,6 +28,7 @@ import com.intellij.codeInsight.template.emmet.nodes.*;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.emmet.tokens.TextToken;
 import com.intellij.codeInsight.template.emmet.tokens.ZenCodingToken;
+import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.diagnostic.AttachmentFactory;
@@ -41,9 +44,11 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -59,9 +64,7 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 
@@ -413,7 +416,6 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
           public void run() {
             callback.getEditor().getCaretModel().runForEachCaret(new CaretAction() {
               public void perform(Caret caret) {
-                callback.fixInitialState(true);
                 String selectedText = callback.getEditor().getSelectionModel().getSelectedText();
                 if (selectedText != null) {
                   String selection = selectedText.trim();
@@ -453,5 +455,52 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
 
   public boolean supportsWrapping() {
     return true;
+  }
+
+  @Override
+  public void addCompletions(CompletionParameters parameters, CompletionResultSet result) {
+    if (!parameters.isAutoPopup()) {
+      return;
+    }
+
+    PsiFile file = parameters.getPosition().getContainingFile();
+    int offset = parameters.getOffset();
+    Editor editor = parameters.getEditor();
+
+    ZenCodingGenerator generator = findApplicableDefaultGenerator(CustomTemplateCallback.getContext(file, offset), false);
+    if (generator != null && generator.hasCompletionItem()) {
+      final Ref<TemplateImpl> generatedTemplate = new Ref<TemplateImpl>();
+      final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file, false) {
+        @Override
+        public void deleteTemplateKey(String key) {
+        }
+
+        @Override
+        public void startTemplate(Template template, Map<String, String> predefinedValues, TemplateEditingListener listener) {
+          if (template instanceof TemplateImpl && !((TemplateImpl)template).isDeactivated()) {
+            generatedTemplate.set((TemplateImpl)template);
+          }
+        }
+      };
+
+      String templatePrefix = computeTemplateKeyWithoutContextChecking(callback);
+
+      if (templatePrefix != null) {
+        if (LiveTemplateCompletionContributor.findApplicableTemplate(file, offset, templatePrefix) == null) {
+          // exclude perfect matches with existing templates because LiveTemplateCompletionContributor handles it
+          final Collection<SingleLineEmmetFilter> extraFilters = ContainerUtil.newLinkedList(new SingleLineEmmetFilter());
+          expand(templatePrefix, callback, null, generator, extraFilters, false);
+          if (!generatedTemplate.isNull()) {
+            final TemplateImpl template = generatedTemplate.get();
+            template.setKey(templatePrefix);
+            template.setDescription(template.getTemplateText());
+
+            CompletionResultSet resultSet = result.withPrefixMatcher(result.getPrefixMatcher().cloneWithPrefix(templatePrefix));
+            resultSet.restartCompletionOnPrefixChange(StandardPatterns.string().startsWith(templatePrefix));
+            resultSet.addElement(generator.createLookupElement(this, template));
+          }
+        }
+      }
+    }
   }
 }

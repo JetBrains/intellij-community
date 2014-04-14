@@ -42,7 +42,7 @@ public class InfoCommandRepositoryProvider extends BaseRepositoryProvider {
       result = new Repository(myTarget.getURL());
     }
     else {
-      SVNInfo info = myVcs.getInfo(myTarget.getFile(), SVNRevision.UNDEFINED);
+      SVNInfo info = myVcs.getInfo(myTarget.getFile());
       result = info != null ? new Repository(info.getRepositoryRootURL()) : null;
     }
 

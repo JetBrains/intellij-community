@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.plugins;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.JBTable;
@@ -85,6 +86,9 @@ public class PluginTable extends JBTable {
     });
     if (model.getColumnCount() > 1) {
       setColumnWidth(1, new JCheckBox().getPreferredSize().width + 4);
+      if (SystemInfo.isMac && model.getColumnCount() == 3) {
+        setColumnWidth(2, 8);
+      }
     }
   }
 

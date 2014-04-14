@@ -1,6 +1,7 @@
 package org.jetbrains.debugger;
 
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import com.intellij.xdebugger.frame.XNavigatable;
 import com.intellij.xdebugger.frame.XValueNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +34,13 @@ public interface DebuggerViewSupport extends MemberFilter {
 
   @NotNull
   XDebuggerEvaluator createFrameEvaluator(@NotNull CallFrameView frame);
+
+  /**
+   * {@link org.jetbrains.debugger.values.FunctionValue} is special case and handled by SDK
+   */
+  boolean canNavigateToSource(@NotNull Variable variable, @NotNull VariableContext context);
+
+  void computeSourcePosition(@NotNull Variable variable, @NotNull VariableContext context, @NotNull XNavigatable navigatable);
 
   class SimpleDebuggerViewSupport implements DebuggerViewSupport {
     public static final DebuggerViewSupport INSTANCE = new SimpleDebuggerViewSupport();
@@ -97,6 +105,15 @@ public interface DebuggerViewSupport extends MemberFilter {
     @Override
     public XDebuggerEvaluator createFrameEvaluator(@NotNull CallFrameView frameView) {
       throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean canNavigateToSource(@NotNull Variable variable, @NotNull VariableContext context) {
+      return false;
+    }
+
+    @Override
+    public void computeSourcePosition(@NotNull Variable variable, @NotNull VariableContext context, @NotNull XNavigatable navigatable) {
     }
 
     @Override

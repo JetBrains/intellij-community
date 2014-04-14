@@ -313,6 +313,7 @@ class Generator {
         }
         return visitor.visitString();
       case INTEGER_TYPE:
+      case "int":
         return visitor.visitInteger();
       case NUMBER_TYPE:
         return visitor.visitNumber();

@@ -54,6 +54,11 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
     PlatformTestCase.initPlatformLangPrefix();
   }
 
+  // let it be as if someone (e.g. dumb mode indexing) has loaded the content so it's available to local history
+  protected static void loadContent(VirtualFile f) throws IOException {
+    f.contentsToByteArray();
+  }
+
   @Override
   public void setUp() throws Exception {
     super.setUp();

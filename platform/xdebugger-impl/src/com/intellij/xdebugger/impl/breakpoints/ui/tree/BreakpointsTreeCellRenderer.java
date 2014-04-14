@@ -21,10 +21,13 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
+import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointCustomGroup;
 
 import javax.swing.*;
 
 class BreakpointsTreeCellRenderer  {
+  private static SimpleTextAttributes SIMPLE_CELL_ATTRIBUTES_BOLD = SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES.derive(SimpleTextAttributes.STYLE_BOLD, null, null, null);
+
   private static void customizeRenderer(Project project,
                                         Object value,
                                         boolean selected,
@@ -38,7 +41,12 @@ class BreakpointsTreeCellRenderer  {
     else if (value instanceof BreakpointsGroupNode) {
       XBreakpointGroup group = ((BreakpointsGroupNode)value).getGroup();
       renderer.setIcon(group.getIcon(expanded));
-      renderer.append(group.getName(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+      if (group instanceof XBreakpointCustomGroup && ((XBreakpointCustomGroup)group).isDefault()) {
+        renderer.append(group.getName(), SIMPLE_CELL_ATTRIBUTES_BOLD);
+      }
+      else {
+        renderer.append(group.getName(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+      }
     }
   }
 

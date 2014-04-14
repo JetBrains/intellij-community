@@ -471,7 +471,7 @@ public class PlatformTestUtil {
     public void assertTiming() {
       assert expectedMs != 0 : "Must call .expect() before run test";
       if (COVERAGE_ENABLED_BUILD) return;
-      Timings.getStatistics(); // warmup, measure
+      Timings.getStatistics(); // warm-up, measure
 
       while (true) {
         attempts--;
@@ -747,7 +747,7 @@ public class PlatformTestUtil {
 
   public static void assertElementsEqual(final Element expected, final Element actual) throws IOException {
     if (!JDOMUtil.areElementsEqual(expected, actual)) {
-      junit.framework.Assert.assertEquals(printElement(expected), printElement(actual));
+      assertEquals(printElement(expected), printElement(actual));
     }
   }
 

@@ -16,15 +16,11 @@
 package git4idea.repo;
 
 import com.intellij.dvcs.repo.Repository;
-import com.intellij.openapi.application.PluginPathManager;
 import git4idea.GitLocalBranch;
 import git4idea.test.GitSingleRepoTest;
 
 import java.io.File;
-import java.util.Collections;
 
-import static com.intellij.openapi.vcs.Executor.cd;
-import static com.intellij.openapi.vcs.Executor.cp;
 import static git4idea.test.GitExecutor.git;
 import static git4idea.test.GitScenarios.commit;
 import static git4idea.test.GitScenarios.conflict;
@@ -48,18 +44,6 @@ public class GitRepositoryReaderNewTest extends GitSingleRepoTest {
     Repository.State state = reader.readState();
     assertNull("Current branch can't be identified for this case", branch);
     assertEquals("State value is incorrect", Repository.State.REBASING, state);
-  }
-
-  public void test_large_packed_refs() {
-    File pluginRoot = new File(PluginPathManager.getPluginHomePath("git4idea"));
-    File dataDir = new File(new File(pluginRoot, "testData"), "repo");
-
-    File gitDir = new File(myRepo.getRoot().getPath(), ".git");
-    cd(dataDir.getPath());
-    cp("packed-refs", gitDir);
-
-    GitRepositoryReader reader = new GitRepositoryReader(gitDir);
-    reader.readBranches(Collections.<GitRemote>emptyList());
   }
 
 }

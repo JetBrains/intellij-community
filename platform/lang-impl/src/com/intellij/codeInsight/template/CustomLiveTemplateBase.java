@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInsight.template;
 
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.template.impl.CustomLiveTemplateLookupElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
@@ -39,6 +41,17 @@ abstract public class CustomLiveTemplateBase implements CustomLiveTemplate {
   @NotNull
   public Collection<? extends CustomLiveTemplateLookupElement> getLookupElements(@NotNull PsiFile file, @NotNull Editor editor, int offset) {
     return Collections.emptyList();
+  }
+  
+  /**
+   * Populate completion result set. Used by LiveTemplateCompletionContributor
+   */
+  public void addCompletions(CompletionParameters parameters, CompletionResultSet result) {
+    String prefix = computeTemplateKeyWithoutContextChecking(new CustomTemplateCallback(parameters.getEditor(), parameters.getOriginalFile(), false));
+    if (prefix != null) {
+      result.withPrefixMatcher(result.getPrefixMatcher().cloneWithPrefix(prefix)).addAllElements(
+        getLookupElements(parameters.getOriginalFile(), parameters.getEditor(), parameters.getOffset()));
+    }
   }
 
   @Nullable

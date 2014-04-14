@@ -18,15 +18,11 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.NotNullComputable;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
-import com.intellij.util.io.PersistentHashMap;
+import com.intellij.util.io.*;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectObjectProcedure;
 import org.jetbrains.annotations.NotNull;
@@ -47,19 +43,36 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Value, Input> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.MapReduceIndex");
+  private static final int NULL_MAPPING = 0;
   @Nullable private final ID<Key, Value> myIndexId;
   private final DataIndexer<Key, Value, Input> myIndexer;
   @NotNull protected final IndexStorage<Key, Value> myStorage;
-  @Nullable private PersistentHashMap<Integer, Collection<Key>> myInputsIndex;
+  private final boolean myHasSnapshotMapping;
+  private final DataExternalizer<Collection<Key>> mySnapshotIndexExternalizer;
+
+  private PersistentHashMap<Integer, Collection<Key>> myInputsIndex;
+  private PersistentHashMap<Integer, Collection<Key>> mySnapshotMapping;
+  private PersistentHashMap<Integer, Integer> myInputsSnapshotMapping;
 
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
 
   private Factory<PersistentHashMap<Integer, Collection<Key>>> myInputsIndexFactory;
 
-  public MapReduceIndex(@Nullable final ID<Key, Value> indexId, DataIndexer<Key, Value, Input> indexer, @NotNull IndexStorage<Key, Value> storage) {
+  public MapReduceIndex(@Nullable final ID<Key, Value> indexId,
+                        DataIndexer<Key, Value, Input> indexer,
+                        @NotNull IndexStorage<Key, Value> storage) {
+    this(indexId, indexer, storage, null);
+  }
+
+  public MapReduceIndex(@Nullable final ID<Key, Value> indexId,
+                        DataIndexer<Key, Value, Input> indexer,
+                        @NotNull IndexStorage<Key, Value> storage,
+                        DataExternalizer<Collection<Key>> snapshotIndexExternalizer) {
     myIndexId = indexId;
     myIndexer = indexer;
     myStorage = storage;
+    myHasSnapshotMapping = snapshotIndexExternalizer != null;
+    mySnapshotIndexExternalizer = snapshotIndexExternalizer;
   }
 
   @NotNull
@@ -73,15 +86,16 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
       getWriteLock().lock();
       myStorage.clear();
       if (myInputsIndex != null) {
-        final File baseFile = myInputsIndex.getBaseFile();
-        try {
-          myInputsIndex.close();
-        }
-        catch (IOException ignored) {
-        }
-
-        FileUtil.delete(baseFile);
+        cleanMapping(myInputsIndex);
         myInputsIndex = createInputsIndex();
+      }
+      if (myInputsSnapshotMapping != null) {
+        cleanMapping(myInputsSnapshotMapping);
+        myInputsSnapshotMapping = createInputSnapshotMapping();
+      }
+      if (mySnapshotMapping != null) {
+        cleanMapping(mySnapshotMapping);
+        mySnapshotMapping = createSnapshotMappingIndex();
       }
     }
     catch (StorageException e) {
@@ -95,14 +109,40 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     }
   }
 
+  private PersistentHashMap<Integer, Integer> createInputSnapshotMapping() throws IOException {
+    assert myIndexId != null;
+    final File fileIdToHashIdFile = new File(IndexInfrastructure.getIndexRootDir(myIndexId), "fileIdToHashId");
+    return IOUtil.openCleanOrResetBroken(new ThrowableComputable<PersistentHashMap<Integer, Integer>, IOException>() {
+      @Override
+      public PersistentHashMap<Integer, Integer> compute() throws IOException {
+        return new PersistentHashMap<Integer, Integer>(fileIdToHashIdFile, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE, 4096) {
+          @Override
+          protected boolean wantCompactIntegralValues() {
+            return true;
+          }
+        };
+      }
+    }, fileIdToHashIdFile);
+  }
+
+  private static void cleanMapping(@NotNull PersistentHashMap<?, ?> index) {
+    final File baseFile = index.getBaseFile();
+    try {
+      index.close();
+    }
+    catch (IOException ignored) {
+    }
+
+    FileUtil.delete(baseFile);
+  }
+
   @Override
   public void flush() throws StorageException{
     try {
       getReadLock().lock();
-      final PersistentHashMap<Integer, Collection<Key>> inputsIndex = myInputsIndex;
-      if (inputsIndex != null && inputsIndex.isDirty()) {
-        inputsIndex.force();
-      }
+      doForce(myInputsIndex);
+      doForce(myInputsSnapshotMapping);
+      doForce(mySnapshotMapping);
       myStorage.flush();
     }
     catch (IOException e) {
@@ -122,6 +162,12 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     }
   }
 
+  private static void doForce(PersistentHashMap<?, ?> inputsIndex) {
+    if (inputsIndex != null && inputsIndex.isDirty()) {
+      inputsIndex.force();
+    }
+  }
+
   @Override
   public void dispose() {
     final Lock lock = getWriteLock();
@@ -131,14 +177,9 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
         myStorage.close();
       }
       finally {
-        if (myInputsIndex != null) {
-          try {
-            myInputsIndex.close();
-          }
-          catch (IOException e) {
-            LOG.error(e);
-          }
-        }
+        doClose(myInputsIndex);
+        doClose(myInputsSnapshotMapping);
+        doClose(mySnapshotMapping);
       }
     }
     catch (StorageException e) {
@@ -146,6 +187,17 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     }
     finally {
       lock.unlock();
+    }
+  }
+
+  private static void doClose(PersistentHashMap<?, ?> index) {
+    if (index != null) {
+      try {
+        index.close();
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
     }
   }
 
@@ -188,7 +240,22 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
   public void setInputIdToDataKeysIndex(Factory<PersistentHashMap<Integer, Collection<Key>>> factory) throws IOException {
     myInputsIndexFactory = factory;
+    if (myHasSnapshotMapping) {
+      myInputsSnapshotMapping = createInputSnapshotMapping();
+      mySnapshotMapping = createSnapshotMappingIndex();
+    }
     myInputsIndex = createInputsIndex();
+  }
+
+  private PersistentHashMap<Integer, Collection<Key>> createSnapshotMappingIndex() throws IOException {
+    assert myIndexId != null;
+    final File hashIdToKeysFile = new File(IndexInfrastructure.getIndexRootDir(myIndexId), "hashIdToKeys");
+    return IOUtil.openCleanOrResetBroken(new ThrowableComputable<PersistentHashMap<Integer, Collection<Key>>, IOException>() {
+      @Override
+      public PersistentHashMap<Integer, Collection<Key>> compute() throws IOException {
+        return new PersistentHashMap<Integer, Collection<Key>>(hashIdToKeysFile, EnumeratorIntegerDescriptor.INSTANCE, mySnapshotIndexExternalizer);
+      }
+    }, hashIdToKeysFile);
   }
 
   @Nullable
@@ -216,6 +283,50 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
     ProgressManager.checkCanceled();
 
+    final NotNullComputable<Collection<Key>> oldKeysGetter;
+    final int savedInputId;
+
+    if (myHasSnapshotMapping && !((MemoryIndexStorage)getStorage()).isBufferingEnabled()) {
+      oldKeysGetter = new NotNullComputable<Collection<Key>>() {
+        @NotNull
+        @Override
+        public Collection<Key> compute() {
+          try {
+            Integer hashId = myInputsSnapshotMapping.get(inputId);
+            Collection<Key> keys = hashId != null ? mySnapshotMapping.get(hashId): null;
+            return keys == null ? Collections.<Key>emptyList() : keys;
+          } catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      };
+      try {
+        if (content instanceof FileContent) {
+          FileContent fileContent = (FileContent)content;
+          savedInputId = ContentHashesSupport.calcContentHashIdWithFileType(fileContent.getContent(), fileContent.getFileType());
+        } else {
+          savedInputId = NULL_MAPPING;
+        }
+      } catch (IOException ex) {
+        throw new RuntimeException(ex);
+      }
+    } else {
+      oldKeysGetter = new NotNullComputable<Collection<Key>>() {
+        @NotNull
+        @Override
+        public Collection<Key> compute() {
+          try {
+            Collection<Key> oldKeys = myInputsIndex.get(inputId);
+            return oldKeys == null? Collections.<Key>emptyList() : oldKeys;
+          }
+          catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      };
+      savedInputId = inputId;
+    }
+
     // do not depend on content!
     return new Computable<Boolean>() {
       @Override
@@ -225,22 +336,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
           @Override
           public void run() {
             try {
-              updateWithMap(inputId, data, new NotNullComputable<Collection<Key>>() {
-                @NotNull
-                @Override
-                public Collection<Key> compute() {
-                  if (myInputsIndex == null) {
-                    return new SmartList<Key>((Key)(Integer)inputId);
-                  }
-                  try {
-                    Collection<Key> oldKeys = myInputsIndex.get(inputId);
-                    return oldKeys == null? Collections.<Key>emptyList() : oldKeys;
-                  }
-                  catch (IOException e) {
-                    throw new RuntimeException(e);
-                  }
-                }
-              });
+              updateWithMap(inputId, savedInputId, data, oldKeysGetter);
             }
             catch (StorageException ex) {
               exRef.set(ex);
@@ -248,6 +344,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
           }
         });
 
+        //noinspection ThrowableResultOfMethodCallIgnored
         if (exRef.get() != null) {
           LOG.info(exRef.get());
           FileBasedIndex.getInstance().requestRebuild(myIndexId);
@@ -259,7 +356,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   }
 
   protected void updateWithMap(final int inputId,
-                               @NotNull Map<Key, Value> newData,
+                               int savedInputId, @NotNull Map<Key, Value> newData,
                                @NotNull NotNullComputable<Collection<Key>> oldKeysGetter) throws StorageException {
     getWriteLock().lock();
     try {
@@ -295,8 +392,14 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
           myStorage.addValue(entry.getKey(), inputId, entry.getValue());
         }
       }
-      if (myInputsIndex != null) {
-        try {
+
+      try {
+        if (myHasSnapshotMapping && !((MemoryIndexStorage)getStorage()).isBufferingEnabled()) {
+          if (savedInputId != NULL_MAPPING && !mySnapshotMapping.containsMapping(savedInputId)) {
+            mySnapshotMapping.put(savedInputId, newData.keySet());
+          }
+          myInputsSnapshotMapping.put(inputId, savedInputId);
+        } else if (myInputsIndex != null) {
           final Set<Key> newKeys = newData.keySet();
           if (newKeys.size() > 0) {
             myInputsIndex.put(inputId, newKeys);
@@ -305,9 +408,9 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
             myInputsIndex.remove(inputId);
           }
         }
-        catch (IOException e) {
-          throw new StorageException(e);
-        }
+      }
+      catch (IOException e) {
+        throw new StorageException(e);
       }
     }
     finally {

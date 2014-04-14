@@ -1,5 +1,9 @@
 package com.intellij.util.net.ssl;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Ref;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.apache.http.HttpStatus;
@@ -12,6 +16,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.security.cert.X509Certificate;
+import java.util.concurrent.Callable;
+
+import static com.intellij.util.net.ssl.ConfirmingTrustManager.MutableTrustManager;
 
 
 /**
@@ -28,9 +36,17 @@ public class CertificateTest extends PlatformTestCase {
   @NonNls private static final String WRONG_HOSTNAME_CERT_CN = "illegal.certificates-tests.labs.intellij.net";
   @NonNls private static final String WRONG_HOSTNAME_CERT_URL = "https://wrong-hostname.certificates-tests.labs.intellij.net";
 
-  private CloseableHttpClient myClient;
-  private ConfirmingTrustManager.MutableTrustManager myTrustManager;
+  //private static final Logger LOG = Logger.getInstance(CertificateTest.class);
 
+  private CloseableHttpClient myClient;
+  private MutableTrustManager myTrustManager;
+  private CertificateManager myCertificateManager;
+  private X509Certificate myAuthorityCertificate;
+
+
+  public void testSetUp() throws Exception {
+    assertTrue(myTrustManager.containsCertificate(AUTHORITY_CN));
+  }
 
   /**
    * Test that expired certificate doesn't pass JSSE timestamp check and hence untrusted and added explicitly, although
@@ -87,19 +103,67 @@ public class CertificateTest extends PlatformTestCase {
     }
   }
 
+  public void testDeadlockDetection() throws Exception {
+    final Ref<Throwable> throwableRef = new Ref<Throwable>();
+
+    final long interruptionTimeout = CertificateManager.DIALOG_VISIBILITY_TIMEOUT + 1000;
+    // Will be interrupted after at most interruptionTimeout (6 seconds originally)
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        final Thread thread = new Thread(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              boolean accepted = CertificateManager.showAcceptDialog(new Callable<DialogWrapper>() {
+                @Override
+                public DialogWrapper call() throws Exception {
+                  // this dialog will be attempted to show only if blocking thread was forcibly interrupted after timeout
+                  throw new AssertionError("Deadlock was not detected in time");
+                }
+              });
+              // should be rejected after 5 seconds
+              assertFalse("Certificate should be rejected", accepted);
+            }
+            catch (Throwable e) {
+              throwableRef.set(e);
+            }
+          }
+        }, "Test EDT-blocking thread");
+        thread.start();
+        try {
+          thread.join(interruptionTimeout);
+        }
+        catch (InterruptedException ignored) {
+          // No one will attempt to interrupt EDT, right?
+        }
+        finally {
+          if (thread.isAlive()) {
+            thread.interrupt();
+            fail("Deadlock was not detected in time");
+          }
+        }
+      }
+    }, ModalityState.any());
+    if (!throwableRef.isNull()) {
+      throw new AssertionError(throwableRef.get());
+    }
+  }
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    CertificateManager certificateManager = CertificateManager.getInstance();
+    myCertificateManager = CertificateManager.getInstance();
+    // add CA certificate
+    myTrustManager = myCertificateManager.getCustomTrustManager();
+    myAuthorityCertificate = CertificateUtil.loadX509Certificate(getTestDataPath() + "certificates/ca.crt");
+
     myClient = HttpClientBuilder.create()
-      .setSslcontext(certificateManager.getSslContext())
+      .setSslcontext(myCertificateManager.getSslContext())
       .setHostnameVerifier(SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER)
       .build();
 
-    // add CA certificate
-    myTrustManager = certificateManager.getCustomTrustManager();
-    assertTrue(myTrustManager.addCertificate(getTestDataPath() + "certificates/ca.crt"));
-    assertTrue(myTrustManager.containsCertificate(AUTHORITY_CN));
+    myTrustManager.addCertificate(myAuthorityCertificate);
   }
 
   @Override

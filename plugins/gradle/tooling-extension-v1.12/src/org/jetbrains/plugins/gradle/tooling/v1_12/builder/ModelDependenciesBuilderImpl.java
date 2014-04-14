@@ -86,7 +86,7 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
       if (!offline) {
         final Collection<IdeExtendedRepoFileDependency> ideRepoFileDependencies =
           dependenciesExtractor.extractRepoFileDependencies(
-            project.getConfigurations(), plusConfigurations, new ArrayList<Configuration>(), downloadSources, downloadJavadoc);
+            project.getDependencies(), plusConfigurations, new ArrayList<Configuration>(), downloadSources, downloadJavadoc);
         for (IdeExtendedRepoFileDependency repoFileDependency : ideRepoFileDependencies) {
           merge(scopesMap, repoFileDependency, userScopes);
         }

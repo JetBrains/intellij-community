@@ -2,8 +2,7 @@ package com.intellij.tasks.actions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.ide.actions.GotoActionBase;
-import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
-import com.intellij.ide.util.gotoByName.SimpleChooseByNameModel;
+import com.intellij.ide.util.gotoByName.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,6 +10,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
@@ -21,6 +21,7 @@ import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -49,10 +50,7 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
   void perform(final Project project) {
     final Ref<Boolean> shiftPressed = Ref.create(false);
 
-    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project,
-                                                                  new GotoTaskPopupModel(project),
-                                                                  new TaskItemProvider(project),
-                                                                  null, false, 0);
+    final ChooseByNamePopup popup = createPopup(project, new GotoTaskPopupModel(project), new TaskItemProvider(project));
 
     popup.setShowListForEmptyPattern(true);
     popup.setSearchInAnyPlace(true);
@@ -170,6 +168,43 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
     public boolean loadInitialCheckBoxState() {
       return ((TaskManagerImpl)TaskManager.getManager(getProject())).getState().searchClosedTasks;
     }
+  }
+
+  /**
+   * {@link ChooseByNameBase} and {@link ChooseByNamePopup} are not disposable (why?). So to correctly dispose alarm used in
+   * {@link TaskItemProvider} and don't touch existing UI classes We have to extend popup and override {@link ChooseByNamePopup#close(boolean)}.
+   */
+  private static class MyChooseByNamePopup extends ChooseByNamePopup {
+    private MyChooseByNamePopup(@Nullable Project project,
+                                @NotNull ChooseByNameModel model,
+                                @NotNull ChooseByNameItemProvider provider,
+                                @Nullable ChooseByNamePopup oldPopup,
+                                @Nullable String predefinedText,
+                                boolean mayRequestOpenInCurrentWindow, int initialIndex) {
+      super(project, model, provider, oldPopup, predefinedText, mayRequestOpenInCurrentWindow, initialIndex);
+    }
+
+    @Override
+    public void close(boolean isOk) {
+      super.close(isOk);
+      Disposer.dispose((TaskItemProvider)myProvider);
+    }
+  }
+
+  /**
+   * Mostly copied from {@link ChooseByNamePopup#createPopup(Project, ChooseByNameModel, ChooseByNameItemProvider, String, boolean, int)}.
+   */
+  private static MyChooseByNamePopup createPopup(Project project, ChooseByNameModel model, ChooseByNameItemProvider provider) {
+    final ChooseByNamePopup oldPopup = project == null ? null : project.getUserData(ChooseByNamePopup.CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY);
+    if (oldPopup != null) {
+      oldPopup.close(false);
+    }
+    MyChooseByNamePopup newPopup = new MyChooseByNamePopup(project, model, provider, oldPopup, null, false, 0);
+
+    if (project != null) {
+      project.putUserData(ChooseByNamePopup.CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, newPopup);
+    }
+    return newPopup;
   }
 
   public static class CreateNewTaskAction {

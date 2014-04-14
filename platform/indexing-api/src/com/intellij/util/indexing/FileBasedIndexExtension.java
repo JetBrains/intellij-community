@@ -85,4 +85,8 @@ public abstract class FileBasedIndexExtension<K, V> {
   public boolean traceKeyHashToVirtualFileMapping() {
     return false;
   }
+
+  public boolean hasSnapshotMapping() {
+    return false;
+  }
 }

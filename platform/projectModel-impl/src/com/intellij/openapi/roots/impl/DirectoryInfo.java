@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ public class DirectoryInfo {
    * orderEntry to (classes of) which a directory belongs
    * MUST BE SORTED WITH {@link #BY_OWNER_MODULE}
    */
+  @Nullable
   private final OrderEntry[] orderEntries;
 
   public static DirectoryInfo createNew() {
@@ -55,11 +56,11 @@ public class DirectoryInfo {
   }
 
   DirectoryInfo(Module module,
-                        VirtualFile contentRoot,
-                        VirtualFile sourceRoot,
-                        VirtualFile libraryClassRoot,
-                        byte sourceRootTypeData,
-                        OrderEntry[] orderEntries) {
+                VirtualFile contentRoot,
+                VirtualFile sourceRoot,
+                VirtualFile libraryClassRoot,
+                byte sourceRootTypeData,
+                @Nullable OrderEntry[] orderEntries) {
     this.module = module;
     this.libraryClassRoot = libraryClassRoot;
     this.contentRoot = contentRoot;

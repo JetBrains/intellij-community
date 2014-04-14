@@ -492,10 +492,15 @@ public class JBTabsImpl extends JComponent
     myDropInfoIndex = dropInfoIndex;
   }
 
-  class TabActionsAutoHideListener extends MouseMotionAdapter {
+  class TabActionsAutoHideListener extends MouseMotionAdapter implements Weighted {
 
     private TabLabel myCurrentOverLabel;
     private Point myLastOverPoint;
+
+    @Override
+    public double getWeight() {
+      return 1;
+    }
 
     @Override
     public void mouseMoved(final MouseEvent e) {

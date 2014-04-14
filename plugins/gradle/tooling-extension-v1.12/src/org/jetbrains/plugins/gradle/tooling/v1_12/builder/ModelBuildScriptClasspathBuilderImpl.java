@@ -86,8 +86,8 @@ public class ModelBuildScriptClasspathBuilderImpl implements ModelBuilderService
 
     if (!offline) {
       // download sources and/or javadoc
-      List<IdeExtendedRepoFileDependency> repoFileDependencies = dependenciesExtractor.extractRepoFileDependencies(
-        project.getConfigurations(), plusConfigurations, new ArrayList<Configuration>(), downloadSources, downloadJavadoc);
+      Collection<IdeExtendedRepoFileDependency> repoFileDependencies = dependenciesExtractor.extractRepoFileDependencies(
+        project.getDependencies(), plusConfigurations, Collections.<Configuration>emptyList(), downloadSources, downloadJavadoc);
 
       for (IdeExtendedRepoFileDependency dependency : repoFileDependencies) {
         if (dependency.getFile() == null) continue;

@@ -76,6 +76,9 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
       client.getParams().setCredentialCharset("UTF-8");
       client.getParams().setAuthenticationPreemptive(true);
       client.getState().setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(getUsername(), getPassword()));
+    } else {
+      client.getState().clearCredentials();
+      client.getParams().setAuthenticationPreemptive(false);
     }
   }
 

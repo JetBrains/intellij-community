@@ -39,6 +39,9 @@ public abstract class AbstractModuleBuilder extends ProjectBuilder {
     return null;
   }
 
+  @Nullable
+  public ModuleWizardStep modifyProjectTypeStep(@NotNull SettingsStep step) { return null; }
+
   /**
    * Custom UI to be shown on the first wizard page
    */

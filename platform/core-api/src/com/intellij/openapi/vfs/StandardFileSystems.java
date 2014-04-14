@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
@@ -67,8 +66,6 @@ public class StandardFileSystems {
 
   @Nullable
   public static VirtualFile getJarRootForLocalFile(@NotNull VirtualFile virtualFile) {
-    if (virtualFile.getFileType() != ArchiveFileType.INSTANCE) return null;
-
     return jar().findFileByPath(virtualFile.getPath() + URLUtil.JAR_SEPARATOR);
   }
 

@@ -51,7 +51,7 @@ public class GroovyAwareModuleBuilder extends JavaModuleBuilder {
 
   @Nullable
   @Override
-  public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
+  public ModuleWizardStep modifyProjectTypeStep(@NotNull SettingsStep settingsStep) {
     return new GroovySdkForNewModuleWizardStep(this, settingsStep.getContext(), getFramework(), settingsStep);
   }
 
@@ -92,12 +92,12 @@ public class GroovyAwareModuleBuilder extends JavaModuleBuilder {
 
   @Override
   public String getParentGroup() {
-    return getModuleTypeName();
+    return "Groovy";
   }
 
   @Override
-  public boolean isTemplateBased() {
-    return true;
+  public int getWeight() {
+    return 60;
   }
 
   @Nullable

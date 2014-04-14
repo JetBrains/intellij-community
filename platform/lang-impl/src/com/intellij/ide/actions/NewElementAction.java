@@ -102,9 +102,6 @@ public class NewElementAction extends AnAction  implements DumbAware, PopupActio
     if (Boolean.TRUE.equals(LangDataKeys.NO_NEW_ACTION.getData(e.getDataContext()))) {
       return false;
     }
-    if (PlatformDataKeys.FILE_EDITOR.getData(e.getDataContext()) != null) {
-      return false;
-    }
     return true;
   }
 

@@ -50,18 +50,16 @@ public class JdkUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.JdkUtil");
   private static final String WRAPPER_CLASS = "com.intellij.rt.execution.CommandLineWrapper";
 
-  private JdkUtil() {
-  }
+  private JdkUtil() { }
 
   /**
    * @return the specified attribute of the JDK (examines rt.jar) or null if cannot determine the value
    */
   @Nullable
-  public static String getJdkMainAttribute(@NotNull Sdk jdk, Attributes.Name attributeName) {
-    final VirtualFile homeDirectory = jdk.getHomeDirectory();
-    if (homeDirectory == null) {
-      return null;
-    }
+  public static String getJdkMainAttribute(@NotNull Sdk jdk, Attributes.Name attribute) {
+    VirtualFile homeDirectory = jdk.getHomeDirectory();
+    if (homeDirectory == null) return null;
+
     VirtualFile rtJar = homeDirectory.findFileByRelativePath("jre/lib/rt.jar");
     if (rtJar == null) {
       rtJar = homeDirectory.findFileByRelativePath("lib/rt.jar");
@@ -72,6 +70,7 @@ public class JdkUtil {
     if (rtJar == null) {
       rtJar = homeDirectory.findFileByRelativePath("../Classes/classes.jar"); // for mac
     }
+
     if (rtJar == null) {
       String versionString = jdk.getVersionString();
       if (versionString != null) {
@@ -81,34 +80,29 @@ public class JdkUtil {
       }
       return versionString;
     }
-    VirtualFile rtJarFileContent = JarFileSystem.getInstance().findFileByPath(rtJar.getPath() + JarFileSystem.JAR_SEPARATOR);
-    if (rtJarFileContent == null) {
-      return null;
-    }
-    com.intellij.openapi.vfs.JarFile manifestJarFile;
-    try {
-      manifestJarFile = JarFileSystem.getInstance().getJarFile(rtJarFileContent);
-    }
-    catch (IOException e) {
-      return null;
-    }
-    if (manifestJarFile == null) {
-      return null;
-    }
-    try {
-      com.intellij.openapi.vfs.JarFile.JarEntry entry = manifestJarFile.getEntry(JarFile.MANIFEST_NAME);
-      if (entry == null) {
-        return null;
+
+    VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(rtJar);
+    return jarRoot != null ? getJarMainAttribute(jarRoot, attribute) : null;
+  }
+
+  @Nullable
+  public static String getJarMainAttribute(@NotNull VirtualFile jarRoot, Attributes.Name attribute) {
+    VirtualFile manifestFile = jarRoot.findFileByRelativePath(JarFile.MANIFEST_NAME);
+    if (manifestFile != null) {
+      try {
+        InputStream stream = manifestFile.getInputStream();
+        try {
+          return new Manifest(stream).getMainAttributes().getValue(attribute);
+        }
+        finally {
+          stream.close();
+        }
       }
-      InputStream is = manifestJarFile.getInputStream(entry);
-      Manifest manifest = new Manifest(is);
-      is.close();
-      Attributes attributes = manifest.getMainAttributes();
-      return attributes.getValue(attributeName);
+      catch (IOException e) {
+        LOG.debug(e);
+      }
     }
-    catch (IOException e) {
-      // nothing
-    }
+
     return null;
   }
 

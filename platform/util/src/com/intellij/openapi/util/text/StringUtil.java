@@ -1700,6 +1700,13 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Nullable
+  public static String substringBefore(@NotNull String text, @NotNull String subString) {
+    int i = text.indexOf(subString);
+    if (i == -1) return null;
+    return text.substring(0, i);
+  }
+
+  @Nullable
   public static String substringAfter(@NotNull String text, @NotNull String subString) {
     int i = text.indexOf(subString);
     if (i == -1) return null;
@@ -2072,6 +2079,8 @@ public class StringUtil extends StringUtilRt {
   }
 
   public static int compareVersionNumbers(@Nullable String v1, @Nullable String v2) {
+    // todo duplicates com.intellij.util.text.VersionComparatorUtil.compare
+    // todo please refactor next time you make changes here
     if (v1 == null && v2 == null) {
       return 0;
     }

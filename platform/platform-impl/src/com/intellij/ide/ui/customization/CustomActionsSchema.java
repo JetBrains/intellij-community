@@ -339,6 +339,7 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
         }
         if (anAction.getTemplatePresentation() != null) {
           anAction.getTemplatePresentation().setIcon(icon);
+          anAction.getTemplatePresentation().setDisabledIcon(IconLoader.getDisabledIcon(icon));
           anAction.setDefaultIcon(false);
         }
       }

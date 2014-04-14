@@ -1069,7 +1069,7 @@ public class MavenProjectsTree {
     try {
       MavenProject rootProject = project;
       while (true) {
-        MavenProject aggregator = myModuleToAggregatorMapping.get(project);
+        MavenProject aggregator = myModuleToAggregatorMapping.get(rootProject);
         if (aggregator == null) {
           return rootProject;
         }

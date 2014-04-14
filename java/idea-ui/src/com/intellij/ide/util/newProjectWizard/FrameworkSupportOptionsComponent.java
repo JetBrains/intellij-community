@@ -60,7 +60,7 @@ public class FrameworkSupportOptionsComponent {
                                           final FrameworkSupportInModuleConfigurable configurable) {
     myModel = model;
     myConfigurable = configurable;
-    VerticalFlowLayout layout = new VerticalFlowLayout();
+    VerticalFlowLayout layout = new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 3, true, false);
     layout.setVerticalFill(true);
     myMainPanel = new JPanel(layout);
     myModel.registerOptionsComponent(provider, this);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.ide.macro.MacroManager;
 import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
@@ -33,6 +32,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
@@ -327,7 +327,7 @@ public class ToolEditorDialog extends DialogWrapper {
           chooser.choose(null, new Consumer<List<VirtualFile>>() {
             @Override
             public void consume(List<VirtualFile> files) {
-              VirtualFile file = files.size() > 0 ? files.get(0) : null;
+              VirtualFile file = !files.isEmpty() ? files.get(0) : null;
               if (file != null) {
                 myTfCommandWorkingDirectory.setText(file.getPresentableUrl());
               }
@@ -348,11 +348,11 @@ public class ToolEditorDialog extends DialogWrapper {
           chooser.choose(null, new Consumer<List<VirtualFile>>() {
             @Override
             public void consume(List<VirtualFile> files) {
-              VirtualFile file = files.size() > 0 ? files.get(0) : null;
+              VirtualFile file = !files.isEmpty() ? files.get(0) : null;
               if (file != null) {
                 myTfCommand.setText(file.getPresentableUrl());
                 String workingDirectory = myTfCommandWorkingDirectory.getText();
-                if (workingDirectory == null || workingDirectory.length() == 0) {
+                if (workingDirectory == null || workingDirectory.isEmpty()) {
                   VirtualFile parent = file.getParent();
                   if (parent != null && parent.isDirectory()) {
                     myTfCommandWorkingDirectory.setText(parent.getPresentableUrl());
@@ -423,7 +423,7 @@ public class ToolEditorDialog extends DialogWrapper {
   }
 
   private void handleOKButton() {
-    setOKActionEnabled(myNameField.getText().trim().length() > 0);
+    setOKActionEnabled(!myNameField.getText().trim().isEmpty());
   }
 
   public Tool getData() {
@@ -431,7 +431,8 @@ public class ToolEditorDialog extends DialogWrapper {
 
     tool.setName(convertString(myNameField.getText()));
     tool.setDescription(convertString(myDescriptionField.getText()));
-    tool.setGroup(myGroupCombo.getSelectedItem() != null ? convertString(myGroupCombo.getSelectedItem().toString()) : null);
+    Object selectedItem = myGroupCombo.getSelectedItem();
+    tool.setGroup(StringUtil.notNullize(selectedItem != null ? convertString(selectedItem.toString()) : ""));
     tool.setShownInMainMenu(myShowInMainMenuCheckbox.isSelected());
     tool.setShownInEditor(myShowInEditorCheckbox.isSelected());
     tool.setShownInProjectViews(myShowInProjectTreeCheckbox.isSelected());
@@ -519,21 +520,21 @@ public class ToolEditorDialog extends DialogWrapper {
   }
 
   private String convertString(String s) {
-    if (s != null && s.trim().length() == 0) return null;
+    if (s != null && s.trim().isEmpty()) return null;
     return s;
   }
 
   private String toSystemIndependentFormat(String s) {
     if (s == null) return null;
     s = s.trim();
-    if (s.length() == 0) return null;
+    if (s.isEmpty()) return null;
     return s.replace(File.separatorChar, '/');
   }
 
   private String toCurrentSystemFormat(String s) {
     if (s == null) return null;
     s = s.trim();
-    if (s.length() == 0) return null;
+    if (s.isEmpty()) return null;
     return s.replace('/', File.separatorChar);
   }
 

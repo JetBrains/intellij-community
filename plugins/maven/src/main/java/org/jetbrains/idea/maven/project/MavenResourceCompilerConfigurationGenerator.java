@@ -116,6 +116,10 @@ public class MavenResourceCompilerConfigurationGenerator {
           resourceConfig.modelMap.put(key, value);
         }
       }
+
+      Element pluginConfiguration = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
+      resourceConfig.outputDirectory = MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "outputDirectory", null);
+
       addResources(resourceConfig.resources, mavenProject.getResources());
       addResources(resourceConfig.testResources, mavenProject.getTestResources());
 
@@ -129,7 +133,6 @@ public class MavenResourceCompilerConfigurationGenerator {
         resourceConfig.properties.put((String)propEntry.getKey(), (String)propEntry.getValue());
       }
 
-      Element pluginConfiguration = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
       resourceConfig.escapeString = MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "escapeString", null);
       String escapeWindowsPaths = MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "escapeWindowsPaths");
       if (escapeWindowsPaths != null) {
@@ -205,7 +208,8 @@ public class MavenResourceCompilerConfigurationGenerator {
     return properties;
   }
 
-  private static void addResources(final List<ResourceRootConfiguration> container, Collection<MavenResource> resources) {
+  private static void addResources(final List<ResourceRootConfiguration> container, @NotNull Collection<MavenResource> resources) {
+
     for (MavenResource resource : resources) {
       final String dir = resource.getDirectory();
       if (dir == null) {

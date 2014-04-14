@@ -98,10 +98,11 @@ public class JavaTestFinder implements TestFinder {
 
     HashSet<String> names = new HashSet<String>();
     cache.getAllClassNames(names);
+    final TestFrameworks frameworks = TestFrameworks.getInstance();
     for (String eachName : names) {
       if (pattern.matcher(eachName).matches()) {
         for (PsiClass eachClass : cache.getClassesByName(eachName, scope)) {
-          if (TestFrameworks.getInstance().isTestClass(eachClass)) {
+          if (frameworks.isTestClass(eachClass) || frameworks.isPotentialTestClass(eachClass)) {
             classesWithProximities.add(
                 new Pair<PsiClass, Integer>(eachClass, TestFinderHelper.calcTestNameProximity(klassName, eachName)));
           }

@@ -42,6 +42,8 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
   @NonNls public static final String EMPTY_PANEL = "empty.panel";
 
   private JPanel myRootPanel;
+
+  private JBCheckBox myAcceptAutomatically;
   private JBCheckBox myCheckHostname;
   private JBCheckBox myCheckValidityPeriod;
 
@@ -58,7 +60,7 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
     myTree = new Tree();
     myTreeBuilder = new CertificateTreeBuilder(myTree);
 
-    // not fully functional by now
+    // are not fully functional by now
     myCheckHostname.setVisible(false);
     myCheckValidityPeriod.setVisible(false);
 
@@ -178,8 +180,9 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
   @Override
   public boolean isModified() {
     CertificateManager.Config state = CertificateManager.getInstance().getState();
-    return myCheckHostname.isSelected() != state.checkHostname ||
-           myCheckValidityPeriod.isSelected() != state.checkValidity ||
+    return myAcceptAutomatically.isSelected() != state.ACCEPT_AUTOMATICALLY ||
+           myCheckHostname.isSelected() != state.CHECK_HOSTNAME ||
+           myCheckValidityPeriod.isSelected() != state.CHECK_VALIDITY ||
            !myCertificates.equals(new HashSet<X509Certificate>(myTrustManager.getCertificates()));
   }
 
@@ -205,8 +208,10 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
       }
     }
     CertificateManager.Config state = CertificateManager.getInstance().getState();
-    state.checkHostname = myCheckHostname.isSelected();
-    state.checkValidity = myCheckValidityPeriod.isSelected();
+
+    state.ACCEPT_AUTOMATICALLY = myAcceptAutomatically.isSelected();
+    state.CHECK_HOSTNAME = myCheckHostname.isSelected();
+    state.CHECK_VALIDITY = myCheckValidityPeriod.isSelected();
   }
 
   @Override
@@ -230,8 +235,9 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
     }
 
     CertificateManager.Config state = CertificateManager.getInstance().getState();
-    myCheckHostname.setSelected(state.checkHostname);
-    myCheckValidityPeriod.setSelected(state.checkValidity);
+    myAcceptAutomatically.setSelected(state.ACCEPT_AUTOMATICALLY);
+    myCheckHostname.setSelected(state.CHECK_HOSTNAME);
+    myCheckValidityPeriod.setSelected(state.CHECK_VALIDITY);
   }
 
   @Override

@@ -18,6 +18,7 @@ package com.intellij.xdebugger.impl.breakpoints;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -28,6 +29,7 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.XLightBreakpointPropertiesPanel;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -56,10 +58,19 @@ class XBreakpointItem extends BreakpointItem {
     final SimpleTextAttributes attributes =
       myBreakpoint.isEnabled() ? SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES;
     renderer.append(getDisplayText(), attributes);
+    String description = getUserDescription();
+    if (!StringUtil.isEmpty(description)) {
+      renderer.append(" (" + description + ")", SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES);
+    }
   }
 
   public String getDisplayText() {
     return XBreakpointUtil.getShortText(myBreakpoint);
+  }
+
+  @Nullable
+  private String getUserDescription() {
+    return ((XBreakpointBase)myBreakpoint).getUserDescription();
   }
 
   public Icon getIcon() {
@@ -68,7 +79,7 @@ class XBreakpointItem extends BreakpointItem {
 
   @Override
   public String speedSearchText() {
-    return ((XBreakpointBase)myBreakpoint).getType().getDisplayText(myBreakpoint);
+    return getDisplayText() + " " + StringUtil.notNullize(getUserDescription());
   }
 
   @Override

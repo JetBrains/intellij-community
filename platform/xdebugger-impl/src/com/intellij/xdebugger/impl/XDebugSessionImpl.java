@@ -88,7 +88,6 @@ public class XDebugSessionImpl implements XDebugSession {
   private final Map<XBreakpoint<?>, CustomizedBreakpointPresentation> myRegisteredBreakpoints =
     new THashMap<XBreakpoint<?>, CustomizedBreakpointPresentation>();
   private final Set<XBreakpoint<?>> myInactiveSlaveBreakpoints = new SmartHashSet<XBreakpoint<?>>();
-  private boolean myBreakpointsMuted;
   private boolean myBreakpointsDisabled;
   private final XDebuggerManagerImpl myDebuggerManager;
   private MyBreakpointListener myBreakpointListener;
@@ -106,7 +105,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private final EventDispatcher<XDebugSessionListener> myDispatcher = EventDispatcher.create(XDebugSessionListener.class);
   private final Project myProject;
   private final @Nullable ExecutionEnvironment myEnvironment;
-  private final ProgramRunner myRunner;
+  private final @Nullable ProgramRunner myRunner;
   private boolean myStopped;
   private boolean myPauseActionSupported;
   private boolean myShowTabOnSuspend;
@@ -117,15 +116,19 @@ public class XDebugSessionImpl implements XDebugSession {
   private volatile boolean breakpointsInitialized;
   private boolean autoInitBreakpoints = true;
 
-  public XDebugSessionImpl(final @NotNull ExecutionEnvironment env, final @NotNull ProgramRunner runner,
-                           XDebuggerManagerImpl debuggerManager) {
-    this(env, runner, debuggerManager, env.getRunProfile().getName(), env.getRunProfile().getIcon(), false);
+  public XDebugSessionImpl(@NotNull ExecutionEnvironment environment,
+                           @Nullable ProgramRunner runner,
+                           @NotNull XDebuggerManagerImpl debuggerManager) {
+    this(environment, runner, debuggerManager, environment.getRunProfile().getName(), environment.getRunProfile().getIcon(), false);
   }
 
-  public XDebugSessionImpl(final @Nullable ExecutionEnvironment env, final @Nullable ProgramRunner runner,
-                           XDebuggerManagerImpl debuggerManager, final @NotNull String sessionName,
-                           final @Nullable Icon icon, final boolean showTabOnSuspend) {
-    myEnvironment = env;
+  public XDebugSessionImpl(@Nullable ExecutionEnvironment environment,
+                           @Nullable ProgramRunner runner,
+                           @NotNull XDebuggerManagerImpl debuggerManager,
+                           @NotNull String sessionName,
+                           @Nullable Icon icon,
+                           boolean showTabOnSuspend) {
+    myEnvironment = environment;
     myRunner = runner;
     mySessionName = sessionName;
     myDebuggerManager = debuggerManager;
@@ -387,12 +390,12 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   private boolean isBreakpointActive(final XBreakpoint<?> b) {
-    return !myBreakpointsMuted && b.isEnabled() && !myInactiveSlaveBreakpoints.contains(b);
+    return !areBreakpointsMuted() && b.isEnabled() && !myInactiveSlaveBreakpoints.contains(b);
   }
 
   @Override
   public boolean areBreakpointsMuted() {
-    return myBreakpointsMuted;
+    return mySessionData.isBreakpointsMuted();
   }
 
   @Override
@@ -412,8 +415,8 @@ public class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void setBreakpointMuted(boolean muted) {
-    if (myBreakpointsMuted == muted) return;
-    myBreakpointsMuted = muted;
+    if (areBreakpointsMuted() == muted) return;
+    mySessionData.setBreakpointsMuted(muted);
     processAllBreakpoints(!muted, muted);
     myDebuggerManager.getBreakpointManager().getLineBreakpointManager().queueAllBreakpointsUpdate();
   }

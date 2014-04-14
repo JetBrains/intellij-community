@@ -18,7 +18,6 @@ package com.intellij.execution.actions;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NonNls;
 
@@ -32,19 +31,22 @@ public class EOFAction extends DumbAwareAction implements AnAction.TransparentUp
   @NonNls public static final String ACTION_ID = "SendEOF";
 
   @Override
+  public void update(AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(StopAction.getHandler(e.getDataContext()) != null);
+  }
+
+  @Override
   public void actionPerformed(AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    ProcessHandler activeProcessHandler = StopAction.getHandler(dataContext);
-    if (activeProcessHandler == null) {
-      return;
-    }
+    ProcessHandler activeProcessHandler = StopAction.getHandler(e.getDataContext());
+    if (activeProcessHandler == null) return;
+
     try {
       OutputStream input = activeProcessHandler.getProcessInput();
       if (input != null) {
         input.close();
       }
     }
-    catch (IOException ex) {
+    catch (IOException ignored) {
     }
   }
 }

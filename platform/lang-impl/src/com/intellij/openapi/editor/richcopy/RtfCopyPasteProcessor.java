@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.richcopy;
 
 import com.intellij.openapi.editor.richcopy.model.*;
 import com.intellij.openapi.editor.richcopy.view.InputStreamTransferableData;
+import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -40,26 +41,133 @@ public class RtfCopyPasteProcessor extends BaseTextWithMarkupCopyPasteProcessor<
   @NotNull private static final String ITALIC        = "\\i";
   @NotNull private static final String PLAIN         = "\\plain\n";
 
+  private int myBackgroundId;
+  private int myForegroundId;
+  private int myFontNameId;
+  private ColorRegistry myColorRegistry;
+  private FontNameRegistry myFontNameRegistry;
+
   public RtfCopyPasteProcessor(TextWithMarkupProcessor processor) {
     super(processor);
   }
 
   @Override
-  protected void buildStringRepresentation(@NotNull final StringBuilder buffer,
-                                           @NotNull final CharSequence rawText,
-                                           @NotNull final SyntaxInfo syntaxInfo,
-                                           final int maxLength) {
-    header(syntaxInfo, buffer, new Runnable() {
-      @Override
-      public void run() {
-        rectangularBackground(syntaxInfo, buffer, new Runnable() {
-          @Override
-          public void run() {
-            content(syntaxInfo, buffer, rawText, maxLength);
-          }
-        });
+  protected void doInit() {
+    myBackgroundId = -1;
+    myForegroundId = -1;
+    myFontNameId   = -1;
+    myColorRegistry = new ColorRegistry();
+    myFontNameRegistry = new FontNameRegistry();
+
+    int defaultForegroundId = myColorRegistry.getId(myDefaultForeground);
+    int defaultBackgroundId = myColorRegistry.getId(myDefaultBackground);
+
+    myBuilder.append("\n\\s0\\box\\brdrhair\\brdrcf").append(defaultForegroundId).append("\\brsp317").append("\\cbpat").append(defaultBackgroundId);
+    saveBackground(defaultBackgroundId);
+  }
+
+  @Override
+  protected void doComplete() {
+    StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      builder.append(HEADER_PREFIX);
+
+      // Color table.
+      builder.append("{\\colortbl;");
+      for (int id : myColorRegistry.getAllIds()) {
+        Color color = myColorRegistry.dataById(id);
+        builder.append(String.format("\\red%d\\green%d\\blue%d;", color.getRed(), color.getGreen(), color.getBlue()));
       }
-    });
+      builder.append("}\n");
+
+      // Font table.
+      builder.append("{\\fonttbl");
+      for (int id : myFontNameRegistry.getAllIds()) {
+        String fontName = myFontNameRegistry.dataById(id);
+        builder.append(String.format("{\\f%d %s;}", id, fontName));
+      }
+      builder.append("}\n");
+
+      myBuilder.insert(0, builder);
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
+    myBuilder.append("\\par");
+    myBuilder.append(HEADER_SUFFIX);
+  }
+
+  @Override
+  public void setFontFamily(String fontFamily) {
+    int id = myFontNameRegistry.getId(fontFamily);
+    saveFontName(id);
+    myFontNameId = id;
+  }
+
+  @Override
+  public void setFontStyle(int fontStyle) {
+    // Reset formatting settings
+    myBuilder.append(PLAIN);
+
+    // Restore target formatting settings.
+    if (myForegroundId >= 0) {
+      saveForeground(myForegroundId);
+    }
+    if (myBackgroundId >= 0) {
+      saveBackground(myBackgroundId);
+    }
+    if (myFontNameId >= 0) {
+      saveFontName(myFontNameId);
+    }
+    saveFontSize(myFontSize);
+
+    if ((fontStyle & Font.ITALIC) > 0) {
+      myBuilder.append(ITALIC);
+    }
+    if ((fontStyle & Font.BOLD) > 0) {
+      myBuilder.append(BOLD);
+    }
+  }
+
+  @Override
+  public void setForeground(Color foreground) {
+    int id = myColorRegistry.getId(foreground);
+    saveForeground(id);
+    myForegroundId = id;
+  }
+
+  @Override
+  public void setBackground(Color background) {
+    int id = myColorRegistry.getId(background);
+    saveBackground(id);
+    myBackgroundId = id;
+  }
+
+  @Override
+  public void addTextFragment(CharSequence charSequence, int startOffset, int endOffset) {
+    myBuilder.append("\n");
+    for (int i = startOffset; i < endOffset; i++) {
+      char c = charSequence.charAt(i);
+      if (c > 127) {
+        // Escape non-ascii symbols.
+        myBuilder.append(String.format("\\u%04d?", (int)c));
+        continue;
+      }
+
+      switch (c) {
+        case '\t':
+          myBuilder.append(TAB);
+          continue;
+        case '\n':
+          myBuilder.append(NEW_LINE);
+          continue;
+        case '\\':
+        case '{':
+        case '}':
+          myBuilder.append('\\');
+      }
+      myBuilder.append(c);
+    }
   }
 
   @Override
@@ -72,159 +180,19 @@ public class RtfCopyPasteProcessor extends BaseTextWithMarkupCopyPasteProcessor<
     }
   }
 
-  private static void header(@NotNull SyntaxInfo syntaxInfo, @NotNull StringBuilder buffer, @NotNull Runnable next) {
-    buffer.append(HEADER_PREFIX);
-
-    // Color table.
-    buffer.append("{\\colortbl;");
-    ColorRegistry colorRegistry = syntaxInfo.getColorRegistry();
-    for (int id : colorRegistry.getAllIds()) {
-      Color color = colorRegistry.dataById(id);
-      buffer.append(String.format("\\red%d\\green%d\\blue%d;", color.getRed(), color.getGreen(), color.getBlue()));
-    }
-    buffer.append("}\n");
-
-    // Font table.
-    buffer.append("{\\fonttbl");
-    FontNameRegistry fontNameRegistry = syntaxInfo.getFontNameRegistry();
-    for (int id : fontNameRegistry.getAllIds()) {
-      String fontName = fontNameRegistry.dataById(id);
-      buffer.append(String.format("{\\f%d %s;}", id, fontName));
-    }
-    buffer.append("}\n");
-
-    next.run();
-    buffer.append(HEADER_SUFFIX);
+  private void saveBackground(int id) {
+    myBuilder.append("\\cb").append(id);
   }
 
-  private static void rectangularBackground(@NotNull SyntaxInfo syntaxInfo, @NotNull StringBuilder buffer, @NotNull Runnable next) {
-    buffer.append("\n\\s0\\box\\brdrhair\\brdrcf").append(syntaxInfo.getDefaultForeground()).append("\\brsp317").append("\\cbpat")
-      .append(syntaxInfo.getDefaultBackground());
-    saveBackground(buffer, syntaxInfo.getDefaultBackground());
-    next.run();
-    buffer.append("\\par");
+  private void saveForeground(int id) {
+    myBuilder.append("\\cf").append(id);
   }
 
-  private static void content(@NotNull SyntaxInfo syntaxInfo, @NotNull StringBuilder buffer, @NotNull CharSequence rawText, int maxLength) {
-    MyVisitor visitor = new MyVisitor(buffer, rawText);
-    for (OutputInfo info : syntaxInfo.getOutputInfos()) {
-      info.invite(visitor);
-      if (buffer.length() > maxLength) {
-        buffer.append("... truncated ...");
-        break;
-      }
-    }
+  private void saveFontName(int id) {
+    myBuilder.append("\\f").append(id);
   }
 
-  private static void saveBackground(@NotNull StringBuilder buffer, int id) {
-    buffer.append("\\cb").append(id);
-  }
-
-  private static void saveForeground(@NotNull StringBuilder buffer, int id) {
-    buffer.append("\\cf").append(id);
-  }
-
-  private static void saveFontName(@NotNull StringBuilder buffer, int id) {
-    buffer.append("\\f").append(id);
-  }
-
-  private static void saveFontSize(@NotNull StringBuilder buffer, int size) {
-    buffer.append("\\fs").append(size * 2);
-  }
-
-  private static class MyVisitor implements OutputInfoVisitor {
-
-    @NotNull private final StringBuilder myBuffer;
-    @NotNull private final CharSequence        myRawText;
-
-    private int myBackgroundId = -1;
-    private int myForegroundId = -1;
-    private int myFontNameId   = -1;
-    private int myFontStyle    = -1;
-    private int myFontSize     = -1;
-
-    MyVisitor(@NotNull StringBuilder buffer, @NotNull CharSequence rawText) {
-      myBuffer = buffer;
-      myRawText = rawText;
-    }
-
-    @Override
-    public void visit(@NotNull Text text) {
-      myBuffer.append("\n");
-      for (int i = text.getStartOffset(), limit = text.getEndOffset(); i < limit; i++) {
-        char c = text.getCharAt(myRawText, i);
-        if (c > 127) {
-          // Escape non-ascii symbols.
-          myBuffer.append(String.format("\\u%04d?", (int)c));
-          continue;
-        }
-
-        switch (c) {
-          case '\t':
-            myBuffer.append(TAB);
-            continue;
-          case '\n':
-            myBuffer.append(NEW_LINE);
-            continue;
-          case '\\':
-          case '{':
-          case '}':
-            myBuffer.append('\\');
-        }
-        myBuffer.append(c);
-      }
-    }
-
-    @Override
-    public void visit(@NotNull Foreground color) {
-      saveForeground(myBuffer, color.getId());
-      myForegroundId = color.getId();
-    }
-
-    @Override
-    public void visit(@NotNull Background color) {
-      saveBackground(myBuffer, color.getId());
-      myBackgroundId = color.getId();
-    }
-
-    @Override
-    public void visit(@NotNull FontFamilyName name) {
-      saveFontName(myBuffer, name.getId());
-      myFontNameId = name.getId();
-    }
-
-    @Override
-    public void visit(@NotNull FontSize size) {
-      saveFontSize(myBuffer, size.getSize());
-      myFontSize = size.getSize();
-    }
-
-    @Override
-    public void visit(@NotNull FontStyle style) {
-      // Reset formatting settings
-      myBuffer.append(PLAIN);
-
-      // Restore target formatting settings.
-      if (myForegroundId >= 0) {
-        saveForeground(myBuffer, myForegroundId);
-      }
-      if (myBackgroundId >= 0) {
-        saveBackground(myBuffer, myBackgroundId);
-      }
-      if (myFontNameId >= 0) {
-        saveFontName(myBuffer, myFontNameId);
-      }
-      if (myFontSize > 0) {
-        saveFontSize(myBuffer, myFontSize);
-      }
-
-      myFontStyle = style.getStyle();
-      if ((myFontStyle & Font.ITALIC) > 0) {
-        myBuffer.append(ITALIC);
-      }
-      if ((myFontStyle & Font.BOLD) > 0) {
-        myBuffer.append(BOLD);
-      }
-    }
+  private void saveFontSize(int size) {
+    myBuilder.append("\\fs").append(size * 2);
   }
 }

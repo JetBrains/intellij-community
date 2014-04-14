@@ -237,7 +237,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     Factory<UsageSearcher> factory = new Factory<UsageSearcher>() {
       @Override
       public UsageSearcher create() {
-        return new UsageSearcher() {
+        return new UsageInfoSearcherAdapter() {
           @Override
           public void generate(@NotNull final Processor<Usage> processor) {
             ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -249,38 +249,12 @@ public abstract class BaseRefactoringProcessor implements Runnable {
                 refreshElements(elements);
               }
             });
-            final Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>();
-            final Ref<Boolean> dumbModeOccurred = new Ref<Boolean>();
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
-              @Override
-              public void run() {
-                try {
-                  refUsages.set(findUsages());
-                }
-                catch (IndexNotReadyException e) {
-                  dumbModeOccurred.set(true);
-                }
-              }
-            });
-            if (!dumbModeOccurred.isNull()) {
-              DumbService.getInstance(myProject).showDumbModeNotification("Usage search is not available until indices are ready");
-              return;
-            }
-            final Usage[] usages = ApplicationManager.getApplication().runReadAction(new Computable<Usage[]>() {
-              @Override
-              public Usage[] compute() {
-                return UsageInfo2UsageAdapter.convert(refUsages.get());
-              }
-            });
+            processUsages(processor, myProject);
+          }
 
-            for (final Usage usage : usages) {
-              ApplicationManager.getApplication().runReadAction(new Runnable() {
-                @Override
-                public void run() {
-                  processor.process(usage);
-                }
-              });
-            }
+          @Override
+          protected UsageInfo[] findUsages() {
+            return BaseRefactoringProcessor.this.findUsages();
           }
         };
       }
@@ -418,7 +392,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     final Runnable refactoringRunnable = new Runnable() {
       @Override
       public void run() {
-        Set<UsageInfo> usagesToRefactor = getUsageInfosToRefactor(usageView);
+        Set<UsageInfo> usagesToRefactor = UsageViewUtil.getNotExcludedUsageInfos(usageView);
         final UsageInfo[] infos = usagesToRefactor.toArray(new UsageInfo[usagesToRefactor.size()]);
         if (ensureElementsWritable(infos, viewDescriptor)) {
           execute(infos);
@@ -434,19 +408,6 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   protected void addDoRefactoringAction(UsageView usageView, Runnable refactoringRunnable, String canNotMakeString) {
     usageView.addPerformOperationAction(refactoringRunnable, getCommandName(), canNotMakeString,
                                         RefactoringBundle.message("usageView.doAction"), false);
-  }
-
-  private static Set<UsageInfo> getUsageInfosToRefactor(final UsageView usageView) {
-    Set<Usage> excludedUsages = usageView.getExcludedUsages();
-
-    Set<UsageInfo> usageInfos = new LinkedHashSet<UsageInfo>();
-    for (Usage usage : usageView.getUsages()) {
-      if (usage instanceof UsageInfo2UsageAdapter && !excludedUsages.contains(usage)) {
-        UsageInfo usageInfo = ((UsageInfo2UsageAdapter)usage).getUsageInfo();
-        usageInfos.add(usageInfo);
-      }
-    }
-    return usageInfos;
   }
 
   private void doRefactoring(@NotNull final Collection<UsageInfo> usageInfoSet) {

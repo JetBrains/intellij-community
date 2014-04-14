@@ -57,7 +57,7 @@ public class CloudAccountSelectionEditor<SC extends CloudConfigurationBase,
   private RemoteServer<SC> myNewServer;
   private RemoteServerConfigurable myServerConfigurable;
 
-  protected CloudAccountSelectionEditor(ST cloudType) {
+  public CloudAccountSelectionEditor(ST cloudType) {
     myCloudType = cloudType;
   }
 
@@ -129,15 +129,15 @@ public class CloudAccountSelectionEditor<SC extends CloudConfigurationBase,
 
     final DeployToServerRunConfiguration<SC, DC> result = (DeployToServerRunConfiguration<SC, DC>)runSettings.getConfiguration();
 
-    runManager.addConfiguration(runSettings, false);
-    runManager.setSelectedConfiguration(runSettings);
-
     result.setServerName(serverName);
 
     final ModulePointer modulePointer = ModulePointerManager.getInstance(project).create(module);
     result.setDeploymentSource(new ModuleDeploymentSourceImpl(modulePointer));
 
     result.setDeploymentConfiguration(deploymentConfiguration);
+
+    runManager.addConfiguration(runSettings, false);
+    runManager.setSelectedConfiguration(runSettings);
 
     return result;
   }

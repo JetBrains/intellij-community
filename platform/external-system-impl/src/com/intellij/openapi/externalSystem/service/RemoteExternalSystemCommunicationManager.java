@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.service;
 
 import com.intellij.CommonBundle;
+import com.intellij.debugger.ui.DebuggerView;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -50,6 +51,7 @@ import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.psi.PsiBundle;
+import com.intellij.ui.PlaceHolder;
 import com.intellij.util.Alarm;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
@@ -125,6 +127,8 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
         // IDE jars.
         classPath.addAll(PathManager.getUtilClassPath());
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(ProjectBundle.class), classPath);
+        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(PlaceHolder.class), classPath);
+        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(DebuggerView.class), classPath);
         ExternalSystemApiUtil.addBundle(params.getClassPath(), "messages.ProjectBundle", ProjectBundle.class);
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(PsiBundle.class), classPath);
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Alarm.class), classPath);

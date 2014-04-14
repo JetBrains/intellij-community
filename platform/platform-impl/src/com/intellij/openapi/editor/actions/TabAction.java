@@ -27,7 +27,6 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
@@ -40,6 +39,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.MacUIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class TabAction extends EditorAction {
   public TabAction() {
@@ -53,11 +54,14 @@ public class TabAction extends EditorAction {
     }
 
     @Override
-    public void executeWriteAction(Editor editor, DataContext dataContext) {
+    public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      if (caret == null) {
+        caret = editor.getCaretModel().getPrimaryCaret();
+      }
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.EDIT_COMMAND_GROUP);
       CommandProcessor.getInstance().setCurrentCommandName(EditorBundle.message("typing.command.name"));
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
-      insertTabAtCaret(editor, project);
+      insertTabAtCaret(editor, caret, project);
     }
 
     @Override
@@ -66,9 +70,15 @@ public class TabAction extends EditorAction {
     }
   }
 
-  private static void insertTabAtCaret(Editor editor, Project project) {
+  private static void insertTabAtCaret(Editor editor, @NotNull Caret caret, Project project) {
     MacUIUtil.hideCursor();
-    int columnNumber = editor.getCaretModel().getLogicalPosition().column;
+    int columnNumber;
+    if (caret.hasSelection()) {
+      columnNumber = editor.visualToLogicalPosition(caret.getSelectionStartPosition()).column;
+    }
+    else {
+      columnNumber = editor.getCaretModel().getLogicalPosition().column;
+    }
 
     CodeStyleFacade settings = CodeStyleFacade.getInstance(project);
 

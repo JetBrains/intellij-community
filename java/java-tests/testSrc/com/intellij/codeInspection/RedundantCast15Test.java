@@ -57,6 +57,11 @@ public class RedundantCast15Test extends InspectionTestCase {
     doTest();
   }
 
+  public void testBoxingTopCast() throws Exception {
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_7, getModule(), getTestRootDisposable());
+    doTest();
+  }
+
   public void testIgnore() throws Exception {
     final RedundantCastInspection castInspection = new RedundantCastInspection();
     castInspection.IGNORE_ANNOTATED_METHODS = true;

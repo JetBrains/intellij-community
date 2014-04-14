@@ -1323,10 +1323,12 @@ public class HighlightUtil extends HighlightUtilBase {
       return null;
     }
     HighlightInfo errorResult = null;
-    if (!isValidTypeForSwitchSelector(type, PsiUtil.isLanguageLevel7OrHigher(expression))) {
+    final boolean atLeastJava7 = PsiUtil.isLanguageLevel7OrHigher(expression);
+    if (!isValidTypeForSwitchSelector(type, atLeastJava7)) {
+      final String switchSelectorMessage = atLeastJava7 ? JavaErrorMessages.message("valid.switch.17.selector.types") 
+                                                        : JavaErrorMessages.message("valid.switch.selector.types");
       String message =
-        JavaErrorMessages.message("incompatible.types", JavaErrorMessages.message("valid.switch.selector.types"), JavaHighlightUtil.formatType(
-          type));
+        JavaErrorMessages.message("incompatible.types", switchSelectorMessage, JavaHighlightUtil.formatType(type));
       errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
       QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createConvertSwitchToIfIntention(statement));
       if (PsiType.LONG.equals(type) || PsiType.FLOAT.equals(type) || PsiType.DOUBLE.equals(type)) {

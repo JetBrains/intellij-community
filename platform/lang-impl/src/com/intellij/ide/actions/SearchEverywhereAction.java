@@ -82,7 +82,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.border.CustomLineBorder;
@@ -134,10 +133,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private GotoFileModel myFileModel;
   private GotoActionModel myActionModel;
   private GotoSymbolModel2 mySymbolsModel;
-  private String[] myClasses;
-  private String[] myFiles;
   private String[] myActions;
-  private String[] mySymbols;
   private Component myFocusComponent;
   private JBPopup myPopup;
   private int myMoreClassesIndex = -1;
@@ -267,6 +263,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private int myPopupActualWidth;
   private Component myFocusOwner;
   private ChooseByNamePopup myFileChooseByName;
+  private ChooseByNamePopup myClassChooseByName;
+  private ChooseByNamePopup mySymbolsChooseByName;
 
   private Editor myEditor;
   private PsiFile myFile;
@@ -1197,11 +1195,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     public void run() {
       try {
         check();
-        myList.getEmptyText().setText("Searching...");
+
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
           @Override
           public void run() {
+            // this line must be called on EDT to avoid context switch at clear().append("text") Don't touch. Ask [kb]
+            myList.getEmptyText().setText("Searching...");
+
             //noinspection unchecked
             myList.setModel(myListModel);
             myTitleIndexes.clear();
@@ -1358,9 +1359,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     private void buildFiles(final String pattern) {
       int filesCounter = 0;
-      if (myFiles == null) {
-        myFiles = myFileModel.getNames(showAll.get());
-      }
       final Set<Object> elements = new LinkedHashSet<Object>();
       final GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
       myFileChooseByName.getProvider().filterElements(myFileChooseByName, pattern, true,
@@ -1421,24 +1419,31 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
     }
 
-    private void buildSymbols(String pattern) {
-      int symbolCounter = 0;
-      if (mySymbols == null) {
-        mySymbols = mySymbolsModel.getNames(showAll.get());
-      }
-      List<MatchResult> matches = collectResults(pattern, mySymbols, mySymbolsModel);
-      final List<Object> symbols = new ArrayList<Object>();
-
-      for (MatchResult o : matches) {
-        if (symbolCounter > MAX_SYMBOLS) break;
-
-        Object[] objects = mySymbolsModel.getElementsByName(o.elementName, showAll.get(), pattern);
-        for (Object object : objects) {
-          if (!myListModel.contains(object) && !symbols.contains(object)) {
-              symbols.add(object);
-              symbolCounter++;
-              if (symbolCounter > MAX_SYMBOLS) break;
+    private void buildSymbols(final String pattern) {
+      int symbolsCounter = 0;
+      final Set<Object> elements = new LinkedHashSet<Object>();
+      final GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
+      mySymbolsChooseByName.getProvider().filterElements(mySymbolsChooseByName, pattern, false,
+                                                      myProgressIndicator, new Processor<Object>() {
+          @Override
+          public boolean process(Object o) {
+            if (o instanceof PsiElement) {
+              final PsiElement element = (PsiElement)o;
+              final PsiFile file = element.getContainingFile();
+              if (file != null && file.getVirtualFile() != null && scope.accept(file.getVirtualFile())) {
+                elements.add(o);
+              }
+            }
+            return elements.size() < 30;
           }
+        });
+      final List<Object> symbols = new ArrayList<Object>();
+      for (Object object : elements) {
+        if (symbolsCounter > MAX_SYMBOLS) break;
+        if (!myListModel.contains(object)) {
+          symbols.add(object);
+          symbolsCounter++;
+          if (symbolsCounter > MAX_SYMBOLS) break;
         }
       }
 
@@ -1513,46 +1518,34 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     }
 
-    private void buildClasses(String pattern, boolean includeLibraries) {
+    private void buildClasses(final String pattern, boolean includeLibraries) {
       if (pattern.indexOf('.') != -1) {
         //todo[kb] it's not a mistake. If we search for "*.png" or "index.xml" in SearchEverywhere
         //todo[kb] we don't want to see Java classes started with Png or Xml. This approach should be reworked someday.
         return;
       }
+
       boolean includeLibs = includeLibraries || showAll.get();
-      int clsCounter = 0;
-      final int maxCount = includeLibraries ? 5 : MAX_CLASSES;
-      if (myClasses == null) {
-        myClasses = myClassModel.getNames(false);
-      }
-      List<MatchResult> matches = collectResults(pattern, includeLibs ? myClassModel.getNames(true) : myClasses, myClassModel);
-//      FindSymbolParameters parameters = FindSymbolParameters.wrap(pattern, project, includeLibs);
-      final List<Object> classes = new ArrayList<Object>();
-      check();
-
-      for (MatchResult matchResult : matches) {
-        if (clsCounter > maxCount) break;
-
-        Object[] objects = myClassModel.getElementsByName(matchResult.elementName, includeLibs, pattern);
-        for (Object object : objects) {
-          check();
-          if (!myListModel.contains(object)) {
-            if (object instanceof PsiElement) {
-              VirtualFile file = PsiUtilCore.getVirtualFile((PsiElement)object);
-              if (file != null) {
-                if (myAlreadyAddedFiles.contains(file)) {
-                  continue;
-                }
-                else {
-                  myAlreadyAddedFiles.add(file);
-                }
-              }
-            }
-            classes.add(object);
-            clsCounter++;
-
-            if (clsCounter > maxCount) break;
+      int filesCounter = 0;
+      final Set<Object> elements = new LinkedHashSet<Object>();
+      myClassChooseByName.getProvider().filterElements(myClassChooseByName, pattern, includeLibs,
+                                                      myProgressIndicator, new Processor<Object>() {
+          @Override
+          public boolean process(Object o) {
+            elements.add(o);
+            return elements.size() < 30;
           }
+        });
+      final List<Object> classes = new ArrayList<Object>();
+      for (Object object : elements) {
+        check();
+        if (filesCounter > MAX_FILES) break;
+        if (!myListModel.contains(object)) {
+          if (object instanceof PsiElement) {
+            classes.add(object);
+          }
+            filesCounter++;
+            if (filesCounter > MAX_FILES) break;
         }
       }
 
@@ -1564,10 +1557,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           public void run() {
             if (!myProgressIndicator.isCanceled()) {
               myTitleIndexes.classes = myListModel.size();
-              for (Object cls : classes) {
-                myListModel.addElement(cls);
+              for (Object file : classes) {
+                myListModel.addElement(file);
               }
-              myMoreClassesIndex = classes.size() >= maxCount ? myListModel.size() - 1 : -1;
+              myMoreClassesIndex = classes.size() >= MAX_CLASSES ? myListModel.size() - 1 : -1;
             }
           }
         });
@@ -1715,10 +1708,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       if (myClassModel == null) {
         myClassModel = new GotoClassModel2(project);
         myFileModel = new GotoFileModel(project);
+        mySymbolsModel = new GotoSymbolModel2(project);
         myFileChooseByName = ChooseByNamePopup.createPopup(project, myFileModel, (PsiElement)null);
+        myClassChooseByName = ChooseByNamePopup.createPopup(project, myClassModel, (PsiElement)null);
+        mySymbolsChooseByName = ChooseByNamePopup.createPopup(project, mySymbolsModel, (PsiElement)null);
         project.putUserData(ChooseByNamePopup.CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, null);
         myActionModel = createActionModel();
-        mySymbolsModel = new GotoSymbolModel2(project);
         myConfigurables.clear();
         fillConfigurablesIds(null, new IdeConfigurablesGroup().getConfigurables());
         fillConfigurablesIds(null, new ProjectConfigurablesGroup(project).getConfigurables());
@@ -1764,7 +1759,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                 }
               })
               .createPopup();
-            myPopup.getContent().setBorder(new EmptyBorder(0,0,0,0));
+            myPopup.getContent().setBorder(new EmptyBorder(0, 0, 0, 0));
             Disposer.register(myPopup, new Disposable() {
               @Override
               public void dispose() {
@@ -1881,13 +1876,18 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       myFileChooseByName.close(false);
       myFileChooseByName = null;
     }
+    if (myClassChooseByName != null) {
+      myClassChooseByName.close(false);
+      myClassChooseByName = null;
+    }
+    if (mySymbolsChooseByName != null) {
+      mySymbolsChooseByName.close(false);
+      mySymbolsChooseByName = null;
+    }
     myClassModel = null;
     myActionModel = null;
     myActions = null;
-    myFiles = null;
-    myClasses = null;
     mySymbolsModel = null;
-    mySymbols = null;
     myConfigurables.clear();
     myFocusComponent = null;
     myContextComponent = null;

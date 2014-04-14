@@ -31,7 +31,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.io.URLUtil;
 import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.NonNls;
@@ -42,17 +41,15 @@ import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.concurrent.Future;
+import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: May 2, 2003
- * Time: 8:35:34 PM
- * To change this template use Options | File Templates.
+ * @author db
+ * @since May 2, 2003
  */
-
 public abstract class AbstractExternalFilter {
 
   private static final boolean EXTRACT_IMAGES_FROM_JARS = SystemProperties.getBooleanProperty("extract.doc.images", true);
@@ -156,11 +153,10 @@ public abstract class AbstractExternalFilter {
           boolean referenceUnpackedImage = true;
           if (!unpackedImage.isFile()) {
             referenceUnpackedImage = false;
-            JarFileSystem jarFileSystem = JarFileSystem.getInstance();
             try {
-              JarFile jarFile = jarFileSystem.getJarFile(jarFileSystem.findFileByPath(jarPath + URLUtil.JAR_SEPARATOR));
-              if (jarFile != null) {
-                JarFile.JarEntry entry = jarFile.getEntry(imgPath);
+              JarFile jarFile = new JarFile(jarPath);
+              try {
+                ZipEntry entry = jarFile.getEntry(imgPath);
                 if (entry != null) {
                   FileUtilRt.createIfNotExists(unpackedImage);
                   FileOutputStream fOut = new FileOutputStream(unpackedImage);
@@ -176,9 +172,12 @@ public abstract class AbstractExternalFilter {
                 }
                 unpackedImage.deleteOnExit();
               }
+              finally {
+                jarFile.close();
+              }
             }
             catch (IOException e) {
-              // Do nothing
+              LOG.debug(e);
             }
           }
           if (referenceUnpackedImage) {
@@ -385,7 +384,7 @@ public abstract class AbstractExternalFilter {
 
     if (useDt) {
       boolean skip = false;
-      
+
       do {
         if (StringUtil.toUpperCase(read).contains(H2) && !read.toUpperCase().contains("H2")) { // read=class name in <H2>
           data.append(H2);

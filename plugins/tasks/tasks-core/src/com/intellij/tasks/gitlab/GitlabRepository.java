@@ -83,6 +83,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
     return true;
   }
 
+  @NotNull
   @Override
   public GitlabRepository clone() {
     return new GitlabRepository(this);
@@ -100,7 +101,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
 
   @Nullable
   @Override
-  public Task findTask(String id) throws Exception {
+  public Task findTask(@NotNull String id) throws Exception {
     return new GitlabTask(this, myCurrentProject, fetchIssue(Integer.parseInt(id)));
   }
 

@@ -50,7 +50,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.zip.ZipFile;
 
 /**
  * @author max
@@ -913,16 +912,28 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     return newRoot;
   }
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  // scans the file for a signature of "end of central directory" record
   private static boolean isValidJar(@NotNull String path) {
     try {
-      new ZipFile(path).close();
-      return true;
+      RandomAccessFile f = new RandomAccessFile(path, "r");
+      try {
+        long length = f.length(), limit = Math.max(length - 65535, 0), offset = length - 22;
+        while (offset >= limit) {
+          f.seek(offset);
+          if (f.read() == 0x50 && f.read() == 0x4B && f.read() == 0x05 && f.read() == 0x06) {
+            return true;
+          }
+          offset--;
+        }
+      }
+      finally {
+        f.close();
+      }
     }
     catch (IOException e) {
       LOG.warn("invalid .jar: " + path);
-      return false;
     }
+    return false;
   }
 
   @NotNull

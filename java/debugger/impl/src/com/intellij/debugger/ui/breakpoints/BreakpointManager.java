@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ package com.intellij.debugger.ui.breakpoints;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.BreakpointStepMethodFilter;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
@@ -42,7 +41,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiField;
@@ -61,7 +63,6 @@ import com.sun.jdi.InternalException;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.request.*;
 import gnu.trove.THashMap;
-import gnu.trove.TIntHashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -86,44 +87,10 @@ public class BreakpointManager {
   private final Map<XBreakpoint, Breakpoint> myBreakpoints = new HashMap<XBreakpoint, Breakpoint>(); // breakpoints storage, access should be synchronized
   @Nullable private List<Breakpoint> myBreakpointsListForIteration = null; // another list for breakpoints iteration, unsynchronized access ok
   private final Map<String, String> myUIProperties = new LinkedHashMap<String, String>();
-  //private final Map<Key<? extends Breakpoint>, BreakpointDefaults> myBreakpointDefaults = new LinkedHashMap<Key<? extends Breakpoint>, BreakpointDefaults>();
 
   private final EventDispatcher<BreakpointManagerListener> myDispatcher = EventDispatcher.create(BreakpointManagerListener.class);
 
   private final StartupManager myStartupManager;
-
-  private void update(@NotNull List<BreakpointWithHighlighter> breakpoints) {
-    final TIntHashSet intHash = new TIntHashSet();
-    for (BreakpointWithHighlighter breakpoint : breakpoints) {
-      SourcePosition sourcePosition = breakpoint.getSourcePosition();
-      breakpoint.reload();
-
-      if (breakpoint.isValid()) {
-        if (sourcePosition == null || breakpoint.getSourcePosition().getLine() != sourcePosition.getLine()) {
-          fireBreakpointChanged(breakpoint);
-        }
-
-        if (intHash.contains(breakpoint.getLineIndex())) {
-          remove(breakpoint);
-        }
-        else {
-          intHash.add(breakpoint.getLineIndex());
-        }
-      }
-      else {
-        remove(breakpoint);
-      }
-    }
-  }
-
-  private void remove(final BreakpointWithHighlighter breakpoint) {
-    DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
-      @Override
-      public void run() {
-        removeBreakpoint(breakpoint);
-      }
-    });
-  }
 
   public BreakpointManager(@NotNull Project project, @NotNull StartupManager startupManager, @NotNull DebuggerManagerImpl debuggerManager) {
     myProject = project;
@@ -204,15 +171,6 @@ public class BreakpointManager {
     });
   }
 
-  //@NotNull
-  //public BreakpointDefaults getBreakpointDefaults(Key<? extends Breakpoint> category) {
-  //  BreakpointDefaults defaults = myBreakpointDefaults.get(category);
-  //  if (defaults == null) {
-  //    defaults = new BreakpointDefaults();
-  //  }
-  //  return defaults;
-  //}
-
   public void setBreakpointDefaults(Key<? extends Breakpoint> category, BreakpointDefaults defaults) {
     Class typeCls = null;
     if (LineBreakpoint.CATEGORY.toString().equals(category.toString())) {
@@ -231,9 +189,7 @@ public class BreakpointManager {
       XBreakpointType<XBreakpoint<?>, ?> type = XDebuggerUtil.getInstance().findBreakpointType(typeCls);
       ((XBreakpointManagerImpl)getXBreakpointManager()).getBreakpointDefaults(type).setSuspendPolicy(Breakpoint.transformSuspendPolicy(defaults.getSuspendPolicy()));
     }
-    //myBreakpointDefaults.put(category, defaults);
   }
-
 
   @Nullable
   public RunToCursorBreakpoint addRunToCursorBreakpoint(Document document, int lineIndex, final boolean ignoreBreakpoints) {
@@ -260,16 +216,6 @@ public class BreakpointManager {
     addBreakpoint(breakpoint);
     return breakpoint;
   }
-
-  //@Nullable
-  //public FieldBreakpoint addFieldBreakpoint(Field field, ObjectReference object) {
-  //  ApplicationManager.getApplication().assertIsDispatchThread();
-  //  final FieldBreakpoint fieldBreakpoint = FieldBreakpoint.create(myProject, field, object, null);
-  //  if (fieldBreakpoint != null) {
-  //    addBreakpoint(fieldBreakpoint);
-  //  }
-  //  return fieldBreakpoint;
-  //}
 
   @Nullable
   public FieldBreakpoint addFieldBreakpoint(@NotNull Document document, int offset) {
@@ -342,50 +288,6 @@ public class BreakpointManager {
                              ((XLineBreakpointType)type).createBreakpointProperties(file, lineIndex));
       }
     });
-  }
-
-  @Nullable
-  public WildcardMethodBreakpoint addMethodBreakpoint(String classPattern, String methodName) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    WildcardMethodBreakpoint breakpoint = WildcardMethodBreakpoint.create(myProject, classPattern, methodName, null);
-    if (breakpoint == null) {
-      return null;
-    }
-    addBreakpoint(breakpoint);
-    return breakpoint;
-  }
-
-  /**
-   * @return null if not found or a breakpoint object
-   */
-  @NotNull
-  public List<BreakpointWithHighlighter> findBreakpoints(final Document document, final int offset) {
-    LinkedList<BreakpointWithHighlighter> result = new LinkedList<BreakpointWithHighlighter>();
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    for (final Breakpoint breakpoint : getBreakpoints()) {
-      if (breakpoint instanceof BreakpointWithHighlighter && ((BreakpointWithHighlighter)breakpoint).isAt(document, offset)) {
-        result.add((BreakpointWithHighlighter)breakpoint);
-      }
-    }
-
-    return result;
-  }
-
-  @NotNull
-  public List<BreakpointWithHighlighter> findBreakpoints(@NotNull Document document, @NotNull TextRange textRange) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    List<BreakpointWithHighlighter> result = new ArrayList<BreakpointWithHighlighter>();
-    int startLine = document.getLineNumber(textRange.getStartOffset());
-    int endLine = document.getLineNumber(textRange.getEndOffset())+1;
-    TextRange lineRange = new TextRange(startLine, endLine);
-    for (final Breakpoint breakpoint : getBreakpoints()) {
-      if (breakpoint instanceof BreakpointWithHighlighter &&
-          lineRange.contains(((BreakpointWithHighlighter)breakpoint).getLineIndex())) {
-        result.add((BreakpointWithHighlighter)breakpoint);
-      }
-    }
-
-    return result;
   }
 
   /**
@@ -658,115 +560,6 @@ public class BreakpointManager {
     }
 
     parentNode.addContent(myOriginalBreakpointsNodes.values());
-    //ApplicationManager.getApplication().runReadAction(new Runnable() {
-    //  @Override
-    //  public void run() {
-    //    removeInvalidBreakpoints();
-    //    final Map<Key<? extends Breakpoint>, Element> categoryToElementMap = new THashMap<Key<? extends Breakpoint>, Element>();
-    //    for (Key<? extends Breakpoint> category : myBreakpointDefaults.keySet()) {
-    //      final Element group = getCategoryGroupElement(categoryToElementMap, category, parentNode);
-    //      final BreakpointDefaults defaults = getBreakpointDefaults(category);
-    //      group.setAttribute(DEFAULT_SUSPEND_POLICY_ATTRIBUTE_NAME, String.valueOf(defaults.getSuspendPolicy()));
-    //      group.setAttribute(DEFAULT_CONDITION_STATE_ATTRIBUTE_NAME, String.valueOf(defaults.isConditionEnabled()));
-    //    }
-    //    // don't store invisible breakpoints
-    //    for (Breakpoint breakpoint : getBreakpoints()) {
-    //      if (breakpoint.isValid() &&
-    //          (!(breakpoint instanceof BreakpointWithHighlighter) || ((BreakpointWithHighlighter)breakpoint).isVisible())) {
-    //        writeBreakpoint(getCategoryGroupElement(categoryToElementMap, breakpoint.getCategory(), parentNode), breakpoint);
-    //      }
-    //    }
-    //    final AnyExceptionBreakpoint anyExceptionBreakpoint = getAnyExceptionBreakpoint();
-    //    final Element group = getCategoryGroupElement(categoryToElementMap, anyExceptionBreakpoint.getCategory(), parentNode);
-    //    writeBreakpoint(group, anyExceptionBreakpoint);
-    //
-    //    final Element rules = new Element(RULES_GROUP_NAME);
-    //    parentNode.addContent(rules);
-    //    //for (EnableBreakpointRule myBreakpointRule : myBreakpointRules) {
-    //    //  writeRule(myBreakpointRule, rules);
-    //    //}
-    //  }
-    //});
-    //
-    //final Element uiProperties = new Element("ui_properties");
-    //parentNode.addContent(uiProperties);
-    //for (final String name : myUIProperties.keySet()) {
-    //  Element property = new Element("property");
-    //  uiProperties.addContent(property);
-    //  property.setAttribute("name", name);
-    //  property.setAttribute("value", myUIProperties.get(name));
-    //}
-  }
-
-  //@SuppressWarnings({"HardCodedStringLiteral"})
-  //private static void writeRule(@NotNull final EnableBreakpointRule enableBreakpointRule, @NotNull Element element) {
-  //  Element rule = new Element("rule");
-  //  if (enableBreakpointRule.isLeaveEnabled()) {
-  //    rule.setAttribute("leaveEnabled", Boolean.toString(true));
-  //  }
-  //  element.addContent(rule);
-  //  writeRuleBreakpoint(rule, MASTER_BREAKPOINT_TAGNAME, enableBreakpointRule.getMasterBreakpoint());
-  //  writeRuleBreakpoint(rule, SLAVE_BREAKPOINT_TAGNAME, enableBreakpointRule.getSlaveBreakpoint());
-  //}
-
-  //@SuppressWarnings({"HardCodedStringLiteral"}) private static void writeRuleBreakpoint(@NotNull final Element element, final String tagName, @NotNull final Breakpoint breakpoint) {
-  //  Element master = new Element(tagName);
-  //  element.addContent(master);
-  //  master.setAttribute("name", breakpoint.getDisplayName());
-  //}
-
-  //@SuppressWarnings({"HardCodedStringLiteral"})
-  //private static void writeBreakpoint(@NotNull final Element group, @NotNull final Breakpoint breakpoint) {
-  //  Element breakpointNode = new Element("breakpoint");
-  //  group.addContent(breakpointNode);
-  //  try {
-  //    breakpoint.writeExternal(breakpointNode);
-  //  }
-  //  catch (WriteExternalException e) {
-  //    LOG.error(e);
-  //  }
-  //}
-
-  private static <T extends Breakpoint> Element getCategoryGroupElement(@NotNull final Map<Key<? extends Breakpoint>, Element> categoryToElementMap, @NotNull final Key<T> category, @NotNull final Element parentNode) {
-    Element group = categoryToElementMap.get(category);
-    if (group == null) {
-      group = new Element(category.toString());
-      categoryToElementMap.put(category, group);
-      parentNode.addContent(group);
-    }
-    return group;
-  }
-
-  private void removeInvalidBreakpoints() {
-    ArrayList<Breakpoint> toDelete = new ArrayList<Breakpoint>();
-
-    for (Breakpoint breakpoint : getBreakpoints()) {
-      if (!breakpoint.isValid()) {
-        toDelete.add(breakpoint);
-      }
-    }
-
-    for (final Breakpoint aToDelete : toDelete) {
-      removeBreakpoint(aToDelete);
-    }
-  }
-
-  /**
-   * @return breakpoints of one of the category:
-   *         LINE_BREAKPOINTS, EXCEPTION_BREAKPOINTS, FIELD_BREAKPOINTS, METHOD_BREAKPOINTS
-   */
-  public <T extends Breakpoint> Breakpoint[] getBreakpoints(@NotNull final Key<T> category) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    removeInvalidBreakpoints();
-
-    final ArrayList<Breakpoint> breakpoints = new ArrayList<Breakpoint>();
-    for (Breakpoint breakpoint : getBreakpoints()) {
-      if (category.equals(breakpoint.getCategory())) {
-        breakpoints.add(breakpoint);
-      }
-    }
-
-    return breakpoints.toArray(new Breakpoint[breakpoints.size()]);
   }
 
   @NotNull
@@ -969,43 +762,8 @@ public class BreakpointManager {
   public void setBreakpointEnabled(@NotNull final Breakpoint breakpoint, final boolean enabled) {
     if (breakpoint.isEnabled() != enabled) {
       breakpoint.setEnabled(enabled);
-      //fireBreakpointChanged(breakpoint);
-      //breakpoint.updateUI();
     }
   }
-  
-  public void addBreakpointRule(@NotNull EnableBreakpointRule rule) {
-    //rule.init();
-    //myBreakpointRules.add(rule);
-  }
-  
-  public boolean removeBreakpointRule(@NotNull EnableBreakpointRule rule) {
-    //final boolean removed = myBreakpointRules.remove(rule);
-    //if (removed) {
-    //  rule.dispose();
-    //}
-    //return removed;
-    return false;
-  }
-  
-  public boolean removeBreakpointRule(@NotNull Breakpoint slaveBreakpoint) {
-    //for (final EnableBreakpointRule rule : myBreakpointRules) {
-    //  if (slaveBreakpoint.equals(rule.getSlaveBreakpoint())) {
-    //    removeBreakpointRule(rule);
-    //    return true;
-    //  }
-    //}
-    return false;
-  }
-
-  //private void updateBreakpointRules(@NotNull Breakpoint removedBreakpoint) {
-  //  for (Iterator<EnableBreakpointRule> it = myBreakpointRules.iterator(); it.hasNext();) {
-  //    final EnableBreakpointRule rule = it.next();
-  //    if (removedBreakpoint.equals(rule.getMasterBreakpoint()) || removedBreakpoint.equals(rule.getSlaveBreakpoint())) {
-  //      it.remove();
-  //    }
-  //  }
-  //}
 
   // copied from XDebugSessionImpl processDependencies
   public void processBreakpointHit(@NotNull final Breakpoint breakpoint) {
@@ -1035,36 +793,10 @@ public class BreakpointManager {
     }
   }
 
-  public void setInitialBreakpointsState() {
-    //myAllowMulticasting = false;
-    //for (final EnableBreakpointRule myBreakpointRule : myBreakpointRules) {
-    //  myBreakpointRule.init();
-    //}
-    //myAllowMulticasting = true;
-    //if (!myBreakpointRules.isEmpty()) {
-    //  IJSwingUtilities.invoke(new Runnable() {
-    //    @Override
-    //    public void run() {
-    //      myDispatcher.getMulticaster().breakpointsChanged();
-    //    }
-    //  });
-    //}
-  }
-  
   @Nullable
   public Breakpoint findMasterBreakpoint(@NotNull Breakpoint dependentBreakpoint) {
     XDependentBreakpointManager dependentBreakpointManager = ((XBreakpointManagerImpl)getXBreakpointManager()).getDependentBreakpointManager();
     return myBreakpoints.get(dependentBreakpointManager.getMasterBreakpoint(dependentBreakpoint.myXBreakpoint));
-  }
-
-  @Nullable
-  public EnableBreakpointRule findBreakpointRule(@NotNull Breakpoint dependentBreakpoint) {
-    //for (final EnableBreakpointRule rule : myBreakpointRules) {
-    //  if (dependentBreakpoint.equals(rule.getSlaveBreakpoint())) {
-    //    return rule;
-    //  }
-    //}
-    return null;
   }
 
   public String getProperty(String name) {
