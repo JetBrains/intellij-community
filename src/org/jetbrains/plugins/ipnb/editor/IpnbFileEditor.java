@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.ipnb;
+package org.jetbrains.plugins.ipnb.editor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
