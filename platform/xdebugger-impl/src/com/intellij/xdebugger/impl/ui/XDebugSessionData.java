@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class XDebugSessionData {
   private String[] myWatchExpressions;
+  private boolean myBreakpointsMuted = false;
 
   public XDebugSessionData(final @NotNull String[] watchExpressions) {
     myWatchExpressions = watchExpressions;
@@ -39,5 +40,13 @@ public class XDebugSessionData {
   @NotNull
   public String[] getWatchExpressions() {
     return myWatchExpressions;
+  }
+
+  public boolean isBreakpointsMuted() {
+    return myBreakpointsMuted;
+  }
+
+  public void setBreakpointsMuted(boolean breakpointsMuted) {
+    myBreakpointsMuted = breakpointsMuted;
   }
 }
