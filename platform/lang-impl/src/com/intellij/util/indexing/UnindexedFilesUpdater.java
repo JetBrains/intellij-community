@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.CacheUpdateRunner;
 import com.intellij.openapi.project.DumbModeTask;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CollectingContentIterator;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
@@ -81,6 +82,11 @@ public class UnindexedFilesUpdater extends DumbModeTask {
 
     indexFiles(indicator, files);
     LOG.info("Unindexed files update done in " + (System.currentTimeMillis() - started) + " ms");
+
+    DumbModeTask task = FileBasedIndexProjectHandler.createChangedFilesIndexingTask(myProject);
+    if (task != null) {
+      DumbService.getInstance(myProject).queueTask(task);
+    }
   }
 
   private void indexFiles(ProgressIndicator indicator, List<VirtualFile> files) {
