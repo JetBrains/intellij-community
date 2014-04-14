@@ -43,7 +43,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> imple
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.CopyPasteReferenceProcessor");
   
   @Override
-  public ReferenceTransferableData collectTransferableData(PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets) {
+  public ReferenceTransferableData collectTransferableData(@Nullable PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets) {
     if (file instanceof PsiCompiledFile) {
       file = ((PsiCompiledFile) file).getDecompiledPsiFile();
     }
