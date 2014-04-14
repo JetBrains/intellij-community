@@ -159,8 +159,8 @@ public class DelegateGraphFacade implements GraphFacade {
 
   @NotNull
   @Override
-  public List<Integer> getAllCommits() {
-    throw new UnsupportedOperationException();
+  public List<GraphCommit<Integer>> getAllCommits() {
+    return myPermanentGraph.getAllCommits();
   }
 
   @Override

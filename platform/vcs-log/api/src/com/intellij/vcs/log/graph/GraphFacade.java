@@ -49,7 +49,7 @@ public interface GraphFacade {
    * To get visible commits use {@link #getVisibleCommitCount} & {@link #getCommitAtRow}.
    */
   @NotNull
-  List<Integer> getAllCommits();
+  List<GraphCommit<Integer>> getAllCommits();
 
   /**
    * A shorthand to getVisibleCommits().get(visibleRow), but may be faster.

@@ -57,7 +57,7 @@ class EmptyGraphFacade implements GraphFacade {
 
   @NotNull
   @Override
-  public List<Integer> getAllCommits() {
+  public List<GraphCommit<Integer>> getAllCommits() {
     return Collections.emptyList();
   }
 
