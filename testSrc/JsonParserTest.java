@@ -64,6 +64,30 @@ public class JsonParserTest extends TestCase {
     assertTrue(cell instanceof CodeCell);
     final List<CellOutput> outputs = ((CodeCell)cell).getCellOutputs();
     assertEquals(0, outputs.size());
+    final String[] input = ((CodeCell)cell).getInput();
+    final String joined = StringUtil.join(input);
+    assertEquals("e = x + 2*y", joined);
+    final String language = ((CodeCell)cell).getLanguage();
+    assertEquals("python", language);
+    final int number = ((CodeCell)cell).getPromptNumber();
+    assertEquals(4, number);
+  }
+
+  public void testOutputs() throws IOException {
+    final String fileName = "testData/outputs.ipynb";
+    final String fileText = getFileText(fileName);
+    final IpnbFile ipnbFile = IpnbParser.parseIpnbFile(fileText);
+    assertNotNull(ipnbFile);
+    final List<IpnbCell> cells = ipnbFile.getCells();
+    assertEquals(1, cells.size());
+    final IpnbCell cell = cells.get(0);
+    assertTrue(cell instanceof CodeCell);
+    final List<CellOutput> outputs = ((CodeCell)cell).getCellOutputs();
+    assertEquals(1, outputs.size());
+    final CellOutput output = outputs.get(0);
+    final String[] text = output.getText();
+    final String joined = StringUtil.join(text);
+    assertEquals("\"Add(Symbol('x'), Mul(Integer(2), Symbol('y')))\"", joined);
   }
 
   private String getFileText(@NotNull final String fileName) throws IOException {
