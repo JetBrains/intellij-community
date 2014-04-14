@@ -72,9 +72,19 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     final PsiExpressionList argumentList = getArgumentList();
     return new MethodCandidateInfo(method, substitutor, !accessible, staticProblem, argumentList, myCurrentFileContext,
                                    null, getTypeArguments(), getLanguageLevel()) {
+
+      private PsiType[] myExpressionTypes;
+
       @Override
       public PsiType[] getArgumentTypes() {
-        return getExpressionTypes(argumentList);
+        if (myExpressionTypes == null && argumentList != null) {
+          final PsiType[] expressionTypes = getExpressionTypes(argumentList);
+          if (!MethodCandidateInfo.ourOverloadGuard.currentStack().isEmpty()) {
+            return expressionTypes;
+          }
+          myExpressionTypes = expressionTypes;
+        }
+        return myExpressionTypes;
       }
 
       @Override
