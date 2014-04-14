@@ -9,6 +9,7 @@ public abstract class SourceCell implements IpnbCell{
     mySource = source;
   }
 
+  @NotNull
   public String[] getSource() {
     return mySource;
   }
