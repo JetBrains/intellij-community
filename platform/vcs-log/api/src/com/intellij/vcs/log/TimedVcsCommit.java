@@ -20,7 +20,7 @@ import com.intellij.vcs.log.graph.GraphCommit;
 import java.util.List;
 
 /**
- * A {@link VcsCommit} with information about date & time when this commit was made.
+ * A {@link GraphCommit} with information about date & time when this commit was made.
  * <p/>
  * An instance of this object can be obtained via
  * {@link VcsLogObjectsFactory#createTimedCommit(Hash, List, long) VcsLogObjectsFactory#createTimedCommit}.
@@ -29,7 +29,7 @@ import java.util.List;
  * and {@code hashcode()} so that they consider only the Hash</b>, i.e. two TimedVcsCommits are equal if and only if they have equal
  * hash codes. The VCS Log framework heavily relies on this fact.
  */
-public interface TimedVcsCommit extends VcsCommit, GraphCommit<Hash> {
+public interface TimedVcsCommit extends GraphCommit<Hash> {
 
   /**
    * <p>Returns the timestamp indicating the date & time when this commit was made.</p>

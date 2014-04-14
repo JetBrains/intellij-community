@@ -18,9 +18,9 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.TimedVcsCommit;
-import com.intellij.vcs.log.VcsCommit;
+import com.intellij.vcs.log.VcsRef;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -90,11 +90,11 @@ public class VcsLogJoiner {
     Set<Hash> allUnresolvedLinkedHashes = new HashSet<Hash>(newRefs);
     allUnresolvedLinkedHashes.removeAll(previousRefs);
     // at this moment allUnresolvedLinkedHashes contains only NEW refs
-    for (VcsCommit commit : firstBlock) {
+    for (TimedVcsCommit commit : firstBlock) {
       allUnresolvedLinkedHashes.add(commit.getId());
       allUnresolvedLinkedHashes.addAll(commit.getParents());
     }
-    for (VcsCommit commit : firstBlock) {
+    for (TimedVcsCommit commit : firstBlock) {
       if (commit.getParents().size() != 0) {
         allUnresolvedLinkedHashes.remove(commit.getId());
       }
@@ -107,7 +107,7 @@ public class VcsLogJoiner {
   private static int getFirstUnTrackedIndex(@NotNull List<? extends TimedVcsCommit> commits, @NotNull Set<Hash> searchHashes) {
     int lastIndex;
     for (lastIndex = 0; lastIndex < commits.size(); lastIndex++) {
-      VcsCommit commit = commits.get(lastIndex);
+      TimedVcsCommit commit = commits.get(lastIndex);
       if (searchHashes.size() == 0)
         return lastIndex;
       if (lastIndex > BOUND_SAVED_LOG)
@@ -122,7 +122,7 @@ public class VcsLogJoiner {
   private static Set<TimedVcsCommit> getAllNewCommits(@NotNull List<? extends TimedVcsCommit> unsafeGreenPartSavedLog,
                                                       @NotNull List<? extends TimedVcsCommit> firstBlock) {
     Set<Hash> existedCommitHashes = ContainerUtil.newHashSet();
-    for (VcsCommit commit : unsafeGreenPartSavedLog) {
+    for (TimedVcsCommit commit : unsafeGreenPartSavedLog) {
       existedCommitHashes.add(commit.getId());
     }
     Set<TimedVcsCommit> allNewsCommits = ContainerUtil.newHashSet();
