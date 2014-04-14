@@ -49,7 +49,7 @@ public class LogMessage extends AbstractMessage {
       myHeader = aEvent.getMessage();
     }
 
-    if (myThrowable != null && StringUtil.isNotEmpty(myThrowable.getMessage())) {
+    if (myThrowable != null && StringUtil.isNotEmpty(myThrowable.getMessage()) && !myHeader.startsWith(myThrowable.getMessage())) {
       if (!myHeader.equals(NO_MESSAGE)) {
         if (!myHeader.endsWith(": ") && !myHeader.endsWith(":")) {
           myHeader += ": ";
