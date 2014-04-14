@@ -45,7 +45,7 @@ public class JarHandlerBase {
   private static final long DEFAULT_TIMESTAMP = -1L;
 
   private final TimedReference<JarFile> myJarFile = new TimedReference<JarFile>(null);
-  private Reference<Map<String, EntryInfo>> myRelPathsToEntries = new SoftReference<Map<String, EntryInfo>>(null);
+  private volatile Reference<Map<String, EntryInfo>> myRelPathsToEntries = new SoftReference<Map<String, EntryInfo>>(null);
   private final Object lock = new Object();
 
   protected final String myBasePath;
@@ -102,7 +102,8 @@ public class JarHandlerBase {
   protected JarFile createJarFile() {
     final File originalFile = getOriginalFile();
     try {
-      @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") final ZipFile zipFile = new ZipFile(getMirrorFile(originalFile));
+      @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+      final ZipFile zipFile = new ZipFile(getMirrorFile(originalFile));
 
       class MyJarEntry implements JarFile.JarEntry {
         private final ZipEntry myEntry;
@@ -197,18 +198,16 @@ public class JarHandlerBase {
 
   @NotNull
   public String[] list(@NotNull VirtualFile file) {
-    synchronized (lock) {
-      EntryInfo parentEntry = getEntryInfo(file);
+    EntryInfo parentEntry = getEntryInfo(file);
 
-      Set<String> names = new HashSet<String>();
-      for (EntryInfo info : getEntriesMap().values()) {
-        if (info.parent == parentEntry) {
-          names.add(info.shortName);
-        }
+    Set<String> names = new HashSet<String>();
+    for (EntryInfo info : getEntriesMap().values()) {
+      if (info.parent == parentEntry) {
+        names.add(info.shortName);
       }
-
-      return ArrayUtil.toStringArray(names);
     }
+
+    return ArrayUtil.toStringArray(names);
   }
 
   protected EntryInfo getEntryInfo(@NotNull VirtualFile file) {
@@ -226,33 +225,35 @@ public class JarHandlerBase {
 
   @NotNull
   protected Map<String, EntryInfo> getEntriesMap() {
-    synchronized (lock) {
-      Map<String, EntryInfo> map = SoftReference.dereference(myRelPathsToEntries);
+    Map<String, EntryInfo> map = SoftReference.dereference(myRelPathsToEntries);
+    if (map == null) {
+      synchronized (lock) {
+        map = SoftReference.dereference(myRelPathsToEntries);
 
-      if (map == null) {
-        JarFile zip = getJar();
-        if (zip != null) {
-          LogUtil.debug(LOG, "mapping %s", myBasePath);
+        if (map == null) {
+          JarFile zip = getJar();
+          if (zip != null) {
+            LogUtil.debug(LOG, "mapping %s", myBasePath);
 
-          map = new THashMap<String, EntryInfo>();
-          map.put("", new EntryInfo(null, "", true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP));
+            map = new THashMap<String, EntryInfo>();
+            map.put("", new EntryInfo(null, "", true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP));
 
-          Enumeration<? extends JarFile.JarEntry> entries = zip.entries();
-          while (entries.hasMoreElements()) {
-            JarFile.JarEntry entry = entries.nextElement();
-            if (entry == null) break;  // corrupted .jar
-            getOrCreate(entry, map, zip);
+            Enumeration<? extends JarFile.JarEntry> entries = zip.entries();
+            while (entries.hasMoreElements()) {
+              JarFile.JarEntry entry = entries.nextElement();
+              if (entry == null) break;  // corrupted .jar
+              getOrCreate(entry, map, zip);
+            }
+
+            myRelPathsToEntries = new SoftReference<Map<String, EntryInfo>>(Collections.unmodifiableMap(map));
           }
-
-          myRelPathsToEntries = new SoftReference<Map<String, EntryInfo>>(map);
-        }
-        else {
-          map = Collections.emptyMap();
+          else {
+            map = Collections.emptyMap();
+          }
         }
       }
-
-      return map;
     }
+    return map;
   }
 
   @NotNull
