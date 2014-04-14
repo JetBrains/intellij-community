@@ -16,8 +16,6 @@
 
 package com.intellij.vcs.log.graph.api;
 
-import com.intellij.vcs.log.graph.api.elements.GraphNode;
-import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import org.jetbrains.annotations.NotNull;
 
 public interface PrintedLinearGraph extends LinearGraphWithElementInfo {
