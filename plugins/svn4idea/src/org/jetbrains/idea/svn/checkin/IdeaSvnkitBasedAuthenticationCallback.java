@@ -161,6 +161,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
 
             dialog.setup(mode, realm, key, true);
             dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
+            dialog.setSaveEnabled(false);
             dialog.show();
             if (dialog.isOK()) {
               answer.set(dialog.getPassword());
