@@ -18,15 +18,12 @@ package com.intellij.diagnostic;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.log4j.spi.LoggingEvent;
-import org.jetbrains.annotations.NonNls;
 
 public class LogMessage extends AbstractMessage {
-
-  @NonNls static final String NO_MESSAGE = "No message";
-
-  private String myHeader = NO_MESSAGE;
   private final Throwable myThrowable;
+  private final String myHeader;
 
+  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
   public LogMessage(LoggingEvent aEvent) {
     super();
 
@@ -45,33 +42,42 @@ public class LogMessage extends AbstractMessage {
 
     myThrowable = aEvent.getThrowable();
 
-    if (StringUtil.isNotEmpty(aEvent.getMessage())) {
-      myHeader = aEvent.getMessage();
+    String header = null;
+
+    if (!StringUtil.isEmptyOrSpaces(aEvent.getMessage())) {
+      header = aEvent.getMessage();
     }
 
     if (myThrowable != null && StringUtil.isNotEmpty(myThrowable.getMessage())) {
-      if (!myHeader.equals(NO_MESSAGE)) {
-        if (!myHeader.endsWith(": ") && !myHeader.endsWith(":")) {
-          myHeader += ": ";
-        }
-        myHeader += myThrowable.getMessage();
+      if (header != null) {
+        if (header.endsWith(":")) header += " ";
+        else if (!header.endsWith(": ")) header += ": ";
+        header += myThrowable.getMessage();
       }
       else {
-        myHeader = myThrowable.getMessage();
+        header = myThrowable.getMessage();
       }
     }
+
+    if (header == null) {
+      header = "No message";
+    }
+
+    myHeader = header;
   }
 
+  @Override
   public Throwable getThrowable() {
     return myThrowable;
   }
 
+  @Override
   public String getMessage() {
     return myHeader;
   }
 
+  @Override
   public String getThrowableText() {
     return StringUtil.getThrowableText(getThrowable());
   }
-
 }
