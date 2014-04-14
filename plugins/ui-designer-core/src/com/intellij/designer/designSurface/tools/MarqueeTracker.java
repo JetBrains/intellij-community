@@ -149,7 +149,7 @@ public class MarqueeTracker extends InputTool {
     myFeedback.setBounds(getSelectionRectangle());
     if (ApplicationManager.getApplication().isInternal()) {
       Dimension size = myFeedback.getSize();
-      myArea.setDescription(size.width + " : " + size.height);
+      myArea.setDescription("Size [" + size.width + " : " + size.height + "]");
     }
     layer.repaint();
   }
