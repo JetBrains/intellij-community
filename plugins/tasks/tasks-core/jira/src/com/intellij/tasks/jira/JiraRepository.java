@@ -17,6 +17,7 @@ import com.intellij.tasks.impl.gson.GsonUtil;
 import com.intellij.tasks.jira.rest.JiraRestApi;
 import com.intellij.tasks.jira.soap.JiraSoapApi;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
@@ -25,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
+import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * @author Dmitry Avdeev
@@ -38,6 +41,8 @@ public class JiraRepository extends BaseRepositoryImpl {
 
   private static final boolean LEGACY_API_ONLY = Boolean.getBoolean("tasks.jira.legacy.api.only");
   private static final boolean REDISCOVER_API = Boolean.getBoolean("tasks.jira.rediscover.api");
+
+  public static final Pattern JIRA_ID_PATTERN = Pattern.compile("\\p{javaUpperCase}+-\\d+");
 
   /**
    * Default JQL query
@@ -83,7 +88,7 @@ public class JiraRepository extends BaseRepositoryImpl {
 
   public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
     ensureApiVersionDiscovered();
-    String resultQuery = query;
+    String resultQuery = StringUtil.notNullize(query);
     if (isJqlSupported()) {
       if (StringUtil.isNotEmpty(mySearchQuery) && StringUtil.isNotEmpty(query)) {
         resultQuery = String.format("summary ~ '%s' and ", query) + mySearchQuery;
@@ -95,7 +100,18 @@ public class JiraRepository extends BaseRepositoryImpl {
         resultQuery = mySearchQuery;
       }
     }
-    return ArrayUtil.toObjectArray(myApiVersion.findTasks(resultQuery, max), Task.class);
+    List<Task> tasksFound = myApiVersion.findTasks(resultQuery, max);
+    // JQL matching doesn't allow to do something like "summary ~ query or key = query"
+    // and it will return error immediately. So we have to search in two steps to provide
+    // behavior consistent with e.g. YouTrack.
+    // looks like issue ID
+    if (query != null && JIRA_ID_PATTERN.matcher(query.trim()).matches()) {
+      Task task = findTask(query);
+      if (task != null) {
+        tasksFound = ContainerUtil.concat(true, tasksFound, task);
+      }
+    }
+    return ArrayUtil.toObjectArray(tasksFound, Task.class);
   }
 
   @Nullable

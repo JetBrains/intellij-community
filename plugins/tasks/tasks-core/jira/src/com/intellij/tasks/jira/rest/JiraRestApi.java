@@ -70,7 +70,13 @@ public abstract class JiraRestApi extends JiraRemoteApi {
   @Nullable
   public final JiraRestTask findTask(@NotNull String key) throws Exception {
     GetMethod method = getSingleIssueSearchMethod(key);
-    return new JiraRestTask(parseIssue(myRepository.executeMethod(method)), myRepository);
+    try {
+      return new JiraRestTask(parseIssue(myRepository.executeMethod(method)), myRepository);
+    }
+    catch (Exception ignored) {
+      // should be logged already
+      return null;
+    }
   }
 
   @NotNull

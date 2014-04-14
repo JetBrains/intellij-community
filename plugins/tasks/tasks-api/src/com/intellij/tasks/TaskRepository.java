@@ -166,7 +166,8 @@ public abstract class TaskRepository {
 
   /**
    * @param id task ID. Don't forget to define {@link #extractId(String)}, if your server uses not <tt>PROJECT-123</tt> format for task IDs.
-   * @return found task or {@code null} otherwise
+   * @return found task or {@code null} otherwise. Basically you should return {@code null} on e.g. 404 error and throw exception with
+   * information about failure in other cases.
    * @throws Exception
    */
   @Nullable

@@ -90,6 +90,22 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
   }
 
   /**
+   * Should return null, not throw exceptions by contact.
+   */
+  public void testIssueNotExists() throws Exception {
+    assertNull(myRepository.findTask("FOO-42"));
+  }
+
+  /**
+   * If query string looks like task ID, separate request will be made to download issue.
+   */
+  public void testFindSingleIssue() throws Exception {
+    Task[] found = myRepository.getIssues("UT-6", 0, 1, true);
+    assertEquals(1, found.length);
+    assertEquals("Summary contains 'bar'", found[0].getSummary());
+  }
+
+  /**
    * Holds only for JIRA > 5.x.x
    */
   public void testExtractedErrorMessage() throws Exception {
