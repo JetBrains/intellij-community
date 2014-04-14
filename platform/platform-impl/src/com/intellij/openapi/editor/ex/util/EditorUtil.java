@@ -405,44 +405,38 @@ public final class EditorUtil {
     EditorEx editorImpl = (EditorEx)editor;
     int offset = start;
     IterationState state = new IterationState(editorImpl, start, end, false);
-    int column;
-    try {
-      int fontType = state.getMergedAttributes().getFontType();
-      column = currentColumn[0];
-      int spaceSize = getSpaceWidth(fontType, editorImpl);
-      for (; column < columnNumber && offset < end; offset++) {
-        if (offset >= state.getEndOffset()) {
-          state.advance();
-          fontType = state.getMergedAttributes().getFontType();
-        }
-
-        char c = text.charAt(offset);
-        if (c == '\t') {
-          final int newX = nextTabStop(x, editorImpl);
-          final int columns = columnsNumber(newX - x, spaceSize);
-          if (debugBuffer != null) {
-            debugBuffer.append(String.format(
-              "Processing tabulation at the offset %d. Current X: %d, new X: %d, current column: %d, new column: %d%n",
-              offset, x, newX, column, column + columns
-            ));
-          }
-          x = newX;
-          column += columns;
-        }
-        else {
-          final int width = charWidth(c, fontType, editorImpl);
-          if (debugBuffer != null) {
-            debugBuffer.append(String.format(
-              "Processing symbol '%c' at the offset %d. Current X: %d, new X: %d%n", c, offset, x, x + width
-            ));
-          }
-          x += width;
-          column++;
-        }
+    int fontType = state.getMergedAttributes().getFontType();
+    int column = currentColumn[0];
+    int spaceSize = getSpaceWidth(fontType, editorImpl);
+    for (; column < columnNumber && offset < end; offset++) {
+      if (offset >= state.getEndOffset()) {
+        state.advance();
+        fontType = state.getMergedAttributes().getFontType();
       }
-    }
-    finally {
-      state.dispose();
+
+      char c = text.charAt(offset);
+      if (c == '\t') {
+        final int newX = nextTabStop(x, editorImpl);
+        final int columns = columnsNumber(newX - x, spaceSize);
+        if (debugBuffer != null) {
+          debugBuffer.append(String.format(
+            "Processing tabulation at the offset %d. Current X: %d, new X: %d, current column: %d, new column: %d%n",
+            offset, x, newX, column, column + columns
+          ));
+        }
+        x = newX;
+        column += columns;
+      }
+      else {
+        final int width = charWidth(c, fontType, editorImpl);
+        if (debugBuffer != null) {
+          debugBuffer.append(String.format(
+            "Processing symbol '%c' at the offset %d. Current X: %d, new X: %d%n", c, offset, x, x + width
+          ));
+        }
+        x += width;
+        column++;
+      }
     }
 
     if (column == columnNumber) {

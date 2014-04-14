@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +39,7 @@ import java.util.List;
 public final class IterationState {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.IterationState");
   
-  private static final Comparator<RangeHighlighterEx> HIGHLIGHTER_COMPARATOR = new Comparator<RangeHighlighterEx>() {
+  private static final Comparator<RangeHighlighterEx> BY_LAYER_THEN_ATTRIBUTES = new Comparator<RangeHighlighterEx>() {
     @Override
     public int compare(RangeHighlighterEx o1, RangeHighlighterEx o2) {
       final int result = LayerComparator.INSTANCE.compare(o1, o2);
@@ -74,7 +75,13 @@ public final class IterationState {
       return result;
     }
   };
-  
+  private static final Comparator<RangeHighlighterEx> BY_AFFECTED_START_OFFSET = new Comparator<RangeHighlighterEx>() {
+    @Override
+    public int compare(RangeHighlighterEx r1, RangeHighlighterEx r2) {
+      return r1.getAffectedAreaStartOffset() - r2.getAffectedAreaStartOffset();
+    }
+  };
+
   private final TextAttributes myMergedAttributes = new TextAttributes();
 
   private final HighlighterIterator myHighlighterIterator;
@@ -113,9 +120,6 @@ public final class IterationState {
   private final EditorEx myEditor;
   private final Color myReadOnlyColor;
 
-  /**
-   * You MUST CALL {@link #dispose()} afterwards
-   */
   public IterationState(@NotNull EditorEx editor, int start, int end, boolean useCaretAndSelection) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     myDocument = editor.getDocument();
@@ -180,22 +184,28 @@ public final class IterationState {
     advance();
   }
 
-  public void dispose() {
-    myView.dispose();
-    myDoc.dispose();
-  }
-
   private class HighlighterSweep {
     private RangeHighlighterEx myNextHighlighter;
-    private final PushBackIterator<RangeHighlighterEx> myIterator;
-    private final DisposableIterator<RangeHighlighterEx> myDisposableIterator;
+    int i;
+    private final RangeHighlighterEx[] highlighters;
 
     private HighlighterSweep(@NotNull MarkupModelEx markupModel, int start, int end) {
-      myDisposableIterator = markupModel.overlappingIterator(start, end);
-      myIterator = new PushBackIterator<RangeHighlighterEx>(myDisposableIterator);
+      // we have to get all highlighters in advance and sort them by affected offsets
+      // since these can be different from the real offsets the highlighters are sorted by in the tree.  (See LINES_IN_RANGE perverts)
+      final List<RangeHighlighterEx> list = new ArrayList<RangeHighlighterEx>();
+      markupModel.processRangeHighlightersOverlappingWith(start, end, new Processor<RangeHighlighterEx>() {
+        @Override
+        public boolean process(RangeHighlighterEx highlighter) {
+          list.add(highlighter);
+          return true;
+        }
+      });
+      highlighters = list.isEmpty() ? RangeHighlighterEx.EMPTY_ARRAY : list.toArray(new RangeHighlighterEx[list.size()]);
+      Arrays.sort(highlighters, BY_AFFECTED_START_OFFSET);
+
       int skipped = 0;
-      while (myIterator.hasNext()) {
-        RangeHighlighterEx highlighter = myIterator.next();
+      while (i < highlighters.length) {
+        RangeHighlighterEx highlighter = highlighters[i++];
         if (!skipHighlighter(highlighter)) {
           myNextHighlighter = highlighter;
           break;
@@ -218,8 +228,8 @@ public final class IterationState {
         myNextHighlighter = null;
       }
 
-      while (myIterator.hasNext()) {
-        RangeHighlighterEx highlighter = myIterator.next();
+      while (i < highlighters.length) {
+        RangeHighlighterEx highlighter = highlighters[i++];
         if (!skipHighlighter(highlighter)) {
           if (highlighter.getAffectedAreaStartOffset() > myStartOffset) {
             myNextHighlighter = highlighter;
@@ -237,10 +247,6 @@ public final class IterationState {
         return myNextHighlighter.getAffectedAreaStartOffset();
       }
       return Integer.MAX_VALUE;
-    }
-
-    public void dispose() {
-      myDisposableIterator.dispose();
     }
   }
 
@@ -331,9 +337,7 @@ public final class IterationState {
     if (myStartOffset < mySelectionStarts[myCurrentSelectionIndex]) {
       return mySelectionStarts[myCurrentSelectionIndex];
     }
-    else {
-      return mySelectionEnds[myCurrentSelectionIndex];
-    }
+    return mySelectionEnds[myCurrentSelectionIndex];
   }
 
   private boolean isInSelection() {
@@ -414,7 +418,7 @@ public final class IterationState {
 
     final int size = myCurrentHighlighters.size();
     if (size > 1) {
-      ContainerUtil.quickSort(myCurrentHighlighters, HIGHLIGHTER_COMPARATOR);
+      ContainerUtil.quickSort(myCurrentHighlighters, BY_LAYER_THEN_ATTRIBUTES);
     }
 
     //noinspection ForLoopReplaceableByForEach
@@ -632,46 +636,6 @@ public final class IterationState {
       int o1Length = o1.getAffectedAreaEndOffset() - o1.getAffectedAreaStartOffset();
       int o2Length = o2.getAffectedAreaEndOffset() - o2.getAffectedAreaStartOffset();
       return o1Length - o2Length;
-    }
-  }
-  
-  private static class PushBackIterator<T> implements Iterator<T> {
-    
-    private final Iterator<T> myDelegate;
-    private T myPushedBack;
-
-    PushBackIterator(Iterator<T> delegate) {
-      myDelegate = delegate;
-    }
-
-    @Override
-    public boolean hasNext() {
-      return myPushedBack != null || myDelegate.hasNext();
-    }
-
-    @Override
-    public T next() {
-      if (myPushedBack != null) {
-        T result = myPushedBack;
-        myPushedBack = null;
-        return result;
-      }
-      return myDelegate.next();
-    }
-
-    @Override
-    public void remove() {
-      if (myPushedBack == null) {
-        myDelegate.remove();
-      }
-      else {
-        myPushedBack = null;
-      }
-    }
-
-    public void pushBack(T element) {
-      assert myPushedBack == null : "Pushed already: " + myPushedBack;
-      myPushedBack = element;
     }
   }
 }

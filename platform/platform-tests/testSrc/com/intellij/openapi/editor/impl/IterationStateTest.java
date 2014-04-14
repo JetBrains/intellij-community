@@ -25,6 +25,7 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.awt.*;
@@ -34,7 +35,6 @@ import java.util.HashSet;
 import java.util.List;
 
 public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase {
-
   private Color DEFAULT_BACKGROUND;
   private Color CARET_ROW_BACKGROUND;
   private Color SELECTION_BACKGROUND;
@@ -138,33 +138,45 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
                     new Segment(6, 11, DEFAULT_BACKGROUND));
   }
 
-  private void verifySplitting(boolean checkForegroundColor, Segment... expectedSegments) {
+  public void testLinesInRange() {
+    init("     line1\n" +
+         "     line2");
+
+    Color breakpointColor = Color.RED;
+    myFixture.getEditor().getMarkupModel().addLineHighlighter(0,
+                                                              HighlighterLayer.SYNTAX + 1,
+                                                              new TextAttributes(null, breakpointColor, null, null, 0));
+
+    verifySplitting(false,
+                    new Segment(0, 5, breakpointColor),
+                    new Segment(5, 10, breakpointColor),
+                    new Segment(10, 11, breakpointColor),
+                    new Segment(11, 16, DEFAULT_BACKGROUND),
+                    new Segment(16, 21, DEFAULT_BACKGROUND));
+  }
+
+  private void verifySplitting(boolean checkForegroundColor, @NotNull Segment... expectedSegments) {
     EditorEx editor = (EditorEx)myFixture.getEditor();
     IterationState iterationState = new IterationState(editor, 0, editor.getDocument().getTextLength(), true);
-    try {
-      List<Segment> actualSegments = new ArrayList<Segment>();
-      do {
-        Segment segment = new Segment(iterationState.getStartOffset(),
-                                      iterationState.getEndOffset(),
-                                      checkForegroundColor ? iterationState.getMergedAttributes().getForegroundColor()
-                                                           : iterationState.getMergedAttributes().getBackgroundColor());
-        readPastLineState(iterationState, segment);
-        actualSegments.add(segment);
-        iterationState.advance();
-      }
-      while (!iterationState.atEnd());
-
-      if (iterationState.hasPastFileEndBackgroundSegments()) {
-        Segment segment = new Segment(iterationState.getEndOffset(), iterationState.getEndOffset(), null);
-        readPastLineState(iterationState, segment);
-        actualSegments.add(segment);
-      }
-
-      Assert.assertArrayEquals(expectedSegments, actualSegments.toArray());
+    List<Segment> actualSegments = new ArrayList<Segment>();
+    do {
+      Segment segment = new Segment(iterationState.getStartOffset(),
+                                    iterationState.getEndOffset(),
+                                    checkForegroundColor ? iterationState.getMergedAttributes().getForegroundColor()
+                                                         : iterationState.getMergedAttributes().getBackgroundColor());
+      readPastLineState(iterationState, segment);
+      actualSegments.add(segment);
+      iterationState.advance();
     }
-    finally {
-      iterationState.dispose();
+    while (!iterationState.atEnd());
+
+    if (iterationState.hasPastFileEndBackgroundSegments()) {
+      Segment segment = new Segment(iterationState.getEndOffset(), iterationState.getEndOffset(), null);
+      readPastLineState(iterationState, segment);
+      actualSegments.add(segment);
     }
+
+    Assert.assertArrayEquals(expectedSegments, actualSegments.toArray());
   }
 
   private static void readPastLineState(IterationState iterationState, Segment segment) {

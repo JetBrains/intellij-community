@@ -265,55 +265,50 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
     myContext.text = document.getCharsSequence();
     myContext.tokenStartOffset = start;
     IterationState iterationState = new IterationState(myEditor, start, document.getTextLength(), false);
-    try {
-      TextAttributes attributes = iterationState.getMergedAttributes();
-      myContext.fontType = attributes.getFontType();
-      myContext.rangeEndOffset = event.getNewEndOffset();
+    TextAttributes attributes = iterationState.getMergedAttributes();
+    myContext.fontType = attributes.getFontType();
+    myContext.rangeEndOffset = event.getNewEndOffset();
 
-      EditorPosition position = new EditorPosition(logical, start, myEditor, myRepresentationHelper);
-      position.x = point.x;
-      int spaceWidth = EditorUtil.getSpaceWidth(myContext.fontType, myEditor);
+    EditorPosition position = new EditorPosition(logical, start, myEditor, myRepresentationHelper);
+    position.x = point.x;
+    int spaceWidth = EditorUtil.getSpaceWidth(myContext.fontType, myEditor);
 
-      myContext.logicalLineData.update(logical.line, spaceWidth, myEditor);
+    myContext.logicalLineData.update(logical.line, spaceWidth, myEditor);
 
-      myContext.currentPosition = position;
-      myContext.lineStartPosition = position.clone();
-      myContext.fontType2spaceWidth.put(myContext.fontType, spaceWidth);
-      myContext.softWrapStartOffset = position.offset;
+    myContext.currentPosition = position;
+    myContext.lineStartPosition = position.clone();
+    myContext.fontType2spaceWidth.put(myContext.fontType, spaceWidth);
+    myContext.softWrapStartOffset = position.offset;
 
-      myContext.contentComponent = myEditor.getContentComponent();
-      myContext.reservedWidthInPixels = myPainter.getMinDrawingWidth(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
+    myContext.contentComponent = myEditor.getContentComponent();
+    myContext.reservedWidthInPixels = myPainter.getMinDrawingWidth(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
 
-      // Perform soft wraps calculation.
-      while (!iterationState.atEnd() && myContext.currentPosition.offset <= event.getNewEndOffset()) {
-        FoldRegion currentFold = iterationState.getCurrentFold();
-        if (currentFold == null) {
-          myContext.tokenEndOffset = iterationState.getEndOffset();
-          processNonFoldToken();
-        }
-        else {
-          boolean continueProcessing = processCollapsedFoldRegion(currentFold);
-          if (!continueProcessing) {
-            return false;
-          }
-
-          // 'myOffset2widthInPixels' contains information necessary to processing soft wraps that lay before the current offset.
-          // We do know that soft wraps are not allowed to go backward after processed collapsed fold region, hence, we drop
-          // information about processed symbols width.
-          myOffset2widthInPixels.clear();
-        }
-
-        iterationState.advance();
-        attributes = iterationState.getMergedAttributes();
-        myContext.fontType = attributes.getFontType();
-        myContext.tokenStartOffset = iterationState.getStartOffset();
-        myOffset2fontType.fill(myContext.tokenStartOffset, iterationState.getEndOffset(), myContext.fontType);
+    // Perform soft wraps calculation.
+    while (!iterationState.atEnd() && myContext.currentPosition.offset <= event.getNewEndOffset()) {
+      FoldRegion currentFold = iterationState.getCurrentFold();
+      if (currentFold == null) {
+        myContext.tokenEndOffset = iterationState.getEndOffset();
+        processNonFoldToken();
       }
-      notifyListenersOnVisualLineEnd();
+      else {
+        boolean continueProcessing = processCollapsedFoldRegion(currentFold);
+        if (!continueProcessing) {
+          return false;
+        }
+
+        // 'myOffset2widthInPixels' contains information necessary to processing soft wraps that lay before the current offset.
+        // We do know that soft wraps are not allowed to go backward after processed collapsed fold region, hence, we drop
+        // information about processed symbols width.
+        myOffset2widthInPixels.clear();
+      }
+
+      iterationState.advance();
+      attributes = iterationState.getMergedAttributes();
+      myContext.fontType = attributes.getFontType();
+      myContext.tokenStartOffset = iterationState.getStartOffset();
+      myOffset2fontType.fill(myContext.tokenStartOffset, iterationState.getEndOffset(), myContext.fontType);
     }
-    finally {
-      iterationState.dispose();
-    }
+    notifyListenersOnVisualLineEnd();
     return true;
   }
 

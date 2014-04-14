@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.DisposableIterator;
 import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -559,13 +559,15 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
   }
 
   @NotNull
-  DisposableIterator<T> overlappingIterator(final int startOffset, final int endOffset) {
-    ProperTextRange.assertProperRange(startOffset, endOffset, "");
+  DisposableIterator<T> overlappingIterator(@NotNull final TextRangeInterval rangeInterval) {
+    TextRange.assertProperRange(rangeInterval);
 
     l.readLock().lock();
 
     try {
-      final IntervalNode<T> firstOverlap = findMinOverlappingWith(getRoot(), new TextRangeInterval(startOffset, endOffset), modCount, 0);
+      final int startOffset = rangeInterval.getStartOffset();
+      final int endOffset = rangeInterval.getEndOffset();
+      final IntervalNode<T> firstOverlap = findMinOverlappingWith(getRoot(), rangeInterval, modCount, 0);
       if (firstOverlap == null) {
         l.readLock().unlock();
         return DisposableIterator.EMPTY;
@@ -599,7 +601,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
             if (currentNode == null) {
               return false;
             }
-            if (overlaps(currentNode, startOffset, endOffset, deltaUpToRootExclusive)) {
+            if (overlaps(currentNode, rangeInterval, deltaUpToRootExclusive)) {
               assert currentNode.intervalStart() + deltaUpToRootExclusive + currentNode.delta >= firstOverlapStart;
               indexInCurrentList = 0;
               while (indexInCurrentList != currentNode.intervals.size()) {
@@ -680,12 +682,12 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     }
   }
 
-  private boolean overlaps(IntervalNode<T> root, int startOffset, int endOffset, int deltaUpToRootExclusive) {
+  private boolean overlaps(IntervalNode<T> root, @NotNull TextRangeInterval rangeInterval, int deltaUpToRootExclusive) {
     if (root == null) return false;
     int delta = root.delta + deltaUpToRootExclusive;
     int start = root.intervalStart() + delta;
     int end = root.intervalEnd() + delta;
-    return Math.max(start, startOffset) <= Math.min(end, endOffset);
+    return rangeInterval.intersects(start, end);
   }
 
   protected IntervalNode<T> findOrInsert(@NotNull IntervalNode<T> node) {

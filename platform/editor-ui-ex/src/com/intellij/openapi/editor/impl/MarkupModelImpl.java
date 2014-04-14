@@ -244,7 +244,8 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   @Override
   public boolean processRangeHighlightersOverlappingWith(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor) {
-    return myHighlighterTree.processOverlappingWith(start, end, processor);
+    TextRangeInterval rangeInterval = roundToLineBoundaries(start, end);
+    return myHighlighterTree.processOverlappingWith(rangeInterval.getStartOffset(), rangeInterval.getEndOffset(), processor);
   }
 
   @Override
@@ -255,11 +256,20 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   @Override
   @NotNull
   public DisposableIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
-    return myHighlighterTree.overlappingIterator(startOffset, endOffset);
+    return myHighlighterTree.overlappingIterator(roundToLineBoundaries(startOffset, endOffset));
+  }
+
+  @NotNull
+  private TextRangeInterval roundToLineBoundaries(int startOffset, int endOffset) {
+    Document document = getDocument();
+    int lineStartOffset = startOffset <= 0 ? 0 : document.getLineStartOffset(document.getLineNumber(startOffset));
+    int lineEndOffset = endOffset <= 0 ? 0 : endOffset >= document.getTextLength() ? document.getTextLength() : document.getLineEndOffset(document.getLineNumber(endOffset));
+    return new TextRangeInterval(lineStartOffset, lineEndOffset);
   }
 
   @Override
   public boolean sweep(int start, int end, @NotNull SweepProcessor<RangeHighlighterEx> sweepProcessor) {
-    return myHighlighterTree.sweep(start, end, sweepProcessor);
+    TextRangeInterval rangeInterval = roundToLineBoundaries(start, end);
+    return myHighlighterTree.sweep(rangeInterval.getStartOffset(), rangeInterval.getEndOffset(), sweepProcessor);
   }
 }
