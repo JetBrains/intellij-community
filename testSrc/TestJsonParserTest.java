@@ -8,28 +8,29 @@ import java.io.FileReader;
 import java.io.IOException;
 
 public class TestJsonParserTest extends TestCase {
-    public void testFile() throws IOException {
-        final String fileName = "testData/SymPy.ipynb";
-        final BufferedReader br = new BufferedReader(new FileReader(fileName));
-        try {
-            final String fileText = getFileText(br);
-            final IpnbFile ipnbFile = IpnbParser.parseIpnbFile(fileText);
-            assertNotNull(ipnbFile);
-            assertEquals(31, ipnbFile.getCells().size());
-        } finally {
-            br.close();
-        }
+  public void testFile() throws IOException {
+    final String fileName = "testData/SymPy.ipynb";
+    final BufferedReader br = new BufferedReader(new FileReader(fileName));
+    try {
+      final String fileText = getFileText(br);
+      final IpnbFile ipnbFile = IpnbParser.parseIpnbFile(fileText);
+      assertNotNull(ipnbFile);
+      assertEquals(31, ipnbFile.getCells().size());
     }
-
-    private String getFileText(@NotNull final BufferedReader br) throws IOException {
-        final StringBuilder sb = new StringBuilder();
-        String line = br.readLine();
-
-        while (line != null) {
-            sb.append(line);
-            sb.append(System.lineSeparator());
-            line = br.readLine();
-        }
-        return sb.toString();
+    finally {
+      br.close();
     }
+  }
+
+  private String getFileText(@NotNull final BufferedReader br) throws IOException {
+    final StringBuilder sb = new StringBuilder();
+    String line = br.readLine();
+
+    while (line != null) {
+      sb.append(line);
+      sb.append(System.lineSeparator());
+      line = br.readLine();
+    }
+    return sb.toString();
+  }
 }
