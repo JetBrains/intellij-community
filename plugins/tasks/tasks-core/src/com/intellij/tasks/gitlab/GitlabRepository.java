@@ -13,6 +13,7 @@ import com.intellij.tasks.impl.httpclient.NewBaseRepositoryImpl;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.apache.http.*;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
@@ -245,7 +246,8 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   }
 
   @TestOnly
-  public void setCachedProjects(@NotNull List<GitlabProject> projects) {
+  @Transient
+  public void setProjects(@NotNull List<GitlabProject> projects) {
     myProjects = projects;
   }
 }

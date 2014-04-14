@@ -39,7 +39,7 @@ public class GitlabIntegrationTest extends TaskManagerTestCase {
     GitlabIssue issue = GSON.fromJson(issueJson, GitlabIssue.class);
     GitlabProject project = GSON.fromJson(projectJson, GitlabProject.class);
 
-    myRepository.setCachedProjects(Collections.singletonList(project));
+    myRepository.setProjects(Collections.singletonList(project));
     myRepository.setShouldFormatCommitMessage(true);
     myRepository.setCommitMessageFormat("{project} {number} {id} {summary}");
 
@@ -47,7 +47,7 @@ public class GitlabIntegrationTest extends TaskManagerTestCase {
     String changeListComment = TaskUtil.getChangeListComment(localTask);
     assertEquals("project-1 2 1 Sample title", changeListComment);
 
-    myRepository.setCachedProjects(Collections.<GitlabProject>emptyList());
+    myRepository.setProjects(Collections.<GitlabProject>emptyList());
     localTask = new LocalTaskImpl(new GitlabTask(myRepository, issue));
     changeListComment = TaskUtil.getChangeListComment(localTask);
     // Project is unknown, so "" is substituted instead
