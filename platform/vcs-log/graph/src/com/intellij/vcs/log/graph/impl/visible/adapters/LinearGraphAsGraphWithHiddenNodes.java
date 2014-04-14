@@ -20,27 +20,41 @@ import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.LinearGraphWithHiddenNodes;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
+import com.intellij.vcs.log.graph.utils.Flags;
+import com.intellij.vcs.log.graph.utils.IdFlags;
 import com.intellij.vcs.log.graph.utils.ListenerController;
 import com.intellij.vcs.log.graph.utils.impl.SetListenerController;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+/**
+ * Methods getUpNodes or getDownNodes may return invisible nodes.
+ * It is done for performance,
+ */
+
 public class LinearGraphAsGraphWithHiddenNodes implements LinearGraphWithHiddenNodes {
 
   @NotNull
-  private final LinearGraph delegateGraph;
+  private final LinearGraph myDelegateGraph;
+  @NotNull
+  private final Flags myVisibleNodes;
 
   @NotNull
   private final SetListenerController<UpdateListener> myListenerController = new SetListenerController<UpdateListener>();
 
   public LinearGraphAsGraphWithHiddenNodes(@NotNull LinearGraph delegateGraph) {
-    this.delegateGraph = delegateGraph;
+    this(delegateGraph, new IdFlags(delegateGraph.nodesCount(), true));
+  }
+
+  public LinearGraphAsGraphWithHiddenNodes(@NotNull LinearGraph delegateGraph, @NotNull Flags visibleNodes) {
+    myDelegateGraph = delegateGraph;
+    myVisibleNodes = visibleNodes;
   }
 
   @Override
   public boolean nodeIsVisible(int nodeIndex) {
-    return true;
+    return myVisibleNodes.get(nodeIndex);
   }
 
   @NotNull
@@ -63,18 +77,18 @@ public class LinearGraphAsGraphWithHiddenNodes implements LinearGraphWithHiddenN
 
   @Override
   public int nodesCount() {
-    return delegateGraph.nodesCount();
+    return myDelegateGraph.nodesCount();
   }
 
   @NotNull
   @Override
   public List<Integer> getUpNodes(int nodeIndex) {
-    return delegateGraph.getUpNodes(nodeIndex);
+    return myDelegateGraph.getUpNodes(nodeIndex);
   }
 
   @NotNull
   @Override
   public List<Integer> getDownNodes(int nodeIndex) {
-    return delegateGraph.getDownNodes(nodeIndex);
+    return myDelegateGraph.getDownNodes(nodeIndex);
   }
 }
