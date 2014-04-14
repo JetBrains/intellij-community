@@ -48,10 +48,12 @@ public class IpnbParser {
   private static class IpnbWorksheet {
     IpnbCellRaw[] cells;
   }
-
   private static class IpnbCellRaw {
     String cell_type;
     String[] source;
+    String[] input;
+    String language;
+    CellOutput[] outputs;
 
     public IpnbCell createCell() {
       final IpnbCell cell;
@@ -72,5 +74,9 @@ public class IpnbParser {
       }
       return cell;
     }
+  }
+  private static class CellOutput {
+    String output_type;
+    String[] text;
   }
 }
