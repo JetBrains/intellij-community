@@ -1,13 +1,10 @@
 package com.intellij.tasks.redmine.model;
 
-import com.google.gson.annotations.SerializedName;
 import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Date;
 
 /**
  * @author Mikhail Golubev
@@ -18,17 +15,8 @@ public class RedmineProject {
   private int id;
   @Mandatory
   private String name;
-  @Mandatory
+  // Missing in Project information sent as part of issue
   private String identifier;
-  @Mandatory
-  private String description;
-
-  @Mandatory
-  @SerializedName("created_on")
-  private Date created;
-  @Mandatory
-  @SerializedName("updated_on")
-  private Date updated;
 
   @Override
   public final boolean equals(Object o) {
@@ -73,21 +61,6 @@ public class RedmineProject {
   @Attribute("identifier")
   public void setIdentifier(@NotNull String identifier) {
     this.identifier = identifier;
-  }
-
-  @NotNull
-  public String getDescription() {
-    return description;
-  }
-
-  @NotNull
-  public Date getCreated() {
-    return created;
-  }
-
-  @NotNull
-  public Date getUpdated() {
-    return updated;
   }
 
   @Override

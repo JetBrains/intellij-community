@@ -10,10 +10,10 @@ import com.intellij.tasks.impl.gson.GsonUtil;
 import com.intellij.tasks.impl.httpclient.NewBaseRepositoryImpl;
 import com.intellij.tasks.redmine.model.RedmineIssue;
 import com.intellij.tasks.redmine.model.RedmineProject;
-import com.intellij.tasks.redmine.model.RedmineResponseWrapper;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
@@ -21,8 +21,11 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import static com.intellij.tasks.impl.httpclient.ResponseUtil.GsonSingleObjectDeserializer;
 import static com.intellij.tasks.redmine.model.RedmineResponseWrapper.*;
@@ -35,6 +38,8 @@ import static com.intellij.tasks.redmine.model.RedmineResponseWrapper.*;
 public class RedmineRepository extends NewBaseRepositoryImpl {
   private static final Logger LOG = Logger.getInstance(RedmineRepository.class);
   private static final Gson GSON = GsonUtil.createDefaultBuilder().create();
+
+  private static final Pattern ID_PATTERN = Pattern.compile("\\d+");
 
   public static final RedmineProject UNSPECIFIED_PROJECT = new RedmineProject() {
     @NotNull
@@ -51,6 +56,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
 
   private String myAPIKey = "";
   private RedmineProject myCurrentProject;
+  private List<RedmineProject> myProjects = null;
 
   /**
    * Serialization constructor
@@ -116,12 +122,13 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     return ContainerUtil.map2Array(issues, RedmineTask.class, new Function<RedmineIssue, RedmineTask>() {
       @Override
       public RedmineTask fun(RedmineIssue issue) {
-        return new RedmineTask(issue, RedmineRepository.this);
+        return new RedmineTask(RedmineRepository.this, issue);
       }
     });
   }
 
   public List<RedmineIssue> fetchIssues(String query, int offset, int limit, boolean withClosed) throws Exception {
+    ensureProjectsDiscovered();
     URIBuilder builder = new URIBuilder(getRestApiUrl("issues.json"))
       .addParameter("offset", String.valueOf(offset))
       .addParameter("limit", String.valueOf(limit))
@@ -151,18 +158,21 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     }
     HttpClient client = getHttpClient();
     HttpGet method = new HttpGet(builder.toString());
-    return client.execute(method, new GsonSingleObjectDeserializer<ProjectsWrapper>(GSON, RedmineResponseWrapper.ProjectsWrapper.class)).getProjects();
+    ProjectsWrapper wrapper = client.execute(method, new GsonSingleObjectDeserializer<ProjectsWrapper>(GSON, ProjectsWrapper.class));
+    myProjects = wrapper.getProjects();
+    return Collections.unmodifiableList(myProjects);
   }
 
   @Nullable
   @Override
   public Task findTask(@NotNull String id) throws Exception {
+    ensureProjectsDiscovered();
     HttpGet method = new HttpGet(getRestApiUrl("issues", id + ".json"));
     IssueWrapper wrapper = getHttpClient().execute(method, new GsonSingleObjectDeserializer<IssueWrapper>(GSON, IssueWrapper.class));
     if (wrapper == null) {
       return null;
     }
-    return new RedmineTask(wrapper.getIssue(), this);
+    return new RedmineTask(this, wrapper.getIssue());
   }
 
   public String getAPIKey() {
@@ -198,7 +208,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
   @Nullable
   @Override
   public String extractId(@NotNull String taskName) {
-    return taskName;
+    return ID_PATTERN.matcher(taskName).matches()? taskName : null;
   }
 
   @Override
@@ -213,5 +223,28 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
 
   public void setCurrentProject(@Nullable RedmineProject project) {
     myCurrentProject = project != null && project.getId() == -1 ? UNSPECIFIED_PROJECT : project;
+  }
+
+  @NotNull
+  public List<RedmineProject> getProjects() {
+    try {
+      ensureProjectsDiscovered();
+    }
+    catch (Exception ignored) {
+      return Collections.emptyList();
+    }
+    return Collections.unmodifiableList(myProjects);
+  }
+
+  private void ensureProjectsDiscovered() throws Exception {
+    if (myProjects == null) {
+      fetchProjects();
+    }
+  }
+
+  @TestOnly
+  @Transient
+  public void setProjects(@NotNull List<RedmineProject> projects) {
+    myProjects = projects;
   }
 }

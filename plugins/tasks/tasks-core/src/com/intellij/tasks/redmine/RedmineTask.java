@@ -5,6 +5,7 @@ import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskType;
 import com.intellij.tasks.redmine.model.RedmineIssue;
+import com.intellij.tasks.redmine.model.RedmineProject;
 import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,10 +19,24 @@ import java.util.Date;
 public class RedmineTask extends Task {
   private final RedmineIssue myIssue;
   private final RedmineRepository myRepository;
+  /**
+   * Only human-readable project name is sent with issue. Because project's identifier is more suited
+   * for commit messages, it has to be extracted from cached projects. The same approach is used in
+   * {@link com.intellij.tasks.gitlab.GitlabRepository}.
+   */
+  private final RedmineProject myProject;
 
-  public RedmineTask(@NotNull RedmineIssue issue, @NotNull RedmineRepository repository) {
+  public RedmineTask(@NotNull RedmineRepository repository, @NotNull RedmineIssue issue) {
     myIssue = issue;
     myRepository = repository;
+    RedmineProject project = null;
+    for (RedmineProject p : repository.getProjects()) {
+      if (issue.getProject() != null && p.getId() == issue.getProject().getId()) {
+        project = p;
+        break;
+      }
+    }
+    myProject = project;
   }
 
   @NotNull
@@ -88,6 +103,18 @@ public class RedmineTask extends Task {
   @Override
   public String getIssueUrl() {
     return myRepository.getRestApiUrl("issues", getId());
+  }
+
+  @NotNull
+  @Override
+  public String getNumber() {
+    return getId();
+  }
+
+  @Nullable
+  @Override
+  public String getProject() {
+    return myProject == null ? null : myProject.getIdentifier();
   }
 
   @Nullable
