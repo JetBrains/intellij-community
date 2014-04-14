@@ -30,8 +30,6 @@ public class IpnbFileType implements FileType {
 
   @NonNls
   public static final String DEFAULT_EXTENSION = "ipnb";
-  @NonNls
-  public static final String DOT_DEFAULT_EXTENSION = "." + DEFAULT_EXTENSION;
 
   @NotNull
   public String getName() {
@@ -50,7 +48,7 @@ public class IpnbFileType implements FileType {
 
   public Icon getIcon() {
     return PlatformIcons.UI_FORM_ICON;
-  }
+  } //TODO
 
   public boolean isBinary() {
     return false;
