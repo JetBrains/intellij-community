@@ -1,7 +1,9 @@
 package org.jetbrains.debugger.values;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
- * Don't forget to update NashornDebuggerSupport.ValueType and debuggerSupport.js respectively also
+ * Don't forget to update NashornDebuggerSupport.ValueType and DebuggerSupport.ts respectively also
  */
 public enum ValueType {
   OBJECT,
@@ -22,6 +24,13 @@ public enum ValueType {
    * null type. This is a bogus type that doesn't exist in JavaScript.
    */
   NULL;
+
+  private static final ValueType[] VALUE_TYPES = ValueType.values();
+
+  @NotNull
+  public static ValueType fromIndex(int index) {
+    return VALUE_TYPES[index];
+  }
 
   /**
    * Returns whether {@code type} corresponds to a JsObject. Note that while 'null' is an object
