@@ -154,7 +154,6 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
       @Override
       public Pair<String, Boolean> get() {
         final Ref<String> answer = new Ref<String>();
-        final Ref<Boolean> save = new Ref<Boolean>();
 
         Runnable command = new Runnable() {
           public void run() {
@@ -165,7 +164,6 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
             dialog.show();
             if (dialog.isOK()) {
               answer.set(dialog.getPassword());
-              save.set(dialog.isSaveAllowed());
             }
           }
         };
@@ -174,7 +172,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
         // the thread that started progress
         WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(command, ModalityState.any());
 
-        return new Pair<String, Boolean>(answer.get(), !save.isNull() && save.get());
+        return new Pair<String, Boolean>(answer.get(), true);
       }
     });
   }
