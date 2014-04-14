@@ -182,8 +182,10 @@ public abstract class FocusCommand extends ActiveRunnable implements Expirable {
           // This change seems reasonable to me. But as far as some implementations
           // can ignore the "forced" parameter we can get bad focus behaviour.
           // So let's start from mac.
-          if (!myToFocus.requestFocusInWindow() && (isForced() && SystemInfo.isMac)) {
-            myToFocus.requestFocus();
+          if (!(myToFocus.requestFocusInWindow())) {
+            if (!SystemInfo.isMac || isForced() ) {
+              myToFocus.requestFocus();
+            }
           }
         }
       }
