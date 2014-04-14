@@ -2001,9 +2001,13 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     final GroovyConfigUtils configUtils = GroovyConfigUtils.getInstance();
     if (typeDefinition.isAnonymous()) {
       if (!configUtils.isVersionAtLeast(typeDefinition, GroovyConfigUtils.GROOVY1_7)) {
-        holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), GroovyBundle.message("anonymous.classes.are.not.supported",
-                                                                                                    configUtils
-                                                                                                      .getSDKVersion(typeDefinition)));
+        holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(),
+                                     GroovyBundle.message("anonymous.classes.are.not.supported", configUtils.getSDKVersion(typeDefinition)));
+      }
+
+      PsiElement superClass = ((PsiAnonymousClass)typeDefinition).getBaseClassReference().resolve();
+      if (superClass instanceof GrTypeDefinition && ((GrTypeDefinition)superClass).isTrait()) {
+        holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), GroovyBundle.message("anonymous.classes.cannot.be.created.from.traits"));
       }
     }
     else if (typeDefinition.getContainingClass() != null && !(typeDefinition instanceof GrEnumTypeDefinition)) {

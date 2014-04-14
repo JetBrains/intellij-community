@@ -1870,4 +1870,12 @@ trait C {
 }
 ''')
   }
+
+  void testTraitAsAnonymous() {
+    testHighlighting('''
+trait T {}
+
+new <error descr="Anonymous classes cannot be created from traits">T</error>(){}
+''')
+  }
 }
