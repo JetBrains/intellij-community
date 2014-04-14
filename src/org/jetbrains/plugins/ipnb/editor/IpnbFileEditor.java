@@ -1,8 +1,10 @@
 package org.jetbrains.plugins.ipnb.editor;
 
+import com.google.common.collect.Lists;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl;
 import com.intellij.openapi.project.Project;
@@ -13,6 +15,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ipnb.Data;
 
 import javax.swing.*;
 import java.awt.*;
@@ -41,15 +44,12 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
 
     myEditor = createEditor(project, vFile);
 
-    myEditorPanel = createIpnbEditorPanel(myName);
+    myEditorPanel = createIpnbEditorPanel(myProject);
   }
 
   @NotNull
-  private JPanel createIpnbEditorPanel(String name) {
-    JPanel panel = new JPanel();
-    panel.setLayout(new FlowLayout());
-    panel.add(new JLabel("Hello IPython " + name));
-    return panel;
+  private JPanel createIpnbEditorPanel(Project project) {
+    return new IpnbEditorPanel(project, null, Lists.newArrayList(Data.MARKDOWN1, Data.CODE1));
   }
 
   @NotNull

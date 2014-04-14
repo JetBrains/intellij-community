@@ -46,7 +46,7 @@ public class IpnbEditorProvider implements FileEditorProvider, DumbAware {
   @NotNull
   @Override
   public String getEditorTypeId() {
-    return "embedded-terminal-editor";
+    return "ipnb-editor";
   }
 
   @NotNull

@@ -5,6 +5,7 @@
     <vendor>JetBrains</vendor>
     <description>IPython Notebook support</description>
     <depends>com.intellij.modules.platform</depends>
+    <depends>Pythonid</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <fileEditorProvider implementation="org.jetbrains.plugins.ipnb.editor.IpnbEditorProvider"/>
