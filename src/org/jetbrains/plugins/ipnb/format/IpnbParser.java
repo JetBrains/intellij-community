@@ -35,22 +35,7 @@ public class IpnbParser {
     for (IpnbWorksheet worksheet : worksheets) {
       final IpnbCellRaw[] rawCells = worksheet.cells;
       for (IpnbCellRaw rawCell : rawCells) {
-        if (rawCell.cell_type.equals("markdown")) {
-          final IpnbCell cell = new MarkdownCell();
-          cells.add(cell);
-        }
-        else if (rawCell.cell_type.equals("code")) {
-          final IpnbCell cell = new CodeCell();
-          cells.add(cell);
-        }
-        else if (rawCell.cell_type.equals("raw")) {
-          final IpnbCell cell = new RawCell();
-          cells.add(cell);
-        }
-        else if (rawCell.cell_type.equals("heading")) {
-          final IpnbCell cell = new HeadingCell();
-          cells.add(cell);
-        }
+        cells.add(rawCell.createCell());
       }
     }
     return new IpnbFile(cells);
@@ -67,6 +52,25 @@ public class IpnbParser {
   private static class IpnbCellRaw {
     String cell_type;
     String[] source;
-    int level;
+
+    public IpnbCell createCell() {
+      final IpnbCell cell;
+      if (cell_type.equals("markdown")) {
+        cell = new MarkdownCell();
+      }
+      else if (cell_type.equals("code")) {
+        cell = new CodeCell();
+      }
+      else if (cell_type.equals("raw")) {
+        cell = new RawCell();
+      }
+      else if (cell_type.equals("heading")) {
+        cell = new HeadingCell();
+      }
+      else {
+        cell = null;
+      }
+      return cell;
+    }
   }
 }
