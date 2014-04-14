@@ -235,8 +235,12 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
     private Pair<Integer, Integer> getLayoutIndexes(GraphElement graphElement) {
       int upLayoutIndex, downLayoutIndex;
       if (graphElement instanceof GraphEdge) {
-        upLayoutIndex = getLayoutIndex(((GraphEdge)graphElement).getUpNodeIndex());
-        downLayoutIndex = getLayoutIndex(((GraphEdge)graphElement).getDownNodeIndex());
+        GraphEdge graphEdge = (GraphEdge)graphElement;
+        upLayoutIndex = getLayoutIndex(graphEdge.getUpNodeIndex());
+        if (graphEdge.getDownNodeIndex() == LinearGraph.NOT_LOAD_COMMIT)
+          downLayoutIndex = upLayoutIndex;
+        else
+          downLayoutIndex = getLayoutIndex(graphEdge.getDownNodeIndex());
       } else {
         assert graphElement instanceof GraphNode;
         upLayoutIndex = getLayoutIndex(((GraphNode)graphElement).getNodeIndex());

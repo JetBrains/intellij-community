@@ -20,6 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.GraphColorManager;
 import com.intellij.vcs.log.graph.SimplePrintElement;
 import com.intellij.vcs.log.graph.api.GraphLayout;
+import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.LinearGraphWithCommitInfo;
 import com.intellij.vcs.log.graph.api.LinearGraphWithElementInfo;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
@@ -134,6 +135,9 @@ public abstract class AbstractPrintElementsManager<CommitId> implements PrintEle
       upNodeIndex = edge.getUpNodeIndex();
       downNodeIndex = edge.getDownNodeIndex();
     }
+    if (downNodeIndex == LinearGraph.NOT_LOAD_COMMIT)
+      downNodeIndex = upNodeIndex;
+
     int upLayoutIndex = graphLayout.getLayoutIndex(upNodeIndex);
     int downLayoutIndex = graphLayout.getLayoutIndex(downNodeIndex);
 

@@ -17,6 +17,7 @@
 package com.intellij.vcs.log.graph.impl.visible.adapters;
 
 import com.intellij.util.BooleanFunction;
+import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.LinearGraphWithHiddenNodes;
 import com.intellij.vcs.log.graph.api.PrintedLinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
@@ -93,6 +94,9 @@ public class GraphWithHiddenNodesAsPrintedGraph implements PrintedLinearGraph {
   @Override
   public GraphEdge.Type getEdgeType(int upNodeIndex, int downNodeIndex) {
     int upIndex = getIndexInPermanentGraph(upNodeIndex);
+    if (downNodeIndex == LinearGraph.NOT_LOAD_COMMIT)
+      return GraphEdge.Type.USUAL;
+
     int downIndex = getIndexInPermanentGraph(downNodeIndex);
     return myDelegateGraph.getEdgeType(upIndex, downIndex);
   }
@@ -134,7 +138,10 @@ public class GraphWithHiddenNodesAsPrintedGraph implements PrintedLinearGraph {
 
     @Override
     public Integer get(int index) {
-      return myIntToIntMap.getShortIndex(longIndexNodes.get(index));
+      Integer longIndex = longIndexNodes.get(index);
+      if (longIndex == LinearGraph.NOT_LOAD_COMMIT)
+        return LinearGraph.NOT_LOAD_COMMIT;
+      return myIntToIntMap.getShortIndex(longIndex);
     }
 
     @Override
