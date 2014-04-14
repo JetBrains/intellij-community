@@ -46,6 +46,7 @@ public class InferenceSession {
 
   private final Map<PsiTypeParameter, InferenceVariable> myInferenceVariables = new LinkedHashMap<PsiTypeParameter, InferenceVariable>();
   private final List<ConstraintFormula> myConstraints = new ArrayList<ConstraintFormula>();
+  private final Set<ConstraintFormula> myConstraintsCopy = new HashSet<ConstraintFormula>();
 
   private PsiSubstitutor mySiteSubstitutor;
   private PsiManager myManager;
@@ -804,7 +805,7 @@ public class InferenceSession {
   }
 
   public void addConstraint(ConstraintFormula constraint) {
-    if (!myConstraints.contains(constraint)) {
+    if (myConstraintsCopy.add(constraint)) {
         myConstraints.add(constraint);
       }
   }
