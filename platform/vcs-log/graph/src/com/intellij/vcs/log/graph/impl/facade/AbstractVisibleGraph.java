@@ -82,7 +82,6 @@ public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<Com
   @NotNull
   @Override
   public RowInfo<CommitId> getRowInfo(final int visibleRow) {
-    final Collection<PrintElement> printElements = myPrintElementGenerator.getPrintElements(visibleRow);
     return new RowInfo<CommitId>() {
       @NotNull
       @Override
@@ -100,7 +99,7 @@ public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<Com
       @NotNull
       @Override
       public Collection<PrintElement> getPrintElements() {
-        return printElements;
+        return myPrintElementGenerator.getPrintElements(visibleRow);
       }
     };
   }
