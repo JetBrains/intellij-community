@@ -241,6 +241,7 @@ public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<Com
     @Override
     public void setLinearBranchesExpansion(boolean collapse) {
       AbstractVisibleGraph.this.setLinearBranchesExpansion(collapse);
+      myPrintElementGenerator.invalidate();
     }
   }
 }

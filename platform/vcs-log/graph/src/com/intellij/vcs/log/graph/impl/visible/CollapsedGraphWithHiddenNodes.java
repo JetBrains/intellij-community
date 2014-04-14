@@ -65,7 +65,7 @@ public class CollapsedGraphWithHiddenNodes implements LinearGraphWithHiddenNodes
   }
 
   // nodes up and down must be loaded
-  public void collapse(int upNodeIndex, final int downNodeIndex) {
+  public void fastCollapse(int upNodeIndex, final int downNodeIndex) {
     myDfsUtil.nodeDfsIterator(upNodeIndex, new DfsUtil.NextNode() {
       @Override
       public int fun(int currentNode) {
@@ -91,6 +91,10 @@ public class CollapsedGraphWithHiddenNodes implements LinearGraphWithHiddenNodes
 
     upToEdge.put(upNodeIndex, downNodeIndex);
     downToEdge.put(downNodeIndex, upNodeIndex);
+  }
+
+  public void collapse(int upNodeIndex, final int downNodeIndex) {
+    fastCollapse(upNodeIndex, downNodeIndex);
     callListeners(upNodeIndex, downNodeIndex);
   }
 
@@ -129,11 +133,15 @@ public class CollapsedGraphWithHiddenNodes implements LinearGraphWithHiddenNodes
     return myVisibleNodes.get(nodeIndex) && myDelegateGraph.nodeIsVisible(nodeIndex);
   }
 
+  public void callListeners() {
+    callListeners(0, myDelegateGraph.nodesCount() - 1);
+  }
+
   public void expandAll() {
     upToEdge.clear();
     downToEdge.clear();
     myVisibleNodes.setAll(true);
-    callListeners(0, myDelegateGraph.nodesCount() - 1);
+    callListeners();
   }
 
   @NotNull

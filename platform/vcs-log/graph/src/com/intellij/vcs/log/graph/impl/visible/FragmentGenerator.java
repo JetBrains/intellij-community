@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Set;
 
 public class FragmentGenerator {
-  private static final int SHORT_FRAGMENT_MAX_SIZE = 100;
+  private static final int SHORT_FRAGMENT_MAX_SIZE = 10;
   private static final int MAX_SEARCH_SIZE = 10;
 
   @NotNull

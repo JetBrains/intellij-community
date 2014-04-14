@@ -123,6 +123,19 @@ public class DelegateGraphFacade implements GraphFacade {
     if (action instanceof LinearBranchesExpansionAction) {
       boolean shouldExpand = ((LinearBranchesExpansionAction)action).shouldExpand();
       actionController.setLinearBranchesExpansion(!shouldExpand);
+      return new GraphAnswer() {
+        @Nullable
+        @Override
+        public GraphChange getGraphChange() {
+          return new GraphChange() {};
+        }
+
+        @Nullable
+        @Override
+        public GraphActionRequest getActionRequest() {
+          return new JumpToRowActionRequest(0);
+        }
+      };
     }
 
     return null;
