@@ -35,7 +35,7 @@ import java.util.ArrayList;
 
 public class CopyPasteFoldingProcessor implements CopyPastePostProcessor<FoldingTransferableData> {
   @Override
-  public FoldingTransferableData collectTransferableData(final PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets) {
+  public FoldingTransferableData collectTransferableData(@Nullable final PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets) {
     // might be slow
     //CodeFoldingManager.getInstance(file.getManager().getProject()).updateFoldRegions(editor);
 

@@ -37,6 +37,7 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.richcopy.settings.RichCopySettings;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -65,7 +66,7 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
 
   @Nullable
   @Override
-  public TextBlockTransferableData collectTransferableData(PsiFile file, Editor editor, int[] startOffsets, int[] endOffsets) {
+  public TextBlockTransferableData collectTransferableData(@Nullable PsiFile file, Editor editor, int[] startOffsets, int[] endOffsets) {
     if (!Registry.is("editor.richcopy.enable")) {
       return null;
     }
@@ -87,9 +88,15 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
       logInitial(document, startOffsets, endOffsets, indentSymbolsToStrip, firstLineStartOffset);
       CharSequence text = document.getCharsSequence();
       EditorColorsScheme schemeToUse = settings.getColorsScheme(editor.getColorsScheme());
-      EditorHighlighter highlighter = HighlighterFactory.createHighlighter(file.getVirtualFile(), schemeToUse, file.getProject());
+
+      EditorHighlighter highlighter;
+      if (file == null) {
+        highlighter = HighlighterFactory.createHighlighter(editor.getProject(), FileTypes.PLAIN_TEXT);
+      }
+      else {
+        highlighter = HighlighterFactory.createHighlighter(file.getVirtualFile(), schemeToUse, file.getProject());
+      }
       highlighter.setText(text);
-      MarkupModel markupModel = DocumentMarkupModel.forDocument(document, file.getProject(), false);
 
       myBuilders.getMulticaster().init(schemeToUse.getDefaultForeground(),
                                        schemeToUse.getDefaultBackground(),
@@ -115,9 +122,23 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
         if (endOffsetToUse <= startOffsetToUse) {
           continue;
         }
-        DisposableIterator<SegmentInfo> it = aggregateSyntaxInfo(schemeToUse,
-                                                                 wrap(highlighter, text, schemeToUse, startOffsetToUse, endOffsetToUse),
-                                                                 wrap(markupModel, text, schemeToUse, startOffsetToUse, endOffsetToUse));
+
+        final MarkupModel editorMarkupModel = editor.getMarkupModel();
+        DisposableIterator<List<SegmentInfo>> highlighterDI = wrap(highlighter, text, schemeToUse, startOffsetToUse, endOffsetToUse);
+        DisposableIterator<List<SegmentInfo>> editorMarkupDI = wrap(editorMarkupModel, text, schemeToUse, startOffsetToUse, endOffsetToUse);
+
+        DisposableIterator[] iterators;
+        if (file != null) {
+          MarkupModel markupModel = DocumentMarkupModel.forDocument(document, file.getProject(), false);
+          DisposableIterator<List<SegmentInfo>> documentMarkupDI = wrap(markupModel, text, schemeToUse, startOffsetToUse, endOffsetToUse);
+          
+          iterators = new DisposableIterator[]{highlighterDI, documentMarkupDI, editorMarkupDI};
+        }
+        else {
+          iterators = new DisposableIterator[]{highlighterDI, editorMarkupDI};
+        }
+        
+        DisposableIterator<SegmentInfo> it = aggregateSyntaxInfo(schemeToUse, iterators);
         try {
           while (it.hasNext()) {
             Iterator<TextWithMarkupBuilder> builderIterator = activeBuilders.getListeners().iterator();
@@ -465,6 +486,9 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
           if (key != null) {
             attributes = colorsScheme.getAttributes(key);
           }
+        }
+        else {
+          attributes = highlighter.getTextAttributes();
         }
 
         if (attributes == null) {

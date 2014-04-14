@@ -28,7 +28,6 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -43,6 +42,9 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
   @SuppressWarnings("ForLoopThatDoesntUseLoopVariable")
   @Override
   public String preprocessOnCopy(final PsiFile file, final int[] startOffsets, final int[] endOffsets, final String text) {
+    if (file == null) {
+      return null;
+    }
     // The main idea is to un-escape string/char literals content if necessary.
     // Example:
     //    Suppose we have a following text at the editor: String s = "first <selection>line \n second</selection> line"

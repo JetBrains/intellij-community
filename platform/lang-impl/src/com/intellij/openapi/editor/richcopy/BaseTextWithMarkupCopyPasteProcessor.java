@@ -49,7 +49,7 @@ public abstract class BaseTextWithMarkupCopyPasteProcessor<T extends TextBlockTr
 
   @Nullable
   @Override
-  public T collectTransferableData(PsiFile file, Editor editor, int[] startOffsets, int[] endOffsets) {
+  public T collectTransferableData(@Nullable PsiFile file, Editor editor, int[] startOffsets, int[] endOffsets) {
     if (!Registry.is("editor.richcopy.enable")) {
       return null;
     }
