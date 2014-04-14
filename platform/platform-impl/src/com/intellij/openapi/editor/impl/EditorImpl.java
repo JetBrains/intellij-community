@@ -79,7 +79,6 @@ import com.intellij.ui.components.OrphanGuardian;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
@@ -89,6 +88,7 @@ import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import gnu.trove.TIntArrayList;
+import gnu.trove.TIntFunction;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntIntHashMap;
 import org.intellij.lang.annotations.JdkConstants;
@@ -1814,10 +1814,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myPreferredSize = dim;
 
       stopOptimizedScrolling();
-      myGutterComponent.setLineNumberAreaWidth(new Convertor<Integer, Integer>() {
-        @NotNull
+      myGutterComponent.setLineNumberAreaWidth(new TIntFunction() {
         @Override
-        public Integer convert(Integer lineNumber) {
+        public int execute(int lineNumber) {
           return getFontMetrics(Font.PLAIN).stringWidth(Integer.toString(lineNumber + 2)) + 6;
         }
       });

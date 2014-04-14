@@ -56,13 +56,9 @@ import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntProcedure;
-import gnu.trove.TObjectProcedure;
+import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,6 +77,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private static final int GAP_BETWEEN_ICONS = 3;
   private static final TooltipGroup GUTTER_TOOLTIP_GROUP = new TooltipGroup("GUTTER_TOOLTIP_GROUP", 0);
   private static final Color COLOR_F0F0 = new Color(0xF0F0F0);
+  public static final TIntFunction ID = new TIntFunction() {
+    @Override
+    public int execute(int value) {
+      return value;
+    }
+  };
 
   private final EditorImpl myEditor;
   private final FoldingAnchorsOverlayStrategy myAnchorsDisplayStrategy;
@@ -98,13 +100,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private Color myBackgroundColor = null;
   private String myLastGutterToolTip = null;
   private int myLastPreferredHeight = -1;
-  private Convertor<Integer, Integer> myLineNumberConvertor;
+  @NotNull private TIntFunction myLineNumberConvertor;
   private boolean myShowDefaultGutterPopup = true;
 
   @SuppressWarnings("unchecked")
   public EditorGutterComponentImpl(EditorImpl editor) {
     myEditor = editor;
-    myLineNumberConvertor = Convertor.SELF;
+    myLineNumberConvertor = ID;
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       installDnD();
     }
@@ -403,7 +405,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       if (logicalPosition.softWrapLinesOnCurrentLogicalLine > 0) {
         continue;
       }
-      int logLine = myLineNumberConvertor.convert(logicalPosition.line);
+      int logLine = myLineNumberConvertor.execute(logicalPosition.line);
       if (logLine >= 0) {
         String s = String.valueOf(logLine + 1);
         g.drawString(s,
@@ -986,8 +988,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return isLineMarkersShown() ? myLineMarkerAreaWidth : 0;
   }
 
-  public void setLineNumberAreaWidth(final Convertor<Integer, Integer> calculator) {
-    final int lineNumberAreaWidth = calculator.convert(myLineNumberConvertor.convert(endLineNumber()));
+  public void setLineNumberAreaWidth(@NotNull TIntFunction calculator) {
+    final int lineNumberAreaWidth = calculator.execute(myLineNumberConvertor.execute(endLineNumber()));
     if (myLineNumberAreaWidth != lineNumberAreaWidth) {
       myLineNumberAreaWidth = lineNumberAreaWidth;
       fireResized();
@@ -1331,7 +1333,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   @Override
-  public void setLineNumberConvertor(Convertor<Integer, Integer> lineNumberConvertor) {
+  public void setLineNumberConvertor(@NotNull TIntFunction lineNumberConvertor) {
     myLineNumberConvertor = lineNumberConvertor;
   }
 
