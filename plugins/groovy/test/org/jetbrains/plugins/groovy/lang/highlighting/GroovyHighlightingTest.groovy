@@ -1818,4 +1818,56 @@ class Target {
 }
 ''')
   }
+
+  void testTrait1() {
+    testHighlighting('''
+trait X {
+  void foo() {}
+}
+''')
+  }
+
+  void testTrait2() {
+    testHighlighting('''
+interface A {}
+trait X implements A {
+  void foo() {}
+}
+''')
+  }
+
+  void testTrait3() {
+    testHighlighting('''
+class A {}
+trait X extends <error descr="Only traits are expected here">A</error> {
+  void foo() {}
+}
+''')
+  }
+
+
+  void testTrait4() {
+    testHighlighting('''
+trait A {}
+trait X extends A {
+  void foo() {}
+}
+''')
+  }
+
+  void testTraitExtendsList() {
+    testHighlighting('''
+trait B extends <error descr="Only traits are expected here">HashMap</error> {}''')
+  }
+
+  void testIncIsNotAllowedInTraits() {
+    testHighlighting('''
+trait C {
+  def x = 5
+  def foo() {
+    <error descr="++ expressions on trait fields/properties are not supported in traits">x++</error>
+  }
+}
+''')
+  }
 }

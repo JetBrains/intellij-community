@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -117,6 +118,24 @@ import static org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter.*;
 @SuppressWarnings({"unchecked"})
 public class GroovyAnnotator extends GroovyElementVisitor {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.annotator.GroovyAnnotator");
+  public static final Condition<PsiClass> IS_INTERFACE = new Condition<PsiClass>() {
+    @Override
+    public boolean value(PsiClass aClass) {
+      return aClass.isInterface();
+    }
+  };
+  private static final Condition<PsiClass> IS_NOT_INTERFACE = new Condition<PsiClass>() {
+    @Override
+    public boolean value(PsiClass aClass) {
+      return !aClass.isInterface();
+    }
+  };
+  public static final Condition<PsiClass> IS_TRAIT = new Condition<PsiClass>() {
+    @Override
+    public boolean value(PsiClass aClass) {
+      return aClass instanceof GrTypeDefinition && ((GrTypeDefinition)aClass).isTrait();
+    }
+  };
 
   private final AnnotationHolder myHolder;
 
@@ -546,6 +565,24 @@ public class GroovyAnnotator extends GroovyElementVisitor {
           constructor = nodes.get(constructor);
         }
         while (constructor != circleStart);
+      }
+    }
+  }
+
+  @Override
+  public void visitUnaryExpression(GrUnaryExpression expression) {
+    if (expression.getOperationTokenType() == GroovyTokenTypes.mINC ||
+        expression.getOperationTokenType() == GroovyTokenTypes.mDEC) {
+      GrExpression operand = expression.getOperand();
+      if (operand instanceof GrReferenceExpression && ((GrReferenceExpression)operand).getQualifier() == null) {
+        GrTraitTypeDefinition trait = PsiTreeUtil.getParentOfType(operand, GrTraitTypeDefinition.class);
+        if (trait != null) {
+          PsiElement resolved = ((GrReferenceExpression)operand).resolve();
+          if (resolved instanceof GrField && ((GrField)resolved).getContainingClass() instanceof GrTraitTypeDefinition) {
+            myHolder.createErrorAnnotation(expression, GroovyBundle
+              .message("0.expressions.on.trait.fields.properties.are.not.supported.in.traits", expression.getOperationToken().getText()));
+          }
+        }
       }
     }
   }
@@ -1572,15 +1609,17 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     if (typeDefinition.isAnnotationType()) {
       myHolder.createErrorAnnotation(extendsClause, GroovyBundle.message("annotation.types.may.not.have.extends.clause"));
     }
+    else if (typeDefinition.isTrait()) {
+      checkReferenceList(myHolder, extendsClause, IS_TRAIT, GroovyBundle.message("only.traits.expected.here"), null);
+    }
     else if (typeDefinition.isInterface()) {
-      checkReferenceList(myHolder, extendsClause, true, GroovyBundle.message("no.class.expected.here"), null);
+      checkReferenceList(myHolder, extendsClause, IS_INTERFACE, GroovyBundle.message("no.class.expected.here"), null);
     }
     else if (typeDefinition.isEnum()) {
       myHolder.createErrorAnnotation(extendsClause, GroovyBundle.message("enums.may.not.have.extends.clause"));
     }
     else {
-      checkReferenceList(myHolder, extendsClause, false, GroovyBundle.message("no.interface.expected.here"),
-                         new ChangeExtendsImplementsQuickFix(typeDefinition));
+      checkReferenceList(myHolder, extendsClause, IS_NOT_INTERFACE, GroovyBundle.message("no.interface.expected.here"), new ChangeExtendsImplementsQuickFix(typeDefinition));
       checkForWildCards(myHolder, extendsClause);
     }
 
@@ -1593,27 +1632,27 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     if (typeDefinition.isAnnotationType()) {
       myHolder.createErrorAnnotation(implementsClause, GroovyBundle.message("annotation.types.may.not.have.implements.clause"));
     }
-    else if (typeDefinition.isInterface()) {
+    else if (typeDefinition.isInterface() && !typeDefinition.isTrait()) {
       myHolder.createErrorAnnotation(implementsClause, GroovyBundle.message("no.implements.clause.allowed.for.interface"))
         .registerFix(new ChangeExtendsImplementsQuickFix(typeDefinition));
     }
     else {
-      checkReferenceList(myHolder, implementsClause, true, GroovyBundle.message("no.class.expected.here"),
-                         new ChangeExtendsImplementsQuickFix(typeDefinition));
+      checkReferenceList(myHolder, implementsClause, IS_INTERFACE, GroovyBundle.message("no.class.expected.here"), new ChangeExtendsImplementsQuickFix(typeDefinition));
       checkForWildCards(myHolder, implementsClause);
     }
   }
 
   private static void checkReferenceList(@NotNull AnnotationHolder holder,
                                          @NotNull GrReferenceList list,
-                                         boolean interfaceExpected,
+                                         @NotNull Condition<PsiClass> applicabilityCondition,
                                          @NotNull String message,
                                          @Nullable IntentionAction fix) {
     for (GrCodeReferenceElement refElement : list.getReferenceElementsGroovy()) {
       final PsiElement psiClass = refElement.resolve();
-      if (psiClass instanceof PsiClass && ((PsiClass)psiClass).isInterface() != interfaceExpected) {
+      if (psiClass instanceof PsiClass && !applicabilityCondition.value((PsiClass)psiClass)) {
+        Annotation annotation = holder.createErrorAnnotation(refElement, message);
         if (fix != null) {
-          holder.createErrorAnnotation(refElement, message).registerFix(fix);
+          annotation.registerFix(fix);
         }
       }
     }
