@@ -15,7 +15,7 @@ public class TestJsonParserTest extends TestCase {
             final String fileText = getFileText(br);
             final IpnbFile ipnbFile = IpnbParser.parseIpnbFile(fileText);
             assertNotNull(ipnbFile);
-            assertEquals(ipnbFile.getWorksheets()[0].getCells().length, 31);
+            assertEquals(31, ipnbFile.getCells().size());
         } finally {
             br.close();
         }

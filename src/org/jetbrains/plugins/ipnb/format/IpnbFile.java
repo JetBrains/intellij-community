@@ -1,9 +1,17 @@
 package org.jetbrains.plugins.ipnb.format;
 
-public class IpnbFile {
-    public IpnbWorksheet[] getWorksheets() {
-        return worksheets;
-    }
+import org.jetbrains.plugins.ipnb.format.cells.IpnbCell;
 
-    IpnbWorksheet[] worksheets;
+import java.util.List;
+
+public class IpnbFile {
+  private final List<IpnbCell> myCells;
+
+  IpnbFile(List<IpnbCell> cells) {
+    myCells = cells;
+  }
+
+  public List<IpnbCell> getCells() {
+    return myCells;
+  }
 }
