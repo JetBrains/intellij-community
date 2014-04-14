@@ -37,6 +37,6 @@ public interface TimedVcsCommit extends VcsCommit {
    *    is used for joining commits from different repositories;
    *    is used for ordering commits in a single repository (keeping the preference of the topological ordering of course).</p>
    */
-  long getTime();
+  long getTimestamp();
 
 }

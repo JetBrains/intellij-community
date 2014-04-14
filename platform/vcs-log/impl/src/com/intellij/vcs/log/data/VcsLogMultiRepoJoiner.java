@@ -50,8 +50,8 @@ class VcsLogMultiRepoJoiner {
     long maxTimeStamp = Long.MIN_VALUE;
     TimedVcsCommit lastCommit = null;
     for (TimedVcsCommit commit : commits) {
-      if (commit.getTime() >= maxTimeStamp) {
-        maxTimeStamp = commit.getTime();
+      if (commit.getTimestamp() >= maxTimeStamp) {
+        maxTimeStamp = commit.getTimestamp();
         lastCommit = commit;
       }
     }

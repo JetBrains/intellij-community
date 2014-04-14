@@ -238,7 +238,7 @@ public class VcsLogJoiner {
             Commit someCommit = list.get(insertIndex);
             if (parents.contains(someCommit.getId()))
               break;
-            if (someCommit.getTime() < currentCommit.getTime())
+            if (someCommit.getTimestamp() < currentCommit.getTimestamp())
               break;
           }
 

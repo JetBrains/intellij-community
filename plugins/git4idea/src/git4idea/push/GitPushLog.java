@@ -336,7 +336,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
 
   @NotNull
   private static String getDateString(@NotNull GitCommit commit) {
-    return DateFormatUtil.formatPrettyDateTime(commit.getTime()) + " ";
+    return DateFormatUtil.formatPrettyDateTime(commit.getTimestamp()) + " ";
   }
 
   @NotNull

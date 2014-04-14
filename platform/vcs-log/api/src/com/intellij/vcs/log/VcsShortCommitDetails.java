@@ -33,7 +33,7 @@ public interface VcsShortCommitDetails extends TimedVcsCommit {
   List<Hash> getParents();
 
   @Override
-  long getTime();
+  long getTimestamp();
 
   @NotNull
   String getSubject();

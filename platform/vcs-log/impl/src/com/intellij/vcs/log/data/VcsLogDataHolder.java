@@ -641,7 +641,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     List<TimedVcsCommit> commits = ContainerUtil.map(firstBlockDetails, new Function<VcsCommitMetadata, TimedVcsCommit>() {
       @Override
       public TimedVcsCommit fun(VcsCommitMetadata details) {
-        return new CompactCommit(details.getId(), details.getParents(), details.getTime());
+        return new CompactCommit(details.getId(), details.getParents(), details.getTimestamp());
       }
     });
     myHashMap.flush();
@@ -842,7 +842,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     private final long myTime;
 
     public CompactCommit(TimedVcsCommit commit) {
-      this(commit.getId(), commit.getParents(), commit.getTime());
+      this(commit.getId(), commit.getParents(), commit.getTimestamp());
     }
 
     public CompactCommit(Hash hash, List<Hash> parents, long time) {
@@ -868,7 +868,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     }
 
     @Override
-    public long getTime() {
+    public long getTimestamp() {
       return myTime;
     }
 
