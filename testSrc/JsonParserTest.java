@@ -16,13 +16,13 @@ public class JsonParserTest extends TestCase {
     assertEquals(31, ipnbFile.getCells().size());
   }
 
-  public void testMarkdownCell() throws IOException {
-    final String fileName = "testData/SymPy.ipynb";
-    final String fileText = getFileText(fileName);
-    final IpnbFile ipnbFile = IpnbParser.parseIpnbFile(fileText);
-    assertNotNull(ipnbFile);
-    assertEquals(31, ipnbFile.getCells().size());
-  }
+  //public void testMarkdownCell() throws IOException {
+  //  final String fileName = "testData/SymPy.ipynb";
+  //  final String fileText = getFileText(fileName);
+  //  final IpnbFile ipnbFile = IpnbParser.parseIpnbFile(fileText);
+  //  assertNotNull(ipnbFile);
+  //  assertEquals(31, ipnbFile.getCells().size());
+  //}
 
   private String getFileText(@NotNull final String fileName) throws IOException {
     final BufferedReader br = new BufferedReader(new FileReader(fileName));
