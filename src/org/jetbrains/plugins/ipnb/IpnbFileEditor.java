@@ -157,7 +157,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
   private static FileEditorProvider getProvider(Project project, VirtualFile vFile) {
     FileEditorProvider[] providers = FileEditorProviderManagerImpl.getInstance().getProviders(project, vFile);
     for (FileEditorProvider provider : providers) {
-      if (!(provider instanceof IpnbFileEditor)) {
+      if (!(provider instanceof IpnbEditorProvider)) {
         return provider;
       }
     }
