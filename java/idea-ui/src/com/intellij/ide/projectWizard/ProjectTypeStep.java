@@ -51,7 +51,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplateEP;
-import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.platform.templates.*;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.IdeBorderFactory;
@@ -307,8 +306,8 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     Collections.sort(groups, new Comparator<TemplatesGroup>() {
       @Override
       public int compare(TemplatesGroup o1, TemplatesGroup o2) {
-        int u = Comparing.compare(ProjectTemplatesFactory.CUSTOM_GROUP.equals(o1.getName()), ProjectTemplatesFactory.CUSTOM_GROUP.equals(o2.getName()));
-        if (u != 0) return u;
+        int i = o2.getWeight() - o1.getWeight();
+        if (i != 0) return i;
         int i1 = moduleTypes.get(getModuleType(o2)).size() - moduleTypes.get(getModuleType(o1)).size();
         if (i1 != 0) return i1;
         return o1.compareTo(o2);
