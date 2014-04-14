@@ -1,4 +1,4 @@
 package org.jetbrains.plugins.ipnb.format.cells;
 
-public class MarkdownCell extends IpnbCell {
+public class MarkdownCell implements IpnbCell {
 }

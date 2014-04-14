@@ -1,4 +1,4 @@
 package org.jetbrains.plugins.ipnb.format.cells;
 
-public class CodeCell extends IpnbCell {
+public class CodeCell implements IpnbCell {
 }
