@@ -64,7 +64,7 @@ public class VcsLogJoiner {
     int unsafeBlockSize = Math.max(redCommitsAndSavedRedIndex.first, newCommitsAndSavedGreenIndex.first);
     List<TimedVcsCommit> unsafePartSavedLog = new ArrayList<TimedVcsCommit>();
     for (TimedVcsCommit commit : savedLog.subList(0, unsafeBlockSize)) {
-      if (!removeCommits.contains(commit.getHash())) {
+      if (!removeCommits.contains(commit.getId())) {
         unsafePartSavedLog.add(commit);
       }
     }
@@ -91,12 +91,12 @@ public class VcsLogJoiner {
     allUnresolvedLinkedHashes.removeAll(previousRefs);
     // at this moment allUnresolvedLinkedHashes contains only NEW refs
     for (VcsCommit commit : firstBlock) {
-      allUnresolvedLinkedHashes.add(commit.getHash());
+      allUnresolvedLinkedHashes.add(commit.getId());
       allUnresolvedLinkedHashes.addAll(commit.getParents());
     }
     for (VcsCommit commit : firstBlock) {
       if (commit.getParents().size() != 0) {
-        allUnresolvedLinkedHashes.remove(commit.getHash());
+        allUnresolvedLinkedHashes.remove(commit.getId());
       }
     }
     int saveGreenIndex = getFirstUnTrackedIndex(savedLog, allUnresolvedLinkedHashes);
@@ -112,7 +112,7 @@ public class VcsLogJoiner {
         return lastIndex;
       if (lastIndex > BOUND_SAVED_LOG)
         throw new IllegalStateException(ILLEGAL_DATA_RELOAD_ALL);
-      searchHashes.remove(commit.getHash());
+      searchHashes.remove(commit.getId());
     }
     if (searchHashes.size() != 0)
       throw new IllegalStateException(ILLEGAL_DATA_RELOAD_ALL);
@@ -123,11 +123,11 @@ public class VcsLogJoiner {
                                                       @NotNull List<? extends TimedVcsCommit> firstBlock) {
     Set<Hash> existedCommitHashes = ContainerUtil.newHashSet();
     for (VcsCommit commit : unsafeGreenPartSavedLog) {
-      existedCommitHashes.add(commit.getHash());
+      existedCommitHashes.add(commit.getId());
     }
     Set<TimedVcsCommit> allNewsCommits = ContainerUtil.newHashSet();
     for (TimedVcsCommit newCommit : firstBlock) {
-      if (!existedCommitHashes.contains(newCommit.getHash())) {
+      if (!existedCommitHashes.contains(newCommit.getId())) {
         allNewsCommits.add(newCommit);
       }
     }
@@ -143,7 +143,7 @@ public class VcsLogJoiner {
     startRedCommits.removeAll(newRefs);
     Set<Hash> startGreenNodes = new HashSet<Hash>(newRefs);
     for (TimedVcsCommit commit : firstBlock) {
-      startGreenNodes.add(commit.getHash());
+      startGreenNodes.add(commit.getId());
       startGreenNodes.addAll(commit.getParents());
     }
     RedGreenSorter sorter = new RedGreenSorter(startRedCommits, startGreenNodes, savedLog);
@@ -177,13 +177,13 @@ public class VcsLogJoiner {
         if (lastIndex > BOUND_SAVED_LOG)
           throw new IllegalStateException(ILLEGAL_DATA_RELOAD_ALL);
 
-        boolean isGreen = currentGreen.contains(commit.getHash());
+        boolean isGreen = currentGreen.contains(commit.getId());
         if (isGreen) {
-          currentRed.remove(commit.getHash());
+          currentRed.remove(commit.getId());
           currentGreen.addAll(commit.getParents());
         }
         else {
-          markRealRedNode(commit.getHash());
+          markRealRedNode(commit.getId());
           currentRed.addAll(commit.getParents());
         }
 
@@ -209,7 +209,7 @@ public class VcsLogJoiner {
       this.list = list;
       newCommitsMap = ContainerUtil.newHashMap();
       for (Commit commit : newCommits) {
-        newCommitsMap.put(commit.getHash(), commit);
+        newCommitsMap.put(commit.getId(), commit);
       }
       commitsStack = new Stack<Commit>();
     }
@@ -236,14 +236,14 @@ public class VcsLogJoiner {
           HashSet<Hash> parents = new HashSet<Hash>(currentCommit.getParents());
           for (insertIndex = 0; insertIndex < list.size(); insertIndex++) {
             Commit someCommit = list.get(insertIndex);
-            if (parents.contains(someCommit.getHash()))
+            if (parents.contains(someCommit.getId()))
               break;
             if (someCommit.getTime() < currentCommit.getTime())
               break;
           }
 
           list.add(insertIndex, currentCommit);
-          newCommitsMap.remove(currentCommit.getHash());
+          newCommitsMap.remove(currentCommit.getId());
           commitsStack.pop();
         }
       }

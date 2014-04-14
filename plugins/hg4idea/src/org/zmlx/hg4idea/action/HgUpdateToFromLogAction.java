@@ -25,7 +25,7 @@ import org.zmlx.hg4idea.repo.HgRepository;
 public class HgUpdateToFromLogAction extends HgLogSingleCommitAction {
   @Override
   protected void actionPerformed(@NotNull HgRepository repository, @NotNull VcsFullCommitDetails commit) {
-    String revisionHash = commit.getHash().asString();
+    String revisionHash = commit.getId().asString();
     Project project = repository.getProject();
     VirtualFile rootFile = repository.getRoot();
     String title = HgVcsMessages.message("hg4idea.progress.updatingTo", revisionHash);

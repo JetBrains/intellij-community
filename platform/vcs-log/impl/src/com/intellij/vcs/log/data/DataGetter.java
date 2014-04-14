@@ -174,7 +174,7 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
       @Override
       public void run() {
         for (T data : details) {
-          myCache.put(data.getHash(), data);
+          myCache.put(data.getId(), data);
         }
       }
     });

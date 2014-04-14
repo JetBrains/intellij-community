@@ -182,7 +182,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     }
 
     private static String getHashText(VcsFullCommitDetails commit) {
-      return commit.getHash().asString();
+      return commit.getId().asString();
     }
 
     private static String getAuthorText(VcsFullCommitDetails commit) {

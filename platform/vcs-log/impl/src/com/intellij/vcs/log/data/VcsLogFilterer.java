@@ -165,7 +165,7 @@ public class VcsLogFilterer {
         break;
       }
       if (matchesAllFilters(data, detailsFilters)) {
-        result.add(data.getHash());
+        result.add(data.getId());
       }
     }
     return result;

@@ -33,7 +33,7 @@ public interface VcsCommit {
    * Returns the hash of this commit.
    */
   @NotNull
-  Hash getHash();
+  Hash getId();
 
   /**
    * <p>Returns parents of this commit.</p>

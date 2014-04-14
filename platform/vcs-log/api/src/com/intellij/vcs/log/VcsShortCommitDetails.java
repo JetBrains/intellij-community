@@ -23,7 +23,7 @@ public interface VcsShortCommitDetails extends TimedVcsCommit {
 
   @Override
   @NotNull
-  Hash getHash();
+  Hash getId();
 
   @NotNull
   VirtualFile getRoot();

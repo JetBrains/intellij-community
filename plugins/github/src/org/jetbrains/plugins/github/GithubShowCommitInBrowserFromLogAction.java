@@ -96,7 +96,7 @@ public class GithubShowCommitInBrowserFromLogAction extends GithubShowCommitInBr
   public void actionPerformed(AnActionEvent e) {
     EventData eventData = collectData(e);
     if (eventData != null) {
-      openInBrowser(eventData.getProject(), eventData.getRepository(), eventData.getCommit().getHash().asString());
+      openInBrowser(eventData.getProject(), eventData.getRepository(), eventData.getCommit().getId().asString());
     }
   }
 

@@ -15,6 +15,8 @@
  */
 package com.intellij.vcs.log;
 
+import com.intellij.vcs.log.graph.GraphCommit;
+
 import java.util.List;
 
 /**

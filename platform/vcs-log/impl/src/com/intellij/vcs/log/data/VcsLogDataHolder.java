@@ -534,7 +534,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
         final List<Hash> list = ContainerUtil.map(compoundLog, new Function<TimedVcsCommit, Hash>() {
           @Override
           public Hash fun(TimedVcsCommit commit) {
-            return commit.getHash();
+            return commit.getId();
           }
         });
 
@@ -633,7 +633,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     // some commits may be no longer available (e.g. rewritten after rebase), but let them stay in the cache:
     // they won't occupy too much place, while checking & removing them is not easy.
     for (VcsCommitMetadata detail : firstBlockDetails) {
-      myTopCommitsDetailsCache.put(detail.getHash(), detail);
+      myTopCommitsDetailsCache.put(detail.getId(), detail);
     }
   }
 
@@ -641,7 +641,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     List<TimedVcsCommit> commits = ContainerUtil.map(firstBlockDetails, new Function<VcsCommitMetadata, TimedVcsCommit>() {
       @Override
       public TimedVcsCommit fun(VcsCommitMetadata details) {
-        return new CompactCommit(details.getHash(), details.getParents(), details.getTime());
+        return new CompactCommit(details.getId(), details.getParents(), details.getTime());
       }
     });
     myHashMap.flush();
@@ -842,7 +842,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     private final long myTime;
 
     public CompactCommit(TimedVcsCommit commit) {
-      this(commit.getHash(), commit.getParents(), commit.getTime());
+      this(commit.getId(), commit.getParents(), commit.getTime());
     }
 
     public CompactCommit(Hash hash, List<Hash> parents, long time) {
@@ -874,7 +874,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
 
     @NotNull
     @Override
-    public Hash getHash() {
+    public Hash getId() {
       return VcsLogDataHolder.this.getHash(myHashIndex);
     }
 

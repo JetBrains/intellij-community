@@ -31,7 +31,7 @@ public class VcsCommitImpl implements VcsCommit {
 
   @Override
   @NotNull
-  public final Hash getHash() {
+  public final Hash getId() {
     return myHash;
   }
 

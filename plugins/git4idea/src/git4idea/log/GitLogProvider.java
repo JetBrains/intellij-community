@@ -94,7 +94,7 @@ public class GitLogProvider implements VcsLogProvider {
           final Set<Hash> firstBlockHashes = ContainerUtil.map2Set(firstBlock, new Function<VcsCommitMetadata, Hash>() {
             @Override
             public Hash fun(VcsCommitMetadata metadata) {
-              return metadata.getHash();
+              return metadata.getId();
             }
           });
           List<VcsRef> unmatchedHeads = getUnmatchedHeads(firstBlockHashes, newTags);
@@ -153,7 +153,7 @@ public class GitLogProvider implements VcsLogProvider {
     return ContainerUtil.filter(detailsFromTaggedBranches, new Condition<VcsCommitMetadata>() {
       @Override
       public boolean value(VcsCommitMetadata metadata) {
-        return !firstBlockHashes.contains(metadata.getHash());
+        return !firstBlockHashes.contains(metadata.getId());
       }
     });
   }
