@@ -17,42 +17,26 @@ package org.jetbrains.plugins.ipnb.editor.panels;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
-import org.jetbrains.plugins.ipnb.format.cells.CodeCell;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * @author traff
  */
-public class CodePanel extends JPanel implements EditorPanel {
+public class CodeSourcePanel extends JPanel implements EditorPanel {
   private final Editor myEditor;
 
-  public CodePanel(Project project, CodeCell cell) {
+  public CodeSourcePanel(Project project, String source, int promptNumber) {
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
-    myEditor = IpnbEditorUtil.createPythonCodeEditor(project, StringUtil.join(cell.getSource(), "\n"));
+    myEditor = IpnbEditorUtil.createPythonCodeEditor(project, source);
 
-    add(createContainer(inputPrompt(cell), myEditor.getComponent()));
+    add(IpnbEditorUtil.createPanelWithPrompt(inputPrompt(promptNumber), myEditor.getComponent()));
   }
 
-  private JPanel createContainer(@NotNull String promptText, JComponent component) {
-    JPanel container = new JPanel(new BorderLayout());
-    JPanel p = new JPanel(new BorderLayout());
-    p.add(new JLabel(promptText), BorderLayout.WEST);
-    add(p, BorderLayout.NORTH);
-
-    container.add(component, BorderLayout.CENTER);
-
-    container.setMinimumSize(myEditor.getComponent().getPreferredSize());
-    return container;
-  }
-
-  private String inputPrompt(@NotNull CodeCell cell) {
-    return String.format("In[%d]:", cell.getPromptNumber());
+  private String inputPrompt(int promptNumber) {
+    return String.format("In[%d]:", promptNumber);
   }
 
   @Override

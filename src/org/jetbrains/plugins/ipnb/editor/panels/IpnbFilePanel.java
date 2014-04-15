@@ -16,9 +16,11 @@
 package org.jetbrains.plugins.ipnb.editor.panels;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.format.IpnbFile;
 import org.jetbrains.plugins.ipnb.format.cells.CodeCell;
 import org.jetbrains.plugins.ipnb.format.cells.HeadingCell;
@@ -59,7 +61,13 @@ public class IpnbFilePanel extends JPanel {
     }
 
     c.weighty = 1;
-    add(new JPanel(), c);
+    add(createEmptyPanel(), c);
+  }
+
+  private JPanel createEmptyPanel() {
+    JPanel panel = new JPanel();
+    panel.setBackground(IpnbEditorUtil.getBackground());
+    return panel;
   }
 
   private JPanel createPanelForCellOutput(@NotNull final Project project, @NotNull final CellOutput cell, int number) {
@@ -68,7 +76,7 @@ public class IpnbFilePanel extends JPanel {
 
   private JPanel createPanelForCell(@NotNull final Project project, @NotNull final IpnbCell cell) {
     if (cell instanceof CodeCell) {
-      return new CodePanel(project, (CodeCell)cell);
+      return new CodeSourcePanel(project, ((CodeCell)cell).getSourceAsString(), ((CodeCell)cell).getPromptNumber());
     }
     else if (cell instanceof MarkdownCell) {
       return new MarkdownPanel(project, (MarkdownCell)cell);

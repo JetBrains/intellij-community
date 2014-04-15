@@ -19,14 +19,17 @@ import com.google.common.collect.Lists;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseWheelListener;
 import java.util.List;
 
@@ -57,5 +60,22 @@ public class IpnbEditorUtil {
     final PyExpressionCodeFragmentImpl fragment = new PyExpressionCodeFragmentImpl(project, "code.py", text, true);
 
     return PsiDocumentManager.getInstance(project).getDocument(fragment);
+  }
+
+  public static JPanel createPanelWithPrompt(@NotNull String promptText, @NotNull final JComponent component) {
+    JPanel container = new JPanel(new BorderLayout());
+    JPanel p = new JPanel(new BorderLayout());
+    p.add(new JLabel(promptText), BorderLayout.WEST);
+    container.add(p, BorderLayout.NORTH);
+
+    container.add(component, BorderLayout.CENTER);
+
+    p.setBackground(getBackground());
+
+    return container;
+  }
+
+  public static Color getBackground() {
+    return EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
   }
 }
