@@ -17,6 +17,10 @@ package org.jetbrains.plugins.ipnb.editor;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.ipnb.format.cells.CodeCell;
+import org.jetbrains.plugins.ipnb.format.cells.output.CellOutput;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,16 +31,38 @@ import java.awt.*;
 public class CodePanel extends JPanel implements EditorPanel {
   private final Editor myEditor;
 
-  public CodePanel(Project project, String prompt, String code) {
-    setLayout(new BorderLayout());
-    myEditor = IpnbEditorUtil.createPythonCodeEditor(project, code);
+  public CodePanel(Project project, CodeCell cell) {
+    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
+    myEditor = IpnbEditorUtil.createPythonCodeEditor(project, StringUtil.join(cell.getInput(), "\n"));
+
+    add(createContainer(inputPrompt(cell), myEditor.getComponent()));
+
+    for (CellOutput output: cell.getCellOutputs()) {
+      add(createContainer(outputPrompt(cell), new JTextArea(StringUtil.join(output.getText(), "\n"))));
+    }
+
+
+  }
+
+  private JPanel createContainer(@NotNull String promptText, JComponent component) {
+    JPanel container = new JPanel(new BorderLayout());
     JPanel p = new JPanel(new BorderLayout());
-    p.add(new JLabel(prompt), BorderLayout.WEST);
+    p.add(new JLabel(promptText), BorderLayout.WEST);
     add(p, BorderLayout.NORTH);
-    add(myEditor.getComponent(), BorderLayout.CENTER);
 
-    setMinimumSize(myEditor.getComponent().getPreferredSize());
+    container.add(component, BorderLayout.CENTER);
+
+    container.setMinimumSize(myEditor.getComponent().getPreferredSize());
+    return container;
+  }
+
+  private String inputPrompt(@NotNull CodeCell cell) {
+    return String.format("In[%d]:", cell.getPromptNumber());
+  }
+
+  private String outputPrompt(@NotNull CodeCell cell) {
+    return String.format("Out[%d]:", cell.getPromptNumber());
   }
 
   @Override

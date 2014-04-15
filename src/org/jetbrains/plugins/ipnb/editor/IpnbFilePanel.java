@@ -20,8 +20,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import org.apache.commons.lang.NotImplementedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ipnb.format.IpnbFile;
+import org.jetbrains.plugins.ipnb.format.cells.CodeCell;
+import org.jetbrains.plugins.ipnb.format.cells.IpnbCell;
+import org.jetbrains.plugins.ipnb.format.cells.MarkdownCell;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,8 +35,8 @@ import java.util.List;
 /**
  * @author traff
  */
-public class IpnbEditorPanel extends JPanel {
-  public IpnbEditorPanel(@NotNull Project project, @Nullable Disposable parent, @NotNull List<String> cells) {
+public class IpnbFilePanel extends JPanel {
+  public IpnbFilePanel(@NotNull Project project, @Nullable Disposable parent, @NotNull IpnbFile file) {
     super();
     setLayout(new GridBagLayout());
 
@@ -41,26 +46,28 @@ public class IpnbEditorPanel extends JPanel {
     c.anchor = GridBagConstraints.PAGE_START;
     c.gridx = 0;
 
-//    c.weighty = 1;
-    for (String cell : cells) {
-      JPanel panel = cell.startsWith("#") ? new CodePanel(project, "In[1]:", cell)
-              : new MarkdownPanel(project, cell);
+    for (IpnbCell cell : file.getCells()) {
+      JPanel panel = createPanelForCell(project, cell);
 
 
       c.gridy = row;
       row++;
       add(panel, c);
-
-//      Disposer.register(parent, new Disposable() {
-//        @Override
-//        public void dispose() {
-//          final EditorFactory editorFactory = EditorFactory.getInstance();
-//          editorFactory.releaseEditor(e);
-//        }
-//      });
     }
 
     c.weighty = 1;
     add(new JPanel(), c);
+  }
+
+  private JPanel createPanelForCell(@NotNull Project project, IpnbCell cell) {
+    if (cell instanceof CodeCell) {
+      return new CodePanel(project, (CodeCell)cell);
+    }
+    else if (cell instanceof MarkdownCell) {
+      return new MarkdownPanel(project, (MarkdownCell)cell);
+    }
+    else {
+      throw new NotImplementedException(cell.getClass().toString());
+    }
   }
 }

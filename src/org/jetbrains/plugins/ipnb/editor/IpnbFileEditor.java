@@ -4,7 +4,6 @@ import com.google.common.collect.Lists;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl;
 import com.intellij.openapi.project.Project;
@@ -16,9 +15,10 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.Data;
+import org.jetbrains.plugins.ipnb.format.IpnbFile;
+import org.jetbrains.plugins.ipnb.format.TestData;
 
 import javax.swing.*;
-import java.awt.*;
 import java.beans.PropertyChangeListener;
 
 /**
@@ -30,7 +30,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
 
   private final String myName;
 
-  private final JPanel myEditorPanel;
+  private final JComponent myEditorPanel;
 
   private final TextEditor myEditor;
 
@@ -44,12 +44,12 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
 
     myEditor = createEditor(project, vFile);
 
-    myEditorPanel = createIpnbEditorPanel(myProject);
+    myEditorPanel = new JScrollPane(createIpnbEditorPanel(myProject));
   }
 
   @NotNull
-  private JPanel createIpnbEditorPanel(Project project) {
-    return new IpnbEditorPanel(project, null, Lists.newArrayList(Data.MARKDOWN1, Data.CODE1));
+  private JComponent createIpnbEditorPanel(Project project) {
+    return new IpnbFilePanel(project, null, TestData.IPNB_FILE1);
   }
 
   @NotNull
