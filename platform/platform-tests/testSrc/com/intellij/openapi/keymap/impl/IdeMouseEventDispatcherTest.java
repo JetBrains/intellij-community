@@ -25,7 +25,10 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.testFramework.LightPlatformTestCase;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseEvent;
+
+import static org.junit.Assume.assumeFalse;
 
 public class IdeMouseEventDispatcherTest extends LightPlatformTestCase {
   private static final String OUR_KEYMAP_NAME = "IdeMouseEventDispatcherTestKeymap";
@@ -38,6 +41,8 @@ public class IdeMouseEventDispatcherTest extends LightPlatformTestCase {
   private int myActionExecutionCount;
 
   public void setUp() throws Exception {
+    assumeFalse(GraphicsEnvironment.isHeadless());
+
     super.setUp();
 
     ActionManager.getInstance().registerAction(OUR_TEST_ACTION, new EmptyAction());
