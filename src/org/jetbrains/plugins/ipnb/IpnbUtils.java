@@ -14,6 +14,8 @@ public class IpnbUtils {
   private static MarkdownProcessor ourMarkdownProcessor = new MarkdownProcessor();
 
   public static String markdown2Html(@NotNull final String description) {
+    // TODO: add links to the dependant notebook pages (see: index.ipynb)
+    //TODO: relative picture links (see: index.ipynb in IPython.kernel) We should use absolute file:/// path
     final List<String> lines = ContainerUtil.newArrayList(description.split("\n|\r|\r\n"));
     final List<String> processedLines = new ArrayList<String>();
     boolean isInCode = false;
@@ -45,12 +47,12 @@ public class IpnbUtils {
     final String[] lineArray = ArrayUtil.toStringArray(processedLines);
     final String normalizedMarkdown = StringUtil.join(lineArray, "\n");
     String html = ourMarkdownProcessor.markdown(normalizedMarkdown);
-    html = html
+    html = "<html><body>" + html
       .replace("<pre><code>", "<pre>").replace("</code></pre>", "</pre>")
       .replace("<em>", "<i>").replace("</em>", "</i>")
       .replace("<strong>", "<b>").replace("</strong>", "</b>")
       .replace("&underline;", "_")
-      .trim()
+      .trim() + "</body></html>"
     ;
     return html;
   }

@@ -55,7 +55,7 @@ public class MarkdownPanel extends JPanel {
   }
 
   private JLabel createPanel(@NotNull final String text) {
-    JLabel label = new JBLabel("<html>"+text+"</html>");
+    JLabel label = new JBLabel(text);
     label.setBackground(JBColor.WHITE);  // TODO: use background colour from settings
     label.setOpaque(true);
     return label;
