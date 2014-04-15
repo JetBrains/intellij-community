@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.util.Collection;
@@ -76,9 +77,9 @@ public class MavenConfigurationProducer extends RuntimeConfigurationProducer {
 
     VirtualFile f = ((PsiFile)l.getPsiElement()).getVirtualFile();
     List<String> goals = ((MavenGoalLocation)l).getGoals();
-    Collection<String> profiles = MavenProjectsManager.getInstance(l.getProject()).getExplicitProfiles();
+    MavenExplicitProfiles profiles = MavenProjectsManager.getInstance(l.getProject()).getExplicitProfiles();
 
-    return new MavenRunnerParameters(true, f.getParent().getPath(), goals, profiles);
+    return new MavenRunnerParameters(true, f.getParent().getPath(), goals, profiles.getEnabledProfiles(), profiles.getDisabledProfiles());
   }
 
   public int compareTo(Object o) {

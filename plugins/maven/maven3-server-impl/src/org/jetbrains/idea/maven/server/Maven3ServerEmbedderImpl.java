@@ -300,20 +300,22 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
 
   @NotNull
   @Override
-  public MavenServerExecutionResult resolveProject(@NotNull File file, @NotNull Collection<String> activeProfiles)
+  public MavenServerExecutionResult resolveProject(@NotNull File file,
+                                                   @NotNull Collection<String> activeProfiles,
+                                                   @NotNull Collection<String> inactiveProfiles)
     throws RemoteException, MavenServerProcessCanceledException {
     DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
 
-    MavenExecutionResult result =
-      doResolveProject(file, new ArrayList<String>(activeProfiles), Arrays.<ResolutionListener>asList(listener));
+    MavenExecutionResult result = doResolveProject(file, new ArrayList<String>(activeProfiles), new ArrayList<String>(inactiveProfiles),
+                                                   Arrays.<ResolutionListener>asList(listener));
     return createExecutionResult(file, result, listener.getRootNode());
   }
 
   @Nullable
   @Override
-  public String evaluateEffectivePom(@NotNull File file, @NotNull List<String> activeProfiles)
+  public String evaluateEffectivePom(@NotNull File file, @NotNull List<String> activeProfiles, @NotNull List<String> inactiveProfiles)
     throws RemoteException, MavenServerProcessCanceledException {
-    return MavenEffectivePomDumper.evaluateEffectivePom(this, file, activeProfiles);
+    return MavenEffectivePomDumper.evaluateEffectivePom(this, file, activeProfiles, inactiveProfiles);
   }
 
   public void executeWithMavenSession(MavenExecutionRequest request, Runnable runnable) {
@@ -350,9 +352,9 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
   @NotNull
   public MavenExecutionResult doResolveProject(@NotNull final File file,
                                                @NotNull final List<String> activeProfiles,
+                                               @NotNull final List<String> inactiveProfiles,
                                                final List<ResolutionListener> listeners) throws RemoteException {
-    final MavenExecutionRequest request =
-      createRequest(file, activeProfiles, Collections.<String>emptyList(), Collections.<String>emptyList());
+    final MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, Collections.<String>emptyList());
 
     request.setUpdateSnapshots(myAlwaysUpdateSnapshots);
 
@@ -899,21 +901,29 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
 
   public static ProfileApplicationResult applyProfiles(MavenModel model,
                                                        File basedir,
-                                                       Collection<String> explicitProfiles,
+                                                       MavenExplicitProfiles explicitProfiles,
                                                        Collection<String> alwaysOnProfiles) throws RemoteException {
     Model nativeModel = MavenModelConverter.toNativeModel(model);
 
+    Collection<String> enabledProfiles = explicitProfiles.getEnabledProfiles();
+    Collection<String> disabledProfiles = explicitProfiles.getDisabledProfiles();
     List<Profile> activatedPom = new ArrayList<Profile>();
     List<Profile> activatedExternal = new ArrayList<Profile>();
     List<Profile> activeByDefault = new ArrayList<Profile>();
 
     List<Profile> rawProfiles = nativeModel.getProfiles();
     List<Profile> expandedProfilesCache = null;
+    List<Profile> deactivatedProfiles = new ArrayList<Profile>();
 
     for (int i = 0; i < rawProfiles.size(); i++) {
       Profile eachRawProfile = rawProfiles.get(i);
 
-      boolean shouldAdd = explicitProfiles.contains(eachRawProfile.getId()) || alwaysOnProfiles.contains(eachRawProfile.getId());
+      if (disabledProfiles.contains(eachRawProfile.getId())) {
+        deactivatedProfiles.add(eachRawProfile);
+        continue;
+      }
+
+      boolean shouldAdd = enabledProfiles.contains(eachRawProfile.getId()) || alwaysOnProfiles.contains(eachRawProfile.getId());
 
       Activation activation = eachRawProfile.getActivation();
       if (activation != null) {
@@ -955,7 +965,10 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
       new DefaultProfileInjector().injectProfile(nativeModel, each, null, null);
     }
 
-    return new ProfileApplicationResult(MavenModelConverter.convertModel(nativeModel, null), collectProfilesIds(activatedProfiles));
+    return new ProfileApplicationResult(MavenModelConverter.convertModel(nativeModel, null),
+                                        new MavenExplicitProfiles(collectProfilesIds(activatedProfiles),
+                                                                  collectProfilesIds(deactivatedProfiles))
+    );
   }
 
   private static Model doInterpolate(Model result, File basedir) throws RemoteException {

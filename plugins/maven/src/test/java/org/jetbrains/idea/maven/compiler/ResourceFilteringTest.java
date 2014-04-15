@@ -19,6 +19,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 
 import java.util.Arrays;
 
@@ -658,7 +659,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     compileModules("project");
     assertResult("target/classes/file.properties", "value=val1");
 
-    myProjectsManager.setExplicitProfiles(Arrays.asList("two"));
+    myProjectsManager.setExplicitProfiles(new MavenExplicitProfiles(Arrays.asList("two")));
     scheduleResolveAll();
     resolveDependenciesAndImport();
     compileModules("project");
