@@ -50,7 +50,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.zip.ZipFile;
 
 /**
  * @author max
@@ -876,7 +875,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       // optimization: for jar roots do not store base path in the myName field, use local FS file's getPath()
       String parentPath = basePath.substring(0, basePath.indexOf(JarFileSystem.JAR_SEPARATOR));
       VirtualFile parentFile = LocalFileSystem.getInstance().findFileByPath(parentPath);
-      if (parentFile == null || !isValidJar(parentPath)) return null;
+      if (parentFile == null) return null;
       newRoot = new JarRoot(fs, rootId, parentFile);
     }
     else {
@@ -911,18 +910,6 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     LOG.assertTrue(rootId == newRoot.getId(), "root=" + newRoot + " expected=" + rootId + " actual=" + newRoot.getId());
 
     return newRoot;
-  }
-
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  private static boolean isValidJar(@NotNull String path) {
-    try {
-      new ZipFile(path).close();
-      return true;
-    }
-    catch (IOException e) {
-      LOG.warn("invalid .jar: " + path);
-      return false;
-    }
   }
 
   @NotNull

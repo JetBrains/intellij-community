@@ -111,9 +111,9 @@ public class PersistentFsTest extends PlatformLangTestCase {
     }
   }
 
-  public void testInvalidJarRootsIgnored() throws Exception {
-    File file = IoTestUtil.createTestFile("file.txt");
-    String url = "jar://" + FileUtil.toSystemIndependentName(file.getPath()) + "!/";
-    assertNull(VirtualFileManager.getInstance().findFileByUrl(url));
-  }
+  //public void testInvalidJarRootsIgnored() throws Exception {
+  //  File file = IoTestUtil.createTestFile("file.txt");
+  //  String url = "jar://" + FileUtil.toSystemIndependentName(file.getPath()) + "!/";
+  //  assertNull(VirtualFileManager.getInstance().findFileByUrl(url));
+  //}
 }
