@@ -49,9 +49,13 @@ public class MemoryPasswordSafe extends BasePasswordSafeProvider {
 
     @Override
     protected int getMinutesToLive() {
-      return Registry.intValue("passwordSafe.memorySafe.ttl");
+      return MemoryPasswordSafe.this.getMinutesToLive();
     }
   };
+
+  protected int getMinutesToLive() {
+    return Registry.intValue("passwordSafe.memorySafe.ttl");
+  }
 
   /**
    * @param project the project to use
