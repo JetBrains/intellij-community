@@ -1,5 +1,6 @@
 package org.jetbrains.protocolReader;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jsonProtocol.ProtocolMetaModel;
 
 class TypeData {
@@ -15,7 +16,7 @@ class TypeData {
     this.name = name;
   }
 
-  void setType(ProtocolMetaModel.StandaloneType type) {
+  void setType(@NotNull ProtocolMetaModel.StandaloneType type) {
     this.type = type;
   }
 
@@ -65,7 +66,7 @@ class TypeData {
   abstract class TypeRef {
     private StandaloneTypeBinding oneDirectionBinding;
 
-    BoxableType resolve(TypeMap typeMap, DomainGenerator domainGenerator) {
+    BoxableType resolve(@NotNull TypeMap typeMap, @NotNull DomainGenerator domainGenerator) {
       if (commonBinding != null) {
         return commonBinding.getJavaType();
       }
@@ -90,7 +91,7 @@ class TypeData {
     abstract StandaloneTypeBinding resolveImpl(DomainGenerator domainGenerator);
 
     void checkResolved() {
-      if (type == null) {
+      if (type == null && !name.equals("int")) {
         throw new RuntimeException();
       }
     }
@@ -98,8 +99,26 @@ class TypeData {
 
   class Output extends TypeRef {
     @Override
-    StandaloneTypeBinding resolveImpl(final DomainGenerator domainGenerator) {
+    StandaloneTypeBinding resolveImpl(@NotNull DomainGenerator domainGenerator) {
       if (type == null) {
+        if (name.equals("int")) {
+          return new StandaloneTypeBinding() {
+            @Override
+            public BoxableType getJavaType() {
+              return BoxableType.INT;
+            }
+
+            @Override
+            public void generate() {
+            }
+
+            @Override
+            public Direction getDirection() {
+              return null;
+            }
+          };
+        }
+
         throw new RuntimeException();
       }
       return domainGenerator.createStandaloneOutputTypeBinding(type, name);
@@ -108,7 +127,7 @@ class TypeData {
 
   class Input extends TypeRef {
     @Override
-    StandaloneTypeBinding resolveImpl(DomainGenerator domainGenerator) {
+    StandaloneTypeBinding resolveImpl(@NotNull DomainGenerator domainGenerator) {
       if (type == null) {
         throw new RuntimeException();
       }

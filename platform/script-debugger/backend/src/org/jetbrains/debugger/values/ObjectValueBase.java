@@ -11,15 +11,15 @@ import java.util.List;
 
 public abstract class ObjectValueBase<VALUE_LOADER extends ValueManager> extends ValueBase implements ObjectValue {
   @SuppressWarnings("unchecked")
-  private static final AsyncValueLoaderManager<ObjectValueBase, List<? extends Variable>> PROPERTIES_LOADER =
-    new AsyncValueLoaderManager<ObjectValueBase, List<? extends Variable>>(ObjectValueBase.class) {
+  private static final AsyncValueLoaderManager<ObjectValueBase, List<Variable>> PROPERTIES_LOADER =
+    new AsyncValueLoaderManager<ObjectValueBase, List<Variable>>(ObjectValueBase.class) {
       @Override
-      public boolean isUpToDate(@NotNull ObjectValueBase host, @NotNull List<? extends Variable> data) {
+      public boolean isUpToDate(@NotNull ObjectValueBase host, @NotNull List<Variable> data) {
         return host.valueManager.getCacheStamp() == host.cacheStamp;
       }
 
       @Override
-      public void load(@NotNull ObjectValueBase host, @NotNull AsyncResult<List<? extends Variable>> result) {
+      public void load(@NotNull ObjectValueBase host, @NotNull AsyncResult<List<Variable>> result) {
         host.loadProperties(result);
       }
     };
@@ -45,7 +45,7 @@ public abstract class ObjectValueBase<VALUE_LOADER extends ValueManager> extends
 
   @NotNull
   @Override
-  public final AsyncResult<List<? extends Variable>> getProperties() {
+  public final AsyncResult<List<Variable>> getProperties() {
     return PROPERTIES_LOADER.get(this);
   }
 

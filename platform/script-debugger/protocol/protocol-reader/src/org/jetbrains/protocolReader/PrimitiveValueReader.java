@@ -5,7 +5,7 @@ class PrimitiveValueReader extends ValueReader {
   private final String readPostfix;
   final String defaultValue;
 
-  final boolean asRawString;
+  private final boolean asRawString;
 
   PrimitiveValueReader(String name) {
     this(name, false);

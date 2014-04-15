@@ -1,5 +1,7 @@
 package org.jetbrains.protocolReader;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.JsonReaderEx;
 import org.jetbrains.jsonProtocol.ItemDescriptor;
 import org.jetbrains.jsonProtocol.ProtocolMetaModel;
@@ -29,7 +31,53 @@ class OutputClassScope extends ClassScope {
     }
 
     if (!mandatoryParameters.isEmpty()) {
-      generateConstructor(out, mandatoryParameters);
+      generateConstructor(out, mandatoryParameters, null);
+      if (mandatoryParameters.size() == 1) {
+        P parameter = mandatoryParameters.get(0);
+        QualifiedTypeData typeData = new OutputMemberScope(getName(parameter)).resolveType(parameter);
+        if (typeData.getJavaType().getFullText().equals("int[]")) {
+          BoxableType[] types = new BoxableType[mandatoryParameters.size()];
+          types[0] = new ListType(BoxableType.INT) {
+            @Override
+            String getShortText(NamePath contextNamespace) {
+              return getFullText();
+            }
+
+            @Override
+            String getFullText() {
+              return "gnu.trove.TIntArrayList";
+            }
+
+            @Override
+            String getWriteMethodName() {
+              return "writeIntList";
+            }
+          };
+
+          out.newLine().newLine();
+          generateConstructor(out, mandatoryParameters, types);
+
+          types[0] = new ListType(BoxableType.INT) {
+            @Override
+            String getShortText(NamePath contextNamespace) {
+              return getFullText();
+            }
+
+            @Override
+            String getFullText() {
+              return "int";
+            }
+
+            @Override
+            String getWriteMethodName() {
+              return "writeSingletonIntArray";
+            }
+          };
+
+          out.newLine().newLine();
+          generateConstructor(out, mandatoryParameters, types);
+        }
+      }
     }
 
     // generate enum classes after constructor
@@ -54,13 +102,13 @@ class OutputClassScope extends ClassScope {
       out.append("public ").append(getShortClassName());
       out.space().append(parameter.name()).append("(").append(type);
       out.space().append("v").append(")").openBlock();
-      appendWriteValueInvocation(out, parameter, "v");
+      appendWriteValueInvocation(out, parameter, "v", null);
       out.newLine().append("return this;");
       out.closeBlock();
     }
   }
 
-  private <P extends ItemDescriptor.Named> void generateConstructor(TextOutput out, List<P> mandatoryParameters) {
+  private <P extends ItemDescriptor.Named> void generateConstructor(@NotNull TextOutput out, @NotNull List<P> mandatoryParameters, @Nullable BoxableType[] mandatoryParameterTypes) {
     boolean hasDoc = false;
     for (P parameter : mandatoryParameters) {
       if (parameter.description() != null) {
@@ -79,25 +127,41 @@ class OutputClassScope extends ClassScope {
     }
     out.append("public " + getShortClassName() + '(');
 
+    if (mandatoryParameterTypes == null) {
+      mandatoryParameterTypes = new BoxableType[mandatoryParameters.size()];
+    }
+    for (int i = 0, length = mandatoryParameterTypes.length; i < length; i++) {
+      if (mandatoryParameterTypes[i] == null) {
+        P parameter = mandatoryParameters.get(i);
+        mandatoryParameterTypes[i] = new OutputMemberScope(parameter.name()).resolveType(parameter).getJavaType();
+      }
+    }
+
     boolean needComa = false;
-    for (P parameter : mandatoryParameters) {
+    for (int i = 0, size = mandatoryParameters.size(); i < size; i++) {
+      P parameter = mandatoryParameters.get(i);
       if (needComa) {
         out.comma();
       }
-      out.append(new OutputMemberScope(parameter.name()).resolveType(parameter).getJavaType().getShortText(getClassContextNamespace()));
+
+      out.append(mandatoryParameterTypes[i].getShortText(getClassContextNamespace()));
       out.space().append(parameter.name());
       needComa = true;
     }
     out.append(")").openBlock(false);
-    for (P parameter : mandatoryParameters) {
+    for (int i = 0, size = mandatoryParameters.size(); i < size; i++) {
+      P parameter = mandatoryParameters.get(i);
       out.newLine();
-      appendWriteValueInvocation(out, parameter, parameter.name());
+      appendWriteValueInvocation(out, parameter, parameter.name(), mandatoryParameterTypes[i]);
     }
     out.closeBlock();
   }
 
-  private void appendWriteValueInvocation(TextOutput out, ItemDescriptor.Named parameter, String valueRefName) {
-    BoxableType type = new OutputMemberScope(parameter.name()).resolveType(parameter).getJavaType();
+  private void appendWriteValueInvocation(TextOutput out, ItemDescriptor.Named parameter, String valueRefName, @Nullable BoxableType type) {
+    if (type == null) {
+      type = new OutputMemberScope(parameter.name()).resolveType(parameter).getJavaType();
+    }
+
     boolean blockOpened = false;
     if (parameter.optional()) {
       String nullValue;

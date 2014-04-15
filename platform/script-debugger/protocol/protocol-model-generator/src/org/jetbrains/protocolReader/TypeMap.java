@@ -1,10 +1,12 @@
 package org.jetbrains.protocolReader;
 
+import com.intellij.openapi.util.Pair;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -13,7 +15,7 @@ import java.util.Map;
  * A type may be used and resolved (generated or hard-coded).
  */
 class TypeMap {
-  private final Map<List<String>, TypeData> map = new THashMap<>();
+  private final Map<Pair<String, String>, TypeData> map = new THashMap<>();
   private Map<String, DomainGenerator> domainGeneratorMap;
   private final List<StandaloneTypeBinding> typesToGenerate = new ArrayList<>();
 
@@ -21,6 +23,7 @@ class TypeMap {
     this.domainGeneratorMap = domainGeneratorMap;
   }
 
+  @Nullable
   BoxableType resolve(String domainName, String typeName, TypeData.Direction direction) {
     DomainGenerator domainGenerator = domainGeneratorMap.get(domainName);
     if (domainGenerator == null) {
@@ -29,7 +32,7 @@ class TypeMap {
     return getTypeData(domainName, typeName).get(direction).resolve(this, domainGenerator);
   }
 
-  void addTypeToGenerate(StandaloneTypeBinding binding) {
+  void addTypeToGenerate(@NotNull StandaloneTypeBinding binding) {
     typesToGenerate.add(binding);
   }
 
@@ -45,17 +48,14 @@ class TypeMap {
     }
   }
 
-  TypeData getTypeData(String domainName, String typeName) {
-    List<String> key = createKey(domainName, typeName);
+  @NotNull
+  TypeData getTypeData(@NotNull String domainName, @NotNull String typeName) {
+    Pair<String, String> key = Pair.create(domainName, typeName);
     TypeData result = map.get(key);
     if (result == null) {
       result = new TypeData(typeName);
       map.put(key, result);
     }
     return result;
-  }
-
-  private static List<String> createKey(String domainName, String typeName) {
-    return Arrays.asList(domainName, typeName);
   }
 }

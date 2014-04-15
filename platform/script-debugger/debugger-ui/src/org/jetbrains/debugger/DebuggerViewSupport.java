@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.frame.CallFrameView;
 import org.jetbrains.debugger.values.ObjectValue;
+import org.jetbrains.debugger.values.Value;
 
 import javax.swing.*;
 import java.util.List;
@@ -30,7 +31,7 @@ public interface DebuggerViewSupport extends MemberFilter {
   // Please, don't hesitate to ask to share some generic implementations. Don't reinvent the wheel and keep in mind - user expects the same UI across all IDEA-based IDEs.
   void computeObjectPresentation(@NotNull ObjectValue value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XValueNode node, @NotNull Icon icon);
 
-  void computeArrayPresentation(@NotNull ObjectValue value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XValueNode node, @NotNull Icon icon);
+  void computeArrayPresentation(@NotNull Value value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XValueNode node, @NotNull Icon icon);
 
   @NotNull
   XDebuggerEvaluator createFrameEvaluator(@NotNull CallFrameView frame);
@@ -97,7 +98,7 @@ public interface DebuggerViewSupport extends MemberFilter {
     }
 
     @Override
-    public void computeArrayPresentation(@NotNull ObjectValue value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XValueNode node, @NotNull Icon icon) {
+    public void computeArrayPresentation(@NotNull Value value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XValueNode node, @NotNull Icon icon) {
       VariableView.setArrayPresentation(value, context, icon, node);
     }
 

@@ -5,9 +5,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 
 public class TextOutput {
-  private int identLevel = 0;
+  public static final char[] EMPTY_CHARS = new char[0];
+  private int identLevel;
   private final static int indentGranularity = 2;
-  private char[][] indents = new char[][]{new char[0]};
+  private char[][] indents = {EMPTY_CHARS};
   private boolean justNewlined;
   private final StringBuilder out;
 
