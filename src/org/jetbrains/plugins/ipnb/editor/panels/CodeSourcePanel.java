@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author traff
@@ -27,16 +28,10 @@ import javax.swing.*;
 public class CodeSourcePanel extends JPanel implements EditorPanel {
   private final Editor myEditor;
 
-  public CodeSourcePanel(Project project, String source, int promptNumber) {
-    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-
+  public CodeSourcePanel(Project project, String source) {
+    super(new BorderLayout());
     myEditor = IpnbEditorUtil.createPythonCodeEditor(project, source);
-
-    add(IpnbEditorUtil.createPanelWithPrompt(inputPrompt(promptNumber), myEditor.getComponent()));
-  }
-
-  private String inputPrompt(int promptNumber) {
-    return String.format("In[%d]:", promptNumber);
+    add(myEditor.getComponent(), BorderLayout.CENTER);
   }
 
   @Override

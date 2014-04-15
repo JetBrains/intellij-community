@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.ipnb.editor.panels;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,54 +37,75 @@ public class IpnbFilePanel extends JPanel {
   public IpnbFilePanel(@NotNull Project project, @Nullable Disposable parent, @NotNull IpnbFile file) {
     super();
     setLayout(new GridBagLayout());
+    setBackground(IpnbEditorUtil.getBackground());
 
-    int row = 0;
     GridBagConstraints c = new GridBagConstraints();
     c.fill = GridBagConstraints.HORIZONTAL;
     c.anchor = GridBagConstraints.PAGE_START;
-    c.gridx = 0;
+    c.gridx = 1;
+    c.gridy = 0;
+    c.gridwidth = 1;
+
+    c.insets = new Insets(10, 0, 0, 0);
 
     for (IpnbCell cell : file.getCells()) {
-      JPanel panel = createPanelForCell(project, cell);
-      c.gridy = row;
-      row++;
-      add(panel, c);
-      if (cell instanceof CodeCell) {
-        for (CellOutput cellOutput : ((CodeCell)cell).getCellOutputs()) {
-          final JPanel outputPanel = createPanelForCellOutput(project, cellOutput, ((CodeCell)cell).getPromptNumber());
-          c.gridy = row;
-          row++;
-          add(outputPanel, c);
-        }
-      }
+      c.gridy = addCellToPanel(project, cell, c);
     }
 
     c.weighty = 1;
     add(createEmptyPanel(), c);
   }
 
-  private JPanel createEmptyPanel() {
-    JPanel panel = new JPanel();
-    panel.setBackground(IpnbEditorUtil.getBackground());
-    return panel;
+  protected static String prompt(int promptNumber, String type) {
+    return String.format(type + "[%d]:", promptNumber);
   }
 
-  private JPanel createPanelForCellOutput(@NotNull final Project project, @NotNull final CellOutput cell, int number) {
-    return new CodeOutputPanel(project, cell, number);
+  public static void addPromptPanel(JComponent container,
+                                    int promptNumber,
+                                    String promptType,
+                                    JComponent component,
+                                    GridBagConstraints c) {
+    c.gridx = 0;
+    container.add(IpnbEditorUtil.createPromptPanel(prompt(promptNumber, promptType)), c);
+    c.gridx = 1;
+    container.add(component, c);
   }
 
-  private JPanel createPanelForCell(@NotNull final Project project, @NotNull final IpnbCell cell) {
+  private int addCellToPanel(Project project, IpnbCell cell, GridBagConstraints c) {
     if (cell instanceof CodeCell) {
-      return new CodeSourcePanel(project, ((CodeCell)cell).getSourceAsString(), ((CodeCell)cell).getPromptNumber());
+      c.gridwidth = 2;
+      c.gridx = 0;
+
+      CodeCell codeCell = (CodeCell)cell;
+
+      addPromptPanel(this, codeCell.getPromptNumber(), "In", new CodeSourcePanel(project, codeCell.getSourceAsString()), c);
+
+      c.gridx = 1;
+      c.gridwidth = 1;
+
+      for (CellOutput cellOutput : codeCell.getCellOutputs()) {
+        c.gridy++;
+        if (cellOutput.getSourceAsString() != null) {
+          addPromptPanel(this, codeCell.getPromptNumber(), "Out",
+                         new CodeOutputPanel(cellOutput.getSourceAsString()), c);
+        }
+      }
     }
     else if (cell instanceof MarkdownCell) {
-      return new MarkdownPanel(project, (MarkdownCell)cell);
+      add(new MarkdownPanel(project, (MarkdownCell)cell), c);
     }
     else if (cell instanceof HeadingCell) {
-      return new HeadingPanel(project, (HeadingCell)cell);
+      add(new HeadingPanel(project, (HeadingCell)cell), c);
     }
     else {
       throw new UnsupportedOperationException(cell.getClass().toString());
     }
+    return c.gridy + 1;
+  }
+
+  private JPanel createEmptyPanel() {
+    JPanel panel = new JPanel();
+    panel.setBackground(IpnbEditorUtil.getBackground());
+    return panel;
   }
 }

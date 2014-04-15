@@ -17,13 +17,21 @@ package org.jetbrains.plugins.ipnb.editor;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.impl.ConsoleViewUtil;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
@@ -40,7 +48,8 @@ import java.util.List;
 public class IpnbEditorUtil {
 
   public static Editor createPythonCodeEditor(@NotNull Project project, @NotNull String text) {
-    EditorEx editor = (EditorEx)EditorFactory.getInstance().createEditor(createPythonCodeDocument(project, text), project, PythonFileType.INSTANCE, false);
+    EditorEx editor =
+      (EditorEx)EditorFactory.getInstance().createEditor(createPythonCodeDocument(project, text), project, PythonFileType.INSTANCE, false);
     noScrolling(editor);
     ConsoleViewUtil.setupConsoleEditor(editor, false, false);
     return editor;
@@ -50,7 +59,7 @@ public class IpnbEditorUtil {
     editor.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
     editor.getScrollPane().setWheelScrollingEnabled(false);
     List<MouseWheelListener> listeners = Lists.newArrayList(editor.getScrollPane().getMouseWheelListeners());
-    for (MouseWheelListener l: listeners) {
+    for (MouseWheelListener l : listeners) {
       editor.getScrollPane().removeMouseWheelListener(l);
     }
   }
@@ -64,17 +73,12 @@ public class IpnbEditorUtil {
     return PsiDocumentManager.getInstance(project).getDocument(fragment);
   }
 
-  public static JPanel createPanelWithPrompt(@NotNull String promptText, @NotNull final JComponent component) {
-    JPanel container = new JPanel(new BorderLayout());
-    JPanel p = new JPanel(new BorderLayout());
-    p.add(new JLabel(promptText), BorderLayout.WEST);
-    container.add(p, BorderLayout.NORTH);
-
-    container.add(component, BorderLayout.CENTER);
-
-    p.setBackground(getBackground());
-
-    return container;
+  public static JComponent createPromptPanel(@NotNull String promptText) {
+    JLabel promptLabel = new JLabel(promptText);
+    promptLabel.setFont(promptLabel.getFont().deriveFont(Font.BOLD));
+    promptLabel.setForeground(JBColor.BLUE);
+    promptLabel.setBackground(getBackground());
+    return promptLabel;
   }
 
   public static Color getBackground() {
