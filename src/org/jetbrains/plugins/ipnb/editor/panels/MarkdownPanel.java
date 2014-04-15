@@ -17,9 +17,11 @@ package org.jetbrains.plugins.ipnb.editor.panels;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import net.sourceforge.jeuclid.swing.JMathComponent;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.IpnbUtils;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
@@ -49,7 +51,8 @@ public class MarkdownPanel extends JPanel {
   private Project myProject;
 
   public MarkdownPanel(Project project, MarkdownCell cell) {
-    super(new BorderLayout());
+    super();
+    setLayout(new VerticalFlowLayout(FlowLayout.LEFT));
     myProject = project;
     final String text = StringUtil.join(cell.getSource(), "\n");
     initPanel(text);
@@ -66,14 +69,8 @@ public class MarkdownPanel extends JPanel {
     });
   }
 
-  private void initPanel(@Nullable  String text) {
+  private void initPanel(@Nullable final String text) {
     if (text == null) return;
-    setLayout(new GridBagLayout());
-    GridBagConstraints c = new GridBagConstraints();
-    c.fill = GridBagConstraints.HORIZONTAL;
-    c.gridy = 0;
-    c.gridx = 0;
-
     final SnuggleEngine engine = new SnuggleEngine(new SimpleStylesheetCache());
     final SnuggleSession session = engine.createSession();
 
@@ -86,30 +83,49 @@ public class MarkdownPanel extends JPanel {
       return;
     }
     final NodeList nodes = session.buildDOMSubtree();
+    boolean hasPlain = true;
+    final StringBuilder plainContent = new StringBuilder();
+    int compNumber = 0;
     for (int i = 0; i != nodes.getLength(); ++i) {
       final Node node = nodes.item(i);
       final StylesheetManager stylesheetManager = session.getStylesheetManager();
       final XMLStringOutputOptions xmlStringOutputOptions = engine.getDefaultXMLStringOutputOptions();
       final String str = XMLUtilities.serializeNodeChildren(stylesheetManager, node, xmlStringOutputOptions);
 
-      if (str.startsWith("<math")) {
+      final Node child = node.getFirstChild();
+      if (child != null && "math".equals(child.getLocalName())) {
+        if (hasPlain) {
+          hasPlain = false;
+          compNumber = addPlainComponent(compNumber, plainContent);
+          plainContent.setLength(0);
+        }
         final JMathComponent comp = new JMathComponent();
         comp.setBackground(IpnbEditorUtil.getBackground());
         comp.setOpaque(true);
         comp.setContent("<html>" + str + "</html>");
-        add(comp, c);
+
+        add(comp, compNumber);
+        compNumber += 1;
       }
       else {
-        final String html = IpnbUtils.markdown2Html(str);
-        final JBLabel comp = new JBLabel(html);
-        comp.setBackground(IpnbEditorUtil.getBackground());
-        comp.setOpaque(true);
-        add(comp, c);
+        hasPlain = true;
+        plainContent.append(IpnbUtils.markdown2Html(str));
       }
-      c.gridy = c.gridy + 1;
+    }
+    if (hasPlain) {
+      addPlainComponent(compNumber, plainContent);
     }
     setBackground(IpnbEditorUtil.getBackground());
     setOpaque(true);
+
+  }
+
+  private int addPlainComponent(final int compNumber, @NotNull final StringBuilder plainContent) {
+    final JBLabel comp = new JBLabel("<html>" + plainContent.toString() + "</html>");
+    comp.setBackground(IpnbEditorUtil.getBackground());
+    comp.setOpaque(true);
+    add(comp, compNumber);
+    return compNumber + 1;
   }
 
   public boolean isEditing() {
@@ -123,9 +139,5 @@ public class MarkdownPanel extends JPanel {
 
   private void updatePanel() {
     removeAll();
-    if (myEditing) {
-
-
-    }
   }
 }
