@@ -153,7 +153,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
         WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
         return;
       }
-      if (inlineLocalDialog.isInlineThis()) {
+      if (refExpr != null && inlineLocalDialog.isInlineThis()) {
         refsToInlineList = Collections.<PsiElement>singletonList(refExpr);
         inlineAll.set(false);
       }
@@ -253,11 +253,12 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
             } else {
               defToInline.delete();
             }
+
+            if (ReferencesSearch.search(local).findFirst() == null) {
+              QuickFixFactory.getInstance().createRemoveUnusedVariableFix(local).invoke(project, editor, local.getContainingFile());
+            }
           }
 
-          if (ReferencesSearch.search(local).findFirst() == null) {
-            QuickFixFactory.getInstance().createRemoveUnusedVariableFix(local).invoke(project, editor, local.getContainingFile());
-          }
 
           if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
             highlightManager.addOccurrenceHighlights(editor, ContainerUtil.convert(exprs, new PsiExpression[refsToInline.length], new Function<SmartPsiElementPointer<PsiExpression>, PsiExpression>() {
