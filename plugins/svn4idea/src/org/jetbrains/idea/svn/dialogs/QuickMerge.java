@@ -404,13 +404,6 @@ public class QuickMerge {
           return new BranchMerger(vcs, currentBranchUrl, myWcInfo.getUrl(), myWcInfo.getPath(), handler, reintegrate, myBranchName,
                                   reintegrate ? invertor.getWrapped().getTargetRevision() : invertor.getWrapped().getSourceRevision());
         }
-        @Nullable
-        public List<CommittedChangeList> getListsToMerge() {
-          return null;
-        }
-        public boolean isMergeAll() {
-          return true;
-        }
       };
     }
   }
