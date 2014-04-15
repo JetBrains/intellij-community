@@ -13,6 +13,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +47,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
 
     myEditor = createEditor(project, vFile);
 
-    myEditorPanel = new JScrollPane(createIpnbEditorPanel(myProject, vFile, this));
+    myEditorPanel = new JBScrollPane(createIpnbEditorPanel(myProject, vFile, this));
   }
 
   @NotNull
