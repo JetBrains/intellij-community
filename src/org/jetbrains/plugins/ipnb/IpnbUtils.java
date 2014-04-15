@@ -14,6 +14,8 @@ public class IpnbUtils {
   private static MarkdownProcessor ourMarkdownProcessor = new MarkdownProcessor();
 
   public static String markdown2Html(@NotNull final String description) {
+    // TODO: add links to the dependant notebook pages (see: index.ipynb)
+    //TODO: relative picture links (see: index.ipynb in IPython.kernel)
     final List<String> lines = ContainerUtil.newArrayList(description.split("\n|\r|\r\n"));
     final List<String> processedLines = new ArrayList<String>();
     boolean isInCode = false;
