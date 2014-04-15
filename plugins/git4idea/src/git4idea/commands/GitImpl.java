@@ -17,6 +17,7 @@ package git4idea.commands;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
@@ -25,6 +26,8 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitBranch;
 import git4idea.GitCommit;
 import git4idea.GitExecutionException;
+import git4idea.GitVcs;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.history.GitHistoryUtils;
 import git4idea.push.GitPushSpec;
 import git4idea.repo.GitRemote;
@@ -362,21 +365,27 @@ public class GitImpl implements Git {
 
   @Override
   @NotNull
-  public GitCommandResult push(@NotNull GitRepository repository, @NotNull String remote, @NotNull String url, @NotNull String spec,
-                               boolean updateTracking, @NotNull GitLineHandlerListener... listeners) {
-    final GitLineHandlerPasswordRequestAware h = new GitLineHandlerPasswordRequestAware(repository.getProject(), repository.getRoot(),
-                                                                                        GitCommand.PUSH);
-    h.setUrl(url);
-    h.setSilent(false);
-    h.setStdoutSuppressed(false);
-    addListeners(h, listeners);
-    h.addProgressParameter();
-    h.addParameters(remote);
-    h.addParameters(spec);
-    if (updateTracking) {
-      h.addParameters("--set-upstream");
-    }
-    return run(h);
+  public GitCommandResult push(@NotNull final GitRepository repository, @NotNull final String remote, @NotNull final String url,
+                               @NotNull final String spec, final boolean updateTracking,
+                               @NotNull final GitLineHandlerListener... listeners) {
+    return runRemoteCommand(new Computable<GitLineHandler>() {
+      @Override
+      public GitLineHandler compute() {
+        final GitLineHandlerPasswordRequestAware h = new GitLineHandlerPasswordRequestAware(repository.getProject(), repository.getRoot(),
+                                                                                            GitCommand.PUSH);
+        h.setUrl(url);
+        h.setSilent(false);
+        h.setStdoutSuppressed(false);
+        addListeners(h, listeners);
+        h.addProgressParameter();
+        h.addParameters(remote);
+        h.addParameters(spec);
+        if (updateTracking) {
+          h.addParameters("--set-upstream");
+        }
+        return h;
+      }
+    });
   }
 
   @Override
@@ -435,32 +444,46 @@ public class GitImpl implements Git {
    */
   @Override
   @NotNull
-  public GitCommandResult fetch(@NotNull GitRepository repository, @NotNull String url, @NotNull String remote, String... params) {
-    final GitLineHandlerPasswordRequestAware h =
-      new GitLineHandlerPasswordRequestAware(repository.getProject(), repository.getRoot(), GitCommand.FETCH);
-    h.setUrl(url);
-    h.addParameters(remote);
-    h.addParameters(params);
-    h.addProgressParameter();
-    return run(h);
+  public GitCommandResult fetch(@NotNull final GitRepository repository, @NotNull final String url, @NotNull final String remote,
+                                @NotNull final List<GitLineHandlerListener> listeners, final String... params) {
+    return runRemoteCommand(new Computable<GitLineHandler>() {
+      @Override
+      public GitLineHandler compute() {
+        final GitLineHandlerPasswordRequestAware h = new GitLineHandlerPasswordRequestAware(repository.getProject(), repository.getRoot(),
+                                                                                            GitCommand.FETCH);
+        h.setUrl(url);
+        h.addParameters(remote);
+        h.addParameters(params);
+        h.addProgressParameter();
+        GitVcs vcs = GitVcs.getInstance(repository.getProject());
+        if (vcs != null && GitVersionSpecialty.SUPPORTS_FETCH_PRUNE.existsIn(vcs.getVersion())) {
+          h.addParameters("--prune");
+        }
+        addListeners(h, listeners);
+        return h;
+      }
+    });
   }
 
   private static void addListeners(@NotNull GitLineHandler handler, @NotNull GitLineHandlerListener... listeners) {
+    addListeners(handler, Arrays.asList(listeners));
+  }
+
+  private static void addListeners(@NotNull GitLineHandler handler, @NotNull List<GitLineHandlerListener> listeners) {
     for (GitLineHandlerListener listener : listeners) {
       handler.addLineListener(listener);
     }
   }
 
-  /**
-   * Runs the given {@link GitLineHandler} in the current thread and returns the {@link GitCommandResult}.
-   */
-  private static GitCommandResult run(@NotNull GitLineHandler handler) {
+  @NotNull
+  private static GitCommandResult run(@NotNull Computable<GitLineHandler> handlerConstructor) {
     final List<String> errorOutput = new ArrayList<String>();
     final List<String> output = new ArrayList<String>();
     final AtomicInteger exitCode = new AtomicInteger();
     final AtomicBoolean startFailed = new AtomicBoolean();
     final AtomicReference<Throwable> exception = new AtomicReference<Throwable>();
-    
+
+    GitLineHandler handler = handlerConstructor.compute();
     handler.addLineListener(new GitLineHandlerListener() {
       @Override public void onLineAvailable(String line, Key outputType) {
         if (isError(line)) {
@@ -480,7 +503,7 @@ public class GitImpl implements Git {
         exception.set(t);
       }
     });
-    
+
     handler.runInCurrentThread(null);
 
     if (handler instanceof GitLineHandlerPasswordRequestAware && ((GitLineHandlerPasswordRequestAware)handler).hadAuthRequest()) {
@@ -490,6 +513,20 @@ public class GitImpl implements Git {
     final boolean success = !startFailed.get() && errorOutput.isEmpty() &&
                             (handler.isIgnoredErrorCode(exitCode.get()) || exitCode.get() == 0);
     return new GitCommandResult(success, exitCode.get(), errorOutput, output, null);
+  }
+
+  /**
+   * Runs the given {@link GitLineHandler} in the current thread and returns the {@link GitCommandResult}.
+   */
+  @NotNull
+  private static GitCommandResult run(@NotNull GitLineHandler handler) {
+    return run(new Computable.PredefinedValueComputable<GitLineHandler>(handler));
+  }
+
+  @Override
+  @NotNull
+  public GitCommandResult runRemoteCommand(@NotNull Computable<GitLineHandler> handlerConstructor) {
+    return run(handlerConstructor);
   }
   
   /**

@@ -40,8 +40,6 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
-import static git4idea.test.GitExecutor.cd;
-import static git4idea.test.GitExecutor.git;
 import static java.lang.String.format;
 
 /**
@@ -227,7 +225,8 @@ public class GitTestImpl implements Git {
 
   @NotNull
   @Override
-  public GitCommandResult fetch(@NotNull GitRepository repository, @NotNull String url, @NotNull String remote, String... params) {
+  public GitCommandResult fetch(@NotNull GitRepository repository, @NotNull String url, @NotNull String remote,
+                                @NotNull List<GitLineHandlerListener> listeners, String... params) {
     throw new UnsupportedOperationException();
   }
 
