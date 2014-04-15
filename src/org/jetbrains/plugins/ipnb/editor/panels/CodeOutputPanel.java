@@ -10,6 +10,8 @@ public class CodeOutputPanel extends JPanel {
   public CodeOutputPanel(@NotNull String outputText) {
     super(new BorderLayout());
 
-    add(new JTextArea(outputText), BorderLayout.CENTER);
+    JTextArea textArea = new JTextArea(outputText);
+    textArea.setEditable(false);
+    add(textArea, BorderLayout.CENTER);
   }
 }
