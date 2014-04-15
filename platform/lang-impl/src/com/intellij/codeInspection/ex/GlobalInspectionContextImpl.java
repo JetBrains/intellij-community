@@ -336,6 +336,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         final VirtualFile virtualFile = file.getVirtualFile();
         if (virtualFile == null) return;
 
+        if (myView == null) {
+          throw new ProcessCanceledException();
+        }
+
         if (LOG.isDebugEnabled()) {
           LOG.debug("Running local inspections on " + virtualFile.getPath());
         }
