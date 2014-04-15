@@ -56,6 +56,10 @@ public class UseOfObsoleteAssertInspectionTest extends IGQuickFixesTestCase {
     doFixTest();
   }
 
+  public void testSingleStaticImport() {
+    doFixTest();
+  }
+
   private void doFixTest() {
     doTest(getTestName(true), InspectionGadgetsBundle.message("use.of.obsolete.assert.quickfix"));
   }
