@@ -17,7 +17,6 @@ package org.jetbrains.plugins.ipnb.editor.panels;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import org.apache.commons.lang.NotImplementedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.format.IpnbFile;
@@ -67,7 +66,7 @@ public class IpnbFilePanel extends JPanel {
       return new HeadingPanel(project, (HeadingCell)cell);
     }
     else {
-      throw new NotImplementedException(cell.getClass().toString());
+      throw new UnsupportedOperationException(cell.getClass().toString());
     }
   }
 }
