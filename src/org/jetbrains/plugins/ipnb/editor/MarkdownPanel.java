@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.ipnb.editor;
 
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.plugins.ipnb.format.cells.MarkdownCell;

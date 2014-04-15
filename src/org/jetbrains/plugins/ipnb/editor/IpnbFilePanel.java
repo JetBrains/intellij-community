@@ -16,21 +16,18 @@
 package org.jetbrains.plugins.ipnb.editor;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import org.apache.commons.lang.NotImplementedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.format.IpnbFile;
 import org.jetbrains.plugins.ipnb.format.cells.CodeCell;
+import org.jetbrains.plugins.ipnb.format.cells.HeadingCell;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbCell;
 import org.jetbrains.plugins.ipnb.format.cells.MarkdownCell;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 
 /**
  * @author traff
@@ -65,6 +62,9 @@ public class IpnbFilePanel extends JPanel {
     }
     else if (cell instanceof MarkdownCell) {
       return new MarkdownPanel(project, (MarkdownCell)cell);
+    }
+    else if (cell instanceof HeadingCell) {
+      return new HeadingPanel(project, (HeadingCell)cell);
     }
     else {
       throw new NotImplementedException(cell.getClass().toString());
