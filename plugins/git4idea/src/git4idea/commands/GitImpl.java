@@ -483,35 +483,48 @@ public class GitImpl implements Git {
     final AtomicBoolean startFailed = new AtomicBoolean();
     final AtomicReference<Throwable> exception = new AtomicReference<Throwable>();
 
-    GitLineHandler handler = handlerConstructor.compute();
-    handler.addLineListener(new GitLineHandlerListener() {
-      @Override public void onLineAvailable(String line, Key outputType) {
-        if (isError(line)) {
-          errorOutput.add(line);
-        } else {
-          output.add(line);
+    int authAttempt = 0;
+    boolean authFailed;
+    boolean success;
+    do {
+      errorOutput.clear();
+      output.clear();
+      exitCode.set(0);
+      startFailed.set(false);
+      exception.set(null);
+
+      GitLineHandler handler = handlerConstructor.compute();
+      handler.addLineListener(new GitLineHandlerListener() {
+        @Override public void onLineAvailable(String line, Key outputType) {
+          if (isError(line)) {
+            errorOutput.add(line);
+          } else {
+            output.add(line);
+          }
         }
+
+        @Override public void processTerminated(int code) {
+          exitCode.set(code);
+        }
+
+        @Override public void startFailed(Throwable t) {
+          startFailed.set(true);
+          errorOutput.add("Failed to start Git process");
+          exception.set(t);
+        }
+      });
+
+      handler.runInCurrentThread(null);
+
+      authFailed = handler.hasHttpAuthFailed();
+
+      if (handler instanceof GitLineHandlerPasswordRequestAware && ((GitLineHandlerPasswordRequestAware)handler).hadAuthRequest()) {
+        errorOutput.add("Authentication failed");
       }
 
-      @Override public void processTerminated(int code) {
-        exitCode.set(code);
-      }
-
-      @Override public void startFailed(Throwable t) {
-        startFailed.set(true);
-        errorOutput.add("Failed to start Git process");
-        exception.set(t);
-      }
-    });
-
-    handler.runInCurrentThread(null);
-
-    if (handler instanceof GitLineHandlerPasswordRequestAware && ((GitLineHandlerPasswordRequestAware)handler).hadAuthRequest()) {
-      errorOutput.add("Authentication failed");
+      success = !startFailed.get() && errorOutput.isEmpty() && (handler.isIgnoredErrorCode(exitCode.get()) || exitCode.get() == 0);
     }
-
-    final boolean success = !startFailed.get() && errorOutput.isEmpty() &&
-                            (handler.isIgnoredErrorCode(exitCode.get()) || exitCode.get() == 0);
+    while (authFailed && authAttempt++ < 2);
     return new GitCommandResult(success, exitCode.get(), errorOutput, output, null);
   }
 
@@ -547,5 +560,4 @@ public class GitImpl implements Git {
     "Cannot apply", "Could not", "Interactive rebase already started", "refusing to pull", "cannot rebase:", "conflict",
     "unable"
   };
-
 }

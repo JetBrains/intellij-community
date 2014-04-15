@@ -137,6 +137,11 @@ public abstract class GithubTest extends UsefulTestCase {
       @Override
       public void forgetPassword() {
       }
+
+      @Override
+      public boolean wasCancelled() {
+        return false;
+      }
     });
   }
 
