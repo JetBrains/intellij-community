@@ -338,10 +338,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                     } else {
                       for (int i = 0; i < lambdaParameters.length; i++) {
                         PsiParameter lambdaParameter = lambdaParameters[i];
-                        if (!TypeConversionUtil.isAssignable(lambdaParameter.getType(),
-                                                             GenericsUtil.eliminateWildcards(substitutor.substitute(parameters[i].getType())))) {
-                          HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(lambdaParameter)
-                            .descriptionAndTooltip(incompatibleTypesMessage).create();
+                        if (!TypeConversionUtil.isAssignable(lambdaParameter.getType(), substitutor.substitute(parameters[i].getType()))) {
+                          HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                            .range(lambdaParameter)
+                            .descriptionAndTooltip(incompatibleTypesMessage)
+                            .create();
                           myHolder.add(result);
                           break;
                         }
