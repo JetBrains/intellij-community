@@ -39,7 +39,9 @@ public class CodePanel extends JPanel implements EditorPanel {
     add(createContainer(inputPrompt(cell), myEditor.getComponent()));
 
     for (CellOutput output: cell.getCellOutputs()) {
-      add(createContainer(outputPrompt(cell), new JTextArea(StringUtil.join(output.getText(), "\n"))));
+      final String[] text = output.getText();
+      if (text != null)
+        add(createContainer(outputPrompt(cell), new JTextArea(StringUtil.join(text, "\n"))));
     }
 
 

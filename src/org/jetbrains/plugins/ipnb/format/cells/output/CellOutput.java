@@ -1,15 +1,15 @@
 package org.jetbrains.plugins.ipnb.format.cells.output;
 
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class CellOutput {
-  @NotNull private final String[] myText;
+  @Nullable private final String[] myText;
 
-  public CellOutput(@NotNull final String[] text) {
+  public CellOutput(@Nullable final String[] text) {
     myText = text;
   }
 
-  @NotNull
+  @Nullable
   public String[] getText() {
     return myText;
   }
