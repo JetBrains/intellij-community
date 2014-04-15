@@ -34,7 +34,7 @@ public class CodePanel extends JPanel implements EditorPanel {
   public CodePanel(Project project, CodeCell cell) {
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
-    myEditor = IpnbEditorUtil.createPythonCodeEditor(project, StringUtil.join(cell.getInput(), "\n"));
+    myEditor = IpnbEditorUtil.createPythonCodeEditor(project, StringUtil.join(cell.getSource(), "\n"));
 
     add(createContainer(inputPrompt(cell), myEditor.getComponent()));
 

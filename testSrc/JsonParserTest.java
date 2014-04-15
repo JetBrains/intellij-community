@@ -64,8 +64,8 @@ public class JsonParserTest extends TestCase {
     assertTrue(cell instanceof CodeCell);
     final List<CellOutput> outputs = ((CodeCell)cell).getCellOutputs();
     assertEquals(0, outputs.size());
-    final String[] input = ((CodeCell)cell).getInput();
-    final String joined = StringUtil.join(input);
+    final String[] source = ((CodeCell)cell).getSource();
+    final String joined = StringUtil.join(source);
     assertEquals("e = x + 2*y", joined);
     final String language = ((CodeCell)cell).getLanguage();
     assertEquals("python", language);

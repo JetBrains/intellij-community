@@ -16,8 +16,8 @@
 package org.jetbrains.plugins.ipnb.editor;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.plugins.ipnb.format.cells.MarkdownCell;
+import org.jetbrains.plugins.ipnb.format.cells.SourceCell;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,7 +34,7 @@ public class MarkdownPanel extends JPanel {
   public MarkdownPanel(Project project, MarkdownCell cell) {
     super(new BorderLayout());
     myProject = project;
-    add(createTextArea(StringUtil.join(cell.getSource(), "\n")), BorderLayout.CENTER);
+    add(createTextArea(cell.getSourceAsString()), BorderLayout.CENTER);
 
 
     addMouseListener(new MouseAdapter() {
