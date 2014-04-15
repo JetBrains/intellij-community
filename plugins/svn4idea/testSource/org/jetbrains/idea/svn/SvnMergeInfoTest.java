@@ -58,9 +58,21 @@ public class SvnMergeInfoTest extends Svn17TestCase {
   private SvnVcs myVcs;
   private BranchInfo myMergeChecker;
 
+  private File trunk;
+  private File folder;
+  private File folder1;
+  private File f1;
+  private File f2;
+
+  private String myTrunkUrl;
+  private String myBranchUrl;
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
+
+    myTrunkUrl = myRepoUrl + "/trunk";
+    myBranchUrl = myRepoUrl + "/branch";
 
     myBranchVcsRoot = new File(myTempDirFixture.getTempDirPath(), "branch");
     myBranchVcsRoot.mkdir();
@@ -69,15 +81,13 @@ public class SvnMergeInfoTest extends Svn17TestCase {
     myProjectLevelVcsManager.setDirectoryMapping(myBranchVcsRoot.getAbsolutePath(), SvnVcs.VCS_NAME);
 
     VirtualFile vcsRoot = LocalFileSystem.getInstance().findFileByIoFile(myBranchVcsRoot);
-    Node node = new Node(vcsRoot, SVNURL.parseURIEncoded(myRepoUrl + "/branch"), SVNURL.parseURIEncoded(myRepoUrl));
+    Node node = new Node(vcsRoot, SVNURL.parseURIEncoded(myBranchUrl), SVNURL.parseURIEncoded(myRepoUrl));
     RootUrlInfo root = new RootUrlInfo(node, WorkingCopyFormat.ONE_DOT_SIX, vcsRoot, null);
     myWCInfo = new WCInfo(root, true, SVNDepth.INFINITY);
-    myOneShotMergeInfoHelper = new OneShotMergeInfoHelper(myProject, myWCInfo, myRepoUrl + "/trunk");
+    myOneShotMergeInfoHelper = new OneShotMergeInfoHelper(myProject, myWCInfo, myTrunkUrl);
 
     myVcs = SvnVcs.getInstance(myProject);
     myVcs.getSvnConfiguration().setCheckNestedForQuickMerge(true);
-    //    AbstractVcs vcsFound = myProjectLevelVcsManager.findVcsByName(SvnVcs.VCS_NAME);
-    //    Assert.assertEquals(1, myProjectLevelVcsManager.getRootsUnderVcs(vcsFound).length);
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
@@ -88,16 +98,9 @@ public class SvnMergeInfoTest extends Svn17TestCase {
 
   @Test
   public void testSimpleNotMerged() throws Exception {
-    final File trunk = newFolder(myTempDirFixture.getTempDirPath(), "trunk");
-    final File folder = newFolder(trunk, "folder");
-    final File f1 = newFile(folder, "f1.txt");
-    newFile(folder, "f2.txt");
-    waitTime();
-
-    importAndCheckOut(trunk);
+    createOneFolderStructure();
 
     // rev 3
-
     editAndCommit(trunk, f1);
 
     assertMergeResult(getTrunkChangeLists(), SvnMergeInfoCache.MergeCheckResult.NOT_MERGED);
@@ -105,47 +108,34 @@ public class SvnMergeInfoTest extends Svn17TestCase {
 
   @Test
   public void testSimpleMerged() throws Exception {
-    final File trunk = newFolder(myTempDirFixture.getTempDirPath(), "trunk");
-    final File folder = newFolder(trunk, "folder");
-    final File f1 = newFile(folder, "f1.txt");
-    newFile(folder, "f2.txt");
-    waitTime();
-
-    importAndCheckOut(trunk);
+    createOneFolderStructure();
 
     // rev 3
     editAndCommit(trunk, f1);
 
     // rev 4: record as merged into branch
-    recordMerge(myBranchVcsRoot, myRepoUrl + "/trunk", "-c", "3");
+    recordMerge(myBranchVcsRoot, myTrunkUrl, "-c", "3");
     commitFile(myBranchVcsRoot);
     updateFile(myBranchVcsRoot);
 
     assertMergeInfo(myBranchVcsRoot, "/trunk:3");
-
     assertMergeResult(getTrunkChangeLists(), SvnMergeInfoCache.MergeCheckResult.MERGED);
   }
 
   @Test
   public void testEmptyMergeinfoBlocks() throws Exception {
-    final File trunk = newFolder(myTempDirFixture.getTempDirPath(), "trunk");
-    final File folder = newFolder(trunk, "folder");
-    final File f1 = newFile(folder, "f1.txt");
-    newFile(folder, "f2.txt");
-    waitTime();
-
-    importAndCheckOut(trunk);
+    createOneFolderStructure();
 
     // rev 3
     editAndCommit(trunk, f1);
 
     // rev 4: record as merged into branch
-    merge(myBranchVcsRoot, myRepoUrl + "/trunk", "-c", "3");
+    merge(myBranchVcsRoot, myTrunkUrl, "-c", "3");
     commitFile(myBranchVcsRoot);
     updateFile(myBranchVcsRoot);
     // rev5: put blocking empty mergeinfo
     //runInAndVerifyIgnoreOutput("merge", "-c", "-3", myRepoUrl + "/trunk/folder", new File(myBranchVcsRoot, "folder").getAbsolutePath(), "--record-only"));
-    merge(new File(myBranchVcsRoot, "folder"), myRepoUrl + "/trunk/folder", "-r", "3:2");
+    merge(new File(myBranchVcsRoot, "folder"), myTrunkUrl + "/folder", "-r", "3:2");
     commitFile(myBranchVcsRoot);
     updateFile(myBranchVcsRoot);
 
@@ -157,13 +147,7 @@ public class SvnMergeInfoTest extends Svn17TestCase {
 
   @Test
   public void testNonInheritableMergeinfo() throws Exception {
-    final File trunk = newFolder(myTempDirFixture.getTempDirPath(), "trunk");
-    final File folder = newFolder(trunk, "folder");
-    final File f1 = newFile(folder, "f1.txt");
-    newFile(folder, "f2.txt");
-    waitTime();
-
-    importAndCheckOut(trunk);
+    createOneFolderStructure();
 
     // rev 3
     editAndCommit(trunk, f1);
@@ -180,18 +164,13 @@ public class SvnMergeInfoTest extends Svn17TestCase {
 
   @Test
   public void testOnlyImmediateInheritableMergeinfo() throws Exception {
-    final File trunk = newFolder(myTempDirFixture.getTempDirPath(), "trunk");
-    final File folder = newFolder(trunk, "folder");
-    final File f1 = newFile(folder, "f1.txt");
-    newFile(folder, "f2.txt");
-    waitTime();
-
-    importAndCheckOut(trunk);
+    createOneFolderStructure();
 
     // rev 3
     editAndCommit(trunk, f1, CONTENT1);
     // rev4
     editAndCommit(trunk, f1, CONTENT2);
+
     updateFile(myBranchVcsRoot);
 
     // rev 4: record non inheritable merge
@@ -211,19 +190,13 @@ public class SvnMergeInfoTest extends Svn17TestCase {
 
   @Test
   public void testTwoPaths() throws Exception {
-    final File trunk = newFolder(myTempDirFixture.getTempDirPath(), "trunk");
-    final File folder = newFolder(trunk, "folder");
-    final File f1 = newFile(folder, "f1.txt");
-    final File folder1 = newFolder(folder, "folder1");
-    final File f2 = newFile(folder1, "f2.txt");
-    waitTime();
-
-    importAndCheckOut(trunk);
+    createTwoFolderStructure(myBranchVcsRoot);
 
     // rev 3
     editFile(f1);
     editFile(f2);
     commitFile(trunk);
+
     updateFile(myBranchVcsRoot);
 
     // rev 4: record non inheritable merge
@@ -246,22 +219,15 @@ public class SvnMergeInfoTest extends Svn17TestCase {
   public void testWhenInfoInRepo() throws Exception {
     final File fullBranch = newFolder(myTempDirFixture.getTempDirPath(), "fullBranch");
 
-    final File trunk = newFolder(myTempDirFixture.getTempDirPath(), "trunk");
-    final File folder = newFolder(trunk, "folder");
-    final File f1 = newFile(folder, "f1.txt");
-    // this will be taken as branch wc root
-    final File folder1 = newFolder(folder, "folder1");
-    final File f2 = newFile(folder1, "f2.txt");
-    waitTime();
-
-    importAndCheckOut(trunk, fullBranch);
-    checkOutFile(myRepoUrl + "/branch/folder/folder1", myBranchVcsRoot);
+    createTwoFolderStructure(fullBranch);
+    // folder1 will be taken as branch wc root
+    checkOutFile(myBranchUrl + "/folder/folder1", myBranchVcsRoot);
 
     // rev 3 : f2 changed
     editAndCommit(trunk, f2);
 
     // rev 4: record as merged into branch using full branch WC
-    recordMerge(fullBranch, myRepoUrl + "/trunk", "-c", "3");
+    recordMerge(fullBranch, myTrunkUrl, "-c", "3");
     commitFile(fullBranch);
     updateFile(myBranchVcsRoot);
 
@@ -273,13 +239,7 @@ public class SvnMergeInfoTest extends Svn17TestCase {
 
   @Test
   public void testMixedWorkingRevisions() throws Exception {
-    final File trunk = newFolder(myTempDirFixture.getTempDirPath(), "trunk");
-    final File folder = newFolder(trunk, "folder");
-    final File f1 = newFile(folder, "f1.txt");
-    newFile(folder, "f2.txt");
-    waitTime();
-
-    importAndCheckOut(trunk);
+    createOneFolderStructure();
 
     // rev 3
     editAndCommit(trunk, f1);
@@ -306,11 +266,32 @@ public class SvnMergeInfoTest extends Svn17TestCase {
     assertMergeResult(changeList, SvnMergeInfoCache.MergeCheckResult.MERGED);
   }
 
+  private void createOneFolderStructure() throws InterruptedException, IOException {
+    trunk = newFolder(myTempDirFixture.getTempDirPath(), "trunk");
+    folder = newFolder(trunk, "folder");
+    f1 = newFile(folder, "f1.txt");
+    f2 = newFile(folder, "f2.txt");
+    waitTime();
+
+    importAndCheckOut(trunk);
+  }
+
+  private void createTwoFolderStructure(File branchFolder) throws InterruptedException, IOException {
+    trunk = newFolder(myTempDirFixture.getTempDirPath(), "trunk");
+    folder = newFolder(trunk, "folder");
+    f1 = newFile(folder, "f1.txt");
+    folder1 = newFolder(folder, "folder1");
+    f2 = newFile(folder1, "f2.txt");
+    waitTime();
+
+    importAndCheckOut(trunk, branchFolder);
+  }
+
   @NotNull
   private List<SvnChangeList> getTrunkChangeLists() throws com.intellij.openapi.vcs.VcsException {
     final CommittedChangesProvider<SvnChangeList, ChangeBrowserSettings> provider = myVcs.getCommittedChangesProvider();
 
-    return provider.getCommittedChanges(provider.createDefaultSettings(), new SvnRepositoryLocation(myRepoUrl + "/trunk"), 0);
+    return provider.getCommittedChanges(provider.createDefaultSettings(), new SvnRepositoryLocation(myTrunkUrl), 0);
   }
 
   private void importAndCheckOut(@NotNull File trunk) throws IOException {
@@ -318,12 +299,12 @@ public class SvnMergeInfoTest extends Svn17TestCase {
   }
 
   private void importAndCheckOut(@NotNull File trunk, @NotNull File branch) throws IOException {
-    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk");
-    runInAndVerifyIgnoreOutput("copy", "-m", "test", myRepoUrl + "/trunk", myRepoUrl + "/branch");
+    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.getAbsolutePath(), myTrunkUrl);
+    runInAndVerifyIgnoreOutput("copy", "-m", "test", myTrunkUrl, myBranchUrl);
 
     FileUtil.delete(trunk);
-    checkOutFile(myRepoUrl + "/trunk", trunk);
-    checkOutFile(myRepoUrl + "/branch", branch);
+    checkOutFile(myTrunkUrl, trunk);
+    checkOutFile(myBranchUrl, branch);
   }
 
   @NotNull
@@ -337,11 +318,6 @@ public class SvnMergeInfoTest extends Svn17TestCase {
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
 
     return editAndCommit(trunk, vf, content);
-  }
-
-  @NotNull
-  private VirtualFile editAndCommit(@NotNull File trunk, @NotNull VirtualFile file) throws InterruptedException, IOException {
-    return editAndCommit(trunk, file, CONTENT1);
   }
 
   @NotNull
@@ -404,7 +380,7 @@ public class SvnMergeInfoTest extends Svn17TestCase {
     Assert.assertEquals(mergeResult, myOneShotMergeInfoHelper.checkList(changeList));
   }
 
-  private void assertRevisions(@NotNull List<SvnChangeList> changeLists, @NotNull int... revisions) {
+  private static void assertRevisions(@NotNull List<SvnChangeList> changeLists, @NotNull int... revisions) {
     for (int i = 0; i < revisions.length; i++) {
       assert changeLists.get(i).getNumber() == revisions[i];
     }
