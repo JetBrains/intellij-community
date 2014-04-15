@@ -21,6 +21,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.IpnbUtils;
+import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.format.cells.MarkdownCell;
 
 import javax.swing.*;
@@ -56,7 +57,7 @@ public class MarkdownPanel extends JPanel {
 
   private JLabel createPanel(@NotNull final String text) {
     JLabel label = new JBLabel(text);
-    label.setBackground(JBColor.WHITE);  // TODO: use background colour from settings
+    label.setBackground(IpnbEditorUtil.getBackground());
     label.setOpaque(true);
     return label;
   }
