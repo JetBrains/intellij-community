@@ -7,19 +7,26 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.ArrayUtil;
+import com.jetbrains.django.util.VirtualFileUtil;
+import org.apache.velocity.texen.util.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.Data;
 import org.jetbrains.plugins.ipnb.format.IpnbFile;
+import org.jetbrains.plugins.ipnb.format.IpnbParser;
 import org.jetbrains.plugins.ipnb.format.TestData;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
 
 /**
  * @author traff
@@ -44,12 +51,18 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
 
     myEditor = createEditor(project, vFile);
 
-    myEditorPanel = new JScrollPane(createIpnbEditorPanel(myProject));
+    myEditorPanel = new JScrollPane(createIpnbEditorPanel(myProject, vFile));
   }
 
   @NotNull
-  private JComponent createIpnbEditorPanel(Project project) {
-    return new IpnbFilePanel(project, null, TestData.IPNB_FILE1);
+  private JComponent createIpnbEditorPanel(Project project, VirtualFile vFile) {
+    try {
+      return new IpnbFilePanel(project, null, IpnbParser.parseIpnbFile(new String(vFile.contentsToByteArray(), CharsetToolkit.UTF8)));
+    }
+    catch (IOException e) {
+      Messages.showErrorDialog(project, e.getMessage(), "Can't open " + vFile.getPath());
+      throw new IllegalStateException(e);
+    }
   }
 
   @NotNull
