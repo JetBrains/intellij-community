@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.ipnb.editor;
 
 import com.google.common.collect.Lists;
+import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -41,6 +42,7 @@ public class IpnbEditorUtil {
   public static Editor createPythonCodeEditor(@NotNull Project project, @NotNull String text) {
     EditorEx editor = (EditorEx)EditorFactory.getInstance().createEditor(createPythonCodeDocument(project, text), project, PythonFileType.INSTANCE, false);
     noScrolling(editor);
+    ConsoleViewUtil.setupConsoleEditor(editor, false, false);
     return editor;
   }
 
