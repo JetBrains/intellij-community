@@ -34,8 +34,16 @@ import java.awt.*;
  * @author traff
  */
 public class IpnbFilePanel extends JPanel {
+
+  public static final int INSET_Y = 10;
+  public static final int INSET_X = 3;
+  private Project myProject;
+  @Nullable private Disposable myParent;
+
   public IpnbFilePanel(@NotNull Project project, @Nullable Disposable parent, @NotNull IpnbFile file) {
     super();
+    myProject = project;
+    myParent = parent;
     setLayout(new GridBagLayout());
     setBackground(IpnbEditorUtil.getBackground());
 
@@ -46,10 +54,10 @@ public class IpnbFilePanel extends JPanel {
     c.gridy = 0;
     c.gridwidth = 1;
 
-    c.insets = new Insets(10, 0, 0, 0);
+    c.insets = new Insets(INSET_Y, INSET_X, 0, 0);
 
     for (IpnbCell cell : file.getCells()) {
-      c.gridy = addCellToPanel(project, cell, c);
+      c.gridy = addCellToPanel(cell, c);
     }
 
     c.weighty = 1;
@@ -68,17 +76,21 @@ public class IpnbFilePanel extends JPanel {
     c.gridx = 0;
     container.add(IpnbEditorUtil.createPromptPanel(prompt(promptNumber, promptType)), c);
     c.gridx = 1;
+    c.ipady = 10;
+    c.weightx = 1;
     container.add(component, c);
+    c.weightx = 0;
+    c.ipady = 0;
   }
 
-  private int addCellToPanel(Project project, IpnbCell cell, GridBagConstraints c) {
+  private int addCellToPanel(IpnbCell cell, GridBagConstraints c) {
     if (cell instanceof CodeCell) {
       c.gridwidth = 2;
       c.gridx = 0;
 
       CodeCell codeCell = (CodeCell)cell;
 
-      addPromptPanel(this, codeCell.getPromptNumber(), "In", new CodeSourcePanel(project, codeCell.getSourceAsString()), c);
+      addPromptPanel(this, codeCell.getPromptNumber(), "In", new CodeSourcePanel(myProject, myParent, codeCell.getSourceAsString()), c);
 
       c.gridx = 1;
       c.gridwidth = 1;
@@ -92,10 +104,10 @@ public class IpnbFilePanel extends JPanel {
       }
     }
     else if (cell instanceof MarkdownCell) {
-      add(new MarkdownPanel(project, (MarkdownCell)cell), c);
+      add(new MarkdownPanel(myProject, (MarkdownCell)cell), c);
     }
     else if (cell instanceof HeadingCell) {
-      add(new HeadingPanel(project, (HeadingCell)cell), c);
+      add(new HeadingPanel(myProject, (HeadingCell)cell), c);
     }
     else {
       throw new UnsupportedOperationException(cell.getClass().toString());
