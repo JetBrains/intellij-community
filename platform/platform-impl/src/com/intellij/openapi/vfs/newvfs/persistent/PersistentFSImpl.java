@@ -19,6 +19,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
@@ -875,7 +878,9 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       // optimization: for jar roots do not store base path in the myName field, use local FS file's getPath()
       String parentPath = basePath.substring(0, basePath.indexOf(JarFileSystem.JAR_SEPARATOR));
       VirtualFile parentFile = LocalFileSystem.getInstance().findFileByPath(parentPath);
-      if (parentFile == null || !isValidJar(parentPath)) return null;
+      if (parentFile == null) return null;
+      FileType type = FileTypeRegistry.getInstance().getFileTypeByFileName(parentFile.getName());
+      if (type != FileTypes.ARCHIVE) return null;
       newRoot = new JarRoot(fs, rootId, parentFile);
     }
     else {
@@ -910,30 +915,6 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     LOG.assertTrue(rootId == newRoot.getId(), "root=" + newRoot + " expected=" + rootId + " actual=" + newRoot.getId());
 
     return newRoot;
-  }
-
-  // scans the file for a signature of "end of central directory" record
-  private static boolean isValidJar(@NotNull String path) {
-    try {
-      RandomAccessFile f = new RandomAccessFile(path, "r");
-      try {
-        long length = f.length(), limit = Math.max(length - 65535, 0), offset = length - 22;
-        while (offset >= limit) {
-          f.seek(offset);
-          if (f.read() == 0x50 && f.read() == 0x4B && f.read() == 0x05 && f.read() == 0x06) {
-            return true;
-          }
-          offset--;
-        }
-      }
-      finally {
-        f.close();
-      }
-    }
-    catch (IOException e) {
-      LOG.warn("invalid .jar: " + path);
-    }
-    return false;
   }
 
   @NotNull
