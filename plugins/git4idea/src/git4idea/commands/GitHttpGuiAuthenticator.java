@@ -99,6 +99,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     // but it is not the right behavior (incorrect password is stored too because of that) and should be fixed separately.
     // We store it here manually, to let it work after that behavior is fixed.
     myPassword = password;
+    myDataProvider = new GitDefaultHttpAuthDataProvider(); // workaround: askPassword remembers the password even it is not correct
     return password;
   }
 
@@ -165,18 +166,13 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
   @Override
   public void forgetPassword() {
-    if (myPasswordKey != null) {
-      try {
-        PasswordSafe.getInstance().removePassword(myProject, PASS_REQUESTER, myPasswordKey);
-      }
-      catch (PasswordSafeException e) {
-        LOG.info("Couldn't forget the password for " + myPasswordKey);
-      }
+    if (myDataProvider != null) {
+      myDataProvider.forgetPassword(adjustUrl(myUrl));
     }
   }
 
   @NotNull
-  private String adjustUrl(@NotNull String url) {
+  private String adjustUrl(@Nullable String url) {
     if (StringUtil.isEmptyOrSpaces(url)) {
       // if Git doesn't specify the URL in the username/password query, we use the url from the Git command
       // We only take the host, to avoid entering the same password for different repositories on the same host.
@@ -228,7 +224,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @NotNull
   private List<GitHttpAuthDataProvider> getProviders() {
     List<GitHttpAuthDataProvider> providers = ContainerUtil.newArrayList();
-    providers.add(new GitDefaultHttpAuthDataProvider(myProject));
+    providers.add(new GitDefaultHttpAuthDataProvider());
     providers.addAll(Arrays.asList(GitHttpAuthDataProvider.EP_NAME.getExtensions()));
     return providers;
   }
@@ -237,8 +233,11 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
    * Makes the password database key for the URL: inserts the login after the scheme: http://login@url.
    */
   @NotNull
-  private static String makeKey(@NotNull String url, @NotNull String login) {
-    Pair<String,String> pair = UriUtil.splitScheme(url);
+  private static String makeKey(@NotNull String url, @Nullable String login) {
+    if (login == null) {
+      return url;
+    }
+    Pair<String, String> pair = UriUtil.splitScheme(url);
     String scheme = pair.getFirst();
     if (StringUtil.isEmpty(scheme)) {
       return scheme + URLUtil.SCHEME_SEPARATOR + login + "@" + pair.getSecond();
@@ -246,26 +245,17 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     return login + "@" + url;
   }
 
-  public static class GitDefaultHttpAuthDataProvider implements GitHttpAuthDataProvider {
-
-    @NotNull private final Project myProject;
-
-    public GitDefaultHttpAuthDataProvider(@NotNull Project project) {
-      myProject = project;
-    }
+  public class GitDefaultHttpAuthDataProvider implements GitHttpAuthDataProvider {
 
     @Nullable
     @Override
     public AuthData getAuthData(@NotNull String url) {
-      String userName = GitRememberedInputs.getInstance().getUserNameForUrl(url);
-      if (userName == null) {
-        return null;
-      }
+      String userName = getUsername(url);
       String key = makeKey(url, userName);
       final PasswordSafe passwordSafe = PasswordSafe.getInstance();
       try {
         String password = passwordSafe.getPassword(myProject, PASS_REQUESTER, key);
-        return new AuthData(userName, password);
+        return new AuthData(StringUtil.notNullize(userName), password);
       }
       catch (PasswordSafeException e) {
         LOG.info("Couldn't get the password for key [" + key + "]", e);
@@ -273,6 +263,21 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       }
     }
 
+    @Nullable
+    private String getUsername(@NotNull String url) {
+      return GitRememberedInputs.getInstance().getUserNameForUrl(url);
+    }
+
+    @Override
+    public void forgetPassword(@NotNull String url) {
+      String key = myPasswordKey != null ? myPasswordKey : makeKey(url, getUsername(url));
+      try {
+        PasswordSafe.getInstance().removePassword(myProject, PASS_REQUESTER, key);
+      }
+      catch (PasswordSafeException e) {
+        LOG.info("Couldn't forget the password for " + myPasswordKey);
+      }
+    }
   }
 
 }
