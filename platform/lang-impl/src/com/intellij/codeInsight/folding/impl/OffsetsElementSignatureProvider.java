@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.folding.impl;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
@@ -75,35 +76,53 @@ public class OffsetsElementSignatureProvider extends AbstractElementSignaturePro
         // Do nothing
       }
     }
-
-    PsiElement result = null;
-    FileViewProvider viewProvider = file.getViewProvider();
-    for (PsiFile psiFile : viewProvider.getAllFiles()) {
-      PsiElement element = viewProvider.findElementAt(start, psiFile.getLanguage());
-      if (element != null) {
-        result = findElement(start, end, index, element, processingInfoStorage);
-        if (result != null) {
-          break;
-        }
-        else if (processingInfoStorage != null) {
-          processingInfoStorage.append(String.format(
-            "Failed to find an element by the given offsets for language %s. Started by the element '%s' (%s)",
-            psiFile.getLanguage(), element, element.getText()
-          ));
-        }
-        final PsiElement injectedStartElement = InjectedLanguageUtil.findElementAtNoCommit(psiFile, start);
+    Language language = file.getLanguage();
+    if (tokenizer.hasMoreTokens()) {
+      String languageId = tokenizer.nextToken();
+      Language languageFromSignature = Language.findLanguageByID(languageId);
+      if (languageFromSignature == null) {
         if (processingInfoStorage != null) {
-          processingInfoStorage.append(String.format(
-            "Trying to find injected element starting from the '%s'%s%n",
-            injectedStartElement, injectedStartElement == null ? "" : String.format("(%s)", injectedStartElement.getText())
-          ));
-        }
-        if (injectedStartElement != null && injectedStartElement != element) {
-          result = findElement(start, end, index, injectedStartElement, processingInfoStorage);
+          processingInfoStorage.append(String.format("Couldn't find language for id %s", languageId));
         }
       }
+      else {
+        language = languageFromSignature;
+      }
     }
-    return result;
+
+    FileViewProvider viewProvider = file.getViewProvider();
+    PsiElement element = viewProvider.findElementAt(start, language);
+    if (element == null) {
+      return null;
+    }
+    PsiElement result = findElement(start, end, index, element, processingInfoStorage);
+    if (result != null) {
+      return result;
+    }
+    else if (processingInfoStorage != null) {
+      processingInfoStorage.append(String.format(
+        "Failed to find an element by the given offsets for language %s. Started by the element '%s' (%s)",
+        language, element, element.getText()
+      ));
+    }
+    PsiFile psiFile = viewProvider.getPsi(language);
+    if (psiFile == null) {
+      if (processingInfoStorage != null) {
+        processingInfoStorage.append(String.format("Couldn't find PSI for language %s", language.toString()));
+      }
+      return null;
+    }
+    final PsiElement injectedStartElement = InjectedLanguageUtil.findElementAtNoCommit(psiFile, start);
+    if (processingInfoStorage != null) {
+      processingInfoStorage.append(String.format(
+        "Trying to find injected element starting from the '%s'%s%n",
+        injectedStartElement, injectedStartElement == null ? "" : String.format("(%s)", injectedStartElement.getText())
+      ));
+    }
+    if (injectedStartElement != null && injectedStartElement != element) {
+      return findElement(start, end, index, injectedStartElement, processingInfoStorage);
+    }
+    return null;
   }
 
   @Nullable
@@ -185,6 +204,10 @@ public class OffsetsElementSignatureProvider extends AbstractElementSignaturePro
       index++;
     }
     buffer.append(ELEMENT_TOKENS_SEPARATOR).append(index);
+    PsiFile containingFile = element.getContainingFile();
+    if (containingFile != null && containingFile.getViewProvider().getLanguages().size() > 1) {
+      buffer.append(ELEMENT_TOKENS_SEPARATOR).append(element.getLanguage().getID());
+    }
     return buffer.toString();
   }
 }
