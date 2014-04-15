@@ -26,7 +26,7 @@ public class GenericKeymapManager extends DefaultKeymap {
     }
 
     if (KeymapManager.DEFAULT_IDEA_KEYMAP.equals(name)) {
-      return "IntelliJ IDEA Classic";
+      return "IntelliJ IDEA Classic" + (SystemInfo.isMac ? " (Windows)" : "");
     }
 
     if ("Mac OS X".equals(name)) {
