@@ -47,12 +47,12 @@ public class IpnbUtils {
     final String[] lineArray = ArrayUtil.toStringArray(processedLines);
     final String normalizedMarkdown = StringUtil.join(lineArray, "\n");
     String html = ourMarkdownProcessor.markdown(normalizedMarkdown);
-    html = html
+    html = "<html><body>" + html
       .replace("<pre><code>", "<pre>").replace("</code></pre>", "</pre>")
       .replace("<em>", "<i>").replace("</em>", "</i>")
       .replace("<strong>", "<b>").replace("</strong>", "</b>")
       .replace("&underline;", "_")
-      .trim()
+      .trim() + "</body></html>"
     ;
     return html;
   }
