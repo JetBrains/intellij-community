@@ -1,4 +1,9 @@
 package org.jetbrains.plugins.ipnb.format.cells;
 
-public class MarkdownCell extends IpnbCell {
+import org.jetbrains.annotations.NotNull;
+
+public class MarkdownCell extends SourceCell {
+  public MarkdownCell(@NotNull final String[] source) {
+    super(source);
+  }
 }

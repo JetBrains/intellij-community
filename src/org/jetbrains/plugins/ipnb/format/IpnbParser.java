@@ -5,6 +5,10 @@ import com.google.gson.GsonBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.format.cells.*;
+import org.jetbrains.plugins.ipnb.format.cells.output.CellOutput;
+import org.jetbrains.plugins.ipnb.format.cells.output.LatexCellOutput;
+import org.jetbrains.plugins.ipnb.format.cells.output.PngCellOutput;
+import org.jetbrains.plugins.ipnb.format.cells.output.StreamCellOutput;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,15 +20,8 @@ public class IpnbParser {
 
   @NotNull
   private static Gson initGson() {
-    GsonBuilder builder = new GsonBuilder();
+    final GsonBuilder builder = new GsonBuilder();
     return builder.create();
-  }
-
-  @NotNull
-  public static CodeCell parseIpnbCell(@NotNull String item)
-    throws IOException {
-    CodeCell ipnbCell = gson.fromJson(item, CodeCell.class);
-    return ipnbCell;
   }
 
   @NotNull
@@ -53,21 +50,27 @@ public class IpnbParser {
     String[] source;
     String[] input;
     String language;
-    CellOutput[] outputs;
+    int level;
+    int prompt_number;
+    CellOutputRaw[] outputs;
 
     public IpnbCell createCell() {
       final IpnbCell cell;
       if (cell_type.equals("markdown")) {
-        cell = new MarkdownCell();
+        cell = new MarkdownCell(source);
       }
       else if (cell_type.equals("code")) {
-        cell = new CodeCell();
+        final List<CellOutput> cellOutputs = new ArrayList<CellOutput>();
+        for (CellOutputRaw outputRaw : outputs) {
+          cellOutputs.add(outputRaw.createOutput());
+        }
+        cell = new CodeCell(language, input, prompt_number, cellOutputs);
       }
       else if (cell_type.equals("raw")) {
         cell = new RawCell();
       }
       else if (cell_type.equals("heading")) {
-        cell = new HeadingCell();
+        cell = new HeadingCell(source, level);
       }
       else {
         cell = null;
@@ -75,8 +78,30 @@ public class IpnbParser {
       return cell;
     }
   }
-  private static class CellOutput {
+
+  private static class CellOutputRaw {
     String output_type;
     String[] text;
+    String png;
+    String[] latex;
+    String stream;
+    int prompt_number;
+
+    public CellOutput createOutput() {
+      final CellOutput cellOutput;
+      if (png != null) {
+        cellOutput = new PngCellOutput(png, text);
+      }
+      else if (latex != null) {
+        cellOutput = new LatexCellOutput(latex, prompt_number, text);
+      }
+      else if (stream != null) {
+        cellOutput = new StreamCellOutput(stream, text);
+      }
+      else {
+        cellOutput = new CellOutput(text);
+      }
+      return cellOutput;
+    }
   }
 }
