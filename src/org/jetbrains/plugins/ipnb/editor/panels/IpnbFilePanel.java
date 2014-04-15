@@ -77,7 +77,9 @@ public class IpnbFilePanel extends JPanel {
     container.add(IpnbEditorUtil.createPromptPanel(prompt(promptNumber, promptType)), c);
     c.gridx = 1;
     c.ipady = 10;
+    c.weightx = 1;
     container.add(component, c);
+    c.weightx = 0;
     c.ipady = 0;
   }
 
