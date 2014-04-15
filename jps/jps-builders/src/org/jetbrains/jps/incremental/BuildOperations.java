@@ -169,9 +169,12 @@ public class BuildOperations {
           final Collection<String> outputs = srcToOut.getOutputs(srcPath);
           if (outputs != null) {
             final boolean shouldPruneOutputDirs = target instanceof ModuleBasedTarget;
+            final List<String> deletedForThisSource = new ArrayList<String>(outputs.size());
             for (String output : outputs) {
-              deleteRecursively(output, deletedPaths, shouldPruneOutputDirs ? dirsToDelete : null);
+              deleteRecursively(output, deletedForThisSource, shouldPruneOutputDirs ? dirsToDelete : null);
             }
+            deletedPaths.addAll(deletedForThisSource);
+            dataManager.getOutputToSourceRegistry().removeMapping(deletedForThisSource, srcPath);
             Set<File> cleaned = cleanedSources.get(target);
             if (cleaned == null) {
               cleaned = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);

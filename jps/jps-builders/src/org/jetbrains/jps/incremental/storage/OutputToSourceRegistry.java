@@ -81,25 +81,32 @@ public class OutputToSourceRegistry extends AbstractStateStorage<Integer, TIntHa
     }
   }
 
-  protected boolean removeMapping(String outputPath, String sourcePath) throws IOException {
-    final int key = FileUtil.pathHashCode(outputPath);
-    synchronized (myDataLock) {
-      final TIntHashSet state = getState(key);
-      if (state != null) {
-        final int value = FileUtil.pathHashCode(sourcePath);
-        final boolean removed = state.remove(value);
-        if (state.isEmpty()) {
-          remove(key);
-        }
-        else {
-          if (removed) {
-            update(key, state);
+  public void removeMapping(String outputPath, String sourcePath) throws IOException {
+    removeMapping(Collections.singleton(outputPath), sourcePath);
+  }
+
+  public void removeMapping(Collection<String> outputPaths, String sourcePath) throws IOException {
+    if (outputPaths.isEmpty()) {
+      return;
+    }
+    final int value = FileUtil.pathHashCode(sourcePath);
+    for (String outputPath : outputPaths) {
+      final int key = FileUtil.pathHashCode(outputPath);
+      synchronized (myDataLock) {
+        final TIntHashSet state = getState(key);
+        if (state != null) {
+          final boolean removed = state.remove(value);
+          if (state.isEmpty()) {
+            remove(key);
+          }
+          else {
+            if (removed) {
+              update(key, state);
+            }
           }
         }
-        return removed;
       }
     }
-    return false;
   }
   
   public Collection<String> getSafeToDeleteOutputs(Collection<String> outputPaths, String associatedSourcePath) throws IOException {

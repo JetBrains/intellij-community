@@ -440,9 +440,7 @@ public class BuildDataManager implements StorageOwner {
         myDelegate.remove(srcPath);
       }
       finally {
-        for (String output : outputs) {
-          myOutputToSourceRegistry.removeMapping(output, srcPath);
-        }
+        myOutputToSourceRegistry.removeMapping(outputs, srcPath);
       }
     }
 
