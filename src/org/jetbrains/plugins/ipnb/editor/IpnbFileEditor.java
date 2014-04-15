@@ -13,6 +13,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +22,7 @@ import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.format.IpnbParser;
 
 import javax.swing.*;
+import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
 
@@ -47,7 +49,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
 
     myEditor = createEditor(project, vFile);
 
-    myEditorPanel = new JBScrollPane(createIpnbEditorPanel(myProject, vFile, this));
+    myEditorPanel = new MyScrollPane(createIpnbEditorPanel(myProject, vFile, this));
   }
 
   @NotNull
@@ -171,5 +173,35 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
       }
     }
     return null;
+  }
+
+  private class MyScrollPane extends JBScrollPane {
+    private MyScrollPane(Component view) {
+      super(view);
+    }
+
+    @Override
+    public JScrollBar createVerticalScrollBar() {
+      return new MyScrollBar(this);
+    }
+  }
+
+
+  private class MyScrollBar extends JBScrollBar {
+    private MyScrollPane myScrollPane;
+
+    public MyScrollBar(MyScrollPane scrollPane) {
+      myScrollPane = scrollPane;
+    }
+
+    @Override
+    public int getUnitIncrement(int direction) {
+      return myEditor.getEditor().getLineHeight();
+    }
+
+    @Override
+    public int getBlockIncrement(int direction) {
+      return myEditor.getEditor().getLineHeight();
+    }
   }
 }
