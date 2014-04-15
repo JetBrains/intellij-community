@@ -145,6 +145,10 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
     myBoundShortcuts.put(targetActionId, sourceActionId);
   }
 
+  public void unbindShortcuts(String targetActionId) {
+    myBoundShortcuts.remove(targetActionId);
+  }
+
   @Override
   public Set<String> getBoundActions() {
     return myBoundShortcuts.keySet();

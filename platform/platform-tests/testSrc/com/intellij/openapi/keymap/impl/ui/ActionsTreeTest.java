@@ -18,17 +18,30 @@ package com.intellij.openapi.keymap.impl.ui;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.ex.KeymapManagerEx;
+import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
   private static final String ACTION_WITHOUT_TEXT_AND_DESCRIPTION = "DummyWithoutTextAndDescription";
   private static final String ACTION_WITH_TEXT_ONLY = "DummyWithTextOnly";
   private static final String ACTION_WITH_TEXT_AND_DESCRIPTION = "DummyWithTextAndDescription";
+  private static final String EXISTENT_ACTION = "DummyExistent";
+  private static final String NON_EXISTENT_ACTION = "DummyNonExistent";
+  private static final String ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION = "DummyWithUseShortcutOfExistentAction";
+  private static final String ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION = "DummyWithUseShortcutOfNonExistentAction";
 
   private AnAction myActionWithoutTextAndDescription;
   private AnAction myActionWithTextOnly;
   private AnAction myActionWithTextAndDescription;
+  private AnAction myActionExistent;
+  private AnAction myActionWithUseShortcutOfExistent;
+  private AnAction myActionWithUseShortcutOfNonExistent;
   private ActionsTree myActionsTree;
 
   public void setUp() throws Exception {
@@ -37,12 +50,23 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
     myActionWithoutTextAndDescription = new MyAction(null, null);
     myActionWithTextOnly = new MyAction("some text", null);
     myActionWithTextAndDescription = new MyAction("text", "description");
+    myActionExistent = new MyAction("text", "description");
+    myActionWithUseShortcutOfExistent = new MyAction("text", "description");
+    myActionWithUseShortcutOfNonExistent = new MyAction("text", "description");
     ActionManager actionManager = ActionManager.getInstance();
     actionManager.registerAction(ACTION_WITHOUT_TEXT_AND_DESCRIPTION, myActionWithoutTextAndDescription);
     actionManager.registerAction(ACTION_WITH_TEXT_ONLY, myActionWithTextOnly);
     actionManager.registerAction(ACTION_WITH_TEXT_AND_DESCRIPTION, myActionWithTextAndDescription);
+    actionManager.registerAction(EXISTENT_ACTION, myActionExistent);
+    actionManager.registerAction(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION, myActionWithUseShortcutOfExistent);
+    actionManager.registerAction(ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION, myActionWithUseShortcutOfNonExistent);
+
+    KeymapManagerEx.getInstanceEx().bindShortcuts(EXISTENT_ACTION, ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION);
+    KeymapManagerEx.getInstanceEx().bindShortcuts(NON_EXISTENT_ACTION, ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION);
+      
     DefaultActionGroup group = (DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_EDITOR);
-    group.addAll(myActionWithoutTextAndDescription, myActionWithTextOnly, myActionWithTextAndDescription);
+    group.addAll(myActionWithoutTextAndDescription, myActionWithTextOnly, myActionWithTextAndDescription,
+                 myActionExistent, myActionWithUseShortcutOfExistent, myActionWithUseShortcutOfNonExistent);
     // populate action tree
     myActionsTree = new ActionsTree();
     myActionsTree.reset(KeymapManager.getInstance().getActiveKeymap(), new QuickList[0]);
@@ -56,9 +80,18 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
       group.remove(myActionWithoutTextAndDescription);
       group.remove(myActionWithTextOnly);
       group.remove(myActionWithTextAndDescription);
+      group.remove(myActionExistent);
+      group.remove(myActionWithUseShortcutOfExistent);
+      group.remove(myActionWithUseShortcutOfNonExistent);
       actionManager.unregisterAction(ACTION_WITHOUT_TEXT_AND_DESCRIPTION);
       actionManager.unregisterAction(ACTION_WITH_TEXT_ONLY);
       actionManager.unregisterAction(ACTION_WITH_TEXT_AND_DESCRIPTION);
+      actionManager.unregisterAction(EXISTENT_ACTION);
+      actionManager.unregisterAction(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION);
+      actionManager.unregisterAction(ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION);
+
+      ((KeymapManagerImpl)KeymapManager.getInstance()).unbindShortcuts(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION);
+      ((KeymapManagerImpl)KeymapManager.getInstance()).unbindShortcuts(ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION);
     }
     finally {
       super.tearDown();
@@ -67,27 +100,50 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
 
   public void testVariousActionsArePresent() {
     doTest(null,
-           ACTION_WITHOUT_TEXT_AND_DESCRIPTION,
-           ACTION_WITH_TEXT_ONLY,
-           ACTION_WITH_TEXT_AND_DESCRIPTION);
+           Arrays.asList(
+             ACTION_WITHOUT_TEXT_AND_DESCRIPTION,
+             ACTION_WITH_TEXT_ONLY,
+             ACTION_WITH_TEXT_AND_DESCRIPTION,
+             EXISTENT_ACTION,
+             ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION),
+           Arrays.asList(
+             NON_EXISTENT_ACTION,
+             ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION
+           )
+    );
   }
 
   public void testFiltering() {
     doTest("Dummy",
            // all below actions should still be present, as they contain 'Dummy' in their actionId
-           ACTION_WITHOUT_TEXT_AND_DESCRIPTION,
-           ACTION_WITH_TEXT_ONLY,
-           ACTION_WITH_TEXT_AND_DESCRIPTION);
+           Arrays.asList(
+             ACTION_WITHOUT_TEXT_AND_DESCRIPTION,
+             ACTION_WITH_TEXT_ONLY,
+             ACTION_WITH_TEXT_AND_DESCRIPTION,
+             EXISTENT_ACTION,
+             ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION),
+           Arrays.asList(
+             NON_EXISTENT_ACTION,
+             ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION
+           )
+    );
   }
 
-  private void doTest(String filter, String... idsThatMustBePresent) {
+  private void doTest(String filter, List<String> idsThatMustBePresent, List<String> idsThatMustNotBePresent) {
     if (filter != null) {
       myActionsTree.filter(filter, new QuickList[0]);
     }
 
+    List<String> missing = new ArrayList<String>();
+    List<String> present = new ArrayList<String>();
     for (String actionId : idsThatMustBePresent) {
-      assertTrue(actionId + " is absent", myActionsTree.getMainGroup().containsId(actionId));
+      if (!myActionsTree.getMainGroup().containsId(actionId)) missing.add(actionId);
     }
+    for (String actionId : idsThatMustNotBePresent) {
+      if (myActionsTree.getMainGroup().containsId(actionId)) present.add(actionId);
+    }
+    assertTrue("Missing actions: " + missing + "\nWrongly shown: " + present,
+               missing.isEmpty() && present.isEmpty());
   }
 
   private static class MyAction extends AnAction {

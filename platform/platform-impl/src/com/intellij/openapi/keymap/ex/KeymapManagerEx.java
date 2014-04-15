@@ -45,6 +45,8 @@ public abstract class KeymapManagerEx extends KeymapManager {
    * @param targetActionId  id of the action which should use shortcut of the 'source action'
    */
   public abstract void bindShortcuts(String sourceActionId, String targetActionId);
+  public abstract void unbindShortcuts(String targetActionId);
+  
   public abstract Set<String> getBoundActions();
   public abstract String getActionBinding(String actionId);
 
