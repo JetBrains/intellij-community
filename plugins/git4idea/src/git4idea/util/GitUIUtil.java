@@ -91,7 +91,7 @@ public class GitUIUtil {
           }
         }
         else {
-          errorMessages.add(error.toString().replace("\n", "<br/>"));
+          errorMessages.add(error.getMessage().replace("\n", "<br/>"));
         }
       }
     }
