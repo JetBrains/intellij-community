@@ -45,6 +45,7 @@ import javax.swing.text.DefaultEditorKit;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
+import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
@@ -2676,4 +2677,29 @@ public class UIUtil {
     }
     return JOptionPane.getRootFrame();
   }
+
+  public static void addUndoRedoActions(JTextComponent textComponent) {
+    final UndoManager undoManager = new UndoManager();
+    textComponent.getDocument().addUndoableEditListener(undoManager);
+    textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, SystemInfo.isMac? InputEvent.META_MASK : InputEvent.CTRL_MASK), "undoKeystroke");
+    textComponent.getActionMap().put("undoKeystroke", new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (undoManager.canUndo()) {
+          undoManager.undo();
+        }
+      }
+    });
+    textComponent.getInputMap().put(
+      KeyStroke.getKeyStroke(KeyEvent.VK_Z, (SystemInfo.isMac? InputEvent.META_MASK : InputEvent.CTRL_MASK) | InputEvent.SHIFT_MASK), "redoKeystroke");
+    textComponent.getActionMap().put("redoKeystroke", new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+         if (undoManager.canRedo()) {
+           undoManager.redo();
+         }
+      }
+    });
+  }
+
 }
