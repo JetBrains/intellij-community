@@ -17,6 +17,10 @@ package org.jetbrains.plugins.ipnb.editor;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBLabel;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.ipnb.IpnbUtils;
 import org.jetbrains.plugins.ipnb.format.cells.MarkdownCell;
 
 import javax.swing.*;
@@ -34,24 +38,27 @@ public class MarkdownPanel extends JPanel {
   public MarkdownPanel(Project project, MarkdownCell cell) {
     super(new BorderLayout());
     myProject = project;
-    add(createTextArea(StringUtil.join(cell.getSource(), "\n")), BorderLayout.CENTER);
+    final String text = StringUtil.join(cell.getSource(), "\n");
+    final String html = IpnbUtils.markdown2Html(text);
+    add(createPanel(html), BorderLayout.CENTER);
 
 
     addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
         if (e.getClickCount() == 2) {
-//          setEditing(true); TODO
+//          setEditing(true); TODO: replace panel with editable textarea
           throw new IllegalStateException("not supported");
         }
       }
     });
   }
 
-  private JTextArea createTextArea(String text) {
-    JTextArea textArea = new JTextArea(text);
-    textArea.setEditable(false);
-    return textArea;
+  private JLabel createPanel(@NotNull final String text) {
+    JLabel label = new JBLabel("<html>"+text+"</html>");
+    label.setBackground(JBColor.WHITE);  // TODO: use background colour from settings
+    label.setOpaque(true);
+    return label;
   }
 
   public boolean isEditing() {
