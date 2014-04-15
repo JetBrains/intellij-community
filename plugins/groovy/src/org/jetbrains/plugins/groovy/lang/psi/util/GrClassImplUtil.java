@@ -317,11 +317,28 @@ public class GrClassImplUtil {
             return false;
           }
         }
+        else if (grType.isTrait() && lastParent != null) {
+          PsiField field = findFieldByName(grType, name, false, true);
+          if (field != null && field.hasModifierProperty(PsiModifier.PUBLIC)) {
+            if (!processField(grType, processor, state, place, processInstanceMethods, substitutor, factory, level, new CandidateInfo(field, PsiSubstitutor.EMPTY))) {
+              return false;
+            }
+          }
+        }
       }
       else {
         for (CandidateInfo info : fieldsMap.values()) {
           if (!processField(grType, processor, state, place, processInstanceMethods, substitutor, factory, level, info)) {
             return false;
+          }
+        }
+        if (grType.isTrait() && lastParent != null) {
+          for (PsiField field : CollectClassMembersUtil.getFields(grType, true)) {
+            if (field.hasModifierProperty(PsiModifier.PUBLIC)) {
+              if (!processField(grType, processor, state, place, processInstanceMethods, substitutor, factory, level, new CandidateInfo(field, PsiSubstitutor.EMPTY))) {
+                return false;
+              }
+            }
           }
         }
       }

@@ -1214,15 +1214,15 @@ public class PsiUtil {
     return !ref.isQualified() && name.equals(ref.getReferenceName());
   }
 
-  public static boolean isProperty(GrField field) {
+  public static boolean isProperty(@NotNull GrField field) {
     final PsiClass clazz = field.getContainingClass();
     if (clazz == null) return false;
-    if (clazz.isInterface()) return false;
+    if (clazz.isInterface() && !PsiImplUtil.isTrait(clazz)) return false;
     final GrModifierList modifierList = field.getModifierList();
     return modifierList == null || !modifierList.hasExplicitVisibilityModifiers();
   }
 
-  public static boolean isConstructorHasRequiredParameters(PsiMethod constructor) {
+  public static boolean isConstructorHasRequiredParameters(@NotNull PsiMethod constructor) {
     LOG.assertTrue(constructor.isConstructor());
     final PsiParameter[] parameters = constructor.getParameterList().getParameters();
     for (PsiParameter parameter : parameters) {

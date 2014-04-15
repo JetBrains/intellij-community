@@ -154,8 +154,12 @@ public class CollectClassMembersUtil {
 
     if (!visitedClasses.add(aClass)) return;
 
+    String fieldPrefix = aClass instanceof GrTypeDefinition && ((GrTypeDefinition)aClass).isTrait() ? getTraitFieldPrefix(aClass) : null;
+
     for (PsiField field : getFields(aClass, includeSynthetic)) {
-      String name = field.getName();
+      String originalName = field.getName();
+      String name = field.hasModifierProperty(PsiModifier.PUBLIC) && fieldPrefix != null ? fieldPrefix + originalName : originalName;
+
       if (!allFields.containsKey(name)) {
         allFields.put(name, new CandidateInfo(field, substitutor));
       }
@@ -190,6 +194,22 @@ public class CollectClassMembersUtil {
         processClass(superClass, allFields, allMethods, allInnerClasses, visitedClasses, superSubstitutor, includeSynthetic);
       }
     }
+  }
+
+  @NotNull
+  public static String getTraitFieldPrefix(@NotNull PsiClass aClass) {
+    String qname = aClass.getQualifiedName();
+    LOG.assertTrue(qname != null, aClass.getClass());
+
+    String[] idents = qname.split("\\.");
+
+    StringBuilder buffer = new StringBuilder();
+    for (String ident : idents) {
+      buffer.append(ident).append("_");
+    }
+
+    buffer.append("_");
+    return buffer.toString();
   }
 
   public static PsiField[] getFields(@NotNull PsiClass aClass, boolean includeSynthetic) {
