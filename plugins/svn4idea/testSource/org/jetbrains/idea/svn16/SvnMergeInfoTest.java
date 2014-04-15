@@ -43,6 +43,7 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
 import java.io.File;
 import java.util.List;
 
+// TODO: Full duplicate of SvnMergeInfoTest in org.jetbrains.idea.svn (before latter was refactored).
 public class SvnMergeInfoTest extends Svn16TestCase {
   private File myBranchVcsRoot;
   private ProjectLevelVcsManagerImpl myProjectLevelVcsManager;
