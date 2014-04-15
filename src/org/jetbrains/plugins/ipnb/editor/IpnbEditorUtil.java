@@ -73,7 +73,7 @@ public class IpnbEditorUtil {
     return PsiDocumentManager.getInstance(project).getDocument(fragment);
   }
 
-  public static JComponent createPromptPanel(@NotNull String promptText) {
+  public static JComponent createPromptComponent(@NotNull String promptText) {
     JLabel promptLabel = new JLabel(promptText);
     promptLabel.setFont(promptLabel.getFont().deriveFont(Font.BOLD));
     promptLabel.setForeground(JBColor.BLUE);
