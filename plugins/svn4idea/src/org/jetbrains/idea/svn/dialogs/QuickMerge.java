@@ -255,7 +255,7 @@ public class QuickMerge {
         final SvnBranchPointsCalculator.BranchCopyData copyData =
           new SvnBranchPointsCalculator.BranchCopyData(myWcInfo.getUrl().toString(), -1, mySourceUrl, -1);
         context.next(new LocalChangesPrompt(false, lists,
-            new SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData>(false, copyData)),
+            new SvnBranchPointsCalculator.WrapperInvertor(false, copyData)),
             new MergeTask(factory, myTitle));
       } else {
         context.cancelEverything();
@@ -353,24 +353,24 @@ public class QuickMerge {
     queue.add(mergeAllExecutor);
   }
 
-  private class MergeAllWithBranchCopyPoint extends TaskDescriptor implements Consumer<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData>, SVNException>> {
-    private final AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData>, SVNException>> myData;
+  private class MergeAllWithBranchCopyPoint extends TaskDescriptor implements Consumer<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, SVNException>> {
+    private final AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, SVNException>> myData;
 
     private MergeAllWithBranchCopyPoint() {
       super("merge all", Where.AWT);
-      myData = new AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData>, SVNException>>();
+      myData = new AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, SVNException>>();
     }
 
     @Override
-    public void consume(TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData>, SVNException> value) {
+    public void consume(TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, SVNException> value) {
       myData.set(value);
     }
 
     @Override
     public void run(ContinuationContext context) {
-      SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData> invertor;
+      SvnBranchPointsCalculator.WrapperInvertor invertor;
       try {
-        final TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData>, SVNException>
+        final TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, SVNException>
           transparentlyFailedValueI = myData.get();
         if (transparentlyFailedValueI == null) {
           finishWithError(context, "Merge start wasn't found", true);
@@ -398,7 +398,7 @@ public class QuickMerge {
     }
 
     private MergerFactory createBranchMergerFactory(final boolean reintegrate,
-                                                    final SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData> invertor) {
+                                                    final SvnBranchPointsCalculator.WrapperInvertor invertor) {
       return new MergerFactory() {
         public IMerger createMerger(SvnVcs vcs, File target, UpdateEventHandler handler, SVNURL currentBranchUrl, String branchName) {
           return new BranchMerger(vcs, currentBranchUrl, myWcInfo.getUrl(), myWcInfo.getPath(), handler, reintegrate, myBranchName,
@@ -532,13 +532,13 @@ public class QuickMerge {
   }
 
   private class MergeCalculator extends TaskDescriptor implements
-                     Consumer<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData>, SVNException>> {
+                     Consumer<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, SVNException>> {
     private final static String ourOneShotStrategy = "svn.quickmerge.oneShotStrategy";
     private final WCInfo myWcInfo;
     private final String mySourceUrl;
     private final String myBranchName;
     private final
-    AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData>, SVNException>>
+    AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, SVNException>>
       myCopyData;
     private boolean myIsReintegrate;
 
@@ -547,7 +547,7 @@ public class QuickMerge {
     private final MergeChecker myMergeChecker;
 
     @Override
-    public void consume(TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData>, SVNException> value) {
+    public void consume(TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, SVNException> value) {
       myCopyData.set(value);
     }
 
@@ -566,13 +566,13 @@ public class QuickMerge {
                                                                                                  myWcInfo.getRootUrl(), mySourceUrl,
                                                                                                  mySourceUrl, myVcs.createWCClient()));
       }*/
-      myCopyData = new AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData>, SVNException>>();
+      myCopyData = new AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, SVNException>>();
     }
 
     //"Calculating not merged revisions"
     @Override
     public void run(ContinuationContext context) {
-      SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData> copyDataValue = null;
+      SvnBranchPointsCalculator.WrapperInvertor copyDataValue = null;
       try {
         copyDataValue = myCopyData.get().get();
       }
@@ -642,9 +642,9 @@ public class QuickMerge {
     }
 
     private class ShowRevisionSelector extends TaskDescriptor {
-      private final SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData> myCopyPoint;
+      private final SvnBranchPointsCalculator.WrapperInvertor myCopyPoint;
 
-      private ShowRevisionSelector(SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData> copyPoint) {
+      private ShowRevisionSelector(SvnBranchPointsCalculator.WrapperInvertor copyPoint) {
         super("show revisions to merge", Where.AWT);
         myCopyPoint = copyPoint;
       }
@@ -676,11 +676,11 @@ public class QuickMerge {
   private class LocalChangesPrompt extends TaskDescriptor {
     private final boolean myMergeAll;
     @Nullable private final List<CommittedChangeList> myLists;
-    private final SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData> myCopyPoint;
+    private final SvnBranchPointsCalculator.WrapperInvertor myCopyPoint;
 
     private LocalChangesPrompt(final boolean mergeAll,
                                @Nullable final List<CommittedChangeList> lists,
-                               @Nullable SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData> copyPoint) {
+                               @Nullable SvnBranchPointsCalculator.WrapperInvertor copyPoint) {
       super("local changes intersection check", Where.AWT);
       myMergeAll = mergeAll;
       myLists = lists;
