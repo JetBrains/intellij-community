@@ -305,7 +305,7 @@ public class SvnBranchPointsCalculator {
     }
   }
 
-  public static class BranchCopyData implements Invertor<BranchCopyData> {
+  public static class BranchCopyData {
     private final String mySource;
     private final String myTarget;
     private final long mySourceRevision;
@@ -342,10 +342,6 @@ public class SvnBranchPointsCalculator {
     public BranchCopyData invertSelf() {
       return new BranchCopyData(myTarget, myTargetRevision, mySource, mySourceRevision);
     }
-  }
-
-  private interface Invertor<T> {
-    T invertSelf();
   }
 
   public TaskDescriptor getFirstCopyPointTask(final String repoUID, final String sourceUrl, final String targetUrl,
