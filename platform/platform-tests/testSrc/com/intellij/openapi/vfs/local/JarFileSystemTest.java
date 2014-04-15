@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs.local;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -38,7 +39,7 @@ import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
 
 public class JarFileSystemTest extends PlatformLangTestCase {
   public void testFindFile() throws IOException {
-    String rtJarPath = System.getProperty("java.home") + "/lib/rt.jar";
+    String rtJarPath = getRtJarPath();
 
     VirtualFile jarRoot = findByPath(rtJarPath + JarFileSystem.JAR_SEPARATOR);
     assertTrue(jarRoot.isDirectory());
@@ -58,9 +59,7 @@ public class JarFileSystemTest extends PlatformLangTestCase {
   }
 
   public void testMetaInf() {
-    String rtJarPath = System.getProperty("java.home") + "/lib/rt.jar";
-
-    VirtualFile jarRoot = findByPath(rtJarPath + JarFileSystem.JAR_SEPARATOR);
+    VirtualFile jarRoot = findByPath(getRtJarPath() + JarFileSystem.JAR_SEPARATOR);
     assertTrue(jarRoot.isDirectory());
 
     VirtualFile metaInf = jarRoot.findChild("META-INF");
@@ -115,8 +114,7 @@ public class JarFileSystemTest extends PlatformLangTestCase {
   }
 
   public void testJarRootForLocalFile() throws Exception {
-    String javaHome = System.getProperty("java.home");
-    String rtJarPath = javaHome + "/lib/rt.jar";
+    String rtJarPath = getRtJarPath();
 
     VirtualFile rtJarFile = LocalFileSystem.getInstance().findFileByPath(rtJarPath);
     assertNotNull(rtJarFile);
@@ -127,10 +125,15 @@ public class JarFileSystemTest extends PlatformLangTestCase {
     VirtualFile entryRoot = JarFileSystem.getInstance().getJarRootForLocalFile(entryFile);
     assertNull(entryRoot);
 
-    VirtualFile nonJarFile = LocalFileSystem.getInstance().findFileByPath(javaHome + "/lib/calendars.properties");
+    VirtualFile nonJarFile = LocalFileSystem.getInstance().findFileByPath(System.getProperty("java.home") + "/lib/calendars.properties");
     assertNotNull(nonJarFile);
     VirtualFile nonJarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(nonJarFile);
     assertNull(nonJarRoot);
+  }
+
+  private static String getRtJarPath() {
+    String home = System.getProperty("java.home");
+    return home + (SystemInfo.isAppleJvm ? "../Classes/classes.jar" : "/lib/rt.jar");
   }
 
   private static VirtualFile findByPath(String path) {
