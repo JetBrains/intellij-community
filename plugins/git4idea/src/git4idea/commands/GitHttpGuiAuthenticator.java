@@ -27,12 +27,16 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.AuthData;
 import com.intellij.util.UriUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.vcsUtil.AuthDialog;
 import git4idea.jgit.GitHttpAuthDataProvider;
 import git4idea.remote.GitRememberedInputs;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * <p>Handles "ask username" and "ask password" requests from Git:
@@ -60,6 +64,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @Nullable private String myUrl;
   @Nullable private String myLogin;
   private boolean myRememberOnDisk;
+  @Nullable private GitHttpAuthDataProvider myDataProvider;
 
   GitHttpGuiAuthenticator(@NotNull Project project, @Nullable ModalityState modalityState, @NotNull GitCommand command,
                           @NotNull String url) {
@@ -76,6 +81,14 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       return myPassword;
     }
     url = adjustUrl(url);
+    Pair<GitHttpAuthDataProvider, AuthData> authData = findBestAuthData(url);
+    if (authData != null && authData.second.getPassword() != null) {
+      String password = authData.second.getPassword();
+      myDataProvider = authData.first;
+      myPassword = password;
+      return password;
+    }
+
     String prompt = "Enter the password for " + url;
     myPasswordKey = url;
     String password = PasswordSafePromptDialog.askPassword(myProject, myModalityState, myTitle, prompt, PASS_REQUESTER, url, false, null);
@@ -93,12 +106,13 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @NotNull
   public String askUsername(@NotNull String url) {
     url = adjustUrl(url);
-    AuthData authData = getSavedAuthData(myProject, url);
+    Pair<GitHttpAuthDataProvider, AuthData> authData = findBestAuthData(url);
     String login = null;
     String password = null;
     if (authData != null) {
-      login = authData.getLogin();
-      password = authData.getPassword();
+      login = authData.second.getLogin();
+      password = authData.second.getPassword();
+      myDataProvider = authData.first;
     }
     if (login != null && password != null) {
       myPassword = password;
@@ -192,37 +206,31 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     return url;
   }
 
+  // return the first that knows username + password; otherwise return the first that knows just the username
   @Nullable
-  private static AuthData getSavedAuthData(@NotNull Project project, @NotNull String url) {
-    String userName = GitRememberedInputs.getInstance().getUserNameForUrl(url);
-    if (userName == null) {
-      return trySavedAuthDataFromProviders(url);
-    }
-    String key = makeKey(url, userName);
-    final PasswordSafe passwordSafe = PasswordSafe.getInstance();
-    try {
-      String password = passwordSafe.getPassword(project, PASS_REQUESTER, key);
-      if (password != null) {
-        return new AuthData(userName, password);
+  private Pair<GitHttpAuthDataProvider, AuthData> findBestAuthData(@NotNull String url) {
+    Pair<GitHttpAuthDataProvider, AuthData> candidate = null;
+    for (GitHttpAuthDataProvider provider : getProviders()) {
+      AuthData data = provider.getAuthData(url);
+      if (data != null) {
+        Pair<GitHttpAuthDataProvider, AuthData> pair = Pair.create(provider, data);
+        if (data.getPassword() != null) {
+          return pair;
+        }
+        if (candidate == null) {
+          candidate = pair;
+        }
       }
-      return trySavedAuthDataFromProviders(url);
     }
-    catch (PasswordSafeException e) {
-      LOG.info("Couldn't get the password for key [" + key + "]", e);
-      return null;
-    }
+    return candidate;
   }
-
-  @Nullable
-  private static AuthData trySavedAuthDataFromProviders(@NotNull String url) {
-    GitHttpAuthDataProvider[] extensions = GitHttpAuthDataProvider.EP_NAME.getExtensions();
-    for (GitHttpAuthDataProvider provider : extensions) {
-      AuthData authData = provider.getAuthData(url);
-      if (authData != null) {
-        return authData;
-      }
-    }
-    return null;
+  
+  @NotNull
+  private List<GitHttpAuthDataProvider> getProviders() {
+    List<GitHttpAuthDataProvider> providers = ContainerUtil.newArrayList();
+    providers.add(new GitDefaultHttpAuthDataProvider(myProject));
+    providers.addAll(Arrays.asList(GitHttpAuthDataProvider.EP_NAME.getExtensions()));
+    return providers;
   }
 
   /**
@@ -236,6 +244,35 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       return scheme + URLUtil.SCHEME_SEPARATOR + login + "@" + pair.getSecond();
     }
     return login + "@" + url;
+  }
+
+  public static class GitDefaultHttpAuthDataProvider implements GitHttpAuthDataProvider {
+
+    @NotNull private final Project myProject;
+
+    public GitDefaultHttpAuthDataProvider(@NotNull Project project) {
+      myProject = project;
+    }
+
+    @Nullable
+    @Override
+    public AuthData getAuthData(@NotNull String url) {
+      String userName = GitRememberedInputs.getInstance().getUserNameForUrl(url);
+      if (userName == null) {
+        return null;
+      }
+      String key = makeKey(url, userName);
+      final PasswordSafe passwordSafe = PasswordSafe.getInstance();
+      try {
+        String password = passwordSafe.getPassword(myProject, PASS_REQUESTER, key);
+        return new AuthData(userName, password);
+      }
+      catch (PasswordSafeException e) {
+        LOG.info("Couldn't get the password for key [" + key + "]", e);
+        return null;
+      }
+    }
+
   }
 
 }
