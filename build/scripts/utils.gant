@@ -262,6 +262,7 @@ binding.setVariable("platformApiModules", [
   "vcs-log-api",
   "xdebugger-api",
   "remote-servers-api",
+  "remote-servers-agent-rt",
   "xml-analysis-api",
   "xml-openapi",
   "xml-psi-api",
