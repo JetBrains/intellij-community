@@ -16,6 +16,7 @@
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.Equality;
 
 import javax.swing.*;
@@ -103,14 +104,21 @@ public abstract class TreeExpansionMonitor<T> {
     myFrozen = true;
   }
 
+  public void unfreeze() {
+    myFrozen = false;
+  }
 
   public void restore() {
     freeze();
+    for (final TreePath myExpandedPath : myExpandedPaths) {
+      myTree.expandPath(findPathByNode((T)myExpandedPath.getLastPathComponent()));
+    }
     for (T mySelectionNode : mySelectionNodes) {
       myTree.getSelectionModel().addSelectionPath(findPathByNode(mySelectionNode));
     }
-    for (final TreePath myExpandedPath : myExpandedPaths) {
-      myTree.expandPath(findPathByNode((T)myExpandedPath.getLastPathComponent()));
+    int selected = myTree.getLeadSelectionRow();
+    if (selected != -1) {
+      TreeUtil.showRowCentered(myTree, selected, false);
     }
     myFrozen = false;
   }

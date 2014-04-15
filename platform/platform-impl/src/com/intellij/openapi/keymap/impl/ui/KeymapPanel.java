@@ -420,14 +420,17 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         alarm.addRequest(new Runnable() {
           public void run() {
             if (!myFilterComponent.isShowing()) return;
-            if (!myTreeExpansionMonitor.isFreeze()) myTreeExpansionMonitor.freeze();
+            myTreeExpansionMonitor.freeze();
             final String filter = getFilter();
             myActionsTree.filter(filter, getCurrentQuickListIds());
             final JTree tree = myActionsTree.getTree();
             TreeUtil.expandAll(tree);
-            if (filter == null || filter.length() == 0){
+            if (filter == null || filter.length() == 0) {
               TreeUtil.collapseAll(tree, 0);
               myTreeExpansionMonitor.restore();
+            }
+            else {
+              myTreeExpansionMonitor.unfreeze();
             }
           }
         }, 300);
@@ -456,6 +459,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     group.add(new DumbAwareAction(KeyMapBundle.message("filter.clear.action.text"),
                            KeyMapBundle.message("filter.clear.action.text"), AllIcons.Actions.GC) {
       public void actionPerformed(AnActionEvent e) {
+        myTreeExpansionMonitor.freeze();
         myActionsTree.filter(null, getCurrentQuickListIds()); //clear filtering
         TreeUtil.collapseAll(myActionsTree.getTree(), 0);
         myTreeExpansionMonitor.restore();
@@ -529,11 +533,12 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
                                     final ShortcutTextField secondShortcut) {
     final KeyStroke keyStroke = firstShortcut.getKeyStroke();
     if (keyStroke != null){
-      if (!myTreeExpansionMonitor.isFreeze()) myTreeExpansionMonitor.freeze();
+      myTreeExpansionMonitor.freeze();
       myActionsTree.filterTree(new KeyboardShortcut(keyStroke, enable2Shortcut.isSelected() ? secondShortcut.getKeyStroke() : null),
                                getCurrentQuickListIds());
       final JTree tree = myActionsTree.getTree();
       TreeUtil.expandAll(tree);
+      myTreeExpansionMonitor.restore();
     }
   }
 
@@ -1041,6 +1046,21 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         });
       }
     }
+    group.add(new Separator());
+    group.add(new DumbAwareAction("Reset Shortcuts") {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        mySelectedKeymap.clearOwnActionsId(actionId);
+        processCurrentKeymapChanged(getCurrentQuickListIds());
+        repaintLists();
+      }
+
+      @Override
+      public void update(AnActionEvent e) {
+        e.getPresentation().setVisible(mySelectedKeymap.canModify() && mySelectedKeymap.hasOwnActionId(actionId));
+        super.update(e);
+      }
+    });
 
     if (e instanceof MouseEvent && ((MouseEvent)e).isPopupTrigger()) {
       final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
