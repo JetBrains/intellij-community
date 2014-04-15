@@ -794,7 +794,6 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     TIntArrayList childrenIdsUpdated = new TIntArrayList();
     List<VirtualFile> childrenToBeUpdated = new SmartList<VirtualFile>();
 
-    assert parent != null;
     final int parentId = getFileId(parent);
     assert parentId != 0;
     TIntHashSet parentChildrenIds = new TIntHashSet(FSRecords.list(parentId));
@@ -875,7 +874,6 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     int rootId = FSRecords.findRootRecord(rootUrl);
 
     if (fs instanceof JarFileSystem) {
-      // optimization: for jar roots do not store base path in the myName field, use local FS file's getPath()
       String parentPath = basePath.substring(0, basePath.indexOf(JarFileSystem.JAR_SEPARATOR));
       VirtualFile parentFile = LocalFileSystem.getInstance().findFileByPath(parentPath);
       if (parentFile == null) return null;
