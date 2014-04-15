@@ -15,6 +15,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.format.IpnbParser;
 
 import javax.swing.*;

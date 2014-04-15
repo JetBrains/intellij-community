@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.ipnb.editor;
+package org.jetbrains.plugins.ipnb.editor.panels;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
