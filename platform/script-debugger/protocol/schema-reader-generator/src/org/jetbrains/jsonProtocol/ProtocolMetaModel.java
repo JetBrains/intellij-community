@@ -70,6 +70,10 @@ public interface ProtocolMetaModel {
 
     @Override
     @JsonOptionalField
+    String shortName();
+
+    @Override
+    @JsonOptionalField
     String type();
 
     @Override
@@ -177,6 +181,10 @@ public interface ProtocolMetaModel {
   interface ObjectProperty extends ItemDescriptor.Named {
     @Override
     String name();
+
+    @Override
+    @JsonOptionalField
+    String shortName();
 
     @Override
     @JsonOptionalField

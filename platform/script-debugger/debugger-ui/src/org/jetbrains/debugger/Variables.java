@@ -38,9 +38,9 @@ public final class Variables {
                                            final @Nullable ActionCallback compoundActionCallback) {
     final boolean isLast = compoundActionCallback == null;
     AsyncResult<?> result =
-      ObsolescentAsyncResults.consume(scope.getVariables(), node, new PairConsumer<List<? extends Variable>, XCompositeNode>() {
+      ObsolescentAsyncResults.consume(scope.getVariables(), node, new PairConsumer<List<Variable>, XCompositeNode>() {
         @Override
-        public void consume(List<? extends Variable> variables, XCompositeNode node) {
+        public void consume(List<Variable> variables, XCompositeNode node) {
           List<Variable> properties = new ArrayList<Variable>(variables.size());
           List<Variable> functions = new SmartList<Variable>();
           for (Variable variable : variables) {
@@ -48,6 +48,7 @@ public final class Variables {
               Value value = variable.getValue();
               if (value != null &&
                   value.getType() == ValueType.FUNCTION &&
+                  value.getValueString() != null &&
                   !UNNAMED_FUNCTION_PATTERN.matcher(value.getValueString()).lookingAt()) {
                 functions.add(variable);
               }

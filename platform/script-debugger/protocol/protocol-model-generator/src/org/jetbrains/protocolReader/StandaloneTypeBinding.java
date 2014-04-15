@@ -1,5 +1,6 @@
 package org.jetbrains.protocolReader;
 
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jsonProtocol.ProtocolMetaModel;
 
 import java.io.IOException;
@@ -13,6 +14,7 @@ interface StandaloneTypeBinding {
   /**
    * @return null if not direction-specific
    */
+  @Nullable
   TypeData.Direction getDirection();
 
   interface Target {

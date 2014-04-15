@@ -30,7 +30,7 @@ public interface Scope {
   String getDescription();
 
   @NotNull
-  AsyncResult<List<? extends Variable>> getVariables();
+  AsyncResult<List<Variable>> getVariables();
 
   boolean isGlobal();
 

@@ -1,9 +1,11 @@
 package org.jetbrains.protocolReader;
 
+import org.jetbrains.annotations.NotNull;
+
 class ListType extends BoxableType {
   private final BoxableType itemType;
 
-  public ListType(BoxableType itemType) {
+  public ListType(@NotNull BoxableType itemType) {
     this.itemType = itemType;
   }
 
@@ -29,7 +31,7 @@ class ListType extends BoxableType {
     if (itemType == LONG || itemType == INT || itemType == NUMBER) {
       return itemType.getFullText() + "[]";
     }
-    return "java.util.List<" + itemType.getFullText() + ">";
+    return "java.util.List<" + itemType.getFullText() + '>';
   }
 
   @Override
@@ -37,6 +39,6 @@ class ListType extends BoxableType {
     if (itemType == LONG || itemType == INT || itemType == NUMBER) {
       return itemType.getFullText() + "[]";
     }
-    return "java.util.List<" + itemType.getShortText(contextNamespace) + ">";
+    return "java.util.List<" + itemType.getShortText(contextNamespace) + '>';
   }
 }

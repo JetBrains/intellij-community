@@ -1,5 +1,6 @@
 package org.jetbrains.protocolReader;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jsonProtocol.ItemDescriptor;
 import org.jetbrains.jsonProtocol.ProtocolMetaModel;
@@ -118,7 +119,7 @@ class DomainGenerator {
     out.closeBlock();
   }
 
-  StandaloneTypeBinding createStandaloneOutputTypeBinding(ProtocolMetaModel.StandaloneType type, String name) {
+  StandaloneTypeBinding createStandaloneOutputTypeBinding(@NotNull ProtocolMetaModel.StandaloneType type, @NotNull String name) {
     return Generator.switchByType(type, new MyCreateStandaloneTypeBindingVisitorBase(this, type, name));
   }
 
@@ -177,14 +178,14 @@ class DomainGenerator {
     });
   }
 
-  StandaloneTypeBinding createStandaloneObjectInputTypeBinding(final ProtocolMetaModel.StandaloneType type,
-      final List<ProtocolMetaModel.ObjectProperty> properties) {
+  StandaloneTypeBinding createStandaloneObjectInputTypeBinding(final ProtocolMetaModel.StandaloneType type, final List<ProtocolMetaModel.ObjectProperty> properties) {
     final String name = type.id();
     final NamePath fullTypeName = generator.getNaming().inputValue.getFullName(domain.domain(), name);
     generator.jsonProtocolParserClassNames.add(fullTypeName.getFullText());
 
     return new StandaloneTypeBinding() {
-      @Override public BoxableType getJavaType() {
+      @Override
+      public BoxableType getJavaType() {
         return new StandaloneType(fullTypeName, "writeMessage");
       }
 

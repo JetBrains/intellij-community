@@ -1,12 +1,109 @@
 // Generated source
 package org.jetbrains.jsonProtocol;
 
+import org.jetbrains.jsonProtocol.*;
+
 import static org.jetbrains.jsonProtocol.JsonReaders.*;
 
 public final class ProtocolSchemaReaderImpl implements org.jetbrains.jsonProtocol.ProtocolSchemaReader {
   @Override
   public org.jetbrains.jsonProtocol.ProtocolMetaModel.Root parseRoot(org.jetbrains.io.JsonReaderEx reader) {
     return new M6(reader);
+  }
+
+  public static final class M4 implements org.jetbrains.jsonProtocol.ProtocolMetaModel.ObjectProperty {
+    private String _description;
+    private java.util.List<String> _enum;
+    private boolean _hidden;
+    private org.jetbrains.jsonProtocol.ProtocolMetaModel.ArrayItemType _items;
+    private String _name;
+    private boolean _optional;
+    private String _$ref;
+    private String _shortName;
+    private String _type;
+
+    public M4(org.jetbrains.io.JsonReaderEx reader) {
+      reader.beginObject();
+      while (reader.hasNext()) {
+        CharSequence name = reader.nextNameAsCharSequence();
+        if (name.equals("description")) {
+          _description = readNullableString(reader);
+        }
+        else if (name.equals("enum")) {
+          _enum = nextList(reader);
+        }
+        else if (name.equals("hidden")) {
+          _hidden = readBoolean(reader, "hidden");
+        }
+        else if (name.equals("items")) {
+          _items = new M0(reader);
+        }
+        else if (name.equals("name")) {
+          _name = readString(reader, "name");
+        }
+        else if (name.equals("optional")) {
+          _optional = readBoolean(reader, "optional");
+        }
+        else if (name.equals("$ref")) {
+          _$ref = readNullableString(reader);
+        }
+        else if (name.equals("shortName")) {
+          _shortName = readNullableString(reader);
+        }
+        else if (name.equals("type")) {
+          _type = readNullableString(reader);
+        }
+        else {
+          reader.skipValue();
+        }
+      }
+      reader.endObject();
+    }
+
+    @Override
+    public java.lang.String description() {
+      return _description;
+    }
+
+    @Override
+    public java.util.List<java.lang.String> getEnum() {
+      return _enum;
+    }
+
+    @Override
+    public boolean hidden() {
+      return _hidden;
+    }
+
+    @Override
+    public org.jetbrains.jsonProtocol.ProtocolMetaModel.ArrayItemType items() {
+      return _items;
+    }
+
+    @Override
+    public java.lang.String name() {
+      return _name;
+    }
+
+    @Override
+    public boolean optional() {
+      return _optional;
+    }
+
+    @Override
+    public java.lang.String ref() {
+      return _$ref;
+    }
+
+    @Override
+    public java.lang.String shortName() {
+      return _shortName;
+    }
+
+    @Override
+    public java.lang.String type() {
+      return _type;
+    }
   }
 
   public static final class M0 implements org.jetbrains.jsonProtocol.ProtocolMetaModel.ArrayItemType {
@@ -23,7 +120,7 @@ public final class ProtocolSchemaReaderImpl implements org.jetbrains.jsonProtoco
       while (reader.hasNext()) {
         CharSequence name = reader.nextNameAsCharSequence();
         if (name.equals("description")) {
-          _description = readString(reader, "description");
+          _description = readNullableString(reader);
         }
         else if (name.equals("enum")) {
           _enum = nextList(reader);
@@ -35,13 +132,13 @@ public final class ProtocolSchemaReaderImpl implements org.jetbrains.jsonProtoco
           _optional = readBoolean(reader, "optional");
         }
         else if (name.equals("properties")) {
-          _properties = readObjectArray(reader, "properties", new M4F(), false);
+          _properties = readObjectArray(reader, "properties", new M4F(), true);
         }
         else if (name.equals("$ref")) {
-          _$ref = readString(reader, "$ref");
+          _$ref = readNullableString(reader);
         }
         else if (name.equals("type")) {
-          _type = readString(reader, "type");
+          _type = readNullableString(reader);
         }
         else {
           reader.skipValue();
@@ -86,6 +183,228 @@ public final class ProtocolSchemaReaderImpl implements org.jetbrains.jsonProtoco
     }
   }
 
+  public static final class M7 implements org.jetbrains.jsonProtocol.ProtocolMetaModel.StandaloneType {
+    private String _description;
+    private java.util.List<String> _enum;
+    private boolean _hidden;
+    private String _id;
+    private org.jetbrains.jsonProtocol.ProtocolMetaModel.ArrayItemType _items;
+    private java.util.List<org.jetbrains.jsonProtocol.ProtocolMetaModel.ObjectProperty> _properties;
+    private String _type;
+
+    public M7(org.jetbrains.io.JsonReaderEx reader) {
+      reader.beginObject();
+      while (reader.hasNext()) {
+        CharSequence name = reader.nextNameAsCharSequence();
+        if (name.equals("description")) {
+          _description = readNullableString(reader);
+        }
+        else if (name.equals("enum")) {
+          _enum = nextList(reader);
+        }
+        else if (name.equals("hidden")) {
+          _hidden = readBoolean(reader, "hidden");
+        }
+        else if (name.equals("id")) {
+          _id = readString(reader, "id");
+        }
+        else if (name.equals("items")) {
+          _items = new M0(reader);
+        }
+        else if (name.equals("properties")) {
+          _properties = readObjectArray(reader, "properties", new M4F(), true);
+        }
+        else if (name.equals("type")) {
+          _type = readString(reader, "type");
+        }
+        else {
+          reader.skipValue();
+        }
+      }
+      reader.endObject();
+    }
+
+    @Override
+    public java.lang.String description() {
+      return _description;
+    }
+
+    @Override
+    public java.util.List<java.lang.String> getEnum() {
+      return _enum;
+    }
+
+    @Override
+    public boolean hidden() {
+      return _hidden;
+    }
+
+    @Override
+    public java.lang.String id() {
+      return _id;
+    }
+
+    @Override
+    public org.jetbrains.jsonProtocol.ProtocolMetaModel.ArrayItemType items() {
+      return _items;
+    }
+
+    @Override
+    public java.util.List<org.jetbrains.jsonProtocol.ProtocolMetaModel.ObjectProperty> properties() {
+      return _properties;
+    }
+
+    @Override
+    public java.lang.String type() {
+      return _type;
+    }
+  }
+
+  public static final class M3 implements org.jetbrains.jsonProtocol.ProtocolMetaModel.Event {
+    private String _description;
+    private boolean _hidden;
+    private String _name;
+    private java.util.List<org.jetbrains.jsonProtocol.ProtocolMetaModel.Parameter> _parameters;
+
+    public M3(org.jetbrains.io.JsonReaderEx reader) {
+      reader.beginObject();
+      while (reader.hasNext()) {
+        CharSequence name = reader.nextNameAsCharSequence();
+        if (name.equals("description")) {
+          _description = readNullableString(reader);
+        }
+        else if (name.equals("hidden")) {
+          _hidden = readBoolean(reader, "hidden");
+        }
+        else if (name.equals("name")) {
+          _name = readString(reader, "name");
+        }
+        else if (name.equals("parameters")) {
+          _parameters = readObjectArray(reader, "parameters", new M5F(), true);
+        }
+        else {
+          reader.skipValue();
+        }
+      }
+      reader.endObject();
+    }
+
+    @Override
+    public java.lang.String description() {
+      return _description;
+    }
+
+    @Override
+    public boolean hidden() {
+      return _hidden;
+    }
+
+    @Override
+    public java.lang.String name() {
+      return _name;
+    }
+
+    @Override
+    public java.util.List<org.jetbrains.jsonProtocol.ProtocolMetaModel.Parameter> parameters() {
+      return _parameters;
+    }
+  }
+
+  public static final class M5 implements org.jetbrains.jsonProtocol.ProtocolMetaModel.Parameter {
+    private String _description;
+    private java.util.List<String> _enum;
+    private boolean _hidden;
+    private org.jetbrains.jsonProtocol.ProtocolMetaModel.ArrayItemType _items;
+    private String _name;
+    private boolean _optional;
+    private String _$ref;
+    private String _shortName;
+    private String _type;
+
+    public M5(org.jetbrains.io.JsonReaderEx reader) {
+      reader.beginObject();
+      while (reader.hasNext()) {
+        CharSequence name = reader.nextNameAsCharSequence();
+        if (name.equals("description")) {
+          _description = readNullableString(reader);
+        }
+        else if (name.equals("enum")) {
+          _enum = nextList(reader);
+        }
+        else if (name.equals("hidden")) {
+          _hidden = readBoolean(reader, "hidden");
+        }
+        else if (name.equals("items")) {
+          _items = new M0(reader);
+        }
+        else if (name.equals("name")) {
+          _name = readString(reader, "name");
+        }
+        else if (name.equals("optional")) {
+          _optional = readBoolean(reader, "optional");
+        }
+        else if (name.equals("$ref")) {
+          _$ref = readNullableString(reader);
+        }
+        else if (name.equals("shortName")) {
+          _shortName = readNullableString(reader);
+        }
+        else if (name.equals("type")) {
+          _type = readNullableString(reader);
+        }
+        else {
+          reader.skipValue();
+        }
+      }
+      reader.endObject();
+    }
+
+    @Override
+    public java.lang.String description() {
+      return _description;
+    }
+
+    @Override
+    public java.util.List<java.lang.String> getEnum() {
+      return _enum;
+    }
+
+    @Override
+    public boolean hidden() {
+      return _hidden;
+    }
+
+    @Override
+    public org.jetbrains.jsonProtocol.ProtocolMetaModel.ArrayItemType items() {
+      return _items;
+    }
+
+    @Override
+    public java.lang.String name() {
+      return _name;
+    }
+
+    @Override
+    public boolean optional() {
+      return _optional;
+    }
+
+    @Override
+    public java.lang.String ref() {
+      return _$ref;
+    }
+
+    @Override
+    public java.lang.String shortName() {
+      return _shortName;
+    }
+
+    @Override
+    public java.lang.String type() {
+      return _type;
+    }
+  }
+
   public static final class M1 implements org.jetbrains.jsonProtocol.ProtocolMetaModel.Command {
     private boolean _async;
     private String _description;
@@ -102,7 +421,7 @@ public final class ProtocolSchemaReaderImpl implements org.jetbrains.jsonProtoco
           _async = readBoolean(reader, "async");
         }
         else if (name.equals("description")) {
-          _description = readString(reader, "description");
+          _description = readNullableString(reader);
         }
         else if (name.equals("hidden")) {
           _hidden = readBoolean(reader, "hidden");
@@ -111,10 +430,10 @@ public final class ProtocolSchemaReaderImpl implements org.jetbrains.jsonProtoco
           _name = readString(reader, "name");
         }
         else if (name.equals("parameters")) {
-          _parameters = readObjectArray(reader, "parameters", new M5F(), false);
+          _parameters = readObjectArray(reader, "parameters", new M5F(), true);
         }
         else if (name.equals("returns")) {
-          _returns = readObjectArray(reader, "returns", new M5F(), false);
+          _returns = readObjectArray(reader, "returns", new M5F(), true);
         }
         else {
           reader.skipValue();
@@ -170,19 +489,19 @@ public final class ProtocolSchemaReaderImpl implements org.jetbrains.jsonProtoco
           _commands = readObjectArray(reader, "commands", new M1F(), false);
         }
         else if (name.equals("description")) {
-          _description = readString(reader, "description");
+          _description = readNullableString(reader);
         }
         else if (name.equals("domain")) {
           _domain = readString(reader, "domain");
         }
         else if (name.equals("events")) {
-          _events = readObjectArray(reader, "events", new M3F(), false);
+          _events = readObjectArray(reader, "events", new M3F(), true);
         }
         else if (name.equals("hidden")) {
           _hidden = readBoolean(reader, "hidden");
         }
         else if (name.equals("types")) {
-          _types = readObjectArray(reader, "types", new M7F(), false);
+          _types = readObjectArray(reader, "types", new M7F(), true);
         }
         else {
           reader.skipValue();
@@ -222,27 +541,19 @@ public final class ProtocolSchemaReaderImpl implements org.jetbrains.jsonProtoco
     }
   }
 
-  public static final class M3 implements org.jetbrains.jsonProtocol.ProtocolMetaModel.Event {
-    private String _description;
-    private boolean _hidden;
-    private String _name;
-    private java.util.List<org.jetbrains.jsonProtocol.ProtocolMetaModel.Parameter> _parameters;
+  public static final class M8 implements org.jetbrains.jsonProtocol.ProtocolMetaModel.Version {
+    private String _major;
+    private String _minor;
 
-    public M3(org.jetbrains.io.JsonReaderEx reader) {
+    public M8(org.jetbrains.io.JsonReaderEx reader) {
       reader.beginObject();
       while (reader.hasNext()) {
         CharSequence name = reader.nextNameAsCharSequence();
-        if (name.equals("description")) {
-          _description = readString(reader, "description");
+        if (name.equals("major")) {
+          _major = readString(reader, "major");
         }
-        else if (name.equals("hidden")) {
-          _hidden = readBoolean(reader, "hidden");
-        }
-        else if (name.equals("name")) {
-          _name = readString(reader, "name");
-        }
-        else if (name.equals("parameters")) {
-          _parameters = readObjectArray(reader, "parameters", new M5F(), false);
+        else if (name.equals("minor")) {
+          _minor = readString(reader, "minor");
         }
         else {
           reader.skipValue();
@@ -252,195 +563,13 @@ public final class ProtocolSchemaReaderImpl implements org.jetbrains.jsonProtoco
     }
 
     @Override
-    public java.lang.String description() {
-      return _description;
+    public java.lang.String major() {
+      return _major;
     }
 
     @Override
-    public boolean hidden() {
-      return _hidden;
-    }
-
-    @Override
-    public java.lang.String name() {
-      return _name;
-    }
-
-    @Override
-    public java.util.List<org.jetbrains.jsonProtocol.ProtocolMetaModel.Parameter> parameters() {
-      return _parameters;
-    }
-  }
-
-  public static final class M4 implements org.jetbrains.jsonProtocol.ProtocolMetaModel.ObjectProperty {
-    private String _description;
-    private java.util.List<String> _enum;
-    private boolean _hidden;
-    private org.jetbrains.jsonProtocol.ProtocolMetaModel.ArrayItemType _items;
-    private String _name;
-    private boolean _optional;
-    private String _$ref;
-    private String _type;
-
-    public M4(org.jetbrains.io.JsonReaderEx reader) {
-      reader.beginObject();
-      while (reader.hasNext()) {
-        CharSequence name = reader.nextNameAsCharSequence();
-        if (name.equals("description")) {
-          _description = readString(reader, "description");
-        }
-        else if (name.equals("enum")) {
-          _enum = nextList(reader);
-        }
-        else if (name.equals("hidden")) {
-          _hidden = readBoolean(reader, "hidden");
-        }
-        else if (name.equals("items")) {
-          _items = new M0(reader);
-        }
-        else if (name.equals("name")) {
-          _name = readString(reader, "name");
-        }
-        else if (name.equals("optional")) {
-          _optional = readBoolean(reader, "optional");
-        }
-        else if (name.equals("$ref")) {
-          _$ref = readString(reader, "$ref");
-        }
-        else if (name.equals("type")) {
-          _type = readString(reader, "type");
-        }
-        else {
-          reader.skipValue();
-        }
-      }
-      reader.endObject();
-    }
-
-    @Override
-    public java.lang.String description() {
-      return _description;
-    }
-
-    @Override
-    public java.util.List<java.lang.String> getEnum() {
-      return _enum;
-    }
-
-    @Override
-    public boolean hidden() {
-      return _hidden;
-    }
-
-    @Override
-    public org.jetbrains.jsonProtocol.ProtocolMetaModel.ArrayItemType items() {
-      return _items;
-    }
-
-    @Override
-    public java.lang.String name() {
-      return _name;
-    }
-
-    @Override
-    public boolean optional() {
-      return _optional;
-    }
-
-    @Override
-    public java.lang.String ref() {
-      return _$ref;
-    }
-
-    @Override
-    public java.lang.String type() {
-      return _type;
-    }
-  }
-
-  public static final class M5 implements org.jetbrains.jsonProtocol.ProtocolMetaModel.Parameter {
-    private String _description;
-    private java.util.List<String> _enum;
-    private boolean _hidden;
-    private org.jetbrains.jsonProtocol.ProtocolMetaModel.ArrayItemType _items;
-    private String _name;
-    private boolean _optional;
-    private String _$ref;
-    private String _type;
-
-    public M5(org.jetbrains.io.JsonReaderEx reader) {
-      reader.beginObject();
-      while (reader.hasNext()) {
-        CharSequence name = reader.nextNameAsCharSequence();
-        if (name.equals("description")) {
-          _description = readString(reader, "description");
-        }
-        else if (name.equals("enum")) {
-          _enum = nextList(reader);
-        }
-        else if (name.equals("hidden")) {
-          _hidden = readBoolean(reader, "hidden");
-        }
-        else if (name.equals("items")) {
-          _items = new M0(reader);
-        }
-        else if (name.equals("name")) {
-          _name = readString(reader, "name");
-        }
-        else if (name.equals("optional")) {
-          _optional = readBoolean(reader, "optional");
-        }
-        else if (name.equals("$ref")) {
-          _$ref = readString(reader, "$ref");
-        }
-        else if (name.equals("type")) {
-          _type = readString(reader, "type");
-        }
-        else {
-          reader.skipValue();
-        }
-      }
-      reader.endObject();
-    }
-
-    @Override
-    public java.lang.String description() {
-      return _description;
-    }
-
-    @Override
-    public java.util.List<java.lang.String> getEnum() {
-      return _enum;
-    }
-
-    @Override
-    public boolean hidden() {
-      return _hidden;
-    }
-
-    @Override
-    public org.jetbrains.jsonProtocol.ProtocolMetaModel.ArrayItemType items() {
-      return _items;
-    }
-
-    @Override
-    public java.lang.String name() {
-      return _name;
-    }
-
-    @Override
-    public boolean optional() {
-      return _optional;
-    }
-
-    @Override
-    public java.lang.String ref() {
-      return _$ref;
-    }
-
-    @Override
-    public java.lang.String type() {
-      return _type;
+    public java.lang.String minor() {
+      return _minor;
     }
   }
 
@@ -473,115 +602,6 @@ public final class ProtocolSchemaReaderImpl implements org.jetbrains.jsonProtoco
     @Override
     public org.jetbrains.jsonProtocol.ProtocolMetaModel.Version version() {
       return _version;
-    }
-  }
-
-  public static final class M7 implements org.jetbrains.jsonProtocol.ProtocolMetaModel.StandaloneType {
-    private String _description;
-    private java.util.List<String> _enum;
-    private boolean _hidden;
-    private String _id;
-    private org.jetbrains.jsonProtocol.ProtocolMetaModel.ArrayItemType _items;
-    private java.util.List<org.jetbrains.jsonProtocol.ProtocolMetaModel.ObjectProperty> _properties;
-    private String _type;
-
-    public M7(org.jetbrains.io.JsonReaderEx reader) {
-      reader.beginObject();
-      while (reader.hasNext()) {
-        CharSequence name = reader.nextNameAsCharSequence();
-        if (name.equals("description")) {
-          _description = readString(reader, "description");
-        }
-        else if (name.equals("enum")) {
-          _enum = nextList(reader);
-        }
-        else if (name.equals("hidden")) {
-          _hidden = readBoolean(reader, "hidden");
-        }
-        else if (name.equals("id")) {
-          _id = readString(reader, "id");
-        }
-        else if (name.equals("items")) {
-          _items = new M0(reader);
-        }
-        else if (name.equals("properties")) {
-          _properties = readObjectArray(reader, "properties", new M4F(), false);
-        }
-        else if (name.equals("type")) {
-          _type = readString(reader, "type");
-        }
-        else {
-          reader.skipValue();
-        }
-      }
-      reader.endObject();
-    }
-
-    @Override
-    public java.lang.String description() {
-      return _description;
-    }
-
-    @Override
-    public java.util.List<java.lang.String> getEnum() {
-      return _enum;
-    }
-
-    @Override
-    public boolean hidden() {
-      return _hidden;
-    }
-
-    @Override
-    public java.lang.String id() {
-      return _id;
-    }
-
-    @Override
-    public org.jetbrains.jsonProtocol.ProtocolMetaModel.ArrayItemType items() {
-      return _items;
-    }
-
-    @Override
-    public java.util.List<org.jetbrains.jsonProtocol.ProtocolMetaModel.ObjectProperty> properties() {
-      return _properties;
-    }
-
-    @Override
-    public java.lang.String type() {
-      return _type;
-    }
-  }
-
-  public static final class M8 implements org.jetbrains.jsonProtocol.ProtocolMetaModel.Version {
-    private String _major;
-    private String _minor;
-
-    public M8(org.jetbrains.io.JsonReaderEx reader) {
-      reader.beginObject();
-      while (reader.hasNext()) {
-        CharSequence name = reader.nextNameAsCharSequence();
-        if (name.equals("major")) {
-          _major = readString(reader, "major");
-        }
-        else if (name.equals("minor")) {
-          _minor = readString(reader, "minor");
-        }
-        else {
-          reader.skipValue();
-        }
-      }
-      reader.endObject();
-    }
-
-    @Override
-    public java.lang.String major() {
-      return _major;
-    }
-
-    @Override
-    public java.lang.String minor() {
-      return _minor;
     }
   }
 

@@ -66,7 +66,9 @@ public final class VariableView extends XNamedValue implements VariableContext {
     node.setPresentation(icon, new ObjectValuePresentation(getClassName(value)), value.hasProperties() != ThreeState.NO);
   }
 
-  public static void setArrayPresentation(@NotNull ObjectValue value, @NotNull VariableContext context, @NotNull final Icon icon, @NotNull XValueNode node) {
+  public static void setArrayPresentation(@NotNull Value value, @NotNull VariableContext context, @NotNull final Icon icon, @NotNull XValueNode node) {
+    assert value.getType() == ValueType.ARRAY;
+
     if (value instanceof ArrayValue) {
       int length = ((ArrayValue)value).getLength();
       node.setPresentation(icon, new ArrayPresentation(length), length > 0);
@@ -142,8 +144,13 @@ public final class VariableView extends XNamedValue implements VariableContext {
     }
   }
 
+  @NotNull
   static String trimFunctionDescription(@NotNull Value value) {
     String presentableValue = value.getValueString();
+    if (presentableValue == null) {
+      return "";
+    }
+
     int endIndex = 0;
     while (endIndex < presentableValue.length() && !StringUtil.isLineBreak(presentableValue.charAt(endIndex))) {
       endIndex++;
@@ -167,7 +174,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
         break;
 
       case ARRAY:
-        context.getDebugProcess().computeArrayPresentation(((ObjectValue)value), variable, context, node, getIcon());
+        context.getDebugProcess().computeArrayPresentation(value, variable, context, node, getIcon());
         break;
 
       case BOOLEAN:
@@ -208,9 +215,9 @@ public final class VariableView extends XNamedValue implements VariableContext {
       return;
     }
 
-    ObsolescentAsyncResults.consume(((ObjectValue)value).getProperties(), node, new PairConsumer<List<? extends Variable>, XCompositeNode>() {
+    ObsolescentAsyncResults.consume(((ObjectValue)value).getProperties(), node, new PairConsumer<List<Variable>, XCompositeNode>() {
       @Override
-      public void consume(List<? extends Variable> variables, XCompositeNode node) {
+      public void consume(List<Variable> variables, XCompositeNode node) {
         if (value instanceof ArrayValue) {
           // todo arrays could have not only indexes values
           return;
