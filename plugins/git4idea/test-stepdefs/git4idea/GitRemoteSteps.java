@@ -161,6 +161,11 @@ public class GitRemoteSteps {
     public void forgetPassword() {
     }
 
+    @Override
+    public boolean wasCancelled() {
+      return false;
+    }
+
     boolean wasPasswordAsked() {
       return myPasswordAsked;
     }

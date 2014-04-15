@@ -65,6 +65,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @Nullable private String myLogin;
   private boolean myRememberOnDisk;
   @Nullable private GitHttpAuthDataProvider myDataProvider;
+  private boolean myWasCancelled;
 
   GitHttpGuiAuthenticator(@NotNull Project project, @Nullable ModalityState modalityState, @NotNull GitCommand command,
                           @NotNull String url) {
@@ -80,6 +81,9 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     if (myPassword != null) {  // already asked in askUsername
       return myPassword;
     }
+    if (myWasCancelled) { // already pressed cancel in askUsername
+      return "";
+    }
     url = adjustUrl(url);
     Pair<GitHttpAuthDataProvider, AuthData> authData = findBestAuthData(url);
     if (authData != null && authData.second.getPassword() != null) {
@@ -93,6 +97,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     myPasswordKey = url;
     String password = PasswordSafePromptDialog.askPassword(myProject, myModalityState, myTitle, prompt, PASS_REQUESTER, url, false, null);
     if (password == null) {
+      myWasCancelled = true;
       return "";
     }
     // Password is stored in the safe in PasswordSafePromptDialog.askPassword,
@@ -129,6 +134,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     }, myModalityState == null ? ModalityState.defaultModalityState() : myModalityState);
 
     if (!dialog.isOK()) {
+      myWasCancelled = true;
       return "";
     }
 
@@ -169,6 +175,11 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     if (myDataProvider != null) {
       myDataProvider.forgetPassword(adjustUrl(myUrl));
     }
+  }
+
+  @Override
+  public boolean wasCancelled() {
+    return myWasCancelled;
   }
 
   @NotNull
