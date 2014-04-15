@@ -75,6 +75,8 @@ import java.util.regex.Pattern;
  */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public abstract class UsefulTestCase extends TestCase {
+  public static final boolean IS_UNDER_TEAMCITY = System.getenv("TEAMCITY_VERSION") != null;
+
   public static final String IDEA_MARKER_CLASS = "com.intellij.openapi.components.impl.stores.IdeaProjectStoreImpl";
   public static final String TEMP_DIR_MARKER = "unitTest_";
 
@@ -643,7 +645,7 @@ public abstract class UsefulTestCase extends TestCase {
     String actualText = StringUtil.convertLineSeparators(actual.trim());
     Assert.assertEquals(expectedText, actualText);
   }
-  
+
   public static void assertExists(File file){
     assertTrue("File should exists " + file, file.exists());
   }

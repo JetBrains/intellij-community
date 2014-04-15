@@ -16,6 +16,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -42,6 +43,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 
 public class PluginHostsConfigurable extends BaseConfigurable {
@@ -187,7 +189,7 @@ public class PluginHostsConfigurable extends BaseConfigurable {
               public void run() {
                 try {
                   result[0] =
-                    UpdateChecker.checkPluginsHost(correctRepositoryRule(getTextField().getText()), new ArrayList<PluginDownloader>());
+                    UpdateChecker.checkPluginsHost(correctRepositoryRule(getTextField().getText()), new HashMap<PluginId, PluginDownloader>(), true, ProgressManager.getInstance().getProgressIndicator());
                 }
                 catch (Exception e1) {
                   ex[0] = e1;

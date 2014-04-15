@@ -675,9 +675,6 @@
   <action id="EditorChooseLookupItem">
     <keyboard-shortcut first-keystroke="ENTER"/>
   </action>
-  <action id="EditorChooseLookupItemAlways">
-    <keyboard-shortcut first-keystroke="control ENTER"/>
-  </action>
   <action id="Inline">
     <keyboard-shortcut first-keystroke="control alt N"/>
   </action>

@@ -147,7 +147,6 @@
     <tipAndTrick file="FinishBySmartEnter.html" feature-id="editing.completion.finishBySmartEnter"/>
     <tipAndTrick file="FinishByExclamation.html" feature-id="editing.completion.finishByExclamation"/>
     <tipAndTrick file="CompletionImportStatic.html" feature-id="editing.completion.global.member.name"/>
-    <tipAndTrick file="FinishByControlEnter.html" feature-id="editing.completion.finishByControlEnter"/>
     <tipAndTrick file="SecondBasicClassNameCompletion.html" feature-id="editing.completion.second.basic"/>
     <tipAndTrick file="SecondSmartCompletionToar.html" feature-id="editing.completion.second.smarttype.toar"/>
     <tipAndTrick file="ChangeSorting.html" feature-id="editing.completion.changeSorting"/>

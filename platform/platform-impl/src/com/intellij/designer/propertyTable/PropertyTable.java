@@ -1057,7 +1057,7 @@ public abstract class PropertyTable extends JBTable {
     }
 
     public boolean isCellEditable(int row, int column) {
-      return column == 1 && myProperties.get(row).getEditor() != null;
+      return column == 1 && myProperties.get(row).isEditable(getCurrentComponent());
     }
 
     @Override

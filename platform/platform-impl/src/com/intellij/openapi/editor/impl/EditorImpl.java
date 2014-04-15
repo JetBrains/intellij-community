@@ -306,6 +306,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private VisualPosition myTargetMultiSelectionPosition;
   private boolean myMultiSelectionInProgress;
   private boolean myLastPressCreatedCaret;
+  // Set when the selection (normal or block one) initiated by mouse drag becomes noticeable (at least one character is selected).
+  // Reset on mouse press event.
   private boolean myCurrentDragIsSubstantial;
 
   private CaretImpl myPrimaryCaret;
@@ -4040,7 +4042,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       // The call below is performed because gutter's height is not updated sometimes, i.e. it sticks to the value that corresponds
       // to the situation when fold region is collapsed. That causes bottom of the gutter to not be repainted and that looks really ugly.
-      getGutterComponentEx().invalidate();
+      myGutterComponent.updateSize();
     }
 
     // The general idea is to check if the user performed 'caret position change click' (left click most of the time) inside selection
@@ -4204,12 +4206,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (isColumnMode() || e.isAltDown()) {
           if (myCaretModel.supportsMultipleCarets()) {
             if (myLastMousePressedLocation != null && (myCurrentDragIsSubstantial || !newLogicalCaret.equals(myLastMousePressedLocation))) {
-              selectionModel.setBlockSelection(myLastMousePressedLocation, newLogicalCaret);
-              myCurrentDragIsSubstantial = true;
+              setBlockSelectionAndBlockActions(e, myLastMousePressedLocation, newLogicalCaret);
             }
           } else {
             final LogicalPosition blockStart = selectionModel.hasBlockSelection() ? selectionModel.getBlockStart() : oldLogicalCaret;
-            selectionModel.setBlockSelection(blockStart, getCaretModel().getLogicalPosition());
+            setBlockSelectionAndBlockActions(e, blockStart, getCaretModel().getLogicalPosition());
           }
         }
         else {
@@ -4270,10 +4271,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               }
             }
             if (oldVisLeadSelectionStart != null) {
-              selectionModel.setSelection(oldVisLeadSelectionStart, oldSelectionStart, newVisualCaret, newCaretOffset);
+              setSelectionAndBlockActions(e, oldVisLeadSelectionStart, oldSelectionStart, newVisualCaret, newCaretOffset);
             }
             else {
-              selectionModel.setSelection(oldSelectionStart, newCaretOffset);
+              setSelectionAndBlockActions(e, oldSelectionStart, newCaretOffset);
             }
             cancelAutoResetForMouseSelectionState();
           }
@@ -4297,7 +4298,34 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     else {
       myScrollingTimer.start(dx, dy);
+      onSubstantialDrag(e);
     }
+  }
+
+  private void setSelectionAndBlockActions(@NotNull MouseEvent mouseDragEvent, int startOffset, int endOffset) {
+    mySelectionModel.setSelection(startOffset, endOffset);
+    if (myCurrentDragIsSubstantial || startOffset != endOffset) {
+      onSubstantialDrag(mouseDragEvent);
+    }
+  }
+
+  private void setSelectionAndBlockActions(@NotNull MouseEvent mouseDragEvent, VisualPosition startPosition, int startOffset, VisualPosition endPosition, int endOffset) {
+    mySelectionModel.setSelection(startPosition, startOffset, endPosition, endOffset);
+    if (myCurrentDragIsSubstantial || startOffset != endOffset || !Comparing.equal(startPosition, endPosition)) {
+      onSubstantialDrag(mouseDragEvent);
+    }
+  }
+
+  private void setBlockSelectionAndBlockActions(@NotNull MouseEvent mouseDragEvent, @NotNull LogicalPosition startPosition, @NotNull LogicalPosition endPosition) {
+    mySelectionModel.setBlockSelection(startPosition, endPosition);
+    if (myCurrentDragIsSubstantial || !startPosition.equals(endPosition)) {
+      onSubstantialDrag(mouseDragEvent);
+    }
+  }
+
+  private void onSubstantialDrag(@NotNull MouseEvent mouseDragEvent) {
+    IdeEventQueue.getInstance().blockNextEvents(mouseDragEvent, IdeEventQueue.BlockMode.ACTIONS);
+    myCurrentDragIsSubstantial = true;
   }
 
   private static class RepaintCursorCommand implements Runnable {

@@ -57,6 +57,10 @@ public class ModuleDeploymentSourceImpl implements ModuleDeploymentSource {
     if (module == null) {
       return null;
     }
+    return getContentRoot(module);
+  }
+
+  public static VirtualFile getContentRoot(Module module) {
     return ArrayUtil.getFirstElement(ModuleRootManager.getInstance(module).getContentRoots());
   }
 

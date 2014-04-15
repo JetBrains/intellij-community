@@ -5,8 +5,8 @@ import java.io.FileInputStream;
 
 public class MismatchedCollectionQueryUpdate {
     private Set foo = new HashSet();
-    private Set foo2 = new HashSet();
-    private Set bar ;
+    private Set <warning descr="Contents of collection 'foo2' are queried, but never updated">foo2</warning> = new HashSet();
+    private Set <warning descr="Contents of collection 'bar' are queried, but never updated">bar</warning> ;
     private Set bar2 = new HashSet(foo2);
     private Set bal ;
 
@@ -18,7 +18,7 @@ public class MismatchedCollectionQueryUpdate {
 
     public void bar2()
     {
-        final List barzoom = new ArrayList(3);
+        final List <warning descr="Contents of collection 'barzoom' are updated, but never queried">barzoom</warning> = new ArrayList(3);
         barzoom.add(new Integer(3));
     }
 
@@ -129,7 +129,18 @@ public class MismatchedCollectionQueryUpdate {
     return "not " + bar + "";
   }
 
+  void methodArgument() {
+    List<String> <warning descr="Contents of collection 'foos' are updated, but never queried">foos</warning> = new ArrayList<>();
+    List<String> <warning descr="Contents of collection 'bars' are queried, but never updated">bars</warning> = new ArrayList<>();
 
+    foos.removeAll( bars );
+
+    List<String> other = new ArrayList<>();
+    other.add("a");
+    m(other);
+  }
+
+  void m(List l) {}
 
   public void foo()
   {
@@ -138,7 +149,7 @@ public class MismatchedCollectionQueryUpdate {
 
   public void foofoo()
   {
-    final Map<String, String> anotherMap = new HashMap<String, String>();
+    final Map<String, String> <warning descr="Contents of collection 'anotherMap' are queried, but never updated">anotherMap</warning> = new HashMap<String, String>();
     final SortedMap<String, String> map = new TreeMap<String, String>(anotherMap);
     final Iterator<String> it = map.keySet().iterator();
     while(it.hasNext()){

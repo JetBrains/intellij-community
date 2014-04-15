@@ -61,6 +61,7 @@ import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.PsiTreeChangePreprocessor;
+import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.EverythingGlobalScope;
@@ -141,7 +142,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   private final ConcurrentHashSet<Project> myProjectsBeingUpdated = new ConcurrentHashSet<Project>();
 
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"}) private volatile boolean myInitialized;
-  // need this variable for memory barrier
+    // need this variable for memory barrier
 
   public FileBasedIndexImpl(@SuppressWarnings("UnusedParameters") VirtualFileManager vfManager,
                             FileDocumentManager fdm,
@@ -514,15 +515,17 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       index = (MapReduceIndex<K, V, FileContent>)custom;
     }
     else {
-      index = new MapReduceIndex<K, V, FileContent>(indexId, extension.getIndexer(), storage);
+      DataExternalizer<Collection<K>> externalizer =
+        extension.hasSnapshotMapping() && IdIndex.ourSnapshotMappingsEnabled
+        ? createInputsIndexExternalizer(extension, indexId, extension.getKeyDescriptor())
+        : null;
+      index = new MapReduceIndex<K, V, FileContent>(indexId, extension.getIndexer(), storage, externalizer);
     }
-
-    final KeyDescriptor<K> keyDescriptor = extension.getKeyDescriptor();
     index.setInputIdToDataKeysIndex(new Factory<PersistentHashMap<Integer, Collection<K>>>() {
       @Override
       public PersistentHashMap<Integer, Collection<K>> create() {
         try {
-          return createIdToDataKeysIndex(indexId, keyDescriptor, storage);
+          return createIdToDataKeysIndex(extension, storage);
         }
         catch (IOException e) {
           throw new RuntimeException(e);
@@ -534,10 +537,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   @NotNull
-  public static <K> PersistentHashMap<Integer, Collection<K>> createIdToDataKeysIndex(@NotNull final ID<K, ?> indexId,
-                                                                                      @NotNull final KeyDescriptor<K> keyDescriptor,
+  public static <K> PersistentHashMap<Integer, Collection<K>> createIdToDataKeysIndex(@NotNull FileBasedIndexExtension <K, ?> extension,
                                                                                       @NotNull MemoryIndexStorage<K, ?> storage)
     throws IOException {
+    ID<K, ?> indexId = extension.getName();
+    KeyDescriptor<K> keyDescriptor = extension.getKeyDescriptor();
     final File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile(indexId);
     final AtomicBoolean isBufferingMode = new AtomicBoolean();
     final TIntObjectHashMap<Collection<K>> tempMap = new TIntObjectHashMap<Collection<K>>();
@@ -549,7 +553,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     // cleared properly before updating (removed data will still be present on disk). See IDEA-52223 for illustration of possible effects.
 
     final PersistentHashMap<Integer, Collection<K>> map = new PersistentHashMap<Integer, Collection<K>>(
-      indexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, new InputIndexDataExternalizer<K>(keyDescriptor, indexId)
+      indexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, createInputsIndexExternalizer(extension, indexId, keyDescriptor)
     ) {
 
       @Override
@@ -600,6 +604,18 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
     });
     return map;
+  }
+
+  private static <K> DataExternalizer<Collection<K>> createInputsIndexExternalizer(FileBasedIndexExtension<K, ?> extension,
+                                                                                  ID<K, ?> indexId,
+                                                                                  KeyDescriptor<K> keyDescriptor) {
+    DataExternalizer<Collection<K>> externalizer;
+    if (extension instanceof CustomInputsIndexFileBasedIndexExtension) {
+      externalizer = ((CustomInputsIndexFileBasedIndexExtension<K>)extension).createExternalizer();
+    } else {
+      externalizer = new InputIndexDataExternalizer<K>(keyDescriptor, indexId);
+    }
+    return externalizer;
   }
 
   @Override
@@ -909,6 +925,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       else {
         throw e;
       }
+    } catch(AssertionError ae) {
+      scheduleRebuild(indexId, ae);
     }
     return null;
   }
@@ -1246,6 +1264,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       else {
         throw e;
       }
+    } catch (AssertionError ae) {
+      scheduleRebuild(indexId, ae);
     }
     return true;
   }

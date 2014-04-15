@@ -36,7 +36,6 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.editor.richcopy.model.*;
 import com.intellij.openapi.editor.richcopy.settings.RichCopySettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -44,6 +43,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,10 +57,10 @@ import java.util.Queue;
 public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlockTransferableData> {
   private static final Logger LOG = Logger.getInstance("#" + TextWithMarkupProcessor.class.getName());
 
-  private final List<TextWithMarkupBuilder> myBuilders = new ArrayList<TextWithMarkupBuilder>();
+  private final EventDispatcher<TextWithMarkupBuilder> myBuilders = EventDispatcher.create(TextWithMarkupBuilder.class);
 
   public void addBuilder(TextWithMarkupBuilder builder) {
-    myBuilders.add(builder);
+    myBuilders.addListener(builder);
   }
 
   @Nullable
@@ -71,10 +71,6 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
     }
 
     try {
-      for (TextWithMarkupBuilder builder : myBuilders) {
-        builder.reset();
-      }
-
       RichCopySettings settings = RichCopySettings.getInstance();
       Document document = editor.getDocument();
       final int indentSymbolsToStrip;
@@ -94,8 +90,17 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
       EditorHighlighter highlighter = HighlighterFactory.createHighlighter(file.getVirtualFile(), schemeToUse, file.getProject());
       highlighter.setText(text);
       MarkupModel markupModel = DocumentMarkupModel.forDocument(document, file.getProject(), false);
-      Context context = new Context(text, schemeToUse, indentSymbolsToStrip);
 
+      myBuilders.getMulticaster().init(schemeToUse.getDefaultForeground(),
+                                       schemeToUse.getDefaultBackground(),
+                                       FontMapper.getPhysicalFontName(schemeToUse.getEditorFontName()),
+                                       schemeToUse.getEditorFontSize());
+
+      EventDispatcher<TextWithMarkupBuilder> activeBuilders = EventDispatcher.create(TextWithMarkupBuilder.class);
+      activeBuilders.getListeners().addAll(myBuilders.getListeners());
+      Context context = new Context(activeBuilders.getMulticaster(), text, schemeToUse, indentSymbolsToStrip);
+
+      outer:
       for (int i = 0; i < startOffsets.length; i++) {
         int startOffsetToUse;
         if (i == 0) {
@@ -103,7 +108,7 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
         }
         else {
           startOffsetToUse = startOffsets[i];
-          context.outputInfos.add(new Text('\n'));
+          activeBuilders.getMulticaster().addTextFragment("\n", 0, 1);
         }
         int endOffsetToUse = endOffsets[i];
         context.reset();
@@ -115,6 +120,15 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
                                                                  wrap(markupModel, text, schemeToUse, startOffsetToUse, endOffsetToUse));
         try {
           while (it.hasNext()) {
+            Iterator<TextWithMarkupBuilder> builderIterator = activeBuilders.getListeners().iterator();
+            while (builderIterator.hasNext()) {
+              if (builderIterator.next().isOverflowed()) {
+                builderIterator.remove();
+                if (activeBuilders.getListeners().isEmpty()) {
+                  break outer;
+                }
+              }
+            }
             SegmentInfo info = it.next();
             if (info.startOffset >= endOffsetToUse) {
               break;
@@ -127,12 +141,8 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
         }
         context.onIterationEnd(endOffsetToUse);
       }
-      SyntaxInfo syntaxInfo = context.finish();
-      logSyntaxInfo(syntaxInfo);
 
-      for (TextWithMarkupBuilder builder : myBuilders) {
-        builder.build(text, syntaxInfo);
-      }
+      myBuilders.getMulticaster().complete();
     }
     catch (Exception e) {
       // catching the exception so that the rest of copy/paste functionality can still work fine
@@ -184,13 +194,6 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
       "Preparing syntax-aware text. Given: %s selection, indent symbols to strip=%d, first line start offset=%d, selected text:%n%s",
       startOffsets.length > 1 ? "block" : "regular", indentSymbolsToStrip, firstLineStartOffset, buffer
     ));
-  }
-
-  private static void logSyntaxInfo(@NotNull SyntaxInfo info) {
-    if (!Registry.is("editor.richcopy.debug")) {
-      return;
-    }
-    LOG.info("Constructed syntax info: " + info);
   }
 
   private static Pair<Integer/* start offset to use */, Integer /* indent symbols to strip */> calcIndentSymbolsToStrip(
@@ -290,7 +293,7 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
         if (fontStyle == Font.PLAIN) {
           fontStyle = info2.fontStyle;
         }
-        return new SegmentInfo(foreground, background, info1.fontFamilyName, fontStyle, info1.fontSize, info1.startOffset, info1.endOffset);
+        return new SegmentInfo(foreground, background, info1.fontFamilyName, fontStyle, info1.startOffset, info1.endOffset);
       }
 
       @Override
@@ -490,12 +493,7 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
   }
 
   private static class Context {
-
-    @NotNull public final List<OutputInfo> outputInfos = ContainerUtilRt.newArrayList();
-
-    @NotNull private final ColorRegistry myColorRegistry    = new ColorRegistry();
-    @NotNull private final FontNameRegistry myFontNameRegistry = new FontNameRegistry();
-
+    @NotNull private final TextWithMarkupBuilder myBuilder;
     @NotNull private final CharSequence myText;
     @NotNull private final Color        myDefaultForeground;
     @NotNull private final Color        myDefaultBackground;
@@ -507,14 +505,12 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
     private final int myIndentSymbolsToStrip;
 
     private int myFontStyle   = -1;
-    private int myFontSize    = -1;
     private int myStartOffset = -1;
-
-    private int mySingleFontSize;
 
     private int myIndentSymbolsToStripAtCurrentLine;
 
-    Context(@NotNull CharSequence charSequence, @NotNull EditorColorsScheme scheme, int indentSymbolsToStrip) {
+    Context(@NotNull TextWithMarkupBuilder builder, @NotNull CharSequence charSequence, @NotNull EditorColorsScheme scheme, int indentSymbolsToStrip) {
+      myBuilder = builder;
       myText = charSequence;
       myDefaultForeground = scheme.getDefaultForeground();
       myDefaultBackground = scheme.getDefaultBackground();
@@ -538,7 +534,6 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
         processForeground(info);
         processFontFamilyName(info);
         processFontStyle(info);
-        processFontSize(info);
       }
     }
 
@@ -555,22 +550,8 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
     private void processFontStyle(@NotNull SegmentInfo info) {
       if (info.fontStyle != myFontStyle) {
         addTextIfPossible(info.startOffset);
-        outputInfos.add(new FontStyle(info.fontStyle));
+        myBuilder.setFontStyle(info.fontStyle);
         myFontStyle = info.fontStyle;
-      }
-    }
-
-    private void processFontSize(@NotNull SegmentInfo info) {
-      if (mySingleFontSize == 0) {
-        mySingleFontSize = info.fontSize;
-      }
-      else if (mySingleFontSize > 0 && mySingleFontSize != info.fontSize) {
-        mySingleFontSize = -1;
-      }
-      if (info.fontSize != myFontSize) {
-        addTextIfPossible(info.startOffset);
-        outputInfos.add(new FontSize(info.fontSize));
-        myFontSize = info.fontSize;
       }
     }
 
@@ -578,7 +559,7 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
       String fontFamilyName = FontMapper.getPhysicalFontName(info.fontFamilyName);
       if (!fontFamilyName.equals(myFontFamilyName)) {
         addTextIfPossible(info.startOffset);
-        outputInfos.add(new FontFamilyName(myFontNameRegistry.getId(fontFamilyName)));
+        myBuilder.setFontFamily(fontFamilyName);
         myFontFamilyName = fontFamilyName;
       }
     }
@@ -587,13 +568,13 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
       if (myForeground == null && info.foreground != null) {
         addTextIfPossible(info.startOffset);
         myForeground = info.foreground;
-        outputInfos.add(new Foreground(myColorRegistry.getId(info.foreground)));
+        myBuilder.setForeground(info.foreground);
       }
       else if (myForeground != null) {
         Color c = info.foreground == null ? myDefaultForeground : info.foreground;
         if (!myForeground.equals(c)) {
           addTextIfPossible(info.startOffset);
-          outputInfos.add(new Foreground(myColorRegistry.getId(c)));
+          myBuilder.setForeground(c);
           myForeground = c;
         }
       }
@@ -603,13 +584,13 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
       if (myBackground == null && info.background != null && !myDefaultBackground.equals(info.background)) {
         addTextIfPossible(info.startOffset);
         myBackground = info.background;
-        outputInfos.add(new Background(myColorRegistry.getId(info.background)));
+        myBuilder.setBackground(info.background);
       }
       else if (myBackground != null) {
         Color c = info.background == null ? myDefaultBackground : info.background;
         if (!myBackground.equals(c)) {
           addTextIfPossible(info.startOffset);
-          outputInfos.add(new Background(myColorRegistry.getId(c)));
+          myBuilder.setBackground(c);
           myBackground = c;
         }
       }
@@ -625,7 +606,7 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
         switch (c) {
           case '\n':
             myIndentSymbolsToStripAtCurrentLine = myIndentSymbolsToStrip;
-            outputInfos.add(new Text(myStartOffset, i + 1));
+            myBuilder.addTextFragment(myText, myStartOffset, i + 1);
             myStartOffset = i + 1;
             break;
           // Intended fall-through.
@@ -641,22 +622,13 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
       }
 
       if (myStartOffset < endOffset) {
-        outputInfos.add(new Text(myStartOffset, endOffset));
+        myBuilder.addTextFragment(myText, myStartOffset, endOffset);
         myStartOffset = endOffset;
       }
     }
 
     public void onIterationEnd(int endOffset) {
       addTextIfPossible(endOffset);
-    }
-
-    @NotNull
-    public SyntaxInfo finish() {
-      int foreground = myColorRegistry.getId(myDefaultForeground);
-      int background = myColorRegistry.getId(myDefaultBackground);
-      myColorRegistry.seal();
-      myFontNameRegistry.seal();
-      return new SyntaxInfo(outputInfos, foreground, background, mySingleFontSize, myFontNameRegistry, myColorRegistry);
     }
   }
 
@@ -667,7 +639,6 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
     @NotNull public final  String fontFamilyName;
 
     public final int fontStyle;
-    public final int fontSize;
     public final int startOffset;
     public final int endOffset;
 
@@ -675,7 +646,6 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
                 @Nullable Color background,
                 @NotNull String fontFamilyName,
                 int fontStyle,
-                int fontSize,
                 int startOffset,
                 int endOffset)
     {
@@ -683,7 +653,6 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
       this.background = background;
       this.fontFamilyName = fontFamilyName;
       this.fontStyle = fontStyle;
-      this.fontSize = fontSize;
       this.startOffset = startOffset;
       this.endOffset = endOffset;
     }
@@ -705,25 +674,20 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
       String defaultFontFamily = colorsScheme.getEditorFontName();
       Font font = ComplementaryFontsRegistry.getFontAbleToDisplay(text.charAt(start), fontSize, fontStyle, defaultFontFamily).getFont();
       String currentFontFamilyName = font.getFamily();
-      int currentFontSize = font.getSize();
       String candidateFontFamilyName;
-      int candidateFontSize;
       for (int i = start + 1; i < end; i++) {
         font = ComplementaryFontsRegistry.getFontAbleToDisplay(text.charAt(i), fontSize, fontStyle, defaultFontFamily).getFont();
         candidateFontFamilyName = font.getFamily();
-        candidateFontSize = font.getSize();
-        if (!candidateFontFamilyName.equals(currentFontFamilyName) || currentFontSize != candidateFontSize) {
+        if (!candidateFontFamilyName.equals(currentFontFamilyName)) {
           result.add(new SegmentInfo(attribute.getForegroundColor(),
                                      attribute.getBackgroundColor(),
                                      currentFontFamilyName,
                                      fontStyle,
-                                     currentFontSize,
                                      currentStart,
                                      i
           ));
           currentStart = i;
           currentFontFamilyName = candidateFontFamilyName;
-          currentFontSize = candidateFontSize;
         }
       }
 
@@ -732,7 +696,6 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
                                    attribute.getBackgroundColor(),
                                    currentFontFamilyName,
                                    fontStyle,
-                                   currentFontSize,
                                    currentStart,
                                    end
         ));
@@ -752,7 +715,6 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
       result = 31 * result + (background != null ? background.hashCode() : 0);
       result = 31 * result + fontFamilyName.hashCode();
       result = 31 * result + fontStyle;
-      result = 31 * result + fontSize;
       result = 31 * result + startOffset;
       result = 31 * result + endOffset;
       return result;
@@ -768,7 +730,6 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
 
       if (endOffset != info.endOffset) return false;
       if (fontStyle != info.fontStyle) return false;
-      if (fontSize != info.fontSize) return false;
       if (startOffset != info.startOffset) return false;
       if (background != null ? !background.equals(info.background) : info.background != null) return false;
       if (!fontFamilyName.equals(info.fontFamilyName)) return false;

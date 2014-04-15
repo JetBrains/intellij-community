@@ -313,10 +313,6 @@
       <keyboard-shortcut first-keystroke="alt DOWN"/>
     </action>
 
-    <action id="EditorChooseLookupItemAlways">
-      <keyboard-shortcut first-keystroke="control ENTER"/>
-    </action>
-
     <action id="EditorLookupUp"> <keyboard-shortcut first-keystroke="control UP"/> </action>
     <action id="EditorLookupDown"> <keyboard-shortcut first-keystroke="control DOWN"/> </action>
 

@@ -202,8 +202,14 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
       try {
         final HashSet<String> usedVariables = new HashSet<String>();
         final CachedXmlDocumentSet documentSet = getFileSet();
-        final String path = documentSet.getParent(EclipseXml.PROJECT_FILE);
-        LOG.assertTrue(documentSet.exists(EclipseXml.PROJECT_FILE));
+        String path = documentSet.getParent(EclipseXml.PROJECT_FILE);
+        if (!documentSet.exists(EclipseXml.PROJECT_FILE)) {
+          if (!documentSet.exists(EclipseXml.CLASSPATH_FILE)) {
+            return usedVariables;
+          }
+
+          path = documentSet.getParent(EclipseXml.CLASSPATH_FILE);
+        }
         final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, module.getProject(), null);
         classpathReader.init(model);
         if (documentSet.exists(EclipseXml.CLASSPATH_FILE)) {

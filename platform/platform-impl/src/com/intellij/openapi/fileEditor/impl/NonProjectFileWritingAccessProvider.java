@@ -17,7 +17,10 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.StorageScheme;
+import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -101,8 +104,20 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
     return deniedFiles;
   }
 
-  private boolean isProjectFile(VirtualFile each) {
-    return ProjectFileIndex.SERVICE.getInstance(myProject).isInContent(each);
+  private boolean isProjectFile(@NotNull VirtualFile file) {
+    if (myProject instanceof ProjectEx) {
+      IProjectStore store = ((ProjectEx)myProject).getStateStore();
+
+      if (store.getStorageScheme() == StorageScheme.DIRECTORY_BASED) {
+        VirtualFile baseDir = myProject.getBaseDir();
+        VirtualFile dotIdea = baseDir == null ? null : baseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
+        if (dotIdea != null && VfsUtilCore.isAncestor(dotIdea, file, false)) return true;
+      }
+
+      if (file.equals(store.getWorkspaceFile()) || file.equals(store.getProjectFile())) return true;
+    }
+
+    return ProjectFileIndex.SERVICE.getInstance(myProject).isInContent(file);
   }
 
   @TestOnly

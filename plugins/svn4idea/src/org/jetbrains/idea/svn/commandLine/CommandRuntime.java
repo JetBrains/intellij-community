@@ -231,10 +231,6 @@ public class CommandRuntime {
            SvnCommandName.resolve.equals(command.getName()) ||
            SvnCommandName.upgrade.equals(command.getName()) ||
            SvnCommandName.changelist.equals(command.getName()) ||
-           // currently "svn lock" is only applied to local files
-           SvnCommandName.lock.equals(command.getName()) ||
-           // currently "svn unlock" is only applied to local files
-           SvnCommandName.unlock.equals(command.getName()) ||
            command.isLocalInfo() || command.isLocalStatus() || command.isLocalProperty() || command.isLocalCat();
   }
 

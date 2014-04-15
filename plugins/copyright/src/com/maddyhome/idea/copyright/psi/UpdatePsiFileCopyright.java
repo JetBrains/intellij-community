@@ -72,13 +72,17 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
 
   @Override
   public void complete() throws Exception {
+    complete(true);
+  }
+
+  public void complete(boolean allowReplacement) throws Exception {
     if (file == null) {
       logger.info("No file for root: " + getRoot());
       return;
     }
 
     if (accept()) {
-      processActions();
+      processActions(allowReplacement);
     }
   }
 
@@ -315,7 +319,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
     return element == null ? null : element.getNextSibling();
   }
 
-  protected void processActions() throws IncorrectOperationException {
+  protected void processActions(final boolean allowReplacement) throws IncorrectOperationException {
     new WriteCommandAction.Simple(file.getProject(), "Update copyright") {
       @Override
       protected void run() throws Throwable {
@@ -334,10 +338,10 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
                 }
                 break;
               case CommentAction.ACTION_REPLACE:
-                doc.replaceString(start, end, getCommentText("", ""));
+                if (allowReplacement) doc.replaceString(start, end, getCommentText("", ""));
                 break;
               case CommentAction.ACTION_DELETE:
-                doc.deleteString(start, end);
+                if (allowReplacement) doc.deleteString(start, end);
                 break;
             }
           }

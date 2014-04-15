@@ -440,14 +440,25 @@ public class PersistentMapTest extends TestCase {
     TIntIntHashMap checkMap = new TIntIntHashMap(size);
     Random r = new Random(1);
     while(size != checkMap.size()) {
-      checkMap.put(r.nextInt(), size == 0 ? 0 : r.nextInt());
+      if (checkMap.size() == 0) {
+        checkMap.put(r.nextInt(), 0);
+        checkMap.put(r.nextInt(), 0);
+        checkMap.put(0, r.nextInt());
+      } else {
+        checkMap.put(r.nextInt(), r.nextInt());
+      }
     }
 
     long started = System.currentTimeMillis();
     PersistentHashMap<Integer, Integer> map = null;
 
     try {
-      map = new PersistentHashMap<Integer, Integer>(file, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE);
+      map = new PersistentHashMap<Integer, Integer>(file, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE) {
+        @Override
+        protected boolean wantCompactIntegralValues() {
+          return true;
+        }
+      };
 
       final PersistentHashMap<Integer, Integer> mapFinal = map;
       boolean result = checkMap.forEachEntry(new TIntIntProcedure() {
@@ -467,7 +478,12 @@ public class PersistentMapTest extends TestCase {
       map.close();
       System.out.println("Done:"+(System.currentTimeMillis() - started));
       started = System.currentTimeMillis();
-      map = new PersistentHashMap<Integer, Integer>(file, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE);
+      map = new PersistentHashMap<Integer, Integer>(file, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE) {
+        @Override
+        protected boolean wantCompactIntegralValues() {
+          return true;
+        }
+      };
       final PersistentHashMap<Integer, Integer> mapFinal2 = map;
       result = checkMap.forEachEntry(new TIntIntProcedure() {
         @Override

@@ -16,9 +16,6 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.codeInsight.intention.impl.SplitIfAction;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.testFramework.LightCodeInsightTestCase;
 
 public class SplitDeclarationTest extends LightQuickFixParameterizedTestCase {
 

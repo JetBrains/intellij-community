@@ -30,9 +30,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Eugene.Kudelevsky
@@ -41,25 +41,25 @@ public class CustomTemplateCallback {
   private final TemplateManager myTemplateManager;
   private final Editor myEditor;
   private final PsiFile myFile;
-  private int myOffset;
+  private final int myOffset;
   private final Project myProject;
-
   private final boolean myInInjectedFragment;
-
-  private FileType myFileType;
+  private Set<TemplateContextType> myApplicableContextTypes;
 
   public CustomTemplateCallback(@NotNull Editor editor, @NotNull PsiFile file, boolean wrapping) {
     myProject = file.getProject();
     myTemplateManager = TemplateManager.getInstance(myProject);
 
-    int offset = getOffset(wrapping, editor);
-    PsiElement element = InjectedLanguageUtil.findInjectedElementNoCommit(file, offset);
+    myOffset = getOffset(wrapping, editor);
+    PsiElement element = InjectedLanguageUtil.findInjectedElementNoCommit(file, myOffset);
     myFile = element != null ? element.getContainingFile() : file;
 
     myInInjectedFragment = InjectedLanguageManager.getInstance(myProject).isInjectedFragment(myFile);
-    myEditor = myInInjectedFragment ? InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file, offset) : editor;
+    myEditor = myInInjectedFragment ? InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file, myOffset) : editor;
+  }
 
-    fixInitialState(wrapping);
+  public PsiFile getFile() {
+    return myFile;
   }
 
   @NotNull
@@ -67,8 +67,8 @@ public class CustomTemplateCallback {
     return getContext(myFile, myOffset);
   }
 
-  public void fixInitialState(boolean wrapping) {
-    myOffset = getOffset(wrapping, myEditor);
+  public int getOffset() {
+    return myOffset;
   }
 
   private static int getOffset(boolean wrapping, Editor editor) {
@@ -88,20 +88,21 @@ public class CustomTemplateCallback {
   }
 
   @NotNull
-  public List<TemplateImpl> findApplicableTemplates(String key) {
-    List<TemplateImpl> templates = getMatchingTemplates(key);
-    templates = filterApplicableCandidates(templates);
-    return templates;
-  }
-
-  public List<TemplateImpl> filterApplicableCandidates(Collection<? extends TemplateImpl> candidates) {
+  public List<TemplateImpl> findApplicableTemplates(@NotNull String key) {
     List<TemplateImpl> result = new ArrayList<TemplateImpl>();
-    for (TemplateImpl candidate : candidates) {
-      if (!candidate.isDeactivated() && TemplateManagerImpl.isApplicable(myFile, myOffset, candidate)) {
+    for (TemplateImpl candidate : getMatchingTemplates(key)) {
+      if (isAvailableTemplate(candidate)) {
         result.add(candidate);
       }
     }
     return result;
+  }
+
+  private boolean isAvailableTemplate(TemplateImpl template) {
+    if (myApplicableContextTypes == null) {
+      myApplicableContextTypes = TemplateManagerImpl.getApplicableContextTypes(myFile, myOffset);  
+    }
+    return !template.isDeactivated() && TemplateManagerImpl.isApplicable(template, myApplicableContextTypes);
   }
 
   public void startTemplate(Template template, Map<String, String> predefinedValues, TemplateEditingListener listener) {
@@ -138,10 +139,7 @@ public class CustomTemplateCallback {
 
   @NotNull
   public FileType getFileType() {
-    if (myFileType == null) {
-      myFileType = myFile.getFileType();
-    }
-    return myFileType;
+    return myFile.getFileType();
   }
 
   public Project getProject() {

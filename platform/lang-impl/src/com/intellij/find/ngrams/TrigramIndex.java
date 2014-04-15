@@ -19,19 +19,26 @@
  */
 package com.intellij.find.ngrams;
 
+import com.intellij.openapi.util.ThreadLocalCachedByteArray;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.util.indexing.*;
-import com.intellij.util.io.EnumeratorIntegerDescriptor;
-import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.*;
+import com.intellij.util.io.DataOutputStream;
 import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.*;
+import java.util.Collection;
 import java.util.Map;
+import java.util.zip.Deflater;
+import java.util.zip.DeflaterInputStream;
+import java.util.zip.DeflaterOutputStream;
 
-public class TrigramIndex extends ScalarIndexExtension<Integer> {
+public class TrigramIndex extends ScalarIndexExtension<Integer> implements CustomInputsIndexFileBasedIndexExtension<Integer> {
   public static final boolean ENABLED = "true".equals(System.getProperty("idea.internal.trigramindex.enabled"));
 
   public static final ID<Integer,Void> INDEX_ID = ID.create("Trigram.Index");
@@ -100,11 +107,65 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> {
 
   @Override
   public int getVersion() {
-    return ENABLED ? 2 : 1;
+    return ENABLED ? 2 + (IdIndex.ourSnapshotMappingsEnabled ? 0xFF:0) : 1;
   }
 
   @Override
   public boolean hasSnapshotMapping() {
     return true;
+  }
+
+  private static final ThreadLocalCachedByteArray spareBufferLocal = new ThreadLocalCachedByteArray();
+
+  @NotNull
+  @Override
+  public DataExternalizer<Collection<Integer>> createExternalizer() {
+    return new InputIndexDataExternalizer<Integer>(getKeyDescriptor(), INDEX_ID) {
+      @Override
+      public void save(@NotNull DataOutput out, @NotNull Collection<Integer> value) throws IOException {
+        final int maxSerializedLength = 4 * value.size() + 4;
+        byte[] originalBuffer = spareBufferLocal.getBuffer(maxSerializedLength);
+        UnsyncByteArrayOutputStream originalBytes = new UnsyncByteArrayOutputStream(originalBuffer);
+        DataOutputStream originalDataOutput = new DataOutputStream(originalBytes);
+
+        super.save(originalDataOutput, value);
+        final int size = originalBytes.size();
+        DataInputOutputUtil.writeINT(out, size);
+
+        Deflater deflater = new Deflater(Deflater.HUFFMAN_ONLY);
+        DeflaterOutputStream compressedDeflaterOutput = new DeflaterOutputStream((OutputStream)out, deflater);
+        try {
+          compressedDeflaterOutput.write(originalBuffer, 0, size);
+        } finally {
+          try {
+            compressedDeflaterOutput.close();
+          } catch (IOException ignore) {}
+          deflater.end();
+        }
+      }
+
+      @NotNull
+      @Override
+      public Collection<Integer> read(@NotNull DataInput in) throws IOException {
+        byte[] originalBuffer;
+        int size;
+        Deflater deflater = new Deflater(Deflater.HUFFMAN_ONLY);
+        DeflaterInputStream is = new DeflaterInputStream((DataInputStream)in, deflater);
+        try {
+          size = DataInputOutputUtil.readINT(in);
+          originalBuffer = spareBufferLocal.getBuffer(size);
+          //noinspection ResultOfMethodCallIgnored
+          is.read(originalBuffer, 0, size);
+        }
+        finally {
+          try {
+            is.close();
+          } catch (IOException ignore) {}
+          deflater.end();
+        }
+
+        return super.read(new DataInputStream(new UnsyncByteArrayInputStream(originalBuffer, 0, size)));
+      }
+    };
   }
 }

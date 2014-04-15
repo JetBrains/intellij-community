@@ -34,8 +34,6 @@ import java.io.File;
 import java.util.List;
 
 public class WizardContext extends UserDataHolderBase {
-  private static final Icon NEW_PROJECT_ICON = null;
-  private static final Icon NEW_MODULE_ICON = null;
   /**
    * a project where the module should be added, can be null => the wizard creates a new project
    */
@@ -124,7 +122,7 @@ public class WizardContext extends UserDataHolderBase {
   }
 
   public Icon getStepIcon() {
-    return isCreatingNewProject() ? NEW_PROJECT_ICON : NEW_MODULE_ICON;
+    return null;
   }
 
   public void requestWizardButtonsUpdate() {

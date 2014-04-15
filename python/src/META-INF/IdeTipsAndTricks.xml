@@ -107,7 +107,6 @@
     <tipAndTrick file="ChangeSorting.html"/>
     <tipAndTrick file="CheckRegExp.html"/>
     <tipAndTrick file="CtrlDotInLookups.html"/>
-    <tipAndTrick file="FinishByControlEnter.html"/>
     <tipAndTrick file="HorizontalScrolling.html"/>
   </extensions>
 </idea-plugin>

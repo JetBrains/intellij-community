@@ -196,6 +196,10 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
     PsiType qualifierType;
     if (qualifierTypeElement != null) {
       qualifierType = qualifierTypeElement.getType();
+      final PsiClass qualifierClass = PsiUtil.resolveClassInType(qualifierType);
+      if (qualifierClass != null) {
+        qualifierType = JavaPsiFacade.getElementFactory(myExpression.getProject()).createType(qualifierClass, PsiSubstitutor.EMPTY);
+      }
     }
     else {
       LOG.assertTrue(qualifierExpression != null);

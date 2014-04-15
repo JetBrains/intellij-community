@@ -18,6 +18,8 @@ package com.maddyhome.idea.copyright.actions;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.BaseAnalysisAction;
+import com.intellij.analysis.BaseAnalysisActionDialog;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -27,19 +29,26 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.ui.TitledSeparator;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
 import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.pattern.FileUtil;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class UpdateCopyrightAction extends BaseAnalysisAction {
+  public static final String UPDATE_EXISTING_COPYRIGHTS = "update.existing.copyrights";
+  private JCheckBox myUpdateExistingCopyrightsCb;
+
   protected UpdateCopyrightAction() {
     super(UpdateCopyrightProcessor.TITLE, UpdateCopyrightProcessor.TITLE);
   }
@@ -107,8 +116,20 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
     return true;
   }
 
+  @Nullable
+  @Override
+  protected JComponent getAdditionalActionSettings(Project project, BaseAnalysisActionDialog dialog) {
+    final JPanel panel = new JPanel(new VerticalFlowLayout());
+    panel.add(new TitledSeparator());
+    myUpdateExistingCopyrightsCb = new JCheckBox("Update existing copyrights", 
+                                                 PropertiesComponent.getInstance().getBoolean(UPDATE_EXISTING_COPYRIGHTS, true));
+    panel.add(myUpdateExistingCopyrightsCb);
+    return panel;
+  }
+
   @Override
   protected void analyze(@NotNull final Project project, @NotNull final AnalysisScope scope) {
+    PropertiesComponent.getInstance().setValue(UPDATE_EXISTING_COPYRIGHTS, String.valueOf(myUpdateExistingCopyrightsCb.isSelected()));
     if (scope.checkScopeWritable(project)) return;
     final List<Runnable> preparations = new ArrayList<Runnable>();
     Task.Backgroundable task = new Task.Backgroundable(project, "Prepare Copyright...", true) {
@@ -120,7 +141,7 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
             if (indicator.isCanceled()) {
               return;
             }
-            preparations.add(new UpdateCopyrightProcessor(project, ModuleUtilCore.findModuleForPsiElement(file), file).preprocessFile(file));
+            preparations.add(new UpdateCopyrightProcessor(project, ModuleUtilCore.findModuleForPsiElement(file), file).preprocessFile(file, myUpdateExistingCopyrightsCb.isSelected()));
           }
         });
       }

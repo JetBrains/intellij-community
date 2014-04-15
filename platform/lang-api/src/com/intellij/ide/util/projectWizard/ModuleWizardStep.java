@@ -28,8 +28,7 @@ import java.awt.*;
 
 public abstract class ModuleWizardStep extends StepAdapter {
 
-  protected static final Icon ICON = null;
-  public static final ModuleWizardStep[] EMPTY_ARRAY = new ModuleWizardStep[0];
+  public static final ModuleWizardStep[] EMPTY_ARRAY = {};
 
   @Override
   public abstract JComponent getComponent();
@@ -54,11 +53,6 @@ public abstract class ModuleWizardStep extends StepAdapter {
   }
 
   public void onWizardFinished() throws CommitStepException {
-  }
-
-  @Override
-  public Icon getIcon() {
-    return ICON;
   }
 
   public boolean isStepVisible() {

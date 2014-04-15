@@ -43,13 +43,12 @@ public class ProgramParametersConfigurator {
     parameters.setWorkingDirectory(getWorkingDir(configuration, project, module));
 
     parameters.setupEnvs(configuration.getEnvs(), configuration.isPassParentEnvs());
-    if (parameters.getEnv() != null) {
-      Map<String, String> expanded = new HashMap<String, String>();
-      for (Map.Entry<String, String> each : parameters.getEnv().entrySet()) {
-        expanded.put(each.getKey(), expandPath(each.getValue(), module, project));
-      }
-      parameters.setEnv(expanded);
+
+    Map<String, String> expanded = new HashMap<String, String>();
+    for (Map.Entry<String, String> each : parameters.getEnv().entrySet()) {
+      expanded.put(each.getKey(), expandPath(each.getValue(), module, project));
     }
+    parameters.setEnv(expanded);
   }
 
   @Nullable

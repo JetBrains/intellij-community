@@ -88,7 +88,6 @@ public class XDebugSessionImpl implements XDebugSession {
   private final Map<XBreakpoint<?>, CustomizedBreakpointPresentation> myRegisteredBreakpoints =
     new THashMap<XBreakpoint<?>, CustomizedBreakpointPresentation>();
   private final Set<XBreakpoint<?>> myInactiveSlaveBreakpoints = new SmartHashSet<XBreakpoint<?>>();
-  private boolean myBreakpointsMuted;
   private boolean myBreakpointsDisabled;
   private final XDebuggerManagerImpl myDebuggerManager;
   private MyBreakpointListener myBreakpointListener;
@@ -391,12 +390,12 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   private boolean isBreakpointActive(final XBreakpoint<?> b) {
-    return !myBreakpointsMuted && b.isEnabled() && !myInactiveSlaveBreakpoints.contains(b);
+    return !areBreakpointsMuted() && b.isEnabled() && !myInactiveSlaveBreakpoints.contains(b);
   }
 
   @Override
   public boolean areBreakpointsMuted() {
-    return myBreakpointsMuted;
+    return mySessionData.isBreakpointsMuted();
   }
 
   @Override
@@ -416,8 +415,8 @@ public class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void setBreakpointMuted(boolean muted) {
-    if (myBreakpointsMuted == muted) return;
-    myBreakpointsMuted = muted;
+    if (areBreakpointsMuted() == muted) return;
+    mySessionData.setBreakpointsMuted(muted);
     processAllBreakpoints(!muted, muted);
     myDebuggerManager.getBreakpointManager().getLineBreakpointManager().queueAllBreakpointsUpdate();
   }

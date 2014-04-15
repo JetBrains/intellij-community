@@ -36,9 +36,10 @@ public class CloudNotifier {
     showMessage(message, messageType, null);
   }
 
-  public void showMessage(String message, MessageType messageType, @Nullable NotificationListener listener) {
+  public Notification showMessage(String message, MessageType messageType, @Nullable NotificationListener listener) {
     NotificationGroup notificationGroup = NotificationGroup.balloonGroup(myNotificationDisplayId);
     Notification notification = notificationGroup.createNotification("", message, messageType.toNotificationType(), listener);
     notification.notify(null);
+    return notification;
   }
 }

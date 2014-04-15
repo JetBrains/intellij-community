@@ -15,7 +15,9 @@
  */
 package org.jetbrains.plugins.gradle.tooling.builder;
 
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.testFramework.UsefulTestCase;
 import org.gradle.tooling.BuildActionExecuter;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
@@ -32,6 +34,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
@@ -40,6 +43,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * @author Vladislav.Soroka
@@ -53,11 +57,7 @@ public abstract class AbstractModelBuilderTest {
   public static final String GRADLE_v1_11 = "1.11";
   public static final String GRADLE_v1_12 = "1.12-20140327133732+0000";
 
-  public static final Pattern TEST_METHOD_NAME_PATTERN;
-
-  static {
-    TEST_METHOD_NAME_PATTERN = Pattern.compile("(.*)\\[(\\d*)\\]");
-  }
+  public static final Pattern TEST_METHOD_NAME_PATTERN = Pattern.compile("(.*)\\[(\\d*)\\]");
 
   private static File ourTempDir;
 
@@ -74,17 +74,25 @@ public abstract class AbstractModelBuilderTest {
 
   @Parameterized.Parameters
   public static Collection<Object[]> data() {
-    Object[][] data = new Object[][]{
+    // keep in sync with download steps of http://buildserver.labs.intellij.net/viewType.html?buildTypeId=IDEATrunk_GradleDownloads
+    Object[][] data = {
       {AbstractModelBuilderTest.GRADLE_v1_9},
       {AbstractModelBuilderTest.GRADLE_v1_10},
       {AbstractModelBuilderTest.GRADLE_v1_11},
-      {AbstractModelBuilderTest.GRADLE_v1_12}};
+      {AbstractModelBuilderTest.GRADLE_v1_12}
+    };
     return Arrays.asList(data);
   }
 
 
   @Before
   public void setUp() throws Exception {
+    File distHome = null;
+    if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+      distHome = new File(PathManagerEx.findFileUnderCommunityHome("plugins/gradle"), "_dist/gradle-" + gradleVersion);
+      assumeTrue("Missing: " + distHome.getPath(), distHome.isDirectory());
+    }
+
     ensureTempDirCreated();
 
     String methodName = name.getMethodName();
@@ -94,29 +102,28 @@ public abstract class AbstractModelBuilderTest {
     }
 
     testDir = new File(ourTempDir, methodName);
-    testDir.mkdirs();
+    FileUtil.ensureExists(testDir);
 
     FileUtil.writeToFile(
       new File(testDir, GradleConstants.DEFAULT_SCRIPT_NAME),
-      FileUtil.loadTextAndClose(getClass().getResourceAsStream(
-                                  String.format("/%s/%s", methodName, GradleConstants.DEFAULT_SCRIPT_NAME))
-      )
+      FileUtil.loadTextAndClose(getClass().getResourceAsStream("/" + methodName + "/" + GradleConstants.DEFAULT_SCRIPT_NAME))
     );
 
     FileUtil.writeToFile(
       new File(testDir, GradleConstants.SETTINGS_FILE_NAME),
-      FileUtil.loadTextAndClose(getClass().getResourceAsStream(
-                                  String.format("/%s/%s", methodName, GradleConstants.SETTINGS_FILE_NAME))
-      )
+      FileUtil.loadTextAndClose(getClass().getResourceAsStream("/" + methodName + "/" + GradleConstants.SETTINGS_FILE_NAME))
     );
 
     GradleConnector connector = GradleConnector.newConnector();
-
-    DefaultGradleConnector gradleConnector = (DefaultGradleConnector)connector;
-    gradleConnector.useGradleVersion(gradleVersion);
-    gradleConnector.forProjectDirectory(testDir);
-    gradleConnector.daemonMaxIdleTime(1, TimeUnit.SECONDS);
-    ProjectConnection connection = gradleConnector.connect();
+    if (distHome != null) {
+      connector.useInstallation(distHome);
+    }
+    else {
+      connector.useGradleVersion(gradleVersion);
+    }
+    connector.forProjectDirectory(testDir);
+    ((DefaultGradleConnector)connector).daemonMaxIdleTime(1, TimeUnit.SECONDS);
+    ProjectConnection connection = connector.connect();
 
     final ProjectImportAction projectImportAction = new ProjectImportAction(false);
     projectImportAction.addExtraProjectModelClasses(getModels());
@@ -130,16 +137,18 @@ public abstract class AbstractModelBuilderTest {
 
   @After
   public void tearDown() throws Exception {
-    FileUtil.delete(testDir);
+    if (testDir != null) {
+      FileUtil.delete(testDir);
+    }
   }
 
   protected abstract Set<Class> getModels();
 
-  private static void ensureTempDirCreated() {
+  private static void ensureTempDirCreated() throws IOException {
     if (ourTempDir != null) return;
 
     ourTempDir = new File(FileUtil.getTempDirectory(), "gradleTests");
     FileUtil.delete(ourTempDir);
-    ourTempDir.mkdirs();
+    FileUtil.ensureExists(ourTempDir);
   }
 }

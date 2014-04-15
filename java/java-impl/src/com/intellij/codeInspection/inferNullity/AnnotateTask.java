@@ -18,23 +18,24 @@ package com.intellij.codeInspection.inferNullity;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
 
 class AnnotateTask implements SequentialTask {
   private final Project myProject;
-  private final NullityInferrer myInferrer;
+  private UsageInfo[] myInfos;
   private final SequentialModalProgressTask myTask;
   private int myCount = 0;
   private final int myTotal;
   private final NullableNotNullManager myNotNullManager;
 
-  public AnnotateTask(Project project, NullityInferrer inferrer, SequentialModalProgressTask progressTask) {
+  public AnnotateTask(Project project, SequentialModalProgressTask progressTask, UsageInfo[] infos) {
     myProject = project;
+    myInfos = infos;
     myNotNullManager = NullableNotNullManager.getInstance(myProject);
-    myInferrer = inferrer;
     myTask = progressTask;
-    myTotal = myInferrer.getCount();
+    myTotal = infos.length;
   }
 
   @Override
@@ -53,7 +54,7 @@ class AnnotateTask implements SequentialTask {
       indicator.setFraction(((double)myCount) / myTotal);
     }
 
-    myInferrer.apply(myCount++, myProject, myNotNullManager);
+    NullityInferrer.apply(myProject, myNotNullManager, myInfos[myCount++]);
 
     return isDone();
   }

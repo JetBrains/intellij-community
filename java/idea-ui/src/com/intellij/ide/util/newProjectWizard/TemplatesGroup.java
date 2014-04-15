@@ -17,6 +17,7 @@ package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.projectWizard.ProjectCategory;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,12 +53,12 @@ public class TemplatesGroup implements Comparable<TemplatesGroup> {
    * @param category
    */
   public TemplatesGroup(ProjectCategory category) {
-    this(category.getDisplayName(), category.getDescription(), null, 0, category.getGroupName(), category.getId(), category.createModuleBuilder());
+    this(category.getDisplayName(), category.getDescription(), category.getIcon(), category.getWeight(), category.getGroupName(), category.getId(), category.createModuleBuilder());
     myProjectCategory = category;
   }
 
   public TemplatesGroup(ModuleBuilder builder) {
-    this(builder.getPresentableName(), builder.getDescription(), builder.getBigIcon(), 0, builder.getParentGroup(), builder.getBuilderId(), builder);
+    this(builder.getPresentableName(), builder.getDescription(), builder.getNodeIcon(), builder.getWeight(), builder.getParentGroup(), builder.getBuilderId(), builder);
   }
 
   @Nullable
@@ -91,6 +92,10 @@ public class TemplatesGroup implements Comparable<TemplatesGroup> {
     return true;
   }
 
+  public int getWeight() {
+    return myWeight;
+  }
+
   @Override
   public int hashCode() {
     return myName.hashCode();
@@ -104,7 +109,10 @@ public class TemplatesGroup implements Comparable<TemplatesGroup> {
   @Override
   public int compareTo(@NotNull TemplatesGroup o) {
     int i = o.myWeight - myWeight;
-    return i == 0 ? o.getName().compareTo(getName()) : i;
+    if (i != 0) return i;
+    int i1 = Comparing.compare(o.getParentGroup(), getParentGroup());
+    if (i1 != 0) return i1;
+    return o.getName().compareTo(getName());
   }
 
   public String getParentGroup() {

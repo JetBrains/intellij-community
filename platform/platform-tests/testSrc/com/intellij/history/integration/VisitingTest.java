@@ -15,10 +15,12 @@
  */
 package com.intellij.history.integration;
 
-import com.intellij.history.core.changes.*;
+import com.intellij.history.core.changes.ChangeSet;
+import com.intellij.history.core.changes.ChangeVisitor;
+import com.intellij.history.core.changes.CreateEntryChange;
+import com.intellij.history.core.changes.RenameChange;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.UIUtil;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -28,7 +30,6 @@ public class VisitingTest extends IntegrationTestCase {
   public void testSimpleVisit() throws Exception {
     createFile("f.txt");
     createFile("dir");
-    UIUtil.dispatchAllInvocationEvents();
     assertVisitorLog("begin create end begin create end finished ");
   }
 
@@ -170,12 +171,6 @@ public class VisitingTest extends IntegrationTestCase {
     @Override
     public void visit(RenameChange c) throws StopVisitingException {
       log += "rename ";
-    }
-
-    @Override
-    public void visit(StructuralChange c) throws StopVisitingException {
-      System.out.println(c);
-      super.visit(c);
     }
 
     @Override

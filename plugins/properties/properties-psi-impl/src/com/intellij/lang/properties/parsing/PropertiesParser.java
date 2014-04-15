@@ -15,24 +15,15 @@
  */
 package com.intellij.lang.properties.parsing;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.LighterASTNode;
-import com.intellij.lang.LighterASTTokenNode;
-import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.PsiParser;
+import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderImpl;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.XmlElementType;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ThreeState;
 import com.intellij.util.TripleFunction;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 /**
  * @author max
@@ -44,18 +35,18 @@ public class PropertiesParser implements PsiParser {
     public ThreeState fun(ASTNode oldNode,
                           LighterASTNode newNode,
                           FlyweightCapableTreeStructure<LighterASTNode> structure) {
-
       if (oldNode.getElementType() == PropertiesElementTypes.PROPERTY) {
         ASTNode oldName = oldNode.findChildByType(PropertiesTokenTypes.KEY_CHARACTERS);
         if (oldName != null) {
-          String oldNameStr = oldName.getText();
+          CharSequence oldNameStr = oldName.getChars();
           CharSequence newNameStr = findKeyCharacters(newNode, structure);
 
-          if (oldNameStr != null && !oldNameStr.equals(newNameStr)) {
+          if (oldNameStr != null && !Comparing.equal(oldNameStr, newNameStr)) {
             return ThreeState.NO;
           }
         }
       }
+
       return ThreeState.UNSURE;
     }
   };

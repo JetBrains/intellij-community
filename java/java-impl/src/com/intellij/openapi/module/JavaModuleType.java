@@ -39,6 +39,8 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
 
   public static final String MODULE_NAME = ProjectBundle.message("module.type.java.name");
   public static final String JAVA_GROUP = "Java";
+  public static final String BUILD_TOOLS_GROUP = "Build Tools";
+  public static final String MOBILE_GROUP = "Mobile Java";
   private static final String JAVA_MODULE = ModuleTypeId.JAVA_MODULE;
 
   public JavaModuleType() {
@@ -79,7 +81,7 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
 
   @Nullable
   @Override
-  public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep, @NotNull final ModuleBuilder moduleBuilder) {
+  public ModuleWizardStep modifyProjectTypeStep(@NotNull SettingsStep settingsStep, @NotNull final ModuleBuilder moduleBuilder) {
     return ProjectWizardStepFactory.getInstance().createJavaSettingsStep(settingsStep, moduleBuilder, new Condition<SdkTypeId>() {
       @Override
       public boolean value(SdkTypeId sdkType) {

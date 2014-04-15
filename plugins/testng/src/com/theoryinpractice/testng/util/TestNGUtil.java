@@ -24,10 +24,12 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.roots.libraries.JarVersionDetectionUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.util.io.JarUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -48,47 +50,31 @@ import org.testng.TestNG;
 import org.testng.annotations.*;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
+import java.util.jar.Attributes;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * @author Hani Suleiman Date: Jul 20, 2005 Time: 1:37:36 PM
+ * @author Hani Suleiman
+ * @since Jul 20, 2005
  */
-public class TestNGUtil
-{
+public class TestNGUtil {
   private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
+
   public static final String TESTNG_GROUP_NAME = "TestNG";
 
   public static boolean hasDocTagsSupport = hasDocTagsSupport();
 
   private static boolean hasDocTagsSupport() {
-    final String testngJarPath = PathUtil.getJarPathForClass(Test.class);
-    if (testngJarPath != null) {
-      final VirtualFile testngjar = LocalFileSystem.getInstance().findFileByPath(testngJarPath);
-      if (testngjar != null ) {
-        try {
-          final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(testngjar);
-          if (jarRoot != null) {
-            final JarFile zipFile = JarFileSystem.getInstance().getJarFile(jarRoot);
-            final String version = JarVersionDetectionUtil.detectJarVersion(zipFile);
-            if (version != null && version.compareTo("5.12") > 0) {
-              return false;
-            }
-          }
-        }
-        catch (IOException e) {
-          return true;
-        }
-      }
-    }
-    return true;
+    String testngJarPath = PathUtil.getJarPathForClass(Test.class);
+    String version = JarUtil.getJarAttribute(new File(testngJarPath), Attributes.Name.IMPLEMENTATION_VERSION);
+    return version == null || StringUtil.compareVersionNumbers(version, "5.12") <= 0;
   }
 
   public static final String TEST_ANNOTATION_FQN = Test.class.getName();
   public static final String FACTORY_ANNOTATION_FQN = Factory.class.getName();
-  public static final String[] CONFIG_ANNOTATIONS_FQN = {
+  @SuppressWarnings("deprecation") public static final String[] CONFIG_ANNOTATIONS_FQN = {
       Configuration.class.getName(),
       Factory.class.getName(),
       ObjectFactory.class.getName(),
@@ -119,9 +105,10 @@ public class TestNGUtil
       "testng.after-suite",
       "testng.after-test"
   };
-  static final List<String> junitAnnotions =
+
+  private static final List<String> JUNIT_ANNOTATIONS =
       Arrays.asList("org.junit.Test", "org.junit.Before", "org.junit.BeforeClass", "org.junit.After", "org.junit.AfterClass");
-  private static final Logger LOG = Logger.getInstance("#" + TestNGUtil.class.getName());
+
   @NonNls
   private static final String SUITE_TAG_NAME = "suite";
 
@@ -501,7 +488,7 @@ public class TestNGUtil
   }
 
   public static boolean containsJunitAnnotions(PsiMethod method) {
-    return method != null && AnnotationUtil.isAnnotated(method, junitAnnotions);
+    return method != null && AnnotationUtil.isAnnotated(method, JUNIT_ANNOTATIONS);
   }
 
   public static boolean inheritsJUnitTestCase(PsiClass psiClass) {

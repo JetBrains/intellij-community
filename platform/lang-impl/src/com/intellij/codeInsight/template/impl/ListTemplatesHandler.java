@@ -112,7 +112,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     showLookup(lookup, file);
   }
 
-  public static MultiMap<String, CustomLiveTemplateLookupElement> listApplicableCustomTemplates(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
+  private static MultiMap<String, CustomLiveTemplateLookupElement> listApplicableCustomTemplates(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
     final MultiMap<String, CustomLiveTemplateLookupElement> result = MultiMap.create();
     CustomTemplateCallback customTemplateCallback = new CustomTemplateCallback(editor, file, false);
     for (CustomLiveTemplate customLiveTemplate : CustomLiveTemplate.EP_NAME.getExtensions()) {

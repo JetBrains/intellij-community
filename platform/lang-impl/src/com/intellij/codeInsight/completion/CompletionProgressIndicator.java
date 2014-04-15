@@ -185,12 +185,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           myLookup.setFocusDegree(LookupImpl.FocusDegree.FOCUSED);
         }
       }
-      else if (FeatureUsageTracker.getInstance()
-        .isToBeAdvertisedInLookup(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ENTER, getProject())) {
-        myLookup.addAdvertisement("Press " +
-                                  CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_ALWAYS) +
-                                  " to choose the selected (or first) suggestion", null);
-      }
       if (!myEditor.isOneLineMode() &&
           FeatureUsageTracker.getInstance()
             .isToBeAdvertisedInLookup(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ARROWS, getProject())) {

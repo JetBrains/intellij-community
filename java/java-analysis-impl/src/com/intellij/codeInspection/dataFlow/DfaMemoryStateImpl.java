@@ -497,7 +497,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   public DfaConstValue getConstantValue(DfaVariableValue value) {
     int index = getEqClassIndex(value);
     EqClass ec = index == -1 ? null : myEqClasses.get(index);
-    return ec == null ? null : ec.findConstant(true);
+    return ec == null ? null : (DfaConstValue)unwrap(ec.findConstant(true));
   }
 
   @Override
@@ -818,7 +818,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     Set<DfaVariableValue> vars = ContainerUtil.newLinkedHashSet(getChangedVariables());
     for (EqClass aClass : myEqClasses) {
       if (aClass != null) {
-        vars.addAll(aClass.getVariables());
+        vars.addAll(aClass.getVariables(true));
       }
     }
     for (DfaVariableValue value : vars) {

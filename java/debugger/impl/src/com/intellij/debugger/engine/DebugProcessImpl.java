@@ -771,7 +771,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           myDebugProcessDispatcher.getMulticaster().processDetached(this, closedByUser);
         }
         finally {
-          setBreakpointsMuted(false);
+          if (DebuggerSettings.getInstance().UNMUTE_ON_STOP) {
+            setBreakpointsMuted(false);
+          }
           if (vm != null) {
             try {
               vm.dispose(); // to be on the safe side ensure that VM mirror, if present, is disposed and invalidated
