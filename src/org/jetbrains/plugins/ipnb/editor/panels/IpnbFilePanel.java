@@ -88,7 +88,7 @@ public class IpnbFilePanel extends JPanel {
 
       CodeCell codeCell = (CodeCell)cell;
 
-      addPromptPanel(this, codeCell.getPromptNumber(), "In", new CodeSourcePanel(myProject, codeCell.getSourceAsString()), c);
+      addPromptPanel(this, codeCell.getPromptNumber(), "In", new CodeSourcePanel(myProject, myParent, codeCell.getSourceAsString()), c);
 
       c.gridx = 1;
       c.gridwidth = 1;
