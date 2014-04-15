@@ -289,7 +289,9 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     myTemplatesMap.putAllValues(map);
 
     for (ProjectCategory category : ProjectCategory.EXTENSION_POINT_NAME.getExtensions()) {
-      myTemplatesMap.put(new TemplatesGroup(category), new ArrayList<ProjectTemplate>());
+      TemplatesGroup group = new TemplatesGroup(category);
+      myTemplatesMap.remove(group);
+      myTemplatesMap.put(group, new ArrayList<ProjectTemplate>());
     }
 
     if (context.isCreatingNewProject()) {
