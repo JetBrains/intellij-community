@@ -21,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.format.cells.CodeCell;
-import org.jetbrains.plugins.ipnb.format.cells.output.CellOutput;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,14 +37,6 @@ public class CodePanel extends JPanel implements EditorPanel {
     myEditor = IpnbEditorUtil.createPythonCodeEditor(project, StringUtil.join(cell.getInput(), "\n"));
 
     add(createContainer(inputPrompt(cell), myEditor.getComponent()));
-
-    for (CellOutput output: cell.getCellOutputs()) {
-      final String[] text = output.getText();
-      if (text != null)
-        add(createContainer(outputPrompt(cell), new JTextArea(StringUtil.join(text, "\n"))));
-    }
-
-
   }
 
   private JPanel createContainer(@NotNull String promptText, JComponent component) {
@@ -62,10 +53,6 @@ public class CodePanel extends JPanel implements EditorPanel {
 
   private String inputPrompt(@NotNull CodeCell cell) {
     return String.format("In[%d]:", cell.getPromptNumber());
-  }
-
-  private String outputPrompt(@NotNull CodeCell cell) {
-    return String.format("Out[%d]:", cell.getPromptNumber());
   }
 
   @Override

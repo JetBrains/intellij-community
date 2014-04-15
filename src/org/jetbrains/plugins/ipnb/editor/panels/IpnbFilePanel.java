@@ -25,6 +25,7 @@ import org.jetbrains.plugins.ipnb.format.cells.CodeCell;
 import org.jetbrains.plugins.ipnb.format.cells.HeadingCell;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbCell;
 import org.jetbrains.plugins.ipnb.format.cells.MarkdownCell;
+import org.jetbrains.plugins.ipnb.format.cells.output.CellOutput;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,18 +46,28 @@ public class IpnbFilePanel extends JPanel {
 
     for (IpnbCell cell : file.getCells()) {
       JPanel panel = createPanelForCell(project, cell);
-
-
       c.gridy = row;
       row++;
       add(panel, c);
+      if (cell instanceof CodeCell) {
+        for (CellOutput cellOutput : ((CodeCell)cell).getCellOutputs()) {
+          final JPanel outputPanel = createPanelForCellOutput(project, cellOutput, ((CodeCell)cell).getPromptNumber());
+          c.gridy = row;
+          row++;
+          add(outputPanel, c);
+        }
+      }
     }
 
     c.weighty = 1;
     add(new JPanel(), c);
   }
 
-  private JPanel createPanelForCell(@NotNull Project project, IpnbCell cell) {
+  private JPanel createPanelForCellOutput(@NotNull final Project project, @NotNull final CellOutput cell, int number) {
+    return new CodeOutputPanel(project, cell, number);
+  }
+
+  private JPanel createPanelForCell(@NotNull final Project project, @NotNull final IpnbCell cell) {
     if (cell instanceof CodeCell) {
       return new CodePanel(project, (CodeCell)cell);
     }
