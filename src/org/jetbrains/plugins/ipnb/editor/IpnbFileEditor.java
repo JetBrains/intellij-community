@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.ipnb.editor;
 
-import com.google.common.collect.Lists;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.editor.Editor;
@@ -12,17 +11,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.ArrayUtil;
-import com.jetbrains.django.util.VirtualFileUtil;
-import org.apache.velocity.texen.util.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.ipnb.Data;
-import org.jetbrains.plugins.ipnb.format.IpnbFile;
 import org.jetbrains.plugins.ipnb.format.IpnbParser;
-import org.jetbrains.plugins.ipnb.format.TestData;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
