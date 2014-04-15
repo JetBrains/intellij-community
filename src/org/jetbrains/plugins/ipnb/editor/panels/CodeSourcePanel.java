@@ -15,8 +15,11 @@
  */
 package org.jetbrains.plugins.ipnb.editor.panels;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 
 import javax.swing.*;
@@ -28,10 +31,16 @@ import java.awt.*;
 public class CodeSourcePanel extends JPanel implements EditorPanel {
   private final Editor myEditor;
 
-  public CodeSourcePanel(Project project, String source) {
+  public CodeSourcePanel(Project project, Disposable parent, String source) {
     super(new BorderLayout());
     myEditor = IpnbEditorUtil.createPythonCodeEditor(project, source);
     add(myEditor.getComponent(), BorderLayout.CENTER);
+    Disposer.register(parent, new Disposable() {
+      @Override
+      public void dispose() {
+        EditorFactory.getInstance().releaseEditor(myEditor);
+      }
+    });
   }
 
   @Override

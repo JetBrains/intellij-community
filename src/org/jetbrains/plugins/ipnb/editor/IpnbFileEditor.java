@@ -2,6 +2,7 @@ package org.jetbrains.plugins.ipnb.editor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl;
@@ -45,13 +46,13 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
 
     myEditor = createEditor(project, vFile);
 
-    myEditorPanel = new JScrollPane(createIpnbEditorPanel(myProject, vFile));
+    myEditorPanel = new JScrollPane(createIpnbEditorPanel(myProject, vFile, this));
   }
 
   @NotNull
-  private JComponent createIpnbEditorPanel(Project project, VirtualFile vFile) {
+  private JComponent createIpnbEditorPanel(Project project, VirtualFile vFile, Disposable parent) {
     try {
-      return new IpnbFilePanel(project, null, IpnbParser.parseIpnbFile(new String(vFile.contentsToByteArray(), CharsetToolkit.UTF8)));
+      return new IpnbFilePanel(project, parent, IpnbParser.parseIpnbFile(new String(vFile.contentsToByteArray(), CharsetToolkit.UTF8)));
     }
     catch (IOException e) {
       Messages.showErrorDialog(project, e.getMessage(), "Can't open " + vFile.getPath());
