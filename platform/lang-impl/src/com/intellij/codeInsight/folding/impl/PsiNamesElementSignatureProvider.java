@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,7 +111,7 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
         processingInfoStorage.append(String.format("Looking for the child with a name '%s' # %d at the element '%s'%n",
                                                    elementMarker, index, parent));
       }
-      return restoreElementInternal(parent, elementMarker, index, PsiNamedElement.class);
+      return restoreElementInternal(parent, unescape(elementMarker), index, PsiNamedElement.class);
     }
     catch (NumberFormatException e) {
       return null;
@@ -183,12 +183,12 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
       if (StringUtil.isEmpty(name)) {
         return null;
       }
-      int index = getChildIndex(named, element.getParent(), name, (Class<PsiNamedElement>)named.getClass());
+      int index = getChildIndex(named, element.getParent(), name, PsiNamedElement.class);
       StringBuilder bufferToUse = buffer;
       if (bufferToUse == null) {
         bufferToUse = new StringBuilder();
       }
-      bufferToUse.append(TYPE_MARKER).append(ELEMENT_TOKENS_SEPARATOR).append(name)
+      bufferToUse.append(TYPE_MARKER).append(ELEMENT_TOKENS_SEPARATOR).append(escape(name))
         .append(ELEMENT_TOKENS_SEPARATOR).append(index);
       return bufferToUse;
     }
