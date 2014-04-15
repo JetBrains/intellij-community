@@ -15,14 +15,20 @@
  */
 package org.jetbrains.plugins.ipnb.editor;
 
+import com.google.common.collect.Lists;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import java.awt.event.MouseWheelListener;
+import java.util.List;
 
 /**
  * @author traff
@@ -30,8 +36,18 @@ import org.jetbrains.annotations.NotNull;
 public class IpnbEditorUtil {
 
   public static Editor createPythonCodeEditor(@NotNull Project project, @NotNull String text) {
-    Editor editor = EditorFactory.getInstance().createEditor(createPythonCodeDocument(project, text), project, PythonFileType.INSTANCE, false);
+    EditorEx editor = (EditorEx)EditorFactory.getInstance().createEditor(createPythonCodeDocument(project, text), project, PythonFileType.INSTANCE, false);
+    noScrolling(editor);
     return editor;
+  }
+
+  private static void noScrolling(EditorEx editor) {
+    editor.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+    editor.getScrollPane().setWheelScrollingEnabled(false);
+    List<MouseWheelListener> listeners = Lists.newArrayList(editor.getScrollPane().getMouseWheelListeners());
+    for (MouseWheelListener l: listeners) {
+      editor.getScrollPane().removeMouseWheelListener(l);
+    }
   }
 
   @NotNull
