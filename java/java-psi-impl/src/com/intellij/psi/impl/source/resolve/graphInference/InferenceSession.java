@@ -620,13 +620,7 @@ public class InferenceSession {
         //inference error occurred
         return false;
       }
-    } while (myConstraintIdx < myConstraints.size()); 
 
-    do {
-      if (!reduceConstraints()) {
-        //inference error occurred
-        return false;
-      }
       if (incorporate) {
         if (!myIncorporationPhase.incorporate()) {
           return false;
