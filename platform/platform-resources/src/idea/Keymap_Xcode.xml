@@ -328,6 +328,10 @@ x    <action id="ActivateStructureToolWindow">
       <keyboard-shortcut first-keystroke="F1" />
       <mouse-shortcut keystroke="control button2" />
     </action>
+    <action id="QuickImplementations">
+      <keyboard-shortcut first-keystroke="control F1"/>
+      <keyboard-shortcut first-keystroke="alt SPACE"/>
+    </action>
     <action id="RemoveFromFavorites" />
     <action id="RenameElement">
       <keyboard-shortcut first-keystroke="control meta E" />
@@ -388,7 +392,7 @@ x    <action id="ActivateStructureToolWindow">
       <keyboard-shortcut first-keystroke="F7"/>
     </action>
     <action id="ForceStepInto">
-      <keyboard-shortcut first-keystroke="shift control F7"/>
+      <keyboard-shortcut first-keystroke="alt control F7"/>
     </action>
     <action id="SmartStepInto">
       <keyboard-shortcut first-keystroke="shift alt F7"/>
@@ -397,13 +401,13 @@ x    <action id="ActivateStructureToolWindow">
       <keyboard-shortcut first-keystroke="F6" />
     </action>
     <action id="ForceStepOver">
-      <keyboard-shortcut first-keystroke="shift control F6" />
+      <keyboard-shortcut first-keystroke="alt control F6" />
     </action>
     <action id="RunToCursor">
       <keyboard-shortcut first-keystroke="control meta C"/>
     </action>
     <action id="ForceRunToCursor">
-      <keyboard-shortcut first-keystroke="shift control meta C"/>
+      <keyboard-shortcut first-keystroke="alt control meta C"/>
     </action>
     <action id="Stop">
       <keyboard-shortcut first-keystroke="meta PERIOD"/>
@@ -421,6 +425,9 @@ x    <action id="ActivateStructureToolWindow">
     <action id="RecentFiles">
       <keyboard-shortcut first-keystroke="control 2" />
       <keyboard-shortcut first-keystroke="control 3" />
+    </action>
+    <action id="RecentChangedFiles">
+      <keyboard-shortcut first-keystroke="control 4" />
     </action>
     <action id="SwitchApply">
       <keyboard-shortcut first-keystroke="control alt ENTER" />
@@ -451,9 +458,6 @@ x    <action id="ActivateStructureToolWindow">
     <action id="ViewBreakpoints">
       <keyboard-shortcut first-keystroke="meta 7"/>
       <keyboard-shortcut first-keystroke="control shift F8"/>
-    </action>
-    <action id="QuickImplementations">
-      <keyboard-shortcut first-keystroke="alt SPACE"/>
     </action>
     <action id="XDebugger.MuteBreakpoints">
       <keyboard-shortcut first-keystroke="meta Y" />
