@@ -26,7 +26,6 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.junit.InheritorChooser;
 import com.intellij.execution.junit2.info.MethodLocation;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -96,8 +95,7 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
   protected boolean setupConfigurationFromContext(TestNGConfiguration configuration,
                                                   ConfigurationContext context,
                                                   Ref<PsiElement> sourceElement) {
-    final PsiElement[] elements = context != null ? LangDataKeys.PSI_ELEMENT_ARRAY.getData(context.getDataContext()) : null;
-    if (elements != null && TestNGPatternConfigurationProducer.collectTestMembers(elements).size() > 1) {
+    if (TestNGPatternConfigurationProducer.isMultipleElementsSelected(context)) {
       return false;
     }
 
