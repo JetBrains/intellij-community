@@ -98,9 +98,12 @@ public abstract class AbstractPrintElementsManager<CommitId> implements PrintEle
     if (printElement instanceof SimplePrintElement) {
       SimplePrintElement.Type elementType = ((SimplePrintElement)printElement).getType();
       if (elementType == SimplePrintElement.Type.UP_ARROW || elementType == SimplePrintElement.Type.DOWN_ARROW) {
+        mySelectedNodes = Collections.emptySet();
         mySpecialSelectedPrintElement = printElement;
         return HAND_CURSOR;
       }
+    } else {
+      mySpecialSelectedPrintElement = null;
     }
 
     if (printElement != null) {
@@ -114,11 +117,7 @@ public abstract class AbstractPrintElementsManager<CommitId> implements PrintEle
       mySelectedNodes = Collections.emptySet();
     }
 
-    if (mySpecialSelectedPrintElement != null) {
-      mySpecialSelectedPrintElement = null;
-      return DEFAULT_CURSOR;
-    } else
-      return null;
+    return DEFAULT_CURSOR; // todo when drop GraphFacade, return null, when mySpecialSelectedPrintElement == null
   }
 
   @Override

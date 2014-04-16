@@ -56,7 +56,7 @@ public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<Com
   }
 
   @NotNull
-  protected final GraphAnswerImpl<CommitId> COMMIT_ID_GRAPH_ANSWER = new GraphAnswerImpl<CommitId>(null, null);
+  protected final GraphAnswerImpl<CommitId> COMMIT_ID_GRAPH_ANSWER = new GraphAnswerImpl<CommitId>(null, Cursor.getDefaultCursor());
 
   @NotNull
   protected final LinearGraphWithCommitInfo<CommitId> myLinearGraphWithCommitInfo;
@@ -139,12 +139,12 @@ public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<Com
         case UP_ARROW:
           assert graphElement instanceof GraphEdge;
           upNodeIndex = ((GraphEdge)graphElement).getUpNodeIndex();
-          return new GraphAnswerImpl<CommitId>(myLinearGraphWithCommitInfo.getHashIndex(upNodeIndex), null);
+          return createJumpAnswer(upNodeIndex);
         case DOWN_ARROW:
           assert graphElement instanceof GraphEdge;
           downNodeIndex = ((GraphEdge)graphElement).getDownNodeIndex();
           if (downNodeIndex != LinearGraph.NOT_LOAD_COMMIT)
-            return new GraphAnswerImpl<CommitId>(myLinearGraphWithCommitInfo.getHashIndex(downNodeIndex), null);
+            return createJumpAnswer(downNodeIndex);
           else {
             upNodeIndex = ((GraphEdge)graphElement).getUpNodeIndex();
             int edgeIndex = myLinearGraphWithCommitInfo.getDownNodes(upNodeIndex).indexOf(LinearGraph.NOT_LOAD_COMMIT);
@@ -152,7 +152,7 @@ public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<Com
             GraphCommit<CommitId> commitIdGraphCommit =
               myCommitsWithNotLoadParent.get(myLinearGraphWithCommitInfo.getHashIndex(upNodeIndex));
             CommitId jumpTo = commitIdGraphCommit.getParents().get(edgeIndex);
-            return new GraphAnswerImpl<CommitId>(jumpTo, null);
+            return createJumpAnswer(jumpTo);
           }
         default:
           throw new IllegalStateException("Unsupported SimplePrintElement type: " + simplePrintElement.getType());
@@ -169,8 +169,12 @@ public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<Com
   }
 
   protected GraphAnswer<CommitId> createJumpAnswer(int nodeIndex) {
+    return createJumpAnswer(myLinearGraphWithCommitInfo.getHashIndex(nodeIndex));
+  }
+
+  private GraphAnswerImpl<CommitId> createJumpAnswer(CommitId commitId) {
     myPrintElementGenerator.invalidate();
-    return new GraphAnswerImpl<CommitId>(myLinearGraphWithCommitInfo.getHashIndex(nodeIndex), null);
+    return new GraphAnswerImpl<CommitId>(commitId, null);
   }
 
   protected static class GraphAnswerImpl<CommitId> implements GraphAnswer<CommitId> {
@@ -202,8 +206,6 @@ public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<Com
     @NotNull
     @Override
     public GraphAnswer<CommitId> performMouseAction(@NotNull GraphMouseAction graphMouseAction) {
-      myPrintElementsManager.performOverElement(null);
-
       PrintElementWithGraphElement printElement = getPrintElementWithGraphElement(graphMouseAction);
       switch (graphMouseAction.getType()) {
         case OVER: {
@@ -211,6 +213,7 @@ public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<Com
           return new GraphAnswerImpl<CommitId>(null, cursor);
         }
         case CLICK:
+          myPrintElementsManager.performOverElement(printElement);
           return AbstractVisibleGraph.this.clickByElement(printElement);
 
         default: {
