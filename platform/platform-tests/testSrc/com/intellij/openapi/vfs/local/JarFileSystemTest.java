@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs.local;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -64,9 +65,7 @@ public class JarFileSystemTest extends PlatformLangTestCase {
     VirtualFile metaInf = jarRoot.findChild("META-INF");
     assertNotNull(metaInf);
 
-    VirtualFile[] children = metaInf.getChildren();
-    assertEquals(1, children.length);
-    assertEquals("MANIFEST.MF", children[0].getName());
+    assertNotNull(metaInf.findChild("MANIFEST.MF"));
   }
 
   public void testJarRefresh() throws IOException {
@@ -122,12 +121,14 @@ public class JarFileSystemTest extends PlatformLangTestCase {
 
   private static String getRtJarPath() {
     String home = System.getProperty("java.home");
-    return home + (SystemInfo.isAppleJvm ? "../Classes/classes.jar" : "/lib/rt.jar");
+    return home + (SystemInfo.isAppleJvm ? "/../Classes/classes.jar" : "/lib/rt.jar");
   }
 
   private static VirtualFile findByPath(String path) {
     VirtualFile file = JarFileSystem.getInstance().findFileByPath(path);
     assertNotNull(file);
+    int p = path.indexOf(JarFileSystem.JAR_SEPARATOR);
+    path = FileUtil.toCanonicalPath(path.substring(0, p)) + path.substring(p);
     assertPathsEqual(path, file.getPath());
     return file;
   }
