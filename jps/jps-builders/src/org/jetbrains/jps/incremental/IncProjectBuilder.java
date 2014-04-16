@@ -513,15 +513,20 @@ public class IncProjectBuilder {
       context.checkCanceled();
       boolean okToDelete = true;
       final File outputRoot = entry.getKey();
-      if (JpsPathUtil.isUnder(allSourceRoots, outputRoot)) {
-        okToDelete = false;
-      }
-      else {
-        final Set<File> _outRoot = Collections.singleton(outputRoot);
-        for (File srcRoot : allSourceRoots) {
-          if (JpsPathUtil.isUnder(_outRoot, srcRoot)) {
-            okToDelete = false;
-            break;
+      if (!moduleIndex.isExcluded(outputRoot)) {
+        // if output root itself is directly or indirectly excluded, 
+        // there cannot be any manageable sources under it, even if the output root is located under some source root
+        // so in this case it is safe to delete such root
+        if (JpsPathUtil.isUnder(allSourceRoots, outputRoot)) {
+          okToDelete = false;
+        }
+        else {
+          final Set<File> _outRoot = Collections.singleton(outputRoot);
+          for (File srcRoot : allSourceRoots) {
+            if (JpsPathUtil.isUnder(_outRoot, srcRoot)) {
+              okToDelete = false;
+              break;
+            }
           }
         }
       }

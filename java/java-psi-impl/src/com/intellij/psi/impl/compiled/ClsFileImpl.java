@@ -34,6 +34,7 @@ import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -87,6 +88,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   private volatile SoftReference<StubTree> myStub;
   private volatile TreeElement myMirrorFileElement;
   private volatile ClsPackageStatementImpl myPackageStatement = null;
+  private volatile LanguageLevel myLanguageLevel = null;
   private boolean myIsPhysical = true;
 
   public ClsFileImpl(@NotNull FileViewProvider viewProvider) {
@@ -236,8 +238,17 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   @Override
   @NotNull
   public LanguageLevel getLanguageLevel() {
-    List stubs = getStub().getChildrenStubs();
-    return !stubs.isEmpty() ? ((PsiClassStub<?>)stubs.get(0)).getLanguageLevel() : LanguageLevel.HIGHEST;
+    LanguageLevel level = myLanguageLevel;
+    if (level == null) {
+      List classes = ApplicationManager.getApplication().runReadAction(new Computable<List>() {
+        @Override
+        public List compute() {
+          return getStub().getChildrenStubs();
+        }
+      });
+      myLanguageLevel = level = !classes.isEmpty() ? ((PsiClassStub<?>)classes.get(0)).getLanguageLevel() : LanguageLevel.HIGHEST;
+    }
+    return level;
   }
 
   @Override
@@ -492,6 +503,8 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       myMirrorFileElement = null;
       myPackageStatement = packageStatement;
     }
+
+    myLanguageLevel = null;
   }
 
   @Override

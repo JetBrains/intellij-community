@@ -312,6 +312,8 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   
   public void testNotNullAfterDereference() { doTest(); }
 
+  public void testNullableBoolean() { doTest(); }
+
   public void testSameComparisonTwice() { doTest(); }
 
   public void testParametersAreNonnullByDefault() {

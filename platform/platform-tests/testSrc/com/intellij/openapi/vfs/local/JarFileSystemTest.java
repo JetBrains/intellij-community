@@ -16,8 +16,9 @@
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -38,7 +39,7 @@ import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
 
 public class JarFileSystemTest extends PlatformLangTestCase {
   public void testFindFile() throws IOException {
-    String rtJarPath = System.getProperty("java.home") + "/lib/rt.jar";
+    String rtJarPath = getRtJarPath();
 
     VirtualFile jarRoot = findByPath(rtJarPath + JarFileSystem.JAR_SEPARATOR);
     assertTrue(jarRoot.isDirectory());
@@ -58,17 +59,13 @@ public class JarFileSystemTest extends PlatformLangTestCase {
   }
 
   public void testMetaInf() {
-    String rtJarPath = System.getProperty("java.home") + "/lib/rt.jar";
-
-    VirtualFile jarRoot = findByPath(rtJarPath + JarFileSystem.JAR_SEPARATOR);
+    VirtualFile jarRoot = findByPath(getRtJarPath() + JarFileSystem.JAR_SEPARATOR);
     assertTrue(jarRoot.isDirectory());
 
     VirtualFile metaInf = jarRoot.findChild("META-INF");
     assertNotNull(metaInf);
 
-    VirtualFile[] children = metaInf.getChildren();
-    assertEquals(1, children.length);
-    assertEquals("MANIFEST.MF", children[0].getName());
+    assertNotNull(metaInf.findChild("MANIFEST.MF"));
   }
 
   public void testJarRefresh() throws IOException {
@@ -104,19 +101,34 @@ public class JarFileSystemTest extends PlatformLangTestCase {
     assertContent(entry, "update");
   }
 
-  public void testInvalidJar() throws Exception {
-    String jarPath = PathManagerEx.getTestDataPath() + "/vfs/maven-toolchain-1.0.jar";
-    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(jarPath);
-    assertNotNull(vFile);
-    VirtualFile manifest = findByPath(jarPath + JarFileSystem.JAR_SEPARATOR + JarFile.MANIFEST_NAME);
-    assertNotNull(manifest);
-    VirtualFile classFile = findByPath(jarPath + JarFileSystem.JAR_SEPARATOR + "org/apache/maven/toolchain/java/JavaToolChain.class");
-    assertNotNull(classFile);
+  public void testJarRootForLocalFile() throws Exception {
+    String rtJarPath = getRtJarPath();
+
+    VirtualFile rtJarFile = LocalFileSystem.getInstance().findFileByPath(rtJarPath);
+    assertNotNull(rtJarFile);
+    VirtualFile rtJarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(rtJarFile);
+    assertNotNull(rtJarRoot);
+
+    VirtualFile entryFile = findByPath(rtJarPath + JarFileSystem.JAR_SEPARATOR + "java/lang/Object.class");
+    VirtualFile entryRoot = JarFileSystem.getInstance().getJarRootForLocalFile(entryFile);
+    assertNull(entryRoot);
+
+    VirtualFile nonJarFile = LocalFileSystem.getInstance().findFileByPath(System.getProperty("java.home") + "/lib/calendars.properties");
+    assertNotNull(nonJarFile);
+    VirtualFile nonJarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(nonJarFile);
+    assertNull(nonJarRoot);
+  }
+
+  private static String getRtJarPath() {
+    String home = System.getProperty("java.home");
+    return home + (SystemInfo.isAppleJvm ? "/../Classes/classes.jar" : "/lib/rt.jar");
   }
 
   private static VirtualFile findByPath(String path) {
     VirtualFile file = JarFileSystem.getInstance().findFileByPath(path);
     assertNotNull(file);
+    int p = path.indexOf(JarFileSystem.JAR_SEPARATOR);
+    path = FileUtil.toCanonicalPath(path.substring(0, p)) + path.substring(p);
     assertPathsEqual(path, file.getPath());
     return file;
   }

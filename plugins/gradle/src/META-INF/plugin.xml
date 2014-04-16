@@ -86,6 +86,7 @@
     <externalSystemConfigLocator implementation="org.jetbrains.plugins.gradle.service.settings.GradleConfigLocator"/>
     <externalSystemManager implementation="org.jetbrains.plugins.gradle.GradleManager"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.BuildClasspathModuleGradleDataService"/>
+    <externalSystemNotificationExtension implementation="org.jetbrains.plugins.gradle.service.notification.GradleNotificationExtension" order="last"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleInstallationManager"/>
 

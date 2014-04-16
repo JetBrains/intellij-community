@@ -271,6 +271,22 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     }
   }
 
+  public void addNavigatableMessage(@NotNull String groupName,
+                                    @NotNull NavigatableMessageElement navigatableMessageElement) {
+    synchronized (myLock) {
+      List<NavigatableMessageElement> elements = myGroupNameToMessagesMap.get(groupName);
+      if (elements == null) {
+        elements = new ArrayList<NavigatableMessageElement>();
+        myGroupNameToMessagesMap.put(groupName, elements);
+      }
+      if (!myGroupNameToElementMap.containsKey(groupName)) {
+        myGroupNames.add(groupName);
+        myGroupNameToElementMap.put(groupName, navigatableMessageElement.getParent());
+      }
+      elements.add(navigatableMessageElement);
+    }
+  }
+
   private void addSimpleMessage(@NotNull ErrorTreeElementKind kind, final String[] text, final Object data) {
     addSimpleMessageElement(new SimpleMessageElement(kind, text, data));
   }

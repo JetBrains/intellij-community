@@ -19,6 +19,9 @@
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="vcs-api" />
     <orderEntry type="library" name="Groovy" level="project" />
+    <orderEntry type="module" module-name="testRunner" />
+    <orderEntry type="module" module-name="smRunner" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
   </component>
 </module>
 

@@ -22,6 +22,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -32,6 +33,7 @@ import com.intellij.pom.NavigatableAdapter;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,7 +44,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.MavenPluginDomUtil;
+import org.jetbrains.idea.maven.dom.model.MavenDomProfile;
+import org.jetbrains.idea.maven.dom.model.MavenDomProfiles;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel;
 import org.jetbrains.idea.maven.dom.plugin.MavenDomMojo;
 import org.jetbrains.idea.maven.dom.plugin.MavenDomPluginModel;
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration;
@@ -55,6 +62,7 @@ import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.utils.*;
 
+import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -664,6 +672,96 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     @NonNls
     protected String getActionId() {
       return "Maven.ToggleProfile";
+    }
+
+    @Nullable
+    @Override
+    public Navigatable getNavigatable() {
+      if (myProject == null) return null;
+      final List<MavenDomProfile> profiles = ContainerUtil.newArrayList();
+
+      // search in "Per User Maven Settings" - %USER_HOME%/.m2/settings.xml
+      // and in "Global Maven Settings" - %M2_HOME%/conf/settings.xml
+      for (VirtualFile virtualFile : myProjectsManager.getGeneralSettings().getEffectiveSettingsFiles()) {
+        if (virtualFile != null) {
+          final MavenDomSettingsModel model = MavenDomUtil.getMavenDomModel(myProject, virtualFile, MavenDomSettingsModel.class);
+          if (model != null) {
+            addProfiles(profiles, model.getProfiles().getProfiles());
+          }
+        }
+      }
+
+      for (MavenProject mavenProject : myProjectsManager.getProjects()) {
+        // search in "Profile descriptors" - located in project basedir (profiles.xml)
+        final VirtualFile mavenProjectFile = mavenProject.getFile();
+        final VirtualFile profilesXmlFile = MavenUtil.findProfilesXmlFile(mavenProjectFile);
+        if (profilesXmlFile != null) {
+          final MavenDomProfiles profilesModel = MavenDomUtil.getMavenDomProfilesModel(myProject, profilesXmlFile);
+          if (profilesModel != null) {
+            addProfiles(profiles, profilesModel.getProfiles());
+          }
+        }
+
+        // search in "Per Project" - Defined in the POM itself (pom.xml)
+        final MavenDomProjectModel projectModel = MavenDomUtil.getMavenDomProjectModel(myProject, mavenProjectFile);
+        if (projectModel != null) {
+          addProfiles(profiles, projectModel.getProfiles().getProfiles());
+        }
+      }
+      return getNavigatable(profiles);
+    }
+
+    private Navigatable getNavigatable(@NotNull final List<MavenDomProfile> profiles) {
+      if (profiles.size() > 1) {
+        return new NavigatableAdapter() {
+          @Override
+          public void navigate(final boolean requestFocus) {
+            final JBList list = new JBList(profiles);
+            list.setCellRenderer(new DefaultListCellRenderer() {
+              @Override
+              public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                Component result = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                @SuppressWarnings("unchecked") MavenDomProfile mavenDomProfile = (MavenDomProfile)value;
+                XmlElement xmlElement = mavenDomProfile.getXmlElement();
+                if (xmlElement != null) {
+                  setText(xmlElement.getContainingFile().getVirtualFile().getPath());
+                }
+                return result;
+              }
+            });
+            JBPopupFactory.getInstance().createListPopupBuilder(list)
+              .setTitle("Choose file to open ")
+              .setItemChoosenCallback(new Runnable() {
+                public void run() {
+                  final Object value = list.getSelectedValue();
+                  if (value instanceof MavenDomProfile) {
+                    final Navigatable navigatable = getNavigatable((MavenDomProfile)value);
+                    if (navigatable != null) navigatable.navigate(requestFocus);
+                  }
+                }
+              }).createPopup().showInFocusCenter();
+          }
+        };
+      }
+      else {
+        return getNavigatable(ContainerUtil.getFirstItem(profiles));
+      }
+    }
+
+    @Nullable
+    private Navigatable getNavigatable(@Nullable final MavenDomProfile profile) {
+      if (profile == null) return null;
+      XmlElement xmlElement = profile.getId().getXmlElement();
+      return xmlElement instanceof Navigatable ? (Navigatable)xmlElement : null;
+    }
+
+    private void addProfiles(@NotNull List<MavenDomProfile> result, @Nullable List<MavenDomProfile> profilesToAdd) {
+      if (profilesToAdd == null) return;
+      for (MavenDomProfile profile : profilesToAdd) {
+        if (StringUtil.equals(profile.getId().getValue(), myProfileName)) {
+          result.add(profile);
+        }
+      }
     }
   }
 

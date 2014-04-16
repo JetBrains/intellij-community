@@ -200,6 +200,9 @@ public class GradleExecutionHelper {
     try {
       return f.fun(connection);
     }
+    catch (ExternalSystemException e) {
+      throw e;
+    }
     catch (Throwable e) {
       LOG.debug("Gradle execution error", e);
       Throwable rootCause = ExceptionUtil.getRootCause(e);

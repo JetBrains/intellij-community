@@ -24,6 +24,9 @@ public class ExternalSystemException extends RuntimeException {
   
   private final String myOriginalReason;
 
+  @NotNull
+  private final String[] myQuickFixes;
+
   public ExternalSystemException() {
     this(null, null);
   }
@@ -36,8 +39,9 @@ public class ExternalSystemException extends RuntimeException {
     this("", cause);
   }
 
-  public ExternalSystemException(@Nullable String message, @Nullable Throwable cause) {
+  public ExternalSystemException(@Nullable String message, @Nullable Throwable cause, @NotNull String... quickFixes) {
     super(extractMessage(message, cause));
+    myQuickFixes = quickFixes;
     if (cause == null) {
       myOriginalReason = "";
       return;
@@ -60,6 +64,11 @@ public class ExternalSystemException extends RuntimeException {
   @NotNull
   public String getOriginalReason() {
     return myOriginalReason;
+  }
+
+  @NotNull
+  public String[] getQuickFixes() {
+    return myQuickFixes;
   }
 
   @Override
