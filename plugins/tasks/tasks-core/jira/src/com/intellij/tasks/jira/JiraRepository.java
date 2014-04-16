@@ -40,6 +40,7 @@ public class JiraRepository extends BaseRepositoryImpl {
   public static final String REST_API_PATH = "/rest/api/latest";
 
   private static final boolean LEGACY_API_ONLY = Boolean.getBoolean("tasks.jira.legacy.api.only");
+  private static final boolean BASIC_AUTH_ONLY = Boolean.getBoolean("tasks.jira.basic.auth.only");
   private static final boolean REDISCOVER_API = Boolean.getBoolean("tasks.jira.rediscover.api");
 
   public static final Pattern JIRA_ID_PATTERN = Pattern.compile("\\p{javaUpperCase}+-\\d+");
@@ -56,13 +57,13 @@ public class JiraRepository extends BaseRepositoryImpl {
    */
   @SuppressWarnings({"UnusedDeclaration"})
   public JiraRepository() {
-    myUseHttpAuthentication = true;
+    setUseHttpAuthentication(true);
   }
 
   public JiraRepository(JiraRepositoryType type) {
     super(type);
     // Use Basic authentication at the beginning of new session and disable then if needed
-    myUseHttpAuthentication = true;
+    setUseHttpAuthentication(true);
   }
 
   private JiraRepository(JiraRepository other) {
@@ -189,19 +190,25 @@ public class JiraRepository extends BaseRepositoryImpl {
     HttpClient client = getHttpClient();
     // Fix for https://jetbrains.zendesk.com/agent/#/tickets/24566
     // See https://confluence.atlassian.com/display/ONDEMANDKB/Getting+randomly+logged+out+of+OnDemand for details
-    boolean cookieAuthenticated = false;
-    for (Cookie cookie : client.getState().getCookies()) {
-      if (cookie.getName().equals("JSESSIONID") && !cookie.isExpired()) {
-        cookieAuthenticated = true;
-        break;
+    if (BASIC_AUTH_ONLY) {
+      // to override persisted settings
+      setUseHttpAuthentication(true);
+    }
+    else {
+      boolean cookieAuthenticated = false;
+      for (Cookie cookie : client.getState().getCookies()) {
+        if (cookie.getName().equals("JSESSIONID") && !cookie.isExpired()) {
+          cookieAuthenticated = true;
+          break;
+        }
       }
+      // disable subsequent basic authorization attempts if user already was authenticated
+      boolean enableBasicAuthentication = !(isRestApiSupported() && cookieAuthenticated);
+      if (enableBasicAuthentication != isUseHttpAuthentication()) {
+        LOG.info("Basic authentication for subsequent requests was " + (enableBasicAuthentication ? "enabled" : "disabled"));
+      }
+      setUseHttpAuthentication(enableBasicAuthentication);
     }
-    // disable subsequent basic authorization attempts if user already was authenticated
-    boolean enableBasicAuthentication = !(isRestApiSupported() && cookieAuthenticated);
-    if (enableBasicAuthentication != isUseHttpAuthentication()) {
-      LOG.info("Basic authentication for subsequent requests was " + (enableBasicAuthentication ? "enabled" : "disabled"));
-    }
-    setUseHttpAuthentication(enableBasicAuthentication);
 
     int statusCode = client.executeMethod(method);
     LOG.debug("Status code: " + statusCode);
