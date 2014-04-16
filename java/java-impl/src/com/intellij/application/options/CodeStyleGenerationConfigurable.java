@@ -25,6 +25,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.refactoring.ui.JavaVisibilityPanel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
@@ -35,6 +36,7 @@ import java.util.*;
 import java.util.List;
 
 public class CodeStyleGenerationConfigurable implements Configurable {
+  private final JavaVisibilityPanel myJavaVisibilityPanel;
   JPanel myPanel;
   private JTextField myFieldPrefixField;
   private JTextField myStaticFieldPrefixField;
@@ -59,17 +61,20 @@ public class CodeStyleGenerationConfigurable implements Configurable {
   private JCheckBox myInsertOverrideAnnotationCheckBox;
   private JPanel myMembersPanel;
   private JCheckBox myRepeatSynchronizedCheckBox;
+  private JPanel myVisibilityPanel;
 
   public CodeStyleGenerationConfigurable(CodeStyleSettings settings) {
     mySettings = settings;
     myMembersOrderList = new MembersOrderList();
     myPanel.setBorder(IdeBorderFactory.createEmptyBorder(2, 2, 2, 2));
+    myJavaVisibilityPanel = new JavaVisibilityPanel(false, true);
   }
 
   public JComponent createComponent() {
     final JPanel panel = ToolbarDecorator.createDecorator(myMembersOrderList)
       .disableAddAction().disableRemoveAction().createPanel();
     myMembersPanel.add(panel, BorderLayout.CENTER);
+    myVisibilityPanel.add(myJavaVisibilityPanel, BorderLayout.CENTER);
     return myPanel;
   }
 
@@ -229,6 +234,7 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     myCbUseExternalAnnotations.setSelected(settings.USE_EXTERNAL_ANNOTATIONS);
     myInsertOverrideAnnotationCheckBox.setSelected(settings.INSERT_OVERRIDE_ANNOTATION);
     myRepeatSynchronizedCheckBox.setSelected(settings.REPEAT_SYNCHRONIZED);
+    myJavaVisibilityPanel.setVisibility(settings.VISIBILITY);
   }
 
   public void reset() {
@@ -258,6 +264,8 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     settings.USE_EXTERNAL_ANNOTATIONS = myCbUseExternalAnnotations.isSelected();
     settings.INSERT_OVERRIDE_ANNOTATION = myInsertOverrideAnnotationCheckBox.isSelected();
     settings.REPEAT_SYNCHRONIZED = myRepeatSynchronizedCheckBox.isSelected();
+    
+    settings.VISIBILITY = myJavaVisibilityPanel.getVisibility();
 
     myMembersOrderList.apply(settings);
 
@@ -306,6 +314,7 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     isModified |= isModified(myRepeatSynchronizedCheckBox, settings.REPEAT_SYNCHRONIZED);
 
     isModified |= myMembersOrderList.isModified(settings);
+    isModified |= !settings.VISIBILITY.equals(myJavaVisibilityPanel.getVisibility());
 
     return isModified;
   }

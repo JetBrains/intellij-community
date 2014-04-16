@@ -1,5 +1,5 @@
 class A
 {
-    A() {
+    public A() {<caret>
     }
 }

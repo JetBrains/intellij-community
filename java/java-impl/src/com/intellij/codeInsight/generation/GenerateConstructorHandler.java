@@ -29,7 +29,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -217,11 +216,8 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
 
     PsiMethod constructor = factory.createConstructor(aClass.getName(), aClass);
-    String modifier = PsiUtil.getMaximumModifierForMember(aClass, false);
 
-    if (modifier != null) {
-      PsiUtil.setModifierProperty(constructor, modifier, true);
-    }
+    GenerateMembersUtil.setVisibility(aClass, constructor);
 
     if (baseConstructor != null){
       PsiJavaCodeReferenceElement[] throwRefs = baseConstructor.getThrowsList().getReferenceElements();
