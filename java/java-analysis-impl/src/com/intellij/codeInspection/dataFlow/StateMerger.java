@@ -118,9 +118,10 @@ class StateMerger {
 
   private static Set<DfaConstValue> getOtherInequalities(Fact removedFact, LinkedHashSet<Fact> memberFacts, DfaMemoryStateImpl state) {
     Set<DfaConstValue> otherInequalities = ContainerUtil.newLinkedHashSet();
+    Set<DfaValue> eqValues = ContainerUtil.newHashSet(state.getEquivalentValues((DfaValue)removedFact.myArg));
     for (Fact candidate : memberFacts) {
       if (candidate.myType == FactType.equality && !candidate.myPositive && candidate.myVar == removedFact.myVar &&
-          !state.areEquivalent((DfaValue)candidate.myArg, (DfaValue)removedFact.myArg) && 
+          !eqValues.contains((DfaValue)candidate.myArg) &&
           candidate.myArg instanceof DfaConstValue) {
         otherInequalities.add((DfaConstValue)candidate.myArg);
       }
