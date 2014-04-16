@@ -94,7 +94,7 @@ public class DefUseInspection extends DefUseInspectionBase {
     protected void sideEffectAwareRemove(Project project, PsiElement psiInitializer, PsiElement elementToDelete, PsiVariable variable) {
       if (!FileModificationService.getInstance().prepareFileForWrite(psiInitializer.getContainingFile())) return;
 
-      final PsiDeclarationStatement declaration = (PsiDeclarationStatement)variable.getParent();
+      final PsiElement declaration = variable.getParent();
       final List<PsiElement> sideEffects = new ArrayList<PsiElement>();
       boolean hasSideEffects = RemoveUnusedVariableUtil.checkSideEffects(psiInitializer, variable, sideEffects);
       int res = RemoveUnusedVariableUtil.DELETE_ALL;
