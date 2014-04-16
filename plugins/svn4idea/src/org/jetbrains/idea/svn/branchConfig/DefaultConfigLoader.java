@@ -17,16 +17,18 @@ package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNInfo;
-import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -59,25 +61,10 @@ public class DefaultConfigLoader {
       while(true) {
         final String s = SVNPathUtil.tail(baseUrl.getPath());
         if (s.equalsIgnoreCase(DEFAULT_TRUNK_NAME) || s.equalsIgnoreCase(DEFAULT_BRANCHES_NAME) || s.equalsIgnoreCase(DEFAULT_TAGS_NAME)) {
-          final SVNURL rootPath = baseUrl.removePathTail();
-          SVNLogClient client = vcs.createLogClient();
-          client.doList(rootPath, SVNRevision.UNDEFINED, SVNRevision.HEAD, false, false, new ISVNDirEntryHandler() {
-            public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
-              if (("".equals(dirEntry.getRelativePath())) || (! SVNNodeKind.DIR.equals(dirEntry.getKind()))) {
-                // do not use itself or files
-                return;
-              }
+          SVNURL rootPath = baseUrl.removePathTail();
+          SvnTarget target = SvnTarget.fromURL(rootPath);
 
-              if (dirEntry.getName().toLowerCase().endsWith(DEFAULT_TRUNK_NAME)) {
-                result.setTrunkUrl(rootPath.appendPath(dirEntry.getName(), false).toString());
-              }
-              else {
-                result.addBranches(rootPath.appendPath(dirEntry.getName(), false).toString(),
-                                   new InfoStorage<List<SvnBranchItem>>(new ArrayList<SvnBranchItem>(0), InfoReliability.defaultValues));
-              }
-            }
-          });
-
+          vcs.getFactory(target).createBrowseClient().list(target, SVNRevision.HEAD, SVNDepth.IMMEDIATES, createHandler(result, rootPath));
           break;
         }
         if (SVNPathUtil.removeTail(baseUrl.getPath()).length() == 0) {
@@ -91,5 +78,26 @@ public class DefaultConfigLoader {
       LOG.info(e);
       return null;
     }
+    catch (VcsException e) {
+      LOG.info(e);
+      return null;
+    }
+  }
+
+  @NotNull
+  private static ISVNDirEntryHandler createHandler(final SvnBranchConfigurationNew result, final SVNURL rootPath) {
+    return new ISVNDirEntryHandler() {
+      public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
+        if (SVNNodeKind.DIR.equals(dirEntry.getKind())) {
+          if (dirEntry.getName().toLowerCase().endsWith(DEFAULT_TRUNK_NAME)) {
+            result.setTrunkUrl(rootPath.appendPath(dirEntry.getName(), false).toString());
+          }
+          else {
+            result.addBranches(rootPath.appendPath(dirEntry.getName(), false).toString(),
+                               new InfoStorage<List<SvnBranchItem>>(new ArrayList<SvnBranchItem>(0), InfoReliability.defaultValues));
+          }
+        }
+      }
+    };
   }
 }
