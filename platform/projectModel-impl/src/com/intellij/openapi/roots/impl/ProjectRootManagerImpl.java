@@ -356,9 +356,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   @Override
-  public void makeRootsChange(@NotNull Runnable runnable, boolean filetypes, boolean fireEvents) {
+  public void makeRootsChange(@NotNull Runnable runnable, boolean fileTypes, boolean fireEvents) {
     if (myProject.isDisposed()) return;
-    BatchSession session = getBatchSession(filetypes);
+    BatchSession session = getBatchSession(fileTypes);
     if (fireEvents) session.beforeRootsChanged();
     try {
       runnable.run();
@@ -368,19 +368,19 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     }
   }
 
-  protected BatchSession getBatchSession(final boolean filetypes) {
-    return filetypes ? myFileTypesChanged : myRootsChanged;
+  protected BatchSession getBatchSession(final boolean fileTypes) {
+    return fileTypes ? myFileTypesChanged : myRootsChanged;
   }
 
   protected boolean isFiringEvent = false;
 
-  private boolean fireBeforeRootsChanged(boolean filetypes) {
+  private boolean fireBeforeRootsChanged(boolean fileTypes) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
     LOG.assertTrue(!isFiringEvent, "Do not use API that changes roots from roots events. Try using invoke later or something else.");
 
     if (myMergedCallStarted) {
-      LOG.assertTrue(!filetypes, "Filetypes change is not supported inside merged call");
+      LOG.assertTrue(!fileTypes, "File types change is not supported inside merged call");
     }
 
     if (myRootsChangesDepth++ == 0) {
@@ -388,17 +388,17 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
         myMergedCallHasRootChange = true;
         myRootsChangesDepth++; // blocks all firing until finishRootsChangedOnDemand
       }
-      fireBeforeRootsChangeEvent(filetypes);
+      fireBeforeRootsChangeEvent(fileTypes);
       return true;
     }
 
     return false;
   }
 
-  protected void fireBeforeRootsChangeEvent(boolean filetypes) {
+  protected void fireBeforeRootsChangeEvent(boolean fileTypes) {
   }
 
-  private boolean fireRootsChanged(boolean filetypes) {
+  private boolean fireRootsChanged(boolean fileTypes) {
     if (myProject.isDisposed()) return false;
 
     ApplicationManager.getApplication().assertWriteAccessAllowed();
@@ -406,7 +406,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     LOG.assertTrue(!isFiringEvent, "Do not use API that changes roots from roots events. Try using invoke later or something else.");
 
     if (myMergedCallStarted) {
-      LOG.assertTrue(!filetypes, "Filetypes change is not supported inside merged call");
+      LOG.assertTrue(!fileTypes, "File types change is not supported inside merged call");
     }
 
     myRootsChangesDepth--;
@@ -424,7 +424,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     psiManager.dropResolveCaches();
     ((PsiModificationTrackerImpl)psiManager.getModificationTracker()).incCounter();
 
-    fireRootsChangedEvent(filetypes);
+    fireRootsChangedEvent(fileTypes);
 
     doSynchronizeRoots();
 
@@ -433,7 +433,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return true;
   }
 
-  protected void fireRootsChangedEvent(boolean filetypes) {
+  protected void fireRootsChangedEvent(boolean fileTypes) {
   }
 
   protected void addRootsToWatch() {
