@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.data;
 
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.TimedVcsCommit;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +26,7 @@ public class VcsLogSorter {
 
   @NotNull
   public static <Commit extends TimedVcsCommit> List<Commit> sortByDateTopoOrder(@NotNull List<Commit> commits) {
-    return new VcsLogJoiner.NewCommitIntegrator<Commit>(new ArrayList<Commit>(), commits).getResultList();
+    return new VcsLogJoiner.NewCommitIntegrator<Hash, Commit>(new ArrayList<Commit>(), commits).getResultList();
   }
 
 }

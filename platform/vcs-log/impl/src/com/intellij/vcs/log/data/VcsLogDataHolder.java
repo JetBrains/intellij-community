@@ -96,7 +96,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
   @NotNull private final BackgroundTaskQueue myDataLoaderQueue;
   @NotNull private final MiniDetailsGetter myMiniDetailsGetter;
   @NotNull private final CommitDetailsGetter myDetailsGetter;
-  @NotNull private final VcsLogJoiner myLogJoiner;
+  @NotNull private final VcsLogJoiner<Hash, TimedVcsCommit> myLogJoiner;
   @NotNull private final VcsLogMultiRepoJoiner myMultiRepoJoiner;
   @NotNull private final VcsLogSettings mySettings;
 
@@ -415,8 +415,8 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
       RecentCommitsInfo info = entry.getValue();
 
       Collection<VcsRef> oldRefs = myLogData.getRefs(root);
-      Pair<List<TimedVcsCommit>, Integer> joinResult = myLogJoiner.addCommits(myLogData.getLog(root), oldRefs,
-                                                                              info.firstBlockCommits, info.newRefs);
+      Pair<List<TimedVcsCommit>, Integer> joinResult = myLogJoiner.addCommits(myLogData.getLog(root), toHashes(oldRefs),
+                                                                              info.firstBlockCommits, toHashes(info.newRefs));
       if (!Comparing.haveEqualElements(oldRefs, info.newRefs)) {
         myContainingBranchesGetter.clearCache();
       }
@@ -442,6 +442,15 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     handleOnSuccessInEdt(onSuccess, dataPack);
     methodLog.report();
   }
+
+  private static Set<Hash> toHashes(Collection<VcsRef> refs) {
+    Set<Hash> hashes = new java.util.HashSet<Hash>(refs.size());
+    for (VcsRef ref : refs) {
+      hashes.add(ref.getCommitHash());
+    }
+    return hashes;
+  }
+
 
   /**
    * Queries the given number of commits (per each root) from the VCS, already sorted, and substitutes the "top commits" set by them.

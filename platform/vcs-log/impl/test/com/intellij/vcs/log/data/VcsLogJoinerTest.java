@@ -25,20 +25,20 @@ public class VcsLogJoinerTest {
   public void runTest(List<String> initial, List<String> updateBlock, List<String> oldRefs, List<String> newRefs, String expected) {
     List<TimedVcsCommit> savedLog = TimedCommitParser.log(ArrayUtil.toStringArray(initial));
     List<? extends TimedVcsCommit> firstBlock = TimedCommitParser.log(ArrayUtil.toStringArray(updateBlock));
-    Collection<VcsRef> vcsOldRefs = ContainerUtil.map(oldRefs, new Function<String, VcsRef>() {
+    Collection<Hash> vcsOldRefs = ContainerUtil.map(oldRefs, new Function<String, Hash>() {
       @Override
-      public VcsRef fun(String s) {
-        return ref(s, s);
+      public Hash fun(String s) {
+        return new SimpleHash(s);
       }
     });
-    Collection<VcsRef> vcsNewRefs = ContainerUtil.map(newRefs, new Function<String, VcsRef>() {
+    Collection<Hash> vcsNewRefs = ContainerUtil.map(newRefs, new Function<String, Hash>() {
       @Override
-      public VcsRef fun(String s) {
-        return ref(s, s);
+      public Hash fun(String s) {
+        return new SimpleHash(s);
       }
     });
 
-    List<? extends TimedVcsCommit> result = new VcsLogJoiner().addCommits(savedLog, vcsOldRefs, firstBlock, vcsNewRefs).getFirst();
+    List<? extends TimedVcsCommit> result = new VcsLogJoiner<Hash, TimedVcsCommit>().addCommits(savedLog, vcsOldRefs, firstBlock, vcsNewRefs).getFirst();
     assertEquals(expected, toStr(result));
   }
 
