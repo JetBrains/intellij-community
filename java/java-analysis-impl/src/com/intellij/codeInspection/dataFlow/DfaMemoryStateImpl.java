@@ -263,8 +263,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     EqClass aClass = new EqClass(myFactory);
     aClass.add(dfaValue.getID());
-    myEqClasses.add(aClass);
 
+    int freeIndex = myEqClasses.indexOf(null);
+    if (freeIndex >= 0) {
+      myEqClasses.set(freeIndex, aClass);
+      return freeIndex;
+    }
+
+    myEqClasses.add(aClass);
     return myEqClasses.size() - 1;
   }
 
