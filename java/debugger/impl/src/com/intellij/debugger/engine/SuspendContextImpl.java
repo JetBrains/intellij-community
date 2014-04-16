@@ -24,6 +24,8 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.HashSet;
+import com.intellij.xdebugger.frame.XExecutionStack;
+import com.intellij.xdebugger.frame.XSuspendContext;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.EventSet;
@@ -37,7 +39,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 /**
  * @author lex
  */
-public abstract class SuspendContextImpl implements SuspendContext {
+public abstract class SuspendContextImpl extends XSuspendContext implements SuspendContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.SuspendContextImpl");
 
   private final DebugProcessImpl myDebugProcess;
@@ -220,5 +222,11 @@ public abstract class SuspendContextImpl implements SuspendContext {
 
   public final SuspendContextCommandImpl pollPostponedCommand() {
     return myPostponedCommands.poll();
+  }
+
+  @Nullable
+  @Override
+  public XExecutionStack getActiveExecutionStack() {
+    return new JavaExecutionStack(getThread(), myDebugProcess);
   }
 }

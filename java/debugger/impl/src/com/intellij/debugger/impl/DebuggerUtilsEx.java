@@ -21,6 +21,7 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.SuspendContextImpl;
@@ -44,6 +45,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.SmartList;
+import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.event.EventSet;
@@ -617,4 +620,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return text.replace("\t", StringUtil.repeat(" ", tabSize));
   }
 
+  @Nullable
+  public static XSourcePosition toXSourcePosition(@NotNull SourcePosition position) {
+    return XSourcePositionImpl.create(position.getFile().getVirtualFile(), position.getLine());
+  }
 }

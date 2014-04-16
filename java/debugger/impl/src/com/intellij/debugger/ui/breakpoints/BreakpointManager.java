@@ -88,8 +88,6 @@ public class BreakpointManager {
   @Nullable private List<Breakpoint> myBreakpointsListForIteration = null; // another list for breakpoints iteration, unsynchronized access ok
   private final Map<String, String> myUIProperties = new LinkedHashMap<String, String>();
 
-  private final EventDispatcher<BreakpointManagerListener> myDispatcher = EventDispatcher.create(BreakpointManagerListener.class);
-
   private final StartupManager myStartupManager;
 
   public BreakpointManager(@NotNull Project project, @NotNull StartupManager startupManager, @NotNull DebuggerManagerImpl debuggerManager) {
@@ -128,13 +126,13 @@ public class BreakpointManager {
       @Override
       public void breakpointAdded(@NotNull XBreakpoint xBreakpoint) {
         if (isJavaType(xBreakpoint)) {
-          onBreakpointAdded(xBreakpoint);
+          //onBreakpointAdded(xBreakpoint);
         }
       }
 
       @Override
       public void breakpointRemoved(@NotNull XBreakpoint xBreakpoint) {
-        onBreakpointRemoved(xBreakpoint);
+        //onBreakpointRemoved(xBreakpoint);
       }
 
       @Override
@@ -505,19 +503,24 @@ public class BreakpointManager {
     return addXLineBreakpoint(typeCls, doc, line);
   }
 
+  public static Breakpoint addBreakpointInt(@NotNull XBreakpoint xBreakpoint) {
+    Project project = ((XBreakpointBase)xBreakpoint).getProject();
+    BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
+    return breakpointManager.onBreakpointAdded(xBreakpoint);
+  }
+
   //used in Fabrique
   public synchronized void addBreakpoint(@NotNull Breakpoint breakpoint) {
     myBreakpoints.put(breakpoint.myXBreakpoint, breakpoint);
     myBreakpointsListForIteration = null;
     breakpoint.updateUI();
-    RequestManagerImpl.createRequests(breakpoint);
-    myDispatcher.getMulticaster().breakpointsChanged();
     checkAndNotifyPossiblySlowBreakpoint(breakpoint.myXBreakpoint);
   }
 
-  private synchronized void onBreakpointAdded(XBreakpoint xBreakpoint) {
+  private synchronized Breakpoint onBreakpointAdded(XBreakpoint xBreakpoint) {
     Breakpoint breakpoint = createJavaBreakpoint(xBreakpoint);
     addBreakpoint(breakpoint);
+    return breakpoint;
   }
 
   public void removeBreakpoint(@Nullable final Breakpoint breakpoint) {
@@ -532,6 +535,12 @@ public class BreakpointManager {
     });
   }
 
+  public static void removeBreakpointInt(@NotNull XBreakpoint xBreakpoint) {
+    Project project = ((XBreakpointBase)xBreakpoint).getProject();
+    BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
+    breakpointManager.onBreakpointRemoved(xBreakpoint);
+  }
+
   private synchronized void onBreakpointRemoved(@Nullable final XBreakpoint xBreakpoint) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (xBreakpoint == null) {
@@ -542,11 +551,6 @@ public class BreakpointManager {
     if (breakpoint != null) {
       //updateBreakpointRules(breakpoint);
       myBreakpointsListForIteration = null;
-      //we delete breakpoints inside release, so gutter will not fire events to deleted breakpoints
-      breakpoint.delete();
-
-      RequestManagerImpl.deleteRequests(breakpoint);
-      myDispatcher.getMulticaster().breakpointsChanged();
     }
   }
 
@@ -722,41 +726,10 @@ public class BreakpointManager {
     }
   }
 
-  public void addBreakpointManagerListener(@NotNull BreakpointManagerListener listener) {
-    myDispatcher.addListener(listener);
-  }
-
-  public void removeBreakpointManagerListener(@NotNull BreakpointManagerListener listener) {
-    myDispatcher.removeListener(listener);
-  }
-  
-  private boolean myAllowMulticasting = true;
-  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   public void fireBreakpointChanged(Breakpoint breakpoint) {
     breakpoint.reload();
     breakpoint.updateUI();
     RequestManagerImpl.updateRequests(breakpoint);
-    if (myAllowMulticasting) {
-      // can be invoked from non-AWT thread
-      myAlarm.cancelAllRequests();
-      final Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          myAlarm.addRequest(new Runnable() {
-            @Override
-            public void run() {
-              myDispatcher.getMulticaster().breakpointsChanged();
-            }
-          }, 100);
-        }
-      };
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        runnable.run();
-      }
-      else {
-        SwingUtilities.invokeLater(runnable);
-      }
-    }
   }
 
   public void setBreakpointEnabled(@NotNull final Breakpoint breakpoint, final boolean enabled) {
