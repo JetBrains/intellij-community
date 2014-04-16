@@ -51,7 +51,7 @@ public class FirstInBranch implements Runnable {
     myTrunkUrl = relativePath(repositoryRoot, trunkUrl);
   }
 
-  private String relativePath(final String parent, final String child) {
+  private static String relativePath(final String parent, final String child) {
     String path = SVNPathUtil.getRelativePath(parent, child);
     return path.startsWith("/") ? path : "/" + path;
   }
@@ -60,7 +60,7 @@ public class FirstInBranch implements Runnable {
     final Set<SVNException> exceptions = new HashSet<SVNException>();
     final boolean [] called = new boolean[1];
     try {
-      createTask(SVNURL.parseURIDecoded(myRepositoryRoot), exceptions).consume(new Consumer<CopyData>() {
+      run(SVNURL.parseURIDecoded(myRepositoryRoot), exceptions, new Consumer<CopyData>() {
         @Override
         public void consume(CopyData data) {
           if (data != null) {
@@ -87,27 +87,27 @@ public class FirstInBranch implements Runnable {
     }
   }
 
-  private Consumer<Consumer<CopyData>> createTask(final SVNURL branchURL, final Set<SVNException> exceptions) {
-    return new Consumer<Consumer<CopyData>>() {
-      public void consume(final Consumer<CopyData> copyDataConsumer) {
-        final SVNLogClient logClient = ApplicationManager.getApplication().runReadAction(new Computable<SVNLogClient>() {
-          @Override
-          public SVNLogClient compute() {
-            if (myVcs.getProject().isDisposed()) return null;
-            return myVcs.createLogClient();
-          }
-        });
-        if (logClient == null) return;
-        try {
-            logClient.doLog(branchURL, null, SVNRevision.UNDEFINED, SVNRevision.HEAD, SVNRevision.create(0), false, true, -1,
-                            new MyLogEntryHandler(copyDataConsumer, myTrunkUrl, myBranchUrl));
-        } catch (SVNCancelException e) {
-          //
-        } catch (SVNException e) {
-          exceptions.add(e);
-        }
+  private void run(final SVNURL branchURL,
+                   final Set<SVNException> exceptions,
+                   final Consumer<CopyData> copyDataConsumer) {
+    final SVNLogClient logClient = ApplicationManager.getApplication().runReadAction(new Computable<SVNLogClient>() {
+      @Override
+      public SVNLogClient compute() {
+        if (myVcs.getProject().isDisposed()) return null;
+        return myVcs.createLogClient();
       }
-    };
+    });
+    if (logClient == null) return;
+    try {
+      logClient.doLog(branchURL, null, SVNRevision.UNDEFINED, SVNRevision.HEAD, SVNRevision.create(0), false, true, -1,
+                      new MyLogEntryHandler(copyDataConsumer, myTrunkUrl, myBranchUrl));
+    }
+    catch (SVNCancelException e) {
+      //
+    }
+    catch (SVNException e) {
+      exceptions.add(e);
+    }
   }
 
   private static class MyLogEntryHandler implements ISVNLogEntryHandler {
