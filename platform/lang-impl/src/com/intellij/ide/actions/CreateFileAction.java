@@ -170,7 +170,12 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
 
       final PsiDirectory psiDirectory = getDirectory();
 
-      final FileType type = FileTypeChooser.getKnownFileTypeOrAssociate(new FakeVirtualFile(psiDirectory.getVirtualFile(), getFileName(inputString)),
+      final FileType type = FileTypeChooser.getKnownFileTypeOrAssociate(new FakeVirtualFile(psiDirectory.getVirtualFile(), getFileName(inputString)) {
+                                                                          @Override
+                                                                          public boolean isDirectory() {
+                                                                            return false;
+                                                                          }
+                                                                        },
                                                                         psiDirectory.getProject());
       return type != null && super.canClose(getFileName(inputString));
     }
