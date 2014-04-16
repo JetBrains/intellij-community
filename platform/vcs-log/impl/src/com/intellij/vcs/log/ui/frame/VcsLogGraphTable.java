@@ -3,7 +3,6 @@ package com.intellij.vcs.log.ui.frame;
 import com.intellij.ide.CopyProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
@@ -20,10 +19,12 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogHighlighter;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.graph.ClickGraphAction;
+import com.intellij.vcs.log.graph.MouseOverAction;
 import com.intellij.vcs.log.graph.*;
+import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.newgraph.render.PositionUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
-import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRender;
 import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
 import org.jetbrains.annotations.NotNull;
@@ -93,9 +94,6 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     addMouseListener(mouseAdapter);
 
     PopupHandler.installPopupHandler(this, VcsLogUiImpl.POPUP_ACTION_GROUP, VcsLogUiImpl.VCS_LOG_TABLE_PLACE);
-
-    new ScrollToAction(true).registerCustomShortcutSet(CommonShortcuts.getMoveHome(), this);
-    new ScrollToAction(false).registerCustomShortcutSet(CommonShortcuts.getMoveEnd(), this);
   }
 
   @Override
@@ -388,19 +386,5 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       return rendererComponent;
     }
 
-  }
-
-  private class ScrollToAction extends DumbAwareAction {
-
-    private final boolean myTop;
-
-    ScrollToAction(boolean top) {
-      myTop = top;
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      scrollRectToVisible(getCellRect(myTop ? 0 : getRowCount() - 1, 0, true));
-    }
   }
 }
