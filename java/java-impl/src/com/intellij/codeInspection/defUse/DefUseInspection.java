@@ -68,10 +68,21 @@ public class DefUseInspection extends DefUseInspectionBase {
       if (!(left instanceof PsiReferenceExpression)) return;
       final PsiElement parent = left.getParent();
       if (!(parent instanceof PsiAssignmentExpression)) return;
+      final PsiExpression rExpression = ((PsiAssignmentExpression)parent).getRExpression();
+      final PsiElement gParent = parent.getParent();
+      if (gParent instanceof PsiExpression && rExpression != null) {
+        if (!FileModificationService.getInstance().prepareFileForWrite(gParent.getContainingFile())) return;
+        if (gParent instanceof PsiParenthesizedExpression) {
+          gParent.replace(rExpression);
+        } else {
+          parent.replace(rExpression);
+        }
+        return;
+      }
 
       final PsiElement resolve = ((PsiReferenceExpression)left).resolve();
       if (!(resolve instanceof PsiVariable)) return;
-      sideEffectAwareRemove(project, ((PsiAssignmentExpression)parent).getRExpression(), parent, (PsiVariable)resolve);
+      sideEffectAwareRemove(project, rExpression, parent, (PsiVariable)resolve);
     }
   }
   private static class RemoveInitializerFix implements LocalQuickFix {
@@ -92,7 +103,7 @@ public class DefUseInspection extends DefUseInspectionBase {
     }
 
     protected void sideEffectAwareRemove(Project project, PsiElement psiInitializer, PsiElement elementToDelete, PsiVariable variable) {
-      if (!FileModificationService.getInstance().prepareFileForWrite(psiInitializer.getContainingFile())) return;
+      if (!FileModificationService.getInstance().prepareFileForWrite(elementToDelete.getContainingFile())) return;
 
       final PsiElement declaration = variable.getParent();
       final List<PsiElement> sideEffects = new ArrayList<PsiElement>();
