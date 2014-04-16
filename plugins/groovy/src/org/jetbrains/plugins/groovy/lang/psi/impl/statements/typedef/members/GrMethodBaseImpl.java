@@ -335,6 +335,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
 
   @Nullable
   public PsiCodeBlock getBody() {
+    if (PsiImplUtil.isTrait(getContainingClass())) return null;
     return PsiImplUtil.getOrCreatePsiCodeBlock(getBlock());
   }
 

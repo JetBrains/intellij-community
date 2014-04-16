@@ -37,6 +37,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -882,7 +883,8 @@ public class PsiImplUtil {
     return null;
   }
 
-  public static boolean isTrait(PsiClass aClass) {
+  @Contract("null->false")
+  public static boolean isTrait(@Nullable PsiClass aClass) {
     return aClass instanceof GrTypeDefinition && ((GrTypeDefinition)aClass).isTrait();
   }
 }

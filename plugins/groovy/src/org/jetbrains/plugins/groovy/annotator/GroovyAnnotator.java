@@ -591,7 +591,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   public void visitOpenBlock(GrOpenBlock block) {
     if (block.getParent() instanceof GrMethod) {
       final GrMethod method = (GrMethod)block.getParent();
-      if (method.hasModifierProperty(ABSTRACT)) {
+      if (method.hasModifierProperty(ABSTRACT) && !PsiImplUtil.isTrait(method.getContainingClass())) {
         final Annotation annotation = myHolder.createErrorAnnotation(block, GroovyBundle.message("abstract.methods.must.not.have.body"));
         registerMakeAbstractMethodNotAbstractFix(annotation, method, true);
       }
@@ -1750,8 +1750,9 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     if (typeDefinition.isAnnotationType()) return;
     if (typeDefinition instanceof GrTypeParameter) return;
 
+
     PsiMethod abstractMethod = ClassUtil.getAnyAbstractMethod(typeDefinition);
-    if (abstractMethod== null) return;
+    if (abstractMethod == null) return;
 
     String notImplementedMethodName = abstractMethod.getName();
 

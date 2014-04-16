@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -154,7 +155,7 @@ public class CollectClassMembersUtil {
 
     if (!visitedClasses.add(aClass)) return;
 
-    String fieldPrefix = aClass instanceof GrTypeDefinition && ((GrTypeDefinition)aClass).isTrait() ? getTraitFieldPrefix(aClass) : null;
+    String fieldPrefix = PsiImplUtil.isTrait(aClass) ? getTraitFieldPrefix(aClass) : null;
 
     for (PsiField field : getFields(aClass, includeSynthetic)) {
       String originalName = field.getName();
