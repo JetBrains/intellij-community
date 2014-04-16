@@ -364,6 +364,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
       final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
       if (lambdaExpression == null) return;
       final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
+      if (functionalInterfaceType == null || !functionalInterfaceType.isValid()) return;
       final String methodRefText = createMethodReferenceText(element, functionalInterfaceType,
                                                              lambdaExpression.getParameterList().getParameters());
 
