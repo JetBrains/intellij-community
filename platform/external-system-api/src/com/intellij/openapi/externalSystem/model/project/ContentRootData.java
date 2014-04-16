@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -88,7 +89,7 @@ public class ContentRootData extends AbstractExternalEntityData {
   public String toString() {
     StringBuilder buffer = new StringBuilder("content root:");
     for (Map.Entry<ExternalSystemSourceType, Collection<SourceRoot>> entry : myData.entrySet()) {
-      buffer.append(entry.getKey().toString().toLowerCase()).append("=").append(entry.getValue()).append("|");
+      buffer.append(entry.getKey().toString().toLowerCase(Locale.ENGLISH)).append("=").append(entry.getValue()).append("|");
     }
     if (!myData.isEmpty()) {
       buffer.setLength(buffer.length() - 1);
@@ -116,6 +117,23 @@ public class ContentRootData extends AbstractExternalEntityData {
     @Nullable
     public String getPackagePrefix() {
       return myPackagePrefix;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof SourceRoot)) return false;
+      SourceRoot root = (SourceRoot)o;
+      if (myPackagePrefix != null ? !myPackagePrefix.equals(root.myPackagePrefix) : root.myPackagePrefix != null) return false;
+      if (!myPath.equals(root.myPath)) return false;
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myPath.hashCode();
+      result = 31 * result + (myPackagePrefix != null ? myPackagePrefix.hashCode() : 0);
+      return result;
     }
 
     @Override
