@@ -13,14 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.fileTypes;
+package com.intellij.openapi.fileTypes.impl;
 
+import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
-import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable;
+import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -32,6 +37,9 @@ import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.PatternUtil;
+import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,13 +47,13 @@ import java.util.Arrays;
 import java.util.regex.Pattern;
 
 public class FileTypesTest extends PlatformTestCase {
-  private FileTypeManagerEx myFileTypeManager;
+  private FileTypeManagerImpl myFileTypeManager;
   private String myOldIgnoredFilesList;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFileTypeManager = FileTypeManagerEx.getInstanceEx();
+    myFileTypeManager = (FileTypeManagerImpl)FileTypeManagerEx.getInstanceEx();
     myOldIgnoredFilesList = myFileTypeManager.getIgnoredFilesList();
   }
 
@@ -187,7 +195,7 @@ public class FileTypesTest extends PlatformTestCase {
     FileUtil.writeToFile(file, "xxx xxx xxx xxx");
     VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     assertNotNull(virtualFile);
-    assertEquals(PlainTextFileType.INSTANCE, virtualFile.getFileType());
+    TestCase.assertEquals(PlainTextFileType.INSTANCE, virtualFile.getFileType());
   }
 
   public void testAutoDetectEmptyFile() throws IOException {
@@ -252,5 +260,41 @@ public class FileTypesTest extends PlatformTestCase {
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
 
     assertEquals(PlainTextFileType.INSTANCE, vFile.getFileType());
+  }
+
+  public void testReDetectOnContentsChange() throws IOException {
+    FileTypeRegistry.FileTypeDetector detector = new FileTypeRegistry.FileTypeDetector() {
+      @Nullable
+      @Override
+      public FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText) {
+        String text = firstCharsIfText.toString();
+        if (text.startsWith("TYPE:")) return FileTypeRegistry.getInstance().findFileTypeByName(StringUtil.trimStart(text, "TYPE:"));
+        return null;
+      }
+
+      @Override
+      public int getVersion() {
+        return 0;
+      }
+    };
+    Extensions.getRootArea().getExtensionPoint(FileTypeRegistry.FileTypeDetector.EP_NAME).registerExtension(detector);
+    try {
+      File d = createTempDirectory();
+      File f = new File(d, "xx.asfdasdfas");
+      FileUtil.writeToFile(f, "akjdhfksdjgf");
+      VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
+      assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof PlainTextFileType);
+
+      VfsUtil.saveText(vFile, "TYPE:IDEA_MODULE");
+      myFileTypeManager.drainReDetectQueue();
+      assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof ModuleFileType);
+
+      VfsUtil.saveText(vFile, "TYPE:IDEA_PROJECT");
+      myFileTypeManager.drainReDetectQueue();
+      assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof ProjectFileType);
+    }
+    finally {
+      Extensions.getRootArea().getExtensionPoint(FileTypeRegistry.FileTypeDetector.EP_NAME).unregisterExtension(detector);
+    }
   }
 }

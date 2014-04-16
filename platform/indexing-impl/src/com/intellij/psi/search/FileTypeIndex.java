@@ -78,7 +78,7 @@ public class FileTypeIndex extends ScalarIndexExtension<FileType>
 
   @Override
   public boolean dependsOnFileContent() {
-    return false;
+    return true;
   }
 
   @Override

@@ -21,6 +21,7 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.impl.TransferToPooledThreadQueue;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,16 +38,17 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.VFileProperty;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentBitSet;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
@@ -112,9 +114,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   private final MessageBus myMessageBus;
   private final Map<String, StandardFileType> myStandardFileTypes = new LinkedHashMap<String, StandardFileType>();
-  @NonNls private static final String[] FILE_TYPES_WITH_PREDEFINED_EXTENSIONS = {"JSP", "JSPX", "DTD", "HTML", "Properties", "XHTML"};
+  @NonNls
+  private static final String[] FILE_TYPES_WITH_PREDEFINED_EXTENSIONS = {"JSP", "JSPX", "DTD", "HTML", "Properties", "XHTML"};
   private final SchemesManager<FileType, AbstractFileType> mySchemesManager;
-  @NonNls private static final String FILE_SPEC = "$ROOT_CONFIG$/filetypes";
+  @NonNls
+  private static final String FILE_SPEC = "$ROOT_CONFIG$/filetypes";
   private final ConcurrentBitSet autoDetectWasRun = new ConcurrentBitSet();
   private final ConcurrentBitSet autoDetectedAsText = new ConcurrentBitSet();
   private final ConcurrentBitSet autoDetectedAsBinary = new ConcurrentBitSet();
@@ -238,6 +242,61 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         fireFileTypesChanged();
       }
     }, RoamingType.PER_USER);
+    bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter(){
+      @Override
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        Set<VirtualFile> files = ContainerUtil.map2Set(events, new Function<VFileEvent, VirtualFile>() {
+          @Override
+          public VirtualFile fun(VFileEvent event) {
+            VirtualFile file = event instanceof VFileCreateEvent ? null : event.getFile();
+            return file != null && isDetectable(file) && wasAutoDetectedBefore(file) ? file : null;
+          }
+        });
+        files.remove(null);
+        reDetectQueue.offer(files);
+      }
+    });
+  }
+  private final TransferToPooledThreadQueue<Collection<VirtualFile>> reDetectQueue = new TransferToPooledThreadQueue<Collection<VirtualFile>>("file type re-detect", Condition.FALSE, -1, new Processor<Collection<VirtualFile>>() {
+    @Override
+    public boolean process(Collection<VirtualFile> files) {
+      ((FileTypeManagerImpl)getInstance()).reDetect(files);
+      return true;
+    }
+  });
+  void drainReDetectQueue() {
+    reDetectQueue.drain();
+  }
+
+  private void reDetect(@NotNull Collection<VirtualFile> files) {
+    final List<VirtualFile> changed = new ArrayList<VirtualFile>();
+    for (VirtualFile file : files) {
+      if (isDetectable(file) && wasAutoDetectedBefore(file)) {
+        FileType before = file.getFileType();
+        FileType after = detectFromContent(file);
+        if (before != after) {
+          changed.add(file);
+        }
+      }
+    }
+    if (!changed.isEmpty()) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          FileContentUtilCore.reparseFiles(changed);
+        }
+      }, ApplicationManager.getApplication().getDisposed());
+    }
+  }
+
+  private boolean wasAutoDetectedBefore(@NotNull VirtualFile file) {
+    if (file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY) != null) return true;
+    if (file instanceof VirtualFileWithId) {
+      int id = Math.abs(((VirtualFileWithId)file).getId());
+      // do not re-detect binary files
+      return autoDetectWasRun.get(id) && !autoDetectedAsBinary.get(id);
+    }
+    return false;
   }
 
   private static void writeImportedExtensionsMap(final Element map, final ImportedFileType type) {
@@ -394,6 +453,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   @NotNull
   @Override
+  @Deprecated
   public FileType detectFileTypeFromContent(@NotNull VirtualFile file) {
     return file.getFileType();
   }
