@@ -18,7 +18,6 @@ package com.intellij.vcs.log.graph.impl.visible;
 
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.hash.HashMap;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.LinearGraphWithHiddenNodes;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
@@ -28,11 +27,11 @@ import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.ListenerController;
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
 import com.intellij.vcs.log.graph.utils.impl.SetListenerController;
+import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 public class CollapsedGraphWithHiddenNodes implements LinearGraphWithHiddenNodes {
   @NotNull
@@ -45,10 +44,10 @@ public class CollapsedGraphWithHiddenNodes implements LinearGraphWithHiddenNodes
   private final DfsUtil myDfsUtil = new DfsUtil();
 
   @NotNull
-  private final Map<Integer, Integer> upToEdge = new HashMap<Integer, Integer>();
+  private final TIntIntHashMap upToEdge = new TIntIntHashMap();
 
   @NotNull
-  private final Map<Integer, Integer> downToEdge = new HashMap<Integer, Integer>();
+  private final TIntIntHashMap downToEdge = new TIntIntHashMap();
 
   @NotNull
   private final SetListenerController<UpdateListener> myListenerController = new SetListenerController<UpdateListener>();
@@ -173,9 +172,8 @@ public class CollapsedGraphWithHiddenNodes implements LinearGraphWithHiddenNodes
   @NotNull
   @Override
   public List<Integer> getUpNodes(int nodeIndex) {
-    Integer upNullableNode = downToEdge.get(nodeIndex);
-    if (upNullableNode != null)
-      return Collections.singletonList(upNullableNode);
+    if (downToEdge.containsKey(nodeIndex))
+      return Collections.singletonList(downToEdge.get(nodeIndex));
 
     List<Integer> upNodes = new SmartList<Integer>();
     for (int upNode : myDelegateGraph.getUpNodes(nodeIndex)) {
@@ -188,9 +186,8 @@ public class CollapsedGraphWithHiddenNodes implements LinearGraphWithHiddenNodes
   @NotNull
   @Override
   public List<Integer> getDownNodes(int nodeIndex) {
-    Integer downNullableNode = upToEdge.get(nodeIndex);
-    if (downNullableNode != null)
-      return Collections.singletonList(downNullableNode);
+    if (upToEdge.containsKey(nodeIndex))
+      return Collections.singletonList(upToEdge.get(nodeIndex));
 
     List<Integer> downNodes = new SmartList<Integer>();
     for (int downNode : myDelegateGraph.getDownNodes(nodeIndex)) {
