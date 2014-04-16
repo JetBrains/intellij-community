@@ -90,7 +90,6 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -110,11 +109,11 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
-import org.junit.Assert;
 import junit.framework.ComparisonFailure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Assert;
 
 import javax.swing.*;
 import java.io.File;
@@ -1061,23 +1060,26 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void checkResultByFile(final String expectedFile, final boolean ignoreTrailingWhitespaces) {
     assertInitialized();
-    new WriteCommandAction.Simple(getProject()) {
-
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
-      protected void run() throws Exception {
-        checkResultByFile(expectedFile, getHostFile(), ignoreTrailingWhitespaces);
+      public void run() {
+        try {
+          checkResultByFile(expectedFile, getHostFile(), ignoreTrailingWhitespaces);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
       }
-    }.execute().throwException();
+    });
   }
 
   @Override
   public void checkResultByFile(final String filePath, final String expectedFile, final boolean ignoreTrailingWhitespaces) {
     assertInitialized();
 
-    new WriteCommandAction.Simple(getProject()) {
-
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
-      protected void run() throws Exception {
+      public void run() {
         final String path = filePath.replace(File.separatorChar, '/');
         final VirtualFile copy = findFileInTempDir(path);
         if (copy == null) {
@@ -1085,9 +1087,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         }
         final PsiFile psiFile = myPsiManager.findFile(copy);
         assert psiFile != null;
-        checkResultByFile(expectedFile, psiFile, ignoreTrailingWhitespaces);
+        try {
+          checkResultByFile(expectedFile, psiFile, ignoreTrailingWhitespaces);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
       }
-    }.execute().throwException();
+    });
   }
 
   @Override
@@ -1674,14 +1681,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                            String actualText) {
     assertInitialized();
     Project project = getProject();
-    PsiFile file = getFile();
     Editor editor = getEditor();
     if (editor instanceof EditorWindow) {
       editor = ((EditorWindow)editor).getDelegate();
-      file = InjectedLanguageUtil.getTopLevelFile(file);
     }
 
-    project.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
+    UsefulTestCase.doPostponedFormatting(getProject());
     if (stripTrailingSpaces) {
       actualText = stripTrailingSpaces(actualText);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -140,20 +141,13 @@ public class JikesCompiler extends ExternalCompiler {
     throws IOException {
 
     final ArrayList<String> commandLine = new ArrayList<String>();
-    final IOException[] ex = {null};
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        try {
-          _createStartupCommand(chunk, commandLine, outputPath);
-        }
-        catch (IOException e) {
-          ex[0] = e;
-        }
+    ApplicationManager.getApplication().runReadAction(new ThrowableComputable<Void, IOException>() {
+      @Override
+      public Void compute() throws IOException {
+        _createStartupCommand(chunk, commandLine, outputPath);
+        return null;
       }
     });
-    if (ex[0] != null) {
-      throw ex[0];
-    }
     return ArrayUtil.toStringArray(commandLine);
   }
 
