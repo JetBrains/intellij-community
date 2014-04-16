@@ -32,6 +32,7 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -96,20 +97,21 @@ public abstract class BaseConfigurationTestCase extends IdeaTestCase {
     return module;
   }
 
-  private Module createTempModule() throws IOException {
+  private Module createTempModule() {
     return createTempModule(myTempFiles, myProject);
   }
 
+  @NotNull
   public static Module createTempModule(TempFiles tempFiles, final Project project) {
     final String tempPath = tempFiles.createTempPath();
-    final Module[] module = new Module[1];
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    return ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
       @Override
-      public void run() {
-        module[0] = ModuleManager.getInstance(project).newModule(tempPath, StdModuleTypes.JAVA.getId());
+      public Module compute() {
+        Module result = ModuleManager.getInstance(project).newModule(tempPath, StdModuleTypes.JAVA.getId());
+        project.save();
+        return result;
       }
     });
-    return module[0];
   }
 
   protected static VirtualFile findFile(String path) {

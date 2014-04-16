@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -177,8 +177,8 @@ public class FileUtilRt {
     return createTempDirectory(prefix, suffix, true);
   }
 
-  public static File createTempDirectory(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix,
-                                         boolean deleteOnExit) throws IOException {
+  @NotNull
+  public static File createTempDirectory(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix, boolean deleteOnExit) throws IOException {
     final File dir = new File(getTempDirectory());
     return createTempDirectory(dir, prefix, suffix, deleteOnExit);
   }
@@ -248,20 +248,21 @@ public class FileUtilRt {
   }
 
   @NotNull
-  private static File doCreateTempFile(@NotNull File dir,
-                                       @NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
+  private static File doCreateTempFile(@NotNull File dir, @NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
     //noinspection ResultOfMethodCallIgnored
     dir.mkdirs();
 
     if (prefix.length() < 3) {
       prefix = (prefix + "___").substring(0, 3);
     }
+    if (suffix == null) {
+      suffix = ".tmp";
+    }
 
     int exceptionsCount = 0;
     while (true) {
       try {
-        //noinspection SSBasedInspection
-        final File temp = File.createTempFile(prefix, suffix, dir);
+        final File temp = createTempFile(prefix, suffix, dir);
         return normalizeFile(temp);
       }
       catch (IOException e) { // Win32 createFileExclusively access denied
@@ -272,7 +273,29 @@ public class FileUtilRt {
     }
   }
 
-  private static File normalizeFile(File temp) throws IOException {
+  @NotNull
+  public static File createTempFile(@NotNull String prefix, @NotNull String suffix, @NotNull File directory) throws IOException {
+    prefix = new File(prefix).getName();
+    File f;
+    int i = 0;
+    do {
+      String name = prefix + (i==0?"":Integer.toString(i)) + suffix;
+      f = new File(directory, name);
+      if (!name.equals(f.getName())) {
+        throw new IOException("Unable to create temporary file, " + f);
+      }
+      i++;
+    } while (f.exists());
+
+    if (!f.createNewFile()) {
+      throw new IOException("Unable to create temporary file " + f);
+    }
+
+    return f;
+  }
+
+  @NotNull
+  private static File normalizeFile(@NotNull File temp) throws IOException {
     final File canonical = temp.getCanonicalFile();
     return SystemInfoRt.isWindows && canonical.getAbsolutePath().contains(" ") ? temp.getAbsoluteFile() : canonical;
   }
@@ -285,6 +308,7 @@ public class FileUtilRt {
     return ourCanonicalTempPathCache;
   }
 
+  @NotNull
   private static String calcCanonicalTempPath() {
     final File file = new File(System.getProperty("java.io.tmpdir"));
     try {
@@ -510,7 +534,8 @@ public class FileUtilRt {
     @Nullable T execute(boolean lastAttempt) throws E;
   }
 
-  public static @Nullable <T, E extends Throwable> T doIOOperation(@NotNull RepeatableIOOperation<T, E> ioTask) throws E {
+  @Nullable
+  public static <T, E extends Throwable> T doIOOperation(@NotNull RepeatableIOOperation<T, E> ioTask) throws E {
     for (int i = MAX_FILE_IO_ATTEMPTS; i > 0; i--) {
       T result = ioTask.execute(i == 1);
       if (result != null) return result;
