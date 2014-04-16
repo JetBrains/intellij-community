@@ -648,9 +648,12 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
   public boolean setSelectedTemplate(String group, String name) {
     ListModel model = myProjectTypeList.getModel();
     for (int i = 0; i < model.getSize(); i++) {
-      if (group.equals(((TemplatesGroup)model.getElementAt(i)).getName())) {
+      TemplatesGroup templatesGroup = (TemplatesGroup)model.getElementAt(i);
+      if (group.equals(templatesGroup.getName())) {
         myProjectTypeList.setSelectedIndex(i);
         if (name == null) return getSelectedGroup().getName().equals(group);
+        Collection<ProjectTemplate> templates = myTemplatesMap.get(templatesGroup);
+        setTemplatesList(templatesGroup, templates, false);
         return myTemplatesList.setSelectedTemplate(name);
       }
     }
