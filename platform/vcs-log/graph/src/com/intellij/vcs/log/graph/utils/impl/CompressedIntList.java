@@ -29,25 +29,40 @@ public class CompressedIntList implements IntList {
 
   @NotNull
   public static IntList newInstance(final int[] delegateArray, int blockSize) {
-    if (blockSize  < 1) throw new IllegalArgumentException("Unsupported blockSize:" + blockSize);
-
-    if (delegateArray.length == 0) return new FullIntList(delegateArray);
-
-    IntDeltaCompressor intDeltaCompressor = IntDeltaCompressor.newInstance(new IntList() {
+    return newInstance(new IntList() {
       @Override
       public int size() {
-        return delegateArray.length - 1;
+        return delegateArray.length;
       }
 
       @Override
       public int get(int index) {
-        return delegateArray[index + 1] - delegateArray[index];
+        return delegateArray[index];
+      }
+    }, blockSize);
+  }
+
+  @NotNull
+  public static IntList newInstance(final IntList delegateList, int blockSize) {
+    if (blockSize  < 1) throw new IllegalArgumentException("Unsupported blockSize:" + blockSize);
+
+    if (delegateList.size() == 0) return new FullIntList(new int[0]);
+
+    IntDeltaCompressor intDeltaCompressor = IntDeltaCompressor.newInstance(new IntList() {
+      @Override
+      public int size() {
+        return delegateList.size() - 1;
+      }
+
+      @Override
+      public int get(int index) {
+        return delegateList.get(index + 1) - delegateList.get(index);
       }
     });
 
-    int[] strongValues = new int[(delegateArray.length - 1) / blockSize + 1];
+    int[] strongValues = new int[(delegateList.size() - 1) / blockSize + 1];
     for (int i = 0; i < strongValues.length; i++)
-      strongValues[i] = delegateArray[i * blockSize];
+      strongValues[i] = delegateList.get(i * blockSize);
 
     return new CompressedIntList(blockSize, strongValues, intDeltaCompressor);
   }

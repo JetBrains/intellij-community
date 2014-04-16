@@ -18,14 +18,14 @@ package com.intellij.vcs.log.graph.impl.permanent;
 
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.graph.utils.IntList;
 import com.intellij.vcs.log.graph.utils.TimestampGetter;
+import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;
 import com.intellij.vcs.log.graph.utils.impl.IntTimestampGetter;
 import com.intellij.vcs.log.graph.GraphCommit;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class PermanentCommitsInfo<CommitId> {
 
@@ -43,20 +43,53 @@ public class PermanentCommitsInfo<CommitId> {
       }
     });
 
-    List<CommitId> commitIdIndex = ContainerUtil.map(graphCommits, new Function<GraphCommit<CommitId>, CommitId>() {
-      @Override
-      public CommitId fun(GraphCommit<CommitId> graphCommit) {
-        return graphCommit.getId();
-      }
-    });
+    boolean isIntegerCase = !graphCommits.isEmpty() && graphCommits.get(0).getId().getClass() == Integer.class;
+
+    List<CommitId> commitIdIndex;
+    if (isIntegerCase) {
+      commitIdIndex = (List<CommitId>)createCompressedIntList((List<? extends GraphCommit<Integer>>)graphCommits);
+    } else {
+      commitIdIndex = ContainerUtil.map(graphCommits, new Function<GraphCommit<CommitId>, CommitId>() {
+        @Override
+        public CommitId fun(GraphCommit<CommitId> graphCommit) {
+          return graphCommit.getId();
+        }
+      });
+    }
     return new PermanentCommitsInfo<CommitId>(timestampGetter, commitIdIndex);
+  }
+
+  @NotNull
+  private static List<Integer> createCompressedIntList(@NotNull final List<? extends GraphCommit<Integer>> graphCommits) {
+    final IntList compressedIntList = CompressedIntList.newInstance(new IntList() {
+      @Override
+      public int size() {
+        return graphCommits.size();
+      }
+
+      @Override
+      public int get(int index) {
+        return graphCommits.get(index).getId();
+      }
+    }, 30);
+    return new AbstractList<Integer>() {
+      @Override
+      public Integer get(int index) {
+        return compressedIntList.get(index);
+      }
+
+      @Override
+      public int size() {
+        return compressedIntList.size();
+      }
+    };
   }
 
   @NotNull
   private final TimestampGetter myTimestampGetter;
 
   @NotNull
-  private final List<CommitId> myCommitIdIndexes;   // todo optimize for Integer
+  private final List<CommitId> myCommitIdIndexes;
 
   public PermanentCommitsInfo(@NotNull TimestampGetter timestampGetter, @NotNull List<CommitId> commitIdIndex) {
     myTimestampGetter = timestampGetter;
@@ -101,15 +134,16 @@ public class PermanentCommitsInfo<CommitId> {
     });
   }
 
-  // todo optimise for branches CommitId
   @NotNull
   public Set<Integer> convertToCommitIndexes(@NotNull Collection<CommitId> commitIds) {
-    return ContainerUtil.map2Set(commitIds, new Function<CommitId, Integer>() {
-      @Override
-      public Integer fun(CommitId commitId) {
-        return getPermanentNodeIndex(commitId);
+    Set<Integer> result = ContainerUtil.newHashSet();
+    for (int i = 0; i < myCommitIdIndexes.size(); i++) {
+      CommitId commitId = myCommitIdIndexes.get(i);
+      if (commitIds.contains(commitId)) {
+        result.add(i);
       }
-    });
+    }
+    return result;
   }
 
 }
