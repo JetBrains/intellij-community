@@ -340,8 +340,8 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
 //        }
 
         List<? extends TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(myLogData.myLogsByRoot.values());
-        final DataPack fullDataPack = DataPack.build(convertToGraphCommits(compoundLog), myLogData.getAllRefs(), indicator,
-                                               myIndexGetter, myHashGetter, myLogProviders);
+        final DataPack fullDataPack = DataPack
+          .build(convertToGraphCommits(compoundLog), myLogData.getAllRefs(), indicator, myIndexGetter, myHashGetter, myLogProviders);
         myLogData = new LogData(myLogData.getLogs(), myLogData.getRefs(), myLogData.getTopCommits(), fullDataPack, true);
         myFullLogShowing = true;
         invokeAndWait(new Runnable() {
@@ -355,41 +355,59 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     }, "Building full log...");
   }
 
+
   private List<? extends GraphCommit<Integer>> convertToGraphCommits(final List<? extends TimedVcsCommit> log) {
-    return new AbstractList<GraphCommit<Integer>>() {
+    return ContainerUtil.map(log, new Function<TimedVcsCommit, GraphCommit<Integer>>() {
       @Override
-      public GraphCommit<Integer> get(int index) {
-        final TimedVcsCommit commit = log.get(index);
-        return new GraphCommit<Integer>() {
-          @NotNull
-          @Override
-          public Integer getId() {
-            return getCommitIndex(commit.getId());
-          }
+      public GraphCommit<Integer> fun(final TimedVcsCommit commit) {
+        final int commtId = getCommitIndex(commit.getId());
+        final long timestamp = commit.getTimestamp();
 
-          @NotNull
-          @Override
-          public List<Integer> getParents() {
-            return ContainerUtil.map(commit.getParents(), new Function<Hash, Integer>() {
-              @Override
-              public Integer fun(Hash hash) {
-                return getCommitIndex(hash);
-              }
-            });
-          }
-
-          @Override
-          public long getTimestamp() {
-            return commit.getTimestamp();
-          }
-        };
+        List<Hash> parentHashes = commit.getParents();
+        List<Integer> parents;
+        if (parentHashes.size() == 1)
+          parents = Collections.singletonList(getCommitIndex(parentHashes.get(0)));
+        else {
+          parents = ContainerUtil.map(parentHashes, new Function<Hash, Integer>() {
+            @Override
+            public Integer fun(Hash hash) {
+              return getCommitIndex(hash);
+            }
+          });
+        }
+        return new GraphCommitInt(commtId, parents, timestamp);
       }
+    });
+  }
 
-      @Override
-      public int size() {
-        return log.size();
-      }
-    };
+  private static class GraphCommitInt implements GraphCommit<Integer> {
+    private final Integer myId;
+    @NotNull
+    private final List<Integer> myParrents;
+    private final long myTimestamp;
+
+    private GraphCommitInt(Integer id, @NotNull List<Integer> parrents, long timestamp) {
+      myId = id;
+      myParrents = parrents;
+      myTimestamp = timestamp;
+    }
+
+    @NotNull
+    @Override
+    public Integer getId() {
+      return myId;
+    }
+
+    @NotNull
+    @Override
+    public List<Integer> getParents() {
+      return myParrents;
+    }
+
+    @Override
+    public long getTimestamp() {
+      return myTimestamp;
+    }
   }
 
   public boolean isFullLogShowing() {
