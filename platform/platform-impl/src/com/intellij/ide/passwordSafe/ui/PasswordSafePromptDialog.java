@@ -25,9 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,16 +68,6 @@ public class PasswordSafePromptDialog extends DialogWrapper {
   @Override
   public JComponent getPreferredFocusedComponent() {
     return myComponent.getPreferredFocusedComponent();
-  }
-
-  @Nullable
-  public static Pair<String, String> showUserPasswordDialog(Project project, String title, String message, String defUser) {
-    PasswordPromptComponent component = new PasswordPromptComponent(PasswordSafeSettings.ProviderType.DO_NOT_STORE, message, true, null, null);
-    component.setUserName(StringUtil.notNullize(defUser));
-    if (new PasswordSafePromptDialog(project, title, component).showAndGet()) {
-      return Pair.create(component.getUserName(), new String(component.getPassword()));
-    }
-    return null;
   }
 
   /**
@@ -211,7 +199,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
         if (d.showAndGet()) {
           ref.set(new String(component.getPassword()));
           try {
-            if (component.isRememberChecked()) {
+            if (component.isRememberSelected()) {
               ps.storePassword(project, requestor, key, ref.get());
             }
             else if (!type.equals(PasswordSafeSettings.ProviderType.DO_NOT_STORE)) {

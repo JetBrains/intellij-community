@@ -105,7 +105,11 @@ public class PasswordPromptComponent {
     myPasswordField.setText(text);
   }
 
-  public boolean isRememberChecked() {
+  public boolean isRememberSelected() {
     return myRememberCheckBox.isSelected();
+  }
+
+  public void setRememberSelected(boolean selected) {
+    myRememberCheckBox.setSelected(selected);
   }
 }
