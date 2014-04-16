@@ -648,7 +648,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     } catch (IOException e) {
       path = getPath().getAbsolutePath();
     }
-    if (ApplicationManager.getApplication().isInternal()) {
+    if (ApplicationManager.getApplication() != null && ApplicationManager.getApplication().isInternal()) {
       if (path.startsWith(PathManager.getHomePath() + File.separator + "out" + File.separator + "classes")) {
         return true;
       }
