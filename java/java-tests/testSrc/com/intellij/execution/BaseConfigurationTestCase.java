@@ -103,7 +103,7 @@ public abstract class BaseConfigurationTestCase extends IdeaTestCase {
 
   @NotNull
   public static Module createTempModule(TempFiles tempFiles, final Project project) {
-    final String tempPath = tempFiles.createTempPath();
+    final String tempPath = tempFiles.createTempFile("xxx").getAbsolutePath();
     return ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
       @Override
       public Module compute() {
