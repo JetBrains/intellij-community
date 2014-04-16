@@ -17,50 +17,32 @@
 package com.intellij.vcs.log.graph.impl.permanent;
 
 import com.intellij.util.SmartList;
+import com.intellij.vcs.log.graph.api.LinearGraph;
+import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.IntList;
 import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;
 import com.intellij.vcs.log.graph.utils.impl.FullIntList;
-import com.intellij.vcs.log.graph.api.LinearGraph;
-import com.intellij.vcs.log.graph.utils.Flags;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.AbstractList;
 import java.util.Collections;
 import java.util.List;
 
 public class PermanentLinearGraphImpl implements LinearGraph {
   private final Flags mySimpleNodes;
 
-  // myNodeToEdgeIndex.length = nodesCount() + 1. See adjacentNodes().
+  // myNodeToEdgeIndex.length = nodesCount() + 1.
   private final IntList myNodeToEdgeIndex;
   private final IntList myLongEdges;
 
   /*package*/ PermanentLinearGraphImpl(Flags simpleNodes, int[] nodeToEdgeIndex, int[] longEdges) {
     mySimpleNodes = simpleNodes;
-    myNodeToEdgeIndex = CompressedIntList.newInstance(nodeToEdgeIndex);
-    myLongEdges = new FullIntList(longEdges);
+    myNodeToEdgeIndex = new FullIntList(nodeToEdgeIndex);
+    myLongEdges = CompressedIntList.newInstance(longEdges, 10);
   }
 
   @Override
   public int nodesCount() {
     return mySimpleNodes.size();
-  }
-
-  @NotNull
-  private List<Integer> adjacentNodes(final int nodeIndex) {
-    final int startIndex = myNodeToEdgeIndex.get(nodeIndex);
-
-    return new AbstractList<Integer>() {
-      @Override
-      public Integer get(int index) {
-        return myLongEdges.get(startIndex + index);
-      }
-
-      @Override
-      public int size() {
-          return myNodeToEdgeIndex.get(nodeIndex + 1) - startIndex;
-      }
-    };
   }
 
   @NotNull
@@ -71,7 +53,8 @@ public class PermanentLinearGraphImpl implements LinearGraph {
       result.add(nodeIndex - 1);
     }
 
-    for (Integer node: adjacentNodes(nodeIndex)) {
+    for (int i = myNodeToEdgeIndex.get(nodeIndex); i < myNodeToEdgeIndex.get(nodeIndex + 1); i++) {
+      int node = myLongEdges.get(i);
       if (node < nodeIndex)
         result.add(node);
     }
@@ -88,7 +71,8 @@ public class PermanentLinearGraphImpl implements LinearGraph {
     }
 
     List<Integer> result = new SmartList<Integer>();
-    for (Integer node: adjacentNodes(nodeIndex)) {
+    for (int i = myNodeToEdgeIndex.get(nodeIndex); i < myNodeToEdgeIndex.get(nodeIndex + 1); i++) {
+      int node = myLongEdges.get(i);
       if (nodeIndex < node)
         result.add(node);
     }
