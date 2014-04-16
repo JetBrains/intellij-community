@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.TransparentlyFailedValue;
 import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.openapi.vcs.persistent.SmallMapSerializer;
@@ -33,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.CopyData;
 import org.jetbrains.idea.svn.history.FirstInBranch;
-import org.tmatesoft.svn.core.SVNException;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -43,7 +43,7 @@ import java.util.*;
 
 public class SvnBranchPointsCalculator {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.dialogs.SvnBranchPointsCalculator");
-  private FactsCalculator<KeyData, WrapperInvertor, SVNException> myCalculator;
+  private FactsCalculator<KeyData, WrapperInvertor, VcsException> myCalculator;
   private PersistentHolder myPersistentHolder;
   private File myFile;
   private final Project myProject;
@@ -78,7 +78,7 @@ public class SvnBranchPointsCalculator {
       }
     };
 
-    myCalculator = new FactsCalculator<KeyData, WrapperInvertor, SVNException>(
+    myCalculator = new FactsCalculator<KeyData, WrapperInvertor, VcsException>(
       myProject, "Looking for branch origin", cache, new Loader(myProject));
   }
 
@@ -240,7 +240,7 @@ public class SvnBranchPointsCalculator {
     }
   }
 
-  private static class Loader implements ThrowableConvertor<KeyData, WrapperInvertor, SVNException> {
+  private static class Loader implements ThrowableConvertor<KeyData, WrapperInvertor, VcsException> {
     private SvnVcs myVcs;
 
     private Loader(final Project project) {
@@ -248,8 +248,8 @@ public class SvnBranchPointsCalculator {
     }
 
     @Override
-    public WrapperInvertor convert(final KeyData keyData) throws SVNException {
-      final TransparentlyFailedValue<CopyData, SVNException> consumer = new TransparentlyFailedValue<CopyData, SVNException>();
+    public WrapperInvertor convert(final KeyData keyData) throws VcsException {
+      final TransparentlyFailedValue<CopyData, VcsException> consumer = new TransparentlyFailedValue<CopyData, VcsException>();
       new FirstInBranch(myVcs, keyData.getRepoUrl(), keyData.getTargetUrl(), keyData.getSourceUrl(), consumer).run();
 
       final CopyData copyData = consumer.get();
@@ -345,7 +345,7 @@ public class SvnBranchPointsCalculator {
   }
 
   public TaskDescriptor getFirstCopyPointTask(final String repoUID, final String sourceUrl, final String targetUrl,
-                                          final Consumer<TransparentlyFailedValueI<WrapperInvertor, SVNException>> consumer) {
-    return myCalculator.getTask(new KeyData(repoUID, sourceUrl, targetUrl), consumer, SVNException.class);
+                                          final Consumer<TransparentlyFailedValueI<WrapperInvertor, VcsException>> consumer) {
+    return myCalculator.getTask(new KeyData(repoUID, sourceUrl, targetUrl), consumer, VcsException.class);
   }
 }

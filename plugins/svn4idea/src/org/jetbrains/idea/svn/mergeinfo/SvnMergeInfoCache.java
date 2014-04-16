@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.TransparentlyFailedValue;
 import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -33,7 +34,6 @@ import org.jetbrains.idea.svn.dialogs.WCPaths;
 import org.jetbrains.idea.svn.history.CopyData;
 import org.jetbrains.idea.svn.history.FirstInBranch;
 import org.jetbrains.idea.svn.history.SvnChangeList;
-import org.tmatesoft.svn.core.SVNException;
 
 import java.util.Map;
 
@@ -43,8 +43,8 @@ public class SvnMergeInfoCache {
   private final Project myProject;
   private final Map<String, MyCurrentUrlData> myCurrentUrlMapping;
 
-  public static Topic<SvnMergeInfoCacheListener> SVN_MERGE_INFO_CACHE = new Topic<SvnMergeInfoCacheListener>("SVN_MERGE_INFO_CACHE",
-                                                                                                 SvnMergeInfoCacheListener.class);
+  public static Topic<SvnMergeInfoCacheListener> SVN_MERGE_INFO_CACHE =
+    new Topic<SvnMergeInfoCacheListener>("SVN_MERGE_INFO_CACHE", SvnMergeInfoCacheListener.class);
 
   private SvnMergeInfoCache(final Project project) {
     myProject = project;
@@ -144,7 +144,7 @@ public class SvnMergeInfoCache {
       myPath = path;
       myRevision = -1;
 
-      final TransparentlyFailedValueI<CopyData, SVNException> result = new TransparentlyFailedValue<CopyData, SVNException>() {
+      final TransparentlyFailedValueI<CopyData, VcsException> result = new TransparentlyFailedValue<CopyData, VcsException>() {
         @Override
         public void set(CopyData copyData) {
           if (copyData == null) return;
@@ -160,7 +160,7 @@ public class SvnMergeInfoCache {
         }
 
         @Override
-        public void fail(SVNException e) {
+        public void fail(VcsException e) {
           LOG.info(e);
           VcsBalloonProblemNotifier.showOverChangesView(vcs.getProject(), e.getMessage(), MessageType.ERROR);
         }

@@ -353,16 +353,16 @@ public class QuickMerge {
     queue.add(mergeAllExecutor);
   }
 
-  private class MergeAllWithBranchCopyPoint extends TaskDescriptor implements Consumer<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, SVNException>> {
-    private final AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, SVNException>> myData;
+  private class MergeAllWithBranchCopyPoint extends TaskDescriptor implements Consumer<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException>> {
+    private final AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException>> myData;
 
     private MergeAllWithBranchCopyPoint() {
       super("merge all", Where.AWT);
-      myData = new AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, SVNException>>();
+      myData = new AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException>>();
     }
 
     @Override
-    public void consume(TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, SVNException> value) {
+    public void consume(TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException> value) {
       myData.set(value);
     }
 
@@ -370,7 +370,7 @@ public class QuickMerge {
     public void run(ContinuationContext context) {
       SvnBranchPointsCalculator.WrapperInvertor invertor;
       try {
-        final TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, SVNException>
+        final TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException>
           transparentlyFailedValueI = myData.get();
         if (transparentlyFailedValueI == null) {
           finishWithError(context, "Merge start wasn't found", true);
@@ -378,8 +378,8 @@ public class QuickMerge {
         }
         invertor = transparentlyFailedValueI.get();
       }
-      catch (SVNException e) {
-        finishWithError(context, "Merge start wasn't found", Collections.singletonList(new VcsException(e)));
+      catch (VcsException e) {
+        finishWithError(context, "Merge start wasn't found", Collections.singletonList(e));
         return;
       }
       if (invertor == null) {
@@ -532,13 +532,13 @@ public class QuickMerge {
   }
 
   private class MergeCalculator extends TaskDescriptor implements
-                     Consumer<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, SVNException>> {
+                     Consumer<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException>> {
     private final static String ourOneShotStrategy = "svn.quickmerge.oneShotStrategy";
     private final WCInfo myWcInfo;
     private final String mySourceUrl;
     private final String myBranchName;
     private final
-    AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, SVNException>>
+    AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException>>
       myCopyData;
     private boolean myIsReintegrate;
 
@@ -547,7 +547,7 @@ public class QuickMerge {
     private final MergeChecker myMergeChecker;
 
     @Override
-    public void consume(TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, SVNException> value) {
+    public void consume(TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException> value) {
       myCopyData.set(value);
     }
 
@@ -566,7 +566,7 @@ public class QuickMerge {
                                                                                                  myWcInfo.getRootUrl(), mySourceUrl,
                                                                                                  mySourceUrl, myVcs.createWCClient()));
       }*/
-      myCopyData = new AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, SVNException>>();
+      myCopyData = new AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException>>();
     }
 
     //"Calculating not merged revisions"
@@ -576,8 +576,8 @@ public class QuickMerge {
       try {
         copyDataValue = myCopyData.get().get();
       }
-      catch (SVNException e) {
-        finishWithError(context, "Merge start wasn't found", Collections.singletonList(new VcsException(e)));
+      catch (VcsException e) {
+        finishWithError(context, "Merge start wasn't found", Collections.singletonList(e));
         return;
       }
       if (copyDataValue == null) {

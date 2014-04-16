@@ -18,15 +18,17 @@ package org.jetbrains.idea.svn.history;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.util.Map;
 
@@ -41,10 +43,10 @@ public class FirstInBranch implements Runnable {
   @NotNull private final String myBranchUrl;
   @NotNull private final String myTrunkUrl;
   @NotNull private final String myRepositoryRoot;
-  @NotNull private final TransparentlyFailedValueI<CopyData, SVNException> myConsumer;
+  @NotNull private final TransparentlyFailedValueI<CopyData, VcsException> myConsumer;
 
   public FirstInBranch(@NotNull SvnVcs vcs, @NotNull String repositoryRoot, @NotNull String branchUrl, @NotNull String trunkUrl,
-                       @NotNull TransparentlyFailedValueI<CopyData, SVNException> consumer) {
+                       @NotNull TransparentlyFailedValueI<CopyData, VcsException> consumer) {
     myVcs = vcs;
     myRepositoryRoot = repositoryRoot;
     myConsumer = consumer;
@@ -63,9 +65,9 @@ public class FirstInBranch implements Runnable {
     SVNURL result = null;
 
     try {
-      result = SVNURL.parseURIDecoded(myRepositoryRoot);
+      result = SvnUtil.createUrl(myRepositoryRoot);
     }
-    catch (SVNException e) {
+    catch (SvnBindException e) {
       LOG.info(e);
       myConsumer.fail(e);
     }
@@ -92,27 +94,34 @@ public class FirstInBranch implements Runnable {
         }
       });
     }
-    catch (SVNException e) {
+    catch (VcsException e) {
       LOG.info(e);
       myConsumer.fail(e);
     }
   }
 
-  private void run(@NotNull SVNURL branchURL, @NotNull Consumer<CopyData> copyDataConsumer) throws SVNException {
-    final SVNLogClient logClient = ApplicationManager.getApplication().runReadAction(new Computable<SVNLogClient>() {
+  private void run(@NotNull SVNURL branchURL, @NotNull Consumer<CopyData> copyDataConsumer) throws VcsException {
+    final SvnTarget target = SvnTarget.fromURL(branchURL);
+
+    HistoryClient client = ApplicationManager.getApplication().runReadAction(new Computable<HistoryClient>() {
       @Override
-      public SVNLogClient compute() {
+      public HistoryClient compute() {
         if (myVcs.getProject().isDisposed()) return null;
-        return myVcs.createLogClient();
+        return myVcs.getFactory(target).createHistoryClient();
       }
     });
-    if (logClient == null) return;
+
+    if (client == null) return;
+
     try {
-      logClient.doLog(branchURL, null, SVNRevision.UNDEFINED, SVNRevision.HEAD, SVNRevision.create(0), false, true, -1,
-                      new MyLogEntryHandler(copyDataConsumer, myTrunkUrl, myBranchUrl));
+      client.doLog(target, SVNRevision.HEAD, SVNRevision.create(0), false, true, false, -1, null,
+                   new MyLogEntryHandler(copyDataConsumer, myTrunkUrl, myBranchUrl));
     }
-    catch (SVNCancelException e) {
-      // process cancelled - do nothing
+    catch (SvnBindException e) {
+      // do not throw cancel exception as this means corresponding copy point is found (if progress indicator was not explicitly cancelled)
+      if (!e.contains(SVNErrorCode.CANCELLED)) {
+        throw e;
+      }
     }
   }
 
