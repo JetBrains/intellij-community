@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
-import com.intellij.tasks.TaskBundle;
+import com.intellij.tasks.impl.RequestFailedException;
 import com.intellij.tasks.impl.gson.GsonUtil;
 import com.intellij.tasks.impl.httpclient.NewBaseRepositoryImpl;
 import com.intellij.tasks.redmine.model.RedmineIssue;
@@ -102,17 +102,21 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
 
   @Override
   public void testConnection() throws Exception {
-    // Strangely, but Redmine doesn't return 401 or 403 error if client sent wrong credentials and instead
+    // Strangely, Redmine doesn't return 401 or 403 error codes, if client sent wrong credentials, and instead
     // merely returns empty array of issues with status code of 200. This means that we should attempt to fetch
-    // something more specific than issues to test connection and configuration.
-    HttpResponse response = getHttpClient().execute(new HttpGet(getRestApiUrl("users", "current.json")));
+    // something more specific than issues to test proper configuration, e.g. current user information at
+    // /users/current.json. Unfortunately this endpoint may be unavailable on some old servers (see IDEA-122845)
+    // and in this case we have to come back to requesting issues in this case to test anything at all.
+    HttpClient client = getHttpClient();
+    HttpResponse response = client.execute(new HttpGet(getRestApiUrl("users", "current.json")));
     //TaskUtil.prettyFormatResponseToLog(LOG, response);
     int code = response.getStatusLine().getStatusCode();
+    if (code == HttpStatus.SC_NOT_FOUND) {
+      getIssues("", 0, 1, true);
+      return;
+    }
     if (code != HttpStatus.SC_OK) {
-      if (code == HttpStatus.SC_UNAUTHORIZED) {
-        throw new Exception(TaskBundle.message("failure.login"));
-      }
-      throw new Exception(TaskBundle.message("failure.http.error", code, response.getStatusLine().getReasonPhrase()));
+      throw RequestFailedException.forStatusCode(code);
     }
   }
 
@@ -148,7 +152,8 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     }
     HttpClient client = getHttpClient();
     HttpGet method = new HttpGet(builder.toString());
-    return client.execute(method, new GsonSingleObjectDeserializer<IssuesWrapper>(GSON, IssuesWrapper.class)).getIssues();
+    IssuesWrapper wrapper = client.execute(method, new GsonSingleObjectDeserializer<IssuesWrapper>(GSON, IssuesWrapper.class));
+    return wrapper == null ? Collections.<RedmineIssue>emptyList() : wrapper.getIssues();
   }
 
   public List<RedmineProject> fetchProjects() throws Exception {
@@ -168,7 +173,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
   public Task findTask(@NotNull String id) throws Exception {
     ensureProjectsDiscovered();
     HttpGet method = new HttpGet(getRestApiUrl("issues", id + ".json"));
-    IssueWrapper wrapper = getHttpClient().execute(method, new GsonSingleObjectDeserializer<IssueWrapper>(GSON, IssueWrapper.class));
+    IssueWrapper wrapper = getHttpClient().execute(method, new GsonSingleObjectDeserializer<IssueWrapper>(GSON, IssueWrapper.class, true));
     if (wrapper == null) {
       return null;
     }
