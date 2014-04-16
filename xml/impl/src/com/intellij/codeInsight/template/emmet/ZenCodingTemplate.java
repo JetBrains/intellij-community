@@ -28,8 +28,9 @@ import com.intellij.codeInsight.template.emmet.nodes.*;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.emmet.tokens.TextToken;
 import com.intellij.codeInsight.template.emmet.tokens.ZenCodingToken;
-import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.ide.IdeEventQueue;
@@ -43,6 +44,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -188,7 +190,12 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     }
     if (surroundedText == null && node instanceof TemplateNode) {
       if (key.equals(((TemplateNode)node).getTemplateToken().getKey()) && callback.findApplicableTemplates(key).size() > 1) {
-        callback.startTemplate();
+        TemplateManagerImpl templateManager = (TemplateManagerImpl)callback.getTemplateManager();
+        Map<TemplateImpl, String> template2Argument = templateManager.findMatchingTemplates(callback.getFile(), callback.getEditor(), null, TemplateSettings.getInstance());
+        Runnable runnable = templateManager.startNonCustomTemplates(template2Argument, callback.getEditor(), null);
+        if (runnable != null) {
+          runnable.run();
+        }
         return;
       }
     }
@@ -472,21 +479,29 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
       final Ref<TemplateImpl> generatedTemplate = new Ref<TemplateImpl>();
       final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file, false) {
         @Override
-        public void deleteTemplateKey(String key) {
+        public void deleteTemplateKey(@NotNull String key) {
         }
 
         @Override
-        public void startTemplate(Template template, Map<String, String> predefinedValues, TemplateEditingListener listener) {
+        public void startTemplate(@NotNull Template template, Map<String, String> predefinedValues, TemplateEditingListener listener) {
           if (template instanceof TemplateImpl && !((TemplateImpl)template).isDeactivated()) {
             generatedTemplate.set((TemplateImpl)template);
           }
         }
       };
 
-      String templatePrefix = computeTemplateKeyWithoutContextChecking(callback);
+      final String templatePrefix = computeTemplateKeyWithoutContextChecking(callback);
 
       if (templatePrefix != null) {
-        if (LiveTemplateCompletionContributor.findApplicableTemplate(file, offset, templatePrefix) == null) {
+        List<TemplateImpl> regularTemplates = TemplateManagerImpl.listApplicableTemplates(file, offset, false);
+        boolean regularTemplateWithSamePrefixExists = !ContainerUtil.filter(regularTemplates, new Condition<TemplateImpl>() {
+          @Override
+          public boolean value(TemplateImpl template) {
+            return templatePrefix.equals(template.getKey());
+          }
+        }).isEmpty();
+        
+        if (!regularTemplateWithSamePrefixExists) {
           // exclude perfect matches with existing templates because LiveTemplateCompletionContributor handles it
           final Collection<SingleLineEmmetFilter> extraFilters = ContainerUtil.newLinkedList(new SingleLineEmmetFilter());
           expand(templatePrefix, callback, null, generator, extraFilters, false);

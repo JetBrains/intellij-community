@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 package com.intellij.codeInsight.generation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.template.impl.SurroundWithTemplateHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageSurrounders;
 import com.intellij.openapi.editor.Editor;
@@ -50,7 +50,7 @@ public class SurroundWithAction extends BaseCodeInsightAction{
       return true;
     }
 
-    if (!SurroundWithTemplateHandler.getApplicableTemplates(editor, file, true).isEmpty()) {
+    if (!TemplateManagerImpl.listApplicableTemplateWithInsertingDummyIdentifier(editor, file, true).isEmpty()) {
       return true;
     }
 

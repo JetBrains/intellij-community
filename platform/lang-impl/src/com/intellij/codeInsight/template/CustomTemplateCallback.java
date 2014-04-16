@@ -39,10 +39,10 @@ import java.util.Set;
  */
 public class CustomTemplateCallback {
   private final TemplateManager myTemplateManager;
-  private final Editor myEditor;
-  private final PsiFile myFile;
+  @NotNull private final Editor myEditor;
+  @NotNull private final PsiFile myFile;
   private final int myOffset;
-  private final Project myProject;
+  @NotNull private final Project myProject;
   private final boolean myInInjectedFragment;
   private Set<TemplateContextType> myApplicableContextTypes;
 
@@ -58,6 +58,11 @@ public class CustomTemplateCallback {
     myEditor = myInInjectedFragment ? InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file, myOffset) : editor;
   }
 
+  public TemplateManager getTemplateManager() {
+    return myTemplateManager;
+  }
+
+  @NotNull
   public PsiFile getFile() {
     return myFile;
   }
@@ -71,7 +76,7 @@ public class CustomTemplateCallback {
     return myOffset;
   }
 
-  private static int getOffset(boolean wrapping, Editor editor) {
+  private static int getOffset(boolean wrapping, @NotNull Editor editor) {
     if (wrapping) {
       return editor.getSelectionModel().getSelectionStart();
     }
@@ -98,29 +103,21 @@ public class CustomTemplateCallback {
     return result;
   }
 
-  private boolean isAvailableTemplate(TemplateImpl template) {
+  private boolean isAvailableTemplate(@NotNull TemplateImpl template) {
     if (myApplicableContextTypes == null) {
       myApplicableContextTypes = TemplateManagerImpl.getApplicableContextTypes(myFile, myOffset);  
     }
     return !template.isDeactivated() && TemplateManagerImpl.isApplicable(template, myApplicableContextTypes);
   }
 
-  public void startTemplate(Template template, Map<String, String> predefinedValues, TemplateEditingListener listener) {
+  public void startTemplate(@NotNull Template template, Map<String, String> predefinedValues, TemplateEditingListener listener) {
     if(myInInjectedFragment) {
       template.setToReformat(false);
     }
     myTemplateManager.startTemplate(myEditor, template, false, predefinedValues, listener);
   }
 
-  public void startTemplate() {
-    Map<TemplateImpl, String> template2Argument =
-      ((TemplateManagerImpl)myTemplateManager).findMatchingTemplates(myFile, myEditor, null, TemplateSettings.getInstance());
-    Runnable runnable = ((TemplateManagerImpl)myTemplateManager).startNonCustomTemplates(template2Argument, myEditor, null);
-    if (runnable != null) {
-      runnable.run();
-    }
-  }
-
+  @NotNull
   private static List<TemplateImpl> getMatchingTemplates(@NotNull String templateKey) {
     TemplateSettings settings = TemplateSettings.getInstance();
     List<TemplateImpl> candidates = new ArrayList<TemplateImpl>();
@@ -142,11 +139,12 @@ public class CustomTemplateCallback {
     return myFile.getFileType();
   }
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }
 
-  public void deleteTemplateKey(String key) {
+  public void deleteTemplateKey(@NotNull String key) {
     int caretAt = myEditor.getCaretModel().getOffset();
     myEditor.getDocument().deleteString(caretAt - key.length(), caretAt);
   }

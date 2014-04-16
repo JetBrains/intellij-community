@@ -312,9 +312,8 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     return !(customLiveTemplate instanceof CustomLiveTemplateBase) || ((CustomLiveTemplateBase)customLiveTemplate).supportsMultiCaret();
   }
 
-  public static boolean isApplicable(CustomLiveTemplate customLiveTemplate, Editor editor, PsiFile file) {
-    int caretOffset = editor.getCaretModel().getOffset();
-    return customLiveTemplate.isApplicable(file, caretOffset > 0 ? caretOffset - 1 : 0, false);
+  public static boolean isApplicable(@NotNull CustomLiveTemplate customLiveTemplate, @NotNull Editor editor, @NotNull PsiFile file) {
+    return customLiveTemplate.isApplicable(file, Math.max(0, editor.getSelectionModel().getSelectionStart() - 1), false);
   }
 
   private static int getArgumentOffset(int caretOffset, String argument, CharSequence text) {
@@ -567,12 +566,29 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     return false;
   }
 
-  public static List<TemplateImpl> listApplicableTemplates(PsiFile file, int offset) {
+  public static List<TemplateImpl> listApplicableTemplates(PsiFile file, int offset, boolean selectionOnly) {
     Set<TemplateContextType> contextTypes = getApplicableContextTypes(file, offset);
 
     final ArrayList<TemplateImpl> result = ContainerUtil.newArrayList();
     for (final TemplateImpl template : TemplateSettings.getInstance().getTemplates()) {
-      if (!template.isDeactivated() && isApplicable(template, contextTypes)) {
+      if (!template.isDeactivated() && (!selectionOnly || template.isSelectionTemplate()) && isApplicable(template, contextTypes)) {
+        result.add(template);
+      }
+    }
+    return result;
+  }
+  
+  public static List<TemplateImpl> listApplicableTemplateWithInsertingDummyIdentifier(Editor editor, PsiFile file, boolean selectionOnly) {
+    int startOffset = editor.getSelectionModel().getSelectionStart();
+    file = insertDummyIdentifier(editor, file);
+
+    return listApplicableTemplates(file, startOffset, selectionOnly);
+  }
+
+  public static List<CustomLiveTemplate> listApplicableCustomTemplates(@NotNull Editor editor, @NotNull PsiFile file, boolean selectionOnly) {
+    List<CustomLiveTemplate> result = new ArrayList<CustomLiveTemplate>();
+    for (CustomLiveTemplate template : CustomLiveTemplate.EP_NAME.getExtensions()) {
+      if ((!selectionOnly || template.supportsWrapping()) && isApplicable(template, editor, file)) {
         result.add(template);
       }
     }
@@ -601,6 +617,13 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     }
 
     return result;
+  }
+  
+  public static PsiFile insertDummyIdentifier(final Editor editor, PsiFile file) {
+    boolean selection = editor.getSelectionModel().hasSelection();
+    final int startOffset = selection ? editor.getSelectionModel().getSelectionStart() : editor.getCaretModel().getOffset();
+    final int endOffset = selection ? editor.getSelectionModel().getSelectionEnd() : startOffset;
+    return insertDummyIdentifier(file, startOffset, endOffset);
   }
 
   public static PsiFile insertDummyIdentifier(PsiFile file, final int startOffset, final int endOffset) {

@@ -22,23 +22,21 @@ import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.codeInsight.template.CustomLiveTemplate;
-import com.intellij.codeInsight.template.CustomLiveTemplateBase;
-import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.impl.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public abstract class ChooseItemAction extends EditorAction {
-  public ChooseItemAction(Handler handler){
+  public ChooseItemAction(Handler handler) {
     super(handler);
   }
 
@@ -90,7 +88,6 @@ public abstract class ChooseItemAction extends EditorAction {
 
       return true;
     }
-    
   }
 
   public static boolean hasTemplatePrefix(LookupImpl lookup, char shortcutChar) {
@@ -109,6 +106,7 @@ public abstract class ChooseItemAction extends EditorAction {
     if (file == null) return false;
 
     final Editor editor = lookup.getEditor();
+    final int offset = editor.getCaretModel().getOffset();
     PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
 
     final LiveTemplateLookupElement liveTemplateLookup = ContainerUtil.findInstance(lookup.getItems(), LiveTemplateLookupElement.class);
@@ -118,34 +116,14 @@ public abstract class ChooseItemAction extends EditorAction {
       //    in this case we should find live template with appropriate prefix (custom live templates doesn't participate in this action). 
       // - completion provider worked too long:
       //    in this case we should check custom templates that provides completion lookup.
-      
-      final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file, false);
-      for (CustomLiveTemplate customLiveTemplate : CustomLiveTemplate.EP_NAME.getExtensions()) {
-        if (customLiveTemplate instanceof CustomLiveTemplateBase) {
-          final int offset = editor.getCaretModel().getOffset();
-          if (customLiveTemplate.getShortcut() == shortcutChar 
-              && TemplateManagerImpl.isApplicable(customLiveTemplate, editor, file)
-              && ((CustomLiveTemplateBase)customLiveTemplate).hasCompletionItem(file, offset)) {
-            return customLiveTemplate.computeTemplateKey(callback) != null;
-          }
-        }
+      if (LiveTemplateCompletionContributor.customTemplateAvailableAndHasCompletionItem(shortcutChar, editor, file, offset)) {
+        return true;
       }
 
-
-      final int end = editor.getCaretModel().getOffset();
-      final int start = lookup.getLookupStart();
-      final String prefix = !lookup.getItems().isEmpty()
-                            ? editor.getDocument().getText(TextRange.create(start, end))
-                            : ListTemplatesHandler.getPrefix(editor.getDocument(), end, false);
-
-      if (TemplateSettings.getInstance().getTemplates(prefix).isEmpty()) {
-        return false;
-      }
-
-      for (TemplateImpl template : SurroundWithTemplateHandler.getApplicableTemplates(editor, file, false)) {
-        if (prefix.equals(template.getKey()) && shortcutChar == TemplateSettings.getInstance().getShortcutChar(template)) {
-          return true;
-        }
+      List<TemplateImpl> templates = TemplateManagerImpl.listApplicableTemplateWithInsertingDummyIdentifier(editor, file, false);
+      TemplateImpl template = LiveTemplateCompletionContributor.findFullMatchedApplicableTemplate(editor, offset, templates);
+      if (template != null && shortcutChar == TemplateSettings.getInstance().getShortcutChar(template)) {
+        return true;
       }
       return false;
     }
@@ -158,20 +136,22 @@ public abstract class ChooseItemAction extends EditorAction {
       super(new Handler(true, Lookup.NORMAL_SELECT_CHAR));
     }
   }
+
   public static class Replacing extends ChooseItemAction {
     public Replacing() {
       super(new Handler(false, Lookup.REPLACE_SELECT_CHAR));
     }
   }
+
   public static class CompletingStatement extends ChooseItemAction {
     public CompletingStatement() {
       super(new Handler(true, Lookup.COMPLETE_STATEMENT_SELECT_CHAR));
     }
   }
+
   public static class ChooseWithDot extends ChooseItemAction {
     public ChooseWithDot() {
       super(new Handler(false, '.'));
     }
   }
-
 }

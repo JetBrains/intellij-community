@@ -23,8 +23,8 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.InvokeTemplateAction;
-import com.intellij.codeInsight.template.impl.SurroundWithTemplateHandler;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.WrapWithCustomTemplateAction;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
@@ -247,8 +247,8 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
       }
     }
 
-    List<CustomLiveTemplate> customTemplates = SurroundWithTemplateHandler.getApplicableCustomTemplates(editor, file);
-    List<TemplateImpl> templates = SurroundWithTemplateHandler.getApplicableTemplates(editor, file, true);
+    List<CustomLiveTemplate> customTemplates = TemplateManagerImpl.listApplicableCustomTemplates(editor, file, true);
+    List<TemplateImpl> templates = TemplateManagerImpl.listApplicableTemplateWithInsertingDummyIdentifier(editor, file, true);
 
     if (!templates.isEmpty() || !customTemplates.isEmpty()) {
       applicable.add(new Separator("Live templates"));

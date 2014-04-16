@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -57,50 +58,80 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
 
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     int offset = editor.getCaretModel().getOffset();
-    String prefix = getPrefix(editor.getDocument(), offset, false);
-    String prefixWithoutDots = getPrefix(editor.getDocument(), offset, true);
+    List<TemplateImpl> applicableTemplates = TemplateManagerImpl.listApplicableTemplateWithInsertingDummyIdentifier(editor, file, false);
 
-    List<TemplateImpl> matchingTemplates = new ArrayList<TemplateImpl>();
-    ArrayList<TemplateImpl> applicableTemplates = SurroundWithTemplateHandler.getApplicableTemplates(editor, file, false);
-    final Pattern prefixSearchPattern = Pattern.compile(".*\\b" + prefixWithoutDots + ".*");
-    for (TemplateImpl template : applicableTemplates) {
-      final String templateDescription = template.getDescription();
-      if (template.getKey().startsWith(prefix) ||
-          !prefixWithoutDots.isEmpty() && templateDescription != null && prefixSearchPattern.matcher(templateDescription).matches()) {
-        matchingTemplates.add(template);
+    Map<TemplateImpl, String> matchingTemplates = filterTemplatesByPrefix(applicableTemplates, editor, offset, false, true);
+    MultiMap<String, CustomLiveTemplateLookupElement> customTemplatesLookupElements = getCustomTemplatesLookupItems(editor, file, offset);
+
+    if (matchingTemplates.isEmpty()) {
+      for (TemplateImpl template : applicableTemplates) {
+        matchingTemplates.put(template, null);
       }
     }
 
-    MultiMap<String,CustomLiveTemplateLookupElement> customTemplatesLookupElements = listApplicableCustomTemplates(editor, file, offset);
-
-    if (matchingTemplates.isEmpty()) {
-      matchingTemplates.addAll(applicableTemplates);
-      prefixWithoutDots = "";
-    }
-
     if (matchingTemplates.isEmpty() && customTemplatesLookupElements.isEmpty()) {
-      String text = prefixWithoutDots.length() == 0
-                    ? CodeInsightBundle.message("templates.no.defined")
-                    : CodeInsightBundle.message("templates.no.defined.with.prefix", prefix);
-      HintManager.getInstance().showErrorHint(editor, text);
+      HintManager.getInstance().showErrorHint(editor, CodeInsightBundle.message("templates.no.defined"));
       return;
     }
 
-    Collections.sort(matchingTemplates, TemplateListPanel.TEMPLATE_COMPARATOR);
-    showTemplatesLookup(project, editor, file, prefixWithoutDots, matchingTemplates, customTemplatesLookupElements);
+    showTemplatesLookup(project, editor, file, matchingTemplates, customTemplatesLookupElements);
+  }
+
+  public static Map<TemplateImpl, String> filterTemplatesByPrefix(@NotNull Collection<TemplateImpl> templates, @NotNull Editor editor,
+                                                                  int offset, boolean fullMatch, boolean searchInDescription) {
+    CharSequence documentText = editor.getDocument().getCharsSequence().subSequence(0, offset);
+
+    String prefixWithoutDots = computeDescriptionMatchingPrefix(editor.getDocument(), offset);
+    Pattern prefixSearchPattern = Pattern.compile(".*\\b" + prefixWithoutDots + ".*");
+
+    Map<TemplateImpl, String> matchingTemplates = new TreeMap<TemplateImpl, String>(TemplateListPanel.TEMPLATE_COMPARATOR);
+    for (TemplateImpl template : templates) {
+      String templateKey = template.getKey();
+      if (fullMatch) {
+        int startOffset = documentText.length() - templateKey.length();
+        if (startOffset <= 0 || !Character.isJavaIdentifierPart(documentText.charAt(startOffset - 1))) {
+          // after non-identifier
+          if (StringUtil.endsWith(documentText, templateKey)) {
+            matchingTemplates.put(template, templateKey);
+          }
+        }
+      }
+      else {
+        for (int i = templateKey.length(); i > 0; i--) {
+          String prefix = templateKey.substring(0, i);
+          int startOffset = documentText.length() - i;
+          if (startOffset > 0 && Character.isJavaIdentifierPart(documentText.charAt(startOffset - 1))) {
+            // after java identifier
+            continue;
+          }
+          if (StringUtil.endsWith(documentText, prefix)) {
+            matchingTemplates.put(template, prefix);
+            break;
+          }
+        }
+      }
+
+      if (searchInDescription) {
+        String templateDescription = template.getDescription();
+        if (!prefixWithoutDots.isEmpty() && templateDescription != null && prefixSearchPattern.matcher(templateDescription).matches()) {
+          matchingTemplates.put(template, prefixWithoutDots);
+        }
+      }
+    }
+
+    return matchingTemplates;
   }
 
   private static void showTemplatesLookup(final Project project,
                                           final Editor editor,
                                           final PsiFile file,
-                                          @NotNull String prefix,
-                                          @NotNull List<TemplateImpl> matchingTemplates,
+                                          @NotNull Map<TemplateImpl, String> matchingTemplates,
                                           @NotNull MultiMap<String, CustomLiveTemplateLookupElement> customTemplatesLookupElements) {
 
-    final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(project).createLookup(editor, LookupElement.EMPTY_ARRAY, prefix,
-                                                                                          new TemplatesArranger());
-    for (TemplateImpl template : matchingTemplates) {
-      lookup.addItem(createTemplateElement(template), new PlainPrefixMatcher(prefix));
+    LookupImpl lookup = (LookupImpl)LookupManager.getInstance(project).createLookup(editor, LookupElement.EMPTY_ARRAY, "", new TemplatesArranger());
+    for (Map.Entry<TemplateImpl, String> entry : matchingTemplates.entrySet()) {
+      TemplateImpl template = entry.getKey();
+      lookup.addItem(createTemplateElement(template), new PlainPrefixMatcher(StringUtil.notNullize(entry.getValue())));
     }
 
     for (Map.Entry<String, Collection<CustomLiveTemplateLookupElement>> entry : customTemplatesLookupElements.entrySet()) {
@@ -112,11 +143,13 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     showLookup(lookup, file);
   }
 
-  private static MultiMap<String, CustomLiveTemplateLookupElement> listApplicableCustomTemplates(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
+  public static MultiMap<String, CustomLiveTemplateLookupElement> getCustomTemplatesLookupItems(@NotNull Editor editor,
+                                                                                                @NotNull PsiFile file,
+                                                                                                int offset) {
     final MultiMap<String, CustomLiveTemplateLookupElement> result = MultiMap.create();
     CustomTemplateCallback customTemplateCallback = new CustomTemplateCallback(editor, file, false);
-    for (CustomLiveTemplate customLiveTemplate : CustomLiveTemplate.EP_NAME.getExtensions()) {
-      if (customLiveTemplate instanceof CustomLiveTemplateBase && TemplateManagerImpl.isApplicable(customLiveTemplate, editor, file)) {
+    for (CustomLiveTemplate customLiveTemplate : TemplateManagerImpl.listApplicableCustomTemplates(editor, file, false)) {
+      if (customLiveTemplate instanceof CustomLiveTemplateBase) {
         String customTemplatePrefix = ((CustomLiveTemplateBase)customLiveTemplate).computeTemplateKeyWithoutContextChecking(customTemplateCallback);
         if (customTemplatePrefix != null) {
           result.putValues(customTemplatePrefix, ((CustomLiveTemplateBase)customLiveTemplate).getLookupElements(file, editor, offset));
@@ -182,13 +215,13 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     return true;
   }
 
-  public static String getPrefix(Document document, int offset, boolean lettersOnly) {
+  private static String computeDescriptionMatchingPrefix(Document document, int offset) {
     CharSequence chars = document.getCharsSequence();
     int start = offset;
     while (true) {
       if (start == 0) break;
       char c = chars.charAt(start - 1);
-      if (!(Character.isJavaIdentifierPart(c) || !lettersOnly && c == '.')) break;
+      if (!(Character.isJavaIdentifierPart(c))) break;
       start--;
     }
     return chars.subSequence(start, offset).toString();
