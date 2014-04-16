@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,17 @@ package com.intellij.util;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Getter;
 import org.jetbrains.annotations.TestOnly;
 
+import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class PatchedWeakReference<T> extends WeakReference<T>{
+public class PatchedWeakReference<T> extends WeakReference<T> implements Getter<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.PatchedWeakReference");
 
   private static List<PatchedWeakReference<?>> ourRefsList = new ArrayList<PatchedWeakReference<?>>();
@@ -47,18 +49,15 @@ public class PatchedWeakReference<T> extends WeakReference<T>{
     }
   }
 
-  /**
-   * public for being accessible from the degenerator as timer stuff does not work.
-   */
-  public static void processQueue() {
+  private static void processQueue() {
     boolean haveClearedRefs = false;
     while(true){
-      PatchedWeakReference ref = (PatchedWeakReference)ourQueue.poll();
-      if (ref != null){
-        haveClearedRefs = true;
-      }
-      else{
+      Reference ref = ourQueue.poll();
+      if (ref == null) {
         break;
+      }
+      else {
+        haveClearedRefs = true;
       }
     }
     if (!haveClearedRefs) return;

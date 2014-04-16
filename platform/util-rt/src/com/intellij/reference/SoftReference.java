@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.reference;
 
+import com.intellij.openapi.util.Getter;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
@@ -28,7 +29,7 @@ import java.lang.ref.ReferenceQueue;
  * @author max
  */
 @SuppressWarnings("ClassNameSameAsAncestorName")
-public class SoftReference<T> extends java.lang.ref.SoftReference<T> {
+public class SoftReference<T> extends java.lang.ref.SoftReference<T> implements Getter<T> {
   //private final T myReferent;
 
   public SoftReference(final T referent) {
@@ -48,6 +49,10 @@ public class SoftReference<T> extends java.lang.ref.SoftReference<T> {
 
   @Nullable
   public static <T> T dereference(@Nullable Reference<T> ref) {
+    return ref == null ? null : ref.get();
+  }
+  @Nullable
+  public static <T> T deref(@Nullable Getter<T> ref) {
     return ref == null ? null : ref.get();
   }
 }
