@@ -6659,7 +6659,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   boolean isInDistractionFreeMode() {
-    return Registry.is("editor.distraction.free.mode") && EditorUtil.isRealFileEditor(this);
+    return EditorUtil.isRealFileEditor(this)
+           && (Registry.is("editor.distraction.free.mode") || isInPresentationMode());
   }
 
   boolean isInPresentationMode() {
