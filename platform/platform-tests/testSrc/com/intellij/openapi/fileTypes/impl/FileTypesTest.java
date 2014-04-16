@@ -37,6 +37,7 @@ import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.PatternUtil;
+import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -292,10 +293,12 @@ public class FileTypesTest extends PlatformTestCase {
 
       VfsUtil.saveText(vFile, "TYPE:IDEA_MODULE");
       myFileTypeManager.drainReDetectQueue();
+      UIUtil.dispatchAllInvocationEvents();
       assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof ModuleFileType);
 
       VfsUtil.saveText(vFile, "TYPE:IDEA_PROJECT");
       myFileTypeManager.drainReDetectQueue();
+      UIUtil.dispatchAllInvocationEvents();
       assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof ProjectFileType);
     }
     finally {
