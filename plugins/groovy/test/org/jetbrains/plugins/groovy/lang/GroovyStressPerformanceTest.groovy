@@ -20,7 +20,10 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.ThrowableRunnable
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection
 import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex
@@ -34,6 +37,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
 class GroovyStressPerformanceTest extends LightGroovyTestCase {
 
   final String basePath = ''
+
+  @Override
+  @NotNull
+  protected LightProjectDescriptor getProjectDescriptor() {
+    GroovyLightProjectDescriptor.GROOVY_2_3
+  }
+
 
   ThrowableRunnable configureAndHighlight(String text) {
     return {
@@ -255,6 +265,179 @@ while (true) {
 }
 '''
     IdeaTestUtil.startPerformanceTest("slow", 300, configureAndComplete(text)).cpuBound().usesAllCPUCores().assertTiming()
+  }
+
+  public void testClosureRecursion() {
+    def text = '''
+class AwsService {
+    def grailsApplication
+    def configService
+
+    def rdsTypeTranslation = [
+            "udbInstClass.uDBInst" : "db.t1.micro",
+            "dbInstClass.uDBInst" : "db.t1.micro",
+            "dbInstClass.smDBInst" : "db.m1.small",
+            "dbInstClass.medDBInst" : "db.m1.medium",
+            "dbInstClass.lgDBInst" : "db.m1.large",
+            "dbInstClass.xlDBInst" : "db.m1.xlarge",
+            "hiMemDBInstClass.xlDBInst" : "db.m2.xlarge",
+            "hiMemDBInstClass.xxlDBInst" : "db.m2.2xlarge",
+            "hiMemDBInstClass.xxxxDBInst" : "db.m2.4xlarge",
+            "multiAZDBInstClass.uDBInst" : "db.t1.micro",
+            "multiAZDBInstClass.smDBInst" : "db.m1.small",
+            "multiAZDBInstClass.medDBInst" : "db.m1.medium",
+            "multiAZDBInstClass.lgDBInst" : "db.m1.large",
+            "multiAZDBInstClass.xlDBInst" : "db.m1.xlarge",
+            "multiAZHiMemInstClass.xlDBInst" : "db.m2.xlarge",
+            "multiAZHiMemInstClass.xxlDBInst" : "db.m2.2xlarge",
+            "multiAZHiMemInstClass.xxxxDBInst" : "db.m2.4xlarge"]
+
+    def regionTranslation = [
+            'us-east-1' : 'us-east',
+            'us-west-2' : 'us-west-2',
+            'us-west-1' : 'us-west',
+            'eu-west-1' : 'eu-ireland',
+            'ap-southeast-1' : 'apac-sin',
+            'ap-northeast-1' : 'apac-tokyo',
+            'sa-east-1' : 'sa-east-1']
+
+    def price(env) {
+        def priceMap = [:]
+        def region = env.region
+
+        def aws = new AwsApi(configService.getAwsConfiguration(), env, configService.getTempPath())
+        def price = 0.0
+        def count = 0
+
+        //def ec2EbsPricing = aws.getEbsOptimizedComputePricing()
+        def rdsMySqlPricing
+        def rdsMySqlMultiPricing
+        def rdsOraclePricing
+        try {
+            rdsMySqlPricing = aws.getMySqlPricing()
+            rdsMySqlMultiPricing = aws.getMySqlMultiAZPricing()
+            rdsOraclePricing = aws.getOracleLIPricing()
+        } catch (Exception) {
+            //TODO : Find new rds pricing json
+        }
+        //def elbPricing = aws.getELBPricing()
+        def ebsPricing = aws.getEBSPricing()
+
+        aws.getComputeResponse(region).reservations.each { Reservation inst ->
+            inst.instances.each { Instance it ->
+                if (it.state.code.toInteger() == 16) {
+                    def os
+                    switch (it.platform) {
+                        case 'windows':
+                            os = "mswin"
+                            break;
+                        case 'linux':
+                        default:
+                            os = "linux"
+                            break;
+                    }
+
+                    aws.getComputePricing(os).config.regions.each { pricingRegion ->
+                        if (pricingRegion.region == regionTranslation[region]) {
+                            pricingRegion.instanceTypes.each { instanceType ->
+                                instanceType.sizes.each { size ->
+                                    if (size.size == it.instanceType) {
+                                        size.valueColumns.each { valueColumn ->
+                                            if (valueColumn.name == os) {
+                                                //Price by type
+                                                def key = "price-ec2-" + os + "-" + it.instanceType
+                                                if (!priceMap.containsKey(key)){
+                                                    priceMap[key] = 0.0
+                                                }
+                                                priceMap[key] += valueColumn.prices.USD.toFloat()
+
+                                                //Type count
+                                                key = "count-ec2-" + os + "-" + it.instanceType
+                                                if (!priceMap.containsKey(key)){
+                                                    priceMap[key] = 0
+                                                }
+                                                priceMap[key] += 1
+                                                count++
+
+                                                //Price for all
+                                                if (!priceMap.containsKey("price-ec2")){
+                                                    priceMap["price-ec2"] = 0.0
+                                                }
+                                                priceMap["price-ec2"] += valueColumn.prices.USD.toFloat()
+
+                                                //Total
+                                                price += valueColumn.prices.USD.toFloat()
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        def rdsPrice = 0.0
+        aws.getRDSResponse(region).dBInstances.each { DBInstance it ->
+            def json
+            switch (it.engine) {
+                case 'mysql':
+                    if (it.multiAZ) {
+                        json = rdsMySqlMultiPricing
+                    } else {
+                        json = rdsMySqlPricing
+                    }
+                    break;
+                case 'oracle-se1':
+                    json = rdsOraclePricing
+                    break;
+            }
+
+            if (json != null) {
+                json.config.regions.each { pricingRegion ->
+                    if (pricingRegion.region == regionTranslation[region]) {
+                        pricingRegion.types.each { instanceType ->
+                            instanceType.tiers.each { tier ->
+                                if (rdsTypeTranslation[instanceType.name + "." + tier.name] == it.DBInstanceClass) {
+                                    rdsPrice += tier.prices.USD.toFloat()
+                                    price += tier.prices.USD.toFloat()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        //TODO : IOPS
+        def ebsPrice = 0.0
+        aws.getEBSResponse(region).volumes.each { Volume it ->
+            ebsPricing.config.regions.each { pricingRegion ->
+                if (pricingRegion.region == regionTranslation[region]) {
+                    pricingRegion.types.each { ebsType ->
+                        if (ebsType.name == "ebsVols") {
+                            ebsType.values.each { ebsValue ->
+                                if (ebsValue.rate == "perGBmoProvStorage") {
+                                    ebsPrice += (ebsValue.prices.USD.toFloat() * it.size.toFloat() / 30 / 24)
+                                    price += (ebsValue.prices.USD.toFloat() * it.size.toFloat() / 30 / 24)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        priceMap.put("price-total", price)
+        priceMap.put("price-rds", rdsPrice)
+        priceMap.put("price-ebs", ebsPrice)
+        priceMap.put("count-total", count)
+        return priceMap
+    }
+}
+'''
+    measureHighlighting(text, 1000)
   }
 
   ThrowableRunnable configureAndComplete(String text) {
