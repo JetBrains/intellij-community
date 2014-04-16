@@ -132,26 +132,26 @@ public class ContentRootDataService implements ProjectDataService<ContentRootDat
               contentEntry.clearExcludeFolders();
               contentEntry.clearSourceFolders();
               LOG.info(String.format("Importing content root '%s' for module '%s'", contentRoot.getRootPath(), module.getName()));
-              for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.SOURCE)) {
-                createSourceRootIfAbsent(contentEntry, path, module.getName(), JavaSourceRootType.SOURCE, false, createEmptyContentRootDirectories);
+              for (SourceRoot root : contentRoot.getRoots(ExternalSystemSourceType.SOURCE)) {
+                createSourceRootIfAbsent(contentEntry, root, module.getName(), JavaSourceRootType.SOURCE, false, createEmptyContentRootDirectories);
               }
-              for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.TEST)) {
-                createSourceRootIfAbsent(contentEntry, path, module.getName(), JavaSourceRootType.TEST_SOURCE, false, createEmptyContentRootDirectories);
+              for (SourceRoot root : contentRoot.getRoots(ExternalSystemSourceType.TEST)) {
+                createSourceRootIfAbsent(contentEntry, root, module.getName(), JavaSourceRootType.TEST_SOURCE, false, createEmptyContentRootDirectories);
               }
-              for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.RESOURCE)) {
-                createSourceRootIfAbsent(contentEntry, path, module.getName(), JavaResourceRootType.RESOURCE, false, createEmptyContentRootDirectories);
+              for (SourceRoot root : contentRoot.getRoots(ExternalSystemSourceType.RESOURCE)) {
+                createSourceRootIfAbsent(contentEntry, root, module.getName(), JavaResourceRootType.RESOURCE, false, createEmptyContentRootDirectories);
               }
-              for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.TEST_RESOURCE)) {
-                createSourceRootIfAbsent(contentEntry, path, module.getName(), JavaResourceRootType.TEST_RESOURCE, false, createEmptyContentRootDirectories);
+              for (SourceRoot root : contentRoot.getRoots(ExternalSystemSourceType.TEST_RESOURCE)) {
+                createSourceRootIfAbsent(contentEntry, root, module.getName(), JavaResourceRootType.TEST_RESOURCE, false, createEmptyContentRootDirectories);
               }
-              for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.SOURCE_GENERATED)) {
-                createSourceRootIfAbsent(contentEntry, path, module.getName(), JavaSourceRootType.SOURCE, true, createEmptyContentRootDirectories);
+              for (SourceRoot root : contentRoot.getRoots(ExternalSystemSourceType.SOURCE_GENERATED)) {
+                createSourceRootIfAbsent(contentEntry, root, module.getName(), JavaSourceRootType.SOURCE, true, createEmptyContentRootDirectories);
               }
-              for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.TEST_GENERATED)) {
-                createSourceRootIfAbsent(contentEntry, path, module.getName(), JavaSourceRootType.TEST_SOURCE, true, createEmptyContentRootDirectories);
+              for (SourceRoot root : contentRoot.getRoots(ExternalSystemSourceType.TEST_GENERATED)) {
+                createSourceRootIfAbsent(contentEntry, root, module.getName(), JavaSourceRootType.TEST_SOURCE, true, createEmptyContentRootDirectories);
               }
-              for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.EXCLUDED)) {
-                createExcludedRootIfAbsent(contentEntry, path, module.getName());
+              for (SourceRoot root : contentRoot.getRoots(ExternalSystemSourceType.EXCLUDED)) {
+                createExcludedRootIfAbsent(contentEntry, root, module.getName());
               }
               contentEntriesMap.remove(contentEntry.getUrl());
             }

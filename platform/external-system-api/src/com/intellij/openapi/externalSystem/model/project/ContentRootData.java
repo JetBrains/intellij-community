@@ -4,6 +4,8 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,12 +40,27 @@ public class ContentRootData extends AbstractExternalEntityData {
 
   /**
    * @param type      target dir type
-   * @return          directories of the target type configured for the current content root
+   * @return source roots of the target type configured for the current content root
    */
   @NotNull
-  public Collection<SourceRoot> getPaths(@NotNull ExternalSystemSourceType type) {
+  public Collection<SourceRoot> getRoots(@NotNull ExternalSystemSourceType type) {
     final Collection<SourceRoot> result = myData.get(type);
     return result == null ? Collections.<SourceRoot>emptyList() : result;
+  }
+
+  /**
+   * @param type target dir type
+   * @return directories of the target type configured for the current content root
+   */
+  @NotNull
+  public Collection<String> getPaths(@NotNull ExternalSystemSourceType type) {
+    final Collection<SourceRoot> result = myData.get(type);
+    return result == null ? Collections.<String>emptyList() : ContainerUtil.map(result, new Function<SourceRoot, String>() {
+      @Override
+      public String fun(SourceRoot root) {
+        return root.getPath();
+      }
+    });
   }
 
   public void storePath(@NotNull ExternalSystemSourceType type, @NotNull String path) throws IllegalArgumentException {
