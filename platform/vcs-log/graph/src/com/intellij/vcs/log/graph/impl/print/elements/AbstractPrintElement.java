@@ -23,13 +23,13 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractPrintElement implements PrintElementWithGraphElement {
 
-  private final int myRowIndex;
-  private final int myPositionInCurrentRow;
+  protected final int myRowIndex;
+  protected final int myPositionInCurrentRow;
 
   @NotNull
-  private final GraphElement myGraphElement;
+  protected final GraphElement myGraphElement;
   @NotNull
-  private final PrintElementsManager myPrintElementsManager;
+  protected final PrintElementsManager myPrintElementsManager;
 
   protected AbstractPrintElement(int rowIndex,
                                  int positionInCurrentRow,

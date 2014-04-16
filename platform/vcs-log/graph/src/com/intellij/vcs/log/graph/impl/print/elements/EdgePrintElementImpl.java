@@ -68,4 +68,29 @@ public class EdgePrintElementImpl extends AbstractPrintElement implements EdgePr
   public LineStyle getLineStyle() {
     return myLineStyle;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof EdgePrintElement)) return false;
+
+    EdgePrintElement that = (EdgePrintElement)o;
+
+    if (myPositionInCurrentRow != that.getPositionInCurrentRow()) return false;
+    if (myPositionInOtherRow != that.getPositionInOtherRow()) return false;
+    if (myRowIndex != that.getRowIndex()) return false;
+    if (myType != that.getType()) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myRowIndex;
+    result = 31 * result + myPositionInCurrentRow;
+    result = 31 * result + myPositionInOtherRow;
+    result = 37 * result + myType.hashCode();
+    return result;
+  }
+
 }

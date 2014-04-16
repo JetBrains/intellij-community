@@ -40,4 +40,27 @@ public class SimplePrintElementImpl extends AbstractPrintElement implements Simp
   public Type getType() {
     return myType;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof SimplePrintElement)) return false;
+
+    SimplePrintElement that = (SimplePrintElement)o;
+
+    if (myPositionInCurrentRow != that.getPositionInCurrentRow()) return false;
+    if (myRowIndex != that.getRowIndex()) return false;
+    if (myType != that.getType()) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myRowIndex;
+    result = 31 * result + myPositionInCurrentRow;
+    result = 37 * result + myType.hashCode();
+    return result;
+  }
+
 }
