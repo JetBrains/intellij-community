@@ -163,7 +163,7 @@ public class DelegateGraphFacade implements GraphFacade {
         if (commitToJump != null) {
           int visibleRowIndex = myVisibleGraph.getVisibleRowIndex(commitToJump);
           if (visibleRowIndex == -1)
-            visibleRowIndex = Integer.MAX_VALUE;
+            return new JumpToNotLoadCommitActionRequest(commitToJump);
           return new JumpToRowActionRequest(visibleRowIndex);
         }
         return null;
