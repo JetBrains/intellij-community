@@ -16,11 +16,11 @@
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,11 +32,12 @@ import java.util.StringTokenizer;
  */
 public abstract class AbstractElementSignatureProvider implements ElementSignatureProvider {
 
-  protected static final char ELEMENTS_SEPARATOR = ';';
+  protected static final String ELEMENTS_SEPARATOR = ";";
   protected static final String ELEMENT_TOKENS_SEPARATOR = "#";
-  private static final char ESCAPE_CHAR = '\\';
-  private static final String CHARS_TO_ESCAPE = ELEMENTS_SEPARATOR + ELEMENT_TOKENS_SEPARATOR + ESCAPE_CHAR;
-  private static final String REPLACEMENT_CHARS = "sh\\";
+
+  private static final String ESCAPE_CHAR = "\\";
+  private static final String[] ESCAPE_FROM = {ESCAPE_CHAR, ELEMENT_TOKENS_SEPARATOR, ELEMENTS_SEPARATOR};
+  private static final String[] ESCAPE_TO = {ESCAPE_CHAR + ESCAPE_CHAR, ESCAPE_CHAR + "s", ESCAPE_CHAR + "h"};
 
   @Override
   @Nullable
@@ -127,56 +128,10 @@ public abstract class AbstractElementSignatureProvider implements ElementSignatu
   }
 
   protected static String escape(String name) {
-    StringBuilder b = StringBuilderSpinAllocator.alloc();
-    try {
-      int length = name.length();
-      b.ensureCapacity(length);
-      for (int i = 0; i < length; i++) {
-        char c = name.charAt(i);
-        int p = CHARS_TO_ESCAPE.indexOf(c);
-        if (p < 0) {
-          b.append(c);
-        }
-        else {
-          b.append(ESCAPE_CHAR).append(REPLACEMENT_CHARS.charAt(p));
-        }
-      }
-      return b.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(b);
-    }
+    return StringUtil.replace(name, ESCAPE_FROM, ESCAPE_TO);
   }
 
   protected static String unescape(String name) {
-    StringBuilder b = StringBuilderSpinAllocator.alloc();
-    try {
-      int length = name.length();
-      b.ensureCapacity(length);
-      boolean escaped = false;
-      for (int i = 0; i < length; i++) {
-        char c = name.charAt(i);
-        if (escaped) {
-          int p = REPLACEMENT_CHARS.indexOf(c);
-          if (p > 0) {
-            c = CHARS_TO_ESCAPE.charAt(p);
-          }
-          b.append(c);
-          escaped = false;
-        }
-        else {
-          if (c == ESCAPE_CHAR) {
-            escaped = true;
-          }
-          else {
-            b.append(c);
-          }
-        }
-      }
-      return b.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(b);
-    }
+    return StringUtil.replace(name, ESCAPE_TO, ESCAPE_FROM);
   }
 }
