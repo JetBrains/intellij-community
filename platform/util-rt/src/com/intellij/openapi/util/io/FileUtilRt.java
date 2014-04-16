@@ -275,6 +275,7 @@ public class FileUtilRt {
 
   @NotNull
   public static File createTempFile(@NotNull String prefix, @NotNull String suffix, @NotNull File directory) throws IOException {
+    // normalize and use only the file name from the prefix
     prefix = new File(prefix).getName();
     File f;
     int i = 0;
