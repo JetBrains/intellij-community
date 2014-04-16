@@ -21,6 +21,7 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
@@ -40,7 +41,8 @@ public class MethodReferenceCompletionProvider extends CompletionProvider<Comple
     for (ExpectedTypeInfo expectedType : expectedTypes) {
       final PsiType defaultType = expectedType.getDefaultType();
       if (LambdaUtil.isFunctionalType(defaultType)) {
-        final PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(defaultType);
+        final PsiType functionalType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(defaultType);
+        final PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalType);
         if (returnType != null) {
           final PsiMethodReferenceExpression ref = (PsiMethodReferenceExpression)parameters.getPosition().getParent();
           final ExpectedTypeInfoImpl typeInfo =
@@ -56,10 +58,10 @@ public class MethodReferenceCompletionProvider extends CompletionProvider<Comple
                 final PsiElement referenceNameElement = referenceExpression.getReferenceNameElement();
                 LOG.assertTrue(referenceNameElement != null, referenceExpression);
                 referenceNameElement.replace(JavaPsiFacade.getElementFactory(element.getProject()).createIdentifier(((PsiMethod)element).getName()));
-                final PsiType added = map.put(referenceExpression, defaultType);
+                final PsiType added = map.put(referenceExpression, functionalType);
                 try {
                   final PsiElement resolve = referenceExpression.resolve();
-                  if (resolve == element && PsiMethodReferenceUtil.checkMethodReferenceContext(referenceExpression, resolve, defaultType) == null) {
+                  if (resolve == element && PsiMethodReferenceUtil.checkMethodReferenceContext(referenceExpression, resolve, functionalType) == null) {
                     result.addElement(lookupElement);
                   }
                 }
