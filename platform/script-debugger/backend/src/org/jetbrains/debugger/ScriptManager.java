@@ -32,11 +32,8 @@ public interface ScriptManager {
   @Nullable
   Script forEachScript(@NotNull CommonProcessors.FindProcessor<Script> scriptProcessor);
 
-  @Nullable
-  Script getScript(@NotNull FunctionValue function);
-
   @NotNull
-  AsyncResult<Script> getOrLoadScript(@NotNull FunctionValue function);
+  AsyncResult<Script> getScript(@NotNull FunctionValue function);
 
   @Nullable("if call frame script is native (at least in Google Chrome)")
   Script getScript(@NotNull CallFrame frame);

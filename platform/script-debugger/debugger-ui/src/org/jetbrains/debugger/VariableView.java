@@ -247,15 +247,20 @@ public final class VariableView extends XNamedValue implements VariableContext {
           }
         }
 
-        remainingChildren = Variables.sortFilterAndAddValueList(variables, node, VariableView.this, maxPropertiesToShow, value.getType() != ValueType.FUNCTION);
+        FunctionValue functionValue = value instanceof FunctionValue ? (FunctionValue)value : null;
+        if (functionValue != null && functionValue.hasScopes() == ThreeState.NO) {
+          functionValue = null;
+        }
+
+        remainingChildren = Variables.sortFilterAndAddValueList(variables, node, VariableView.this, maxPropertiesToShow, functionValue == null);
         if (remainingChildren != null) {
           remainingChildrenOffset = maxPropertiesToShow;
           childrenModificationStamp = ((ObjectValue)value).getCacheStamp();
         }
 
-        if (value.getType() == ValueType.FUNCTION) {
+        if (functionValue != null) {
           // we pass context as variable context instead of this variable value - we cannot watch function scopes variables, so, this variable name doesn't matter
-          node.addChildren(XValueChildrenList.bottomGroup(new FunctionScopesValueGroup((FunctionValue)value, context)), true);
+          node.addChildren(XValueChildrenList.bottomGroup(new FunctionScopesValueGroup(functionValue, context)), true);
         }
       }
     });
@@ -423,7 +428,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
       ((FunctionValue)value).resolve().doWhenDone(new Consumer<FunctionValue>() {
         @Override
         public void consume(final FunctionValue function) {
-          getDebugProcess().getVm().getScriptManager().getOrLoadScript(function).doWhenDone(new Consumer<Script>() {
+          getDebugProcess().getVm().getScriptManager().getScript(function).doWhenDone(new Consumer<Script>() {
             @Override
             public void consume(Script script) {
               navigatable.setSourcePosition(script == null ? null : getDebugProcess().getSourceInfo(null, script, function.getOpenParenLine(), function.getOpenParenColumn()));
