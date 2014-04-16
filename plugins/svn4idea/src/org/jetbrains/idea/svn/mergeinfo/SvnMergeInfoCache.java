@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.changes.TransparentlyFailedValue;
 import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SoftHashMap;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.Nullable;
@@ -34,21 +35,20 @@ import org.jetbrains.idea.svn.history.FirstInBranch;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.tmatesoft.svn.core.SVNException;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public class SvnMergeInfoCache {
   private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache");
 
   private final Project myProject;
-  private final MyState myState;
+  private final Map<String, MyCurrentUrlData> myCurrentUrlMapping;
 
   public static Topic<SvnMergeInfoCacheListener> SVN_MERGE_INFO_CACHE = new Topic<SvnMergeInfoCacheListener>("SVN_MERGE_INFO_CACHE",
                                                                                                  SvnMergeInfoCacheListener.class);
 
   private SvnMergeInfoCache(final Project project) {
     myProject = project;
-    myState = new MyState();
+    myCurrentUrlMapping = ContainerUtil.newHashMap();
   }
 
   public static SvnMergeInfoCache getInstance(final Project project) {
@@ -58,7 +58,7 @@ public class SvnMergeInfoCache {
   public void clear(final WCPaths info, final String branchPath) {
     final String currentUrl = info.getRootUrl();
 
-    final MyCurrentUrlData rootMapping = myState.getCurrentUrlMapping().get(currentUrl);
+    final MyCurrentUrlData rootMapping = myCurrentUrlMapping.get(currentUrl);
     if (rootMapping != null) {
       final BranchInfo mergeChecker = rootMapping.getBranchInfo(branchPath);
       if (mergeChecker != null) {
@@ -71,7 +71,7 @@ public class SvnMergeInfoCache {
   public MergeinfoCached getCachedState(final WCPaths info, final String branchPath) {
     final String currentUrl = info.getRootUrl();
 
-    MyCurrentUrlData rootMapping = myState.getCurrentUrlMapping().get(currentUrl);
+    MyCurrentUrlData rootMapping = myCurrentUrlMapping.get(currentUrl);
     if (rootMapping != null) {
       final BranchInfo branchInfo = rootMapping.getBranchInfo(branchPath);
       if (branchInfo != null) {
@@ -92,11 +92,11 @@ public class SvnMergeInfoCache {
     final String currentUrl = info.getRootUrl();
     final String branchUrl = selectedBranch.getUrl();
 
-    MyCurrentUrlData rootMapping = myState.getCurrentUrlMapping().get(currentUrl);
+    MyCurrentUrlData rootMapping = myCurrentUrlMapping.get(currentUrl);
     BranchInfo mergeChecker = null;
     if (rootMapping == null) {
       rootMapping = new MyCurrentUrlData();
-      myState.getCurrentUrlMapping().put(currentUrl, rootMapping);
+      myCurrentUrlMapping.put(currentUrl, rootMapping);
     } else {
       mergeChecker = rootMapping.getBranchInfo(branchPath);
     }
@@ -110,7 +110,7 @@ public class SvnMergeInfoCache {
 
   public boolean isMixedRevisions(final WCInfoWithBranches info, final String branchPath) {
     final String currentUrl = info.getRootUrl();
-    final MyCurrentUrlData rootMapping = myState.getCurrentUrlMapping().get(currentUrl);
+    final MyCurrentUrlData rootMapping = myCurrentUrlMapping.get(currentUrl);
     if (rootMapping != null) {
       final BranchInfo branchInfo = rootMapping.getBranchInfo(branchPath);
       if (branchInfo != null) {
@@ -118,22 +118,6 @@ public class SvnMergeInfoCache {
       }
     }
     return false;
-  }
-
-  private static class MyState {
-    private Map<String, MyCurrentUrlData> myCurrentUrlMapping;
-
-    private MyState() {
-      myCurrentUrlMapping = new HashMap<String, MyCurrentUrlData>();
-    }
-
-    public Map<String, MyCurrentUrlData> getCurrentUrlMapping() {
-      return myCurrentUrlMapping;
-    }
-
-    public void setCurrentUrlMapping(final Map<String, MyCurrentUrlData> currentUrlMapping) {
-      myCurrentUrlMapping = currentUrlMapping;
-    }
   }
 
   public static enum MergeCheckResult {
