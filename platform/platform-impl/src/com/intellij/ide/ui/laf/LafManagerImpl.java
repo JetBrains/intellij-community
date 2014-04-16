@@ -299,6 +299,11 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
    * RubyMine uses Native L&F for linux as well
    */
   private UIManager.LookAndFeelInfo getDefaultLaf() {
+    if (StartupUtil.getWizardLAF() != null) {
+      UIManager.LookAndFeelInfo laf = findLaf(StartupUtil.getWizardLAF());
+      LOG.assertTrue(laf != null);
+      return laf;
+    }
     final String systemLafClassName = UIManager.getSystemLookAndFeelClassName();
     if (SystemInfo.isMac) {
       UIManager.LookAndFeelInfo laf = findLaf(systemLafClassName);
