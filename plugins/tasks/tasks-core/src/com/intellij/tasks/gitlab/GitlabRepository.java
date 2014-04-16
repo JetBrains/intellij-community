@@ -175,7 +175,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   public GitlabIssue fetchIssue(int id) throws Exception {
     ensureProjectsDiscovered();
     HttpGet request = new HttpGet(getRestApiUrl("issues", id));
-    ResponseHandler<GitlabIssue> handler = new GsonSingleObjectDeserializer<GitlabIssue>(GSON, GitlabIssue.class);
+    ResponseHandler<GitlabIssue> handler = new GsonSingleObjectDeserializer<GitlabIssue>(GSON, GitlabIssue.class, true);
     return getHttpClient().execute(request, handler);
   }
 

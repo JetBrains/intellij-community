@@ -7,9 +7,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.tasks.impl.RequestFailedException;
 import com.intellij.tasks.impl.TaskUtil;
 import org.apache.commons.httpclient.HeaderElement;
 import org.apache.commons.httpclient.HttpMethod;
+import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.NameValuePair;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
@@ -92,17 +94,27 @@ public class ResponseUtil {
   public static final class GsonSingleObjectDeserializer<T> implements ResponseHandler<T> {
     private final Gson myGson;
     private final Class<T> myClass;
-    public GsonSingleObjectDeserializer(Gson gson, Class<T> cls) {
+    private final boolean myIgnoreNotFound;
+
+    public GsonSingleObjectDeserializer(@NotNull Gson gson, @NotNull Class<T> cls) {
+      this(gson, cls, false);
+    }
+
+    public GsonSingleObjectDeserializer(@NotNull Gson gson, @NotNull Class<T> cls, boolean ignoreNotFound) {
       myGson = gson;
       myClass = cls;
+      myIgnoreNotFound = ignoreNotFound;
     }
 
     @Override
     public T handleResponse(HttpResponse response) throws IOException {
       int statusCode = response.getStatusLine().getStatusCode();
       LOG.info("Status code: " + statusCode);
-      if (statusCode >= 400 && statusCode < 500) {
-        return null;
+      if (!isSuccessful(statusCode)) {
+        if (statusCode == HttpStatus.SC_NOT_FOUND && myIgnoreNotFound) {
+          return null;
+        }
+        throw RequestFailedException.forStatusCode(statusCode);
       }
       try {
         if (LOG.isDebugEnabled()) {
@@ -122,16 +134,26 @@ public class ResponseUtil {
   public static final class GsonMultipleObjectsDeserializer<T> implements ResponseHandler<List<T>> {
     private final Gson myGson;
     private final TypeToken<List<T>> myTypeToken;
-    public GsonMultipleObjectsDeserializer(Gson gson, TypeToken<List<T>> token) {
+    private final boolean myIgnoreNotFound;
+
+    public GsonMultipleObjectsDeserializer(Gson gson, TypeToken<List<T>> typeToken) {
+      this(gson, typeToken, false);
+    }
+
+    public GsonMultipleObjectsDeserializer(@NotNull Gson gson, @NotNull TypeToken<List<T>> token, boolean ignoreNotFound) {
       myGson = gson;
       myTypeToken = token;
+      myIgnoreNotFound = ignoreNotFound;
     }
 
     @Override
     public List<T> handleResponse(HttpResponse response) throws IOException {
       int statusCode = response.getStatusLine().getStatusCode();
-      if (statusCode >= 400 && statusCode < 500) {
-        return Collections.emptyList();
+      if (!isSuccessful(statusCode)) {
+        if (statusCode == HttpStatus.SC_NOT_FOUND && myIgnoreNotFound) {
+          return Collections.emptyList();
+        }
+        throw RequestFailedException.forStatusCode(statusCode);
       }
       LOG.info("Status code: " + statusCode);
       try {
@@ -147,5 +169,17 @@ public class ResponseUtil {
         return Collections.emptyList();
       }
     }
+  }
+
+  public static boolean isSuccessful(int statusCode) {
+    return statusCode / 100 == 2;
+  }
+
+  public static boolean isClientError(int statusCode) {
+    return statusCode / 100 == 4;
+  }
+
+  public static boolean isServerError(int statusCode) {
+    return statusCode / 100 == 5;
   }
 }
