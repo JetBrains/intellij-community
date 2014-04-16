@@ -1,10 +1,12 @@
 package com.intellij.updater;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import java.nio.file.Files;
 
 public class Digester {
   public static Map<String, Long> digestFiles(File dir, List<String> ignoredFiles, UpdaterUI ui)
@@ -43,10 +45,15 @@ public class Digester {
   }
 
   private static long doDigestRegularFile(File file) throws IOException {
+    if (Files.isSymbolicLink(file.toPath())) {
+      Runner.logger.info("File is link: " +  file.getName());
+    }
+
     if (file.isDirectory()) {
       Runner.logger.info("Added dir: " +  file.getName());
       return 0;
     } else {
+      Runner.logger.info("Added file: " +  file.getName());
       InputStream in = new BufferedInputStream(new FileInputStream(file));
       try {
         return digestStream(in);
