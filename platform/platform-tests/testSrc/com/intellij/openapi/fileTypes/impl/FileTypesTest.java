@@ -263,6 +263,11 @@ public class FileTypesTest extends PlatformTestCase {
   }
 
   public void testReDetectOnContentsChange() throws IOException {
+    FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFileName("x" + ModuleFileType.DOT_DEFAULT_EXTENSION);
+    assertTrue(fileType.toString(), fileType instanceof ModuleFileType);
+    fileType = FileTypeRegistry.getInstance().getFileTypeByFileName("x" + ProjectFileType.DOT_DEFAULT_EXTENSION);
+    assertTrue(fileType.toString(), fileType instanceof ProjectFileType);
+
     FileTypeRegistry.FileTypeDetector detector = new FileTypeRegistry.FileTypeDetector() {
       @Nullable
       @Override
