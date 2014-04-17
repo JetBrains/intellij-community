@@ -130,8 +130,6 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
   public static Key<Sdk> CONSOLE_SDK = new Key<Sdk>("PYDEV_CONSOLE_SDK_KEY");
 
-  private static final String PYTHON_ENV_COMMAND = "import sys; print('Python %s on %s' % (sys.version, sys.platform))\n";
-
   private static final long APPROPRIATE_TO_WAIT = 60000;
 
   protected PydevConsoleRunner(@NotNull final Project project,
@@ -471,8 +469,6 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
           });
 
           enableConsoleExecuteAction();
-
-          consoleView.executeStatement(PYTHON_ENV_COMMAND, ProcessOutputTypes.SYSTEM);
 
           for (String statement : statements2execute) {
             consoleView.executeStatement(statement + "\n", ProcessOutputTypes.SYSTEM);
