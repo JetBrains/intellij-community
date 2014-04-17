@@ -103,9 +103,7 @@ public class LambdaUtil {
 
   public static boolean isFunctionalType(PsiType type) {
     if (type instanceof PsiIntersectionType) {
-      for (PsiType type1 : ((PsiIntersectionType)type).getConjuncts()) {
-        if (isFunctionalType(type1)) return true;
-      }
+      return extractFunctionalConjunct((PsiIntersectionType)type) != null;
     }
     return isFunctionalClass(PsiUtil.resolveGenericsClassInType(type).getElement());
   }
@@ -286,9 +284,8 @@ public class LambdaUtil {
     } else if (parent instanceof PsiTypeCastExpression) {
       final PsiType castType = ((PsiTypeCastExpression)parent).getType();
       if (castType instanceof PsiIntersectionType) {
-        for (PsiType conjunctType : ((PsiIntersectionType)castType).getConjuncts()) {
-          if (getFunctionalInterfaceMethod(conjunctType) != null) return conjunctType;
-        }
+        final PsiType conjunct = extractFunctionalConjunct((PsiIntersectionType)castType);
+        if (conjunct != null) return conjunct;
       }
       return castType;
     }
@@ -363,6 +360,19 @@ public class LambdaUtil {
     return null;
   }
 
+  @Nullable
+  private static PsiType extractFunctionalConjunct(PsiIntersectionType type) {
+    PsiType conjunct = null;
+    for (PsiType conjunctType : ((PsiIntersectionType)type).getConjuncts()) {
+      final PsiMethod interfaceMethod = getFunctionalInterfaceMethod(conjunctType);
+      if (interfaceMethod != null) {
+        if (conjunct != null && !conjunct.equals(conjunctType)) return null;
+        conjunct = conjunctType;
+      }
+    }
+    return conjunct;
+  }
+  
   private static PsiType getFunctionalInterfaceTypeByContainingLambda(@NotNull PsiLambdaExpression parentLambda) {
     final PsiType parentInterfaceType = parentLambda.getFunctionalInterfaceType();
     return parentInterfaceType != null ? getFunctionalInterfaceReturnType(parentInterfaceType) : null;
