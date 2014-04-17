@@ -1000,8 +1000,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                 super.completionFinished(offset1, offset2, indicator, items, hasModifiers);
               }
             };
-            Editor editor = getCompletionEditor();
-            handler.invokeCompletion(getProject(), editor, invocationCount);
+            final Editor editor = getCompletionEditor();
+            assert editor != null: "Editor is null";
+            editor.getCaretModel().runForEachCaret(new CaretAction() {
+              @Override
+              public void perform(final Caret caret) {
+                handler.invokeCompletion(getProject(), editor, invocationCount);
+              }
+            });
             PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); // to compare with file text
           }
         }, null, null);
