@@ -181,7 +181,8 @@ public class LambdaUtil {
       boolean subsignature = true;
       for (MethodSignature methodSignature : signatures) {
         if (!signature.equals(methodSignature)) {
-          if (!MethodSignatureUtil.isSubsignature(signature, methodSignature)) {
+          if (!MethodSignatureUtil.isSubsignature(signature, methodSignature) && 
+              methodSignature.getTypeParameters().length == 0) {
             subsignature = false;
             break;
           }
