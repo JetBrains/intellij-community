@@ -344,8 +344,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
 
     LocalHistoryImpl.getInstanceImpl().cleanupForNextTest();
-
-    PatchedWeakReference.clearAll();
   }
 
   private static Set<VirtualFile> eternallyLivingFiles() {
