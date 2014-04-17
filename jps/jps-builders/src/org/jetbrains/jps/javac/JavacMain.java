@@ -77,7 +77,6 @@ public class JavacMain {
     final boolean usingJavac = compilingTool instanceof JavacCompilerTool;
     final JavacFileManager fileManager = new JavacFileManager(new ContextImpl(compiler, diagnosticConsumer, outputSink, canceledStatus, usingJavac), transformers);
 
-    fileManager.handleOption("-bootclasspath", Collections.singleton("").iterator()); // this will clear cached stuff
     fileManager.handleOption("-extdirs", Collections.singleton("").iterator()); // this will clear cached stuff
     fileManager.handleOption("-endorseddirs", Collections.singleton("").iterator()); // this will clear cached stuff
     final Collection<String> _options = prepareOptions(options, compilingTool);
@@ -115,6 +114,7 @@ public class JavacMain {
       
       if (!platformClasspath.isEmpty()) {
         try {
+          fileManager.handleOption("-bootclasspath", Collections.singleton("").iterator()); // this will clear cached stuff
           fileManager.setLocation(StandardLocation.PLATFORM_CLASS_PATH, buildPlatformClasspath(platformClasspath, _options));
         }
         catch (IOException e) {
