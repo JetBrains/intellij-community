@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -30,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
-import java.nio.charset.Charset;
 import java.util.List;
 
 public class GeneralSettings implements NamedJDOMExternalizable, ExportableApplicationComponent {
@@ -69,11 +66,6 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
   @NonNls private static final String OPTION_AUTO_SAVE_IF_INACTIVE = "autoSaveIfInactive";
   @NonNls private static final String OPTION_USE_SAFE_WRITE = "useSafeWrite";
 
-  @Deprecated
-  @NonNls private static final String OPTION_CHARSET = "charset";
-  @Deprecated
-  @NonNls private static final String OPTION_UTFGUESSING = "UTFGuessing";
-
   @NonNls private static final String OPTION_USE_DEFAULT_BROWSER = "useDefaultBrowser";
   @NonNls private static final String OPTION_CONFIRM_EXTRACT_FILES = "confirmExtractFiles";
   @NonNls private static final String OPTION_USE_CYCLIC_BUFFER = "useCyclicBuffer";
@@ -82,13 +74,6 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
   @NonNls private static final String OPTION_CONFIRM_OPEN_NEW_PROJECT = "confirmOpenNewProject2";
   @NonNls private static final String OPTION_CYCLIC_BUFFER_SIZE = "cyclicBufferSize";
   @NonNls private static final String OPTION_LAST_PROJECT_LOCATION = "lastProjectLocation";
-
-  @Deprecated
-  private Charset myCharset;
-  @Deprecated
-  private boolean myUseUTFGuessing;
-  @Deprecated
-  private boolean oldCharsetSettingsHaveBeenRead;
 
   public static GeneralSettings getInstance(){
     return ApplicationManager.getApplication().getComponent(GeneralSettings.class);
@@ -292,16 +277,6 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
       if (OPTION_USE_SAFE_WRITE.equals(name) && value != null) {
         myUseSafeWrite = Boolean.valueOf(value).booleanValue();
         safeWriteSettingRead = true;
-      }
-
-      if (OPTION_CHARSET.equals(name)) {
-        //for migration
-        myCharset = CharsetToolkit.forName(value);
-        oldCharsetSettingsHaveBeenRead = true;
-      }
-      if (OPTION_UTFGUESSING.equals(name)) {
-        myUseUTFGuessing = Boolean.valueOf(value).booleanValue();
-        oldCharsetSettingsHaveBeenRead = true;
       }
 
       if (OPTION_USE_DEFAULT_BROWSER.equals(name)) {
@@ -527,14 +502,5 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
 
   public void setSearchInBackground(final boolean searchInBackground) {
     mySearchInBackground = searchInBackground;
-  }
-
-  // returns true if something has been migrated
-  public boolean migrateCharsetSettingsTo(EncodingManager encodingProjectManager) {
-    if (oldCharsetSettingsHaveBeenRead) {
-      encodingProjectManager.setEncoding(null, myCharset);
-      encodingProjectManager.setUseUTFGuessing(null, myUseUTFGuessing);
-    }
-    return oldCharsetSettingsHaveBeenRead;
   }
 }

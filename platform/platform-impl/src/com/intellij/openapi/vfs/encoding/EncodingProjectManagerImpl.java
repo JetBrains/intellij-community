@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,20 +22,14 @@
  */
 package com.intellij.openapi.vfs.encoding;
 
-import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.components.StorageScheme;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
@@ -66,12 +60,9 @@ import java.util.*;
     @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/encodings.xml", scheme = StorageScheme.DIRECTORY_BASED)
   }
 )
-public class EncodingProjectManagerImpl extends EncodingProjectManager {
+public class EncodingProjectManagerImpl extends EncodingProjectManager implements NamedComponent, PersistentStateComponent<Element> {
   @NonNls private static final String PROJECT_URL = "PROJECT";
   private final Project myProject;
-  private final GeneralSettings myGeneralSettings;
-  private final EditorSettingsExternalizable myEditorSettings;
-  private boolean myUseUTFGuessing = true;
   private boolean myNative2AsciiForPropertiesFiles;
   private Charset myDefaultCharsetForPropertiesFiles;
   private volatile long myModificationCount;
@@ -82,13 +73,8 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
     }
   };
 
-  public EncodingProjectManagerImpl(Project project,
-                                    GeneralSettings generalSettings,
-                                    EditorSettingsExternalizable editorSettings,
-                                    PsiDocumentManager documentManager) {
+  public EncodingProjectManagerImpl(Project project, PsiDocumentManager documentManager) {
     myProject = project;
-    myGeneralSettings = generalSettings;
-    myEditorSettings = editorSettings;
     documentManager.addListener(new PsiDocumentManager.Listener() {
       @Override
       public void documentCreated(@NotNull Document document, PsiFile psiFile) {
@@ -122,7 +108,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
       child.setAttribute("url", file == null ? PROJECT_URL : file.getUrl());
       child.setAttribute("charset", charset.name());
     }
-    element.setAttribute("useUTFGuessing", Boolean.toString(myUseUTFGuessing));
+    element.setAttribute("useUTFGuessing", Boolean.toString(true));
     element.setAttribute("native2AsciiForPropertiesFiles", Boolean.toString(myNative2AsciiForPropertiesFiles));
     if (myDefaultCharsetForPropertiesFiles != null) {
       element.setAttribute("defaultCharsetForPropertiesFiles", myDefaultCharsetForPropertiesFiles.name());
@@ -147,20 +133,9 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
     myMapping.clear();
     myMapping.putAll(mapping);
 
-    myUseUTFGuessing = Boolean.parseBoolean(element.getAttributeValue("useUTFGuessing"));
     myNative2AsciiForPropertiesFiles = Boolean.parseBoolean(element.getAttributeValue("native2AsciiForPropertiesFiles"));
     myDefaultCharsetForPropertiesFiles = CharsetToolkit.forName(element.getAttributeValue("defaultCharsetForPropertiesFiles"));
 
-    boolean migrated = myGeneralSettings.migrateCharsetSettingsTo(this);
-    migrated |= myEditorSettings.migrateCharsetSettingsTo(this);
-    if (migrated) {
-      // load up default project only if some settings have been migrated
-      EncodingProjectManager defaultManager = getInstance(ProjectManager.getInstance().getDefaultProject());
-      if (defaultManager != null) {
-        myGeneralSettings.migrateCharsetSettingsTo(defaultManager);
-        myEditorSettings.migrateCharsetSettingsTo(defaultManager);
-      }
-    }
     myModificationCount++;
   }
 
@@ -169,26 +144,6 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
   @NotNull
   public String getComponentName() {
     return "EncodingProjectManager";
-  }
-
-  @Override
-  public void initComponent() {
-
-  }
-
-  @Override
-  public void disposeComponent() {
-
-  }
-
-  @Override
-  public void projectOpened() {
-
-  }
-
-  @Override
-  public void projectClosed() {
-
   }
 
   @Override
@@ -387,15 +342,11 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
 
   @Override
   public boolean isUseUTFGuessing(final VirtualFile virtualFile) {
-    return myUseUTFGuessing;
+    return true;
   }
 
   @Override
   public void setUseUTFGuessing(final VirtualFile virtualFile, final boolean useUTFGuessing) {
-    if (myUseUTFGuessing != useUTFGuessing) {
-      myUseUTFGuessing = useUTFGuessing;
-      reloadAllFilesUnder(null);
-    }
   }
 
   private static final ThreadLocal<Boolean> SUPPRESS_RELOAD = new ThreadLocal<Boolean>();
