@@ -11,7 +11,9 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
+import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
+import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
@@ -218,10 +220,20 @@ public final class LanguageConsoleBuilder {
         return;
       }
 
-      editor.setHorizontalScrollbarVisible(true);
-
       final ConsoleGutterComponent lineStartGutter = new ConsoleGutterComponent(editor, gutterContentProvider, true);
       final ConsoleGutterComponent lineEndGutter = new ConsoleGutterComponent(editor, gutterContentProvider, false);
+
+      editor.getSoftWrapModel().forceAdditionalColumnsUsage();
+      ((SoftWrapModelImpl)editor.getSoftWrapModel()).getApplianceManager().setWidthProvider(new SoftWrapApplianceManager.VisibleAreaWidthProvider() {
+        @Override
+        public int getVisibleAreaWidth() {
+          int guttersWidth = lineEndGutter.getPreferredSize().width + lineStartGutter.getPreferredSize().width;
+          EditorEx editor = getHistoryViewer();
+          return editor.getScrollingModel().getVisibleArea().width - guttersWidth;
+        }
+      });
+      editor.setHorizontalScrollbarVisible(true);
+
       JLayeredPane layeredPane = new JBLayeredPane() {
         @Override
         public Dimension getPreferredSize() {
