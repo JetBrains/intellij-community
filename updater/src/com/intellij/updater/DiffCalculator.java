@@ -5,23 +5,17 @@ import java.util.Map;
 import java.util.Set;
 
 public class DiffCalculator {
-
   public static Result calculate(Map<String, Long> oldChecksums, Map<String, Long> newChecksums) {
     Result result = new Result();
-    Runner.logger.info("Elements to delete");
-    result.filesToDelete = withAllRemoved(oldChecksums, newChecksums, "delete");
-    Runner.logger.info("Elements to add");
-//    result.filesToCreate = withAllRemoved(newChecksums, oldChecksums, "").keySet();
-    result.filesToCreate = withAllRemoved(newChecksums, oldChecksums, "");
-    Runner.logger.info("Elements to modify");
+    result.filesToDelete = withAllRemoved(oldChecksums, newChecksums);
+    result.filesToCreate = withAllRemoved(newChecksums, oldChecksums).keySet();
     result.filesToUpdate = collect(oldChecksums, newChecksums, false);
     return result;
   }
 
-  private static Map<String, Long> withAllRemoved(Map<String, Long> from, Map<String, Long> toRemove, String toDelete) {
+  private static Map<String, Long> withAllRemoved(Map<String, Long> from, Map<String, Long> toRemove) {
     Map<String, Long> result = new HashMap<String, Long>(from);
     for (String each : toRemove.keySet()) {
-      if (toDelete == "delete") Runner.logger.info("Element to delete: " + each);
       result.remove(each);
     }
     return result;
@@ -42,8 +36,7 @@ public class DiffCalculator {
 
   public static class Result {
     public Map<String, Long> filesToDelete;
-//    public Set<String> filesToCreate;
-    public Map<String, Long> filesToCreate;
+    public Set<String> filesToCreate;
     public Map<String, Long> filesToUpdate;
   }
 }

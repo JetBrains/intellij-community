@@ -22,12 +22,8 @@ public class CreateAction extends PatchAction {
     patchOutput.putNextEntry(new ZipEntry(myPath));
 
     writeExecutableFlag(patchOutput, newerFile);
-    if (newerFile.isDirectory()){
-      Runner.logger.info("Do not add directory to the patch file: " +  newerFile.getName());
-      System.out.println("Do not add directory to the patch file: " + newerFile.getName());
-    }else{
-      Utils.copyFileToStream(newerFile, patchOutput);
-    }
+    Utils.copyFileToStream(newerFile, patchOutput);
+
     patchOutput.closeEntry();
   }
 

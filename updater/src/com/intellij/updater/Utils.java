@@ -171,18 +171,11 @@ public class Utils {
 
   private static void collectRelativePaths(File dir, LinkedHashSet<String> result, String parentPath) {
     File[] children = dir.listFiles();
-    if (children == null) {
-      Runner.logger.info("The folder is empty. Added the folder " + dir.getName());
-      result.add((parentPath == null ? "" : parentPath + "/") + dir.getName());
-      return;
-    }
+    if (children == null) return;
 
     for (File each : children) {
       String relativePath = (parentPath == null ? "" : parentPath + "/") + each.getName();
       if (each.isDirectory()) {
-        // if the element is a folder - to add full path
-        Runner.logger.info("Added folder " + each.getName());
-        result.add(relativePath);
         collectRelativePaths(each, result, relativePath);
       }
       else {

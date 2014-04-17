@@ -57,7 +57,6 @@ public class Runner {
 
   private static String getLogDir() {
     String logFolder = System.getProperty("idea.updater.log");
-    System.out.println("Logger: " + logFolder);
     if (logFolder == null || !isValidLogDir(logFolder)) {
       logFolder = System.getProperty("java.io.tmpdir");
       if (!isValidLogDir(logFolder)) {
@@ -246,13 +245,11 @@ public class Runner {
           jarFile.close();
         }
 
-        logger.info("Files were copied to the temp file.");
         ui.checkCancelled();
 
         File destDir = new File(destFolder);
         PatchFileCreator.PreparationResult result = PatchFileCreator.prepareAndValidate(patchFile, destDir, ui);
         Map<String, ValidationResult.Option> options = ui.askUser(result.validationResults);
-        logger.info("Apply...");
         return PatchFileCreator.apply(result, options, ui);
       }
       catch (IOException e) {
