@@ -10,5 +10,5 @@ public interface StringValue extends Value {
   /**
    * Asynchronously reloads object value with extended size limit
    */
-  ActionCallback reloadHeavyValue();
+  ActionCallback getFullString();
 }
