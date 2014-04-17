@@ -48,7 +48,7 @@ public class CustomLineBorder implements Border {
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
     final Color oldColor = g.getColor();
-    g.setColor(myColor);
+    g.setColor(getColor());
 
     if (myInsets.left > 0) g.fillRect(x, y, x + myInsets.left, y + h);
     if (myInsets.bottom > 0) g.fillRect(x, y + h - myInsets.bottom, x + w, y + h);
@@ -56,6 +56,10 @@ public class CustomLineBorder implements Border {
     if (myInsets.top > 0) g.fillRect(x, y, x + w, y + myInsets.top);
 
     g.setColor(oldColor);
+  }
+
+  protected Color getColor() {
+    return myColor;
   }
 
   @Override

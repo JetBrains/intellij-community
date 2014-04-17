@@ -59,6 +59,8 @@ public class CustomizeKeyboardSchemeStepPanel extends AbstractCustomizeWizardSte
                                    "<tr><td style=\"text-align:right;\">&#8984;Y</td><td style=\"text-align:left;\">Delete line</td></tr>" +
                                    "</table></body></html>"
     ));
+    defaultRadioButton.setOpaque(false);
+    macRadioButton.setOpaque(false);
 
     add(myMacButton);
     add(myDefaultButton);

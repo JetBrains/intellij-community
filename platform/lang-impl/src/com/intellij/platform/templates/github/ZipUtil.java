@@ -132,7 +132,7 @@ public class ZipUtil {
         dirToMove = unzipToDir;
       }
       // Don't "FileUtil.moveDirWithContent(dirToMove, targetDir)"
-      // because a file moved with "java.io.File.renameTo" won't inherits its new parent's permissions
+      // because a file moved with "java.io.File.renameTo" won't inherit its new parent's permissions
       FileUtil.copyDirContent(dirToMove, targetDir);
       FileUtil.delete(unzipToDir);
     }

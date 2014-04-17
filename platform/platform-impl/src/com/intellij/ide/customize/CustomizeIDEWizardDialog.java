@@ -16,6 +16,7 @@
 package com.intellij.ide.customize;
 
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.SystemInfo;
@@ -54,6 +55,13 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     myFooterLabel.setEnabled(false);
     init();
     initCurrentStep();
+    System.setProperty(StartupActionScriptManager.STARTUP_WIZARD_MODE, "true");
+  }
+
+  @Override
+  protected void dispose() {
+    System.clearProperty(StartupActionScriptManager.STARTUP_WIZARD_MODE);
+    super.dispose();
   }
 
   protected void initSteps() {

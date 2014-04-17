@@ -21,7 +21,7 @@ public class CustomPropertiesValuePresentation extends XValuePresentation {
 
   @Override
   public void renderValue(@NotNull XValueTextRenderer renderer) {
-    renderer.renderComment(VariableView.getClassName(value));
+    renderer.renderComment(VariableView.getObjectValueDescription(value));
     renderer.renderSpecialSymbol(" {");
     boolean isFirst = true;
     for (Variable property : properties) {
@@ -63,8 +63,7 @@ public class CustomPropertiesValuePresentation extends XValuePresentation {
           break;
 
         case OBJECT:
-          ObjectValue objectValue = (ObjectValue)value;
-          renderer.renderComment(VariableView.getClassName(objectValue));
+          renderer.renderComment(VariableView.getObjectValueDescription((ObjectValue)value));
           break;
 
         default:

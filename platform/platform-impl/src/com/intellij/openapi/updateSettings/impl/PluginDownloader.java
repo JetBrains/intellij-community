@@ -94,7 +94,7 @@ public class PluginDownloader {
 
   public boolean prepareToInstall(ProgressIndicator pi) throws IOException {
     IdeaPluginDescriptor descriptor = null;
-    if (PluginManager.isPluginInstalled(PluginId.getId(myPluginId))) {
+    if (!Boolean.getBoolean(StartupActionScriptManager.STARTUP_WIZARD_MODE) && PluginManager.isPluginInstalled(PluginId.getId(myPluginId))) {
       //store old plugins file
       descriptor = PluginManager.getPlugin(PluginId.getId(myPluginId));
       LOG.assertTrue(descriptor != null);
@@ -115,14 +115,16 @@ public class PluginDownloader {
       errorMessage = ex.getMessage();
     }
     if (myFile == null) {
-      final String text = IdeBundle.message("error.plugin.was.not.installed", getPluginName(), errorMessage);
-      final String title = IdeBundle.message("title.failed.to.download");
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          Messages.showErrorDialog(text, title);
-        }
-      });
+      if (ApplicationManager.getApplication() != null) {
+        final String text = IdeBundle.message("error.plugin.was.not.installed", getPluginName(), errorMessage);
+        final String title = IdeBundle.message("title.failed.to.download");
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            Messages.showErrorDialog(text, title);
+          }
+        });
+      }
       return false;
     }
 
