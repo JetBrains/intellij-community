@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -998,10 +998,14 @@ public final class PsiUtil extends PsiUtilCore {
   public static PsiMethod getResourceCloserMethod(@NotNull final PsiResourceVariable resource) {
     final PsiType resourceType = resource.getType();
     if (!(resourceType instanceof PsiClassType)) return null;
-    final PsiClass resourceClass = ((PsiClassType)resourceType).resolve();
+    return getResourceCloserMethodForType((PsiClassType)resourceType, resource.getProject());
+  }
+
+  @Nullable
+  public static PsiMethod getResourceCloserMethodForType(@NotNull final PsiClassType resourceType, Project project) {
+    final PsiClass resourceClass = resourceType.resolve();
     if (resourceClass == null) return null;
 
-    final Project project = resource.getProject();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     final PsiClass autoCloseable = facade.findClass(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, ProjectScope.getLibrariesScope(project));
     if (autoCloseable == null) return null;
