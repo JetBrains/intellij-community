@@ -19,9 +19,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
-
 public class TryWithResourcesPostfixTemplateTest extends PostfixTemplateTestCase {
-
   @NotNull
   @Override
   protected String getSuffix() {
@@ -34,19 +32,8 @@ public class TryWithResourcesPostfixTemplateTest extends PostfixTemplateTestCase
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
   }
 
-  public void testSimple() {
-    doTest();
-  }
-
-  public void testSimpleWithMyException() {
-    doTest();
-  }
-
-  public void testSimpleWithConflict() {
-    doTest();
-  }
-
-  public void testSimpleNotAutoCloseable() {
-    doTest();
-  }
+  public void testSimple()                  { doTest(); }
+  public void testSimpleWithMyException()   { doTest(); }
+  public void testSimpleWithConflict()      { doTest(); }
+  public void testSimpleNotAutoCloseable()  { doTest(); }
 }
