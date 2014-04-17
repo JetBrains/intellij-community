@@ -62,8 +62,14 @@ public final class VariableView extends XNamedValue implements VariableContext {
     return StringUtil.isEmpty(className) ? "Object" : className;
   }
 
+  @NotNull
+  public static String getObjectValueDescription(@NotNull ObjectValue value) {
+    String description = value.getValueString();
+    return StringUtil.isEmpty(description) ? getClassName(value) : description;
+  }
+
   public static void setObjectPresentation(@NotNull ObjectValue value, @NotNull Icon icon, @NotNull XValueNode node) {
-    node.setPresentation(icon, new ObjectValuePresentation(getClassName(value)), value.hasProperties() != ThreeState.NO);
+    node.setPresentation(icon, new ObjectValuePresentation(getObjectValueDescription(value)), value.hasProperties() != ThreeState.NO);
   }
 
   public static void setArrayPresentation(@NotNull Value value, @NotNull VariableContext context, @NotNull final Icon icon, @NotNull XValueNode node) {
