@@ -75,6 +75,10 @@ public class MostSpecificResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testIncompleteMethodInInterface() throws Exception {
+    doTest(false);
+  }
+
   private void doTest() {
     doTest(true);
   }
