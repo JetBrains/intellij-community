@@ -70,6 +70,6 @@ public class GithubHttpAuthDataProvider implements GitHttpAuthDataProvider {
 
   @Override
   public void forgetPassword(@NotNull String url) {
-    // TODO
+    GithubSettings.getInstance().setValidGitAuth(false);
   }
 }
