@@ -87,6 +87,7 @@ public class TempFileSystem extends LocalFileSystemBase {
     return new FakeVirtualFile(parent, dir);
   }
 
+  @NotNull
   @Override
   public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String file) throws IOException {
     final FSItem fsItem = convert(parent);
@@ -104,6 +105,7 @@ public class TempFileSystem extends LocalFileSystemBase {
     return new FakeVirtualFile(parent, file);
   }
 
+  @NotNull
   @Override
   public VirtualFile copyFile(Object requestor,
                               @NotNull VirtualFile file,

@@ -416,6 +416,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     return len;
   }
 
+  @NotNull
   @Override
   public VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile parent, @NotNull String name) throws IOException {
     getDelegate(file).copyFile(requestor, file, parent, name);
@@ -428,6 +429,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     return child;
   }
 
+  @NotNull
   @Override
   public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile parent, @NotNull String dir) throws IOException {
     getDelegate(parent).createChildDirectory(requestor, parent, dir);
@@ -440,6 +442,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     return child;
   }
 
+  @NotNull
   @Override
   public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String file) throws IOException {
     getDelegate(parent).createChildFile(requestor, parent, file);

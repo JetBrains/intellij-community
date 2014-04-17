@@ -286,6 +286,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     throw new IOException(VfsBundle.message("jar.modification.not.supported.error", vDir.getUrl()));
   }
 
+  @NotNull
   @Override
   public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
     throw new IOException(VfsBundle.message("jar.modification.not.supported.error", vDir.getUrl()));
@@ -300,6 +301,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     throw new IOException(VfsBundle.message("jar.modification.not.supported.error", vFile.getUrl()));
   }
 
+  @NotNull
   @Override
   public VirtualFile copyFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent, @NotNull String copyName) throws IOException {
     throw new IOException(VfsBundle.message("jar.modification.not.supported.error", vFile.getUrl()));

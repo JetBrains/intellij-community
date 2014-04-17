@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,6 +172,7 @@ public class VfsUtilCore {
    * @return a copy of the file
    * @throws java.io.IOException if file failed to be copied
    */
+  @NotNull
   public static VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir) throws IOException {
     return copyFile(requestor, file, toDir, file.getName());
   }
@@ -188,6 +189,7 @@ public class VfsUtilCore {
    * @return a copy of the file
    * @throws java.io.IOException if file failed to be copied
    */
+  @NotNull
   public static VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull @NonNls String newName)
     throws IOException {
     final VirtualFile newChild = toDir.createChildData(requestor, newName);
