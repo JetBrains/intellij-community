@@ -1,19 +1,20 @@
 <component>
   <keymap version="1" name="Xcode" parent="Mac OS X 10.5+">
     <action id="ActivateHierarchyToolWindow"/>
+    <action id="ActivateTODOToolWindow"/>
     <action id="ActivateFavoritesToolWindow">
       <keyboard-shortcut first-keystroke="meta 0"/>
     </action>
     <action id="ActivateProjectToolWindow">
       <keyboard-shortcut first-keystroke="meta 1"/>
     </action>
-x    <action id="ActivateStructureToolWindow">
+    <action id="ActivateStructureToolWindow">
       <keyboard-shortcut first-keystroke="meta 2" />
     </action>
     <action id="ActivateFindToolWindow">
       <keyboard-shortcut first-keystroke="meta 3" />
     </action>
-    <action id="ActivateTODOToolWindow">
+    <action id="ActivateMessagesToolWindow">
       <keyboard-shortcut first-keystroke="meta 4"/>
     </action>
     <action id="ActivateRunToolWindow">
@@ -23,8 +24,8 @@ x    <action id="ActivateStructureToolWindow">
       <keyboard-shortcut first-keystroke="meta shift Y" />
       <keyboard-shortcut first-keystroke="meta 6" />
     </action>
-    <action id="ActivateMessagesToolWindow">
-      <keyboard-shortcut first-keystroke="meta 8" />
+    <action id="ActivateChangesToolWindow">
+      <keyboard-shortcut first-keystroke="meta 9" />
     </action>
     <action id="FileStructurePopup">
       <keyboard-shortcut first-keystroke="control 6"/>
