@@ -475,7 +475,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
       }
 
       final AtomicBoolean evaluated = new AtomicBoolean();
-      ((StringValue)value).reloadHeavyValue().doWhenDone(new Runnable() {
+      ((StringValue)value).getFullString().doWhenDone(new Runnable() {
         @Override
         public void run() {
           if (!callback.isObsolete() && evaluated.compareAndSet(false, true)) {
