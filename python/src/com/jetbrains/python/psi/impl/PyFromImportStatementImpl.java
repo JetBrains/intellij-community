@@ -235,11 +235,10 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   @NotNull
   @Override
   public List<String> getFullyQualifiedObjectNames() {
-    final PyReferenceExpression source = getImportSource();
-    String prefix = "";
-    if (source != null) {
-      prefix = source.getText() + ".";
-    }
+    final QualifiedName source = getImportSourceQName();
+
+    final String prefix = (source != null) ? (source.join(".") + '.') : "";
+
     final List<String> unqualifiedNames = PyImportStatementImpl.getImportElementNames(getImportElements());
 
     final List<String> result = new ArrayList<String>(unqualifiedNames.size());
