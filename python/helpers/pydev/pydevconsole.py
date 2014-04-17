@@ -153,7 +153,7 @@ class InterpreterInterface(BaseInterpreterInterface):
         sys.exit(0)
 
     def get_greeting_msg(self):
-        return 'PyDev console: starting.\n'
+        return 'PyDev console: starting.'
 
 
 def process_exec_queue(interpreter):
@@ -199,7 +199,7 @@ try:
                 pass
 except:
     IPYTHON = False
-    sys.stderr.write('Unable to import IPython, using PyDev console instead.\n')
+    sys.stderr.write('Unable to import IPython, using PyDev console instead.')
     pass #IPython not available, proceed as usual.
 
 #=======================================================================================================================
