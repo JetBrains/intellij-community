@@ -52,6 +52,11 @@ import java.util.Map;
  */
 public class RunPythonConsoleAction extends AnAction implements DumbAware {
 
+  public static final String WORKING_DIR_ENV = "WORKING_DIR_AND_PYTHON_PATHS";
+
+  public static final String PYTHON_ENV_COMMAND = "import sys; print('Python %s on %s' % (sys.version, sys.platform))\n" +
+                                                   "sys.path.extend([" + WORKING_DIR_ENV + "])\n";
+
   public RunPythonConsoleAction() {
     super();
     getTemplatePresentation().setIcon(PythonIcons.Python.Python);
@@ -98,13 +103,13 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
       pythonPath = mappingSettings.convertToRemote(pythonPath);
     }
 
-    String selfPathAppend = constructPythonPathCommand(pythonPath);
-
     String customStartScript = settingsProvider.getCustomStartScript();
 
-    if (customStartScript.trim().length() > 0) {
-      selfPathAppend += "\n" + customStartScript.trim();
+    if(customStartScript.trim().length() > 0){
+      customStartScript = "\n" + customStartScript;
     }
+
+    String selfPathAppend = constructPythonPathCommand(pythonPath, customStartScript);
 
     String workingDir = settingsProvider.getWorkingDirectory();
     if (StringUtil.isEmpty(workingDir)) {
@@ -220,7 +225,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
     return Pair.create(sdk, module);
   }
 
-  public static String constructPythonPathCommand(Collection<String> pythonPath) {
+  public static String constructPythonPathCommand(Collection<String> pythonPath, String command) {
     final String path = Joiner.on(", ").join(Collections2.transform(pythonPath, new Function<String, String>() {
       @Override
       public String apply(String input) {
@@ -228,6 +233,6 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
       }
     }));
 
-    return "sys.path.extend([" + path + "])";
+    return command.replace(WORKING_DIR_ENV, path);
   }
 }
