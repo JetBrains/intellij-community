@@ -41,7 +41,7 @@ public class SubstitutedFileType extends LanguageFileType{
   }
 
   @NotNull
-  public static FileType substituteFileType(VirtualFile file, @NotNull FileType fileType, Project project) {
+  public static FileType substituteFileType(@NotNull VirtualFile file, @NotNull FileType fileType, Project project) {
     if (project == null) {
       return fileType;
     }
@@ -97,5 +97,10 @@ public class SubstitutedFileType extends LanguageFileType{
 
   public boolean isSameFileType() {
     return myFileType.equals(myOriginalFileType);
+  }
+
+  @Override
+  public String toString() {
+    return "SubstitutedFileType: original="+myOriginalFileType+"; substituted="+myFileType;
   }
 }
