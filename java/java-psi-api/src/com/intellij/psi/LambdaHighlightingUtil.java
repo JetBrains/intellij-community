@@ -97,18 +97,17 @@ public class LambdaHighlightingUtil {
   @Nullable
   public static String checkInterfaceFunctional(PsiType functionalInterfaceType) {
     if (functionalInterfaceType instanceof PsiIntersectionType) {
-      if (!LambdaUtil.isFunctionalType(functionalInterfaceType)) {
-        int count = 0;
-        for (PsiType type : ((PsiIntersectionType)functionalInterfaceType).getConjuncts()) {
-          if (checkInterfaceFunctional(type) == null) {
-            count++;
-          }
-        }
-
-        if (count > 1) {
-          return "Multiple non-overriding abstract methods found in " + functionalInterfaceType.getPresentableText();
+      int count = 0;
+      for (PsiType type : ((PsiIntersectionType)functionalInterfaceType).getConjuncts()) {
+        if (checkInterfaceFunctional(type) == null) {
+          count++;
         }
       }
+
+      if (count > 1) {
+        return "Multiple non-overriding abstract methods found in " + functionalInterfaceType.getPresentableText();
+      }
+      return null;
     }
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
     final PsiClass aClass = resolveResult.getElement();

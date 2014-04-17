@@ -18,3 +18,18 @@ class Test {
     Object o5 = (Runnable & A) <error descr="Multiple non-overriding abstract methods found in Runnable & A">() -> {}</error>;
   }
 }
+
+class Test1 {
+
+  interface A {
+    <X> void foo();
+  }
+
+  interface B {
+    void foo();
+  }
+
+  {
+    Object c0 = (A & B) ()->{};
+  }
+}
