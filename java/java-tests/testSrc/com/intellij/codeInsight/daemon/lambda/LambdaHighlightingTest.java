@@ -102,6 +102,7 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testSameLambdaParamNames() {doTest();}
   public void testIDEA123308() {doTest();}
   public void testIntersection() {doTest();}
+  public void testNoBoxingInLambdaFormalParams() {doTest();}
 
   private void doTest() {
     doTest(false);
