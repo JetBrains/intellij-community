@@ -11,6 +11,13 @@ project("moduleWithSourceSetDirBothAsResourceAndJava") {
   sourceSets.test.resources.srcDir 'src/test/java'
 }
 
+project("moduleWithSourceSetDirBothAsResourceAndGroovy") {
+  apply plugin: "groovy"
+
+  sourceSets.main.resources.srcDir 'src/main/groovy'
+  sourceSets.test.resources.srcDir 'src/test/groovy'
+}
+
 project("moduleWithCustomSourceSet") {
   apply plugin: "java"
 
