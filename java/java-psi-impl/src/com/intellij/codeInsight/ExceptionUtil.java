@@ -537,7 +537,7 @@ public class ExceptionUtil {
   }
 
   @NotNull
-  private static List<PsiClassType> getUnhandledExceptions(@Nullable PsiMethod method,
+  public static List<PsiClassType> getUnhandledExceptions(@Nullable PsiMethod method,
                                                            PsiElement element,
                                                            PsiElement topElement,
                                                            @NotNull PsiSubstitutor substitutor) {

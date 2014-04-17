@@ -271,8 +271,8 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
                           disposable.get(),
                           dropActionHandler.get(),
                           cleanUp.get(),
-                          asSource.get(),
                           asTarget.get(),
+                          asSource.get(),
                           asNativeTarget.get());
       }
     };

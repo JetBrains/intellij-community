@@ -7,9 +7,7 @@
       <sourceFolder url="file://$MODULE_DIR$/resources" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/testFramework" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/test-stepdefs" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/gitlog" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
