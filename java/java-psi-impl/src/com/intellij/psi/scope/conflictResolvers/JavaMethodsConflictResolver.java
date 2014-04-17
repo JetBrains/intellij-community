@@ -624,11 +624,11 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
             }
   
             if (!applicable12ignoreFunctionalType && applicable21ignoreFunctionalType) {
-              return specifics == Specifics.SECOND ? Specifics.SECOND : Specifics.NEITHER;
+              return specifics == Specifics.FIRST ? Specifics.FIRST : Specifics.NEITHER;
             }
   
             if (!applicable21ignoreFunctionalType && applicable12ignoreFunctionalType) {
-              return specifics == Specifics.FIRST ? Specifics.FIRST : Specifics.NEITHER;
+              return specifics == Specifics.SECOND ? Specifics.SECOND : Specifics.NEITHER;
             }
   
             return specifics;
