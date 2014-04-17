@@ -218,6 +218,8 @@ public final class LanguageConsoleBuilder {
         return;
       }
 
+      editor.setHorizontalScrollbarVisible(true);
+
       final ConsoleGutterComponent lineStartGutter = new ConsoleGutterComponent(editor, gutterContentProvider, true);
       final ConsoleGutterComponent lineEndGutter = new ConsoleGutterComponent(editor, gutterContentProvider, false);
       JLayeredPane layeredPane = new JBLayeredPane() {
