@@ -93,10 +93,7 @@ public class AppUIUtil {
   public static void invokeOnEdt(Runnable runnable, @Nullable Condition condition) {
     Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
-      //noinspection unchecked
-      if (condition == null || !condition.value(null)) {
-        runnable.run();
-      }
+      runnable.run();
     }
     else if (condition == null) {
       application.invokeLater(runnable);
