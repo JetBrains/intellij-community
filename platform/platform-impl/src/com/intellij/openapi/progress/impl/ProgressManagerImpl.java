@@ -21,6 +21,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.SmoothProgressAdapter;
@@ -49,6 +50,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ProgressManagerImpl extends ProgressManager implements Disposable{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.impl.ProgressManagerImpl");
   private final AtomicInteger myCurrentUnsafeProgressCount = new AtomicInteger(0);
   private final AtomicInteger myCurrentModalProgressCount = new AtomicInteger(0);
 
@@ -172,8 +174,14 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
       @Override
       public void run() {
         try {
-          if (progress != null && !progress.isRunning()) {
-            progress.start();
+          try {
+            if (progress != null && !progress.isRunning()) {
+              progress.start();
+            }
+          }
+          catch (Throwable e) {
+            LOG.info("Unexpected error when starting progress: ", e);
+            throw new RuntimeException(e);
           }
           process.run();
           maybeSleep();
