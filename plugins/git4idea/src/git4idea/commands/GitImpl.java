@@ -133,16 +133,21 @@ public class GitImpl implements Git {
   
   @Override
   @NotNull
-  public GitCommandResult clone(@NotNull Project project, @NotNull File parentDirectory, @NotNull String url,
-                                @NotNull String clonedDirectoryName, @NotNull GitLineHandlerListener... listeners) {
-    GitLineHandlerPasswordRequestAware handler = new GitLineHandlerPasswordRequestAware(project, parentDirectory, GitCommand.CLONE);
-    handler.setStdoutSuppressed(false);
-    handler.setUrl(url);
-    handler.addParameters("--progress");
-    handler.addParameters(url);
-    handler.addParameters(clonedDirectoryName);
-    addListeners(handler, listeners);
-    return run(handler);
+  public GitCommandResult clone(@NotNull final Project project, @NotNull final File parentDirectory, @NotNull final String url,
+                                @NotNull final String clonedDirectoryName, @NotNull final GitLineHandlerListener... listeners) {
+    return run(new Computable<GitLineHandler>() {
+      @Override
+      public GitLineHandler compute() {
+        GitLineHandlerPasswordRequestAware handler = new GitLineHandlerPasswordRequestAware(project, parentDirectory, GitCommand.CLONE);
+        handler.setStdoutSuppressed(false);
+        handler.setUrl(url);
+        handler.addParameters("--progress");
+        handler.addParameters(url);
+        handler.addParameters(clonedDirectoryName);
+        addListeners(handler, listeners);
+        return handler;
+      }
+    });
   }
 
   @NotNull
