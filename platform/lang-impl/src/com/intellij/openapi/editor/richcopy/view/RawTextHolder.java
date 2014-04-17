@@ -13,11 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.editor.richcopy;
+package com.intellij.openapi.editor.richcopy.view;
 
-import com.intellij.openapi.editor.richcopy.model.SyntaxInfo;
-
-public interface TextWithMarkupBuilder {
-  void reset();
-  void build(SyntaxInfo syntaxInfo);
+public interface RawTextHolder {
+  void setRawText(String rawText);
 }

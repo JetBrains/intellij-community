@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.editor.richcopy;
+package com.intellij.openapi.editor.richcopy.model;
 
-import com.intellij.openapi.editor.richcopy.model.SyntaxInfo;
-
-public interface TextWithMarkupBuilder {
-  void reset();
-  void build(SyntaxInfo syntaxInfo);
+public interface MarkupHandler {
+  void handleText(int startOffset, int endOffset) throws Exception;
+  void handleForeground(int foregroundId)  throws Exception;
+  void handleBackground(int backgroundId)  throws Exception;
+  void handleFont(int fontNameId)  throws Exception;
+  void handleStyle(int style)  throws Exception;
 }

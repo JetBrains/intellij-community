@@ -16,32 +16,24 @@
 package com.intellij.openapi.editor.richcopy;
 
 import com.intellij.codeInsight.editorActions.CopyPastePostProcessor;
+import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
 import com.intellij.codeInsight.editorActions.TextBlockTransferableData;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.RawText;
+import com.intellij.openapi.editor.richcopy.model.SyntaxInfo;
+import com.intellij.openapi.editor.richcopy.view.RawTextHolder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.StringBuilderSpinAllocator;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.awt.datatransfer.Transferable;
 
-public abstract class BaseTextWithMarkupCopyPasteProcessor<T extends TextBlockTransferableData> implements CopyPastePostProcessor<T>, TextWithMarkupBuilder {
-  private static final Logger LOG = Logger.getInstance("#" + BaseTextWithMarkupCopyPasteProcessor.class.getName());
-  private static final String TRUNCATED_MESSAGE = "... truncated ...";
-
+public abstract class BaseTextWithMarkupCopyPasteProcessor<T extends RawTextHolder & TextBlockTransferableData>
+  implements CopyPastePostProcessor<T>, TextWithMarkupBuilder {
   private T myData;
-  private int mySizeLimit;
-  protected StringBuilder myBuilder;
-  protected String myDefaultFontFamily;
-  protected Color myDefaultForeground;
-  protected Color myDefaultBackground;
-  protected int myFontSize;
 
   protected BaseTextWithMarkupCopyPasteProcessor(TextWithMarkupProcessor processor) {
     processor.addBuilder(this);
@@ -53,10 +45,7 @@ public abstract class BaseTextWithMarkupCopyPasteProcessor<T extends TextBlockTr
     if (!Registry.is("editor.richcopy.enable")) {
       return null;
     }
-    releaseBuilder(); // to avoid leakage in case 'complete' method wasn't called due to some exception
-    T data = myData;
-    myData = null;
-    return data;
+    return myData;
   }
 
   @Nullable
@@ -76,58 +65,38 @@ public abstract class BaseTextWithMarkupCopyPasteProcessor<T extends TextBlockTr
   }
 
   @Override
-  public void init(Color defaultForeground, Color defaultBackground, String defaultFontFamily, int fontSize) {
+  public void build(SyntaxInfo syntaxInfo) {
+    myData = doBuild(syntaxInfo);
+  }
+
+  @Override
+  public void reset() {
     myData = null;
-    myDefaultForeground = defaultForeground;
-    myDefaultBackground = defaultBackground;
-    myDefaultFontFamily = defaultFontFamily;
-    myFontSize = fontSize;
-    allocateBuilder();
-    mySizeLimit = Registry.intValue("editor.richcopy.max.size.megabytes") * 1048576;
-    doInit();
   }
 
-  @Override
-  public boolean isOverflowed() {
-    boolean overflowed = myBuilder.length() > mySizeLimit;
-    if (overflowed) {
-      setFontFamily(myDefaultFontFamily);
-      setForeground(myDefaultForeground);
-      setBackground(myDefaultBackground);
-      addTextFragment(TRUNCATED_MESSAGE, 0, TRUNCATED_MESSAGE.length());
+  protected abstract T doBuild(SyntaxInfo info);
+
+  public static class RawTextSetter implements CopyPastePreProcessor {
+    private final BaseTextWithMarkupCopyPasteProcessor myProcessor;
+
+    public RawTextSetter(BaseTextWithMarkupCopyPasteProcessor processor) {
+      myProcessor = processor;
     }
-    return overflowed;
-  }
 
-  @Override
-  public void complete() {
-    try {
-      doComplete();
-      String data = myBuilder.toString();
-      if (Registry.is("editor.richcopy.debug")) {
-        LOG.info("Resulting text: \n" + data);
+    @Override
+    @Nullable
+    public String preprocessOnCopy(final PsiFile file, final int[] startOffsets, final int[] endOffsets, String text) {
+      if (myProcessor.myData != null) {
+        myProcessor.myData.setRawText(text);
+        myProcessor.myData = null;
       }
-      myData = createTransferable(data);
+      return null; // noop
     }
-    finally {
-      releaseBuilder();
+
+    @Override
+    public String preprocessOnPaste(final Project project, final PsiFile file, final Editor editor, String text, final RawText rawText) {
+      return text; // noop
     }
   }
 
-  protected abstract T createTransferable(@NotNull String data);
-  protected abstract void doInit();
-  protected abstract void doComplete();
-
-  private void allocateBuilder() {
-    if (myBuilder == null) {
-      myBuilder = StringBuilderSpinAllocator.alloc();
-    }
-  }
-
-  private void releaseBuilder() {
-    if (myBuilder != null) {
-      StringBuilderSpinAllocator.dispose(myBuilder);
-      myBuilder = null;
-    }
-  }
 }
