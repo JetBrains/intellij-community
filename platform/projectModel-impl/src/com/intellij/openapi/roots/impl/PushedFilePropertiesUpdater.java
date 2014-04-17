@@ -92,7 +92,12 @@ public class PushedFilePropertiesUpdater {
           public void fileCreated(@NotNull final VirtualFileEvent event) {
             final VirtualFile file = event.getFile();
             final FilePropertyPusher[] pushers = file.isDirectory() ? myPushers : myFilePushers;
-            pushRecursively(file, pushers);
+            if (event.isFromRefresh()) {
+              schedulePushRecursively(file, pushers);
+            } else {
+              // push synchronously to avoid entering dumb mode in the middle of a meaningful write action
+              doPushRecursively(file, pushers, ProjectRootManager.getInstance(myProject).getFileIndex());
+            }
           }
 
           @Override
@@ -116,7 +121,7 @@ public class PushedFilePropertiesUpdater {
 
             @Override
             public void pushRecursively(VirtualFile file, Project project) {
-              PushedFilePropertiesUpdater.this.pushRecursively(file, pusher);
+              PushedFilePropertiesUpdater.this.schedulePushRecursively(file, pusher);
             }
           });
         }
@@ -124,7 +129,7 @@ public class PushedFilePropertiesUpdater {
     });
   }
 
-  private void pushRecursively(final VirtualFile dir, final FilePropertyPusher... pushers) {
+  private void schedulePushRecursively(final VirtualFile dir, final FilePropertyPusher... pushers) {
     if (pushers.length == 0) return;
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     queueTask(new DumbModeTask() {
