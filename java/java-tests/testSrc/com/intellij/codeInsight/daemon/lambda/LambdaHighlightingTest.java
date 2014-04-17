@@ -78,6 +78,7 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testAmbiguitySpecificReturn() { doTest(true); }
   public void testFunctionalInterfaceAnnotation() { doTest(); }
   public void testFunctionalInterfaceAnnotation2() { doTest(); }
+  public void testFunctionalInterfaceAnnotation3() { doTest(); }
   public void testAmbiguityReturnValueResolution() { doTest(); }
   public void testAmbiguityReturnValueResolution1() { doTest(); }
   public void testAmbiguityReturnValueResolution2() { doTest(true); }
