@@ -10,14 +10,6 @@ import com.intellij.psi.xml.*;
 %unicode
 
 %{
-  private IElementType elTokenType = XmlTokenType.XML_DATA_CHARACTERS;
-  private IElementType elTokenType2 = XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN;
-
-  public void setElTypes(IElementType _elTokenType,IElementType _elTokenType2) {
-    elTokenType = _elTokenType;
-    elTokenType2 = _elTokenType2;
-  }
-
   public _HtmlLexer() {
     this((java.io.Reader)null);
   }
@@ -60,7 +52,7 @@ DTD_REF= "\"" [^\"]* "\"" | "'" [^']* "'"
 DOCTYPE= "<!" (D|d)(O|o)(C|c)(T|t)(Y|y)(P|p)(E|e)
 HTML= (H|h)(T|t)(M|m)(L|l)
 PUBLIC= (P|p)(U|u)(B|b)(L|l)(I|i)(C|c)
-EL_EMBEDDMENT="${" [^\}]* "}"
+EL_EMBEDDMENT="${" [^<\}]* "}"
 
 END_COMMENT="--"[ \n\r\t\f]*">"
 
@@ -115,10 +107,6 @@ CONDITIONAL_COMMENT_CONDITION=({ALPHA})({ALPHA}|{WHITE_SPACE_CHARS}|{DIGIT}|"."|
   return XmlTokenType.XML_DATA_CHARACTERS;
 }
 
-<YYINITIAL> {EL_EMBEDDMENT} {
-  return elTokenType;
-}
-
 <START_TAG_NAME, END_TAG_NAME> {TAG_NAME} { yybegin(TAG_ATTRIBUTES); return XmlTokenType.XML_NAME; }
 <END_TAG_NAME2> {TAG_NAME_FWT} { return XmlTokenType.XML_NAME; }
 <START_TAG_NAME2> {TAG_NAME_FWT} { yybegin(TAG_CHARACTERS); return XmlTokenType.XML_NAME; }
@@ -133,9 +121,6 @@ CONDITIONAL_COMMENT_CONDITION=({ALPHA})({ALPHA}|{WHITE_SPACE_CHARS}|{DIGIT}|"."|
 
 <ATTRIBUTE_VALUE_START> ">" { yybegin(YYINITIAL); return XmlTokenType.XML_TAG_END; }
 <ATTRIBUTE_VALUE_START> "/>" { yybegin(YYINITIAL); return XmlTokenType.XML_EMPTY_ELEMENT_END; }
- <ATTRIBUTE_VALUE_START> {EL_EMBEDDMENT} {
-  return elTokenType2;
-}
 
 <ATTRIBUTE_VALUE_START> [^ \n\r\t\f'\"\>]([^ \n\r\t\f\>]|(\/[^\>]))* { yybegin(TAG_ATTRIBUTES); return XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN; }
 <ATTRIBUTE_VALUE_START> "\"" { yybegin(ATTRIBUTE_VALUE_DQ); return XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER; }
@@ -144,14 +129,12 @@ CONDITIONAL_COMMENT_CONDITION=({ALPHA})({ALPHA}|{WHITE_SPACE_CHARS}|{DIGIT}|"."|
 <ATTRIBUTE_VALUE_DQ> {
   "\"" { yybegin(TAG_ATTRIBUTES); return XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER; }
   \\\$ { return XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN; }
-  "${" [^\}\"]* "}" { return elTokenType2; }
   [^] { return XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN;}
 }
 
 <ATTRIBUTE_VALUE_SQ> {
   "'" { yybegin(TAG_ATTRIBUTES); return XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER; }
   \\\$ { return XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN; }
-  "${" [^\}\']* "}" { return elTokenType2; }
   [^] { return XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN;}
 }
 
