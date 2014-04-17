@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginNode;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ConcurrencyUtil;
@@ -30,10 +31,11 @@ import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardStep {
-  private static ScheduledExecutorService ourService = ConcurrencyUtil.newSingleScheduledThreadExecutor("FeaturedPlugins");
+  private static ScheduledExecutorService ourService = new ScheduledThreadPoolExecutor(4, ConcurrencyUtil.newNamedThreadFactory("FeaturedPlugins", true, Thread.NORM_PRIORITY));
 
   public CustomizeFeaturedPluginsStepPanel() {
     setLayout(new GridLayout(0, 3, GAP, GAP));
@@ -82,12 +84,71 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
           return size;
         }
       };
+      final CardLayout wrapperLayout = new CardLayout();
+      final JPanel buttonWrapper = new JPanel(wrapperLayout);
       final JButton installButton = new JButton("Install", AllIcons.General.DownloadPlugin);
+      final JProgressBar progressBar = new JProgressBar(0, 100);
+      progressBar.setStringPainted(true);
+      buttonWrapper.add(installButton, "button");
+      buttonWrapper.add(progressBar, "progress");
+      wrapperLayout.show(buttonWrapper, "button");
+
+      final ProgressIndicatorBase indicator = new ProgressIndicatorBase(true) {
+        @Override
+        public void start() {
+          super.start();
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              wrapperLayout.show(buttonWrapper, "progress");
+            }
+          });
+        }
+
+        @Override
+        public void setIndeterminate(boolean indeterminate) {
+          super.setIndeterminate(indeterminate);
+        }
+
+        @Override
+        public void processFinish() {
+          super.processFinish();
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              progressBar.setString("Installed");
+            }
+          });
+        }
+
+        @Override
+        public void setFraction(final double fraction) {
+          super.setFraction(fraction);
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              int value = (int)(100 * fraction + .5);
+              progressBar.setValue(value);
+              progressBar.setString(value + "%");
+            }
+          });
+        }
+
+        @Override
+        public void cancel() {
+          super.cancel();
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              wrapperLayout.show(buttonWrapper, "button");
+            }
+          });
+        }
+      };
       installButton.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          installButton.setEnabled(false);
-          installButton.setText("In progress...");
+          wrapperLayout.show(buttonWrapper, "progress");
           ourService.schedule(new Runnable() {
             @Override
             public void run() {
@@ -95,16 +156,11 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
                 PluginNode node = new PluginNode(descriptor.getPluginId());
                 node.setUrl(descriptor.getUrl());
                 PluginDownloader downloader = PluginDownloader.createDownloader(node);
-                if (downloader.prepareToInstall()) {
-                  downloader.install();
-                  onSuccess();
-                }
-                else {
-                  onFail();
-                }
+                downloader.prepareToInstall(indicator);
+                downloader.install();
+                indicator.processFinish();
               }
               catch (Exception ignored) {
-                ignored.printStackTrace();
                 onFail();
               }
             }
@@ -114,17 +170,8 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
               SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                  installButton.setText("Cannot download plugin");
-                }
-              });
-            }
-
-            void onSuccess() {
-              //noinspection SSBasedInspection
-              SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  installButton.setText("Installed");
+                  wrapperLayout.show(buttonWrapper, "progress");
+                  progressBar.setString("Cannot download plugin");
                 }
               });
             }
@@ -138,7 +185,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       gbc.weighty = 1;
       groupPanel.add(Box.createVerticalGlue(), gbc);
       gbc.weighty = 0;
-      groupPanel.add(installButton, gbc);
+      groupPanel.add(buttonWrapper, gbc);
       gbc.weighty = 1;
       groupPanel.add(Box.createVerticalGlue(), gbc);
       groupPanel.setBorder(BorderFactory.createEmptyBorder(GAP, GAP, GAP, GAP));

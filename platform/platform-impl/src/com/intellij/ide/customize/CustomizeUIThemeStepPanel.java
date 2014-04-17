@@ -57,7 +57,6 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
     if (SystemInfo.isMac) {
       myLafNames.put(DEFAULT, IconLoader.getIcon("/lafs/OSXAqua.png"));
       myLafNames.put(DARCULA, IconLoader.getIcon("/lafs/OSXDarcula.png"));
-      myLafNames.put(INTELLIJ, IconLoader.getIcon("/lafs/WindowsIntelliJ.png"));
     }
     else if (SystemInfo.isWindows) {
       if (PlatformUtils.isIdeaCommunity()) {
@@ -82,6 +81,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
       final String lafName = entry.getKey();
       Icon icon = entry.getValue();
       final JRadioButton radioButton = new JRadioButton(lafName, myDefaultLafName == null);
+      radioButton.setOpaque(false);
       if (myDefaultLafName == null) {
         radioButton.setSelected(true);
         myDefaultFocusedComponent = radioButton;
@@ -93,6 +93,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
           return radioButton.isSelected() ? UIUtil.getListSelectionBackground() : super.getBackground();
         }
       };
+      panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
       panel.setOpaque(true);
       panel.add(radioButton, BorderLayout.NORTH);
       final JLabel label = new JLabel(myColumnMode ? IconUtil.scale(icon, .2) : icon) {

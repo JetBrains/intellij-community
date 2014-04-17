@@ -37,7 +37,6 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
   private static final String MAIN = "main";
   private static final String CUSTOMIZE = "customize";
   private static final int COLS = 3;
-  private final Color myDescriptionForeground = ColorUtil.withAlpha(UIManager.getColor("Label.foreground"), .75);
   private static final TextProvider CUSTOMIZE_TEXT_PROVIDER = new TextProvider() {
     @Override
     public String getText() {
@@ -100,13 +99,11 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
           return isGroupEnabled(group);
         }
 
-        //@Override
-        //public Color getForeground() {
-        //  return isGroupEnabled(group)? myDescriptionForeground : myDescriptionDisabledForeground;
-        //}
-
+        @Override
+        public Color getForeground() {
+          return ColorUtil.withAlpha(UIManager.getColor("Label.foreground"), .75);
+        }
       };
-      descriptionLabel.setForeground(myDescriptionForeground);
       groupPanel.add(descriptionLabel, gbc);
       gbc.weighty = 1;
       groupPanel.add(Box.createVerticalGlue(), gbc);
@@ -131,8 +128,12 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
     for (Component component : components) {
       ((JComponent)component).setBorder(
         new CompoundBorder(new CustomLineBorder(ColorUtil.withAlpha(JBColor.foreground(), .2), 0, 0, cursor / 3 < rowCount - 1 ? 1 : 0,
-                                                cursor % COLS != COLS - 1 ? 1 : 0), BorderFactory.createEmptyBorder(GAP, GAP, GAP, GAP))
-      );
+                                                cursor % COLS != COLS - 1 ? 1 : 0) {
+          @Override
+          protected Color getColor() {
+            return ColorUtil.withAlpha(JBColor.foreground(), .2);
+          }
+        }, BorderFactory.createEmptyBorder(GAP, GAP, GAP, GAP)));
       cursor++;
     }
   }
