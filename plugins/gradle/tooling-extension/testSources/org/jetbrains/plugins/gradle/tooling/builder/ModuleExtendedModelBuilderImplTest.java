@@ -50,7 +50,7 @@ public class ModuleExtendedModelBuilderImplTest extends AbstractModelBuilderTest
 
   @Test
   public void testGradleSourcesSetsInterpretation() throws Exception {
-    final int modulesSize = 8;
+    final int modulesSize = 9;
 
     DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getIdeaProject().getModules();
 
@@ -77,6 +77,13 @@ public class ModuleExtendedModelBuilderImplTest extends AbstractModelBuilderTest
             assertEquals(ContainerUtil.newArrayList("src/main/java"), sourceDirectories);
             assertEquals(ContainerUtil.newArrayList("src/main/resources"), resourceDirectories);
             assertEquals(ContainerUtil.newArrayList("src/test/java"), testDirectories);
+            assertEquals(ContainerUtil.newArrayList("src/test/resources"), testResourceDirectories);
+            assertEquals(ContainerUtil.newArrayList(".gradle", "build"), excludeDirectories);
+          }
+          else if (module.getName().equals("moduleWithSourceSetDirBothAsResourceAndGroovy")) {
+            assertEquals(ContainerUtil.newArrayList("src/main/groovy", "src/main/java"), sourceDirectories);
+            assertEquals(ContainerUtil.newArrayList("src/main/resources"), resourceDirectories);
+            assertEquals(ContainerUtil.newArrayList("src/test/groovy", "src/test/java"), testDirectories);
             assertEquals(ContainerUtil.newArrayList("src/test/resources"), testResourceDirectories);
             assertEquals(ContainerUtil.newArrayList(".gradle", "build"), excludeDirectories);
           }
