@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -664,18 +664,14 @@ public abstract class DialogWrapper {
       final Set<JBOptionButton.OptionInfo> infos = eachOptionsButton.getOptionInfos();
       for (final JBOptionButton.OptionInfo eachInfo : infos) {
         if (eachInfo.getMnemonic() >= 0) {
-          Character mnemonic = Character.valueOf((char)eachInfo.getMnemonic());
-          String shortcut = SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast("1.7") ?
-                            "control alt pressed " + mnemonic :
-                            "alt pressed " + mnemonic;
-          final CustomShortcutSet sc = CustomShortcutSet.fromString(shortcut);
+          final char mnemonic = (char)eachInfo.getMnemonic();
           new AnAction() {
             @Override
             public void actionPerformed(AnActionEvent e) {
               final JBOptionButton buttonToActivate = eachInfo.getButton();
               buttonToActivate.showPopup(eachInfo.getAction(), true);
             }
-          }.registerCustomShortcutSet(sc, getPeer().getRootPane());
+          }.registerCustomShortcutSet(MnemonicHelper.createShortcut(mnemonic), getPeer().getRootPane());
         }
       }
     }
