@@ -23,74 +23,63 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class CustomizeKeyboardSchemeStepPanel extends AbstractCustomizeWizardStep {
 
-  private final JToggleButton myMacButton;
-  private final JToggleButton myDefaultButton;
+  private final JPanel myMacPanel;
+  private final JPanel myDefaultPanel;
 
   public CustomizeKeyboardSchemeStepPanel() {//&#8997; alt
     setLayout(new GridLayout(1, 2, GAP, GAP));
-    myMacButton = new JToggleButton();
-    myMacButton.setLayout(new VerticalFlowLayout());
     final JRadioButton macRadioButton =
       new JRadioButton("I've never used " + ApplicationNamesInfo.getInstance().getProductName() + " or am a Mac user");
-    myMacButton.add(macRadioButton);
-    myMacButton.add(new JLabel("<html><body><h3>" + KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP + " keymap</h3>" +
-                               "Adapted for Mac<br><br><table><tr><td colspan=\"2\">EXAMPLES</td></tr>" +
-                               "<tr><td style=\"text-align:right;\">&#8984;N</td><td style=\"text-align:left;\">Generate</td></tr>" +
-                               "<tr><td style=\"text-align:right;\">&#8984;O</td><td style=\"text-align:left;\">Go to class</td></tr>" +
-                               "<tr><td style=\"text-align:right;\">&#8984;&#9003;</td><td style=\"text-align:left;\">Delete line</td></tr>" +
-                               "</table></body></html>"
-    ));
-
-    add(myMacButton);
-    myDefaultButton = new JToggleButton();
-    myDefaultButton.setLayout(new VerticalFlowLayout());
-    final JRadioButton defaultRadioButton =
-      new JRadioButton("I used " + ApplicationNamesInfo.getInstance().getProductName() + " before or am a Windows user");
-    myDefaultButton.add(defaultRadioButton);
-    myDefaultButton.add(new JLabel("<html><body><h3>" + KeymapManager.MAC_OS_X_KEYMAP + " keymap</h3>" +
-                                   "Default for all platforms<br><br><table><tr><td colspan=\"2\">EXAMPLES</td></tr>" +
-                                   "<tr><td style=\"text-align:right;\">^N</td><td style=\"text-align:left;\">Generate</td></tr>" +
-                                   "<tr><td style=\"text-align:right;\">&#8984;N</td><td style=\"text-align:left;\">Go to class</td></tr>" +
-                                   "<tr><td style=\"text-align:right;\">&#8984;Y</td><td style=\"text-align:left;\">Delete line</td></tr>" +
-                                   "</table></body></html>"
-    ));
-    defaultRadioButton.setOpaque(false);
     macRadioButton.setOpaque(false);
-
-    add(myMacButton);
-    add(myDefaultButton);
-    ButtonGroup group = new ButtonGroup();
-    ButtonGroup subGroup = new ButtonGroup();
-    group.add(myMacButton);
-    group.add(myDefaultButton);
-    myMacButton.addActionListener(new ActionListener() {
+    myMacPanel = createBigButtonPanel(new VerticalFlowLayout(), macRadioButton, new Runnable() {
       @Override
-      public void actionPerformed(ActionEvent e) {
-        macRadioButton.setSelected(myMacButton.isSelected());
+      public void run() {
         StartupUtil.setMyWizardMacKeymap(KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP);
       }
     });
-    myDefaultButton.addActionListener(new ActionListener() {
+    String style = "<style type=\"text/css\">" +
+    "body {margin-left:"+ GAP +"px; border:none;padding:0px;}"+
+    "table {margin:0px; cell-padding:0px; border:none;}"+
+    "</style>";
+
+    myMacPanel.add(macRadioButton);
+    myMacPanel.add(
+      new JLabel("<html><head>"+style+"</head><body><h3>" + KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP + " keymap</h3>" +
+                 "Adapted for Mac<br><br><table><tr><td align=\"left\" colspan=\"2\">EXAMPLES</td></tr>" +
+                 "<tr><td style=\"text-align:right;\">&#8984;N</td><td style=\"text-align:left;\">Generate</td></tr>" +
+                 "<tr><td style=\"text-align:right;\">&#8984;O</td><td style=\"text-align:left;\">Go to class</td></tr>" +
+                 "<tr><td style=\"text-align:right;\">&#8984;&#9003;</td><td style=\"text-align:left;\">Delete line</td></tr>" +
+                 "</table></body></html>"
+      ));
+
+    add(myMacPanel);
+    final JRadioButton defaultRadioButton =
+      new JRadioButton("I used " + ApplicationNamesInfo.getInstance().getProductName() + " before or am a Windows user");
+    defaultRadioButton.setOpaque(false);
+    myDefaultPanel = createBigButtonPanel(new VerticalFlowLayout(),defaultRadioButton, new Runnable() {
       @Override
-      public void actionPerformed(ActionEvent e) {
-        defaultRadioButton.setSelected(myDefaultButton.isSelected());
+      public void run() {
         StartupUtil.setMyWizardMacKeymap(KeymapManager.MAC_OS_X_KEYMAP);
       }
-    });
-    subGroup.add(macRadioButton);
-    subGroup.add(defaultRadioButton);
-    myDefaultButton.setSelected(true);
-    defaultRadioButton.setSelected(true);
-  }
+    } );
+    myDefaultPanel.add(defaultRadioButton);
+    myDefaultPanel.add(new JLabel("<html><head>" + style + "</head><body><h3>" + KeymapManager.MAC_OS_X_KEYMAP + " keymap</h3>" +
+                                  "Default for all platforms<br><br><table><tr><td align=\"left\" colspan=\"2\">EXAMPLES</td></tr>" +
+                                  "<tr><td style=\"text-align:right;\">^N</td><td style=\"text-align:left;\">Generate</td></tr>" +
+                                  "<tr><td style=\"text-align:right;\">&#8984;N</td><td style=\"text-align:left;\">Go to class</td></tr>" +
+                                  "<tr><td style=\"text-align:right;\">&#8984;Y</td><td style=\"text-align:left;\">Delete line</td></tr>" +
+                                  "</table></body></html>"
+    ));
 
-  @Override
-  Component getDefaultFocusedComponent() {
-    return myMacButton.isSelected() ? myMacButton : myDefaultButton;
+    add(myMacPanel);
+    add(myDefaultPanel);
+    ButtonGroup group = new ButtonGroup();
+    group.add(macRadioButton);
+    group.add(defaultRadioButton);
+    defaultRadioButton.setSelected(true);
   }
 
   @Override

@@ -15,8 +15,16 @@
  */
 package com.intellij.ide.customize;
 
+import com.intellij.ui.ClickListener;
+import com.intellij.ui.ColorUtil;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.MouseEvent;
 
 public abstract class AbstractCustomizeWizardStep extends JPanel {
   protected static final int GAP = 20;
@@ -26,6 +34,35 @@ public abstract class AbstractCustomizeWizardStep extends JPanel {
   abstract String getHTMLHeader();
 
   abstract String getHTMLFooter();
+
+  private static Color getSelectionBackground() {
+    return ColorUtil.mix(UIUtil.getListSelectionBackground(), UIUtil.getLabelBackground(), .75);
+  }
+
+  protected static JPanel createBigButtonPanel(LayoutManager layout, final JToggleButton anchorButton, final Runnable action) {
+    final JPanel panel = new JPanel(layout) {
+      @Override
+      public Color getBackground() {
+        return anchorButton.isSelected() ? getSelectionBackground() : super.getBackground();
+      }
+    };
+    panel.setOpaque(true);
+    new ClickListener() {
+      @Override
+      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
+        anchorButton.setSelected(true);
+        action.run();
+        return true;
+      }
+    }.installOn(panel);
+    anchorButton.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        panel.repaint();
+      }
+    });
+    return panel;
+  }
 
   Component getDefaultFocusedComponent() {
     return null;

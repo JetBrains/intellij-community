@@ -16,7 +16,6 @@
 package com.intellij.ide.customize;
 
 import com.intellij.CommonBundle;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginNode;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -86,7 +85,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       };
       final CardLayout wrapperLayout = new CardLayout();
       final JPanel buttonWrapper = new JPanel(wrapperLayout);
-      final JButton installButton = new JButton("Install", AllIcons.General.DownloadPlugin);
+      final JButton installButton = new JButton("Install");
       final JProgressBar progressBar = new JProgressBar(0, 100);
       progressBar.setStringPainted(true);
       buttonWrapper.add(installButton, "button");
@@ -203,7 +202,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
   @Override
   public String getHTMLHeader() {
     return "<html><body><h2>Download featured plugins</h2>" +
-           "We have a few plugins in our repository that most users like to download." +
+           "We have a few plugins in our repository that most users like to download. " +
            "Perhaps, you need them too?</body></html>";
   }
 

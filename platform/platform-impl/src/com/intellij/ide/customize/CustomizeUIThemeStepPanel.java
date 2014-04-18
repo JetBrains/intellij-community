@@ -24,16 +24,14 @@ import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.ClickListener;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -44,7 +42,6 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
   private static final String INTELLIJ = "IntelliJ";
   private static final String ALLOY = "Alloy. IDEA Theme";
   private static final String GTK = "GTK+";
-  private Component myDefaultFocusedComponent;
   private boolean myInitial = true;
   private boolean myColumnMode;
   private JLabel myPreviewLabel;
@@ -84,17 +81,15 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
       radioButton.setOpaque(false);
       if (myDefaultLafName == null) {
         radioButton.setSelected(true);
-        myDefaultFocusedComponent = radioButton;
         myDefaultLafName = lafName;
       }
-      final JPanel panel = new JPanel(new BorderLayout(10, 10)) {
+      final JPanel panel = createBigButtonPanel(new BorderLayout(10, 10), radioButton, new Runnable() {
         @Override
-        public Color getBackground() {
-          return radioButton.isSelected() ? UIUtil.getListSelectionBackground() : super.getBackground();
+        public void run() {
+          applyLaf(lafName, CustomizeUIThemeStepPanel.this);
         }
-      };
+      });
       panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-      panel.setOpaque(true);
       panel.add(radioButton, BorderLayout.NORTH);
       final JLabel label = new JLabel(myColumnMode ? IconUtil.scale(icon, .2) : icon) {
         @Override
@@ -104,16 +99,8 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
           return size;
         }
       };
-
+      label.setVerticalAlignment(SwingConstants.TOP);
       panel.add(label, BorderLayout.CENTER);
-      new ClickListener(){
-        @Override
-        public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-          radioButton.setSelected(true);
-          applyLaf(lafName, CustomizeUIThemeStepPanel.this);
-          return true;
-        }
-      }.installOn(label);
       radioButton.addItemListener(new ItemListener() {
         @Override
         public void itemStateChanged(ItemEvent e) {
@@ -135,11 +122,6 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
     }
     applyLaf(myDefaultLafName, this);
     myInitial = false;
-  }
-
-  @Override
-  Component getDefaultFocusedComponent() {
-    return myDefaultFocusedComponent;
   }
 
   @Override
