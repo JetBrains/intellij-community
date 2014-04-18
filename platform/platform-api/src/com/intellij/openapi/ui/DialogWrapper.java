@@ -665,15 +665,10 @@ public abstract class DialogWrapper {
       for (final JBOptionButton.OptionInfo eachInfo : infos) {
         if (eachInfo.getMnemonic() >= 0) {
           Character mnemonic = Character.valueOf((char)eachInfo.getMnemonic());
-          String altMnemonic = "alt pressed " + mnemonic;
-          String ctrlAltMnemonic = "control alt pressed " + mnemonic;
-          final CustomShortcutSet sc;
-          if (SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast("1.7")) {
-            sc = CustomShortcutSet.fromString(altMnemonic, ctrlAltMnemonic);
-          }
-          else {
-            sc = CustomShortcutSet.fromString(altMnemonic);
-          }
+          String shortcut = SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast("1.7") ?
+                            "control alt pressed " + mnemonic :
+                            "alt pressed " + mnemonic;
+          final CustomShortcutSet sc = CustomShortcutSet.fromString(shortcut);
           new AnAction() {
             @Override
             public void actionPerformed(AnActionEvent e) {
