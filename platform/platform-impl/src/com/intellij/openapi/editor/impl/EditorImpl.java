@@ -68,10 +68,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.GuiUtils;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.LightweightHint;
-import com.intellij.ui.SideBorder;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
@@ -140,7 +137,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final boolean HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK =
     Boolean.parseBoolean(System.getProperty("idea.honor.camel.humps.on.triple.click"));
   private static final Key<BufferedImage> BUFFER = Key.create("buffer");
-  public static final JBColor CURSOR_FOREGROUND = new JBColor(Color.white, Color.black);
+  public static final JBColor CURSOR_FOREGROUND = new JBColor(Gray._255, Gray._0);
   @NotNull private final DocumentEx myDocument;
 
   private final JPanel myPanel;
@@ -383,7 +380,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     };
 
     ((MarkupModelEx)DocumentMarkupModel.forDocument(myDocument, myProject, true)).addMarkupModelListener(myCaretModel, markupModelListener);
-    ((MarkupModelEx)getMarkupModel()).addMarkupModelListener(myCaretModel, markupModelListener);
+    getMarkupModel().addMarkupModelListener(myCaretModel, markupModelListener);
 
     myDocument.addDocumentListener(myFoldingModel, myCaretModel);
     myDocument.addDocumentListener(myCaretModel, myCaretModel);
@@ -2915,7 +2912,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         for (int i = 0; i < myCount; i++) {
           if (!Comparing.equal(color[i], currentColor)) {
             currentColor = color[i];
-            g.setColor(currentColor != null ? currentColor : Color.black);
+            g.setColor(currentColor != null ? currentColor : JBColor.black);
           }
 
           drawChars(g, data[i], starts[i], ends[i], x[i], y[i]);
@@ -4467,7 +4464,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     //myEditorComponent.setOpaque(true);
   }
 
-  private class CaretRectangle {
+  private static class CaretRectangle {
     private final Point myPoint;
     private final int myWidth;
     private final Caret myCaret;
@@ -4588,7 +4585,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       else {
         Color caretColor = myScheme.getColor(EditorColors.CARET_COLOR);
-        if (caretColor == null) caretColor = new JBColor(Color.BLACK, Color.WHITE);
+        if (caretColor == null) caretColor = new JBColor(Gray._0, Gray._255);
         g.setColor(caretColor);
         g.fillRect(x, y, width, lineHeight - 1);
         final LogicalPosition startPosition = caret == null ? getCaretModel().getLogicalPosition() : caret.getLogicalPosition();
@@ -5777,7 +5774,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private boolean isToggleCaretEvent(MouseEvent e) {
+  private static boolean isToggleCaretEvent(MouseEvent e) {
     KeymapManager keymapManager = KeymapManager.getInstance();
     if (keymapManager == null) {
       return false;
@@ -6763,7 +6760,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         else {
           g.setColor(UIUtil.getPanelBackground());
           g.drawLine(x, y, x + width, y);
-          g.setColor(new Color(0, 0, 0, 90));
+          g.setColor(Gray._0.withAlpha(90));
           g.drawLine(x, y, x + width, y);
         }
       }
