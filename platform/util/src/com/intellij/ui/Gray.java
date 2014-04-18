@@ -580,7 +580,8 @@ public class Gray extends Color {
     _224, _225, _226, _227, _228, _229, _230, _231, _232, _233, _234, _235, _236, _237, _238, _239,
     _240, _241, _242, _243, _244, _245, _246, _247, _248, _249, _250, _251, _252, _253, _254, _255};
 
-  public static final Color TRANSPARENT = _0.withAlpha(0);
+  @SuppressWarnings("UseJBColor")
+  public static final Color TRANSPARENT = new Color(0,0,0,0);
 
   //public static void main(String[] args) {
   //  for (int i = 0; i < 256; i++) {
