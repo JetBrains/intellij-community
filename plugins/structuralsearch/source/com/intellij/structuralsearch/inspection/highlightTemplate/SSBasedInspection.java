@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2005 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.structuralsearch.inspection.highlightTemplate;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
+import com.intellij.dupLocator.iterators.CountingNodeIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
@@ -29,6 +30,8 @@ import com.intellij.structuralsearch.Matcher;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatcherImpl;
+import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
+import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.Replacer;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
@@ -110,12 +113,14 @@ public class SSBasedInspection extends LocalInspectionTool {
 
       @Override
       public void visitElement(PsiElement element) {
+        if (LexicalNodesFilter.getInstance().accepts(element)) return;
+        final SsrFilteringNodeIterator matchedNodes = new SsrFilteringNodeIterator(element);
         for (Pair<MatchContext, Configuration> pair : contexts) {
           Configuration configuration = pair.second;
           MatchContext context = pair.first;
 
-          if (Matcher.checkIfShouldAttemptToMatch(context, element)) {
-            matcher.processMatchesInElement(context, configuration, element, processor);
+          if (Matcher.checkIfShouldAttemptToMatch(context, matchedNodes)) {
+            matcher.processMatchesInElement(context, configuration, matchedNodes, processor);
           }
         }
       }

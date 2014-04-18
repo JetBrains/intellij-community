@@ -1,6 +1,7 @@
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
+import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
@@ -112,19 +113,36 @@ public class MatcherImpl {
     }
   }
 
-  public static boolean checkIfShouldAttemptToMatch(MatchContext context,PsiElement elt) {
-    CompiledPattern pattern = context.getPattern();
-    PsiElement element = pattern.getNodes().current();
-    MatchingHandler matchingHandler = pattern.getHandler(element);
-    return matchingHandler != null && matchingHandler.canMatch(element, elt);
+  public static boolean checkIfShouldAttemptToMatch(MatchContext context, SsrFilteringNodeIterator matchedNodes) {
+    final CompiledPattern pattern = context.getPattern();
+    final NodeIterator patternNodes = pattern.getNodes();
+    try {
+      while (patternNodes.hasNext()) {
+        final PsiElement patternNode = patternNodes.current();
+        final PsiElement matchedNode = matchedNodes.current();
+        if (matchedNode == null) {
+          return false;
+        }
+        final MatchingHandler matchingHandler = pattern.getHandler(patternNode);
+        if (matchingHandler == null || !matchingHandler.canMatch(patternNode, matchedNode)) {
+          return false;
+        }
+        matchedNodes.advance();
+        patternNodes.advance();
+      }
+      return true;
+    } finally {
+      patternNodes.reset();
+      matchedNodes.reset();
+    }
   }
 
   public void processMatchesInElement(MatchContext context, Configuration configuration,
-                                      PsiElement element,
+                                      NodeIterator matchedNodes,
                                       PairProcessor<MatchResult, Configuration> processor) {
-    configureOptions(context, configuration, element, processor);
+    configureOptions(context, configuration, matchedNodes.current(), processor);
     context.setShouldRecursivelyMatch(false);
-    visitor.matchContext(new ArrayBackedNodeIterator(new PsiElement[] {element}));
+    visitor.matchContext(matchedNodes);
   }
 
   public void clearContext() {
