@@ -25,9 +25,6 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author Nadya Zabrodina
- */
 public class HgExecutor extends Executor {
 
   private static final String HG_EXECUTABLE_ENV = "IDEA_TEST_HG_EXECUTABLE";
@@ -61,16 +58,24 @@ public class HgExecutor extends Executor {
   }
 
   public static String hg(String command) {
+    return hg(command, false);
+  }
+
+  public static String hg(String command, boolean ignoreNonZeroExitCode) {
     List<String> split = splitCommandInParameters(command);
     split.add(0, HG_EXECUTABLE);
     debug("hg " + command);
-    return run(split, true);
+    return run(split, ignoreNonZeroExitCode);
   }
 
   public static void updateProject() {
     hg("pull");
-    hg("update");
-    hg("merge");
+    hg("update", true);
+    hgMergeWith("");
+  }
+
+  public static void hgMergeWith(@NotNull String mergeWith) {
+    hg("merge " + mergeWith, true);
   }
 
   @NotNull
