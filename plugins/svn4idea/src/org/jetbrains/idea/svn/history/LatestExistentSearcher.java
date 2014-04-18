@@ -15,8 +15,11 @@
  */
 package org.jetbrains.idea.svn.history;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnFileUrlMapping;
@@ -25,10 +28,14 @@ import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.util.Map;
 
 public class LatestExistentSearcher {
+
+  private static final Logger LOG = Logger.getInstance(LatestExistentSearcher.class);
+
   private long myStartNumber;
   private boolean myStartExistsKnown;
   private final SVNURL myUrl;
@@ -67,30 +74,40 @@ public class LatestExistentSearcher {
 
         final String urlRelativeString = myUrl.toString().substring(repRoot.toString().length());
         final SVNRevision startRevision = SVNRevision.create(myStartNumber);
-        myVcs.createLogClient().doLog(existingParent, new String[]{""}, startRevision, startRevision, SVNRevision.HEAD, false, true, 0,
-                       new ISVNLogEntryHandler() {
-                         public void handleLogEntry(final SVNLogEntry logEntry) throws SVNException {
-                           final Map changedPaths = logEntry.getChangedPaths();
-                           for (Object o : changedPaths.values()) {
-                             final SVNLogEntryPath path = (SVNLogEntryPath) o;
-                             if ((path.getType() == 'D') && (urlRelativeString.equals(path.getPath()))) {
-                               latest.set(logEntry.getRevision());
-                               throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE);
-                             }
-                           }
-                         }
-                       });
+        SvnTarget target = SvnTarget.fromURL(existingParent, startRevision);
+        myVcs.getFactory(target).createHistoryClient()
+          .doLog(target, startRevision, SVNRevision.HEAD, false, true, false, 0, null, createHandler(latest, urlRelativeString));
       }
     }
     catch (SVNException e) {
-      //
-    } finally {
+      LOG.info(e);
+    }
+    catch (VcsException e) {
+      LOG.info(e);
+    }
+    finally {
       if (repository != null) {
         repository.closeSession();
       }
     }
 
     return latest.get().longValue();
+  }
+
+  @NotNull
+  private static ISVNLogEntryHandler createHandler(@NotNull final Ref<Long> latest, @NotNull final String urlRelativeString) {
+    return new ISVNLogEntryHandler() {
+      public void handleLogEntry(final SVNLogEntry logEntry) throws SVNException {
+        final Map changedPaths = logEntry.getChangedPaths();
+        for (Object o : changedPaths.values()) {
+          final SVNLogEntryPath path = (SVNLogEntryPath)o;
+          if ((path.getType() == 'D') && (urlRelativeString.equals(path.getPath()))) {
+            latest.set(logEntry.getRevision());
+            throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE);
+          }
+        }
+      }
+    };
   }
 
   public long getLatestExistent() {
