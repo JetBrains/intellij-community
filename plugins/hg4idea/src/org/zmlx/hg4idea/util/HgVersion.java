@@ -56,6 +56,7 @@ public final class HgVersion implements Comparable<HgVersion> {
   public static final HgVersion PARENT_REVISION_TEMPLATES_SUPPORTED = new HgVersion(2, 4, 0);
   public static final HgVersion BRANCH_HEADS_BASE_SERVED_FILE_EXIST = new HgVersion(2, 5, 0);
   public static final HgVersion BRANCH2_FILE_EXIST = new HgVersion(2, 9, 0);
+  public static final HgVersion IGNORE_WHITESPACE_DIFF_IN_ANNOTATIONS = new HgVersion(2, 1, 0);
 
   //see http://selenic.com/pipermail/mercurial-devel/2013-May/051209.html  fixed since 2.7
   private static final HgVersion LARGEFILES_WITH_FOLLOW_SUPPORTED = new HgVersion(2, 7, 0);
@@ -161,6 +162,10 @@ public final class HgVersion implements Comparable<HgVersion> {
 
   public boolean isParentRevisionTemplateSupported() {
     return compareTo(PARENT_REVISION_TEMPLATES_SUPPORTED) >= 0;
+  }
+
+  public boolean isIgnoreWhitespaceDiffInAnnotationsSupported() {
+    return compareTo(IGNORE_WHITESPACE_DIFF_IN_ANNOTATIONS) >= 0;
   }
 
   public boolean hasBranchHeadsBaseServed() {

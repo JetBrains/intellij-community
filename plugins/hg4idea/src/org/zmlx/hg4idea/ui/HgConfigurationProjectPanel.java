@@ -33,6 +33,7 @@ public class HgConfigurationProjectPanel {
 
   private JPanel myMainPanel;
   private JCheckBox myCheckIncomingOutgoingCbx;
+  private JCheckBox myIgnoredWhitespacesInAnnotationsCbx;
   private TextFieldWithBrowseButton myPathSelector;
   private JButton myTestButton;
   private final HgVcs myVcs;
@@ -61,11 +62,14 @@ public class HgConfigurationProjectPanel {
 
   public boolean isModified() {
     boolean executableModified = !getCurrentPath().equals(myProjectSettings.getHgExecutable());
-    return executableModified || myCheckIncomingOutgoingCbx.isSelected() != myProjectSettings.isCheckIncomingOutgoing();
+    return executableModified ||
+           myCheckIncomingOutgoingCbx.isSelected() != myProjectSettings.isCheckIncomingOutgoing() ||
+           myIgnoredWhitespacesInAnnotationsCbx.isSelected() != myProjectSettings.isWhitespacesIgnoredInAnnotations();
   }
 
   public void saveSettings() {
     myProjectSettings.setCheckIncomingOutgoing(myCheckIncomingOutgoingCbx.isSelected());
+    myProjectSettings.setIgnoreWhitespacesInAnnotations(myIgnoredWhitespacesInAnnotationsCbx.isSelected());
     myProjectSettings.setHgExecutable(getCurrentPath());
     myVcs.checkVersion();
   }
@@ -75,7 +79,8 @@ public class HgConfigurationProjectPanel {
   }
 
   public void loadSettings() {
-    myCheckIncomingOutgoingCbx.setSelected(myProjectSettings.isCheckIncomingOutgoing() );
+    myCheckIncomingOutgoingCbx.setSelected(myProjectSettings.isCheckIncomingOutgoing());
+    myIgnoredWhitespacesInAnnotationsCbx.setSelected(myProjectSettings.isWhitespacesIgnoredInAnnotations());
     myPathSelector.setText(myProjectSettings.getGlobalSettings().getHgExecutable());
   }
 
