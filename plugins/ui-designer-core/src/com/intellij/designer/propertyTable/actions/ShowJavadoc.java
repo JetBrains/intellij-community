@@ -66,6 +66,7 @@ public class ShowJavadoc extends AnAction implements IPropertyTableAction {
   private static void setEnabled(RadPropertyTable table, AnActionEvent e, Presentation presentation) {
     Property property = table.getSelectionProperty();
     presentation.setEnabled(property != null &&
+                            !table.isEditing() &&
                             (property.getJavadocElement() != null || !StringUtil.isEmpty(property.getJavadocText())) &&
                             (e == null || e.getProject() != null));
   }
