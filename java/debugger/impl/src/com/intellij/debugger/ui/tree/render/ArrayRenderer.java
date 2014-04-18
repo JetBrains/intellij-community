@@ -123,6 +123,7 @@ public class ArrayRenderer extends NodeRendererImpl{
         for (idx = start; idx <= end; idx++) {
           DebuggerTreeNode arrayItemNode = nodeManager.createNode(descriptorFactory.getArrayItemDescriptor(builder.getParentDescriptor(), array, idx), evaluationContext);
 
+          if (arrayItemNode == null) continue;
           if (ViewsGeneralSettings.getInstance().HIDE_NULL_ARRAY_ELEMENTS && ((ValueDescriptorImpl)arrayItemNode.getDescriptor()).isNull()) continue;
           if(added >= (ENTRIES_LIMIT  + 1)/ 2) break;
           children.add(arrayItemNode);
@@ -135,6 +136,7 @@ public class ArrayRenderer extends NodeRendererImpl{
         for (idx = end; idx >= start; idx--) {
           DebuggerTreeNode arrayItemNode = nodeManager.createNode(descriptorFactory.getArrayItemDescriptor(builder.getParentDescriptor(), array, idx), evaluationContext);
 
+          if (arrayItemNode == null) continue;
           if (ViewsGeneralSettings.getInstance().HIDE_NULL_ARRAY_ELEMENTS && ((ValueDescriptorImpl)arrayItemNode.getDescriptor()).isNull()) continue;
           if(added >= ENTRIES_LIMIT) break;
           childrenTail.add(arrayItemNode);

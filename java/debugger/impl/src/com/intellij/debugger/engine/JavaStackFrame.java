@@ -15,15 +15,42 @@
  */
 package com.intellij.debugger.engine;
 
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.events.DebuggerCommandImpl;
+import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.jdi.DecompiledLocalVariable;
+import com.intellij.debugger.jdi.LocalVariableProxyImpl;
+import com.intellij.debugger.jdi.LocalVariablesUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.debugger.settings.ViewsGeneralSettings;
+import com.intellij.debugger.ui.impl.FrameVariablesTree;
+import com.intellij.debugger.ui.impl.watch.*;
+import com.intellij.debugger.ui.tree.*;
+import com.intellij.debugger.ui.tree.render.ChildrenBuilder;
+import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
+import com.intellij.debugger.ui.tree.render.NodeRenderer;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.frame.XCompositeNode;
-import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.*;
+import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author egor
@@ -32,11 +59,13 @@ public class JavaStackFrame extends XStackFrame {
   private final StackFrameProxyImpl myStackFrameProxy;
   private final DebugProcessImpl myDebugProcess;
   private final XSourcePosition mySourcePosition;
+  private final NodeDescriptorFactoryImpl myNodeManager;
 
   public JavaStackFrame(StackFrameProxyImpl stackFrameProxy, DebugProcessImpl debugProcess) {
     myStackFrameProxy = stackFrameProxy;
     myDebugProcess = debugProcess;
     mySourcePosition = calcSourcePosition();
+    myNodeManager = new NodeDescriptorFactoryImpl(myDebugProcess.getProject());
   }
 
   private final XSourcePosition calcSourcePosition() {
@@ -52,11 +81,17 @@ public class JavaStackFrame extends XStackFrame {
     catch (Throwable e) {
       //TODO: handle
     }
-    SourcePosition position = positionManager.getSourcePosition(location);
-    if (position != null) {
-      return DebuggerUtilsEx.toXSourcePosition(position);
-    }
-    return null;
+    final Location loc = location;
+    return ApplicationManager.getApplication().runReadAction(new Computable<XSourcePosition>() {
+      @Override
+      public XSourcePosition compute() {
+        SourcePosition position = positionManager.getSourcePosition(loc);
+        if (position != null) {
+          return DebuggerUtilsEx.toXSourcePosition(position);
+        }
+        return null;
+      }
+    });
   }
 
   @Nullable
@@ -66,7 +101,177 @@ public class JavaStackFrame extends XStackFrame {
   }
 
   @Override
-  public void computeChildren(@NotNull XCompositeNode node) {
-    super.computeChildren(node);
+  public void computeChildren(@NotNull final XCompositeNode node) {
+    myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+      @Override
+      protected void action() throws Exception {
+        XValueChildrenList children = new XValueChildrenList();
+        DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(myDebugProcess.getProject()).getContext();
+        try {
+          buildVariables(debuggerContext, children);
+        }
+        catch (EvaluateException e) {
+          e.printStackTrace();
+        }
+        node.addChildren(children, true);
+      }
+    });
+  }
+
+  private static boolean myAutoWatchMode = false;
+
+  // copied from FrameVariablesTree
+  private void buildVariables(DebuggerContextImpl debuggerContext, XValueChildrenList children) throws EvaluateException {
+    EvaluationContextImpl evaluationContext = debuggerContext.createEvaluationContext();
+    final SourcePosition sourcePosition = debuggerContext.getSourcePosition();
+    if (sourcePosition == null) {
+      return;
+    }
+
+    try {
+      if (!ViewsGeneralSettings.getInstance().ENABLE_AUTO_EXPRESSIONS && !myAutoWatchMode) {
+        // optimization
+        superBuildVariables(evaluationContext, children);
+      }
+      else {
+        final Map<String, LocalVariableProxyImpl> visibleVariables = FrameVariablesTree.getVisibleVariables(myStackFrameProxy);
+        final EvaluationContextImpl evalContext = evaluationContext;
+        final Pair<Set<String>, Set<TextWithImports>> usedVars =
+          ApplicationManager.getApplication().runReadAction(new Computable<Pair<Set<String>, Set<TextWithImports>>>() {
+            @Override
+            public Pair<Set<String>, Set<TextWithImports>> compute() {
+              return FrameVariablesTree.findReferencedVars(visibleVariables.keySet(), sourcePosition, evalContext);
+            }
+          });
+        // add locals
+        if (myAutoWatchMode) {
+          for (String var : usedVars.first) {
+            final LocalVariableDescriptorImpl descriptor = myNodeManager.getLocalVariableDescriptor(null, visibleVariables.get(var));
+            children.add(new JavaValue(descriptor, evaluationContext));
+            //myChildren.add(myNodeManager.createNode(descriptor, evaluationContext));
+          }
+        }
+        else {
+          superBuildVariables(evaluationContext, children);
+        }
+        // add expressions
+        final EvaluationContextImpl evalContextCopy = evaluationContext.createEvaluationContext(evaluationContext.getThisObject());
+        evalContextCopy.setAutoLoadClasses(false);
+        for (TextWithImports text : usedVars.second) {
+          WatchItemDescriptor descriptor = myNodeManager.getWatchItemDescriptor(null, text, null);
+          children.add(new JavaValue(descriptor, evaluationContext));
+          //myChildren.add(myNodeManager.createNode(descriptor, evalContextCopy));
+        }
+      }
+    }
+    catch (EvaluateException e) {
+      if (e.getCause() instanceof AbsentInformationException) {
+        final StackFrameProxyImpl frame = myStackFrameProxy;
+
+        final Collection<Value> argValues = frame.getArgumentValues();
+        int index = 0;
+        for (Value argValue : argValues) {
+          final ArgumentValueDescriptorImpl descriptor = myNodeManager.getArgumentValueDescriptor(null, index++, argValue, null);
+          children.add(new JavaValue(descriptor, evaluationContext));
+          //final DebuggerTreeNodeImpl variableNode = myNodeManager.createNode(descriptor, evaluationContext);
+          //myChildren.add(variableNode);
+        }
+        //myChildren.add(myNodeManager.createMessageNode(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE));
+        // trying to collect values from variable slots
+        final List<DecompiledLocalVariable> decompiled = FrameVariablesTree.collectVariablesFromBytecode(frame, argValues.size());
+        if (!decompiled.isEmpty()) {
+          try {
+            final Map<DecompiledLocalVariable, Value> values = LocalVariablesUtil.fetchValues(frame.getStackFrame(), decompiled);
+            for (DecompiledLocalVariable var : decompiled) {
+              final Value value = values.get(var);
+              final ArgumentValueDescriptorImpl descriptor = myNodeManager.getArgumentValueDescriptor(null, var.getSlot(), value, var.getName());
+              children.add(new JavaValue(descriptor, evaluationContext));
+              //final DebuggerTreeNodeImpl variableNode = myNodeManager.createNode(descriptor, evaluationContext);
+              //myChildren.add(variableNode);
+            }
+          }
+          catch (Exception ex) {
+            //LOG.info(ex);
+          }
+        }
+      }
+      else {
+        throw e;
+      }
+    }
+  }
+
+  protected void superBuildVariables(final EvaluationContextImpl evaluationContext, XValueChildrenList children) throws EvaluateException {
+    final StackFrameProxyImpl frame = myStackFrameProxy;
+    for (final LocalVariableProxyImpl local : frame.visibleVariables()) {
+      final LocalVariableDescriptorImpl descriptor = myNodeManager.getLocalVariableDescriptor(null, local);
+      children.add(new JavaValue(descriptor, evaluationContext));
+      //final DebuggerTreeNodeImpl variableNode = myNodeManager.createNode(descriptor, evaluationContext);
+      //myChildren.add(variableNode);
+    }
+  }
+
+  private class JavaValue extends XNamedValue {
+    private final ValueDescriptorImpl myValueDescriptor;
+    private final EvaluationContextImpl myEvaluationContext;
+
+    protected JavaValue(ValueDescriptorImpl valueDescriptor, EvaluationContextImpl evaluationContext) {
+      super(valueDescriptor.getName());
+      myValueDescriptor = valueDescriptor;
+      myEvaluationContext = evaluationContext;
+      valueDescriptor.setContext(evaluationContext);
+      myValueDescriptor.updateRepresentation(evaluationContext, DescriptorLabelListener.DUMMY_LISTENER);
+    }
+
+    @Override
+    public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
+      Type type = myValueDescriptor.getType();
+      String typeName = type != null ? type.name() : "";
+      node.setPresentation(null, typeName, myValueDescriptor.getValueText(), myValueDescriptor.isExpandable());
+    }
+
+    @Override
+    public void computeChildren(@NotNull final XCompositeNode node) {
+      myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+        @Override
+        protected void action() throws Exception {
+          final XValueChildrenList children = new XValueChildrenList();
+          final NodeRenderer renderer = myValueDescriptor.getRenderer(myEvaluationContext.getDebugProcess());
+          renderer.buildChildren(myValueDescriptor.getValue(), new ChildrenBuilder() {
+            @Override
+            public NodeDescriptorFactory getDescriptorManager() {
+              return myNodeManager;
+            }
+
+            @Override
+            public NodeManager getNodeManager() {
+              return new NodeManagerImpl(myDebugProcess.getProject(), null) {
+                @Override
+                public DebuggerTreeNodeImpl createMessageNode(String s) {
+                  return null;
+                }
+
+                @Override
+                public DebuggerTreeNodeImpl createNode(NodeDescriptor nodeDescriptor, EvaluationContext evaluationContext) {
+                  if (nodeDescriptor instanceof ValueDescriptorImpl) {
+                    children.add(new JavaValue((ValueDescriptorImpl)nodeDescriptor, (EvaluationContextImpl)evaluationContext));
+                  }
+                  return null;
+                }
+              };
+            }
+
+            @Override
+            public ValueDescriptor getParentDescriptor() {
+              return null;
+            }
+
+            @Override
+            public void setChildren(List<DebuggerTreeNode> children) {
+            }
+          }, myEvaluationContext);
+          node.addChildren(children, true);
+      }});
+    }
   }
 }

@@ -59,6 +59,8 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   private final HashSet<ObjectReference> myKeptReferences = new HashSet<ObjectReference>();
   private EvaluationContextImpl myEvaluationContext = null;
 
+  private volatile JavaExecutionStack myJavaExecutionStack;
+
   SuspendContextImpl(@NotNull DebugProcessImpl debugProcess, int suspendPolicy, int eventVotes, EventSet set) {
     myDebugProcess = debugProcess;
     mySuspendPolicy = suspendPolicy;
@@ -71,6 +73,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     ThreadReferenceProxyImpl threadProxy = myDebugProcess.getVirtualMachineProxy().getThreadReferenceProxy(thread);
     LOG.assertTrue(myThread == null || myThread == threadProxy);
     myThread = threadProxy;
+    myJavaExecutionStack = myThread != null ? new JavaExecutionStack(myThread, myDebugProcess) : null;
   }
 
   protected abstract void resumeImpl();
@@ -227,6 +230,6 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   @Nullable
   @Override
   public XExecutionStack getActiveExecutionStack() {
-    return new JavaExecutionStack(getThread(), myDebugProcess);
+    return myJavaExecutionStack;
   }
 }

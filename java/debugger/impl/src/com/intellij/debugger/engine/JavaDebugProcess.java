@@ -52,6 +52,9 @@ public class JavaDebugProcess extends XDebugProcess {
     process.addDebugProcessListener(new DebugProcessAdapter() {
       @Override
       public void paused(final SuspendContext suspendContext) {
+        //DebugProcessImpl process = (DebugProcessImpl)suspendContext.getDebugProcess();
+        //JdiSuspendContext context = new JdiSuspendContext(process, true);
+        //getSession().positionReached(new JavaSuspendContext(context, PositionManagerImpl.DEBUGGER_VIEW_SUPPORT, null));
         getSession().positionReached((XSuspendContext)suspendContext);
       }
     });

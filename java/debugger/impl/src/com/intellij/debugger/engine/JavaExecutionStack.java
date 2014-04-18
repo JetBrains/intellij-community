@@ -16,10 +16,11 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.xdebugger.frame.XExecutionStack;
-import com.intellij.xdebugger.frame.XStackFrame;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -31,13 +32,13 @@ import java.util.List;
 public class JavaExecutionStack extends XExecutionStack {
   private final ThreadReferenceProxyImpl myThreadProxy;
   private final DebugProcessImpl myDebugProcess;
-  private final XStackFrame myTopFrame;
+  private final JavaStackFrame myTopFrame;
 
-  public JavaExecutionStack(ThreadReferenceProxyImpl threadProxy, DebugProcessImpl debugProcess) {
-    super("stack");
+  public JavaExecutionStack(@NotNull ThreadReferenceProxyImpl threadProxy, @NotNull DebugProcessImpl debugProcess) {
+    super(threadProxy.name());
     myThreadProxy = threadProxy;
     myDebugProcess = debugProcess;
-    XStackFrame topFrame = null;
+    JavaStackFrame topFrame = null;
     try {
       topFrame = new JavaStackFrame(myThreadProxy.frame(0), myDebugProcess);
     }
@@ -49,26 +50,26 @@ public class JavaExecutionStack extends XExecutionStack {
 
   @Nullable
   @Override
-  public XStackFrame getTopFrame() {
+  public JavaStackFrame getTopFrame() {
     return myTopFrame;
   }
 
   @Override
-  public void computeStackFrames(int firstFrameIndex, XStackFrameContainer container) {
-    try {
-      List<JavaStackFrame> frames = new ArrayList<JavaStackFrame>();
-      boolean top = true;
-      for (StackFrameProxyImpl frameProxy : myThreadProxy.frames()) {
-        if (top) {
-          top = false;
-          continue;
+  public void computeStackFrames(int firstFrameIndex, final XStackFrameContainer container) {
+    myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+      @Override
+      protected void action() throws Exception {
+        List<JavaStackFrame> frames = new ArrayList<JavaStackFrame>();
+        boolean top = true;
+        for (StackFrameProxyImpl frameProxy : myThreadProxy.frames()) {
+          if (top) {
+            top = false;
+            continue;
+          }
+          frames.add(new JavaStackFrame(frameProxy, myDebugProcess));
         }
-        frames.add(new JavaStackFrame(frameProxy, myDebugProcess));
+        container.addStackFrames(frames, true);
       }
-      container.addStackFrames(frames, true);
-    }
-    catch (EvaluateException e) {
-      e.printStackTrace();
-    }
+    });
   }
 }
