@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
@@ -35,7 +36,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DefaultConfigLoader {
+
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.branchConfig.DefaultConfigLoader");
+
   @NonNls private static final String DEFAULT_TRUNK_NAME = "trunk";
   @NonNls private static final String DEFAULT_BRANCHES_NAME = "branches";
   @NonNls private static final String DEFAULT_TAGS_NAME = "tags";
@@ -89,11 +92,13 @@ public class DefaultConfigLoader {
     return new ISVNDirEntryHandler() {
       public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
         if (SVNNodeKind.DIR.equals(dirEntry.getKind())) {
-          if (dirEntry.getName().toLowerCase().endsWith(DEFAULT_TRUNK_NAME)) {
-            result.setTrunkUrl(rootPath.appendPath(dirEntry.getName(), false).toString());
+          SVNURL childUrl = rootPath.appendPath(dirEntry.getName(), false);
+
+          if (StringUtil.endsWithIgnoreCase(dirEntry.getName(), DEFAULT_TRUNK_NAME)) {
+            result.setTrunkUrl(childUrl.toString());
           }
           else {
-            result.addBranches(rootPath.appendPath(dirEntry.getName(), false).toString(),
+            result.addBranches(childUrl.toString(),
                                new InfoStorage<List<SvnBranchItem>>(new ArrayList<SvnBranchItem>(0), InfoReliability.defaultValues));
           }
         }
