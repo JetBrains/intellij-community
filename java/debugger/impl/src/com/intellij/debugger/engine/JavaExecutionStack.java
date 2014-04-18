@@ -40,7 +40,10 @@ public class JavaExecutionStack extends XExecutionStack {
     myDebugProcess = debugProcess;
     JavaStackFrame topFrame = null;
     try {
-      topFrame = new JavaStackFrame(myThreadProxy.frame(0), myDebugProcess);
+      StackFrameProxyImpl frame = myThreadProxy.frame(0);
+      if (frame != null) {
+        topFrame = new JavaStackFrame(frame, myDebugProcess);
+      }
     }
     catch (EvaluateException e) {
       e.printStackTrace();

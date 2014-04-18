@@ -56,14 +56,14 @@ public class JavaStackFrame extends XStackFrame {
   private final XSourcePosition mySourcePosition;
   private final NodeDescriptorFactoryImpl myNodeManager;
 
-  public JavaStackFrame(StackFrameProxyImpl stackFrameProxy, DebugProcessImpl debugProcess) {
+  public JavaStackFrame(@NotNull StackFrameProxyImpl stackFrameProxy, @NotNull DebugProcessImpl debugProcess) {
     myStackFrameProxy = stackFrameProxy;
     myDebugProcess = debugProcess;
     mySourcePosition = calcSourcePosition();
     myNodeManager = new NodeDescriptorFactoryImpl(myDebugProcess.getProject());
   }
 
-  private final XSourcePosition calcSourcePosition() {
+  private XSourcePosition calcSourcePosition() {
     final CompoundPositionManager positionManager = myDebugProcess.getPositionManager();
     if (positionManager == null) {
       // process already closed

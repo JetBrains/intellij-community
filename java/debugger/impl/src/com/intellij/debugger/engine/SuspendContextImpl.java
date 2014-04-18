@@ -33,6 +33,8 @@ import com.sun.jdi.request.EventRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -60,6 +62,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   private EvaluationContextImpl myEvaluationContext = null;
 
   private volatile JavaExecutionStack myJavaExecutionStack;
+  private XExecutionStack[] myExecutionStacks;
 
   SuspendContextImpl(@NotNull DebugProcessImpl debugProcess, int suspendPolicy, int eventVotes, EventSet set) {
     myDebugProcess = debugProcess;
@@ -231,5 +234,20 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   @Override
   public XExecutionStack getActiveExecutionStack() {
     return myJavaExecutionStack;
+  }
+
+  @Override
+  public XExecutionStack[] getExecutionStacks() {
+    return myExecutionStacks;
+  }
+
+  public void initExecutionStacks() {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    Collection<XExecutionStack> res = new ArrayList<XExecutionStack>();
+    Collection<ThreadReferenceProxyImpl> threads = getDebugProcess().getVirtualMachineProxy().allThreads();
+    for (ThreadReferenceProxyImpl thread : threads) {
+      res.add(new JavaExecutionStack(thread, myDebugProcess));
+    }
+    myExecutionStacks = res.toArray(new XExecutionStack[res.size()]);
   }
 }

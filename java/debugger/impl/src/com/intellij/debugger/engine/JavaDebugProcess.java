@@ -55,6 +55,7 @@ public class JavaDebugProcess extends XDebugProcess {
         //DebugProcessImpl process = (DebugProcessImpl)suspendContext.getDebugProcess();
         //JdiSuspendContext context = new JdiSuspendContext(process, true);
         //getSession().positionReached(new JavaSuspendContext(context, PositionManagerImpl.DEBUGGER_VIEW_SUPPORT, null));
+        ((SuspendContextImpl)suspendContext).initExecutionStacks();
         getSession().positionReached((XSuspendContext)suspendContext);
       }
     });
