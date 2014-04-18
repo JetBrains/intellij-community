@@ -50,7 +50,7 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
     }
   };
 
-  public static final boolean ourSnapshotMappingsEnabled = SystemProperties.getBooleanProperty("idea.index.snapshot.mappings.enabled", false);
+  public static final boolean ourSnapshotMappingsEnabled = SystemProperties.getBooleanProperty("idea.index.snapshot.mappings.enabled", true);
 
   private final DataExternalizer<Integer> myValueExternalizer = new DataExternalizer<Integer>() {
     @Override
