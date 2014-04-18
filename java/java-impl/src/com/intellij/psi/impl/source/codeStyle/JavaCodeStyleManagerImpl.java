@@ -27,14 +27,11 @@ import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
 import com.intellij.psi.statistics.JavaStatisticsManager;
-import com.intellij.psi.util.PsiElementFilter;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.psi.util.FileTypeUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -309,7 +306,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     return suggestVariableNameByType(type, variableKind, correctKeywords, false);
   }
 
-  private String[] suggestVariableNameByType(PsiType type, final VariableKind variableKind, boolean correctKeywords, boolean skipIndices) {
+  private String[] suggestVariableNameByType(final PsiType type, final VariableKind variableKind, final boolean correctKeywords, boolean skipIndices) {
     String longTypeName = skipIndices ? type.getCanonicalText():getLongTypeName(type);
     CodeStyleSettings.TypeToNameMap map = getMapByVariableKind(variableKind);
     if (map != null && longTypeName != null) {
@@ -322,7 +319,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       }
     }
 
-    Collection<String> suggestions = new LinkedHashSet<String>();
+    final Collection<String> suggestions = new LinkedHashSet<String>();
 
     if (!skipIndices) {
       suggestNamesForCollectionInheritors(type, variableKind, suggestions, correctKeywords);
@@ -334,6 +331,21 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     if (typeName != null) {
       typeName = normalizeTypeName(typeName);
       ContainerUtil.addAll(suggestions, getSuggestionsByName(typeName, variableKind, type instanceof PsiArrayType, correctKeywords));
+    }
+
+    if (!skipIndices && type instanceof PsiClassType) {
+      final PsiClass psiClass = ((PsiClassType)type).resolve();
+      if (psiClass != null && psiClass.getContainingClass() != null) {
+        InheritanceUtil.processSupers(psiClass, false, new Processor<PsiClass>() {
+          @Override
+          public boolean process(PsiClass superClass) {
+            if (PsiTreeUtil.isAncestor(superClass, psiClass, true)) {
+              ContainerUtil.addAll(suggestions, getSuggestionsByName(superClass.getName(), variableKind, false, correctKeywords));
+            }
+            return false;
+          }
+        });
+      }
     }
 
     return ArrayUtil.toStringArray(suggestions);
