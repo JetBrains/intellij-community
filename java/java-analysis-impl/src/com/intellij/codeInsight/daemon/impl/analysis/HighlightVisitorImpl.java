@@ -551,7 +551,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         PsiElement resolved = result.getElement();
 
         if ((!result.isAccessible() || !result.isStaticsScopeCorrect()) &&
-            !HighlightMethodUtil.isDummyConstructorCall(expression, myResolveHelper, list, referenceExpression)) {
+            !HighlightMethodUtil.isDummyConstructorCall(expression, myResolveHelper, list, referenceExpression) &&
+            referenceExpression.getParent() == expression) {
           try {
             myHolder.add(HighlightMethodUtil.checkAmbiguousMethodCallArguments(referenceExpression, results, list, resolved, result, expression, myResolveHelper));
           }
