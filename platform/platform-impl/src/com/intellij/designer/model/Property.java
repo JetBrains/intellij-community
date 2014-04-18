@@ -18,9 +18,11 @@ package com.intellij.designer.model;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.PropertyRenderer;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ui.TextTransferable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.datatransfer.Transferable;
 import java.util.Collections;
 import java.util.List;
 
@@ -122,6 +124,17 @@ public abstract class Property<T extends PropertiesContainer> {
 
   public boolean closeEditorDuringRefresh() {
     return false;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Copy
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
+  @NotNull
+  public Transferable doCopy(@NotNull T container, @NotNull Object commonValue) {
+    return new TextTransferable(commonValue.toString());
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////

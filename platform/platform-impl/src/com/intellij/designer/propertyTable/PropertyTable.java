@@ -22,6 +22,7 @@ import com.intellij.designer.model.PropertyContext;
 import com.intellij.designer.propertyTable.renderers.LabelPropertyRenderer;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -84,7 +85,7 @@ public abstract class PropertyTable extends JBTable {
   private final TableSpeedSearch mySpeedSearch;
 
   private final AbstractTableModel myModel = new PropertyTableModel();
-  private List<PropertiesContainer> myContainers = Collections.emptyList();
+  protected List<PropertiesContainer> myContainers = Collections.emptyList();
   protected List<Property> myProperties = Collections.emptyList();
   protected final Set<String> myExpandedProperties = new HashSet<String>();
 
@@ -636,7 +637,7 @@ public abstract class PropertyTable extends JBTable {
   }
 
   @Nullable
-  private Object getValue(Property property) throws Exception {
+  protected final Object getValue(Property property) throws Exception {
     int size = myContainers.size();
     if (size == 0) {
       return null;
@@ -813,6 +814,15 @@ public abstract class PropertyTable extends JBTable {
       removeEditor();
       myStoppingEditing = false;
     }
+  }
+
+  @Override
+  public void removeEditor() {
+    super.removeEditor();
+    updateEditActions();
+  }
+
+  protected void updateEditActions() {
   }
 
   private boolean setValueAtRow(int row, final Object newValue) {
@@ -1164,6 +1174,13 @@ public abstract class PropertyTable extends JBTable {
         errComponent
           .append(MessageFormat.format("Error getting value: {0}", e.getMessage()), SimpleTextAttributes.ERROR_ATTRIBUTES);
         return errComponent;
+      }
+      finally {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            updateEditActions();
+          }
+        });
       }
     }
 
