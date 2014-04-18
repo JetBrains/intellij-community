@@ -361,6 +361,9 @@ public class PersistentHashMapValueStorage {
   }
 
   private static void writePrevChunkAddress(long prevChunkAddress, long currentChunkAddress, DataOutputStream dataOutputStream) throws IOException {
+    if(currentChunkAddress < prevChunkAddress) {
+      assert false;
+    }
     long diff = currentChunkAddress - prevChunkAddress;
 
     if (diff < Integer.MAX_VALUE || prevChunkAddress == 0)
