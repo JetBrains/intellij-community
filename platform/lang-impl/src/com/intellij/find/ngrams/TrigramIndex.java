@@ -19,10 +19,12 @@
  */
 package com.intellij.find.ngrams;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.ThreadLocalCachedByteArray;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
@@ -39,7 +41,10 @@ import java.util.zip.DeflaterInputStream;
 import java.util.zip.DeflaterOutputStream;
 
 public class TrigramIndex extends ScalarIndexExtension<Integer> implements CustomInputsIndexFileBasedIndexExtension<Integer> {
-  public static final boolean ENABLED = "true".equals(System.getProperty("idea.internal.trigramindex.enabled"));
+  public static final boolean ENABLED = SystemProperties.getBooleanProperty("idea.internal.trigramindex.enabled",
+                                                                            ApplicationManager.getApplication().isInternal() &&
+                                                                            !ApplicationManager.getApplication().isUnitTestMode()
+  );
 
   public static final ID<Integer,Void> INDEX_ID = ID.create("Trigram.Index");
 
