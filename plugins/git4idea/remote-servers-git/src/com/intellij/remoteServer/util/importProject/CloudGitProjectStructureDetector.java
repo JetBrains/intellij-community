@@ -65,13 +65,11 @@ public class CloudGitProjectStructureDetector extends ProjectStructureDetector {
   }
 
   private static void detectApplicationRoot(@NotNull File dir, @NotNull List<DetectedProjectRoot> result) {
-    final File gitDir = new File(dir, GitUtil.DOT_GIT);
-    if (!gitDir.exists()) {
-      return;
-    }
-
     VirtualFile repositoryRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
     if (repositoryRoot == null) {
+      return;
+    }
+    if (GitUtil.findGitDir(repositoryRoot) == null) {
       return;
     }
 
