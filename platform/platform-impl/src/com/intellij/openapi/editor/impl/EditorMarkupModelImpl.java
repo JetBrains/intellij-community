@@ -1254,7 +1254,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                 double cy = 0;
                 double rx = size.width / 10;
                 int ry = myEditor.getLineHeight() * 3 / 2;
-                g2.setPaint(new GradientPaint(0, 0, new Color(255, 255, 255, 75), 0, ry, new Color(255, 255, 255, 10)));
+                g2.setPaint(new GradientPaint(0, 0, Gray._255.withAlpha(75), 0, ry, Gray._255.withAlpha(10)));
                 double pseudoMajorAxis = size.width - rx * 9 / 5;
                 Shape topShape1 = new Ellipse2D.Double(cx - rx - pseudoMajorAxis / 2, cy - ry, 2 * rx, 2 * ry);
                 Shape topShape2 = new Ellipse2D.Double(cx - rx + pseudoMajorAxis / 2, cy - ry, 2 * rx, 2 * ry);
@@ -1264,7 +1264,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                 g2.fill(topArea);
                 Area bottomArea = new Area(s);
                 bottomArea.subtract(topArea);
-                g2.setPaint(new GradientPaint(0, size.height - ry, new Color(0, 0, 0, 10), 0, size.height, new Color(255, 255, 255, 30)));
+                g2.setPaint(new GradientPaint(0, size.height - ry, Gray._0.withAlpha(10), 0, size.height, Gray._255.withAlpha(30)));
                 g2.fill(bottomArea);
               }
             }
