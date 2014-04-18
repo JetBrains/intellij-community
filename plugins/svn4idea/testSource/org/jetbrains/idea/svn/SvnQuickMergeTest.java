@@ -37,10 +37,7 @@ import org.jetbrains.idea.SvnTestCase;
 import org.jetbrains.idea.svn.branchConfig.InfoReliability;
 import org.jetbrains.idea.svn.branchConfig.InfoStorage;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
-import org.jetbrains.idea.svn.dialogs.MergeDialogI;
-import org.jetbrains.idea.svn.dialogs.QuickMerge;
-import org.jetbrains.idea.svn.dialogs.QuickMergeContentsVariants;
-import org.jetbrains.idea.svn.dialogs.WCInfo;
+import org.jetbrains.idea.svn.dialogs.*;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 import org.junit.Before;
@@ -107,9 +104,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     VcsTestUtil.editFileInCommand(myProject, myBranchTree.myS1File, "edited in branch");
     runInAndVerifyIgnoreOutput(myBranchRoot, "ci", "-m", "change in branch", myBranchTree.myS1File.getPath());
 
-    final WCInfo found = getWcInfo();
-    final QuickMerge quickMerge =
-      new QuickMerge(myProject, myBranchUrl, found, SVNPathUtil.tail(myBranchUrl), myWorkingCopyDir);
+    final QuickMerge quickMerge = newQuickMerge(myBranchUrl);
     // by default merges all
     final QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction() {
       @Override
@@ -174,9 +169,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     }
 
     // we should get exactly 2 revisions for selection (copy and change in b2)
-    final WCInfo found = getWcInfo();
-    final QuickMerge quickMerge =
-      new QuickMerge(myProject, myBranchUrl, found, SVNPathUtil.tail(myBranchUrl), myWorkingCopyDir);
+    final QuickMerge quickMerge = newQuickMerge(myBranchUrl);
     // by default merges all
     final AtomicReference<String> selectionError = new AtomicReference<String>();
     final QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction() {
@@ -268,9 +261,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     runInAndVerifyIgnoreOutput(myBranchRoot, "ci", "-m", "change in b2", myBranchTree.myS2File.getPath());
 
     // we should get exactly 2 revisions for selection (copy and change in b2)
-    final WCInfo found = getWcInfo();
-    final QuickMerge quickMerge =
-      new QuickMerge(myProject, myRepoUrl + "/branches/b2", found, SVNPathUtil.tail(myRepoUrl + "/branches/b2"), myWorkingCopyDir);
+    final QuickMerge quickMerge = newQuickMerge(myRepoUrl + "/branches/b2");
     // by default merges all
     final AtomicReference<String> selectionError = new AtomicReference<String>();
     final QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction() {
@@ -344,9 +335,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
       Thread.sleep(10);
     }
 
-    final WCInfo found = getWcInfo();
-    final QuickMerge quickMerge =
-      new QuickMerge(myProject, myBranchUrl, found, SVNPathUtil.tail(myBranchUrl), myWorkingCopyDir);
+    final QuickMerge quickMerge = newQuickMerge(myBranchUrl);
     // by default merges all
     final QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction() {
       @Override
@@ -436,9 +425,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     myTree = new SubTree(myWorkingCopyDir); //reload
 
     refreshSvnMappingsSynchronously();
-    final WCInfo found = getWcInfo();
-    final QuickMerge quickMerge =
-      new QuickMerge(myProject, trunkUrl, found, SVNPathUtil.tail(trunkUrl), myWorkingCopyDir);
+    final QuickMerge quickMerge = newQuickMerge(trunkUrl);
     // by default merges all
     final QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction();
     final WaitingTaskDescriptor descriptor = new WaitingTaskDescriptor();
@@ -464,6 +451,12 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     final Change dirChange = myChangeListManager.getChange(myWorkingCopyDir);
     Assert.assertNotNull(dirChange);
     Assert.assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
+  }
+
+  private QuickMerge newQuickMerge(@NotNull String sourceUrl) {
+    MergeContext mergeContext = new MergeContext(myVcs, sourceUrl, getWcInfo(), SVNPathUtil.tail(sourceUrl), myWorkingCopyDir);
+
+    return new QuickMerge(mergeContext);
   }
 
   private static class WaitingTaskDescriptor extends TaskDescriptor {

@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Pair;
@@ -32,7 +31,6 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshSessionImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.FilePathByPathComparator;
@@ -69,27 +67,15 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class QuickMerge {
-  private final Project myProject;
-  private final String myBranchName;
-  private final VirtualFile myRoot;
-  private WCInfo myWcInfo;
-  private String mySourceUrl;
-  private SvnVcs myVcs;
-  private final String myTitle;
+
+  @NotNull private final MergeContext myMergeContext;
   private final Continuation myContinuation;
   private QuickMergeInteraction myInteraction;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.dialogs.QuickMerge");
 
-  public QuickMerge(Project project, String sourceUrl, WCInfo wcInfo, final String branchName, final VirtualFile root) {
-    myProject = project;
-    myBranchName = branchName;
-    myRoot = root;
-    myVcs = SvnVcs.getInstance(project);
-    mySourceUrl = sourceUrl;
-    myWcInfo = wcInfo;
-    myTitle = "Merge from " + myBranchName;
-
-    myContinuation = Continuation.createFragmented(myProject, true);
+  public QuickMerge(@NotNull MergeContext mergeContext) {
+    myMergeContext = mergeContext;
+    myContinuation = Continuation.createFragmented(mergeContext.getProject(), true);
   }
 
   private class SourceUrlCorrection extends TaskDescriptor {
@@ -99,12 +85,14 @@ public class QuickMerge {
 
     @Override
     public void run(ContinuationContext continuationContext) {
-      final SVNURL branch = SvnBranchConfigurationManager.getInstance(myProject).getSvnBranchConfigManager().getWorkingBranchWithReload(myWcInfo.getUrl(), myRoot);
-      if (branch != null && (! myWcInfo.getUrl().equals(branch))) {
+      final SVNURL branch =
+        SvnBranchConfigurationManager.getInstance(myMergeContext.getProject()).getSvnBranchConfigManager().getWorkingBranchWithReload(
+          myMergeContext.getWcInfo().getUrl(), myMergeContext.getRoot());
+      if (branch != null && (!myMergeContext.getWcInfo().getUrl().equals(branch))) {
         final String branchString = branch.toString();
-        if (SVNPathUtil.isAncestor(branchString, myWcInfo.getRootUrl())) {
-          final String subPath = SVNPathUtil.getRelativePath(branchString, myWcInfo.getRootUrl());
-          mySourceUrl = SVNPathUtil.append(mySourceUrl, subPath);
+        if (SVNPathUtil.isAncestor(branchString, myMergeContext.getWcInfo().getRootUrl())) {
+          final String subPath = SVNPathUtil.getRelativePath(branchString, myMergeContext.getWcInfo().getRootUrl());
+          myMergeContext.setSourceUrl(SVNPathUtil.append(myMergeContext.getSourceUrl(), subPath));
         }
       }
     }
@@ -122,7 +110,8 @@ public class QuickMerge {
         return;
       }
 
-      if (SVNURLUtil.isAncestor(url, myWcInfo.getUrl()) || SVNURLUtil.isAncestor(myWcInfo.getUrl(), url)) {
+      if (SVNURLUtil.isAncestor(url, myMergeContext.getWcInfo().getUrl()) ||
+          SVNURLUtil.isAncestor(myMergeContext.getWcInfo().getUrl(), url)) {
         finishWithError(continuationContext, "Cannot merge from self", true);
         return;
       }
@@ -137,7 +126,7 @@ public class QuickMerge {
       SVNURL url = null;
 
       try {
-        url = SvnUtil.createUrl(mySourceUrl);
+        url = SvnUtil.createUrl(myMergeContext.getSourceUrl());
       }
       catch (SvnBindException e) {
         finishWithError(continuationContext, e.getMessage(), true);
@@ -155,7 +144,8 @@ public class QuickMerge {
     @Override
     public void run(ContinuationContext context) {
       final List<TaskDescriptor> tasks = new LinkedList<TaskDescriptor>();
-      final boolean supportsMergeinfo = myWcInfo.getFormat().supportsMergeInfo() && SvnUtil.checkRepositoryVersion15(myVcs, mySourceUrl);
+      final boolean supportsMergeinfo = myMergeContext.getWcInfo().getFormat().supportsMergeInfo() && SvnUtil.checkRepositoryVersion15(
+        myMergeContext.getVcs(), myMergeContext.getSourceUrl());
       if (! supportsMergeinfo) {
         insertMergeAll(tasks);
       } else {
@@ -168,7 +158,7 @@ public class QuickMerge {
   @CalledInAwt
   public void execute(@NotNull final QuickMergeInteraction interaction, @NotNull final TaskDescriptor... finalTasks) {
     myInteraction = interaction;
-    myInteraction.setTitle(myTitle);
+    myInteraction.setTitle(myMergeContext.getTitle());
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
@@ -183,13 +173,13 @@ public class QuickMerge {
     myContinuation.addExceptionHandler(VcsException.class, new Consumer<VcsException>() {
       @Override
       public void consume(VcsException e) {
-        myInteraction.showErrors(myTitle, Collections.singletonList(e));
+        myInteraction.showErrors(myMergeContext.getTitle(), Collections.singletonList(e));
       }
     });
     myContinuation.addExceptionHandler(SVNException.class, new Consumer<SVNException>() {
       @Override
       public void consume(SVNException e) {
-        myInteraction.showErrors(myTitle, Collections.singletonList(new VcsException(e)));
+        myInteraction.showErrors(myMergeContext.getTitle(), Collections.singletonList(new VcsException(e)));
       }
     });
     myContinuation.addExceptionHandler(RuntimeException.class, new Consumer<RuntimeException>() {
@@ -215,7 +205,9 @@ public class QuickMerge {
         @Override
         public void consume(Long bunchSize, final MergeDialogI dialog) {
           final LoadRecentBranchRevisions loader =
-            new LoadRecentBranchRevisions(myBranchName, dialog.getLastNumber(), myWcInfo, myVcs, mySourceUrl, bunchSize.intValue());
+            new LoadRecentBranchRevisions(
+              myMergeContext.getBranchName(), dialog.getLastNumber(), myMergeContext.getWcInfo(), myMergeContext.getVcs(),
+              myMergeContext.getSourceUrl(), bunchSize.intValue());
           final TaskDescriptor updater = new TaskDescriptor("", Where.AWT) {
             @Override
             public void run(ContinuationContext context) {
@@ -231,7 +223,7 @@ public class QuickMerge {
               dialog.setEverythingLoaded(true);
             }
           };
-          final Continuation fragmented = Continuation.createFragmented(myProject, true);
+          final Continuation fragmented = Continuation.createFragmented(myMergeContext.getProject(), true);
           fragmented.addExceptionHandler(VcsException.class, new Consumer<VcsException>() {
             @Override
             public void consume(VcsException e) {
@@ -242,7 +234,8 @@ public class QuickMerge {
         }
       };
       final List<CommittedChangeList> lists = myInteraction.showRecentListsForSelection(myLoader.getCommittedChangeLists(),
-        myTitle, myLoader.getHelper(), loader, myLoader.isLastLoaded());
+                                                                                        myMergeContext.getTitle(), myLoader.getHelper(),
+                                                                                        loader, myLoader.isLastLoaded());
 
       if (lists != null && ! lists.isEmpty()){
           final MergerFactory factory = new ChangeListsMergerFactory(lists) {
@@ -253,10 +246,10 @@ public class QuickMerge {
           };
         // fictive branch point, just for
         final SvnBranchPointsCalculator.BranchCopyData copyData =
-          new SvnBranchPointsCalculator.BranchCopyData(myWcInfo.getUrl().toString(), -1, mySourceUrl, -1);
-        context.next(new LocalChangesPrompt(false, lists,
-            new SvnBranchPointsCalculator.WrapperInvertor(false, copyData)),
-            new MergeTask(factory, myTitle));
+          new SvnBranchPointsCalculator.BranchCopyData(myMergeContext.getWcInfo().getUrl().toString(), -1, myMergeContext.getSourceUrl(),
+                                                       -1);
+        context.next(new LocalChangesPrompt(false, lists, new SvnBranchPointsCalculator.WrapperInvertor(false, copyData)),
+                     new MergeTask(factory, myMergeContext.getTitle()));
       } else {
         context.cancelEverything();
       }
@@ -277,7 +270,9 @@ public class QuickMerge {
         return;
       }
       if (QuickMergeContentsVariants.showLatest == variant) {
-        final LoadRecentBranchRevisions loader = new LoadRecentBranchRevisions(myBranchName, -1, myWcInfo, myVcs, mySourceUrl);
+        final LoadRecentBranchRevisions loader =
+          new LoadRecentBranchRevisions(myMergeContext.getBranchName(), -1, myMergeContext.getWcInfo(), myMergeContext
+            .getVcs(), myMergeContext.getSourceUrl());
         final ShowRecentInDialog dialog = new ShowRecentInDialog(loader);
         context.next(loader, dialog);
         return;
@@ -285,14 +280,15 @@ public class QuickMerge {
 
       final MergeCalculator calculator;
       try {
-        calculator = new MergeCalculator(myWcInfo, mySourceUrl, myBranchName);
+        calculator = new MergeCalculator(myMergeContext.getWcInfo(), myMergeContext.getSourceUrl(), myMergeContext.getBranchName());
       }
       catch (VcsException e) {
         finishWithError(context, e.getMessage(), true);
         return;
       }
-      context.next(myVcs.getSvnBranchPointsCalculator().getFirstCopyPointTask(
-        myWcInfo.getRepositoryRoot(), myWcInfo.getRootUrl(), mySourceUrl, calculator), calculator);
+      context.next(myMergeContext.getVcs().getSvnBranchPointsCalculator()
+                     .getFirstCopyPointTask(myMergeContext.getWcInfo().getRepositoryRoot(), myMergeContext.getWcInfo().getRootUrl(),
+                                            myMergeContext.getSourceUrl(), calculator), calculator);
     }
   }
 
@@ -303,10 +299,10 @@ public class QuickMerge {
   }
 
   private boolean checkForSwitchedRoots() {
-    final List<WCInfo> infoList = myVcs.getAllWcInfos();
+    final List<WCInfo> infoList = myMergeContext.getVcs().getAllWcInfos();
     boolean switchedFound = false;
     for (WCInfo wcInfo : infoList) {
-      if (FileUtil.isAncestor(new File(myWcInfo.getPath()), new File(wcInfo.getPath()), true)
+      if (FileUtil.isAncestor(new File(myMergeContext.getWcInfo().getPath()), new File(wcInfo.getPath()), true)
           && NestedCopyType.switched.equals(wcInfo.getType())) {
         switchedFound = true;
         break;
@@ -349,7 +345,9 @@ public class QuickMerge {
   private void insertMergeAll(final List<TaskDescriptor> queue) {
     queue.add(new LocalChangesPrompt(true, null, null));
     final MergeAllWithBranchCopyPoint mergeAllExecutor = new MergeAllWithBranchCopyPoint();
-    queue.add(myVcs.getSvnBranchPointsCalculator().getFirstCopyPointTask(myWcInfo.getRepositoryRoot(), mySourceUrl, myWcInfo.getRootUrl(), mergeAllExecutor));
+    queue.add(myMergeContext.getVcs().getSvnBranchPointsCalculator()
+                .getFirstCopyPointTask(myMergeContext.getWcInfo().getRepositoryRoot(), myMergeContext.getSourceUrl(),
+                                       myMergeContext.getWcInfo().getRootUrl(), mergeAllExecutor));
     queue.add(mergeAllExecutor);
   }
 
@@ -387,13 +385,13 @@ public class QuickMerge {
         return;
       }
       final boolean reintegrate = invertor.isInvertedSense();
-      if (reintegrate && (! myInteraction.shouldReintegrate(mySourceUrl, invertor.inverted().getTarget()))) {
+      if (reintegrate && (!myInteraction.shouldReintegrate(myMergeContext.getSourceUrl(), invertor.inverted().getTarget()))) {
         context.cancelEverything();
         return;
       }
       final MergerFactory mergerFactory = createBranchMergerFactory(reintegrate, invertor);
 
-      final String title = "Merging all from " + myBranchName + (reintegrate ? " (reintegrate)" : "");
+      final String title = "Merging all from " + myMergeContext.getBranchName() + (reintegrate ? " (reintegrate)" : "");
       context.next(new MergeTask(mergerFactory, title));
     }
 
@@ -401,7 +399,8 @@ public class QuickMerge {
                                                     final SvnBranchPointsCalculator.WrapperInvertor invertor) {
       return new MergerFactory() {
         public IMerger createMerger(SvnVcs vcs, File target, UpdateEventHandler handler, SVNURL currentBranchUrl, String branchName) {
-          return new BranchMerger(vcs, currentBranchUrl, myWcInfo.getUrl(), myWcInfo.getPath(), handler, reintegrate, myBranchName,
+          return new BranchMerger(vcs, currentBranchUrl, myMergeContext.getWcInfo().getUrl(), myMergeContext.getWcInfo().getPath(), handler,
+                                  reintegrate, myMergeContext.getBranchName(),
                                   reintegrate ? invertor.getWrapped().getTargetRevision() : invertor.getWrapped().getSourceRevision());
         }
       };
@@ -421,14 +420,16 @@ public class QuickMerge {
     public void run(ContinuationContext context) {
       final SVNURL sourceUrlUrl;
       try {
-        sourceUrlUrl = SVNURL.parseURIEncoded(mySourceUrl);
+        sourceUrlUrl = SVNURL.parseURIEncoded(myMergeContext.getSourceUrl());
       } catch (SVNException e) {
         finishWithError(context, "Cannot merge: " + e.getMessage(), true);
         return;
       }
 
-      final SvnIntegrateChangesTask task = new SvnIntegrateChangesTask(SvnVcs.getInstance(myProject),
-        new WorkingCopyInfo(myWcInfo.getPath(), true), myFactory, sourceUrlUrl, getName(), false, myBranchName);
+      final SvnIntegrateChangesTask task = new SvnIntegrateChangesTask(myMergeContext.getVcs(),
+                                                                       new WorkingCopyInfo(myMergeContext.getWcInfo().getPath(), true),
+                                                                       myFactory, sourceUrlUrl, getName(), false,
+                                                                       myMergeContext.getBranchName());
       final TaskDescriptor taskDescriptor = TaskDescriptor.createForBackgroundableTask(task);
       // merge task will be the next after...
       context.next(taskDescriptor);
@@ -437,8 +438,8 @@ public class QuickMerge {
     }
 
     private void createChangelist(final ContinuationPause context) {
-      final ChangeListManager listManager = ChangeListManager.getInstance(myProject);
-      String name = myTitle;
+      final ChangeListManager listManager = ChangeListManager.getInstance(myMergeContext.getProject());
+      String name = myMergeContext.getTitle();
       int i = 1;
       boolean updateDefaultList = false;
       while (true) {
@@ -456,7 +457,7 @@ public class QuickMerge {
           }
           break;
         }
-        name = myTitle + " (" + i + ")";
+        name = myMergeContext.getTitle() + " (" + i + ")";
         ++ i;
       }
       if (updateDefaultList) {
@@ -559,8 +560,8 @@ public class QuickMerge {
       myNotMerged = new LinkedList<CommittedChangeList>();
       myMergeTitle = "Merge from " + branchName;
 //      if (Boolean.TRUE.equals(Boolean.getBoolean(ourOneShotStrategy))) {
-        myMergeChecker = new OneShotMergeInfoHelper(myProject, myWcInfo, mySourceUrl);
-        ((OneShotMergeInfoHelper) myMergeChecker).prepare();
+      myMergeChecker = new OneShotMergeInfoHelper(myMergeContext.getProject(), myWcInfo, mySourceUrl);
+      ((OneShotMergeInfoHelper)myMergeChecker).prepare();
 /*      } else {
         myMergeChecker = new BranchInfo.MyMergeCheckerWrapper(myWcInfo.getPath(), new BranchInfo(myVcs, myWcInfo.getRepositoryRoot(),
                                                                                                  myWcInfo.getRootUrl(), mySourceUrl,
@@ -591,7 +592,8 @@ public class QuickMerge {
       final SvnBranchPointsCalculator.BranchCopyData data = copyDataValue.getTrue();
       final long sourceLatest = data.getTargetRevision();
 
-      final SvnCommittedChangesProvider committedChangesProvider = (SvnCommittedChangesProvider)myVcs.getCommittedChangesProvider();
+      final SvnCommittedChangesProvider committedChangesProvider =
+        (SvnCommittedChangesProvider)myMergeContext.getVcs().getCommittedChangesProvider();
       final ChangeBrowserSettings settings = new ChangeBrowserSettings();
       settings.CHANGE_AFTER = Long.toString(sourceLatest);
       settings.USE_CHANGE_AFTER_FILTER = true;
@@ -690,19 +692,19 @@ public class QuickMerge {
     @Nullable
     private File getLocalPath(final String relativeToRepoPath) {
       // from source if not inverted
-      final String pathToCheck = SVNPathUtil.append(myWcInfo.getRepositoryRoot(), relativeToRepoPath);
+      final String pathToCheck = SVNPathUtil.append(myMergeContext.getWcInfo().getRepositoryRoot(), relativeToRepoPath);
       final SvnBranchPointsCalculator.BranchCopyData wrapped = myCopyPoint.getWrapped();
       final String relativeInSource =
         SVNPathUtil.getRelativePath(myCopyPoint.isInvertedSense() ? wrapped.getSource() : wrapped.getTarget(), pathToCheck);
       if (StringUtil.isEmptyOrSpaces(relativeInSource)) return null;
-      final File local = new File(myWcInfo.getPath(), relativeInSource);
+      final File local = new File(myMergeContext.getWcInfo().getPath(), relativeInSource);
       return local;
     }
 
     @Override
     public void run(ContinuationContext context) {
       final Intersection intersection;
-      final ChangeListManager listManager = ChangeListManager.getInstance(myProject);
+      final ChangeListManager listManager = ChangeListManager.getInstance(myMergeContext.getProject());
       final List<LocalChangeList> localChangeLists = listManager.getChangeListsCopy();
 
       if (myMergeAll) {
@@ -801,8 +803,10 @@ public class QuickMerge {
                 FileDocumentManager.getInstance().saveAllDocuments();
               }
             }, ModalityState.NON_MODAL);
-          ShelveChangesManager.getInstance(myProject).shelveChanges(changes, myIntersection.getComment(name) + " (auto shelve before merge)",
-                                                                    true);
+          ShelveChangesManager.getInstance(myMergeContext.getProject()).shelveChanges(changes, myIntersection.getComment(name) +
+                                                                                               " (auto shelve before merge)",
+                                                                                      true
+          );
           session.addAllFiles(ChangesUtil.getFilesFromChanges(changes));
         }
         catch (IOException e) {
