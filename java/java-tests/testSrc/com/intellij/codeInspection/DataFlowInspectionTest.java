@@ -179,6 +179,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testConstantDoubleComparisons() { doTest(); }
+  public void testInherentNumberRanges() { doTest(); }
 
   public void testMutableNullableFieldsTreatment() { doTest(); }
   public void testMutableVolatileNullableFieldsTreatment() { doTest(); }

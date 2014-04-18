@@ -114,13 +114,14 @@ public class DfaRelationValue extends DfaValue {
       return result;
     }
 
-    private static IElementType getSymmetricOperation(IElementType sign) {
-      if (LT == sign) return GT;
-      if (GE == sign) return LE;
-      if (GT == sign) return LT;
-      if (LE == sign) return GE;
-      return sign;
-    }
+  }
+
+  public static IElementType getSymmetricOperation(IElementType sign) {
+    if (LT == sign) return GT;
+    if (GE == sign) return LE;
+    if (GT == sign) return LT;
+    if (LE == sign) return GE;
+    return sign;
   }
 
   private DfaRelationValue(DfaValueFactory factory) {
