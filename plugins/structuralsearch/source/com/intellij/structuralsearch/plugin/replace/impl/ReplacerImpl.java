@@ -221,9 +221,9 @@ public class ReplacerImpl {
                 .commitDocument(FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile()));
             }
 
-            final int paretOffset = elementParent.getTextRange().getStartOffset();
+            final int parentOffset = elementParent.getTextRange().getStartOffset();
 
-            codeStyleManager.reformatRange(containingFile, paretOffset, paretOffset + elementParent.getTextLength(), true);
+            codeStyleManager.reformatRange(containingFile, parentOffset, parentOffset + elementParent.getTextLength(), true);
           }
         }
       }
