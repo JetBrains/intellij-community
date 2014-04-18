@@ -620,6 +620,11 @@ interface TxANotAnno {}
     checkPreferredItems 0, 'MyEnum.BAR', 'MyEnum', 'MyEnum.FOO'
   }
 
+  public void testPreferClassesOfExpectedClassType() {
+    myFixture.addClass "class XException extends Exception {}"
+    checkPreferredItems 0, 'XException', 'XClass', 'XIntf'
+  }
+
   public void testGlobalStaticMemberStats() {
     configureNoCompletion(getTestName(false) + ".java")
     myFixture.complete(CompletionType.BASIC, 2)

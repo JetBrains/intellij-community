@@ -310,7 +310,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     final IElementType opSign = instruction.getOperationSign();
     if (opSign != null) {
-      DfaInstructionState[] states = handleConstantComparison(instruction, runner, memState, dfaRight, dfaLeft);
+      DfaInstructionState[] states = handleConstantComparison(instruction, runner, memState, dfaRight, dfaLeft, opSign);
       if (states == null) {
         states = handleRelationBinop(instruction, runner, memState, dfaRight, dfaLeft);
       }
@@ -422,8 +422,21 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                                                 DataFlowRunner runner,
                                                                 DfaMemoryState memState,
                                                                 DfaValue dfaRight,
-                                                                DfaValue dfaLeft) {
-    final IElementType opSign = instruction.getOperationSign();
+                                                                DfaValue dfaLeft, IElementType opSign) {
+    if (dfaRight instanceof DfaConstValue && dfaLeft instanceof DfaVariableValue) {
+      PsiType varType = ((DfaVariableValue)dfaLeft).getVariableType();
+      Object value = ((DfaConstValue)dfaRight).getValue();
+      if (varType instanceof PsiPrimitiveType && value instanceof Number) {
+        DfaInstructionState[] result = checkTypeRanges(instruction, runner, memState, opSign, varType, ((Number)value).longValue());
+        if (result != null) {
+          return result;
+        }
+      }
+    }
+    if (dfaRight instanceof DfaVariableValue && dfaLeft instanceof DfaConstValue) {
+      return handleConstantComparison(instruction, runner, memState, dfaLeft, dfaRight, DfaRelationValue.getSymmetricOperation(opSign));
+    }
+
     if (EQEQ != opSign && NE != opSign ||
         !(dfaLeft instanceof DfaConstValue) || !(dfaRight instanceof DfaConstValue)) {
       return null;
@@ -431,13 +444,49 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     boolean negated = (NE == opSign) ^ (DfaMemoryStateImpl.isNaN(dfaLeft) || DfaMemoryStateImpl.isNaN(dfaRight));
     if (dfaLeft == dfaRight ^ negated) {
-      memState.push(runner.getFactory().getConstFactory().getTrue());
-      instruction.setTrueReachable();
+      return alwaysTrue(instruction, runner, memState);
     }
-    else {
-      memState.push(runner.getFactory().getConstFactory().getFalse());
-      instruction.setFalseReachable();
+    return alwaysFalse(instruction, runner, memState);
+  }
+
+  private static DfaInstructionState[] checkTypeRanges(BinopInstruction instruction,
+                                                       DataFlowRunner runner,
+                                                       DfaMemoryState memState,
+                                                       IElementType opSign, PsiType varType, long constantValue) {
+    long minValue = varType == PsiType.BYTE ? Byte.MIN_VALUE :
+                    varType == PsiType.SHORT ? Short.MIN_VALUE :
+                    varType == PsiType.INT ? Integer.MIN_VALUE :
+                    varType == PsiType.CHAR ? Character.MIN_VALUE :
+                    Long.MIN_VALUE;
+    long maxValue = varType == PsiType.BYTE ? Byte.MAX_VALUE :
+                    varType == PsiType.SHORT ? Short.MAX_VALUE :
+                    varType == PsiType.INT ? Integer.MAX_VALUE :
+                    varType == PsiType.CHAR ? Character.MAX_VALUE :
+                    Long.MAX_VALUE;
+
+    if (constantValue < minValue || constantValue > maxValue) {
+      if (opSign == EQEQ) return alwaysFalse(instruction, runner, memState);
+      if (opSign == NE) return alwaysTrue(instruction, runner, memState);
     }
+
+    if (opSign == LT && constantValue <= minValue) return alwaysFalse(instruction, runner, memState);
+    if ((opSign == LT || opSign == LE) && constantValue > maxValue) return alwaysTrue(instruction, runner, memState);
+
+    if (opSign == GT && constantValue >= maxValue) return alwaysFalse(instruction, runner, memState);
+    if ((opSign == GT || opSign == GE) && constantValue < minValue) return alwaysTrue(instruction, runner, memState);
+
+    return null;
+  }
+
+  private static DfaInstructionState[] alwaysFalse(BinopInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    memState.push(runner.getFactory().getConstFactory().getFalse());
+    instruction.setFalseReachable();
+    return nextInstruction(instruction, runner, memState);
+  }
+
+  private static DfaInstructionState[] alwaysTrue(BinopInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    memState.push(runner.getFactory().getConstFactory().getTrue());
+    instruction.setTrueReachable();
     return nextInstruction(instruction, runner, memState);
   }
 

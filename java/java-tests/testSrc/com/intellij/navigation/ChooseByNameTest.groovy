@@ -184,7 +184,7 @@ class Intf {
     List<Object> elements = ['empty']
     def semaphore = new Semaphore()
     semaphore.down()
-    popup.scheduleCalcElements(text, false, false, ModalityState.NON_MODAL, { set ->
+    popup.scheduleCalcElements(text, false, ModalityState.NON_MODAL, { set ->
       elements = set as List
       semaphore.up()
     } as Consumer<Set<?>>)

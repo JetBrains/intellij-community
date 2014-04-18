@@ -179,6 +179,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testConstantDoubleComparisons() { doTest(); }
+  public void testInherentNumberRanges() { doTest(); }
 
   public void testMutableNullableFieldsTreatment() { doTest(); }
   public void testMutableVolatileNullableFieldsTreatment() { doTest(); }
@@ -286,7 +287,12 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testNoConfusionWithAnonymousConstantInitializer() { doTest(); }
   public void testForeachOverWildcards() { doTest(); }
   public void testFinalGetter() { doTest(); }
-  
+
+  public void testByteBufferGetter() {
+    myFixture.addClass("package java.nio; public class MappedByteBuffer { public int getInt() {} }");
+    doTest();
+  }
+
   public void testManySequentialIfsNotComplex() { doTest(); }
   public void testManySequentialInstanceofsNotComplex() { doTest(); }
   public void testLongDisjunctionsNotComplex() { doTest(); }

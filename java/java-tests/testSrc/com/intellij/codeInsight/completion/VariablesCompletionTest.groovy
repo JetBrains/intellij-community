@@ -227,4 +227,17 @@ class FooFoo {
     myFixture.assertPreferredCompletionItems 0, 'l', 'nanoTime', 'time'
   }
 
+  public void "test use superclass for inner class variable name suggestion"() {
+    myFixture.configureByText 'a.java', '''
+class FooFoo {
+  { Rectangle2D.Double <caret>x }
+}
+class Rectangle2D {
+  static class Double extends Rectangle2D {}
+}
+'''
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'aDouble', 'rectangle2D'
+  }
+
 }
