@@ -15,6 +15,7 @@
  */
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.util.ThreadLocalCachedIntArray;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
@@ -91,20 +92,52 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
     }
 
     public static void saveInvalidateCommand(final DataOutput out, int inputId) throws IOException {
-      DataInputOutputUtil.writeSINT(out, -inputId);
+      DataInputOutputUtil.writeINT(out, -inputId);
     }
+    private static final ThreadLocalCachedIntArray ourSpareBuffer = new ThreadLocalCachedIntArray();
 
     private void saveImpl(@NotNull DataOutput out, @NotNull final ValueContainer<T> container) throws IOException {
-      DataInputOutputUtil.writeSINT(out, container.size());
+      DataInputOutputUtil.writeINT(out, container.size());
+
       for (final Iterator<T> valueIterator = container.getValueIterator(); valueIterator.hasNext();) {
         final T value = valueIterator.next();
         myExternalizer.save(out, value);
+        ValueContainer.IntIterator ids = container.getInputIdsIterator(value);
+        DataInputOutputUtil.writeINT(out, ids.size());
+        if (ids.size() == 1) {
+          DataInputOutputUtil.writeINT(out, ids.next()); // most common 90% case during index building
+        } else {
+          // serialize positive file ids with delta encoding after sorting numbers via bitset
+          // todo it would be nice to have compressed random access serializable bitset or at least file ids sorted
+          int max = 0, min = Integer.MAX_VALUE;
 
-        final ValueContainer.IntIterator ids = container.getInputIdsIterator(value);
-        DataInputOutputUtil.writeSINT(out, ids.size());
-        while (ids.hasNext()) {
-          final int id = ids.next();
-          DataInputOutputUtil.writeSINT(out, id);
+          while (ids.hasNext()) {
+            final int id = ids.next();
+            max = Math.max(id, max);
+            min = Math.min(id, min);
+          }
+
+          assert min > 0;
+
+          final int offset = (min >> INT_BITS_SHIFT) << INT_BITS_SHIFT;
+          final int bitsLength = ((max - offset) >> INT_BITS_SHIFT) + 1;
+          final int[] bits = ourSpareBuffer.getBuffer(bitsLength);
+          for(int i = 0; i < bitsLength; ++i) bits[i] = 0;
+
+          ids = container.getInputIdsIterator(value);
+          while (ids.hasNext()) {
+            final int id = ids.next() - offset;
+            bits[id >> INT_BITS_SHIFT] |= (1 << (id));
+          }
+
+          int pos = nextSetBit(0, bits, bitsLength);
+          int prev = 0;
+
+          while (pos != -1) {
+            DataInputOutputUtil.writeINT(out, pos + offset - prev);
+            prev = pos + offset;
+            pos = nextSetBit(pos + 1, bits, bitsLength);
+          }
         }
       }
     }
@@ -116,7 +149,7 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
       final ValueContainerImpl<T> valueContainer = new ValueContainerImpl<T>();
 
       while (stream.available() > 0) {
-        final int valueCount = DataInputOutputUtil.readSINT(in);
+        final int valueCount = DataInputOutputUtil.readINT(in);
         if (valueCount < 0) {
           valueContainer.removeAssociatedValue(-valueCount);
           valueContainer.setNeedsCompacting(true);
@@ -124,16 +157,38 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
         else {
           for (int valueIdx = 0; valueIdx < valueCount; valueIdx++) {
             final T value = myExternalizer.read(in);
-            final int idCount = DataInputOutputUtil.readSINT(in);
+            final int idCount = DataInputOutputUtil.readINT(in);
             valueContainer.ensureFileSetCapacityForValue(value, idCount);
+            int prev = 0;
             for (int i = 0; i < idCount; i++) {
-              final int id = DataInputOutputUtil.readSINT(in);
-              valueContainer.addValue(id, value);
+              final int id = DataInputOutputUtil.readINT(in);
+              valueContainer.addValue(prev + id, value);
+              prev += id;
             }
           }
         }
       }
       return valueContainer;
+    }
+
+    private static final int INT_BITS_SHIFT = 5;
+    private static int nextSetBit(int bitIndex, int[] bits, int bitsLength) {
+      int wordIndex = bitIndex >> INT_BITS_SHIFT;
+      if (wordIndex >= bitsLength) {
+        return -1;
+      }
+
+      int word = bits[wordIndex] & (-1 << bitIndex);
+
+      while (true) {
+        if (word != 0) {
+          return (wordIndex << INT_BITS_SHIFT) + Long.numberOfTrailingZeros(word);
+        }
+        if (++wordIndex == bitsLength) {
+          return -1;
+        }
+        word = bits[wordIndex];
+      }
     }
   }
 
