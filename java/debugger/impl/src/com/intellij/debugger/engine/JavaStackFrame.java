@@ -18,7 +18,6 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
@@ -31,18 +30,14 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.ViewsGeneralSettings;
 import com.intellij.debugger.ui.impl.FrameVariablesTree;
 import com.intellij.debugger.ui.impl.watch.*;
-import com.intellij.debugger.ui.tree.*;
-import com.intellij.debugger.ui.tree.render.ChildrenBuilder;
-import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
-import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.*;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
-import com.sun.jdi.Type;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,6 +87,13 @@ public class JavaStackFrame extends XStackFrame {
         return null;
       }
     });
+  }
+
+  @Nullable
+  @Override
+  public XDebuggerEvaluator getEvaluator() {
+    DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(myDebugProcess.getProject()).getContext();
+    return new JavaDebuggerEvaluator(myDebugProcess, context);
   }
 
   @Nullable
@@ -208,70 +210,6 @@ public class JavaStackFrame extends XStackFrame {
       children.add(new JavaValue(descriptor, evaluationContext));
       //final DebuggerTreeNodeImpl variableNode = myNodeManager.createNode(descriptor, evaluationContext);
       //myChildren.add(variableNode);
-    }
-  }
-
-  private class JavaValue extends XNamedValue {
-    private final ValueDescriptorImpl myValueDescriptor;
-    private final EvaluationContextImpl myEvaluationContext;
-
-    protected JavaValue(ValueDescriptorImpl valueDescriptor, EvaluationContextImpl evaluationContext) {
-      super(valueDescriptor.getName());
-      myValueDescriptor = valueDescriptor;
-      myEvaluationContext = evaluationContext;
-      valueDescriptor.setContext(evaluationContext);
-      myValueDescriptor.updateRepresentation(evaluationContext, DescriptorLabelListener.DUMMY_LISTENER);
-    }
-
-    @Override
-    public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
-      Type type = myValueDescriptor.getType();
-      String typeName = type != null ? type.name() : "";
-      node.setPresentation(null, typeName, myValueDescriptor.getValueText(), myValueDescriptor.isExpandable());
-    }
-
-    @Override
-    public void computeChildren(@NotNull final XCompositeNode node) {
-      myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
-        @Override
-        protected void action() throws Exception {
-          final XValueChildrenList children = new XValueChildrenList();
-          final NodeRenderer renderer = myValueDescriptor.getRenderer(myEvaluationContext.getDebugProcess());
-          renderer.buildChildren(myValueDescriptor.getValue(), new ChildrenBuilder() {
-            @Override
-            public NodeDescriptorFactory getDescriptorManager() {
-              return myNodeManager;
-            }
-
-            @Override
-            public NodeManager getNodeManager() {
-              return new NodeManagerImpl(myDebugProcess.getProject(), null) {
-                @Override
-                public DebuggerTreeNodeImpl createMessageNode(String s) {
-                  return null;
-                }
-
-                @Override
-                public DebuggerTreeNodeImpl createNode(NodeDescriptor nodeDescriptor, EvaluationContext evaluationContext) {
-                  if (nodeDescriptor instanceof ValueDescriptorImpl) {
-                    children.add(new JavaValue((ValueDescriptorImpl)nodeDescriptor, (EvaluationContextImpl)evaluationContext));
-                  }
-                  return null;
-                }
-              };
-            }
-
-            @Override
-            public ValueDescriptor getParentDescriptor() {
-              return null;
-            }
-
-            @Override
-            public void setChildren(List<DebuggerTreeNode> children) {
-            }
-          }, myEvaluationContext);
-          node.addChildren(children, true);
-      }});
     }
   }
 }
