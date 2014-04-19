@@ -20,23 +20,28 @@
 package com.intellij.find.ngrams;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.ThreadLocalCachedByteArray;
+import com.intellij.openapi.util.ThreadLocalCachedIntArray;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
-import com.intellij.util.io.*;
-import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.EnumeratorIntegerDescriptor;
+import com.intellij.util.io.KeyDescriptor;
 import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
-import java.util.zip.*;
 
 public class TrigramIndex extends ScalarIndexExtension<Integer> implements CustomInputsIndexFileBasedIndexExtension<Integer> {
   public static final boolean ENABLED = SystemProperties.getBooleanProperty("idea.internal.trigramindex.enabled",
@@ -117,57 +122,43 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> implements Custo
   public boolean hasSnapshotMapping() {
     return true;
   }
-
-  private static final ThreadLocalCachedByteArray spareBufferLocal = new ThreadLocalCachedByteArray();
+  private static final ThreadLocalCachedIntArray spareBufferLocal = new ThreadLocalCachedIntArray();
 
   @NotNull
   @Override
   public DataExternalizer<Collection<Integer>> createExternalizer() {
-    return new InputIndexDataExternalizer<Integer>(getKeyDescriptor(), INDEX_ID) {
+    return new DataExternalizer<Collection<Integer>>() {
       @Override
       public void save(@NotNull DataOutput out, @NotNull Collection<Integer> value) throws IOException {
-        final int maxSerializedLength = 4 * value.size() + 4;
-        byte[] originalBuffer = spareBufferLocal.getBuffer(maxSerializedLength);
-        UnsyncByteArrayOutputStream originalBytes = new UnsyncByteArrayOutputStream(originalBuffer);
-        DataOutputStream originalDataOutput = new DataOutputStream(originalBytes);
+        final int numberOfValues = value.size();
 
-        super.save(originalDataOutput, value);
-        final int size = originalBytes.size();
-        DataInputOutputUtil.writeINT(out, size);
+        int[] buffer = spareBufferLocal.getBuffer(numberOfValues);
+        int ptr = 0;
+        for(Integer i:value) {
+          buffer[ptr++] = i;
+        }
+        Arrays.sort(buffer,0, numberOfValues);
 
-        Deflater deflater = new Deflater(Deflater.HUFFMAN_ONLY);
-        DeflaterOutputStream compressedDeflaterOutput = new DeflaterOutputStream((OutputStream)out, deflater);
-        try {
-          compressedDeflaterOutput.write(originalBuffer, 0, size);
-        } finally {
-          try {
-            compressedDeflaterOutput.close();
-          } catch (IOException ignore) {}
-          deflater.end();
+        DataInputOutputUtil.writeINT(out, numberOfValues);
+        int prev = 0;
+        for(ptr=0; ptr< numberOfValues; ++ptr) {
+          DataInputOutputUtil.writeLONG(out, (long)buffer[ptr] - prev);
+          prev = buffer[ptr];
         }
       }
 
       @NotNull
       @Override
       public Collection<Integer> read(@NotNull DataInput in) throws IOException {
-        byte[] originalBuffer;
-        int size;
-        Inflater inflater = new Inflater();
-        InflaterInputStream is = new InflaterInputStream((DataInputStream)in, inflater);
-        try {
-          size = DataInputOutputUtil.readINT(in);
-          originalBuffer = spareBufferLocal.getBuffer(size);
-          //noinspection ResultOfMethodCallIgnored
-          is.read(originalBuffer, 0, size);
+        int size = DataInputOutputUtil.readINT(in);
+        ArrayList<Integer> result = new ArrayList<Integer>(size);
+        int prev = 0;
+        while(size -- > 0) {
+          int l = (int)(DataInputOutputUtil.readLONG(in) + prev);
+          result.add(l);
+          prev = l;
         }
-        finally {
-          try {
-            is.close();
-          } catch (IOException ignore) {}
-          inflater.end();
-        }
-
-        return super.read(new DataInputStream(new UnsyncByteArrayInputStream(originalBuffer, 0, size)));
+        return result;
       }
     };
   }
