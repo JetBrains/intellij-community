@@ -19,6 +19,7 @@ package com.intellij.codeInsight.lookup;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -86,7 +87,7 @@ public abstract class LookupArranger {
 
   protected static boolean isPrefixItem(Lookup lookup, LookupElement item, final boolean exactly) {
     final String pattern = lookup.itemPattern(item);
-    if (pattern.equals(item.getLookupString())) {
+    if (Comparing.strEqual(pattern, item.getLookupString(), item.isCaseSensitive())) {
       return true;
     }
 
