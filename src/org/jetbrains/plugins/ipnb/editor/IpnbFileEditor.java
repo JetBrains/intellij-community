@@ -2,21 +2,29 @@ package org.jetbrains.plugins.ipnb.editor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.components.JBScrollBar;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
+import org.jetbrains.plugins.ipnb.format.IpnbParser;
 
 import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
 
 /**
  * @author traff
@@ -27,7 +35,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
 
   private final String myName;
 
-  private final JPanel myEditorPanel;
+  private final JComponent myEditorPanel;
 
   private final TextEditor myEditor;
 
@@ -41,15 +49,18 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
 
     myEditor = createEditor(project, vFile);
 
-    myEditorPanel = createIpnbEditorPanel(myName);
+    myEditorPanel = new MyScrollPane(createIpnbEditorPanel(myProject, vFile, this));
   }
 
   @NotNull
-  private JPanel createIpnbEditorPanel(String name) {
-    JPanel panel = new JPanel();
-    panel.setLayout(new FlowLayout());
-    panel.add(new JLabel("Hello IPython " + name));
-    return panel;
+  private JComponent createIpnbEditorPanel(Project project, VirtualFile vFile, Disposable parent) {
+    try {
+      return new IpnbFilePanel(project, parent, IpnbParser.parseIpnbFile(new String(vFile.contentsToByteArray(), CharsetToolkit.UTF8)));
+    }
+    catch (IOException e) {
+      Messages.showErrorDialog(project, e.getMessage(), "Can't open " + vFile.getPath());
+      throw new IllegalStateException(e);
+    }
   }
 
   @NotNull
@@ -162,5 +173,35 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
       }
     }
     return null;
+  }
+
+  private class MyScrollPane extends JBScrollPane {
+    private MyScrollPane(Component view) {
+      super(view);
+    }
+
+    @Override
+    public JScrollBar createVerticalScrollBar() {
+      return new MyScrollBar(this);
+    }
+  }
+
+
+  private class MyScrollBar extends JBScrollBar {
+    private MyScrollPane myScrollPane;
+
+    public MyScrollBar(MyScrollPane scrollPane) {
+      myScrollPane = scrollPane;
+    }
+
+    @Override
+    public int getUnitIncrement(int direction) {
+      return myEditor.getEditor().getLineHeight();
+    }
+
+    @Override
+    public int getBlockIncrement(int direction) {
+      return myEditor.getEditor().getLineHeight();
+    }
   }
 }

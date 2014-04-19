@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.ipnb.format.cells;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class SourceCell implements IpnbCell{
@@ -12,5 +13,10 @@ public abstract class SourceCell implements IpnbCell{
   @NotNull
   public String[] getSource() {
     return mySource;
+  }
+
+  @NotNull
+  public String getSourceAsString() {
+    return StringUtil.join(mySource, "\n");
   }
 }

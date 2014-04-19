@@ -29,7 +29,7 @@ public class IpnbFileType implements FileType {
   public static final IpnbFileType INSTANCE = new IpnbFileType();
 
   @NonNls
-  public static final String DEFAULT_EXTENSION = "ipnb";
+  public static final String DEFAULT_EXTENSION = "ipynb";
 
   @NotNull
   public String getName() {
