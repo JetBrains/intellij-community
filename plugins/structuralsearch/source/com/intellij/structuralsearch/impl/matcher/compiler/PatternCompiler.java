@@ -72,9 +72,7 @@ public class PatternCompiler {
 
       List<PsiElement> elements = compileByAllPrefixes(project, options, result, context, prefixes);
 
-      context.getPattern().setNodes(
-        new ArrayBackedNodeIterator(PsiUtilCore.toPsiElementArray(elements))
-      );
+      context.getPattern().setNodes(elements);
 
       if (context.getSearchHelper().doOptimizing() && context.getSearchHelper().isScannedSomething()) {
         final Set<PsiFile> set = context.getSearchHelper().getFilesSetToScan();

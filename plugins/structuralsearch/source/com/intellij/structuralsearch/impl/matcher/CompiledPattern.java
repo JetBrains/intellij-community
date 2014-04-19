@@ -1,9 +1,11 @@
 package com.intellij.structuralsearch.impl.matcher;
 
+import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SimpleHandler;
@@ -11,6 +13,7 @@ import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Class to hold compiled pattern information
@@ -21,9 +24,10 @@ public abstract class CompiledPattern {
   private MatchingStrategy strategy;
   private PsiElement targetNode;
   private int optionsHashStamp;
+  private int nodeCount;
 
   // @todo support this property during matching (how many nodes should be advanced)
-  // when match is not successfull (or successful partially)
+  // when match is not successful (or successful partially)
   //private int advancement = 1;
 
   public abstract String[] getTypedVarPrefixes();
@@ -55,12 +59,17 @@ public abstract class CompiledPattern {
     this.strategy = strategy;
   }
 
+  public int getNodeCount() {
+    return nodeCount;
+  }
+
   public NodeIterator getNodes() {
     return nodes;
   }
 
-  public void setNodes(NodeIterator nodes) {
-    this.nodes = nodes;
+  public void setNodes(List<PsiElement> elements) {
+    this.nodes = new ArrayBackedNodeIterator(PsiUtilCore.toPsiElementArray(elements));
+    this.nodeCount = elements.size();
   }
 
   public boolean isTypedVar(final PsiElement element) {

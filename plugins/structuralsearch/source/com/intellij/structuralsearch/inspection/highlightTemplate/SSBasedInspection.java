@@ -99,13 +99,7 @@ public class SSBasedInspection extends LocalInspectionTool {
           String name = configuration.getName();
           LocalQuickFix fix = createQuickFix(holder.getManager().getProject(), matchResult, configuration);
           holder.registerProblem(
-            holder.getManager().createProblemDescriptor(
-              element,
-              name,
-              fix,
-              ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-              isOnTheFly
-            )
+            holder.getManager().createProblemDescriptor(element, name, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly)
           );
           return true;
         }
@@ -120,7 +114,8 @@ public class SSBasedInspection extends LocalInspectionTool {
           MatchContext context = pair.first;
 
           if (Matcher.checkIfShouldAttemptToMatch(context, matchedNodes)) {
-            matcher.processMatchesInElement(context, configuration, matchedNodes, processor);
+            final int nodeCount = context.getPattern().getNodeCount();
+            matcher.processMatchesInElement(context, configuration, new CountingNodeIterator(nodeCount, matchedNodes), processor);
           }
         }
       }
