@@ -306,16 +306,16 @@ public class GithubCreatePullRequestWorker {
       return true;
     }
     if (info.getInfo().getBranchToHeadCommits(myGitRepository).isEmpty()) {
-      GithubNotifications.showWarningDialog(myProject, CANNOT_CREATE_PULL_REQUEST, "Can't create empty pull request: the branch" +
+      GithubNotifications.showWarningDialog(myProject, CANNOT_CREATE_PULL_REQUEST, "Can't create empty pull request: the branch " +
                                                                                    getCurrentBranch() +
                                                                                    " in fully merged to the branch " +
                                                                                    targetBranch +
                                                                                    ".");
       return false;
     }
-    if (info.getInfo().getHeadToBranchCommits(myGitRepository).isEmpty()) {
+    if (!info.getInfo().getHeadToBranchCommits(myGitRepository).isEmpty()) {
       return GithubNotifications
-               .showYesNoDialog(myProject, "The branch" + targetBranch + " in not fully merged to the branch " + getCurrentBranch(),
+               .showYesNoDialog(myProject, "The branch " + targetBranch + " in not fully merged to the branch " + getCurrentBranch(),
                                 "Do you want to proceed anyway?") == Messages.YES;
     }
 
