@@ -36,9 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.*;
 import java.util.Collection;
 import java.util.Map;
-import java.util.zip.Deflater;
-import java.util.zip.DeflaterInputStream;
-import java.util.zip.DeflaterOutputStream;
+import java.util.zip.*;
 
 public class TrigramIndex extends ScalarIndexExtension<Integer> implements CustomInputsIndexFileBasedIndexExtension<Integer> {
   public static final boolean ENABLED = SystemProperties.getBooleanProperty("idea.internal.trigramindex.enabled",
@@ -154,8 +152,8 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> implements Custo
       public Collection<Integer> read(@NotNull DataInput in) throws IOException {
         byte[] originalBuffer;
         int size;
-        Deflater deflater = new Deflater(Deflater.HUFFMAN_ONLY);
-        DeflaterInputStream is = new DeflaterInputStream((DataInputStream)in, deflater);
+        Inflater inflater = new Inflater();
+        InflaterInputStream is = new InflaterInputStream((DataInputStream)in, inflater);
         try {
           size = DataInputOutputUtil.readINT(in);
           originalBuffer = spareBufferLocal.getBuffer(size);
@@ -166,7 +164,7 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> implements Custo
           try {
             is.close();
           } catch (IOException ignore) {}
-          deflater.end();
+          inflater.end();
         }
 
         return super.read(new DataInputStream(new UnsyncByteArrayInputStream(originalBuffer, 0, size)));
