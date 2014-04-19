@@ -1,94 +1,71 @@
-import com.google.gson.Gson;
+import com.intellij.openapi.util.Ref;
 import junit.framework.TestCase;
-import org.java_websocket.client.WebSocketClient;
-import org.java_websocket.drafts.Draft_17;
-import org.java_websocket.handshake.ServerHandshake;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ipnb.protocol.IpnbConnection;
+import org.jetbrains.plugins.ipnb.protocol.IpnbConnectionListenerBase;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
+import java.util.Map;
 
 /**
+ *
+ * * Message Spec
+ *   http://ipython.org/ipython-doc/dev/development/messaging.html
+ *
+ * * Notebook REST API
+ *   https://github.com/ipython/ipython/wiki/IPEP-16%3A-Notebook-multi-directory-dashboard-and-URL-mapping
+ *
  * @author vlan
  */
 public class WebSocketConnectionTest extends TestCase {
-  private static final String LOCATION = "127.0.0.1:8888";
-  private static final String API_URL = "/api";
-  private static final String KERNELS_URL = API_URL + "/kernels";
+  @Override
+  protected void setUp() throws Exception {
+    //WebSocketImpl.DEBUG = true;
+  }
 
-  public void testGetKernels() throws URISyntaxException, IOException {
-    final Kernel kernel = getFirstKernel("http://" + LOCATION + KERNELS_URL);
-    assertNotNull(kernel);
-    assertTrue(kernel.getId().length() > 0);
+  public void testStartAndShutdownKernel() throws URISyntaxException, IOException, InterruptedException {
+    final IpnbConnection connection = new IpnbConnection(getTestServerURI(), new IpnbConnectionListenerBase() {
+      @Override
+      public void onOpen(@NotNull IpnbConnection connection) {
+        assertTrue(connection.getKernelId().length() > 0);
+        connection.shutdown();
+      }
+    });
+    connection.close();
   }
 
   public void testBasicWebSocket() throws IOException, URISyntaxException, InterruptedException {
-    final Kernel kernel = getFirstKernel("http://" + LOCATION + KERNELS_URL);
-    assertNotNull(kernel);
-    final URI shellURI = new URI("ws://" + LOCATION + KERNELS_URL + "/" + kernel.getId() + "/shell");
-    final WebSocketClient shellClient = new WebSocketClient(shellURI, new Draft_17()) {
+    final Ref<Boolean> evaluated = Ref.create(false);
+    final IpnbConnection connection = new IpnbConnection(getTestServerURI(), new IpnbConnectionListenerBase() {
+      private String myMessageId;
+
       @Override
-      public void onOpen(@NotNull ServerHandshake handshakeData) {
-        System.out.format("onOpen(%s)\n", handshakeData);
+      public void onOpen(@NotNull IpnbConnection connection) {
+        myMessageId = connection.execute("2 + 2");
       }
 
       @Override
-      public void onMessage(@NotNull String message) {
-        System.out.format("onMessage(%s)\n", message);
+      public void onOutput(@NotNull IpnbConnection connection, @NotNull String parentMessageId, @NotNull Map<String, String> outputs) {
+        if (myMessageId.equals(parentMessageId)) {
+          assertEquals("4", outputs.get("text/plain"));
+          evaluated.set(true);
+          connection.shutdown();
+        }
       }
-
-      @Override
-      public void onClose(int code, @NotNull String reason, boolean remote) {
-        System.out.format("onClose(%d, %s, %b)\n", code, reason, remote);
-      }
-
-      @Override
-      public void onError(@NotNull Exception e) {
-        System.out.format("onError(%s)\n", e);
-      }
-    };
-    final Thread thread = new Thread(shellClient);
-    thread.start();
-    try {
-      thread.join();
-    }
-    finally {
-      shellClient.close();
-    }
-  }
-
-  @Nullable
-  private Kernel getFirstKernel(@NotNull String url) throws IOException {
-    final String s = readURL(url);
-    final Gson gson = new Gson();
-    final Kernel[] kernels = gson.fromJson(s, Kernel[].class);
-    return kernels.length > 0 ? kernels[0] : null;
+    });
+    connection.close();
+    assertTrue(evaluated.get());
   }
 
   @NotNull
-  private static String readURL(@NotNull String url) throws IOException {
-    final BufferedReader reader = new BufferedReader(new InputStreamReader(new URL(url).openStream(), "utf-8"));
-    final StringBuilder builder = new StringBuilder();
-    char[] buffer = new char[4096];
-    int n;
-    while ((n = reader.read(buffer)) != -1) {
-      builder.append(buffer, 0, n);
+  public static URI getTestServerURI() {
+    try {
+      return new URI("http://127.0.0.1:8888");
     }
-    return builder.toString();
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  private static class Kernel {
-    @NotNull private String id;
-
-    @NotNull
-    public String getId() {
-      return id;
+    catch (URISyntaxException e) {
+      throw new RuntimeException(e);
     }
   }
 }
