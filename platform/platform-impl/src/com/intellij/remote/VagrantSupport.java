@@ -40,7 +40,7 @@ public abstract class VagrantSupport {
   public abstract Pair<String, RemoteCredentials> getVagrantSettings(Project project);
 
   @NotNull
-  public abstract RemoteCredentials getVagrantSettings(Project project, String vagrantFolder);
+  public abstract RemoteCredentials getVagrantSettings(@NotNull Project project, String vagrantFolder);
 
   @NotNull
   public abstract RemoteCredentials getCredentials(@NotNull String folder) throws IOException;
