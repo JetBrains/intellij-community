@@ -116,6 +116,7 @@ public class SSBasedInspection extends LocalInspectionTool {
           if (Matcher.checkIfShouldAttemptToMatch(context, matchedNodes)) {
             final int nodeCount = context.getPattern().getNodeCount();
             matcher.processMatchesInElement(context, configuration, new CountingNodeIterator(nodeCount, matchedNodes), processor);
+            matchedNodes.reset();
           }
         }
       }
