@@ -187,7 +187,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
 
   @Nullable
   private static UIManager.LookAndFeelInfo getLookAndFeelInfo(String name) {
-    if (DEFAULT.equals(name)) return new UIManager.LookAndFeelInfo(DEFAULT, "apple.laf.AquaLookAndFeel");
+    if (DEFAULT.equals(name)) return new UIManager.LookAndFeelInfo(DEFAULT, "com.apple.laf.AquaLookAndFeel");
     if (DARCULA.equals(name)) return new UIManager.LookAndFeelInfo(DARCULA, DarculaLaf.class.getName());
     if (INTELLIJ.equals(name)) return new UIManager.LookAndFeelInfo(INTELLIJ, IntelliJLaf.class.getName());
     if (ALLOY.equals(name)) return new UIManager.LookAndFeelInfo(ALLOY, "com.incors.plaf.alloy.AlloyIdea");

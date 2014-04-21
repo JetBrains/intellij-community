@@ -32,7 +32,7 @@ import java.util.*;
 
 class PluginGroups {
   static final String CORE = "Core";
-  private static final int MAX_DESCR_LENGTH = 80;
+  private static final int MAX_DESCR_LENGTH = 50;
 
 
   private static PluginGroups instance = null;
@@ -62,7 +62,7 @@ class PluginGroups {
       myPluginsFromRepository.addAll(RepositoryHelper.loadPluginsFromRepository(null));
     }
     catch (Exception e) {
-      e.printStackTrace();
+      //OK, it's offline
     }
     PluginManager.loadDisabledPlugins(new File(PathManager.getConfigPath()).getPath(), myDisabledPluginIds);
 
