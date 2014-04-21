@@ -41,7 +41,7 @@ import java.util.*;
  * @author yole
  */
 public abstract class VcsVFSListener implements Disposable {
-  private VcsDirtyScopeManager myDirtyScopeManager;
+  private final VcsDirtyScopeManager myDirtyScopeManager;
   private final ProjectLevelVcsManager myVcsManager;
   private final VcsFileListenerContextHelper myVcsFileListenerContextHelper;
 
@@ -72,7 +72,7 @@ public abstract class VcsVFSListener implements Disposable {
 
   protected enum VcsDeleteType {SILENT, CONFIRM, IGNORE}
 
-  protected VcsVFSListener(final Project project, final AbstractVcs vcs) {
+  protected VcsVFSListener(@NotNull Project project, @NotNull AbstractVcs vcs) {
     myProject = project;
     myVcs = vcs;
     myChangeListManager = ChangeListManager.getInstance(project);
@@ -90,6 +90,7 @@ public abstract class VcsVFSListener implements Disposable {
     myVcsFileListenerContextHelper = VcsFileListenerContextHelper.getInstance(myProject);
   }
 
+  @Override
   public void dispose() {
   }
 
@@ -104,7 +105,7 @@ public abstract class VcsVFSListener implements Disposable {
 
   private boolean isUnderMyVcs(VirtualFile file) {
     return myVcsManager.getVcsFor(file) == myVcs &&
-           (myVcsManager.isFileInContent(file)) &&
+           myVcsManager.isFileInContent(file) &&
            !myChangeListManager.isIgnoredFile(file);
   }
 
@@ -314,13 +315,15 @@ public abstract class VcsVFSListener implements Disposable {
   protected abstract boolean isDirectoryVersioningSupported();
 
   private class MyVirtualFileAdapter extends VirtualFileAdapter {
+    @Override
     public void fileCreated(@NotNull final VirtualFileEvent event) {
       VirtualFile file = event.getFile();
       if (isUnderMyVcs(file)) {
-        VcsVFSListener.this.fileAdded(event, file);
+        fileAdded(event, file);
       }
     }
 
+    @Override
     public void fileCopied(@NotNull final VirtualFileCopyEvent event) {
       if (isEventIgnored(event, true) || myChangeListManager.isIgnoredFile(event.getFile())) return;
       final AbstractVcs oldVcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(event.getOriginalFile());
@@ -336,6 +339,7 @@ public abstract class VcsVFSListener implements Disposable {
       }
     }
 
+    @Override
     public void beforeFileDeletion(@NotNull final VirtualFileEvent event) {
       final VirtualFile file = event.getFile();
       if (isEventIgnored(event, true)) {
@@ -357,6 +361,7 @@ public abstract class VcsVFSListener implements Disposable {
       }
     }
 
+    @Override
     public void beforeFileMovement(@NotNull final VirtualFileMoveEvent event) {
       if (isEventIgnored(event, true)) return;
       final VirtualFile file = event.getFile();
@@ -369,6 +374,7 @@ public abstract class VcsVFSListener implements Disposable {
       }
     }
 
+    @Override
     public void fileMoved(@NotNull final VirtualFileMoveEvent event) {
       if (isEventIgnored(event, true)) return;
       final AbstractVcs oldVcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(event.getOldParent());
@@ -377,6 +383,7 @@ public abstract class VcsVFSListener implements Disposable {
       }
     }
 
+    @Override
     public void beforePropertyChange(@NotNull final VirtualFilePropertyEvent event) {
       if (!isEventIgnored(event, false) && event.getPropertyName().equalsIgnoreCase(VirtualFile.PROP_NAME)) {
         String oldName = (String)event.getOldValue();
@@ -406,6 +413,7 @@ public abstract class VcsVFSListener implements Disposable {
   private class MyCommandAdapter extends CommandAdapter {
     private int myCommandLevel;
 
+    @Override
     public void commandStarted(final CommandEvent event) {
       if (myProject != event.getProject()) return;
       myCommandLevel++;
@@ -457,6 +465,7 @@ public abstract class VcsVFSListener implements Disposable {
       }
     }
 
+    @Override
     public void commandFinished(final CommandEvent event) {
       if (myProject != event.getProject()) return;
       myCommandLevel--;
