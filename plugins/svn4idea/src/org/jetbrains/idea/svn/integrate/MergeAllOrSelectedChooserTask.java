@@ -50,9 +50,7 @@ public class MergeAllOrSelectedChooserTask extends BaseMergeTask {
 
     final MergeCalculatorTask calculator;
     try {
-      calculator = new MergeCalculatorTask(myMergeContext, myInteraction, myMergeContext.getWcInfo(), myMergeContext.getSourceUrl(),
-                                           myMergeContext.getBranchName()
-      );
+      calculator = new MergeCalculatorTask(myMergeContext, myInteraction);
     }
     catch (VcsException e) {
       finishWithError(context, e.getMessage(), true);

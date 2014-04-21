@@ -33,7 +33,6 @@ import org.jetbrains.idea.svn.actions.ChangeListsMergerFactory;
 import org.jetbrains.idea.svn.dialogs.MergeContext;
 import org.jetbrains.idea.svn.dialogs.QuickMergeContentsVariants;
 import org.jetbrains.idea.svn.dialogs.SvnBranchPointsCalculator;
-import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
@@ -60,9 +59,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public class MergeCalculatorTask extends BaseMergeTask implements
                                                        Consumer<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException>> {
   private final static String ourOneShotStrategy = "svn.quickmerge.oneShotStrategy";
-  private final WCInfo myWcInfo;
-  private final String mySourceUrl;
-  private final String myBranchName;
   private final
   AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException>>
     myCopyData;
@@ -77,18 +73,12 @@ public class MergeCalculatorTask extends BaseMergeTask implements
     myCopyData.set(value);
   }
 
-  public MergeCalculatorTask(@NotNull MergeContext mergeContext,
-                             @NotNull QuickMergeInteraction interaction, WCInfo wcInfo,
-                             String sourceUrl,
-                             String branchName) throws VcsException {
+  public MergeCalculatorTask(@NotNull MergeContext mergeContext, @NotNull QuickMergeInteraction interaction) throws VcsException {
     super(mergeContext, interaction, "Calculating not merged revisions", Where.POOLED);
-    myWcInfo = wcInfo;
-    mySourceUrl = sourceUrl;
-    myBranchName = branchName;
     myNotMerged = new LinkedList<CommittedChangeList>();
-    myMergeTitle = "Merge from " + branchName;
+    myMergeTitle = "Merge from " + myMergeContext.getBranchName();
     //      if (Boolean.TRUE.equals(Boolean.getBoolean(ourOneShotStrategy))) {
-    myMergeChecker = new OneShotMergeInfoHelper(myMergeContext.getProject(), myWcInfo, mySourceUrl);
+    myMergeChecker = new OneShotMergeInfoHelper(myMergeContext.getProject(), myMergeContext.getWcInfo(), myMergeContext.getSourceUrl());
     ((OneShotMergeInfoHelper)myMergeChecker).prepare();
 /*      } else {
       myMergeChecker = new BranchInfo.MyMergeCheckerWrapper(myWcInfo.getPath(), new BranchInfo(myVcs, myWcInfo.getRepositoryRoot(),
@@ -116,7 +106,7 @@ public class MergeCalculatorTask extends BaseMergeTask implements
 
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     myIsReintegrate = copyDataValue.isInvertedSense();
-    if (!myWcInfo.getFormat().supportsMergeInfo()) return;
+    if (!myMergeContext.getWcInfo().getFormat().supportsMergeInfo()) return;
     final SvnBranchPointsCalculator.BranchCopyData data = copyDataValue.getTrue();
     final long sourceLatest = data.getTargetRevision();
 
@@ -126,15 +116,15 @@ public class MergeCalculatorTask extends BaseMergeTask implements
     settings.CHANGE_AFTER = Long.toString(sourceLatest);
     settings.USE_CHANGE_AFTER_FILTER = true;
 
-    String local = SVNPathUtil.getRelativePath(myWcInfo.getRepositoryRoot(), myWcInfo.getRootUrl());
+    String local = SVNPathUtil.getRelativePath(myMergeContext.getWcInfo().getRepositoryRoot(), myMergeContext.getWcInfo().getRootUrl());
     final String relativeLocal = (local.startsWith("/") ? local : "/" + local);
-    String relativeBranch = SVNPathUtil.getRelativePath(myWcInfo.getRepositoryRoot(), mySourceUrl);
+    String relativeBranch = SVNPathUtil.getRelativePath(myMergeContext.getWcInfo().getRepositoryRoot(), myMergeContext.getSourceUrl());
     relativeBranch = (relativeBranch.startsWith("/") ? relativeBranch : "/" + relativeBranch);
 
     final LinkedList<Pair<SvnChangeList, TreeStructureNode<SVNLogEntry>>> list =
       new LinkedList<Pair<SvnChangeList, TreeStructureNode<SVNLogEntry>>>();
     try {
-      committedChangesProvider.getCommittedChangesWithMergedRevisons(settings, new SvnRepositoryLocation(mySourceUrl), 0,
+      committedChangesProvider.getCommittedChangesWithMergedRevisons(settings, new SvnRepositoryLocation(myMergeContext.getSourceUrl()), 0,
                                                                      new PairConsumer<SvnChangeList, TreeStructureNode<SVNLogEntry>>() {
                                                                        public void consume(SvnChangeList svnList,
                                                                                            TreeStructureNode<SVNLogEntry> tree) {
