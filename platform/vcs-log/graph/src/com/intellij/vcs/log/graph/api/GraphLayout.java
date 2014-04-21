@@ -23,6 +23,4 @@ public interface GraphLayout {
 
   int getLayoutIndex(int nodeIndex);
   int getOneOfHeadNodeIndex(int nodeIndex);
-
-  int getHeadNodeIndex(int layoutIndex);
 }

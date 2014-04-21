@@ -16,10 +16,7 @@
 
 package com.intellij.vcs.log.graph.impl.permanent;
 
-import com.intellij.vcs.log.graph.utils.IntList;
-import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;
 import com.intellij.vcs.log.graph.api.LinearGraph;
-import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.utils.DfsUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +28,7 @@ import java.util.List;
 public class GraphLayoutBuilder {
 
   @NotNull
-  public static GraphLayout build(@NotNull LinearGraph graph, @NotNull Comparator<Integer> headerNodeIndexComparator) {
+  public static GraphLayoutImpl build(@NotNull LinearGraph graph, @NotNull Comparator<Integer> headerNodeIndexComparator) {
     List<Integer> heads = new ArrayList<Integer>();
     for (int i = 0; i < graph.nodesCount(); i++) {
       if (graph.getUpNodes(i).size() == 0) {
@@ -97,7 +94,7 @@ public class GraphLayoutBuilder {
   }
 
   @NotNull
-  private GraphLayout build() {
+  private GraphLayoutImpl build() {
     for(int i = 0; i < myHeadNodeIndex.size(); i++) {
       int headNodeIndex = myHeadNodeIndex.get(i);
       myStartLayoutIndexForHead[i] = currentLayoutIndex;
@@ -108,47 +105,4 @@ public class GraphLayoutBuilder {
     return new GraphLayoutImpl(myLayoutIndex, myHeadNodeIndex, myStartLayoutIndexForHead);
   }
 
-  private static class GraphLayoutImpl implements GraphLayout {
-    @NotNull
-    private final IntList myLayoutIndex;
-
-    @NotNull
-    private final List<Integer> myHeadNodeIndex;
-    @NotNull
-    private final int[] myStartLayoutIndexForHead;
-
-    private GraphLayoutImpl(@NotNull int[] layoutIndex, @NotNull List<Integer> headNodeIndex, @NotNull int[] startLayoutIndexForHead) {
-      myLayoutIndex = CompressedIntList.newInstance(layoutIndex);
-      myHeadNodeIndex = headNodeIndex;
-      myStartLayoutIndexForHead = startLayoutIndexForHead;
-    }
-
-    @Override
-    public int getLayoutIndex(int nodeIndex) {
-      return myLayoutIndex.get(nodeIndex);
-    }
-
-    @Override
-    public int getOneOfHeadNodeIndex(int nodeIndex) {
-      return getHeadNodeIndex(getLayoutIndex(nodeIndex));
-    }
-
-    @Override
-    public int getHeadNodeIndex(int layoutIndex) {
-      return myHeadNodeIndex.get(getHeadOrder(layoutIndex));
-    }
-
-    private int getHeadOrder(int layoutIndex) {
-      int a = 0;
-      int b = myStartLayoutIndexForHead.length - 1;
-      while (b > a) {
-        int middle = (a + b + 1) / 2;
-        if (myStartLayoutIndexForHead[middle] <= layoutIndex)
-          a = middle;
-        else
-          b = middle - 1;
-      }
-      return a;
-    }
-  }
 }

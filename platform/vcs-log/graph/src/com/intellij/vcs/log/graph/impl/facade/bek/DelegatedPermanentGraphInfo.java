@@ -128,12 +128,6 @@ public class DelegatedPermanentGraphInfo<CommitId> implements PermanentGraphInfo
         int usualIndex = graphLayout.getOneOfHeadNodeIndex(myBekIntMap.getUsualIndex(nodeIndex));
         return myBekIntMap.getBekIndex(usualIndex);
       }
-
-      @Override
-      public int getHeadNodeIndex(int layoutIndex) {
-        int usualIndex = graphLayout.getHeadNodeIndex(layoutIndex);
-        return myBekIntMap.getBekIndex(usualIndex);
-      }
     };
   }
 
