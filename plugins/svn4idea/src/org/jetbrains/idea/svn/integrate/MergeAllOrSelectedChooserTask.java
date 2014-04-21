@@ -40,9 +40,7 @@ public class MergeAllOrSelectedChooserTask extends BaseMergeTask {
       return;
     }
     if (QuickMergeContentsVariants.showLatest == variant) {
-      final LoadRecentBranchRevisions loader =
-        new LoadRecentBranchRevisions(myMergeContext.getBranchName(), -1, myMergeContext.getWcInfo(), myMergeContext
-          .getVcs(), myMergeContext.getSourceUrl());
+      final LoadRecentBranchRevisions loader = new LoadRecentBranchRevisions(myMergeContext, -1);
       final ShowRecentInDialogTask dialog = new ShowRecentInDialogTask(myMergeContext, myInteraction, loader);
       context.next(loader, dialog);
       return;

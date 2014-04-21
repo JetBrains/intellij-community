@@ -58,9 +58,7 @@ public class ShowRecentInDialogTask extends BaseMergeTask {
       @Override
       public void consume(Long bunchSize, final MergeDialogI dialog) {
         final LoadRecentBranchRevisions loader =
-          new LoadRecentBranchRevisions(
-            myMergeContext.getBranchName(), dialog.getLastNumber(), myMergeContext.getWcInfo(), myMergeContext.getVcs(),
-            myMergeContext.getSourceUrl(), bunchSize.intValue());
+          new LoadRecentBranchRevisions(myMergeContext, dialog.getLastNumber(), bunchSize.intValue());
         final TaskDescriptor updater = new TaskDescriptor("", Where.AWT) {
           @Override
           public void run(ContinuationContext context) {
