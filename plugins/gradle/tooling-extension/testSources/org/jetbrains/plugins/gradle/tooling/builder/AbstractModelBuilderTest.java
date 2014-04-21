@@ -15,14 +15,16 @@
  */
 package org.jetbrains.plugins.gradle.tooling.builder;
 
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.ObjectUtils;
 import org.gradle.tooling.BuildActionExecuter;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.ProjectImportAction;
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -35,6 +37,8 @@ import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
@@ -43,7 +47,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assume.assumeTrue;
 
 /**
  * @author Vladislav.Soroka
@@ -74,7 +77,6 @@ public abstract class AbstractModelBuilderTest {
 
   @Parameterized.Parameters
   public static Collection<Object[]> data() {
-    // keep in sync with download steps of http://buildserver.labs.intellij.net/viewType.html?buildTypeId=IDEATrunk_GradleDownloads
     Object[][] data = {
       {AbstractModelBuilderTest.GRADLE_v1_9},
       {AbstractModelBuilderTest.GRADLE_v1_10},
@@ -87,12 +89,6 @@ public abstract class AbstractModelBuilderTest {
 
   @Before
   public void setUp() throws Exception {
-    File distHome = null;
-    if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-      distHome = new File(PathManagerEx.findFileUnderCommunityHome("plugins/gradle"), "_dist/gradle-" + gradleVersion);
-      assumeTrue("Missing: " + distHome.getPath(), distHome.isDirectory());
-    }
-
     ensureTempDirCreated();
 
     String methodName = name.getMethodName();
@@ -115,11 +111,17 @@ public abstract class AbstractModelBuilderTest {
     );
 
     GradleConnector connector = GradleConnector.newConnector();
-    if (distHome != null) {
-      connector.useInstallation(distHome);
+
+    String releaseRepoUrl = DistributionLocator.getRepoUrl(false);
+    String snapshotRepoUrl = DistributionLocator.getRepoUrl(true);
+
+    if (releaseRepoUrl == null || snapshotRepoUrl == null) {
+      connector.useGradleVersion(gradleVersion);
     }
     else {
-      connector.useGradleVersion(gradleVersion);
+      final URI distributionUri =
+        new DistributionLocator(releaseRepoUrl, snapshotRepoUrl).getDistributionFor(GradleVersion.version(gradleVersion));
+      connector.useDistribution(distributionUri);
     }
     connector.forProjectDirectory(testDir);
     ((DefaultGradleConnector)connector).daemonMaxIdleTime(1, TimeUnit.SECONDS);
@@ -150,5 +152,47 @@ public abstract class AbstractModelBuilderTest {
     ourTempDir = new File(FileUtil.getTempDirectory(), "gradleTests");
     FileUtil.delete(ourTempDir);
     FileUtil.ensureExists(ourTempDir);
+  }
+
+  private static class DistributionLocator {
+    private static final String RELEASE_REPOSITORY_ENV = "GRADLE_RELEASE_REPOSITORY";
+    private static final String SNAPSHOT_REPOSITORY_ENV = "GRADLE_SNAPSHOT_REPOSITORY";
+    private static final String INTELLIJ_LABS_GRADLE_RELEASE_MIRROR =
+      "http://services.gradle.org-mirror.labs.intellij.net/distributions";
+    private static final String INTELLIJ_LABS_GRADLE_SNAPSHOT_MIRROR =
+      "http://services.gradle.org-mirror.labs.intellij.net/distributions-snapshots";
+
+    @NotNull private final String myReleaseRepoUrl;
+    @NotNull private final String mySnapshotRepoUrl;
+
+    private DistributionLocator(@NotNull String releaseRepoUrl, @NotNull String snapshotRepoUrl) {
+      myReleaseRepoUrl = releaseRepoUrl;
+      mySnapshotRepoUrl = snapshotRepoUrl;
+    }
+
+    @NotNull
+    public URI getDistributionFor(@NotNull GradleVersion version) throws URISyntaxException {
+      return getDistribution(getDistributionRepository(version), version, "gradle", "bin");
+    }
+
+    @NotNull
+    private String getDistributionRepository(@NotNull GradleVersion version) {
+      return version.isSnapshot() ? mySnapshotRepoUrl : myReleaseRepoUrl;
+    }
+
+    private static URI getDistribution(@NotNull String repositoryUrl,
+                                       @NotNull GradleVersion version,
+                                       @NotNull String archiveName,
+                                       @NotNull String archiveClassifier) throws URISyntaxException {
+      return new URI(String.format("%s/%s-%s-%s.zip", repositoryUrl, archiveName, version.getVersion(), archiveClassifier));
+    }
+
+    @Nullable
+    static String getRepoUrl(boolean isSnapshotUrl) {
+      return ObjectUtils.chooseNotNull(
+        System.getenv(isSnapshotUrl ? SNAPSHOT_REPOSITORY_ENV : RELEASE_REPOSITORY_ENV),
+        UsefulTestCase.IS_UNDER_TEAMCITY ? isSnapshotUrl ? INTELLIJ_LABS_GRADLE_SNAPSHOT_MIRROR : INTELLIJ_LABS_GRADLE_RELEASE_MIRROR : null
+      );
+    }
   }
 }
