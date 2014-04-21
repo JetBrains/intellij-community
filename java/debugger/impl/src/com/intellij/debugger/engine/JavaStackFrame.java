@@ -30,12 +30,16 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.ViewsGeneralSettings;
 import com.intellij.debugger.ui.impl.FrameVariablesTree;
 import com.intellij.debugger.ui.impl.watch.*;
+import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.ColoredTextContainer;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.Value;
@@ -55,12 +59,17 @@ public class JavaStackFrame extends XStackFrame {
   private final DebugProcessImpl myDebugProcess;
   private final XSourcePosition mySourcePosition;
   private final NodeDescriptorFactoryImpl myNodeManager;
+  private final StackFrameDescriptorImpl myDescriptor;
+  private final JavaFramesListRenderer myRenderer = new JavaFramesListRenderer();
 
-  public JavaStackFrame(@NotNull StackFrameProxyImpl stackFrameProxy, @NotNull DebugProcessImpl debugProcess) {
+  public JavaStackFrame(@NotNull StackFrameProxyImpl stackFrameProxy, @NotNull DebugProcessImpl debugProcess, MethodsTracker tracker) {
     myStackFrameProxy = stackFrameProxy;
     myDebugProcess = debugProcess;
     mySourcePosition = calcSourcePosition();
     myNodeManager = new NodeDescriptorFactoryImpl(myDebugProcess.getProject());
+    myDescriptor = new StackFrameDescriptorImpl(stackFrameProxy, tracker);
+    myDescriptor.setContext(null);
+    myDescriptor.updateRepresentation(null, DescriptorLabelListener.DUMMY_LISTENER);
   }
 
   private XSourcePosition calcSourcePosition() {
@@ -100,6 +109,11 @@ public class JavaStackFrame extends XStackFrame {
   @Override
   public XSourcePosition getSourcePosition() {
     return mySourcePosition;
+  }
+
+  @Override
+  public void customizePresentation(@NotNull ColoredTextContainer component) {
+    myRenderer.customizePresentation(myDescriptor, component);
   }
 
   @Override
