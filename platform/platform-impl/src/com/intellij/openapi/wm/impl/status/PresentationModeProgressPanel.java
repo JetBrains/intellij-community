@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.InplaceButton;
+import com.intellij.ui.TransparentPanel;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 
@@ -77,13 +78,7 @@ public class PresentationModeProgressPanel {
   }
 
   private void createUIComponents() {
-    myRootPanel = new JPanel() {
-      @Override
-      public void paint(Graphics g) {
-        ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
-        super.paint(g);
-      }
-    };
+    myRootPanel = new TransparentPanel(0.5f);
     final IconButton iconButton = new IconButton(myProgress.getInfo().getCancelTooltipText(),
                                                  AllIcons.Process.Stop,
                                                  AllIcons.Process.StopHovered);
