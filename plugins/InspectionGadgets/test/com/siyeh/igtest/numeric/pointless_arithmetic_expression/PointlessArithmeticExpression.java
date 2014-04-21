@@ -123,4 +123,5 @@ class Expanded {{
   System.out.println(u * 1);
   long g = 8L / 8L;
   long h = 9L * 0L;
+  int a = 8 * 0 * 8 * ; // don't warn
 }}
