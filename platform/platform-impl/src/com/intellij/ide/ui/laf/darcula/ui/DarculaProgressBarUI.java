@@ -89,6 +89,9 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
     }
     area.subtract(new Area(new RoundRectangle2D.Double(0,0,w, h, 9,9)));
     ((Graphics2D)g).setPaint(c.getParent().getBackground());
+    if (c.isOpaque()) {
+      ((Graphics2D)g).fill(area);
+    }
     g.drawRoundRect(1,1, w-3, h-3, 8,8);
     g.translate(0, -(c.getHeight() - h)/2);
 
