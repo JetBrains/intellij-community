@@ -15,17 +15,28 @@
  */
 package com.intellij.debugger.engine;
 
+import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerContextListener;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.DebuggerStateManager;
+import com.intellij.debugger.ui.DebuggerContentInfo;
+import com.intellij.debugger.ui.impl.ThreadsPanel;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.execution.ui.layout.PlaceInGrid;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.ui.content.Content;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XSuspendContext;
+import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +47,7 @@ public class JavaDebugProcess extends XDebugProcess {
   private final DebuggerSession myJavaSession;
   private final JavaDebuggerEditorsProvider myEditorsProvider;
   private final XBreakpointHandler<?>[] myBreakpointHandlers;
+  private final MyDebuggerStateManager myStateManager = new MyDebuggerStateManager();
 
   public JavaDebugProcess(@NotNull XDebugSession session, DebuggerSession javaSession) {
     super(session);
@@ -57,6 +69,13 @@ public class JavaDebugProcess extends XDebugProcess {
         //getSession().positionReached(new JavaSuspendContext(context, PositionManagerImpl.DEBUGGER_VIEW_SUPPORT, null));
         ((SuspendContextImpl)suspendContext).initExecutionStacks();
         getSession().positionReached((XSuspendContext)suspendContext);
+      }
+    });
+
+    myJavaSession.getContextManager().addListener(new DebuggerContextListener() {
+      @Override
+      public void changeEvent(DebuggerContextImpl newContext, int event) {
+        myStateManager.fireStateChanged(newContext, event);
       }
     });
   }
@@ -113,5 +132,42 @@ public class JavaDebugProcess extends XDebugProcess {
   @Override
   public ExecutionConsole createConsole() {
     return myJavaSession.getProcess().getExecutionResult().getExecutionConsole();
+  }
+
+  @NotNull
+  @Override
+  public XDebugTabLayouter createTabLayouter() {
+    return new XDebugTabLayouter() {
+      @Override
+      public void registerAdditionalContent(@NotNull RunnerLayoutUi ui) {
+        ThreadsPanel panel = new ThreadsPanel(myJavaSession.getProject(), myStateManager);
+        Content threadsContent = ui.createContent(
+          DebuggerContentInfo.THREADS_CONTENT, panel, XDebuggerBundle.message("debugger.session.tab.threads.title"),
+          AllIcons.Debugger.Threads, null);
+        threadsContent.setCloseable(false);
+        ui.addContent(threadsContent, 0, PlaceInGrid.left, true);
+      }
+    };
+  }
+
+  private class MyDebuggerStateManager extends DebuggerStateManager {
+    @Override
+    public void fireStateChanged(DebuggerContextImpl newContext, int event) {
+      super.fireStateChanged(newContext, event);
+    }
+
+    @Override
+    public DebuggerContextImpl getContext() {
+      final DebuggerSession session = myJavaSession;
+      return session != null ? session.getContextManager().getContext() : DebuggerContextImpl.EMPTY_CONTEXT;
+    }
+
+    @Override
+    public void setState(DebuggerContextImpl context, int state, int event, String description) {
+      final DebuggerSession session = myJavaSession;
+      if (session != null) {
+        session.getContextManager().setState(context, state, event, description);
+      }
+    }
   }
 }
