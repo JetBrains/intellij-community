@@ -23,8 +23,8 @@ import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.LinearGraphWithElementInfo;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
+import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo;
 import com.intellij.vcs.log.graph.impl.facade.ContainingBranchesGetter;
-import com.intellij.vcs.log.graph.impl.permanent.PermanentCommitsInfo;
 import com.intellij.vcs.log.graph.impl.print.EdgesInRowGenerator;
 import com.intellij.vcs.log.graph.parser.CommitParser;
 import org.jetbrains.annotations.NotNull;
@@ -97,9 +97,9 @@ public class GraphStrUtils {
     return s.toString();
   }
 
-  public static <CommitId> String commitsInfoToStr(PermanentCommitsInfo<CommitId> commitsInfo, Function<CommitId, String> toStr) {
+  public static <CommitId> String commitsInfoToStr(PermanentCommitsInfo<CommitId> commitsInfo, int size, Function<CommitId, String> toStr) {
     StringBuilder s = new StringBuilder();
-    for (int i = 0; i < commitsInfo.size(); i++) {
+    for (int i = 0; i < size; i++) {
       if (i != 0)
         s.append("\n");
 

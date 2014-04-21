@@ -22,6 +22,7 @@ import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.graph.actions.GraphMouseAction;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.LinearGraphWithCommitInfo;
+import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
@@ -42,7 +43,7 @@ import java.util.Set;
 
 public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<CommitId> {
   @NotNull
-  protected static <CommitId> LinearGraphAsGraphWithHiddenNodes createBranchesGraph(@NotNull final PermanentGraphImpl<CommitId> permanentGraph,
+  protected static <CommitId> LinearGraphAsGraphWithHiddenNodes createBranchesGraph(@NotNull final PermanentGraphInfo<CommitId> permanentGraph,
                                                                   @Nullable Set<CommitId> heads) {
     if (heads == null) {
       return new LinearGraphAsGraphWithHiddenNodes(permanentGraph.getPermanentLinearGraph());

@@ -23,8 +23,10 @@ import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.graph.api.GraphLayout;
+import com.intellij.vcs.log.graph.api.LinearGraph;
+import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutBuilder;
-import com.intellij.vcs.log.graph.impl.permanent.PermanentCommitsInfo;
+import com.intellij.vcs.log.graph.impl.permanent.PermanentCommitsInfoIml;
 import com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphBuilder;
 import com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphImpl;
 import org.jetbrains.annotations.NotNull;
@@ -32,9 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId> {
-
-  private final Set<Integer> myBranchNodeIndexes;
+public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, PermanentGraphInfo<CommitId> {
 
   @NotNull
   public static <CommitId> PermanentGraphImpl<CommitId> newInstance(@NotNull List<? extends GraphCommit<CommitId>> graphCommits,
@@ -44,7 +44,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId> {
     PermanentLinearGraphImpl linearGraph = permanentLinearGraphBuilder.build();
     Map<CommitId, GraphCommit<CommitId>> commitsWithNotLoadParent = permanentLinearGraphBuilder.getCommitsWithNotLoadParent();
 
-    final PermanentCommitsInfo<CommitId> commitIdPermanentCommitsInfo = PermanentCommitsInfo.newInstance(graphCommits);
+    final PermanentCommitsInfoIml<CommitId> commitIdPermanentCommitsInfo = PermanentCommitsInfoIml.newInstance(graphCommits);
 
     GraphLayout permanentGraphLayout = GraphLayoutBuilder.build(linearGraph, new Comparator<Integer>() {
       @Override
@@ -60,7 +60,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId> {
   }
 
   @NotNull
-  private final PermanentCommitsInfo<CommitId> myPermanentCommitsInfo;
+  private final PermanentCommitsInfoIml<CommitId> myPermanentCommitsInfo;
   @NotNull
   private final PermanentLinearGraphImpl myPermanentLinearGraph;
   @NotNull
@@ -70,13 +70,15 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId> {
   @NotNull
   private final Set<CommitId> myBranchesCommitId;
   @NotNull
+  private final Set<Integer> myBranchNodeIndexes;
+  @NotNull
   private final Map<CommitId, GraphCommit<CommitId>> myCommitsWithNotLoadParent;
   @NotNull
   private final ContainingBranchesGetter myBranchesGetter;
 
   public PermanentGraphImpl(@NotNull PermanentLinearGraphImpl permanentLinearGraph,
                             @NotNull GraphLayout permanentGraphLayout,
-                            @NotNull PermanentCommitsInfo<CommitId> permanentCommitsInfo,
+                            @NotNull PermanentCommitsInfoIml<CommitId> permanentCommitsInfo,
                             @NotNull GraphColorManager<CommitId> graphColorManager,
                             @NotNull Set<CommitId> branchesCommitId,
                             @NotNull Map<CommitId, GraphCommit<CommitId>> commitsWithNotLoadParent) {
@@ -136,12 +138,12 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId> {
   }
 
   @NotNull
-  public PermanentCommitsInfo<CommitId> getPermanentCommitsInfo() {
+  public PermanentCommitsInfoIml<CommitId> getPermanentCommitsInfo() {
     return myPermanentCommitsInfo;
   }
 
   @NotNull
-  public PermanentLinearGraphImpl getPermanentLinearGraph() {
+  public LinearGraph getPermanentLinearGraph() {
     return myPermanentLinearGraph;
   }
 
@@ -160,10 +162,12 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId> {
     return myBranchesCommitId;
   }
 
+  @NotNull
   public Set<Integer> getBranchNodeIndexes() {
     return myBranchNodeIndexes;
   }
 
+  @NotNull
   public Condition<Integer> getNotCollapsedNodes() {
     return new Condition<Integer>() {
       @Override

@@ -18,6 +18,7 @@ package com.intellij.vcs.log.graph.impl.permanent;
 
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo;
 import com.intellij.vcs.log.graph.utils.IntList;
 import com.intellij.vcs.log.graph.utils.TimestampGetter;
 import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;
@@ -27,10 +28,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class PermanentCommitsInfo<CommitId> {
+public class PermanentCommitsInfoIml<CommitId> implements PermanentCommitsInfo<CommitId> {
 
   @NotNull
-  public static <CommitId> PermanentCommitsInfo<CommitId> newInstance(@NotNull final List<? extends GraphCommit<CommitId>> graphCommits) {
+  public static <CommitId> PermanentCommitsInfoIml<CommitId> newInstance(@NotNull final List<? extends GraphCommit<CommitId>> graphCommits) {
     TimestampGetter timestampGetter = IntTimestampGetter.newInstance(new TimestampGetter() {
       @Override
       public int size() {
@@ -56,7 +57,7 @@ public class PermanentCommitsInfo<CommitId> {
         }
       });
     }
-    return new PermanentCommitsInfo<CommitId>(timestampGetter, commitIdIndex);
+    return new PermanentCommitsInfoIml<CommitId>(timestampGetter, commitIdIndex);
   }
 
   @NotNull
@@ -91,27 +92,31 @@ public class PermanentCommitsInfo<CommitId> {
   @NotNull
   private final List<CommitId> myCommitIdIndexes;
 
-  public PermanentCommitsInfo(@NotNull TimestampGetter timestampGetter, @NotNull List<CommitId> commitIdIndex) {
+  public PermanentCommitsInfoIml(@NotNull TimestampGetter timestampGetter, @NotNull List<CommitId> commitIdIndex) {
     myTimestampGetter = timestampGetter;
     myCommitIdIndexes = commitIdIndex;
   }
 
+  @Override
   @NotNull
   public CommitId getCommitId(int permanentNodeIndex) {
     return myCommitIdIndexes.get(permanentNodeIndex);
   }
 
+  @Override
   public long getTimestamp(int permanentNodeIndex) {
     return myTimestampGetter.getTimestamp(permanentNodeIndex);
   }
 
-  // todo optimize with special map
-  public int getPermanentNodeIndex(@NotNull CommitId commitId) {
-    return myCommitIdIndexes.indexOf(commitId);
+  @NotNull
+  public TimestampGetter getTimestampGetter() {
+    return myTimestampGetter;
   }
 
-  public int size() {
-    return myCommitIdIndexes.size();
+  // todo optimize with special map
+  @Override
+  public int getPermanentNodeIndex(@NotNull CommitId commitId) {
+    return myCommitIdIndexes.indexOf(commitId);
   }
 
   @NotNull

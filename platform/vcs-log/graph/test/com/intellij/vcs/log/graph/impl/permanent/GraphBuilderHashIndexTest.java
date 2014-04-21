@@ -17,6 +17,7 @@
 package com.intellij.vcs.log.graph.impl.permanent;
 
 import com.intellij.vcs.log.graph.GraphCommit;
+import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo;
 import com.intellij.vcs.log.graph.impl.CommitIdManager;
 import com.intellij.vcs.log.graph.AbstractTestWithTextFile;
 import org.junit.Test;
@@ -36,9 +37,9 @@ public abstract class GraphBuilderHashIndexTest<CommitId> extends AbstractTestWi
   @Override
   protected void runTest(String in, String out) {
     final List<GraphCommit<CommitId>> commits = getCommitIdManager().parseCommitList(in);
-    PermanentCommitsInfo<CommitId> commitsInfo = PermanentCommitsInfo.newInstance(commits);
+    PermanentCommitsInfo<CommitId> commitsInfo = PermanentCommitsInfoIml.newInstance(commits);
 
-    assertEquals(out, commitsInfoToStr(commitsInfo, getCommitIdManager().getToStrFunction()));
+    assertEquals(out, commitsInfoToStr(commitsInfo, commits.size(), getCommitIdManager().getToStrFunction()));
   }
 
   protected abstract CommitIdManager<CommitId> getCommitIdManager();

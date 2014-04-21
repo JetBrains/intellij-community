@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.graph.api.LinearGraphWithCommitInfo;
+import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
 import com.intellij.vcs.log.graph.impl.print.FilterPrintElementsManager;
@@ -35,7 +36,7 @@ import java.util.Set;
 public class FilterVisibleGraph<CommitId> extends AbstractVisibleGraph<CommitId> {
 
   @NotNull
-  public static <CommitId> FilterVisibleGraph<CommitId> newInstance(@NotNull final PermanentGraphImpl<CommitId> permanentGraph,
+  public static <CommitId> FilterVisibleGraph<CommitId> newInstance(@NotNull final PermanentGraphInfo<CommitId> permanentGraph,
                                                                        @Nullable Set<CommitId> heads,
                                                                        @NotNull final Condition<CommitId> filter) {
     LinearGraphAsGraphWithHiddenNodes branchesGraph = createBranchesGraph(permanentGraph, heads);

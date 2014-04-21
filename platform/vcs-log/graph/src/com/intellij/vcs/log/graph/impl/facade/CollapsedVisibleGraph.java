@@ -18,6 +18,7 @@ package com.intellij.vcs.log.graph.impl.facade;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
+import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
@@ -36,7 +37,7 @@ import java.util.Set;
 public class CollapsedVisibleGraph<CommitId> extends AbstractVisibleGraph<CommitId> {
 
   @NotNull
-  public static <CommitId> CollapsedVisibleGraph<CommitId> newInstance(@NotNull final PermanentGraphImpl<CommitId> permanentGraph,
+  public static <CommitId> CollapsedVisibleGraph<CommitId> newInstance(@NotNull final PermanentGraphInfo<CommitId> permanentGraph,
                                                                        @Nullable Set<CommitId> heads) {
     LinearGraphAsGraphWithHiddenNodes branchesGraph = createBranchesGraph(permanentGraph, heads);
     CollapsedGraphWithHiddenNodes collapsedGraph = new CollapsedGraphWithHiddenNodes(branchesGraph);
@@ -69,13 +70,13 @@ public class CollapsedVisibleGraph<CommitId> extends AbstractVisibleGraph<Commit
   private final IntToIntMap myIntToIntMap;
 
   @NotNull
-  private final PermanentGraphImpl<CommitId> myPermanentGraph;
+  private final PermanentGraphInfo<CommitId> myPermanentGraph;
 
 
   private CollapsedVisibleGraph(@NotNull GraphWithHiddenNodesAsGraphWithCommitInfo<CommitId> graphWithCommitInfo,
                                 @NotNull CollapsedGraphWithHiddenNodes collapsedGraph,
                                 @NotNull PrintElementsManager printElementsManager,
-                                @NotNull FragmentGenerator fragmentGeneratorForPrinterGraph, @NotNull PermanentGraphImpl<CommitId> permanentGraph) {
+                                @NotNull FragmentGenerator fragmentGeneratorForPrinterGraph, @NotNull PermanentGraphInfo<CommitId> permanentGraph) {
     super(graphWithCommitInfo, permanentGraph.getCommitsWithNotLoadParent(), printElementsManager);
     myCollapsedGraph = collapsedGraph;
     myFragmentGeneratorForPrinterGraph = fragmentGeneratorForPrinterGraph;

@@ -16,10 +16,10 @@
 
 package com.intellij.vcs.log.graph.impl.visible.adapters;
 
+import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.api.LinearGraphWithCommitInfo;
 import com.intellij.vcs.log.graph.api.LinearGraphWithHiddenNodes;
-import com.intellij.vcs.log.graph.impl.permanent.PermanentCommitsInfo;
-import com.intellij.vcs.log.graph.api.GraphLayout;
+import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo;
 import org.jetbrains.annotations.NotNull;
 
 public class GraphWithHiddenNodesAsGraphWithCommitInfo<CommitId> extends GraphWithHiddenNodesAsPrintedGraph implements LinearGraphWithCommitInfo<CommitId> {
