@@ -144,10 +144,8 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       }
     }
 
-    if (myCompletionType == CompletionType.SMART) {
-      if (object instanceof PsiLocalVariable || object instanceof PsiParameter || object instanceof PsiThisExpression) {
-        return MyResult.localOrParameter;
-      }
+    if (object instanceof PsiLocalVariable || object instanceof PsiParameter || object instanceof PsiThisExpression) {
+      return MyResult.localOrParameter;
     }
 
     if (object instanceof String && item.getUserData(JavaCompletionUtil.SUPER_METHOD_PARAMETERS) == Boolean.TRUE) {
