@@ -542,7 +542,7 @@ public class BreakpointManager {
   }
 
   private synchronized void onBreakpointRemoved(@Nullable final XBreakpoint xBreakpoint) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    //ApplicationManager.getApplication().assertIsDispatchThread();
     if (xBreakpoint == null) {
       return;
     }
