@@ -194,7 +194,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
 
     myModulesProvider = modulesProvider;
     Project project = context.getProject();
-    final LibrariesContainer container = LibrariesContainerFactory.createContainer(project);
+    final LibrariesContainer container = LibrariesContainerFactory.createContainer(context, modulesProvider);
     FrameworkSupportModelBase model = new FrameworkSupportModelBase(project, null, container) {
       @NotNull
       @Override
