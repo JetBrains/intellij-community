@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.InplaceButton;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -42,6 +43,8 @@ public class PresentationModeProgressPanel {
     final Font font = UIUtil.getLabelFont().deriveFont(11f);
     myText.setFont(font);
     myText2.setFont(font);
+    myText.setIcon(EmptyIcon.create(1, 16));
+    myText2.setIcon(EmptyIcon.create(1, 16));
   }
   public void update() {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
