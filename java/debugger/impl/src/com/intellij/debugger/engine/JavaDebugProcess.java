@@ -29,6 +29,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManagerAdapter;
+import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -140,12 +142,28 @@ public class JavaDebugProcess extends XDebugProcess {
     return new XDebugTabLayouter() {
       @Override
       public void registerAdditionalContent(@NotNull RunnerLayoutUi ui) {
-        ThreadsPanel panel = new ThreadsPanel(myJavaSession.getProject(), myStateManager);
-        Content threadsContent = ui.createContent(
+        final ThreadsPanel panel = new ThreadsPanel(myJavaSession.getProject(), myStateManager);
+        final Content threadsContent = ui.createContent(
           DebuggerContentInfo.THREADS_CONTENT, panel, XDebuggerBundle.message("debugger.session.tab.threads.title"),
           AllIcons.Debugger.Threads, null);
         threadsContent.setCloseable(false);
         ui.addContent(threadsContent, 0, PlaceInGrid.left, true);
+        ui.addListener(new ContentManagerAdapter() {
+          @Override
+          public void selectionChanged(ContentManagerEvent event) {
+            if (event.getContent() == threadsContent) {
+              if (threadsContent.isSelected()) {
+                panel.setUpdateEnabled(true);
+                if (panel.isRefreshNeeded()) {
+                  panel.rebuildIfVisible(DebuggerSession.EVENT_CONTEXT);
+                }
+              }
+              else {
+                panel.setUpdateEnabled(false);
+              }
+            }
+          }
+        }, myJavaSession.getProject());
       }
     };
   }
