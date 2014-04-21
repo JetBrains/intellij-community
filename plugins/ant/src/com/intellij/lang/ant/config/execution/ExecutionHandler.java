@@ -193,28 +193,31 @@ public final class ExecutionHandler {
 
         final OutputPacketProcessor dispatcher = handler.getErr().getEventsDispatcher();
 
-        if (event.getExitCode() != 0) {
-          // in case process exits abnormally, provide all unprocessed stderr content
-          final String unprocessed;
-          synchronized (myUnprocessedStdErr) {
-            unprocessed = myUnprocessedStdErr.toString();
-            myUnprocessedStdErr.setLength(0);
+        try {
+          if (event.getExitCode() != 0) {
+            // in case process exits abnormally, provide all unprocessed stderr content
+            final String unprocessed;
+            synchronized (myUnprocessedStdErr) {
+              unprocessed = myUnprocessedStdErr.toString();
+              myUnprocessedStdErr.setLength(0);
+            }
+            if (!unprocessed.isEmpty()) {
+              dispatcher.processOutput(new Printable() {
+                public void printOn(Printer printer) {
+                  errorView.outputError(unprocessed, AntBuildMessageView.PRIORITY_ERR);
+                }
+              });
+            }
           }
-          if (!unprocessed.isEmpty()) {
-            dispatcher.processOutput(new Printable() {
-              public void printOn(Printer printer) {
-                errorView.outputError(unprocessed, AntBuildMessageView.PRIORITY_ERR);
-              }
-            });
+          else {
+            synchronized (myUnprocessedStdErr) {
+              myUnprocessedStdErr.setLength(0);
+            }
           }
         }
-        else {
-          synchronized (myUnprocessedStdErr) {
-            myUnprocessedStdErr.setLength(0);
-          }
+        finally {
+          errorView.buildFinished(progress != null && progress.isCanceled(), buildTime, antBuildListener, dispatcher);
         }
-
-        errorView.buildFinished(progress != null && progress.isCanceled(), buildTime, antBuildListener, dispatcher);
       }
     });
     handler.startNotify();
