@@ -29,11 +29,11 @@ import java.awt.event.MouseEvent;
 public abstract class AbstractCustomizeWizardStep extends JPanel {
   protected static final int GAP = 20;
 
-  abstract String getTitle();
+  protected abstract String getTitle();
 
-  abstract String getHTMLHeader();
+  protected abstract String getHTMLHeader();
 
-  abstract String getHTMLFooter();
+  protected abstract String getHTMLFooter();
 
   private static Color getSelectionBackground() {
     return ColorUtil.mix(UIUtil.getListSelectionBackground(), UIUtil.getLabelBackground(), .75);
