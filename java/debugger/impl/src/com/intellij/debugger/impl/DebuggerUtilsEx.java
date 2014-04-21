@@ -36,9 +36,12 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.SmartList;
 import com.sun.jdi.*;
@@ -604,5 +607,14 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
+  public static String prepareValueText(String text, Project project) {
+    text = StringUtil.unquoteString(text);
+    text = StringUtil.unescapeStringCharacters(text);
+    int tabSize = CodeStyleSettingsManager.getSettings(project).getTabSize(StdFileTypes.JAVA);
+    if (tabSize < 0) {
+      tabSize = 0;
+    }
+    return text.replace("\t", StringUtil.repeat(" ", tabSize));
+  }
 
 }

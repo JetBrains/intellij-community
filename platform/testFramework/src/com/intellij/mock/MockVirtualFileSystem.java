@@ -56,24 +56,29 @@ public class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
 
   @Override
   public void deleteFile(Object requestor, @NotNull VirtualFile vFile) throws IOException {
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public void moveFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent) throws IOException {
+    throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public VirtualFile copyFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent, @NotNull final String copyName) throws IOException {
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public void renameFile(Object requestor, @NotNull VirtualFile vFile, @NotNull String newName) throws IOException {
+    throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   @Override

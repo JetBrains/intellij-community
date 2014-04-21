@@ -35,6 +35,7 @@ import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -154,8 +155,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     newKeymap.myName = myName;
     newKeymap.myCanModify = canModify();
 
-    newKeymap.myKeystroke2ListOfIds = null;
-    newKeymap.myMouseShortcut2ListOfIds = null;
+    newKeymap.cleanShortcutsCache();
 
     for (Map.Entry<String, LinkedHashSet<Shortcut>> entry : myActionId2ListOfShortcuts.entrySet()) {
       LinkedHashSet<Shortcut> list = entry.getValue();
@@ -217,11 +217,12 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     if (list == null) {
       list = new LinkedHashSet<Shortcut>();
       myActionId2ListOfShortcuts.put(actionId, list);
-      if (myParent != null) {
-        // copy parent shortcuts for this actionId
-        Shortcut[] shortcuts = getParentShortcuts(actionId);
-        // shortcuts are immutables
-        ContainerUtil.addAll(list, shortcuts);
+      Shortcut[] boundShortcuts = getBoundShortcuts(actionId);
+      if (boundShortcuts != null) {
+        ContainerUtil.addAll(list, boundShortcuts);
+      }
+      else if (myParent != null) {
+        ContainerUtil.addAll(list, getParentShortcuts(actionId));
       }
     }
     list.add(shortcut);
@@ -229,6 +230,10 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     if (checkParentShortcut && myParent != null && areShortcutsEqual(getParentShortcuts(actionId), getShortcuts(actionId))) {
       myActionId2ListOfShortcuts.remove(actionId);
     }
+    cleanShortcutsCache();
+  }
+
+  private void cleanShortcutsCache() {
     myKeystroke2ListOfIds = null;
     myMouseShortcut2ListOfIds = null;
   }
@@ -250,26 +255,28 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
         Shortcut each = it.next();
         if (shortcut.equals(each)) {
           it.remove();
-          if (myParent != null && areShortcutsEqual(getParentShortcuts(actionId), getShortcuts(actionId))) {
+          if ((myParent != null && areShortcutsEqual(getParentShortcuts(actionId), getShortcuts(actionId)))
+              || (myParent == null && list.isEmpty())) {
             myActionId2ListOfShortcuts.remove(actionId);
-          }
+          } 
           break;
         }
       }
     }
     else if (myParent != null) {
       // put to the map the parent's bindings except for the removed binding
-      Shortcut[] parentShortcuts = getParentShortcuts(actionId);
-      LinkedHashSet<Shortcut> listOfShortcuts = new LinkedHashSet<Shortcut>();
-      for (Shortcut parentShortcut : parentShortcuts) {
-        if (!shortcut.equals(parentShortcut)) {
-          listOfShortcuts.add(parentShortcut);
+      LinkedHashSet<Shortcut> listOfShortcuts = new LinkedHashSet<Shortcut>(0);
+      if (!isActionBound(actionId)) {
+        Shortcut[] parentShortcuts = getParentShortcuts(actionId);
+        for (Shortcut parentShortcut : parentShortcuts) {
+          if (!shortcut.equals(parentShortcut)) {
+            listOfShortcuts.add(parentShortcut);
+          }
         }
       }
       myActionId2ListOfShortcuts.put(actionId, listOfShortcuts);
     }
-    myKeystroke2ListOfIds = null;
-    myMouseShortcut2ListOfIds = null;
+    cleanShortcutsCache();
     fireShortcutChanged(actionId);
   }
 
@@ -410,7 +417,9 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
         boolean originalListInstance = true;
         for (String id : ids) {
           // add actions from parent keymap only if they are absent in this keymap
-          if (!myActionId2ListOfShortcuts.containsKey(id)) {
+          // do not add parent bind actions, if bind-on action is overwritten in the child 
+          if (!myActionId2ListOfShortcuts.containsKey(id) && 
+              !myActionId2ListOfShortcuts.containsKey(getActionBinding(id))) {
             if (list == null) {
               list = new ArrayList<String>();
               originalListInstance = false;
@@ -510,6 +519,11 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     return getKeymapManager().getBoundActions().contains(actionId);
   }
 
+  @Nullable
+  public String getActionBinding(@NotNull final String actionId) {
+    return getKeymapManager().getActionBinding(actionId);
+  }
+
   @Override
   public Shortcut[] getShortcuts(String actionId) {
     LinkedHashSet<Shortcut> shortcuts = myActionId2ListOfShortcuts.get(actionId);
@@ -518,10 +532,9 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     // and likely this behaviour can't be changed completely because of IDEA-58896.
     // But. If shortcuts for actionId has been explicitly defined in current keymap
     // then shortcuts of bounded action won't be used.
-    KeymapManagerEx keymapManager = getKeymapManager();
-    boolean hasBoundedAction = keymapManager.getBoundActions().contains(actionId);
-    if (hasBoundedAction && (shortcuts == null || shortcuts.isEmpty())) {
-      return getShortcuts(keymapManager.getActionBinding(actionId));
+    if (shortcuts == null) {
+      Shortcut[] boundShortcuts = getBoundShortcuts(actionId);
+      if (boundShortcuts!= null) return boundShortcuts;
     }
 
     if (shortcuts == null) {
@@ -533,6 +546,16 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
       }
     }
     return shortcuts.isEmpty() ? ourEmptyShortcutsArray : shortcuts.toArray(new Shortcut[shortcuts.size()]);
+  }
+
+  @Nullable
+  private Shortcut[] getBoundShortcuts(String actionId) {
+    KeymapManagerEx keymapManager = getKeymapManager();
+    boolean hasBoundedAction = keymapManager.getBoundActions().contains(actionId);
+    if (hasBoundedAction) {
+      return getShortcuts(keymapManager.getActionBinding(actionId));
+    }
+    return null;
   }
 
   private KeymapManagerEx getKeymapManager() {
@@ -827,6 +850,16 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
 
   public void clearOwnActionsIds() {
     myActionId2ListOfShortcuts.clear();
+    cleanShortcutsCache();
+  }
+
+  public boolean hasOwnActionId(String actionId) {
+    return myActionId2ListOfShortcuts.containsKey(actionId);
+  }
+
+  public void clearOwnActionsId(String actionId) {
+    myActionId2ListOfShortcuts.remove(actionId);
+    cleanShortcutsCache();
   }
 
   @Override

@@ -30,7 +30,6 @@ public class VisitingTest extends IntegrationTestCase {
   public void testSimpleVisit() throws Exception {
     createFile("f.txt");
     createFile("dir");
-
     assertVisitorLog("begin create end begin create end finished ");
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -104,21 +105,15 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
   @NotNull
   public Process launchProcess(@NotNull final ModuleChunk chunk, @NotNull final String outputDir, @NotNull final CompileContext compileContext) throws IOException {
     @NonNls final ArrayList<String> commandLine = new ArrayList<String>();
-    final IOException[] ex = {null};
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        try {
-          final EclipseCompilerOptions options = EclipseCompilerConfiguration.getOptions(myProject, EclipseEmbeddedCompilerConfiguration.class);
-          myEclipseExternalCompiler.addCommandLineOptions(commandLine, chunk, outputDir, options, false, false);
-        }
-        catch (IOException e) {
-          ex[0] = e;
-        }
+    ApplicationManager.getApplication().runReadAction(new ThrowableComputable<Void, IOException>() {
+      @Override
+      public Void compute() throws IOException {
+        final EclipseCompilerOptions options =
+          EclipseCompilerConfiguration.getOptions(myProject, EclipseEmbeddedCompilerConfiguration.class);
+        myEclipseExternalCompiler.addCommandLineOptions(commandLine, chunk, outputDir, options, false, false);
+        return null;
       }
     });
-    if (ex[0] != null) {
-      throw ex[0];
-    }
 
     return new Process() {
       public OutputStream getOutputStream() {
@@ -140,7 +135,7 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
         try {
           commandLine.remove("-verbose");
           String[] finalCmds = ArrayUtil.toStringArray(commandLine);
-          myEclipseCompilerDriver.parseCommandLineAndCompile(finalCmds,compileContext);
+          myEclipseCompilerDriver.parseCommandLineAndCompile(finalCmds, compileContext);
           myExitCode = 0;
           return myExitCode;
         }

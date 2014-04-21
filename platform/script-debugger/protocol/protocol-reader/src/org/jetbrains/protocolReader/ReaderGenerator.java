@@ -28,7 +28,7 @@ public class ReaderGenerator {
     private final DynamicReader<?> parser;
     private final Collection<GeneratedCodeMap> basePackagesMap;
 
-    public GenerateConfiguration(String packageName, String className, DynamicReader parser) {
+    public GenerateConfiguration(String packageName, String className, DynamicReader<?> parser) {
       this(packageName, className, parser, Collections.<GeneratedCodeMap>emptyList());
     }
 
@@ -109,7 +109,7 @@ public class ReaderGenerator {
   }
 
   private static class StringParam implements ParamListener {
-    private String value = null;
+    private String value;
 
     @Override
     public void setValue(String value) {

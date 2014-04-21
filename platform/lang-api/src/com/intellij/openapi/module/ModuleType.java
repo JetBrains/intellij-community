@@ -67,6 +67,11 @@ public abstract class ModuleType<T extends ModuleBuilder> {
     return null;
   }
 
+  @Nullable
+  public ModuleWizardStep modifyProjectTypeStep(@NotNull SettingsStep settingsStep, @NotNull ModuleBuilder moduleBuilder) {
+    return null;
+  }
+
   @NotNull
   public final String getId() {
     return myId;

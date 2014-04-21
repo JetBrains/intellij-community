@@ -18,6 +18,7 @@ package com.intellij.ide.plugins;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Files;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -32,6 +33,7 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
 
@@ -62,7 +64,9 @@ public class RepositoryHelper {
       }
     }
 
-    HttpURLConnection connection = HttpConfigurable.getInstance().openHttpConnection(url);
+    HttpURLConnection connection = ApplicationManager.getApplication() != null ?
+                                   HttpConfigurable.getInstance().openHttpConnection(url) :
+                                   (HttpURLConnection)new URL(url).openConnection();
     connection.setRequestProperty("Accept-Encoding", "gzip");
 
     if (indicator != null) {

@@ -4,11 +4,13 @@ import com.intellij.ProjectTopics;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.runtime.Deployment;
 import com.intellij.remoteServer.runtime.ServerConnection;
@@ -28,15 +30,23 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class CloudSupportConfigurableBase<
   SC extends CloudConfigurationBase,
   DC extends CloudDeploymentNameConfiguration,
-  SR extends CloudMultiSourceServerRuntimeInstance<DC, ?, ?, ?>>
+  SR extends CloudMultiSourceServerRuntimeInstance<DC, ?, ?, ?>,
+  ST extends ServerType<SC>>
   extends FrameworkSupportConfigurable {
 
+  private final ST myCloudType;
   private final Project myModelProject;
+
+  private final CloudNotifier myNotifier;
 
   private boolean myInitialized = false;
 
-  public CloudSupportConfigurableBase(FrameworkSupportModel frameworkSupportModel) {
+  private CloudAccountSelectionEditor<SC, DC, ST> myAccountSelectionEditor;
+
+  public CloudSupportConfigurableBase(ST cloudType, FrameworkSupportModel frameworkSupportModel) {
+    myCloudType = cloudType;
     myModelProject = frameworkSupportModel.getProject();
+    myNotifier = new CloudNotifier(cloudType.getPresentableName());
   }
 
   @Override
@@ -132,13 +142,26 @@ public abstract class CloudSupportConfigurableBase<
     }
   }
 
-  protected abstract CloudAccountSelectionEditor<SC, DC, ?> getAccountSelectionEditor();
+  protected CloudAccountSelectionEditor<SC, DC, ST> getAccountSelectionEditor() {
+    if (myAccountSelectionEditor == null) {
+      myAccountSelectionEditor = new CloudAccountSelectionEditor<SC, DC, ST>(myCloudType) {
+
+        @Override
+        protected void handleError(ConfigurationException e) {
+          getNotifier().showMessage(e.getMessage(), MessageType.ERROR);
+        }
+      };
+    }
+    return myAccountSelectionEditor;
+  }
+
+  protected CloudNotifier getNotifier() {
+    return myNotifier;
+  }
 
   protected abstract JComboBox getExistingComboBox();
 
   protected abstract void updateApplicationUI();
-
-  protected abstract CloudNotifier getNotifier();
 
   protected abstract class ConnectionTask<T> extends CloudConnectionTask<T, SC, DC, SR> {
 

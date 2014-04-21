@@ -103,6 +103,7 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements NonP
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public VirtualFile copyFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent, @NotNull final String copyName) throws IOException {
     throw new UnsupportedOperationException();
@@ -116,6 +117,7 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements NonP
     firePropertyChanged(requestor, vFile, VirtualFile.PROP_NAME, oldName, newName);
   }
 
+  @NotNull
   @Override
   public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
     final VirtualFileDirectoryImpl dir = (VirtualFileDirectoryImpl)vDir;

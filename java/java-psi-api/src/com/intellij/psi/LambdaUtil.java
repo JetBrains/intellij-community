@@ -107,9 +107,7 @@ public class LambdaUtil {
         if (isFunctionalType(type1)) return true;
       }
     }
-    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(GenericsUtil.eliminateWildcards(type));
-    final PsiClass aClass = resolveResult.getElement();
-    return isFunctionalClass(aClass);
+    return isFunctionalClass(PsiUtil.resolveGenericsClassInType(type).getElement());
   }
 
   @Contract("null -> false")

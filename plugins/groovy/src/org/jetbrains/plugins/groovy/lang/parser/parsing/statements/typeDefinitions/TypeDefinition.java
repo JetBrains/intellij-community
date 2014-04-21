@@ -64,6 +64,13 @@ public class TypeDefinition implements GroovyElementTypes {
       }
     }
 
+    if (builder.getTokenType() == kTRAIT) {
+      builder.advanceLexer();
+      if (parseAfterKeyword(builder, parser, ClassType.TRAIT)) {
+        return TRAIT_DEFINITION;
+      }
+    }
+
     if (builder.getTokenType() == mAT) {
       builder.advanceLexer();
       if (builder.getTokenType() == kINTERFACE) {

@@ -1,7 +1,6 @@
 package org.jetbrains.debugger;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
@@ -63,11 +62,19 @@ public final class VariableView extends XNamedValue implements VariableContext {
     return StringUtil.isEmpty(className) ? "Object" : className;
   }
 
-  public static void setObjectPresentation(@NotNull ObjectValue value, @NotNull Icon icon, @NotNull XValueNode node) {
-    node.setPresentation(icon, new ObjectValuePresentation(getClassName(value)), value.hasProperties() != ThreeState.NO);
+  @NotNull
+  public static String getObjectValueDescription(@NotNull ObjectValue value) {
+    String description = value.getValueString();
+    return StringUtil.isEmpty(description) ? getClassName(value) : description;
   }
 
-  public static void setArrayPresentation(@NotNull ObjectValue value, @NotNull VariableContext context, @NotNull final Icon icon, @NotNull XValueNode node) {
+  public static void setObjectPresentation(@NotNull ObjectValue value, @NotNull Icon icon, @NotNull XValueNode node) {
+    node.setPresentation(icon, new ObjectValuePresentation(getObjectValueDescription(value)), value.hasProperties() != ThreeState.NO);
+  }
+
+  public static void setArrayPresentation(@NotNull Value value, @NotNull VariableContext context, @NotNull final Icon icon, @NotNull XValueNode node) {
+    assert value.getType() == ValueType.ARRAY;
+
     if (value instanceof ArrayValue) {
       int length = ((ArrayValue)value).getLength();
       node.setPresentation(icon, new ArrayPresentation(length), length > 0);
@@ -143,8 +150,13 @@ public final class VariableView extends XNamedValue implements VariableContext {
     }
   }
 
+  @NotNull
   static String trimFunctionDescription(@NotNull Value value) {
     String presentableValue = value.getValueString();
+    if (presentableValue == null) {
+      return "";
+    }
+
     int endIndex = 0;
     while (endIndex < presentableValue.length() && !StringUtil.isLineBreak(presentableValue.charAt(endIndex))) {
       endIndex++;
@@ -168,7 +180,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
         break;
 
       case ARRAY:
-        context.getDebugProcess().computeArrayPresentation(((ObjectValue)value), variable, context, node, getIcon());
+        context.getDebugProcess().computeArrayPresentation(value, variable, context, node, getIcon());
         break;
 
       case BOOLEAN:
@@ -209,9 +221,9 @@ public final class VariableView extends XNamedValue implements VariableContext {
       return;
     }
 
-    ObsolescentAsyncResults.consume(((ObjectValue)value).getProperties(), node, new PairConsumer<List<? extends Variable>, XCompositeNode>() {
+    ObsolescentAsyncResults.consume(((ObjectValue)value).getProperties(), node, new PairConsumer<List<Variable>, XCompositeNode>() {
       @Override
-      public void consume(List<? extends Variable> variables, XCompositeNode node) {
+      public void consume(List<Variable> variables, XCompositeNode node) {
         if (value instanceof ArrayValue) {
           // todo arrays could have not only indexes values
           return;
@@ -241,15 +253,20 @@ public final class VariableView extends XNamedValue implements VariableContext {
           }
         }
 
-        remainingChildren = Variables.sortFilterAndAddValueList(variables, node, VariableView.this, maxPropertiesToShow, value.getType() != ValueType.FUNCTION);
+        FunctionValue functionValue = value instanceof FunctionValue ? (FunctionValue)value : null;
+        if (functionValue != null && functionValue.hasScopes() == ThreeState.NO) {
+          functionValue = null;
+        }
+
+        remainingChildren = Variables.sortFilterAndAddValueList(variables, node, VariableView.this, maxPropertiesToShow, functionValue == null);
         if (remainingChildren != null) {
           remainingChildrenOffset = maxPropertiesToShow;
           childrenModificationStamp = ((ObjectValue)value).getCacheStamp();
         }
 
-        if (value.getType() == ValueType.FUNCTION) {
+        if (functionValue != null) {
           // we pass context as variable context instead of this variable value - we cannot watch function scopes variables, so, this variable name doesn't matter
-          node.addChildren(XValueChildrenList.bottomGroup(new FunctionScopesValueGroup((FunctionValue)value, context)), true);
+          node.addChildren(XValueChildrenList.bottomGroup(new FunctionScopesValueGroup(functionValue, context)), true);
         }
       }
     });
@@ -408,18 +425,16 @@ public final class VariableView extends XNamedValue implements VariableContext {
 
   @Override
   public boolean canNavigateToSource() {
-    // todo WEB-4369
-    return value.getType() == ValueType.FUNCTION;
+    return value instanceof FunctionValue || getDebugProcess().canNavigateToSource(variable, context);
   }
 
   @Override
   public void computeSourcePosition(@NotNull final XNavigatable navigatable) {
-    AsyncResult<FunctionValue> fun = value instanceof FunctionValue ? ((FunctionValue)value).resolve() : null;
-    if (fun != null) {
-      fun.doWhenDone(new Consumer<FunctionValue>() {
+    if (value instanceof FunctionValue) {
+      ((FunctionValue)value).resolve().doWhenDone(new Consumer<FunctionValue>() {
         @Override
         public void consume(final FunctionValue function) {
-          getDebugProcess().getVm().getScriptManager().getOrLoadScript(function).doWhenDone(new Consumer<Script>() {
+          getDebugProcess().getVm().getScriptManager().getScript(function).doWhenDone(new Consumer<Script>() {
             @Override
             public void consume(Script script) {
               navigatable.setSourcePosition(script == null ? null : getDebugProcess().getSourceInfo(null, script, function.getOpenParenLine(), function.getOpenParenColumn()));
@@ -427,6 +442,9 @@ public final class VariableView extends XNamedValue implements VariableContext {
           });
         }
       });
+    }
+    else {
+      getDebugProcess().computeSourcePosition(variable, context, navigatable);
     }
   }
 
@@ -463,7 +481,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
       }
 
       final AtomicBoolean evaluated = new AtomicBoolean();
-      ((StringValue)value).reloadHeavyValue().doWhenDone(new Runnable() {
+      ((StringValue)value).getFullString().doWhenDone(new Runnable() {
         @Override
         public void run() {
           if (!callback.isObsolete() && evaluated.compareAndSet(false, true)) {
@@ -472,5 +490,11 @@ public final class VariableView extends XNamedValue implements VariableContext {
         }
       }).doWhenRejected(createErrorMessageConsumer(callback));
     }
+  }
+
+  @Nullable
+  @Override
+  public Scope getScope() {
+    return context.getScope();
   }
 }

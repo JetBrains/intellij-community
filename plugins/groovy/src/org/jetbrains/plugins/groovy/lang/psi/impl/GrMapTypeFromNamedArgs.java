@@ -15,8 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
@@ -43,7 +43,7 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
   private final Map<String, GrExpression> myStringEntries;
   private final List<Pair<GrExpression, GrExpression>> myOtherEntries;
 
-  private final AtomicNotNullLazyValue<List<Pair<PsiType, PsiType>>> myTypesOfOtherEntries = new AtomicNotNullLazyValue<List<Pair<PsiType, PsiType>>>() {
+  private final VolatileNotNullLazyValue<List<Pair<PsiType, PsiType>>> myTypesOfOtherEntries = new VolatileNotNullLazyValue<List<Pair<PsiType, PsiType>>>() {
     @NotNull
     @Override
     protected List<Pair<PsiType, PsiType>> compute() {
@@ -56,7 +56,7 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
     }
   };
 
-  private final AtomicNotNullLazyValue<Map<String, PsiType>> myTypesOfStringEntries = new AtomicNotNullLazyValue<Map<String, PsiType>>() {
+  private final VolatileNotNullLazyValue<Map<String, PsiType>> myTypesOfStringEntries = new VolatileNotNullLazyValue<Map<String,PsiType>>() {
     @NotNull
     @Override
     protected Map<String, PsiType> compute() {

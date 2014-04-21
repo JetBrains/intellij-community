@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,13 +56,9 @@ import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntProcedure;
-import gnu.trove.TObjectProcedure;
+import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,6 +77,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private static final int GAP_BETWEEN_ICONS = 3;
   private static final TooltipGroup GUTTER_TOOLTIP_GROUP = new TooltipGroup("GUTTER_TOOLTIP_GROUP", 0);
   private static final Color COLOR_F0F0 = new Color(0xF0F0F0);
+  public static final TIntFunction ID = new TIntFunction() {
+    @Override
+    public int execute(int value) {
+      return value;
+    }
+  };
 
   private final EditorImpl myEditor;
   private final FoldingAnchorsOverlayStrategy myAnchorsDisplayStrategy;
@@ -98,13 +100,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private Color myBackgroundColor = null;
   private String myLastGutterToolTip = null;
   private int myLastPreferredHeight = -1;
-  private Convertor<Integer, Integer> myLineNumberConvertor;
+  @NotNull private TIntFunction myLineNumberConvertor;
   private boolean myShowDefaultGutterPopup = true;
 
   @SuppressWarnings("unchecked")
   public EditorGutterComponentImpl(EditorImpl editor) {
     myEditor = editor;
-    myLineNumberConvertor = Convertor.SELF;
+    myLineNumberConvertor = ID;
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       installDnD();
     }
@@ -403,7 +405,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       if (logicalPosition.softWrapLinesOnCurrentLogicalLine > 0) {
         continue;
       }
-      int logLine = myLineNumberConvertor.convert(logicalPosition.line);
+      int logLine = myLineNumberConvertor.execute(logicalPosition.line);
       if (logLine >= 0) {
         String s = String.valueOf(logLine + 1);
         g.drawString(s,
@@ -422,17 +424,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private interface RangeHighlighterProcessor {
-    void process(RangeHighlighter highlighter);
+    void process(@NotNull RangeHighlighter highlighter);
   }
 
-  private void processRangeHighlighters(int startOffset, int endOffset, RangeHighlighterProcessor processor) {
+  private void processRangeHighlighters(int startOffset, int endOffset, @NotNull RangeHighlighterProcessor processor) {
     Document document = myEditor.getDocument();
     final MarkupModelEx docMarkup = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myEditor.getProject(), true);
     // we limit highlighters to process to between line starting at startOffset and line ending at endOffset
-    int docLength = document.getTextLength();
-    int patchedStartOffset = startOffset < docLength ? document.getLineStartOffset(document.getLineNumber(startOffset)) : docLength;
-    int patchedEndOffset = endOffset <= docLength ? document.getLineEndOffset(document.getLineNumber(endOffset)) + 1 : docLength;
-    DisposableIterator<RangeHighlighterEx> docHighlighters = docMarkup.overlappingIterator(patchedStartOffset, patchedEndOffset);
+    DisposableIterator<RangeHighlighterEx> docHighlighters = docMarkup.overlappingIterator(startOffset, endOffset);
     DisposableIterator<RangeHighlighterEx> editorHighlighters = myEditor.getMarkupModel().overlappingIterator(startOffset, endOffset);
 
     try {
@@ -518,9 +517,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     myLastPreferredHeight = myEditor.getPreferredHeight();
     calcIconAreaWidth();
     calcAnnotationsSize();
-    if (myEditor.isInDistractionFreeMode() && !isMirrored()) {
-      centerEditorByAnnotationArea();
-    }
+    calcAnnotationExtraSize();
   }
 
   private int sizeHash() {
@@ -550,11 +547,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
   }
 
-  private void centerEditorByAnnotationArea() {
+  private void calcAnnotationExtraSize() {
+    myTextAnnotationExtraSize = 0;
+    if (!myEditor.isInDistractionFreeMode() || isMirrored()) return;
+
     Window frame = SwingUtilities.getWindowAncestor(myEditor.getComponent());
     if (frame == null) return;
 
-    myTextAnnotationExtraSize = 0;
     EditorSettings settings = myEditor.getSettings();
     int rightMargin = settings.getRightMargin(myEditor.getProject());
     if (rightMargin <= 0) return;
@@ -580,7 +579,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     processRangeHighlighters(0, myEditor.getDocument().getTextLength(), new RangeHighlighterProcessor() {
       @Override
-      public void process(RangeHighlighter highlighter) {
+      public void process(@NotNull RangeHighlighter highlighter) {
         GutterMark renderer = highlighter.getGutterIconRenderer();
         if (renderer == null) {
           return;
@@ -630,7 +629,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     try {
       processRangeHighlighters(firstVisibleOffset, lastVisibleOffset, new RangeHighlighterProcessor() {
         @Override
-        public void process(RangeHighlighter highlighter) {
+        public void process(@NotNull RangeHighlighter highlighter) {
           paintLineMarkerRenderer(highlighter, g);
         }
       });
@@ -989,8 +988,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return isLineMarkersShown() ? myLineMarkerAreaWidth : 0;
   }
 
-  public void setLineNumberAreaWidth(final Convertor<Integer, Integer> calculator) {
-    final int lineNumberAreaWidth = calculator.convert(myLineNumberConvertor.convert(endLineNumber()));
+  public void setLineNumberAreaWidth(@NotNull TIntFunction calculator) {
+    final int lineNumberAreaWidth = calculator.execute(myLineNumberConvertor.execute(endLineNumber()));
     if (myLineNumberAreaWidth != lineNumberAreaWidth) {
       myLineNumberAreaWidth = lineNumberAreaWidth;
       fireResized();
@@ -1264,7 +1263,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     processRangeHighlighters(firstVisibleOffset, lastVisibleOffset, new RangeHighlighterProcessor() {
       @Override
-      public void process(RangeHighlighter highlighter) {
+      public void process(@NotNull RangeHighlighter highlighter) {
         if (gutterRenderer[0] != null) return;
         Rectangle rectangle = getLineRendererRectangle(highlighter);
         if (rectangle == null) return;
@@ -1334,7 +1333,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   @Override
-  public void setLineNumberConvertor(Convertor<Integer, Integer> lineNumberConvertor) {
+  public void setLineNumberConvertor(@NotNull TIntFunction lineNumberConvertor) {
     myLineNumberConvertor = lineNumberConvertor;
   }
 

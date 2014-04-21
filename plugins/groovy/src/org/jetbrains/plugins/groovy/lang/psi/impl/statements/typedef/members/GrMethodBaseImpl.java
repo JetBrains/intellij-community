@@ -335,6 +335,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
 
   @Nullable
   public PsiCodeBlock getBody() {
+    if (PsiImplUtil.isTrait(getContainingClass())) return null;
     return PsiImplUtil.getOrCreatePsiCodeBlock(getBlock());
   }
 
@@ -402,11 +403,6 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   }
 
   public boolean hasModifierProperty(@GrModifier.GrModifierConstant @NonNls @NotNull String name) {
-    if (name.equals(PsiModifier.ABSTRACT)) {
-      final PsiClass containingClass = getContainingClass();
-      if (containingClass != null && containingClass.isInterface()) return true;
-    }
-
     return getModifierList().hasModifierProperty(name);
   }
 

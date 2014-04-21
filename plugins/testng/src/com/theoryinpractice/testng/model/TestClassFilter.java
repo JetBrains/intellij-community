@@ -36,6 +36,7 @@ import java.util.Arrays;
 public class TestClassFilter implements ClassFilter.ClassFilterWithScope
 {
     public static final String GUICE_INJECTION = "com.google.inject.Inject";
+    public static final String GUICE = "org.testng.annotations.Guice";
     public static final String FACTORY_INJECTION = "org.testng.annotations.Factory";
 
     private final GlobalSearchScope scope;
@@ -85,7 +86,7 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope
                     break;
                   }
                 }
-                if (!canBeInstantiated){
+                if (!canBeInstantiated && !AnnotationUtil.isAnnotated(psiClass, GUICE, false)){
                   return false;
                 }
               }

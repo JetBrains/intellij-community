@@ -54,19 +54,25 @@ class GitBranchWorkerTest extends GitPlatformTest {
   public void setUp() {
     super.setUp();
 
-    cd(myProjectRoot)
-    File community = mkdir("community")
-    File contrib = mkdir("contrib")
+    try {
+      cd(myProjectRoot)
+      File community = mkdir("community")
+      File contrib = mkdir("contrib")
 
-    myUltimate = createRepository(myProjectRoot.path)
-    myCommunity = createRepository(community.path)
-    myContrib = createRepository(contrib.path)
-    myRepositories = [ myUltimate, myCommunity, myContrib ]
+      myUltimate = createRepository(myProjectRoot.path)
+      myCommunity = createRepository(community.path)
+      myContrib = createRepository(contrib.path)
+      myRepositories = [ myUltimate, myCommunity, myContrib ]
 
-    cd(myProjectRoot)
-    touch(".gitignore", "community\ncontrib")
-    git("add .gitignore")
-    git("commit -m gitignore")
+      cd(myProjectRoot)
+      touch(".gitignore", "community\ncontrib")
+      git("add .gitignore")
+      git("commit -m gitignore")
+    }
+    catch (Throwable e) {
+      tearDown()
+      throw e
+    }
   }
 
   public void tearDown() {

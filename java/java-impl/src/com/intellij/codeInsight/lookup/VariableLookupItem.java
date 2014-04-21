@@ -123,7 +123,10 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     }
 
     ref = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getTailOffset() - 1, PsiReferenceExpression.class, false);
-    makeVariableFinalIfNeeded(context, ref);
+    PsiElement target = ref == null ? null : ref.resolve();
+    if (target instanceof PsiLocalVariable || target instanceof PsiParameter) {
+      makeFinalIfNeeded(context, (PsiVariable)target);
+    }
 
     final char completionChar = context.getCompletionChar();
     if (completionChar == '=') {
@@ -151,22 +154,16 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     }
   }
 
-  private static void makeVariableFinalIfNeeded(InsertionContext context, @Nullable PsiReferenceExpression ref) {
+  public static void makeFinalIfNeeded(@NotNull InsertionContext context, @NotNull PsiVariable variable) {
+    PsiElement place = context.getFile().findElementAt(context.getTailOffset() - 1);
     if (!Registry.is("java.completion.make.outer.variables.final") ||
-        ref == null || PsiUtil.isLanguageLevel8OrHigher(ref) || JspPsiUtil.isInJspFile(ref)) {
+        place == null || PsiUtil.isLanguageLevel8OrHigher(place) || JspPsiUtil.isInJspFile(place)) {
       return;
     }
 
-    PsiElement target = ref.resolve();
-    if (target instanceof PsiLocalVariable || target instanceof PsiParameter) {
-      PsiClass placeClass = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getTailOffset() - 1, PsiClass.class, false);
-      if (placeClass != null && !PsiTreeUtil.isAncestor(placeClass, target, true) &&
-          !HighlightControlFlowUtil.isReassigned((PsiVariable)target, new HashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>())) {
-        PsiModifierList modifierList = ((PsiVariable)target).getModifierList();
-        if (modifierList != null) {
-          modifierList.setModifierProperty(PsiModifier.FINAL, true);
-        }
-      }
+    if (HighlightControlFlowUtil.getInnerClassVariableReferencedFrom(variable, place) != null &&
+        !HighlightControlFlowUtil.isReassigned(variable, new HashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>())) {
+      PsiUtil.setModifierProperty(variable, PsiModifier.FINAL, true);
     }
   }
 

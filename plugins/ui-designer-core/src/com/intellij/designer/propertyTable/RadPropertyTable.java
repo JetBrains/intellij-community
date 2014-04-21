@@ -21,12 +21,16 @@ import com.intellij.designer.designSurface.ComponentSelectionListener;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.model.*;
+import com.intellij.ide.CopyProvider;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.ui.TextTransferable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,10 +41,13 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import java.awt.*;
+import java.awt.datatransfer.Transferable;
 import java.util.Collections;
 import java.util.List;
 
 public class RadPropertyTable extends PropertyTable implements DataProvider, ComponentSelectionListener {
+  private final MyCopyProvider myCopyProvider = new MyCopyProvider();
+
   private final Project myProject;
 
   private EditableArea myArea;
@@ -91,8 +98,13 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
 
   @Override
   public Object getData(@NonNls String dataId) {
-    if (PlatformDataKeys.FILE_EDITOR.is(dataId) && myDesigner != null) {
-      return myDesigner.getEditor();
+    if (myDesigner != null) {
+      if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
+        return myDesigner.getEditor();
+      }
+      if (PlatformDataKeys.COPY_PROVIDER.is(dataId) && !isEditing()) {
+        return myCopyProvider;
+      }
     }
     return null;
   }
@@ -184,5 +196,39 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
   @Override
   protected PropertyContext getPropertyContext() {
     return myDesigner;
+  }
+
+  private class MyCopyProvider implements CopyProvider {
+
+    @Override
+    public void performCopy(@NotNull DataContext dataContext) {
+      try {
+        Property property = getSelectionProperty();
+        Object value = getValue(property);
+        Transferable transferable;
+
+        if (value == null) {
+          transferable = new TextTransferable("");
+        }
+        else {
+          transferable = property.doCopy(myContainers.get(0), value);
+        }
+
+        CopyPasteManager.getInstance().setContents(transferable);
+      }
+      catch (Throwable e) {
+        myDesigner.showError("Copy property error", e);
+      }
+    }
+
+    @Override
+    public boolean isCopyEnabled(@NotNull DataContext dataContext) {
+      return getSelectionProperty() != null;
+    }
+
+    @Override
+    public boolean isCopyVisible(@NotNull DataContext dataContext) {
+      return true;
+    }
   }
 }

@@ -49,13 +49,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.SystemHealthMonitor");
 
-  private static final NotNullLazyValue<NotificationGroup> LOG_GROUP = new AtomicNotNullLazyValue<NotificationGroup>() {
-    @NotNull
-    @Override
-    protected NotificationGroup compute() {
-      return NotificationGroup.logOnlyGroup("System Health Log Messages");
-    }
-  };
+  private static final NotificationGroup GROUP = new NotificationGroup("System Health", NotificationDisplayType.STICKY_BALLOON, false);
+  private static final NotificationGroup LOG_GROUP = NotificationGroup.logOnlyGroup("System Health (minor)");
 
   @NotNull private final PropertiesComponent myProperties;
 
@@ -110,7 +105,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
                 .show(new RelativePoint(component, new Point(rect.x + 30, rect.y + rect.height - 10)), Balloon.Position.above);
             }
 
-            Notification notification = LOG_GROUP.getValue().createNotification(message, NotificationType.WARNING);
+            Notification notification = LOG_GROUP.createNotification(message, NotificationType.WARNING);
             notification.setImportant(true);
             Notifications.Bus.notify(notification);
           }
@@ -131,7 +126,6 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
     JobScheduler.getScheduler().schedule(new Runnable() {
       private static final long LOW_DISK_SPACE_THRESHOLD = 50 * 1024 * 1024;
       private static final long MAX_WRITE_SPEED_IN_BPS = 500 * 1024 * 1024;  // 500 MB/sec is near max SSD sequential write speed
-      private volatile NotificationGroup mySystemNotificationGroup;
 
       @Override
       public void run() {
@@ -176,10 +170,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
                     restart(timeout);
                   }
                   else {
-                    if (mySystemNotificationGroup == null) {
-                      mySystemNotificationGroup = new NotificationGroup("System", NotificationDisplayType.STICKY_BALLOON, false);
-                    }
-                    mySystemNotificationGroup.createNotification(message, file.getPath(), NotificationType.ERROR, null).whenExpired(new Runnable() {
+                    GROUP.createNotification(message, file.getPath(), NotificationType.ERROR, null).whenExpired(new Runnable() {
                       @Override
                       public void run() {
                         reported.compareAndSet(true, false);

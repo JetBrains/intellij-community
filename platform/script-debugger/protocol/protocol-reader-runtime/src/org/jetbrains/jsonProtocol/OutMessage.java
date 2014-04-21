@@ -149,7 +149,7 @@ public abstract class OutMessage {
     }
   }
 
-  protected final void writeSingletonIntArray(String name, int value) {
+  protected final void writeSingletonIntArray(@NotNull String name, @NotNull int value) {
     try {
       beginArguments();
       writer.name(name);

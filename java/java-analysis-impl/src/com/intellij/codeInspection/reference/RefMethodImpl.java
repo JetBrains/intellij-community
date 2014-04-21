@@ -103,7 +103,10 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     final PsiMethod method = (PsiMethod)getElement();
     LOG.assertTrue(method != null);
     setConstructor(method.isConstructor());
-    setFlag(method.getReturnType() == null || PsiType.VOID.equals(method.getReturnType()), IS_RETURN_VALUE_USED_MASK);
+    final PsiType returnType = method.getReturnType();
+    setFlag(returnType == null || 
+            PsiType.VOID.equals(returnType) || 
+            returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID), IS_RETURN_VALUE_USED_MASK);
 
     if (!isReturnValueUsed()) {
       myReturnValueTemplate = RETURN_VALUE_UNDEFINED;

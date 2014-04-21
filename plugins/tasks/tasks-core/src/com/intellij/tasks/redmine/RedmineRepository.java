@@ -5,15 +5,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
-import com.intellij.tasks.TaskBundle;
+import com.intellij.tasks.impl.RequestFailedException;
 import com.intellij.tasks.impl.gson.GsonUtil;
 import com.intellij.tasks.impl.httpclient.NewBaseRepositoryImpl;
 import com.intellij.tasks.redmine.model.RedmineIssue;
 import com.intellij.tasks.redmine.model.RedmineProject;
-import com.intellij.tasks.redmine.model.RedmineResponseWrapper;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
@@ -21,8 +21,11 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import static com.intellij.tasks.impl.httpclient.ResponseUtil.GsonSingleObjectDeserializer;
 import static com.intellij.tasks.redmine.model.RedmineResponseWrapper.*;
@@ -35,6 +38,8 @@ import static com.intellij.tasks.redmine.model.RedmineResponseWrapper.*;
 public class RedmineRepository extends NewBaseRepositoryImpl {
   private static final Logger LOG = Logger.getInstance(RedmineRepository.class);
   private static final Gson GSON = GsonUtil.createDefaultBuilder().create();
+
+  private static final Pattern ID_PATTERN = Pattern.compile("\\d+");
 
   public static final RedmineProject UNSPECIFIED_PROJECT = new RedmineProject() {
     @NotNull
@@ -51,6 +56,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
 
   private String myAPIKey = "";
   private RedmineProject myCurrentProject;
+  private List<RedmineProject> myProjects = null;
 
   /**
    * Serialization constructor
@@ -88,6 +94,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     return true;
   }
 
+  @NotNull
   @Override
   public RedmineRepository clone() {
     return new RedmineRepository(this);
@@ -95,17 +102,21 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
 
   @Override
   public void testConnection() throws Exception {
-    // Strangely, but Redmine doesn't return 401 or 403 error if client sent wrong credentials and instead
+    // Strangely, Redmine doesn't return 401 or 403 error codes, if client sent wrong credentials, and instead
     // merely returns empty array of issues with status code of 200. This means that we should attempt to fetch
-    // something more specific than issues to test connection and configuration.
-    HttpResponse response = getHttpClient().execute(new HttpGet(getRestApiUrl("users", "current.json")));
+    // something more specific than issues to test proper configuration, e.g. current user information at
+    // /users/current.json. Unfortunately this endpoint may be unavailable on some old servers (see IDEA-122845)
+    // and in this case we have to come back to requesting issues in this case to test anything at all.
+    HttpClient client = getHttpClient();
+    HttpResponse response = client.execute(new HttpGet(getRestApiUrl("users", "current.json")));
     //TaskUtil.prettyFormatResponseToLog(LOG, response);
     int code = response.getStatusLine().getStatusCode();
+    if (code == HttpStatus.SC_NOT_FOUND) {
+      getIssues("", 0, 1, true);
+      return;
+    }
     if (code != HttpStatus.SC_OK) {
-      if (code == HttpStatus.SC_UNAUTHORIZED) {
-        throw new Exception(TaskBundle.message("failure.login"));
-      }
-      throw new Exception(TaskBundle.message("failure.http.error", code, response.getStatusLine().getReasonPhrase()));
+      throw RequestFailedException.forStatusCode(code);
     }
   }
 
@@ -115,12 +126,13 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     return ContainerUtil.map2Array(issues, RedmineTask.class, new Function<RedmineIssue, RedmineTask>() {
       @Override
       public RedmineTask fun(RedmineIssue issue) {
-        return new RedmineTask(issue, RedmineRepository.this);
+        return new RedmineTask(RedmineRepository.this, issue);
       }
     });
   }
 
   public List<RedmineIssue> fetchIssues(String query, int offset, int limit, boolean withClosed) throws Exception {
+    ensureProjectsDiscovered();
     URIBuilder builder = new URIBuilder(getRestApiUrl("issues.json"))
       .addParameter("offset", String.valueOf(offset))
       .addParameter("limit", String.valueOf(limit))
@@ -140,7 +152,8 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     }
     HttpClient client = getHttpClient();
     HttpGet method = new HttpGet(builder.toString());
-    return client.execute(method, new GsonSingleObjectDeserializer<IssuesWrapper>(GSON, IssuesWrapper.class)).getIssues();
+    IssuesWrapper wrapper = client.execute(method, new GsonSingleObjectDeserializer<IssuesWrapper>(GSON, IssuesWrapper.class));
+    return wrapper == null ? Collections.<RedmineIssue>emptyList() : wrapper.getIssues();
   }
 
   public List<RedmineProject> fetchProjects() throws Exception {
@@ -150,18 +163,21 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     }
     HttpClient client = getHttpClient();
     HttpGet method = new HttpGet(builder.toString());
-    return client.execute(method, new GsonSingleObjectDeserializer<ProjectsWrapper>(GSON, RedmineResponseWrapper.ProjectsWrapper.class)).getProjects();
+    ProjectsWrapper wrapper = client.execute(method, new GsonSingleObjectDeserializer<ProjectsWrapper>(GSON, ProjectsWrapper.class));
+    myProjects = wrapper.getProjects();
+    return Collections.unmodifiableList(myProjects);
   }
 
   @Nullable
   @Override
-  public Task findTask(String id) throws Exception {
+  public Task findTask(@NotNull String id) throws Exception {
+    ensureProjectsDiscovered();
     HttpGet method = new HttpGet(getRestApiUrl("issues", id + ".json"));
-    IssueWrapper wrapper = getHttpClient().execute(method, new GsonSingleObjectDeserializer<IssueWrapper>(GSON, IssueWrapper.class));
+    IssueWrapper wrapper = getHttpClient().execute(method, new GsonSingleObjectDeserializer<IssueWrapper>(GSON, IssueWrapper.class, true));
     if (wrapper == null) {
       return null;
     }
-    return new RedmineTask(wrapper.getIssue(), this);
+    return new RedmineTask(this, wrapper.getIssue());
   }
 
   public String getAPIKey() {
@@ -196,13 +212,13 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
 
   @Nullable
   @Override
-  public String extractId(String taskName) {
-    return taskName;
+  public String extractId(@NotNull String taskName) {
+    return ID_PATTERN.matcher(taskName).matches()? taskName : null;
   }
 
   @Override
   protected int getFeatures() {
-    return super.getFeatures() | BASIC_HTTP_AUTHORIZATION;
+    return super.getFeatures() & ~NATIVE_SEARCH | BASIC_HTTP_AUTHORIZATION;
   }
 
   @Nullable
@@ -212,5 +228,28 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
 
   public void setCurrentProject(@Nullable RedmineProject project) {
     myCurrentProject = project != null && project.getId() == -1 ? UNSPECIFIED_PROJECT : project;
+  }
+
+  @NotNull
+  public List<RedmineProject> getProjects() {
+    try {
+      ensureProjectsDiscovered();
+    }
+    catch (Exception ignored) {
+      return Collections.emptyList();
+    }
+    return Collections.unmodifiableList(myProjects);
+  }
+
+  private void ensureProjectsDiscovered() throws Exception {
+    if (myProjects == null) {
+      fetchProjects();
+    }
+  }
+
+  @TestOnly
+  @Transient
+  public void setProjects(@NotNull List<RedmineProject> projects) {
+    myProjects = projects;
   }
 }

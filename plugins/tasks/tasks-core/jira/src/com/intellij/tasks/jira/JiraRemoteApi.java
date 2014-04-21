@@ -24,14 +24,14 @@ public abstract class JiraRemoteApi {
   }
 
   @NotNull
-  public abstract List<Task> findTasks(String jql, int max) throws Exception;
+  public abstract List<Task> findTasks(@NotNull String jql, int max) throws Exception;
 
   @Nullable
-  public abstract Task findTask(String key) throws Exception;
+  public abstract Task findTask(@NotNull String key) throws Exception;
 
-  public abstract void setTaskState(Task task, TaskState state) throws Exception;
+  public abstract void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception;
 
-  public abstract void updateTimeSpend(LocalTask task, String timeSpent, String comment) throws Exception;
+  public abstract void updateTimeSpend(@NotNull LocalTask task, @NotNull String timeSpent, String comment) throws Exception;
 
   @NotNull
   public final String getVersionName() {

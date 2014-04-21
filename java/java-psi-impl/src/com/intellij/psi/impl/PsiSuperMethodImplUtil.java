@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.HierarchicalMethodSignatureImpl;
@@ -112,6 +113,7 @@ public class PsiSuperMethodImplUtil {
                                                                                         final boolean includePrivates,
                                                                                         final Set<PsiClass> visited,
                                                                                         boolean isInRawContext) {
+    ProgressManager.checkCanceled();
     Map<MethodSignature, HierarchicalMethodSignature> result = new LinkedHashMap<MethodSignature, HierarchicalMethodSignature>();
     final Map<MethodSignature, List<PsiMethod>> sameParameterErasureMethods = new THashMap<MethodSignature, List<PsiMethod>>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
 

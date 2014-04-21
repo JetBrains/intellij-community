@@ -100,6 +100,7 @@ public final class TrelloRepository extends BaseRepositoryImpl {
     return myIncludeAllCards == repository.myIncludeAllCards;
   }
 
+  @NotNull
   @Override
   public BaseRepository clone() {
     return new TrelloRepository(this);
@@ -118,7 +119,7 @@ public final class TrelloRepository extends BaseRepositoryImpl {
 
   @Nullable
   @Override
-  public Task findTask(String id) throws Exception {
+  public Task findTask(@NotNull String id) throws Exception {
     String url = TRELLO_API_BASE_URL + "/cards/" + id + "?actions=commentCard&fields=" + encodeUrl(TrelloCard.REQUIRED_FIELDS) ;
     try {
       return new TrelloTask(makeRequestAndDeserializeJsonResponse(url, TrelloCard.class), this);
@@ -175,7 +176,7 @@ public final class TrelloRepository extends BaseRepositoryImpl {
 
   @Nullable
   @Override
-  public String extractId(String taskName) {
+  public String extractId(@NotNull String taskName) {
     return TrelloUtil.TRELLO_ID_PATTERN.matcher(taskName).matches() ? taskName : null;
   }
 

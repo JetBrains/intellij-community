@@ -21,6 +21,7 @@ import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
@@ -85,6 +86,7 @@ public abstract class BaseRepository extends TaskRepository {
     }
   }
 
+  @NotNull
   @Override
   public abstract BaseRepository clone();
 
@@ -131,7 +133,7 @@ public abstract class BaseRepository extends TaskRepository {
   }
 
   @Nullable
-  public String extractId(String taskName) {
+  public String extractId(@NotNull String taskName) {
     Matcher matcher = PATTERN.matcher(taskName);
     return matcher.find() ? matcher.group() : null;
   }

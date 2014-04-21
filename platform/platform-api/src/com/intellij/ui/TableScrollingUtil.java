@@ -280,6 +280,9 @@ public class TableScrollingUtil {
         moveHome(list);
       }
     });
+
+    ListScrollingUtil.maybeInstallDefaultShortcuts(list);
+
     new AnAction() {
       public void actionPerformed(AnActionEvent e) {
         moveHome(list);

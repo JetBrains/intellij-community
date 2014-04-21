@@ -26,13 +26,14 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author stathik
@@ -162,16 +163,11 @@ public class PluginInstaller {
       final String repositoryName = pluginNode.getRepositoryName();
       if (repositoryName != null) {
         try {
-          final List<PluginDownloader> downloaders = new ArrayList<PluginDownloader>();
+          final Map<PluginId, PluginDownloader> downloaders = new HashMap<PluginId, PluginDownloader>();
           if (!UpdateChecker.checkPluginsHost(repositoryName, downloaders)) {
             return false;
           }
-          for (PluginDownloader pluginDownloader : downloaders) {
-            if (Comparing.strEqual(pluginDownloader.getPluginId(), pluginNode.getPluginId().getIdString())) {
-              downloader = pluginDownloader;
-              break;
-            }
-          }
+          downloader = downloaders.get(pluginNode.getPluginId());
           if (downloader == null) return false;
         }
         catch (Exception e) {

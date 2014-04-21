@@ -26,6 +26,7 @@ import org.zmlx.hg4idea.command.HgInitCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 import org.zmlx.hg4idea.util.HgErrorUtil;
+import org.zmlx.hg4idea.util.HgUtil;
 
 public class HgIntegrationEnabler extends VcsIntegrationEnabler<HgVcs> {
 
@@ -42,6 +43,7 @@ public class HgIntegrationEnabler extends VcsIntegrationEnabler<HgVcs> {
         VcsNotifier notification = VcsNotifier.getInstance(myProject);
         if (!HgErrorUtil.hasErrorsInCommandExecution(result)) {
           success[0] = true;
+          refreshVcsDir(projectDir, HgUtil.DOT_HG);
           notification.notifySuccess(HgVcsMessages.message("hg4idea.init.created.notification.title"),
                                      HgVcsMessages
                                        .message("hg4idea.init.created.notification.description", projectDir.getPresentableUrl())

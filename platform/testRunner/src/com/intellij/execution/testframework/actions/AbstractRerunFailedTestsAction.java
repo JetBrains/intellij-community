@@ -40,21 +40,24 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentContainer;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
+import java.util.*;
 import java.util.List;
 
 public class AbstractRerunFailedTestsAction extends AnAction implements AnAction.TransparentUpdate, Disposable {
@@ -161,19 +164,81 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
   }
 
   public void actionPerformed(AnActionEvent e) {
-    findActualAction().performAction();
+    findActualAction().showPopup(e);
   }
 
-  private void performAction() {
+  private void showPopup(AnActionEvent e) {
     boolean isDebug = myConsoleProperties.isDebug();
     final MyRunProfile profile = getRunProfile();
-    if (profile == null)
+    if (profile == null) {
       return;
-    try {
-      final Executor executor = isDebug ? DefaultDebugExecutor.getDebugExecutorInstance() : DefaultRunExecutor.getRunExecutorInstance();
+    }
+
+    final Executor executor = isDebug ? DefaultDebugExecutor.getDebugExecutorInstance() : DefaultRunExecutor.getRunExecutorInstance();
+
+    final InputEvent event = e.getInputEvent();
+    if (!(event instanceof MouseEvent) || !event.isShiftDown()) {
       final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), profile);
-      assert runner != null;
-      runner.execute(new ExecutionEnvironmentBuilder(myEnvironment).setRunProfile(profile).build());
+      LOG.assertTrue(runner != null);
+      performAction(runner, profile, myEnvironment.getExecutor());
+      return;
+    }
+
+    final LinkedHashMap<Executor, ProgramRunner> availableRunners = new LinkedHashMap<Executor, ProgramRunner>();
+    final Executor[] executors = new Executor[] {DefaultRunExecutor.getRunExecutorInstance(), DefaultDebugExecutor.getDebugExecutorInstance()};
+    for (Executor ex : executors) {
+      final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(ex.getId(), profile);
+      if (runner != null) {
+        availableRunners.put(ex, runner);
+      }
+    }
+
+    if (availableRunners.isEmpty()) {
+      LOG.error(executor.getActionName() + " is not available now");
+      return;
+    }
+
+    if (availableRunners.size() == 1) {
+      performAction(availableRunners.get(executor), profile, executor);
+    } else {
+      final JBList list = new JBList(availableRunners.keySet());
+      list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+      list.setSelectedValue(executor, true);
+      list.setCellRenderer(new DefaultListCellRenderer() {
+        @Override
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+          final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+          if (value instanceof Executor) {
+            setText(UIUtil.removeMnemonic(((Executor)value).getStartActionText()));
+            setIcon(((Executor)value).getIcon());
+          }
+          return component;
+        }
+      });
+      JBPopupFactory.getInstance().createListPopupBuilder(list)
+        .setTitle("Restart Failed Tests")
+        .setMovable(false)
+        .setResizable(false)
+        .setRequestFocus(true)
+        .setItemChoosenCallback(new Runnable() {
+          public void run() {
+            final Object value = list.getSelectedValue();
+            if (value instanceof Executor) {
+              performAction(availableRunners.get(value), profile, (Executor)value);
+            }
+          }
+        }).createPopup().showUnderneathOf(event.getComponent());
+    }
+  }
+
+  private void performAction(ProgramRunner runner, MyRunProfile profile, Executor executor) {
+    try {
+      final ExecutionEnvironment environment =
+        new ExecutionEnvironmentBuilder(myEnvironment).setRunnerId(runner.getRunnerId())
+          .setExecutor(executor)
+          .setRunProfile(profile)
+          .build();
+      runner.execute(environment);
     }
     catch (ExecutionException e1) {
       LOG.error(e1);

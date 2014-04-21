@@ -60,6 +60,24 @@
   <item name="java.io.DataInputStream java.lang.String readUTF(java.io.DataInput)">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.io.DataInputStream java.lang.String readUTF(java.io.DataInput) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.io.DataOutput void write(byte[]) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.io.DataOutput void write(byte[], int, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.io.DataOutput void writeBytes(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.io.DataOutput void writeChars(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.io.DataOutput void writeUTF(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="java.io.File File(java.io.File, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NonNls" />
     <annotation name="org.jetbrains.annotations.NotNull" />

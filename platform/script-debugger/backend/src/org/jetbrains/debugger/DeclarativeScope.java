@@ -3,25 +3,24 @@ package org.jetbrains.debugger;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.AsyncValueLoaderManager;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.debugger.values.ObjectValue;
 import org.jetbrains.debugger.values.ValueManager;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 public abstract class DeclarativeScope<VALUE_LOADER extends ValueManager> extends ScopeBase {
-  @SuppressWarnings("unchecked")
-  private static final AsyncValueLoaderManager<DeclarativeScope, List<? extends Variable>> VARIABLES_LOADER =
-    new AsyncValueLoaderManager<DeclarativeScope, List<? extends Variable>>(
-      ((AtomicReferenceFieldUpdater)AtomicReferenceFieldUpdater.newUpdater(DeclarativeScope.class, AsyncResult.class, "variables"))) {
+  private static final AsyncValueLoaderManager<DeclarativeScope, List<Variable>> VARIABLES_LOADER =
+    new AsyncValueLoaderManager<DeclarativeScope, List<Variable>>(DeclarativeScope.class) {
       @Override
-      public boolean isUpToDate(@NotNull DeclarativeScope host, @NotNull List<? extends Variable> data) {
+      public boolean isUpToDate(@NotNull DeclarativeScope host, @NotNull List<Variable> data) {
         return host.valueManager.getCacheStamp() == host.cacheStamp;
       }
 
       @Override
-      public void load(@NotNull DeclarativeScope host, @NotNull AsyncResult<List<? extends Variable>> result) {
+      public void load(@NotNull DeclarativeScope host, @NotNull AsyncResult<List<Variable>> result) {
         host.loadVariables(result);
       }
     };
@@ -48,9 +47,19 @@ public abstract class DeclarativeScope<VALUE_LOADER extends ValueManager> extend
     cacheStamp = valueManager.getCacheStamp();
   }
 
+  protected final void loadScopeObjectProperties(@NotNull ObjectValue value, @NotNull final AsyncResult<List<? extends Variable>> result) {
+    value.getProperties().doWhenDone(new Consumer<List<Variable>>() {
+      @Override
+      public void consume(List<Variable> variables) {
+        updateCacheStamp();
+        result.setDone(variables);
+      }
+    }).notifyWhenRejected(result);
+  }
+
   @NotNull
   @Override
-  public final AsyncResult<List<? extends Variable>> getVariables() {
+  public final AsyncResult<List<Variable>> getVariables() {
     return VARIABLES_LOADER.get(this);
   }
 

@@ -168,7 +168,7 @@
               </grid>
               <grid id="81c32" binding="myMembersPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
                 <constraints>
-                  <grid row="0" column="1" row-span="5" col-span="1" vsize-policy="3" hsize-policy="3" anchor="1" fill="3" indent="0" use-parent-layout="false"/>
+                  <grid row="0" column="1" row-span="2" col-span="1" vsize-policy="3" hsize-policy="3" anchor="1" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
                 <clientProperties>
@@ -281,6 +281,21 @@
                       <text value="Repeat &amp;synchronized modifier"/>
                     </properties>
                   </component>
+                </children>
+              </grid>
+              <grid id="edade" binding="myVisibilityPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+                <constraints>
+                  <grid row="2" column="1" row-span="3" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+                <clientProperties>
+                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
+                </clientProperties>
+                <border type="none"/>
+                <children>
+                  <vspacer id="69bbc">
+                    <constraints border-constraint="Center"/>
+                  </vspacer>
                 </children>
               </grid>
             </children>

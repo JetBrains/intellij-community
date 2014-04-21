@@ -46,7 +46,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -104,7 +103,7 @@ public class TodoCheckinHandler extends CheckinHandler {
         }, null);
         panel.add(linkLabel, BorderLayout.CENTER);
 
-        disableWhenDumb(myProject, checkBox, "TODO check is impossible until indices are up-to-date");
+        CheckinHandlerUtil.disableWhenDumb(myProject, checkBox, "TODO check is impossible until indices are up-to-date");
         return panel;
       }
 
@@ -130,12 +129,6 @@ public class TodoCheckinHandler extends CheckinHandler {
         checkBox.setSelected(myConfiguration.CHECK_NEW_TODO);
       }
     };
-  }
-
-  static void disableWhenDumb(@NotNull Project project, @NotNull JCheckBox checkBox, @NotNull String tooltip) {
-    boolean dumb = DumbService.isDumb(project);
-    checkBox.setEnabled(!dumb);
-    checkBox.setToolTipText(dumb ? tooltip : "");
   }
 
   @Override

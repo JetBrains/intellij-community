@@ -30,7 +30,7 @@ public abstract class JiraRestApi extends JiraRemoteApi {
   private static final Logger LOG = Logger.getInstance(JiraRestApi.class);
 
   public static JiraRestApi fromJiraVersion(@NotNull JiraVersion jiraVersion, @NotNull JiraRepository repository) {
-    LOG.debug("JIRA version is " + jiraVersion);
+    LOG.info("JIRA version is " + jiraVersion);
     if (jiraVersion.getMajorNumber() == 4 && jiraVersion.getMinorNumber() >= 2) {
       return new JiraRestApi20Alpha1(repository);
     }
@@ -53,7 +53,7 @@ public abstract class JiraRestApi extends JiraRemoteApi {
 
   @Override
   @NotNull
-  public final List<Task> findTasks(String jql, int max) throws Exception {
+  public final List<Task> findTasks(@NotNull String jql, int max) throws Exception {
     GetMethod method = getMultipleIssuesSearchMethod(jql, max);
     String response = myRepository.executeMethod(method);
     List<JiraIssue> issues = parseIssues(response);
@@ -68,9 +68,15 @@ public abstract class JiraRestApi extends JiraRemoteApi {
 
   @Override
   @Nullable
-  public final JiraRestTask findTask(String key) throws Exception {
+  public final JiraRestTask findTask(@NotNull String key) throws Exception {
     GetMethod method = getSingleIssueSearchMethod(key);
-    return new JiraRestTask(parseIssue(myRepository.executeMethod(method)), myRepository);
+    try {
+      return new JiraRestTask(parseIssue(myRepository.executeMethod(method)), myRepository);
+    }
+    catch (Exception ignored) {
+      // should be logged already
+      return null;
+    }
   }
 
   @NotNull
@@ -95,7 +101,7 @@ public abstract class JiraRestApi extends JiraRemoteApi {
   protected abstract JiraIssue parseIssue(String response);
 
   @Override
-  public void setTaskState(Task task, TaskState state) throws Exception {
+  public void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception {
     String requestBody = getRequestForStateTransition(state);
     LOG.debug(String.format("Transition: %s -> %s, request: %s", task.getState(), state, requestBody));
     if (requestBody == null) {

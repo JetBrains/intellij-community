@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +34,7 @@ import java.util.Collection;
 
 public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.WriteCommandAction");
-  private final String myName;
+  private final String myCommandName;
   private final String myGroupID;
   private final Project myProject;
   private final PsiFile[] myPsiFiles;
@@ -45,8 +47,8 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     this(project, commandName, null, files);
   }
 
-  protected WriteCommandAction(@Nullable final Project project, @Nullable final String name, @Nullable final String groupID, PsiFile... files) {
-    myName = name;
+  protected WriteCommandAction(@Nullable final Project project, @Nullable final String commandName, @Nullable final String groupID, PsiFile... files) {
+    myCommandName = commandName;
     myGroupID = groupID;
     myProject = project;
     myPsiFiles = files == null || files.length == 0 ? PsiFile.EMPTY_ARRAY : files;
@@ -57,7 +59,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   }
 
   public final String getCommandName() {
-    return myName;
+    return myCommandName;
   }
 
   public String getGroupID() {
@@ -67,28 +69,23 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   @NotNull
   @Override
   public RunResult<T> execute() {
-    if (!ApplicationManager.getApplication().isDispatchThread() && ApplicationManager.getApplication().isReadAccessAllowed()) {
+    Application application = ApplicationManager.getApplication();
+    if (!application.isDispatchThread() && application.isReadAccessAllowed()) {
       LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
     }
-
     final RunResult<T> result = new RunResult<T>(this);
 
     try {
-      Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          performWriteCommandAction(result);
-        }
-      };
-      Application application = ApplicationManager.getApplication();
       if (application.isDispatchThread()) {
-        runnable.run();
-      }
-      else if (application.isReadAccessAllowed()) {
-        LOG.error("Calling write command from read-action leads to deadlock.");
+        performWriteCommandAction(result);
       }
       else {
-        SwingUtilities.invokeAndWait(runnable);
+        SwingUtilities.invokeAndWait(new Runnable() {
+          @Override
+          public void run() {
+            performWriteCommandAction(result);
+          }
+        });
       }
     }
     catch (InvocationTargetException e) {
@@ -102,11 +99,10 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     return FileModificationService.getInstance().preparePsiElementsForWrite(psiFiles);
   }
 
-  private void performWriteCommandAction(final RunResult<T> result) {
+  private void performWriteCommandAction(@NotNull final RunResult<T> result) {
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(Arrays.asList(myPsiFiles))) return;
 
-    //this is needed to prevent memory leak, since command
-    // is put into undo queue
+    // this is needed to prevent memory leak, since the command is put into undo queue
     final RunResult[] results = {result};
 
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
@@ -131,21 +127,23 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     return UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION;
   }
 
-  protected <T> RunResult<T> executeCommand(RunResult<T> result) {
+  public void performCommand() throws Throwable {
     //this is needed to prevent memory leak, since command
     // is put into undo queue
-    final RunResult[] results = {result};
+    final RunResult[] results = {new RunResult<T>(this)};
+    final Ref<Throwable> exception = new Ref<Throwable>();
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       @Override
       public void run() {
         if (isGlobalUndoAction()) CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
-        results[0].run();
+        exception.set(results[0].run().getThrowable());
         results[0] = null;
       }
     }, getCommandName(), getGroupID(), getUndoConfirmationPolicy());
 
-    return result;
+    Throwable throwable = exception.get();
+    if (throwable != null) throw throwable;
   }
 
   /**
@@ -187,6 +185,17 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
         result.setResult(computable.compute());
       }
     }.execute().getResultObject();
+  }
+
+  public static <T, E extends Throwable> T runWriteCommandAction(Project project, @NotNull final ThrowableComputable<T, E> computable) throws E {
+    RunResult<T> result = new WriteCommandAction<T>(project,"") {
+      @Override
+      protected void run(@NotNull Result<T> result) throws Throwable {
+        result.setResult(computable.compute());
+      }
+    }.execute();
+    if (result.getThrowable() instanceof Throwable) throw (E)result.getThrowable();
+    return result.throwException().getResultObject();
   }
 }
 

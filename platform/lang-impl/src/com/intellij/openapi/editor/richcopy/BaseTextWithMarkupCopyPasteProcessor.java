@@ -16,24 +16,23 @@
 package com.intellij.openapi.editor.richcopy;
 
 import com.intellij.codeInsight.editorActions.CopyPastePostProcessor;
+import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
 import com.intellij.codeInsight.editorActions.TextBlockTransferableData;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.RawText;
 import com.intellij.openapi.editor.richcopy.model.SyntaxInfo;
+import com.intellij.openapi.editor.richcopy.view.RawTextHolder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.StringBuilderSpinAllocator;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.Transferable;
 
-public abstract class BaseTextWithMarkupCopyPasteProcessor<T extends TextBlockTransferableData> implements CopyPastePostProcessor<T>, TextWithMarkupBuilder {
-  private static final Logger LOG = Logger.getInstance("#" + BaseTextWithMarkupCopyPasteProcessor.class.getName());
-
+public abstract class BaseTextWithMarkupCopyPasteProcessor<T extends RawTextHolder & TextBlockTransferableData>
+  implements CopyPastePostProcessor<T>, TextWithMarkupBuilder {
   private T myData;
 
   protected BaseTextWithMarkupCopyPasteProcessor(TextWithMarkupProcessor processor) {
@@ -66,23 +65,8 @@ public abstract class BaseTextWithMarkupCopyPasteProcessor<T extends TextBlockTr
   }
 
   @Override
-  public void build(CharSequence charSequence, SyntaxInfo syntaxInfo) {
-    String stringRepresentation = null;
-    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-    try {
-      buildStringRepresentation(buffer, charSequence, syntaxInfo, Registry.intValue("editor.richcopy.max.size.megabytes") * 1048576);
-      stringRepresentation = buffer.toString();
-      if (Registry.is("editor.richcopy.debug")) {
-        LOG.info("Resulting text: \n'" + stringRepresentation + "'");
-      }
-    }
-    catch (Exception e){
-      LOG.error(e);
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
-    }
-    myData = stringRepresentation == null ? null : createTransferable(stringRepresentation);
+  public void build(SyntaxInfo syntaxInfo) {
+    myData = doBuild(syntaxInfo);
   }
 
   @Override
@@ -90,6 +74,29 @@ public abstract class BaseTextWithMarkupCopyPasteProcessor<T extends TextBlockTr
     myData = null;
   }
 
-  protected abstract void buildStringRepresentation(@NotNull StringBuilder buffer, @NotNull CharSequence rawText, @NotNull SyntaxInfo syntaxInfo, int maxLength);
-  protected abstract T createTransferable(@NotNull String data);
+  protected abstract T doBuild(SyntaxInfo info);
+
+  public static class RawTextSetter implements CopyPastePreProcessor {
+    private final BaseTextWithMarkupCopyPasteProcessor myProcessor;
+
+    public RawTextSetter(BaseTextWithMarkupCopyPasteProcessor processor) {
+      myProcessor = processor;
+    }
+
+    @Override
+    @Nullable
+    public String preprocessOnCopy(final PsiFile file, final int[] startOffsets, final int[] endOffsets, String text) {
+      if (myProcessor.myData != null) {
+        myProcessor.myData.setRawText(text);
+        myProcessor.myData = null;
+      }
+      return null; // noop
+    }
+
+    @Override
+    public String preprocessOnPaste(final Project project, final PsiFile file, final Editor editor, String text, final RawText rawText) {
+      return text; // noop
+    }
+  }
+
 }

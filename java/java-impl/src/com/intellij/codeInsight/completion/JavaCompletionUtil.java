@@ -330,7 +330,9 @@ public class JavaCompletionUtil {
 
     PsiScopesUtil.processTypeDeclarations(qualifierType, member, new MyProcessor());
 
-    PsiType rawType = member instanceof PsiField ? ((PsiField) member).getType() : ((PsiMethod) member).getReturnType();
+    PsiType rawType = member instanceof PsiField ? ((PsiField) member).getType() :
+                      member instanceof PsiMethod ? ((PsiMethod) member).getReturnType() :
+                      JavaPsiFacade.getElementFactory(member.getProject()).createType((PsiClass)member);
     return subst.get().substitute(rawType);
   }
 

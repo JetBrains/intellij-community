@@ -20,6 +20,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.ui.Animator;
@@ -73,7 +74,7 @@ public class SheetMessage {
     myParent = owner;
 
     myWindow.setUndecorated(true);
-    myWindow.setBackground(new JBColor(new Color(0, 0, 0, 0), new Color(0, 0, 0, 0)));
+    myWindow.setBackground(Gray.TRANSPARENT);
     myController = new SheetController(this, title, message, icon, buttons, defaultButton, doNotAskOption, focusedButton);
 
     imageHeight = 0;

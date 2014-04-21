@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -270,6 +270,7 @@ mGSTRING_LITERAL = \"\"
   "class"                                 {  return( kCLASS );  }
   "interface"                             {  return( kINTERFACE );  }
   "enum"                                  {  return( kENUM );  }
+  "trait"                                 {  return( kTRAIT );  }
   "extends"                               {  return( kEXTENDS );  }
   "super"                                 {  return( kSUPER );  }
   "void"                                  {  return( kVOID );  }
@@ -402,6 +403,7 @@ mGSTRING_LITERAL = \"\"
   "class"                                 {  return( kCLASS );  }
   "interface"                             {  return( kINTERFACE );  }
   "enum"                                  {  return( kENUM );  }
+  "trait"                                 {  return( kTRAIT );  }
   "extends"                               {  return( kEXTENDS );  }
   "super"                                 {  return( kSUPER );  }
   "void"                                  {  return( kVOID );  }
@@ -537,6 +539,7 @@ mGSTRING_LITERAL = \"\"
   "class"                                 {  return( kCLASS );  }
   "interface"                             {  return( kINTERFACE );  }
   "enum"                                  {  return( kENUM );  }
+  "trait"                                 {  return( kTRAIT );  }
   "extends"                               {  return( kEXTENDS );  }
   "super"                                 {  return( kSUPER );  }
   "void"                                  {  return( kVOID );  }
@@ -640,6 +643,7 @@ mGSTRING_LITERAL = \"\"
   "class"                                 {  return( kCLASS );  }
   "interface"                             {  return( kINTERFACE );  }
   "enum"                                  {  return( kENUM );  }
+  "trait"                                 {  return( kTRAIT );  }
   "extends"                               {  return( kEXTENDS );  }
   "super"                                 {  return( kSUPER );  }
   "void"                                  {  return( kVOID );  }
@@ -788,6 +792,7 @@ mGSTRING_LITERAL = \"\"
 "class"                                   {  return( kCLASS );  }
 "interface"                               {  return( kINTERFACE );  }
 "enum"                                    {  return( kENUM );  }
+"trait"                                   {  return( kTRAIT );  }
 "extends"                                 {  return( kEXTENDS );  }
 "super"                                   {  return( kSUPER );  }
 "void"                                    {  return( kVOID );  }

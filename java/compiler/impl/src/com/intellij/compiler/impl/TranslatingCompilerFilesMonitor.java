@@ -405,11 +405,10 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     final int projectId = getProjectId(project);
     if (!successfullyCompiled.isEmpty()) {
       final LocalFileSystem lfs = LocalFileSystem.getInstance();
-      final IOException[] exceptions = {null};
       // need read action here to ensure that no modifications were made to VFS while updating file attributes
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          try {
+      ApplicationManager.getApplication().runReadAction(new ThrowableComputable<Void, IOException>() {
+        @Override
+        public Void compute() throws IOException {
             final Map<VirtualFile, SourceFileInfo> compiledSources = new HashMap<VirtualFile, SourceFileInfo>();
             final Set<VirtualFile> forceRecompile = new HashSet<VirtualFile>();
 
@@ -477,15 +476,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                 addSourceForRecompilation(projectId, file, info);
               }
             }
-          }
-          catch (IOException e) {
-            exceptions[0] = e;
-          }
+          return null;
         }
       });
-      if (exceptions[0] != null) {
-        throw exceptions[0];
-      }
     }
     
     if (filesToRecompile.length > 0) {

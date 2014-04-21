@@ -31,11 +31,12 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.sun.jdi.ReferenceType;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.java.debugger.breakpoints.properties.JavaExceptionBreakpointProperties;
 
 public class AnyExceptionBreakpoint extends ExceptionBreakpoint {
   public static final @NonNls Key<AnyExceptionBreakpoint> ANY_EXCEPTION_BREAKPOINT = BreakpointCategory.lookup("breakpoint_any");
 
-  protected AnyExceptionBreakpoint(Project project, XBreakpoint xBreakpoint) {
+  protected AnyExceptionBreakpoint(Project project, XBreakpoint<JavaExceptionBreakpointProperties> xBreakpoint) {
     super(project, null, null, xBreakpoint);
     //setEnabled(false);
   }

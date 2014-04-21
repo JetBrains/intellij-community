@@ -71,43 +71,41 @@ public final class ExecutionHandler {
                               @Nullable final AntBuildMessageView buildMessageViewToReuse,
                               final DataContext dataContext,
                               List<BuildFileProperty> additionalProperties, @NotNull final AntBuildListener antBuildListener) {
-    FileDocumentManager.getInstance().saveAllDocuments();
-    final AntCommandLineBuilder builder = new AntCommandLineBuilder();
     final AntBuildMessageView messageView;
     final GeneralCommandLine commandLine;
-    synchronized (builder) {
-      Project project = buildFile.getProject();
+    final Project project = buildFile.getProject();
+    try {
+      FileDocumentManager.getInstance().saveAllDocuments();
+      final AntCommandLineBuilder builder = new AntCommandLineBuilder();
 
-      try {
-        builder.setBuildFile(buildFile.getAllOptions(), VfsUtil.virtualToIoFile(buildFile.getVirtualFile()));
-        builder.calculateProperties(dataContext, additionalProperties);
-        builder.addTargets(targets);
+      builder.setBuildFile(buildFile.getAllOptions(), VfsUtil.virtualToIoFile(buildFile.getVirtualFile()));
+      builder.calculateProperties(dataContext, additionalProperties);
+      builder.addTargets(targets);
 
-        builder.getCommandLine().setCharset(EncodingProjectManager.getInstance(buildFile.getProject()).getDefaultCharset());
+      builder.getCommandLine().setCharset(EncodingProjectManager.getInstance(buildFile.getProject()).getDefaultCharset());
 
-        messageView = prepareMessageView(buildMessageViewToReuse, buildFile, targets);
-        commandLine = CommandLineBuilder.createFromJavaParameters(builder.getCommandLine());
-        messageView.setBuildCommandLine(commandLine.getCommandLineString());
-      }
-      catch (RunCanceledException e) {
-        e.showMessage(project, AntBundle.message("run.ant.erorr.dialog.title"));
-        antBuildListener.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
-        return;
-      }
-      catch (CantRunException e) {
-        ExecutionErrorDialog.show(e, AntBundle.message("cant.run.ant.erorr.dialog.title"), project);
-        antBuildListener.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
-        return;
-      }
-      catch (Macro.ExecutionCancelledException e) {
-        antBuildListener.buildFinished(AntBuildListener.ABORTED, 0);
-        return;
-      }
-      catch (Throwable e) {
-        antBuildListener.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
-        LOG.error(e);
-        return;
-      }
+      messageView = prepareMessageView(buildMessageViewToReuse, buildFile, targets);
+      commandLine = CommandLineBuilder.createFromJavaParameters(builder.getCommandLine());
+      messageView.setBuildCommandLine(commandLine.getCommandLineString());
+    }
+    catch (RunCanceledException e) {
+      e.showMessage(project, AntBundle.message("run.ant.erorr.dialog.title"));
+      antBuildListener.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
+      return;
+    }
+    catch (CantRunException e) {
+      ExecutionErrorDialog.show(e, AntBundle.message("cant.run.ant.erorr.dialog.title"), project);
+      antBuildListener.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
+      return;
+    }
+    catch (Macro.ExecutionCancelledException e) {
+      antBuildListener.buildFinished(AntBuildListener.ABORTED, 0);
+      return;
+    }
+    catch (Throwable e) {
+      antBuildListener.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
+      LOG.error(e);
+      return;
     }
 
     new Task.Backgroundable(buildFile.getProject(), AntBundle.message("ant.build.progress.dialog.title"), true) {
@@ -195,28 +193,31 @@ public final class ExecutionHandler {
 
         final OutputPacketProcessor dispatcher = handler.getErr().getEventsDispatcher();
 
-        if (event.getExitCode() != 0) {
-          // in case process exits abnormally, provide all unprocessed stderr content
-          final String unprocessed;
-          synchronized (myUnprocessedStdErr) {
-            unprocessed = myUnprocessedStdErr.toString();
-            myUnprocessedStdErr.setLength(0);
+        try {
+          if (event.getExitCode() != 0) {
+            // in case process exits abnormally, provide all unprocessed stderr content
+            final String unprocessed;
+            synchronized (myUnprocessedStdErr) {
+              unprocessed = myUnprocessedStdErr.toString();
+              myUnprocessedStdErr.setLength(0);
+            }
+            if (!unprocessed.isEmpty()) {
+              dispatcher.processOutput(new Printable() {
+                public void printOn(Printer printer) {
+                  errorView.outputError(unprocessed, AntBuildMessageView.PRIORITY_ERR);
+                }
+              });
+            }
           }
-          if (!unprocessed.isEmpty()) {
-            dispatcher.processOutput(new Printable() {
-              public void printOn(Printer printer) {
-                errorView.outputError(unprocessed, AntBuildMessageView.PRIORITY_ERR);
-              }
-            });
+          else {
+            synchronized (myUnprocessedStdErr) {
+              myUnprocessedStdErr.setLength(0);
+            }
           }
         }
-        else {
-          synchronized (myUnprocessedStdErr) {
-            myUnprocessedStdErr.setLength(0);
-          }
+        finally {
+          errorView.buildFinished(progress != null && progress.isCanceled(), buildTime, antBuildListener, dispatcher);
         }
-
-        errorView.buildFinished(progress != null && progress.isCanceled(), buildTime, antBuildListener, dispatcher);
       }
     });
     handler.startNotify();

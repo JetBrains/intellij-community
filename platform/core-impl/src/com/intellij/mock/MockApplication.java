@@ -17,6 +17,7 @@ package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -190,7 +191,7 @@ public class MockApplication extends MockComponentManager implements Application
   @Override
   public ModalityState getNoneModalityState() {
     if (MODALITY_STATE_NONE == null) {
-      MODALITY_STATE_NONE = new ModalityState() {
+      MODALITY_STATE_NONE = new ModalityStateEx() {
         @Override
         public boolean dominates(@NotNull ModalityState anotherState) {
           return false;

@@ -266,11 +266,10 @@ public class LaterInvocator {
       }
 
 
-      ModalityStateEx currentModality;
+      ModalityState currentModality;
       if (ourModalEntities.isEmpty()) {
         Application application = ApplicationManager.getApplication();
-        currentModality =
-          application == null ? (ModalityStateEx)ModalityState.NON_MODAL : (ModalityStateEx)application.getNoneModalityState();
+        currentModality = application == null ? ModalityState.NON_MODAL : application.getNoneModalityState();
       }
       else {
         currentModality = new ModalityStateEx(ourModalEntities.toArray());

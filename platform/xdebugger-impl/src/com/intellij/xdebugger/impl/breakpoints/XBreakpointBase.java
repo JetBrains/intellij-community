@@ -212,8 +212,15 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   public void setGroup(String group) {
-    group = StringUtil.nullize(group);
-    myState.setGroup(group);
+    myState.setGroup(StringUtil.nullize(group));
+  }
+
+  public String getUserDescription() {
+    return myState.getDescription();
+  }
+
+  public void setUserDescription(String description) {
+    myState.setDescription(StringUtil.nullize(description));
   }
 
   public void dispose() {

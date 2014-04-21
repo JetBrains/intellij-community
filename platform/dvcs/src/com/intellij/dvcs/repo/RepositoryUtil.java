@@ -70,7 +70,7 @@ public class RepositoryUtil {
    * If an other exception happens, rethrows it as a {@link RepoStateException}.
    * In the case of success returns the result of the task execution.
    */
-  public static String tryOrThrow(Callable<String> actionToTry, File fileToLoad) {
+  public static <T> T tryOrThrow(Callable<T> actionToTry, File fileToLoad) {
     IOException cause = null;
     for (int i = 0; i < IO_RETRIES; i++) {
       try {

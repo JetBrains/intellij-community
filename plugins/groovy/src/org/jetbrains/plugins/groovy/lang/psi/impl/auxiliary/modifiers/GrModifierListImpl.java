@@ -174,14 +174,14 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     if (owner instanceof GrVariableDeclaration && owner.getParent() instanceof GrTypeDefinitionBody) {
       PsiElement pParent = owner.getParent().getParent();
       if (!modifierList.hasExplicitVisibilityModifiers()) { //properties are backed by private fields
-        if (!(pParent instanceof PsiClass) || !((PsiClass)pParent).isInterface()) {
+        if (!(pParent instanceof GrTypeDefinition && isInterface((GrTypeDefinition)pParent))) {
           if (modifier.equals(GrModifier.PRIVATE)) return true;
           if (modifier.equals(GrModifier.PROTECTED)) return false;
           if (modifier.equals(GrModifier.PUBLIC)) return false;
         }
       }
 
-      if (pParent instanceof PsiClass && ((PsiClass)pParent).isInterface()) {
+      if (pParent instanceof GrTypeDefinition && isInterface((GrTypeDefinition)pParent)) {
         if (modifier.equals(GrModifier.STATIC)) return true;
         if (modifier.equals(GrModifier.FINAL)) return true;
       }
@@ -195,9 +195,9 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
 
     if (owner instanceof GrMethod && owner.getParent() instanceof GrTypeDefinitionBody) {
       PsiElement parent = owner.getParent().getParent();
-      if (parent instanceof PsiClass && ((PsiClass)parent).isInterface()) {
+      if (parent instanceof GrTypeDefinition && ((GrTypeDefinition)parent).isInterface()) {
         if (GrModifier.ABSTRACT.equals(modifier)) return true;
-        if (GrModifier.PUBLIC.equals(modifier)) return true;
+        if (!((GrTypeDefinition)parent).isTrait() && GrModifier.PUBLIC.equals(modifier)) return true;
       }
     }
 
@@ -244,6 +244,10 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     }
 
     return false;
+  }
+
+  private static boolean isInterface(GrTypeDefinition pParent) {
+    return pParent.isInterface() && !pParent.isTrait();
   }
 
   public boolean hasModifierProperty(@NotNull @NonNls String modifier) {

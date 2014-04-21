@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
@@ -44,14 +45,15 @@ public class LambdaCompletionProvider extends CompletionProvider<CompletionParam
     for (ExpectedTypeInfo expectedType : expectedTypes) {
       final PsiType defaultType = expectedType.getDefaultType();
       if (LambdaUtil.isFunctionalType(defaultType)) {
-        final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(defaultType);
+        final PsiType functionalInterfaceType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(defaultType);
+        final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
         if (method != null) {
           PsiParameter[] params = method.getParameterList().getParameters();
           final Project project = method.getProject();
           final PsiElement originalPosition = parameters.getOriginalPosition();
           final JVMElementFactory jvmElementFactory = originalPosition != null ? JVMElementFactories.getFactory(originalPosition.getLanguage(), project) : null;
           if (jvmElementFactory != null) {
-            final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(method, PsiUtil.resolveGenericsClassInType(defaultType));
+            final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(method, PsiUtil.resolveGenericsClassInType(functionalInterfaceType));
             final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
             params = GenerateMembersUtil.overriddenParameters(params, jvmElementFactory, codeStyleManager, substitutor, originalPosition);
           }

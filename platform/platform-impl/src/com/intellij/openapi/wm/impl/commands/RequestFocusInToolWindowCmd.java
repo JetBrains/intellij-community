@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,6 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
   private final FocusWatcher myFocusWatcher;
 
   private final boolean myForced;
-  private final IdeFocusManager myFocusManager;
   private final Expirable myTimestamp;
 
   public RequestFocusInToolWindowCmd(IdeFocusManager focusManager, final ToolWindowImpl toolWindow, final FocusWatcher focusWatcher, final Runnable finishCallBack, boolean forced) {
@@ -52,13 +51,14 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
     myToolWindow = toolWindow;
     myFocusWatcher = focusWatcher;
     myForced = forced;
-    myFocusManager = focusManager;
 
-    myTimestamp = myFocusManager.getTimestamp(true);
+    myTimestamp = focusManager.getTimestamp(true);
   }
 
+  @Override
   public final void run() {
     myToolWindow.getActivation().doWhenDone(new Runnable() {
+      @Override
       public void run() {
         processRequestFocus();
       }
@@ -103,6 +103,7 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
       // Try to focus component which is preferred one for the tool window
       if (preferredFocusedComponent != null) {
         requestFocus(preferredFocusedComponent).doWhenDone(new Runnable() {
+          @Override
           public void run() {
             bringOwnerToFront();
           }
@@ -112,6 +113,7 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
         // If there is no preferred component then try to focus tool window itself
         final JComponent componentToFocus = myToolWindow.getComponent();
         requestFocus(componentToFocus).doWhenDone(new Runnable() {
+          @Override
           public void run() {
             bringOwnerToFront();
           }
@@ -143,7 +145,7 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
     // isn't active.
     if (owner != null && owner.getFocusOwner() == null) {
       final Window activeWindow = getActiveWindow(owner.getOwnedWindows());
-      if (activeWindow == null || (activeWindow instanceof FloatingDecorator)) {
+      if (activeWindow == null || activeWindow instanceof FloatingDecorator) {
         LOG.debug("owner.toFront()");
         //Thread.dumpStack();
         //System.out.println("------------------------------------------------------");
@@ -153,23 +155,29 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
   }
 
 
-  private ActionCallback requestFocus(final Component c) {
+  @NotNull
+  private ActionCallback requestFocus(@NotNull final Component c) {
     final ActionCallback result = new ActionCallback();
     final Alarm checkerAlarm = new Alarm(result);
     Runnable checker = new Runnable() {
       final long startTime = System.currentTimeMillis();
       @Override
       public void run() {
-        if (System.currentTimeMillis() - startTime > 10000) return;
+        if (System.currentTimeMillis() - startTime > 10000) {
+          result.setRejected();
+          return;
+        }
         if (c.isShowing()) {
           final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner();
           if (owner != null && owner == c) {
             myManager.getFocusManager().requestFocus(new FocusCommand() {
+              @Override
               @NotNull
               public ActionCallback run() {
                 return new ActionCallback.Done();
               }
             }, myForced).doWhenProcessed(new Runnable() {
+              @Override
               public void run() {
                 updateToolWindow(c);
               }
@@ -178,6 +186,7 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
           else {
             myManager.getFocusManager().requestFocus(new FocusCommand.ByComponent(c, myToolWindow.getComponent()), myForced)
               .doWhenProcessed(new Runnable() {
+                @Override
                 public void run() {
                   updateToolWindow(c);
                 }
@@ -204,7 +213,7 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
     updateFocusedComponentForWatcher(c);
   }
 
-  private void updateFocusedComponentForWatcher(final Component c) {
+  private static void updateFocusedComponentForWatcher(final Component c) {
     final WindowWatcher watcher = ((WindowManagerImpl)WindowManager.getInstance()).getWindowWatcher();
     final FocusWatcher focusWatcher = watcher.getFocusWatcherFor(c);
     if (focusWatcher != null && c.isFocusOwner()) {
@@ -216,9 +225,8 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
    * @return first active window from hierarchy with specified roots. Returns <code>null</code>
    *         if there is no active window in the hierarchy.
    */
-  private Window getActiveWindow(final Window[] windows) {
-    for (int i = 0; i < windows.length; i++) {
-      Window window = windows[i];
+  private static Window getActiveWindow(final Window[] windows) {
+    for (Window window : windows) {
       if (window.isShowing() && window.isActive()) {
         return window;
       }

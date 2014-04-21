@@ -136,11 +136,10 @@ public class GroovyPsiCreator implements GroovyElementTypes {
 
     //type definitions
     if (elem == CLASS_DEFINITION) return new GrClassDefinitionImpl(node);
-    if (elem == INTERFACE_DEFINITION)
-      return new GrInterfaceDefinitionImpl(node);
+    if (elem == INTERFACE_DEFINITION) return new GrInterfaceDefinitionImpl(node);
     if (elem == ENUM_DEFINITION) return new GrEnumTypeDefinitionImpl(node);
-    if (elem == ANNOTATION_DEFINITION)
-      return new GrAnnotationTypeDefinitionImpl(node);
+    if (elem == ANNOTATION_DEFINITION) return new GrAnnotationTypeDefinitionImpl(node);
+    if (elem == TRAIT_DEFINITION) return new GrTraitTypeDefinitionImpl(node);
     if (elem == ANNOTATION_METHOD) return new GrAnnotationMethodImpl(node);
 
     if (elem == REFERENCE_ELEMENT) return new GrCodeReferenceElementImpl(node);

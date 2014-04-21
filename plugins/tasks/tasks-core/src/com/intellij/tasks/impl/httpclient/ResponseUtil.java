@@ -1,14 +1,17 @@
 package com.intellij.tasks.impl.httpclient;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.tasks.impl.RequestFailedException;
 import com.intellij.tasks.impl.TaskUtil;
 import org.apache.commons.httpclient.HeaderElement;
 import org.apache.commons.httpclient.HttpMethod;
+import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.NameValuePair;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
@@ -22,6 +25,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -90,42 +94,92 @@ public class ResponseUtil {
   public static final class GsonSingleObjectDeserializer<T> implements ResponseHandler<T> {
     private final Gson myGson;
     private final Class<T> myClass;
-    public GsonSingleObjectDeserializer(Gson gson, Class<T> cls) {
+    private final boolean myIgnoreNotFound;
+
+    public GsonSingleObjectDeserializer(@NotNull Gson gson, @NotNull Class<T> cls) {
+      this(gson, cls, false);
+    }
+
+    public GsonSingleObjectDeserializer(@NotNull Gson gson, @NotNull Class<T> cls, boolean ignoreNotFound) {
       myGson = gson;
       myClass = cls;
+      myIgnoreNotFound = ignoreNotFound;
     }
 
     @Override
     public T handleResponse(HttpResponse response) throws IOException {
       int statusCode = response.getStatusLine().getStatusCode();
-      if (statusCode >= 400 && statusCode < 500) {
+      LOG.info("Status code: " + statusCode);
+      if (!isSuccessful(statusCode)) {
+        if (statusCode == HttpStatus.SC_NOT_FOUND && myIgnoreNotFound) {
+          return null;
+        }
+        throw RequestFailedException.forStatusCode(statusCode);
+      }
+      try {
+        if (LOG.isDebugEnabled()) {
+          String content = getResponseContentAsString(response);
+          TaskUtil.prettyFormatJsonToLog(LOG, content);
+          return myGson.fromJson(content, myClass);
+        }
+        return myGson.fromJson(getResponseContentAsReader(response), myClass);
+      }
+      catch (JsonSyntaxException e) {
+        LOG.warn("Malformed server response", e);
         return null;
       }
-      if (LOG.isDebugEnabled()) {
-        String content = getResponseContentAsString(response);
-        TaskUtil.prettyFormatJsonToLog(LOG, content);
-        return myGson.fromJson(content, myClass);
-      }
-      return myGson.fromJson(getResponseContentAsReader(response), myClass);
     }
   }
 
   public static final class GsonMultipleObjectsDeserializer<T> implements ResponseHandler<List<T>> {
     private final Gson myGson;
     private final TypeToken<List<T>> myTypeToken;
-    public GsonMultipleObjectsDeserializer(Gson gson, TypeToken<List<T>> token) {
+    private final boolean myIgnoreNotFound;
+
+    public GsonMultipleObjectsDeserializer(Gson gson, TypeToken<List<T>> typeToken) {
+      this(gson, typeToken, false);
+    }
+
+    public GsonMultipleObjectsDeserializer(@NotNull Gson gson, @NotNull TypeToken<List<T>> token, boolean ignoreNotFound) {
       myGson = gson;
       myTypeToken = token;
+      myIgnoreNotFound = ignoreNotFound;
     }
 
     @Override
     public List<T> handleResponse(HttpResponse response) throws IOException {
-      if (LOG.isDebugEnabled()) {
-        String content = getResponseContentAsString(response);
-        TaskUtil.prettyFormatJsonToLog(LOG, content);
-        return myGson.fromJson(content, myTypeToken.getType());
+      int statusCode = response.getStatusLine().getStatusCode();
+      if (!isSuccessful(statusCode)) {
+        if (statusCode == HttpStatus.SC_NOT_FOUND && myIgnoreNotFound) {
+          return Collections.emptyList();
+        }
+        throw RequestFailedException.forStatusCode(statusCode);
       }
-      return myGson.fromJson(getResponseContentAsReader(response), myTypeToken.getType());
+      LOG.info("Status code: " + statusCode);
+      try {
+        if (LOG.isDebugEnabled()) {
+          String content = getResponseContentAsString(response);
+          TaskUtil.prettyFormatJsonToLog(LOG, content);
+          return myGson.fromJson(content, myTypeToken.getType());
+        }
+        return myGson.fromJson(getResponseContentAsReader(response), myTypeToken.getType());
+      }
+      catch (JsonSyntaxException e) {
+        LOG.warn("Malformed server response", e);
+        return Collections.emptyList();
+      }
     }
+  }
+
+  public static boolean isSuccessful(int statusCode) {
+    return statusCode / 100 == 2;
+  }
+
+  public static boolean isClientError(int statusCode) {
+    return statusCode / 100 == 4;
+  }
+
+  public static boolean isServerError(int statusCode) {
+    return statusCode / 100 == 5;
   }
 }

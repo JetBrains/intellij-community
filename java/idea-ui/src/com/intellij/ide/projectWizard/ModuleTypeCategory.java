@@ -1,5 +1,6 @@
 package com.intellij.ide.projectWizard;
 
+import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModuleType;
@@ -27,6 +28,13 @@ public class ModuleTypeCategory extends ProjectCategory {
 
     public Java() {
       super(JavaModuleType.getModuleType());
+    }
+  }
+
+  public static class JavaSE extends Java {
+    @Override
+    public int getWeight() {
+      return JavaModuleBuilder.JAVA_WEIGHT;
     }
   }
 }

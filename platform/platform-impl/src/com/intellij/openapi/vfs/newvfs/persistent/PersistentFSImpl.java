@@ -19,6 +19,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
@@ -50,7 +53,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.zip.ZipFile;
 
 /**
  * @author max
@@ -414,6 +416,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     return len;
   }
 
+  @NotNull
   @Override
   public VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile parent, @NotNull String name) throws IOException {
     getDelegate(file).copyFile(requestor, file, parent, name);
@@ -426,6 +429,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     return child;
   }
 
+  @NotNull
   @Override
   public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile parent, @NotNull String dir) throws IOException {
     getDelegate(parent).createChildDirectory(requestor, parent, dir);
@@ -438,6 +442,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     return child;
   }
 
+  @NotNull
   @Override
   public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String file) throws IOException {
     getDelegate(parent).createChildFile(requestor, parent, file);
@@ -792,7 +797,6 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     TIntArrayList childrenIdsUpdated = new TIntArrayList();
     List<VirtualFile> childrenToBeUpdated = new SmartList<VirtualFile>();
 
-    assert parent != null;
     final int parentId = getFileId(parent);
     assert parentId != 0;
     TIntHashSet parentChildrenIds = new TIntHashSet(FSRecords.list(parentId));
@@ -873,10 +877,11 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     int rootId = FSRecords.findRootRecord(rootUrl);
 
     if (fs instanceof JarFileSystem) {
-      // optimization: for jar roots do not store base path in the myName field, use local FS file's getPath()
       String parentPath = basePath.substring(0, basePath.indexOf(JarFileSystem.JAR_SEPARATOR));
       VirtualFile parentFile = LocalFileSystem.getInstance().findFileByPath(parentPath);
-      if (parentFile == null || !isValidJar(parentPath)) return null;
+      if (parentFile == null) return null;
+      FileType type = FileTypeRegistry.getInstance().getFileTypeByFileName(parentFile.getName());
+      if (type != FileTypes.ARCHIVE) return null;
       newRoot = new JarRoot(fs, rootId, parentFile);
     }
     else {
@@ -911,18 +916,6 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     LOG.assertTrue(rootId == newRoot.getId(), "root=" + newRoot + " expected=" + rootId + " actual=" + newRoot.getId());
 
     return newRoot;
-  }
-
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  private static boolean isValidJar(@NotNull String path) {
-    try {
-      new ZipFile(path).close();
-      return true;
-    }
-    catch (IOException e) {
-      LOG.warn("invalid .jar: " + path);
-      return false;
-    }
   }
 
   @NotNull

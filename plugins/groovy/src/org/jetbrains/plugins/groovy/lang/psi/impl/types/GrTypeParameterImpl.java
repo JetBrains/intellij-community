@@ -137,6 +137,11 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
     return false;
   }
 
+  @Override
+  public boolean isTrait() {
+    return false;
+  }
+
   @NotNull
   public PsiReferenceList getExtendsList() {
     final GrTypeParameterParameterExtendsListImpl list = findChildByClass(GrTypeParameterParameterExtendsListImpl.class);

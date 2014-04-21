@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ public abstract class EncodingManager extends EncodingRegistry {
   @NotNull
   public abstract Collection<Charset> getFavorites();
 
+  @Deprecated // does nothing
   public abstract void setUseUTFGuessing(VirtualFile virtualFile, boolean useUTFGuessing);
 
   public abstract boolean isNative2AsciiForPropertiesFiles();

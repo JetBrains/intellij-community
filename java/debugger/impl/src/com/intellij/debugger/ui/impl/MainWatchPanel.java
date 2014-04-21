@@ -80,14 +80,7 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
             ((event.getModifiers() & (InputEvent.SHIFT_MASK | InputEvent.ALT_MASK | InputEvent.CTRL_MASK | InputEvent.META_MASK)) !=0) ) {
           return false;
         }
-        boolean sameRow = false;
-        Rectangle bounds = watchTree.getRowBounds(watchTree.getLeadSelectionRow());
-        if (bounds != null) {
-          bounds.width = watchTree.getWidth();
-          if (bounds.contains(event.getPoint())) {
-            sameRow = true;
-          }
-        }
+        boolean sameRow = isAboveSelectedItem(event, watchTree);
         final AnAction editWatchAction = ActionManager.getInstance().getAction(DebuggerActions.EDIT_WATCH);
         Presentation presentation = editWatchAction.getTemplatePresentation().clone();
         DataContext context = DataManager.getInstance().getDataContext(watchTree);
@@ -105,7 +98,18 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
         return false;
       }
     };
+    final ClickListener mouseEmptySpaceListener = new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent event) {
+        if (!isAboveSelectedItem(event, watchTree)) {
+          newWatch();
+          return true;
+        }
+        return false;
+      }
+    };
     ListenerUtil.addClickListener(watchTree, mouseListener);
+    ListenerUtil.addClickListener(watchTree, mouseEmptySpaceListener);
 
     final FocusListener focusListener = new FocusListener() {
       @Override
@@ -183,6 +187,17 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
       public void updateDraggedImage(final Image image, final Point dropPoint, final Point imageOffset) {
       }
     }, myTree);
+  }
+
+  private static boolean isAboveSelectedItem(MouseEvent event, WatchDebuggerTree watchTree) {
+    Rectangle bounds = watchTree.getRowBounds(watchTree.getLeadSelectionRow());
+    if (bounds != null) {
+      bounds.width = watchTree.getWidth();
+      if (bounds.contains(event.getPoint())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void addWatchesFrom(final DebuggerTreeNodeImpl[] nodes) {

@@ -65,9 +65,11 @@ public class InferenceVariable {
 
   public Set<InferenceVariable> getDependencies(InferenceSession session) {
     final Set<InferenceVariable> dependencies = new LinkedHashSet<InferenceVariable>();
-    for (InferenceBound inferenceBound : InferenceBound.values()) {
-      for (PsiType bound : getBounds(inferenceBound)) {
-        session.collectDependencies(bound, dependencies);
+    for (List<PsiType> boundTypes : myBounds.values()) {
+      if (boundTypes != null) {
+        for (PsiType bound : boundTypes) {
+          session.collectDependencies(bound, dependencies);
+        }
       }
     }
 
@@ -75,19 +77,19 @@ public class InferenceVariable {
     for (InferenceVariable variable : session.getInferenceVariables()) {
       if (!dependencies.contains(variable) && variable != this) {
         nextBound:
-        for (InferenceBound inferenceBound : InferenceBound.values()) {
-          final List<PsiType> bounds = getBounds(inferenceBound); //todo
-          for (PsiType bound : bounds) {
-            if (session.isProperType(bound)) {
-              continue nextBound;
-            }
-          }
-          for (PsiType bound : bounds) {
-            Set<InferenceVariable> deps = new HashSet<InferenceVariable>();
-            session.collectDependencies(bound, deps);
-            if (deps.contains(this)) {
-              dependencies.add(variable);
-              continue next;
+        for (List<PsiType> bounds : myBounds.values()) { //todo
+          if (bounds != null) {
+            for (PsiType bound : bounds) {
+              final Set<InferenceVariable> deps = new HashSet<InferenceVariable>();
+              session.collectDependencies(bound, deps);
+              if (deps.isEmpty()) {
+                continue nextBound;
+              }
+
+              if (deps.contains(this)) {
+                dependencies.add(variable);
+                continue next;
+              }
             }
           }
         }

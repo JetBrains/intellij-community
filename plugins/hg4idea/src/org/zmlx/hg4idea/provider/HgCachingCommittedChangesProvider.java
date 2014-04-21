@@ -348,7 +348,7 @@ public class HgCachingCommittedChangesProvider implements CachingCommittedChange
       new HgCommandResultNotifier(project).notifyError(null, HgVcsMessages.message("hg4idea.error.log.command.execution"), e.getMessage());
       return null;
     }
-    if (revisions == null || revision.isEmpty()) {
+    if (revisions == null || revisions.isEmpty()) {
       return null;
     }
     HgFileRevision localRevision = revisions.get(0);

@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
 
 import java.util.Collection;
@@ -33,21 +34,25 @@ public class MapIgnoredFilesHolder extends AbstractIgnoredFilesHolder {
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.MapIgnoredFilesHolder");
 
   private final Set<VirtualFile> mySet;
+  private final Set<VirtualFile> myVcsIgnoredSet;
   private final Project myProject;
 
   public MapIgnoredFilesHolder(Project project) {
     super(project);
     myProject = project;
     mySet = new HashSet<VirtualFile>();
+    myVcsIgnoredSet = new HashSet<VirtualFile>();    //collect ignored files from VcsChangeProvider -> processIgnored
   }
 
   @Override
   protected void removeFile(VirtualFile file) {
     mySet.remove(file);
+    myVcsIgnoredSet.remove(file);
   }
 
   @Override
   protected Collection<VirtualFile> keys() {
+    // if mySet has a big size ->  idea will process all of this on every typing. see cleanAndAdjustScope() in AbstractIgnoredFilesHolder
     return mySet;
   }
 
@@ -58,25 +63,31 @@ public class MapIgnoredFilesHolder extends AbstractIgnoredFilesHolder {
     mySet.add(file);
   }
 
+  public void addByVcsChangeProvider(VirtualFile file) {
+    myVcsIgnoredSet.add(file);
+  }
+
   @Override
   public boolean containsFile(VirtualFile file) {
-    return mySet.contains(file);
+    return mySet.contains(file) || myVcsIgnoredSet.contains(file);
   }
 
   @Override
   public Collection<VirtualFile> values() {
-    return mySet;
+    return ContainerUtil.union(mySet, myVcsIgnoredSet);
   }
 
   @Override
   public void cleanAll() {
     mySet.clear();
+    myVcsIgnoredSet.clear();// not sure we need to delete
   }
 
   @Override
   public FileHolder copy() {
     final MapIgnoredFilesHolder result = new MapIgnoredFilesHolder(myProject);
     result.mySet.addAll(mySet);
+    result.myVcsIgnoredSet.addAll(myVcsIgnoredSet);
     return result;
   }
 

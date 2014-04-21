@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -131,6 +131,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     myPropertiesFile = new TextFieldWithHistory();
     myPropertiesFile.setHistorySize(-1);
     myPropertiesFilePanel.add(GuiUtils.constructFieldWithBrowseButton(myPropertiesFile, new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         TreeFileChooserFactory chooserFactory = TreeFileChooserFactory.getInstance(myProject);
         final PropertiesFile propertiesFile = getPropertiesFile();
@@ -144,6 +145,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     }), BorderLayout.CENTER);
 
     myPropertiesFile.addDocumentListener(new DocumentAdapter() {
+      @Override
       protected void textChanged(DocumentEvent e) {
         propertiesFileChanged();
         somethingChanged();
@@ -151,12 +153,14 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     });
 
     getKeyTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       protected void textChanged(DocumentEvent e) {
         somethingChanged();
       }
     });
 
     myValue.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       protected void textChanged(DocumentEvent e) {
         somethingChanged();
       }
@@ -168,6 +172,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
       !PropertiesComponent.getInstance().isValueSet(KEY) || PropertiesComponent.getInstance().isTrueValue(KEY);
     myUseResourceBundle.setSelected(useBundleByDefault);
     myUseResourceBundle.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         PropertiesComponent.getInstance().setValue(KEY, Boolean.valueOf(myUseResourceBundle.isSelected()).toString());
       }
@@ -300,6 +305,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     final String lastUrl = suggestSelectedFileUrl(paths);
     final String lastPath = lastUrl == null ? null : FileUtil.toSystemDependentName(VfsUtil.urlToPath(lastUrl));
     Collections.sort(paths, new Comparator<String>() {
+      @Override
       public int compare(final String path1, final String path2) {
         if (lastPath != null && lastPath.equals(path1)) return -1;
         if (lastPath != null && lastPath.equals(path2)) return 1;
@@ -388,23 +394,16 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     try {
       final File file = new File(path).getCanonicalFile();
       FileUtil.createParentDirs(file);
-      final IOException[] e = new IOException[1];
-      virtualFile = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-        public VirtualFile compute() {
+      virtualFile = ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<VirtualFile, IOException>() {
+        @Override
+        public VirtualFile compute() throws IOException {
           VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file.getParentFile());
-          try {
-            if (dir == null) {
-              throw new IOException("Error creating directory structure for file '" + path + "'");
-            }
-            return dir.createChildData(this, file.getName());
+          if (dir == null) {
+            throw new IOException("Error creating directory structure for file '" + path + "'");
           }
-          catch (IOException e1) {
-            e[0] = e1;
-          }
-          return null;
+          return dir.createChildData(this, file.getName());
         }
       });
-      if (e[0] != null) throw e[0];
     }
     catch (IOException e) {
       Messages.showErrorDialog(myProject, e.getLocalizedMessage(), CodeInsightBundle.message("i18nize.error.creating.properties.file"));
@@ -415,19 +414,23 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     return psiFile instanceof PropertiesFile;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myCustomization.focusValueComponent ? myValue:myKey;
   }
 
+  @Override
   public void dispose() {
     saveLastSelectedFile();
     super.dispose();
   }
 
+  @Override
   protected void doOKAction() {
     if (!createPropertiesFileIfNotExists()) return;
     Collection<PropertiesFile> propertiesFiles = getAllPropertiesFiles();
@@ -445,11 +448,13 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     super.doOKAction();
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
+  @Override
   public void doHelpAction() {
     HelpManager.getInstance().invokeHelp("editing.propertyFile.i18nInspection");
   }
@@ -459,14 +464,17 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     return myValue;
   }
 
+  @Override
   public String getValue() {
     return myValue.getText();
   }
 
+  @Override
   public String getKey() {
     return getKeyTextField().getText();
   }
 
+  @Override
   public boolean hasValidData() {
     assert !ApplicationManager.getApplication().isUnitTestMode();
     show();
@@ -478,10 +486,12 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     return myUseResourceBundle.isEnabled() && myUseResourceBundle.isSelected();
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.codeInsight.i18n.I18nizeQuickFixDialog";
   }
 
+  @Override
   public Collection<PropertiesFile> getAllPropertiesFiles() {
     PropertiesFile propertiesFile = getPropertiesFile();
     if (propertiesFile == null) return Collections.emptySet();

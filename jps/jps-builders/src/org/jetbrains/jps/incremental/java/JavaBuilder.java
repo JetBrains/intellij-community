@@ -37,6 +37,7 @@ import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
+import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
 import org.jetbrains.jps.builders.java.JavaBuilderExtension;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
@@ -62,7 +63,8 @@ import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleType;
 import org.jetbrains.jps.service.JpsServiceManager;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.*;
 import java.net.ServerSocket;
 import java.util.*;
@@ -104,15 +106,35 @@ public class JavaBuilder extends ModuleLevelBuilder {
         return StringUtil.endsWithIgnoreCase(file.getPath(), DOT_JAVA_EXTENSION);
       }
     };
+  private static final String RT_JAR_PATH_SUFFIX = File.separator + "rt.jar";
 
   private final Executor myTaskRunner;
   private static final List<ClassPostProcessor> ourClassProcessors = new ArrayList<ClassPostProcessor>();
   private static final Set<JpsModuleType<?>> ourCompilableModuleTypes;
+  @Nullable
+  private static final File ourDefaultRtJar;
   static {
     ourCompilableModuleTypes = new HashSet<JpsModuleType<?>>();
     for (JavaBuilderExtension extension : JpsServiceManager.getInstance().getExtensions(JavaBuilderExtension.class)) {
       ourCompilableModuleTypes.addAll(extension.getCompilableModuleTypes());
     }
+    File rtJar = null;
+    StringTokenizer tokenizer = new StringTokenizer(System.getProperty("sun.boot.class.path", ""), File.pathSeparator, false);
+    while (tokenizer.hasMoreTokens()) {
+      final String path = tokenizer.nextToken();
+      if (isRtJarPath(path)) {
+        rtJar = new File(path);
+        break;
+      }
+    }
+    ourDefaultRtJar = rtJar;
+  }
+  
+  private static boolean isRtJarPath(String path) {
+    if (StringUtil.endsWithIgnoreCase(path, RT_JAR_PATH_SUFFIX)) {
+      return true;
+    }
+    return RT_JAR_PATH_SUFFIX.charAt(0) != '/' && StringUtil.endsWithIgnoreCase(path, "/rt.jar");
   }
 
   public static void registerClassPostProcessor(ClassPostProcessor processor) {
@@ -375,8 +397,16 @@ public class JavaBuilder extends ModuleLevelBuilder {
     try {
       final boolean rc;
       if (USE_EMBEDDED_JAVAC) {
-        rc = JavacMain.compile(options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer,
-                               context.getCancelStatus(), compilingTool);
+        final Collection<File> _platformCp = calcEffectivePlatformCp(platformCp, options, compilingTool);
+        if (_platformCp == null) {
+          diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, 
+            "Compact compilation profile was requested, but target platform for module \"" + chunk.getName() + "\" differs from javac's platform (" + System.getProperty("java.version") + ")\nCompilation profiles are not supported for such configuration"
+          ));
+          return true;
+        }
+        rc = JavacMain.compile(
+          options, files, classpath, _platformCp, sourcePath, outs, diagnosticSink, classesConsumer, context.getCancelStatus(), compilingTool
+        );
       }
       else {
         final JavacServerClient client = ensureJavacServerLaunched(context, compilingTool);
@@ -395,6 +425,40 @@ public class JavaBuilder extends ModuleLevelBuilder {
     finally {
       counter.await();
     }
+  }
+
+  // If platformCp of the build process is the same as the target plafform, do not specify platformCp explicitly
+  // this will allow javac to resolve against ct.sym file, which is required for the "compilation profiles" feature
+  @Nullable
+  private static Collection<File> calcEffectivePlatformCp(Collection<File> platformCp, List<String> options, JavaCompilingTool compilingTool) {
+    if (ourDefaultRtJar == null || !(compilingTool instanceof JavacCompilerTool)) {
+      return platformCp;
+    }
+    boolean profileFeatureRequested = false;
+    for (String option : options) {
+      if ("-profile".equalsIgnoreCase(option)) {
+        profileFeatureRequested = true;
+        break;
+      }
+    }
+    if (!profileFeatureRequested) {
+      return platformCp;
+    }
+    boolean isTargetPlatformSameAsBuildRuntime = false;
+    for (File file : platformCp) {
+      if (FileUtil.filesEqual(file, ourDefaultRtJar)) {
+        isTargetPlatformSameAsBuildRuntime = true;
+        break;
+      }
+    }
+    if (!isTargetPlatformSameAsBuildRuntime) {
+      // compact profile was requested, but we have to use alternative platform classpath to meet project settings
+      // consider this a compile error and let user re-configure the project 
+      return null;
+    }
+    // returning empty list will force default behaviour for platform classpath calculation 
+    // javac will resolve against its own bootclasspath and use ct.sym file when available 
+    return Collections.emptyList();
   }
 
   private void submitAsyncTask(final CompileContext context, final Runnable taskRunnable) {

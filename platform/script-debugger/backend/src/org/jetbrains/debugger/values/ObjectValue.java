@@ -18,7 +18,7 @@ public interface ObjectValue extends Value {
   String getClassName();
 
   @NotNull
-  AsyncResult<List<? extends Variable>> getProperties();
+  AsyncResult<List<Variable>> getProperties();
 
   /**
    * It must return quickly. Return {@link com.intellij.util.ThreeState#UNSURE} otherwise.

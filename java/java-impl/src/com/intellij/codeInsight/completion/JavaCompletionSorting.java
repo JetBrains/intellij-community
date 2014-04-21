@@ -34,6 +34,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -425,20 +426,35 @@ public class JavaCompletionSorting {
   }
 
   private static class PreferExpected extends LookupElementWeigher {
-    private final boolean myAcceptClasses;
+    private final boolean myConstructorPossible;
     private final ExpectedTypeInfo[] myExpectedTypes;
+    private final List<PsiType> myExpectedClasses = new SmartList<PsiType>();
 
-    public PreferExpected(boolean acceptClasses, ExpectedTypeInfo[] expectedTypes) {
+    public PreferExpected(boolean constructorPossible, ExpectedTypeInfo[] expectedTypes) {
       super("expectedType");
-      myAcceptClasses = acceptClasses;
+      myConstructorPossible = constructorPossible;
       myExpectedTypes = expectedTypes;
+      for (ExpectedTypeInfo info : expectedTypes) {
+        ContainerUtil.addIfNotNull(myExpectedClasses, PsiUtil.substituteTypeParameter(info.getDefaultType(), CommonClassNames.JAVA_LANG_CLASS, 0, false));
+      }
     }
 
     @NotNull
     @Override
-    public Comparable weigh(@NotNull LookupElement item) {
-      return item.getObject() instanceof PsiClass && !myAcceptClasses
-             ? ExpectedTypeMatching.normal : getExpectedTypeMatching(item, myExpectedTypes);
+    public ExpectedTypeMatching weigh(@NotNull LookupElement item) {
+      if (item.getObject() instanceof PsiClass && !myConstructorPossible) {
+        PsiType itemType = JavaCompletionUtil.getLookupElementType(item);
+        if (itemType != null) {
+          for (PsiType expectedClass : myExpectedClasses) {
+            if (expectedClass.isAssignableFrom(itemType)) {
+              return ExpectedTypeMatching.expected;
+            }
+          }
+        }
+        return ExpectedTypeMatching.normal;
+      }
+
+      return getExpectedTypeMatching(item, myExpectedTypes);
     }
   }
 

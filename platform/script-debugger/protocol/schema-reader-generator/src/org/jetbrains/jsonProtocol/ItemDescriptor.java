@@ -1,5 +1,7 @@
 package org.jetbrains.jsonProtocol;
 
+import org.chromium.protocolReader.JsonOptionalField;
+
 import java.util.List;
 
 public interface ItemDescriptor {
@@ -13,6 +15,9 @@ public interface ItemDescriptor {
 
   interface Named extends Referenceable {
     String name();
+
+    @JsonOptionalField
+    String shortName();
 
     boolean optional();
   }

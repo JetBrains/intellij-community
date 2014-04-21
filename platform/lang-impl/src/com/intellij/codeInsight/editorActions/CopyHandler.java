@@ -56,15 +56,15 @@ public class CopyHandler extends EditorActionHandler {
 
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
 
-    if (file == null || settings.ADD_IMPORTS_ON_PASTE == CodeInsightSettings.NO){
-      if (myOriginalAction != null){
+    if (file == null || settings.ADD_IMPORTS_ON_PASTE == CodeInsightSettings.NO) {
+      if (myOriginalAction != null) {
         myOriginalAction.execute(editor, dataContext);
       }
       return;
     }
 
     final SelectionModel selectionModel = editor.getSelectionModel();
-    if(!selectionModel.hasSelection(true) && !selectionModel.hasBlockSelection()) {
+    if (!selectionModel.hasSelection(true) && !selectionModel.hasBlockSelection()) {
       if (Registry.is(CopyAction.SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY)) {
         return;
       }
@@ -89,7 +89,7 @@ public class CopyHandler extends EditorActionHandler {
     final int[] endOffsets = selectionModel.getBlockSelectionEnds();
 
     List<TextBlockTransferableData> transferableDatas = new ArrayList<TextBlockTransferableData>();
-    for(CopyPastePostProcessor processor: Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
+    for (CopyPastePostProcessor processor : Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
       final TextBlockTransferableData e = processor.collectTransferableData(file, editor, startOffsets, endOffsets);
       if (e != null) {
         transferableDatas.add(e);
@@ -98,7 +98,7 @@ public class CopyHandler extends EditorActionHandler {
 
     String rawText = TextBlockTransferable.convertLineSeparators(selectionModel.getSelectedText(true), "\n", transferableDatas);
     String escapedText = null;
-    for(CopyPastePreProcessor processor: Extensions.getExtensions(CopyPastePreProcessor.EP_NAME)) {
+    for (CopyPastePreProcessor processor : Extensions.getExtensions(CopyPastePreProcessor.EP_NAME)) {
       escapedText = processor.preprocessOnCopy(file, startOffsets, endOffsets, rawText);
       if (escapedText != null) {
         break;

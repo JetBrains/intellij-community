@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
+import com.intellij.openapi.util.Getter;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -25,7 +26,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
-public class FileElement extends LazyParseableElement implements FileASTNode {
+public class FileElement extends LazyParseableElement implements FileASTNode, Getter<FileElement> {
   private volatile CharTable myCharTable = new CharTableImpl();
 
   @Override
@@ -59,5 +60,10 @@ public class FileElement extends LazyParseableElement implements FileASTNode {
 
   public void setCharTable(CharTable table) {
     myCharTable = table;
+  }
+
+  @Override
+  public FileElement get() {
+    return this;
   }
 }

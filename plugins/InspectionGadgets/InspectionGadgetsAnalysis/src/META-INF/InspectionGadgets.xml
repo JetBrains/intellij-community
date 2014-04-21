@@ -1509,6 +1509,10 @@
                      key="use.obsolete.collection.type.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.maturity.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.maturity.ObsoleteCollectionInspection"/>
+    <localInspection language="JAVA" shortName="UseOfObsoleteDateTimeApi" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="use.of.obsolete.date.time.api.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.maturity.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.maturity.UseOfObsoleteDateTimeApiInspection"/>
 
     <!--group.names.memory.issues-->
     <localInspection language="JAVA" shortName="StaticCollection" bundle="com.siyeh.InspectionGadgetsBundle" key="static.collection.display.name"

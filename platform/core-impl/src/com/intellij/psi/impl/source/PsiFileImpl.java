@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -74,9 +75,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   protected PsiFile myOriginalFile = null;
   private final FileViewProvider myViewProvider;
   private static final Key<Document> HARD_REFERENCE_TO_DOCUMENT = new Key<Document>("HARD_REFERENCE_TO_DOCUMENT");
-  private volatile SoftReference<StubTree> myStub;
+  private volatile Reference<StubTree> myStub;
   protected final PsiManagerEx myManager;
-  private volatile Object myTreeElementPointer; // SoftReference/WeakReference to ASTNode or a strong reference to a tree if the file is a DummyHolder
+  private volatile Getter<FileElement> myTreeElementPointer; // SoftReference/WeakReference to ASTNode or a strong reference to a tree if the file is a DummyHolder
   public static final Key<Boolean> BUILDING_STUB = new Key<Boolean>("Don't use stubs mark!");
 
   protected PsiFileImpl(@NotNull IElementType elementType, IElementType contentElementType, @NotNull FileViewProvider provider) {
@@ -129,18 +130,13 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   private FileElement derefTreeElement() {
-    final Object pointer = myTreeElementPointer;
-    if (pointer instanceof FileElement) {
-      return (FileElement)pointer;
-    }
-    if (pointer instanceof Reference) {
-      FileElement treeElement = (FileElement)((Reference)pointer).get();
-      if (treeElement != null) return treeElement;
+    Getter<FileElement> pointer = myTreeElementPointer;
+    FileElement treeElement = SoftReference.deref(pointer);
+    if (treeElement != null) return treeElement;
 
-      synchronized (PsiLock.LOCK) {
-        if (myTreeElementPointer == pointer) {
-          myTreeElementPointer = null;
-        }
+    synchronized (PsiLock.LOCK) {
+      if (myTreeElementPointer == pointer) {
+        myTreeElementPointer = null;
       }
     }
     return null;
@@ -468,7 +464,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     if (getTreeElement() != null) {
       // not set by provider in clone
       final FileElement treeClone = (FileElement)calcTreeElement().clone();
-      clone.myTreeElementPointer = treeClone; // should not use setTreeElement here because cloned file still have VirtualFile (SCR17963)
+      clone.setTreeElementPointer(treeClone); // should not use setTreeElement here because cloned file still have VirtualFile (SCR17963)
       treeClone.setPsi(clone);
     }
 
@@ -703,7 +699,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   protected PsiFileImpl cloneImpl(FileElement treeElementClone) {
     PsiFileImpl clone = (PsiFileImpl)super.clone();
-    clone.myTreeElementPointer = treeElementClone; // should not use setTreeElement here because cloned file still have VirtualFile (SCR17963)
+    clone.setTreeElementPointer(treeElementClone); // should not use setTreeElement here because cloned file still have VirtualFile (SCR17963)
     treeElementClone.setPsi(clone);
     return clone;
   }
@@ -712,13 +708,14 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return !getViewProvider().isEventSystemEnabled();
   }
 
-  private Object createTreeElementPointer(ASTNode treeElement) {
+  @NotNull
+  private Getter<FileElement> createTreeElementPointer(@NotNull FileElement treeElement) {
     if (isKeepTreeElementByHardReference()) {
       return treeElement;
     }
     return myManager.isBatchFilesProcessingMode()
-                 ? new PatchedWeakReference<ASTNode>(treeElement)
-                 : new SoftReference<ASTNode>(treeElement);
+                 ? new PatchedWeakReference<FileElement>(treeElement)
+                 : new SoftReference<FileElement>(treeElement);
   }
 
   @Override

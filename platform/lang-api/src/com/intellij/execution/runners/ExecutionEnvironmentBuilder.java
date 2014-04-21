@@ -45,7 +45,7 @@ public final class ExecutionEnvironmentBuilder {
   @Nullable private RunnerAndConfigurationSettings myRunnerAndConfigurationSettings;
   @Nullable private String myRunnerId;
   private boolean myAssignNewId;
-  @NotNull private final Executor myExecutor;
+  @NotNull private Executor myExecutor;
   @Nullable private DataContext myDataContext;
 
   public ExecutionEnvironmentBuilder(@NotNull Project project, @NotNull Executor executor) {
@@ -117,6 +117,11 @@ public final class ExecutionEnvironmentBuilder {
 
   public ExecutionEnvironmentBuilder setDataContext(@Nullable DataContext dataContext) {
     myDataContext = dataContext;
+    return this;
+  }
+
+  public ExecutionEnvironmentBuilder setExecutor(@NotNull Executor executor) {
+    myExecutor = executor;
     return this;
   }
 

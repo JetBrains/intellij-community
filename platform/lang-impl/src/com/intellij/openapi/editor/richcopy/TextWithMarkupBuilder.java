@@ -19,5 +19,5 @@ import com.intellij.openapi.editor.richcopy.model.SyntaxInfo;
 
 public interface TextWithMarkupBuilder {
   void reset();
-  void build(CharSequence charSequence, SyntaxInfo syntaxInfo);
+  void build(SyntaxInfo syntaxInfo);
 }

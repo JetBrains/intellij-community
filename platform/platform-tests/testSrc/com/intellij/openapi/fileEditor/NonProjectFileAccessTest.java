@@ -17,8 +17,10 @@ package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
@@ -29,6 +31,7 @@ import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -79,6 +82,34 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     typeAndCheck(nonProjectFile, true);
     assertNull(getNotificationPanel(projectFile));
     assertNull(getNotificationPanel(nonProjectFile));
+  }
+
+  public void testAccessToFilesUnderProjectRootAndDotIdea() throws Exception {
+    saveProject();
+    VirtualFile fileUnderProjectDir = new WriteAction<VirtualFile>() {
+      @Override
+      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
+        result.setResult(getProject().getBaseDir().createChildData(this, "fileUnderProjectDir.txt"));
+      }
+    }.execute().getResultObject();
+    
+    assertFalse(ProjectFileIndex.SERVICE.getInstance(getProject()).isInContent(fileUnderProjectDir));
+
+    typeAndCheck(getProject().getProjectFile(), true);
+    typeAndCheck(getProject().getWorkspaceFile(), true);
+    typeAndCheck(fileUnderProjectDir, false);
+  }
+
+  private void saveProject() {
+    ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
+    boolean save = app.isDoNotSave();
+    app.doNotSave(false);
+    try {
+      getProject().save();
+    }
+    finally {
+      app.doNotSave(save);
+    }
   }
 
   public void testAllowEditingInOneFileOnly() throws Exception {
@@ -250,8 +281,8 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     }.execute().getResultObject();
   }
 
-  private NonProjectFileNotificationPanel typeAndCheck(VirtualFile file, boolean changed) {
-    return typeAndCheck(file, changed, !changed);
+  private NonProjectFileNotificationPanel typeAndCheck(VirtualFile file, boolean fileHasBeenChanged) {
+    return typeAndCheck(file, fileHasBeenChanged, !fileHasBeenChanged);
   }
 
   private NonProjectFileNotificationPanel typeAndCheck(VirtualFile file, boolean changed, boolean hasWarningPanel) {

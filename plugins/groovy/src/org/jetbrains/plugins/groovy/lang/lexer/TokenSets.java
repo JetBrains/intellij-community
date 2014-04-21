@@ -95,7 +95,7 @@ public abstract class TokenSets {
                                                           kFLOAT, kFOR, kFINALLY, kIF, kIMPLEMENTS, kIMPORT, kIN, kINSTANCEOF, kINT,
                                                           kINTERFACE, kLONG, kNATIVE, kNEW, kNULL, kPACKAGE, kPRIVATE, kPROTECTED, kPUBLIC,
                                                           kRETURN, kSHORT, kSTATIC, kSTRICTFP, kSUPER, kSWITCH, kSYNCHRONIZED, kTHIS,
-                                                          kTHROW, kTHROWS, kTRANSIENT, kTRUE, kTRY, kVOID, kVOLATILE, kWHILE);
+                                                          kTHROW, kTHROWS, kTRAIT, kTRANSIENT, kTRUE, kTRY, kVOID, kVOLATILE, kWHILE);
 
   public static final TokenSet REFERENCE_NAMES = TokenSet.orSet(KEYWORDS, PROPERTY_NAMES, NUMBERS);
   public static final TokenSet REFERENCE_NAMES_WITHOUT_NUMBERS = TokenSet.orSet(KEYWORDS, PROPERTY_NAMES);

@@ -1,5 +1,8 @@
 package org.jetbrains.protocolReader;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jsonProtocol.ItemDescriptor;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,4 +39,9 @@ abstract class ClassScope {
   }
 
   protected abstract TypeData.Direction getTypeDirection();
+
+  @NotNull
+  protected static String getName(@NotNull ItemDescriptor.Named named) {
+    return named.shortName() == null ? named.name() : named.shortName();
+  }
 }

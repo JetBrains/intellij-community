@@ -5,6 +5,7 @@ javacvs-src
 smartcvs-src
 svn4idea
 git4idea
+remote-servers-git
 hg4idea
 tasks
 tasks-core

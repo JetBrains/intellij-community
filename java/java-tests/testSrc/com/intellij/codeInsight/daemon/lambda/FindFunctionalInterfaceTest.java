@@ -16,12 +16,13 @@
 package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFunctionalExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -39,8 +40,27 @@ public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase
     assertEquals("() -> {}", next.getText());
   }
 
+  public void testFieldFromAnonymousClassScope() throws Exception {
+    myFixture.configureByFile(getTestName(false) + ".java");
+    final PsiElement elementAtCaret = myFixture.getElementAtCaret();
+    assertNotNull(elementAtCaret);
+    final PsiField field = PsiTreeUtil.getParentOfType(elementAtCaret, PsiField.class, false);
+    assertNotNull(field);
+    final PsiClass aClass = field.getContainingClass();
+    assertTrue(aClass instanceof PsiAnonymousClass);
+    final Collection<PsiReference> references = ReferencesSearch.search(field).findAll();
+    assertFalse(references.isEmpty());
+    assertEquals(1, references.size());
+  }
+
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/lambda/findUsages/";
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
   }
 }

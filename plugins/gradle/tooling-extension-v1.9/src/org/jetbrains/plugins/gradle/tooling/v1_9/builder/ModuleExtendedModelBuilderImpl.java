@@ -97,7 +97,7 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
       if (sourceSets instanceof SourceSetContainer) {
         SourceSetContainer sourceSetContainer = (SourceSetContainer)sourceSets;
         for (SourceSet sourceSet : sourceSetContainer) {
-          for (File javaSrcDir : sourceSet.getJava().getSrcDirs()) {
+          for (File javaSrcDir : sourceSet.getAllJava().getSrcDirs()) {
             boolean isTestDir = isTestDir(sourceSet, testClassesDirs);
             addFilePath(isTestDir ? testDirectories : sourceDirectories, javaSrcDir);
           }

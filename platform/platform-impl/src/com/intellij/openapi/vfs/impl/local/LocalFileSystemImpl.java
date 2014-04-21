@@ -529,12 +529,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
 
   @TestOnly
   public void cleanupForNextTest() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        FileDocumentManager.getInstance().saveAllDocuments();
-      }
-    });
+    FileDocumentManager.getInstance().saveAllDocuments();
     PersistentFS.getInstance().clearIdCache();
     myRootsToWatch.clear();
   }

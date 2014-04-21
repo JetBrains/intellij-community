@@ -19,6 +19,7 @@ import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.provider.annotate.HgAnnotationLine;
@@ -55,6 +56,12 @@ public class HgAnnotateCommand {
   public List<HgAnnotationLine> execute(@NotNull HgFile hgFile, VcsFileRevision revision) {
     final List<String> arguments = new ArrayList<String>();
     arguments.add("-cvnudl");
+    HgVcs vcs = HgVcs.getInstance(myProject);
+    if (vcs != null &&
+        vcs.getProjectSettings().isWhitespacesIgnoredInAnnotations() &&
+        vcs.getVersion().isIgnoreWhitespaceDiffInAnnotationsSupported()) {
+      arguments.add("-w");
+    }
     if (revision != null) {
       arguments.add("-r");
       HgRevisionNumber revisionNumber = (HgRevisionNumber)revision.getRevisionNumber();

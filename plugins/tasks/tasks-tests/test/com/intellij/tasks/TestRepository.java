@@ -3,6 +3,7 @@ package com.intellij.tasks;
 import com.intellij.openapi.util.Condition;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -19,6 +20,7 @@ public class TestRepository extends BaseRepository {
     myTasks = tasks;
   }
 
+  @NotNull
   @Override
   public BaseRepository clone() {
     return this;
@@ -35,7 +37,7 @@ public class TestRepository extends BaseRepository {
 
   @Nullable
   @Override
-  public Task findTask(final String id) throws Exception {
+  public Task findTask(@NotNull final String id) throws Exception {
     return ContainerUtil.find(myTasks, new Condition<Task>() {
       @Override
       public boolean value(Task task) {

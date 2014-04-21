@@ -263,18 +263,19 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     EqClass aClass = new EqClass(myFactory);
     aClass.add(dfaValue.getID());
-    myEqClasses.add(aClass);
 
+    int freeIndex = myEqClasses.indexOf(null);
+    if (freeIndex >= 0) {
+      myEqClasses.set(freeIndex, aClass);
+      return freeIndex;
+    }
+
+    myEqClasses.add(aClass);
     return myEqClasses.size() - 1;
   }
 
-  boolean areEquivalent(DfaValue val1, DfaValue val2) {
-    int index = getEqClassIndex(val1);
-    return index >= 0 && index == getEqClassIndex(val2);
-  }
-
   @NotNull
-  private List<DfaValue> getEqClassesFor(@NotNull DfaValue dfaValue) {
+  List<DfaValue> getEquivalentValues(@NotNull DfaValue dfaValue) {
     int index = getEqClassIndex(dfaValue);
     EqClass set = index == -1 ? null : myEqClasses.get(index);
     if (set == null) {
@@ -284,7 +285,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private boolean canBeNaN(@NotNull DfaValue dfaValue) {
-    for (DfaValue eq : getEqClassesFor(dfaValue)) {
+    for (DfaValue eq : getEquivalentValues(dfaValue)) {
       if (eq instanceof DfaBoxedValue) {
         eq = ((DfaBoxedValue)eq).getWrappedValue();
       }
@@ -298,7 +299,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
 
   private boolean isEffectivelyNaN(@NotNull DfaValue dfaValue) {
-    for (DfaValue eqClass : getEqClassesFor(dfaValue)) {
+    for (DfaValue eqClass : getEquivalentValues(dfaValue)) {
       if (isNaN(eqClass)) return true;
     }
     return false;
@@ -323,7 +324,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
       if (valueToWrap instanceof DfaVariableValue) {
         if (PsiType.BOOLEAN.equals(((DfaVariableValue)valueToWrap).getVariableType())) return true;
-        for (DfaValue value : getEqClassesFor(valueToWrap)) {
+        for (DfaValue value : getEquivalentValues(valueToWrap)) {
           if (value instanceof DfaConstValue && cacheable((DfaConstValue)value)) return true;
         }
       }
@@ -497,7 +498,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   public DfaConstValue getConstantValue(DfaVariableValue value) {
     int index = getEqClassIndex(value);
     EqClass ec = index == -1 ? null : myEqClasses.get(index);
-    return ec == null ? null : ec.findConstant(true);
+    return ec == null ? null : (DfaConstValue)unwrap(ec.findConstant(true));
   }
 
   @Override
@@ -818,7 +819,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     Set<DfaVariableValue> vars = ContainerUtil.newLinkedHashSet(getChangedVariables());
     for (EqClass aClass : myEqClasses) {
       if (aClass != null) {
-        vars.addAll(aClass.getVariables());
+        vars.addAll(aClass.getVariables(true));
       }
     }
     for (DfaVariableValue value : vars) {

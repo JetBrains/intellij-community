@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -131,10 +130,12 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     return new File(CompilerPaths.getCompilerSystemDirectory(project), "maven_compiler_caches.dat");
   }
 
+  @Override
   public boolean validateConfiguration(CompileScope scope) {
     return true;
   }
 
+  @Override
   @NotNull
   public ProcessingItem[] getProcessingItems(final CompileContext context) {
     final Project project = context.getProject();
@@ -375,6 +376,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     }
   }
 
+  @Override
   public ProcessingItem[] process(final CompileContext context, ProcessingItem[] items) {
     context.getProgressIndicator().setText("Processing Maven resources...");
 
@@ -451,11 +453,13 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     }
   }
 
+  @Override
   @NotNull
   public String getDescription() {
     return "Maven Resource Compiler";
   }
 
+  @Override
   public ValidityState createValidityState(DataInput in) throws IOException {
     return MyValididtyState.load(in);
   }
@@ -483,9 +487,10 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
       myFiltered = isFiltered;
       myProperties = properties;
       myEscapeString = escapeString;
-      myState = new MyValididtyState(sourceFile.getTimeStamp(), outputFileTimestamp, isFiltered, propertiesHashCode, escapeString);
+      myState = new MyValididtyState(sourceFile.getTimeStamp(), outputFileTimestamp, isFiltered, propertiesHashCode, StringUtil.notNullize(escapeString));
     }
 
+    @Override
     @NotNull
     public VirtualFile getFile() {
       return mySourceFile;
@@ -512,6 +517,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
       return myEscapeString;
     }
 
+    @Override
     @NotNull
     public MyValididtyState getValidityState() {
       return myState;
@@ -525,11 +531,13 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
       myFile = new LightVirtualFile(this.getClass().getName());
     }
 
+    @Override
     @NotNull
     public VirtualFile getFile() {
       return myFile;
     }
 
+    @Override
     public ValidityState getValidityState() {
       return null;
     }
@@ -540,7 +548,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     private long myOutputFileTimestamp;
     private final boolean myFiltered;
     private final long myPropertiesHashCode;
-    private final String myEscapeString;
+    @NotNull private final String myEscapeString;
 
     public static MyValididtyState load(DataInput in) throws IOException {
       return new MyValididtyState(in.readLong(), in.readLong(), in.readBoolean(), in.readLong(), in.readUTF());
@@ -554,7 +562,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
                              long outputFileTimestamp,
                              boolean isFiltered,
                              long propertiesHashCode,
-                             String escapeString) {
+                             @NotNull String escapeString) {
       mySourceFileTimestamp = sourceFileTimestamp;
       myOutputFileTimestamp = outputFileTimestamp;
       myFiltered = isFiltered;
@@ -573,6 +581,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
       return mySourceFileTimestamp + " " + myOutputFileTimestamp + " " + myFiltered + " " + myPropertiesHashCode + " " + myEscapeString;
     }
 
+    @Override
     public boolean equalsTo(ValidityState otherState) {
       if (!(otherState instanceof MyValididtyState)) return false;
       MyValididtyState that = (MyValididtyState)otherState;
@@ -581,9 +590,10 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
              && myOutputFileTimestamp == that.myOutputFileTimestamp
              && myFiltered == that.myFiltered
              && myPropertiesHashCode == that.myPropertiesHashCode
-             && Comparing.strEqual(myEscapeString, that.myEscapeString);
+             && myEscapeString.equals(that.myEscapeString);
     }
 
+    @Override
     public void save(DataOutput out) throws IOException {
       out.writeLong(mySourceFileTimestamp);
       out.writeLong(myOutputFileTimestamp);

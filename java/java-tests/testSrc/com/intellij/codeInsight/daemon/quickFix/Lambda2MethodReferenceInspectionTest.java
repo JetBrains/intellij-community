@@ -17,6 +17,8 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -36,4 +38,8 @@ public class Lambda2MethodReferenceInspectionTest extends LightQuickFixParameter
     return "/codeInsight/daemonCodeAnalyzer/quickFix/lambda2methodReference";
   }
 
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk18();
+  }
 }

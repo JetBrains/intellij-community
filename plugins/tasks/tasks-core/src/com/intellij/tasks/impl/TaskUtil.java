@@ -29,6 +29,7 @@ import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskState;
 import com.intellij.tasks.impl.httpclient.ResponseUtil;
+import com.intellij.util.text.SyncDateFormat;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.http.HttpResponse;
@@ -44,10 +45,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -55,7 +53,7 @@ import java.util.regex.Pattern;
  * @author Dmitry Avdeev
  */
 public class TaskUtil {
-  private static SimpleDateFormat ISO8601_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+  private static SyncDateFormat ISO8601_DATE_FORMAT = new SyncDateFormat(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
 
   static {
     // Use UTC time zone by default (for formatting)
@@ -65,11 +63,11 @@ public class TaskUtil {
   // Almost ISO-8601 strict except date parts may be separated by '/'
   // and date only also allowed just in case
   private static Pattern ISO8601_DATE_PATTERN = Pattern.compile(
-    "(\\d{4}[/-]\\d{2}[/-]\\d{2})" +                   // date
+    "(\\d{4}[/-]\\d{2}[/-]\\d{2})" +                   // date (1)
     "(?:[ T]" +
-    "(\\d{2}:\\d{2}:\\d{2})(.\\d{3,})?" +              // optional time and milliseconds
+    "(\\d{2}:\\d{2}:\\d{2})(.\\d{3,})?" +              // optional time (2) and milliseconds (3)
     "(?:\\s?" +
-    "([+-]\\d{2}:\\d{2}|[+-]\\d{4}|[+-]\\d{2}|Z)" +    // optional timezone info, if time is also present
+    "([+-]\\d{2}:\\d{2}|[+-]\\d{4}|[+-]\\d{2}|Z)" +    // optional timezone info (4), if time is also present
     ")?)?"
   );
 
@@ -79,8 +77,11 @@ public class TaskUtil {
   }
 
   public static String formatTask(@NotNull Task task, String format) {
-    return format.replace("{id}", task.getId()).replace("{number}", task.getNumber())
-      .replace("{project}", task.getProject() == null ? "" : task.getProject()).replace("{summary}", task.getSummary());
+    return format
+      .replace("{id}", task.getId())
+      .replace("{number}", task.getNumber())
+      .replace("{project}", StringUtil.notNullize(task.getProject()))
+      .replace("{summary}", task.getSummary());
   }
 
   @Nullable
@@ -253,7 +254,7 @@ public class TaskUtil {
       try {
         String content = ResponseUtil.getResponseContentAsString(response);
         Header header = response.getRequestHeader(HTTP.CONTENT_TYPE);
-        String contentType = header == null ? "text/plain" : header.getElements()[0].getName().toLowerCase();
+        String contentType = header == null ? "text/plain" : header.getElements()[0].getName().toLowerCase(Locale.ENGLISH);
         if (contentType.contains("xml")) {
           prettyFormatXmlToLog(logger, content);
         }
@@ -275,7 +276,7 @@ public class TaskUtil {
       try {
         String content = ResponseUtil.getResponseContentAsString(response);
         org.apache.http.Header header = response.getEntity().getContentType();
-        String contentType = header == null ? "text/plain" : header.getElements()[0].getName().toLowerCase();
+        String contentType = header == null ? "text/plain" : header.getElements()[0].getName().toLowerCase(Locale.ENGLISH);
         if (contentType.contains("xml")) {
           prettyFormatXmlToLog(logger, content);
         }

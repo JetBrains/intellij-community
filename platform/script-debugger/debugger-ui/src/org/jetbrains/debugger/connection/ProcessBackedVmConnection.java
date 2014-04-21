@@ -45,7 +45,7 @@ public abstract class ProcessBackedVmConnection extends VmConnection<Vm> {
         createVmAndConnect(address, result);
         result.doWhenDone(new Consumer<Vm>() {
           @Override
-          public void consume(Vm vm) {
+          public void consume(@NotNull Vm vm) {
             ProcessBackedVmConnection.this.vm = vm;
             setState(ConnectionStatus.CONNECTED, "Connected to " + address.getHostName() + ":" + address.getPort());
             startProcessing();

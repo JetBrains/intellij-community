@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +80,7 @@ public class StringConcatenationInspectionBase extends BaseInspection {
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)infos[0];
     final Collection<InspectionGadgetsFix> result = new ArrayList();
-    final PsiElement parent = polyadicExpression.getParent();
+    final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(polyadicExpression);
     if (parent instanceof PsiVariable) {
       final PsiVariable variable = (PsiVariable)parent;
       final InspectionGadgetsFix fix = createAddAnnotationFix(variable);
@@ -95,6 +96,22 @@ public class StringConcatenationInspectionBase extends BaseInspection {
           final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)target;
           final InspectionGadgetsFix fix = createAddAnnotationFix(modifierListOwner);
           result.add(fix);
+        }
+      }
+    }
+    else if (parent instanceof PsiExpressionList) {
+      final PsiElement grandParent = parent.getParent();
+      if (grandParent instanceof PsiMethodCallExpression) {
+        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+        final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+        final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+        if (qualifierExpression instanceof PsiReferenceExpression) {
+          final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifierExpression;
+          final PsiElement target = referenceExpression.resolve();
+          if (target instanceof PsiModifierListOwner) {
+            final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)target;
+            result.add(createAddAnnotationFix(modifierListOwner));
+          }
         }
       }
     }

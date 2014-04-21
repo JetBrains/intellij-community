@@ -525,6 +525,7 @@
     <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.ConstructorReferencesSearcher"/>
     <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GrAliasedImportedElementSearcher"/>
     <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.AccessorReferencesSearcher"/>
+    <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GroovyTraitFieldSearcher"/>
 
     <antCustomCompiler implementation="org.jetbrains.plugins.groovy.ant.GroovyAntCustomCompilerProvider"/>
 
@@ -539,6 +540,9 @@
                     serviceImplementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerWorkspaceConfiguration"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration"
                     serviceImplementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration"/>
+
+    <applicationService serviceInterface="org.jetbrains.plugins.groovy.lang.resolve.KnownRecursionManager"
+                        serviceImplementation="org.jetbrains.plugins.groovy.lang.resolve.KnownRecursionManager"/>
 
     <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.providers.GroovyReferenceContributor"/>
 

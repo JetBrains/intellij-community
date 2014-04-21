@@ -20,7 +20,6 @@ import com.intellij.CommonBundle;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
@@ -29,13 +28,13 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
 
-public class DisableInspectionToolAction implements IntentionAction, Iconable {
+public class DisableInspectionToolAction extends IntentionAndQuickFixAction implements Iconable {
   private final String myToolId;
   public static final String NAME = InspectionsBundle.message("disable.inspection.action.name");
 
@@ -47,9 +46,9 @@ public class DisableInspectionToolAction implements IntentionAction, Iconable {
     myToolId = key.toString();
   }
 
-  @Override
   @NotNull
-  public String getText() {
+  @Override
+  public String getName() {
     return NAME;
   }
 
@@ -68,8 +67,8 @@ public class DisableInspectionToolAction implements IntentionAction, Iconable {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(file.getProject());
+  public void applyFix(@NotNull Project project, PsiFile file, @Nullable Editor editor) {
+    InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
     InspectionProfile inspectionProfile = profileManager.getInspectionProfile();
     ModifiableModel model = inspectionProfile.getModifiableModel();
     model.disableTool(myToolId, file);

@@ -16,6 +16,8 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
 import org.jetbrains.annotations.NotNull;
 
 @State(
@@ -23,11 +25,14 @@ import org.jetbrains.annotations.NotNull;
   storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE)
 )
 public class HgProjectSettings implements PersistentStateComponent<HgProjectSettings.State> {
- @NotNull private final HgGlobalSettings myAppSettings;
+
+  @NotNull private final HgGlobalSettings myAppSettings;
+  @NotNull private final Project myProject;
 
   private State myState = new State();
 
-  public HgProjectSettings(@NotNull HgGlobalSettings appSettings) {
+  public HgProjectSettings(@NotNull Project project, @NotNull HgGlobalSettings appSettings) {
+    myProject = project;
     myAppSettings = appSettings;
   }
 
@@ -35,6 +40,7 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
     public boolean myCheckIncoming = true;
     public boolean myCheckOutgoing = true;
     public Boolean CHECK_INCOMING_OUTGOING = null;
+    public boolean myIgnoreWhitespacesInAnnotations = true;
   }
 
   public State getState() {
@@ -52,8 +58,20 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
     return myState.CHECK_INCOMING_OUTGOING != null && myState.CHECK_INCOMING_OUTGOING.booleanValue();
   }
 
+  public boolean isWhitespacesIgnoredInAnnotations() {
+    return myState.myIgnoreWhitespacesInAnnotations;
+  }
+
   public void setCheckIncomingOutgoing(boolean checkIncomingOutgoing) {
     myState.CHECK_INCOMING_OUTGOING = checkIncomingOutgoing;
+  }
+
+  public void setIgnoreWhitespacesInAnnotations(boolean ignoreWhitespacesInAnnotations) {
+    final boolean changed = myState.myIgnoreWhitespacesInAnnotations != ignoreWhitespacesInAnnotations;
+    myState.myIgnoreWhitespacesInAnnotations = ignoreWhitespacesInAnnotations;
+    if (changed) {
+      myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).configurationChanged(HgVcs.getKey());
+    }
   }
 
   public String getHgExecutable() {

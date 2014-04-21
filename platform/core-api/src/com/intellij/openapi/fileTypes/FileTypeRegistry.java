@@ -102,5 +102,7 @@ public abstract class FileTypeRegistry {
      */
     @Nullable
     FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText);
+
+    int getVersion();
   }
 }

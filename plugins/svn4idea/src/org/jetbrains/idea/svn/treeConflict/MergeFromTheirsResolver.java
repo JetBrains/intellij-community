@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
@@ -355,55 +356,56 @@ public class MergeFromTheirsResolver {
     public void run(final ContinuationContext context) {
       if (myTheirsBinaryChanges.isEmpty()) return;
       final Application application = ApplicationManager.getApplication();
-      final VcsException[] exc = new VcsException[1];
       final List<FilePath> dirtyPaths = new ArrayList<FilePath>();
       for (final Change change : myTheirsBinaryChanges) {
-        application.runWriteAction(new Runnable() {
-          public void run() {
-            try {
-              if (change.getAfterRevision() != null) {
-                final FilePath file = change.getAfterRevision().getFile();
-                dirtyPaths.add(file);
-                final String parentPath = file.getParentPath().getPath();
-                final VirtualFile parentFile = VfsUtil.createDirectoryIfMissing(parentPath);
-                if (parentFile == null) {
-                  context.handleException(new VcsException("Can not create directory: " + parentPath, true), false);
-                  return;
+        try {
+          application.runWriteAction(new ThrowableComputable<Void, VcsException>() {
+            @Override
+            public Void compute() throws VcsException {
+              try {
+                if (change.getAfterRevision() == null) {
+                  final FilePath path = change.getBeforeRevision().getFile();
+                  dirtyPaths.add(path);
+                  final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(path.getIOFile());
+                  if (file == null) {
+                    context.handleException(new VcsException("Can not delete file: " + file.getPath(), true), false);
+                    return null;
+                  }
+                  file.delete(TreeConflictRefreshablePanel.class);
                 }
-                final VirtualFile child = parentFile.createChildData(TreeConflictRefreshablePanel.class, file.getName());
-                if (child == null) {
-                  context.handleException(new VcsException("Can not create file: " + file.getPath(), true), false);
-                  return;
+                else {
+                  final FilePath file = change.getAfterRevision().getFile();
+                  dirtyPaths.add(file);
+                  final String parentPath = file.getParentPath().getPath();
+                  final VirtualFile parentFile = VfsUtil.createDirectoryIfMissing(parentPath);
+                  if (parentFile == null) {
+                    context.handleException(new VcsException("Can not create directory: " + parentPath, true), false);
+                    return null;
+                  }
+                  final VirtualFile child = parentFile.createChildData(TreeConflictRefreshablePanel.class, file.getName());
+                  if (child == null) {
+                    context.handleException(new VcsException("Can not create file: " + file.getPath(), true), false);
+                    return null;
+                  }
+                  final BinaryContentRevision revision = (BinaryContentRevision)change.getAfterRevision();
+                  final byte[] content = revision.getBinaryContent();
+                  // actually it was the fix for IDEA-91572 Error saving merged data: Argument 0 for @NotNull parameter of > com/intellij/
+                  if (content == null) {
+                    context.handleException(new VcsException("Can not load Theirs content for file " + file.getPath()), false);
+                    return null;
+                  }
+                  child.setBinaryContent(content);
                 }
-                final BinaryContentRevision revision = (BinaryContentRevision)change.getAfterRevision();
-                final byte[] content = revision.getBinaryContent();
-                // actually it was the fix for IDEA-91572 Error saving merged data: Argument 0 for @NotNull parameter of > com/intellij/
-                if (content == null) {
-                  context.handleException(new VcsException("Can not load Theirs content for file " + file.getPath()), false);
-                  return;
-                }
-                child.setBinaryContent(content);
-              } else {
-                final FilePath path = change.getBeforeRevision().getFile();
-                dirtyPaths.add(path);
-                final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(path.getIOFile());
-                if (file == null) {
-                  context.handleException(new VcsException("Can not delete file: " + file.getPath(), true), false);
-                  return;
-                }
-                file.delete(TreeConflictRefreshablePanel.class);
               }
+              catch (IOException e) {
+                throw new VcsException(e);
+              }
+              return null;
             }
-            catch (IOException e) {
-              exc[0] = new VcsException(e);
-            }
-            catch (VcsException e) {
-              exc[0] = e;
-            }
-          }
-        });
-        if (exc[0] != null) {
-          context.handleException(exc[0], true);
+          });
+        }
+        catch (VcsException e) {
+          context.handleException(e, true);
           return;
         }
       }

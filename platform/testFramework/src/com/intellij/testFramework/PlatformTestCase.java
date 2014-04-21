@@ -344,8 +344,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
 
     LocalHistoryImpl.getInstanceImpl().cleanupForNextTest();
-
-    PatchedWeakReference.clearAll();
   }
 
   private static Set<VirtualFile> eternallyLivingFiles() {
@@ -694,7 +692,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   @Override
-  protected void invokeTestRunnable(final Runnable runnable) throws Exception {
+  protected void invokeTestRunnable(@NotNull final Runnable runnable) throws Exception {
     final Exception[] e = new Exception[1];
     Runnable runnable1 = new Runnable() {
       @Override

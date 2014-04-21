@@ -30,7 +30,10 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.light.LightTypeElement;
 import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -44,6 +47,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.UniqueNameGenerator;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -582,12 +586,24 @@ public class GenerateMembersUtil {
 
   @Nullable
   public static PsiMethod generateGetterPrototype(@NotNull PsiField field) {
-    return annotateOnOverrideImplement(field.getContainingClass(), PropertyUtil.generateGetterPrototype(field));
+    return setVisibility(field, annotateOnOverrideImplement(field.getContainingClass(), PropertyUtil.generateGetterPrototype(field)));
   }
 
   @Nullable
   public static PsiMethod generateSetterPrototype(@NotNull PsiField field) {
-    return annotateOnOverrideImplement(field.getContainingClass(), PropertyUtil.generateSetterPrototype(field));
+    return setVisibility(field, annotateOnOverrideImplement(field.getContainingClass(), PropertyUtil.generateSetterPrototype(field)));
+  }
+
+  @Contract("_, null -> null")
+  public static PsiMethod setVisibility(PsiMember member, PsiMethod prototype) {
+    if (prototype == null) return null;
+    final String visibility = CodeStyleSettingsManager.getSettings(member.getProject()).VISIBILITY;
+    final PsiModifierList modifierList = prototype.getModifierList();
+    final String newVisibility = VisibilityUtil.ESCALATE_VISIBILITY.equals(visibility)
+                                 ? PsiUtil.getMaximumModifierForMember(member instanceof PsiClass ? (PsiClass)member : member.getContainingClass(), false)
+                                 : visibility;
+    VisibilityUtil.setVisibility(modifierList, newVisibility);
+    return prototype;
   }
 
   @Nullable

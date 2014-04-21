@@ -18,7 +18,7 @@ public final class JsonReaders {
 
   private static void checkIsNull(JsonReaderEx reader, String fieldName) {
     if (reader.peek() == JsonToken.NULL) {
-      throw new RuntimeException("Field is not nullable" + (fieldName == null ? "" : (" " + fieldName)));
+      throw new RuntimeException("Field is not nullable" + (fieldName == null ? "" : (": " + fieldName)));
     }
   }
 

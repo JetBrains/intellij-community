@@ -130,6 +130,8 @@ public class VersionComparatorUtil {
    * @return 0 if ver1 equals ver2, positive value if ver1 > ver2, negative value if ver1 < ver2
    */
   public static int compare(String ver1, String ver2) {
+    // todo duplicates com.intellij.openapi.util.text.StringUtil.compareVersionNumbers()
+    // todo please refactor next time you make changes here
     if (ver1 == null) {
       return (ver2 == null) ? 0 : -1;
     } else if (ver2 == null) {

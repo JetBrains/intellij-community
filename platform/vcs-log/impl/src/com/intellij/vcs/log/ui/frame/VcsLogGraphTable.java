@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.TableScrollingUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -94,6 +95,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     addMouseListener(mouseAdapter);
 
     PopupHandler.installPopupHandler(this, VcsLogUiImpl.POPUP_ACTION_GROUP, VcsLogUiImpl.VCS_LOG_TABLE_PLACE);
+    TableScrollingUtil.installActions(this);
   }
 
   @Override

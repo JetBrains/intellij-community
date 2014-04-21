@@ -15,13 +15,10 @@
  */
 package git4idea.roots;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.roots.VcsIntegrationEnabler;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
@@ -43,7 +40,7 @@ public class GitIntegrationEnabler extends VcsIntegrationEnabler<GitVcs> {
     VcsNotifier vcsNotifier = VcsNotifier.getInstance(myProject);
     GitCommandResult result = myGit.init(myProject, projectDir);
     if (result.success()) {
-      refreshGitDir(projectDir);
+      refreshVcsDir(projectDir, GitUtil.DOT_GIT);
       vcsNotifier.notifySuccess("Created Git repository in " + projectDir.getPresentableUrl());
       return true;
     }
@@ -56,17 +53,4 @@ public class GitIntegrationEnabler extends VcsIntegrationEnabler<GitVcs> {
     }
   }
 
-  private static void refreshGitDir(final VirtualFile projectDir) {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            LocalFileSystem.getInstance().refreshAndFindFileByPath(projectDir.getPath() + "/" + GitUtil.DOT_GIT);
-          }
-        });
-      }
-    });
-  }
 }

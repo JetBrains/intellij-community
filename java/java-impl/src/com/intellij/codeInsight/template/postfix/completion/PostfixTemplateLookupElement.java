@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.codeInsight.template.impl.CustomLiveTemplateLookupElement;
 import com.intellij.codeInsight.template.postfix.templates.PostfixLiveTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class PostfixTemplateLookupElement extends CustomLiveTemplateLookupElement {
@@ -30,7 +31,7 @@ public class PostfixTemplateLookupElement extends CustomLiveTemplateLookupElemen
                                       @NotNull PostfixTemplate postfixTemplate,
                                       @NotNull String templateKey,
                                       boolean sudden) {
-    super(liveTemplate, templateKey, postfixTemplate.getPresentableName(), postfixTemplate.getDescription(), sudden, true);
+    super(liveTemplate, templateKey, StringUtil.trimStart(templateKey, "."), postfixTemplate.getDescription(), sudden, true);
     myTemplate = postfixTemplate;
   }
 

@@ -428,6 +428,31 @@ print a<caret>a
 ''', )
   }
 
+  void testTraitField() {
+    doTest(4, '''
+trait T {
+  public int fi<caret>eld = 4
+
+  def bar() {
+    print field
+    print T__field
+  }
+}
+
+class C extends T {
+  def abc {
+    print field
+    print T__field
+  }
+}
+
+
+new C().T__field
+new C().field
+
+''')
+  }
+
   private void doSuperMethodTest(String... firstParameterTypes) {
     myFixture.configureByFile(getTestName(false) + ".groovy");
     final GroovyFile file = (GroovyFile)myFixture.getFile();

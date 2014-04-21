@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,10 +158,11 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   @Nullable
   public File getMirroredFile(@NotNull VirtualFile vFile) {
     VirtualFile jar = getJarRootForLocalFile(vFile);
-    final JarHandler handler = jar != null ? getHandler(jar) : null;
-    return handler != null ? handler.getMirrorFile(new File(vFile.getPath())) : null;
+    final JarHandler handler = jar == null ? null : getHandler(jar);
+    return handler == null ? null : handler.getMirrorFile(new File(vFile.getPath()));
   }
 
+  @NotNull
   private JarHandler getHandler(@NotNull VirtualFile entryVFile) {
     final String jarRootPath = extractRootPath(entryVFile.getPath());
 
@@ -285,6 +286,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     throw new IOException(VfsBundle.message("jar.modification.not.supported.error", vDir.getUrl()));
   }
 
+  @NotNull
   @Override
   public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
     throw new IOException(VfsBundle.message("jar.modification.not.supported.error", vDir.getUrl()));
@@ -299,6 +301,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     throw new IOException(VfsBundle.message("jar.modification.not.supported.error", vFile.getUrl()));
   }
 
+  @NotNull
   @Override
   public VirtualFile copyFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent, @NotNull String copyName) throws IOException {
     throw new IOException(VfsBundle.message("jar.modification.not.supported.error", vFile.getUrl()));

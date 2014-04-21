@@ -16,8 +16,8 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
@@ -41,7 +41,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.
 public abstract class GrMapType extends GrLiteralClassType {
   private final String myJavaClassName;
 
-  private final AtomicNotNullLazyValue<PsiType[]> myParameters = new AtomicNotNullLazyValue<PsiType[]>() {
+  private final VolatileNotNullLazyValue<PsiType[]> myParameters = new VolatileNotNullLazyValue<PsiType[]>() {
     @NotNull
     @Override
     protected PsiType[] compute() {

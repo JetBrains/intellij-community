@@ -180,15 +180,15 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   public Collection<? extends CustomLiveTemplateLookupElement> getLookupElements(@NotNull PsiFile file, @NotNull Editor editor, int offset) {
     String key = computeTemplateKeyWithoutContextChecking(editor.getDocument().getCharsSequence(), offset);
     if (key != null && editor.getCaretModel().getCaretCount() == 1) {
-      Map<String, CustomLiveTemplateLookupElement> result = ContainerUtil.newHashMap();
+      Collection<CustomLiveTemplateLookupElement> result = ContainerUtil.newHashSet();
       Condition<PostfixTemplate> isApplicationTemplateFunction = createIsApplicationTemplateFunction(key, file, editor);
       for (Map.Entry<String, PostfixTemplate> entry : myTemplates.entrySet()) {
         PostfixTemplate postfixTemplate = entry.getValue();
-        if (entry.getKey().startsWith(key) && isApplicationTemplateFunction.value(postfixTemplate)) {
-          result.put(postfixTemplate.getKey(), new PostfixTemplateLookupElement(this, postfixTemplate, postfixTemplate.getKey(), false));
+        if (isApplicationTemplateFunction.value(postfixTemplate)) {
+          result.add(new PostfixTemplateLookupElement(this, postfixTemplate, entry.getKey(), false));
         }
       }
-      return result.values();
+      return result;
     }
     return super.getLookupElements(file, editor, offset);
   }

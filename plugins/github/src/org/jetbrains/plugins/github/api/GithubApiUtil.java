@@ -111,7 +111,7 @@ public class GithubApiUtil {
       String uri = GithubUrlUtil.getApiUrl(auth.getHost()) + path;
       method = doREST(auth, uri, requestBody, headers, verb);
 
-      checkStatusCode(method);
+      checkStatusCode(method, requestBody);
 
       InputStream resp = method.getResponseBodyAsStream();
       if (resp == null) {
@@ -235,7 +235,7 @@ public class GithubApiUtil {
     return client;
   }
 
-  private static void checkStatusCode(@NotNull HttpMethod method) throws IOException {
+  private static void checkStatusCode(@NotNull HttpMethod method, @Nullable String body) throws IOException {
     int code = method.getStatusCode();
     switch (code) {
       case HttpStatus.SC_OK:
@@ -243,7 +243,6 @@ public class GithubApiUtil {
       case HttpStatus.SC_ACCEPTED:
       case HttpStatus.SC_NO_CONTENT:
         return;
-      case HttpStatus.SC_BAD_REQUEST:
       case HttpStatus.SC_UNAUTHORIZED:
       case HttpStatus.SC_PAYMENT_REQUIRED:
       case HttpStatus.SC_FORBIDDEN:
@@ -261,6 +260,12 @@ public class GithubApiUtil {
         }
 
         throw new GithubAuthenticationException("Request response: " + message);
+      case HttpStatus.SC_BAD_REQUEST:
+      case HttpStatus.SC_UNPROCESSABLE_ENTITY:
+        if (body != null) {
+          LOG.info(body);
+        }
+        throw new GithubStatusCodeException(code + ": " + getErrorMessage(method), code);
       default:
         throw new GithubStatusCodeException(code + ": " + getErrorMessage(method), code);
     }
@@ -440,7 +445,7 @@ public class GithubApiUtil {
       String uri = GithubUrlUtil.getApiUrl(auth.getHost()) + "/user";
       method = doREST(auth, uri, null, Collections.<Header>emptyList(), HttpVerb.HEAD);
 
-      checkStatusCode(method);
+      checkStatusCode(method, null);
 
       Header header = method.getResponseHeader("X-OAuth-Scopes");
       if (header == null) {

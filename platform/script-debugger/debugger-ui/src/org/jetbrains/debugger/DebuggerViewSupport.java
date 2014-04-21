@@ -1,11 +1,13 @@
 package org.jetbrains.debugger;
 
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import com.intellij.xdebugger.frame.XNavigatable;
 import com.intellij.xdebugger.frame.XValueNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.frame.CallFrameView;
 import org.jetbrains.debugger.values.ObjectValue;
+import org.jetbrains.debugger.values.Value;
 
 import javax.swing.*;
 import java.util.List;
@@ -29,10 +31,17 @@ public interface DebuggerViewSupport extends MemberFilter {
   // Please, don't hesitate to ask to share some generic implementations. Don't reinvent the wheel and keep in mind - user expects the same UI across all IDEA-based IDEs.
   void computeObjectPresentation(@NotNull ObjectValue value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XValueNode node, @NotNull Icon icon);
 
-  void computeArrayPresentation(@NotNull ObjectValue value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XValueNode node, @NotNull Icon icon);
+  void computeArrayPresentation(@NotNull Value value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XValueNode node, @NotNull Icon icon);
 
   @NotNull
   XDebuggerEvaluator createFrameEvaluator(@NotNull CallFrameView frame);
+
+  /**
+   * {@link org.jetbrains.debugger.values.FunctionValue} is special case and handled by SDK
+   */
+  boolean canNavigateToSource(@NotNull Variable variable, @NotNull VariableContext context);
+
+  void computeSourcePosition(@NotNull Variable variable, @NotNull VariableContext context, @NotNull XNavigatable navigatable);
 
   class SimpleDebuggerViewSupport implements DebuggerViewSupport {
     public static final DebuggerViewSupport INSTANCE = new SimpleDebuggerViewSupport();
@@ -89,7 +98,7 @@ public interface DebuggerViewSupport extends MemberFilter {
     }
 
     @Override
-    public void computeArrayPresentation(@NotNull ObjectValue value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XValueNode node, @NotNull Icon icon) {
+    public void computeArrayPresentation(@NotNull Value value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XValueNode node, @NotNull Icon icon) {
       VariableView.setArrayPresentation(value, context, icon, node);
     }
 
@@ -97,6 +106,15 @@ public interface DebuggerViewSupport extends MemberFilter {
     @Override
     public XDebuggerEvaluator createFrameEvaluator(@NotNull CallFrameView frameView) {
       throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean canNavigateToSource(@NotNull Variable variable, @NotNull VariableContext context) {
+      return false;
+    }
+
+    @Override
+    public void computeSourcePosition(@NotNull Variable variable, @NotNull VariableContext context, @NotNull XNavigatable navigatable) {
     }
 
     @Override
