@@ -45,7 +45,7 @@ import java.util.List;
 * Date: 3/30/13
 * Time: 7:40 PM
 */
-class LoadRecentBranchRevisions extends TaskDescriptor {
+public class LoadRecentBranchRevisions extends TaskDescriptor {
   public static final String PROP_BUNCH_SIZE = "idea.svn.quick.merge.bunch.size";
   private final static int BUNCH_SIZE = 100;
   private int myBunchSize;
@@ -58,11 +58,11 @@ class LoadRecentBranchRevisions extends TaskDescriptor {
   private final String mySourceUrl;
   private final Integer myTestBunchSize;
 
-  LoadRecentBranchRevisions(String branchName, long first, WCInfo info, SvnVcs vcs, String url) {
+  public LoadRecentBranchRevisions(String branchName, long first, WCInfo info, SvnVcs vcs, String url) {
     this(branchName, first, info, vcs, url, -1);
   }
 
-  LoadRecentBranchRevisions(String branchName, long first, WCInfo info, SvnVcs vcs, String url, final int bunchSize) {
+  public LoadRecentBranchRevisions(String branchName, long first, WCInfo info, SvnVcs vcs, String url, final int bunchSize) {
     super("Loading recent " + branchName + " revisions", Where.POOLED);
     myFirst = first;
     myWcInfo = info;
