@@ -27,6 +27,7 @@ import com.intellij.debugger.jdi.DecompiledLocalVariable;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.jdi.LocalVariablesUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.ViewsGeneralSettings;
 import com.intellij.debugger.ui.impl.FrameVariablesTree;
 import com.intellij.debugger.ui.impl.watch.*;
@@ -134,7 +135,8 @@ public class JavaStackFrame extends XStackFrame {
     });
   }
 
-  private static boolean myAutoWatchMode = false;
+  // TODO: need to act on option change
+  private static boolean myAutoWatchMode = DebuggerSettings.getInstance().AUTO_VARIABLES_MODE;
 
   // copied from FrameVariablesTree
   private void buildVariables(DebuggerContextImpl debuggerContext, XValueChildrenList children) throws EvaluateException {
