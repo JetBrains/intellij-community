@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.impl;
 
-import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -83,7 +83,7 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
   }
 
   @Nullable
-  protected RunContentDescriptor attachVirtualMachine(Project project, RunProfileState state,
+  protected RunContentDescriptor attachVirtualMachine(final Project project, RunProfileState state,
                                                       RunContentDescriptor contentToReuse,
                                                       ExecutionEnvironment env, RemoteConnection connection, boolean pollConnection)
     throws ExecutionException {
@@ -91,22 +91,18 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
     final RunContentDescriptor res =
       manager.attachVirtualMachine(env.getExecutor(), this, env, state, contentToReuse, connection, pollConnection);
 
-    if (false) {
-      return res;
-    } else {
-      final DebuggerManagerImpl debugManager = (DebuggerManagerImpl)DebuggerManagerEx.getInstance(project);
+    if (res == null) return null;
 
-      XDebugSession debugSession =
-        XDebuggerManager.getInstance(project).startSession(this, env, contentToReuse, new XDebugProcessStarter() {
-          @Override
-          @NotNull
-          public XDebugProcess start(@NotNull XDebugSession session) {
-            return new JavaDebugProcess(session, debugManager.getDebugSession(res.getProcessHandler()));
-          }
-        });
-      //return res;
-      return debugSession.getRunContentDescriptor();
-    }
+    XDebugSession debugSession =
+      XDebuggerManager.getInstance(project).startSession(this, env, contentToReuse, new XDebugProcessStarter() {
+        @Override
+        @NotNull
+        public XDebugProcess start(@NotNull XDebugSession session) {
+          final DebuggerManagerImpl debugManager = (DebuggerManagerImpl)DebuggerManager.getInstance(project);
+          return new JavaDebugProcess(session, debugManager.getDebugSession(res.getProcessHandler()));
+        }
+      });
+    return debugSession.getRunContentDescriptor();
   }
 
   private static RemoteConnection createRemoteDebugConnection(RemoteState connection, final RunnerSettings settings) {
