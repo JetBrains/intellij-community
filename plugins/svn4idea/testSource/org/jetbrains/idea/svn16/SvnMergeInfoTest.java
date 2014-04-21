@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.dialogs.MergeContext;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
@@ -49,6 +50,7 @@ public class SvnMergeInfoTest extends Svn16TestCase {
   private ProjectLevelVcsManagerImpl myProjectLevelVcsManager;
   private WCInfo myWCInfo;
   private OneShotMergeInfoHelper myOneShotMergeInfoHelper;
+  private MergeContext myMergeContext;
 
   @Override
   public void setUp() throws Exception {
@@ -64,7 +66,8 @@ public class SvnMergeInfoTest extends Svn16TestCase {
     Node node = new Node(vcsRoot, SVNURL.parseURIEncoded(myRepoUrl + "/branch"), SVNURL.parseURIEncoded(myRepoUrl));
     RootUrlInfo root = new RootUrlInfo(node, WorkingCopyFormat.ONE_DOT_SIX, vcsRoot, null);
     myWCInfo = new WCInfo(root, true, SVNDepth.INFINITY);
-    myOneShotMergeInfoHelper = new OneShotMergeInfoHelper(myProject, myWCInfo, myRepoUrl + "/trunk");
+    myMergeContext = new MergeContext(SvnVcs.getInstance(myProject), myRepoUrl + "/trunk", myWCInfo, "trunk", vcsRoot);
+    myOneShotMergeInfoHelper = new OneShotMergeInfoHelper(myMergeContext);
 
     SvnConfiguration.getInstance(myProject).setCheckNestedForQuickMerge(true);
 //    AbstractVcs vcsFound = myProjectLevelVcsManager.findVcsByName(SvnVcs.VCS_NAME);

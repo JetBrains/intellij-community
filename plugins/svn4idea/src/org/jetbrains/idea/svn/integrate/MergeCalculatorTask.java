@@ -78,7 +78,7 @@ public class MergeCalculatorTask extends BaseMergeTask implements
     myNotMerged = new LinkedList<CommittedChangeList>();
     myMergeTitle = "Merge from " + myMergeContext.getBranchName();
     //      if (Boolean.TRUE.equals(Boolean.getBoolean(ourOneShotStrategy))) {
-    myMergeChecker = new OneShotMergeInfoHelper(myMergeContext.getProject(), myMergeContext.getWcInfo(), myMergeContext.getSourceUrl());
+    myMergeChecker = new OneShotMergeInfoHelper(myMergeContext);
     ((OneShotMergeInfoHelper)myMergeChecker).prepare();
 /*      } else {
       myMergeChecker = new BranchInfo.MyMergeCheckerWrapper(myWcInfo.getPath(), new BranchInfo(myVcs, myWcInfo.getRepositoryRoot(),

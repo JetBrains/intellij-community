@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.dialogs.MergeContext;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
@@ -35,6 +36,7 @@ import org.junit.Test;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -66,6 +68,7 @@ public class SvnMergeInfoTest extends Svn17TestCase {
 
   private String myTrunkUrl;
   private String myBranchUrl;
+  private MergeContext myMergeContext;
 
   @Override
   public void setUp() throws Exception {
@@ -84,7 +87,8 @@ public class SvnMergeInfoTest extends Svn17TestCase {
     Node node = new Node(vcsRoot, SVNURL.parseURIEncoded(myBranchUrl), SVNURL.parseURIEncoded(myRepoUrl));
     RootUrlInfo root = new RootUrlInfo(node, WorkingCopyFormat.ONE_DOT_SIX, vcsRoot, null);
     myWCInfo = new WCInfo(root, true, SVNDepth.INFINITY);
-    myOneShotMergeInfoHelper = new OneShotMergeInfoHelper(myProject, myWCInfo, myTrunkUrl);
+    myMergeContext = new MergeContext(SvnVcs.getInstance(myProject), myTrunkUrl, myWCInfo, SVNPathUtil.tail(myTrunkUrl), vcsRoot);
+    myOneShotMergeInfoHelper = new OneShotMergeInfoHelper(myMergeContext);
 
     myVcs = SvnVcs.getInstance(myProject);
     myVcs.getSvnConfiguration().setCheckNestedForQuickMerge(true);

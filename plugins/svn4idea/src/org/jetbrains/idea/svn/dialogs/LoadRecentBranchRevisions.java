@@ -120,7 +120,7 @@ public class LoadRecentBranchRevisions extends TaskDescriptor {
     }
 
     try {
-      myHelper = new OneShotMergeInfoHelper(myMergeContext.getProject(), myMergeContext.getWcInfo(), myMergeContext.getSourceUrl());
+      myHelper = new OneShotMergeInfoHelper(myMergeContext);
       ProgressManager.progress2("Calculating not merged revisions");
       myHelper.prepare();
     }
