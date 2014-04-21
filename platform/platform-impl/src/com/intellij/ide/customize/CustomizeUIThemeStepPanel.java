@@ -26,6 +26,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -161,6 +162,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
       }
       Window window = SwingUtilities.getWindowAncestor(component);
       if (window != null) {
+        window.setBackground(new Color(UIUtil.getPanelBackground().getRGB()));
         SwingUtilities.updateComponentTreeUI(window);
       }
       if (ApplicationManager.getApplication() != null) {
