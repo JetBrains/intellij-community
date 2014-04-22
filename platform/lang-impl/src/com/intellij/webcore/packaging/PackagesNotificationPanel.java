@@ -22,7 +22,7 @@ import java.util.Map;
  * @author yole
  */
 public class PackagesNotificationPanel {
-  private final JEditorPane myEditorPane = new JEditorPane();
+  private final JEditorPane myEditorPane = new MyNotificationPane();
   private final Project myProject;
   private final Map<String, Runnable> myLinkHandlers = new HashMap<String, Runnable>();
   private String myErrorTitle;
@@ -91,6 +91,10 @@ public class PackagesNotificationPanel {
     myLinkHandlers.put(key, handler);
   }
 
+  public void removeAllLinkHandlers() {
+    myLinkHandlers.clear();
+  }
+
   public JComponent getComponent() {
     return myEditorPane;
   }
@@ -101,7 +105,8 @@ public class PackagesNotificationPanel {
 
   private void showContent(String text, final Color background) {
     myEditorPane.removeAll();
-    myEditorPane.setText(UIUtil.toHtml(text));
+    String htmlText = text.startsWith("<html>") ? text : UIUtil.toHtml(text);
+    myEditorPane.setText(htmlText);
     myEditorPane.setBackground(background);
     myEditorPane.setVisible(true);
     myErrorTitle = null;
@@ -124,5 +129,16 @@ public class PackagesNotificationPanel {
 
   public boolean hasLinkHandler(String key) {
     return myLinkHandlers.containsKey(key);
+  }
+
+  private static class MyNotificationPane extends JEditorPane {
+    @Override
+    public Dimension getPreferredSize() {
+      // This trick makes text component to carry text over to the next line
+      // iff the text line width exceeds parent's width
+      Dimension dimension = super.getPreferredSize();
+      dimension.width = 0;
+      return dimension;
+    }
   }
 }
