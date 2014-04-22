@@ -57,7 +57,11 @@
     @@archs@@
     <key>LSRequiresNativeExecution</key>
     <string>YES</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>@@min_osx@@</string>
+
     @@url_schemes@@
+
     <key>JVMOptions</key>
     <dict>
       <key>ClassPath</key>
