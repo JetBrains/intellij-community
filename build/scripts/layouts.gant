@@ -336,14 +336,17 @@ public def layoutCommunityPlugins(String home) {
       jar("gradle.jar") {
         module("gradle")
       }
+
+      jar("gradle-tooling-extension-api.jar") {
+        module("gradle-tooling-extension-api")
+      }
+
+      jar("gradle-tooling-extension-impl.jar") {
+        module("gradle-tooling-extension-impl")
+      }
+
       jar("gradle-tooling-extension.jar") {
         module("gradle-tooling-extension")
-      }
-      def gradleToolingVersions = ["1.9", "1.11", "1.12"]
-      gradleToolingVersions.each { ver ->
-        jar("gradle-tooling-extension-v" + ver + ".jar") {
-          module("gradle-tooling-extension-v" + ver)
-        }
       }
       fileset(dir: "$home/plugins/gradle/lib") { include(name: "*.jar") }
     }
