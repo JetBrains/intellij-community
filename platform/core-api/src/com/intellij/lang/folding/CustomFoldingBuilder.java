@@ -29,7 +29,8 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements D
     List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
     if (CustomFoldingProvider.getAllProviders().length > 0) {
       myDefaultProvider = null;
-      addCustomFoldingRegionsRecursively(null, root.getNode(), descriptors, 0);
+      ASTNode rootNode = root.getNode();
+      addCustomFoldingRegionsRecursively(new FoldingStack(rootNode), rootNode, descriptors, 0);
     }
     buildLanguageFoldRegions(descriptors, root, document, quick);
     return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
@@ -55,11 +56,11 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements D
                                                    @NotNull Document document,
                                                    boolean quick);
 
-  private void addCustomFoldingRegionsRecursively(@Nullable FoldingStack foldingStack,
+  private void addCustomFoldingRegionsRecursively(@NotNull FoldingStack foldingStack,
                                                   @NotNull ASTNode node,
                                                   @NotNull List<FoldingDescriptor> descriptors,
                                                   int currDepth) {
-    FoldingStack localFoldingStack = isCustomFoldingRoot(node) || foldingStack == null ? new FoldingStack(node) : foldingStack;
+    FoldingStack localFoldingStack = isCustomFoldingRoot(node) ? new FoldingStack(node) : foldingStack;
     for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
       if (isCustomRegionStart(child)) {
         localFoldingStack.push(child);
@@ -103,7 +104,6 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements D
 
   @Override
   public final boolean isCollapsedByDefault(@NotNull ASTNode node) {
-    // TODO<rv>: Modify Folding API and pass here folding range.
     if (isCustomFoldingRoot(node)) {
       for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
         if (isCustomRegionStart(child)) {
