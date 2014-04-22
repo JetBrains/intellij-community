@@ -1,6 +1,8 @@
 package com.intellij.compiler;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
@@ -105,6 +107,31 @@ public class ModuleCompileScopeTest extends BaseCompilerTestCase {
     assertNoOutput(m2);
     make(m2);
     assertOutput(m2, fs().file("B.class"));
+    assertModulesUpToDate();
+  }
+
+  public void testMakeDependentModules() {
+    VirtualFile file1 = createFile("main/src/A.java", "class A{}");
+    Module main = addModule("main", file1.getParent());
+    VirtualFile file2 = createFile("dep/src/B.java", "class B{}");
+    Module dep = addModule("dep", file2.getParent());
+    ModuleRootModificationUtil.addDependency(main, dep);
+    makeWithDependencies(main);
+    assertOutput(main, fs().file("A.class"));
+    assertOutput(dep, fs().file("B.class"));
+  }
+
+  public void testDoNotIncludeRuntimeDependenciesToCompileScope() {
+    VirtualFile file1 = createFile("main/src/A.java", "class A{}");
+    Module main = addModule("main", file1.getParent());
+    VirtualFile file2 = createFile("dep/src/B.java", "class B{}");
+    Module dep = addModule("dep", file2.getParent());
+    ModuleRootModificationUtil.addDependency(main, dep, DependencyScope.RUNTIME, false);
+    makeWithDependencies(main);
+    assertOutput(main, fs().file("A.class"));
+    assertNoOutput(dep);
+    make(dep);
+    assertOutput(dep, fs().file("B.class"));
     assertModulesUpToDate();
   }
 
