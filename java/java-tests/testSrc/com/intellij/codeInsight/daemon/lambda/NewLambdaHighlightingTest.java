@@ -198,6 +198,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testOnlyLambdaAtTypeParameterPlace() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
