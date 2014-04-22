@@ -324,14 +324,17 @@ public abstract class HgUtil {
   }
 
   /**
-    * Shows a message dialog to enter the name of new branch.
-    * @return name of new branch or {@code null} if user has cancelled the dialog.
-    */
-   @Nullable
-   public static String getNewBranchNameFromUser(@NotNull Project project,
-                                                 @NotNull String dialogTitle) {
-     return Messages.showInputDialog(project, "Enter the name of new branch:", dialogTitle, Messages.getQuestionIcon());
-   }
+   * Shows a message dialog to enter the name of new branch.
+   *
+   * @return name of new branch or {@code null} if user has cancelled the dialog.
+   */
+  @Nullable
+  public static String getNewBranchNameFromUser(@NotNull HgRepository repository,
+                                                @NotNull String dialogTitle) {
+    return Messages.showInputDialog(repository.getProject(), "Enter the name of new branch:", dialogTitle, Messages.getQuestionIcon(), "",
+                                    HgReferenceValidator.newInstance(repository));
+  }
+
   /**
    * Checks is a merge operation is in progress on the given repository.
    * Actually gets the number of parents of the current revision. If there are 2 parents, then a merge is going on. Otherwise there is
