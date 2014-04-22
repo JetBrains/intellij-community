@@ -115,6 +115,7 @@
 
     <action id="ExportThreads" class="com.intellij.debugger.actions.ExportThreadsAction" icon="AllIcons.Actions.Export">
       <add-to-group group-id="RunMenu" anchor="last"/>
+      <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="first"/>
     </action>
     <action id="DumpThreads" class="com.intellij.debugger.actions.ThreadDumpAction" text="Get thread dump" icon="AllIcons.Actions.Dump">
       <add-to-group group-id="RunMenu" anchor="last"/>
@@ -152,7 +153,9 @@
       <action id="Debugger.CustomizeContextView" class="com.intellij.debugger.actions.CustomizeContextViewAction">
         <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="last"/>
       </action>
-      <action id="Debugger.CustomizeThreadsView" class="com.intellij.debugger.actions.CustomizeThreadsViewAction"/>
+      <action id="Debugger.CustomizeThreadsView" class="com.intellij.debugger.actions.CustomizeThreadsViewAction">
+        <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="last"/>
+      </action>
       <action id="Debugger.NewWatch" class="com.intellij.debugger.actions.NewWatchAction" icon="AllIcons.Debugger.NewWatch"/>
       <action id="Debugger.EditWatch" class="com.intellij.debugger.actions.EditWatchAction"/>
       <action id="Debugger.EditFrameSource" class="com.intellij.debugger.actions.EditFrameSourceAction"/>
