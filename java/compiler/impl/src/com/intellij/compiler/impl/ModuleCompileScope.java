@@ -33,6 +33,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.CommonProcessors;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -75,13 +76,7 @@ public class ModuleCompileScope extends FileIndexCompileScope {
   }
 
   private void buildScopeModulesSet(Module module) {
-    myScopeModules.add(module);
-    final Module[] dependencies = ModuleRootManager.getInstance(module).getDependencies();
-    for (Module dependency : dependencies) {
-      if (!myScopeModules.contains(dependency)) { // may be in case of module circular dependencies
-        buildScopeModulesSet(dependency);
-      }
-    }
+    ModuleRootManager.getInstance(module).orderEntries().recursively().compileOnly().forEachModule(new CommonProcessors.CollectProcessor<Module>(myScopeModules));
   }
 
   @NotNull
