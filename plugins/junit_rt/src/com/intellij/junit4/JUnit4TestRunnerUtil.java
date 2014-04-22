@@ -123,12 +123,13 @@ public class JUnit4TestRunnerUtil {
           final Class clazz = loadTestClass(suiteClassName.substring(0, index));
           final String methodName = suiteClassName.substring(index + 1);
           final RunWith clazzAnnotation = (RunWith)clazz.getAnnotation(RunWith.class);
+          final Description testMethodDescription = Description.createTestDescription(clazz, methodName);
           if (clazzAnnotation == null) { //do not override external runners
             try {
               final Method method = clazz.getMethod(methodName, null);
               if (method != null && notForked && (method.getAnnotation(Ignore.class) != null || clazz.getAnnotation(Ignore.class) != null)) { //override ignored case only
                 final Request classRequest = createIgnoreIgnoredClassRequest(clazz, true);
-                final Filter ignoredTestFilter = Filter.matchMethodDescription(Description.createTestDescription(clazz, methodName));
+                final Filter ignoredTestFilter = Filter.matchMethodDescription(testMethodDescription);
                 return classRequest.filterWith(new Filter() {
                   public boolean shouldRun(Description description) {
                     return ignoredTestFilter.shouldRun(description);
@@ -151,13 +152,20 @@ public class JUnit4TestRunnerUtil {
           }
           try {
             if (clazz.getMethod("suite", new Class[0]) != null && !methodName.equals("suite")) {
-              return Request.classWithoutSuiteMethod(clazz).filterWith(Description.createTestDescription(clazz, methodName));
+              return Request.classWithoutSuiteMethod(clazz).filterWith(testMethodDescription);
             }
           }
           catch (Throwable e) {
             //ignore
           }
-          final Filter methodFilter = Filter.matchMethodDescription(Description.createTestDescription(clazz, methodName));
+
+          final Filter methodFilter;
+          try {
+            methodFilter = Filter.matchMethodDescription(testMethodDescription);
+          }
+          catch (NoSuchMethodError e) {
+            return Request.method(clazz, methodName);
+          }
           return Request.aClass(clazz).filterWith(new Filter() {
             public boolean shouldRun(Description description) {
               if (description.isTest() && description.getDisplayName().startsWith("warning(junit.framework.TestSuite$")) {
