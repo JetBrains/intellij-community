@@ -141,6 +141,9 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
 
   @Override
   protected void doOKAction() {
+    for (AbstractCustomizeWizardStep step : mySteps) {
+      if (!step.beforeOkAction()) return;
+    }
     try {
       PluginManager.saveDisabledPlugins(PluginGroups.getInstance().getDisabledPluginIds(), false);
     }
