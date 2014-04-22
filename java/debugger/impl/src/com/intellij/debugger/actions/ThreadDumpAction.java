@@ -40,6 +40,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.unscramble.ThreadDumpParser;
 import com.intellij.unscramble.ThreadState;
 import com.intellij.util.SmartList;
+import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.*;
 import gnu.trove.TIntObjectHashMap;
 
@@ -70,7 +71,11 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
               public void run() {
                 final DebuggerSessionTab sessionTab = DebuggerPanelsManager.getInstance(project).getSessionTab();
                 if (sessionTab != null) {
-                  sessionTab.addThreadDump(threads);
+                  sessionTab.addThreadDump(threads, sessionTab.getUi());
+                  XDebugSession xSession = session.getProcess().getXDebugSession();
+                  if (xSession != null) {
+                    sessionTab.addThreadDump(threads, xSession.getUI());
+                  }
                 }
               }
             }, ModalityState.NON_MODAL);

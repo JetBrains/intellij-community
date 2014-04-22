@@ -16,6 +16,7 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerContextListener;
 import com.intellij.debugger.impl.DebuggerSession;
@@ -195,6 +196,12 @@ public class JavaDebugProcess extends XDebugProcess {
 
   @Override
   public void registerAdditionalActions(@NotNull DefaultActionGroup leftToolbar, @NotNull DefaultActionGroup topToolbar) {
+    Constraints beforeRunner = new Constraints(Anchor.BEFORE, "Runner.Layout");
+    leftToolbar.add(Separator.getInstance(), beforeRunner);
+    leftToolbar.add(ActionManager.getInstance().getAction(DebuggerActions.EXPORT_THREADS), beforeRunner);
+    leftToolbar.add(ActionManager.getInstance().getAction(DebuggerActions.DUMP_THREADS), beforeRunner);
+    leftToolbar.add(Separator.getInstance(), beforeRunner);
+
     final DefaultActionGroup settings = new DefaultActionGroup("DebuggerSettings", true) {
       @Override
       public void update(AnActionEvent e) {

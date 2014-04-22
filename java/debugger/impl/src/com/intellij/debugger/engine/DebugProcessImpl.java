@@ -1976,7 +1976,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @Nullable
-  private XDebugSession getXDebugSession() {
+  public XDebugSession getXDebugSession() {
     return XDebuggerManager.getInstance(myProject).getDebugSession(getExecutionResult().getExecutionConsole());
   }
 
