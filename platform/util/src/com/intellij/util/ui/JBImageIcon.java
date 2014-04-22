@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.classlayout;
+package com.intellij.util.ui;
 
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.MoveClassFix;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.image.ImageObserver;
 
-public class ClassInTopLevelPackageInspection extends ClassInTopLevelPackageInspectionBase {
+/**
+ * HiDPI-aware image icon
+ *
+ * @author Konstantin Bulenkov
+ */
+public class JBImageIcon extends ImageIcon {
+  public JBImageIcon(Image image) {
+    super(image);
+  }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new MoveClassFix();
+  public final synchronized void paintIcon(final Component c, final Graphics g, final int x, final int y) {
+    final ImageObserver observer = getImageObserver();
+
+    UIUtil.drawImage(g, getImage(), x, y, observer == null ? c : observer);
   }
 }

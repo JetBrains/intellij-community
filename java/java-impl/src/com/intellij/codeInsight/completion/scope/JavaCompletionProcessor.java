@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.BaseScopeProcessor;
@@ -100,13 +101,10 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
       if (qualifier instanceof PsiSuperExpression) {
         final PsiJavaCodeReferenceElement qSuper = ((PsiSuperExpression)qualifier).getQualifier();
         if (qSuper == null) {
-          myQualifierClass = JavaResolveUtil.getContextClass( myElement);
+          myQualifierClass = JavaResolveUtil.getContextClass(myElement);
         } else {
           final PsiElement target = qSuper.resolve();
           myQualifierClass = target instanceof PsiClass ? (PsiClass)target : null;
-        }
-        if (myQualifierClass != null) {
-          myQualifierType = JavaPsiFacade.getInstance(element.getProject()).getElementFactory().createType(myQualifierClass);
         }
       }
       else if (qualifier != null) {
@@ -117,7 +115,12 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
             myQualifierClass = (PsiClass)target;
           }
         }
+      } else {
+        myQualifierClass = JavaResolveUtil.getContextClass(myElement);
       }
+    }
+    if (myQualifierClass != null && myQualifierType == null) {
+      myQualifierType = JavaPsiFacade.getElementFactory(element.getProject()).createType(myQualifierClass);
     }
 
     if (myOptions.checkInitialized) {
@@ -219,6 +222,19 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
       return true;
     }
 
+    if (element instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)element;
+      if (PsiTypesUtil.isGetClass(method) && PsiUtil.isLanguageLevel5OrHigher(myElement)) {
+        PsiType patchedType = PsiTypesUtil.createJavaLangClassType(myElement, myQualifierType, false);
+        if (patchedType != null) {
+          element = new LightMethodBuilder(element.getManager(), method.getName()).
+            addModifier(PsiModifier.PUBLIC).
+            setMethodReturnType(patchedType).
+            setContainingClass(method.getContainingClass());
+        }
+      }
+    }
+
     if (satisfies(element, state) && isAccessible(element)) {
       CompletionElement element1 = new CompletionElement(element, state.get(PsiSubstitutor.KEY));
       if (myResultNames.add(element1.getUniqueId())) {
@@ -288,7 +304,9 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     if (!(element instanceof PsiMember)) return true;
 
     PsiMember member = (PsiMember)element;
-    return JavaPsiFacade.getInstance(element.getProject()).getResolveHelper().isAccessible(member, member.getModifierList(), myElement, myQualifierClass, myDeclarationHolder);
+    PsiClass accessObjectClass = member instanceof PsiClass ? null : myQualifierClass;
+    return JavaPsiFacade.getInstance(element.getProject()).getResolveHelper().isAccessible(member, member.getModifierList(), myElement,
+                                                                                           accessObjectClass, myDeclarationHolder);
   }
 
   public void setCompletionElements(@NotNull Object[] elements) {

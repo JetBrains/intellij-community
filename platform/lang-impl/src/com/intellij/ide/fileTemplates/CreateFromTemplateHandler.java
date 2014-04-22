@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -31,8 +32,10 @@ public interface CreateFromTemplateHandler {
   ExtensionPointName<CreateFromTemplateHandler> EP_NAME = ExtensionPointName.create("com.intellij.createFromTemplateHandler");
 
   boolean handlesTemplate(FileTemplate template);
+
+  @NotNull
   PsiElement createFromTemplate(Project project, PsiDirectory directory, final String fileName, FileTemplate template, String templateText,
-                                Map<String, Object> props) throws IncorrectOperationException;
+                                @NotNull Map<String, Object> props) throws IncorrectOperationException;
 
   boolean canCreate(final PsiDirectory[] dirs);
   boolean isNameRequired();

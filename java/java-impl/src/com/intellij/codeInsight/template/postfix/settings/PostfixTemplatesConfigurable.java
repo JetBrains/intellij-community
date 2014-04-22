@@ -19,7 +19,11 @@ import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.codeInsight.template.postfix.templates.LanguagePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
+import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
+import com.intellij.lang.LanguageExtensionPoint;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -34,8 +38,9 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.util.*;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 public class PostfixTemplatesConfigurable implements SearchableConfigurable, EditorOptionsProvider, Configurable.NoScroll {
   @Nullable
@@ -61,7 +66,14 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
     }
 
     myTemplatesSettings = settings;
-    List<PostfixTemplate> templates = Arrays.asList(PostfixTemplate.EP_NAME.getExtensions());
+
+    LanguageExtensionPoint[] extensions = new ExtensionPointName<LanguageExtensionPoint>(LanguagePostfixTemplate.EP_NAME).getExtensions();
+
+    List<PostfixTemplate> templates = ContainerUtil.newArrayList();
+    for (LanguageExtensionPoint extension : extensions) {
+      templates.addAll(((PostfixTemplateProvider)extension.getInstance()).getTemplates());
+    }
+
     ContainerUtil.sort(templates, new Comparator<PostfixTemplate>() {
       @Override
       public int compare(PostfixTemplate o1, PostfixTemplate o2) {
@@ -184,7 +196,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
   private static String shortcutToString(char shortcut) {
     if (shortcut == TemplateSettings.SPACE_CHAR) {
       return SPACE;
-    } 
+    }
     if (shortcut == TemplateSettings.ENTER_CHAR) {
       return ENTER;
     }

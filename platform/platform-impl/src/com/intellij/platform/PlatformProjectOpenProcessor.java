@@ -27,9 +27,9 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
@@ -199,6 +199,8 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
         @Override
         public void run() {
           ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+          ContentEntry[] entries = model.getContentEntries();
+          if (entries.length == 1) model.removeContentEntry(entries[0]); // remove custom content entry created for temp directory
           model.addContentEntry(virtualFile);
           model.commit();
         }

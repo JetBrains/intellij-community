@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -100,8 +101,9 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
     return fileType.equals(StdFileTypes.JAVA) && !FileTemplateUtil.INTERNAL_PACKAGE_INFO_TEMPLATE_NAME.equals(template.getName());
   }
 
+  @NotNull
   public PsiElement createFromTemplate(final Project project, final PsiDirectory directory, final String fileName, FileTemplate template,
-                                       String templateText, Map<String, Object> props) throws IncorrectOperationException {
+                                       String templateText, @NotNull Map<String, Object> props) throws IncorrectOperationException {
     String extension = template.getExtension();
     PsiElement result = createClassOrInterface(project, directory, templateText, template.isReformatCode(), extension);
     hackAwayEmptyPackage((PsiJavaFile)result.getContainingFile(), template, props);

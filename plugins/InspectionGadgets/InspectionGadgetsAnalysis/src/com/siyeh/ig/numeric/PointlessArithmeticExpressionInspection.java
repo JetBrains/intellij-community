@@ -20,8 +20,8 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -116,20 +116,19 @@ public class PointlessArithmeticExpressionInspection
       }
       else if (tokenType.equals(JavaTokenType.ASTERISK) && isZero(operand) ||
         tokenType.equals(JavaTokenType.PERC) && (isOne(operand) || EquivalenceChecker.expressionsAreEquivalent(previousOperand, operand))) {
-        return PsiType.LONG.equals(polyadicExpression.getType()) ? "0L" : "0";
-      }
-      else if (tokenType.equals(JavaTokenType.LE) || tokenType.equals(JavaTokenType.GE) ||
-               tokenType.equals(JavaTokenType.LT) || tokenType.equals(JavaTokenType.GT)) {
-        return (tokenType.equals(JavaTokenType.LT) || tokenType.equals(JavaTokenType.GT)) ? "false" : "true";
+        fromTarget = operands[0];
+        untilTarget = operands[length - 1];
+        replacement = PsiType.LONG.equals(polyadicExpression.getType()) ? "0L" : "0";
+        break;
       }
 
       previousOperand = operand;
     }
-    return buildReplacementExpression(polyadicExpression, fromTarget, untilTarget, replacement).trim();
+    return getText(polyadicExpression, fromTarget, untilTarget, replacement).trim();
   }
 
-  public static String buildReplacementExpression(PsiPolyadicExpression expression, PsiElement fromTarget, PsiElement untilTarget,
-                                                  String replacement) {
+  public static String getText(PsiPolyadicExpression expression, PsiElement fromTarget, PsiElement untilTarget,
+                               @NotNull @NonNls String replacement) {
     final StringBuilder result = new StringBuilder();
     boolean stop = false;
     for (PsiElement child : expression.getChildren()) {
@@ -198,13 +197,10 @@ public class PointlessArithmeticExpressionInspection
       if (!arithmeticTokens.contains(expression.getOperationTokenType())) {
         return;
       }
-      if (ExpressionUtils.hasStringType(expression)) {
+      if (ExpressionUtils.hasStringType(expression) || PsiUtilCore.hasErrorElementChild(expression)) {
         return;
       }
       final PsiExpression[] operands = expression.getOperands();
-      if (operands.length < 2) {
-        return;
-      }
       final IElementType tokenType = expression.getOperationTokenType();
       final boolean isPointless;
       if (tokenType.equals(JavaTokenType.PLUS)) {
@@ -221,14 +217,6 @@ public class PointlessArithmeticExpressionInspection
       }
       else if (tokenType.equals(JavaTokenType.PERC)) {
         isPointless = modExpressionIsPointless(operands);
-      }
-      else if (tokenType.equals(JavaTokenType.LE) ||
-               tokenType.equals(JavaTokenType.GE) ||
-               tokenType.equals(JavaTokenType.GT) ||
-               tokenType.equals(JavaTokenType.LT)) {
-        final PsiExpression lhs = operands[0];
-        final PsiExpression rhs = operands[1];
-        isPointless = comparisonExpressionIsPointless(lhs, rhs, tokenType);
       }
       else {
         isPointless = false;
@@ -292,45 +280,6 @@ public class PointlessArithmeticExpressionInspection
       }
       return false;
     }
-
-    private boolean comparisonExpressionIsPointless(
-      PsiExpression lhs, PsiExpression rhs, IElementType comparison) {
-      if (PsiType.INT.equals(lhs.getType()) &&
-          PsiType.INT.equals(rhs.getType())) {
-        return intComparisonIsPointless(lhs, rhs, comparison);
-      }
-      else if (PsiType.LONG.equals(lhs.getType()) &&
-               PsiType.LONG.equals(rhs.getType())) {
-        return longComparisonIsPointless(lhs, rhs, comparison);
-      }
-      return false;
-    }
-
-    private boolean intComparisonIsPointless(
-      PsiExpression lhs, PsiExpression rhs, IElementType comparison) {
-      if (isMaxInt(lhs) || isMinInt(rhs)) {
-        return JavaTokenType.GE.equals(comparison) ||
-               JavaTokenType.LT.equals(comparison);
-      }
-      if (isMinInt(lhs) || isMaxInt(rhs)) {
-        return JavaTokenType.LE.equals(comparison) ||
-               JavaTokenType.GT.equals(comparison);
-      }
-      return false;
-    }
-
-    private boolean longComparisonIsPointless(
-      PsiExpression lhs, PsiExpression rhs, IElementType comparison) {
-      if (isMaxLong(lhs) || isMinLong(rhs)) {
-        return JavaTokenType.GE.equals(comparison) ||
-               JavaTokenType.LT.equals(comparison);
-      }
-      if (isMinLong(lhs) || isMaxLong(rhs)) {
-        return JavaTokenType.LE.equals(comparison) ||
-               JavaTokenType.GT.equals(comparison);
-      }
-      return false;
-    }
   }
 
   boolean isZero(PsiExpression expression) {
@@ -345,33 +294,5 @@ public class PointlessArithmeticExpressionInspection
       return false;
     }
     return ExpressionUtils.isOne(expression);
-  }
-
-  private static boolean isMinInt(PsiExpression expression) {
-    final Integer value = (Integer)
-      ConstantExpressionUtil.computeCastTo(
-        expression, PsiType.INT);
-    return value != null && value.intValue() == Integer.MIN_VALUE;
-  }
-
-  private static boolean isMaxInt(PsiExpression expression) {
-    final Integer value = (Integer)
-      ConstantExpressionUtil.computeCastTo(
-        expression, PsiType.INT);
-    return value != null && value.intValue() == Integer.MAX_VALUE;
-  }
-
-  private static boolean isMinLong(PsiExpression expression) {
-    final Long value = (Long)
-      ConstantExpressionUtil.computeCastTo(
-        expression, PsiType.LONG);
-    return value != null && value.longValue() == Long.MIN_VALUE;
-  }
-
-  private static boolean isMaxLong(PsiExpression expression) {
-    final Long value = (Long)
-      ConstantExpressionUtil.computeCastTo(
-        expression, PsiType.LONG);
-    return value != null && value.longValue() == Long.MAX_VALUE;
   }
 }

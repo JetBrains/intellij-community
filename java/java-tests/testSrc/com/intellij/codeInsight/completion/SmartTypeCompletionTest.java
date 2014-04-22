@@ -1022,6 +1022,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testDuplicateMembersFromSuperClass() throws Throwable { doTest(); }
   public void testInnerAfterNew() throws Throwable { doTest(); }
   public void testEverythingInStringConcatenation() throws Throwable { doTest(); }
+  public void testGetClassWhenClassExpected() { doTest(); }
 
   public void testMemberImportStatically() {
     configureByTestName();

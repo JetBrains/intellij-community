@@ -26,12 +26,11 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -101,13 +100,6 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
       };
       label.setVerticalAlignment(SwingConstants.TOP);
       panel.add(label, BorderLayout.CENTER);
-      radioButton.addItemListener(new ItemListener() {
-        @Override
-        public void itemStateChanged(ItemEvent e) {
-          if (e.getStateChange() != ItemEvent.SELECTED) return;
-          applyLaf(lafName, CustomizeUIThemeStepPanel.this);
-        }
-      });
 
       group.add(radioButton);
       buttonsPanel.add(panel);
@@ -161,6 +153,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
       }
       Window window = SwingUtilities.getWindowAncestor(component);
       if (window != null) {
+        window.setBackground(new Color(UIUtil.getPanelBackground().getRGB()));
         SwingUtilities.updateComponentTreeUI(window);
       }
       if (ApplicationManager.getApplication() != null) {
@@ -187,7 +180,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
 
   @Nullable
   private static UIManager.LookAndFeelInfo getLookAndFeelInfo(String name) {
-    if (DEFAULT.equals(name)) return new UIManager.LookAndFeelInfo(DEFAULT, "apple.laf.AquaLookAndFeel");
+    if (DEFAULT.equals(name)) return new UIManager.LookAndFeelInfo(DEFAULT, "com.apple.laf.AquaLookAndFeel");
     if (DARCULA.equals(name)) return new UIManager.LookAndFeelInfo(DARCULA, DarculaLaf.class.getName());
     if (INTELLIJ.equals(name)) return new UIManager.LookAndFeelInfo(INTELLIJ, IntelliJLaf.class.getName());
     if (ALLOY.equals(name)) return new UIManager.LookAndFeelInfo(ALLOY, "com.incors.plaf.alloy.AlloyIdea");

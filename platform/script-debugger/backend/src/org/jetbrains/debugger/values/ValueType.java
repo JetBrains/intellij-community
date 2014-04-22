@@ -15,14 +15,7 @@ public enum ValueType {
   ARRAY,
   NODE,
 
-  /**
-   * undefined type.
-   */
   UNDEFINED,
-
-  /**
-   * null type. This is a bogus type that doesn't exist in JavaScript.
-   */
   NULL;
 
   private static final ValueType[] VALUE_TYPES = ValueType.values();
