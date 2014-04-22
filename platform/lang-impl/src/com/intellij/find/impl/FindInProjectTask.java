@@ -124,7 +124,7 @@ class FindInProjectTask {
       final Set<PsiFile> filesForFastWordSearch = getFilesForFastWordSearch();
       myProgress.setIndeterminate(false);
 
-      searchInFiles(consumer, processPresentation, filesForFastWordSearch);
+      searchInFiles(filesForFastWordSearch, processPresentation, consumer);
 
       myProgress.setIndeterminate(true);
       myProgress.setText("Scanning non-indexed files...");
@@ -133,7 +133,7 @@ class FindInProjectTask {
       myProgress.setIndeterminate(false);
 
       long start = System.currentTimeMillis();
-      searchInFiles(consumer, processPresentation, otherFiles);
+      searchInFiles(otherFiles, processPresentation, consumer);
       if (skipIndexed && otherFiles.size() > 1000) {
         logStats(otherFiles, start);
       }
@@ -177,7 +177,9 @@ class FindInProjectTask {
     LOG.info(message);
   }
 
-  private void searchInFiles(Processor<UsageInfo> consumer, FindUsagesProcessPresentation processPresentation, Collection<PsiFile> psiFiles) {
+  private void searchInFiles(@NotNull Collection<PsiFile> psiFiles,
+                             @NotNull FindUsagesProcessPresentation processPresentation,
+                             @NotNull Processor<UsageInfo> consumer) {
     int i = 0;
     long totalFilesSize = 0;
     int count = 0;
@@ -233,11 +235,12 @@ class FindInProjectTask {
       @Override
       public boolean processFile(@NotNull final VirtualFile virtualFile) {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
           public void run() {
             ProgressManager.checkCanceled();
             if (virtualFile.isDirectory() || !virtualFile.isValid() ||
                 !myFileMask.value(virtualFile) ||
-                (globalCustomScope != null && !globalCustomScope.contains(virtualFile))) {
+                globalCustomScope != null && !globalCustomScope.contains(virtualFile)) {
               return;
             }
 
@@ -399,7 +402,10 @@ class FindInProjectTask {
 
         for (VirtualFile hit : hits) {
           if (myFileMask.value(hit)) {
-            resultFiles.add(findFile(hit));
+            PsiFile file = findFile(hit);
+            if (file != null) {
+              resultFiles.add(file);
+            }
           }
         }
 
@@ -419,8 +425,9 @@ class FindInProjectTask {
     });
 
     // in case our word splitting is incorrect
-    for (PsiFile file : CacheManager.SERVICE.getInstance(myProject)
-      .getFilesWithWord(stringToFind, UsageSearchContext.ANY, scope, myFindModel.isCaseSensitive())) {
+    CacheManager cacheManager = CacheManager.SERVICE.getInstance(myProject);
+    PsiFile[] filesWithWord = cacheManager.getFilesWithWord(stringToFind, UsageSearchContext.ANY, scope, myFindModel.isCaseSensitive());
+    for (PsiFile file : filesWithWord) {
       if (myFileMask.value(file.getVirtualFile())) {
         resultFiles.add(file);
       }
