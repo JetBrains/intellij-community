@@ -152,6 +152,7 @@
       <action id="Debugger.CompareValueWithClipboard" class="com.intellij.debugger.actions.CompareValueWithClipboardAction"/>
       <action id="Debugger.CustomizeContextView" class="com.intellij.debugger.actions.CustomizeContextViewAction">
         <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="last"/>
+        <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="last"/>
       </action>
       <action id="Debugger.CustomizeThreadsView" class="com.intellij.debugger.actions.CustomizeThreadsViewAction">
         <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="last"/>
