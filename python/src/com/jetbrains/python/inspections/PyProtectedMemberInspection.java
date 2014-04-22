@@ -81,7 +81,10 @@ public class PyProtectedMemberInspection extends PyInspection {
     public void visitPyImportElement(PyImportElement node) {
       final PyStatement statement = node.getContainingImportStatement();
       if (!(statement instanceof PyFromImportStatement)) return;
-      checkReference(node.getImportReferenceExpression(), ((PyFromImportStatement)statement).getImportSource());
+      final PyReferenceExpression importReferenceExpression = node.getImportReferenceExpression();
+      final PyReferenceExpression importSource = ((PyFromImportStatement)statement).getImportSource();
+      if (importReferenceExpression != null && importSource != null)
+        checkReference(importReferenceExpression, importSource);
     }
 
     @Override
@@ -91,7 +94,7 @@ public class PyProtectedMemberInspection extends PyInspection {
       checkReference(node, qualifier);
     }
 
-    private void checkReference(PyReferenceExpression node, PyExpression qualifier) {
+    private void checkReference(@NotNull final PyReferenceExpression node, @NotNull final PyExpression qualifier) {
       if (myTypeEvalContext.getType(qualifier) instanceof PyNamedTupleType) return;
       final String name = node.getName();
       final List<LocalQuickFix> quickFixes = new ArrayList<LocalQuickFix>();
