@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -101,27 +101,20 @@ public class CompilerAPICompiler implements BackendCompiler {
 
   @NotNull
   public Process launchProcess(@NotNull final ModuleChunk chunk, @NotNull final String outputDir, @NotNull final CompileContext compileContext) throws IOException {
-    final IOException[] ex = {null};
-    @NonNls final List<String> commandLine = ApplicationManager.getApplication().runReadAction(new Computable<List<String>>() {
-      public List<String> compute() {
-        try {
+    @NonNls final List<String> commandLine =
+      ApplicationManager.getApplication().runReadAction(new ThrowableComputable<List<String>, IOException>() {
+        @Override
+        public List<String> compute() throws IOException {
           List<String> commandLine = new ArrayList<String>();
           final List<String> additionalOptions =
-            JavacCompiler.addAdditionalSettings(commandLine, CompilerAPIConfiguration.getOptions(myProject, CompilerAPIConfiguration.class), false, JavaSdkVersion.JDK_1_6, chunk, compileContext.isAnnotationProcessorsEnabled());
+            JavacCompiler.addAdditionalSettings(commandLine, CompilerAPIConfiguration .getOptions(myProject, CompilerAPIConfiguration.class), false,
+                                                 JavaSdkVersion.JDK_1_6, chunk, compileContext.isAnnotationProcessorsEnabled());
 
-          JavacCompiler.addCommandLineOptions(chunk, commandLine, outputDir, chunk.getJdk(), false,false, null, false, false, false);
+          JavacCompiler.addCommandLineOptions(chunk, commandLine, outputDir, chunk.getJdk(), false, false, null, false, false, false);
           commandLine.addAll(additionalOptions);
           return commandLine;
         }
-        catch (IOException e) {
-          ex[0] = e;
-        }
-        return null;
-      }
-    });
-    if (ex[0] != null) {
-      throw ex[0];
-    }
+      });
     return new MyProcess(commandLine, chunk, outputDir, compileContext);
   }
 

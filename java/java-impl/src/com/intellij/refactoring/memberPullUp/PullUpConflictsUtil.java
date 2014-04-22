@@ -24,10 +24,12 @@
  */
 package com.intellij.refactoring.memberPullUp;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
@@ -101,6 +103,18 @@ public class PullUpConflictsUtil {
         if (!movedMembers.contains(method) && !method.hasModifierProperty(PsiModifier.PRIVATE)) {
           if (method.findSuperMethods(superClass).length > 0) {
             abstrMethods.add(method);
+          }
+        }
+      }
+
+      if (newAbstractMethodInSuper(infos)) {
+        final PsiAnnotation annotation = AnnotationUtil.findAnnotation(superClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE);
+        if (annotation != null) {
+          conflicts.putValue(annotation, RefactoringBundle.message("functional.interface.broken"));
+        } else {
+          final PsiFunctionalExpression functionalExpression = FunctionalExpressionSearch.search(superClass).findFirst();
+          if (functionalExpression != null) {
+            conflicts.putValue(functionalExpression, RefactoringBundle.message("functional.interface.broken"));
           }
         }
       }
@@ -189,6 +203,16 @@ public class PullUpConflictsUtil {
       }
     }
     return conflicts;
+  }
+
+  private static boolean newAbstractMethodInSuper(MemberInfoBase<? extends PsiMember>[] infos) {
+    boolean toAbstract = false;
+    for (MemberInfoBase<? extends PsiMember> info : infos) {
+      if (info.isToAbstract()) {
+        toAbstract = true;
+      }
+    }
+    return toAbstract;
   }
 
   private static void checkInterfaceTarget(MemberInfoBase<? extends PsiMember>[] infos, MultiMap<PsiElement, String> conflictsList) {

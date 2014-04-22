@@ -1,6 +1,6 @@
 class Test {
   private class Foo {
-      private Foo() {<caret>
+      public Foo() {<caret>
       }
   }
 }

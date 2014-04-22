@@ -48,7 +48,7 @@ public class OptimizeImportsBeforeCheckinHandler extends CheckinHandler implemen
   @Nullable
   public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
     final JCheckBox optimizeBox = new JCheckBox(VcsBundle.message("checkbox.checkin.options.optimize.imports"));
-    TodoCheckinHandler.disableWhenDumb(myProject, optimizeBox, "Impossible until indices are up-to-date");
+    CheckinHandlerUtil.disableWhenDumb(myProject, optimizeBox, "Impossible until indices are up-to-date");
     return new RefreshableOnComponent() {
       @Override
       public JComponent getComponent() {
@@ -92,7 +92,7 @@ public class OptimizeImportsBeforeCheckinHandler extends CheckinHandler implemen
     };
 
     if (configuration.OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT && !DumbService.isDumb(myProject)) {
-      new OptimizeImportsProcessor(myProject, BeforeCheckinHandlerUtil.getPsiFiles(myProject, files), COMMAND_NAME, performCheckoutAction).run();
+      new OptimizeImportsProcessor(myProject, CheckinHandlerUtil.getPsiFiles(myProject, files), COMMAND_NAME, performCheckoutAction).run();
     }  else {
       finishAction.run();
     }

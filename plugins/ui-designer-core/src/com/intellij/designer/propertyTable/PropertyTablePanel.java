@@ -57,7 +57,12 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
   private final JLabel myTitleLabel;
 
   public PropertyTablePanel(final Project project) {
-    myPropertyTable = new RadPropertyTable(project);
+    myPropertyTable = new RadPropertyTable(project) {
+      @Override
+      protected void updateEditActions() {
+        updateActions();
+      }
+    };
 
     setLayout(new GridBagLayout());
 
@@ -67,7 +72,8 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
     myTitleLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
     add(myTitleLabel,
         new GridBagConstraints(gridX++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
-                               new Insets(2, 5, 2, 10), 0, 0));
+                               new Insets(2, 5, 2, 10), 0, 0)
+    );
 
     ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup actionGroup = new DefaultActionGroup();
@@ -87,12 +93,14 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
     myTabPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
     add(myTabPanel,
         new GridBagConstraints(gridX++, 0, 1, 1, 1, 0, GridBagConstraints.LINE_START, GridBagConstraints.NONE,
-                               new Insets(2, 0, 2, 0), 0, 0));
+                               new Insets(2, 0, 2, 0), 0, 0)
+    );
 
     myActionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
     add(myActionPanel,
         new GridBagConstraints(gridX++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                               new Insets(2, 0, 2, 2), 0, 0));
+                               new Insets(2, 0, 2, 2), 0, 0)
+    );
 
     myActions = actionGroup.getChildren(null);
     for (AnAction action : myActions) {

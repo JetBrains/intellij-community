@@ -31,8 +31,6 @@ import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -158,17 +156,12 @@ public class DescriptorComposer extends HTMLComposerImpl {
 
       //noinspection HardCodedStringLiteral
       anchor.append("<a HREF=\"");
-      try {
-        if (myExporter == null){
-          //noinspection HardCodedStringLiteral
-          anchor.append(new URL(vFile.getUrl() + "#descr:" + i));
-        }
-        else {
-          anchor.append(myExporter.getURL(refElement));
-        }
+      if (myExporter == null){
+        //noinspection HardCodedStringLiteral
+        anchor.append(appendURL(vFile, "descr:" + i));
       }
-      catch (MalformedURLException e) {
-        LOG.error(e);
+      else {
+        anchor.append(myExporter.getURL(refElement));
       }
 
       anchor.append("\">");
@@ -197,14 +190,9 @@ public class DescriptorComposer extends HTMLComposerImpl {
       if (myExporter == null) {
         //noinspection HardCodedStringLiteral
         lineAnchor.append("<a HREF=\"");
-        try {
-          int offset = doc.getLineStartOffset(lineNumber - 1);
-          offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), offset, " \t");
-          lineAnchor.append(new URL(vFile.getUrl() + "#" + offset));
-        }
-        catch (MalformedURLException e) {
-          LOG.error(e);
-        }
+        int offset = doc.getLineStartOffset(lineNumber - 1);
+        offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), offset, " \t");
+        lineAnchor.append(appendURL(vFile, String.valueOf(offset)));
         lineAnchor.append("\">");
       }
       lineAnchor.append(Integer.toString(lineNumber));
@@ -222,5 +210,7 @@ public class DescriptorComposer extends HTMLComposerImpl {
     composeAdditionalDescription(buf, refElement);
   }
 
-
+  private static String appendURL(VirtualFile vFile, String anchor) {
+    return vFile.getUrl() + "#" + anchor;
+  }
 }

@@ -26,7 +26,7 @@ public class ThreeStateCheckBox extends JCheckBox {
   private State myState;
   private boolean myThirdStateEnabled = true;
 
-  public static enum State {
+  public enum State {
     SELECTED, NOT_SELECTED, DONT_CARE
   }
 

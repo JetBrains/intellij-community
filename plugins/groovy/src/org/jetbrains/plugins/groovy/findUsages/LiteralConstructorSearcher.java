@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.Processor;
@@ -48,7 +49,10 @@ public class LiteralConstructorSearcher {
       return false;
     }
 
-    final PsiClass psiClass = reference.getConstructedClassType().resolve();
+    PsiClassType constructedClassType = reference.getConstructedClassType();
+    if (constructedClassType == null) return false;
+
+    final PsiClass psiClass = constructedClassType.resolve();
     return myConstructor.getManager().areElementsEquivalent(myConstructor.getContainingClass(), psiClass);
   }
 }

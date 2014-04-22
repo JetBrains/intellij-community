@@ -25,6 +25,8 @@
     <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.InstanceofExpressionPostfixTemplate"/>
     <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.SoutPostfixTemplate"/>
     <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.FormatPostfixTemplate"/>
+    <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.TryStatementPostfixTemplate"/>
+    <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.TryWithResourcesPostfixTemplate"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

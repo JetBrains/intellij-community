@@ -77,7 +77,7 @@ public class CertificateManager implements ApplicationComponent, PersistentState
    * Used to check whether dialog is visible to prevent possible deadlock, e.g. when some external resource is loaded by
    * {@link java.awt.MediaTracker}.
    */
-  private static final long DIALOG_VISIBILITY_TIMEOUT = 5000; // ms
+  static final long DIALOG_VISIBILITY_TIMEOUT = 5000; // ms
 
   public static CertificateManager getInstance() {
     return (CertificateManager)ApplicationManager.getApplication().getComponent(COMPONENT_NAME);
@@ -211,7 +211,7 @@ public class CertificateManager implements ApplicationComponent, PersistentState
     Runnable showDialog = new Runnable() {
       @Override
       public void run() {
-        // skip if certificate was already rejected due to timeout
+        // skip if certificate was already rejected due to timeout or interrupt
         if (proceeded.getCount() == 0) {
           return;
         }
@@ -221,7 +221,7 @@ public class CertificateManager implements ApplicationComponent, PersistentState
           accepted.set(dialog.showAndGet());
         }
         catch (Exception e) {
-          LOG.error("Unexpected error", e);
+          LOG.error(e);
         }
         finally {
           proceeded.countDown();
@@ -252,6 +252,7 @@ public class CertificateManager implements ApplicationComponent, PersistentState
     }
     catch (InterruptedException e) {
       Thread.currentThread().interrupt();
+      proceeded.countDown();
     }
     return accepted.get();
   }
@@ -268,13 +269,23 @@ public class CertificateManager implements ApplicationComponent, PersistentState
   }
 
   public static class Config {
-    // ensure that request's hostname matches certificate's common name (CN)
-    public volatile boolean checkHostname;
-    // ensure that certificate is neither expired nor not yet eligible
-    public volatile boolean checkValidity;
+    /**
+     * Ensure that request's hostname matches certificate's common name (CN).
+     */
+    public boolean CHECK_HOSTNAME = false;
+    /**
+     * Ensure that certificate is neither expired nor not yet eligible.
+     */
+    public boolean CHECK_VALIDITY = false;
+
     @Tag("expired")
     @Property(surroundWithTag = false)
     @AbstractCollection(elementTag = "commonName")
-    public volatile LinkedHashSet<String> brokenCertificates = new LinkedHashSet<String>();
+    public LinkedHashSet<String> BROKEN_CERTIFICATES = new LinkedHashSet<String>();
+
+    /**
+     * Do not show the dialog and accept untrusted certificates automatically.
+     */
+    public boolean ACCEPT_AUTOMATICALLY = false;
   }
 }

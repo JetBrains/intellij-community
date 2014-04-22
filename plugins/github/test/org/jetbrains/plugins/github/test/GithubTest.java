@@ -110,6 +110,11 @@ public abstract class GithubTest extends GitPlatformTest {
       @Override
       public void forgetPassword() {
       }
+
+      @Override
+      public boolean wasCancelled() {
+        return false;
+      }
     });
   }
 

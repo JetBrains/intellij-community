@@ -150,6 +150,7 @@ public class LightVirtualFile extends VirtualFile {
     public void moveFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent) throws IOException {
     }
 
+    @NotNull
     @Override
     public VirtualFile copyFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent, @NotNull final String copyName) throws IOException {
       throw new IOException("Cannot copy files");
@@ -159,6 +160,7 @@ public class LightVirtualFile extends VirtualFile {
     public void renameFile(Object requestor, @NotNull VirtualFile vFile, @NotNull String newName) throws IOException {
     }
 
+    @NotNull
     @Override
     public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
       throw new IOException("Cannot create files");

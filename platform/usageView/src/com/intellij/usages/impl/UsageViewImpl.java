@@ -54,10 +54,7 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewManager;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.*;
-import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
-import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.TransferToEDTQueue;
@@ -1136,9 +1133,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     for (Usage usage : myUsageNodes.keySet()) {
       if (usage instanceof UsageInfo2UsageAdapter) {
         SmartPsiElementPointer<?> pointer = ((UsageInfo2UsageAdapter)usage).getUsageInfo().getSmartPointer();
-        if (pointer != null) {
-          pointerManager.removePointer(pointer);
-        }
+        pointerManager.removePointer(pointer);
       }
     }
   }
@@ -1164,7 +1159,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
             return;
           }
           showNode(firstUsageNode);
-          if (UsageViewSettings.getInstance().isExpanded()) {
+          if (UsageViewSettings.getInstance().isExpanded() && myUsageNodes.size() < 10000) {
             expandAll();
           }
         }

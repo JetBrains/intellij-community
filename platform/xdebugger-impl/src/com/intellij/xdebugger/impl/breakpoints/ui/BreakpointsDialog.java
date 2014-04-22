@@ -41,9 +41,11 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState;
+import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointCustomGroup;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemNode;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemsTreeController;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointsCheckboxTree;
+import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointsGroupNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -240,7 +242,17 @@ public class BreakpointsDialog extends DialogWrapper {
             return res;
           }
         };
-        return new AnAction[]{group};
+        List<AnAction> res = new ArrayList<AnAction>();
+        res.add(group);
+        Object component = tree.getLastSelectedPathComponent();
+        if (tree.getSelectionCount() == 1 && component instanceof BreakpointsGroupNode &&
+            ((BreakpointsGroupNode)component).getGroup() instanceof XBreakpointCustomGroup) {
+          res.add(new SetAsDefaultGroupAction((XBreakpointCustomGroup)((BreakpointsGroupNode)component).getGroup()));
+        }
+        if (tree.getSelectionCount() == 1 && component instanceof BreakpointItemNode) {
+          res.add(new EditDescriptionAction((XBreakpointBase)((BreakpointItemNode)component).getBreakpointItem().getBreakpoint()));
+        }
+        return res.toArray(new AnAction[res.size()]);
       }
     }, ActionPlaces.UNKNOWN, ActionManager.getInstance());
 
@@ -468,12 +480,45 @@ public class BreakpointsDialog extends DialogWrapper {
       }
       for (BreakpointItem item : myTreeController.getSelectedBreakpoints()) {
         Object breakpoint = item.getBreakpoint();
-        if (item.allowedToRemove() && breakpoint instanceof XBreakpointBase) {
+        if (breakpoint instanceof XBreakpointBase) {
           ((XBreakpointBase)breakpoint).setGroup(groupName);
         }
       }
       myTreeController.rebuildTree(myBreakpointItems);
+    }
+  }
 
+  private class SetAsDefaultGroupAction extends AnAction {
+    private final String myName;
+
+    private SetAsDefaultGroupAction(XBreakpointCustomGroup group) {
+      super(group.isDefault() ? "Unset as default" : "Set as default");
+      myName = group.isDefault() ? null : group.getName();
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      getBreakpointManager().setDefaultGroup(myName);
+      myTreeController.rebuildTree(myBreakpointItems);
+    }
+  }
+
+  private class EditDescriptionAction extends AnAction {
+    private final XBreakpointBase myBreakpoint;
+
+    private EditDescriptionAction(XBreakpointBase breakpoint) {
+      super("Edit description");
+      myBreakpoint = breakpoint;
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      String description = Messages.showInputDialog("", "Edit Description", null, myBreakpoint.getUserDescription(), null);
+      if (description == null) {
+        return;
+      }
+      myBreakpoint.setUserDescription(description);
+      myTreeController.rebuildTree(myBreakpointItems);
     }
   }
 }

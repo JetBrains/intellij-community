@@ -24,7 +24,7 @@ import java.io.IOException;
 
 public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   private static final int PAGE_SIZE;
-  private static final int DEFAULT_PAGE_SIZE = 4096;
+  private static final int DEFAULT_PAGE_SIZE = 32768;
 
   static {
     int pageSize;

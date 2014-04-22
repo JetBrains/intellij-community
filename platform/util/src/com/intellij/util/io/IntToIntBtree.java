@@ -73,7 +73,7 @@ class IntToIntBtree {
       FileUtil.delete(file);
     }
 
-    storage = new ResizeableMappedFile(file, pageSize, storageLockContext, 1024 * 1024, true, IOUtil.ourByteBuffersUseNativeByteOrder);
+    storage = new ResizeableMappedFile(file, pageSize, storageLockContext, pageSize, true, IOUtil.ourByteBuffersUseNativeByteOrder);
     root = new BtreeIndexNodeView(this);
 
     if (initial) {
@@ -95,7 +95,7 @@ class IntToIntBtree {
 
       hashPageCapacity = i;
       metaPageLen = BtreePage.RESERVED_META_PAGE_LEN;
-      i = (int)(hashPageCapacity * 0.8);
+      i = (int)(hashPageCapacity * 0.9);
       if ((i & 1) == 1) ++i;
     } else {
       hashPageCapacity = -1;

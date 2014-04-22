@@ -104,7 +104,8 @@ public class TerminalProcessHandler extends SvnProcessHandler {
     }
   }
 
-  private static Key resolveOutputType(@NotNull String line, @NotNull Key outputType) {
+  @NotNull
+  protected Key resolveOutputType(@NotNull String line, @NotNull Key outputType) {
     Key result = outputType;
 
     if (!ProcessOutputTypes.SYSTEM.equals(outputType)) {

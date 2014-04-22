@@ -1329,4 +1329,93 @@ class ProductServiceImpl{}
 ''', GrMethod)
   }
 
+  void testTraitPublicField1() {
+    resolveByText('''
+trait T {
+  public int field = 4
+}
+
+class C extends T {
+
+  void foo() {
+    print T__fie<caret>ld
+  }
+}
+''', GrField)
+  }
+
+  void testTraitPublicField2() {
+    resolveByText('''
+trait T {
+  public int field = 4
+
+  void foo() {
+    print fiel<caret>d
+  }
+}
+''', GrField)
+  }
+
+  void testTraitPublicField3() {
+    resolveByText('''
+trait T {
+  public int field = 4
+
+  void foo() {
+    print T__fie<caret>ld
+  }
+}
+''', GrField)
+  }
+
+  void testTraitPublicField4() {
+    resolveByText('''
+trait T {
+  public int field = 4
+}
+
+class C extends T {}
+
+new C().T__fiel<caret>d
+''', GrField)
+  }
+
+  void testTraitProperty1() {
+    resolveByText('''
+trait T {
+  int prop = 4
+}
+
+class C extends T {}
+
+new C().pr<caret>op
+''', GrAccessorMethod)
+  }
+
+  void testTraitProperty2() {
+    resolveByText('''
+trait T {
+  int prop = 4
+}
+
+class C extends T {
+  def bar() {
+    print pro<caret>p
+  }
+}
+''', GrAccessorMethod)
+  }
+
+  void testTraitProperty3() {
+    resolveByText('''
+trait T {
+  int prop = 4
+
+  void foo() {
+    print pro<caret>p
+  }
+}
+''', GrField)
+  }
+
 }

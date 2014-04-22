@@ -22,6 +22,7 @@ import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 import static com.intellij.codeInsight.ConditionChecker.Type.*;
 import static com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint;
@@ -45,6 +47,24 @@ import static com.intellij.psi.CommonClassNames.*;
 
 public class ControlFlowAnalyzer extends JavaElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer");
+  private static final Condition<String> FALSE_GETTERS = parseFalseGetters();
+
+  private static Condition<String> parseFalseGetters() {
+    try {
+      final Pattern pattern = Pattern.compile(Registry.stringValue("ide.dfa.getters.with.side.effects"));
+      return new Condition<String>() {
+        @Override
+        public boolean value(String s) {
+          return pattern.matcher(s).matches();
+        }
+      };
+    }
+    catch (Exception e) {
+      LOG.error(e);
+      return Condition.FALSE;
+    }
+  }
+
   public static final String ORG_JETBRAINS_ANNOTATIONS_CONTRACT = Contract.class.getName();
   private boolean myIgnoreAssertions;
 
@@ -1891,7 +1911,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
     if (target instanceof PsiMethod) {
       if (PropertyUtil.isSimplePropertyGetter((PsiMethod)target)) {
-        return (PsiMethod)target;
+        String qName = PsiUtil.getMemberQualifiedName((PsiMethod)target);
+        if (qName == null || !FALSE_GETTERS.value(qName)) {
+          return (PsiMethod)target;
+        }
       }
     }
     return null;

@@ -598,13 +598,15 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   @Override
   public void dispose() {
-    final EditorFactory editorFactory = EditorFactory.getInstance();
+    EditorFactory editorFactory = EditorFactory.getInstance();
     editorFactory.releaseEditor(myConsoleEditor);
     editorFactory.releaseEditor(myHistoryViewer);
 
-    final FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
-    if (editorManager.isFileOpen(myVirtualFile)) {
-      editorManager.closeFile(myVirtualFile);
+    if (getProject().isOpen()) {
+      FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
+      if (editorManager.isFileOpen(myVirtualFile)) {
+        editorManager.closeFile(myVirtualFile);
+      }
     }
   }
 

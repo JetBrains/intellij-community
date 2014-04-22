@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.search;
 
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Comparing;
@@ -86,6 +87,11 @@ public class FileTypeIndex extends ScalarIndexExtension<FileType>
     int version = 1;
     for (FileType type : types) {
       version += type.getName().hashCode();
+    }
+
+    version *= 31;
+    for (FileTypeRegistry.FileTypeDetector detector : Extensions.getExtensions(FileTypeRegistry.FileTypeDetector.EP_NAME)) {
+      version += detector.getVersion();
     }
     return version;
   }

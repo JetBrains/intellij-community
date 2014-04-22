@@ -18,6 +18,7 @@ package com.intellij.openapi.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.ClickListener;
@@ -410,7 +411,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
     private IdeGlassPane myGlassPane;
 
-    private final MouseAdapter myListener = new MouseAdapter() {
+    private class MyMouseAdapter extends MouseAdapter implements Weighted {
       @Override
       public void mousePressed(MouseEvent e) {
         _processMouseEvent(e);
@@ -430,33 +431,39 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       public void mouseDragged(MouseEvent e) {
         _processMouseMotionEvent(e);
       }
-    };
+      @Override
+      public double getWeight() {
+        return 1;
+      }
+      private void _processMouseMotionEvent(MouseEvent e) {
+        MouseEvent event = getTargetEvent(e);
+        if (event == null) {
+          myGlassPane.setCursor(null, myListener);
+          return;
+        }
 
-    private void _processMouseMotionEvent(MouseEvent e) {
-      MouseEvent event = getTargetEvent(e);
-      if (event == null) {
-        myGlassPane.setCursor(null, myListener);
-        return;
+        processMouseMotionEvent(event);
+        if (event.isConsumed()) {
+          e.consume();
+        }
       }
 
-      processMouseMotionEvent(event);
-      if (event.isConsumed()) {
-        e.consume();
+      private void _processMouseEvent(MouseEvent e) {
+        MouseEvent event = getTargetEvent(e);
+        if (event == null) {
+          myGlassPane.setCursor(null, myListener);
+          return;
+        }
+
+        processMouseEvent(event);
+        if (event.isConsumed()) {
+          e.consume();
+        }
       }
     }
 
-    private void _processMouseEvent(MouseEvent e) {
-      MouseEvent event = getTargetEvent(e);
-      if (event == null) {
-        myGlassPane.setCursor(null, myListener);
-        return;
-      }
+    private final MouseAdapter myListener = new MyMouseAdapter();
 
-      processMouseEvent(event);
-      if (event.isConsumed()) {
-        e.consume();
-      }
-    }
 
     private MouseEvent getTargetEvent(MouseEvent e) {
       return SwingUtilities.convertMouseEvent(e.getComponent(), e, this);

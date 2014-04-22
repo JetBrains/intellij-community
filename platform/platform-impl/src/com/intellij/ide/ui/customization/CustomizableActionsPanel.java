@@ -333,6 +333,7 @@ public class CustomizableActionsPanel {
       if (exitCode == Messages.OK) {
         mySelectedSchema.addIconCustomization(actionId, null);
         anAction.getTemplatePresentation().setIcon(AllIcons.Toolbar.Unknown);
+        anAction.getTemplatePresentation().setDisabledIcon(IconLoader.getDisabledIcon(AllIcons.Toolbar.Unknown));
         anAction.setDefaultIcon(false);
         node.setUserObject(Pair.create(actionId, AllIcons.Toolbar.Unknown));
         myActionsTree.repaint();

@@ -22,6 +22,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -47,6 +48,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * @author anna
@@ -84,13 +86,15 @@ public class PluginDownloader {
     myPluginName = pluginName;
   }
 
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
   public boolean prepareToInstall() throws IOException {
     return prepareToInstall(new ProgressIndicatorBase());
   }
 
   public boolean prepareToInstall(ProgressIndicator pi) throws IOException {
     IdeaPluginDescriptor descriptor = null;
-    if (PluginManager.isPluginInstalled(PluginId.getId(myPluginId))) {
+    if (!Boolean.getBoolean(StartupActionScriptManager.STARTUP_WIZARD_MODE) && PluginManager.isPluginInstalled(PluginId.getId(myPluginId))) {
       //store old plugins file
       descriptor = PluginManager.getPlugin(PluginId.getId(myPluginId));
       LOG.assertTrue(descriptor != null);
@@ -111,14 +115,16 @@ public class PluginDownloader {
       errorMessage = ex.getMessage();
     }
     if (myFile == null) {
-      final String text = IdeBundle.message("error.plugin.was.not.installed", getPluginName(), errorMessage);
-      final String title = IdeBundle.message("title.failed.to.download");
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          Messages.showErrorDialog(text, title);
-        }
-      });
+      if (ApplicationManager.getApplication() != null) {
+        final String text = IdeBundle.message("error.plugin.was.not.installed", getPluginName(), errorMessage);
+        final String title = IdeBundle.message("title.failed.to.download");
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            Messages.showErrorDialog(text, title);
+          }
+        });
+      }
       return false;
     }
 
@@ -225,12 +231,16 @@ public class PluginDownloader {
     try {
       connection = openConnection(myPluginUrl);
 
-      final InputStream is = UrlConnectionUtil.getConnectionInputStream(connection, pi);
+      final InputStream is = (ApplicationManager.getApplication() != null)
+                              ? UrlConnectionUtil.getConnectionInputStream(connection, pi)
+                              : connection.getInputStream();
       if (is == null) {
         throw new IOException("Failed to open connection");
       }
 
-      pi.setText(IdeBundle.message("progress.downloading.plugin", getPluginName()));
+      if (ApplicationManager.getApplication() != null) {
+        pi.setText(IdeBundle.message("progress.downloading.plugin", getPluginName()));
+      }
       final int contentLength = connection.getContentLength();
       pi.setIndeterminate(contentLength == -1);
 
@@ -263,7 +273,9 @@ public class PluginDownloader {
   }
 
   private URLConnection openConnection(final String url) throws IOException {
-    final URLConnection connection = HttpConfigurable.getInstance().openConnection(url);
+    final URLConnection connection = ApplicationManager.getApplication() != null
+                                     ? HttpConfigurable.getInstance().openConnection(url)
+                                     : new URL(url).openConnection();
     if (connection instanceof HttpURLConnection) {
       final int responseCode = ((HttpURLConnection)connection).getResponseCode();
       if (responseCode != HttpURLConnection.HTTP_OK) {
@@ -362,8 +374,12 @@ public class PluginDownloader {
       url = ((PluginNode)descriptor).getDownloadUrl();
     }
     if (url == null) {
-      String uuid = UpdateChecker.getInstallationUID(PropertiesComponent.getInstance());
-      String buildNumber = ApplicationInfo.getInstance().getApiVersion();
+      String uuid = ApplicationManager.getApplication() == null ?
+                    UUID.randomUUID().toString() :
+                    UpdateChecker.getInstallationUID(PropertiesComponent.getInstance());
+      String buildNumber = ApplicationManager.getApplication() != null
+                           ? ApplicationInfo.getInstance().getApiVersion()
+                           :  ApplicationInfoImpl.getShadowInstance().getBuild().asString();
       url = RepositoryHelper.getDownloadUrl() + URLEncoder.encode(descriptor.getPluginId().getIdString(), "UTF8") +
             "&build=" + buildNumber + "&uuid=" + URLEncoder.encode(uuid, "UTF8");
     }

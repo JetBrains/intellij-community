@@ -24,7 +24,6 @@ import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.ContentIterator;
@@ -36,7 +35,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.util.Consumer;
-import com.intellij.util.io.storage.HeavyProcessLatch;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,10 +57,18 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
       startupManager.registerPreStartupActivity(new Runnable() {
         @Override
         public void run() {
-          final UnindexedFilesUpdater unindexedFilesUpdater = new UnindexedFilesUpdater(project, index);
+          // dumb mode should start before post-startup activities
+          // only when queueTask is called from UI thread, we can guarantee that
+          // when the method returns, the application has entered dumb mode
+          UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              if (!project.isDisposed()) {
+                DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project, true));
+              }
+            }
+          });
 
-          startupManager.registerCacheUpdater(unindexedFilesUpdater);
-          rootManager.registerRootsChangeUpdater(unindexedFilesUpdater);
           myIndex.registerIndexableSet(FileBasedIndexProjectHandler.this, project);
           projectManager.addProjectManagerListener(project, new ProjectManagerAdapter() {
             private boolean removed = false;
@@ -69,7 +76,6 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
             public void projectClosing(Project project) {
               if (!removed) {
                 removed = true;
-                rootManager.unregisterRootsChangeUpdater(unindexedFilesUpdater);
                 myIndex.removeIndexableSet(FileBasedIndexProjectHandler.this);
               }
             }
@@ -111,26 +117,15 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
   @Nullable
   public static DumbModeTask createChangedFilesIndexingTask(final Project project) {
     final FileBasedIndexImpl index = (FileBasedIndexImpl)FileBasedIndex.getInstance();
-    final Collection<VirtualFile> files = index.getFilesToUpdate(project);
-    if (files.isEmpty()) return null;
 
-    if (files.size() + index.getNumberOfPendingInvalidations() < 20 && !DumbService.isDumb(project)) {
-      // the changed set is small, process it immediately without entering dumb mode
-      // invalidation tasks are also processed and may take some time => take them into account
-      try {
-        HeavyProcessLatch.INSTANCE.processStarted();
-        reindexRefreshedFiles(new EmptyProgressIndicator(), files, project, index);
-      }
-      finally {
-        HeavyProcessLatch.INSTANCE.processFinished();
-      }
-
+    if (index.getChangedFileCount() + index.getNumberOfPendingInvalidations() < 20) {
       return null;
     }
 
     return new DumbModeTask() {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+        final Collection<VirtualFile> files = index.getFilesToUpdate(project);
         indicator.setIndeterminate(false);
         indicator.setText(IdeBundle.message("progress.indexing.updating"));
         reindexRefreshedFiles(indicator, files, project, index);

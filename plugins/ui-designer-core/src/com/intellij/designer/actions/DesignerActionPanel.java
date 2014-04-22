@@ -15,17 +15,21 @@
  */
 package com.intellij.designer.actions;
 
+import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.designSurface.ComponentSelectionListener;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
@@ -105,7 +109,8 @@ public class DesignerActionPanel implements DataProvider {
                                                                   KeyEvent.KEY_PRESSED, 0, 0,
                                                                   KeyEvent.VK_ESCAPE,
                                                                   (char)KeyEvent.VK_ESCAPE),
-                                                     myDesigner.getSurfaceArea());
+                                                     myDesigner.getSurfaceArea()
+        );
       }
     };
     selectParent.registerCustomShortcutSet(KeyEvent.VK_ESCAPE, 0, null);
@@ -236,7 +241,11 @@ public class DesignerActionPanel implements DataProvider {
         PlatformDataKeys.CUT_PROVIDER.is(dataId) ||
         PlatformDataKeys.COPY_PROVIDER.is(dataId) ||
         PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
-      return myCommonEditActionsProvider;
+      JTable table = DesignerToolWindowManager.getInstance(myDesigner).getPropertyTable();
+      Component focusOwner = IdeFocusManager.getInstance(myDesigner.getProject()).getFocusOwner();
+      if (!UIUtil.isAncestor(table, focusOwner)) {
+        return myCommonEditActionsProvider;
+      }
     }
     return null;
   }

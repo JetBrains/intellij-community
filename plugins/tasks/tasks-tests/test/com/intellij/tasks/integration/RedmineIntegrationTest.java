@@ -2,6 +2,8 @@ package com.intellij.tasks.integration;
 
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManagerTestCase;
+import com.intellij.tasks.impl.LocalTaskImpl;
+import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.tasks.redmine.RedmineRepository;
 import com.intellij.tasks.redmine.RedmineRepositoryType;
 
@@ -45,6 +47,13 @@ public class RedmineIntegrationTest extends TaskManagerTestCase {
 
     found = myRepository.getIssues("", 0, 1, true);
     assertEquals(1, found.length);
+  }
+
+  public void testCommitMessageFormat() throws Exception {
+    myRepository.setCommitMessageFormat("{project} {number} {id} {summary}");
+    myRepository.setShouldFormatCommitMessage(true);
+    LocalTaskImpl localTask = new LocalTaskImpl(myRepository.findTask(String.valueOf(7)));
+    assertEquals("prj-1 7 7 Summary contains 'baz'", TaskUtil.getChangeListComment(localTask));
   }
 
   @Override

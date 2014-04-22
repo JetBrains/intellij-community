@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,7 +39,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 
 public class MavenModuleWizardStep extends ModuleWizardStep {
-  private static final Icon WIZARD_ICON = IconLoader.getIcon("/addmodulewizard.png");
+  private static final Icon WIZARD_ICON = null;
 
   private static final String INHERIT_GROUP_ID_KEY = "MavenModuleWizard.inheritGroupId";
   private static final String INHERIT_VERSION_KEY = "MavenModuleWizard.inheritVersion";

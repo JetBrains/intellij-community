@@ -42,6 +42,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -78,33 +79,22 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
   @Override
   protected void runTest() throws Throwable {
-    final Throwable[] throwable = {null};
-    Runnable action = new Runnable() {
-      @Override
-      public void run() {
-        CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-          @Override
-          public void run() {
-
-            try {
-              doRunTest();
-            }
-            catch (Throwable t) {
-              throwable[0] = t;
-            }
-          }
-        }, "", null);
-      }
-    };
     if (isRunInWriteAction()) {
-      ApplicationManager.getApplication().runWriteAction(action);
+      WriteCommandAction.runWriteCommandAction(getProject(), new ThrowableComputable<Void, Throwable>() {
+        @Override
+        public Void compute() throws Throwable {
+          doRunTest();
+          return null;
+        }
+      });
     }
     else {
-      action.run();
-    }
-
-    if (throwable[0] != null) {
-      throw throwable[0];
+      new WriteCommandAction.Simple(getProject()){
+        @Override
+        protected void run() throws Throwable {
+          doRunTest();
+        }
+      }.performCommand();
     }
   }
 
@@ -230,16 +220,13 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     }
   }
 
-  private static void deleteVFile() {
+  private static void deleteVFile() throws IOException {
     if (myVFile != null) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Void, IOException>() {
         @Override
-        public void run() {
-          try {
-            myVFile.delete(this);
-          } catch (IOException e) {
-            LOG.error(e);
-          }
+        public Void compute() throws IOException {
+          myVFile.delete(this);
+          return null;
         }
       });
     }

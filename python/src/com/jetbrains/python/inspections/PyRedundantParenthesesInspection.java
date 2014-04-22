@@ -73,6 +73,9 @@ public class PyRedundantParenthesesInspection extends PyInspection {
       if (node.getText().contains("\n")) return;
       PyYieldExpression yieldExpression = PsiTreeUtil.getParentOfType(expression, PyYieldExpression.class, false);
       if (yieldExpression != null) return;
+      if (expression instanceof PyTupleExpression && myIgnoreTupleInReturn) {
+        return;
+      }
       if (expression instanceof PyReferenceExpression || expression instanceof PyLiteralExpression) {
         if (myIgnorePercOperator) {
           PsiElement parent = node.getParent();
@@ -85,9 +88,6 @@ public class PyRedundantParenthesesInspection extends PyInspection {
           return;
         registerProblem(node, "Remove redundant parentheses", new RedundantParenthesesQuickFix());
       }
-      else if (node.getParent() instanceof PyReturnStatement && expression instanceof PyTupleExpression && myIgnoreTupleInReturn) {
-        return;
-      }
       else if (node.getParent() instanceof PyIfPart || node.getParent() instanceof PyWhilePart
                   || node.getParent() instanceof PyReturnStatement) {
           registerProblem(node, "Remove redundant parentheses", new RedundantParenthesesQuickFix());
@@ -99,8 +99,11 @@ public class PyRedundantParenthesesInspection extends PyInspection {
           return;
         if (binaryExpression.getOperator() == PyTokenTypes.AND_KEYWORD ||
             binaryExpression.getOperator() == PyTokenTypes.OR_KEYWORD) {
-          if (binaryExpression.getLeftExpression() instanceof PyParenthesizedExpression &&
-            binaryExpression.getRightExpression() instanceof PyParenthesizedExpression) {
+          final PyExpression leftExpression = binaryExpression.getLeftExpression();
+          final PyExpression rightExpression = binaryExpression.getRightExpression();
+          if (leftExpression instanceof PyParenthesizedExpression && rightExpression instanceof PyParenthesizedExpression &&
+            !(((PyParenthesizedExpression)leftExpression).getContainedExpression() instanceof PyBinaryExpression) &&
+            !(((PyParenthesizedExpression)rightExpression).getContainedExpression() instanceof PyBinaryExpression)) {
             registerProblem(node, "Remove redundant parentheses", new RedundantParenthesesQuickFix());
           }
         }
@@ -112,7 +115,7 @@ public class PyRedundantParenthesesInspection extends PyInspection {
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox("Ignore argument of % operator", "myIgnorePercOperator");
-    panel.addCheckbox("Ignore tuple in return statement", "myIgnoreTupleInReturn");
+    panel.addCheckbox("Ignore tuples", "myIgnoreTupleInReturn");
     return panel;
   }
 }

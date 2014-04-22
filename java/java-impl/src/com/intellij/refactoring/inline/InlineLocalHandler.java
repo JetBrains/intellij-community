@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
@@ -43,7 +44,6 @@ import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
-import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -131,7 +131,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       return;
     }
 
-    final List<PsiElement> refsToInlineList = new ArrayList<PsiElement>();
+    List<PsiElement> refsToInlineList = new ArrayList<PsiElement>();
     Collections.addAll(refsToInlineList, DefUseUtil.getRefs(containerBlock, local, defToInline));
     for (PsiElement innerClassUsage : innerClassUsages) {
       if (!refsToInlineList.contains(innerClassUsage)) {
@@ -143,11 +143,38 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_VARIABLE);
       return;
     }
+
+    final Ref<Boolean> inlineAll = new Ref<Boolean>(true);
+    if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
+      int occurrencesCount = refsToInlineList.size();
+      final InlineLocalDialog inlineLocalDialog = new InlineLocalDialog(project, local, refExpr, occurrencesCount);
+      inlineLocalDialog.show();
+      if (!inlineLocalDialog.isOK()){
+        WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+        return;
+      }
+      if (refExpr != null && inlineLocalDialog.isInlineThis()) {
+        refsToInlineList = Collections.<PsiElement>singletonList(refExpr);
+        inlineAll.set(false);
+      }
+    }
+
     final PsiElement[] refsToInline = PsiUtilCore.toPsiElementArray(refsToInlineList);
 
-    EditorColorsManager manager = EditorColorsManager.getInstance();
+    final EditorColorsManager manager = EditorColorsManager.getInstance();
     final TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     final TextAttributes writeAttributes = manager.getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES);
+
+    if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
+      // TODO : check if initializer uses fieldNames that possibly will be hidden by other
+      // locals with the same names after inlining
+      highlightManager.addOccurrenceHighlights(
+        editor,
+        refsToInline,
+        attributes, true, null
+      );
+    }
+
     if (refExpr != null && PsiUtil.isAccessedForReading(refExpr) && ArrayUtil.find(refsToInline, refExpr) < 0) {
       final PsiElement[] defs = DefUseUtil.getDefs(containerBlock, local, refExpr);
       LOG.assertTrue(defs.length > 0);
@@ -204,33 +231,6 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       return;
     }
 
-    if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
-      // TODO : check if initializer uses fieldNames that possibly will be hidden by other
-      // locals with the same names after inlining
-      highlightManager.addOccurrenceHighlights(
-        editor,
-        refsToInline,
-        attributes, true, null
-      );
-      int occurrencesCount = refsToInline.length;
-      String occurencesString = RefactoringBundle.message("occurences.string", occurrencesCount);
-      final String promptKey = isInliningVariableInitializer(defToInline)
-                               ? "inline.local.variable.prompt" : "inline.local.variable.definition.prompt";
-      final String question = RefactoringBundle.message(promptKey, localName) + " " + occurencesString;
-      RefactoringMessageDialog dialog = new RefactoringMessageDialog(
-        REFACTORING_NAME,
-        question,
-        HelpID.INLINE_VARIABLE,
-        "OptionPane.questionIcon",
-        true,
-        project);
-      dialog.show();
-      if (!dialog.isOK()){
-        WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
-        return;
-      }
-    }
-
     final Runnable runnable = new Runnable() {
       public void run() {
         final String refactoringId = "refactoring.inline.local.variable";
@@ -247,15 +247,18 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
             exprs[idx] = pointerManager.createSmartPsiElementPointer(InlineUtil.inlineVariable(local, defToInline, refElement));
           }
 
-          if (!isInliningVariableInitializer(defToInline)) {
-            defToInline.getParent().delete();
-          } else {
-            defToInline.delete();
+          if (inlineAll.get()) {
+            if (!isInliningVariableInitializer(defToInline)) {
+              defToInline.getParent().delete();
+            } else {
+              defToInline.delete();
+            }
+
+            if (ReferencesSearch.search(local).findFirst() == null) {
+              QuickFixFactory.getInstance().createRemoveUnusedVariableFix(local).invoke(project, editor, local.getContainingFile());
+            }
           }
 
-          if (ReferencesSearch.search(local).findFirst() == null) {
-            QuickFixFactory.getInstance().createRemoveUnusedVariableFix(local).invoke(project, editor, local.getContainingFile());
-          }
 
           if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
             highlightManager.addOccurrenceHighlights(editor, ContainerUtil.convert(exprs, new PsiExpression[refsToInline.length], new Function<SmartPsiElementPointer<PsiExpression>, PsiExpression>() {

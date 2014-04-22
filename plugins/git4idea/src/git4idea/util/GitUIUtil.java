@@ -91,7 +91,7 @@ public class GitUIUtil {
           }
         }
         else {
-          errorMessages.add(error.toString().replace("\n", "<br/>"));
+          errorMessages.add(error.getMessage().replace("\n", "<br/>"));
         }
       }
     }
@@ -99,8 +99,7 @@ public class GitUIUtil {
   }
 
   public static void notifyError(Project project, String title, String description, boolean important, @Nullable Exception error) {
-    notifyMessage(
-      project, title, description, important, Collections.singleton(error));
+    notifyMessage(project, title, description, important, error == null ? null : Collections.singleton(error));
   }
 
   /**

@@ -17,6 +17,7 @@
 package com.intellij.formatting;
 
 import com.intellij.diagnostic.LogMessageEx;
+import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
@@ -394,6 +395,7 @@ class InitialInfoBuilder {
     buffer.append("'\n");
     buffer.append("model (").append(model.getClass()).append("): ").append(model);
 
+    Throwable currentThrowable = new Throwable();
     if (model instanceof FormattingDocumentModelImpl) {
       final FormattingDocumentModelImpl modelImpl = (FormattingDocumentModelImpl)model;
       buffer.append("Psi Tree:\n");
@@ -404,9 +406,26 @@ class InitialInfoBuilder {
         DebugUtil.treeToBuffer(buffer, root.getNode(), 0, false, true, true, true);
       }
       buffer.append('\n');
+      currentThrowable = makeLanguageStackTrace(currentThrowable, file);
     }
 
-    LogMessageEx.error(LOG, messageBuffer.toString(), buffer.toString());
+    LogMessageEx.error(LOG, messageBuffer.toString(), currentThrowable, buffer.toString());
+  }
+  
+  private static Throwable makeLanguageStackTrace(@NotNull Throwable currentThrowable, @NotNull PsiFile file) {
+    Throwable langThrowable = new Throwable();
+    FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
+    if (builder == null) return currentThrowable;
+    Class builderClass = builder.getClass();
+    Class declaringClass = builderClass.getDeclaringClass();
+    String guessedFileName = (declaringClass == null ? builderClass.getSimpleName() : declaringClass.getSimpleName())  + ".java";
+    StackTraceElement ste = new StackTraceElement(builder.getClass().getName(), "createModel", guessedFileName, 1);
+    StackTraceElement[] originalStackTrace = currentThrowable.getStackTrace();
+    StackTraceElement[] modifiedStackTrace = new StackTraceElement[originalStackTrace.length + 1];
+    System.arraycopy(originalStackTrace, 0, modifiedStackTrace, 1, originalStackTrace.length);
+    modifiedStackTrace[0] = ste;
+    langThrowable.setStackTrace(modifiedStackTrace);
+    return langThrowable;
   }
 
   /**

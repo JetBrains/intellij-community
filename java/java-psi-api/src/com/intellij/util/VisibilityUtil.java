@@ -67,6 +67,12 @@ public class VisibilityUtil  {
     }
   }
 
+  public static void escalateVisibility(PsiModifierList modifierList, PsiElement place) throws IncorrectOperationException {
+    final PsiElement parent = modifierList.getParent();
+    if (parent instanceof PsiMember) {
+      escalateVisibility((PsiMember)parent, place);
+    }
+  }
 
   @PsiModifier.ModifierConstant
   public static String getPossibleVisibility(final PsiMember psiMethod, final PsiElement place) {

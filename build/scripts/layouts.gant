@@ -59,7 +59,6 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     "jsp-openapi",
     "jsp-base-openapi",
     "openapi",
-    "remote-servers-api",
     "remote-servers-java-api",
     "testFramework-java",
   ].flatten()
@@ -79,7 +78,6 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     "jsp-spi",
     "manifest",
     "platform-main",
-    "remote-servers-impl",
     "remote-servers-java-impl",
     "testFramework",
     "tests_bootstrap",
@@ -354,10 +352,8 @@ public def layoutCommunityPlugins(String home) {
       jar("git4idea-rt.jar") {
         module("git4idea-rt")
       }
-      if (!isDefined("pluginFilter")) {//temporary fix to exclude remote-servers-git module from layout for small IDEs because corresponding module isn't compiled
-        jar("remote-servers-git.jar") {
-          module("remote-servers-git")
-        }
+      jar("remote-servers-git.jar") {
+        module("remote-servers-git")
       }
       fileset(dir: "$home/plugins/git4idea/lib") {
         include(name: "trilead-ssh2.jar")
@@ -795,7 +791,7 @@ def layout_core(String home, String target) {
       include(name: "asm.jar")
       include(name: "asm-commons.jar")
       include(name: "cli-parser-1.1.jar")
-      include(name: "snappy-java-1.0.5.jar")
+      include(name: "snappy-in-java-0.3.jar")
       include(name: "jayatana-1.2.4.jar")
     }
   }

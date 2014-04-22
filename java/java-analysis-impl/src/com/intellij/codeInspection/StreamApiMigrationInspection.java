@@ -256,7 +256,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           final PsiIfStatement ifStmt = extractIfStatement(body);
 
           String foreEachText = wrapInBlock(body);
-          String iterated = iteratedValue.getText();
+          String iterated = iteratedValue instanceof PsiCallExpression || 
+                            iteratedValue instanceof PsiReferenceExpression ||
+                            iteratedValue instanceof PsiQualifiedExpression ||
+                            iteratedValue instanceof PsiParenthesizedExpression ? iteratedValue.getText() : "(" + iteratedValue.getText() + ")";
           if (ifStmt != null) {
             final PsiExpression condition = ifStmt.getCondition();
             if (condition != null) {

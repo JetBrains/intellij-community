@@ -39,6 +39,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -281,7 +282,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
 
     for (final CustomLiveTemplate customLiveTemplate : CustomLiveTemplate.EP_NAME.getExtensions()) {
       if (shortcutChar == customLiveTemplate.getShortcut()) {
-        if (editor.getCaretModel().getCaretCount() > 1 && supportsMultiCaretMode(customLiveTemplate)) {
+        if (editor.getCaretModel().getCaretCount() > 1 && !supportsMultiCaretMode(customLiveTemplate)) {
           continue;
         }
         if (isApplicable(customLiveTemplate, editor, file)) {
@@ -308,12 +309,11 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   }
 
   private static boolean supportsMultiCaretMode(CustomLiveTemplate customLiveTemplate) {
-    return customLiveTemplate instanceof CustomLiveTemplateBase && !((CustomLiveTemplateBase)customLiveTemplate).supportsMultiCaret();
+    return !(customLiveTemplate instanceof CustomLiveTemplateBase) || ((CustomLiveTemplateBase)customLiveTemplate).supportsMultiCaret();
   }
 
-  public static boolean isApplicable(CustomLiveTemplate customLiveTemplate, Editor editor, PsiFile file) {
-    int caretOffset = editor.getCaretModel().getOffset();
-    return customLiveTemplate.isApplicable(file, caretOffset > 0 ? caretOffset - 1 : 0, false);
+  public static boolean isApplicable(@NotNull CustomLiveTemplate customLiveTemplate, @NotNull Editor editor, @NotNull PsiFile file) {
+    return customLiveTemplate.isApplicable(file, Math.max(0, editor.getSelectionModel().getSelectionStart() - 1), false);
   }
 
   private static int getArgumentOffset(int caretOffset, String argument, CharSequence text) {
@@ -566,6 +566,35 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     return false;
   }
 
+  public static List<TemplateImpl> listApplicableTemplates(PsiFile file, int offset, boolean selectionOnly) {
+    Set<TemplateContextType> contextTypes = getApplicableContextTypes(file, offset);
+
+    final ArrayList<TemplateImpl> result = ContainerUtil.newArrayList();
+    for (final TemplateImpl template : TemplateSettings.getInstance().getTemplates()) {
+      if (!template.isDeactivated() && (!selectionOnly || template.isSelectionTemplate()) && isApplicable(template, contextTypes)) {
+        result.add(template);
+      }
+    }
+    return result;
+  }
+  
+  public static List<TemplateImpl> listApplicableTemplateWithInsertingDummyIdentifier(Editor editor, PsiFile file, boolean selectionOnly) {
+    int startOffset = editor.getSelectionModel().getSelectionStart();
+    file = insertDummyIdentifier(editor, file);
+
+    return listApplicableTemplates(file, startOffset, selectionOnly);
+  }
+
+  public static List<CustomLiveTemplate> listApplicableCustomTemplates(@NotNull Editor editor, @NotNull PsiFile file, boolean selectionOnly) {
+    List<CustomLiveTemplate> result = new ArrayList<CustomLiveTemplate>();
+    for (CustomLiveTemplate template : CustomLiveTemplate.EP_NAME.getExtensions()) {
+      if ((!selectionOnly || template.supportsWrapping()) && isApplicable(template, editor, file)) {
+        result.add(template);
+      }
+    }
+    return result;
+  }
+
   public static Set<TemplateContextType> getApplicableContextTypes(PsiFile file, int offset) {
     Set<TemplateContextType> result = getDirectlyApplicableContextTypes(file, offset);
 
@@ -588,6 +617,13 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     }
 
     return result;
+  }
+  
+  public static PsiFile insertDummyIdentifier(final Editor editor, PsiFile file) {
+    boolean selection = editor.getSelectionModel().hasSelection();
+    final int startOffset = selection ? editor.getSelectionModel().getSelectionStart() : editor.getCaretModel().getOffset();
+    final int endOffset = selection ? editor.getSelectionModel().getSelectionEnd() : startOffset;
+    return insertDummyIdentifier(file, startOffset, endOffset);
   }
 
   public static PsiFile insertDummyIdentifier(PsiFile file, final int startOffset, final int endOffset) {

@@ -187,6 +187,11 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       public boolean isSearchOutsideRootModel() {
         return true;
       }
+
+      @Override
+      public String toString() {
+        return "NOT: "+myBaseScope;
+      }
     };
   }
 
@@ -568,6 +573,11 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     public GlobalSearchScope uniteWith(@NotNull final GlobalSearchScope scope) {
       return scope;
     }
+
+    @Override
+    public String toString() {
+      return "EMPTY";
+    }
   }
 
   public static final GlobalSearchScope EMPTY_SCOPE = new EmptyScope();
@@ -576,11 +586,10 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     private final VirtualFile myVirtualFile;
     private final Module myModule;
 
-    private FileScope(@NotNull Project project, final VirtualFile virtualFile) {
+    private FileScope(@NotNull Project project, VirtualFile virtualFile) {
       super(project);
       myVirtualFile = virtualFile;
-      myModule = virtualFile != null && !project.isDefault() ?
-                 FileIndexFacade.getInstance(project).getModuleForFile(virtualFile) : null;
+      myModule = virtualFile == null || project.isDefault() ? null : FileIndexFacade.getInstance(project).getModuleForFile(virtualFile);
     }
 
     @Override
@@ -602,12 +611,17 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     public boolean isSearchInLibraries() {
       return myModule == null;
     }
+
+    @Override
+    public String toString() {
+      return "File :"+myVirtualFile;
+    }
   }
 
   public static class FilesScope extends GlobalSearchScope {
     private final Collection<VirtualFile> myFiles;
 
-    public FilesScope(final Project project, final Collection<VirtualFile> files) {
+    public FilesScope(final Project project, @NotNull Collection<VirtualFile> files) {
       super(project);
       myFiles = files;
     }
@@ -641,6 +655,12 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     @Override
     public int hashCode() {
       return myFiles.hashCode();
+    }
+
+    @Override
+    public String toString() {
+      List<VirtualFile> files = myFiles.size() <= 20 ? new ArrayList<VirtualFile>(myFiles) : new ArrayList<VirtualFile>(myFiles).subList(0,20);
+      return "Files: ("+ files +")";
     }
   }
 }

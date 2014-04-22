@@ -18,9 +18,12 @@ package com.intellij.psi.search.searches;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFunctionalExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.util.EmptyQuery;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +54,18 @@ public class FunctionalExpressionSearch extends ExtensibleQueryFactory<PsiFuncti
 
   public static Query<PsiFunctionalExpression> search(final PsiClass aClass, SearchScope scope) {
     return INSTANCE.createUniqueResultsQuery(new SearchParameters(aClass, scope));
+  }
+
+  public static Query<PsiFunctionalExpression> search(final PsiMethod psiMethod) {
+    return search(psiMethod, GlobalSearchScope.allScope(psiMethod.getProject()));
+  }
+
+  public static Query<PsiFunctionalExpression> search(final PsiMethod psiMethod, SearchScope scope) {
+    if (!psiMethod.hasModifierProperty(PsiModifier.STATIC) && !psiMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
+      return INSTANCE.createUniqueResultsQuery(new SearchParameters(psiMethod.getContainingClass(), scope));
+    }
+
+    return EmptyQuery.getEmptyQuery();
   }
 
   public static Query<PsiFunctionalExpression> search(final PsiClass aClass) {

@@ -60,7 +60,7 @@ class Inheritor extends GrBase {
     generateConstructor(true)
     myFixture.checkResult """
 class Inheritor extends GrBase {
-    Inheritor(int i) {
+    public Inheritor(int i) {
         super(i);
     }
 }

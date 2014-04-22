@@ -97,6 +97,13 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
         return new GrAnonymousClassDefinitionImpl(stub);
       }
     };
+  GrStubElementType<GrTypeDefinitionStub, GrTraitTypeDefinition> TRAIT_DEFINITION =
+    new GrTypeDefinitionElementType<GrTraitTypeDefinition>("Trait definition") {
+      @Override
+      public GrTraitTypeDefinition createPsi(@NotNull GrTypeDefinitionStub stub) {
+        return new GrTraitTypeDefinitionImpl(stub);
+      }
+    };
 
   GrStubElementType<GrTypeDefinitionStub, GrEnumConstantInitializer> ENUM_CONSTANT_INITIALIZER =
     new GrTypeDefinitionElementType<GrEnumConstantInitializer>("Enum constant initializer") {

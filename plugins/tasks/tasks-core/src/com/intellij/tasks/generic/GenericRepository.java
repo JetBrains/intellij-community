@@ -139,6 +139,7 @@ public class GenericRepository extends BaseRepositoryImpl {
     myResponseHandlersMap.put(ResponseType.TEXT, getTextResponseHandlerDefault());
   }
 
+  @NotNull
   @Override
   public GenericRepository clone() {
     return new GenericRepository(this);
@@ -242,7 +243,7 @@ public class GenericRepository extends BaseRepositoryImpl {
 
   @Nullable
   @Override
-  public Task findTask(final String id) throws Exception {
+  public Task findTask(@NotNull final String id) throws Exception {
     List<TemplateVariable> variables = concat(getAllTemplateVariables(), new TemplateVariable("id", id));
     String requestUrl = substituteTemplateVariables(getSingleTaskUrl(), variables);
     HttpMethod method = getHttpMethod(requestUrl, mySingleTaskMethodType);

@@ -55,9 +55,7 @@ import org.jetbrains.plugins.groovy.mvc.*;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -238,12 +236,7 @@ public class GriffonFramework extends MvcFramework {
       return params;
     }
 
-    Map<String, String> env = params.getEnv();
-    if (env == null) {
-      env = new HashMap<String, String>();
-      params.setEnv(env);
-    }
-    env.put(getSdkHomePropertyName(), FileUtil.toSystemDependentName(sdkRoot.getPath()));
+    params.addEnv(getSdkHomePropertyName(), FileUtil.toSystemDependentName(sdkRoot.getPath()));
 
     final VirtualFile lib = sdkRoot.findChild("lib");
     if (lib != null) {

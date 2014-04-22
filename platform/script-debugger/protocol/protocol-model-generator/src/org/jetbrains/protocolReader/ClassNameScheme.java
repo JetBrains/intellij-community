@@ -1,23 +1,29 @@
 package org.jetbrains.protocolReader;
 
+import org.jetbrains.annotations.NotNull;
+
 abstract class ClassNameScheme {
   private final String suffix;
   private final String rootPackage;
 
-  private ClassNameScheme(String suffix, String rootPackage) {
+  private ClassNameScheme(@NotNull String suffix, String rootPackage) {
     this.suffix = suffix;
     this.rootPackage = rootPackage;
   }
 
-  NamePath getFullName(String domainName, String baseName) {
+  @NotNull
+  NamePath getFullName(@NotNull String domainName, String baseName) {
     return new NamePath(getShortName(baseName), new NamePath(getPackageNameVirtual(domainName)));
   }
 
-  String getShortName(String baseName) {
+  String getShortName(@NotNull String baseName) {
+    if (baseName.endsWith("Descriptor")) {
+      return baseName;
+    }
     return new String(getShortNameChars(baseName));
   }
 
-  char[] getShortNameChars(String baseName) {
+  private char[] getShortNameChars(@NotNull String baseName) {
     char[] name = new char[baseName.length() + suffix.length()];
     baseName.getChars(0, baseName.length(), name, 0);
     if (!suffix.isEmpty()) {
@@ -39,7 +45,8 @@ abstract class ClassNameScheme {
     return getPackageName(rootPackage, domainName);
   }
 
-  public static String getPackageName(String rootPackage, String domain) {
+  @NotNull
+  public static String getPackageName(@NotNull String rootPackage, @NotNull String domain) {
     if (domain.isEmpty()) {
       return rootPackage;
     }
@@ -47,7 +54,7 @@ abstract class ClassNameScheme {
   }
 
   static class Input extends ClassNameScheme {
-    Input(String suffix, String rootPackage) {
+    Input(@NotNull String suffix, String rootPackage) {
       super(suffix, rootPackage);
     }
 

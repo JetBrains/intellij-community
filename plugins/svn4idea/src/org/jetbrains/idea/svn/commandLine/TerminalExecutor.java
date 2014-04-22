@@ -17,12 +17,14 @@ package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.ExecutionException;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.pty4j.PtyProcess;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 
@@ -42,6 +44,11 @@ public class TerminalExecutor extends CommandExecutor {
   }
 
   @Override
+  public Boolean wasError() {
+    return Boolean.FALSE;
+  }
+
+  @Override
   protected void startHandlingStreams() {
     for (InteractiveCommandListener listener : myInteractiveListeners) {
       ((TerminalProcessHandler)myHandler).addInteractiveListener(listener);
@@ -53,7 +60,25 @@ public class TerminalExecutor extends CommandExecutor {
   @NotNull
   @Override
   protected SvnProcessHandler createProcessHandler() {
-    return new TerminalProcessHandler(myProcess, needsUtf8Output(), needsBinaryOutput());
+    return new TerminalProcessHandler(myProcess, needsUtf8Output(), false);
+  }
+
+  /**
+   * TODO: remove this when separate streams for output and errors are implemented for Unix.
+   */
+  @NotNull
+  @Override
+  public ByteArrayOutputStream getBinaryOutput() {
+    if (this instanceof WinTerminalExecutor) {
+      return super.getBinaryOutput();
+    }
+
+    ByteArrayOutputStream result = new ByteArrayOutputStream();
+    byte[] outputBytes = CharsetToolkit.getUtf8Bytes(getOutput());
+
+    result.write(outputBytes, 0, outputBytes.length);
+
+    return result;
   }
 
   @NotNull

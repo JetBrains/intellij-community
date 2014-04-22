@@ -246,7 +246,7 @@ public class JobLauncherImpl extends JobLauncher {
     }
 
     @Override
-    public void waitForCompletion(int millis) throws InterruptedException, ExecutionException, TimeoutException {
+    public void waitForCompletion(int millis) throws InterruptedException, ExecutionException, TimeoutException, CancellationException {
       get(millis, TimeUnit.MILLISECONDS);
     }
   }

@@ -4,6 +4,7 @@
 
 package org.jetbrains.protocolReader;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jsonProtocol.ItemDescriptor;
 
 import java.io.IOException;
@@ -298,7 +299,7 @@ class Generator {
     return fileUpdater;
   }
 
-  static <R> R switchByType(ItemDescriptor typedObject, TypeVisitor<R> visitor) {
+  static <R> R switchByType(@NotNull ItemDescriptor typedObject, @NotNull TypeVisitor<R> visitor) {
     String refName = typedObject instanceof ItemDescriptor.Referenceable ? ((ItemDescriptor.Referenceable)typedObject).ref() : null;
     if (refName != null) {
       return visitor.visitRef(refName);
@@ -313,6 +314,7 @@ class Generator {
         }
         return visitor.visitString();
       case INTEGER_TYPE:
+      case "int":
         return visitor.visitInteger();
       case NUMBER_TYPE:
         return visitor.visitNumber();

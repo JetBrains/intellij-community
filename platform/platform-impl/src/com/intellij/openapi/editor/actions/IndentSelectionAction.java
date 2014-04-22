@@ -26,10 +26,7 @@ import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.IndentStrategy;
-import com.intellij.openapi.editor.LanguageIndentStrategy;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -42,6 +39,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,7 +55,7 @@ public class IndentSelectionAction extends EditorAction {
     }
 
     @Override
-    public void executeWriteAction(Editor editor, DataContext dataContext) {
+    public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (isEnabled(editor, dataContext)) {
         indentSelection(editor, project);
@@ -84,8 +82,7 @@ public class IndentSelectionAction extends EditorAction {
   }
 
   /**
-   * Returns true if there is a selection in the editor and it spans multiple lines or the whole single line (potentially without leading and
-   * trailing whitespaces).
+   * Returns true if there is a selection in the editor and it contains at least one non-whitespace character
    */
   private static boolean hasSuitableSelection(Editor editor) {
     if (!editor.getSelectionModel().hasSelection()) {
@@ -94,15 +91,7 @@ public class IndentSelectionAction extends EditorAction {
     Document document = editor.getDocument();
     int selectionStart = editor.getSelectionModel().getSelectionStart();
     int selectionEnd = editor.getSelectionModel().getSelectionEnd();
-    int selectionLineStart = document.getLineNumber(selectionStart);
-    int selectionLineEnd = document.getLineNumber(selectionEnd);
-    if (selectionLineStart != selectionLineEnd) {
-      return true;
-    }
-    int lineStart = document.getLineStartOffset(selectionLineStart);
-    int lineEnd = document.getLineEndOffset(selectionLineEnd);
-    return (selectionStart <= lineStart || CharArrayUtil.containsOnlyWhiteSpaces(document.getCharsSequence().subSequence(lineStart, selectionStart)))
-           && (selectionEnd >= lineEnd || CharArrayUtil.containsOnlyWhiteSpaces(document.getCharsSequence().subSequence(selectionEnd, lineEnd)));
+    return !CharArrayUtil.containsOnlyWhiteSpaces(document.getCharsSequence().subSequence(selectionStart, selectionEnd));
   }
 
   private static void indentSelection(Editor editor, Project project) {

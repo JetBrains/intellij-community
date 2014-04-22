@@ -673,7 +673,7 @@ public class PluginManagerCore {
       descriptor = loadDescriptorFromJar(file, fileName);
     }
 
-    if (descriptor != null && !descriptor.getOptionalConfigs().isEmpty()) {
+    if (descriptor != null && descriptor.getOptionalConfigs() != null && !descriptor.getOptionalConfigs().isEmpty()) {
       final Map<PluginId, IdeaPluginDescriptorImpl> descriptors = new HashMap<PluginId, IdeaPluginDescriptorImpl>(descriptor.getOptionalConfigs().size());
       for (Map.Entry<PluginId, String> entry: descriptor.getOptionalConfigs().entrySet()) {
         String optionalDescriptorName = entry.getValue();

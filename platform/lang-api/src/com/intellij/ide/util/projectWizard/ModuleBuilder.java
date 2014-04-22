@@ -106,6 +106,10 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   @Override
   @Nullable
   public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
+    return modifyStep(settingsStep);
+  }
+
+  public ModuleWizardStep modifyStep(SettingsStep settingsStep) {
     ModuleType type = getModuleType();
     if (type == null) {
       return null;
@@ -140,6 +144,11 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
         }
       };
     }
+  }
+
+  public ModuleWizardStep modifyProjectTypeStep(@NotNull SettingsStep settingsStep) {
+    ModuleType type = getModuleType();
+    return type == null ? null : type.modifyProjectTypeStep(settingsStep, this);
   }
 
   protected List<WizardInputField> getAdditionalFields() {
@@ -358,6 +367,8 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   public String getParentGroup() {
     return null;
   }
+
+  public int getWeight() { return 0; }
 
   public boolean isTemplate() {
     return false;

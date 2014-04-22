@@ -32,7 +32,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -644,32 +643,32 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
   public static boolean executeTargetSynchronously(final DataContext dataContext, final AntBuildTarget target, final List<BuildFileProperty> additionalProperties) {
     final Semaphore targetDone = new Semaphore();
-    final boolean[] result = new boolean[1];
-    try {
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-
-        public void run() {
-          Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    targetDone.down();
+    final Ref<Boolean> result = Ref.create(Boolean.FALSE);
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        try {
+          final Project project = CommonDataKeys.PROJECT.getData(dataContext);
           if (project == null || project.isDisposed()) {
-            result[0] = false;
-            return;
+            targetDone.up();
           }
-          targetDone.down();
-          target.run(dataContext, additionalProperties, new AntBuildListener() {
-            public void buildFinished(int state, int errorCount) {
-              result[0] = (state == AntBuildListener.FINISHED_SUCCESSFULLY) && (errorCount == 0);
-              targetDone.up();
-            }
-          });
+          else {
+            target.run(dataContext, additionalProperties, new AntBuildListener() {
+              public void buildFinished(int state, int errorCount) {
+                result.set((state == AntBuildListener.FINISHED_SUCCESSFULLY) && (errorCount == 0));
+                targetDone.up();
+              }
+            });
+          }
         }
-      }, ModalityState.NON_MODAL);
-    }
-    catch (Exception e) {
-      LOG.error(e);
-      return false;
-    }
+        catch (Throwable e) {
+          targetDone.up();
+          LOG.error(e);
+        }
+      }
+    });
     targetDone.waitFor();
-    return result[0];
+    return result.get();
   }
 
   private List<ExecutionEvent> getEventsByClass(Class eventClass) {

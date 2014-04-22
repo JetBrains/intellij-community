@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,6 +66,34 @@ public class ProblematicWhitespaceInspectionTest extends LightInspectionTestCase
     options.SMART_TABS = true;
     doTest("/*File 'X.java' uses spaces for indentation*/class X {\n" +
            "  \tString s;\n" +
+           "}\n/**/");
+  }
+
+  public void testSmartTabsInFile2() {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    final CommonCodeStyleSettings.IndentOptions options = settings.getIndentOptions(JavaFileType.INSTANCE);
+    options.USE_TAB_CHARACTER = true;
+    options.SMART_TABS = true;
+    doTest("class X {\n" +
+           "\tvoid aaa(boolean a, boolean b, boolean c) {\n" +
+           "\t\taaa(true,\n" +
+           "\t\t    true,\n" +
+           "\t\t    true);\n" +
+           "\t}\n" +
+           "}\n");
+  }
+
+  public void testSmartTabsInFile3() {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    final CommonCodeStyleSettings.IndentOptions options = settings.getIndentOptions(JavaFileType.INSTANCE);
+    options.USE_TAB_CHARACTER = true;
+    options.SMART_TABS = true;
+    doTest("/*File 'X.java' uses spaces for indentation*/class X {\n" +
+           "\tvoid aaa(boolean a, boolean b, boolean c) {\n" +
+           "\t\taaa(true,\n" +
+           "\t \t    true,\n" +
+           "\t\t    true);\n" +
+           "\t}\n" +
            "}\n/**/");
   }
 

@@ -373,7 +373,7 @@ public class RedundantCastUtil {
         PsiType castType = typeElement.getType();
         final PsiExpression innerOperand = ((PsiTypeCastExpression)expr).getOperand();
         final PsiType operandType = innerOperand != null ? innerOperand.getType() : null;
-        if (!(castType instanceof PsiPrimitiveType)) {
+        if (!(castType instanceof PsiPrimitiveType) && !(topCastType instanceof PsiPrimitiveType)) {
           if (operandType != null && topCastType != null && TypeConversionUtil.areTypesConvertible(operandType, topCastType)) {
             addToResults((PsiTypeCastExpression)expr);
           }

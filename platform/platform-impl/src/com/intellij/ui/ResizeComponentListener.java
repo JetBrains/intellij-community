@@ -16,6 +16,7 @@
 
 package com.intellij.ui;
 
+import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
@@ -31,7 +32,7 @@ import java.awt.event.MouseMotionListener;
  * User: anna
  * Date: 13-Mar-2006
  */
-public class ResizeComponentListener extends MouseAdapter implements MouseMotionListener {
+public class ResizeComponentListener extends MouseAdapter implements MouseMotionListener, Weighted {
   private static final int SENSITIVITY = 4;
   private final AbstractPopup myPopup;
   private final AbstractPopup.MyContentPanel myComponent;
@@ -43,6 +44,11 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
     myPopup = popup;
     myComponent = (AbstractPopup.MyContentPanel)popup.getContent();
     myGlassPane = glassPane;
+  }
+
+  @Override
+  public double getWeight() {
+    return 0.5;
   }
 
   public void mousePressed(MouseEvent e) {

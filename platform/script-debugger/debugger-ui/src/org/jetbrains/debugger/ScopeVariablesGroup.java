@@ -21,15 +21,16 @@ public class ScopeVariablesGroup extends XValueGroup {
     super(createScopeNodeName(scope));
 
     this.scope = scope;
-    this.callFrame = scope.getType() == Scope.Type.LOCAL ? callFrame : null;
 
-    if (callFrame == null) {
+    if (callFrame == null || scope.getType() == Scope.Type.LIBRARY) {
       // functions scopes - we can watch variables only from global scope
-      this.context = new ParentlessVariableContext(context, scope.getType() == Scope.Type.GLOBAL);
+      this.context = new ParentlessVariableContext(context, scope, scope.getType() == Scope.Type.GLOBAL);
     }
     else {
-      this.context = scope.getType() == Scope.Type.LIBRARY ? new ParentlessVariableContext(context, false) : context;
+      this.context = new ScopedVariableContext(context, scope);
     }
+
+    this.callFrame = scope.getType() == Scope.Type.LOCAL ? callFrame : null;
   }
 
   public static void createAndAddScopeList(@NotNull XCompositeNode node, @NotNull List<Scope> scopes, @NotNull VariableContext context, @Nullable CallFrame callFrame) {
@@ -106,13 +107,25 @@ public class ScopeVariablesGroup extends XValueGroup {
     Variables.processScopeVariables(scope, node, context, callback);
   }
 
-  private static final class ParentlessVariableContext extends VariableContextBase {
+  private static class ScopedVariableContext implements VariableContext {
     private final VariableContext parentContext;
-    private final boolean watchableAsEvaluationExpression;
+    private final Scope scope;
 
-    public ParentlessVariableContext(@NotNull VariableContext parentContext, boolean watchableAsEvaluationExpression) {
+    public ScopedVariableContext(@NotNull VariableContext parentContext, @NotNull Scope scope) {
       this.parentContext = parentContext;
-      this.watchableAsEvaluationExpression = watchableAsEvaluationExpression;
+      this.scope = scope;
+    }
+
+    @Nullable
+    @Override
+    public String getName() {
+      return parentContext.getName();
+    }
+
+    @NotNull
+    @Override
+    public MemberFilter getMemberFilter() {
+      return parentContext.getMemberFilter();
     }
 
     @NotNull
@@ -129,7 +142,40 @@ public class ScopeVariablesGroup extends XValueGroup {
 
     @Override
     public boolean watchableAsEvaluationExpression() {
+      return parentContext.watchableAsEvaluationExpression();
+    }
+
+    @Nullable
+    @Override
+    public Scope getScope() {
+      return scope;
+    }
+
+    @Nullable
+    @Override
+    public VariableContext getParent() {
+      return parentContext;
+    }
+  }
+
+  private static final class ParentlessVariableContext extends ScopedVariableContext {
+    private final boolean watchableAsEvaluationExpression;
+
+    public ParentlessVariableContext(@NotNull VariableContext parentContext, @NotNull Scope scope, boolean watchableAsEvaluationExpression) {
+      super(parentContext, scope);
+
+      this.watchableAsEvaluationExpression = watchableAsEvaluationExpression;
+    }
+
+    @Override
+    public boolean watchableAsEvaluationExpression() {
       return watchableAsEvaluationExpression;
+    }
+
+    @Nullable
+    @Override
+    public VariableContext getParent() {
+      return null;
     }
   }
 }

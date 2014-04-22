@@ -1,24 +1,31 @@
 <component>
   <keymap version="1" name="Xcode" parent="Mac OS X 10.5+">
     <action id="ActivateHierarchyToolWindow"/>
+    <action id="ActivateTODOToolWindow"/>
     <action id="ActivateFavoritesToolWindow">
-      <keyboard-shortcut first-keystroke="meta 8"/>
-    </action>
-    <action id="ActivateMessagesToolWindow">
-      <keyboard-shortcut first-keystroke="meta 4" />
-    </action>
-    <action id="ActivateRunToolWindow">
       <keyboard-shortcut first-keystroke="meta 0"/>
+    </action>
+    <action id="ActivateProjectToolWindow">
+      <keyboard-shortcut first-keystroke="meta 1"/>
     </action>
     <action id="ActivateStructureToolWindow">
       <keyboard-shortcut first-keystroke="meta 2" />
     </action>
-    <action id="ActivateTODOToolWindow">
-      <keyboard-shortcut first-keystroke="meta 5"/>
+    <action id="ActivateFindToolWindow">
+      <keyboard-shortcut first-keystroke="meta 3" />
+    </action>
+    <action id="ActivateMessagesToolWindow">
+      <keyboard-shortcut first-keystroke="meta 4"/>
+    </action>
+    <action id="ActivateRunToolWindow">
+      <keyboard-shortcut first-keystroke="meta 5" />
     </action>
     <action id="ActivateDebugToolWindow">
       <keyboard-shortcut first-keystroke="meta shift Y" />
       <keyboard-shortcut first-keystroke="meta 6" />
+    </action>
+    <action id="ActivateChangesToolWindow">
+      <keyboard-shortcut first-keystroke="meta 9" />
     </action>
     <action id="FileStructurePopup">
       <keyboard-shortcut first-keystroke="control 6"/>
@@ -27,7 +34,7 @@
     <action id="AutoIndentLines">
       <keyboard-shortcut first-keystroke="control I" />
     </action>
-    <action id="Build">
+    <action id="CompileDirty">
       <keyboard-shortcut first-keystroke="meta B" />
     </action>
     <action id="AppCode.CreateXcodeProject">
@@ -44,7 +51,6 @@
     </action>
     <action id="CodeCompletion">
       <keyboard-shortcut first-keystroke="control SPACE" />
-      <keyboard-shortcut first-keystroke="F5" />
       <keyboard-shortcut first-keystroke="alt ESCAPE" />
     </action>
     <action id="CollapseDocComments">
@@ -67,6 +73,13 @@
     </action>
     <action id="DuplicatesForm.SendToLeft" />
     <action id="DuplicatesForm.SendToRight" />
+
+    <action id="Generate">
+      <keyboard-shortcut first-keystroke="meta N"/>
+    </action>
+    <action id="NewElement">
+      <keyboard-shortcut first-keystroke="meta N"/>
+    </action>
     
     <action id="$Cut">
       <keyboard-shortcut first-keystroke="meta X"/> <!--disable shift DELETE-->
@@ -82,7 +95,6 @@
     <action id="EditorBackSpace">
       <keyboard-shortcut first-keystroke="BACK_SPACE"/>
     </action>
-
     <action id="SafeDelete">
       <keyboard-shortcut first-keystroke="meta DELETE"/>
     </action>
@@ -232,7 +244,7 @@
     </action>
     <action id="GotoImplementation">
       <mouse-shortcut keystroke="meta alt button1" />
-      <keyboard-shortcut first-keystroke="meta alt B" />
+      <keyboard-shortcut first-keystroke="control alt meta J" />
     </action>
     <action id="GotoNextError">
       <keyboard-shortcut first-keystroke="meta QUOTE" />
@@ -265,14 +277,15 @@
     <action id="ImplementMethods">
       <keyboard-shortcut first-keystroke="control meta I" />
     </action>
+    <action id="OverrideMethods">
+      <keyboard-shortcut first-keystroke="control meta O" />
+    </action>
     <action id="InspectCode">
       <keyboard-shortcut first-keystroke="meta shift B" />
     </action>
     <action id="Instruments">
       <keyboard-shortcut first-keystroke="meta I" />
     </action>
-    <action id="IntroduceField" />
-    <action id="IntroduceConstant" />
     <action id="LocalHistory.PutLabel">
       <keyboard-shortcut first-keystroke="control meta S"/>
     </action>
@@ -294,25 +307,17 @@
     </action>
     <action id="NextEditorTab" />
     <action id="NextProjectWindow" />
-    <action id="OCIntroduceDefine">
-      <keyboard-shortcut first-keystroke="meta alt G" />
+
+    <action id="IntroduceField" >
+      <keyboard-shortcut first-keystroke="meta alt I" />
     </action>
-    <action id="OCIntroduceConstant">
-      <keyboard-shortcut first-keystroke="meta alt S" />
+    <action id="IntroduceConstant">
+      <keyboard-shortcut first-keystroke="meta alt S"/>
     </action>
     <action id="OpenFile">
     </action>
-    <action id="OpenXcodeProjectAction">
-      <keyboard-shortcut first-keystroke="meta O" />
-    </action>
-    <action id="OverrideMethods">
-      <keyboard-shortcut first-keystroke="control meta O" />
-    </action>
     <action id="ParameterInfo">
       <keyboard-shortcut first-keystroke="shift meta P" />
-    </action>
-    <action id="Pause">
-      <keyboard-shortcut first-keystroke="control meta Y" />
     </action>
     <action id="PreviousEditorTab" />
     <action id="PreviousProjectWindow" />
@@ -323,6 +328,10 @@
       <keyboard-shortcut first-keystroke="shift control meta SLASH" />
       <keyboard-shortcut first-keystroke="F1" />
       <mouse-shortcut keystroke="control button2" />
+    </action>
+    <action id="QuickImplementations">
+      <keyboard-shortcut first-keystroke="control F1"/>
+      <keyboard-shortcut first-keystroke="alt SPACE"/>
     </action>
     <action id="RemoveFromFavorites" />
     <action id="RenameElement">
@@ -336,39 +345,6 @@
       <keyboard-shortcut first-keystroke="alt shift meta F"/>
       <keyboard-shortcut first-keystroke="control shift R"/>
     </action>
-    <action id="RerunFailedTests">
-      <keyboard-shortcut first-keystroke="control alt meta G"/>
-    </action>
-    <action id="Resume">
-      <keyboard-shortcut first-keystroke="control Y"/>
-      <keyboard-shortcut first-keystroke="meta F9" />
-    </action>
-    <action id="Run">
-      <keyboard-shortcut first-keystroke="meta R" />
-      <keyboard-shortcut first-keystroke="shift F10" />
-    </action>
-    <action id="RunClass">
-      <keyboard-shortcut first-keystroke="control alt meta U"/>
-      <keyboard-shortcut first-keystroke="control shift F10"/>
-    </action>
-    <action id="RunToCursor">
-      <keyboard-shortcut first-keystroke="control meta C"/>
-      <keyboard-shortcut first-keystroke="alt F9"/>
-    </action>
-    <action id="ForceRunToCursor">
-      <keyboard-shortcut first-keystroke="control alt meta C"/>
-      <keyboard-shortcut first-keystroke="control alt F9"/>
-    </action>
-    <action id="Debug">
-      <keyboard-shortcut first-keystroke="meta U" />
-      <keyboard-shortcut first-keystroke="shift F9"/>
-    </action>
-    <action id="ChooseRunConfiguration">
-      <keyboard-shortcut first-keystroke="alt meta R"/>
-    </action>
-    <action id="ChooseDebugConfiguration">
-      <keyboard-shortcut first-keystroke="alt meta U"/>
-    </action>
     <action id="SelectIn">
       <keyboard-shortcut first-keystroke="shift meta J" />
       <keyboard-shortcut first-keystroke="alt F1" />
@@ -380,12 +356,59 @@
       <keyboard-shortcut first-keystroke="control 5"/>
       <keyboard-shortcut first-keystroke="alt HOME"/>
     </action>
+    <action id="Rerun">
+      <keyboard-shortcut first-keystroke="control alt meta G"/>
+    </action>
+    <action id="RerunFailedTests">
+      <keyboard-shortcut first-keystroke="alt meta G"/>
+    </action>
+    <action id="Run">
+      <keyboard-shortcut first-keystroke="meta R" />
+    </action>
+    <action id="RunClass">
+      <keyboard-shortcut first-keystroke="control alt meta R"/>
+    </action>
+    <action id="Debug">
+      <keyboard-shortcut first-keystroke="meta U" />
+    </action>
+    <action id="DebugClass">
+      <keyboard-shortcut first-keystroke="control alt meta U"/>
+    </action>
+    <action id="ChooseRunConfiguration">
+      <keyboard-shortcut first-keystroke="alt meta R"/>
+    </action>
+    <action id="ChooseDebugConfiguration">
+      <keyboard-shortcut first-keystroke="alt meta U"/>
+    </action>
+    <action id="Pause">
+      <keyboard-shortcut first-keystroke="control meta Y" />
+    </action>
+    <action id="Resume">
+      <keyboard-shortcut first-keystroke="control meta Y"/>
+    </action>
     <action id="StepOut">
       <keyboard-shortcut first-keystroke="F8" />
-      <keyboard-shortcut first-keystroke="shift F8" />
+    </action>
+    <action id="StepInto">
+      <keyboard-shortcut first-keystroke="F7"/>
+    </action>
+    <action id="ForceStepInto">
+      <keyboard-shortcut first-keystroke="alt control F7"/>
+    </action>
+    <action id="SmartStepInto">
+      <keyboard-shortcut first-keystroke="shift alt F7"/>
     </action>
     <action id="StepOver">
       <keyboard-shortcut first-keystroke="F6" />
+    </action>
+    <action id="ForceStepOver">
+      <keyboard-shortcut first-keystroke="alt control F6" />
+    </action>
+    <action id="RunToCursor">
+      <keyboard-shortcut first-keystroke="control meta C"/>
+    </action>
+    <action id="ForceRunToCursor">
+      <keyboard-shortcut first-keystroke="alt control meta C"/>
     </action>
     <action id="Stop">
       <keyboard-shortcut first-keystroke="meta PERIOD"/>
@@ -403,6 +426,9 @@
     <action id="RecentFiles">
       <keyboard-shortcut first-keystroke="control 2" />
       <keyboard-shortcut first-keystroke="control 3" />
+    </action>
+    <action id="RecentChangedFiles">
+      <keyboard-shortcut first-keystroke="control 4" />
     </action>
     <action id="SwitchApply">
       <keyboard-shortcut first-keystroke="control alt ENTER" />
@@ -433,9 +459,6 @@
     <action id="ViewBreakpoints">
       <keyboard-shortcut first-keystroke="meta 7"/>
       <keyboard-shortcut first-keystroke="control shift F8"/>
-    </action>
-    <action id="QuickImplementations">
-      <keyboard-shortcut first-keystroke="alt SPACE"/>
     </action>
     <action id="XDebugger.MuteBreakpoints">
       <keyboard-shortcut first-keystroke="meta Y" />
@@ -506,6 +529,37 @@
     </action>
     <action id="NextOccurence">
       <keyboard-shortcut first-keystroke="control DOWN"/>
+    </action>
+    
+    <action id="GotoBookmark0">
+      <keyboard-shortcut first-keystroke="control alt 0"/>
+    </action>
+    <action id="GotoBookmark1">
+      <keyboard-shortcut first-keystroke="control alt 1"/>
+    </action>
+    <action id="GotoBookmark2">
+      <keyboard-shortcut first-keystroke="control alt 2"/>
+    </action>
+    <action id="GotoBookmark3">
+      <keyboard-shortcut first-keystroke="control alt 3"/>
+    </action>
+    <action id="GotoBookmark4">
+      <keyboard-shortcut first-keystroke="control alt 4"/>
+    </action>
+    <action id="GotoBookmark5">
+      <keyboard-shortcut first-keystroke="control alt 5"/>
+    </action>
+    <action id="GotoBookmark6">
+      <keyboard-shortcut first-keystroke="control alt 6"/>
+    </action>
+    <action id="GotoBookmark7">
+      <keyboard-shortcut first-keystroke="control alt 7"/>
+    </action>
+    <action id="GotoBookmark8">
+      <keyboard-shortcut first-keystroke="control alt 8"/>
+    </action>
+    <action id="GotoBookmark9">
+      <keyboard-shortcut first-keystroke="control alt 9"/>
     </action>
   </keymap>
 </component>

@@ -2,6 +2,9 @@ package org.jetbrains.jsonProtocol;
 
 import com.google.gson.stream.JsonWriter;
 import gnu.trove.TIntArrayList;
+import gnu.trove.TIntHashSet;
+import gnu.trove.TIntProcedure;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -91,7 +94,7 @@ public abstract class OutMessage {
     }
   }
 
-  protected final void writeIntArray(String name, int[] value) {
+  protected final void writeIntArray(@NotNull String name, @NotNull int[] value) {
     try {
       beginArguments();
       writer.name(name);
@@ -106,7 +109,32 @@ public abstract class OutMessage {
     }
   }
 
-  protected final void writeIntList(String name, TIntArrayList value) {
+  protected final void writeIntSet(@NotNull String name, @NotNull TIntHashSet value) {
+    try {
+      beginArguments();
+      writer.name(name);
+      writer.beginArray();
+      value.forEach(new TIntProcedure() {
+        @Override
+        public boolean execute(int value) {
+          try {
+            writer.value(value);
+          }
+          catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+          return true;
+        }
+      });
+      writer.endArray();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+  }
+
+  protected final void writeIntList(@NotNull String name, @NotNull TIntArrayList value) {
     try {
       beginArguments();
       writer.name(name);
@@ -121,7 +149,7 @@ public abstract class OutMessage {
     }
   }
 
-  protected final void writeSingletonIntArray(String name, int value) {
+  protected final void writeSingletonIntArray(@NotNull String name, @NotNull int value) {
     try {
       beginArguments();
       writer.name(name);

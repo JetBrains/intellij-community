@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,8 +47,8 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigur
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
@@ -392,25 +392,19 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   private Module createModule(final ModuleBuilder builder) {
-    final Exception[] ex = new Exception[]{null};
-    final Module module = ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
-      @Override
-      @SuppressWarnings({"ConstantConditions"})
-      public Module compute() {
-        try {
+    try {
+      return ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Module, Exception>() {
+        @Override
+        public Module compute() throws Exception {
           return builder.createModule(myModuleModel);
         }
-        catch (Exception e) {
-          ex[0] = e;
-          return null;
-        }
-      }
-    });
-    if (ex[0] != null) {
-      Messages.showErrorDialog(ProjectBundle.message("module.add.error.message", ex[0].getMessage()),
-                               ProjectBundle.message("module.add.error.title"));
+      });
     }
-    return module;
+    catch (Exception e) {
+      Messages.showErrorDialog(ProjectBundle.message("module.add.error.message", e.getMessage()),
+                               ProjectBundle.message("module.add.error.title"));
+      return null;
+    }
   }
 
   @Nullable

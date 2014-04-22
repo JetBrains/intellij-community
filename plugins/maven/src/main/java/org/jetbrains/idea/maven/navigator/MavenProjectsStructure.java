@@ -37,7 +37,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.GenericDomValue;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import icons.MavenIcons;
@@ -751,22 +750,9 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Nullable
     private Navigatable getNavigatable(@Nullable final MavenDomProfile profile) {
-      if (profile != null) {
-        final GenericDomValue<String> id = profile.getId();
-        final String value = id.getValue();
-        if (value != null && value.equals(myProfileName)) {
-          final XmlElement xmlElement = profile.getId().getXmlElement();
-          return new NavigatableAdapter() {
-            @Override
-            public void navigate(boolean requestFocus) {
-              if (xmlElement != null) {
-                ((Navigatable)xmlElement).navigate(requestFocus);
-              }
-            }
-          };
-        }
-      }
-      return null;
+      if (profile == null) return null;
+      XmlElement xmlElement = profile.getId().getXmlElement();
+      return xmlElement instanceof Navigatable ? (Navigatable)xmlElement : null;
     }
 
     private void addProfiles(@NotNull List<MavenDomProfile> result, @Nullable List<MavenDomProfile> profilesToAdd) {

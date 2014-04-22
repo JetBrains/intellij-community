@@ -67,6 +67,16 @@ public abstract class GitChangeProviderTest extends GitSingleRepoTest {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    try {
+      initTest();
+    }
+    catch (Exception e) {
+      super.tearDown();
+      throw e;
+    }
+  }
+
+  private void initTest() {
     myVcs = GitVcs.getInstance(myProject);
     assertNotNull(myVcs);
     myChangeProvider = (GitChangeProvider) myVcs.getChangeProvider();

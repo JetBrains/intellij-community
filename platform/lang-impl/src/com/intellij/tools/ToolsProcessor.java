@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -63,7 +64,8 @@ abstract public class ToolsProcessor<T extends Tool> extends BaseSchemeProcessor
       throw new InvalidDataException();
     }
 
-    String groupName = root.getAttributeValue(ATTRIBUTE_NAME);
+    String attrName = root.getAttributeValue(ATTRIBUTE_NAME);
+    String groupName = StringUtil.isEmpty(attrName)? Tool.DEFAULT_GROUP_NAME : attrName;
     ToolsGroup<T> result = createToolsGroup(groupName);
 
     final PathMacroManager macroManager = PathMacroManager.getInstance(ApplicationManager.getApplication());

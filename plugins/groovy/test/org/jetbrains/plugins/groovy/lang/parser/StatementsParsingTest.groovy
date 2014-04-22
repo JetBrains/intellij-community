@@ -202,6 +202,7 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testTypedef$interfaces$members$member5() throws Throwable { doTest(); }
   public void testTypedef$interfaces$members$member6() throws Throwable { doTest(); }
   public void testTypedef$interfaces$members$memeber7() throws Throwable { doTest(); }
+  public void testTypedef$traits$trait1() {doTest()}
   public void testTypedef$methods$method2() throws Throwable { doTest(); }
   public void testTypedef$methods$method3() throws Throwable { doTest(); }
   public void testTypedef$methods$method4() throws Throwable { doTest(); }

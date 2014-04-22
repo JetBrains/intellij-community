@@ -16,10 +16,10 @@
 package git4idea.commands;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitCommit;
-import git4idea.history.browser.GitHeavyCommit;
 import git4idea.push.GitPushSpec;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +34,15 @@ import java.util.Set;
  * @author Kirill Likhodedov
  */
 public interface Git {
+
+  /**
+   * A generic method to run a Git remote command, when existing methods like {@link #fetch(GitRepository, String, String, List, String...)}
+   * are not sufficient.
+   * @param handlerConstructor this is needed, since the operation may need to repeat (e.g. in case of authentication failure).
+   *                           make sure to supply a stateless constructor.
+   */
+  @NotNull
+  GitCommandResult runRemoteCommand(@NotNull Computable<GitLineHandler> handlerConstructor);
 
   @NotNull
   GitCommandResult init(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitLineHandlerListener... listeners);
@@ -128,5 +137,6 @@ public interface Git {
   List<GitCommit> history(@NotNull GitRepository repository, @NotNull String range);
 
   @NotNull
-  GitCommandResult fetch(@NotNull GitRepository repository, @NotNull String url, @NotNull String remote, String... params);
+  GitCommandResult fetch(@NotNull GitRepository repository, @NotNull String url, @NotNull String remote,
+                         @NotNull List<GitLineHandlerListener> listeners, String... params);
 }

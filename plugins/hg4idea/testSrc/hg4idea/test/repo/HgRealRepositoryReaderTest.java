@@ -29,10 +29,8 @@ import java.util.Arrays;
 
 import static com.intellij.openapi.vcs.Executor.*;
 import static hg4idea.test.HgExecutor.hg;
+import static hg4idea.test.HgExecutor.hgMergeWith;
 
-/**
- * @author Nadya Zabrodina
- */
 public class HgRealRepositoryReaderTest extends HgPlatformTest {
 
   @NotNull private HgRepositoryReader myRepositoryReader;
@@ -47,7 +45,7 @@ public class HgRealRepositoryReaderTest extends HgPlatformTest {
   }
 
   public void testMergeState() {
-    hg("merge branchB");
+    hgMergeWith("branchB");
     assertEquals(myRepositoryReader.readState(), Repository.State.MERGING);
   }
 

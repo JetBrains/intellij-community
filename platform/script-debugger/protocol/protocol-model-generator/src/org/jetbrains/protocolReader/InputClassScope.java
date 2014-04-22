@@ -12,13 +12,13 @@ class InputClassScope extends ClassScope {
 
   public void generateMainJsonProtocolInterfaceBody(TextOutput out, List<ProtocolMetaModel.Parameter> parameters) throws IOException {
     if (parameters != null) {
-      for (ProtocolMetaModel.Parameter param : parameters) {
-        if (param.description() != null) {
-          out.doc(param.description());
+      for (ProtocolMetaModel.Parameter parameter : parameters) {
+        if (parameter.description() != null) {
+          out.doc(parameter.description());
         }
 
-        String methodName = Generator.generateMethodNameSubstitute(param.name(), out);
-        QualifiedTypeData paramTypeData = newMemberScope(param.name()).resolveType(param);
+        String methodName = Generator.generateMethodNameSubstitute(getName(parameter), out);
+        QualifiedTypeData paramTypeData = newMemberScope(getName(parameter)).resolveType(parameter);
         paramTypeData.writeAnnotations(out);
         out.append(paramTypeData.getJavaType().getShortText(getClassContextNamespace())).space().append(methodName).append("();").newLine();
       }
@@ -28,7 +28,7 @@ class InputClassScope extends ClassScope {
   void generateStandaloneTypeBody(TextOutput out, List<ProtocolMetaModel.ObjectProperty> properties) throws IOException {
     if (properties != null) {
       for (ProtocolMetaModel.ObjectProperty objectProperty : properties) {
-        String propertyName = objectProperty.name();
+        String propertyName = getName(objectProperty);
 
         if (objectProperty.description() != null) {
           out.doc(objectProperty.description());
@@ -39,7 +39,7 @@ class InputClassScope extends ClassScope {
         QualifiedTypeData propertyTypeData = memberScope.resolveType(objectProperty);
         propertyTypeData.writeAnnotations(out);
 
-        out.append(propertyTypeData.getJavaType().getShortText(getClassContextNamespace()) + " " + methodName + "();").newLine();
+        out.append(propertyTypeData.getJavaType().getShortText(getClassContextNamespace()) + ' ' + methodName + "();").newLine();
       }
     }
   }
@@ -88,12 +88,12 @@ class InputClassScope extends ClassScope {
             for (ProtocolMetaModel.ObjectProperty property : propertyList) {
               out.doc(property.description());
 
-              String methodName = Generator.generateMethodNameSubstitute(property.name(), out);
-              MemberScope memberScope = newMemberScope(property.name());
+              String methodName = Generator.generateMethodNameSubstitute(getName(property), out);
+              MemberScope memberScope = newMemberScope(getName(property));
               QualifiedTypeData propertyTypeData = memberScope.resolveType(property);
               propertyTypeData.writeAnnotations(out);
 
-              out.append(propertyTypeData.getJavaType().getShortText(getClassContextNamespace()) + " " + methodName + "();").newLine();
+              out.append(propertyTypeData.getJavaType().getShortText(getClassContextNamespace()) + ' ' + methodName + "();").newLine();
             }
           }
           out.closeBlock();

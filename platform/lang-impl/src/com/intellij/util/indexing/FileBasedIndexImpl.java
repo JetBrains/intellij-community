@@ -18,7 +18,6 @@ package com.intellij.util.indexing;
 
 import com.intellij.AppTopics;
 import com.intellij.history.LocalHistory;
-import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.lang.ASTNode;
 import com.intellij.notification.NotificationDisplayType;
@@ -62,6 +61,7 @@ import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.PsiTreeChangePreprocessor;
+import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.EverythingGlobalScope;
@@ -142,7 +142,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   private final ConcurrentHashSet<Project> myProjectsBeingUpdated = new ConcurrentHashSet<Project>();
 
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"}) private volatile boolean myInitialized;
-  // need this variable for memory barrier
+    // need this variable for memory barrier
 
   public FileBasedIndexImpl(@SuppressWarnings("UnusedParameters") VirtualFileManager vfManager,
                             FileDocumentManager fdm,
@@ -229,7 +229,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             LOG.info(e);
           }
         }
-        scheduleIndexRebuild(true);
+        scheduleIndexRebuild();
       }
     });
 
@@ -515,15 +515,17 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       index = (MapReduceIndex<K, V, FileContent>)custom;
     }
     else {
-      index = new MapReduceIndex<K, V, FileContent>(indexId, extension.getIndexer(), storage);
+      DataExternalizer<Collection<K>> externalizer =
+        extension.hasSnapshotMapping() && IdIndex.ourSnapshotMappingsEnabled
+        ? createInputsIndexExternalizer(extension, indexId, extension.getKeyDescriptor())
+        : null;
+      index = new MapReduceIndex<K, V, FileContent>(indexId, extension.getIndexer(), storage, externalizer);
     }
-
-    final KeyDescriptor<K> keyDescriptor = extension.getKeyDescriptor();
     index.setInputIdToDataKeysIndex(new Factory<PersistentHashMap<Integer, Collection<K>>>() {
       @Override
       public PersistentHashMap<Integer, Collection<K>> create() {
         try {
-          return createIdToDataKeysIndex(indexId, keyDescriptor, storage);
+          return createIdToDataKeysIndex(extension, storage);
         }
         catch (IOException e) {
           throw new RuntimeException(e);
@@ -535,44 +537,14 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   @NotNull
-  public static <K> PersistentHashMap<Integer, Collection<K>> createIdToDataKeysIndex(@NotNull final ID<K, ?> indexId,
-                                                                                      @NotNull final KeyDescriptor<K> keyDescriptor,
+  public static <K> PersistentHashMap<Integer, Collection<K>> createIdToDataKeysIndex(@NotNull FileBasedIndexExtension <K, ?> extension,
                                                                                       @NotNull MemoryIndexStorage<K, ?> storage)
     throws IOException {
+    ID<K, ?> indexId = extension.getName();
+    KeyDescriptor<K> keyDescriptor = extension.getKeyDescriptor();
     final File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile(indexId);
     final AtomicBoolean isBufferingMode = new AtomicBoolean();
     final TIntObjectHashMap<Collection<K>> tempMap = new TIntObjectHashMap<Collection<K>>();
-
-    final DataExternalizer<Collection<K>> dataExternalizer = new DataExternalizer<Collection<K>>() {
-      @Override
-      public void save(@NotNull DataOutput out, @NotNull Collection<K> value) throws IOException {
-        try {
-          DataInputOutputUtil.writeINT(out, value.size());
-          for (K key : value) {
-            keyDescriptor.save(out, key);
-          }
-        }
-        catch (IllegalArgumentException e) {
-          throw new IOException("Error saving data for index " + indexId, e);
-        }
-      }
-
-      @NotNull
-      @Override
-      public Collection<K> read(@NotNull DataInput in) throws IOException {
-        try {
-          final int size = DataInputOutputUtil.readINT(in);
-          final List<K> list = new ArrayList<K>(size);
-          for (int idx = 0; idx < size; idx++) {
-            list.add(keyDescriptor.read(in));
-          }
-          return list;
-        }
-        catch (IllegalArgumentException e) {
-          throw new IOException("Error reading data for index " + indexId, e);
-        }
-      }
-    };
 
     // Important! Update IdToDataKeysIndex depending on the sate of "buffering" flag from the MemoryStorage.
     // If buffering is on, all changes should be done in memory (similar to the way it is done in memory storage).
@@ -581,7 +553,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     // cleared properly before updating (removed data will still be present on disk). See IDEA-52223 for illustration of possible effects.
 
     final PersistentHashMap<Integer, Collection<K>> map = new PersistentHashMap<Integer, Collection<K>>(
-      indexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, dataExternalizer
+      indexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, createInputsIndexExternalizer(extension, indexId, keyDescriptor)
     ) {
 
       @Override
@@ -632,6 +604,18 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
     });
     return map;
+  }
+
+  private static <K> DataExternalizer<Collection<K>> createInputsIndexExternalizer(FileBasedIndexExtension<K, ?> extension,
+                                                                                  ID<K, ?> indexId,
+                                                                                  KeyDescriptor<K> keyDescriptor) {
+    DataExternalizer<Collection<K>> externalizer;
+    if (extension instanceof CustomInputsIndexFileBasedIndexExtension) {
+      externalizer = ((CustomInputsIndexFileBasedIndexExtension<K>)extension).createExternalizer();
+    } else {
+      externalizer = new InputIndexDataExternalizer<K>(keyDescriptor, indexId);
+    }
+    return externalizer;
   }
 
   @Override
@@ -941,6 +925,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       else {
         throw e;
       }
+    } catch(AssertionError ae) {
+      scheduleRebuild(indexId, ae);
     }
     return null;
   }
@@ -1278,6 +1264,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       else {
         throw e;
       }
+    } catch (AssertionError ae) {
+      scheduleRebuild(indexId, ae);
     }
     return true;
   }
@@ -1327,7 +1315,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           try {
             doClearIndex(indexId);
             if (!cleanupOnly) {
-              scheduleIndexRebuild(false);
+              scheduleIndexRebuild();
             }
           }
           catch (StorageException e) {
@@ -1365,16 +1353,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
   }
 
-  private void scheduleIndexRebuild(boolean forceDumbMode) {
+  private static void scheduleIndexRebuild() {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      final Set<CacheUpdater> updatersToRun = Collections.<CacheUpdater>singleton(new UnindexedFilesUpdater(project, this));
-      final DumbServiceImpl service = DumbServiceImpl.getInstance(project);
-      if (forceDumbMode) {
-        service.queueCacheUpdateInDumbMode(updatersToRun);
-      }
-      else {
-        service.queueCacheUpdate(updatersToRun);
-      }
+      DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project, false));
     }
   }
 
@@ -1669,6 +1650,10 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   public int getNumberOfPendingInvalidations() {
     return myChangedFilesCollector.getNumberOfPendingInvalidations();
+  }
+
+  public int getChangedFileCount() {
+    return myChangedFilesCollector.getAllFilesToUpdate().size();
   }
 
   @NotNull

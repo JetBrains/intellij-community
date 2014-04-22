@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -134,7 +135,7 @@ public class CacheUtils {
     final Set<VirtualFile> compiledWithErrors, 
     final @Nullable Function<Pair<int[], Set<VirtualFile>>, Pair<int[], Set<VirtualFile>>> filter)
     throws CacheCorruptedException, ExitException {
-    
+
     if (!CompilerConfiguration.MAKE_ENABLED) {
       return Collections.emptyList();
     }
@@ -143,51 +144,44 @@ public class CacheUtils {
     final DependencyCache dependencyCache = context.getDependencyCache();
 
     final Pair<int[], Set<VirtualFile>> deps = dependencyCache.findDependentClasses(context, context.getProject(), compiledWithErrors);
-    final Pair<int[], Set<VirtualFile>> filteredDeps = filter != null? filter.fun(deps) : deps;
+    final Pair<int[], Set<VirtualFile>> filteredDeps = filter != null ? filter.fun(deps) : deps;
 
     final Set<VirtualFile> dependentFiles = new HashSet<VirtualFile>();
-    final CacheCorruptedException[] _ex = {null};
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        try {
-          CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(context.getProject());
-          SourceFileFinder sourceFileFinder = new SourceFileFinder(context.getProject(), context);
-          final Cache cache = dependencyCache.getCache();
-          for (final int infoQName : filteredDeps.getFirst()) {
-            final String qualifiedName = dependencyCache.resolve(infoQName);
-            final String sourceFileName = cache.getSourceFileName(infoQName);
-            final VirtualFile file = sourceFileFinder.findSourceFile(qualifiedName, sourceFileName, true);
-            if (file != null) {
-              dependentFiles.add(file);
-              if (ApplicationManager.getApplication().isUnitTestMode()) {
-                LOG.assertTrue(file.isValid());
-                CompilerManagerImpl.addRecompiledPath(file.getPath());
-              }
-            }
-            else {
-              LOG.info("No source file for " + dependencyCache.resolve(infoQName) + " found; source file name=" + sourceFileName);
+    ApplicationManager.getApplication().runReadAction(new ThrowableComputable<Void, CacheCorruptedException>() {
+      @Override
+      public Void compute() throws CacheCorruptedException {
+        CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(context.getProject());
+        SourceFileFinder sourceFileFinder = new SourceFileFinder(context.getProject(), context);
+        final Cache cache = dependencyCache.getCache();
+        for (final int infoQName : filteredDeps.getFirst()) {
+          final String qualifiedName = dependencyCache.resolve(infoQName);
+          final String sourceFileName = cache.getSourceFileName(infoQName);
+          final VirtualFile file = sourceFileFinder.findSourceFile(qualifiedName, sourceFileName, true);
+          if (file != null) {
+            dependentFiles.add(file);
+            if (ApplicationManager.getApplication().isUnitTestMode()) {
+              LOG.assertTrue(file.isValid());
+              CompilerManagerImpl.addRecompiledPath(file.getPath());
             }
           }
-          for (final VirtualFile file : filteredDeps.getSecond()) {
-            if (!compilerConfiguration.isExcludedFromCompilation(file)) {
-              dependentFiles.add(file);
-              if (ApplicationManager.getApplication().isUnitTestMode()) {
-                LOG.assertTrue(file.isValid());
-                CompilerManagerImpl.addRecompiledPath(file.getPath());
-              }
+          else {
+            LOG.info("No source file for " + dependencyCache.resolve(infoQName) + " found; source file name=" + sourceFileName);
+          }
+        }
+        for (final VirtualFile file : filteredDeps.getSecond()) {
+          if (!compilerConfiguration.isExcludedFromCompilation(file)) {
+            dependentFiles.add(file);
+            if (ApplicationManager.getApplication().isUnitTestMode()) {
+              LOG.assertTrue(file.isValid());
+              CompilerManagerImpl.addRecompiledPath(file.getPath());
             }
           }
         }
-        catch (CacheCorruptedException e) {
-          _ex[0] = e;
-        }
+        return null;
       }
     });
-    if (_ex[0] != null) {
-      throw _ex[0];
-    }
     context.getProgressIndicator().setText(
-      dependentFiles.size() > 0? CompilerBundle.message("progress.found.dependent.files", dependentFiles.size()) : ""
+      dependentFiles.size() > 0 ? CompilerBundle.message("progress.found.dependent.files", dependentFiles.size()) : ""
     );
 
     return dependentFiles;

@@ -33,4 +33,6 @@ public interface GitHttpAuthDataProvider {
   @Nullable
   AuthData getAuthData(@NotNull String url);
 
+  void forgetPassword(@NotNull String url);
+
 }

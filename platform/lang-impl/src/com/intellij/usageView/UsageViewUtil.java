@@ -30,6 +30,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.usages.UsageView;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -162,5 +165,18 @@ public class UsageViewUtil {
     VirtualFile file = info.getVirtualFile();
     Project project = info.getProject();
     FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file, offset), requestFocus);
+  }
+
+  public static Set<UsageInfo> getNotExcludedUsageInfos(final UsageView usageView) {
+    Set<Usage> excludedUsages = usageView.getExcludedUsages();
+
+    Set<UsageInfo> usageInfos = new LinkedHashSet<UsageInfo>();
+    for (Usage usage : usageView.getUsages()) {
+      if (usage instanceof UsageInfo2UsageAdapter && !excludedUsages.contains(usage)) {
+        UsageInfo usageInfo = ((UsageInfo2UsageAdapter)usage).getUsageInfo();
+        usageInfos.add(usageInfo);
+      }
+    }
+    return usageInfos;
   }
 }

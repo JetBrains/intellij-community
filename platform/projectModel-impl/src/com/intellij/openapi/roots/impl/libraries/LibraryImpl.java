@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   private String myName;
   private final LibraryTable myLibraryTable;
   private final Map<OrderRootType, VirtualFilePointerContainer> myRoots;
-  private @Nullable VirtualFilePointerContainer myExcludedRoots;
+  @Nullable private VirtualFilePointerContainer myExcludedRoots;
   private final JarDirectories myJarDirectories = new JarDirectories();
   private final LibraryImpl mySource;
   private PersistentLibraryKind<?> myKind;
@@ -188,10 +188,10 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   }
 
   public static void collectJarFiles(final VirtualFile dir, final List<VirtualFile> container, final boolean recursively) {
-    VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor(SKIP_ROOT, (recursively ? null : ONE_LEVEL_DEEP)) {
+    VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor(SKIP_ROOT, recursively ? null : ONE_LEVEL_DEEP) {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
-        final VirtualFile jarRoot = StandardFileSystems.getJarRootForLocalFile(file);
+        final VirtualFile jarRoot = file.isDirectory() ? null : StandardFileSystems.getJarRootForLocalFile(file);
         if (jarRoot != null) {
           container.add(jarRoot);
           return false;

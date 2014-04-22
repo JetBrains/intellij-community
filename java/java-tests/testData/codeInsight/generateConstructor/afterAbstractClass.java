@@ -1,4 +1,4 @@
 public abstract class Test {
-    protected Test() {<caret>
+    public Test() {<caret>
     }
 }

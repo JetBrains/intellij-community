@@ -30,15 +30,12 @@ import com.intellij.ide.util.gotoByName.ChooseByNameFilter;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -117,24 +114,29 @@ public class RunInspectionAction extends GotoActionBase {
     final FileFilterPanel fileFilterPanel = new FileFilterPanel();
     fileFilterPanel.init();
 
-    final BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog(
-      AnalysisScopeBundle.message("specify.analysis.scope", InspectionsBundle.message("inspection.action.title")),
-      AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),
-      project,
-      analysisScope,
-      module != null ? module.getName() : null,
-      true,
-      AnalysisUIOptions.getInstance(project),
-      psiElement) {
+    final BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog(AnalysisScopeBundle.message("specify.analysis.scope", InspectionsBundle.message("inspection.action.title")),
+                                                                         AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")), 
+                                                                         project, analysisScope, module != null ? module.getName() : null, 
+                                                                         true, AnalysisUIOptions.getInstance(project), psiElement) {
 
       @Override
       protected JComponent getAdditionalActionSettings(Project project) {
         return fileFilterPanel.getPanel();
       }
 
+      @NotNull
       @Override
-      public SearchScope getCustomScope() {
-        return PsiSearchScopeUtil.union(fileFilterPanel.getSearchScope(), super.getCustomScope());
+      public AnalysisScope getScope(@NotNull AnalysisUIOptions uiOptions,
+                                    @NotNull AnalysisScope defaultScope,
+                                    @NotNull Project project,
+                                    Module module) {
+        final AnalysisScope scope = super.getScope(uiOptions, defaultScope, project, module);
+        final SearchScope filterScope = fileFilterPanel.getSearchScope();
+        if (filterScope == null) {
+          return scope;
+        }
+        final SearchScope filteredScope = filterScope.intersectWith(scope.toSearchScope());
+        return new AnalysisScope(filteredScope, project);
       }
     };
 

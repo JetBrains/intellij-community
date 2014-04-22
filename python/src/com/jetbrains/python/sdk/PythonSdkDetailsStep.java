@@ -40,6 +40,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   private DialogWrapper myMore;
@@ -154,7 +155,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
     Iterables.removeIf(allSdks, new Predicate<Sdk>() {
       @Override
       public boolean apply(Sdk sdk) {
-        return sdk.getSdkType() instanceof PythonSdkType;
+        return !(sdk.getSdkType() instanceof PythonSdkType);
       }
     });
     final List<PythonSdkFlavor> flavors = PythonSdkFlavor.getApplicableFlavors(false);
@@ -164,7 +165,10 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
         allSdks.add(new PyDetectedSdk(string));
       }
     }
-
+    final Set<String> sdks = PySdkService.getInstance().getAddedSdks();
+    for (String string : SdkConfigurationUtil.filterExistingPaths(PythonSdkType.getInstance(), sdks, myExistingSdks)) {
+      allSdks.add(new PyDetectedSdk(string));
+    }
     if (myProject != null) {
       dialog = new CreateVirtualEnvDialog(myProject, allSdks, null);
     }

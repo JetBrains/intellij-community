@@ -305,18 +305,21 @@ public class GithubCreatePullRequestWorker {
     if (info == null) {
       return true;
     }
+
+    String localBranchName = "'" + getCurrentBranch() + "'";
+    String targetBranchName = "'" + myTargetRemote + ":" + targetBranch + "'";
     if (info.getInfo().getBranchToHeadCommits(myGitRepository).isEmpty()) {
-      GithubNotifications.showWarningDialog(myProject, CANNOT_CREATE_PULL_REQUEST, "Can't create empty pull request: the branch" +
-                                                                                   getCurrentBranch() +
-                                                                                   " in fully merged to the branch " +
-                                                                                   targetBranch +
-                                                                                   ".");
+      GithubNotifications
+        .showWarningDialog(myProject, CANNOT_CREATE_PULL_REQUEST,
+                           "Can't create empty pull request: the branch " + localBranchName +
+                           " is fully merged to the branch " + targetBranchName
+        );
       return false;
     }
-    if (info.getInfo().getHeadToBranchCommits(myGitRepository).isEmpty()) {
+    if (!info.getInfo().getHeadToBranchCommits(myGitRepository).isEmpty()) {
       return GithubNotifications
-               .showYesNoDialog(myProject, "The branch" + targetBranch + " in not fully merged to the branch " + getCurrentBranch(),
-                                "Do you want to proceed anyway?") == Messages.YES;
+               .showYesNoDialog(myProject, "Do you want to proceed anyway?",
+                                "The branch " + targetBranchName + " is not fully merged to the branch " + localBranchName) == Messages.YES;
     }
 
     return true;

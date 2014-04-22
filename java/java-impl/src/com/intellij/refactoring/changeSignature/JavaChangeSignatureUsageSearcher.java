@@ -77,7 +77,7 @@ class JavaChangeSignatureUsageSearcher {
     methods.add(method);
 
     for (PsiMethod psiMethod : methods) {
-      for (PsiFunctionalExpression functionalExpression : FunctionalExpressionSearch.search(psiMethod.getContainingClass())) {
+      for (PsiFunctionalExpression functionalExpression : FunctionalExpressionSearch.search(psiMethod)) {
         result.add(new FunctionalInterfaceChangedUsageInfo(functionalExpression, psiMethod));
       }
     }

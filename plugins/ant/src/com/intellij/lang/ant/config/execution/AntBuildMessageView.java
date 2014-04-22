@@ -791,26 +791,30 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
               final Runnable finishRunnable = new Runnable() {
                 public void run() {
                   final int errorCount = getErrorCount();
-                  final AntBuildFileBase buildFile = myBuildFile;
-                  if (buildFile != null) {
-                    if (errorCount == 0 && buildFile.isViewClosedWhenNoErrors()) {
-                      close();
-                    }
-                    else if (errorCount > 0) {
-                      myTreeView.scrollToFirstError();
+                  try {
+                    final AntBuildFileBase buildFile = myBuildFile;
+                    if (buildFile != null) {
+                      if (errorCount == 0 && buildFile.isViewClosedWhenNoErrors()) {
+                        close();
+                      }
+                      else if (errorCount > 0) {
+                        myTreeView.scrollToFirstError();
+                      }
+                      else {
+                        myTreeView.scrollToStatus();
+                      }
                     }
                     else {
-                      myTreeView.scrollToStatus();
+                      myTreeView.scrollToLastMessage();
                     }
                   }
-                  else {
-                    myTreeView.scrollToLastMessage();
+                  finally {
+                    VirtualFileManager.getInstance().asyncRefresh(new Runnable() {
+                      public void run() {
+                        antBuildListener.buildFinished(aborted ? AntBuildListener.ABORTED : AntBuildListener.FINISHED_SUCCESSFULLY, errorCount);
+                      }
+                    });
                   }
-                  VirtualFileManager.getInstance().asyncRefresh(new Runnable() {
-                    public void run() {
-                      antBuildListener.buildFinished(aborted ? AntBuildListener.ABORTED : AntBuildListener.FINISHED_SUCCESSFULLY, errorCount);
-                    }
-                  });
                 }
               };
               if (shouldActivate) {

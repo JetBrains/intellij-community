@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
@@ -80,7 +81,7 @@ public class TipManager implements Disposable, PopupMenuListener {
 
   boolean myInsideComponent;
 
-  private class MyMouseListener extends MouseAdapter {
+  private class MyMouseListener extends MouseAdapter implements Weighted{
     @Override
     public void mouseExited(final MouseEvent e) {
       myInsideComponent = false;
@@ -91,6 +92,11 @@ public class TipManager implements Disposable, PopupMenuListener {
       if (myInsideComponent) {
         hideTooltip(true);
       }
+    }
+
+    @Override
+    public double getWeight() {
+      return 0;
     }
 
     @Override
@@ -130,7 +136,7 @@ public class TipManager implements Disposable, PopupMenuListener {
     }
   }
 
-  private class MyMouseMotionListener extends MouseMotionAdapter {
+  private class MyMouseMotionListener extends MouseMotionAdapter implements Weighted{
     @Override
     public void mouseMoved(final MouseEvent e) {
       myLastMouseEvent = e;
@@ -150,6 +156,10 @@ public class TipManager implements Disposable, PopupMenuListener {
       }
     }
 
+    @Override
+    public double getWeight() {
+      return 0;
+    }
   }
 
   private boolean isInsideComponent(final MouseEvent e) {

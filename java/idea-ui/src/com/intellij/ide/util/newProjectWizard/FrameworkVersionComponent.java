@@ -28,7 +28,7 @@ public class FrameworkVersionComponent {
                                    final List<? extends FrameworkVersion> versions_, String labelText) {
     myModel = model;
     myAllVersions = versions_;
-    myMainPanel = new JPanel(new VerticalFlowLayout());
+    myMainPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 3, true, false));
     myFrameworkOrGroupId = frameworkOrGroupId;
     myVersionsBox = new ComboBox();
     myVersionsBox.setRenderer(new ListCellRendererWrapper<FrameworkVersion>() {
@@ -47,7 +47,7 @@ public class FrameworkVersionComponent {
       }
     });
 
-    myVersionsPanel = FormBuilder.createFormBuilder().addLabeledComponent(labelText, myVersionsBox).getPanel();
+    myVersionsPanel = FormBuilder.createFormBuilder().setHorizontalGap(5).addLabeledComponent(labelText, myVersionsBox).getPanel();
     myMainPanel.add(myVersionsPanel);
     updateVersionsList();
   }

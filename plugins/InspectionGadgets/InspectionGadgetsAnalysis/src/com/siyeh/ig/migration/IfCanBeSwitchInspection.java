@@ -17,6 +17,9 @@ package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -30,6 +33,7 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.psiutils.SwitchUtils.IfStatementBranch;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +43,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.Document;
 import java.awt.*;
+import java.lang.String;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -46,6 +51,8 @@ import java.util.List;
 
 public class IfCanBeSwitchInspection extends BaseInspection {
 
+  @NonNls private static final String ONLY_SAFE = "onlySuggestNullSafe";
+  
   @SuppressWarnings({"PublicField"})
   public int minimumBranches = 3;
 
@@ -55,8 +62,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
   @SuppressWarnings({"PublicField"})
   public boolean suggestEnumSwitches = false;
 
-  @SuppressWarnings("PublicField")
-  public boolean onlySuggestNullSafe = true;
+  private boolean onlySuggestNullSafe = true;
 
   @Override
   public boolean isEnabledByDefault() {
@@ -132,6 +138,10 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       new CheckBox(InspectionGadgetsBundle.message("if.can.be.switch.null.safe.option"), this, "onlySuggestNullSafe");
     panel.add(checkBox3, constraints);
     return panel;
+  }
+
+  public void setOnlySuggestNullSafe(boolean onlySuggestNullSafe) {
+    this.onlySuggestNullSafe = onlySuggestNullSafe;
   }
 
   private static class IfCanBeSwitchFix extends InspectionGadgetsFix {
@@ -487,6 +497,31 @@ public class IfCanBeSwitchInspection extends BaseInspection {
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new IfCanBeSwitchVisitor();
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    super.writeSettings(node);
+    if (!onlySuggestNullSafe) {
+      final Element e = new Element("option");
+      e.setAttribute("name", ONLY_SAFE);
+      e.setAttribute("value", Boolean.toString(onlySuggestNullSafe));
+      node.addContent(e);
+    }
+  }
+
+  @Override
+  public void readSettings(@NotNull Element node) throws InvalidDataException {
+    super.readSettings(node);
+    for (Element o : node.getChildren()) {
+      if (Comparing.strEqual(node.getAttributeValue("name"), ONLY_SAFE)) {
+        final String onlySafe = node.getAttributeValue("value");
+        if (onlySafe != null) {
+          onlySuggestNullSafe = Boolean.parseBoolean(onlySafe);
+        }
+        break;
+      }
+    }
   }
 
   private class IfCanBeSwitchVisitor extends BaseInspectionVisitor {

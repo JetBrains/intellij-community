@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -221,14 +221,12 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
       if (VariableAccessUtils.variableIsReturned(variable, context)) {
         return false;
       }
-      if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable, context)) {
-        return false;
-      }
       return !VariableAccessUtils.variableIsUsedInArrayInitializer(variable, context);
     }
 
     private boolean collectionContentsAreUpdated(PsiVariable variable, PsiElement context) {
-      if (collectionUpdateCalled(variable, context)) {
+      if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable, CollectionUtils.getAllCollectionNames(), context) ||
+          collectionUpdateCalled(variable, context)) {
         return true;
       }
       final PsiExpression initializer = variable.getInitializer();
@@ -253,7 +251,7 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
     }
 
     private boolean collectionContentsAreQueried(PsiVariable variable, PsiElement context) {
-      if (collectionQueryCalled(variable, context)) {
+      if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable, context) || collectionQueryCalled(variable, context)) {
         return true;
       }
       final PsiExpression initializer = variable.getInitializer();

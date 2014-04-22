@@ -213,6 +213,7 @@ public class ControlFlowUtil {
 
   public static List<PsiVariable> getUsedVariables(ControlFlow flow, int start, int end) {
     ArrayList<PsiVariable> array = new ArrayList<PsiVariable>();
+    if (start < 0) return array;
     List<Instruction> instructions = flow.getInstructions();
     for (int i = start; i < end; i++) {
       Instruction instruction = instructions.get(i);

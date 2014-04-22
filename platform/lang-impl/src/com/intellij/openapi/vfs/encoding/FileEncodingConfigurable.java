@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,6 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
   private EncodingFileTreeTable myTreeView;
   private JScrollPane myTreePanel;
   private JPanel myPanel;
-  private JCheckBox myAutodetectUTFEncodedFilesCheckBox;
   private JCheckBox myTransparentNativeToAsciiCheckBox;
   private JPanel myPropertiesFilesEncodingCombo;
   private final Ref<Charset> mySelectedCharsetForPropertiesFiles = new Ref<Charset>();
@@ -145,7 +144,6 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
     Map<VirtualFile, Charset> mapping = EncodingProjectManager.getInstance(myProject).getAllMappings();
     boolean same = editing.equals(mapping)
        && Comparing.equal(encodingManager.getDefaultCharsetForPropertiesFiles(null), mySelectedCharsetForPropertiesFiles.get())
-       && encodingManager.isUseUTFGuessing(null) == myAutodetectUTFEncodedFilesCheckBox.isSelected()
        && encodingManager.isNative2AsciiForPropertiesFiles() == myTransparentNativeToAsciiCheckBox.isSelected()
       ;
     return !same;
@@ -179,7 +177,6 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
     encodingManager.setMapping(result);
     encodingManager.setDefaultCharsetForPropertiesFiles(null, mySelectedCharsetForPropertiesFiles.get());
     encodingManager.setNative2AsciiForPropertiesFiles(null, myTransparentNativeToAsciiCheckBox.isSelected());
-    encodingManager.setUseUTFGuessing(null, myAutodetectUTFEncodedFilesCheckBox.isSelected());
 
     Charset ideCharset = mySelectedIdeCharset.get();
     EncodingManager.getInstance().setDefaultCharsetName(ideCharset == null ? "" : ideCharset.name());
@@ -189,7 +186,6 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
   public void reset() {
     EncodingProjectManager encodingManager = EncodingProjectManager.getInstance(myProject);
     myTreeView.reset(encodingManager.getAllMappings());
-    myAutodetectUTFEncodedFilesCheckBox.setSelected(encodingManager.isUseUTFGuessing(null));
     myTransparentNativeToAsciiCheckBox.setSelected(encodingManager.isNative2AsciiForPropertiesFiles());
     mySelectedCharsetForPropertiesFiles.set(encodingManager.getDefaultCharsetForPropertiesFiles(null));
 

@@ -50,6 +50,7 @@ public abstract class EncodingRegistry {
   @Nullable
   public abstract Charset getEncoding(@Nullable VirtualFile virtualFile, boolean useParentDefaults);
 
+  @Deprecated // return true always
   public abstract boolean isUseUTFGuessing(VirtualFile virtualFile);
 
   public abstract void setEncoding(@Nullable("null means project") VirtualFile virtualFileOrDir, @Nullable("null means remove mapping") Charset charset);

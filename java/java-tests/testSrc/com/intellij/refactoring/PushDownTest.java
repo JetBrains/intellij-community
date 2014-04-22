@@ -16,12 +16,14 @@
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.memberPushDown.PushDownProcessor;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
 
@@ -53,6 +55,12 @@ public class PushDownTest extends LightRefactoringTestCase {
   public void testSubstTypeArgs() { doTestImplements(); }
   public void testExtensionMethodToInterface() { doTest(); }
   public void testExtensionMethodToClass() { doTest(); }
+
+  public void testFunctionalExpression() { doTest(true);}
+  public void testFunctionalInterface() { doTest(true);}
+  public void testFunctionalExpressionDefaultMethod() { doTest();}
+
+  public void testInterfaceConstants() { doTest();}
 
   private void doTest() {
     doTest(false);
@@ -121,5 +129,10 @@ public class PushDownTest extends LightRefactoringTestCase {
     }.run();
 
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk18();
   }
 }

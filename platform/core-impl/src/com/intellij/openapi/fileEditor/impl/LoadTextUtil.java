@@ -108,10 +108,6 @@ public final class LoadTextUtil {
     return Pair.create(result, detectedLineSeparator);
   }
 
-  private static Charset detectCharset(@NotNull VirtualFile virtualFile, @NotNull byte[] content) {
-    return detectCharset(virtualFile, content, virtualFile.getFileType());
-  }
-
   public static Charset detectCharset(@NotNull VirtualFile virtualFile, @NotNull byte[] content, @NotNull FileType fileType) {
     Charset charset = null;
 
@@ -162,14 +158,14 @@ public final class LoadTextUtil {
     return bomAndCharset;
   }
 
+  private static final boolean GUESS_UTF = Boolean.parseBoolean(System.getProperty("idea.guess.utf.encoding", "true"));
+
   @Nullable("null means no luck, otherwise it's tuple(guessed encoding, hint about content if was unable to guess, BOM)")
   public static Trinity<Charset, CharsetToolkit.GuessedEncoding, byte[]> guessFromContent(@NotNull VirtualFile virtualFile, @NotNull byte[] content, int length) {
-    EncodingRegistry settings = EncodingRegistry.getInstance();
-    boolean shouldGuess = settings != null && settings.isUseUTFGuessing(virtualFile);
-    CharsetToolkit toolkit = shouldGuess ? new CharsetToolkit(content, EncodingRegistry.getInstance().getDefaultCharset()) : null;
+    CharsetToolkit toolkit = GUESS_UTF ? new CharsetToolkit(content, EncodingRegistry.getInstance().getDefaultCharset()) : null;
     String detectedFromBytes = null;
     try {
-      if (shouldGuess) {
+      if (GUESS_UTF) {
         toolkit.setEnforce8Bit(true);
         Charset charset = toolkit.guessFromBOM();
         if (charset != null) {
@@ -183,7 +179,9 @@ public final class LoadTextUtil {
           detectedFromBytes = "auto-detected from bytes";
           return Trinity.create(CharsetToolkit.UTF8_CHARSET, guessed, null); //UTF detected, ignore all directives
         }
-        return Trinity.create(null, guessed,null);
+        if (guessed == CharsetToolkit.GuessedEncoding.SEVEN_BIT) {
+          return Trinity.create(null, guessed, null);
+        }
       }
       return null;
     }

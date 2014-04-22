@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 abstract class Timed<T> implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.Timed");
   private static final Map<Timed, Boolean> ourReferences = Collections.synchronizedMap(new WeakHashMap<Timed, Boolean>());
+  protected static final int SERVICE_DELAY = 60;
 
   int myLastCheckedAccessCount;
   int myAccessCount;
@@ -74,6 +75,9 @@ abstract class Timed<T> implements Disposable {
     return false;
   }
 
+  protected synchronized boolean checkLocked() {
+    return isLocked();
+  }
 
   static {
     ScheduledExecutorService service = ConcurrencyUtil.newSingleScheduledThreadExecutor("timed reference disposer", Thread.MIN_PRIORITY + 1);
@@ -87,7 +91,7 @@ abstract class Timed<T> implements Disposable {
           LOG.error(e);
         }
       }
-    }, 60, 60, TimeUnit.SECONDS);
+    }, SERVICE_DELAY, SERVICE_DELAY, TimeUnit.SECONDS);
   }
 
   static void disposeTimed() {
@@ -95,7 +99,7 @@ abstract class Timed<T> implements Disposable {
     for (Timed timed : references) {
       if (timed == null) continue;
       synchronized (timed) {
-        if (timed.myLastCheckedAccessCount == timed.myAccessCount && !timed.isLocked()) {
+        if (timed.myLastCheckedAccessCount == timed.myAccessCount && !timed.checkLocked()) {
           timed.dispose();
         }
         else {

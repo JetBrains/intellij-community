@@ -17,13 +17,13 @@ package com.intellij.ui;
 
 import com.intellij.Patches;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.WeakHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Area;
 import java.util.Map;
 
 /**
@@ -33,11 +33,8 @@ import java.util.Map;
 public class ScreenUtil {
   public static final String DISPOSE_TEMPORARY = "dispose.temporary";
 
-  @Nullable private static final Map<GraphicsConfiguration, Pair<Insets, Long>> ourInsetsCache;
-  static {
-    final boolean useCache = SystemInfo.isXWindow && !GraphicsEnvironment.isHeadless();
-    ourInsetsCache = useCache ? new WeakHashMap<GraphicsConfiguration, Pair<Insets, Long>>() : null;
-  }
+  @Nullable private static final Map<GraphicsConfiguration, Pair<Insets, Long>> ourInsetsCache =
+    Patches.JDK_BUG_ID_8004103 ? new WeakHashMap<GraphicsConfiguration, Pair<Insets, Long>>() : null;
   private static final int ourInsetsTimeout = 5000;  // shouldn't be too long
 
   private ScreenUtil() { }
@@ -77,6 +74,15 @@ public class ScreenUtil {
       applyInsets(result[i], getScreenInsets(configuration));
     }
     return result;
+  }
+
+  public static Shape getAllScreensShape() {
+    Rectangle[] rectangles = getAllScreenBounds();
+    Area area = new Area();
+    for (Rectangle rectangle : rectangles) {
+      area.add(new Area(rectangle));
+    }
+    return area;
   }
 
   public static Rectangle getScreenRectangle(@NotNull Point p) {

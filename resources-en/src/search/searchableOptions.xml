@@ -4327,6 +4327,13 @@
     <option name="wraps" hit="Use soft wraps in editor" />
     <option name="space" hit="Virtual Space" />
     <option name="virtual" hit="Virtual Space" />
+    <option name="rich" hit="Rich-text copy"/>
+    <option name="copy" hit="Rich-text copy"/>
+    <option name="color" hit="Color scheme"/>
+    <option name="scheme" hit="Color scheme"/>
+    <option name="strip" hit="Strip common indent"/>
+    <option name="common" hit="Strip common indent"/>
+    <option name="indent" hit="Strip common indent"/>
   </configurable>
   <configurable id="vcs.Subversion" configurable_name="Subversion">
     <option name="" path="General" hit="" />

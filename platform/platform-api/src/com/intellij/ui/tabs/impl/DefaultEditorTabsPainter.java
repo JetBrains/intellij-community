@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ public class DefaultEditorTabsPainter implements JBEditorTabsPainter {
 
   private static void drawShadow(Graphics2D g, int x, int w, int shadowBottom) {
     int shadowTop = shadowBottom - ACTIVE_TAB_SHADOW_HEIGHT;
-    g.setPaint(UIUtil.getGradientPaint(x, shadowTop, new Color(0, 0, 0, 0),
+    g.setPaint(UIUtil.getGradientPaint(x, shadowTop, Gray.TRANSPARENT,
                                    x, shadowBottom, new Color(0, 0, 0, 30)));
     g.fillRect(x, shadowTop, w, ACTIVE_TAB_SHADOW_HEIGHT);
   }

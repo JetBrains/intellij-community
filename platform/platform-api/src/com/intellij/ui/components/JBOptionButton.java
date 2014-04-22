@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.JBMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.ScreenUtil;
@@ -35,7 +36,7 @@ import java.awt.event.MouseMotionListener;
 import java.util.HashSet;
 import java.util.Set;
 
-public class JBOptionButton extends JButton implements MouseMotionListener {
+public class JBOptionButton extends JButton implements MouseMotionListener, Weighted {
 
 
   private static final Insets myDownIconInsets = new Insets(0, 6, 0, 4);
@@ -83,6 +84,11 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
     if (!ScreenUtil.isStandardAddRemoveNotify(this))
       return;
     Disposer.dispose(myDisposable);
+  }
+
+  @Override
+  public double getWeight() {
+    return 0.5;
   }
 
   @Override

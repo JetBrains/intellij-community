@@ -268,7 +268,9 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
         }
       }
     }
-    catch (Throwable ignored) { }
+    catch (Throwable ignored) {
+      // ignored
+    }
 
     return null;
   }

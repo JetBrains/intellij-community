@@ -346,15 +346,14 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         }
         else if (classOptions.isImplementingClasses){
           if (!addImplementingClasses(psiClass, processor, classOptions)) return false;
+          FunctionalExpressionSearch.search(psiClass, classOptions.searchScope).forEach(new PsiElementProcessorAdapter<PsiFunctionalExpression>(
+            new PsiElementProcessor<PsiFunctionalExpression>() {
+              @Override
+              public boolean execute(@NotNull PsiFunctionalExpression expression) {
+                return addResult(processor, expression, options);
+              }
+            }));
         }
-
-        FunctionalExpressionSearch.search(psiClass, classOptions.searchScope).forEach(new PsiElementProcessorAdapter<PsiFunctionalExpression>(
-          new PsiElementProcessor<PsiFunctionalExpression>() {
-            @Override
-            public boolean execute(@NotNull PsiFunctionalExpression expression) {
-              return addResult(processor, expression, options);
-            }
-          }));
       }
       else if (classOptions.isDerivedClasses) {
         if (!addInheritors(psiClass, processor, classOptions)) return false;
@@ -372,6 +371,13 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       final JavaMethodFindUsagesOptions methodOptions = (JavaMethodFindUsagesOptions)options;
       if (isAbstract && methodOptions.isImplementingMethods || methodOptions.isOverridingMethods) {
         if (!processOverridingMethods(psiMethod, processor, methodOptions)) return false;
+        FunctionalExpressionSearch.search(psiMethod, methodOptions.searchScope).forEach(new PsiElementProcessorAdapter<PsiFunctionalExpression>(
+          new PsiElementProcessor<PsiFunctionalExpression>() {
+            @Override
+            public boolean execute(@NotNull PsiFunctionalExpression expression) {
+              return addResult(processor, expression, options);
+            }
+          }));
       }
     }
 

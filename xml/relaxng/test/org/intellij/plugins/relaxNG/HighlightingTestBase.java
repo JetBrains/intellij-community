@@ -215,13 +215,14 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
     assertTrue("One action expected", fixes != null && fixes.length == 1);
 
     final Project project = myTestFixture.getProject();
+    final ProblemDescriptor problemDescriptor = InspectionManager.getInstance(project).createProblemDescriptor(psiReference.getElement(),
+                                                                                                               "foo",
+                                                                                                               fixes,
+                                                                                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                                                                               true);
     new WriteCommandAction.Simple(project, myTestFixture.getFile()) {
       @Override
       protected void run() throws Throwable {
-        ProblemDescriptor problemDescriptor = InspectionManager.getInstance(project).createProblemDescriptor(psiReference.getElement(), "foo",
-                                                                                               fixes,
-                                                                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                                                                               true);
         fixes[0].applyFix(project, problemDescriptor);
       }
     }.execute();

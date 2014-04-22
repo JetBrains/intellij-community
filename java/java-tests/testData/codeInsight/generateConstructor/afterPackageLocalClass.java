@@ -1,4 +1,4 @@
 class Test {
-    Test() {<caret>
+    public Test() {<caret>
     }
 }

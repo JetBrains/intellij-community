@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -396,6 +396,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return new FakeVirtualFile(parent, dir);
   }
 
+  @NotNull
   @Override
   public VirtualFile createChildFile(final Object requestor, @NotNull final VirtualFile parent, @NotNull final String file) throws IOException {
     final File ioFile = new File(convertToIOFile(parent), file);
@@ -524,6 +525,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     });
   }
 
+  @NotNull
   @Override
   public VirtualFile copyFile(final Object requestor,
                               @NotNull final VirtualFile vFile,
@@ -640,6 +642,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return true;
   }
 
+  @NotNull
   @Override
   public String getCanonicallyCasedName(@NotNull final VirtualFile file) {
     if (isCaseSensitive()) {

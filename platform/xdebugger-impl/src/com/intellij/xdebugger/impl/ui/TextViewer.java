@@ -26,6 +26,7 @@ public final class TextViewer extends EditorTextField {
 
     myEmbeddedIntoDialogWrapper = embeddedIntoDialogWrapper;
     myUseSoftWraps = useSoftWraps;
+    setFontInheritedFromLAF(false);
   }
 
   private static Document createDocument(@NotNull String initialText) {
@@ -40,6 +41,7 @@ public final class TextViewer extends EditorTextField {
   protected EditorEx createEditor() {
     final EditorEx editor = super.createEditor();
     editor.setHorizontalScrollbarVisible(true);
+    editor.setCaretEnabled(true);
     editor.setVerticalScrollbarVisible(true);
     editor.setEmbeddedIntoDialogWrapper(myEmbeddedIntoDialogWrapper);
     editor.getComponent().setPreferredSize(null);

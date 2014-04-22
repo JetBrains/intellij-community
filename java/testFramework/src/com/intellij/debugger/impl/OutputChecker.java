@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,19 +24,20 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.HashMap;
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -172,91 +173,78 @@ public class OutputChecker {
 
     if (application == null) return buffer;
 
-    final Exception[] ex = new Exception[]{null};
-
-    String actual = application.runReadAction(new Computable<String>() {
+    return application.runReadAction(new ThrowableComputable<String, Exception>() {
       @Override
-      public String compute() {
-        try {
-          String internalJdkHome = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().getHomeDirectory().getPath();
-          //System.out.println("internalJdkHome = " + internalJdkHome);
+      public String compute() throws UnknownHostException {
+        String internalJdkHome = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().getHomeDirectory().getPath();
+        //System.out.println("internalJdkHome = " + internalJdkHome);
 
-          String result = buffer;
-          //System.out.println("Original Output = " + result);
-          final boolean shouldIgnoreCase = !SystemInfo.isFileSystemCaseSensitive;
+        String result = buffer;
+        //System.out.println("Original Output = " + result);
+        final boolean shouldIgnoreCase = !SystemInfo.isFileSystemCaseSensitive;
 
-          result = StringUtil.replace(result, "\r\n", "\n");
-          result = StringUtil.replace(result, "\r", "\n");
-          result = replaceAdditionalInOutput(result);
-          result = StringUtil.replace(result, testJdk.getHomePath(), "!TEST_JDK!", shouldIgnoreCase);
-          result = StringUtil.replace(result, myAppPath, "!APP_PATH!", shouldIgnoreCase);
-          result = StringUtil.replace(result, myAppPath.replace(File.separatorChar, '/'), "!APP_PATH!", shouldIgnoreCase);
-          result = StringUtil.replace(result, JavaSdkUtil.getIdeaRtJarPath(), "!RT_JAR!", shouldIgnoreCase);
-          result = StringUtil.replace(result, JavaSdkUtil.getJunit4JarPath(), "!JUNIT4_JAR!", shouldIgnoreCase);
-          result = StringUtil.replace(result, InetAddress.getLocalHost().getCanonicalHostName(), "!HOST_NAME!", shouldIgnoreCase);
-          result = StringUtil.replace(result, InetAddress.getLocalHost().getHostName(), "!HOST_NAME!", shouldIgnoreCase);
-          result = StringUtil.replace(result, "127.0.0.1", "!HOST_NAME!", shouldIgnoreCase);
-          result = StringUtil.replace(result, JavaSdkUtil.getIdeaRtJarPath().replace('/', File.separatorChar), "!RT_JAR!", shouldIgnoreCase);
-          result = StringUtil.replace(result, internalJdkHome.replace('/', File.separatorChar), "!JDK_HOME!", shouldIgnoreCase);
-          result = StringUtil.replace(result, internalJdkHome, "!JDK_HOME!", shouldIgnoreCase);
-          result = StringUtil.replace(result, PathManager.getHomePath(), "!IDEA_HOME!", shouldIgnoreCase);
-          result = StringUtil.replace(result, "Process finished with exit code 255", "Process finished with exit code -1");
+        result = StringUtil.replace(result, "\r\n", "\n");
+        result = StringUtil.replace(result, "\r", "\n");
+        result = replaceAdditionalInOutput(result);
+        result = StringUtil.replace(result, testJdk.getHomePath(), "!TEST_JDK!", shouldIgnoreCase);
+        result = StringUtil.replace(result, myAppPath, "!APP_PATH!", shouldIgnoreCase);
+        result = StringUtil.replace(result, myAppPath.replace(File.separatorChar, '/'), "!APP_PATH!", shouldIgnoreCase);
+        result = StringUtil.replace(result, JavaSdkUtil.getIdeaRtJarPath(), "!RT_JAR!", shouldIgnoreCase);
+        result = StringUtil.replace(result, JavaSdkUtil.getJunit4JarPath(), "!JUNIT4_JAR!", shouldIgnoreCase);
+        result = StringUtil.replace(result, InetAddress.getLocalHost().getCanonicalHostName(), "!HOST_NAME!", shouldIgnoreCase);
+        result = StringUtil.replace(result, InetAddress.getLocalHost().getHostName(), "!HOST_NAME!", shouldIgnoreCase);
+        result = StringUtil.replace(result, "127.0.0.1", "!HOST_NAME!", shouldIgnoreCase);
+        result = StringUtil.replace(result, JavaSdkUtil.getIdeaRtJarPath().replace('/', File.separatorChar), "!RT_JAR!", shouldIgnoreCase);
+        result = StringUtil.replace(result, internalJdkHome.replace('/', File.separatorChar), "!JDK_HOME!", shouldIgnoreCase);
+        result = StringUtil.replace(result, internalJdkHome, "!JDK_HOME!", shouldIgnoreCase);
+        result = StringUtil.replace(result, PathManager.getHomePath(), "!IDEA_HOME!", shouldIgnoreCase);
+        result = StringUtil.replace(result, "Process finished with exit code 255", "Process finished with exit code -1");
 
-//          result = result.replaceAll(" +\n", "\n");
-          result = result.replaceAll("!HOST_NAME!:\\d*", "!HOST_NAME!:!HOST_PORT!");
-          result = result.replaceAll("at \\'.*?\\'", "at '!HOST_NAME!:PORT_NAME!'");
-          result = result.replaceAll("address: \\'.*?\\'", "address: '!HOST_NAME!:PORT_NAME!'");
-          result = result.replaceAll("file.*AppletPage.*\\.html", "file:/!APPLET_HTML!");
-          result = result.replaceAll("\"(!JDK_HOME!.*?)\"", "$1");
-          result = result.replaceAll("\"(!APP_PATH!.*?)\"", "$1");
+        //          result = result.replaceAll(" +\n", "\n");
+        result = result.replaceAll("!HOST_NAME!:\\d*", "!HOST_NAME!:!HOST_PORT!");
+        result = result.replaceAll("at \\'.*?\\'", "at '!HOST_NAME!:PORT_NAME!'");
+        result = result.replaceAll("address: \\'.*?\\'", "address: '!HOST_NAME!:PORT_NAME!'");
+        result = result.replaceAll("file.*AppletPage.*\\.html", "file:/!APPLET_HTML!");
+        result = result.replaceAll("\"(!JDK_HOME!.*?)\"", "$1");
+        result = result.replaceAll("\"(!APP_PATH!.*?)\"", "$1");
 
-          result = result.replaceAll("-Didea.launcher.port=\\d*", "-Didea.launcher.port=!IDEA_LAUNCHER_PORT!");
-          result = result.replaceAll("-Dfile.encoding=[\\w\\d-]*", "-Dfile.encoding=!FILE_ENCODING!");
-          result = result.replaceAll("\\((.*)\\:\\d+\\)", "($1:!LINE_NUMBER!)");
+        result = result.replaceAll("-Didea.launcher.port=\\d*", "-Didea.launcher.port=!IDEA_LAUNCHER_PORT!");
+        result = result.replaceAll("-Dfile.encoding=[\\w\\d-]*", "-Dfile.encoding=!FILE_ENCODING!");
+        result = result.replaceAll("\\((.*)\\:\\d+\\)", "($1:!LINE_NUMBER!)");
 
-          int commandLineStart = result.indexOf("!JDK_HOME!");
-          while (commandLineStart != -1) {
-            final StringBuilder builder = new StringBuilder(result);
-            int i = commandLineStart + 1;
-            while (i < builder.length()) {
-              char c = builder.charAt(i);
-              if (c == '\n') break;
-              else if (c == File.separatorChar) builder.setCharAt(i, '\\');
-              i++;
-            }
-            result = builder.toString();
-            commandLineStart = result.indexOf("!JDK_HOME!", commandLineStart + 1);
+        int commandLineStart = result.indexOf("!JDK_HOME!");
+        while (commandLineStart != -1) {
+          final StringBuilder builder = new StringBuilder(result);
+          int i = commandLineStart + 1;
+          while (i < builder.length()) {
+            char c = builder.charAt(i);
+            if (c == '\n') break;
+            else if (c == File.separatorChar) builder.setCharAt(i, '\\');
+            i++;
           }
+          result = builder.toString();
+          commandLineStart = result.indexOf("!JDK_HOME!", commandLineStart + 1);
+        }
 
-          result = stripQuotesAroundClasspath(result);
+        result = stripQuotesAroundClasspath(result);
 
-          final Matcher matcher = Pattern.compile("-classpath\\s+(\\S+)\\s+").matcher(result);
-          while (matcher.find()) {
-            final String classPath = matcher.group(1);
-            final String[] classPathElements = classPath.split(File.pathSeparator);
-            if (sortClassPath) {
-              Arrays.sort(classPathElements);
-            }
-            final String sortedPath = StringUtil.join(classPathElements, ";");
-            result = StringUtil.replace(result, classPath, sortedPath);
+        final Matcher matcher = Pattern.compile("-classpath\\s+(\\S+)\\s+").matcher(result);
+        while (matcher.find()) {
+          final String classPath = matcher.group(1);
+          final String[] classPathElements = classPath.split(File.pathSeparator);
+          if (sortClassPath) {
+            Arrays.sort(classPathElements);
           }
-
-          result = JDI_BUG_OUTPUT_PATTERN_1.matcher(result).replaceAll("");
-          result = JDI_BUG_OUTPUT_PATTERN_2.matcher(result).replaceAll("");
-
-          return result;
+          final String sortedPath = StringUtil.join(classPathElements, ";");
+          result = StringUtil.replace(result, classPath, sortedPath);
         }
-        catch (Exception exception) {
-          ex[0] = exception;
-          return null;
-        }
+
+        result = JDI_BUG_OUTPUT_PATTERN_1.matcher(result).replaceAll("");
+        result = JDI_BUG_OUTPUT_PATTERN_2.matcher(result).replaceAll("");
+
+        return result;
       }
     });
-
-
-    if (ex[0] != null) throw ex[0];
-
-    return actual;
   }
 
   protected String replaceAdditionalInOutput(String str) {

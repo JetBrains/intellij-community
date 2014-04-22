@@ -1,6 +1,7 @@
 package org.jetbrains.debugger.values;
 
 import com.intellij.openapi.util.AsyncResult;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.Scope;
@@ -24,4 +25,11 @@ public interface FunctionValue extends ObjectValue {
 
   @Nullable
   Scope[] getScopes();
+
+  /**
+   * Method could be called (it is normal and expected) for unresolved function.
+   * It must return quickly. Return {@link com.intellij.util.ThreeState#UNSURE} otherwise.
+   */
+  @NotNull
+  ThreeState hasScopes();
 }

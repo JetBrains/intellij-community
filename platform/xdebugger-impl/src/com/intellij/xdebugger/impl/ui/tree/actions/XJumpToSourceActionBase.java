@@ -16,7 +16,6 @@
 package com.intellij.xdebugger.impl.ui.tree.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.project.Project;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XNavigatable;
@@ -29,19 +28,19 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public abstract class XJumpToSourceActionBase extends XDebuggerTreeActionBase {
+  @Override
   protected void perform(final XValueNodeImpl node, @NotNull final String nodeName, final AnActionEvent e) {
     XValue value = node.getValueContainer();
     XNavigatable navigatable = new XNavigatable() {
+      @Override
       public void setSourcePosition(@Nullable final XSourcePosition sourcePosition) {
         if (sourcePosition != null) {
           AppUIUtil.invokeOnEdt(new Runnable() {
+            @Override
             public void run() {
-              Project project = node.getTree().getProject();
-              if (project.isDisposed()) return;
-
-              sourcePosition.createNavigatable(project).navigate(true);
+              sourcePosition.createNavigatable(node.getTree().getProject()).navigate(true);
             }
-          });
+          }, node.getTree().getProject().getDisposed());
         }
       }
     };

@@ -424,17 +424,17 @@ public class GenericsHighlightUtil {
                                                             @NotNull PsiIdentifier classIdentifier) {
     for (HierarchicalMethodSignature methodSignature : signaturesWithSupers) {
       final PsiMethod method = methodSignature.getMethod();
-      if (method.hasModifierProperty(PsiModifier.DEFAULT)) {
+      final boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
+      if (method.hasModifierProperty(PsiModifier.DEFAULT) || isAbstract) {
         final PsiClass containingClass = method.getContainingClass();
         List<HierarchicalMethodSignature> superSignatures = methodSignature.getSuperSignatures();
         if (!superSignatures.isEmpty()) {
           for (HierarchicalMethodSignature signature : superSignatures) {
             final PsiMethod superMethod = signature.getMethod();
             final PsiClass superContainingClass = superMethod.getContainingClass();
-            if (containingClass != null && superContainingClass != null && !InheritanceUtil
-              .isInheritorOrSelf(containingClass, superContainingClass, true)) {
+            if (containingClass != null && superContainingClass != null && !InheritanceUtil.isInheritorOrSelf(containingClass, superContainingClass, true)) {
               final boolean isDefault = superMethod.hasModifierProperty(PsiModifier.DEFAULT);
-              if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !isDefault) {
+              if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !isDefault && !isAbstract) {
                 final String message = JavaErrorMessages.message(
                   aClass instanceof PsiEnumConstantInitializer ? "enum.constant.should.implement.method" : "class.must.be.abstract",
                   HighlightUtil.formatClass(superContainingClass),
@@ -445,7 +445,7 @@ public class GenericsHighlightUtil {
                   .create();
               }
 
-              if (isDefault || superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+              if (isDefault || !isAbstract && superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
                 final String message = isDefault
                                        ? " inherits unrelated defaults for "
                                        : " inherits abstract and default for ";

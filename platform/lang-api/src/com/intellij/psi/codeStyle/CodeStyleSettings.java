@@ -207,6 +207,9 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public boolean GENERATE_FINAL_LOCALS = false;
   public boolean GENERATE_FINAL_PARAMETERS = false;
 
+//----------------- visibility -----------------------------
+  public String VISIBILITY = "public";
+
 //----------------- generate parentheses around method arguments ----------
   public boolean PARENTHESES_AROUND_METHOD_ARGUMENTS = true;
 

@@ -18,15 +18,12 @@ package com.intellij.diagnostic;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.log4j.spi.LoggingEvent;
-import org.jetbrains.annotations.NonNls;
 
 public class LogMessage extends AbstractMessage {
-
-  @NonNls static final String NO_MESSAGE = "No message";
-
-  private String myHeader = NO_MESSAGE;
   private final Throwable myThrowable;
+  private final String myHeader;
 
+  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
   public LogMessage(LoggingEvent aEvent) {
     super();
 
@@ -45,33 +42,45 @@ public class LogMessage extends AbstractMessage {
 
     myThrowable = aEvent.getThrowable();
 
-    if (StringUtil.isNotEmpty(aEvent.getMessage())) {
-      myHeader = aEvent.getMessage();
+    String header = null;
+
+    if (!StringUtil.isEmptyOrSpaces(aEvent.getMessage())) {
+      header = aEvent.getMessage();
     }
 
-    if (myThrowable != null && StringUtil.isNotEmpty(myThrowable.getMessage())) {
-      if (!myHeader.equals(NO_MESSAGE)) {
-        if (!myHeader.endsWith(": ") && !myHeader.endsWith(":")) {
-          myHeader += ": ";
+    if (myThrowable != null) {
+      String message = myThrowable.getMessage();
+      if (StringUtil.isNotEmpty(message) && (header == null || !header.startsWith(message))) {
+        if (header != null) {
+          if (header.endsWith(":")) header += " ";
+          else if (!header.endsWith(": ")) header += ": ";
+          header += message;
         }
-        myHeader += myThrowable.getMessage();
-      }
-      else {
-        myHeader = myThrowable.getMessage();
+        else {
+          header = message;
+        }
       }
     }
+
+    if (header == null) {
+      header = "No message";
+    }
+
+    myHeader = header;
   }
 
+  @Override
   public Throwable getThrowable() {
     return myThrowable;
   }
 
+  @Override
   public String getMessage() {
     return myHeader;
   }
 
+  @Override
   public String getThrowableText() {
     return StringUtil.getThrowableText(getThrowable());
   }
-
 }

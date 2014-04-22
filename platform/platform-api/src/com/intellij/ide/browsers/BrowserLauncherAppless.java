@@ -31,6 +31,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -40,6 +41,8 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.OptionsDialog;
 import org.jetbrains.annotations.Contract;
@@ -54,8 +57,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -186,21 +191,17 @@ public class BrowserLauncherAppless extends BrowserLauncher {
         url = url.substring(0, sharpPos);
       }
 
-      VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
-      if (file == null || !(file.getFileSystem() instanceof JarFileSystem)) return null;
+      Pair<String, String> pair = URLUtil.splitJarUrl(url);
+      if (pair == null) return null;
 
-      JarFileSystem jarFileSystem = (JarFileSystem)file.getFileSystem();
-      VirtualFile jarVirtualFile = jarFileSystem.getVirtualFileForJar(file);
-      if (jarVirtualFile == null) return null;
+      File jarFile = new File(FileUtil.toSystemDependentName(pair.first));
+      if (!jarFile.canRead()) return null;
 
-      String targetFilePath = file.getPath();
-      String targetFileRelativePath = StringUtil.substringAfter(targetFilePath, JarFileSystem.JAR_SEPARATOR);
-      LOG.assertTrue(targetFileRelativePath != null);
+      String jarUrl = StandardFileSystems.FILE_PROTOCOL_PREFIX + FileUtil.toSystemIndependentName(jarFile.getPath());
+      String jarLocationHash = jarFile.getName() + "." + Integer.toHexString(jarUrl.hashCode());
+      final File outputDir = new File(getExtractedFilesDir(), jarLocationHash);
 
-      String jarVirtualFileLocationHash = jarVirtualFile.getName() + Integer.toHexString(jarVirtualFile.getUrl().hashCode());
-      final File outputDir = new File(getExtractedFilesDir(), jarVirtualFileLocationHash);
-
-      final String currentTimestamp = String.valueOf(new File(jarVirtualFile.getPath()).lastModified());
+      final String currentTimestamp = String.valueOf(new File(jarFile.getPath()).lastModified());
       final File timestampFile = new File(outputDir, ".idea.timestamp");
 
       String previousTimestamp = null;
@@ -239,21 +240,21 @@ public class BrowserLauncherAppless extends BrowserLauncher {
           return null;
         }
 
-        @SuppressWarnings("ConstantConditions")
-        final ZipFile zipFile = jarFileSystem.getJarFile(file).getZipFile();
-        if (zipFile == null) {
-          return null;
-        }
-        ZipEntry entry = zipFile.getEntry(targetFileRelativePath);
-        if (entry == null) {
-          return null;
-        }
-        InputStream is = zipFile.getInputStream(entry);
+        boolean closeZip = true;
+        final ZipFile zipFile = new ZipFile(jarFile);
         try {
+          ZipEntry entry = zipFile.getEntry(pair.second);
+          if (entry == null) {
+            return null;
+          }
+          InputStream is = zipFile.getInputStream(entry);
           ZipUtil.extractEntry(entry, is, outputDir);
+          closeZip = false;
         }
         finally {
-          is.close();
+          if (closeZip) {
+            zipFile.close();
+          }
         }
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -266,8 +267,7 @@ public class BrowserLauncherAppless extends BrowserLauncher {
                 final int[] counter = new int[]{0};
 
                 class MyFilter implements FilenameFilter {
-                  private final Set<File> myImportantDirs = new HashSet<File>(
-                    Arrays.asList(outputDir, new File(outputDir, "resources")));
+                  private final Set<File> myImportantDirs = ContainerUtil.newHashSet(outputDir, new File(outputDir, "resources"));
                   private final boolean myImportantOnly;
 
                   private MyFilter(boolean importantOnly) {
@@ -287,19 +287,23 @@ public class BrowserLauncherAppless extends BrowserLauncher {
                 }
 
                 try {
-                  ZipUtil.extract(zipFile, outputDir, new MyFilter(true));
-                  ZipUtil.extract(zipFile, outputDir, new MyFilter(false));
-                  FileUtil.writeToFile(timestampFile, currentTimestamp.getBytes());
+                  try {
+                    ZipUtil.extract(zipFile, outputDir, new MyFilter(true));
+                    ZipUtil.extract(zipFile, outputDir, new MyFilter(false));
+                    FileUtil.writeToFile(timestampFile, currentTimestamp);
+                  }
+                  finally {
+                    zipFile.close();
+                  }
                 }
-                catch (IOException ignore) {
-                }
+                catch (IOException ignore) { }
               }
             }.queue();
           }
         });
       }
 
-      return VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(new File(outputDir, targetFileRelativePath).getPath())) + anchor;
+      return VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(new File(outputDir, pair.second).getPath())) + anchor;
     }
     catch (IOException e) {
       LOG.warn(e);
@@ -386,7 +390,10 @@ public class BrowserLauncherAppless extends BrowserLauncher {
                                  @Nullable WebBrowser browser,
                                  @Nullable Project project,
                                  @NotNull String[] additionalParameters) {
-    return doLaunch(url, browserPath == null && browser != null ? PathUtil.toSystemDependentName(browser.getPath()) : browserPath, browser, project, additionalParameters);
+    if (browserPath == null && browser != null) {
+      browserPath = PathUtil.toSystemDependentName(browser.getPath());
+    }
+    return doLaunch(url, browserPath, browser, project, additionalParameters);
   }
 
   private boolean doLaunch(@Nullable String url,
@@ -406,8 +413,9 @@ public class BrowserLauncherAppless extends BrowserLauncher {
       return true;
     }
 
-    doShowError(browser == null ? IdeBundle.message("error.please.specify.path.to.web.browser", CommonBundle.settingsActionPath()) : browser
-      .getBrowserNotFoundMessage(), browser, project, IdeBundle.message("title.browser.not.found"));
+    String message = browser != null ? browser.getBrowserNotFoundMessage() :
+                     IdeBundle.message("error.please.specify.path.to.web.browser", CommonBundle.settingsActionPath());
+    doShowError(message, browser, project, IdeBundle.message("title.browser.not.found"));
     return false;
   }
 
@@ -417,6 +425,15 @@ public class BrowserLauncherAppless extends BrowserLauncher {
                            @Nullable final Project project,
                            String[] additionalParameters) {
     GeneralCommandLine commandLine = new GeneralCommandLine(command);
+
+    if (url != null && url.startsWith("jar:")) {
+      String files = extractFiles(url);
+      if (files == null) {
+        return false;
+      }
+      url = files;
+    }
+
     if (url != null) {
       commandLine.addParameter(url);
     }

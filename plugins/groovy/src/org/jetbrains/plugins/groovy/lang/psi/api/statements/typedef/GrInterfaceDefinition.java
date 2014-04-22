@@ -16,16 +16,11 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
 
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterListOwner;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
-import com.intellij.psi.StubBasedPsiElement;
 
 /**
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
  */
 public interface GrInterfaceDefinition extends GrTypeDefinition, GrTypeParameterListOwner {
-  @Nullable
-  public GrImplementsClause getImplementsClause();
 }

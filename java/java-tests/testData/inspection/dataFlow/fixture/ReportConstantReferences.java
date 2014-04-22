@@ -16,4 +16,10 @@ class Test {
     return foo;
   }
 
+  public void testDontReplaceQualifierWithNull(Object bar) {
+    if (bar == null) {
+      <warning descr="Method invocation 'bar.hashCode()' may produce 'java.lang.NullPointerException'">bar.hashCode()</warning>;
+    }
+  }
+
 }

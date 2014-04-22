@@ -35,10 +35,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
@@ -85,7 +82,8 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
     GrExpression expression =
       refVariableElementParent instanceof GrNewExpression && refVariableElement.getNode().getElementType() == GroovyTokenTypes.kNEW
       ? (GrNewExpression)refVariableElementParent
-      : PsiTreeUtil.getParentOfType(refVariableElement, GrReferenceExpression.class);
+      : refVariableElementParent instanceof GrParenthesizedExpression ? ((GrParenthesizedExpression)refVariableElementParent).getOperand() 
+                                                                      : PsiTreeUtil.getParentOfType(refVariableElement, GrReferenceExpression.class);
     if (expression instanceof GrReferenceExpression && !(expression.getParent() instanceof GrMethodCall)) {
       final String referenceName = ((GrReferenceExpression)expression).getReferenceName();
       if (((GrReferenceExpression)expression).resolve() == variable ||

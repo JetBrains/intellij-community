@@ -146,8 +146,9 @@ public class ActionsTreeUtil {
         if (action == null) return false;
         final String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
         if (id != null) {
-          boolean actionBound = isActionBound(keymap, id);
-          return filter == null ? !actionBound : !actionBound && filter.value(action);
+          String binding = getActionBinding(keymap, id);
+          boolean bound = binding != null && actionManager.getAction(binding) != null;
+          return filter == null ? !bound : !bound && filter.value(action);
         }
 
         return filter == null || filter.value(action);
@@ -267,10 +268,16 @@ public class ActionsTreeUtil {
     return group;
   }
 
-  private static boolean isActionBound(final Keymap keymap, final String id) {
-    if (keymap == null) return false;
+  @Nullable
+  private static String getActionBinding(final Keymap keymap, final String id) {
+    if (keymap == null) return null;
+    
     Keymap parent = keymap.getParent();
-    return ((KeymapImpl)keymap).isActionBound(id) || (parent != null && ((KeymapImpl)parent).isActionBound(id));
+    String result = ((KeymapImpl)keymap).getActionBinding(id);
+    if (result == null && parent != null) {
+      result = ((KeymapImpl)parent).getActionBinding(id);
+    }
+    return result;
   }
 
   private static void addEditorActions(final Condition<AnAction> filtered,

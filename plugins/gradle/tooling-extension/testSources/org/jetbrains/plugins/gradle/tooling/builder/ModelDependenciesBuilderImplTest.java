@@ -28,6 +28,7 @@ import org.jetbrains.plugins.gradle.model.ProjectDependenciesModel;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import static junit.framework.Assert.*;
@@ -89,7 +90,7 @@ public class ModelDependenciesBuilderImplTest extends AbstractModelBuilderTest {
       else if (ideaModule.getName().equals("api")) {
         assertEquals(1, dependencies.size());
         IdeaDependency libDependency = dependencies.getAt(0);
-        assertEquals(GradleDependencyScope.PROVIDED.getIdeaMappingName(), libDependency.getScope().getScope().toLowerCase());
+        assertEquals("provided", libDependency.getScope().getScope().toLowerCase(Locale.ENGLISH));
         assertTrue(libDependency instanceof IdeaModuleDependency);
 
         IdeaModuleDependency libModuleDependency = (IdeaModuleDependency)libDependency;
@@ -99,7 +100,7 @@ public class ModelDependenciesBuilderImplTest extends AbstractModelBuilderTest {
       else if (ideaModule.getName().equals("service")) {
         assertEquals(1, dependencies.size());
         IdeaDependency apiDependency = dependencies.getAt(0);
-        assertEquals(GradleDependencyScope.COMPILE.getIdeaMappingName(), apiDependency.getScope().getScope().toLowerCase());
+        assertEquals(GradleDependencyScope.COMPILE.getIdeaMappingName(), apiDependency.getScope().getScope().toLowerCase(Locale.ENGLISH));
         assertTrue(apiDependency instanceof IdeaModuleDependency);
 
         IdeaModuleDependency apiModuleDependency = (IdeaModuleDependency)apiDependency;
@@ -115,11 +116,11 @@ public class ModelDependenciesBuilderImplTest extends AbstractModelBuilderTest {
         assertEquals(2, libraryDependencies.size());
 
         IdeaSingleEntryLibraryDependency someDep = libraryDependencies.get(0);
-        assertEquals(GradleDependencyScope.COMPILE.getIdeaMappingName(), someDep.getScope().getScope().toLowerCase());
+        assertEquals(GradleDependencyScope.COMPILE.getIdeaMappingName(), someDep.getScope().getScope().toLowerCase(Locale.ENGLISH));
         assertEquals("someDep.jar", someDep.getFile().getName());
 
         IdeaSingleEntryLibraryDependency someTestDep = libraryDependencies.get(1);
-        assertEquals(GradleDependencyScope.COMPILE.getIdeaMappingName(), someTestDep.getScope().getScope().toLowerCase());
+        assertEquals(GradleDependencyScope.COMPILE.getIdeaMappingName(), someTestDep.getScope().getScope().toLowerCase(Locale.ENGLISH));
         assertEquals("someTestDep.jar", someTestDep.getFile().getName());
       }
       else if (ideaModule.getName().equals("withIdeRepoFileDependency")) {

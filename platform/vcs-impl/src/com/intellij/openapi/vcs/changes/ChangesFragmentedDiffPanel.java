@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,7 +167,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
             if (isAfter) {
               final LogicalPosition position = side.getEditor().getCaretModel().getLogicalPosition();
               final int line = position.line;
-              final Integer converted = myFragmentedContent.getNewConvertor().convert(line);
+              final int converted = myFragmentedContent.getNewConvertor().execute(line);
               descriptor = new OpenFileDescriptor(myProject, myFragmentedContent.getFile(), converted, position.column);
             } else {
               if (((DiffPanelImpl) panel).getEditor1().getDocument().getTextLength() == 0) {
@@ -207,7 +207,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
                 correctLine = Math.max(lineInNew, current.getAfter());
               }
 
-              final Integer converted = myFragmentedContent.getNewConvertor().convert(correctLine);
+              int converted = myFragmentedContent.getNewConvertor().execute(correctLine);
               descriptor = new OpenFileDescriptor(myProject, myFragmentedContent.getFile(), converted, column);
             }
           }
@@ -246,11 +246,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
         final DiffPanel panel = myCurrentHorizontal ? myHorizontal : myVertical;
         if (panel == null) return false;
         final DiffSideView side = ((DiffPanelImpl)panel).getCurrentSide();
-        if (side == null || side.getEditor() == null) return false;
-        if (side.getEditor() != null) {
-          return true;
-        }
-        return false;
+        return side != null && side.getEditor() != null;
       }
     };
   }
@@ -260,7 +256,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
   }
 
   public void refreshData(final PreparedFragmentedContent fragmentedContent) {
-    myPresentationState = new PresentationState();
+    myPresentationState = new PresentationState(myConfiguration, myCurrentHorizontal);
     myFragmentedContent = fragmentedContent;
 
     boolean navigationEnabled = !myFragmentedContent.isOneSide();
@@ -355,17 +351,17 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     myNextDiff.unregisterCustomShortcutSet(myParent);
   }
 
-  private class PresentationState {
-    private IgnoreSpaceEnum myIgnoreSpace;
-    private boolean myHorizontal;
-    private int myContextLines;
-    private boolean mySoftWraps;
+  private static class PresentationState {
+    private final IgnoreSpaceEnum myIgnoreSpace;
+    private final boolean myHorizontal;
+    private final int myContextLines;
+    private final boolean mySoftWraps;
 
-    private PresentationState() {
-      myIgnoreSpace = myConfiguration.SHORT_DIFF_IGNORE_SPACE;
-      myHorizontal = ChangesFragmentedDiffPanel.this.myCurrentHorizontal;
-      myContextLines = myConfiguration.SHORT_DIFF_EXTRA_LINES;
-      mySoftWraps = myConfiguration.SOFT_WRAPS_IN_SHORT_DIFF;
+    private PresentationState(@NotNull VcsConfiguration configuration, boolean currentHorizontal) {
+      myIgnoreSpace = configuration.SHORT_DIFF_IGNORE_SPACE;
+      myHorizontal = currentHorizontal;
+      myContextLines = configuration.SHORT_DIFF_EXTRA_LINES;
+      mySoftWraps = configuration.SOFT_WRAPS_IN_SHORT_DIFF;
     }
 
     @Override
@@ -395,21 +391,22 @@ public class ChangesFragmentedDiffPanel implements Disposable {
 
   public void refreshPresentation() {
     // 1. vertical 2. number of lines 3. soft wraps (4. ignore spaces)
-    PresentationState current = new PresentationState();
+    PresentationState current = new PresentationState(myConfiguration, myCurrentHorizontal);
     if (myFragmentedContent != null && ! Comparing.equal(myPresentationState, current)) {
       recalculatePresentation();
-    } else {
+    }
+    else {
       ensurePresentation();
     }
     myPreviousDiff.registerCustomShortcutSet(myPreviousDiff.getShortcutSet(), myParent);
     myNextDiff.registerCustomShortcutSet(myNextDiff.getShortcutSet(), myParent);
   }
 
-  private final static Icon ourIcon = PlatformIcons.CHECK_ICON;
+  private static final Icon ourIcon = PlatformIcons.CHECK_ICON;
   
   private class PopupAction extends DumbAwareAction {
-    private AnAction myUsual;
-    private AnAction myNumbered;
+    private final AnAction myUsual;
+    private final AnAction myNumbered;
     private final ChangesFragmentedDiffPanel.MyUseSoftWrapsAction mySoftWrapsAction;
 
     private PopupAction() {
@@ -540,7 +537,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     final Point location = new Point(start.x + visibleArea.width, start.y + visibleArea.height);
     final LogicalPosition lp = editor.xyToLogicalPosition(location);
 
-    int curStartLine = startLp.line == (editor.getDocument().getLineCount() - 1) ? startLp.line : (startLp.line + 1);
+    int curStartLine = startLp.line == editor.getDocument().getLineCount() - 1 ? startLp.line : startLp.line + 1;
     int cutEndLine = lp.line == 0 ? 0 : lp.line - 1;
 
     boolean commonPartOk = leftPixels == 0 || startLp.line == lp.line;
@@ -548,7 +545,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
                                     commonPartOk && lp.softWrapLinesOnCurrentLogicalLine == 0 ? lp.line : cutEndLine);
   }
 
-  private final static int[] ourMarks = {1,2,4,8,-1};
+  private static final int[] ourMarks = {1,2,4,8,-1};
   public static final Hashtable<Integer,JLabel> LABELS = new Hashtable<Integer, JLabel>();
   public static final int ALL_VALUE = 5;
 
@@ -605,7 +602,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
       JPanel wrapper = new JPanel(new BorderLayout());
       wrapper.add(label, BorderLayout.NORTH);
       result.add(wrapper, BorderLayout.WEST);
-      final JSlider slider = new JSlider(JSlider.HORIZONTAL, 1, 5, 1);
+      final JSlider slider = new JSlider(SwingConstants.HORIZONTAL, 1, 5, 1);
       slider.setMinorTickSpacing(1);
       slider.setPaintTicks(true);
       slider.setPaintTrack(true);
@@ -691,7 +688,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     @Override
     public void actionPerformed(AnActionEvent e) {
       int currentLogicalLineIdx = getCurrentLogicalLineIdx(true);
-      int nextLineIdx = currentLogicalLineIdx == (myLeftLines.size() - 1) ? currentLogicalLineIdx : currentLogicalLineIdx + 1;
+      int nextLineIdx = currentLogicalLineIdx == myLeftLines.size() - 1 ? currentLogicalLineIdx : currentLogicalLineIdx + 1;
 
       DiffPanelImpl panel = (DiffPanelImpl) getCurrentPanel();
       panel.getSideView(FragmentSide.SIDE1).scrollToFirstDiff(myLeftLines.get(nextLineIdx));

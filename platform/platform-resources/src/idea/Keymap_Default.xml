@@ -413,6 +413,9 @@
   <action id="CompareDirs">
     <keyboard-shortcut first-keystroke="control D"/>
   </action>
+  <action id="SendEOF">
+    <keyboard-shortcut first-keystroke="control D"/>
+  </action>
   <action id="EditorToggleCase">
     <keyboard-shortcut first-keystroke="control shift U"/>
   </action>
@@ -671,9 +674,6 @@
   </action>
   <action id="EditorChooseLookupItem">
     <keyboard-shortcut first-keystroke="ENTER"/>
-  </action>
-  <action id="EditorChooseLookupItemAlways">
-    <keyboard-shortcut first-keystroke="control ENTER"/>
   </action>
   <action id="Inline">
     <keyboard-shortcut first-keystroke="control alt N"/>
@@ -961,9 +961,6 @@
   <action id="Jdbc.RunSqlScript"><keyboard-shortcut first-keystroke="control shift F10"/></action>
 
   <action id="Console.Execute"><keyboard-shortcut first-keystroke="ENTER"/></action>
-  <action id="Console.SplitLine">
-    <keyboard-shortcut first-keystroke="control ENTER"/>
-  </action>
   <action id ="Refactorings.QuickListPopupAction">
     <keyboard-shortcut first-keystroke="control alt shift T"/>
   </action>

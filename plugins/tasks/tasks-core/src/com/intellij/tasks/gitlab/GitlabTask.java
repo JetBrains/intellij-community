@@ -21,11 +21,16 @@ public class GitlabTask extends Task {
   private final GitlabRepository myRepository;
   private final GitlabProject myProject;
 
-  public GitlabTask(@NotNull GitlabRepository respository,
-                    @NotNull GitlabProject project,
-                    @NotNull GitlabIssue issue) {
-    myRepository = respository;
+  public GitlabTask(@NotNull GitlabRepository repository, @NotNull GitlabIssue issue) {
+    myRepository = repository;
     myIssue = issue;
+
+    GitlabProject project = null;
+    for (GitlabProject p : myRepository.getProjects()) {
+      if (p.getId() == myIssue.getProjectId()) {
+        project = p;
+      }
+    }
     myProject = project;
   }
 
@@ -87,10 +92,25 @@ public class GitlabTask extends Task {
     return true;
   }
 
+  @NotNull
+  @Override
+  public String getNumber() {
+    return String.valueOf(myIssue.getLocalId());
+  }
+
+  @Nullable
+  @Override
+  public String getProject() {
+    return myProject == null ? null : myProject.getName();
+  }
+
   @Nullable
   @Override
   public String getIssueUrl() {
-    return myProject.getWebUrl() + "/issues/" + myIssue.getLocalId();
+    if (myProject != null) {
+      return myProject.getWebUrl() + "/issues/" + myIssue.getLocalId();
+    }
+    return null;
   }
 
   @Nullable

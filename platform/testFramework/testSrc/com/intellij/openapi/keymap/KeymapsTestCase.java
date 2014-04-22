@@ -1,0 +1,683 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.openapi.keymap;
+
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.keymap.ex.KeymapManagerEx;
+import com.intellij.openapi.keymap.impl.KeymapImpl;
+import com.intellij.openapi.keymap.impl.MacOSDefaultKeymap;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FactoryMap;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
+import junit.framework.TestCase;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.util.*;
+
+/**
+ * @author cdr
+ */
+public abstract class KeymapsTestCase extends PlatformTestCase {
+  private static final boolean OUTPUT_TEST_DATA = false;
+
+  public void testDuplicateShortcuts() {
+    StringBuilder failMessage = new StringBuilder();
+    Map<String, Map<String, List<String>>> knownDuplicates = getKnownDuplicates();
+    
+    for (Keymap keymap : KeymapManagerEx.getInstanceEx().getAllKeymaps()) {
+      String failure = checkDuplicatesInKeymap(keymap, knownDuplicates);
+      if (failure != null) {
+        if (failMessage.length() > 0) failMessage.append("\n");
+        failMessage.append(failure);
+      }
+    }
+    if (failMessage.length() > 0) {
+      TestCase.fail(failMessage +
+                    "\n" +
+                    "Please specify 'use-shortcut-of' attribute for your action if it is similar to another action (but it won't appear in Settings/Keymap),\n" +
+                    "reassign shortcut or, if absolutely must, modify the 'known duplicates list'");
+    }
+  }
+
+  // @formatter:off
+  @NonNls @SuppressWarnings({"HardCodedStringLiteral"})
+  private static final Map<String, String[][]> DEFAULT_DUPLICATES = new THashMap<String, String[][]>(){{
+    put("$default", new String[][] {
+    { "ADD",                      "ExpandTreeNode", "Graph.ZoomIn"},
+    { "BACK_SPACE",               "EditorBackSpace", "Images.Thumbnails.UpFolder"},
+    { "ENTER",                    "EditorChooseLookupItem", "NextTemplateVariable", "EditorEnter", "Images.Thumbnails.EnterAction",
+                                  "PropertyInspectorActions.EditValue", "Console.Execute"},
+    { "F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue"},
+    { "alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue"},
+    { "F5",                       "UML.ApplyCurrentLayout", "CopyElement"},
+    { "F7",                       "NextDiff", "StepInto"},
+    { "INSERT",                   "EditorToggleInsertState", "UsageView.Include", "DomElementsTreeView.AddElement", "DomCollectionControl.Add"},
+    { "SUBTRACT",                 "CollapseTreeNode", "Graph.ZoomOut"},
+    { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection", "EditorTab", "NextTemplateParameter"},
+    { "alt DOWN",                 "ShowContent", "MethodDown"},
+    { "alt F1",                   "SelectIn", "ProjectViewChangeView"},
+    { "alt INSERT",               "FileChooser.NewFolder", "Generate", "NewElement"},
+    { "control 1",                "FileChooser.GotoHome", "GotoBookmark1", "DuplicatesForm.SendToLeft"},
+    { "control 2",                "FileChooser.GotoProject", "GotoBookmark2", "DuplicatesForm.SendToRight"},
+    { "control 3",                "GotoBookmark3", "FileChooser.GotoModule"},
+    { "control ADD",              "ExpandAll", "ExpandRegion"},
+    { "control DELETE",           "EditorDeleteToWordEnd", "RemoveFromFavorites"},
+    { "control DIVIDE",           "CommentByLineComment", "Images.Editor.ActualSize"},
+    { "control DOWN",             "EditorScrollDown", "Console.History.Previous", "EditorLookupDown"},
+    { "control ENTER",            "EditorSplitLine", "ViewSource", "Console.Jdbc.Execute", "Console.Jpa.Execute", "Groovy.Shell.Execute"},
+    { "control EQUALS",           "ExpandAll", "ExpandRegion"},
+    { "control F5",               "Refresh", "Rerun"},
+    { "control D",                "CompareDirs", "EditorDuplicate", "CompareTwoFiles", "SendEOF"},
+    { "control M",                "EditorScrollToCenter", "Vcs.ShowMessageHistory"},
+    { "control N",                "FileChooser.NewFolder", "GotoClass"},
+    { "control P",                "FileChooser.TogglePathShowing", "ParameterInfo"},
+    { "control R",                "Replace", "Console.TableResult.Reload", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
+    { "control SLASH",            "CommentByLineComment", "Images.Editor.ActualSize"},
+    { "control U",                "GotoSuperMethod", "CommanderSwapPanels"},
+    { "control UP",               "EditorScrollUp", "Console.History.Next", "EditorLookupUp"},
+    { "control alt A",            "ChangesView.AddUnversioned", "Diagram.DeselectAll"},
+    { "control alt E",            "PerforceDirect.Edit", "Console.History.Browse"},
+    { "control alt DOWN",         "NextOccurence", "Console.TableResult.NextPage"},
+    { "control alt G",            "org.jetbrains.plugins.ruby.rails.actions.generators.GeneratorsPopupAction", "Mvc.RunTarget"},
+    { "control alt R",            "org.jetbrains.plugins.ruby.tasks.rake.actions.RakeTasksPopupAction", "Django.RunManageTaskAction"},
+    { "control alt UP",           "PreviousOccurence", "Console.TableResult.PreviousPage"},
+    { "control MINUS",            "CollapseAll", "CollapseRegion"},
+    { "control PERIOD",           "EditorChooseLookupItemDot", "CollapseSelection"},
+    { "shift DELETE",             "$Cut", "Maven.Uml.Exclude"},
+    { "shift F4",                 "Debugger.EditTypeSource", "EditSourceInNewWindow"},
+    { "shift F7",                 "PreviousDiff", "SmartStepInto"},
+    { "shift TAB",                "PreviousTemplateVariable", "PrevParameter", "EditorUnindentSelection", "PrevTemplateParameter"},
+    { "shift alt L",              "org.jetbrains.plugins.ruby.console.LoadInIrbConsoleAction", "context.load"},
+    { "shift alt T",              "tasks.switch", "tasks.switch.toolbar"},
+    { "shift control D",          "Uml.ShowDiff", "TagDocumentationNavigation"},
+    { "shift control DOWN",       "ResizeToolWindowDown", "MoveStatementDown"},
+    { "shift control ENTER",      "EditorChooseLookupItemCompleteStatement", "EditorCompleteStatement", "Console.Jpa.GenerateSql"},
+    { "shift control F10",        "Jdbc.OpenConsole", "Jdbc.RunSqlScript", "Jpa.OpenConsole", "RunClass", "RunTargetAction"},
+    { "shift control F8",         "ViewBreakpoints", "EditBreakpoint"},
+    { "shift control G",          "ClassTemplateNavigation", "GoToClass"},
+    { "shift control LEFT",       "EditorPreviousWordWithSelection", "ResizeToolWindowLeft", },
+    { "shift control RIGHT",      "EditorNextWordWithSelection", "ResizeToolWindowRight", },
+    { "shift control T",          "GotoTest", "Images.ShowThumbnails"},
+    { "shift control UP",         "ResizeToolWindowUp", "MoveStatementUp"},
+    { "shift control alt DOWN",   "VcsShowNextChangeMarker", "HtmlTableCellNavigateDown"},
+    { "shift control alt UP",     "VcsShowPrevChangeMarker", "HtmlTableCellNavigateUp"},
+    { "shift control alt DELETE", "Console.Jdbc.Terminate", "Console.Jpa.Terminate"},
+    { "shift control K",          "hg4idea.push", "Git.Push"},
+    { "control E",                "RecentFiles", "Vcs.ShowMessageHistory"},
+    });
+    put("Mac OS X 10.5+", new String[][] {
+    { "BACK_SPACE",               "$Delete", "EditorBackSpace", "Images.Thumbnails.UpFolder"},
+    { "shift BACK_SPACE",         "EditorBackSpace", "UsageView.Include"},
+    { "meta BACK_SPACE",          "EditorDeleteLine", "$Delete"},
+    { "control DOWN",             "ShowContent", "EditorLookupDown", "MethodDown"},
+    { "control UP",               "EditorLookupUp", "MethodUp"},
+    { "meta R",                   "Refresh", "Rerun", "Replace", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
+    { "control O",                "ExportToTextFile", "OverrideMethods", },
+    { "control ENTER",            "Generate", "NewElement"},
+    { "meta 1",                   "ActivateProjectToolWindow", "FileChooser.GotoHome", "DuplicatesForm.SendToLeft"},
+    { "meta 2",                   "ActivateFavoritesToolWindow", "FileChooser.GotoProject", "DuplicatesForm.SendToRight"},
+    { "meta 3",                   "ActivateFindToolWindow", "FileChooser.GotoModule"},
+    { "meta N",                   "FileChooser.NewFolder", "Generate", "NewElement"},
+    { "shift meta G",             "ClassTemplateNavigation", "GoToClass", "FindPrevious"},
+    { "shift meta LEFT",          "EditorLineStartWithSelection", "ResizeToolWindowLeft", },
+    { "shift meta RIGHT",         "EditorLineEndWithSelection", "ResizeToolWindowRight", },
+    { "meta E",                   "RecentFiles", "Vcs.ShowMessageHistory"},
+    { "alt R",                    "Django.RunManageTaskAction", "org.jetbrains.plugins.ruby.tasks.rake.actions.RakeTasksPopupAction"},
+    });
+    put("Mac OS X", new String[][] {
+    { "BACK_SPACE",               "$Delete", "EditorBackSpace", "Images.Thumbnails.UpFolder"},
+    { "control DOWN",             "EditorLookupDown", "ShowContent", "MethodDown"},
+    { "control UP",               "EditorLookupUp", "MethodUp"},
+    { "control ENTER",            "Generate", "NewElement"},
+    { "control F5",               "Refresh", "Rerun"},
+    { "meta 1",                   "ActivateProjectToolWindow", "FileChooser.GotoHome", "DuplicatesForm.SendToLeft"},
+    { "meta 2",                   "ActivateFavoritesToolWindow", "FileChooser.GotoProject", "DuplicatesForm.SendToRight"},
+    { "meta 3",                   "ActivateFindToolWindow", "FileChooser.GotoModule"},
+    { "shift meta LEFT",          "EditorLineStartWithSelection", "ResizeToolWindowLeft", },
+    { "shift meta RIGHT",         "EditorLineEndWithSelection", "ResizeToolWindowRight", },
+    { "shift control K",          "hg4idea.push", "Git.Push"},
+    { "alt R",                    "Django.RunManageTaskAction", "org.jetbrains.plugins.ruby.tasks.rake.actions.RakeTasksPopupAction"},
+    { "meta E",                   "RecentFiles", "Vcs.ShowMessageHistory"},
+    });
+    put("Emacs", new String[][] {
+    { "F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue"},
+    { "alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue"},
+    { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection", "EmacsStyleIndent", "NextTemplateParameter"},
+    { "alt DOWN",                 "ShowContent", "MethodDown"},
+    { "alt SLASH",                "CodeCompletion", "HippieCompletion"},
+    { "control 0",                "Unsplit", "GotoBookmark0"},
+    { "control 1",                "UnsplitAll", "FileChooser.GotoHome", "GotoBookmark1", "DuplicatesForm.SendToLeft"},
+    { "control 2",                "FileChooser.GotoProject", "GotoBookmark2", "DuplicatesForm.SendToRight"},
+    { "control 3",                "GotoBookmark3", "FileChooser.GotoModule"},
+    { "control 5",                "ChangeSplitOrientation", "GotoBookmark5"},
+    { "control D",                "CompareDirs", "$Delete", "CompareTwoFiles", "SendEOF"},
+    { "control K",                "EditorCutLineEnd", "CheckinProject"},
+    { "control N",                "EditorDown", "FileChooser.NewFolder"},
+    { "control P",                "EditorUp", "FileChooser.TogglePathShowing"},
+    { "control R",                "Console.TableResult.Reload", "org.jetbrains.plugins.ruby.rails.console.ReloadSources", "FindPrevious"},
+    { "control SLASH",            "$Undo", "Images.Editor.ActualSize"},
+    { "control X",                "GotoFile", "SaveAll", "NextTab", "PreviousTab", "CloseContent", "CloseAllEditors", "NextSplitter",
+                                  "GotoNextError", "NextProjectWindow", "EditorSwapSelectionBoundaries", "SplitVertically",
+                                  "SplitHorizontally", "CloseAllEditorsButActive", "Switcher", "$SelectAll"},
+    { "control alt A",            "MethodUp", "ChangesView.AddUnversioned", "Diagram.DeselectAll"},
+    { "control alt E",            "MethodDown", "PerforceDirect.Edit", "Console.History.Browse"},
+    { "control alt G",            "GotoDeclaration", "org.jetbrains.plugins.ruby.rails.actions.generators.GeneratorsPopupAction", "Mvc.RunTarget"},
+    { "control alt S",            "ShowSettings", "Find"},
+    { "shift DELETE",             "$Cut", "Maven.Uml.Exclude"},
+    { "shift alt S",              "FindUsages", "context.save"},
+    { "shift control X",          "GotoPreviousError", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
+    });
+    put("Visual Studio", new String[][] {
+    { "F5",                       "Resume", "UML.ApplyCurrentLayout"},
+    { "F7",                       "NextDiff", "CompileDirty"},
+    { "alt F2",                   "ShowBookmarks", "WebOpenInAction"},
+    { "alt F8",                   "ReformatCode", "ForceStepInto", "EvaluateExpression"},
+    { "alt INSERT",               "FileChooser.NewFolder", "Generate", "NewElement"},
+    { "control DIVIDE",           "CommentByLineComment", "Images.Editor.ActualSize"},
+    { "control F1",               "ExternalJavaDoc", "ShowErrorDescription"},
+    { "control F10",              "RunToCursor", "javaee.UpdateRunningApplication"},
+    { "control F5",               "Rerun", "Run"},
+    { "control N",                "FileChooser.NewFolder", "Generate", },
+    { "control P",                "FileChooser.TogglePathShowing", "Print"},
+    { "control SLASH",            "CommentByLineComment", "Images.Editor.ActualSize"},
+    { "control alt F",            "ReformatCode", "IntroduceField"},
+    { "shift F1",                 "QuickJavaDoc", "ExternalJavaDoc"},
+    { "shift F12",                "RestoreDefaultLayout", "FindUsagesInFile"},
+    { "shift F2",                 "GotoPreviousError", "GotoDeclaration"},
+    { "shift control F7",         "FindUsagesInFile", "HighlightUsagesInFile"},
+    { "shift control I",          "ImplementMethods", "QuickImplementations"},
+    { "alt F9",         "ViewBreakpoints", "EditBreakpoint"},
+    });
+    put("Default for XWin", new String[][] {
+    });
+    put("Default for GNOME", new String[][] {
+    { "alt F1",                   "SelectIn", "ProjectViewChangeView"},
+    { "shift alt 1",              "SelectIn", "ProjectViewChangeView"},
+    { "shift alt 7",              "IDEtalk.SearchUserHistory", "FindUsages"},
+    { "shift alt LEFT",           "PreviousEditorTab", "Back"},
+    { "shift alt RIGHT",          "NextEditorTab", "Forward"},
+    });
+    put("Default for KDE", new String[][] {
+    { "control 1",                "FileChooser.GotoHome", "ShowErrorDescription", "DuplicatesForm.SendToLeft"},
+    { "control 2",                "FileChooser.GotoProject", "Stop", "DuplicatesForm.SendToRight"},
+    { "control 3",                "FindWordAtCaret", "FileChooser.GotoModule"},
+    { "control 5",                "Refresh", "Rerun"},
+    { "shift alt 1",              "SelectIn", "ProjectViewChangeView"},
+    { "shift alt 7",              "IDEtalk.SearchUserHistory", "FindUsages"},
+    { "shift alt L",              "ReformatCode", "org.jetbrains.plugins.ruby.console.LoadInIrbConsoleAction", "context.load"},
+    });
+    put("Eclipse", new String[][] {
+    { "F2",                       "Console.TableResult.EditValue", "QuickJavaDoc"},
+    { "alt ENTER",                "Console.TableResult.EditValue", "ShowIntentionActions"},
+    { "F5",                       "UML.ApplyCurrentLayout", "StepInto"},
+    { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection", "EditorTab", "NextTemplateParameter"},
+    { "alt DOWN",                 "ShowContent", "MoveStatementDown"},
+    { "alt HOME",                 "ViewNavigationBar", "ShowNavBar"},
+    { "control F10",              "ShowPopupMenu", "javaee.UpdateRunningApplication"},
+    { "control F11",              "Rerun", "ToggleBookmarkWithMnemonic"},
+    { "control D",                "CompareDirs", "EditorDeleteLine", "CompareTwoFiles", "SendEOF"},
+    { "control N",                "ShowPopupMenu", "FileChooser.NewFolder"},
+    { "control P",                "FileChooser.TogglePathShowing", "Print"},
+    { "control R",                "RunToCursor", "Console.TableResult.Reload", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
+    { "control U",                "EvaluateExpression", "CommanderSwapPanels"},
+    { "control alt DOWN",         "Console.TableResult.NextPage", "EditorDuplicateLines"},
+    { "control alt E",            "Console.History.Browse", "ExecuteInPyConsoleAction", "PerforceDirect.Edit"},
+    { "control alt G",            "org.jetbrains.plugins.ruby.rails.actions.generators.GeneratorsPopupAction", "Mvc.RunTarget"},
+    { "shift alt L",              "IntroduceVariable", "org.jetbrains.plugins.ruby.console.LoadInIrbConsoleAction", "context.load"},
+    { "shift alt S",              "ShowPopupMenu", "context.save"},
+    { "shift alt T",              "ShowPopupMenu", "tasks.switch", "tasks.switch.toolbar"},
+    { "shift control DOWN",       "ResizeToolWindowDown", "MethodDown"},
+    { "shift control E",          "EditSource", "RecentChangedFiles", "Graph.Faces.OpenSelectedPages"},
+    { "shift control F6",         "PreviousTab", "ChangeTypeSignature"},
+    { "shift control F11",        "ToggleBookmark", "FocusTracer"},
+    { "shift control G",          "FindUsagesInFile", "ClassTemplateNavigation", "GoToClass"},
+    { "shift control I",          "QuickImplementations", "Debugger.Inspect"},
+    { "shift control LEFT",       "EditorPreviousWordWithSelection", "ResizeToolWindowLeft", },
+    { "shift control RIGHT",      "EditorNextWordWithSelection", "ResizeToolWindowRight", },
+    { "shift control UP",         "ResizeToolWindowUp", "MethodUp"},
+    { "shift control alt LEFT",   "NextEditorTab", "HtmlTableCellNavigateLeft"},
+    { "shift control alt RIGHT",  "PreviousEditorTab", "HtmlTableCellNavigateRight"},
+    { "shift control K",          "hg4idea.push", "Git.Push", "FindPrevious"},
+    { "shift control X",          "EditorToggleCase", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
+    });
+    put("NetBeans 6.5", new String[][] {
+    { "F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue"},
+    { "F4",                       "RunToCursor", "EditSource"},
+    { "F5",                       "Debugger.ResumeThread", "Resume", "UML.ApplyCurrentLayout"},
+    { "alt DOWN",                 "NextOccurence", "ShowContent"},
+    { "alt INSERT",               "FileChooser.NewFolder", "Generate", "NewElement"},
+    { "control 1",                "ActivateProjectToolWindow", "DuplicatesForm.SendToLeft"},
+    { "control 2",                "ActivateProjectToolWindow", "FileChooser.GotoProject", "DuplicatesForm.SendToRight"},
+    { "control 3",                "ActivateProjectToolWindow", "FileChooser.GotoModule"},
+    { "control BACK_SPACE",       "EditorDeleteToWordStart", "ToggleDockMode"},
+    { "control DIVIDE",           "CommentByLineComment", "Images.Editor.ActualSize"},
+    { "control D",                "EditorDuplicate", "CompareDirs", "CompareTwoFiles", "SendEOF"},
+    { "control M",                "Vcs.ShowMessageHistory", "Move"},
+    { "control R",                "RenameElement", "Console.TableResult.Reload", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
+    { "control SLASH",            "CommentByLineComment", "Images.Editor.ActualSize"},
+    { "control U",                "EditorToggleCase", "CommanderSwapPanels"},
+    { "control PERIOD",           "GotoNextError", "EditorChooseLookupItemDot"},
+    { "control alt DOWN",         "MethodDown", "Console.TableResult.NextPage"},
+    { "control alt UP",           "MethodUp", "Console.TableResult.PreviousPage"},
+    { "shift F4",                 "RecentFiles", "Debugger.EditTypeSource", "Vcs.ShowMessageHistory", "EditSourceInNewWindow"},
+    { "shift alt F9",             "ChooseDebugConfiguration", "ValidateXml", "ValidateJsp"},
+    { "shift control DOWN",       "EditorDuplicate", "ResizeToolWindowDown", },
+    { "shift control ENTER",      "EditorChooseLookupItemCompleteStatement", "EditorCompleteStatement", "Console.Jpa.GenerateSql"},
+    { "shift control F7",         "HighlightUsagesInFile", "Debugger.NewWatch"},
+    { "shift control UP",         "EditorDuplicate", "ResizeToolWindowUp", },
+    { "shift control alt P",      "Print", "Graph.Print"},
+    { "shift control K",          "HippieCompletion", "hg4idea.push", "Git.Push"},
+    { "control alt E",            "Console.History.Browse", "ExecuteInPyConsoleAction", "PerforceDirect.Edit"},
+    { "TAB",                      "NextTemplateVariable", "NextParameter", "EditorTab", "EditorChooseLookupItemReplace", "EditorIndentSelection", "NextTemplateParameter"},
+    { "shift TAB",                "EditorUnindentSelection", "PreviousTemplateVariable", "PrevParameter", "PrevTemplateParameter"},
+    });
+    put("JBuilder", new String[][] {
+    { "F2",                       "EditorTab", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue"},
+    { "F5",                       "ToggleBreakpointEnabled", "UML.ApplyCurrentLayout"},
+    { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection", "EmacsStyleIndent", "NextTemplateParameter"},
+    { "control F6",               "PreviousEditorTab", "PreviousTab", },
+    { "control M",                "Vcs.ShowMessageHistory", "OverrideMethods", },
+    { "control N",                "FileChooser.NewFolder", "GotoClass"},
+    { "control P",                "FileChooser.TogglePathShowing", "FindInPath"},
+    { "shift control A",          "SaveAll", "GotoAction"},
+    { "shift control E",          "RecentChangedFiles", "ExtractMethod"},
+    { "shift control ENTER",      "EditorChooseLookupItemCompleteStatement", "FindUsages", "Console.Jpa.GenerateSql"},
+    { "shift control F6",         "NextTab", "ChangeTypeSignature"},
+    { "shift control G",          "GotoSymbol", "ClassTemplateNavigation", "GoToClass"},
+    { "shift control K",          "hg4idea.push", "Git.Push"},
+    { "control SUBTRACT",         "CollapseAll", "CollapseRegion"},
+    { "shift control X",          "EditorToggleShowWhitespaces", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
+    });
+    put("Eclipse (Mac OS X)", new String[][] {
+      { "meta BACK_SPACE",          "EditorDeleteToWordStart", "$Delete"},
+      { "F2",                       "Console.TableResult.EditValue", "QuickJavaDoc"},
+      { "F3",                       "GotoDeclaration", "EditSource"},
+      { "F5",                       "StepInto", "UML.ApplyCurrentLayout"},
+      { "control PERIOD",           "EditorChooseLookupItemDot", "HippieCompletion"},
+      { "meta 1",                   "FileChooser.GotoHome", "ShowIntentionActions", "DuplicatesForm.SendToLeft"},
+      { "meta 3",                   "FileChooser.GotoModule", "GotoAction"},
+      { "meta D",                   "EditorDeleteLine", "CompareTwoFiles", "CompareDirs", "SendEOF"},
+      { "meta P",                   "FileChooser.TogglePathShowing", "Print"},
+      { "meta R",                   "org.jetbrains.plugins.ruby.rails.console.ReloadSources", "RunToCursor"},
+      { "meta U",                   "CommanderSwapPanels", "EvaluateExpression"},
+      { "meta W",                   "CloseContent", "CloseActiveTab"},
+      { "meta alt DOWN",            "Console.TableResult.NextPage", "EditorDuplicateLines"},
+      { "shift meta F11",           "Run", "FocusTracer"},
+      { "shift meta G",             "ClassTemplateNavigation", "GoToClass", "FindUsages"},
+      { "shift meta K",             "hg4idea.push", "Git.Push", "FindPrevious"},
+      { "shift meta X",             "EditorToggleCase", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
+    });
+  }};
+  // @formatter:on
+  
+  private Map<String, Map<String, List<String>>> getKnownDuplicates() {
+    Map<String, Map<String, List<String>>> result = new LinkedHashMap<String, Map<String, List<String>>>();
+    collectKnownDuplicates(result);
+    return result;
+  } 
+  
+  protected void collectKnownDuplicates(Map<String, Map<String, List<String>>> result) {
+    appendKnownDuplicates(result, DEFAULT_DUPLICATES);
+  }
+
+  protected static void appendKnownDuplicates(Map<String, Map<String, List<String>>> result, Map<String, String[][]> duplicates) {
+    for (Map.Entry<String, String[][]> eachKeymap : duplicates.entrySet()) {
+      String keymapName = eachKeymap.getKey();
+      
+      Map<String, List<String>> mapping = result.get(keymapName);
+      if (mapping == null) {
+        result.put(keymapName, mapping = new LinkedHashMap<String, List<String>>());
+      }
+
+      for (String[] shortcuts : eachKeymap.getValue()) {
+        TestCase.assertTrue("known duplicates list entry for '" + keymapName + "' must not contain empty array", 
+                            shortcuts.length > 0);
+        TestCase.assertTrue("known duplicates list entry for '" + keymapName + "', shortcut '" + shortcuts[0] +
+                            "' must contain at least two conflicting action ids", 
+                            shortcuts.length > 2);
+        mapping.put(shortcuts[0], ContainerUtil.newArrayList(shortcuts, 1, shortcuts.length));
+      }
+    }
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private static String checkDuplicatesInKeymap(Keymap keymap, Map<String, Map<String, List<String>>> allKnownDuplicates) {
+    Set<Shortcut> shortcuts = new LinkedHashSet<Shortcut>();
+    Set<String> aids = new THashSet<String>(Arrays.asList(keymap.getActionIds()));
+    removeBoundActionIds(aids);
+
+    nextId:
+    for (String id : aids) {
+
+      Map<String, List<String>> knownDuplicates = allKnownDuplicates.get(keymap.getName());
+      if (knownDuplicates != null) {
+        for (List<String> actionsMapping : knownDuplicates.values()) {
+          for (String eachAction : actionsMapping) {
+            if (eachAction.equals(id)) continue nextId;
+          }
+        }
+      }
+
+      for (Shortcut shortcut : keymap.getShortcuts(id)) {
+        if (!(shortcut instanceof KeyboardShortcut)) {
+          continue;
+        }
+        shortcuts.add(shortcut);
+      }
+    }
+    List<Shortcut> sorted = new ArrayList<Shortcut>(shortcuts);
+    Collections.sort(sorted, new Comparator<Shortcut>() {
+      @Override
+      public int compare(Shortcut o1, Shortcut o2) {
+        return getText(o1).compareTo(getText(o2));
+      }
+    });
+
+    if (OUTPUT_TEST_DATA) {
+      System.out.println("put(\"" + keymap.getName() + "\", new String[][] {");
+    }
+    else {
+      System.out.println(keymap.getName());
+    }
+    StringBuilder failMessage = new StringBuilder();
+    for (Shortcut shortcut : sorted) {
+      if (!(shortcut instanceof KeyboardShortcut)) {
+        continue;
+      }
+      Set<String> ids = new THashSet<String>(Arrays.asList(keymap.getActionIds(shortcut)));
+      removeBoundActionIds(ids);
+      if (ids.size() == 1) continue;
+      Keymap parent = keymap.getParent();
+      if (parent != null) {
+        // ignore duplicates from default keymap
+        boolean differFromParent = false;
+        for (String id : ids) {
+          Shortcut[] here = keymap.getShortcuts(id);
+          Shortcut[] there = parent.getShortcuts(id);
+          if (keymap.getName().startsWith("Mac")) convertMac(there);
+          if (!new HashSet<Shortcut>(Arrays.asList(here)).equals(new HashSet<Shortcut>(Arrays.asList(there)))) {
+            differFromParent = true;
+            break;
+          }
+        }
+        if (!differFromParent) continue;
+      }
+
+      String def = "{ "
+                   + "\"" + getText(shortcut) + "\","
+                   + StringUtil.repeatSymbol(' ', 25- getText(shortcut).length())
+                   + StringUtil.join(ids, StringUtil.QUOTER, ", ")
+                   + "},";
+      if (OUTPUT_TEST_DATA) {
+        System.out.println(def);
+      }
+      else {
+        if (failMessage.length() == 0)  {
+          failMessage.append("Shortcut '" + getText(shortcut) + "' conflicts found in keymap '" + keymap.getName() + "':\n");
+        }
+        failMessage.append(def + "\n");
+      }
+    }
+    if (OUTPUT_TEST_DATA) {
+      System.out.println("});");
+    }
+    return failMessage.toString();
+  }
+
+  private static void removeBoundActionIds(Set<String> aids) {
+    // explicitly bound to another action
+    for (Iterator<String> it = aids.iterator(); it.hasNext();) {
+      String id = it.next();
+      String sourceId = KeymapManagerEx.getInstanceEx().getActionBinding(id);
+      if (sourceId != null) {
+        it.remove();
+      }
+    }
+  }
+
+  @NonNls private static final Set<String> unknownActionIds = new THashSet<String>(Arrays.asList(
+    "ActivateChangesToolWindow", "ActivateFavoritesToolWindow", "ActivateCommanderToolWindow", "ActivateDebugToolWindow", "ActivateFindToolWindow",
+    "ActivateHierarchyToolWindow", "ActivateMessagesToolWindow", "ActivateProjectToolWindow", "ActivateRunToolWindow",
+    "ActivateStructureToolWindow", "ActivateTODOToolWindow", "ActivateWebToolWindow","ActivatePaletteToolWindow",
+    "ActivateTerminalToolWindow",
+    "IDEtalk.SearchUserHistory", "IDEtalk.SearchUserHistory", "IDEtalk.Rename",
+    ""
+  ));
+  
+  protected void collectUnknownActions(Set<String> result) {
+    result.addAll(unknownActionIds);
+  }
+
+  public void testValidActionIds() {
+    THashSet<String> unknownActions = new THashSet<String>();
+    collectUnknownActions(unknownActions);
+    
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") 
+    Map<String, List<String>> missingActions = new FactoryMap<String, List<String>>() {
+      @Override
+      protected Map<String, List<String>> createMap() {
+        return new LinkedHashMap<String, List<String>>();
+      }
+
+      @Nullable
+      @Override
+      protected List<String> create(String key) {
+        return new ArrayList<String>();
+      }
+    }; 
+    for (Keymap keymap : KeymapManagerEx.getInstanceEx().getAllKeymaps()) {
+      String[] ids = keymap.getActionIds();
+      Arrays.sort(ids);
+      Set<String> noDuplicates = new LinkedHashSet<String>(Arrays.asList(ids));
+      TestCase.assertEquals(new ArrayList<String>(Arrays.asList(ids)), new ArrayList<String>(noDuplicates));
+      for (String cid : ids) {
+        if (unknownActions.contains(cid)) continue;
+        AnAction action = ActionManager.getInstance().getAction(cid);
+        if (action == null) {
+          if (OUTPUT_TEST_DATA) {
+            System.out.print("\""+cid+"\", ");
+          }
+          else {
+            missingActions.get(keymap.getName()).add(cid);
+          }
+        }
+      }
+    }
+    
+    List<String> reappearedAction = new ArrayList<String>();
+    for (String id : unknownActions) {
+      AnAction action = ActionManager.getInstance().getAction(id);
+      if (action != null) {
+        reappearedAction.add(id);
+      }
+    }
+
+    if (!missingActions.isEmpty() || !reappearedAction.isEmpty()) {
+      StringBuilder message = new StringBuilder();
+      if (!missingActions.isEmpty()) {
+        for (Map.Entry<String, List<String>> keymapAndActions : missingActions.entrySet()) {
+          message.append("Unknown actions in keymap ").append(keymapAndActions.getKey()).append(", add them to unknown actions list:\n");
+          for (String action : keymapAndActions.getValue()) {
+            message.append("\"").append(action).append("\",").append("\n");
+          }
+        }
+      }
+      if (!reappearedAction.isEmpty()) {
+        message.append("The following actions have reappeared, remove them from unknown action list:\n");
+        for (String action : reappearedAction) {
+          message.append(action).append("\n");
+        }
+      }
+      fail("\n" + message);
+    }
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public void testIdsListIsConsistent() {
+    Map<String, Map<String, List<String>>> duplicates = getKnownDuplicates();
+
+    THashSet<String> allMaps =
+      new THashSet<String>(ContainerUtil.map(KeymapManagerEx.getInstanceEx().getAllKeymaps(), new Function<Keymap, String>() {
+        @Override
+        public String fun(Keymap keymap) {
+          return keymap.getName();
+        }
+      }));
+    TestCase.assertTrue("Modify 'known duplicates list' test data. Keymaps were added: " +
+                        ContainerUtil.subtract(allMaps, duplicates.keySet()),
+                        ContainerUtil.subtract(allMaps, duplicates.keySet()).isEmpty()
+    );
+    TestCase.assertTrue("Modify 'known duplicates list' test data. Keymaps were removed: " +
+                        ContainerUtil.subtract(duplicates.keySet(), allMaps),
+                        ContainerUtil.subtract(duplicates.keySet(), allMaps).isEmpty()
+    );
+
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") 
+    Map<String, List<String>> reassignedShortcuts = new FactoryMap<String, List<String>>() {
+      @Override
+      protected Map<String, List<String>> createMap() {
+        return new LinkedHashMap<String, List<String>>();
+      }
+
+      @Nullable
+      @Override
+      protected List<String> create(String key) {
+        return new ArrayList<String>();
+      }
+    }; 
+    for (String name : duplicates.keySet()) {
+      Keymap keymap = KeymapManagerEx.getInstanceEx().getKeymap(name);
+      TestCase.assertNotNull("KeyMap " + name + " not found", keymap);
+      Map<String, List<String>> duplicateIdsList = duplicates.get(name);
+      Set<String> mentionedShortcuts = new THashSet<String>();
+      for (Map.Entry<String, List<String>> shortcutMappings : duplicateIdsList.entrySet()) {
+
+        String shortcutString = shortcutMappings.getKey();
+        if (!mentionedShortcuts.add(shortcutString)) {
+          TestCase.fail("Shortcut '" + shortcutString + "' duplicate in keymap '" + keymap + "'. Please modify 'known duplicates list'");
+        }
+        Shortcut shortcut = parse(shortcutString);
+        String[] ids = keymap.getActionIds(shortcut);
+        Set<String> actualSc = new HashSet<String>(Arrays.asList(ids));
+
+        removeBoundActionIds(actualSc);
+
+        Set<String> expectedSc = new HashSet<String>(shortcutMappings.getValue());
+        for (String s : actualSc) {
+          if (!expectedSc.contains(s)) {
+            reassignedShortcuts.get(keymap.getName()).add(getText(shortcut));
+          }
+        }
+        for (String s : expectedSc) {
+          if (!actualSc.contains(s)) {
+            System.out.println("Expected action '" + s + "' does not reassign shortcut " + getText(shortcut) + " in keymap " + keymap + " or is not registered");
+          }
+        }
+
+      }
+    }
+    if (!reassignedShortcuts.isEmpty()) {
+      StringBuilder message = new StringBuilder();
+      for (Map.Entry<String, List<String>> keymapToShortcuts : reassignedShortcuts.entrySet()) {
+        message.append("The following shortcuts was reassigned in keymap ").append(keymapToShortcuts.getKey())
+          .append(". Please modify known duplicates list:\n");
+        for (String eachShortcut : keymapToShortcuts.getValue()) {
+          message.append(eachShortcut).append("\n");
+        }
+      }
+      TestCase.fail("\n" + message.toString());
+    }
+  }
+
+  private static Shortcut parse(String s) {
+    String[] sc = s.split(",");
+    KeyStroke fst = ActionManagerEx.getKeyStroke(sc[0]);
+    assert fst != null : s;
+    KeyStroke snd = null;
+    if (sc.length == 2) {
+      snd = ActionManagerEx.getKeyStroke(sc[1]);
+    }
+    return new KeyboardShortcut(fst, snd);
+  }
+
+  private static String getText(Shortcut shortcut) {
+    if (shortcut instanceof KeyboardShortcut) {
+      KeyStroke fst = ((KeyboardShortcut)shortcut).getFirstKeyStroke();
+      String s = KeymapImpl.getKeyShortcutString(fst);
+
+      KeyStroke snd = ((KeyboardShortcut)shortcut).getSecondKeyStroke();
+      if (snd != null) {
+        s += "," + KeymapImpl.getKeyShortcutString(snd);
+      }
+      return s;
+    }
+    return KeymapUtil.getShortcutText(shortcut);
+  }
+
+  private static void convertMac(Shortcut[] there) {
+    for (int i = 0; i < there.length; i++) {
+      there[i] = MacOSDefaultKeymap.convertShortcutFromParent(there[i]);
+    }
+  }
+
+  private static final Set<String> LINUX_KEYMAPS = ContainerUtil.newHashSet("Default for XWin", "Default for GNOME", "Default for KDE");
+
+  public void testLinuxShortcuts() {
+    for (Keymap keymap : KeymapManagerEx.getInstanceEx().getAllKeymaps()) {
+      if (LINUX_KEYMAPS.contains(keymap.getName())) {
+        checkLinuxKeymap(keymap);
+      }
+    }
+  }
+
+  private static void checkLinuxKeymap(final Keymap keymap) {
+    for (String actionId : keymap.getActionIds()) {
+      for (Shortcut shortcut : keymap.getShortcuts(actionId)) {
+        if (shortcut instanceof KeyboardShortcut) {
+          checkCtrlAltFn(keymap, shortcut, ((KeyboardShortcut)shortcut).getFirstKeyStroke());
+          checkCtrlAltFn(keymap, shortcut, ((KeyboardShortcut)shortcut).getSecondKeyStroke());
+        }
+      }
+    }
+  }
+
+  private static void checkCtrlAltFn(final Keymap keymap, final Shortcut shortcut, final KeyStroke stroke) {
+    if (stroke != null) {
+      final int modifiers = stroke.getModifiers();
+      final int keyCode = stroke.getKeyCode();
+      if (KeyEvent.VK_F1 <= keyCode && keyCode <= KeyEvent.VK_F12 &&
+          (modifiers & InputEvent.CTRL_MASK) != 0 && (modifiers & InputEvent.ALT_MASK) != 0 && (modifiers & InputEvent.SHIFT_MASK) == 0) {
+        final String message = "Invalid shortcut '" + shortcut + "' for action(s) " + Arrays.asList(keymap.getActionIds(shortcut)) +
+                               " in keymap '" + keymap.getName() + "' " +
+                               "(Ctrl-Alt-Fn shortcuts switch Linux virtual terminals (causes newbie panic), " +
+                               "so either assign another shortcut, or remove it; see Keymap_XWin.xml for reference).";
+        TestCase.fail(message);
+      }
+    }
+  }
+}

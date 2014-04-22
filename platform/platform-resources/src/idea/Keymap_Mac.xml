@@ -7,6 +7,7 @@
     <action id="$Delete">
       <keyboard-shortcut first-keystroke="DELETE"/>
       <keyboard-shortcut first-keystroke="BACK_SPACE"/>
+      <keyboard-shortcut first-keystroke="meta BACK_SPACE"/>
     </action>
 
     <action id="EditorDelete">
@@ -54,7 +55,6 @@
     </action>
     <action id="SafeDelete">
       <keyboard-shortcut first-keystroke="meta DELETE"/>
-      <keyboard-shortcut first-keystroke="meta BACK_SPACE"/>
     </action>
     <action id="RemoveFromFavorites">
       <keyboard-shortcut first-keystroke="control DELETE"/>
@@ -311,10 +311,6 @@
     </action>
     <action id="EditorUnSelectWord">
       <keyboard-shortcut first-keystroke="alt DOWN"/>
-    </action>
-
-    <action id="EditorChooseLookupItemAlways">
-      <keyboard-shortcut first-keystroke="control ENTER"/>
     </action>
 
     <action id="EditorLookupUp"> <keyboard-shortcut first-keystroke="control UP"/> </action>

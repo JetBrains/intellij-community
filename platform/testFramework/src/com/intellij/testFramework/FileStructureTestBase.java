@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.ui.tree.TreeUtil;
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.junit.Before;
 
 import javax.swing.tree.TreePath;
@@ -120,7 +120,7 @@ public abstract class FileStructureTestBase extends CodeInsightFixtureTestCase {
   }
 
   protected FilteringTreeStructure.FilteringNode getRootNode() {
-    return (FilteringTreeStructure.FilteringNode)getStructure().getRootElement();
+    return getStructure().getRootElement();
   }
 
   protected void updateRecursively(final FilteringTreeStructure.FilteringNode node) {

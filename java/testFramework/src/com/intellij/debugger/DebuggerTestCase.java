@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,11 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -109,8 +111,14 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
   @Override
   protected void tearDown() throws Exception {
-    super.tearDown();
+    FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
+    ExecutionResult executionResult = myDebugProcess == null ? null : myDebugProcess.getExecutionResult();
+    ExecutionConsole console = executionResult == null ? null : executionResult.getExecutionConsole();
+    if (console != null) {
+      Disposer.dispose(console);
+    }
     myConsoleBuffer = null;
+    super.tearDown();
   }
 
   protected void createLocalProcess(String className) throws ExecutionException, InterruptedException, InvocationTargetException {

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class ScriptManagerBase<SCRIPT extends ScriptBase> implements ScriptManager {
   @SuppressWarnings("unchecked")
-  private final AsyncValueLoaderManager<ScriptBase, String> scriptSourceLoader = new AsyncValueLoaderManager<ScriptBase, String>(ScriptBase.UPDATER) {
+  private final AsyncValueLoaderManager<ScriptBase, String> scriptSourceLoader = new AsyncValueLoaderManager<ScriptBase, String>(ScriptBase.class) {
     @Override
     public void load(@NotNull ScriptBase script, @NotNull AsyncResult<String> result) {
       //noinspection unchecked

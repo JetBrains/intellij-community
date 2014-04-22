@@ -23,15 +23,15 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
+import java.util.Collection;
 
 /**
  * @author pti
  */
 class PluginUpdateInfoDialog extends AbstractUpdateDialog {
-  private final List<PluginDownloader> myUploadedPlugins;
+  private final Collection<PluginDownloader> myUploadedPlugins;
 
-  protected PluginUpdateInfoDialog(@NotNull List<PluginDownloader> updatePlugins, boolean enableLink) {
+  protected PluginUpdateInfoDialog(@NotNull Collection<PluginDownloader> updatePlugins, boolean enableLink) {
     super(enableLink);
     myUploadedPlugins = updatePlugins;
     init();

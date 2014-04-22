@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,6 +83,7 @@ public class CoreJarFileSystem extends DeprecatedVirtualFileSystem {
     throw new UnsupportedOperationException("JarFileSystem is read-only");
   }
 
+  @NotNull
   @Override
   protected VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
     throw new UnsupportedOperationException("JarFileSystem is read-only");
@@ -94,6 +95,7 @@ public class CoreJarFileSystem extends DeprecatedVirtualFileSystem {
     throw new UnsupportedOperationException("JarFileSystem is read-only");
   }
 
+  @NotNull
   @Override
   protected VirtualFile copyFile(Object requestor,
                                  @NotNull VirtualFile virtualFile,

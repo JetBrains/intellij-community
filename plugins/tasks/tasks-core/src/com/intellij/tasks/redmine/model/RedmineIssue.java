@@ -4,6 +4,7 @@ import com.google.gson.annotations.SerializedName;
 import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 
@@ -28,6 +29,8 @@ public class RedmineIssue {
   @Mandatory
   @SerializedName("updated_on")
   private Date updated;
+
+  private RedmineProject project;
 
   public int getId() {
     return id;
@@ -59,6 +62,11 @@ public class RedmineIssue {
   @NotNull
   public Date getUpdated() {
     return updated;
+  }
+
+  @Nullable
+  public RedmineProject getProject() {
+    return project;
   }
 
   @RestModel

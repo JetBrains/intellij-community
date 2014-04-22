@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -221,15 +221,11 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
 
   @Override
   public boolean isUseUTFGuessing(final VirtualFile virtualFile) {
-    Project project = guessProject(virtualFile);
-    return project == null || EncodingProjectManager.getInstance(project).isUseUTFGuessing(virtualFile);
+    return true;
   }
 
   @Override
   public void setUseUTFGuessing(final VirtualFile virtualFile, final boolean useUTFGuessing) {
-    Project project = guessProject(virtualFile);
-    if (project == null) return;
-    EncodingProjectManager.getInstance(project).setUseUTFGuessing(virtualFile, useUTFGuessing);
   }
 
   @Override

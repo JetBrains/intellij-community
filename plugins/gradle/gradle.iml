@@ -104,11 +104,6 @@
         </CLASSES>
         <JAVADOC />
         <SOURCES />
-        <jarDirectory url="jar://$MODULE_DIR$/lib/native-platform-linux-amd64-0.3-rc-2.jar!/" recursive="false" />
-        <jarDirectory url="jar://$MODULE_DIR$/lib/native-platform-linux-i386-0.3-rc-2.jar!/" recursive="false" />
-        <jarDirectory url="jar://$MODULE_DIR$/lib/native-platform-osx-universal-0.3-rc-2.jar!/" recursive="false" />
-        <jarDirectory url="jar://$MODULE_DIR$/lib/native-platform-windows-amd64-0.3-rc-2.jar!/" recursive="false" />
-        <jarDirectory url="jar://$MODULE_DIR$/lib/native-platform-windows-i386-0.3-rc-2.jar!/" recursive="false" />
       </library>
     </orderEntry>
     <orderEntry type="library" scope="TEST" name="Mocks" level="project" />

@@ -19,10 +19,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
@@ -33,6 +36,28 @@ public class InplaceIntroduceConstantTest extends AbstractJavaInplaceIntroduceTe
   private static final String BASE_PATH = "/refactoring/inplaceIntroduceConstant/";
 
   public void testReplaceAll() throws Exception {
+
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
+        inplaceIntroduceFieldPopup.setReplaceAllOccurrences(true);
+
+      }
+    });
+  }
+
+  @Nullable
+  @Override
+  protected PsiExpression getExpressionFromEditor() {
+    final PsiExpression expression = super.getExpressionFromEditor();
+    if (expression != null) {
+      return expression;
+    }
+    final PsiExpression expr = PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiExpression.class);
+    return expr instanceof PsiLiteralExpression ? expr : null;
+  }
+
+  public void testReplaceAllInsideParenthesized() throws Exception {
 
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override

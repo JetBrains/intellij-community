@@ -366,6 +366,10 @@ public class JavaSdkImpl extends JavaSdk {
           sdkModificator.addRoot(VirtualFileManager.getInstance().findFileByUrl(url), JavadocOrderRootType.getInstance());
         }
       }
+    } else {
+      if (getVersion(sdk) == JavaSdkVersion.JDK_1_7) {
+        sdkModificator.addRoot(VirtualFileManager.getInstance().findFileByUrl("http://docs.oracle.com/javafx/2/api/"), JavadocOrderRootType.getInstance());
+      }
     }
     attachJdkAnnotations(sdkModificator);
     sdkModificator.commitChanges();

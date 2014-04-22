@@ -22,6 +22,9 @@ import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -33,6 +36,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -81,7 +85,7 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
     void virtualEnvCreated(Sdk sdk, boolean associateWithProject);
   }
 
-  private void setupVirtualEnvSdk(List<Sdk> allSdks,
+  private static void setupVirtualEnvSdk(List<Sdk> allSdks,
                                          final String path,
                                          boolean associateWithProject,
                                          VirtualEnvCallback callback) {
@@ -98,7 +102,6 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
       final ProjectJdkImpl sdk = new ProjectJdkImpl(name, PythonSdkType.getInstance());
       sdk.setHomePath(FileUtil.toSystemDependentName(sdkHome.getPath()));
       callback.virtualEnvCreated(sdk, associateWithProject);
-      PythonSdkType.setupSdkPaths(sdk, myProject, null);
     }
   }
 
@@ -244,16 +247,50 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
     myMainPanel.add(myMakeAvailableToAllProjectsCheckbox, c);
     button.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        SdkConfigurationUtil.createSdk(myProject, allSdks.toArray(new Sdk[allSdks.size()]), new NullableConsumer<Sdk>() {
+        final PySdkService sdkService = PySdkService.getInstance();
+
+        final PythonSdkType sdkType = PythonSdkType.getInstance();
+        final FileChooserDescriptor descriptor = sdkType.getHomeChooserDescriptor();
+        if (SystemInfo.isMac) {
+          descriptor.putUserData(PathChooserDialog.NATIVE_MAC_CHOOSER_SHOW_HIDDEN_FILES, Boolean.TRUE);
+        }
+        String suggestedPath = sdkType.suggestHomePath();
+        VirtualFile suggestedDir = suggestedPath == null
+                                   ? null
+                                   : LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(suggestedPath));
+        final NullableConsumer<Sdk> consumer = new NullableConsumer<Sdk>() {
           @Override
           public void consume(@Nullable Sdk sdk) {
             if (sdk == null) return;
             if (!allSdks.contains(sdk)) {
               allSdks.add(sdk);
+              sdkService.addSdk(sdk);
             }
             updateSdkList(allSdks, sdk);
           }
-        }, false, PythonSdkType.getInstance());
+        };
+        FileChooser.chooseFiles(descriptor, myProject, suggestedDir, new FileChooser.FileChooserConsumer() {
+          @Override
+          public void consume(List<VirtualFile> selectedFiles) {
+            final String path = selectedFiles.get(0).getPath();
+            if (sdkType.isValidSdkHome(path)) {
+              Sdk newSdk = null;
+              for (Sdk sdk : allSdks) {
+                if (path.equals(sdk.getHomePath())) {
+                  newSdk = sdk;
+                }
+              }
+              if (newSdk == null)
+                newSdk = new PyDetectedSdk(path);
+              consumer.consume(newSdk);
+            }
+          }
+
+          @Override
+          public void cancelled() {
+          }
+        });
+
       }
     });
   }

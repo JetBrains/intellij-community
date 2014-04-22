@@ -62,6 +62,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     super(type);
   }
 
+  @NotNull
   @Override
   public BaseRepository clone() {
     return new YouTrackRepository(this);
@@ -158,7 +159,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   }
 
   @Nullable
-  public Task findTask(String id) throws Exception {
+  public Task findTask(@NotNull String id) throws Exception {
     HttpMethod method = doREST("/rest/issue/byid/" + id, false);
     InputStream stream = method.getResponseBodyAsStream();
     Element element = new SAXBuilder(false).build(stream).getRootElement();
@@ -184,7 +185,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public void setTaskState(Task task, TaskState state) throws Exception {
+  public void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception {
     String s = myCustomStateNames.get(state);
     if (StringUtil.isEmpty(s)) {
       s = state.name();
@@ -331,7 +332,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
 
   @Override
   protected int getFeatures() {
-    return super.getFeatures() | TIME_MANAGEMENT;
+    return super.getFeatures() | TIME_MANAGEMENT | STATE_UPDATING;
   }
 
   public void setCustomStateNames(Map<TaskState, String> customStateNames) {

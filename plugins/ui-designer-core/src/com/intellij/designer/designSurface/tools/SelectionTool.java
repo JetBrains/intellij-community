@@ -21,6 +21,7 @@ import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.InplaceContext;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -124,7 +125,13 @@ public class SelectionTool extends InputTool {
       InputTool tracker = myArea.findTargetTool(myCurrentScreenX, myCurrentScreenY);
       if (tracker == null) {
         refreshCursor();
-        myArea.setDescription(null);
+
+        if (ApplicationManager.getApplication().isInternal()) {
+          myArea.setDescription("Location (" + myCurrentScreenX + " x " + myCurrentScreenY + ")");
+        }
+        else {
+          myArea.setDescription(null);
+        }
       }
       else {
         if (myInputEvent instanceof MouseEvent) {

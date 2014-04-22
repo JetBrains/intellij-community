@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -70,6 +71,15 @@ public class IgnoredFilesCompositeHolder implements IgnoredFilesHolder {
   @Override
   public HolderType getType() {
     return HolderType.IGNORED;
+  }
+
+  @Nullable
+  public IgnoredFilesHolder getAppropriateIgnoredHolder() {
+    if (!myHolderMap.containsKey(myCurrentVcs)) {
+      LOG.error("current vcs: " + myCurrentVcs);
+      return null;
+    }
+    return myHolderMap.get(myCurrentVcs);
   }
 
   @Override

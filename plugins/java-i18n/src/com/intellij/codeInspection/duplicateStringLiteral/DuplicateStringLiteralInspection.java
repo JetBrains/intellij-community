@@ -222,7 +222,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
       PsiElement parent = expression1.getParent();
       if (parent instanceof PsiField) {
         final PsiField field = (PsiField)parent;
-        if (field.getInitializer() == expression1 && field.hasModifierProperty(PsiModifier.FINAL) && field.hasModifierProperty(PsiModifier.STATIC)) {
+        if (field.getInitializer() == expression1 && field.hasModifierProperty(PsiModifier.STATIC)) {
           constants.add(field);
           iterator.remove();
         }

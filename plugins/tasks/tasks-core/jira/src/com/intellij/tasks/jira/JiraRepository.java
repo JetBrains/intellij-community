@@ -17,17 +17,17 @@ import com.intellij.tasks.impl.gson.GsonUtil;
 import com.intellij.tasks.jira.rest.JiraRestApi;
 import com.intellij.tasks.jira.soap.JiraSoapApi;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
+import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * @author Dmitry Avdeev
@@ -40,7 +40,10 @@ public class JiraRepository extends BaseRepositoryImpl {
   public static final String REST_API_PATH = "/rest/api/latest";
 
   private static final boolean LEGACY_API_ONLY = Boolean.getBoolean("tasks.jira.legacy.api.only");
+  private static final boolean BASIC_AUTH_ONLY = Boolean.getBoolean("tasks.jira.basic.auth.only");
   private static final boolean REDISCOVER_API = Boolean.getBoolean("tasks.jira.rediscover.api");
+
+  public static final Pattern JIRA_ID_PATTERN = Pattern.compile("\\p{javaUpperCase}+-\\d+");
 
   /**
    * Default JQL query
@@ -54,10 +57,13 @@ public class JiraRepository extends BaseRepositoryImpl {
    */
   @SuppressWarnings({"UnusedDeclaration"})
   public JiraRepository() {
+    setUseHttpAuthentication(true);
   }
 
   public JiraRepository(JiraRepositoryType type) {
     super(type);
+    // Use Basic authentication at the beginning of new session and disable then if needed
+    setUseHttpAuthentication(true);
   }
 
   private JiraRepository(JiraRepository other) {
@@ -76,13 +82,14 @@ public class JiraRepository extends BaseRepositoryImpl {
   }
 
 
+  @NotNull
   public JiraRepository clone() {
     return new JiraRepository(this);
   }
 
   public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
     ensureApiVersionDiscovered();
-    String resultQuery = query;
+    String resultQuery = StringUtil.notNullize(query);
     if (isJqlSupported()) {
       if (StringUtil.isNotEmpty(mySearchQuery) && StringUtil.isNotEmpty(query)) {
         resultQuery = String.format("summary ~ '%s' and ", query) + mySearchQuery;
@@ -94,12 +101,23 @@ public class JiraRepository extends BaseRepositoryImpl {
         resultQuery = mySearchQuery;
       }
     }
-    return ArrayUtil.toObjectArray(myApiVersion.findTasks(resultQuery, max), Task.class);
+    List<Task> tasksFound = myApiVersion.findTasks(resultQuery, max);
+    // JQL matching doesn't allow to do something like "summary ~ query or key = query"
+    // and it will return error immediately. So we have to search in two steps to provide
+    // behavior consistent with e.g. YouTrack.
+    // looks like issue ID
+    if (query != null && JIRA_ID_PATTERN.matcher(query.trim()).matches()) {
+      Task task = findTask(query);
+      if (task != null) {
+        tasksFound = ContainerUtil.concat(true, tasksFound, task);
+      }
+    }
+    return ArrayUtil.toObjectArray(tasksFound, Task.class);
   }
 
   @Nullable
   @Override
-  public Task findTask(String id) throws Exception {
+  public Task findTask(@NotNull String id) throws Exception {
     ensureApiVersionDiscovered();
     return myApiVersion.findTask(id);
   }
@@ -130,7 +148,7 @@ public class JiraRepository extends BaseRepositoryImpl {
   @NotNull
   public JiraRemoteApi discoverApiVersion() throws Exception {
     if (LEGACY_API_ONLY) {
-      LOG.warn("Intentionally using only legacy JIRA API");
+      LOG.info("Intentionally using only legacy JIRA API");
       return new JiraSoapApi(this);
     }
 
@@ -165,22 +183,38 @@ public class JiraRepository extends BaseRepositoryImpl {
     }
   }
 
-  // Used primarily for XML_RPC API
   @NotNull
   public String executeMethod(@NotNull HttpMethod method) throws Exception {
-    return executeMethod(getHttpClient(), method);
-  }
-
-  @NotNull
-  public String executeMethod(@NotNull HttpClient client, @NotNull HttpMethod method) throws Exception {
     LOG.debug("URI: " + method.getURI());
-    int statusCode;
-    String entityContent;
-    statusCode = client.executeMethod(method);
+
+    HttpClient client = getHttpClient();
+    // Fix for https://jetbrains.zendesk.com/agent/#/tickets/24566
+    // See https://confluence.atlassian.com/display/ONDEMANDKB/Getting+randomly+logged+out+of+OnDemand for details
+    if (BASIC_AUTH_ONLY) {
+      // to override persisted settings
+      setUseHttpAuthentication(true);
+    }
+    else {
+      boolean cookieAuthenticated = false;
+      for (Cookie cookie : client.getState().getCookies()) {
+        if (cookie.getName().equals("JSESSIONID") && !cookie.isExpired()) {
+          cookieAuthenticated = true;
+          break;
+        }
+      }
+      // disable subsequent basic authorization attempts if user already was authenticated
+      boolean enableBasicAuthentication = !(isRestApiSupported() && cookieAuthenticated);
+      if (enableBasicAuthentication != isUseHttpAuthentication()) {
+        LOG.info("Basic authentication for subsequent requests was " + (enableBasicAuthentication ? "enabled" : "disabled"));
+      }
+      setUseHttpAuthentication(enableBasicAuthentication);
+    }
+
+    int statusCode = client.executeMethod(method);
     LOG.debug("Status code: " + statusCode);
     // may be null if 204 No Content received
     final InputStream stream = method.getResponseBodyAsStream();
-    entityContent = stream == null ? "" : StreamUtil.readText(stream, CharsetToolkit.UTF8);
+    String entityContent = stream == null ? "" : StreamUtil.readText(stream, CharsetToolkit.UTF8);
     TaskUtil.prettyFormatJsonToLog(LOG, entityContent);
     // besides SC_OK, can also be SC_NO_CONTENT in issue transition requests
     // see: JiraRestApi#setTaskStatus
@@ -220,14 +254,6 @@ public class JiraRepository extends BaseRepositoryImpl {
     return super.getHttpClient();
   }
 
-  /**
-   * Always use Basic HTTP authentication for JIRA REST interface
-   */
-  @Override
-  public boolean isUseHttpAuthentication() {
-    return true;
-  }
-
   @Override
   protected void configureHttpClient(HttpClient client) {
     super.configureHttpClient(client);
@@ -237,15 +263,20 @@ public class JiraRepository extends BaseRepositoryImpl {
   @Override
   protected int getFeatures() {
     int features = super.getFeatures();
-    if (myApiVersion == null || myApiVersion.getType() == JiraRemoteApi.ApiType.SOAP) {
-      return features & ~NATIVE_SEARCH & ~STATE_UPDATING & ~TIME_MANAGEMENT;
-    } else {
+    if (isRestApiSupported()) {
       return features | TIME_MANAGEMENT | STATE_UPDATING;
+    }
+    else {
+      return features & ~NATIVE_SEARCH & ~STATE_UPDATING & ~TIME_MANAGEMENT;
     }
   }
 
-  public boolean isJqlSupported() {
+  private boolean isRestApiSupported() {
     return myApiVersion != null && myApiVersion.getType() != JiraRemoteApi.ApiType.SOAP;
+  }
+
+  public boolean isJqlSupported() {
+    return isRestApiSupported();
   }
 
   public String getSearchQuery() {
@@ -253,7 +284,7 @@ public class JiraRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public void setTaskState(Task task, TaskState state) throws Exception {
+  public void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception {
     myApiVersion.setTaskState(task, state);
   }
 

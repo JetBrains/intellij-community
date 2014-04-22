@@ -791,7 +791,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       catch (Exception e) {
         String reason = "";
         // Fix to IDEA-111810
-        if (e.getClass() == Exception.class) {
+        //noinspection InstanceofCatchParameter
+        if (e.getClass() == Exception.class || e instanceof RequestFailedException) {
           // probably contains some message meaningful to end-user
           reason = e.getMessage();
         }

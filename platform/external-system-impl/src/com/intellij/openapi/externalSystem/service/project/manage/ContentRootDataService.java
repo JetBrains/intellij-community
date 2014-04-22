@@ -21,6 +21,7 @@ import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ContentRootData;
+import com.intellij.openapi.externalSystem.model.project.ContentRootData.SourceRoot;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
@@ -33,6 +34,7 @@ import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -130,25 +132,25 @@ public class ContentRootDataService implements ProjectDataService<ContentRootDat
               contentEntry.clearExcludeFolders();
               contentEntry.clearSourceFolders();
               LOG.info(String.format("Importing content root '%s' for module '%s'", contentRoot.getRootPath(), module.getName()));
-              for (String path : contentRoot.getPaths(ExternalSystemSourceType.SOURCE)) {
+              for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.SOURCE)) {
                 createSourceRootIfAbsent(contentEntry, path, module.getName(), JavaSourceRootType.SOURCE, false, createEmptyContentRootDirectories);
               }
-              for (String path : contentRoot.getPaths(ExternalSystemSourceType.TEST)) {
+              for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.TEST)) {
                 createSourceRootIfAbsent(contentEntry, path, module.getName(), JavaSourceRootType.TEST_SOURCE, false, createEmptyContentRootDirectories);
               }
-              for (String path : contentRoot.getPaths(ExternalSystemSourceType.RESOURCE)) {
+              for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.RESOURCE)) {
                 createSourceRootIfAbsent(contentEntry, path, module.getName(), JavaResourceRootType.RESOURCE, false, createEmptyContentRootDirectories);
               }
-              for (String path : contentRoot.getPaths(ExternalSystemSourceType.TEST_RESOURCE)) {
+              for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.TEST_RESOURCE)) {
                 createSourceRootIfAbsent(contentEntry, path, module.getName(), JavaResourceRootType.TEST_RESOURCE, false, createEmptyContentRootDirectories);
               }
-              for (String path : contentRoot.getPaths(ExternalSystemSourceType.SOURCE_GENERATED)) {
+              for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.SOURCE_GENERATED)) {
                 createSourceRootIfAbsent(contentEntry, path, module.getName(), JavaSourceRootType.SOURCE, true, createEmptyContentRootDirectories);
               }
-              for (String path : contentRoot.getPaths(ExternalSystemSourceType.TEST_GENERATED)) {
+              for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.TEST_GENERATED)) {
                 createSourceRootIfAbsent(contentEntry, path, module.getName(), JavaSourceRootType.TEST_SOURCE, true, createEmptyContentRootDirectories);
               }
-              for (String path : contentRoot.getPaths(ExternalSystemSourceType.EXCLUDED)) {
+              for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.EXCLUDED)) {
                 createExcludedRootIfAbsent(contentEntry, path, module.getName());
               }
               contentEntriesMap.remove(contentEntry.getUrl());
@@ -179,7 +181,7 @@ public class ContentRootDataService implements ProjectDataService<ContentRootDat
   }
 
   private static void createSourceRootIfAbsent(
-    @NotNull ContentEntry entry, @NotNull String path, @NotNull String moduleName,
+    @NotNull ContentEntry entry, @NotNull SourceRoot root, @NotNull String moduleName,
     @NotNull JpsModuleSourceRootType sourceRootType, boolean generated, boolean createEmptyContentRootDirectories) {
     List<SourceFolder> folders = entry.getSourceFolders(sourceRootType);
     for (SourceFolder folder : folders) {
@@ -187,12 +189,15 @@ public class ContentRootDataService implements ProjectDataService<ContentRootDat
       if (file == null) {
         continue;
       }
-      if (ExternalSystemApiUtil.getLocalFileSystemPath(file).equals(path)) {
+      if (ExternalSystemApiUtil.getLocalFileSystemPath(file).equals(root.getPath())) {
         return;
       }
     }
-    LOG.info(String.format("Importing source root '%s' for content root '%s' of module '%s'", path, entry.getUrl(), moduleName));
-    SourceFolder sourceFolder = entry.addSourceFolder(toVfsUrl(path), sourceRootType);
+    LOG.info(String.format("Importing %s for content root '%s' of module '%s'", root, entry.getUrl(), moduleName));
+    SourceFolder sourceFolder = entry.addSourceFolder(toVfsUrl(root.getPath()), sourceRootType);
+    if (!StringUtil.isEmpty(root.getPackagePrefix())) {
+      sourceFolder.setPackagePrefix(root.getPackagePrefix());
+    }
     if (generated) {
       JavaSourceRootProperties properties = sourceFolder.getJpsElement().getProperties(JavaModuleSourceRootTypes.SOURCES);
       if(properties != null) {
@@ -201,22 +206,22 @@ public class ContentRootDataService implements ProjectDataService<ContentRootDat
     }
     if(createEmptyContentRootDirectories) {
       try {
-        VfsUtil.createDirectoryIfMissing(path);
+        VfsUtil.createDirectoryIfMissing(root.getPath());
       }
       catch (IOException e) {
-        LOG.warn(String.format("Unable to create directory for the path: %s", path), e);
+        LOG.warn(String.format("Unable to create directory for the path: %s", root.getPath()), e);
       }
     }
   }
 
-  private static void createExcludedRootIfAbsent(@NotNull ContentEntry entry, @NotNull String path, @NotNull String moduleName) {
+  private static void createExcludedRootIfAbsent(@NotNull ContentEntry entry, @NotNull SourceRoot root, @NotNull String moduleName) {
     for (VirtualFile file : entry.getExcludeFolderFiles()) {
-      if (ExternalSystemApiUtil.getLocalFileSystemPath(file).equals(path)) {
+      if (ExternalSystemApiUtil.getLocalFileSystemPath(file).equals(root.getPath())) {
         return;
       }
     }
-    LOG.info(String.format("Importing excluded root '%s' for content root '%s' of module '%s'", path, entry.getUrl(), moduleName));
-    entry.addExcludeFolder(toVfsUrl(path));
+    LOG.info(String.format("Importing excluded root '%s' for content root '%s' of module '%s'", root, entry.getUrl(), moduleName));
+    entry.addExcludeFolder(toVfsUrl(root.getPath()));
   }
 
   @Override

@@ -606,7 +606,7 @@ public class JavaDocInfoGenerator {
           String text = o.toString();
           PsiType type = variable.getType();
           if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-            text = "\"" + StringUtil.trimLog(text, 120) + "\"";
+            text = "\"" + StringUtil.shortenPathWithEllipsis(text, 120) + "\"";
           }
           else if (type.equalsToText("char")) text = "'" + text + "'";
           try {
@@ -1087,7 +1087,9 @@ public class JavaDocInfoGenerator {
           generateLinkValue(tag, buffer, false);
         }
         else if (tagName.equals(LITERAL_TAG)) {
-          generateLiteralValue(buffer, ((PsiInlineDocTagImpl)tag).getDataElementsIgnoreWhitespaces());
+          final PsiElement[] dataElements = tag instanceof PsiInlineDocTagImpl ?((PsiInlineDocTagImpl)tag).getDataElementsIgnoreWhitespaces() 
+                                                                               : tag.getDataElements();
+          generateLiteralValue(buffer, dataElements);
         }
         else if (tagName.equals(CODE_TAG)) {
           generateCodeValue(tag, buffer);

@@ -40,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.util.List;
 
 public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
   @Nullable private final Project myProject;
@@ -75,11 +76,14 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
 
   @Override
   public String getErrorText(String inputString) {
-    if (FileTypeManager.getInstance().isFileIgnored(inputString)) {
-      return "Trying to create a " + (myIsDirectory ? "directory" : "package") + " with ignored name, result will not be visible";
-    }
-    if (!myIsDirectory && inputString.length() > 0 && !PsiDirectoryFactory.getInstance(myProject).isValidPackageName(inputString)) {
-      return "Not a valid package name, it would be impossible to create a class inside";
+    List<String> strings = StringUtil.split(inputString, ".");
+    for (String part : strings) {
+      if (FileTypeManager.getInstance().isFileIgnored(part)) {
+        return "Trying to create a " + (myIsDirectory ? "directory" : "package") + " with ignored name, result will not be visible";
+      }
+      if (!myIsDirectory && part.length() > 0 && !PsiDirectoryFactory.getInstance(myProject).isValidPackageName(part)) {
+        return "Not a valid package name, it would be impossible to create a class inside";
+      }
     }
     return null;
   }

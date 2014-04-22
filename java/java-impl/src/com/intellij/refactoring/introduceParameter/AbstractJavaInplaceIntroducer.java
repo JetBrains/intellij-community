@@ -139,7 +139,9 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
     final PsiElement refVariableElementParent = refVariableElement != null ? refVariableElement.getParent() : null;
     PsiExpression expression = refVariableElement instanceof PsiKeyword && refVariableElementParent instanceof PsiNewExpression 
                                ? (PsiNewExpression)refVariableElementParent 
-                               : PsiTreeUtil.getParentOfType(refVariableElement, PsiReferenceExpression.class);
+                               : refVariableElementParent instanceof PsiParenthesizedExpression 
+                                 ? ((PsiParenthesizedExpression)refVariableElementParent).getExpression() 
+                                 : PsiTreeUtil.getParentOfType(refVariableElement, PsiReferenceExpression.class);
     if (expression instanceof PsiReferenceExpression && !(expression.getParent() instanceof PsiMethodCallExpression)) {
       final String referenceName = ((PsiReferenceExpression)expression).getReferenceName();
       if (((PsiReferenceExpression)expression).resolve() == psiVariable ||

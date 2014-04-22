@@ -58,7 +58,7 @@ public class SuspendContextImpl extends XSuspendContext {
         }
         else {
           if (value instanceof StringValue && ((StringValue)value).isTruncated()) {
-            ((StringValue)value).reloadHeavyValue().doWhenDone(new Runnable() {
+            ((StringValue)value).getFullString().doWhenDone(new Runnable() {
               @Override
               public void run() {
                 result.setDone(value.getValueString());

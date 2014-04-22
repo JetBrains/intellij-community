@@ -46,12 +46,16 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
-import junit.framework.*;
+import junit.framework.AssertionFailedError;
+import junit.framework.Test;
+import junit.framework.TestCase;
+import junit.framework.TestSuite;
 import org.intellij.lang.annotations.RegExp;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Assert;
 
 import java.awt.*;
 import java.io.File;
@@ -71,6 +75,8 @@ import java.util.regex.Pattern;
  */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public abstract class UsefulTestCase extends TestCase {
+  public static final boolean IS_UNDER_TEAMCITY = System.getenv("TEAMCITY_VERSION") != null;
+
   public static final String IDEA_MARKER_CLASS = "com.intellij.openapi.components.impl.stores.IdeaProjectStoreImpl";
   public static final String TEMP_DIR_MARKER = "unitTest_";
 
@@ -324,7 +330,7 @@ public abstract class UsefulTestCase extends TestCase {
     UIUtil.invokeAndWaitIfNeeded(r);
   }
 
-  protected void invokeTestRunnable(Runnable runnable) throws Exception {
+  protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
     UIUtil.invokeAndWaitIfNeeded(runnable);
     //runnable.run();
   }
@@ -639,7 +645,7 @@ public abstract class UsefulTestCase extends TestCase {
     String actualText = StringUtil.convertLineSeparators(actual.trim());
     Assert.assertEquals(expectedText, actualText);
   }
-  
+
   public static void assertExists(File file){
     assertTrue("File should exists " + file, file.exists());
   }

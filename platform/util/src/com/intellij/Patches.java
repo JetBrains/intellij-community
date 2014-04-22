@@ -17,6 +17,8 @@ package com.intellij;
 
 import com.intellij.openapi.util.SystemInfo;
 
+import java.awt.*;
+
 @SuppressWarnings({"HardCodedStringLiteral", "UtilityClassWithoutPrivateConstructor"})
 public class Patches {
   /**
@@ -113,9 +115,17 @@ public class Patches {
 
   /**
    * Java 7 incorrectly calculates screen insets on multi-monitor X Window configurations.
-   * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=7172665.
+   * See https://bugs.openjdk.java.net/browse/JDK-7172665.
    */
-  public static final boolean SUN_BUG_ID_7172665 = SystemInfo.isXWindow && SystemInfo.isJavaVersionAtLeast("1.7");
+  public static final boolean SUN_BUG_ID_7172665 =
+    SystemInfo.isXWindow && SystemInfo.isJavaVersionAtLeast("1.7") && !SystemInfo.isJavaVersionAtLeast("1.8");
+
+  /**
+   * XToolkit.getScreenInsets() may be very slow.
+   * See https://bugs.openjdk.java.net/browse/JDK-8004103.
+   */
+  public static final boolean JDK_BUG_ID_8004103 =
+    SystemInfo.isXWindow && !GraphicsEnvironment.isHeadless() && SystemInfo.isJavaVersionAtLeast("1.7");
 
   /**
    * On some WMs modal dialogs may show behind full screen window.
@@ -126,9 +136,9 @@ public class Patches {
 
   /**
    * No BindException when another program is using the port.
-   * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=7179799
+   * See https://bugs.openjdk.java.net/browse/JDK-7179799.
    */
-  public static final boolean SUN_BUG_ID_7179799 = true;
+  public static final boolean SUN_BUG_ID_7179799 = SystemInfo.isWindows && !SystemInfo.isJavaVersionAtLeast("1.8");
 
   /**
    * Marker field to find all usages of the reflective access to JDK 7-specific methods
