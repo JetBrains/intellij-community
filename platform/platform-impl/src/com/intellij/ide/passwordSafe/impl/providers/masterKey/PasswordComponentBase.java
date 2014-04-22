@@ -41,6 +41,8 @@ public abstract class PasswordComponentBase {
   protected JPasswordField myNewPasswordField;
   protected JPasswordField myConfirmPasswordField;
   protected JCheckBox myEncryptCheckBox;
+  protected JLabel myPasswordLabel;
+  protected JLabel myNewPasswordLabel;
 
 
   public PasswordComponentBase(@NotNull MasterKeyPasswordSafe safe, @NotNull String title) {
@@ -48,6 +50,7 @@ public abstract class PasswordComponentBase {
     myTitle = title;
     myIconLabel.setText("");
     myIconLabel.setIcon(AllIcons.General.PasswordLock);
+    myIconLabel.setDisabledIcon(AllIcons.General.PasswordLock);
     //myPromptLabel.setUI(new MultiLineLabelUI());
     myPromptLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
 
