@@ -51,6 +51,7 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
 
         try {
             configuration.setScriptName(baseDir.findChild("task1").findChild("task1_tests.py").getCanonicalPath()); //TODO: get current task name
+            //configuration.setScriptName(baseDir.findChild("task3").findChild("task3_tests.py").getCanonicalPath());
         } catch (Exception e) {
             Log.print("Can not find test script for run configuration");
         }
@@ -90,11 +91,12 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
                             final String curFileName = taskManager.getFileName(task, file);
                             createFile(curFileName, taskDirectory);
                         }
-                        createFile("task1_tests.py", baseDir.findChild("task1"));
-                        createFile("study_utrunner.py", baseDir.findChild(".idea"));
-                        createFile("study_tcunittest.py", baseDir.findChild(".idea"));
 
                     }
+                    createFile("task1_tests.py", baseDir.findChild("task1"));
+                    createFile("task3_tests.py", baseDir.findChild("task2"));
+                    createFile("study_utrunner.py", baseDir.findChild(".idea"));
+                    createFile("study_tcunittest.py", baseDir.findChild(".idea"));
 
                 } catch (IOException e) {
                     Log.print("Problems with creating files");
