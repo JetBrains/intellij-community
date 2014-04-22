@@ -31,8 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -102,13 +100,6 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
       };
       label.setVerticalAlignment(SwingConstants.TOP);
       panel.add(label, BorderLayout.CENTER);
-      radioButton.addItemListener(new ItemListener() {
-        @Override
-        public void itemStateChanged(ItemEvent e) {
-          if (e.getStateChange() != ItemEvent.SELECTED) return;
-          applyLaf(lafName, CustomizeUIThemeStepPanel.this);
-        }
-      });
 
       group.add(radioButton);
       buttonsPanel.add(panel);

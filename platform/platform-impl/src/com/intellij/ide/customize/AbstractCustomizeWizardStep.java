@@ -46,18 +46,23 @@ public abstract class AbstractCustomizeWizardStep extends JPanel {
         return anchorButton.isSelected() ? getSelectionBackground() : super.getBackground();
       }
     };
-    panel.setOpaque(true);
+    panel.setOpaque(anchorButton.isSelected());
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
         anchorButton.setSelected(true);
-        action.run();
         return true;
       }
     }.installOn(panel);
     anchorButton.addItemListener(new ItemListener() {
+      boolean curState = anchorButton.isSelected();
       @Override
       public void itemStateChanged(ItemEvent e) {
+        if (e.getStateChange() == ItemEvent.SELECTED && curState != anchorButton.isSelected()) {
+          action.run();
+        }
+        curState = anchorButton.isSelected();
+        panel.setOpaque(curState);
         panel.repaint();
       }
     });
@@ -66,5 +71,8 @@ public abstract class AbstractCustomizeWizardStep extends JPanel {
 
   Component getDefaultFocusedComponent() {
     return null;
+  }
+
+  public void beforeShown(boolean forward) {
   }
 }
