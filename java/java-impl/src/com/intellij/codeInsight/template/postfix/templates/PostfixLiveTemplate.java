@@ -15,17 +15,15 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.codeInsight.completion.CompletionInitializationContext;
-import com.intellij.codeInsight.completion.JavaCompletionContributor;
+import com.google.common.collect.Sets;
 import com.intellij.codeInsight.template.CustomLiveTemplateBase;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.impl.CustomLiveTemplateLookupElement;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInsight.template.postfix.completion.PostfixTemplateLookupElement;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
-import com.intellij.codeInsight.template.postfix.util.Aliases;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoConstants;
@@ -33,7 +31,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -42,71 +39,53 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Collections;
 import java.util.Set;
 
 public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   public static final String POSTFIX_TEMPLATE_ID = "POSTFIX_TEMPLATE_ID";
-
   private static final Logger LOG = Logger.getInstance(PostfixLiveTemplate.class);
-  private final HashMap<String, PostfixTemplate> myTemplates = ContainerUtil.newHashMap();
+  private static final LanguagePostfixTemplate templates = LanguagePostfixTemplate.INSTANCE;
 
-  public PostfixLiveTemplate() {
-    for (PostfixTemplate template : PostfixTemplate.EP_NAME.getExtensions()) {
-      register(template.getKey(), template);
-      Aliases aliases = template.getClass().getAnnotation(Aliases.class);
-      if (aliases != null) {
-        for (String key : aliases.value()) {
-          register(key, template);
-        }
+  @NotNull
+  public Set<String> getAllTemplateKeys(PsiFile file, int offset) {
+    Set<String> keys = Sets.newHashSet();
+    Language language = PsiUtilCore.getLanguageAtOffset(file, offset);
+
+    for (PostfixTemplateProvider provider : templates.allForLanguage(language)) {
+      keys.addAll(provider.getKeys());
+    }
+    return keys;
+  }
+
+  public boolean hasNotEmptyKey(PsiFile file, int offset) {
+    Language language = PsiUtilCore.getLanguageAtOffset(file, offset);
+    for (PostfixTemplateProvider provider : templates.allForLanguage(language)) {
+      if (StringUtil
+        .isNotEmpty(computeTemplateKeyWithoutContextChecking(provider, file.getText(), offset + 1))) {
+        return true;
       }
     }
-  }
-
-  private void register(@NotNull String key, @NotNull PostfixTemplate template) {
-    PostfixTemplate registered = myTemplates.put(key, template);
-    if (registered != null) {
-      LOG.error("Can't register postfix template. Duplicated key: " + template.getKey());
-    }
-  }
-
-  @Nullable
-  @Override
-  public String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
-    Editor editor = callback.getEditor();
-    String key = computeTemplateKeyWithoutContextChecking(editor.getDocument().getCharsSequence(), editor.getCaretModel().getOffset());
-    if (key == null) return null;
-    return isApplicableTemplate(getTemplateByKey(key), key, callback.getContext().getContainingFile(), editor) ? key : null;
-  }
-  
-  @Nullable
-  @Override
-  public String computeTemplateKeyWithoutContextChecking(@NotNull CustomTemplateCallback callback) {
-    Editor editor = callback.getEditor();
-    return computeTemplateKeyWithoutContextChecking(editor.getDocument().getCharsSequence(), editor.getCaretModel().getOffset());
-  }
-
-  @Override
-  public boolean supportsMultiCaret() {
     return false;
   }
 
   @Nullable
-  public String computeTemplateKeyWithoutContextChecking(@NotNull CharSequence documentContent, int currentOffset) {
+  public String computeTemplateKeyWithoutContextChecking(PostfixTemplateProvider provider,
+                                                         @NotNull CharSequence documentContent,
+                                                         int currentOffset) {
     int startOffset = currentOffset;
     if (documentContent.length() < startOffset) {
       return null;
     }
+
     while (startOffset > 0) {
       char currentChar = documentContent.charAt(startOffset - 1);
       if (!Character.isJavaIdentifierPart(currentChar)) {
-        if (currentChar != '.' && currentChar != '!') {
+        if (!provider.isTerminalSymbol(currentChar)) {
           return null;
         }
         startOffset--;
@@ -117,19 +96,82 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     return String.valueOf(documentContent.subSequence(startOffset, currentOffset));
   }
 
+  @Nullable
+  @Override
+  public String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
+    Editor editor = callback.getEditor();
+    CharSequence charsSequence = editor.getDocument().getCharsSequence();
+    int offset = editor.getCaretModel().getOffset();
+    Language language = getLanguage(callback);
+    for (PostfixTemplateProvider provider : templates.allForLanguage(language)) {
+      String key = computeTemplateKeyWithoutContextChecking(provider, charsSequence, offset);
+      if (key != null && isApplicableTemplate(provider, key, callback.getFile(), editor)) {
+        return key;
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public String computeTemplateKeyWithoutContextChecking(@NotNull CustomTemplateCallback callback) {
+    Editor editor = callback.getEditor();
+    return computeTemplateKeyWithoutContextChecking(callback.getFile(), editor, editor.getCaretModel().getOffset());
+  }
+
+  @Override
+  public boolean supportsMultiCaret() {
+    return false;
+  }
+
+  @Nullable
+  public String computeTemplateKeyWithoutContextChecking(PsiFile file, Editor editor, int currentOffset) {
+    Language language = PsiUtilCore.getLanguageAtOffset(file, currentOffset);
+    for (PostfixTemplateProvider provider : templates.allForLanguage(language)) {
+      String key = computeTemplateKeyWithoutContextChecking(provider, editor.getDocument().getCharsSequence(), currentOffset);
+      if (key != null) return key;
+    }
+    return null;
+  }
+
   @Override
   public void expand(@NotNull final String key, @NotNull final CustomTemplateCallback callback) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.postfix");
 
-    final PostfixTemplate template = getTemplateByKey(key);
+    Editor editor = callback.getEditor();
+    Language language = getLanguage(callback);
+    for (PostfixTemplateProvider provider : templates.allForLanguage(language)) {
+      PostfixTemplate postfixTemplate = provider.get(key);
+      if (postfixTemplate != null) {
+        expandForProvider(provider, key, callback);
+        return;
+      }
+    }
+
+    // don't care about errors in multiCaret mode
+    if (editor.getCaretModel().getAllCarets().size() == 1) {
+      LOG.error("Template not found by key: " + key);
+    }
+  }
+
+  private static Language getLanguage(CustomTemplateCallback callback) {
+    return PsiUtilCore.getLanguageAtOffset(callback.getFile(), callback.getEditor().getCaretModel().getOffset());
+  }
+
+  public void expandForProvider(
+    @NotNull PostfixTemplateProvider provider,
+    @NotNull final String key,
+    @NotNull final CustomTemplateCallback callback) {
     final Editor editor = callback.getEditor();
     final PsiFile file = callback.getContext().getContainingFile();
-    if (isApplicableTemplate(template, key, file, editor)) {
+    if (isApplicableTemplate(provider, key, file, editor)) {
       int currentOffset = editor.getCaretModel().getOffset();
       PsiElement newContext = deleteTemplateKey(file, editor.getDocument(), currentOffset, key);
-      newContext = addSemicolonIfNeeded(editor, editor.getDocument(), newContext, currentOffset - key.length());
+      newContext = provider.preExpand(editor, newContext, currentOffset, key);
+      PostfixTemplate template = provider.get(key);
+      assert template != null;
       expandTemplate(template, editor, newContext);
     }
     // don't care about errors in multiCaret mode
@@ -141,11 +183,10 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   @Override
   public boolean isApplicable(PsiFile file, int offset, boolean wrapping) {
     PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
-    if (wrapping  || file == null || settings == null || !settings.isPostfixTemplatesEnabled() ||
-        PsiUtilCore.getLanguageAtOffset(file, offset) != JavaLanguage.INSTANCE) {
+    if (wrapping || file == null || settings == null || !settings.isPostfixTemplatesEnabled()) {
       return false;
     }
-    return StringUtil.isNotEmpty(computeTemplateKeyWithoutContextChecking(file.getText(), offset + 1));
+    return hasNotEmptyKey(file, offset);
   }
 
   @Override
@@ -177,35 +218,46 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
 
   @NotNull
   @Override
-  public Collection<? extends CustomLiveTemplateLookupElement> getLookupElements(@NotNull PsiFile file, @NotNull Editor editor, int offset) {
-    String key = computeTemplateKeyWithoutContextChecking(editor.getDocument().getCharsSequence(), offset);
+  public Collection<? extends CustomLiveTemplateLookupElement> getLookupElements(@NotNull PsiFile file,
+                                                                                 @NotNull Editor editor,
+                                                                                 int offset) {
+    Collection<CustomLiveTemplateLookupElement> result = ContainerUtil.newHashSet();
+    Language language = PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
+    for (PostfixTemplateProvider provider : templates.allForLanguage(language)) {
+      result.addAll(getLookupElementsForProvider(provider, file, editor, offset));
+    }
+
+    return result;
+  }
+
+  @NotNull
+  private Collection<? extends CustomLiveTemplateLookupElement> getLookupElementsForProvider(
+    @NotNull PostfixTemplateProvider provider,
+    @NotNull PsiFile file,
+    @NotNull Editor editor,
+    int offset) {
+    String key = computeTemplateKeyWithoutContextChecking(file, editor, offset);
     if (key != null && editor.getCaretModel().getCaretCount() == 1) {
       Collection<CustomLiveTemplateLookupElement> result = ContainerUtil.newHashSet();
-      Condition<PostfixTemplate> isApplicationTemplateFunction = createIsApplicationTemplateFunction(key, file, editor);
-      for (Map.Entry<String, PostfixTemplate> entry : myTemplates.entrySet()) {
-        PostfixTemplate postfixTemplate = entry.getValue();
+
+      Condition<PostfixTemplate> isApplicationTemplateFunction = createIsApplicationTemplateFunction(provider, key, file, editor);
+      for (String postfixKey : provider.getKeys()) {
+        PostfixTemplate postfixTemplate = provider.get(postfixKey);
+        assert postfixTemplate != null;
         if (isApplicationTemplateFunction.value(postfixTemplate)) {
-          result.add(new PostfixTemplateLookupElement(this, postfixTemplate, entry.getKey(), false));
+          result.add(new PostfixTemplateLookupElement(this, postfixTemplate, postfixKey, false));
         }
       }
       return result;
     }
-    return super.getLookupElements(file, editor, offset);
+    return Collections.emptyList();
   }
 
-  @NotNull
-  public Set<String> getAllTemplateKeys() {
-    return myTemplates.keySet();
-  }
 
-  @Nullable
-  public PostfixTemplate getTemplateByKey(@NotNull String key) {
-    return myTemplates.get(key);
-  }
-
-  private static void expandTemplate(@NotNull final PostfixTemplate template,
-                                     @NotNull final Editor editor,
-                                     @NotNull final PsiElement context) {
+  private static void expandTemplate(
+    @NotNull final PostfixTemplate template,
+    @NotNull final Editor editor,
+    @NotNull final PsiElement context) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -218,56 +270,6 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     });
   }
 
-  @Contract("null, _, _, _ -> false")
-  private static boolean isApplicableTemplate(@Nullable PostfixTemplate template, @NotNull String key, @NotNull PsiFile file, @NotNull Editor editor) {
-    return createIsApplicationTemplateFunction(key, file, editor).value(template);
-  }
-  
-  private static Condition<PostfixTemplate> createIsApplicationTemplateFunction(@NotNull String key, @NotNull PsiFile file, @NotNull Editor editor) {
-    int currentOffset = editor.getCaretModel().getOffset();
-    final int newOffset = currentOffset - key.length();
-    CharSequence fileContent = editor.getDocument().getCharsSequence();
-
-    StringBuilder fileContentWithoutKey = new StringBuilder();
-    fileContentWithoutKey.append(fileContent.subSequence(0, newOffset));
-    fileContentWithoutKey.append(fileContent.subSequence(currentOffset, fileContent.length()));
-    PsiFile copyFile = copyFile(file, fileContentWithoutKey);
-    Document copyDocument = copyFile.getViewProvider().getDocument();
-    if (copyDocument == null) {
-      //noinspection unchecked
-      return Condition.FALSE;
-    }
-
-    if (isSemicolonNeeded(copyFile, editor)) {
-      fileContentWithoutKey.insert(newOffset, ';');
-      copyFile = copyFile(file, fileContentWithoutKey);
-      copyDocument = copyFile.getViewProvider().getDocument();
-      if (copyDocument == null) {
-        //noinspection unchecked
-        return Condition.FALSE;
-      }
-    }
-
-    final PsiElement context = CustomTemplateCallback.getContext(copyFile, newOffset > 0 ? newOffset - 1 : newOffset);
-    final Document finalCopyDocument = copyDocument;
-    return new Condition<PostfixTemplate>() {
-      @Override
-      public boolean value(PostfixTemplate template) {
-        return template != null && template.isEnabled() && template.isApplicable(context, finalCopyDocument, newOffset);
-      }
-    };
-  }
-
-  @NotNull
-  private static PsiFile copyFile(@NotNull PsiFile file, @NotNull StringBuilder fileContentWithoutKey) {
-    final PsiFileFactory psiFileFactory = PsiFileFactory.getInstance(file.getProject());
-    PsiFile copy = psiFileFactory.createFileFromText(file.getName(), file.getFileType(), fileContentWithoutKey);
-    VirtualFile vFile = copy.getVirtualFile();
-    if (vFile != null) {
-      vFile.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
-    }
-    return copy;
-  }
 
   @NotNull
   private static PsiElement deleteTemplateKey(@NotNull final PsiFile file,
@@ -291,33 +293,58 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     return CustomTemplateCallback.getContext(file, startOffset > 0 ? startOffset - 1 : startOffset);
   }
 
-  @NotNull
-  private static PsiElement addSemicolonIfNeeded(@NotNull final Editor editor,
-                                                 @NotNull final Document document,
-                                                 @NotNull final PsiElement context,
-                                                 final int offset) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    final Ref<PsiElement> newContext = Ref.create(context);
-    final PsiFile file = context.getContainingFile();
-    if (isSemicolonNeeded(file, editor)) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-            public void run() {
-              document.insertString(offset, ";");
-              PsiDocumentManager.getInstance(context.getProject()).commitDocument(document);
-              newContext.set(CustomTemplateCallback.getContext(file, offset - 1));
-            }
-          });
-        }
-      });
+  private static Condition<PostfixTemplate> createIsApplicationTemplateFunction(
+    @NotNull PostfixTemplateProvider provider,
+    @NotNull String key,
+    @NotNull PsiFile file,
+    @NotNull Editor editor) {
+    int currentOffset = editor.getCaretModel().getOffset();
+    final int newOffset = currentOffset - key.length();
+    CharSequence fileContent = editor.getDocument().getCharsSequence();
+    StringBuilder fileContentWithoutKey = new StringBuilder();
+    fileContentWithoutKey.append(fileContent.subSequence(0, newOffset));
+    fileContentWithoutKey.append(fileContent.subSequence(currentOffset, fileContent.length()));
+    PsiFile copyFile = copyFile(file, fileContentWithoutKey);
+    Document copyDocument = copyFile.getViewProvider().getDocument();
+    if (copyDocument == null) {
+      //noinspection unchecked
+      return Condition.FALSE;
     }
-    return newContext.get();
+
+    copyFile = provider.preCheck(editor, copyFile, newOffset);
+    copyDocument = copyFile.getViewProvider().getDocument();
+    if (copyDocument == null) {
+      //noinspection unchecked
+      return Condition.FALSE;
+    }
+
+    final PsiElement context = CustomTemplateCallback.getContext(copyFile, newOffset > 0 ? newOffset - 1 : newOffset);
+    final Document finalCopyDocument = copyDocument;
+    return new Condition<PostfixTemplate>() {
+      @Override
+      public boolean value(PostfixTemplate template) {
+        return template != null && template.isEnabled() && template.isApplicable(context, finalCopyDocument, newOffset);
+      }
+    };
   }
 
-  private static boolean isSemicolonNeeded(@NotNull PsiFile file, @NotNull Editor editor) {
-    return JavaCompletionContributor.semicolonNeeded(editor, file, CompletionInitializationContext.calcStartOffset(editor));
+
+  @NotNull
+  public static PsiFile copyFile(@NotNull PsiFile file, @NotNull StringBuilder fileContentWithoutKey) {
+    final PsiFileFactory psiFileFactory = PsiFileFactory.getInstance(file.getProject());
+    PsiFile copy = psiFileFactory.createFileFromText(file.getName(), file.getFileType(), fileContentWithoutKey);
+    VirtualFile vFile = copy.getVirtualFile();
+    if (vFile != null) {
+      vFile.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
+    }
+    return copy;
+  }
+
+  public static boolean isApplicableTemplate(
+    @NotNull PostfixTemplateProvider provider,
+    @NotNull String key,
+    @NotNull PsiFile file,
+    @NotNull Editor editor) {
+    return createIsApplicationTemplateFunction(provider, key, file, editor).value(provider.get(key));
   }
 }
