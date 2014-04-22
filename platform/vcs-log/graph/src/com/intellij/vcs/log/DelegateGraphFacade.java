@@ -190,18 +190,25 @@ public class DelegateGraphFacade implements GraphFacade {
 
   @Override
   public void setVisibleBranches(@Nullable Collection<Integer> heads) {
-    if (heads == null)
+    boolean needUpdate;
+    if (heads == null) {
+      needUpdate = myHeads != null;
       myHeads = null;
-    else
+    } else {
+      needUpdate = true;
       myHeads = new HashSet<Integer>(heads);
-
-    updateVisibleGraph();
+    }
+    if (needUpdate)
+      updateVisibleGraph();
   }
 
   @Override
   public void setFilter(@Nullable Condition<Integer> visibilityPredicate) {
+    boolean needUpdate = !(visibilityPredicate == myVisibilityPredicate);
+
     myVisibilityPredicate = visibilityPredicate;
-    updateVisibleGraph();
+    if (needUpdate)
+      updateVisibleGraph();
   }
 
   @Override
