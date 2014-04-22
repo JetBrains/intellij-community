@@ -131,6 +131,11 @@ public class JavaDebugProcess extends XDebugProcess {
     return myBreakpointHandlers;
   }
 
+  @Override
+  public boolean checkCanInitBreakpoints() {
+    return false;
+  }
+
   @Nullable
   @Override
   protected ProcessHandler doGetProcessHandler() {
