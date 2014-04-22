@@ -403,6 +403,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
     replacefilter(token: "@@help_id@@", value: helpId)
     replacefilter(token: "@@url_schemes@@", value: urlSchemes)
     replacefilter(token: "@@archs@@", value: archs)
+    replacefilter(token: "@@min_osx@@", value: ifNull(args.min_osx, "10.6"))
   }
 
   if (executable != "idea") {

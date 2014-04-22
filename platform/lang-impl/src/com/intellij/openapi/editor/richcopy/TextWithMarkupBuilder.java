@@ -15,17 +15,9 @@
  */
 package com.intellij.openapi.editor.richcopy;
 
-import java.awt.*;
-import java.util.EventListener;
+import com.intellij.openapi.editor.richcopy.model.SyntaxInfo;
 
-// we're extending EventListener to be able to use EventDispatcher in TextWithMarkupProcessor
-public interface TextWithMarkupBuilder extends EventListener {
-  void init(Color defaultForeground, Color defaultBackground, String defaultFontFamily, int fontSize);
-  boolean isOverflowed();
-  void setFontFamily(String fontFamily);
-  void setFontStyle(int fontStyle);
-  void setForeground(Color foreground);
-  void setBackground(Color background);
-  void addTextFragment(CharSequence charSequence, int startOffset, int endOffset);
-  void complete();
+public interface TextWithMarkupBuilder {
+  void reset();
+  void build(SyntaxInfo syntaxInfo);
 }

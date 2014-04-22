@@ -60,20 +60,19 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
     add(scrollPane, MAIN);
     add(myCustomizePanel, CUSTOMIZE);
 
-    //PluginManager.loadDisabledPlugins(new File(PathManager.getConfigPath()).getPath(), myDisabledPluginIds);
-    //for (IdeaPluginDescriptor pluginDescriptor : myAllPlugins) {
-    //  if (pluginDescriptor.getPluginId().getIdString().equals("com.intellij")) {
-    ////    skip 'IDEA CORE' plugin
-        //continue;
-      //}
-    //  //PluginManager.initClassLoader(PluginGroups.class.getClassLoader(), (IdeaPluginDescriptorImpl)pluginDescriptor);
-    //}
     Map<String, List<String>> groups = PluginGroups.getInstance().getTree();
     for (Map.Entry<String, List<String>> entry : groups.entrySet()) {
       final String group = entry.getKey();
       if (PluginGroups.CORE.equals(group)) continue;
 
-      JPanel groupPanel = new JPanel(new GridBagLayout());
+      JPanel groupPanel = new JPanel(new GridBagLayout()) {
+        @Override
+        public Color getBackground() {
+          Color color = UIManager.getColor("Panel.background");
+          return isGroupEnabled(group)? color : ColorUtil.darker(color, 1);
+        }
+      };
+      gridPanel.setOpaque(true);
       GridBagConstraints gbc = new GridBagConstraints();
       gbc.insets = new Insets(0, 0, 10, 0);
       gbc.fill = GridBagConstraints.BOTH;
@@ -113,6 +112,7 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
       }
       else {
         JPanel buttonsPanel = new JPanel(new GridLayout(1, 2, 10, 5));
+        buttonsPanel.setOpaque(false);
         LinkLabel customizeButton = createLink(CUSTOMIZE_COMMAND + ":" + group, CUSTOMIZE_TEXT_PROVIDER);
         buttonsPanel.add(customizeButton);
         LinkLabel disableAllButton = createLink(SWITCH_COMMAND + ":" + group, getGroupSwitchTextProvider(group));
@@ -213,22 +213,20 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
     return null;
   }
 
-
-
-
-
-  private class IdSetPanel extends JPanel {
+  private class IdSetPanel extends JPanel implements LinkListener<String> {
     private JLabel myTitleLabel = new JLabel();
     private JPanel myContentPanel = new JPanel(new GridLayout(0, 3, 5, 5));
     private JButton mySaveButton = new JButton("Save Changes and Go Back");
+    private String myGroup;
 
     private IdSetPanel() {
       setLayout(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, GAP, true, false));
       add(myTitleLabel);
       add(myContentPanel);
-      JPanel buttonPanel = new JPanel(new BorderLayout());
-      buttonPanel.add(mySaveButton, BorderLayout.WEST);
-      buttonPanel.add(Box.createHorizontalGlue(), BorderLayout.CENTER);
+      JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 25, 5));
+      buttonPanel.add(mySaveButton);
+      buttonPanel.add(new LinkLabel<String>("Enable All", null, this, "enable"));
+      buttonPanel.add(new LinkLabel<String>("Disable All", null, this, "disable"));
       add(buttonPanel);
       mySaveButton.addActionListener(new ActionListener() {
         @Override
@@ -238,7 +236,19 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
       });
     }
 
+    @Override
+    public void linkSelected(LinkLabel aSource, String command) {
+      if (myGroup == null) return;
+      boolean enable = "enable".equals(command);
+      List<IdSet> idSets = PluginGroups.getInstance().getSets(myGroup);
+      for (IdSet set : idSets) {
+        PluginGroups.getInstance().setIdSetEnabled(set, enable);
+      }
+      CustomizePluginsStepPanel.this.repaint();
+    }
+
     void update(String group) {
+      myGroup = group;
       myTitleLabel.setText("<html><body><h2 style=\"text-align:left;\">" + group + "</h2></body></html>");
       myContentPanel.removeAll();
       List<IdSet> idSets = PluginGroups.getInstance().getSets(group);

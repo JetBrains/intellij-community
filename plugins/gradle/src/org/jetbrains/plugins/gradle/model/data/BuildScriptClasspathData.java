@@ -19,13 +19,11 @@ import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.AbstractExternalEntityData;
-import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
@@ -56,32 +54,32 @@ public class BuildScriptClasspathData extends AbstractExternalEntityData {
     private static final long serialVersionUID = 1L;
 
     @NotNull
-    private final File myClassesFile;
+    private final Set<String> myClassesFile;
 
-    @Nullable
-    private final File mySourcesFile;
+    @NotNull
+    private final Set<String> mySourcesFile;
 
-    @Nullable
-    private final File myJavadocFile;
+    @NotNull
+    private final Set<String> myJavadocFile;
 
-    public ClasspathEntry(@NotNull File classesFile, @Nullable File sourcesFile, @Nullable File javadocFile) {
+    public ClasspathEntry(@NotNull Set<String> classesFile, @NotNull Set<String> sourcesFile, @NotNull Set<String> javadocFile) {
       myClassesFile = classesFile;
       mySourcesFile = sourcesFile;
       myJavadocFile = javadocFile;
     }
 
     @NotNull
-    public File getClassesFile() {
+    public Set<String> getClassesFile() {
       return myClassesFile;
     }
 
-    @Nullable
-    public File getSourcesFile() {
+    @NotNull
+    public Set<String> getSourcesFile() {
       return mySourcesFile;
     }
 
-    @Nullable
-    public File getJavadocFile() {
+    @NotNull
+    public Set<String> getJavadocFile() {
       return myJavadocFile;
     }
 
@@ -92,18 +90,18 @@ public class BuildScriptClasspathData extends AbstractExternalEntityData {
 
       ClasspathEntry entry = (ClasspathEntry)o;
 
-      if (!FileUtil.filesEqual(myClassesFile, entry.myClassesFile)) return false;
-      if (!FileUtil.filesEqual(myJavadocFile, entry.myJavadocFile)) return false;
-      if (!FileUtil.filesEqual(mySourcesFile, entry.mySourcesFile)) return false;
+      if (!myClassesFile.equals(entry.myClassesFile)) return false;
+      if (!myJavadocFile.equals(entry.myJavadocFile)) return false;
+      if (!mySourcesFile.equals(entry.mySourcesFile)) return false;
 
       return true;
     }
 
     @Override
     public int hashCode() {
-      int result = FileUtil.fileHashCode(myClassesFile);
-      result = 31 * result + FileUtil.fileHashCode(mySourcesFile);
-      result = 31 * result + FileUtil.fileHashCode(myJavadocFile);
+      int result = myClassesFile.hashCode();
+      result = 31 * result + mySourcesFile.hashCode();
+      result = 31 * result + myJavadocFile.hashCode();
       return result;
     }
   }

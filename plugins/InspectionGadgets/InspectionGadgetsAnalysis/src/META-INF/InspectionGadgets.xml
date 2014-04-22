@@ -394,10 +394,6 @@
     <localInspection language="JAVA" shortName="AnonymousInnerClass" bundle="com.siyeh.InspectionGadgetsBundle" key="anonymous.inner.class.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.class.structure" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.classlayout.AnonymousInnerClassInspection"/>
-    <localInspection language="JAVA" suppressId="ClassWithoutPackageStatement" shortName="ClassInTopLevelPackage" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="class.in.top.level.package.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.classlayout.ClassInTopLevelPackageInspection"/>
     <localInspection language="JAVA" suppressId="NonStaticInitializer" shortName="ClassInitializer" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="class.initializer.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.class.structure"
                      enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.classlayout.ClassInitializerInspection"/>

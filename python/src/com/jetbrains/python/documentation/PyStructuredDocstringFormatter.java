@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.documentation;
 
+import com.google.common.collect.Lists;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -50,7 +51,11 @@ public class PyStructuredDocstringFormatter {
   @Nullable
   public static List<String> formatDocstring(@NotNull final PsiElement element, @NotNull final String docstring) {
     Module module = ModuleUtilCore.findModuleForPsiElement(element);
-    if (module == null) module = ModuleManager.getInstance(element.getProject()).getModules()[0];
+    if (module == null) {
+      final Module[] modules = ModuleManager.getInstance(element.getProject()).getModules();
+      if (modules.length == 0) return Lists.newArrayList();
+      module = modules[0];
+    }
 
     final PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(module);
     final List<String> result = new ArrayList<String>();

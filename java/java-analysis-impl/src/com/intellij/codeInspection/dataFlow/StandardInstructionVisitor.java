@@ -470,10 +470,12 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
 
     if (opSign == LT && constantValue <= minValue) return alwaysFalse(instruction, runner, memState);
-    if ((opSign == LT || opSign == LE) && constantValue > maxValue) return alwaysTrue(instruction, runner, memState);
+    if (opSign == LT && constantValue > maxValue) return alwaysTrue(instruction, runner, memState);
+    if (opSign == LE && constantValue >= maxValue) return alwaysTrue(instruction, runner, memState);
 
     if (opSign == GT && constantValue >= maxValue) return alwaysFalse(instruction, runner, memState);
-    if ((opSign == GT || opSign == GE) && constantValue < minValue) return alwaysTrue(instruction, runner, memState);
+    if (opSign == GT && constantValue < minValue) return alwaysTrue(instruction, runner, memState);
+    if (opSign == GE && constantValue <= minValue) return alwaysTrue(instruction, runner, memState);
 
     return null;
   }

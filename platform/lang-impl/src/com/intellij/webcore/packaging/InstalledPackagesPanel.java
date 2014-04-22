@@ -44,7 +44,8 @@ public class InstalledPackagesPanel extends JPanel {
 
   protected final JBTable myPackagesTable;
   private DefaultTableModel myPackagesTableModel;
-  protected PackageManagementService myPackageManagementService;
+  // can be accessed from any thread
+  protected volatile PackageManagementService myPackageManagementService;
   protected final Project myProject;
   protected final PackagesNotificationPanel myNotificationArea;
   protected final List<Consumer<Sdk>> myPathChangedListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -424,7 +425,7 @@ public class InstalledPackagesPanel extends JPanel {
           final boolean shouldFetchLatestVersionsForOnlyInstalledPackages = shouldFetchLatestVersionsForOnlyInstalledPackages();
           if (cache.isEmpty()) {
             if (!shouldFetchLatestVersionsForOnlyInstalledPackages) {
-              refreshLatestVersions();
+              refreshLatestVersions(packageManagementService);
             }
           }
           UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -514,28 +515,30 @@ public class InstalledPackagesPanel extends JPanel {
     return false;
   }
 
-  private void refreshLatestVersions() {
+  private void refreshLatestVersions(@NotNull final PackageManagementService packageManagementService) {
     final Application application = ApplicationManager.getApplication();
     application.executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        try {
-          List<RepoPackage> packages = myPackageManagementService.reloadAllPackages();
-          final Map<String, RepoPackage> packageMap = buildNameToPackageMap(packages);
-          application.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              for (int i = 0; i != myPackagesTableModel.getRowCount(); ++i) {
-                final InstalledPackage pyPackage = (InstalledPackage)myPackagesTableModel.getValueAt(i, 0);
-                final RepoPackage repoPackage = packageMap.get(pyPackage.getName());
-                myPackagesTableModel.setValueAt(repoPackage == null ? null : repoPackage.getLatestVersion(), i, 2);
+        if (packageManagementService == myPackageManagementService) {
+          try {
+            List<RepoPackage> packages = packageManagementService.reloadAllPackages();
+            final Map<String, RepoPackage> packageMap = buildNameToPackageMap(packages);
+            application.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                for (int i = 0; i != myPackagesTableModel.getRowCount(); ++i) {
+                  final InstalledPackage pyPackage = (InstalledPackage)myPackagesTableModel.getValueAt(i, 0);
+                  final RepoPackage repoPackage = packageMap.get(pyPackage.getName());
+                  myPackagesTableModel.setValueAt(repoPackage == null ? null : repoPackage.getLatestVersion(), i, 2);
+                }
+                myPackagesTable.setPaintBusy(false);
               }
-              myPackagesTable.setPaintBusy(false);
-            }
-          }, ModalityState.stateForComponent(myPackagesTable));
-        }
-        catch (IOException ignored) {
-          myPackagesTable.setPaintBusy(false);
+            }, ModalityState.stateForComponent(myPackagesTable));
+          }
+          catch (IOException ignored) {
+            myPackagesTable.setPaintBusy(false);
+          }
         }
       }
     });

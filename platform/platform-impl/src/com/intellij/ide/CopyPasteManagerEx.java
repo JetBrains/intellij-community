@@ -154,7 +154,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
         addToTheTopOfTheStack(content);
       }
       else {
-        moveContentToStackTop(same);
+        moveContentToStackTop(same, false); // notification is done in setContents() method
       }
     }
     catch (UnsupportedFlavorException ignore) { }
@@ -283,12 +283,18 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   }
 
   public void moveContentToStackTop(Transferable t) {
+    moveContentToStackTop(t, true);
+  }
+
+  private void moveContentToStackTop(Transferable t, boolean notifyOthers) {
     Transferable current = myData.isEmpty() ? null : myData.get(0);
     if (!Comparing.equal(t, current)) {
       myData.remove(t);
       myData.add(0, t);
-      setSystemClipboardContent(t);
-      fireContentChanged(current, t);
+      if (notifyOthers) {
+        setSystemClipboardContent(t);
+        fireContentChanged(current, t);
+      }
     }
   }
 }

@@ -121,10 +121,13 @@ public class BuildClasspathModuleGradleDataService implements ProjectDataService
         final Set<String> buildClasspath = ContainerUtil.newLinkedHashSet();
         BuildScriptClasspathData buildScriptClasspathData = node.getData();
         for (BuildScriptClasspathData.ClasspathEntry classpathEntry : buildScriptClasspathData.getClasspathEntries()) {
-          if (classpathEntry.getSourcesFile() != null) {
-            buildClasspath.add(FileUtil.toCanonicalPath(classpathEntry.getSourcesFile().getPath()));
+          for (String path : classpathEntry.getSourcesFile()) {
+            buildClasspath.add(FileUtil.toCanonicalPath(path));
           }
-          buildClasspath.add(FileUtil.toCanonicalPath(classpathEntry.getClassesFile().getPath()));
+
+          for (String path : classpathEntry.getClassesFile()) {
+            buildClasspath.add(FileUtil.toCanonicalPath(path));
+          }
         }
 
         ExternalProjectBuildClasspathPojo projectBuildClasspathPojo =

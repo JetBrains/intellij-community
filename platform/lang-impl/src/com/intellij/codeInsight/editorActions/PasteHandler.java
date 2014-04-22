@@ -229,12 +229,12 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       VirtualFile virtualFile = file.getVirtualFile();
       if (!pastedTextContainsWhiteSpacesOnly && (virtualFile == null || !SingleRootFileViewProvider.isTooLargeForIntelligence(virtualFile))) {
         final int indentOptions1 = indentOptions;
-        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
 
         ApplicationManager.getApplication().runWriteAction(
           new Runnable() {
             @Override
             public void run() {
+              PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
               switch (indentOptions1) {
                 case CodeInsightSettings.INDENT_BLOCK:
                   if (!indented.get()) {

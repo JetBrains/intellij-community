@@ -7,8 +7,8 @@ final class NestedCommandCallbackWithResponse<SUCCESS_RESPONSE, RESULT, MAIN_RES
   extends CommandCallbackWithResponseBase<SUCCESS_RESPONSE, AsyncResult<MAIN_RESULT>, RESULT, ERROR_DETAILS> {
   private final PairConsumer<RESULT, AsyncResult<MAIN_RESULT>> consumer;
 
-  public NestedCommandCallbackWithResponse(AsyncResult<MAIN_RESULT> mainAsyncResult, String methodName, PairConsumer<RESULT, AsyncResult<MAIN_RESULT>> consumer) {
-    super(mainAsyncResult, methodName, null);
+  public NestedCommandCallbackWithResponse(AsyncResult<MAIN_RESULT> result, String methodName, PairConsumer<RESULT, AsyncResult<MAIN_RESULT>> consumer) {
+    super(result, methodName, null);
 
     this.consumer = consumer;
   }

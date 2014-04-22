@@ -553,6 +553,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
         if ((!result.isAccessible() || !result.isStaticsScopeCorrect()) &&
             !HighlightMethodUtil.isDummyConstructorCall(expression, myResolveHelper, list, referenceExpression) &&
+            // this check is for fake expression from JspMethodCallImpl
             referenceExpression.getParent() == expression) {
           try {
             myHolder.add(HighlightMethodUtil.checkAmbiguousMethodCallArguments(referenceExpression, results, list, resolved, result, expression, myResolveHelper));

@@ -42,11 +42,12 @@ class PostfixTemplatesCompletionProvider extends CompletionProvider<CompletionPa
     PostfixLiveTemplate postfixLiveTemplate = getPostfixLiveTemplate(parameters.getOriginalFile(), parameters.getEditor());
     if (postfixLiveTemplate != null) {
       postfixLiveTemplate.addCompletions(parameters, result.withPrefixMatcher(new MyPrefixMatcher(result.getPrefixMatcher().getPrefix())));
-      CharSequence documentContent = parameters.getEditor().getDocument().getCharsSequence();
-      String possibleKey = postfixLiveTemplate.computeTemplateKeyWithoutContextChecking(documentContent, parameters.getOffset());
+      String possibleKey = postfixLiveTemplate
+        .computeTemplateKeyWithoutContextChecking(parameters.getOriginalFile(), parameters.getEditor(), parameters.getOffset());
       if (possibleKey != null) {
         result = result.withPrefixMatcher(possibleKey);
-        result.restartCompletionOnPrefixChange(StandardPatterns.string().oneOf(postfixLiveTemplate.getAllTemplateKeys()));
+        result.restartCompletionOnPrefixChange(
+          StandardPatterns.string().oneOf(postfixLiveTemplate.getAllTemplateKeys(parameters.getOriginalFile(), parameters.getOffset())));
       }
     }
   }

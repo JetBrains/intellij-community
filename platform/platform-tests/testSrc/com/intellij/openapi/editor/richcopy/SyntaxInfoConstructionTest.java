@@ -19,11 +19,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.richcopy.model.ColorRegistry;
+import com.intellij.openapi.editor.richcopy.model.MarkupHandler;
+import com.intellij.openapi.editor.richcopy.model.SyntaxInfo;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.ui.JBColor;
 import junit.framework.TestCase;
-
-import java.awt.*;
 
 /**
  * @author Denis Zhdanov
@@ -235,56 +236,64 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
   }
 
   private String getSyntaxInfo() {
-    final StringBuilder syntaxInfo = new StringBuilder();
-    Editor editor = myFixture.getEditor();
+    final StringBuilder builder = new StringBuilder();
+    final Editor editor = myFixture.getEditor();
+    final String text = editor.getSelectionModel().getSelectedText(true);
+    assertNotNull(text);
 
     TextWithMarkupProcessor processor = new TextWithMarkupProcessor();
     processor.addBuilder(new TextWithMarkupBuilder() {
       @Override
-      public void init(Color defaultForeground, Color defaultBackground, String defaultFontFamily, int fontSize) {
-        assertEquals(JBColor.BLACK, defaultForeground);
-        assertEquals(JBColor.WHITE, defaultBackground);
-        assertEquals(getFontSize(), fontSize);
+      public void reset() {
+
       }
 
       @Override
-      public boolean isOverflowed() {
-        return false;
-      }
+      public void build(SyntaxInfo syntaxInfo) {
+        final ColorRegistry colorRegistry = syntaxInfo.getColorRegistry();
+        assertEquals(JBColor.BLACK, colorRegistry.dataById(syntaxInfo.getDefaultForeground()));
+        assertEquals(JBColor.WHITE, colorRegistry.dataById(syntaxInfo.getDefaultBackground()));
+        assertEquals(getFontSize(), syntaxInfo.getSingleFontSize());
+        SyntaxInfo.MarkupIterator it = syntaxInfo.new MarkupIterator();
+        try {
+          while (it.hasNext()) {
+            it.processNext(new MarkupHandler() {
+              @Override
+              public void handleText(int startOffset, int endOffset) throws Exception {
+                builder.append("text=").append(text.substring(startOffset, endOffset)).append('\n');
+              }
 
-      @Override
-      public void setFontFamily(String fontFamily) {
-      }
+              @Override
+              public void handleForeground(int foregroundId) throws Exception {
+                builder.append("foreground=").append(colorRegistry.dataById(foregroundId)).append(',');
+              }
 
-      @Override
-      public void setFontStyle(int fontStyle) {
-        syntaxInfo.append("fontStyle=").append(fontStyle).append(',');
-      }
+              @Override
+              public void handleBackground(int backgroundId) throws Exception {
+                builder.append("background=").append(colorRegistry.dataById(backgroundId)).append(',');
+              }
 
-      @Override
-      public void setForeground(Color foreground) {
-        syntaxInfo.append("foreground=").append(foreground).append(',');
-      }
+              @Override
+              public void handleFont(int fontNameId) throws Exception {
+                assertEquals(1, fontNameId);
+              }
 
-      @Override
-      public void setBackground(Color background) {
-        syntaxInfo.append("background=").append(background).append(',');
+              @Override
+              public void handleStyle(int style) throws Exception {
+                builder.append("fontStyle=").append(style).append(',');
+              }
+            });
+          }
+        }
+        finally {
+          it.dispose();
+        }
       }
-
-      @Override
-      public void addTextFragment(CharSequence charSequence, int startOffset, int endOffset) {
-        syntaxInfo.append("text=").append(charSequence.subSequence(startOffset, endOffset)).append('\n');
-      }
-
-      @Override
-      public void complete() {
-
-      }
-    });
+     });
     SelectionModel selectionModel = editor.getSelectionModel();
     processor.collectTransferableData(myFixture.getFile(), editor, selectionModel.getBlockSelectionStarts(), selectionModel.getBlockSelectionEnds());
 
-    return syntaxInfo.toString();
+    return builder.toString();
   }
 
   private void init(String text) {

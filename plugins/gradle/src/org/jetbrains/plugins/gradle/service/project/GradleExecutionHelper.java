@@ -35,9 +35,9 @@ import org.gradle.tooling.internal.consumer.Distribution;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.ProjectImportAction;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
+import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
@@ -385,7 +385,7 @@ public class GradleExecutionHelper {
 
   @Nullable
   public static File generateInitScript(boolean isBuildSrcProject) {
-    InputStream stream = ProjectImportAction.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init.gradle");
+    InputStream stream = Init.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init/init.gradle");
     try {
       if (stream == null) {
         LOG.warn("Can't get init script template");
@@ -413,8 +413,7 @@ public class GradleExecutionHelper {
 
   @Nullable
   public static String getBuildSrcDefaultInitScript() {
-    InputStream stream =
-      ProjectImportAction.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/buildSrcInit.gradle");
+    InputStream stream = Init.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init/buildSrcInit.gradle");
     try {
       if (stream == null) return null;
       return FileUtil.loadTextAndClose(stream);
@@ -464,8 +463,7 @@ public class GradleExecutionHelper {
       }
       buf.append(']');
 
-      InputStream stream =
-        ProjectImportAction.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/testFilterInit.gradle");
+      InputStream stream = Init.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init/testFilterInit.gradle");
       try {
         if (stream == null) {
           LOG.warn("Can't get test filter init script template");
@@ -488,14 +486,10 @@ public class GradleExecutionHelper {
   @NotNull
   private static String getToolingExtensionsJarPaths() throws ClassNotFoundException {
     final ArrayList<Class<?>> list = ContainerUtil.newArrayList(
-      // add gradle-tooling-extension jar
+      // add gradle-tooling-extension-api jar
       Class.forName("org.jetbrains.plugins.gradle.model.ProjectImportAction"),
-      // add gradle-tooling-extension-v1.9 jar
-      Class.forName("org.jetbrains.plugins.gradle.tooling.v1_9.builder.ModelBuildScriptClasspathBuilderImpl"),
-      // add gradle-tooling-extension-v1.11 jar
-      Class.forName("org.jetbrains.plugins.gradle.tooling.v1_11.builder.ModelBuildScriptClasspathBuilderImpl"),
-      // add gradle-tooling-extension-v1.12 jar
-      Class.forName("org.jetbrains.plugins.gradle.tooling.v1_12.builder.ModelBuildScriptClasspathBuilderImpl")
+      // add gradle-tooling-extension-impl jar
+      Class.forName("org.jetbrains.plugins.gradle.tooling.builder.ModelBuildScriptClasspathBuilderImpl")
     );
 
     StringBuilder buf = new StringBuilder();

@@ -78,6 +78,21 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
     doCompleteTest(".2", '\n');
   }
 
+  public void testRestartCompletionForExactMatch() {
+    configureByFile();
+    type("not");
+    LookupElement currentItem = getLookup().getCurrentItem();
+    assertNotNull(currentItem);
+    assertInstanceOf(currentItem, PostfixTemplateLookupElement.class);
+    assertEquals(".not", currentItem.getLookupString());
+
+    type("null");
+    currentItem = getLookup().getCurrentItem();
+    assertNotNull(currentItem);
+    assertInstanceOf(currentItem, PostfixTemplateLookupElement.class);
+    assertEquals(".notnull", currentItem.getLookupString());
+  }
+
   public void testShowTemplateInAutoPopup() {
     doAutoPopupTest("instanceof", InstanceofExpressionPostfixTemplate.class);
   }
