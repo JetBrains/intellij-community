@@ -89,7 +89,6 @@ public class HtmlTransferableData extends AbstractSyntaxAwareReaderTransferableD
     }
     finally {
       myResultBuffer = null;
-      myRawText = null;
       myColorRegistry = null;
       myFontNameRegistry = null;
       myColors.clear();
