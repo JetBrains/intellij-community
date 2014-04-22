@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -44,7 +46,8 @@ import java.util.Map;
 /**
  * @author yole
  */
-public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurable> implements SearchableConfigurable {
+public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurable> implements SearchableConfigurable,
+                                                                                               Configurable.NoScroll {
   @NotNull
   private final Project myProject;
   private final String myDisplayName;
@@ -113,7 +116,8 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
     for (Module module : modules) {
       final T configurable = createModuleConfigurable(module);
       myModuleConfigurables.put(module, configurable);
-      final JComponent component = configurable.createComponent();
+      final JComponent component = new JBScrollPane(configurable.createComponent());
+      component.setBorder(new EmptyBorder(0, 0, 0, 0));
       cardPanel.add(component, module.getName());
     }
     moduleList.addListSelectionListener(new ListSelectionListener() {

@@ -121,7 +121,12 @@ class FindInProjectTask {
     try {
       myProgress.setIndeterminate(true);
       myProgress.setText("Scanning indexed files...");
-      final Set<PsiFile> filesForFastWordSearch = getFilesForFastWordSearch();
+      final Set<PsiFile> filesForFastWordSearch = ApplicationManager.getApplication().runReadAction(new Computable<Set<PsiFile>>() {
+        @Override
+        public Set<PsiFile> compute() {
+          return getFilesForFastWordSearch();
+        }
+      });
       myProgress.setIndeterminate(false);
 
       searchInFiles(filesForFastWordSearch, processPresentation, consumer);

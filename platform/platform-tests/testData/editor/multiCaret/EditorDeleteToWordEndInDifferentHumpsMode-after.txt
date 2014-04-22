@@ -1,2 +1,2 @@
-Ab<caret>Dabra<caret>Hum<selection><caret>D</selection>ump Hu<selection>mpDu<caret></selection>
-<selection>YetAnot<caret>HumpedWord</selection>
+Ab<caret>Dabra<caret>Hum<caret>ump Hu<caret>mp
+<caret>

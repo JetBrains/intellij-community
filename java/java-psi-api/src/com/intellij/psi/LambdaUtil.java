@@ -103,9 +103,7 @@ public class LambdaUtil {
 
   public static boolean isFunctionalType(PsiType type) {
     if (type instanceof PsiIntersectionType) {
-      for (PsiType type1 : ((PsiIntersectionType)type).getConjuncts()) {
-        if (isFunctionalType(type1)) return true;
-      }
+      return extractFunctionalConjunct((PsiIntersectionType)type) != null;
     }
     return isFunctionalClass(PsiUtil.resolveGenericsClassInType(type).getElement());
   }
@@ -114,7 +112,7 @@ public class LambdaUtil {
   public static boolean isFunctionalClass(PsiClass aClass) {
     if (aClass != null) {
       if (aClass instanceof PsiTypeParameter) return false;
-      final List<MethodSignature> signatures = findFunctionCandidates(aClass);
+      final List<HierarchicalMethodSignature> signatures = findFunctionCandidates(aClass);
       return signatures != null && signatures.size() == 1;
     }
     return false;
@@ -144,7 +142,7 @@ public class LambdaUtil {
   @Nullable
   static MethodSignature getFunction(PsiClass psiClass) {
     if (psiClass == null) return null;
-    final List<MethodSignature> functions = findFunctionCandidates(psiClass);
+    final List<HierarchicalMethodSignature> functions = findFunctionCandidates(psiClass);
     if (functions != null && functions.size() == 1) {
       return functions.get(0);
     }
@@ -178,12 +176,13 @@ public class LambdaUtil {
   }
 
   @Nullable
-  private static List<MethodSignature> hasSubsignature(List<MethodSignature> signatures) {
-    for (MethodSignature signature : signatures) {
+  private static List<HierarchicalMethodSignature> hasSubsignature(List<HierarchicalMethodSignature> signatures) {
+    for (HierarchicalMethodSignature signature : signatures) {
       boolean subsignature = true;
-      for (MethodSignature methodSignature : signatures) {
+      for (HierarchicalMethodSignature methodSignature : signatures) {
         if (!signature.equals(methodSignature)) {
-          if (!MethodSignatureUtil.isSubsignature(signature, methodSignature)) {
+          if (!MethodSignatureUtil.isSubsignature(signature, methodSignature) &&
+              !skipMethod(signature, methodSignature)) {
             subsignature = false;
             break;
           }
@@ -194,10 +193,20 @@ public class LambdaUtil {
     return signatures;
   }
 
+  private static boolean skipMethod(HierarchicalMethodSignature signature,
+                                    HierarchicalMethodSignature methodSignature) {
+    //not generic
+    if (methodSignature.getTypeParameters().length == 0) {
+      return false;
+    }
+    //foreign class
+    return signature.getMethod().getContainingClass() != methodSignature.getMethod().getContainingClass();
+  }
+
   @Nullable
-  public static List<MethodSignature> findFunctionCandidates(PsiClass psiClass) {
+  public static List<HierarchicalMethodSignature> findFunctionCandidates(PsiClass psiClass) {
     if (psiClass != null && psiClass.isInterface() && !psiClass.isAnnotationType()) {
-      final List<MethodSignature> methods = new ArrayList<MethodSignature>();
+      final List<HierarchicalMethodSignature> methods = new ArrayList<HierarchicalMethodSignature>();
       final Collection<HierarchicalMethodSignature> visibleSignatures = psiClass.getVisibleSignatures();
       for (HierarchicalMethodSignature signature : visibleSignatures) {
         final PsiMethod psiMethod = signature.getMethod();
@@ -286,9 +295,8 @@ public class LambdaUtil {
     } else if (parent instanceof PsiTypeCastExpression) {
       final PsiType castType = ((PsiTypeCastExpression)parent).getType();
       if (castType instanceof PsiIntersectionType) {
-        for (PsiType conjunctType : ((PsiIntersectionType)castType).getConjuncts()) {
-          if (getFunctionalInterfaceMethod(conjunctType) != null) return conjunctType;
-        }
+        final PsiType conjunct = extractFunctionalConjunct((PsiIntersectionType)castType);
+        if (conjunct != null) return conjunct;
       }
       return castType;
     }
@@ -363,6 +371,19 @@ public class LambdaUtil {
     return null;
   }
 
+  @Nullable
+  private static PsiType extractFunctionalConjunct(PsiIntersectionType type) {
+    PsiType conjunct = null;
+    for (PsiType conjunctType : type.getConjuncts()) {
+      final PsiMethod interfaceMethod = getFunctionalInterfaceMethod(conjunctType);
+      if (interfaceMethod != null) {
+        if (conjunct != null && !conjunct.equals(conjunctType)) return null;
+        conjunct = conjunctType;
+      }
+    }
+    return conjunct;
+  }
+  
   private static PsiType getFunctionalInterfaceTypeByContainingLambda(@NotNull PsiLambdaExpression parentLambda) {
     final PsiType parentInterfaceType = parentLambda.getFunctionalInterfaceType();
     return parentInterfaceType != null ? getFunctionalInterfaceReturnType(parentInterfaceType) : null;

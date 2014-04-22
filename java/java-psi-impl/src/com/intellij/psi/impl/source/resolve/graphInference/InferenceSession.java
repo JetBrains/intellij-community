@@ -1070,7 +1070,7 @@ public class InferenceSession {
           session.addConstraint(new StrictSubtypingConstraint(tReturnType, sReturnType));
           return true;
         } else {
-          return TypeConversionUtil.isAssignable(sReturnType, tReturnType); 
+          return sReturnType != null && tReturnType != null && TypeConversionUtil.isAssignable(tReturnType, sReturnType); 
         }
       }
     }
@@ -1115,7 +1115,7 @@ public class InferenceSession {
         session.addConstraint(new StrictSubtypingConstraint(tReturnType, sReturnType));
         return true;
       } else {
-        return TypeConversionUtil.isAssignable(sReturnType, tReturnType);
+        return sReturnType != null && tReturnType != null && TypeConversionUtil.isAssignable(tReturnType, sReturnType);
       }
     }
 

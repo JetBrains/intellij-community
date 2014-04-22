@@ -75,6 +75,26 @@ public class MostSpecificResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testIncompleteMethodInInterface() throws Exception {
+    doTest(false);
+  }
+
+  public void testMostSpecificByReturnType() throws Exception {
+    doTest();
+  }
+
+  public void testDifferentParamsLength() throws Exception {
+    doTest(false);
+  }
+
+  public void testNoReturnTypeResolutionForThrownException() throws Exception {
+    doTest(false);
+  }
+
+  public void testBoxingAndOverloadResolution() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(true);
   }
