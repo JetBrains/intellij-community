@@ -84,8 +84,7 @@ public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
 
       myModificationStamp++;
       setRevision(myContentRevision.getRevisionNumber().asString());
-      final ByteBuffer byteBuffer = getCharset().encode(content);
-      myContent = byteBuffer.compact().array();
+      myContent = content.getBytes(getCharset());
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           vcsFileSystem.fireContentsChanged(this, ContentRevisionVirtualFile.this, 0);

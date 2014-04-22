@@ -25,8 +25,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.templates.ArchivedProjectTemplate;
-import com.intellij.ui.*;
-import com.intellij.ui.SingleSelectionModel;
+import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.containers.ContainerUtil;
@@ -100,7 +100,6 @@ public class ProjectTemplateList extends JPanel {
       }
     };
     myList.setCellRenderer(renderer);
-    myList.setSelectionModel(new SingleSelectionModel());
     myList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
@@ -136,7 +135,9 @@ public class ProjectTemplateList extends JPanel {
     int index = preserveSelection ? myList.getSelectedIndex() : -1;
     //noinspection unchecked
     myList.setModel(new CollectionListModel(list));
-    myList.setSelectedIndex(index == -1 ? 0 : index);
+    if (myList.isEnabled()) {
+      myList.setSelectedIndex(index == -1 ? 0 : index);
+    }
     updateSelection();
   }
 
@@ -149,6 +150,12 @@ public class ProjectTemplateList extends JPanel {
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
     myList.setEnabled(enabled);
+    if (!enabled) {
+      myList.clearSelection();
+    }
+    else {
+      myList.setSelectedIndex(0);
+    }
     myDescriptionPane.setEnabled(enabled);
   }
 

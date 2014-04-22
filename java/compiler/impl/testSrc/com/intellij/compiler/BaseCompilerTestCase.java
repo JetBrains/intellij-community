@@ -171,7 +171,15 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   }
 
   protected CompilationLog make(Module... modules) {
-    return make(getCompilerManager().createModulesCompileScope(modules, false), CompilerFilter.ALL);
+    return make(false, modules);
+  }
+
+  protected CompilationLog makeWithDependencies(Module... modules) {
+    return make(true, modules);
+  }
+
+  private CompilationLog make(boolean includeDependentModules, Module... modules) {
+    return make(getCompilerManager().createModulesCompileScope(modules, includeDependentModules), CompilerFilter.ALL);
   }
 
   protected CompilationLog recompile(Module... modules) {

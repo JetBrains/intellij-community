@@ -1624,4 +1624,15 @@ class Foo {
     def tabKeyPresentation = KeyEvent.getKeyText(TemplateSettings.TAB_CHAR as int)
     assert p.typeText == "  [$tabKeyPresentation] "
   }
+
+  public void "test autopopup after package completion"() {
+    myFixture.addClass("package foo.bar.goo; class Foo {}")
+    myFixture.configureByText "a.java", "class Foo { { foo.b<caret> } }"
+    myFixture.completeBasic()
+    assert myFixture.editor.document.text.contains('foo.bar. ')
+    joinAutopopup()
+    joinCompletion()
+    assert lookup
+    assert myFixture.lookupElementStrings == ['goo']
+  }
 }

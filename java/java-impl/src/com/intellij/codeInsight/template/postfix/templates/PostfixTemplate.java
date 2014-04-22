@@ -18,7 +18,6 @@ package com.intellij.codeInsight.template.postfix.templates;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionStatement;
@@ -31,9 +30,6 @@ public abstract class PostfixTemplate {
   @NotNull private final String myKey;
   @NotNull private final String myDescription;
   @NotNull private final String myExample;
-
-  @NotNull
-  public static final ExtensionPointName<PostfixTemplate> EP_NAME = ExtensionPointName.create("com.intellij.postfixTemplate");
 
   protected PostfixTemplate(@NotNull String name, @NotNull String description, @NotNull String example) {
     this(name, "." + name, description, example);

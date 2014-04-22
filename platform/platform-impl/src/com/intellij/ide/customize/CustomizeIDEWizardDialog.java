@@ -70,7 +70,12 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
       mySteps.add(new CustomizeKeyboardSchemeStepPanel());
     }
     mySteps.add(new CustomizePluginsStepPanel());
-    mySteps.add(new CustomizeFeaturedPluginsStepPanel());
+    try {
+      mySteps.add(new CustomizeFeaturedPluginsStepPanel());
+    }
+    catch (CustomizeFeaturedPluginsStepPanel.OfflineException e) {
+      //skip featured step if we're offline
+    }
   }
 
   @Override
