@@ -19,10 +19,8 @@ package com.intellij.vcs.log;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.graph.*;
-import com.intellij.vcs.log.graph.GraphAnswer;
 import com.intellij.vcs.log.graph.actions.ActionController;
 import com.intellij.vcs.log.graph.actions.GraphMouseAction;
-import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl;
 import com.intellij.vcs.log.printer.idea.ColorGenerator;
 import com.intellij.vcs.log.printer.idea.GraphCellPainter;
 import com.intellij.vcs.log.printer.idea.PrintParameters;
@@ -40,7 +38,7 @@ import java.util.Set;
 public class DelegateGraphFacade implements GraphFacade {
 
   @NotNull
-  private final PermanentGraphImpl<Integer> myPermanentGraph;
+  private final PermanentGraph<Integer> myPermanentGraph;
   private final GraphCellPainter myGraphCellPainter;
 
   @NotNull
@@ -52,7 +50,7 @@ public class DelegateGraphFacade implements GraphFacade {
   @Nullable
   private Condition<Integer> myVisibilityPredicate = null;
 
-  public DelegateGraphFacade(@NotNull PermanentGraphImpl<Integer> permanentGraph, @NotNull ColorGenerator colorGenerator) {
+  public DelegateGraphFacade(@NotNull PermanentGraph<Integer> permanentGraph, @NotNull ColorGenerator colorGenerator) {
     myPermanentGraph = permanentGraph;
     myGraphCellPainter = new SimpleGraphCellPainter(colorGenerator);
     updateVisibleGraph();
