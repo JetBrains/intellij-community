@@ -156,7 +156,11 @@ class MethodReferenceResolver implements ResolveCache.PolyVariantResolver<PsiMet
                       final PsiSubstitutor receiverSubstitutor = pClass != null ? TypeConversionUtil
                         .getClassSubstitutor(containingClass, pClass, pResult.getSubstitutor()) : null;
                       if (receiverSubstitutor != null) {
-                        if (!method.hasTypeParameters() && signature.getParameterTypes().length == 1) return receiverSubstitutor;
+                        if (!method.hasTypeParameters()) {
+                          if (signature.getParameterTypes().length == 1 || PsiUtil.isRawSubstitutor(containingClass, receiverSubstitutor)) {
+                            return receiverSubstitutor;
+                          }
+                        }
                         psiSubstitutor = receiverSubstitutor;
                       }
                     }
