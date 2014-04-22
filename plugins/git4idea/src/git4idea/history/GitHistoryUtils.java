@@ -531,7 +531,7 @@ public class GitHistoryUtils {
                                                  AUTHOR_NAME, AUTHOR_EMAIL);
     h.setStdoutSuppressed(true);
     h.addParameters(parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters("--full-history", "--sparse");
+    h.addParameters("--full-history");
     h.addParameters("--date-order");
     h.addParameters(parameters);
     h.endOptions();
