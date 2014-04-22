@@ -35,9 +35,9 @@ import org.gradle.tooling.internal.consumer.Distribution;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.ProjectImportAction;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
+import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
@@ -48,6 +48,7 @@ import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 /**
  * @author Denis Zhdanov
@@ -154,6 +155,9 @@ public class GradleExecutionHelper {
           return StringUtil.isEmpty(s) ? null : s;
         }
       });
+
+      // TODO remove this replacement when --tests option will become available for tooling API
+      replaceTestCommandOptionWithInitScript(filteredArgs);
       operation.withArguments(ArrayUtil.toStringArray(filteredArgs));
     }
 
@@ -381,13 +385,13 @@ public class GradleExecutionHelper {
 
   @Nullable
   public static File generateInitScript(boolean isBuildSrcProject) {
-    InputStream stream = ProjectImportAction.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init.gradle");
+    InputStream stream = Init.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init/init.gradle");
     try {
       if (stream == null) {
         LOG.warn("Can't get init script template");
         return null;
       }
-      String s = FileUtil.loadTextAndClose(stream).replace("${EXTENSIONS_JARS_PATH}", getToolingExtensionsJarPaths());
+      String s = FileUtil.loadTextAndClose(stream).replaceFirst(Pattern.quote("${EXTENSIONS_JARS_PATH}"), getToolingExtensionsJarPaths());
       if (isBuildSrcProject) {
         String buildSrcDefaultInitScript = getBuildSrcDefaultInitScript();
         if (buildSrcDefaultInitScript == null) return null;
@@ -409,8 +413,7 @@ public class GradleExecutionHelper {
 
   @Nullable
   public static String getBuildSrcDefaultInitScript() {
-    InputStream stream =
-      ProjectImportAction.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/buildSrcInit.gradle");
+    InputStream stream = Init.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init/buildSrcInit.gradle");
     try {
       if (stream == null) return null;
       return FileUtil.loadTextAndClose(stream);
@@ -435,17 +438,58 @@ public class GradleExecutionHelper {
     }
   }
 
+  private static void replaceTestCommandOptionWithInitScript(@NotNull List<String> args) {
+    Set<String> testIncludePatterns = ContainerUtil.newLinkedHashSet();
+    Iterator<String> it = args.iterator();
+    while (it.hasNext()) {
+      final String next = it.next();
+      if ("--tests".equals(next)) {
+        it.remove();
+        if (it.hasNext()) {
+          testIncludePatterns.add(it.next());
+          it.remove();
+        }
+      }
+    }
+    if (!testIncludePatterns.isEmpty()) {
+      StringBuilder buf = new StringBuilder();
+      buf.append('[');
+      for (Iterator<String> iterator = testIncludePatterns.iterator(); iterator.hasNext(); ) {
+        String pattern = iterator.next();
+        buf.append('\"').append(pattern).append('\"');
+        if (iterator.hasNext()) {
+          buf.append(',');
+        }
+      }
+      buf.append(']');
+
+      InputStream stream = Init.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init/testFilterInit.gradle");
+      try {
+        if (stream == null) {
+          LOG.warn("Can't get test filter init script template");
+          return;
+        }
+        String s = FileUtil.loadTextAndClose(stream).replaceFirst(Pattern.quote("${TEST_NAME_INCLUDES}"), buf.toString());
+        final File tempFile = FileUtil.createTempFile("ijinit", '.' + GradleConstants.EXTENSION, true);
+        FileUtil.writeToFile(tempFile, s);
+        ContainerUtil.addAll(args, GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
+      }
+      catch (Exception e) {
+        LOG.warn("Can't generate IJ gradle test filter init script", e);
+      }
+      finally {
+        StreamUtil.closeStream(stream);
+      }
+    }
+  }
+
   @NotNull
   private static String getToolingExtensionsJarPaths() throws ClassNotFoundException {
     final ArrayList<Class<?>> list = ContainerUtil.newArrayList(
-      // add gradle-tooling-extension jar
+      // add gradle-tooling-extension-api jar
       Class.forName("org.jetbrains.plugins.gradle.model.ProjectImportAction"),
-      // add gradle-tooling-extension-v1.9 jar
-      Class.forName("org.jetbrains.plugins.gradle.tooling.v1_9.builder.ModelBuildScriptClasspathBuilderImpl"),
-      // add gradle-tooling-extension-v1.11 jar
-      Class.forName("org.jetbrains.plugins.gradle.tooling.v1_11.builder.ModelBuildScriptClasspathBuilderImpl"),
-      // add gradle-tooling-extension-v1.12 jar
-      Class.forName("org.jetbrains.plugins.gradle.tooling.v1_12.builder.ModelBuildScriptClasspathBuilderImpl")
+      // add gradle-tooling-extension-impl jar
+      Class.forName("org.jetbrains.plugins.gradle.tooling.builder.ModelBuildScriptClasspathBuilderImpl")
     );
 
     StringBuilder buf = new StringBuilder();

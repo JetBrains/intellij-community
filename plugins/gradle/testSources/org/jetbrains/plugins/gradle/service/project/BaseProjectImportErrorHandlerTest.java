@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.externalSystem.model.LocationAwareExternalSystemException;
-import org.gradle.api.internal.LocationAwareException;
+import org.gradle.internal.exceptions.LocationAwareException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;

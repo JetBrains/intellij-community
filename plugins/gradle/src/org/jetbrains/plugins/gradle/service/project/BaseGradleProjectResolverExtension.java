@@ -160,7 +160,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
         ContainerUtil.map(buildScriptClasspathModel.getClasspath(), new Function<ClasspathEntryModel, BuildScriptClasspathData.ClasspathEntry>() {
           @Override
           public BuildScriptClasspathData.ClasspathEntry fun(ClasspathEntryModel model) {
-            return new BuildScriptClasspathData.ClasspathEntry(model.getClassesFile(), model.getSourcesFile(), model.getJavadocFile());
+            return new BuildScriptClasspathData.ClasspathEntry(model.getClasses(), model.getSources(), model.getJavadoc());
           }
         });
       BuildScriptClasspathData buildScriptClasspathData =
@@ -239,11 +239,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   public void populateModuleDependencies(@NotNull IdeaModule gradleModule,
                                          @NotNull DataNode<ModuleData> ideModule,
                                          @NotNull DataNode<ProjectData> ideProject) {
-
-    ProjectDependenciesModel dependenciesModel = resolverCtx.getExtraProject(gradleModule, ProjectDependenciesModel.class);
-
-    final List<? extends IdeaDependency> dependencies =
-      dependenciesModel != null ? dependenciesModel.getDependencies() : gradleModule.getDependencies().getAll();
+    final List<? extends IdeaDependency> dependencies = gradleModule.getDependencies().getAll();
 
     if (dependencies == null) return;
 
@@ -305,7 +301,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   @Override
   public Set<Class> getExtraProjectModelClasses() {
     return ContainerUtil.<Class>set(
-      GradleBuild.class, ModuleExtendedModel.class, ProjectDependenciesModel.class, BuildScriptClasspathModel.class);
+      GradleBuild.class, ModuleExtendedModel.class, BuildScriptClasspathModel.class);
   }
 
   @NotNull
