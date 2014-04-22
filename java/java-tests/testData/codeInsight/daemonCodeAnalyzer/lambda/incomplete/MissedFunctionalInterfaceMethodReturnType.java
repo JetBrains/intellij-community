@@ -20,3 +20,16 @@ class Test {
   <T> void foo(T t1, I<T> t3) {}
 
 }
+
+class Test2 {
+
+  interface F {
+    <X>  <error descr="Invalid method declaration; return type required">m</error>();
+  }
+
+  void g() {}
+
+  {
+    F f = this::g;
+  }
+}
