@@ -6,6 +6,7 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.checkin.CmdCheckinClient;
 import org.jetbrains.idea.svn.commandLine.*;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -61,7 +62,7 @@ public class CmdCopyMoveClient extends BaseSvnClient implements CopyMoveClient {
 
     // copy to url output is the same as commit output - just statuses have "copy of" suffix
     // so "Adding" will be "Adding copy of"
-    SvnCommitRunner.CommandListener listener = new SvnCommitRunner.CommandListener(handler);
+    CmdCheckinClient.CommandListener listener = new CmdCheckinClient.CommandListener(handler);
     // TODO: Check correctness when source is url
     if (source.isFile()) {
       listener.setBaseDirectory(source.getFile());

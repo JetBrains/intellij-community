@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.commandLine;
+package org.jetbrains.idea.svn.checkin;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,8 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
-import org.jetbrains.idea.svn.checkin.CheckinClient;
-import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
+import org.jetbrains.idea.svn.commandLine.*;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
@@ -48,9 +47,9 @@ import java.util.regex.Pattern;
  * Date: 2/25/13
  * Time: 4:56 PM
  */
-public class SvnCommitRunner extends BaseSvnClient implements CheckinClient {
+public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
 
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.commandLine.SvnCommitRunner");
+  private static final Logger LOG = Logger.getInstance(CmdCheckinClient.class);
 
   public static final long INVALID_REVISION_NUMBER = -1L;
 
@@ -87,7 +86,7 @@ public class SvnCommitRunner extends BaseSvnClient implements CheckinClient {
     CommandUtil.put(parameters, paths);
 
     IdeaCommitHandler handler = new IdeaCommitHandler(ProgressManager.getInstance().getProgressIndicator());
-    SvnCommitRunner.CommandListener listener = new CommandListener(handler);
+    CmdCheckinClient.CommandListener listener = new CommandListener(handler);
     listener.setBaseDirectory(CommandUtil.correctUpToExistingParent(paths[0]));
     CommandUtil.execute(myVcs, SvnTarget.fromFile(paths[0]), SvnCommandName.ci, parameters, listener);
     listener.throwExceptionIfOccurred();
