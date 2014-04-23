@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Locale;
@@ -114,7 +115,7 @@ public class ContentRootData extends AbstractExternalEntityData {
     return buffer.toString();
   }
 
-  public static class SourceRoot {
+  public static class SourceRoot implements Serializable {
     @NotNull
     private final String myPath;
 
