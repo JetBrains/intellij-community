@@ -25,6 +25,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -47,6 +48,9 @@ import java.lang.reflect.Method;
 import java.util.EventListener;
 import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static com.intellij.ui.mac.foundation.Foundation.invoke;
 
@@ -378,17 +382,38 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
       @Override
       public void run() {
         try {
-            requestToggleFullScreenMethod.invoke(Application.getApplication(),myFrame);
-          }
-          catch (IllegalAccessException e) {
-            LOG.error(e);
-          }
-          catch (InvocationTargetException e) {
-            LOG.error(e);
-          }
+          requestToggleFullScreenMethod.invoke(Application.getApplication(),myFrame);
+        }
+        catch (IllegalAccessException e) {
+          LOG.error(e);
+        }
+        catch (InvocationTargetException e) {
+          LOG.error(e);
+        }
       }
     });
     return callback;
   }
 
+  public void exitFullScreenAndDispose() {
+
+    LOG.assertTrue(isInFullScreen());
+    try {
+      requestToggleFullScreenMethod.invoke(Application.getApplication(), myFrame);
+    }
+    catch (IllegalAccessException e) {
+      LOG.error(e);
+    }
+    catch (InvocationTargetException e) {
+      LOG.error(e);
+    }
+
+    myDispatcher.addListener(new FSAdapter() {
+      @Override
+      public void windowExitedFullScreen(AppEvent.FullScreenEvent event) {
+        myFrame.disposeImpl();
+        myDispatcher.removeListener(this);
+      }
+    });
+  }
 }
