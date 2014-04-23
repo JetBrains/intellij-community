@@ -29,6 +29,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.containers.Convertor;
@@ -69,7 +70,6 @@ public class GithubUtil {
   public static final Logger LOG = Logger.getInstance("github");
 
   // TODO: Consider sharing of GithubAuthData between actions (as member of GithubSettings)
-  @NotNull
   public static <T> T runTask(@NotNull Project project,
                               @NotNull GithubAuthDataHolder authHolder,
                               @NotNull ProgressIndicator indicator,
@@ -106,7 +106,6 @@ public class GithubUtil {
     }
   }
 
-  @NotNull
   public static <T> T runTaskWithBasicAuthForHost(@NotNull Project project,
                                                   @NotNull GithubAuthDataHolder authHolder,
                                                   @NotNull ProgressIndicator indicator,
@@ -286,7 +285,7 @@ public class GithubUtil {
                                           @NotNull String caption,
                                           @NotNull final ThrowableConvertor<ProgressIndicator, T, IOException> task) throws IOException {
     final Ref<T> dataRef = new Ref<T>();
-    final Ref<IOException> exceptionRef = new Ref<IOException>();
+    final Ref<Throwable> exceptionRef = new Ref<Throwable>();
     ProgressManager.getInstance().run(new Task.Modal(project, caption, true) {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
@@ -296,15 +295,19 @@ public class GithubUtil {
           exceptionRef.set(e);
         }
         catch (Error e) {
-          exceptionRef.set(new GithubOperationCanceledException(e));
+          exceptionRef.set(e);
         }
         catch (RuntimeException e) {
-          exceptionRef.set(new GithubOperationCanceledException(e));
+          exceptionRef.set(e);
         }
       }
     });
     if (!exceptionRef.isNull()) {
-      throw exceptionRef.get();
+      Throwable e = exceptionRef.get();
+      if (e instanceof IOException) throw ((IOException)e);
+      if (e instanceof RuntimeException) throw ((RuntimeException)e);
+      if (e instanceof Error) throw ((Error)e);
+      throw new RuntimeException(e);
     }
     return dataRef.get();
   }
@@ -313,12 +316,52 @@ public class GithubUtil {
                                           @NotNull String caption,
                                           @NotNull final Convertor<ProgressIndicator, T> task) {
     final Ref<T> dataRef = new Ref<T>();
+    final Ref<Throwable> exceptionRef = new Ref<Throwable>();
     ProgressManager.getInstance().run(new Task.Modal(project, caption, true) {
       public void run(@NotNull ProgressIndicator indicator) {
-        dataRef.set(task.convert(indicator));
+        try {
+          dataRef.set(task.convert(indicator));
+        }
+        catch (Error e) {
+          exceptionRef.set(e);
+        }
+        catch (RuntimeException e) {
+          exceptionRef.set(e);
+        }
       }
     });
+    if (!exceptionRef.isNull()) {
+      Throwable e = exceptionRef.get();
+      if (e instanceof RuntimeException) throw ((RuntimeException)e);
+      if (e instanceof Error) throw ((Error)e);
+      throw new RuntimeException(e);
+    }
     return dataRef.get();
+  }
+
+  public static void computeValueInModal(@NotNull Project project,
+                                         @NotNull String caption,
+                                         @NotNull final Consumer<ProgressIndicator> task) {
+    final Ref<Throwable> exceptionRef = new Ref<Throwable>();
+    ProgressManager.getInstance().run(new Task.Modal(project, caption, true) {
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          task.consume(indicator);
+        }
+        catch (Error e) {
+          exceptionRef.set(e);
+        }
+        catch (RuntimeException e) {
+          exceptionRef.set(e);
+        }
+      }
+    });
+    if (!exceptionRef.isNull()) {
+      Throwable e = exceptionRef.get();
+      if (e instanceof RuntimeException) throw ((RuntimeException)e);
+      if (e instanceof Error) throw ((Error)e);
+      throw new RuntimeException(e);
+    }
   }
 
   /*
