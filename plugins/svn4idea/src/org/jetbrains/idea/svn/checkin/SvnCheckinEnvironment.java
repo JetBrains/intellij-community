@@ -24,8 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.AbstractFilterChildren;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -38,7 +36,6 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
@@ -48,14 +45,14 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
-import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient;
-import org.jetbrains.idea.svn.commandLine.SvnCommitRunner;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNStatus;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import javax.swing.*;
 import java.awt.*;
@@ -132,15 +129,8 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     if (committables.isEmpty()) {
       return;
     }
-    // TODO: Create CommitClient and refactor to use common ClientFactory model.
-    SVNCommitInfo[] results;
-    if (WorkingCopyFormat.ONE_DOT_EIGHT.equals(format) ||
-        !WorkingCopyFormat.ONE_DOT_SIX.equals(format) && mySvnVcs.getSvnConfiguration().isCommandLine()) {
-      results = doWithCommandLine(committables, comment);
-    }
-    else {
-      results = doWithSvnkit(committables, comment);
-    }
+
+    SVNCommitInfo[] results = mySvnVcs.getFactory(format).createCheckinClient().commit(committables, comment);
 
     final StringBuilder committedRevisions = new StringBuilder();
     for (SVNCommitInfo result : results) {
@@ -157,106 +147,6 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     if (committedRevisions.length() > 0) {
       reportCommittedRevisions(feedback, committedRevisions.toString());
     }
-  }
-
-  private SVNCommitInfo[] doWithSvnkit(Collection<File> committables, String comment) throws VcsException {
-    File[] pathsToCommit = committables.toArray(new File[committables.size()]);
-    boolean keepLocks = SvnConfiguration.getInstance(mySvnVcs.getProject()).isKeepLocks();
-    SVNCommitPacket[] commitPackets = null;
-    SVNCommitInfo[] results;
-    SVNCommitClient committer = mySvnVcs.createCommitClient();
-    IdeaCommitHandler handler = new IdeaCommitHandler(ProgressManager.getInstance().getProgressIndicator(), true, true);
-
-    committer.setEventHandler(handler);
-    try {
-      commitPackets = committer.doCollectCommitItems(pathsToCommit, keepLocks, true, SVNDepth.EMPTY, true, null);
-      results = committer.doCommit(commitPackets, keepLocks, comment);
-      commitPackets = null;
-    }
-    catch (SVNException e) {
-      throw new SvnBindException(e);
-    }
-    finally {
-      if (commitPackets != null) {
-        for (SVNCommitPacket commitPacket : commitPackets) {
-          try {
-            commitPacket.dispose();
-          }
-          catch (SVNException e) {
-            LOG.info(e);
-          }
-        }
-      }
-    }
-
-    // This seems to be necessary only for SVNKit as changes after command line operations should be detected during VFS refresh.
-    for(VirtualFile f : handler.getDeletedFiles()) {
-      f.putUserData(VirtualFile.REQUESTOR_MARKER, this);
-    }
-
-    return results;
-  }
-
-  private SVNCommitInfo[] doWithCommandLine(Collection<File> committables, String comment) throws VcsException {
-    // if directory renames were used, IDEA reports all files under them as moved, but for svn we can not pass some of them
-    // to commit command - since not all paths are registered as changes -> so we need to filter these cases, but only if
-    // there at least some child-parent relationships in passed paths
-    try {
-      committables = filterCommittables(committables);
-    } catch (SVNException e) {
-      throw new SvnBindException(e);
-    }
-
-    IdeaCommitHandler handler = new IdeaCommitHandler(ProgressManager.getInstance().getProgressIndicator());
-    SvnCommitRunner runner = new SvnCommitRunner(mySvnVcs, handler);
-
-    return runner.commit(ArrayUtil.toObjectArray(committables, File.class), comment);
-  }
-
-  private Collection<File> filterCommittables(Collection<File> committables) throws SVNException {
-    final Set<String> childrenOfSomebody = ContainerUtil.newHashSet();
-    new AbstractFilterChildren<File>() {
-      @Override
-      protected void sortAscending(List<File> list) {
-        Collections.sort(list);
-      }
-
-      @Override
-      protected boolean isAncestor(File parent, File child) {
-        // strict here will ensure that for case insensitive file systems paths different only by case will not be treated as ancestors
-        // of each other which is what we need to perform renames from one case to another on Windows
-        final boolean isAncestor = FileUtil.isAncestor(parent, child, true);
-        if (isAncestor) {
-          childrenOfSomebody.add(child.getPath());
-        }
-        return isAncestor;
-      }
-    }.doFilter(new ArrayList<File>(committables));
-    if (! childrenOfSomebody.isEmpty()) {
-      List<File> result = ContainerUtil.newArrayList();
-      SvnCommandLineStatusClient statusClient = new SvnCommandLineStatusClient(mySvnVcs);
-
-      for (File file : committables) {
-        if (!childrenOfSomebody.contains(file.getPath())) {
-          result.add(file);
-        } else {
-          try {
-            final SVNStatus status = statusClient.doStatus(file, false);
-            if (status != null && ! SVNStatusType.STATUS_NONE.equals(status.getContentsStatus()) &&
-                ! SVNStatusType.STATUS_UNVERSIONED.equals(status.getContentsStatus())) {
-              result.add(file);
-            }
-          }
-          catch (SVNException e) {
-            // not versioned
-            LOG.info(e);
-            throw e;
-          }
-        }
-      }
-      return result;
-    }
-    return committables;
   }
 
   private void reportCommittedRevisions(Set<String> feedback, String committedRevisions) {

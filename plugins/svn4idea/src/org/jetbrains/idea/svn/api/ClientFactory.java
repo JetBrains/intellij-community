@@ -6,6 +6,7 @@ import org.jetbrains.idea.svn.add.AddClient;
 import org.jetbrains.idea.svn.annotate.AnnotateClient;
 import org.jetbrains.idea.svn.browse.BrowseClient;
 import org.jetbrains.idea.svn.change.ChangeListClient;
+import org.jetbrains.idea.svn.checkin.CheckinClient;
 import org.jetbrains.idea.svn.checkin.ImportClient;
 import org.jetbrains.idea.svn.checkout.CheckoutClient;
 import org.jetbrains.idea.svn.checkout.ExportClient;
@@ -19,11 +20,11 @@ import org.jetbrains.idea.svn.history.HistoryClient;
 import org.jetbrains.idea.svn.integrate.MergeClient;
 import org.jetbrains.idea.svn.lock.LockClient;
 import org.jetbrains.idea.svn.portable.SvnStatusClientI;
-import org.jetbrains.idea.svn.update.UpdateClient;
 import org.jetbrains.idea.svn.portable.SvnWcClientI;
 import org.jetbrains.idea.svn.properties.PropertyClient;
 import org.jetbrains.idea.svn.revert.RevertClient;
 import org.jetbrains.idea.svn.update.RelocateClient;
+import org.jetbrains.idea.svn.update.UpdateClient;
 import org.jetbrains.idea.svn.upgrade.UpgradeClient;
 
 /**
@@ -57,6 +58,7 @@ public abstract class ClientFactory {
   protected UpgradeClient myUpgradeClient;
   protected BrowseClient myBrowseClient;
   protected DiffClient myDiffClient;
+  protected CheckinClient myCheckinClient;
 
   protected ClientFactory(@NotNull SvnVcs vcs) {
     myVcs = vcs;
@@ -185,6 +187,11 @@ public abstract class ClientFactory {
   @NotNull
   public DiffClient createDiffClient() {
     return prepare(myDiffClient);
+  }
+
+  @NotNull
+  public CheckinClient createCheckinClient() {
+    return prepare(myCheckinClient);
   }
 
   @NotNull

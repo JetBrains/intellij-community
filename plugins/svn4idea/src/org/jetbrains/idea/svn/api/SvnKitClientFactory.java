@@ -6,6 +6,7 @@ import org.jetbrains.idea.svn.add.SvnKitAddClient;
 import org.jetbrains.idea.svn.annotate.SvnKitAnnotateClient;
 import org.jetbrains.idea.svn.browse.SvnKitBrowseClient;
 import org.jetbrains.idea.svn.change.SvnKitChangeListClient;
+import org.jetbrains.idea.svn.checkin.SvnKitCheckinClient;
 import org.jetbrains.idea.svn.checkin.SvnKitImportClient;
 import org.jetbrains.idea.svn.checkout.SvnKitCheckoutClient;
 import org.jetbrains.idea.svn.checkout.SvnKitExportClient;
@@ -18,13 +19,13 @@ import org.jetbrains.idea.svn.diff.SvnKitDiffClient;
 import org.jetbrains.idea.svn.history.SvnKitHistoryClient;
 import org.jetbrains.idea.svn.integrate.SvnKitMergeClient;
 import org.jetbrains.idea.svn.lock.SvnKitLockClient;
-import org.jetbrains.idea.svn.update.SvnKitUpdateClient;
-import org.jetbrains.idea.svn.update.UpdateClient;
 import org.jetbrains.idea.svn.portable.SvnkitSvnStatusClient;
 import org.jetbrains.idea.svn.portable.SvnkitSvnWcClient;
 import org.jetbrains.idea.svn.properties.SvnKitPropertyClient;
 import org.jetbrains.idea.svn.revert.SvnKitRevertClient;
 import org.jetbrains.idea.svn.update.SvnKitRelocateClient;
+import org.jetbrains.idea.svn.update.SvnKitUpdateClient;
+import org.jetbrains.idea.svn.update.UpdateClient;
 import org.jetbrains.idea.svn.upgrade.SvnKitUpgradeClient;
 
 /**
@@ -59,6 +60,7 @@ public class SvnKitClientFactory extends ClientFactory {
     myUpgradeClient = new SvnKitUpgradeClient();
     myBrowseClient = new SvnKitBrowseClient();
     myDiffClient = new SvnKitDiffClient();
+    myCheckinClient = new SvnKitCheckinClient();
     statusClient = new SvnkitSvnStatusClient(myVcs, null);
     infoClient = new SvnkitSvnWcClient(myVcs);
   }

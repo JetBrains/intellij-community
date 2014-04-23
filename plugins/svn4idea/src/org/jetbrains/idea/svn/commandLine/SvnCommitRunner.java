@@ -17,14 +17,24 @@ package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.AbstractFilterChildren;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.checkin.CheckinClient;
+import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.wc.SVNStatus;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
@@ -38,21 +48,30 @@ import java.util.regex.Pattern;
  * Date: 2/25/13
  * Time: 4:56 PM
  */
-public class SvnCommitRunner {
+public class SvnCommitRunner extends BaseSvnClient implements CheckinClient {
 
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.commandLine.SvnCommitRunner");
 
   public static final long INVALID_REVISION_NUMBER = -1L;
 
-  private SvnCommitRunner.CommandListener myCommandListener;
-  private SvnVcs myVcs;
+  @NotNull
+  @Override
+  public SVNCommitInfo[] commit(@NotNull Collection<File> paths, @NotNull String message) throws VcsException {
+    // if directory renames were used, IDEA reports all files under them as moved, but for svn we can not pass some of them
+    // to commit command - since not all paths are registered as changes -> so we need to filter these cases, but only if
+    // there at least some child-parent relationships in passed paths
+    try {
+      paths = filterCommittables(paths);
+    }
+    catch (SVNException e) {
+      throw new SvnBindException(e);
+    }
 
-  public SvnCommitRunner(@NotNull SvnVcs vcs, @Nullable CommitEventHandler handler) {
-    myVcs = vcs;
-    myCommandListener = new CommandListener(handler);
+    return commit(ArrayUtil.toObjectArray(paths, File.class), message);
   }
 
-  public SVNCommitInfo[] commit(File[] paths, String message) throws VcsException {
+  @NotNull
+  public SVNCommitInfo[] commit(@NotNull File[] paths, @NotNull String message) throws VcsException {
     if (paths.length == 0) return new SVNCommitInfo[]{SVNCommitInfo.NULL};
 
     final List<String> parameters = new ArrayList<String>();
@@ -67,23 +86,70 @@ public class SvnCommitRunner {
     Arrays.sort(paths);
     CommandUtil.put(parameters, paths);
 
-    myCommandListener.setBaseDirectory(CommandUtil.correctUpToExistingParent(paths[0]));
-    CommandUtil.execute(myVcs, SvnTarget.fromFile(paths[0]), SvnCommandName.ci, parameters, myCommandListener);
-    myCommandListener.throwExceptionIfOccurred();
+    IdeaCommitHandler handler = new IdeaCommitHandler(ProgressManager.getInstance().getProgressIndicator());
+    SvnCommitRunner.CommandListener listener = new CommandListener(handler);
+    listener.setBaseDirectory(CommandUtil.correctUpToExistingParent(paths[0]));
+    CommandUtil.execute(myVcs, SvnTarget.fromFile(paths[0]), SvnCommandName.ci, parameters, listener);
+    listener.throwExceptionIfOccurred();
 
-    long revision = validateRevisionNumber();
+    long revision = validateRevisionNumber(listener.getCommittedRevision());
 
     return new SVNCommitInfo[]{new SVNCommitInfo(revision, null, null, null)};
   }
 
-  private long validateRevisionNumber() throws VcsException {
-    long revision = myCommandListener.getCommittedRevision();
-
+  private static long validateRevisionNumber(long revision) throws VcsException {
     if (revision < 0) {
       throw new VcsException("Wrong committed revision number: " + revision);
     }
 
     return revision;
+  }
+
+  private Collection<File> filterCommittables(@NotNull Collection<File> committables) throws SVNException {
+    final Set<String> childrenOfSomebody = ContainerUtil.newHashSet();
+    new AbstractFilterChildren<File>() {
+      @Override
+      protected void sortAscending(List<File> list) {
+        Collections.sort(list);
+      }
+
+      @Override
+      protected boolean isAncestor(File parent, File child) {
+        // strict here will ensure that for case insensitive file systems paths different only by case will not be treated as ancestors
+        // of each other which is what we need to perform renames from one case to another on Windows
+        final boolean isAncestor = FileUtil.isAncestor(parent, child, true);
+        if (isAncestor) {
+          childrenOfSomebody.add(child.getPath());
+        }
+        return isAncestor;
+      }
+    }.doFilter(ContainerUtil.newArrayList(committables));
+    if (!childrenOfSomebody.isEmpty()) {
+      List<File> result = ContainerUtil.newArrayList();
+      SvnCommandLineStatusClient statusClient = new SvnCommandLineStatusClient(myVcs);
+
+      for (File file : committables) {
+        if (!childrenOfSomebody.contains(file.getPath())) {
+          result.add(file);
+        }
+        else {
+          try {
+            final SVNStatus status = statusClient.doStatus(file, false);
+            if (status != null && !SVNStatusType.STATUS_NONE.equals(status.getContentsStatus()) &&
+                !SVNStatusType.STATUS_UNVERSIONED.equals(status.getContentsStatus())) {
+              result.add(file);
+            }
+          }
+          catch (SVNException e) {
+            // not versioned
+            LOG.info(e);
+            throw e;
+          }
+        }
+      }
+      return result;
+    }
+    return committables;
   }
 
   public static class CommandListener extends LineCommandAdapter {

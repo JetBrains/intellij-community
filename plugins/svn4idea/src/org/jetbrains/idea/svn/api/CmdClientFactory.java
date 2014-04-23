@@ -10,21 +10,22 @@ import org.jetbrains.idea.svn.checkin.CmdImportClient;
 import org.jetbrains.idea.svn.checkout.CmdCheckoutClient;
 import org.jetbrains.idea.svn.checkout.CmdExportClient;
 import org.jetbrains.idea.svn.cleanup.CmdCleanupClient;
-import org.jetbrains.idea.svn.diff.CmdDiffClient;
-import org.jetbrains.idea.svn.update.CmdUpdateClient;
 import org.jetbrains.idea.svn.commandLine.SvnCommandLineInfoClient;
 import org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient;
+import org.jetbrains.idea.svn.commandLine.SvnCommitRunner;
 import org.jetbrains.idea.svn.conflict.CmdConflictClient;
 import org.jetbrains.idea.svn.content.CmdContentClient;
 import org.jetbrains.idea.svn.copy.CmdCopyMoveClient;
 import org.jetbrains.idea.svn.delete.CmdDeleteClient;
+import org.jetbrains.idea.svn.diff.CmdDiffClient;
 import org.jetbrains.idea.svn.history.CmdHistoryClient;
 import org.jetbrains.idea.svn.integrate.CmdMergeClient;
 import org.jetbrains.idea.svn.lock.CmdLockClient;
-import org.jetbrains.idea.svn.update.UpdateClient;
 import org.jetbrains.idea.svn.properties.CmdPropertyClient;
 import org.jetbrains.idea.svn.revert.CmdRevertClient;
 import org.jetbrains.idea.svn.update.CmdRelocateClient;
+import org.jetbrains.idea.svn.update.CmdUpdateClient;
+import org.jetbrains.idea.svn.update.UpdateClient;
 import org.jetbrains.idea.svn.upgrade.CmdUpgradeClient;
 
 /**
@@ -59,6 +60,7 @@ public class CmdClientFactory extends ClientFactory {
     myUpgradeClient = new CmdUpgradeClient();
     myBrowseClient = new CmdBrowseClient();
     myDiffClient = new CmdDiffClient();
+    myCheckinClient = new SvnCommitRunner();
     statusClient = new SvnCommandLineStatusClient(myVcs);
     infoClient = new SvnCommandLineInfoClient(myVcs);
   }
