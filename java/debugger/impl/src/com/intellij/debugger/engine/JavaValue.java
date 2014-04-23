@@ -15,16 +15,18 @@
  */
 package com.intellij.debugger.engine;
 
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
-import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
-import com.intellij.debugger.ui.impl.watch.NodeDescriptorProvider;
-import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
-import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
+import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.*;
 import com.intellij.debugger.ui.tree.render.ChildrenBuilder;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
+import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.frame.*;
 import com.sun.jdi.Type;
 import org.jetbrains.annotations.NotNull;
@@ -114,5 +116,24 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
         }, myEvaluationContext);
         node.addChildren(children, true);
     }});
+  }
+
+  @Override
+  public void computeSourcePosition(@NotNull XNavigatable navigatable) {
+    Project project = myEvaluationContext.getProject();
+    DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(project).getContext();
+    if (myValueDescriptor instanceof FieldDescriptorImpl) {
+      SourcePosition position = ((FieldDescriptorImpl)myValueDescriptor).getSourcePosition(project, debuggerContext);
+      navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(position));
+    }
+    if (myValueDescriptor instanceof LocalVariableDescriptorImpl) {
+      SourcePosition position = ((LocalVariableDescriptorImpl)myValueDescriptor).getSourcePosition(project, debuggerContext);
+      navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(position));
+    }
+  }
+
+  @Override
+  public boolean canNavigateToTypeSource() {
+    return super.canNavigateToTypeSource();
   }
 }
