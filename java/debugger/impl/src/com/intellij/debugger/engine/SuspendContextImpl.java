@@ -61,8 +61,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   private final HashSet<ObjectReference> myKeptReferences = new HashSet<ObjectReference>();
   private EvaluationContextImpl myEvaluationContext = null;
 
-  private volatile JavaExecutionStack myJavaExecutionStack;
-  private XExecutionStack[] myExecutionStacks;
+  private JavaExecutionStack[] myExecutionStacks;
 
   SuspendContextImpl(@NotNull DebugProcessImpl debugProcess, int suspendPolicy, int eventVotes, EventSet set) {
     myDebugProcess = debugProcess;
@@ -76,7 +75,6 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     ThreadReferenceProxyImpl threadProxy = myDebugProcess.getVirtualMachineProxy().getThreadReferenceProxy(thread);
     LOG.assertTrue(myThread == null || myThread == threadProxy);
     myThread = threadProxy;
-    myJavaExecutionStack = myThread != null ? new JavaExecutionStack(myThread, myDebugProcess) : null;
   }
 
   protected abstract void resumeImpl();
@@ -233,7 +231,12 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   @Nullable
   @Override
   public XExecutionStack getActiveExecutionStack() {
-    return myJavaExecutionStack;
+    for (JavaExecutionStack stack : myExecutionStacks) {
+      if (stack.getThreadProxy().equals(myThread)) {
+        return stack;
+      }
+    }
+    return null;
   }
 
   @Override
@@ -243,11 +246,11 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   public void initExecutionStacks() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    Collection<XExecutionStack> res = new ArrayList<XExecutionStack>();
+    Collection<JavaExecutionStack> res = new ArrayList<JavaExecutionStack>();
     Collection<ThreadReferenceProxyImpl> threads = getDebugProcess().getVirtualMachineProxy().allThreads();
     for (ThreadReferenceProxyImpl thread : threads) {
       res.add(new JavaExecutionStack(thread, myDebugProcess));
     }
-    myExecutionStacks = res.toArray(new XExecutionStack[res.size()]);
+    myExecutionStacks = res.toArray(new JavaExecutionStack[res.size()]);
   }
 }

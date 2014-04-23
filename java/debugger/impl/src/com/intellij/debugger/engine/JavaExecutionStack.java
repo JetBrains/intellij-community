@@ -53,6 +53,11 @@ public class JavaExecutionStack extends XExecutionStack {
     myTopFrame = topFrame;
   }
 
+  @NotNull
+  public ThreadReferenceProxyImpl getThreadProxy() {
+    return myThreadProxy;
+  }
+
   @Nullable
   @Override
   public JavaStackFrame getTopFrame() {
