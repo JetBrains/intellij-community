@@ -276,7 +276,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
     final JPanel content = new NonOpaquePanel(new BorderLayout((int)(label.getIconTextGap() * 1.5), (int)(label.getIconTextGap() * 1.5)));
 
-    text.setCaretPosition(0);
+    if (text.getCaret() != null) {
+      text.setCaretPosition(0);
+    }
     JScrollPane pane = ScrollPaneFactory.createScrollPane(text,
                                                           ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                           ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
