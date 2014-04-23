@@ -72,8 +72,7 @@ public abstract class JavaClassTreeElementBase<Value extends PsiElement> extends
             myLocation = "";
           } else {
             myLocation = cls.getName();
-            char rightArrow = '\u2192';
-            myLocation = UIUtil.getLabelFont().canDisplay(rightArrow) ? rightArrow + myLocation :  "->" + myLocation;
+            myLocation = UIUtil.rightArrow() + myLocation;
           }
         } else {
           myLocation = "";
