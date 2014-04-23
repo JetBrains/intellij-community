@@ -36,7 +36,6 @@ public class RichCopySettings implements PersistentStateComponent<RichCopySettin
   @NotNull public static final String ACTIVE_GLOBAL_SCHEME_MARKER = "__ACTIVE_GLOBAL_SCHEME__";
 
   private String  mySchemeName = ACTIVE_GLOBAL_SCHEME_MARKER;
-  private boolean myStripIndents = true;
 
   @NotNull
   public static RichCopySettings getInstance() {
@@ -84,13 +83,5 @@ public class RichCopySettings implements PersistentStateComponent<RichCopySettin
 
   public void setSchemeName(@Nullable String schemeName) {
     mySchemeName = schemeName;
-  }
-
-  public boolean isStripIndents() {
-    return myStripIndents;
-  }
-
-  public void setStripIndents(boolean stripIndents) {
-    myStripIndents = stripIndents;
   }
 }
