@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,13 @@
 
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.module.Module;
@@ -33,6 +36,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.docking.DockManager;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -52,13 +56,28 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
   private final MyPsiTreeChangeListener myPsiTreeChangeListener;
   private final WolfTheProblemSolver.ProblemListener myProblemListener;
 
-  public PsiAwareFileEditorManagerImpl(final Project project, final PsiManager psiManager, final WolfTheProblemSolver problemSolver, DockManager dockManager) {
+  public PsiAwareFileEditorManagerImpl(final Project project,
+                                       final PsiManager psiManager,
+                                       final WolfTheProblemSolver problemSolver,
+                                       DockManager dockManager,
+                                       MessageBus messageBus) {
     super(project, dockManager);
     myPsiManager = psiManager;
     myProblemSolver = problemSolver;
     myPsiTreeChangeListener = new MyPsiTreeChangeListener();
     myProblemListener = new MyProblemListener();
     registerExtraEditorDataProvider(new TextEditorPsiDataProvider(), null);
+
+    // reinit syntax highlighter for Groovy. In power save mode keywords are highlighted by GroovySyntaxHighlighter insteadof
+    // GrKeywordAndDeclarationHighlighter. So we need to drop caches for token types attributes in LayeredLexerEditorHighlighter
+    messageBus.connect().subscribe(PowerSaveMode.TOPIC, new PowerSaveMode.Listener() {
+      @Override
+      public void powerSaveStateChanged() {
+        for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+          ((EditorEx)editor).reinitSettings();
+        }
+      }
+    });
   }
 
   @Override
