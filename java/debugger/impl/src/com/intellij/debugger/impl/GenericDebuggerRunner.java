@@ -15,11 +15,14 @@
  */
 package com.intellij.debugger.impl;
 
-import com.intellij.debugger.DebuggerManager;
+import com.intellij.debugger.DebugEnvironment;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.DefaultDebugUIEnvironment;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.ui.DebuggerPanelsManager;
+import com.intellij.debugger.ui.tree.render.BatchEvaluator;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
@@ -87,19 +90,37 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
                                                       RunContentDescriptor contentToReuse,
                                                       ExecutionEnvironment env, RemoteConnection connection, boolean pollConnection)
     throws ExecutionException {
-    final DebuggerPanelsManager manager = DebuggerPanelsManager.getInstance(project);
-    final RunContentDescriptor res =
-      manager.attachVirtualMachine(env.getExecutor(), this, env, state, contentToReuse, connection, pollConnection);
+    DefaultDebugUIEnvironment debugEnvironment = new DefaultDebugUIEnvironment(project,
+                                                                               env.getExecutor(),
+                                                                               this,
+                                                                               env,
+                                                                               state,
+                                                                               contentToReuse,
+                                                                               connection,
+                                                                               pollConnection);
+    DebugEnvironment environment = debugEnvironment.getEnvironment();
+    final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(project).attachVirtualMachine(environment);
+    if (debuggerSession == null) {
+      return null;
+    }
 
-    if (res == null) return null;
+    final DebugProcessImpl debugProcess = debuggerSession.getProcess();
+    if (debugProcess.isDetached() || debugProcess.isDetaching()) {
+      debuggerSession.dispose();
+      return null;
+    }
+    if (environment.isRemote()) {
+      // optimization: that way BatchEvaluator will not try to lookup the class file in remote VM
+      // which is an expensive operation when executed first time
+      debugProcess.putUserData(BatchEvaluator.REMOTE_SESSION_KEY, Boolean.TRUE);
+    }
 
     XDebugSession debugSession =
       XDebuggerManager.getInstance(project).startSession(this, env, contentToReuse, new XDebugProcessStarter() {
         @Override
         @NotNull
         public XDebugProcess start(@NotNull XDebugSession session) {
-          final DebuggerManagerImpl debugManager = (DebuggerManagerImpl)DebuggerManager.getInstance(project);
-          return new JavaDebugProcess(session, debugManager.getDebugSession(res.getProcessHandler()));
+          return new JavaDebugProcess(session, debuggerSession);
         }
       });
     return debugSession.getRunContentDescriptor();

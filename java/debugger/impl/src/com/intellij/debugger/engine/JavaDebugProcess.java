@@ -196,7 +196,7 @@ public class JavaDebugProcess extends XDebugProcess {
               }
             }
           }
-        }, myJavaSession.getProject());
+        }, threadsContent);
       }
     };
   }
