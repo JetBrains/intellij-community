@@ -29,16 +29,18 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient;
 import org.jetbrains.idea.svn.portable.SvnStatusClientI;
-import org.jetbrains.idea.svn.portable.SvnkitSvnStatusClient;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNStatus;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.File;
 import java.util.LinkedList;
@@ -113,48 +115,31 @@ public class SvnRecursiveStatusWalker {
   }
 
   private static class MyItem {
-    private final Project myProject;
-    private final FilePath myPath;
-    private final SVNDepth myDepth;
-    private final SvnStatusClientI mySvnClient;
-    private final SvnStatusClientI myCommandLineClient;
+    @NotNull private final FilePath myPath;
+    @NotNull private final SVNDepth myDepth;
+    @NotNull private final SvnStatusClientI myStatusClient;
     private final boolean myIsInnerCopyRoot;
-    private final SvnConfiguration myConfiguration17;
-    private final SvnVcs myVcs;
 
-    private MyItem(SvnVcs vcs, FilePath path, SVNDepth depth, SVNStatusClient client, boolean isInnerCopyRoot) {
-      myVcs = vcs;
-      myProject = vcs.getProject();
-      myConfiguration17 = SvnConfiguration.getInstance(myProject);
+    private MyItem(@NotNull FilePath path, @NotNull SVNDepth depth, boolean isInnerCopyRoot, @NotNull SvnStatusClientI statusClient) {
       myPath = path;
       myDepth = depth;
-      mySvnClient = new SvnkitSvnStatusClient(myVcs, client);
-      myCommandLineClient = new SvnCommandLineStatusClient(myVcs);
+      myStatusClient = statusClient;
       myIsInnerCopyRoot = isInnerCopyRoot;
     }
 
+    @NotNull
     public FilePath getPath() {
       return myPath;
     }
 
+    @NotNull
     public SVNDepth getDepth() {
       return myDepth;
     }
 
+    @NotNull
     public SvnStatusClientI getClient() {
-      // TODO: refactor to ClientFactory usage but carefully save all parameters passed in myClient - fileProvider and
-      // TODO: event handler (for cancel support)
-      WorkingCopyFormat format = myVcs.getWorkingCopyFormat(myPath.getIOFile());
-
-      if (format == WorkingCopyFormat.ONE_DOT_EIGHT) {
-        return myCommandLineClient;
-      }
-
-      if (format == WorkingCopyFormat.ONE_DOT_SIX) {
-        return mySvnClient;
-      }
-
-      return myConfiguration17.isCommandLine() ? myCommandLineClient : mySvnClient;
+      return myStatusClient;
     }
 
     public boolean isIsInnerCopyRoot() {
@@ -219,8 +204,12 @@ public class SvnRecursiveStatusWalker {
     FileUtil.processFilesRecursively(ioFile, processor, directoryFilter);
   }
 
-  private MyItem createItem(FilePath path, SVNDepth depth, boolean isInnerCopyRoot) {
-    return new MyItem(myVcs, path, depth, myPartner.createStatusClient(), isInnerCopyRoot);
+  @NotNull
+  private MyItem createItem(@NotNull FilePath path, @NotNull SVNDepth depth, boolean isInnerCopyRoot) {
+    SvnStatusClientI statusClient =
+      myVcs.getFactory(path.getIOFile()).createStatusClient(myPartner.getFileProvider(), myPartner.getEventHandler());
+
+    return new MyItem(path, depth, isInnerCopyRoot, statusClient);
   }
 
   private class MyHandler implements ISVNStatusHandler {

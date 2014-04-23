@@ -20,10 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatus;
-import org.tmatesoft.svn.core.wc.SVNStatusClient;
+import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
 import java.util.Collection;
@@ -36,12 +33,19 @@ import java.util.Collection;
  */
 public class SvnkitSvnStatusClient implements SvnStatusClientI {
 
-  @Nullable private final SVNStatusClient myStatusClient;
+  private SVNStatusClient myStatusClient;
   @NotNull private final SvnVcs myVcs;
+  @Nullable private final ISVNStatusFileProvider myProvider;
+  @Nullable private final ISVNEventHandler myHandler;
 
-  public SvnkitSvnStatusClient(@NotNull SvnVcs vcs, @Nullable SVNStatusClient statusClient) {
+  public SvnkitSvnStatusClient(@NotNull SvnVcs vcs) {
+    this(vcs, null, null);
+  }
+
+  public SvnkitSvnStatusClient(@NotNull SvnVcs vcs, @Nullable ISVNStatusFileProvider provider, @Nullable ISVNEventHandler handler) {
     myVcs = vcs;
-    myStatusClient = statusClient;
+    myProvider = provider;
+    myHandler = handler;
   }
 
   @Override
@@ -99,6 +103,18 @@ public class SvnkitSvnStatusClient implements SvnStatusClientI {
 
   @NotNull
   private SVNStatusClient getStatusClient() {
-    return myStatusClient != null ? myStatusClient : myVcs.createStatusClient();
+    // if either provider or handler is specified - we reuse same status client for all further doStatus() calls
+    return myHandler != null || myProvider != null ? ensureStatusClient() : myVcs.createStatusClient();
+  }
+
+  @NotNull
+  private SVNStatusClient ensureStatusClient() {
+    if (myStatusClient == null) {
+      myStatusClient = myVcs.createStatusClient();
+      myStatusClient.setFilesProvider(myProvider);
+      myStatusClient.setEventHandler(myHandler);
+    }
+
+    return myStatusClient;
   }
 }

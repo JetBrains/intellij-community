@@ -23,12 +23,13 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
 import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNStatusClient;
 
 public class StatusWalkerPartner {
   private final SvnVcs myVcs;
@@ -48,10 +49,9 @@ public class StatusWalkerPartner {
     myFileProvider = fileProvider;
   }
 
-  public SVNStatusClient createStatusClient() {
-    final SVNStatusClient result = myVcs.createStatusClient();
-    result.setFilesProvider(myFileProvider);
-    result.setEventHandler(new ISVNEventHandler() {
+  @NotNull
+  public ISVNEventHandler getEventHandler() {
+    return new ISVNEventHandler() {
       public void handleEvent(SVNEvent event, double progress) throws SVNException {
         //
       }
@@ -61,8 +61,12 @@ public class StatusWalkerPartner {
           myIndicator.checkCanceled();
         }
       }
-    });
-    return result;
+    };
+  }
+
+  @Nullable
+  public ISVNStatusFileProvider getFileProvider() {
+    return myFileProvider;
   }
 
   public void checkCanceled() {

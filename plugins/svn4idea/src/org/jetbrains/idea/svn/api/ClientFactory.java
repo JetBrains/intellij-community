@@ -1,6 +1,7 @@
 package org.jetbrains.idea.svn.api;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.add.AddClient;
 import org.jetbrains.idea.svn.annotate.AnnotateClient;
@@ -26,6 +27,8 @@ import org.jetbrains.idea.svn.revert.RevertClient;
 import org.jetbrains.idea.svn.update.RelocateClient;
 import org.jetbrains.idea.svn.update.UpdateClient;
 import org.jetbrains.idea.svn.upgrade.UpgradeClient;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -96,6 +99,11 @@ public abstract class ClientFactory {
   public SvnStatusClientI createStatusClient() {
     // TODO: Update this in same like other clients - move to corresponding package, rename clients
     return statusClient;
+  }
+
+  @NotNull
+  public SvnStatusClientI createStatusClient(@Nullable ISVNStatusFileProvider provider, @NotNull ISVNEventHandler handler) {
+    return createStatusClient();
   }
 
   @NotNull
