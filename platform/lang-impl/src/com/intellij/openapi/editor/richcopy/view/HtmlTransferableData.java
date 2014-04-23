@@ -58,9 +58,7 @@ public class HtmlTransferableData extends AbstractSyntaxAwareReaderTransferableD
     myFontNameRegistry = mySyntaxInfo.getFontNameRegistry();
     try {
       buildColorMap();
-      myResultBuffer.append("<div style=\"border:1px inset;padding:2%;\">")
-              .append("<pre style=\"margin:0;padding:6px;background-color:");
-//              .append("<pre style='height:30%;overflow:auto;margin:0;padding:6px;background-color:")
+      myResultBuffer.append("<pre style=\"background-color:");
       appendColor(myResultBuffer, mySyntaxInfo.getDefaultBackground());
       myResultBuffer.append(';');
       if (myFontNameRegistry.size() == 1) {
@@ -85,7 +83,7 @@ public class HtmlTransferableData extends AbstractSyntaxAwareReaderTransferableD
       finally {
         it.dispose();
       }
-      myResultBuffer.append("</pre></div>");
+      myResultBuffer.append("</pre>");
     }
     finally {
       myResultBuffer = null;
