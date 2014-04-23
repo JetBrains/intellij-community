@@ -30,10 +30,12 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.ui.EmptyIcon;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -70,10 +72,10 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
     popup.showInScreenCoordinates(ownerComponent, popupPoint);
   }
 
-  public PythonSdkDetailsStep(Project project,
-                              DialogWrapper moreDialog, Component ownerComponent,
-                              Sdk[] existingSdks,
-                              NullableConsumer<Sdk> callback) {
+  public PythonSdkDetailsStep(@Nullable final Project project,
+                              @Nullable final DialogWrapper moreDialog, @NotNull final Component ownerComponent,
+                              @NotNull final Sdk[] existingSdks,
+                              @NotNull final NullableConsumer<Sdk> callback) {
     super(null, getAvailableOptions(moreDialog != null));
     myProject = project;
     myMore = moreDialog;
@@ -189,6 +191,12 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   @Override
   public boolean canBeHidden(String value) {
     return true;
+  }
+
+  @Override
+  public void canceled() {
+    if (getFinalRunnable() == null)
+      Disposer.dispose(myMore.getDisposable());
   }
 
   @Override
