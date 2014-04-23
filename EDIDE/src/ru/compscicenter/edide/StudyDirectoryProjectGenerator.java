@@ -94,7 +94,7 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
 
                     }
                     createFile("task1_tests.py", baseDir.findChild("task1"));
-                    createFile("task3_tests.py", baseDir.findChild("task2"));
+                    createFile("task2_tests.py", baseDir.findChild("task2"));
                     createFile("study_utrunner.py", baseDir.findChild(".idea"));
                     createFile("study_tcunittest.py", baseDir.findChild(".idea"));
 
