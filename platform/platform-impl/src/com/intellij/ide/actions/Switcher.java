@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -940,14 +940,11 @@ public class Switcher extends AnAction implements DumbAware {
           return;
         }
         if (keyCode == VK_ENTER && files.getModel().getSize() + toolWindows.getModel().getSize() == 0) {
-          AnAction gotoAction = ActionManager.getInstance().getAction("GotoClass");
-          if (gotoAction == null) {
-            gotoAction = ActionManager.getInstance().getAction("GotoFile");
-          }
-          if (gotoAction != null) {
+          AnAction gotoFile = ActionManager.getInstance().getAction("GotoFile");
+          if (gotoFile != null) {
             final String search = mySpeedSearch.getEnteredPrefix();
             myPopup.cancel();
-            final AnAction action = gotoAction;
+            final AnAction action = gotoFile;
             SwingUtilities.invokeLater(new Runnable() {
               @Override
               public void run() {
