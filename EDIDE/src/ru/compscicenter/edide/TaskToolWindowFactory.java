@@ -26,19 +26,12 @@ import java.util.List;
  * Time: 14:45
  */
 
-class TaskToolWindowCondition implements Condition {
 
-    @Override
-    public boolean value(Object o) {
-        return true;
-    }
-}
-
-public class TaskTextToolWindowFactory implements ToolWindowFactory{
+public class TaskToolWindowFactory implements ToolWindowFactory{
     JButton nextTask = new JButton("next");
     JLabel task;
     JPanel panel = new JPanel(new BorderLayout());
-    public TaskTextToolWindowFactory() {
+    public TaskToolWindowFactory() {
         nextTask.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 Project project = ProjectManager.getInstance().getOpenProjects()[0];
