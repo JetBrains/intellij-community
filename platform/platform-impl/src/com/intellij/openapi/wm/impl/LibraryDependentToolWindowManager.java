@@ -9,9 +9,9 @@ import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.wm.ext.LibraryDependentToolWindow;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.ext.LibraryDependentToolWindow;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.messages.MessageBusConnection;
 
@@ -28,11 +28,7 @@ public class LibraryDependentToolWindowManager extends AbstractProjectComponent 
   public void projectOpened() {
     final ModuleRootListener rootListener = new ModuleRootAdapter() {
       public void rootsChanged(ModuleRootEvent event) {
-        DumbService.getInstance(myProject).smartInvokeLater(new Runnable() {
-          public void run() {
-            checkToolWindowStatuses();
-          }
-        });
+        checkToolWindowStatuses();
       }
     };
 
@@ -54,16 +50,21 @@ public class LibraryDependentToolWindowManager extends AbstractProjectComponent 
       return;
     }
 
-    for (LibraryDependentToolWindow libraryToolWindow : Extensions.getExtensions(LibraryDependentToolWindow.EXTENSION_POINT_NAME)) {
-       if (libraryToolWindow.getLibrarySearchHelper().isLibraryExists(myProject)) {
-           ensureToolWindowExists(libraryToolWindow);
-       } else {
-         ToolWindow toolWindow = myToolWindowManager.getToolWindow(libraryToolWindow.id);
-         if (toolWindow != null) {
-           myToolWindowManager.unregisterToolWindow(libraryToolWindow.id);
-         }
-       }
-    }
+    DumbService.getInstance(myProject).smartInvokeLater(new Runnable() {
+      public void run() {
+        for (LibraryDependentToolWindow libraryToolWindow : Extensions.getExtensions(LibraryDependentToolWindow.EXTENSION_POINT_NAME)) {
+          if (libraryToolWindow.getLibrarySearchHelper().isLibraryExists(myProject)) {
+            ensureToolWindowExists(libraryToolWindow);
+          }
+          else {
+            ToolWindow toolWindow = myToolWindowManager.getToolWindow(libraryToolWindow.id);
+            if (toolWindow != null) {
+              myToolWindowManager.unregisterToolWindow(libraryToolWindow.id);
+            }
+          }
+        }
+      }
+    });
   }
 
   private void ensureToolWindowExists(LibraryDependentToolWindow extension) {

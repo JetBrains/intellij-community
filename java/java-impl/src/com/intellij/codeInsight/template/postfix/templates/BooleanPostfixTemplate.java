@@ -28,7 +28,7 @@ abstract public class BooleanPostfixTemplate extends PostfixTemplate {
 
   @Override
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
-    PsiExpression topmostExpression = getTopmostExpression(context);
+    PsiExpression topmostExpression = PostfixTemplatesUtils.getTopmostExpression(context);
     return topmostExpression != null && PostfixTemplatesUtils.isBoolean(topmostExpression.getType());
   }
 }

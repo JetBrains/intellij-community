@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
+import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
@@ -30,7 +31,7 @@ public class SynchronizedStatementPostfixTemplate extends StatementPostfixTempla
 
   @Override
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
-    PsiExpression expression = getTopmostExpression(context);
+    PsiExpression expression = PostfixTemplatesUtils.getTopmostExpression(context);
     PsiType type = expression != null ? expression.getType() : null;
     return type != null && !(type instanceof PsiPrimitiveType);
   }

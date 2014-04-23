@@ -19,11 +19,7 @@ import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettin
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiExpressionStatement;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class PostfixTemplate {
   @NotNull private final String myPresentableName;
@@ -65,12 +61,6 @@ public abstract class PostfixTemplate {
   public boolean isEnabled() {
     final PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
     return settings != null && settings.isPostfixTemplatesEnabled() && settings.isTemplateEnabled(this);
-  }
-
-  @Nullable
-  public static PsiExpression getTopmostExpression(PsiElement context) {
-    PsiExpressionStatement statement = PsiTreeUtil.getNonStrictParentOfType(context, PsiExpressionStatement.class);
-    return statement != null ? PsiTreeUtil.getChildOfType(statement, PsiExpression.class) : null;
   }
 
   public abstract boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset);
