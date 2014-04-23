@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.editor.richcopy.settings;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -31,16 +30,15 @@ import org.jetbrains.annotations.Nullable;
   name = "EditorRichCopySettings",
   storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/editor.rich.copy.xml")}
 )
-public class RichCopySettings implements PersistentStateComponent<RichCopySettings>, ApplicationComponent {
+public class RichCopySettings implements PersistentStateComponent<RichCopySettings> {
 
   @NotNull public static final String ACTIVE_GLOBAL_SCHEME_MARKER = "__ACTIVE_GLOBAL_SCHEME__";
 
   private String  mySchemeName = ACTIVE_GLOBAL_SCHEME_MARKER;
-  private boolean myStripIndents = true;
 
   @NotNull
   public static RichCopySettings getInstance() {
-    return ApplicationManager.getApplication().getComponent(RichCopySettings.class);
+    return ServiceManager.getService(RichCopySettings.class);
   }
 
   @NotNull
@@ -63,20 +61,6 @@ public class RichCopySettings implements PersistentStateComponent<RichCopySettin
     XmlSerializerUtil.copyBean(state, this);
   }
 
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return getClass().getName();
-  }
-
   @NotNull
   public String getSchemeName() {
     return mySchemeName == null ? ACTIVE_GLOBAL_SCHEME_MARKER : mySchemeName;
@@ -84,13 +68,5 @@ public class RichCopySettings implements PersistentStateComponent<RichCopySettin
 
   public void setSchemeName(@Nullable String schemeName) {
     mySchemeName = schemeName;
-  }
-
-  public boolean isStripIndents() {
-    return myStripIndents;
-  }
-
-  public void setStripIndents(boolean stripIndents) {
-    myStripIndents = stripIndents;
   }
 }

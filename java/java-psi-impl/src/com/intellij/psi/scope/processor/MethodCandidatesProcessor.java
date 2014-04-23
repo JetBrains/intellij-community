@@ -94,7 +94,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     };
   }
 
-  protected PsiType[] getExpressionTypes(PsiExpressionList argumentList) {
+  protected static PsiType[] getExpressionTypes(PsiExpressionList argumentList) {
     return argumentList != null ? argumentList.getExpressionTypes() : null;
   }
 

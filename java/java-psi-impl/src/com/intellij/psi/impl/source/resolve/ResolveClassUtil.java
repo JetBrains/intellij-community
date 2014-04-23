@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,15 +20,16 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ResolveClassUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.ResolveClassUtil");
 
   @Nullable
-  public static PsiClass resolveClass(PsiJavaCodeReferenceElement ref) {
+  public static PsiClass resolveClass(@NotNull PsiJavaCodeReferenceElement ref, @NotNull PsiFile containingFile) {
     if (ref instanceof PsiJavaCodeReferenceElementImpl &&
-        ((PsiJavaCodeReferenceElementImpl)ref).getKind() == PsiJavaCodeReferenceElementImpl.CLASS_IN_QUALIFIED_NEW_KIND) {
+        ((PsiJavaCodeReferenceElementImpl)ref).getKind(containingFile) == PsiJavaCodeReferenceElementImpl.CLASS_IN_QUALIFIED_NEW_KIND) {
       PsiElement parent = ref.getParent();
       if (parent instanceof PsiAnonymousClass){
         parent = parent.getParent();
@@ -63,7 +64,7 @@ public class ResolveClassUtil {
     long time1 = System.currentTimeMillis();
     */
 
-    ClassResolverProcessor processor = new ClassResolverProcessor(className, ref, ref.getContainingFile());
+    ClassResolverProcessor processor = new ClassResolverProcessor(className, ref, containingFile);
     PsiScopesUtil.resolveAndWalk(processor, ref, null);
 
 

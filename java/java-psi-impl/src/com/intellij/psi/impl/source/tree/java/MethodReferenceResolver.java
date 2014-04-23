@@ -41,14 +41,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-class MethodReferenceResolver implements ResolveCache.PolyVariantResolver<PsiMethodReferenceExpression> {
+class MethodReferenceResolver implements ResolveCache.PolyVariantContextResolver<PsiMethodReferenceExpressionImpl> {
   private static final Logger LOG = Logger.getInstance("#" + MethodReferenceResolver.class.getName());
 
   @NotNull
   @Override
-  public ResolveResult[] resolve(@NotNull final PsiMethodReferenceExpression reference, boolean incompleteCode) {
-    final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(
-      reference);
+  public JavaResolveResult[] resolve(@NotNull final PsiMethodReferenceExpressionImpl reference, @NotNull final PsiFile containingFile, boolean incompleteCode) {
+    final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(reference);
 
     final PsiClass containingClass = qualifierResolveResult.getContainingClass();
     PsiSubstitutor substitutor = qualifierResolveResult.getSubstitutor();
@@ -87,7 +86,7 @@ class MethodReferenceResolver implements ResolveCache.PolyVariantResolver<PsiMet
 
         final PsiConflictResolver conflictResolver = createResolver(reference, qualifierResolveResult, interfaceMethod, signature);
         final MethodCandidatesProcessor processor =
-          new MethodCandidatesProcessor(reference, reference.getContainingFile(), new PsiConflictResolver[] {conflictResolver}, new SmartList<CandidateInfo>()) {
+          new MethodCandidatesProcessor(reference, containingFile, new PsiConflictResolver[] {conflictResolver}, new SmartList<CandidateInfo>()) {
             @Override
             protected boolean acceptVarargs() {
               return true;
@@ -156,7 +155,11 @@ class MethodReferenceResolver implements ResolveCache.PolyVariantResolver<PsiMet
                       final PsiSubstitutor receiverSubstitutor = pClass != null ? TypeConversionUtil
                         .getClassSubstitutor(containingClass, pClass, pResult.getSubstitutor()) : null;
                       if (receiverSubstitutor != null) {
-                        if (!method.hasTypeParameters() && signature.getParameterTypes().length == 1) return receiverSubstitutor;
+                        if (!method.hasTypeParameters()) {
+                          if (signature.getParameterTypes().length == 1 || PsiUtil.isRawSubstitutor(containingClass, receiverSubstitutor)) {
+                            return receiverSubstitutor;
+                          }
+                        }
                         psiSubstitutor = receiverSubstitutor;
                       }
                     }
@@ -175,7 +178,7 @@ class MethodReferenceResolver implements ResolveCache.PolyVariantResolver<PsiMet
                     return substitutor;
                   }
 
-                  if (interfaceMethodReturnType != PsiType.VOID) {
+                  if (interfaceMethodReturnType != PsiType.VOID && interfaceMethodReturnType != null) {
                     final PsiType returnType = method.isConstructor() ? composeReturnType(containingClass, substitutor) : method.getReturnType();
                     if (returnType != null) {
                       session.registerConstraints(returnType, interfaceMethodReturnType);
@@ -241,7 +244,7 @@ class MethodReferenceResolver implements ResolveCache.PolyVariantResolver<PsiMet
     return functionalInterfaceType;
   }
 
-  protected PsiConflictResolver createResolver(PsiMethodReferenceExpression referenceExpression,
+  protected PsiConflictResolver createResolver(PsiMethodReferenceExpressionImpl referenceExpression,
                                                PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult,
                                                PsiMethod interfaceMethod,
                                                MethodSignature signature) {
@@ -257,11 +260,11 @@ class MethodReferenceResolver implements ResolveCache.PolyVariantResolver<PsiMet
 
   private static class MethodReferenceConflictResolver extends JavaMethodsConflictResolver {
     private final MethodSignature mySignature;
-    private PsiMethodReferenceExpression myReferenceExpression;
+    private final PsiMethodReferenceExpressionImpl myReferenceExpression;
     private final PsiMethodReferenceUtil.QualifierResolveResult myQualifierResolveResult;
     private final boolean myFunctionalMethodVarArgs;
 
-    private MethodReferenceConflictResolver(PsiMethodReferenceExpression referenceExpression, 
+    private MethodReferenceConflictResolver(PsiMethodReferenceExpressionImpl referenceExpression,
                                             PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult,
                                             @Nullable MethodSignature signature, boolean varArgs) {
       super(referenceExpression, signature != null ? signature.getParameterTypes() : PsiType.EMPTY_ARRAY, PsiUtil.getLanguageLevel(referenceExpression));

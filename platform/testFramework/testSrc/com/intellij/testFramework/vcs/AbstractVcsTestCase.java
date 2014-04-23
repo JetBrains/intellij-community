@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
@@ -95,7 +96,7 @@ public abstract class AbstractVcsTestCase {
       if (pluginName != null) {
         System.setProperty(key, pluginName);
       }
-      String name = getClass().getName() + "." + testName;
+      String name = testName;
       final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name);
       myProjectFixture = testFixtureBuilder.getFixture();
       testFixtureBuilder.addModule(EmptyModuleFixtureBuilder.class).addContentRoot(clientRoot.toString());
@@ -116,13 +117,15 @@ public abstract class AbstractVcsTestCase {
           assert myWorkingCopyDir != null;
         }
       });
-    } finally {
+    }
+    finally {
       if (was != null) {
         System.setProperty(key, was);
       } else {
         System.clearProperty(key);
       }
     }
+    ((ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject)).waitForInitialized();
   }
 
   protected void projectCreated() {

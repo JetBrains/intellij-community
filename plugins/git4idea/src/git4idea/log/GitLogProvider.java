@@ -165,7 +165,9 @@ public class GitLogProvider implements VcsLogProvider {
       return Collections.emptyList();
     }
 
-    return GitHistoryUtils.readCommits(myProject, root, userRegistry, GitHistoryUtils.LOG_ALL);
+    List<String> parameters = new ArrayList<String>(GitHistoryUtils.LOG_ALL);
+    parameters.add("--sparse");
+    return GitHistoryUtils.readCommits(myProject, root, userRegistry, parameters);
   }
 
   @NotNull
@@ -315,6 +317,7 @@ public class GitLogProvider implements VcsLogProvider {
 
     // note: structure filter must be the last parameter, because it uses "--" which separates parameters from paths
     if (filterCollection.getStructureFilter() != null) {
+      filterParameters.add("--simplify-merges");
       filterParameters.add("--");
       for (VirtualFile file : filterCollection.getStructureFilter().getFiles(root)) {
         filterParameters.add(file.getPath());

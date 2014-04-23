@@ -78,12 +78,7 @@ public class BackspaceAction extends EditorAction {
 
   private static void doBackSpaceAtCaret(@NotNull Editor editor) {
     if(editor.getSelectionModel().hasSelection()) {
-      int newOffset = editor.getSelectionModel().getSelectionStart();
-      if (EditorActionUtil.canEditAtOffset(editor, newOffset)) {
-        editor.getCaretModel().moveToOffset(newOffset);
-        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-        EditorModificationUtil.deleteSelectedText(editor);
-      }
+      doBackspaceAction(editor);
       return;
     }
 
@@ -129,6 +124,15 @@ public class BackspaceAction extends EditorAction {
         CommandProcessor commandProcessor = CommandProcessor.getInstance();
         commandProcessor.setCurrentCommandGroupId(null);
       }
+    }
+  }
+
+  static void doBackspaceAction(@NotNull Editor editor) {
+    int newOffset = editor.getSelectionModel().getSelectionStart();
+    if (EditorActionUtil.canEditAtOffset(editor, newOffset)) {
+      editor.getCaretModel().moveToOffset(newOffset);
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      EditorModificationUtil.deleteSelectedText(editor);
     }
   }
 }

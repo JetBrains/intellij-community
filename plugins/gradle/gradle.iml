@@ -12,7 +12,8 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="external-system-api" exported="" />
     <orderEntry type="module" module-name="external-system-impl" exported="" />
-    <orderEntry type="module" module-name="gradle-tooling-extension" exported="" />
+    <orderEntry type="module" module-name="gradle-tooling-extension-api" exported="" />
+    <orderEntry type="module" module-name="gradle-tooling-extension-impl" />
     <orderEntry type="module" module-name="idea-ui" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="compiler-openapi" />
@@ -23,39 +24,41 @@
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="maven" />
+    <orderEntry type="module" module-name="junit" />
     <orderEntry type="library" name="swingx" level="project" />
     <orderEntry type="module-library" exported="">
       <library name="Gradle">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/gradle-tooling-api-1.9.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-core-1.9.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-messaging-1.9.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-wrapper-1.9.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-base-services-1.9.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-native-1.9.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-tooling-api-1.12-rc-1.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-core-1.12-rc-1.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-messaging-1.12-rc-1.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-wrapper-1.12-rc-1.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-base-services-1.12-rc-1.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-native-1.12-rc-1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/core/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/core/src/test/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/native/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/wrapper/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/wrapper/src/test/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/messaging/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/messaging/src/test/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/tooling-api/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/tooling-api/src/integTest/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/tooling-api/src/testFixtures/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/base-services/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/base-services/src/test/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-rc-1-src.zip!/gradle-1.12-rc-1/subprojects/core/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-rc-1-src.zip!/gradle-1.12-rc-1/subprojects/core/src/test/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-rc-1-src.zip!/gradle-1.12-rc-1/subprojects/native/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-rc-1-src.zip!/gradle-1.12-rc-1/subprojects/wrapper/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-rc-1-src.zip!/gradle-1.12-rc-1/subprojects/wrapper/src/test/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-rc-1-src.zip!/gradle-1.12-rc-1/subprojects/messaging/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-rc-1-src.zip!/gradle-1.12-rc-1/subprojects/messaging/src/test/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-rc-1-src.zip!/gradle-1.12-rc-1/subprojects/tooling-api/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-rc-1-src.zip!/gradle-1.12-rc-1/subprojects/tooling-api/src/integTest/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-rc-1-src.zip!/gradle-1.12-rc-1/subprojects/tooling-api/src/testFixtures/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-rc-1-src.zip!/gradle-1.12-rc-1/subprojects/base-services/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-rc-1-src.zip!/gradle-1.12-rc-1/subprojects/base-services/src/test/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-rc-1-src.zip!/gradle-1.12-rc-1/subprojects/ide/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-rc-1-src.zip!/gradle-1.12-rc-1/subprojects/ide/src/test/groovy" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" exported="">
       <library name="Slf4j">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/slf4j-api-1.7.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/slf4j-simple-1.7.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/slf4j-api-1.7.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -95,12 +98,7 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/jna-3.2.7.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/jna-posix-1.0.3.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-0.3-rc-2.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-linux-amd64-0.3-rc-2.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-linux-i386-0.3-rc-2.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-osx-universal-0.3-rc-2.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-windows-amd64-0.3-rc-2.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-windows-i386-0.3-rc-2.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-0.10.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

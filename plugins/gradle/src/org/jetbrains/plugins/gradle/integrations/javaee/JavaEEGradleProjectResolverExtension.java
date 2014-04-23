@@ -24,7 +24,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.WebConfiguration;
+import org.jetbrains.plugins.gradle.model.web.WebConfiguration;
 import org.jetbrains.plugins.gradle.model.data.War;
 import org.jetbrains.plugins.gradle.model.data.WarDirectory;
 import org.jetbrains.plugins.gradle.model.data.WebConfigurationModelData;

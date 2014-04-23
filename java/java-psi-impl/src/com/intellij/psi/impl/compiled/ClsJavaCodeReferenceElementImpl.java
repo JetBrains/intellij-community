@@ -15,18 +15,21 @@
  */
 package com.intellij.psi.impl.compiled;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
+import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -44,7 +47,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   private final String myQualifiedName;
   private final PsiReferenceParameterList myRefParameterList;
 
-  public ClsJavaCodeReferenceElementImpl(PsiElement parent, String canonicalText) {
+  public ClsJavaCodeReferenceElementImpl(PsiElement parent, @NotNull String canonicalText) {
     myParent = parent;
 
     String canonical = TypeInfo.internFrequentType(canonicalText);
@@ -88,20 +91,20 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     return myCanonicalText;
   }
 
-  private static class Resolver implements ResolveCache.PolyVariantResolver<ClsJavaCodeReferenceElementImpl> {
+  private static class Resolver implements ResolveCache.PolyVariantContextResolver<ClsJavaCodeReferenceElementImpl> {
     public static final Resolver INSTANCE = new Resolver();
 
     @NotNull
     @Override
-    public JavaResolveResult[] resolve(@NotNull ClsJavaCodeReferenceElementImpl ref, boolean incompleteCode) {
-      final JavaResolveResult resolveResult = ref.advancedResolveImpl();
+    public JavaResolveResult[] resolve(@NotNull ClsJavaCodeReferenceElementImpl ref, @NotNull PsiFile containingFile, boolean incompleteCode) {
+      final JavaResolveResult resolveResult = ref.advancedResolveImpl(containingFile);
       return resolveResult == null ? JavaResolveResult.EMPTY_ARRAY : new JavaResolveResult[] {resolveResult};
     }
   }
 
-  private JavaResolveResult advancedResolveImpl() {
+  private JavaResolveResult advancedResolveImpl(@NotNull PsiFile containingFile) {
     PsiTypeElement[] typeElements = myRefParameterList == null ? PsiTypeElement.EMPTY_ARRAY : myRefParameterList.getTypeParameterElements();
-    PsiElement resolve = resolveElement();
+    PsiElement resolve = resolveElement(containingFile);
     if (resolve == null) return null;
     if (resolve instanceof PsiClass) {
       Map<PsiTypeParameter, PsiType> substitutionMap = new HashMap<PsiTypeParameter, PsiType>();
@@ -137,7 +140,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     }
   }
 
-  private void collectOuterClassTypeArgs(final PsiClass psiClass,
+  private void collectOuterClassTypeArgs(@NotNull PsiClass psiClass,
                                          final String canonicalText,
                                          final Map<PsiTypeParameter, PsiType> substitutionMap) {
     final PsiClass containingClass = psiClass.getContainingClass();
@@ -179,7 +182,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   }
 
   @Nullable
-  private PsiElement resolveElement() {
+  private PsiElement resolveElement(@NotNull PsiFile containingFile) {
     PsiElement element = getParent();
     while(element != null && (!(element instanceof PsiClass) || element instanceof PsiTypeParameter)) {
       if(element instanceof PsiMethod){
@@ -199,16 +202,18 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable((PsiTypeParameterListOwner)element)) {
       if (myQualifiedName.equals(parameter.getName())) return parameter;
     }
-    return resolveClassPreferringMyJar();
+    return resolveClassPreferringMyJar(containingFile);
   }
 
   @Nullable
-  private PsiClass resolveClassPreferringMyJar() {
-    PsiClass[] classes = JavaPsiFacade.getInstance(getProject()).findClasses(myQualifiedName, getResolveScope());
+  private PsiClass resolveClassPreferringMyJar(@NotNull PsiFile containingFile) {
+    Project project = containingFile.getProject();
+    GlobalSearchScope scope = ResolveScopeManager.getInstance(project).getResolveScope(this);
+    PsiClass[] classes = JavaPsiFacade.getInstance(project).findClasses(myQualifiedName, scope);
     if (classes.length == 0) return null;
 
     if (classes.length > 1) {
-      VirtualFile jarFile = PsiUtil.getJarFile(this);
+      VirtualFile jarFile = PsiUtil.getJarFile(containingFile);
       if (jarFile != null) {
         for (PsiClass aClass : classes) {
           if (Comparing.equal(PsiUtil.getJarFile(aClass), jarFile)) return aClass;

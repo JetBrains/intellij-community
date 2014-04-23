@@ -24,9 +24,7 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -81,6 +79,10 @@ public class DeleteToWordStartAction extends TextComponentEditorAction {
     @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
+      if (editor.getSelectionModel().hasSelection()) {
+        BackspaceAction.doBackspaceAction(editor);
+        return;
+      }
       deleteToWordStart(editor);
     }
 

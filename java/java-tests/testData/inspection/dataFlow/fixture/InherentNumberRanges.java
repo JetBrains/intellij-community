@@ -16,4 +16,10 @@ class Foo {
     boolean a = <warning descr="Condition 'i < 0x80000000L' is always 'true'">i < 0x80000000L</warning>;
     boolean f = <warning descr="Condition 'i > 0x7fffffff' is always 'false'">i > 0x7fffffff</warning>;
   }
+
+  void f(int k) {
+    if (<warning descr="Condition 'k <= Integer.MAX_VALUE' is always 'true'">k <= Integer.MAX_VALUE</warning>);
+    if (<warning descr="Condition 'k > Integer.MAX_VALUE' is always 'false'">k > Integer.MAX_VALUE</warning>);
+    if (<warning descr="Condition 'k >= Integer.MIN_VALUE' is always 'true'">k >= Integer.MIN_VALUE</warning>);
+  }
 }

@@ -119,7 +119,10 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   private final UISettings myUiSettings;
   private String myLastWarning = null;
   private PropertyChangeListener myThemeChangeListener = null;
-
+  private static final HashMap<String, String> ourLafClassesAliases = new HashMap<String, String>();
+  static {
+    ourLafClassesAliases.put("idea.dark.laf.classname", DarculaLookAndFeelInfo.CLASS_NAME);
+  }
 
   /**
    * Invoked via reflection.
@@ -251,6 +254,9 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       Element child = (Element)o;
       if (ELEMENT_LAF.equals(child.getName())) {
         className = child.getAttributeValue(ATTRIBUTE_CLASS_NAME);
+        if (className != null && ourLafClassesAliases.containsKey(className)) {
+          className = ourLafClassesAliases.get(className);
+        }
         break;
       }
     }

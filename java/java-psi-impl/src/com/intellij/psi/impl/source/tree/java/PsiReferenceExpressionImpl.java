@@ -181,23 +181,22 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     super.clearCaches();
   }
 
-  public static final class OurGenericsResolver implements ResolveCache.PolyVariantResolver<PsiJavaReference> {
+  public static final class OurGenericsResolver implements ResolveCache.PolyVariantContextResolver<PsiJavaReference> {
     public static final OurGenericsResolver INSTANCE = new OurGenericsResolver();
 
-    @Override
     @NotNull
-    public JavaResolveResult[] resolve(@NotNull PsiJavaReference ref, boolean incompleteCode) {
+    @Override
+    public ResolveResult[] resolve(@NotNull PsiJavaReference ref, @NotNull PsiFile containingFile, boolean incompleteCode) {
       PsiReferenceExpressionImpl expression = (PsiReferenceExpressionImpl)ref;
       CompositeElement treeParent = expression.getTreeParent();
       IElementType parentType = treeParent == null ? null : treeParent.getElementType();
-      PsiFile file = expression.getContainingFile();
 
-      List<PsiElement> qualifiers = resolveAllQualifiers(expression, file);
+      List<PsiElement> qualifiers = resolveAllQualifiers(expression, containingFile);
       try {
-        JavaResolveResult[] result = expression.resolve(parentType, file);
+        JavaResolveResult[] result = expression.resolve(parentType, containingFile);
 
         if (result.length == 0 && incompleteCode && parentType != JavaElementType.REFERENCE_EXPRESSION) {
-          result = expression.resolve(JavaElementType.REFERENCE_EXPRESSION, file);
+          result = expression.resolve(JavaElementType.REFERENCE_EXPRESSION, containingFile);
         }
 
         JavaResolveUtil.substituteResults(expression, result);
@@ -213,6 +212,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
       }
     }
 
+    @NotNull
     private static List<PsiElement> resolveAllQualifiers(@NotNull PsiReferenceExpressionImpl expression, @NotNull final PsiFile containingFile) {
       // to avoid SOE, resolve all qualifiers starting from the innermost
       PsiElement qualifier = expression.getQualifier();
@@ -246,9 +246,9 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   }
 
   @NotNull
-  private JavaResolveResult[] resolve(IElementType parentType, PsiFile containingFile) {
+  private JavaResolveResult[] resolve(IElementType parentType, @NotNull PsiFile containingFile) {
     if (parentType == JavaElementType.REFERENCE_EXPRESSION) {
-      JavaResolveResult[] result = resolveToVariable();
+      JavaResolveResult[] result = resolveToVariable(containingFile);
       if (result.length > 0) {
         return result;
       }
@@ -280,7 +280,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
       return resolve(JavaElementType.REFERENCE_EXPRESSION, containingFile);
     }
 
-    return resolveToVariable();
+    return resolveToVariable(containingFile);
   }
 
   @NotNull
@@ -297,7 +297,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   }
 
   @NotNull
-  private JavaResolveResult[] resolveToPackage(PsiFile containingFile) {
+  private JavaResolveResult[] resolveToPackage(@NotNull PsiFile containingFile) {
     final String packageName = getCachedNormalizedText();
     Project project = containingFile.getProject();
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
@@ -316,7 +316,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   }
 
   @NotNull
-  private JavaResolveResult[] resolveToClass(@NotNull PsiElement classNameElement, PsiFile containingFile) {
+  private JavaResolveResult[] resolveToClass(@NotNull PsiElement classNameElement, @NotNull PsiFile containingFile) {
     final String className = classNameElement.getText();
 
     final ClassResolverProcessor processor = new ClassResolverProcessor(className, this, containingFile);
@@ -325,8 +325,8 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   }
 
   @NotNull
-  private JavaResolveResult[] resolveToVariable() {
-    final VariableResolverProcessor processor = new VariableResolverProcessor(this, getContainingFile());
+  private JavaResolveResult[] resolveToVariable(@NotNull PsiFile containingFile) {
+    final VariableResolverProcessor processor = new VariableResolverProcessor(this, containingFile);
     PsiScopesUtil.resolveAndWalk(processor, this, null);
     return processor.getResult();
   }
@@ -730,7 +730,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   }
 
   @Override
-  public void fullyQualify(PsiClass targetClass) {
+  public void fullyQualify(@NotNull PsiClass targetClass) {
     JavaSourceUtil.fullyQualifyReference(this, targetClass);
   }
 

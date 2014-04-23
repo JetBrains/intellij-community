@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,8 @@ import com.intellij.ProjectTopics;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -43,7 +44,7 @@ import javax.swing.*;
 import java.util.*;
 
 
-public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, ProjectComponent {
+public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, NamedComponent, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.RunManagerImpl");
   private final Project myProject;
 
@@ -61,9 +62,9 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   @Nullable private String myLoadedSelectedConfigurationUniqueName = null;
   @Nullable private String mySelectedConfigurationId = null;
 
-  private Map<String, Icon> myIdToIcon = new HashMap<String, Icon>();
-  private Map<String, Long> myIconCheckTimes = new HashMap<String, Long>();
-  private Map<String, Long> myIconCalcTime = Collections.synchronizedMap(new HashMap<String, Long>());
+  private final Map<String, Icon> myIdToIcon = new HashMap<String, Icon>();
+  private final Map<String, Long> myIconCheckTimes = new HashMap<String, Long>();
+  private final Map<String, Long> myIconCalcTime = Collections.synchronizedMap(new HashMap<String, Long>());
 
   @NonNls
   protected static final String CONFIGURATION = "configuration";
@@ -78,7 +79,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   @NonNls private static final String OPTION = "option";
 
   private List<Element> myUnknownElements = null;
-  private JDOMExternalizableStringList myOrder = new JDOMExternalizableStringList();
+  private final JDOMExternalizableStringList myOrder = new JDOMExternalizableStringList();
   private final ArrayList<RunConfiguration> myRecentlyUsedTemporaries = new ArrayList<RunConfiguration>();
   private boolean myOrdered = true;
 
@@ -128,18 +129,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   @Override
-  public void disposeComponent() {
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void projectOpened() {
-  }
-
-  @Override
   @NotNull
   public RunnerAndConfigurationSettings createConfiguration(@NotNull final String name, @NotNull final ConfigurationFactory factory) {
     return createConfiguration(doCreateConfiguration(name, factory, true), factory);
@@ -171,7 +160,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   @Override
-  public void projectClosed() {
+  public void dispose() {
     myTemplateConfigurationsMap.clear();
   }
 

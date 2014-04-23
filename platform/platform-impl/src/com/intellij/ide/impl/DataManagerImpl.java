@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.dataRules.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
@@ -48,21 +47,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class DataManagerImpl extends DataManager implements ApplicationComponent {
+public class DataManagerImpl extends DataManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.impl.DataManagerImpl");
   private final Map<String, GetDataRule> myDataConstantToRuleMap = new THashMap<String, GetDataRule>();
   private WindowManagerEx myWindowManager;
 
   public DataManagerImpl() {
     registerRules();
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
   }
 
   @Nullable
@@ -282,12 +273,6 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     myDataConstantToRuleMap.put(PlatformDataKeys.FILE_EDITOR.getName(), new FileEditorRule());
     myDataConstantToRuleMap.put(CommonDataKeys.NAVIGATABLE_ARRAY.getName(), new NavigatableArrayRule());
     myDataConstantToRuleMap.put(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.getName(), new InactiveEditorRule());
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "DataManager";
   }
 
   @Override

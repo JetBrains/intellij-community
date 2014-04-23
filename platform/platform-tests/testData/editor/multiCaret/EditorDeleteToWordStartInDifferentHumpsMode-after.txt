@@ -1,3 +1,3 @@
 <caret>aCa<caret>
-<caret>pDump Hump<caret>mp
-Yet<caret>herHumpedWord
+Hum<caret>ump Hu<caret>mp
+<caret>

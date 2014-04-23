@@ -87,11 +87,9 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
   }
 
   private static void rectangularBackground(@NotNull SyntaxInfo syntaxInfo, @NotNull StringBuilder buffer, @NotNull Runnable next) {
-    buffer.append("\n\\s0\\box\\brdrhair\\brdrcf").append(syntaxInfo.getDefaultForeground()).append("\\brsp317").append("\\cbpat")
-      .append(syntaxInfo.getDefaultBackground());
+    buffer.append("\n\\s0\\box").append("\\cbpat").append(syntaxInfo.getDefaultBackground());
     saveBackground(buffer, syntaxInfo.getDefaultBackground());
     next.run();
-    buffer.append("\\par");
   }
 
   private static void content(@NotNull SyntaxInfo syntaxInfo, @NotNull StringBuilder buffer, @NotNull String rawText, int maxLength) {

@@ -312,30 +312,46 @@ public class JavaI18nUtil extends I18nUtil {
   }
 
   /**
-   * Returns number of different parameters in i18n message. For example, for string
+   * Returns number of different message format parameters in property value
+   *
    * <i>Class {0} info: Class {0} extends class {1} and implements interface {2}</i>
+   * number of parameters is 3.
+   *
+   * @param propertyValue
+   * @return number of parameters from single property or 0 for wrong format
+   */
+  public static int getPropertyValuePlaceholdersCount(final @NotNull String propertyValue) {
+    try {
+      return new MessageFormat(propertyValue).getFormatsByArgumentIndex().length;
+    } catch (final IllegalArgumentException e) {
+      return 0;
+    }
+  }
+
+  /**
+   * Returns number of different parameters in i18n message. For example, for string
+   *
+   * <i>Class {0} info: Class {0} extends class {1} and implements interface {2}</i> in one translation of property
+   * <i>Class {0} info: Class {0} extends class {1} </i> in other translation of property
+   *
    * number of parameters is 3.
    *
    * @param expression i18n literal
    * @return number of parameters
    */
-  public static int getPropertyValueParamsMaxCount(final PsiLiteralExpression expression) {
+  public static int getPropertyValueParamsMaxCount(final @NotNull PsiLiteralExpression expression) {
     int maxCount = -1;
     for (PsiReference reference : expression.getReferences()) {
       if (reference instanceof PsiPolyVariantReference) {
         for (ResolveResult result : ((PsiPolyVariantReference)reference).multiResolve(false)) {
           if (result.isValidResult() && result.getElement() instanceof IProperty) {
-            String value = ((IProperty)result.getElement()).getValue();
-            MessageFormat format;
             try {
-              format = new MessageFormat(value);
-            }
-            catch (Exception e) {
-              continue; // ignore syntax error
-            }
-            try {
-              int count = format.getFormatsByArgumentIndex().length;
-              maxCount = Math.max(maxCount, count);
+              final IProperty property = (IProperty)result.getElement();
+              final String propertyValue = property.getValue();
+              if (propertyValue == null) {
+                continue;
+              }
+              maxCount = Math.max(maxCount, getPropertyValuePlaceholdersCount(propertyValue));
             }
             catch (IllegalArgumentException ignored) {
             }

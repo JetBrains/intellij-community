@@ -69,7 +69,7 @@ import java.util.Set;
   name = "WindowManager",
   roamingType = RoamingType.GLOBAL,
   storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/window.manager.xml")})
-public final class WindowManagerImpl extends WindowManagerEx implements ApplicationComponent, PersistentStateComponent<Element> {
+public final class WindowManagerImpl extends WindowManagerEx implements NamedComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.WindowManagerImpl");
 
   @NonNls public static final String FULL_SCREEN = "ide.frame.full.screen";
@@ -402,13 +402,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
         }
       }
     }
-  }
-
-  @Override
-  public final void disposeComponent() {}
-
-  @Override
-  public final void initComponent() {
   }
 
   @Override

@@ -329,6 +329,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       tool.inspectionStarted(inspectionManager, this, getPresentation(toolWrapper));
     }
 
+    final boolean headlessEnvironment = ApplicationManager.getApplication().isHeadlessEnvironment();
     final Map<String, InspectionToolWrapper> map = getInspectionWrappersMap(localTools);
     scope.accept(new PsiElementVisitor() {
       @Override
@@ -336,7 +337,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         final VirtualFile virtualFile = file.getVirtualFile();
         if (virtualFile == null) return;
 
-        if (myView == null) {
+        if (myView == null && !headlessEnvironment) {
           throw new ProcessCanceledException();
         }
 

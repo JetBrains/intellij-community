@@ -81,6 +81,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.List;
 
@@ -88,6 +89,9 @@ import static com.jetbrains.python.psi.PyFunction.Modifier.CLASSMETHOD;
 import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
 
 public class PyUtil {
+
+  private static final Object[] EMPTY_OBJECTS = new Object[0];
+
   private PyUtil() {
   }
 
@@ -825,6 +829,21 @@ public class PyUtil {
     }
     return null;
 
+  }
+
+  /**
+   * Returns empty array if null is provided. Returns provided array otherwise.
+   * @param expression array expression
+   * @param <T> array type
+   * @return provided array or empty array if parameter is null
+   */
+  @SuppressWarnings("unchecked")
+  @NotNull
+  public static <T>T[] notNullArray(@Nullable final T[] expression) {
+    if (expression != null) {
+      return expression;
+    }
+    return (T[]) EMPTY_OBJECTS;
   }
 
   public static class KnownDecoratorProviderHolder {

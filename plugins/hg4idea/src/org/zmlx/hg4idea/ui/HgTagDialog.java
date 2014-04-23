@@ -14,11 +14,12 @@ package org.zmlx.hg4idea.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.util.HgReferenceValidator;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -34,17 +35,10 @@ public class HgTagDialog extends DialogWrapper {
   public HgTagDialog(@NotNull Project project, @NotNull Collection<HgRepository> repos, @Nullable HgRepository selectedRepo) {
     super(project, false);
     hgRepositorySelectorComponent.setTitle("Select repository to tag");
-    DocumentListener documentListener = new DocumentListener() {
-      public void insertUpdate(DocumentEvent e) {
-        update();
-      }
-
-      public void removeUpdate(DocumentEvent e) {
-        update();
-      }
-
-      public void changedUpdate(DocumentEvent e) {
-        update();
+    DocumentListener documentListener = new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        validateFields();
       }
     };
 
@@ -67,19 +61,23 @@ public class HgTagDialog extends DialogWrapper {
   private void setRoots(@NotNull Collection<HgRepository> repos, @Nullable HgRepository selectedRepo) {
     hgRepositorySelectorComponent.setRoots(repos);
     hgRepositorySelectorComponent.setSelectedRoot(selectedRepo);
-    update();
   }
 
   protected JComponent createCenterPanel() {
     return contentPanel;
   }
 
-  private void update() {
-    setOKActionEnabled(validateOptions());
-  }
-
-  private boolean validateOptions() {
-    return !StringUtil.isEmptyOrSpaces(tagTxt.getText());
+  private void validateFields() {
+    HgReferenceValidator validator = HgReferenceValidator.newInstance(hgRepositorySelectorComponent.getRepository());
+    String name = getTagName();
+    if (!validator.checkInput(name)) {
+      String message = validator.getErrorText(name);
+      setErrorText(message == null ? "You have to specify tag name." : message);
+      setOKActionEnabled(false);
+      return;
+    }
+    setErrorText(null);
+    setOKActionEnabled(true);
   }
 
   @Override

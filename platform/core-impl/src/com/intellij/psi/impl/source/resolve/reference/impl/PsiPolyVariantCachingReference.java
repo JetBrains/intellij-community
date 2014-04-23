@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public abstract class PsiPolyVariantCachingReference implements PsiPolyVariantRe
   }
 
   @NotNull
-  protected abstract ResolveResult[] resolveInner(boolean incompleteCode);
+  protected abstract ResolveResult[] resolveInner(boolean incompleteCode, @NotNull PsiFile containingFile);
 
   @Override
   public boolean isReferenceTo(final PsiElement element) {
@@ -56,13 +56,13 @@ public abstract class PsiPolyVariantCachingReference implements PsiPolyVariantRe
     return ElementManipulators.getManipulator(currentElement);
   }
 
-  private static class MyResolver implements ResolveCache.PolyVariantResolver<PsiPolyVariantReference> {
+  private static class MyResolver implements ResolveCache.PolyVariantContextResolver<PsiPolyVariantReference> {
     private static final MyResolver INSTANCE = new MyResolver();
 
     @NotNull
     @Override
-    public ResolveResult[] resolve(@NotNull PsiPolyVariantReference reference, boolean incompleteCode) {
-      return ((PsiPolyVariantCachingReference)reference).resolveInner(incompleteCode);
+    public ResolveResult[] resolve(@NotNull PsiPolyVariantReference ref, @NotNull PsiFile containingFile, boolean incompleteCode) {
+      return ((PsiPolyVariantCachingReference)ref).resolveInner(incompleteCode, containingFile);
     }
   }
 }

@@ -19,8 +19,8 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.template.impl.CustomLiveTemplateLookupElement;
 import com.intellij.codeInsight.template.postfix.templates.PostfixLiveTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class PostfixTemplateLookupElement extends CustomLiveTemplateLookupElement {
@@ -44,15 +44,11 @@ public class PostfixTemplateLookupElement extends CustomLiveTemplateLookupElemen
   public void renderElement(LookupElementPresentation presentation) {
     super.renderElement(presentation);
     if (sudden) {
-      presentation.setTailText(" " + arrow() + " " + myTemplate.getExample());
+      presentation.setTailText(" " + UIUtil.rightArrow() + " " + myTemplate.getExample());
     }
     else {
       presentation.setTypeText(myTemplate.getExample());
       presentation.setTypeGrayed(true);
     }
-  }
-
-  private static String arrow() {
-    return SystemInfo.isMac ? "→" : "->";
   }
 }

@@ -137,7 +137,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
   }
 
   protected Wrap createChildWrap(ASTNode child) {
-    return Wrap.createWrap(Wrap.NONE, false);
+    return Wrap.createWrap(WrapType.NONE, false);
   }
 
   protected Alignment createChildAlignment(ASTNode child) {
@@ -152,5 +152,9 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
     return myForeignChildren;
   }
 
+  @Nullable
+  public Wrap substituteTemplateChildWrap(@NotNull DataLanguageBlockWrapper child, @Nullable Wrap childWrap) {
+    return childWrap;
+  }
 }
 
