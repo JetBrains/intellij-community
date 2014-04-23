@@ -94,12 +94,6 @@ public class SvnChangeProvider implements ChangeProvider {
         walker.go(item.getDir(), SVNDepth.IMMEDIATES);
       }
 
-      // they are taken under non recursive: ENTRIES file is read anyway, so we get to know parent status also for free
-      /*for (FilePath path : zipper.getSingleFiles()) {
-        FileStatus status = getParentStatus(context, path);
-        processFile(path, context, status, false, context.getClient());
-      }*/
-
       processCopiedAndDeleted(context, dirtyScope);
       processUnsaved(dirtyScope, addGate, context);
 
@@ -251,9 +245,10 @@ public class SvnChangeProvider implements ChangeProvider {
       File wcPath = guessWorkingCopyPath(copiedStatus.getFile(), copiedStatus.getURL(), copyFromURL);
       SVNStatus status;
       try {
-        status = context.getClient().doStatus(wcPath, false);
+        status = myVcs.getFactory(wcPath).createStatusClient().doStatus(wcPath, false);
       }
       catch(SVNException ex) {
+        LOG.info(ex);
         status = null;
       }
       if (status != null && SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_DELETED)) {
