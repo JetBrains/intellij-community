@@ -559,44 +559,6 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     return myUserRegistry.getUsers();
   }
 
-  public void getFilteredDetailsFromTheVcs(@NotNull final VcsLogFilterCollection filterCollection, 
-                                           @NotNull final Consumer<List<Hash>> success, final int maxCount) {
-    runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
-      @Override
-      public void consume(ProgressIndicator indicator) throws VcsException {
-        Collection<List<? extends TimedVcsCommit>> logs = ContainerUtil.newArrayList();
-        for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
-          final VirtualFile root = entry.getKey();
-
-          if (filterCollection.getStructureFilter() != null && filterCollection.getStructureFilter().getFiles(root).isEmpty()
-              || filterCollection.getUserFilter() != null && filterCollection.getUserFilter().getUserNames(root).isEmpty()) {
-            // there is a structure or user filter, but it doesn't match this root
-            continue;
-          }
-
-          List<TimedVcsCommit> matchingCommits = entry.getValue().getCommitsMatchingFilter(root, filterCollection, maxCount);
-          logs.add(matchingCommits);
-        }
-
-        final List<? extends TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(logs);
-
-        final List<Hash> list = ContainerUtil.map(compoundLog, new Function<TimedVcsCommit, Hash>() {
-          @Override
-          public Hash fun(TimedVcsCommit commit) {
-            return commit.getId();
-          }
-        });
-
-        invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            success.consume(list);
-          }
-        });
-      }
-    }, "Looking for more results...");
-  }
-
   @NotNull
   public Map<VirtualFile, VcsUser> getCurrentUser() {
     return myCurrentUser;
@@ -697,7 +659,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     return commits;
   }
 
-  private void runInBackground(final ThrowableConsumer<ProgressIndicator, VcsException> task, final String title) {
+  void runInBackground(final ThrowableConsumer<ProgressIndicator, VcsException> task, final String title) {
     myDataLoaderQueue.run(new Task.Backgroundable(myProject, title) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
