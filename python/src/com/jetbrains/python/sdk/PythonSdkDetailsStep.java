@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.util.NullableConsumer;
+import com.intellij.util.ui.EmptyIcon;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.Nullable;
@@ -62,6 +63,10 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
 
     final ListPopupStep sdkHomesStep = new PythonSdkDetailsStep(project, moreDialog, ownerComponent, existingSdks, callback);
     final ListPopup popup = JBPopupFactory.getInstance().createListPopup(sdkHomesStep);
+    Dimension size = new JLabel(VIRTUALENV, EmptyIcon.ICON_16, SwingConstants.LEFT).getMinimumSize();
+    final int height = size.height * 5 + 5;
+    popup.setSize(new Dimension(size.width, height));
+    popup.setMinimumSize(new Dimension(size.width, height));
     popup.showInScreenCoordinates(ownerComponent, popupPoint);
   }
 
