@@ -39,7 +39,7 @@ import javax.swing.*;
 public class WebModuleBuilder extends ModuleBuilder {
 
   public static final String GROUP_NAME = "Static Web";
-  public static final Icon ICON = AllIcons.General.Web;
+  public static final Icon ICON = AllIcons.Nodes.PpWeb;
 
   private final WebProjectTemplate<?> myTemplate;
 
