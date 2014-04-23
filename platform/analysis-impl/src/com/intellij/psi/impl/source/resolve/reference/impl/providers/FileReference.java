@@ -128,15 +128,11 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
     return ResolveCache.getInstance(file.getProject()).resolveWithCaching(this, MyResolver.INSTANCE, false, false, file);
   }
 
-  protected ResolveResult[] innerResolve() {
-    return innerResolve(getFileReferenceSet().isCaseSensitive());
-  }
-
   @NotNull
-  protected ResolveResult[] innerResolve(boolean caseSensitive) {
+  protected ResolveResult[] innerResolve(boolean caseSensitive, @NotNull PsiFile containingFile) {
     final String referenceText = getText();
     if (referenceText.isEmpty() && myIndex == 0) {
-      return new ResolveResult[]{new PsiElementResolveResult(getElement().getContainingFile())};
+      return new ResolveResult[]{new PsiElementResolveResult(containingFile)};
     }
     final Collection<PsiFileSystemItem> contexts = getContexts();
     final Collection<ResolveResult> result = new THashSet<ResolveResult>();
@@ -144,7 +140,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
       innerResolveInContext(referenceText, context, result, caseSensitive);
     }
     if (contexts.isEmpty() && isAllowedEmptyPath(referenceText)) {
-      result.add(new PsiElementResolveResult(getElement().getContainingFile()));
+      result.add(new PsiElementResolveResult(containingFile));
     }
     final int resultCount = result.size();
     return resultCount > 0 ? result.toArray(new ResolveResult[resultCount]) : ResolveResult.EMPTY_ARRAY;
@@ -330,8 +326,8 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
   }
 
   @Nullable
-  public PsiFileSystemItem innerSingleResolve(final boolean caseSensitive) {
-    final ResolveResult[] resolveResults = innerResolve(caseSensitive);
+  public PsiFileSystemItem innerSingleResolve(final boolean caseSensitive, @NotNull PsiFile containingFile) {
+    final ResolveResult[] resolveResults = innerResolve(caseSensitive, containingFile);
     return resolveResults.length == 1 ? (PsiFileSystemItem)resolveResults[0].getElement() : null;
   }
 
@@ -553,13 +549,13 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
     return myFileReferenceSet.getLastReference();
   }
 
-  static class MyResolver implements ResolveCache.PolyVariantResolver<FileReference> {
+  static class MyResolver implements ResolveCache.PolyVariantContextResolver<FileReference> {
     static final MyResolver INSTANCE = new MyResolver();
 
     @NotNull
     @Override
-    public ResolveResult[] resolve(@NotNull FileReference ref, boolean incompleteCode) {
-      return ref.innerResolve(ref.getFileReferenceSet().isCaseSensitive());
+    public ResolveResult[] resolve(@NotNull FileReference ref, @NotNull PsiFile containingFile, boolean incompleteCode) {
+      return ref.innerResolve(ref.getFileReferenceSet().isCaseSensitive(), containingFile);
     }
   }
 }
