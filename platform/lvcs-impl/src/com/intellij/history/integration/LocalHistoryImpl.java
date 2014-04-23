@@ -128,7 +128,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
   public void disposeComponent() {
     if (!isInitialized.getAndSet(false)) return;
 
-    int period = Registry.intValue("localHistory.daysToKeep") * 1000 * 60 * 60 * 24;
+    long period = Registry.intValue("localHistory.daysToKeep") * 1000 * 60 * 60 * 24;
 
     VirtualFileManager fm = VirtualFileManager.getInstance();
     fm.removeVirtualFileListener(myEventDispatcher);
