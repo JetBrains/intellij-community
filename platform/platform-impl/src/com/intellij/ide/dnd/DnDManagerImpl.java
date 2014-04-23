@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ui.GeometryUtil;
 import com.intellij.util.ui.UIUtil;
@@ -538,7 +539,7 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
     public void dragGestureRecognized(DragGestureEvent dge) {
       try {
         final DnDSource source = getSource(dge.getComponent());
-        if (source == null) return;
+        if (source == null || !MouseDragHelper.checkModifiers(dge.getTriggerEvent())) return;
 
         DnDAction action = getDnDActionForPlatformAction(dge.getDragAction());
         if (source.canStartDragging(action, dge.getDragOrigin())) {
