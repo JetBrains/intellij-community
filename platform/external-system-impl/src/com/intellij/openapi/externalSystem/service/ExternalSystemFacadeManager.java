@@ -186,7 +186,7 @@ public class ExternalSystemFacadeManager {
   @NotNull
   private RemoteExternalSystemFacade doCreateFacade(@NotNull IntegrationKey key, @NotNull Project project,
                                                     @NotNull ExternalSystemCommunicationManager communicationManager) throws Exception {
-    final RemoteExternalSystemFacade facade = communicationManager.acquire(project.getName(), key.getExternalSystemId());
+    final RemoteExternalSystemFacade facade = communicationManager.acquire(key.getExternalProjectConfigPath(), key.getExternalSystemId());
     if (facade == null) {
       throw new IllegalStateException("Can't obtain facade to working with external api at the remote process. Project: " + project);
     }

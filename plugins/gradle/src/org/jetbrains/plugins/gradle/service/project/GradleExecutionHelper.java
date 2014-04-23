@@ -39,6 +39,7 @@ import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleEnvironment;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
@@ -188,16 +189,13 @@ public class GradleExecutionHelper {
       projectDir = projectPath;
     }
 
-    // This is a workaround to get right base dir in case of 'PROJECT' setting used in case custom wrapper property file location
-    // see org.gradle.wrapper.PathAssembler#getBaseDir for details
     String userDir = null;
-    if (settings != null && settings.getDistributionType() == DistributionType.WRAPPED) {
+    if (!GradleEnvironment.ADJUST_USER_DIR) {
       try {
         userDir = System.getProperty("user.dir");
-        System.setProperty("user.dir", projectDir);
+        if (userDir != null) System.setProperty("user.dir", projectDir);
       }
-      catch (Exception e) {
-        // ignore
+      catch (Exception ignore) {
       }
     }
     ProjectConnection connection = getConnection(projectDir, settings);
