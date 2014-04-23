@@ -17,7 +17,7 @@ package org.jetbrains.idea.svn.portable;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.*;
@@ -31,19 +31,17 @@ import java.util.Collection;
  * Date: 1/24/12
  * Time: 9:47 AM
  */
-public class SvnkitSvnStatusClient implements SvnStatusClientI {
+public class SvnkitSvnStatusClient extends BaseSvnClient implements SvnStatusClientI {
 
   private SVNStatusClient myStatusClient;
-  @NotNull private final SvnVcs myVcs;
   @Nullable private final ISVNStatusFileProvider myProvider;
   @Nullable private final ISVNEventHandler myHandler;
 
-  public SvnkitSvnStatusClient(@NotNull SvnVcs vcs) {
-    this(vcs, null, null);
+  public SvnkitSvnStatusClient() {
+    this(null, null);
   }
 
-  public SvnkitSvnStatusClient(@NotNull SvnVcs vcs, @Nullable ISVNStatusFileProvider provider, @Nullable ISVNEventHandler handler) {
-    myVcs = vcs;
+  public SvnkitSvnStatusClient(@Nullable ISVNStatusFileProvider provider, @Nullable ISVNEventHandler handler) {
     myProvider = provider;
     myHandler = handler;
   }

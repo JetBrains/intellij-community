@@ -65,14 +65,14 @@ public class SvnKitClientFactory extends ClientFactory {
     myBrowseClient = new SvnKitBrowseClient();
     myDiffClient = new SvnKitDiffClient();
     myCheckinClient = new SvnKitCheckinClient();
-    statusClient = new SvnkitSvnStatusClient(myVcs);
+    statusClient = new SvnkitSvnStatusClient();
     infoClient = new SvnkitSvnWcClient(myVcs);
   }
 
   @NotNull
   @Override
   public SvnStatusClientI createStatusClient(@Nullable ISVNStatusFileProvider provider, @NotNull ISVNEventHandler handler) {
-    return new SvnkitSvnStatusClient(myVcs, provider, handler);
+    return prepare(new SvnkitSvnStatusClient(provider, handler));
   }
 
   @NotNull

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.portable;
 
+import org.jetbrains.idea.svn.api.SvnClient;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
@@ -30,7 +31,7 @@ import java.util.Collection;
  * Date: 1/24/12
  * Time: 9:46 AM
  */
-public interface SvnStatusClientI extends SvnMarkerInterface {
+public interface SvnStatusClientI extends SvnClient {
   long doStatus(File path, boolean recursive, boolean remote, boolean reportAll,
           boolean includeIgnored, ISVNStatusHandler handler) throws SVNException;
   long doStatus(File path, boolean recursive, boolean remote, boolean reportAll, boolean includeIgnored, boolean collectParentExternals, ISVNStatusHandler handler) throws SVNException;

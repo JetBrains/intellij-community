@@ -97,8 +97,7 @@ public abstract class ClientFactory {
 
   @NotNull
   public SvnStatusClientI createStatusClient() {
-    // TODO: Update this in same like other clients - move to corresponding package, rename clients
-    return statusClient;
+    return prepare(statusClient);
   }
 
   @NotNull

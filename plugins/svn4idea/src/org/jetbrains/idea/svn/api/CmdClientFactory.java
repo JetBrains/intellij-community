@@ -6,13 +6,13 @@ import org.jetbrains.idea.svn.add.CmdAddClient;
 import org.jetbrains.idea.svn.annotate.CmdAnnotateClient;
 import org.jetbrains.idea.svn.browse.CmdBrowseClient;
 import org.jetbrains.idea.svn.change.CmdChangeListClient;
+import org.jetbrains.idea.svn.checkin.CmdCheckinClient;
 import org.jetbrains.idea.svn.checkin.CmdImportClient;
 import org.jetbrains.idea.svn.checkout.CmdCheckoutClient;
 import org.jetbrains.idea.svn.checkout.CmdExportClient;
 import org.jetbrains.idea.svn.cleanup.CmdCleanupClient;
 import org.jetbrains.idea.svn.commandLine.SvnCommandLineInfoClient;
 import org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient;
-import org.jetbrains.idea.svn.checkin.CmdCheckinClient;
 import org.jetbrains.idea.svn.conflict.CmdConflictClient;
 import org.jetbrains.idea.svn.content.CmdContentClient;
 import org.jetbrains.idea.svn.copy.CmdCopyMoveClient;
@@ -61,7 +61,7 @@ public class CmdClientFactory extends ClientFactory {
     myBrowseClient = new CmdBrowseClient();
     myDiffClient = new CmdDiffClient();
     myCheckinClient = new CmdCheckinClient();
-    statusClient = new SvnCommandLineStatusClient(myVcs);
+    statusClient = new SvnCommandLineStatusClient();
     infoClient = new SvnCommandLineInfoClient(myVcs);
   }
 

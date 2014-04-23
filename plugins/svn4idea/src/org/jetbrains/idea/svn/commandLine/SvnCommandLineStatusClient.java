@@ -25,7 +25,7 @@ import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
-import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.portable.PortableStatus;
 import org.jetbrains.idea.svn.portable.SvnExceptionWrapper;
 import org.jetbrains.idea.svn.portable.SvnStatusClientI;
@@ -49,16 +49,8 @@ import java.util.*;
  * Date: 1/25/12
  * Time: 5:21 PM
  */
-public class SvnCommandLineStatusClient implements SvnStatusClientI {
+public class SvnCommandLineStatusClient extends BaseSvnClient implements SvnStatusClientI {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient");
-
-  private final SvnCommandLineInfoClient myInfoClient;
-  @NotNull private final SvnVcs myVcs;
-
-  public SvnCommandLineStatusClient(@NotNull SvnVcs vcs) {
-    myVcs = vcs;
-    myInfoClient = new SvnCommandLineInfoClient(vcs);
-  }
 
   @Override
   public long doStatus(File path, boolean recursive, boolean remote, boolean reportAll, boolean includeIgnored, ISVNStatusHandler handler)
@@ -103,7 +95,7 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
     File base = path.isDirectory() ? path : path.getParentFile();
     base = CommandUtil.correctUpToExistingParent(base);
 
-    final SVNInfo infoBase = myInfoClient.doInfo(base, revision);
+    final SVNInfo infoBase = myFactory.createInfoClient().doInfo(base, revision);
     List<String> parameters = new ArrayList<String>();
 
     putParameters(parameters, path, depth, remote, reportAll, includeIgnored, changeLists);
@@ -211,7 +203,7 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
       @Override
       public SVNInfo convert(File o) {
         try {
-          return myInfoClient.doInfo(o, revision);
+          return myFactory.createInfoClient().doInfo(o, revision);
         }
         catch (SVNException e) {
           throw new SvnExceptionWrapper(e);
