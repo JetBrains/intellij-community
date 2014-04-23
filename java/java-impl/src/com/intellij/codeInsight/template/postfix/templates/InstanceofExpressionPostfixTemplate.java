@@ -19,7 +19,6 @@ import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.template.*;
-import com.intellij.codeInsight.template.postfix.util.Aliases;
 import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -35,25 +34,30 @@ import org.jetbrains.annotations.NotNull;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-@Aliases(".inst")
 public class InstanceofExpressionPostfixTemplate extends PostfixTemplate {
+
   public InstanceofExpressionPostfixTemplate() {
-    super("instanceof", "Surrounds expression with instanceof", "expr instanceof SomeType ? ((SomeType) expr). : null");
+    this("instanceof");
+  }
+
+  public InstanceofExpressionPostfixTemplate(String alias) {
+    super(alias, "Surrounds expression with instanceof", "expr instanceof SomeType ? ((SomeType) expr). : null");
   }
 
   @Override
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
-    return PostfixTemplatesUtils.isNotPrimitiveTypeExpression(getTopmostExpression(context));
+    return PostfixTemplatesUtils.isNotPrimitiveTypeExpression(PostfixTemplatesUtils.getTopmostExpression(context));
   }
 
   @Override
   public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
-    PsiExpression expression = getTopmostExpression(context);
+    PsiExpression expression = PostfixTemplatesUtils.getTopmostExpression(context);
     if (!PostfixTemplatesUtils.isNotPrimitiveTypeExpression(expression)) return;
     surroundExpression(context.getProject(), editor, expression);
   }
 
-  private static void surroundExpression(@NotNull Project project, @NotNull Editor editor, @NotNull PsiExpression expr) throws IncorrectOperationException {
+  private static void surroundExpression(@NotNull Project project, @NotNull Editor editor, @NotNull PsiExpression expr)
+    throws IncorrectOperationException {
     assert expr.isValid();
     PsiType[] types = GuessManager.getInstance(project).guessTypeToCast(expr);
     final boolean parenthesesNeeded = expr instanceof PsiPolyadicExpression ||

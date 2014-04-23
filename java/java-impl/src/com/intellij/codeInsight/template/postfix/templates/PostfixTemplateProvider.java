@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -33,32 +32,21 @@ public interface PostfixTemplateProvider {
   Set<PostfixTemplate> getTemplates();
 
   /**
-   * Return all keys registered in the provider
-   */
-  @NotNull
-  Set<String> getKeys();
-
-  /**
-   * Return postfix template for key
-   */
-  @Nullable
-  PostfixTemplate get(@Nullable String key);
-
-  /**
    * Check symbol can separate template keys
    */
   boolean isTerminalSymbol(char currentChar);
 
   /**
    * Prepare original file content for template expanding
+   * Return context after transformation
    */
   @NotNull
-  PsiElement preExpand(@NotNull Editor editor, @NotNull PsiElement context, int currentOffset, @NotNull String key);
+  PsiElement preExpand(@NotNull Editor editor, @NotNull PsiElement context, int offset, @NotNull String key);
 
   /**
    * Do some actions with the file content before check applicable.
-   * Return new copy of file because we should not change original file
+   * Return copyFile or another copy of file after processing
    */
   @NotNull
-  PsiFile preCheck(@NotNull Editor editor, @NotNull PsiFile file, int currentOffset);
+  PsiFile preCheck(@NotNull Editor editor, @NotNull PsiFile copyFile, int currentOffset);
 }

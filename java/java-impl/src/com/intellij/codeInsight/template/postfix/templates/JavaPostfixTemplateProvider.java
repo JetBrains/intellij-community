@@ -18,10 +18,8 @@ package com.intellij.codeInsight.template.postfix.templates;
 import com.intellij.codeInsight.completion.CompletionInitializationContext;
 import com.intellij.codeInsight.completion.JavaCompletionContributor;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
-import com.intellij.codeInsight.template.postfix.util.Aliases;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Ref;
@@ -30,75 +28,47 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
 import java.util.Set;
 
 
 public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
+  private final Set<PostfixTemplate> templates;
 
-  private static final Logger LOG = Logger.getInstance(JavaPostfixTemplateProvider.class);
-
-  private final Map<String, PostfixTemplate> myMapTemplates;
 
   public JavaPostfixTemplateProvider() {
-    myMapTemplates = ContainerUtil.newHashMap();
-    for (PostfixTemplate template : getInitializeTemplateSet()) {
-      register(template.getKey(), template);
-      Aliases aliases = template.getClass().getAnnotation(Aliases.class);
-      if (aliases != null) {
-        for (String key : aliases.value()) {
-          register(key, template);
-        }
-      }
-    }
-  }
-
-  @NotNull
-  protected Set<PostfixTemplate> getInitializeTemplateSet() {
-    return ContainerUtil.newHashSet(new AssertStatementPostfixTemplate(),
-                                    new CastExpressionPostfixTemplate(),
-                                    new ElseStatementPostfixTemplate(),
-                                    new ForAscendingPostfixTemplate(),
-                                    new ForDescendingPostfixTemplate(),
-                                    new ForeachPostfixTemplate(),
-                                    new FormatPostfixTemplate(),
-                                    new IfStatementPostfixTemplate(),
-                                    new InstanceofExpressionPostfixTemplate(),
-                                    new IntroduceFieldPostfixTemplate(),
-                                    new IntroduceVariablePostfixTemplate(),
-                                    new IsNullCheckPostfixTemplate(),
-                                    new NotExpressionPostfixTemplate(),
-                                    new NotNullCheckPostfixTemplate(),
-                                    new ParenthesizedExpressionPostfixTemplate(),
-                                    new ReturnStatementPostfixTemplate(),
-                                    new SoutPostfixTemplate(),
-                                    new SwitchStatementPostfixTemplate(),
-                                    new SynchronizedStatementPostfixTemplate(),
-                                    new ThrowExceptionPostfixTemplate(),
-                                    new TryStatementPostfixTemplate(),
-                                    new TryWithResourcesPostfixTemplate(),
-                                    new WhileStatementPostfixTemplate());
+    templates = ContainerUtil.newHashSet(new AssertStatementPostfixTemplate(),
+                                         new CastExpressionPostfixTemplate(),
+                                         new ElseStatementPostfixTemplate(),
+                                         new ForAscendingPostfixTemplate(),
+                                         new ForDescendingPostfixTemplate(),
+                                         new ForeachPostfixTemplate(),
+                                         new FormatPostfixTemplate(),
+                                         new IfStatementPostfixTemplate(),
+                                         new InstanceofExpressionPostfixTemplate(),
+                                         new InstanceofExpressionPostfixTemplate("inst"),
+                                         new IntroduceFieldPostfixTemplate(),
+                                         new IntroduceVariablePostfixTemplate(),
+                                         new IsNullCheckPostfixTemplate(),
+                                         new NotExpressionPostfixTemplate(),
+                                         new NotExpressionPostfixTemplate("!"),
+                                         new NotNullCheckPostfixTemplate(),
+                                         new NotNullCheckPostfixTemplate("nn"),
+                                         new ParenthesizedExpressionPostfixTemplate(),
+                                         new ReturnStatementPostfixTemplate(),
+                                         new SoutPostfixTemplate(),
+                                         new SwitchStatementPostfixTemplate(),
+                                         new SynchronizedStatementPostfixTemplate(),
+                                         new ThrowExceptionPostfixTemplate(),
+                                         new TryStatementPostfixTemplate(),
+                                         new TryWithResourcesPostfixTemplate(),
+                                         new WhileStatementPostfixTemplate());
   }
 
   @NotNull
   @Override
   public Set<PostfixTemplate> getTemplates() {
-    return ContainerUtil.newHashSet(myMapTemplates.values());
-  }
-
-  @NotNull
-  @Override
-  public Set<String> getKeys() {
-    return myMapTemplates.keySet();
-  }
-
-
-  @Nullable
-  @Override
-  public PostfixTemplate get(@Nullable String key) {
-    return myMapTemplates.get(key);
+    return templates;
   }
 
   @Override
@@ -115,24 +85,17 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
 
   @NotNull
   @Override
-  public PsiFile preCheck(@NotNull Editor editor, @NotNull PsiFile file, int currentOffset) {
-    Document document = file.getViewProvider().getDocument();
+  public PsiFile preCheck(@NotNull Editor editor, @NotNull PsiFile copyFile, int currentOffset) {
+    Document document = copyFile.getViewProvider().getDocument();
     assert document != null;
     CharSequence sequence = document.getCharsSequence();
     StringBuilder fileContentWithoutKey = new StringBuilder(sequence);
-    if (isSemicolonNeeded(file, editor)) {
+    if (isSemicolonNeeded(copyFile, editor)) {
       fileContentWithoutKey.insert(currentOffset, ';');
-      file = PostfixLiveTemplate.copyFile(file, fileContentWithoutKey);
+      copyFile = PostfixLiveTemplate.copyFile(copyFile, fileContentWithoutKey);
     }
 
-    return file;
-  }
-
-  private void register(@NotNull String key, @NotNull PostfixTemplate template) {
-    PostfixTemplate registered = myMapTemplates.put(key, template);
-    if (registered != null) {
-      LOG.error("Can't register postfix template. Duplicated key: " + template.getKey());
-    }
+    return copyFile;
   }
 
   @NotNull
