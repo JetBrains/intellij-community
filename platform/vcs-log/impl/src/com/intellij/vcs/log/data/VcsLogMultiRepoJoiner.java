@@ -6,10 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author Kirill Likhodedov
- */
-class VcsLogMultiRepoJoiner {
+public class VcsLogMultiRepoJoiner {
 
   @NotNull
   public List<? extends TimedVcsCommit> join(@NotNull Collection<List<? extends TimedVcsCommit>> logsFromRepos) {

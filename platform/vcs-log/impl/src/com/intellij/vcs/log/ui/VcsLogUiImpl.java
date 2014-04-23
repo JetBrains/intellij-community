@@ -39,7 +39,6 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
   private static final Logger LOG = Logger.getInstance(VcsLogUiImpl.class);
 
-  @NotNull private final VcsLogDataHolder myLogDataHolder;
   @NotNull private final MainFrame myMainFrame;
   @NotNull private final Project myProject;
   @NotNull private final VcsLogColorManager myColorManager;
@@ -53,7 +52,6 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
   public VcsLogUiImpl(@NotNull VcsLogDataHolder logDataHolder, @NotNull Project project, @NotNull VcsLogSettings settings,
                       @NotNull VcsLogColorManager manager, @NotNull VcsLogUiProperties uiProperties, @NotNull DataPack initialDataPack) {
-    myLogDataHolder = logDataHolder;
     myProject = project;
     myColorManager = manager;
     myUiProperties = uiProperties;
@@ -61,15 +59,8 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     Disposer.register(logDataHolder, this);
 
     myFilterer = new VcsLogFilterer(logDataHolder, this);
-    myLog = new VcsLogImpl(myLogDataHolder, this);
-    myMainFrame = new MainFrame(myLogDataHolder, this, project, settings, uiProperties, myLog, initialDataPack);
-    project.getMessageBus().connect(project).subscribe(VcsLogDataHolder.REFRESH_COMPLETED, new VcsLogRefreshListener() {
-      @Override
-      public void refresh(@NotNull DataPack dataPack) {
-        applyFiltersAndUpdateUi(dataPack);
-      }
-    });
-    applyFiltersAndUpdateUi(initialDataPack);
+    myLog = new VcsLogImpl(logDataHolder, this);
+    myMainFrame = new MainFrame(logDataHolder, this, project, settings, uiProperties, myLog, initialDataPack);
   }
 
   @NotNull
@@ -293,7 +284,10 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     return commits;
   }
 
-  
+  public void setDataPack(@NotNull DataPack dataPack) {
+    applyFiltersAndUpdateUi(dataPack);
+  }
+
   private void applyFiltersAndUpdateUi(@NotNull final DataPack dataPack) {
     runUnderModalProgress("Applying filters...", new Runnable() {
       public void run() {
