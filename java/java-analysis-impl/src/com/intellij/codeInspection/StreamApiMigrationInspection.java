@@ -76,7 +76,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           final PsiStatement body = statement.getBody();
           if (iteratedValue != null && body != null) {
             final PsiType iteratedValueType = iteratedValue.getType();
-            if (InheritanceUtil.isInheritor(iteratedValueType, CommonClassNames.JAVA_LANG_ITERABLE)) {
+            if (InheritanceUtil.isInheritor(iteratedValueType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
               final PsiClass iteratorClass = PsiUtil.resolveClassInType(iteratedValueType);
               LOG.assertTrue(iteratorClass != null);
               try {
