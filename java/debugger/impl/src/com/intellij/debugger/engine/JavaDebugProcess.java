@@ -131,6 +131,11 @@ public class JavaDebugProcess extends XDebugProcess {
   }
 
   @Override
+  public void startPausing() {
+    myJavaSession.pause();
+  }
+
+  @Override
   public void resume() {
     myJavaSession.resume();
   }
