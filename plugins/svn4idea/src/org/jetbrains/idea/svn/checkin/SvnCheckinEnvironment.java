@@ -87,51 +87,34 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return null;
   }
 
-
-  private List<VcsException> commitInt(List<File> paths, final String comment, final boolean force, final Set<String> feedback) {
+  private List<VcsException> commitInt(List<File> paths, final String comment, final Set<String> feedback) {
     final List<VcsException> exception = new ArrayList<VcsException>();
     final List<File> committables = getCommitables(paths);
-
-    final SVNCommitClient committer = mySvnVcs.createCommitClient();
-
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-    IdeaCommitHandler handler = new IdeaCommitHandler(progress, true, true);
-    if (progress != null) {
-      committer.setEventHandler(handler);
-    }
 
     if (progress != null) {
-      doCommit(committables, committer, comment, force, exception, feedback);
+      doCommit(committables, comment, exception, feedback);
     }
     else if (ApplicationManager.getApplication().isDispatchThread()) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
-          doCommit(committables, committer, comment, force, exception, feedback);
+          doCommit(committables, comment, exception, feedback);
         }
       }, SvnBundle.message("progress.title.commit"), false, mySvnVcs.getProject());
     }
     else {
-      doCommit(committables, committer, comment, force, exception, feedback);
+      doCommit(committables, comment, exception, feedback);
     }
 
-    // TODO: Check if such processing of deleted files also necessary for command line. And if yes - use one handler instance for both
-    // TODO: SVNKit and command line code flows.
-    for(VirtualFile f : handler.getDeletedFiles()) {
-      f.putUserData(VirtualFile.REQUESTOR_MARKER, this);
-    }
     return exception;
   }
 
-  private void doCommit(List<File> committables,
-                        SVNCommitClient committer,
-                        String comment,
-                        boolean force,
-                        List<VcsException> exception, final Set<String> feedback) {
+  private void doCommit(List<File> committables, String comment, List<VcsException> exception, final Set<String> feedback) {
     //noinspection unchecked
     final MultiMap<Pair<SVNURL,WorkingCopyFormat>,File> map = SvnUtil.splitIntoRepositoriesMap(mySvnVcs, committables, Convertor.SELF);
     for (Map.Entry<Pair<SVNURL, WorkingCopyFormat>, Collection<File>> entry : map.entrySet()) {
       try {
-        doCommitOneRepo(entry.getValue(), committer, comment, force, exception, feedback, entry.getKey().getSecond());
+        doCommitOneRepo(entry.getValue(), comment, exception, feedback, entry.getKey().getSecond());
       }
       catch (VcsException e) {
         LOG.info(e);
@@ -141,11 +124,11 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   private void doCommitOneRepo(Collection<File> committables,
-                               SVNCommitClient committer,
                                String comment,
-                               boolean force,
-                               List<VcsException> exception, final Set<String> feedback, final WorkingCopyFormat format)
-    throws VcsException {
+                               List<VcsException> exception,
+                               final Set<String> feedback,
+                               final WorkingCopyFormat format)
+  throws VcsException {
     if (committables.isEmpty()) {
       return;
     }
@@ -156,7 +139,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       results = doWithCommandLine(committables, comment);
     }
     else {
-      results = doWithSvnkit(committables, committer, comment, force);
+      results = doWithSvnkit(committables, comment);
     }
 
     final StringBuilder committedRevisions = new StringBuilder();
@@ -176,17 +159,19 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     }
   }
 
-  private SVNCommitInfo[] doWithSvnkit(Collection<File> committables, SVNCommitClient committer, String comment, boolean force)
-    throws VcsException {
+  private SVNCommitInfo[] doWithSvnkit(Collection<File> committables, String comment) throws VcsException {
     File[] pathsToCommit = committables.toArray(new File[committables.size()]);
     boolean keepLocks = SvnConfiguration.getInstance(mySvnVcs.getProject()).isKeepLocks();
     SVNCommitPacket[] commitPackets = null;
     SVNCommitInfo[] results;
+    SVNCommitClient committer = mySvnVcs.createCommitClient();
+    IdeaCommitHandler handler = new IdeaCommitHandler(ProgressManager.getInstance().getProgressIndicator(), true, true);
+
+    committer.setEventHandler(handler);
     try {
-      commitPackets = committer.doCollectCommitItems(pathsToCommit, keepLocks, force, SVNDepth.EMPTY, true, null);
+      commitPackets = committer.doCollectCommitItems(pathsToCommit, keepLocks, true, SVNDepth.EMPTY, true, null);
       results = committer.doCommit(commitPackets, keepLocks, comment);
       commitPackets = null;
-      return results;
     }
     catch (SVNException e) {
       throw new SvnBindException(e);
@@ -203,6 +188,13 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
         }
       }
     }
+
+    // This seems to be necessary only for SVNKit as changes after command line operations should be detected during VFS refresh.
+    for(VirtualFile f : handler.getDeletedFiles()) {
+      f.putUserData(VirtualFile.REQUESTOR_MARKER, this);
+    }
+
+    return results;
   }
 
   private SVNCommitInfo[] doWithCommandLine(Collection<File> committables, String comment) throws VcsException {
@@ -371,7 +363,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
                                    String preparedComment,
                                    @NotNull NullableFunction<Object, Object> parametersHolder,
                                    Set<String> feedback) {
-    return commitInt(collectPaths(changes), preparedComment, true, feedback);
+    return commitInt(collectPaths(changes), preparedComment, feedback);
   }
 
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
