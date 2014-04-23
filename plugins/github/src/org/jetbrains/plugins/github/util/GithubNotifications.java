@@ -120,7 +120,7 @@ public class GithubNotifications {
 
   public static void showErrorDialog(@NotNull Component component, @NotNull String title, @NotNull Exception e) {
     LOG.info(title, e);
-    Messages.showInfoMessage(component, getErrorTextFromException(e), title);
+    Messages.showErrorDialog(component, getErrorTextFromException(e), title);
   }
 
   @Messages.YesNoResult
