@@ -35,6 +35,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -68,7 +70,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
-import com.intellij.util.PatchedWeakReference;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.IndexedRootsProvider;
@@ -228,6 +229,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     LightPlatformTestCase.clearUncommittedDocuments(getProject());
 
     runStartupActivities();
+    ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
   }
 
   protected Project doCreateProject(File projectFile) throws Exception {
