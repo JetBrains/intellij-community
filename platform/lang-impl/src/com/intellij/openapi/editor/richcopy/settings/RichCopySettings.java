@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.editor.richcopy.settings;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -31,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
   name = "EditorRichCopySettings",
   storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/editor.rich.copy.xml")}
 )
-public class RichCopySettings implements PersistentStateComponent<RichCopySettings>, ApplicationComponent {
+public class RichCopySettings implements PersistentStateComponent<RichCopySettings> {
 
   @NotNull public static final String ACTIVE_GLOBAL_SCHEME_MARKER = "__ACTIVE_GLOBAL_SCHEME__";
 
@@ -39,7 +38,7 @@ public class RichCopySettings implements PersistentStateComponent<RichCopySettin
 
   @NotNull
   public static RichCopySettings getInstance() {
-    return ApplicationManager.getApplication().getComponent(RichCopySettings.class);
+    return ServiceManager.getService(RichCopySettings.class);
   }
 
   @NotNull
@@ -60,20 +59,6 @@ public class RichCopySettings implements PersistentStateComponent<RichCopySettin
   @Override
   public void loadState(RichCopySettings state) {
     XmlSerializerUtil.copyBean(state, this);
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return getClass().getName();
   }
 
   @NotNull
