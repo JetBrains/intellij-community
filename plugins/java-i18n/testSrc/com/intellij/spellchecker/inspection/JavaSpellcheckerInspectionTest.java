@@ -21,7 +21,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 public class JavaSpellcheckerInspectionTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("java-i18n") + "/testData/inspection";
+    return PluginPathManager.getPluginHomePathRelative("java-i18n") + "/testData/inspections/spellchecker";
   }
 
   public void testCorrectJava() { doTest(); }
