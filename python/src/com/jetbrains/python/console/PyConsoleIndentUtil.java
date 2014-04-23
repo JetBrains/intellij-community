@@ -16,19 +16,25 @@
 package com.jetbrains.python.console;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 /**
  * @author traff
  */
 public class PyConsoleIndentUtil {
   private static final int TAB_INDENT = 4;
+
+  private static final Map<String, String> pythonBrackets = ImmutableMap.of(
+      "(", ")",
+      "[", "]",
+      "{", "}"
+  );
 
   private PyConsoleIndentUtil() {
   }
@@ -70,53 +76,55 @@ public class PyConsoleIndentUtil {
       indentArray[i] += addIndent;
     }
 
-    shiftToParentOnUnindent(indentArray);
-
     return padOutput(lines, indentArray);
-  }
-
-  private static void shiftToParentOnUnindent(int[] indentArray) {
-    int[] stack = new int[indentArray.length];
-    int count = 0;
-    int replace = -1;
-    int replaceBy = -1;
-    for (int i = 0; i < indentArray.length; i++) {
-      if (indentArray[i] == replace) {
-        indentArray[i] = replaceBy;
-      }
-      else {
-        replace = -1;
-        if (count == 0 || indentArray[i] > stack[count - 1]) {
-          stack[count++] = indentArray[i];
-        }
-        if (count > 0 && indentArray[i] < stack[count - 1]) {
-          do {
-            count--;
-          }
-          while (count > 0 && stack[count - 1] > indentArray[i]);
-          if (count > 0) {
-            replace = indentArray[i];
-            replaceBy = stack[count - 1];
-            indentArray[i] = replaceBy;
-          }
-        }
-      }
-    }
   }
 
   private static void shiftLeftAll(int[] indentArray, List<String> lines) {
     if (indentArray.length == 0) {
       return;
     }
+
+    int minIndent = Integer.MAX_VALUE;
+    for (int i = 0; i < indentArray.length; i++) {
+      minIndent = Math.min(minIndent, indentArray[i]);
+    }
+
+    if (indentArray[0] == minIndent) {
+      for (int i = 0; i < indentArray.length; i++) {
+        indentArray[i] -= minIndent;
+      }
+      return;
+    }
+
     int indent = indentArray[0];
     int lastIndent = Integer.MAX_VALUE;
     boolean lastIndented = false;
+    boolean insideMultiline = false;
+    boolean shouldSkipNext = false;
+
+    Map<String, Integer> openedBrackets = new HashMap<String, Integer>();
+    openedBrackets.put("(", 0);
+    openedBrackets.put("[", 0);
+    openedBrackets.put("{", 0);
+
     for (int i = 0; i < indentArray.length; i++) {
       if (!StringUtil.isEmpty(lines.get(i))) {
-        if (i > 0 && shouldSkipNext(lines.get(i - 1))) {
+
+        if(i > 0 && shouldSkipNext(lines.get(i - 1), openedBrackets)) {
+          shouldSkipNext = true;
+        }
+
+        openedBrackets = countOpenedBrackets(openedBrackets, lines.get(i));
+
+        if (shouldSkipNext || shouldSkip(lines.get(i), insideMultiline)) {
+          if(!lines.get(i).startsWith("#")){
+            shouldSkipNext = false;
+          }
+          insideMultiline = insideMultiline ^ startOrEndNewMultiline(lines.get(i));
           indentArray[i] -= indent;
           continue;
         }
+
         if (indentArray[i] < indent || indentArray[i] > lastIndent && !lastIndented) {
           indent = indentArray[i];
         }
@@ -162,8 +170,42 @@ public class PyConsoleIndentUtil {
     return line;
   }
 
-  public static boolean shouldSkipNext(@NotNull String line) {
+  public static boolean shouldSkipNext(@NotNull String line, Map<String, Integer> opened) {
     line = stripComments(line);
-    return line.endsWith(",");
+    return line.endsWith("\\") || insideBrackets(opened);
+  }
+
+  public static boolean shouldSkip(@NotNull String line, boolean insideMultiline) {
+    return  insideMultiline || (insideMultiline ^ startOrEndNewMultiline(line)) || line.startsWith("#");
+  }
+
+  public static boolean startOrEndNewMultiline(String line){
+    return PyConsoleUtil.isSingleQuoteMultilineStarts(line) || PyConsoleUtil.isDoubleQuoteMultilineStarts(line);
+  }
+
+  public static boolean insideBrackets(Map<String, Integer> opened){
+    for(String bracket : opened.keySet()){
+      if(opened.get(bracket) > 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public static Map<String, Integer> countOpenedBrackets(Map<String, Integer> opened, String line){
+    for(String open :  pythonBrackets.keySet()){
+      opened.put(open, opened.get(open) + openedBracketsCountChange(line, open));
+    }
+    return opened;
+  }
+
+  public static int openedBracketsCountChange(String line, String open) {
+    if(pythonBrackets.keySet().contains(open)){
+      String close = pythonBrackets.get(open);
+      return StringUtil.getOccurrenceCount(line, open) -  StringUtil.getOccurrenceCount(line, close) +
+             StringUtil.getOccurrenceCount(line, "\\" + close) - StringUtil.getOccurrenceCount(line, "\\" + open);
+    }  else {
+      throw new UnsupportedOperationException("\"" + open + "\" not a parenthesis.");
+    }
   }
 }
