@@ -52,28 +52,15 @@ public class SvnCommitRunner {
     myCommandListener = new CommandListener(handler);
   }
 
-  public SVNCommitInfo[] commit(File[] paths,
-                                String message,
-                                @Nullable SVNDepth depth,
-                                boolean noUnlock,
-                                boolean keepChangelist,
-                                Collection<String> changelists,
-                                Map revpropTable) throws VcsException {
+  public SVNCommitInfo[] commit(File[] paths, String message) throws VcsException {
     if (paths.length == 0) return new SVNCommitInfo[]{SVNCommitInfo.NULL};
 
     final List<String> parameters = new ArrayList<String>();
-    CommandUtil.put(parameters, depth);
-    CommandUtil.put(parameters, noUnlock, "--no-unlock");
-    CommandUtil.put(parameters, keepChangelist, "--keep-changelists");
-    CommandUtil.putChangeLists(parameters, changelists);
+    CommandUtil.put(parameters, SVNDepth.EMPTY);
+    CommandUtil.put(parameters, false, "--no-unlock");
+    CommandUtil.put(parameters, false, "--keep-changelists");
+    CommandUtil.putChangeLists(parameters, null);
 
-    if (revpropTable != null && ! revpropTable.isEmpty()) {
-      final Set<Map.Entry<Object, Object>> set = revpropTable.entrySet();
-      for (Map.Entry<Object, Object> entry : set) {
-        parameters.add("--with-revprop");
-        parameters.add(entry.getKey() + "=" + entry.getValue());
-      }
-    }
     parameters.add("-m");
     parameters.add(message);
     // TODO: seems that sort is not necessary here

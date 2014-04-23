@@ -210,7 +210,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     IdeaCommitHandler handler = new IdeaCommitHandler(ProgressManager.getInstance().getProgressIndicator());
     SvnCommitRunner runner = new SvnCommitRunner(mySvnVcs, handler);
 
-    return runner.commit(ArrayUtil.toObjectArray(committables, File.class), comment, SVNDepth.EMPTY, false, false, null, null);
+    return runner.commit(ArrayUtil.toObjectArray(committables, File.class), comment);
   }
 
   private Collection<File> filterCommittables(Collection<File> committables) throws SVNException {
