@@ -62,7 +62,7 @@ public class SvnRecursiveStatusWalker {
   }
 
   public void go(final FilePath rootPath, final SVNDepth depth) throws SVNException {
-    final MyItem root = new MyItem(myVcs, rootPath, depth, myPartner.createStatusClient(), false);
+    final MyItem root = createItem(rootPath, depth, false);
     myQueue.add(root);
 
     while (! myQueue.isEmpty()) {
@@ -187,7 +187,7 @@ public class SvnRecursiveStatusWalker {
           return true;
         }
         if (file.isDirectory() && new File(file, SVNFileUtil.getAdminDirectoryName()).exists()) {
-          final MyItem childItem = new MyItem(myVcs, path, newDepth, myPartner.createStatusClient(), true);
+          final MyItem childItem = createItem(path, newDepth, true);
           myQueue.add(childItem);
         } else if (vf != null) {
           myReceiver.processUnversioned(vf);
@@ -217,6 +217,10 @@ public class SvnRecursiveStatusWalker {
       processor = checkDirProcessor;
     }
     FileUtil.processFilesRecursively(ioFile, processor, directoryFilter);
+  }
+
+  private MyItem createItem(FilePath path, SVNDepth depth, boolean isInnerCopyRoot) {
+    return new MyItem(myVcs, path, depth, myPartner.createStatusClient(), isInnerCopyRoot);
   }
 
   private class MyHandler implements ISVNStatusHandler {
@@ -295,8 +299,7 @@ public class SvnRecursiveStatusWalker {
             //myReceiver.processUnversioned(vFile);
             //processRecursively(vFile, myCurrentItem.getDepth());
           } else {
-            final MyItem childItem = new MyItem(myVcs, new FilePathImpl(vFile), SVNDepth.INFINITY,
-                                                myPartner.createStatusClient(), true);
+            final MyItem childItem = createItem(new FilePathImpl(vFile), SVNDepth.INFINITY, true);
             myQueue.add(childItem);
           }
         } else {
@@ -309,7 +312,7 @@ public class SvnRecursiveStatusWalker {
     }
   }
 
-  private VirtualFile getVirtualFile(File ioFile) {
+  private static VirtualFile getVirtualFile(File ioFile) {
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
     VirtualFile vFile = lfs.findFileByIoFile(ioFile);
     if (vFile == null) {
