@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,32 +21,34 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Future;
 
 public class VcsInitialization {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.VcsInitialization");
 
-  private final Project myProject;
-  private final List<Pair<VcsInitObject, Runnable>> myList;
+  private final List<Pair<VcsInitObject, Runnable>> myList = new ArrayList<Pair<VcsInitObject, Runnable>>();
   private final Object myLock;
   private boolean myInitStarted;
+  private volatile Future<?> myFuture;
 
-  public VcsInitialization(final Project project) {
+  public VcsInitialization(@NotNull final Project project) {
     myLock = new Object();
-    myProject = project;
-    myList = new LinkedList<Pair<VcsInitObject, Runnable>>();
 
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
+    StartupManager.getInstance(project).registerPostStartupActivity(new DumbAwareRunnable() {
+      @Override
       public void run() {
-        if (myProject.isDisposed()) return;
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        if (project.isDisposed()) return;
+        myFuture = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           @Override
           public void run() {
-            if (!myProject.isDisposed()) {
+            if (!project.isDisposed()) {
               execute();
             }
           }
@@ -55,7 +57,7 @@ public class VcsInitialization {
     });
   }
 
-  public void add(final VcsInitObject vcsInitObject, final Runnable runnable) {
+  public void add(@NotNull final VcsInitObject vcsInitObject, @NotNull final Runnable runnable) {
     synchronized (myLock) {
       if (myInitStarted) {
         if (! vcsInitObject.isCanBeLast()) {
@@ -76,12 +78,24 @@ public class VcsInitialization {
       myInitStarted = true; // list would not be modified starting from this point
     }
     Collections.sort(list, new Comparator<Pair<VcsInitObject, Runnable>>() {
+      @Override
       public int compare(Pair<VcsInitObject, Runnable> o1, Pair<VcsInitObject, Runnable> o2) {
-        return new Integer(o1.getFirst().getOrder()).compareTo(new Integer(o2.getFirst().getOrder()));
+        return o1.getFirst().getOrder() - o2.getFirst().getOrder();
       }
     });
     for (Pair<VcsInitObject, Runnable> pair : list) {
       pair.getSecond().run();
+    }
+  }
+
+  @TestOnly
+  public void waitForInitialized() {
+    try {
+      myFuture.get();
+      myFuture = null;
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 }
