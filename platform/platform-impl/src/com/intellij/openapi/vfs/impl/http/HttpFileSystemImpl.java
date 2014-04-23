@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.openapi.vfs.impl.http;
 
 import com.intellij.util.io.URLUtil;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
@@ -30,9 +29,4 @@ public class HttpFileSystemImpl extends HttpFileSystemBase {
     return (HttpFileSystemImpl)getInstance();
   }
 
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "HttpFileSystem";
-  }
 }

@@ -237,6 +237,18 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testRefOnStaticInterfaceMethod() throws Exception {
+    doTest();
+  }
+
+  public void testUncheckedMethodReference() throws Exception {
+    doTest(true);
+  }
+
+  public void testIDEA124148() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

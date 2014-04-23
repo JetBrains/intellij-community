@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ import java.util.*;
   storages = {@Storage(
     file = StoragePathMacros.WORKSPACE_FILE)})
 public class XDebuggerManagerImpl extends XDebuggerManager
-  implements ProjectComponent, PersistentStateComponent<XDebuggerManagerImpl.XDebuggerState> {
+  implements NamedComponent, PersistentStateComponent<XDebuggerManagerImpl.XDebuggerState> {
   @NonNls public static final String COMPONENT_NAME = "XDebuggerManager";
   private final Project myProject;
   private final XBreakpointManagerImpl myBreakpointManager;
@@ -148,26 +148,10 @@ public class XDebuggerManagerImpl extends XDebuggerManager
     return myProject;
   }
 
-  @Override
-  public void projectOpened() {
-  }
-
-  @Override
-  public void projectClosed() {
-  }
-
   @NotNull
   @Override
   public String getComponentName() {
     return COMPONENT_NAME;
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
   }
 
   @Override

@@ -80,8 +80,9 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(myManager.getProject()).getParserFacade();
     try {
       final PsiJavaCodeReferenceElement ref = parserFacade.createReferenceFromText(referenceText, context);
-      LOG.assertTrue(ref.isValid(), referenceText);
-      return ResolveClassUtil.resolveClass(ref);
+      PsiFile containingFile = ref.getContainingFile();
+      LOG.assertTrue(containingFile.isValid(), referenceText);
+      return ResolveClassUtil.resolveClass(ref, containingFile);
     }
     catch (IncorrectOperationException e) {
       return null;

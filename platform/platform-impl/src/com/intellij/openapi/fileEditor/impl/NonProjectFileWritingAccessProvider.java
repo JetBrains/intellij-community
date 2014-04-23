@@ -19,6 +19,8 @@ import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.ModuleRootAdapter;
@@ -105,6 +107,8 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
   }
 
   private boolean isProjectFile(@NotNull VirtualFile file) {
+    if (ProjectFileIndex.SERVICE.getInstance(myProject).isInContent(file)) return true;
+    
     if (myProject instanceof ProjectEx) {
       IProjectStore store = ((ProjectEx)myProject).getStateStore();
 
@@ -115,9 +119,12 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
       }
 
       if (file.equals(store.getWorkspaceFile()) || file.equals(store.getProjectFile())) return true;
+      for (Module each : ModuleManager.getInstance(myProject).getModules()) {
+        if (file.equals(each.getModuleFile())) return true;
+      }
     }
 
-    return ProjectFileIndex.SERVICE.getInstance(myProject).isInContent(file);
+    return false;
   }
 
   @TestOnly

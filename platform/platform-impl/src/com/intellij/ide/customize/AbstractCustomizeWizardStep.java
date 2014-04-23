@@ -35,7 +35,8 @@ public abstract class AbstractCustomizeWizardStep extends JPanel {
 
   protected abstract String getHTMLFooter();
 
-  private static Color getSelectionBackground() {
+  @NotNull
+  protected static Color getSelectionBackground() {
     return ColorUtil.mix(UIUtil.getListSelectionBackground(), UIUtil.getLabelBackground(), .75);
   }
 
@@ -74,5 +75,9 @@ public abstract class AbstractCustomizeWizardStep extends JPanel {
   }
 
   public void beforeShown(boolean forward) {
+  }
+
+  public boolean beforeOkAction() {
+    return true;
   }
 }

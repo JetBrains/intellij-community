@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
@@ -48,7 +47,8 @@ import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.util.*;
 
-import static org.zmlx.hg4idea.util.HgUtil.*;
+import static org.zmlx.hg4idea.util.HgUtil.getNamesWithoutHashes;
+import static org.zmlx.hg4idea.util.HgUtil.getNewBranchNameFromUser;
 
 public class HgBranchPopupActions {
 
@@ -62,8 +62,8 @@ public class HgBranchPopupActions {
 
   ActionGroup createActions(@Nullable DefaultActionGroup toInsert) {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
-    popupGroup.addAction(new HgNewBranchAction(myProject, Collections.singletonList(myRepository), myRepository.getRoot()));
-    popupGroup.addAction(new HgNewBookmarkAction(myProject, Collections.singletonList(myRepository), myRepository.getRoot()));
+    popupGroup.addAction(new HgNewBranchAction(myProject, Collections.singletonList(myRepository), myRepository));
+    popupGroup.addAction(new HgNewBookmarkAction(myProject, Collections.singletonList(myRepository), myRepository));
     popupGroup.addAction(new HgShowUnnamedHeadsForCurrentBranchAction(myProject, myRepository));
     if (toInsert != null) {
       popupGroup.addAll(toInsert);
@@ -92,24 +92,24 @@ public class HgBranchPopupActions {
   }
 
   private static class HgNewBranchAction extends NewBranchAction<HgRepository> {
-    @NotNull final VirtualFile myPreselectedRepo;
+    @NotNull final HgRepository myPreselectedRepo;
 
-    HgNewBranchAction(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull VirtualFile preselectedRepo) {
+    HgNewBranchAction(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull HgRepository preselectedRepo) {
       super(project, repositories);
       myPreselectedRepo = preselectedRepo;
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      final String name = getNewBranchNameFromUser(myProject, "Create New Branch");
+      final String name = getNewBranchNameFromUser(myPreselectedRepo, "Create New Branch");
       if (name == null) {
         return;
       }
       try {
-        new HgBranchCreateCommand(myProject, myPreselectedRepo, name).execute(new HgCommandResultHandler() {
+        new HgBranchCreateCommand(myProject, myPreselectedRepo.getRoot(), name).execute(new HgCommandResultHandler() {
           @Override
           public void process(@Nullable HgCommandResult result) {
-            getRepositoryManager(myProject).updateRepository(myPreselectedRepo);
+            myPreselectedRepo.update();
             if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
               new HgCommandResultNotifier(myProject)
                 .notifyError(result, "Creation failed", "Branch creation [" + name + "] failed");
@@ -124,11 +124,11 @@ public class HgBranchPopupActions {
   }
 
   private static class HgNewBookmarkAction extends DumbAwareAction {
-    protected final List<HgRepository> myRepositories;
-    protected Project myProject;
-    @NotNull final VirtualFile myPreselectedRepo;
+    @NotNull protected final List<HgRepository> myRepositories;
+    @NotNull protected Project myProject;
+    @NotNull final HgRepository myPreselectedRepo;
 
-    HgNewBookmarkAction(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull VirtualFile preselectedRepo) {
+    HgNewBookmarkAction(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull HgRepository preselectedRepo) {
       super("New Bookmark", "Create new bookmark", null);
       myProject = project;
       myRepositories = repositories;
@@ -146,12 +146,12 @@ public class HgBranchPopupActions {
     @Override
     public void actionPerformed(AnActionEvent e) {
 
-      final HgBookmarkDialog bookmarkDialog = new HgBookmarkDialog(myProject);
+      final HgBookmarkDialog bookmarkDialog = new HgBookmarkDialog(myPreselectedRepo);
       bookmarkDialog.show();
       if (bookmarkDialog.isOK()) {
         try {
           final String name = bookmarkDialog.getName();
-          new HgBookmarkCommand(myProject, myPreselectedRepo, name).createBookmark(bookmarkDialog.isActive());
+          new HgBookmarkCommand(myProject, myPreselectedRepo.getRoot(), name).createBookmark(bookmarkDialog.isActive());
         }
         catch (HgCommandException exception) {
           HgAbstractGlobalAction.handleException(myProject, exception);

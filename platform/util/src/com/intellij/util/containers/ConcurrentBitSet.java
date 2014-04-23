@@ -407,13 +407,21 @@ public class ConcurrentBitSet {
     StringBuilder b = new StringBuilder();
     b.append('{');
 
-    int i = nextSetBit(0);
-    if (i != -1) {
-      b.append(i);
-      for (i = nextSetBit(i + 1); i >= 0; i = nextSetBit(i + 1)) {
-        int endOfRun = nextClearBit(i);
+    for (int i = nextSetBit(0); i >= 0; i = nextSetBit(i + 1)) {
+      int endOfRun = nextClearBit(i);
+      if (endOfRun - i > 1) {
+        if (b.length() != 1) {
+          b.append(", ");
+        }
+        b.append(i).append("...").append(endOfRun-1);
+        i = endOfRun;
+      }
+      else {
         do {
-          b.append(", ").append(i);
+          if (b.length() != 1) {
+            b.append(", ");
+          }
+          b.append(i);
         }
         while (++i < endOfRun);
       }

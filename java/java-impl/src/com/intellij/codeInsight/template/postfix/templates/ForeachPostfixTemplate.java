@@ -37,13 +37,13 @@ public class ForeachPostfixTemplate extends PostfixTemplate {
 
   @Override
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
-    PsiExpression expr = getTopmostExpression(context);
+    PsiExpression expr = PostfixTemplatesUtils.getTopmostExpression(context);
     return expr != null && (PostfixTemplatesUtils.isArray(expr.getType()) || PostfixTemplatesUtils.isIterable(expr.getType()));
   }
 
   @Override
   public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
-    PsiExpression expr = getTopmostExpression(context);
+    PsiExpression expr = PostfixTemplatesUtils.getTopmostExpression(context);
     if (expr == null) return;
     Project project = context.getProject();
 

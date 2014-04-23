@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
@@ -29,6 +30,10 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileNotificationPanel;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
+import com.intellij.openapi.module.EmptyModuleType;
+import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -84,7 +89,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     assertNull(getNotificationPanel(nonProjectFile));
   }
 
-  public void testAccessToFilesUnderProjectRootAndDotIdea() throws Exception {
+  public void testAccessToProjectSystemFiles() throws Exception {
     saveProject();
     VirtualFile fileUnderProjectDir = new WriteAction<VirtualFile>() {
       @Override
@@ -98,6 +103,41 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     typeAndCheck(getProject().getProjectFile(), true);
     typeAndCheck(getProject().getWorkspaceFile(), true);
     typeAndCheck(fileUnderProjectDir, false);
+  }
+
+  public void testAccessToModuleSystemFiles() throws Exception {
+    final Module moduleWithoutContentRoot = new WriteCommandAction<Module>(getProject()) {
+      @Override
+      protected void run(@NotNull Result<Module> result) throws Throwable {
+        String moduleName;
+        ModifiableModuleModel moduleModel = ModuleManager.getInstance(getProject()).getModifiableModel();
+        try {
+          VirtualFile moduleDir = getProject().getBaseDir().createChildDirectory(this, "moduleWithoutContentRoot");
+          moduleName = moduleModel.newModule(moduleDir + "/moduleWithoutContentRoot.iml", EmptyModuleType.EMPTY_MODULE).getName();
+          moduleModel.commit();
+        }
+        catch (Throwable t) {
+          moduleModel.dispose();
+          throw t;
+        }
+
+        result.setResult(ModuleManager.getInstance(getProject()).findModuleByName(moduleName));
+      }
+    }.execute().getResultObject();
+    saveProject();
+    
+    VirtualFile fileUnderModuleDir = new WriteAction<VirtualFile>() {
+      @Override
+      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
+        result.setResult(moduleWithoutContentRoot.getModuleFile().getParent().createChildData(this, "fileUnderModuleDir.txt"));
+      }
+    }.execute().getResultObject();
+    
+    assertFalse(ProjectFileIndex.SERVICE.getInstance(getProject()).isInContent(fileUnderModuleDir));
+
+    typeAndCheck(moduleWithoutContentRoot.getModuleFile(), true);
+    typeAndCheck(myModule.getModuleFile(), true);
+    typeAndCheck(fileUnderModuleDir, false);
   }
 
   private void saveProject() {

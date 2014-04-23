@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.siyeh.ig.performance;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
@@ -27,6 +29,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
@@ -97,19 +100,19 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
       }
       final PsiExpression qualifier = expression.getQualifierExpression();
       final PsiExpression argument = arguments[0];
-      final String variableText;
+      final PsiExpression checkedExpression;
       final boolean addNullCheck;
       if (ExpressionUtils.isEmptyStringLiteral(argument)) {
-        variableText = getRemainingText(qualifier);
+        checkedExpression = getCheckedExpression(qualifier);
         addNullCheck = false;
       }
       else {
-        variableText = getRemainingText(argument);
-        addNullCheck = true;
+        checkedExpression = getCheckedExpression(argument);
+        addNullCheck = !isCheckedForNull(checkedExpression);
       }
-      StringBuilder newExpression;
+      final StringBuilder newExpression;
       if (addNullCheck) {
-        newExpression = new StringBuilder(variableText);
+        newExpression = new StringBuilder(checkedExpression.getText());
         newExpression.append("!=null&&");
       } else {
         newExpression = new StringBuilder("");
@@ -121,38 +124,81 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
         if (BoolUtils.isNegation(parentExpression)) {
           expressionToReplace = parentExpression;
           if (useIsEmpty) {
-            newExpression.append('!').append(variableText).append(".isEmpty()");
+            newExpression.append('!').append(checkedExpression.getText()).append(".isEmpty()");
           }
           else {
-            newExpression.append(variableText).append(".length()!=0");
+            newExpression.append(checkedExpression.getText()).append(".length()!=0");
           }
         }
         else {
           expressionToReplace = call;
           if (useIsEmpty) {
-            newExpression.append(variableText).append(".isEmpty()");
+            newExpression.append(checkedExpression.getText()).append(".isEmpty()");
           }
           else {
-            newExpression.append(variableText).append(".length()==0");
+            newExpression.append(checkedExpression.getText()).append(".length()==0");
           }
         }
       }
       else {
         expressionToReplace = call;
         if (useIsEmpty) {
-          newExpression.append(variableText).append(".isEmpty()");
+          newExpression.append(checkedExpression.getText()).append(".isEmpty()");
         }
         else {
-          newExpression.append(variableText).append(".length()==0");
+          newExpression.append(checkedExpression.getText()).append(".length()==0");
         }
       }
       PsiReplacementUtil.replaceExpression(expressionToReplace, newExpression.toString());
     }
 
-    private String getRemainingText(PsiExpression expression) {
-      if (useIsEmpty ||
-          !(expression instanceof PsiMethodCallExpression)) {
-        return expression.getText();
+    private static boolean isCheckedForNull(PsiExpression expression) {
+      final PsiPolyadicExpression polyadicExpression =
+        PsiTreeUtil.getParentOfType(expression, PsiPolyadicExpression.class, true, PsiStatement.class, PsiVariable.class);
+      if (polyadicExpression == null) {
+        return false;
+      }
+      final IElementType tokenType = polyadicExpression.getOperationTokenType();
+      for (PsiExpression operand : polyadicExpression.getOperands()) {
+        if (PsiTreeUtil.isAncestor(operand, expression, true)) {
+          return false;
+        }
+        if (!(operand instanceof PsiBinaryExpression)) {
+          continue;
+        }
+        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)operand;
+        final IElementType operationTokenType = binaryExpression.getOperationTokenType();
+        if (JavaTokenType.ANDAND.equals(tokenType)) {
+          if (!JavaTokenType.NE.equals(operationTokenType)) {
+            continue;
+          }
+        }
+        else if (JavaTokenType.OROR.equals(tokenType)) {
+          if (!JavaTokenType.EQEQ.equals(operationTokenType)) {
+            continue;
+          }
+        }
+        else {
+          continue;
+        }
+        final PsiExpression lhs = binaryExpression.getLOperand();
+        final PsiExpression rhs = binaryExpression.getROperand();
+        if (rhs == null) {
+          continue;
+        }
+        if (PsiType.NULL.equals(lhs.getType()) && EquivalenceChecker.expressionsAreEquivalent(expression, rhs)) {
+          return true;
+        }
+        else if (PsiType.NULL.equals(rhs.getType()) && EquivalenceChecker.expressionsAreEquivalent(expression, lhs)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    private PsiExpression getCheckedExpression(PsiExpression expression) {
+      if (useIsEmpty || !(expression instanceof PsiMethodCallExpression)) {
+        return expression;
       }
       // to replace stringBuffer.toString().equals("") with
       // stringBuffer.length() == 0
@@ -161,15 +207,15 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
       final String referenceName = methodExpression.getReferenceName();
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
       if (qualifierExpression == null) {
-        return expression.getText();
+        return expression;
       }
       final PsiType type = qualifierExpression.getType();
       if (HardcodedMethodConstants.TO_STRING.equals(referenceName) && type != null && (type.equalsToText(
         CommonClassNames.JAVA_LANG_STRING_BUFFER) || type.equalsToText(CommonClassNames.JAVA_LANG_STRING_BUILDER))) {
-        return qualifierExpression.getText();
+        return qualifierExpression;
       }
       else {
-        return expression.getText();
+        return expression;
       }
     }
   }

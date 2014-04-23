@@ -272,16 +272,18 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
         FileChooser.chooseFiles(descriptor, myProject, suggestedDir, new FileChooser.FileChooserConsumer() {
           @Override
           public void consume(List<VirtualFile> selectedFiles) {
-            final String path = selectedFiles.get(0).getPath();
+            String path = selectedFiles.get(0).getPath();
             if (sdkType.isValidSdkHome(path)) {
+              path = FileUtil.toSystemDependentName(path);
               Sdk newSdk = null;
               for (Sdk sdk : allSdks) {
                 if (path.equals(sdk.getHomePath())) {
                   newSdk = sdk;
                 }
               }
-              if (newSdk == null)
+              if (newSdk == null) {
                 newSdk = new PyDetectedSdk(path);
+              }
               consumer.consume(newSdk);
             }
           }
@@ -366,6 +368,7 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
   private void updateSdkList(final List<Sdk> allSdks, @Nullable Sdk initialSelection) {
     mySdkCombo.setRenderer(new PySdkListCellRenderer());
     mySdkCombo.setModel(new CollectionComboBoxModel(allSdks, initialSelection));
+    checkValid();
   }
 
   @Override

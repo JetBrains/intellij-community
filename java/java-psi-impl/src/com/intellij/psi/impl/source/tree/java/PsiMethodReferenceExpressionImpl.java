@@ -47,6 +47,7 @@ import java.util.Map;
 
 public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase implements PsiMethodReferenceExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiMethodReferenceExpressionImpl");
+  private static final MethodReferenceResolver RESOLVER = new MethodReferenceResolver();
 
   public PsiMethodReferenceExpressionImpl() {
     super(JavaElementType.METHOD_REF_EXPRESSION);
@@ -77,7 +78,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
 
     final MethodReferenceResolver resolver = new MethodReferenceResolver() {
       @Override
-      protected PsiConflictResolver createResolver(PsiMethodReferenceExpression referenceExpression,
+      protected PsiConflictResolver createResolver(PsiMethodReferenceExpressionImpl referenceExpression,
                                                    PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult,
                                                    PsiMethod interfaceMethod,
                                                    MethodSignature signature) {
@@ -90,7 +91,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       }
     };
 
-    final ResolveResult[] result = resolver.resolve(this, false);
+    final ResolveResult[] result = resolver.resolve(this, getContainingFile(), false);
     final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(this);
     final int interfaceArity = interfaceMethod.getParameterList().getParametersCount();
     for (ResolveResult resolveResult : result) {
@@ -262,12 +263,11 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       LOG.error("invalid!");
       return JavaResolveResult.EMPTY_ARRAY;
     }
-    final MethodReferenceResolver resolver = new MethodReferenceResolver();
     final Map<PsiMethodReferenceExpression, PsiType> map = PsiMethodReferenceUtil.ourRefs.get();
     if (map != null && map.containsKey(this)) {
-      return (JavaResolveResult[])resolver.resolve(this, incompleteCode);
+      return RESOLVER.resolve(this, file, incompleteCode);
     }
-    ResolveResult[] results = ResolveCache.getInstance(getProject()).resolveWithCaching(this, resolver, true, incompleteCode,file);
+    ResolveResult[] results = ResolveCache.getInstance(getProject()).resolveWithCaching(this, RESOLVER, true, incompleteCode, file);
     return results.length == 0 ? JavaResolveResult.EMPTY_ARRAY : (JavaResolveResult[])results;
   }
 
@@ -421,9 +421,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
     if (interfaceMethod != null) {
       final PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(left);
 
-      LOG.assertTrue(interfaceReturnType != null);
-
-      if (interfaceReturnType == PsiType.VOID) {
+      if (interfaceReturnType == PsiType.VOID || interfaceReturnType == null) {
         return true;
       }
 

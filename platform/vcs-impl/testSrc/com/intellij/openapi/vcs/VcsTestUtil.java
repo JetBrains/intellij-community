@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.vcs;
 
 import com.intellij.notification.Notification;
@@ -54,24 +69,17 @@ public class VcsTestUtil {
    * @param name   Name of the directory.
    * @return reference to the created or already existing directory.
    */
-  public static VirtualFile createDir(@NotNull Project project, @NotNull final VirtualFile parent, @NotNull final String name) {
-    final Ref<VirtualFile> result = new Ref<VirtualFile>();
-    new WriteCommandAction.Simple(project) {
+  public static VirtualFile createDir(@NotNull final Project project, @NotNull final VirtualFile parent, @NotNull final String name) {
+    return new WriteCommandAction<VirtualFile>(project) {
       @Override
-      protected void run() throws Throwable {
-        try {
-          VirtualFile dir = parent.findChild(name);
-          if (dir == null) {
-            dir = parent.createChildDirectory(this, name);
-          }
-          result.set(dir);
+      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
+        VirtualFile dir = parent.findChild(name);
+        if (dir == null) {
+          dir = parent.createChildDirectory(this, name);
         }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+        result.setResult(dir);
       }
-    }.execute();
-    return result.get();
+    }.execute().throwException().getResultObject();
   }
 
   public static void renameFileInCommand(@NotNull Project project, @NotNull final VirtualFile file, @NotNull final String newName) {

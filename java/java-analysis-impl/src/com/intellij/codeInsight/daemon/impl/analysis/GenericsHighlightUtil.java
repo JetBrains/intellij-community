@@ -42,6 +42,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -326,7 +327,8 @@ public class GenericsHighlightUtil {
     if (errorResult == null && languageLevel.isAtLeast(LanguageLevel.JDK_1_7) &&
         referenceElements.length > 1) {
       //todo suppress erased methods which come from the same class
-      return checkOverrideEquivalentMethods(languageLevel, aClass);
+      final Collection<HighlightInfo> result = checkOverrideEquivalentMethods(languageLevel, aClass);
+      return result != null && result.size() > 0 ? result.iterator().next() : null;
     }
     return errorResult;
   }
@@ -380,23 +382,29 @@ public class GenericsHighlightUtil {
     return null;
   }
 
-  public static HighlightInfo checkOverrideEquivalentMethods(@NotNull LanguageLevel languageLevel,
-                                                             @NotNull PsiClass aClass) {
+  public static Collection<HighlightInfo> checkOverrideEquivalentMethods(@NotNull LanguageLevel languageLevel,
+                                                                         @NotNull PsiClass aClass) {
+    List<HighlightInfo> result = new ArrayList<HighlightInfo>();
     final Collection<HierarchicalMethodSignature> signaturesWithSupers = aClass.getVisibleSignatures();
     PsiManager manager = aClass.getManager();
     Map<MethodSignature, MethodSignatureBackedByPsiMethod> sameErasureMethods =
       new THashMap<MethodSignature, MethodSignatureBackedByPsiMethod>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
 
+    final Set<MethodSignature> foundProblems = new THashSet<MethodSignature>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
     for (HierarchicalMethodSignature signature : signaturesWithSupers) {
       HighlightInfo info = checkSameErasureNotSubSignatureInner(signature, manager, aClass, sameErasureMethods);
-      if (info != null) return info;
+      if (info != null && foundProblems.add(signature)) {
+        result.add(info);
+      }
       if (aClass instanceof PsiTypeParameter) {
         info = HighlightMethodUtil.checkMethodIncompatibleReturnType(signature, signature.getSuperSignatures(), true, HighlightNamesUtil.getClassDeclarationTextRange(aClass));
-        if (info != null) return info;
+        if (info != null) {
+          result.add(info);
+        }
       }
     }
 
-    return null;
+    return result.isEmpty() ? null : result;
   }
 
   static HighlightInfo checkDefaultMethodOverrideEquivalentToObjectNonPrivate(@NotNull LanguageLevel languageLevel,
