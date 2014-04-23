@@ -18,7 +18,7 @@ package com.intellij.codeInsight.template.postfix.templates;
 import com.intellij.lang.LanguageExtension;
 
 public class LanguagePostfixTemplate extends LanguageExtension<PostfixTemplateProvider> {
-  public static final LanguagePostfixTemplate INSTANCE = new LanguagePostfixTemplate();
+  public static final LanguagePostfixTemplate LANG_EP = new LanguagePostfixTemplate();
   public static final String EP_NAME = "com.intellij.codeInsight.template.postfixTemplateProvider";
 
   private LanguagePostfixTemplate() {

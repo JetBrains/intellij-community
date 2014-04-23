@@ -60,6 +60,7 @@ import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.nio.charset.Charset;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -99,7 +100,7 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
 
       @Override
       protected RunProfileState getRunProfileState(Object o, String configuration, Executor executor) throws ExecutionException {
-        return createRunProfileState();
+        return createRunProfileState(configuration);
       }
     };
 
@@ -114,14 +115,15 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
     mySupport.stopAll(wait);
   }
 
-  private RunProfileState createRunProfileState() {
+  private RunProfileState createRunProfileState(final String configuration) {
     return new CommandLineState(null) {
       private SimpleJavaParameters createJavaParameters() throws ExecutionException {
 
         final SimpleJavaParameters params = new SimpleJavaParameters();
         params.setJdk(new SimpleJavaSdkType().createJdk("tmp", SystemProperties.getJavaHome()));
 
-        params.setWorkingDirectory(PathManager.getBinPath());
+        File myWorkingDirectory = new File(configuration);
+        params.setWorkingDirectory(myWorkingDirectory.isDirectory() ? myWorkingDirectory.getPath() : PathManager.getBinPath());
         final List<String> classPath = ContainerUtilRt.newArrayList();
 
         // IDE jars.

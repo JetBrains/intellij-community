@@ -36,7 +36,7 @@ public class FormatPostfixTemplate extends PostfixTemplate {
 
   @Override
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
-    PsiExpression expr = getTopmostExpression(context);
+    PsiExpression expr = PostfixTemplatesUtils.getTopmostExpression(context);
     PsiType type = expr != null ? expr.getType() : null;
     return expr != null && type != null && CommonClassNames.JAVA_LANG_STRING.equals(type.getCanonicalText());
   }

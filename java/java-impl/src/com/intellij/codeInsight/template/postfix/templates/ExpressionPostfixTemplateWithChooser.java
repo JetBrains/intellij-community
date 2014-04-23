@@ -42,6 +42,13 @@ public abstract class ExpressionPostfixTemplateWithChooser extends PostfixTempla
     super(name, description, example);
   }
 
+  protected ExpressionPostfixTemplateWithChooser(@NotNull String name,
+                                                 @NotNull String key,
+                                                 @NotNull String description,
+                                                 @NotNull String example) {
+    super(name, key, description, example);
+  }
+
   @Override
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
     return !getExpressions(context, copyDocument, newOffset).isEmpty();
@@ -75,20 +82,22 @@ public abstract class ExpressionPostfixTemplateWithChooser extends PostfixTempla
           }
         },
         new PsiExpressionTrimRenderer.RenderFunction(),
-        "Expressions", 0, ScopeHighlighter.NATURAL_RANGER);
+        "Expressions", 0, ScopeHighlighter.NATURAL_RANGER
+      );
     }
   }
 
   @NotNull
   protected List<PsiExpression> getExpressions(@NotNull PsiElement context, @NotNull Document document, final int offset) {
-    List<PsiExpression> expressions = ContainerUtil.filter(IntroduceVariableBase.collectExpressions(context.getContainingFile(), document, 
-                                                                                                    Math.max(offset - 1, 0), false), 
+    List<PsiExpression> expressions = ContainerUtil.filter(IntroduceVariableBase.collectExpressions(context.getContainingFile(), document,
+                                                                                                    Math.max(offset - 1, 0), false),
                                                            new Condition<PsiExpression>() {
                                                              @Override
                                                              public boolean value(PsiExpression expression) {
                                                                return expression.getTextRange().getEndOffset() == offset;
                                                              }
-                                                           });
+                                                           }
+    );
     return ContainerUtil.filter(expressions.isEmpty() ? maybeTopmostExpression(context) : expressions, getTypeCondition());
   }
 
@@ -100,7 +109,7 @@ public abstract class ExpressionPostfixTemplateWithChooser extends PostfixTempla
 
   @NotNull
   private static List<PsiExpression> maybeTopmostExpression(@NotNull PsiElement context) {
-    PsiExpression expression = getTopmostExpression(context);
+    PsiExpression expression = PostfixTemplatesUtils.getTopmostExpression(context);
     PsiType type = expression != null ? expression.getType() : null;
     if (type == null || PsiType.VOID.equals(type)) return ContainerUtil.emptyList();
     return ContainerUtil.createMaybeSingletonList(expression);

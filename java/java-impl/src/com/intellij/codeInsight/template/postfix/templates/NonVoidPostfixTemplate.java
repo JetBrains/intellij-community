@@ -28,7 +28,7 @@ abstract public class NonVoidPostfixTemplate extends PostfixTemplate {
 
   @Override
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
-    PsiExpression expr = getTopmostExpression(context);
+    PsiExpression expr = PostfixTemplatesUtils.getTopmostExpression(context);
     return expr != null && PostfixTemplatesUtils.isNonVoid(expr.getType());
   }
 }

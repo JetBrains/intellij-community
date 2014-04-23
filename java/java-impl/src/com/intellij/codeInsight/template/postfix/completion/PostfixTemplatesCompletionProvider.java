@@ -19,6 +19,7 @@ import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionProvider;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
 import com.intellij.codeInsight.template.postfix.templates.PostfixLiveTemplate;
@@ -42,8 +43,8 @@ class PostfixTemplatesCompletionProvider extends CompletionProvider<CompletionPa
     PostfixLiveTemplate postfixLiveTemplate = getPostfixLiveTemplate(parameters.getOriginalFile(), parameters.getEditor());
     if (postfixLiveTemplate != null) {
       postfixLiveTemplate.addCompletions(parameters, result.withPrefixMatcher(new MyPrefixMatcher(result.getPrefixMatcher().getPrefix())));
-      String possibleKey = postfixLiveTemplate
-        .computeTemplateKeyWithoutContextChecking(parameters.getOriginalFile(), parameters.getEditor(), parameters.getOffset());
+      String possibleKey = postfixLiveTemplate.computeTemplateKeyWithoutContextChecking(
+        new CustomTemplateCallback(parameters.getEditor(), parameters.getOriginalFile(), false));
       if (possibleKey != null) {
         result = result.withPrefixMatcher(possibleKey);
         result.restartCompletionOnPrefixChange(
