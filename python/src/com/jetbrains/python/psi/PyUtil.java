@@ -831,21 +831,6 @@ public class PyUtil {
 
   }
 
-  /**
-   * Returns empty array if null is provided. Returns provided array otherwise.
-   * @param expression array expression
-   * @param <T> array type
-   * @return provided array or empty array if parameter is null
-   */
-  @SuppressWarnings("unchecked")
-  @NotNull
-  public static <T>T[] notNullArray(@Nullable final T[] expression) {
-    if (expression != null) {
-      return expression;
-    }
-    return (T[]) EMPTY_OBJECTS;
-  }
-
   public static class KnownDecoratorProviderHolder {
     public static PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
 
