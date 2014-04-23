@@ -944,7 +944,7 @@ public abstract class ChooseByNameBase {
     final Runnable request = new Runnable() {
       @Override
       public void run() {
-        scheduleCalcElements(text, myCheckBox.isSelected(), postRunnable == null, modalityState, new Consumer<Set<?>>() {
+        scheduleCalcElements(text, myCheckBox.isSelected(), modalityState, new Consumer<Set<?>>() {
           @Override
           public void consume(Set<?> elements) {
             synchronized (myRebuildMutex) {
@@ -981,10 +981,9 @@ public abstract class ChooseByNameBase {
 
   public void scheduleCalcElements(String text,
                                    boolean checkboxState,
-                                   boolean canCancel,
                                    ModalityState modalityState,
                                    Consumer<Set<?>> callback) {
-    scheduleCalcElements(new CalcElementsThread(text, checkboxState, callback, modalityState, canCancel, false));
+    scheduleCalcElements(new CalcElementsThread(text, checkboxState, callback, modalityState, false));
   }
 
   private void scheduleCalcElements(final CalcElementsThread thread) {
@@ -1476,25 +1475,23 @@ public abstract class ChooseByNameBase {
     private final ModalityState myModalityState;
 
     private final ProgressIndicator myCancelled = new ProgressIndicatorBase();
-    private final boolean myCanCancel;
 
     CalcElementsThread(String pattern,
                        boolean checkboxState,
                        Consumer<Set<?>> callback,
                        @NotNull ModalityState modalityState,
-                       boolean canCancel, boolean scopeExpanded) {
+                       boolean scopeExpanded) {
       myPattern = pattern;
       myCheckboxState = checkboxState;
       myCallback = callback;
       myModalityState = modalityState;
-      myCanCancel = canCancel;
       myScopeExpanded = scopeExpanded;
     }
 
     private final Alarm myShowCardAlarm = new Alarm();
 
     private void scheduleRestart() {
-      scheduleCalcElements(new CalcElementsThread(myPattern, myCheckboxState, myCallback, myModalityState, myCanCancel, myScopeExpanded));
+      scheduleCalcElements(new CalcElementsThread(myPattern, myCheckboxState, myCallback, myModalityState, myScopeExpanded));
     }
 
     @Override
@@ -1610,9 +1607,7 @@ public abstract class ChooseByNameBase {
     }
 
     private void cancel() {
-      if (myCanCancel) {
-        myCancelled.cancel();
-      }
+      myCancelled.cancel();
     }
 
   }
@@ -1692,7 +1687,7 @@ public abstract class ChooseByNameBase {
               @Override
               public void run() {
                 final boolean[] overFlow = {false};
-                myCalcElementsThread = new CalcElementsThread(text, everywhere, null, ModalityState.NON_MODAL, true, false) {
+                myCalcElementsThread = new CalcElementsThread(text, everywhere, null, ModalityState.NON_MODAL, false) {
                   private final AtomicBoolean userAskedToAbort = new AtomicBoolean();
                   @Override
                   protected boolean isOverflow(@NotNull Set<Object> elementsArray) {
