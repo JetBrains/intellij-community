@@ -38,13 +38,17 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.FunctionUtil;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient;
 import org.jetbrains.idea.svn.commandLine.SvnCommitRunner;
 import org.tmatesoft.svn.core.SVNCommitInfo;
@@ -126,7 +130,13 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     //noinspection unchecked
     final MultiMap<Pair<SVNURL,WorkingCopyFormat>,File> map = SvnUtil.splitIntoRepositoriesMap(mySvnVcs, committables, Convertor.SELF);
     for (Map.Entry<Pair<SVNURL, WorkingCopyFormat>, Collection<File>> entry : map.entrySet()) {
-      doCommitOneRepo(entry.getValue(), committer, comment, force, exception, feedback, entry.getKey().getSecond());
+      try {
+        doCommitOneRepo(entry.getValue(), committer, comment, force, exception, feedback, entry.getKey().getSecond());
+      }
+      catch (VcsException e) {
+        LOG.info(e);
+        exception.add(e);
+      }
     }
   }
 
@@ -134,52 +144,21 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
                                SVNCommitClient committer,
                                String comment,
                                boolean force,
-                               List<VcsException> exception, final Set<String> feedback, final WorkingCopyFormat format) {
+                               List<VcsException> exception, final Set<String> feedback, final WorkingCopyFormat format)
+    throws VcsException {
     if (committables.isEmpty()) {
       return;
     }
     // TODO: Create CommitClient and refactor to use common ClientFactory model.
+    SVNCommitInfo[] results;
     if (WorkingCopyFormat.ONE_DOT_EIGHT.equals(format) ||
         !WorkingCopyFormat.ONE_DOT_SIX.equals(format) && mySvnVcs.getSvnConfiguration().isCommandLine()) {
-      doWithCommandLine(committables, comment, exception, feedback);
+      results = doWithCommandLine(committables, comment);
     }
     else {
-      doWithSvnkit(committables, committer, comment, force, exception, feedback);
+      results = doWithSvnkit(committables, committer, comment, force);
     }
-  }
 
-  private void doWithSvnkit(Collection<File> committables,
-                            SVNCommitClient committer,
-                            String comment,
-                            boolean force,
-                            List<VcsException> exception, Set<String> feedback) {
-    File[] pathsToCommit = committables.toArray(new File[committables.size()]);
-    boolean keepLocks = SvnConfiguration.getInstance(mySvnVcs.getProject()).isKeepLocks();
-    SVNCommitPacket[] commitPackets = null;
-    SVNCommitInfo[] results;
-    try {
-      commitPackets = committer.doCollectCommitItems(pathsToCommit, keepLocks, force, SVNDepth.EMPTY, true, null);
-      results = committer.doCommit(commitPackets, keepLocks, comment);
-      commitPackets = null;
-    }
-    catch (SVNException e) {
-      // exception on collecting commitables.
-      exception.add(new VcsException(e));
-      LOG.info(e);
-      return;
-    }
-    finally {
-      if (commitPackets != null) {
-        for (SVNCommitPacket commitPacket : commitPackets) {
-          try {
-            commitPacket.dispose();
-          }
-          catch (SVNException e) {
-            LOG.info(e);
-          }
-        }
-      }
-    }
     final StringBuilder committedRevisions = new StringBuilder();
     for (SVNCommitInfo result : results) {
       if (result.getErrorMessage() != null) {
@@ -197,29 +176,49 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     }
   }
 
-  private void doWithCommandLine(Collection<File> committables, String comment, List<VcsException> exception, Set<String> feedback) {
+  private SVNCommitInfo[] doWithSvnkit(Collection<File> committables, SVNCommitClient committer, String comment, boolean force)
+    throws VcsException {
+    File[] pathsToCommit = committables.toArray(new File[committables.size()]);
+    boolean keepLocks = SvnConfiguration.getInstance(mySvnVcs.getProject()).isKeepLocks();
+    SVNCommitPacket[] commitPackets = null;
+    SVNCommitInfo[] results;
+    try {
+      commitPackets = committer.doCollectCommitItems(pathsToCommit, keepLocks, force, SVNDepth.EMPTY, true, null);
+      results = committer.doCommit(commitPackets, keepLocks, comment);
+      commitPackets = null;
+      return results;
+    }
+    catch (SVNException e) {
+      throw new SvnBindException(e);
+    }
+    finally {
+      if (commitPackets != null) {
+        for (SVNCommitPacket commitPacket : commitPackets) {
+          try {
+            commitPacket.dispose();
+          }
+          catch (SVNException e) {
+            LOG.info(e);
+          }
+        }
+      }
+    }
+  }
+
+  private SVNCommitInfo[] doWithCommandLine(Collection<File> committables, String comment) throws VcsException {
     // if directory renames were used, IDEA reports all files under them as moved, but for svn we can not pass some of them
     // to commit command - since not all paths are registered as changes -> so we need to filter these cases, but only if
     // there at least some child-parent relationships in passed paths
     try {
       committables = filterCommittables(committables);
     } catch (SVNException e) {
-      exception.add(new VcsException(e));
-      return;
+      throw new SvnBindException(e);
     }
 
     IdeaCommitHandler handler = new IdeaCommitHandler(ProgressManager.getInstance().getProgressIndicator());
+    SvnCommitRunner runner = new SvnCommitRunner(mySvnVcs, handler);
 
-    try {
-      SvnCommitRunner runner = new SvnCommitRunner(mySvnVcs, handler);
-      final long revision =
-        runner.commit(ArrayUtil.toObjectArray(committables, File.class), comment, SVNDepth.EMPTY, false, false, null, null);
-
-      reportCommittedRevisions(feedback, String.valueOf(revision));
-    }
-    catch (VcsException e) {
-      exception.add(e);
-    }
+    return runner.commit(ArrayUtil.toObjectArray(committables, File.class), comment, SVNDepth.EMPTY, false, false, null, null);
   }
 
   private Collection<File> filterCommittables(Collection<File> committables) throws SVNException {

@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -51,14 +52,14 @@ public class SvnCommitRunner {
     myCommandListener = new CommandListener(handler);
   }
 
-  public long commit(File[] paths,
-                     String message,
-                     @Nullable SVNDepth depth,
-                     boolean noUnlock,
-                     boolean keepChangelist,
-                     Collection<String> changelists,
-                     Map revpropTable) throws VcsException {
-    if (paths.length == 0) return INVALID_REVISION_NUMBER;
+  public SVNCommitInfo[] commit(File[] paths,
+                                String message,
+                                @Nullable SVNDepth depth,
+                                boolean noUnlock,
+                                boolean keepChangelist,
+                                Collection<String> changelists,
+                                Map revpropTable) throws VcsException {
+    if (paths.length == 0) return new SVNCommitInfo[]{SVNCommitInfo.NULL};
 
     final List<String> parameters = new ArrayList<String>();
     CommandUtil.put(parameters, depth);
@@ -83,7 +84,9 @@ public class SvnCommitRunner {
     CommandUtil.execute(myVcs, SvnTarget.fromFile(paths[0]), SvnCommandName.ci, parameters, myCommandListener);
     myCommandListener.throwExceptionIfOccurred();
 
-    return validateRevisionNumber();
+    long revision = validateRevisionNumber();
+
+    return new SVNCommitInfo[]{new SVNCommitInfo(revision, null, null, null)};
   }
 
   private long validateRevisionNumber() throws VcsException {
