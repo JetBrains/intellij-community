@@ -366,6 +366,7 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
   private void updateSdkList(final List<Sdk> allSdks, @Nullable Sdk initialSelection) {
     mySdkCombo.setRenderer(new PySdkListCellRenderer());
     mySdkCombo.setModel(new CollectionComboBoxModel(allSdks, initialSelection));
+    checkValid();
   }
 
   @Override
