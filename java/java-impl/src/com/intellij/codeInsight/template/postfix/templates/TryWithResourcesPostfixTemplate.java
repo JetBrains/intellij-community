@@ -22,6 +22,7 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
+import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -44,7 +45,7 @@ public class TryWithResourcesPostfixTemplate extends PostfixTemplate {
   public boolean isApplicable(@NotNull PsiElement element, @NotNull Document copyDocument, int newOffset) {
     if (!PsiUtil.isLanguageLevel7OrHigher(element)) return false;
 
-    PsiExpression initializer = getTopmostExpression(element);
+    PsiExpression initializer = PostfixTemplatesUtils.getTopmostExpression(element);
 
     if (initializer == null) return false;
 
@@ -61,7 +62,7 @@ public class TryWithResourcesPostfixTemplate extends PostfixTemplate {
 
   @Override
   public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
-    PsiExpression expression = getTopmostExpression(context);
+    PsiExpression expression = PostfixTemplatesUtils.getTopmostExpression(context);
     assert expression != null;
 
     Project project = context.getProject();

@@ -75,7 +75,7 @@ public class InterfaceMayBeAnnotatedFunctionalInspection extends BaseInspection 
       if (LambdaHighlightingUtil.checkInterfaceFunctional(aClass) != null) {
         return;
       }
-      final List<MethodSignature> candidates = LambdaUtil.findFunctionCandidates(aClass);
+      final List<HierarchicalMethodSignature> candidates = LambdaUtil.findFunctionCandidates(aClass);
       if (candidates == null || candidates.size() != 1) {
         return;
       }

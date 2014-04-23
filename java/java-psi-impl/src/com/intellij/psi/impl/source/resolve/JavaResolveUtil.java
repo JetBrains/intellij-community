@@ -225,7 +225,7 @@ public class JavaResolveUtil {
     return true;
   }
 
-  public static void substituteResults(final @NotNull PsiJavaCodeReferenceElement ref, @NotNull JavaResolveResult[] result) {
+  public static void substituteResults(@NotNull final PsiJavaCodeReferenceElement ref, @NotNull JavaResolveResult[] result) {
     if (result.length > 0 && result[0].getElement() instanceof PsiClass) {
       for (int i = 0; i < result.length; i++) {
         final CandidateInfo resolveResult = (CandidateInfo)result[i];
@@ -247,7 +247,7 @@ public class JavaResolveUtil {
 
   @NotNull
   public static <T extends PsiPolyVariantReference> JavaResolveResult[] resolveWithContainingFile(@NotNull T ref,
-                                                                                                  @NotNull ResolveCache.PolyVariantResolver<T> resolver,
+                                                                                                  @NotNull ResolveCache.PolyVariantContextResolver<T> resolver,
                                                                                                   boolean needToPreventRecursion,
                                                                                                   boolean incompleteCode,
                                                                                                   @NotNull PsiFile containingFile) {

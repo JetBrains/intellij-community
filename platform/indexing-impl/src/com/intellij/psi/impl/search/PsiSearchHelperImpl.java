@@ -394,7 +394,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         public Void compute() {
           if (myManager.getProject().isDisposed()) throw new ProcessCanceledException();
           List<PsiFile> psiRoots = file.getViewProvider().getAllFiles();
-          Set<PsiElement> processed = new THashSet<PsiElement>(psiRoots.size() * 2, (float)0.5);
+          Set<PsiFile> processed = new THashSet<PsiFile>(psiRoots.size() * 2, (float)0.5);
           for (final PsiFile psiRoot : psiRoots) {
             checkCanceled(progress);
             assert psiRoot != null : "One of the roots of file " + file + " is null. All roots: " + psiRoots + "; ViewProvider: " +

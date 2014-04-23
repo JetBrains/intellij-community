@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -146,9 +148,9 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     new WriteCommandAction.Simple(null) {
       @Override
       protected void run() throws Throwable {
-        File projectFile = FileUtil.createTempFile(myName+"_", PROJECT_FILE_SUFFIX);
-        FileUtil.delete(projectFile);
-        myFilesToDelete.add(projectFile);
+        File tempDirectory = FileUtil.createTempDirectory(myName, "");
+        File projectFile = new File(tempDirectory, myName + PROJECT_FILE_SUFFIX);
+        myFilesToDelete.add(tempDirectory);
 
         LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectFile);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -166,6 +168,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
 
         ProjectManagerEx.getInstanceEx().openTestProject(myProject);
         LightPlatformTestCase.clearUncommittedDocuments(myProject);
+        ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
       }
     }.execute().throwException();
   }
@@ -244,6 +247,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
       }
     }.execute();
     return ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+            @Override
             public PsiFile compute() {
               return PsiManager.getInstance(getProject()).findFile(virtualFile[0]);
             }

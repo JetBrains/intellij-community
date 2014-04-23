@@ -50,7 +50,7 @@ public class ResourceBundleImpl extends ResourceBundle {
     List<PropertiesFile> result = new SmartList<PropertiesFile>();
     PsiManager psiManager = PsiManager.getInstance(project);
     for (VirtualFile file : children) {
-      if (!file.isValid()) continue;
+      if (!file.isValid() || file.getExtension() == null) continue;
       if (Comparing.strEqual(PropertiesUtil.getBaseName(file), myBaseName)) {
         PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(psiManager.findFile(file));
         if (propertiesFile != null) {

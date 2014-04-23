@@ -58,6 +58,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.io.*;
@@ -264,7 +265,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       return true;
     }
   });
-  void drainReDetectQueue() {
+
+  @TestOnly
+  public void drainReDetectQueue() {
     reDetectQueue.drain();
   }
 

@@ -17,12 +17,12 @@ package com.intellij.codeInsight.template.postfix.util;
 
 import com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurrounder;
 import com.intellij.codeInsight.generation.surroundWith.JavaWithIfExpressionSurrounder;
-import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +45,7 @@ public abstract class PostfixTemplatesUtils {
   }
 
   public static void createStatement(@NotNull PsiElement context, @NotNull Editor editor, @NotNull String prefix, @NotNull String suffix, int offset) {
-    PsiExpression expr = PostfixTemplate.getTopmostExpression(context);
+    PsiExpression expr = getTopmostExpression(context);
     PsiElement parent = expr != null ? expr.getParent() : null;
     assert parent instanceof PsiStatement;
     PsiElementFactory factory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
@@ -120,6 +120,12 @@ public abstract class PostfixTemplatesUtils {
       showErrorHint(project, editor);
     }
     return null;
+  }
+
+  @Nullable
+  public static PsiExpression getTopmostExpression(PsiElement context) {
+    PsiExpressionStatement statement = PsiTreeUtil.getNonStrictParentOfType(context, PsiExpressionStatement.class);
+    return statement != null ? PsiTreeUtil.getChildOfType(statement, PsiExpression.class) : null;
   }
 }
 

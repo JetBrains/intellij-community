@@ -65,7 +65,10 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
             }
           }
 
-          collectReturnTypeVariables(session, psiExpression, substitutor.substitute(interfaceMethod.getReturnType()), result);
+          final PsiType returnType = interfaceMethod.getReturnType();
+          if (returnType != null) {
+            collectReturnTypeVariables(session, psiExpression, substitutor.substitute(returnType), result);
+          }
 
           return result;
         }

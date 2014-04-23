@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -81,33 +80,6 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
   @Override
   public void queue(VirtualFile suspiciousFile) {
     if (myDelegate != null) myDelegate.queue(suspiciousFile);
-  }
-
-  @Override
-  public void projectOpened() {
-    if (myDelegate != null) myDelegate.projectOpened();
-  }
-
-  @Override
-  public void projectClosed() {
-    if (myDelegate != null) myDelegate.projectClosed();
-  }
-
-  @Override
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "mockwolf";
-  }
-
-  @Override
-  public void initComponent() {
-
-  }
-
-  @Override
-  public void disposeComponent() {
-
   }
 
   @Override

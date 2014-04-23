@@ -120,7 +120,7 @@ public class TestDataReferenceContributor extends PsiReferenceContributor {
 
     @NotNull
     @Override
-    protected ResolveResult[] innerResolve(boolean caseSensitive) {
+    protected ResolveResult[] innerResolve(boolean caseSensitive, @NotNull PsiFile containingFile) {
       if (getIndex() == 0 && StringUtil.startsWithChar(getText(), '$')) {
         if (PROJECT_ROOT_VARIABLE.equals(getText())) {
           final PsiDirectory projectPsiRoot = getProjectPsiRoot();
@@ -135,7 +135,7 @@ public class TestDataReferenceContributor extends PsiReferenceContributor {
           }
         }
       }
-      return super.innerResolve(caseSensitive);
+      return super.innerResolve(caseSensitive, containingFile);
     }
 
     @Nullable

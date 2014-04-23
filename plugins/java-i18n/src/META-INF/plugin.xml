@@ -37,7 +37,7 @@
     <globalInspection shortName="InconsistentResourceBundle" bundle="messages.InspectionsBundle"
                       key="inconsistent.resource.bundle.display.name" groupBundle="messages.PropertiesBundle"
                       groupKey="properties.files.inspection.group.display.name" enabledByDefault="true" level="ERROR"
-                      implementationClass="com.intellij.codeInspection.i18n.InconsistentResourceBundleInspection"/>
+                      implementationClass="com.intellij.codeInspection.i18n.inconsistentResourceBundle.InconsistentResourceBundleInspection"/>
     <localInspection language="Properties" shortName="UnusedMessageFormatParameter" bundle="messages.PropertiesBundle"
                      key="unused.message.format.parameter.display.name" groupKey="properties.files.inspection.group.display.name"
                      enabledByDefault="true" level="WARNING"

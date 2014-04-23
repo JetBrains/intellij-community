@@ -29,7 +29,7 @@ public class ThrowExceptionPostfixTemplate extends PostfixTemplate {
 
   @Override
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
-    PsiExpression expression = getTopmostExpression(context);
+    PsiExpression expression = PostfixTemplatesUtils.getTopmostExpression(context);
     return expression != null && PostfixTemplatesUtils.isThrowable(expression.getType());
   }
 

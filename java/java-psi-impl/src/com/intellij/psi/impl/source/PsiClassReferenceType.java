@@ -208,11 +208,10 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
     if (myReference instanceof PsiJavaCodeReferenceElementImpl) {
       PsiAnnotation[] annotations = getAnnotations();
       if (!annotated || annotations.length == 0) annotations = null;
-      return ((PsiJavaCodeReferenceElementImpl)myReference).getCanonicalText(annotated, annotations);
+      PsiJavaCodeReferenceElementImpl impl = (PsiJavaCodeReferenceElementImpl)myReference;
+      return impl.getCanonicalText(annotated, annotations, impl.getContainingFile());
     }
-    else {
-      return myReference.getCanonicalText();
-    }
+    return myReference.getCanonicalText();
   }
 
   @NotNull

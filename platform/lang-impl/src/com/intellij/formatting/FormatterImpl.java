@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package com.intellij.formatting;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
@@ -47,13 +46,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class FormatterImpl extends FormatterEx
-  implements ApplicationComponent,
-             IndentFactory,
+  implements IndentFactory,
              WrapFactory,
              AlignmentFactory,
              SpacingFactory,
-             FormattingModelFactory
-{
+             FormattingModelFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.FormatterImpl");
 
   private final AtomicReference<FormattingProgressTask> myProgressTask = new AtomicReference<FormattingProgressTask>();
@@ -795,20 +792,6 @@ public class FormatterImpl extends FormatterEx
       }
       return spacing;
     }
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "FormatterEx";
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
   }
 
   @Override
