@@ -129,7 +129,9 @@ public class PostfixTemplatesListPanel {
   public void setState(@NotNull Map<String, Boolean> templatesState) {
     myTemplatesState.clear();
     for (Map.Entry<String, Boolean> entry : templatesState.entrySet()) {
-      myTemplatesState.put(entry.getKey(), entry.getValue());
+      if (!entry.getValue()) {
+        myTemplatesState.put(entry.getKey(), entry.getValue());
+      }
     }
   }
 
@@ -187,7 +189,13 @@ public class PostfixTemplatesListPanel {
 
     @Override
     public void setValue(@NotNull PostfixTemplate template, Boolean value) {
-      myTemplatesState.put(template.getKey(), value);
+      String key = template.getKey();
+      if (value) {
+        myTemplatesState.remove(key);
+      }
+      else {
+        myTemplatesState.put(key, value);
+      }
     }
   }
 
