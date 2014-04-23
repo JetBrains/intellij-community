@@ -17,6 +17,8 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.actions.DebuggerActions;
+import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerContextListener;
 import com.intellij.debugger.impl.DebuggerSession;
@@ -24,11 +26,15 @@ import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.debugger.ui.impl.ThreadsPanel;
+import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
+import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
+import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
+import com.intellij.debugger.ui.tree.NodeDescriptor;
+import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.PlaceInGrid;
-import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -57,6 +63,7 @@ public class JavaDebugProcess extends XDebugProcess {
   private final JavaDebuggerEditorsProvider myEditorsProvider;
   private final XBreakpointHandler<?>[] myBreakpointHandlers;
   private final MyDebuggerStateManager myStateManager = new MyDebuggerStateManager();
+  private final NodeManagerImpl myNodeManager;
 
   public JavaDebugProcess(@NotNull XDebugSession session, DebuggerSession javaSession) {
     super(session);
@@ -87,6 +94,15 @@ public class JavaDebugProcess extends XDebugProcess {
         myStateManager.fireStateChanged(newContext, event);
       }
     });
+    myNodeManager = new NodeManagerImpl(session.getProject(), null) {
+      @Override
+      public DebuggerTreeNodeImpl createNode(final NodeDescriptor descriptor, EvaluationContext evaluationContext) {
+        ((NodeDescriptorImpl)descriptor).setContext((EvaluationContextImpl)evaluationContext);
+        final DebuggerTreeNodeImpl node = new DebuggerTreeNodeImpl(null, descriptor);
+        ((NodeDescriptorImpl)descriptor).updateRepresentation((EvaluationContextImpl)evaluationContext, DescriptorLabelListener.DUMMY_LISTENER);
+        return node;
+      }
+    };
   }
 
   @NotNull
@@ -327,5 +343,9 @@ public class JavaDebugProcess extends XDebugProcess {
   private static void addActionToGroup(final DefaultActionGroup group, final String actionId) {
     AnAction action = ActionManager.getInstance().getAction(actionId);
     if (action != null) group.add(action);
+  }
+
+  public NodeManagerImpl getNodeManager() {
+    return myNodeManager;
   }
 }

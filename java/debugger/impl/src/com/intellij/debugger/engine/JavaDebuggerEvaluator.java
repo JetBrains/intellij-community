@@ -50,7 +50,7 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator {
         EvaluationContextImpl evalContext = myDebuggerContext.createEvaluationContext();
         descriptor.setContext(evalContext);
         descriptor.updateRepresentation(evalContext, DescriptorLabelListener.DUMMY_LISTENER);
-        callback.evaluated(new JavaValue(descriptor, evalContext));
+        callback.evaluated(new JavaValue(descriptor, evalContext, myDebugProcess.getXdebugProcess().getNodeManager()));
       }
     });
   }

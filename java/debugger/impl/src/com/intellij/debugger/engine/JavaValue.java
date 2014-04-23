@@ -15,11 +15,10 @@
  */
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
-import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
-import com.intellij.debugger.ui.impl.watch.NodeDescriptorFactoryImpl;
+import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
+import com.intellij.debugger.ui.impl.watch.NodeDescriptorProvider;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.*;
@@ -35,18 +34,23 @@ import java.util.List;
 /**
 * @author egor
 */
-public class JavaValue extends XNamedValue {
+public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
   private final ValueDescriptorImpl myValueDescriptor;
   private final EvaluationContextImpl myEvaluationContext;
-  private final NodeDescriptorFactoryImpl myNodeManager;
+  private final NodeManagerImpl myNodeManager;
 
-  JavaValue(ValueDescriptorImpl valueDescriptor, EvaluationContextImpl evaluationContext) {
+  JavaValue(ValueDescriptorImpl valueDescriptor, EvaluationContextImpl evaluationContext, NodeManagerImpl nodeManager) {
     super(valueDescriptor.getName());
     myValueDescriptor = valueDescriptor;
     myEvaluationContext = evaluationContext;
-    valueDescriptor.setContext(evaluationContext);
+    myValueDescriptor.setContext(evaluationContext);
     myValueDescriptor.updateRepresentation(evaluationContext, DescriptorLabelListener.DUMMY_LISTENER);
-    myNodeManager = new NodeDescriptorFactoryImpl(myEvaluationContext.getDebugProcess().getProject());
+    myNodeManager = nodeManager;
+  }
+
+  @Override
+  public NodeDescriptorImpl getDescriptor() {
+    return myValueDescriptor;
   }
 
   @Override
@@ -71,29 +75,41 @@ public class JavaValue extends XNamedValue {
 
           @Override
           public NodeManager getNodeManager() {
-            return new NodeManagerImpl(myEvaluationContext.getDebugProcess().getProject(), null) {
-              @Override
-              public DebuggerTreeNodeImpl createMessageNode(String s) {
-                return null;
-              }
-
-              @Override
-              public DebuggerTreeNodeImpl createNode(NodeDescriptor nodeDescriptor, EvaluationContext evaluationContext) {
-                if (nodeDescriptor instanceof ValueDescriptorImpl) {
-                  children.add(new JavaValue((ValueDescriptorImpl)nodeDescriptor, (EvaluationContextImpl)evaluationContext));
-                }
-                return null;
-              }
-            };
+            return myNodeManager;
+            //return new NodeManagerImpl(myEvaluationContext.getDebugProcess().getProject(), null) {
+            //  @Override
+            //  public DebuggerTreeNodeImpl createMessageNode(String s) {
+            //    return null;
+            //  }
+            //
+            //  @Override
+            //  public DebuggerTreeNodeImpl createNode(NodeDescriptor nodeDescriptor, EvaluationContext evaluationContext) {
+            //    if (nodeDescriptor instanceof ValueDescriptorImpl) {
+            //      children.add(new JavaValue((ValueDescriptorImpl)nodeDescriptor, (EvaluationContextImpl)evaluationContext, myNodeManager));
+            //    }
+            //    return null;
+            //  }
+            //
+            //  @Override
+            //  public <T extends NodeDescriptor> T getDescriptor(NodeDescriptor parent, DescriptorData<T> key) {
+            //    return myNodeManager.getDescriptor(parent, key);
+            //  }
+            //};
           }
 
           @Override
           public ValueDescriptor getParentDescriptor() {
-            return null;
+            return myValueDescriptor;
           }
 
           @Override
-          public void setChildren(List<DebuggerTreeNode> children) {
+          public void setChildren(List<DebuggerTreeNode> nodes) {
+            for (DebuggerTreeNode node : nodes) {
+              NodeDescriptor descriptor = node.getDescriptor();
+              if (descriptor instanceof ValueDescriptorImpl) {
+                children.add(new JavaValue((ValueDescriptorImpl)descriptor, myEvaluationContext, myNodeManager));
+              }
+            }
           }
         }, myEvaluationContext);
         node.addChildren(children, true);

@@ -59,7 +59,7 @@ public class JavaStackFrame extends XStackFrame {
   private final StackFrameProxyImpl myStackFrameProxy;
   private final DebugProcessImpl myDebugProcess;
   private final XSourcePosition mySourcePosition;
-  private final NodeDescriptorFactoryImpl myNodeManager;
+  private final NodeManagerImpl myNodeManager;
   private final StackFrameDescriptorImpl myDescriptor;
   private final JavaFramesListRenderer myRenderer = new JavaFramesListRenderer();
 
@@ -67,7 +67,7 @@ public class JavaStackFrame extends XStackFrame {
     myStackFrameProxy = stackFrameProxy;
     myDebugProcess = debugProcess;
     mySourcePosition = calcSourcePosition();
-    myNodeManager = new NodeDescriptorFactoryImpl(myDebugProcess.getProject());
+    myNodeManager = debugProcess.getXdebugProcess().getNodeManager();
     myDescriptor = new StackFrameDescriptorImpl(stackFrameProxy, tracker);
     myDescriptor.setContext(null);
     myDescriptor.updateRepresentation(null, DescriptorLabelListener.DUMMY_LISTENER);
@@ -165,7 +165,7 @@ public class JavaStackFrame extends XStackFrame {
         if (myAutoWatchMode) {
           for (String var : usedVars.first) {
             final LocalVariableDescriptorImpl descriptor = myNodeManager.getLocalVariableDescriptor(null, visibleVariables.get(var));
-            children.add(new JavaValue(descriptor, evaluationContext));
+            children.add(new JavaValue(descriptor, evaluationContext, myNodeManager));
             //myChildren.add(myNodeManager.createNode(descriptor, evaluationContext));
           }
         }
@@ -177,7 +177,7 @@ public class JavaStackFrame extends XStackFrame {
         evalContextCopy.setAutoLoadClasses(false);
         for (TextWithImports text : usedVars.second) {
           WatchItemDescriptor descriptor = myNodeManager.getWatchItemDescriptor(null, text, null);
-          children.add(new JavaValue(descriptor, evaluationContext));
+          children.add(new JavaValue(descriptor, evaluationContext, myNodeManager));
           //myChildren.add(myNodeManager.createNode(descriptor, evalContextCopy));
         }
       }
@@ -190,7 +190,7 @@ public class JavaStackFrame extends XStackFrame {
         int index = 0;
         for (Value argValue : argValues) {
           final ArgumentValueDescriptorImpl descriptor = myNodeManager.getArgumentValueDescriptor(null, index++, argValue, null);
-          children.add(new JavaValue(descriptor, evaluationContext));
+          children.add(new JavaValue(descriptor, evaluationContext, myNodeManager));
           //final DebuggerTreeNodeImpl variableNode = myNodeManager.createNode(descriptor, evaluationContext);
           //myChildren.add(variableNode);
         }
@@ -203,7 +203,7 @@ public class JavaStackFrame extends XStackFrame {
             for (DecompiledLocalVariable var : decompiled) {
               final Value value = values.get(var);
               final ArgumentValueDescriptorImpl descriptor = myNodeManager.getArgumentValueDescriptor(null, var.getSlot(), value, var.getName());
-              children.add(new JavaValue(descriptor, evaluationContext));
+              children.add(new JavaValue(descriptor, evaluationContext, myNodeManager));
               //final DebuggerTreeNodeImpl variableNode = myNodeManager.createNode(descriptor, evaluationContext);
               //myChildren.add(variableNode);
             }
@@ -222,8 +222,8 @@ public class JavaStackFrame extends XStackFrame {
   protected void superBuildVariables(final EvaluationContextImpl evaluationContext, XValueChildrenList children) throws EvaluateException {
     final StackFrameProxyImpl frame = myStackFrameProxy;
     for (final LocalVariableProxyImpl local : frame.visibleVariables()) {
-      final LocalVariableDescriptorImpl descriptor = myNodeManager.getLocalVariableDescriptor(null, local);
-      children.add(new JavaValue(descriptor, evaluationContext));
+      final LocalVariableDescriptorImpl descriptor = myNodeManager.getLocalVariableDescriptor(myDescriptor, local);
+      children.add(new JavaValue(descriptor, evaluationContext, myNodeManager));
       //final DebuggerTreeNodeImpl variableNode = myNodeManager.createNode(descriptor, evaluationContext);
       //myChildren.add(variableNode);
     }
