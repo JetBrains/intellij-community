@@ -75,7 +75,7 @@ public class SvnRecursiveStatusWalker {
       if (path.isDirectory()) {
         myHandler.setCurrentItem(item);
         try {
-          final SvnStatusClientI client = item.getClient(ioFile);
+          final SvnStatusClientI client = item.getClient();
           client.doStatus(ioFile, SVNRevision.WORKING, item.getDepth(), false, false, true, true, myHandler, null);
           myHandler.checkIfCopyRootWasReported(null, ioFile);
         }
@@ -84,7 +84,7 @@ public class SvnRecursiveStatusWalker {
         }
       } else {
         try {
-          final SVNStatus status = item.getClient(ioFile).doStatus(ioFile, false, false);
+          final SVNStatus status = item.getClient().doStatus(ioFile, false, false);
           myReceiver.process(path, status);
         } catch (SVNException e) {
           handleStatusException(item, path, e);
@@ -141,10 +141,10 @@ public class SvnRecursiveStatusWalker {
       return myDepth;
     }
 
-    public SvnStatusClientI getClient(final File file) {
+    public SvnStatusClientI getClient() {
       // TODO: refactor to ClientFactory usage but carefully save all parameters passed in myClient - fileProvider and
       // TODO: event handler (for cancel support)
-      WorkingCopyFormat format = myVcs.getWorkingCopyFormat(file);
+      WorkingCopyFormat format = myVcs.getWorkingCopyFormat(myPath.getIOFile());
 
       if (format == WorkingCopyFormat.ONE_DOT_EIGHT) {
         return myCommandLineClient;
@@ -235,7 +235,7 @@ public class SvnRecursiveStatusWalker {
         SVNStatus statusInner;
         try {
           statusInner = ioFileStatus != null ? ioFileStatus :
-            myCurrentItem.getClient(itemFile).doStatus(itemFile, false);
+                        myCurrentItem.getClient().doStatus(itemFile, false);
         }
         catch (SVNException e) {
           LOG.info(e);
