@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.NullableComputable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -27,14 +28,17 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
+import java.util.regex.MatchResult;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author cdr
  */
 public class PropertiesUtil {
+  private final static Pattern LOCALE_PATTERN = Pattern.compile("(_[^\\._]{2}(_[^\\._]+){0,2})\\.[^_]+$");
+  private final static Locale DEFAULT_LOCALE = new Locale("", "", "");
 
 
   public static boolean isPropertyComplete(final Project project, ResourceBundle resourceBundle, String propertyName) {
@@ -47,23 +51,24 @@ public class PropertiesUtil {
 
   @NotNull
   public static String getBaseName(@NotNull VirtualFile virtualFile) {
-    String name = virtualFile.getNameWithoutExtension();
-
-    List<String> parts = StringUtil.split(name, "_");
-    if (parts.size() == 1) return parts.get(0);
-    if (parts.size() == 0) return "";
-
-    String baseName = parts.get(0);
-    for (int i = 1; i< parts.size(); i++) {
-      String part = parts.get(i);
-      if (part.length() == 2) {
-        break;
+    String name = virtualFile.getName();
+    final Matcher matcher = LOCALE_PATTERN.matcher(name);
+    final String baseNameWithExtension;
+    if (matcher.find()) {
+      final MatchResult matchResult = matcher.toMatchResult();
+      final String[] splitted = matchResult.group(1).split("_");
+      if (splitted.length > 1) {
+        baseNameWithExtension = name.substring(0, matchResult.start(1)) + name.substring(matchResult.end(1));
       }
-      baseName += "_";
-      baseName += part;
+      else {
+        baseNameWithExtension = name;
+      }
+    }
+    else {
+      baseNameWithExtension = name;
     }
 
-    return baseName;
+    return FileUtil.getNameWithoutExtension(baseNameWithExtension);
   }
 
   /**
@@ -108,24 +113,20 @@ public class PropertiesUtil {
   }
 
   @NotNull
-  public static Locale getLocale(VirtualFile propertiesFile) {
-    String name = propertiesFile.getNameWithoutExtension();
-    String tail = StringUtil.trimStart(name, getBaseName(propertiesFile));
-    tail = StringUtil.trimStart(tail, "_");
-    String[] parts = tail.split("_");
-    String language = parts.length == 0 ? "" : parts[0];
-    String country = "";
-    String variant = "";
-    if (parts.length >= 2 && parts[1].length() == 2) {
-      country = parts[1];
-      for (int i = 2; i < parts.length; i++) {
-        String part = parts[i];
-        if (variant.length() != 0) variant += "_";
-        variant += part;
+  public static Locale getLocale(final VirtualFile propertiesFile) {
+    String name = propertiesFile.getName();
+    final Matcher matcher = LOCALE_PATTERN.matcher(name);
+    if (matcher.find()) {
+      String rawLocale = matcher.group(1);
+      String[] splittedRawLocale = rawLocale.split("_");
+      if (splittedRawLocale.length > 1 && splittedRawLocale[1].length() == 2) {
+        final String language = splittedRawLocale[1];
+        final String country = splittedRawLocale.length > 2 ? splittedRawLocale[2] : "";
+        final String variant = splittedRawLocale.length > 3 ? splittedRawLocale[3] : "";
+        return new Locale(language, country, variant);
       }
     }
-
-    return new Locale(language,country,variant);
+    return DEFAULT_LOCALE;
   }
 
   @NotNull
