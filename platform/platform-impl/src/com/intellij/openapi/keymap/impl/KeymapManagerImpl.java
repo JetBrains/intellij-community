@@ -84,9 +84,9 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
       RoamingType.PER_USER);
 
     Keymap[] keymaps = defaultKeymap.getKeymaps();
+    String systemDefaultKeymap = defaultKeymap.getDefaultKeymapName();
     for (Keymap keymap : keymaps) {
       addKeymap(keymap);
-      String systemDefaultKeymap = defaultKeymap.getDefaultKeymapName();
       if (systemDefaultKeymap.equals(keymap.getName())) {
         setActiveKeymap(keymap);
       }

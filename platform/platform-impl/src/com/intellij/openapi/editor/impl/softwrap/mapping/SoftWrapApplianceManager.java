@@ -1365,7 +1365,7 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
       int visualLineBefore = currentPosition.visualLine;
       int logicalLineBefore = currentPosition.logicalLine;
       int logicalColumnBefore = currentPosition.logicalColumn;
-      currentPosition.advance(foldRegion);
+      currentPosition.advance(foldRegion, -1);
       currentPosition.x += placeHolderWidthInPixels;
       int collapsedFoldingWidthInColumns = currentPosition.logicalColumn;
       if (currentPosition.logicalLine <= logicalLineBefore) {

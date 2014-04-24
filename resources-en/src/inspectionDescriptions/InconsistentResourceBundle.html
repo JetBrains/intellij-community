@@ -22,8 +22,8 @@
       option controls invalid resource bundle structure inspection.<br>
       It reports properties contained in inherited properties file that are missing in parent (or in sibling if there is no parent).<br>
       E.g. having this resource bundle:<br>
-      <b>messages_fr.properties</b>: <font color="#000080"><b>abc=xxx</b></font><br>
       <b>messages.properties</b>: empty<br>
+      <b>messages_fr.properties</b>: <font color="#000080"><b>abc=xxx</b></font><br>
 
       Property <font color="#000080"><b>abc</b></font> translation here is not available for any language except French,
       and, thus, will be reported as missing in the (default) properties file <b>messages.properties</b>.
@@ -36,10 +36,49 @@
     </ul>
   option checks for properties which are copy-pasted into several properties files verbatim.<br>
   E.g. in this resource bundle:<br>
-  <b>messages_fr.properties</b>: <font color="#000080"><b>abc=xxx</b></font><br>
   <b>messages.properties</b>: <font color="#000080"><b>abc=xxx</b></font><br>
+  <b>messages_fr.properties</b>: <font color="#000080"><b>abc=xxx</b></font><br>
 
   Property <font color="#000080"><b>abc</b></font> will be reported as unnecessarily inherited in the file <b>messages_fr.properties</b>.
+  <br>
+
+<ul>
+    <li>
+
+      <b>Report properties overridden with different placeholders</b>
+    </li>
+    </ul>
+  option checks for properties which are overridden for placeholders consistency.<br>
+  E.g. in this resource bundle:<br>
+  <b>messages.properties</b>:<br>
+    <font color="#000080"><b>qwe={0}xxx{1}</b></font><br>
+    <font color="#000080"><b>abc={0}yyy{1}</b></font><br>
+  <b>messages_fr.properties</b>:<br>
+    <font color="#000080"><b>qwe={0}xxx{0}xxx{1}</b></font><br>
+    <font color="#000080"><b>abc={0}yyy</b></font><br>
+
+
+  Property <font color="#000080"><b>abc</b></font> will be reported as property contains message format placeholders
+  with value not corresponding to <b>messages.properties</b>.
+  <br>
+
+<ul>
+    <li>
+
+      <b>Report properties overridden with different values endings</b>
+    </li>
+    </ul>
+  option checks for properties which are overridden for endings consistency.<br>
+  E.g. in this resource bundle:<br>
+  <b>messages.properties</b>:<br>
+    <font color="#000080"><b>abc=xxxzzz</b></font><br>
+  <b>messages_fr.properties</b>:<br>
+    <font color="#000080"><b>abc=xxx;</b></font><br>
+
+
+  Property <font color="#000080"><b>abc</b></font> will be reported as property contains special signs
+  (<b>'!'</b>, <b>'?'</b>, <b>'.'</b>, <b>':'</b> or <b>';'</b>) at the end of value but
+  value in <b>messages.properties</b> doesn't.
   <br>
 </font>
 

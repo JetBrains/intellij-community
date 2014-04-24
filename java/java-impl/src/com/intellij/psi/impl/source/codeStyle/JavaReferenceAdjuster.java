@@ -55,7 +55,8 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
 
         boolean rightKind = true;
         if (elementType == JavaElementType.JAVA_CODE_REFERENCE) {
-          int kind = ((PsiJavaCodeReferenceElementImpl)element).getKind();
+          PsiJavaCodeReferenceElementImpl impl = (PsiJavaCodeReferenceElementImpl)element;
+          int kind = impl.getKind(impl.getContainingFile());
           rightKind = kind == PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND || kind == PsiJavaCodeReferenceElementImpl.CLASS_OR_PACKAGE_NAME_KIND;
         }
 

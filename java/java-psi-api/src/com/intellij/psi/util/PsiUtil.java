@@ -998,14 +998,15 @@ public final class PsiUtil extends PsiUtilCore {
   public static PsiMethod getResourceCloserMethod(@NotNull final PsiResourceVariable resource) {
     final PsiType resourceType = resource.getType();
     if (!(resourceType instanceof PsiClassType)) return null;
-    return getResourceCloserMethodForType((PsiClassType)resourceType, resource.getProject());
+    return getResourceCloserMethodForType((PsiClassType)resourceType);
   }
 
   @Nullable
-  public static PsiMethod getResourceCloserMethodForType(@NotNull final PsiClassType resourceType, Project project) {
+  public static PsiMethod getResourceCloserMethodForType(@NotNull final PsiClassType resourceType) {
     final PsiClass resourceClass = resourceType.resolve();
     if (resourceClass == null) return null;
 
+    final Project project = resourceClass.getProject();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     final PsiClass autoCloseable = facade.findClass(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, ProjectScope.getLibrariesScope(project));
     if (autoCloseable == null) return null;

@@ -54,7 +54,8 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     myNavigationLabel.setEnabled(false);
     myFooterLabel.setEnabled(false);
     init();
-    initCurrentStep();
+    initCurrentStep(true);
+    setSize(400, 300);
     System.setProperty(StartupActionScriptManager.STARTUP_WIZARD_MODE, "true");
   }
 
@@ -70,7 +71,12 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
       mySteps.add(new CustomizeKeyboardSchemeStepPanel());
     }
     mySteps.add(new CustomizePluginsStepPanel());
-    mySteps.add(new CustomizeFeaturedPluginsStepPanel());
+    try {
+      mySteps.add(new CustomizeFeaturedPluginsStepPanel());
+    }
+    catch (CustomizeFeaturedPluginsStepPanel.OfflineException e) {
+      //skip featured step if we're offline
+    }
   }
 
   @Override
@@ -120,7 +126,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     }
     if (e.getSource() == myBackButton) {
       myIndex--;
-      initCurrentStep();
+      initCurrentStep(false);
       return;
     }
     if (e.getSource() == myNextButton) {
@@ -129,12 +135,20 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
         return;
       }
       myIndex++;
-      initCurrentStep();
+      initCurrentStep(true);
     }
   }
 
   @Override
+  public void doCancelAction() {
+    // lets pretend it is the wind..
+  }
+
+  @Override
   protected void doOKAction() {
+    for (AbstractCustomizeWizardStep step : mySteps) {
+      if (!step.beforeOkAction()) return;
+    }
     try {
       PluginManager.saveDisabledPlugins(PluginGroups.getInstance().getDisabledPluginIds(), false);
     }
@@ -143,8 +157,9 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     super.doOKAction();
   }
 
-  private void initCurrentStep() {
+  private void initCurrentStep(boolean forward) {
     final AbstractCustomizeWizardStep myCurrentStep = mySteps.get(myIndex);
+    myCurrentStep.beforeShown(forward);
     myCardLayout.swipe(myContentPanel, myCurrentStep.getTitle(), JBCardLayout.SwipeDirection.AUTO, new Runnable() {
       @Override
       public void run() {

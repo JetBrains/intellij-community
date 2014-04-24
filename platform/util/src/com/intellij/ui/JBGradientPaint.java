@@ -37,6 +37,7 @@ public class JBGradientPaint extends GradientPaint {
     super(getX1(c, direction), getY1(c, direction), color1, getX2(c, direction), getY2(c, direction), color2);
   }
 
+  @SuppressWarnings("UnusedParameters")
   private static float getX1(JComponent c, GradientDirection d) {
     return 0;
   }

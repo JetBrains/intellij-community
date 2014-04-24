@@ -16,6 +16,8 @@
 package com.intellij.openapi.editor.richcopy;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.editor.richcopy.view.HtmlTransferableData;
+import com.intellij.openapi.editor.richcopy.view.RtfTransferableData;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
@@ -48,14 +50,14 @@ public class RichCopyTest extends LightPlatformCodeInsightFixtureTestCase {
     Transferable contents = CopyPasteManager.getInstance().getContents();
     assertNotNull(contents);
 
-    assertTrue(contents.isDataFlavorSupported(HtmlCopyPasteProcessor.FLAVOR));
+    assertTrue(contents.isDataFlavorSupported(HtmlTransferableData.FLAVOR));
     String expectedHtml = getFileContents(getTestName(false) + ".html");
-    String actualHtml = readFully((Reader)contents.getTransferData(HtmlCopyPasteProcessor.FLAVOR));
+    String actualHtml = readFully((Reader)contents.getTransferData(HtmlTransferableData.FLAVOR));
     assertMatches("HTML contents differs", expectedHtml, actualHtml);
 
-    assertTrue(contents.isDataFlavorSupported(RtfCopyPasteProcessor.FLAVOR));
+    assertTrue(contents.isDataFlavorSupported(RtfTransferableData.FLAVOR));
     String expectedRtf = getFileContents(getTestName(false) + ".rtf");
-    String actualRtf = readFully((InputStream)contents.getTransferData(RtfCopyPasteProcessor.FLAVOR));
+    String actualRtf = readFully((InputStream)contents.getTransferData(RtfTransferableData.FLAVOR));
     assertMatches("RTF contents differs", expectedRtf, actualRtf);
   }
 

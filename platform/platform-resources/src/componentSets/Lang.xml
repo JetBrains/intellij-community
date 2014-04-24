@@ -37,10 +37,6 @@
     <component>
       <implementation-class>com.intellij.codeInsight.preview.ImageOrColorPreviewManager</implementation-class>
     </component>
-
-    <component>
-      <implementation-class>com.intellij.openapi.editor.richcopy.settings.RichCopySettings</implementation-class>
-    </component>
   </application-components>
 
   <project-components>

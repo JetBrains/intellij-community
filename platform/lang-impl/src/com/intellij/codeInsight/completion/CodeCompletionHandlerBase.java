@@ -430,7 +430,8 @@ public class CodeCompletionHandlerBase {
 
       // the insert handler may have started a live template with completion
       if (CompletionService.getCompletionService().getCurrentCompletion() == null &&
-          !ApplicationManager.getApplication().isUnitTestMode()) {
+          // ...or scheduled another autopopup
+          !CompletionServiceImpl.isPhase(CompletionPhase.CommittingDocuments.class)) {
         CompletionServiceImpl.setCompletionPhase(hasModifiers? new CompletionPhase.InsertedSingleItem(indicator, restorePrefix) : CompletionPhase.NoCompletion);
       }
       checkNotSync(indicator, items);

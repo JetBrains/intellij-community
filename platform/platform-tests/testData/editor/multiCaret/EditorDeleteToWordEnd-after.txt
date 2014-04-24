@@ -1,2 +1,2 @@
-s<caret>text<caret>o<selection>t<caret></selection> text
-an<caret> l<caret>yet a<selection>not<caret></selection> line
+s<caret>text<caret>o<caret>r text
+an<caret>er l<caret>yet a<caret>her line

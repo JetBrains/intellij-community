@@ -206,7 +206,7 @@ public class OffsetsElementSignatureProvider extends AbstractElementSignaturePro
     buffer.append(ELEMENT_TOKENS_SEPARATOR).append(index);
     PsiFile containingFile = element.getContainingFile();
     if (containingFile != null && containingFile.getViewProvider().getLanguages().size() > 1) {
-      buffer.append(ELEMENT_TOKENS_SEPARATOR).append(element.getLanguage().getID());
+      buffer.append(ELEMENT_TOKENS_SEPARATOR).append(containingFile.getLanguage().getID());
     }
     return buffer.toString();
   }

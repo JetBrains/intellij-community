@@ -18,22 +18,14 @@ package com.intellij.codeInsight.template.postfix.templates;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiExpressionStatement;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class PostfixTemplate {
   @NotNull private final String myPresentableName;
   @NotNull private final String myKey;
   @NotNull private final String myDescription;
   @NotNull private final String myExample;
-
-  @NotNull
-  public static final ExtensionPointName<PostfixTemplate> EP_NAME = ExtensionPointName.create("com.intellij.postfixTemplate");
 
   protected PostfixTemplate(@NotNull String name, @NotNull String description, @NotNull String example) {
     this(name, "." + name, description, example);
@@ -69,12 +61,6 @@ public abstract class PostfixTemplate {
   public boolean isEnabled() {
     final PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
     return settings != null && settings.isPostfixTemplatesEnabled() && settings.isTemplateEnabled(this);
-  }
-
-  @Nullable
-  public static PsiExpression getTopmostExpression(PsiElement context) {
-    PsiExpressionStatement statement = PsiTreeUtil.getNonStrictParentOfType(context, PsiExpressionStatement.class);
-    return statement != null ? PsiTreeUtil.getChildOfType(statement, PsiExpression.class) : null;
   }
 
   public abstract boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset);

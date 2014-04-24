@@ -206,7 +206,7 @@ public abstract class QuickFixFactory {
 
   @NotNull public abstract IntentionAction createDeferFinalAssignmentFix(@NotNull PsiVariable variable, @NotNull PsiReferenceExpression expression);
 
-  @NotNull public abstract IntentionAction createVariableAccessFromInnerClassFix(@NotNull PsiVariable variable, @NotNull PsiClass aClass);
+  @NotNull public abstract IntentionAction createVariableAccessFromInnerClassFix(@NotNull PsiVariable variable, @NotNull PsiElement scope);
 
   @NotNull public abstract IntentionAction createCreateConstructorParameterFromFieldFix(@NotNull PsiField field);
 

@@ -541,9 +541,6 @@
     <projectService serviceInterface="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration"
                     serviceImplementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration"/>
 
-    <applicationService serviceInterface="org.jetbrains.plugins.groovy.lang.resolve.KnownRecursionManager"
-                        serviceImplementation="org.jetbrains.plugins.groovy.lang.resolve.KnownRecursionManager"/>
-
     <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.providers.GroovyReferenceContributor"/>
 
     <resolveScopeProvider implementation="org.jetbrains.plugins.groovy.lang.resolve.GroovyResolveScopeProvider"/>

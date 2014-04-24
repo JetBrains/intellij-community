@@ -1,41 +1,23 @@
 <idea-plugin version="2">
   <extensionPoints>
-    <extensionPoint name="postfixTemplate" interface="com.intellij.codeInsight.template.postfix.templates.PostfixTemplate"/>
+    <extensionPoint name="codeInsight.template.postfixTemplateProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider"/>
+    </extensionPoint>
   </extensionPoints>
 
+
   <extensions defaultExtensionNs="com.intellij">
-    <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.ElseStatementPostfixTemplate"/>
-    <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.IntroduceVariablePostfixTemplate"/>
-    <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.NotNullCheckPostfixTemplate"/>
-    <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.IsNullCheckPostfixTemplate"/>
-    <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.NotExpressionPostfixTemplate"/>
-    <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.ForeachPostfixTemplate"/>
-    <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.WhileStatementPostfixTemplate"/>
-    <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.CastExpressionPostfixTemplate"/>
-    <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.IfStatementPostfixTemplate"/>
-    <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.ForAscendingPostfixTemplate"/>
-    <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.ForDescendingPostfixTemplate"/>
-    <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.IntroduceFieldPostfixTemplate"/>
-    <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.ParenthesizedExpressionPostfixTemplate"/>
-    <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.ReturnStatementPostfixTemplate"/>
-    <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.SwitchStatementPostfixTemplate"/>
-    <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.ThrowExceptionPostfixTemplate"/>
-    <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.AssertStatementPostfixTemplate"/>
-    <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.SynchronizedStatementPostfixTemplate"/>
-    <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.InstanceofExpressionPostfixTemplate"/>
-    <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.SoutPostfixTemplate"/>
-    <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.FormatPostfixTemplate"/>
-    <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.TryStatementPostfixTemplate"/>
-    <postfixTemplate implementation="com.intellij.codeInsight.template.postfix.templates.TryWithResourcesPostfixTemplate"/>
+    <codeInsight.template.postfixTemplateProvider language="JAVA" implementationClass="com.intellij.codeInsight.template.postfix.templates.JavaPostfixTemplateProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService id="postfixCompletionSettings" serviceImplementation="com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings"/>
     <customLiveTemplate implementation="com.intellij.codeInsight.template.postfix.templates.PostfixLiveTemplate"/>
-    
+
     <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.template.postfix.completion.PostfixTemplateCompletionContributor"/>
     <lookup.actionProvider implementation="com.intellij.codeInsight.template.postfix.completion.PostfixTemplateLookupActionProvider"/>
-    
+
     <editorOptionsProvider id="editing.postfixCompletion" instance="com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesConfigurable"/>
   </extensions>
 </idea-plugin>

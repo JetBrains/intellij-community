@@ -18,6 +18,7 @@ package com.intellij.ide.passwordSafe.impl.providers.masterKey;
 import com.intellij.ide.passwordSafe.HelpID;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
 
 /**
@@ -28,13 +29,17 @@ public class ResetPasswordComponent extends PasswordComponentBase {
   private final boolean myFirstTime;
 
   public ResetPasswordComponent(MasterKeyPasswordSafe safe, boolean firstTime) {
-    super(safe, "Reset");
+    super(safe, firstTime ? "Setup" : "Reset");
     myFirstTime = firstTime;
     UIUtil.setEnabled(myPasswordPanel, false, true);
     myPasswordPanel.setVisible(false);
     if (firstTime) {
-      myPromptLabel.setText("<html><br>Specify the password for the password database.<br>" +
-                            "Leave blank to disable the master password.</html>");
+      myNewPasswordLabel.setText(myPasswordLabel.getText());
+      myNewPasswordLabel.setDisplayedMnemonic(myPasswordLabel.getDisplayedMnemonic());
+      myNewPasswordLabel.setDisplayedMnemonicIndex(myPasswordLabel.getDisplayedMnemonicIndex());
+      DialogUtil.registerMnemonic(myPasswordLabel, null);
+      myPromptLabel.setText("<html><br>Specify the new password for the password database.<br>" +
+                            "Leave blank to disable the master password protection.</html>");
     }
     else {
       myPromptLabel.setText("<html><br>The password for the password database will be reset.<br>" +

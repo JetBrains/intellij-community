@@ -193,14 +193,11 @@ public class FileUtilRt {
   public static File createTempDirectory(@NotNull File dir,
                                          @NotNull @NonNls String prefix, @Nullable @NonNls String suffix,
                                          boolean deleteOnExit) throws IOException {
-    File file = doCreateTempFile(dir, prefix, suffix);
+    File file = doCreateTempFile(dir, prefix, suffix, true);
     if (deleteOnExit) {
       file.deleteOnExit();
     }
-    if (!file.delete() && file.exists()) {
-      throw new IOException("Cannot delete file: " + file);
-    }
-    if (!file.mkdir() && !file.isDirectory()) {
+    if (!file.isDirectory()) {
       throw new IOException("Cannot create directory: " + file);
     }
     return file;
@@ -235,7 +232,7 @@ public class FileUtilRt {
   public static File createTempFile(@NonNls File dir,
                                     @NotNull @NonNls String prefix, @Nullable @NonNls String suffix,
                                     boolean create, boolean deleteOnExit) throws IOException {
-    File file = doCreateTempFile(dir, prefix, suffix);
+    File file = doCreateTempFile(dir, prefix, suffix, false);
     if (deleteOnExit) {
       file.deleteOnExit();
     }
@@ -248,7 +245,10 @@ public class FileUtilRt {
   }
 
   @NotNull
-  private static File doCreateTempFile(@NotNull File dir, @NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
+  private static File doCreateTempFile(@NotNull File dir,
+                                       @NotNull @NonNls String prefix,
+                                       @Nullable @NonNls String suffix,
+                                       boolean isDirectory) throws IOException {
     //noinspection ResultOfMethodCallIgnored
     dir.mkdirs();
 
@@ -262,7 +262,7 @@ public class FileUtilRt {
     int exceptionsCount = 0;
     while (true) {
       try {
-        final File temp = createTempFile(prefix, suffix, dir);
+        final File temp = createTemp(prefix, suffix, dir, isDirectory);
         return normalizeFile(temp);
       }
       catch (IOException e) { // Win32 createFileExclusively access denied
@@ -274,21 +274,24 @@ public class FileUtilRt {
   }
 
   @NotNull
-  public static File createTempFile(@NotNull String prefix, @NotNull String suffix, @NotNull File directory) throws IOException {
+  private static File createTemp(@NotNull String prefix, @NotNull String suffix, @NotNull File directory, boolean isDirectory) throws IOException {
     // normalize and use only the file name from the prefix
     prefix = new File(prefix).getName();
+
     File f;
     int i = 0;
     do {
-      String name = prefix + (i==0?"":Integer.toString(i)) + suffix;
+      String name = prefix + i + suffix;
       f = new File(directory, name);
       if (!name.equals(f.getName())) {
-        throw new IOException("Unable to create temporary file, " + f);
+        throw new IOException("Unable to create temporary file " + f + " for name " + name);
       }
       i++;
-    } while (f.exists());
+    }
+    while (f.exists());
 
-    if (!f.createNewFile()) {
+    boolean success = isDirectory ? f.mkdir() : f.createNewFile();
+    if (!success) {
       throw new IOException("Unable to create temporary file " + f);
     }
 

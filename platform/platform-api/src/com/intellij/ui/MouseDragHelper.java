@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.NullableComponent;
 import com.intellij.openapi.util.Disposer;
@@ -27,10 +28,7 @@ import com.intellij.util.ui.update.UiNotifyConnector;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.*;
 
 public abstract class MouseDragHelper implements MouseListener, MouseMotionListener, KeyEventDispatcher, Weighted {
 
@@ -56,6 +54,16 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     myDragComponent = dragComponent;
     myParentDisposable = parent;
 
+  }
+
+  /**
+   *
+   * @param event
+   * @return false if Settings -> Appearance -> Drag-n-Drop with ALT pressed only is selected but event doesn't have ALT modifier
+   */
+  public static boolean checkModifiers(InputEvent event) {
+    if (event == null || !UISettings.getInstance().DND_WITH_PRESSED_ALT_ONLY) return true;
+    return (event.getModifiers() & InputEvent.ALT_MASK) != 0;
   }
 
   public void start() {

@@ -30,9 +30,10 @@ public enum LanguageLevel {
   JDK_1_5(JavaCoreBundle.message("jdk.1.5.language.level.description")),
   JDK_1_6(JavaCoreBundle.message("jdk.1.6.language.level.description")),
   JDK_1_7(JavaCoreBundle.message("jdk.1.7.language.level.description")),
-  JDK_1_8(JavaCoreBundle.message("jdk.1.8.language.level.description"));
+  JDK_1_8(JavaCoreBundle.message("jdk.1.8.language.level.description")),
+  JDK_1_9(JavaCoreBundle.message("jdk.1.9.language.level.description"));
 
-  public static final LanguageLevel HIGHEST = JDK_1_8;
+  public static final LanguageLevel HIGHEST = JDK_1_8; // TODO! when language level 9 is really supported, update this field
   public static final Key<LanguageLevel> KEY = Key.create("LANGUAGE_LEVEL");
 
   private final String myPresentableText;
@@ -59,6 +60,7 @@ public enum LanguageLevel {
     if ("1.6".equals(value)) return JDK_1_6;
     if ("1.7".equals(value)) return JDK_1_7;
     if ("1.8".equals(value)) return JDK_1_8;
+    if ("1.9".equals(value)) return JDK_1_9;
 
     return null;
   }

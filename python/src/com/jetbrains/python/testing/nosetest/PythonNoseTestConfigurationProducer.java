@@ -41,8 +41,7 @@ public class PythonNoseTestConfigurationProducer extends
       module = modules[0];
     }
     final Sdk sdk = PythonSdkType.findPythonSdk(module);
-    return (TestRunnerService.getInstance(module).getProjectConfiguration().equals(
-      PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME) && sdk != null);
+    return (PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME.equals(TestRunnerService.getInstance(module).getProjectConfiguration()) && sdk != null);
   }
 
   @Override

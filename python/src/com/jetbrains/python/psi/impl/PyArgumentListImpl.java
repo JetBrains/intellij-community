@@ -27,6 +27,7 @@ import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.FunctionParameter;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
@@ -203,7 +204,6 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
       catch (IncorrectOperationException e1) {
         throw new IllegalStateException(e1);
       }
-
     }
     else {
       getNode().addChild(arg.getNode(), par);
@@ -214,7 +214,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
   public ASTNode getClosingParen() {
     ASTNode node = getNode();
     final ASTNode[] children = node.getChildren(TokenSet.create(PyTokenTypes.RPAR));
-    return children.length == 0 ? null : children[children.length-1];
+    return children.length == 0 ? null : children[children.length - 1];
   }
 
   private void addArgumentNode(PyExpression arg, ASTNode beforeThis, boolean commaFirst) {
@@ -256,14 +256,12 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
         // 1: Nothing, just add
         addArgumentNode(argument, node, true);
         break;
-
       }
       else if (PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens().contains(type)) {
         // 2: After some argument followed by comma: after comma, add element, add comma
         // 3: After some argument not followed by comma: add comma, add element
         addArgumentNode(argument, node, true);
         break;
-
       }
       else if (type == PyTokenTypes.COMMA) {
         ASTNode next = PyUtil.getNextNonWhitespace(node);
@@ -332,5 +330,24 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     protected boolean applyNotNull(@NotNull final PyExpression input) {
       return (PsiTreeUtil.getParentOfType(input, PyKeywordArgument.class) == null) && !(input instanceof PyKeywordArgument);
     }
+  }
+
+  @Nullable
+  @Override
+  public PyExpression getValueExpressionForParam(@NotNull final FunctionParameter parameter) {
+    final String parameterName = parameter.getName();
+    if (parameterName != null) {
+      final PyKeywordArgument kwarg = getKeywordArgument(parameterName);
+      if (kwarg != null) {
+        return kwarg.getValueExpression();
+      }
+    }
+
+    final PyExpression[] arguments = getArguments();
+    if (arguments.length > parameter.getPosition()) {
+      return arguments[parameter.getPosition()];
+    }
+
+    return null;
   }
 }

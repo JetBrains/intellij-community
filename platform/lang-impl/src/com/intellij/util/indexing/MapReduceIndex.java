@@ -286,7 +286,11 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     final NotNullComputable<Collection<Key>> oldKeysGetter;
     final int savedInputId;
 
-    if (myHasSnapshotMapping && !((MemoryIndexStorage)getStorage()).isBufferingEnabled()) {
+    boolean weProcessPhysicalContent = content == null ||
+                                       (content instanceof FileContent &&
+                                        ((FileContent)content).getUserData(FileBasedIndexImpl.ourPhysicalContentKey) != null);
+
+    if (myHasSnapshotMapping && weProcessPhysicalContent) {
       try { // optimistically (out of index update write section) read current snapshot keys for file
         final Integer hashId = myInputsSnapshotMapping.get(inputId);
         final Collection<Key> keys = hashId != null ? mySnapshotMapping.get(hashId): null;

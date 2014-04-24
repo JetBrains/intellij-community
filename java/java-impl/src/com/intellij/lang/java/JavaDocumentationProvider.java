@@ -34,7 +34,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -56,8 +55,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Maxim.Mossienko
@@ -591,13 +592,16 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         if (classUrls != null) {
           urls = ContainerUtil.newSmartList();
 
-          String rawSignature = formatMethodSignature(method, true);
-          for (String classUrl : classUrls) {
-            urls.add(classUrl + "#" + rawSignature);
-          }
+          final boolean useJava8Format = PsiUtil.isLanguageLevel8OrHigher(method);
 
-          String signature = formatMethodSignature(method, false);
-          if (Comparing.compare(rawSignature, signature) != 0) {
+          final Set<String> signatures = new LinkedHashSet<String>();
+          signatures.add(formatMethodSignature(method, true, useJava8Format));
+          signatures.add(formatMethodSignature(method, false, useJava8Format));
+
+          signatures.add(formatMethodSignature(method, true, !useJava8Format));
+          signatures.add(formatMethodSignature(method, false, !useJava8Format));
+
+          for (String signature : signatures) {
             for (String classUrl : classUrls) {
               urls.add(classUrl + "#" + signature);
             }
@@ -626,7 +630,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     }
   }
 
-  private static String formatMethodSignature(PsiMethod method, boolean raw) {
+  private static String formatMethodSignature(PsiMethod method, boolean raw, boolean java8Format) {
     int options = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS;
     int parameterOptions = PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES;
     if (raw) {
@@ -636,7 +640,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
     String signature = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, options, parameterOptions, 999);
 
-    if (PsiUtil.isLanguageLevel8OrHigher(method)) {
+    if (java8Format) {
       signature = signature.replaceAll("\\(|\\)|, ", "-").replaceAll("\\[\\]", ":A");
     }
 

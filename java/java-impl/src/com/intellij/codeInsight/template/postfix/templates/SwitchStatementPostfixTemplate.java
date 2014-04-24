@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
+import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -51,7 +52,7 @@ public class SwitchStatementPostfixTemplate extends StatementPostfixTemplateBase
 
   @Override
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
-    PsiExpression expr = getTopmostExpression(context);
+    PsiExpression expr = PostfixTemplatesUtils.getTopmostExpression(context);
     return expr != null && isSwitchCompatibleType(expr.getType(), context);
   }
 

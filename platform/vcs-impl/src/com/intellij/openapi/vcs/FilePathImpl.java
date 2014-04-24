@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,8 +62,7 @@ public class FilePathImpl implements FilePath {
     }
   }
 
-  @NotNull
-  private static File fileFromVirtual(VirtualFile virtualParent, final VirtualFile child, @NotNull String name) {
+  private static File fileFromVirtual(VirtualFile virtualParent, final VirtualFile child, String name) {
     assert virtualParent != null || child != null;
     if (virtualParent != null) {
       return new File(virtualParent.getPath(), name);
@@ -72,12 +71,12 @@ public class FilePathImpl implements FilePath {
   }
 
   @Heavy
-  public FilePathImpl(@NotNull VirtualFile virtualParent, @NotNull String name, final boolean isDirectory) {
+  public FilePathImpl(@NotNull VirtualFile virtualParent, String name, final boolean isDirectory) {
     this(virtualParent, name, isDirectory, null, false);
   }
 
   @Heavy
-  private FilePathImpl(@NotNull VirtualFile virtualParent, @NotNull String name, final boolean isDirectory, final boolean forDeleted) {
+  private FilePathImpl(@NotNull VirtualFile virtualParent, String name, final boolean isDirectory, final boolean forDeleted) {
     this(virtualParent, name, isDirectory, null, forDeleted);
   }
 
@@ -96,15 +95,15 @@ public class FilePathImpl implements FilePath {
     this(virtualFile.getParent(), virtualFile.getName(), virtualFile.isDirectory(), virtualFile, false);
   }
 
-  @NotNull
   public FilePath createChild(final String subPath, final boolean isDirectory) {
     if (StringUtil.isEmptyOrSpaces(subPath)) return this;
 
-    VirtualFile virtualFile = getVirtualFile();
-    if (virtualFile != null && subPath.indexOf('/') == -1 && subPath.indexOf('\\') == -1) {
-      return new FilePathImpl(virtualFile, subPath, isDirectory, true);
+    if (getVirtualFile() != null && subPath.indexOf('/') == -1 && subPath.indexOf('\\') == -1) {
+      return new FilePathImpl(getVirtualFile(), subPath, isDirectory, true);
     }
-    return new FilePathImpl(new File(getIOFile(), subPath), isDirectory);
+    else {
+      return new FilePathImpl(new File(getIOFile(), subPath), isDirectory);
+    }
   }
 
   public int hashCode() {
@@ -115,13 +114,13 @@ public class FilePathImpl implements FilePath {
     if (!(o instanceof FilePath)) {
       return false;
     }
-    if (!isSpecialName(myName) && !isSpecialName(((FilePath)o).getName()) &&
-        !Comparing.equal(myName, ((FilePath)o).getName())) {
-      return false;
+    else {
+      if (! isSpecialName(myName) && ! isSpecialName(((FilePath)o).getName()) &&
+          ! Comparing.equal(myName, ((FilePath)o).getName())) return false;
+      return myFile.equals(((FilePath)o).getIOFile());
     }
-    return myFile.equals(((FilePath)o).getIOFile());
   }
-
+  
   private static boolean isSpecialName(final String name) {
     return ".".equals(name) || "..".equals(name);
   }
@@ -129,29 +128,31 @@ public class FilePathImpl implements FilePath {
   @Override
   public void refresh() {
     if (myLocal) {
-      VirtualFile virtualParent = getVirtualFileParent();
-      myVirtualFile = virtualParent == null ? LocalFileSystem.getInstance().findFileByIoFile(myFile) : virtualParent.findChild(myName);
+      if (myVirtualParent == null) {
+        myVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(myFile);
+      }
+      else {
+        myVirtualFile = myVirtualParent.findChild(myName);
+      }
     }
   }
 
   @Override
   public void hardRefresh() {
-    if (myLocal) {
-      VirtualFile virtualFile = getVirtualFile();
-      if (virtualFile == null || !virtualFile.isValid()) {
-        myVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myFile);
-      }
+    if (myLocal && (myVirtualFile == null || ! myVirtualFile.isValid())) {
+      myVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myFile);
     }
   }
 
-  @NotNull
   @Override
   public String getPath() {
-    final VirtualFile virtualFile = getVirtualFile();
+    final VirtualFile virtualFile = myVirtualFile;
     if (virtualFile != null && virtualFile.isValid()) {
       return virtualFile.getPath();
     }
-    return myFile.getPath();
+    else {
+      return myFile.getPath();
+    }
   }
 
   public void setIsDirectory(boolean isDirectory) {
@@ -160,17 +161,20 @@ public class FilePathImpl implements FilePath {
 
   @Override
   public boolean isDirectory() {
-    VirtualFile virtualFile = getVirtualFile();
-    return virtualFile == null ? myIsDirectory : virtualFile.isDirectory();
+    if (myVirtualFile == null) {
+      return myIsDirectory;
+    }
+    else {
+      return myVirtualFile.isDirectory();
+    }
   }
 
   @Override
-  public boolean isUnder(@NotNull FilePath parent, boolean strict) {
-    VirtualFile virtualFile = getVirtualFile();
-    if (virtualFile != null) {
+  public boolean isUnder(FilePath parent, boolean strict) {
+    if (myVirtualFile != null) {
       final VirtualFile parentFile = parent.getVirtualFile();
       if (parentFile != null) {
-        return VfsUtilCore.isAncestor(parentFile, virtualFile, strict);
+        return VfsUtilCore.isAncestor(parentFile, myVirtualFile, strict);
       }
     }
     return FileUtil.isAncestor(parent.getIOFile(), getIOFile(), strict);
@@ -178,9 +182,8 @@ public class FilePathImpl implements FilePath {
 
   @Override
   public FilePath getParentPath() {
-    VirtualFile virtualParent = getVirtualFileParent();
-    if (virtualParent != null && virtualParent.getParent() != null) {
-      return new FilePathImpl(virtualParent);
+    if (myVirtualParent != null && myVirtualParent.isValid() && myVirtualParent.getParent() != null) {
+      return new FilePathImpl(myVirtualParent);
     }
 
     // can't use File.getParentPath() because the path may not correspond to an actual file on disk,
@@ -197,25 +200,19 @@ public class FilePathImpl implements FilePath {
   @Override
   @Nullable
   public VirtualFile getVirtualFile() {
-    VirtualFile virtualFile = myVirtualFile;
-    if (virtualFile != null && !virtualFile.isValid()) {
-      myVirtualFile = virtualFile = null;
+    if (myVirtualFile != null && !myVirtualFile.isValid()) {
+      myVirtualFile = null;
     }
-    if (virtualFile == null) {
-      refresh();
-      virtualFile = myVirtualFile;
-    }
-    return virtualFile;
+    return myVirtualFile;
   }
 
   @Override
   @Nullable
   public VirtualFile getVirtualFileParent() {
-    VirtualFile virtualParent = myVirtualParent;
-    if (virtualParent != null && !virtualParent.isValid()) {
-      myVirtualParent = virtualParent = null;
+    if (myVirtualParent != null && !myVirtualParent.isValid()) {
+      myVirtualParent = null;
     }
-    return virtualParent;
+    return myVirtualParent;
   }
 
   @Override
@@ -224,7 +221,6 @@ public class FilePathImpl implements FilePath {
     return myFile;
   }
 
-  @NotNull
   @Override
   public String getName() {
     return myName;
@@ -232,21 +228,21 @@ public class FilePathImpl implements FilePath {
 
   @Override
   public String getPresentableUrl() {
-    VirtualFile virtualFile = getVirtualFile();
-    if (virtualFile == null || !virtualFile.isValid()) {
+    if (myVirtualFile == null || !myVirtualFile.isValid()) {
       return myFile.getAbsolutePath();
     }
-    return virtualFile.getPresentableUrl();
+    else {
+      return myVirtualFile.getPresentableUrl();
+    }
   }
 
   @Override
   @Nullable
   public Document getDocument() {
-    VirtualFile virtualFile = getVirtualFile();
-    if (virtualFile == null || virtualFile.getFileType().isBinary()) {
+    if (myVirtualFile == null || myVirtualFile.getFileType().isBinary()) {
       return null;
     }
-    return FileDocumentManager.getInstance().getDocument(virtualFile);
+    return FileDocumentManager.getInstance().getDocument(myVirtualFile);
   }
 
   @Override
@@ -257,8 +253,7 @@ public class FilePathImpl implements FilePath {
   @Override
   public Charset getCharset(Project project) {
     // try to find existing virtual file
-    VirtualFile virtualFile = getVirtualFile();
-    VirtualFile existing = virtualFile != null && virtualFile.isValid() ? virtualFile : null;
+    VirtualFile existing = myVirtualFile != null && myVirtualFile.isValid() ? myVirtualFile : null;
     if (existing == null) {
       LocalFileSystem lfs = LocalFileSystem.getInstance();
       for (File f = myFile; f != null; f = f.getParentFile()) {
@@ -283,8 +278,7 @@ public class FilePathImpl implements FilePath {
 
   @Override
   public FileType getFileType() {
-    VirtualFile virtualFile = getVirtualFile();
-    return virtualFile != null ? virtualFile.getFileType() : FileTypeManager.getInstance().getFileTypeByFileName(myFile.getName());
+    return myVirtualFile != null ? myVirtualFile.getFileType() : FileTypeManager.getInstance().getFileTypeByFileName(myFile.getName());
   }
 
   public static FilePathImpl create(VirtualFile file) {
@@ -322,52 +316,59 @@ public class FilePathImpl implements FilePath {
     if (virtualFileParent != null) {
       return new FilePathImpl(virtualFileParent, selectedFile.getName(), isDirectory, true);
     }
-    return new FilePathImpl(selectedFile, isDirectory);
+    else {
+      return new FilePathImpl(selectedFile, isDirectory);
+    }
   }
 
-  public static FilePath createOn(@NotNull String s) {
+  public static FilePath createOn(String s) {
     File ioFile = new File(s);
     final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
     VirtualFile virtualFile = localFileSystem.findFileByIoFile(ioFile);
     if (virtualFile != null) {
       return new FilePathImpl(virtualFile);
     }
-    VirtualFile virtualFileParent = localFileSystem.findFileByIoFile(ioFile.getParentFile());
-    if (virtualFileParent == null) return null;
-    return new FilePathImpl(virtualFileParent, ioFile.getName(), false);
+    else {
+      VirtualFile virtualFileParent = localFileSystem.findFileByIoFile(ioFile.getParentFile());
+      if (virtualFileParent != null) {
+        return new FilePathImpl(virtualFileParent, ioFile.getName(), false);
+      }
+      else {
+        return null;
+      }
+    }
   }
 
-  private static final Constructor<File> ourFileStringConstructor;
-  static {
-    // avoid filename normalization (IDEADEV-10548)
-    Constructor<File> constructor = null; // new File(String, int)
-    try {
-      constructor = File.class.getDeclaredConstructor(String.class, int.class);
-      constructor.setAccessible(true);
-    }
-    catch (Exception ignored) {
-    }
-    ourFileStringConstructor = constructor;
-  }
+  private static Constructor<File> ourFileStringConstructor;
+  private static boolean ourFileStringConstructorInitialized;
 
   @NotNull
-  public static FilePath createNonLocal(@NotNull String path, final boolean directory) {
+  public static FilePath createNonLocal(String path, final boolean directory) {
     path = path.replace('/', File.separatorChar);
-    File file = createIoFile(path);
-    return new FilePathImpl(file, directory, false);
-  }
-
-  @NotNull
-  private static File createIoFile(@NotNull String path) {
-    if (ourFileStringConstructor != null) {
+    // avoid filename normalization (IDEADEV-10548)
+    if (!ourFileStringConstructorInitialized) {
+      ourFileStringConstructorInitialized = true;
       try {
-        return ourFileStringConstructor.newInstance(path, 1);
+        ourFileStringConstructor = File.class.getDeclaredConstructor(String.class, int.class);
+        ourFileStringConstructor.setAccessible(true);
       }
       catch (Exception ex) {
-        // reflection call failed, try regular call
+        ourFileStringConstructor = null;
       }
     }
-    return new File(path);
+    File file = null;
+    try {
+      if (ourFileStringConstructor != null) {
+        file = ourFileStringConstructor.newInstance(path, 1);
+      }
+    }
+    catch (Exception ex) {
+      // reflection call failed, try regular call
+    }
+    if (file == null) {
+      file = new File(path);
+    }
+    return new FilePathImpl(file, directory, false);
   }
 
   @Override

@@ -24,7 +24,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
@@ -47,7 +46,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
-public class TemplateManagerImpl extends TemplateManager implements ProjectComponent, Disposable {
+public class TemplateManagerImpl extends TemplateManager implements Disposable {
   protected Project myProject;
   private boolean myTemplateTesting;
 
@@ -55,26 +54,6 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
 
   public TemplateManagerImpl(Project project) {
     myProject = project;
-  }
-
-  @Override
-  public void disposeComponent() {
-  }
-
-  @Override
-  public void dispose() {
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void projectClosed() {
-  }
-
-  @Override
-  public void projectOpened() {
     final EditorFactoryListener myEditorFactoryListener = new EditorFactoryAdapter() {
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
@@ -89,6 +68,11 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
       }
     };
     EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener, myProject);
+  }
+
+  @Override
+  public void dispose() {
+
   }
 
   @TestOnly
@@ -538,12 +522,6 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
 
   public static TemplateContextType[] getAllContextTypes() {
     return Extensions.getExtensions(TemplateContextType.EP_NAME);
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "TemplateManager";
   }
 
   @Override

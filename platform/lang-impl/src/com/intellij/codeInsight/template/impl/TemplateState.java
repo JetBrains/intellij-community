@@ -26,6 +26,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
@@ -116,9 +117,9 @@ public class TemplateState implements Disposable {
       public void commandStarted(CommandEvent event) {
         if (myEditor != null) {
           final int offset = myEditor.getCaretModel().getOffset();
-          myDocumentChangesTerminateTemplate = (myCurrentSegmentNumber >= 0 &&
+          myDocumentChangesTerminateTemplate = myCurrentSegmentNumber >= 0 &&
                                                (offset < mySegments.getSegmentStart(myCurrentSegmentNumber) ||
-                                                offset > mySegments.getSegmentEnd(myCurrentSegmentNumber)));
+                                                offset > mySegments.getSegmentEnd(myCurrentSegmentNumber));
         }
         started = true;
       }
@@ -393,13 +394,8 @@ public class TemplateState implements Disposable {
   }
 
   private String getRangesDebugInfo() {
-    return myTemplateRange.toString() +
-           "\ntemplateKey: " +
-           myTemplate.getKey() +
-           "\ntemplateText: " +
-           myTemplate.getTemplateText() +
-           "\ntemplateString: " +
-           myTemplate.getString();
+    return myTemplateRange + "\ntemplateKey: " + myTemplate.getKey() + "\ntemplateText: " + myTemplate.getTemplateText() +
+           "\ntemplateString: " + myTemplate;
   }
 
   private void doReformat(final TextRange range) {
@@ -479,7 +475,7 @@ public class TemplateState implements Disposable {
     }
 
     String message = template.getKey();
-    if (message == null || message.length() == 0) {
+    if (message == null || message.isEmpty()) {
       message = template.getString();
       if (message == null) {
         message = template.getTemplateText();
@@ -633,7 +629,7 @@ public class TemplateState implements Disposable {
     if (myProcessor != null && myCurrentVariableNumber >= 0) {
       final String variableName = myTemplate.getVariableNameAt(myCurrentVariableNumber);
       final TextResult value = getVariableValue(variableName);
-      if (value != null && value.getText().length() > 0) {
+      if (value != null && !value.getText().isEmpty()) {
         if (!myProcessor.process(variableName, value.getText())) {
           finishTemplateEditing(false); // nextTab(); ?
           return;
@@ -643,7 +639,7 @@ public class TemplateState implements Disposable {
 
     fixOverlappedSegments(myCurrentSegmentNumber);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
       @Override
       public void run() {
         BitSet calcedSegments = new BitSet();
@@ -1146,7 +1142,7 @@ public class TemplateState implements Disposable {
             final int offset = mySegments.getSegmentStart(endSegmentNumber);
             final int lineStart = myDocument.getLineStartOffset(myDocument.getLineNumber(offset));
             // if $END$ is at line start, put it at correct indentation
-            if (myDocument.getCharsSequence().subSequence(lineStart, offset).toString().trim().length() == 0) {
+            if (myDocument.getCharsSequence().subSequence(lineStart, offset).toString().trim().isEmpty()) {
               final int adjustedOffset = style.adjustLineIndent(file, offset);
               mySegments.replaceSegmentAt(endSegmentNumber, adjustedOffset, adjustedOffset);
             }

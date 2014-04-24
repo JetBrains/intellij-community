@@ -881,9 +881,13 @@
 
     <virtualFileSystem key="scratchpad" implementationClass="com.intellij.ide.scratch.ScratchpadFileSystem"/>
 
+    <applicationService serviceImplementation="com.intellij.openapi.editor.richcopy.settings.RichCopySettings"/>
     <copyPastePostProcessor implementation="com.intellij.openapi.editor.richcopy.TextWithMarkupProcessor"/>
     <copyPastePostProcessor implementation="com.intellij.openapi.editor.richcopy.RtfCopyPasteProcessor"/>
     <copyPastePostProcessor implementation="com.intellij.openapi.editor.richcopy.HtmlCopyPasteProcessor"/>
+     <!--the following bindings use 'first' order to make sure they capture raw text before any other processor modifies it -->
+    <copyPastePreProcessor implementation="com.intellij.openapi.editor.richcopy.RtfCopyPasteProcessor$RawTextSetter" order="first" id="richcopy-rtf"/>
+    <copyPastePreProcessor implementation="com.intellij.openapi.editor.richcopy.HtmlCopyPasteProcessor$RawTextSetter" order="first" id="richcopy-html"/>
   </extensions>
 </idea-plugin>
 

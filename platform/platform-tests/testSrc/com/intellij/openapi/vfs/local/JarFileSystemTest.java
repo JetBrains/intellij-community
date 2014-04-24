@@ -75,6 +75,9 @@ public class JarFileSystemTest extends PlatformLangTestCase {
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar);
     assertNotNull(vFile);
 
+    VirtualFile jarRoot = findByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR);
+    assertEquals(1, jarRoot.getChildren().length);
+
     final VirtualFile entry = findByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR + JarFile.MANIFEST_NAME);
     assertContent(entry, "");
 
@@ -94,12 +97,15 @@ public class JarFileSystemTest extends PlatformLangTestCase {
       }
     );
 
-    IoTestUtil.writeEntry(jar, JarFile.MANIFEST_NAME, "update");
+    IoTestUtil.createTestJar(jar, JarFile.MANIFEST_NAME, "update", "some.txt", "some text");
     vFile.refresh(false, false);
 
     assertTrue(updated.get());
     assertTrue(entry.isValid());
     assertContent(entry, "update");
+    assertEquals(2, jarRoot.getChildren().length);
+    VirtualFile newEntry = findByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR + "some.txt");
+    assertContent(newEntry, "some text");
   }
 
   public void testInvalidJar() throws Exception {

@@ -384,6 +384,10 @@ public class UIUtil {
   }
 
   public static void setEnabled(Component component, boolean enabled, boolean recursively) {
+    setEnabled(component, enabled, recursively, false);
+  }
+
+  public static void setEnabled(Component component, boolean enabled, boolean recursively, boolean visibleOnly) {
     component.setEnabled(enabled);
     if (component instanceof JComboBox && isUnderAquaLookAndFeel()) {
       // On Mac JComboBox instances have children: com.apple.laf.AquaComboBoxButton and javax.swing.CellRendererPane.
@@ -401,7 +405,9 @@ public class UIUtil {
         final Container container = (Container)component;
         final int subComponentCount = container.getComponentCount();
         for (int i = 0; i < subComponentCount; i++) {
-          setEnabled(container.getComponent(i), enabled, recursively);
+          Component child = container.getComponent(i);
+          if (visibleOnly && !child.isVisible()) continue;
+          setEnabled(child, enabled, recursively, visibleOnly);
         }
       }
     }
@@ -2936,5 +2942,11 @@ public class UIUtil {
       }
     }
     return genericFontFamily;
+  }
+
+  @NotNull
+  public static String rightArrow() {
+    char rightArrow = '\u2192';
+    return getLabelFont().canDisplay(rightArrow) ? String.valueOf(rightArrow) : "->";
   }
 }

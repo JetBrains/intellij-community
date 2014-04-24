@@ -24,6 +24,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.RetinaImage;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +34,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.FilteredImageSource;
-import java.awt.image.ImageObserver;
 import java.awt.image.ImageProducer;
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
@@ -98,7 +98,7 @@ public final class IconLoader {
 
   @Deprecated
   public static Icon getIcon(@NotNull final Image image) {
-    return new MyImageIcon(image);
+    return new JBImageIcon(image);
   }
 
   public static void setUseDarkIcons(boolean useDarkIcons) {
@@ -279,7 +279,7 @@ public final class IconLoader {
       Image img = createDisabled(image);
       if (UIUtil.isRetina()) img = RetinaImage.createFrom(img, 2, ImageLoader.ourComponent);
 
-      disabledIcon = new MyImageIcon(img);
+      disabledIcon = new JBImageIcon(img);
       ourIcon2DisabledIcon.put(icon, disabledIcon);
     }
     return disabledIcon;
@@ -380,19 +380,6 @@ public final class IconLoader {
     @Override
     public String toString() {
       return myUrl.toString();
-    }
-  }
-
-  private static final class MyImageIcon extends ImageIcon {
-    public MyImageIcon(final Image image) {
-      super(image);
-    }
-
-    @Override
-    public final synchronized void paintIcon(final Component c, final Graphics g, final int x, final int y) {
-      final ImageObserver observer = getImageObserver();
-
-      UIUtil.drawImage(g, getImage(), x, y, observer == null ? c : observer);
     }
   }
 

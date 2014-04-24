@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -49,31 +48,12 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.*;
 
-public class HighlightManagerImpl extends HighlightManager implements ProjectComponent {
+public class HighlightManagerImpl extends HighlightManager {
   private final Project myProject;
 
   public HighlightManagerImpl(Project project) {
     myProject = project;
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "HighlightManager";
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
-  }
-
-  @Override
-  public void projectOpened() {
-    AnActionListener anActionListener = new MyAnActionListener();
-    ActionManagerEx.getInstanceEx().addAnActionListener(anActionListener, myProject);
+    ActionManagerEx.getInstanceEx().addAnActionListener(new MyAnActionListener(), myProject);
 
     DocumentListener documentListener = new DocumentAdapter() {
       @Override
@@ -100,10 +80,6 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
       }
     };
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(documentListener, myProject);
-  }
-
-  @Override
-  public void projectClosed() {
   }
 
   @Nullable

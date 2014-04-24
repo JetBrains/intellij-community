@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import javax.swing.*;
  * @author Konstantin Bulenkov
  */
 public class DarculaLookAndFeelInfo extends UIManager.LookAndFeelInfo {
-    @NonNls public static final String CLASS_NAME = "idea.dark.laf.classname";
+    @NonNls public static final String CLASS_NAME = DarculaLaf.class.getName();
     public DarculaLookAndFeelInfo(){
       super(IdeBundle.message("idea.dark.look.and.feel"), CLASS_NAME);
     }

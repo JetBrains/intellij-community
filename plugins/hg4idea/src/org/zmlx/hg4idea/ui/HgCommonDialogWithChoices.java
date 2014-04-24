@@ -31,6 +31,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
 
+import static org.zmlx.hg4idea.util.HgUtil.TIP_REFERENCE;
+
 public class HgCommonDialogWithChoices extends DialogWrapper {
 
 
@@ -119,7 +121,8 @@ public class HgCommonDialogWithChoices extends DialogWrapper {
     HgRepository repo = hgRepositorySelectorComponent.getRepository();
     branchSelector.setModel(new DefaultComboBoxModel(repo.getOpenedBranches().toArray()));
     DefaultComboBoxModel tagComboBoxModel = new DefaultComboBoxModel(HgUtil.getNamesWithoutHashes(repo.getTags()).toArray());
-    tagComboBoxModel.addElement("tip");    //HgRepository does not store 'tip' tag because it is internal and not included in tags file
+    tagComboBoxModel
+      .addElement(TIP_REFERENCE);    //HgRepository does not store 'tip' tag because it is internal and not included in tags file
     tagSelector.setModel(tagComboBoxModel);
     bookmarkSelector.setModel(new DefaultComboBoxModel(HgUtil.getNamesWithoutHashes(repo.getBookmarks()).toArray()));
     update();

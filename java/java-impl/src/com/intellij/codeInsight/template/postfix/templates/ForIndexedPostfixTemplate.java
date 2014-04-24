@@ -37,7 +37,7 @@ public abstract class ForIndexedPostfixTemplate extends PostfixTemplate {
 
   @Override
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
-    PsiExpression expr = getTopmostExpression(context);
+    PsiExpression expr = PostfixTemplatesUtils.getTopmostExpression(context);
     return expr != null && (PostfixTemplatesUtils.isNumber(expr.getType()) ||
                             PostfixTemplatesUtils.isArray(expr.getType()) ||
                             PostfixTemplatesUtils.isIterable(expr.getType()));
@@ -45,7 +45,7 @@ public abstract class ForIndexedPostfixTemplate extends PostfixTemplate {
 
   @Override
   public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
-    PsiExpression expr = getTopmostExpression(context);
+    PsiExpression expr = PostfixTemplatesUtils.getTopmostExpression(context);
     if (expr == null) {
       PostfixTemplatesUtils.showErrorHint(context.getProject(), editor);
       return;

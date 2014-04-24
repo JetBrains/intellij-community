@@ -94,7 +94,7 @@ class DragHelper extends MouseDragHelper {
   }
 
   protected void processDrag(MouseEvent event, Point targetScreenPoint, Point startPointScreen) {
-    if (!myTabs.isTabDraggingEnabled() || !isDragSource(event)) return;
+    if (!myTabs.isTabDraggingEnabled() || !isDragSource(event) || !MouseDragHelper.checkModifiers(event)) return;
 
     SwingUtilities.convertPointFromScreen(startPointScreen, myTabs);
 

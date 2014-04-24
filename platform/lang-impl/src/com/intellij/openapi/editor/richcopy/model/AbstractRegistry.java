@@ -19,14 +19,13 @@ import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Serializable;
 import java.util.Arrays;
 
 /**
  * @author Denis Zhdanov
  * @since 3/23/13 3:17 PM
  */
-public abstract class AbstractRegistry<T> implements Serializable {
+public abstract class AbstractRegistry<T> {
 
   @NotNull private final TIntObjectHashMap<T> myDataById = new TIntObjectHashMap<T>();
 

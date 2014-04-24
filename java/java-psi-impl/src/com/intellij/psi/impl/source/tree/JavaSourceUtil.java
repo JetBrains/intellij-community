@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,12 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 
 public class JavaSourceUtil {
   private JavaSourceUtil() { }
 
-  public static void fullyQualifyReference(final CompositeElement reference, final PsiClass targetClass) {
+  public static void fullyQualifyReference(@NotNull CompositeElement reference, @NotNull PsiClass targetClass) {
     if (((SourceJavaCodeReference)reference).isQualified()) { // qualified reference
       final PsiClass parentClass = targetClass.getContainingClass();
       if (parentClass == null) return;

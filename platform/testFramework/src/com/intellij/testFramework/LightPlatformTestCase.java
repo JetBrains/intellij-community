@@ -50,6 +50,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -337,18 +338,29 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   @Override
   protected void setUp() throws Exception {
-    super.setUp();
-    initApplication();
-    ourApplication.setDataProvider(this);
-    doSetup(new SimpleLightProjectDescriptor(getModuleType(), getProjectJDK()), configureLocalInspectionTools(), myAvailableInspectionTools);
-    InjectedLanguageManagerImpl.pushInjectors(getProject());
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          LightPlatformTestCase.super.setUp();
+          initApplication();
+          ourApplication.setDataProvider(LightPlatformTestCase.this);
+          doSetup(new SimpleLightProjectDescriptor(getModuleType(), getProjectJDK()), configureLocalInspectionTools(),
+                  myAvailableInspectionTools);
+          InjectedLanguageManagerImpl.pushInjectors(getProject());
 
-    storeSettings();
+          storeSettings();
 
-    myThreadTracker = new ThreadTracker();
-    ModuleRootManager.getInstance(ourModule).orderEntries().getAllLibrariesAndSdkClassesRoots();
-    VirtualFilePointerManagerImpl filePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
-    filePointerManager.storePointers();
+          myThreadTracker = new ThreadTracker();
+          ModuleRootManager.getInstance(ourModule).orderEntries().getAllLibrariesAndSdkClassesRoots();
+          VirtualFilePointerManagerImpl filePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
+          filePointerManager.storePointers();
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
   }
 
   public static void doSetup(@NotNull LightProjectDescriptor descriptor,
@@ -444,6 +456,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
       assertEmpty("There are unsaved documents", Arrays.asList(unsavedDocuments));
     }
+    ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
   }
 
   // todo: use Class<? extends InspectionProfileEntry> once on Java 7
@@ -521,6 +534,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   public static void doTearDown(@NotNull final Project project, IdeaTestApplication application, boolean checkForEditors) throws Exception {
+    ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
     DocumentCommitThread.getInstance().clearQueue();
     CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
     checkAllTimersAreDisposed();

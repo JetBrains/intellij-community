@@ -504,7 +504,8 @@ public class TreeModelBuilder {
 
     ChangesBrowserNode parentNode = myFoldersCache.get(parentPath.getKey());
     if (parentNode == null) {
-      parentNode = ChangesBrowserNode.create(myProject, new FilePathImpl(new File(parentPath.getPath()), true));
+      FilePathImpl filePath = parentPath.getVf() == null ? new FilePathImpl(new File(parentPath.getPath()), true) : new FilePathImpl(parentPath.getVf());
+      parentNode = ChangesBrowserNode.create(myProject, filePath);
       ChangesBrowserNode grandPa = getParentNodeFor(parentPath, policy, rootNode);
       model.insertNodeInto(parentNode, grandPa, grandPa.getChildCount());
       myFoldersCache.put(parentPath.getKey(), parentNode);

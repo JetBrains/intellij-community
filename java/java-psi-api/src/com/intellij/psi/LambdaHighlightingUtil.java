@@ -36,7 +36,7 @@ public class LambdaHighlightingUtil {
   @Nullable
   public static String checkInterfaceFunctional(@NotNull PsiClass psiClass, String interfaceNonFunctionalMessage) {
     if (psiClass instanceof PsiTypeParameter) return null; //should be logged as cyclic inference
-    final List<MethodSignature> signatures = LambdaUtil.findFunctionCandidates(psiClass);
+    final List<HierarchicalMethodSignature> signatures = LambdaUtil.findFunctionCandidates(psiClass);
     if (signatures == null) return interfaceNonFunctionalMessage;
     if (signatures.isEmpty()) return "No target method found";
     if (signatures.size() == 1) {
@@ -97,15 +97,23 @@ public class LambdaHighlightingUtil {
   @Nullable
   public static String checkInterfaceFunctional(PsiType functionalInterfaceType) {
     if (functionalInterfaceType instanceof PsiIntersectionType) {
+      int count = 0;
       for (PsiType type : ((PsiIntersectionType)functionalInterfaceType).getConjuncts()) {
-        if (checkInterfaceFunctional(type) == null) return null;
+        if (checkInterfaceFunctional(type) == null) {
+          count++;
+        }
       }
+
+      if (count > 1) {
+        return "Multiple non-overriding abstract methods found in " + functionalInterfaceType.getPresentableText();
+      }
+      return null;
     }
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
     final PsiClass aClass = resolveResult.getElement();
     if (aClass != null) {
       if (aClass instanceof PsiTypeParameter) return null; //should be logged as cyclic inference
-      final List<MethodSignature> signatures = LambdaUtil.findFunctionCandidates(aClass);
+      final List<HierarchicalMethodSignature> signatures = LambdaUtil.findFunctionCandidates(aClass);
       if (signatures != null && signatures.size() == 1) {
         final MethodSignature functionalMethod = signatures.get(0);
         if (functionalMethod.getTypeParameters().length > 0) return "Target method is generic";

@@ -147,23 +147,9 @@ public abstract class DumbService {
    * Invoke the runnable later on EventDispatchThread AND when IDEA isn't in dumb mode
    * @param runnable runnable
    */
-  public void smartInvokeLater(@NotNull final Runnable runnable) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        runWhenSmart(runnable);
-      }
-    });
-  }
+  public abstract void smartInvokeLater(@NotNull Runnable runnable);
 
-  public void smartInvokeLater(@NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        runWhenSmart(runnable);
-      }
-    }, modalityState);
-  }
+  public abstract void smartInvokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState);
 
   private static final NotNullLazyKey<DumbService, Project> INSTANCE_KEY = ServiceManager.createLazyKey(DumbService.class);
 

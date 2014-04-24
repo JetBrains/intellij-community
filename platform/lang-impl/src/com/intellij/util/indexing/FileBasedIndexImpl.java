@@ -1792,6 +1792,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
     assert index != null;
 
+    if (currentFC != null && currentFC.getUserData(ourPhysicalContentKey) == null) {
+      currentFC.putUserData(ourPhysicalContentKey, Boolean.TRUE);
+    }
     // important: no hard referencing currentFC to avoid OOME, the methods introduced for this purpose!
     final Computable<Boolean> update = index.update(inputId, currentFC);
 
@@ -1800,6 +1803,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                    createIndexedStampUpdateRunnable(indexId, file, currentFC != null)
     );
   }
+
+  static final Key<Boolean> ourPhysicalContentKey = Key.create("physical.content.flag");
 
   @NotNull
   private Runnable createIndexedStampUpdateRunnable(@NotNull final ID<?, ?> indexId,
