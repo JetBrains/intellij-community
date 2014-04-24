@@ -284,7 +284,6 @@ public class JavaGenericsUtil {
       PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getClassSubstitutor(owner, aClass, substitutor);
       if (superClassSubstitutor == null) return null;
       PsiType itemType = superClassSubstitutor.substitute(typeParameter);
-      itemType = substitutor.substitute(itemType);
       return itemType == null ? PsiType.getJavaLangObject(manager, aClass.getResolveScope()) : itemType;
     }
     return null;
