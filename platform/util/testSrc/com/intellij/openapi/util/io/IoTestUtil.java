@@ -26,9 +26,9 @@ import java.io.*;
 import java.net.URL;
 import java.util.Locale;
 import java.util.Set;
-import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.jar.JarOutputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static org.junit.Assert.*;
 
@@ -217,20 +217,23 @@ public class IoTestUtil {
 
   @NotNull
   public static File createTestJar(File jarFile) throws IOException {
-    writeEntry(jarFile, JarFile.MANIFEST_NAME, "");
-    return jarFile;
+    return createTestJar(jarFile, JarFile.MANIFEST_NAME, "");
   }
 
-  public static void writeEntry(@NotNull File jarFile, @NotNull String name, @NotNull String content) throws IOException {
-    JarOutputStream stream = new JarOutputStream(new FileOutputStream(jarFile));
+  @NotNull
+  public static File createTestJar(@NotNull File jarFile, @NotNull String... data) throws IOException {
+    ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(jarFile));
     try {
-      stream.putNextEntry(new JarEntry(name));
-      stream.write(content.getBytes("UTF-8"));
-      stream.closeEntry();
+      for (int i = 0; i < data.length; i += 2) {
+        stream.putNextEntry(new ZipEntry(data[i]));
+        stream.write(data[i + 1].getBytes("UTF-8"));
+        stream.closeEntry();
+      }
     }
     finally {
       stream.close();
     }
+    return jarFile;
   }
 
   @NotNull

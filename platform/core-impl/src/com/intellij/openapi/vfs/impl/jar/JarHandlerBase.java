@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFile;
@@ -41,8 +42,8 @@ import java.util.zip.ZipFile;
 public class JarHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.jar.JarHandlerBase");
 
-  private static final long DEFAULT_LENGTH = 0L;
-  private static final long DEFAULT_TIMESTAMP = -1L;
+  protected static final long DEFAULT_LENGTH = 0L;
+  protected static final long DEFAULT_TIMESTAMP = -1L;
 
   private final TimedReference<JarFile> myJarFile = new TimedReference<JarFile>(null);
   private volatile Reference<Map<String, EntryInfo>> myRelPathsToEntries = new SoftReference<Map<String, EntryInfo>>(null);
@@ -313,7 +314,7 @@ public class JarHandlerBase {
   }
 
   public long getLength(@NotNull VirtualFile file) {
-    if (file.getParent() == null) return DEFAULT_LENGTH;
+    if (file.getParent() == null) return getOriginalFile().length();
     EntryInfo entry = getEntryInfo(file);
     return entry == null ? DEFAULT_LENGTH : entry.length;
   }
@@ -341,7 +342,8 @@ public class JarHandlerBase {
   @Nullable
   public FileAttributes getAttributes(@NotNull VirtualFile file) {
     if (file.getParent() == null) {
-      return new FileAttributes(true, false, false, false, DEFAULT_LENGTH, getOriginalFile().lastModified(), false);
+      FileAttributes attributes = FileSystemUtil.getAttributes(getOriginalFile());
+      return attributes == null ? null : new FileAttributes(true, false, false, false, attributes.length, attributes.lastModified, false);
     }
 
     EntryInfo entry = getEntryInfo(file);
