@@ -86,7 +86,7 @@ public class PythonNewDirectoryProjectAction extends NewDirectoryProjectAction {
       for (Sdk sdk : sdks) {
         final SdkAdditionalData additionalData = sdk.getSdkAdditionalData();
         if (additionalData instanceof PythonSdkAdditionalData) {
-          ((PythonSdkAdditionalData) additionalData).reassociateWithCreatedProject(newProject);
+          ((PythonSdkAdditionalData)additionalData).reassociateWithCreatedProject(newProject);
         }
       }
     }
