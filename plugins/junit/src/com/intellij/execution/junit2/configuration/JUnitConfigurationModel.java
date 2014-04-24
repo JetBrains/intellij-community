@@ -42,19 +42,23 @@ public class JUnitConfigurationModel {
   public static final int METHOD = 2;
   public static final int PATTERN = 3;
   public static final int DIR = 4;
+  public static final int CATEGORY = 5;
 
   private static final List<String> ourTestObjects;
 
   static {
-    ourTestObjects = Arrays.asList(JUnitConfiguration.TEST_PACKAGE, JUnitConfiguration.TEST_CLASS, JUnitConfiguration.TEST_METHOD,
+    ourTestObjects = Arrays.asList(JUnitConfiguration.TEST_PACKAGE,
+                                   JUnitConfiguration.TEST_CLASS, 
+                                   JUnitConfiguration.TEST_METHOD,
                                    JUnitConfiguration.TEST_PATTERN,
-                                   JUnitConfiguration.TEST_DIRECTORY);
+                                   JUnitConfiguration.TEST_DIRECTORY,
+                                   JUnitConfiguration.TEST_CATEGORY);
   }
 
 
   private JUnitConfigurable myListener;
   private int myType = -1;
-  private final Object[] myJUnitDocuments = new Object[5];
+  private final Object[] myJUnitDocuments = new Object[6];
   private final Project myProject;
 
   public JUnitConfigurationModel(final Project project) {
@@ -99,7 +103,8 @@ public class JUnitConfigurationModel {
     data.TEST_OBJECT = testObject;
     if (testObject != JUnitConfiguration.TEST_PACKAGE &&
         testObject != JUnitConfiguration.TEST_PATTERN &&
-        testObject != JUnitConfiguration.TEST_DIRECTORY) {
+        testObject != JUnitConfiguration.TEST_DIRECTORY &&
+        testObject != JUnitConfiguration.TEST_CATEGORY) {
       try {
         data.METHOD_NAME = getJUnitTextValue(METHOD);
         final PsiClass testClass = !myProject.isDefault() && !StringUtil.isEmptyOrSpaces(className) ? JUnitUtil.findPsiClass(className, module, myProject) : null;
@@ -123,6 +128,9 @@ public class JUnitConfigurationModel {
       }
       else if (testObject == JUnitConfiguration.TEST_DIRECTORY) {
         data.setDirName(getJUnitTextValue(DIR));
+      }
+      else if (testObject == JUnitConfiguration.TEST_CATEGORY) {
+        data.setCategoryName(getJUnitTextValue(CATEGORY));
       }
       else {
         final LinkedHashSet<String> set = new LinkedHashSet<String>();
@@ -168,6 +176,7 @@ public class JUnitConfigurationModel {
     setJUnitTextValue(METHOD, data.getMethodName());
     setJUnitTextValue(PATTERN, data.getPatternPresentation());
     setJUnitTextValue(DIR, data.getDirName());
+    setJUnitTextValue(CATEGORY, data.getCategory());
   }
 
   private void setJUnitTextValue(final int index, final String text) {

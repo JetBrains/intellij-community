@@ -98,14 +98,20 @@ public abstract class TestObject implements JavaCommandLine {
                                       final Project project,
                                       final JUnitConfiguration configuration,
                                       ExecutionEnvironment environment) {
-    if (JUnitConfiguration.TEST_METHOD.equals(id))
+    if (JUnitConfiguration.TEST_METHOD.equals(id)) {
       return new TestMethod(project, configuration, environment);
-    if (JUnitConfiguration.TEST_CLASS.equals(id))
+    }
+    if (JUnitConfiguration.TEST_CLASS.equals(id)) {
       return new TestClass(project, configuration, environment);
-    if (JUnitConfiguration.TEST_PACKAGE.equals(id))
+    }
+    if (JUnitConfiguration.TEST_PACKAGE.equals(id)){
       return new TestPackage(project, configuration, environment);
-    else if (JUnitConfiguration.TEST_DIRECTORY.equals(id)) {
+    }
+    if (JUnitConfiguration.TEST_DIRECTORY.equals(id)) {
       return new TestDirectory(project, configuration, environment);
+    }
+    if (JUnitConfiguration.TEST_CATEGORY.equals(id)) {
+      return new TestCategory(project, configuration, environment);
     }
     if (JUnitConfiguration.TEST_PATTERN.equals(id)) {
       return new TestsPattern(project, configuration, environment);
@@ -486,6 +492,9 @@ public abstract class TestObject implements JavaCommandLine {
       final PrintWriter writer = new PrintWriter(myTempFile, CharsetToolkit.UTF8);
       try {
         writer.println(packageName);
+        final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
+        final String category = data.TEST_OBJECT == JUnitConfiguration.TEST_CATEGORY ? data.getCategory() : "";
+        writer.println(category);
         final List<String> testNames = new ArrayList<String>();
         for (final T element : elements) {
           final String name = nameFunction.fun(element);
