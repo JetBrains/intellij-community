@@ -61,6 +61,7 @@ public abstract class AbstractModelBuilderTest {
   public static final String GRADLE_v1_12 = "1.12-rc-1";
 
   public static final Pattern TEST_METHOD_NAME_PATTERN = Pattern.compile("(.*)\\[(\\d*)\\]");
+  private static final int DEFAULT_DAEMON_MAX_IDLE_TIME = 5;
 
   private static File ourTempDir;
 
@@ -124,9 +125,9 @@ public abstract class AbstractModelBuilderTest {
       connector.useDistribution(distributionUri);
     }
     connector.forProjectDirectory(testDir);
-    int daemonMaxIdleTime = 1;
+    int daemonMaxIdleTime = DEFAULT_DAEMON_MAX_IDLE_TIME;
     try {
-      daemonMaxIdleTime = Integer.parseInt(System.getProperty("gradleDaemonMaxIdleTime", "1"));
+      daemonMaxIdleTime = Integer.parseInt(System.getProperty("gradleDaemonMaxIdleTime", String.valueOf(DEFAULT_DAEMON_MAX_IDLE_TIME)));
     }
     catch (NumberFormatException ignore) {}
 
