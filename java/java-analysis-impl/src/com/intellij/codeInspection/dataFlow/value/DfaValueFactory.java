@@ -115,19 +115,6 @@ public class DfaValueFactory {
     return getConstFactory().create(literal);
   }
 
-  private static boolean isNotNullExpression(PsiExpression initializer, PsiType type) {
-    if (initializer instanceof PsiNewExpression) {
-      return true;
-    }
-    if (initializer instanceof PsiPolyadicExpression) {
-      if (type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
   @Nullable
   public DfaValue createReferenceValue(PsiReferenceExpression referenceExpression) {
     PsiElement psiSource = referenceExpression.resolve();
@@ -139,12 +126,6 @@ public class DfaValueFactory {
     if (variable.hasModifierProperty(PsiModifier.FINAL) && !variable.hasModifierProperty(PsiModifier.TRANSIENT)) {
       DfaValue constValue = getConstFactory().create(variable);
       if (constValue != null) return constValue;
-
-      PsiExpression initializer = variable.getInitializer();
-      PsiType type = initializer == null ? null : initializer.getType();
-      if (initializer != null && type != null && isNotNullExpression(initializer, type)) {
-        return createTypeValue(type, Nullness.NOT_NULL);
-      }
     }
 
     if (!variable.hasModifierProperty(PsiModifier.VOLATILE) && isEffectivelyUnqualified(referenceExpression)) {
