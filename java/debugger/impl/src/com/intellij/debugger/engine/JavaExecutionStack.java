@@ -15,12 +15,14 @@
  */
 package com.intellij.debugger.engine;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.impl.watch.MethodsTracker;
-import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.sun.jdi.ThreadReference;
@@ -40,7 +42,7 @@ public class JavaExecutionStack extends XExecutionStack {
   private final MethodsTracker myTracker = new MethodsTracker();
 
   public JavaExecutionStack(@NotNull ThreadReferenceProxyImpl threadProxy, @NotNull DebugProcessImpl debugProcess, boolean current) {
-    super(threadProxy.name(), current ? AllIcons.Debugger.ThreadCurrent : AllIcons.Debugger.ThreadSuspended);
+    super(calcRepresentation(threadProxy), current ? AllIcons.Debugger.ThreadCurrent : AllIcons.Debugger.ThreadSuspended);
     myThreadProxy = threadProxy;
     myDebugProcess = debugProcess;
     JavaStackFrame topFrame = null;
@@ -101,5 +103,18 @@ public class JavaExecutionStack extends XExecutionStack {
         container.addStackFrames(frames, true);
       }
     });
+  }
+
+  private static String calcRepresentation(ThreadReferenceProxyImpl thread) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    String name = thread.name();
+    ThreadGroupReferenceProxyImpl gr = thread.threadGroupProxy();
+    final String grname = (gr != null)? gr.name() : null;
+    final String threadStatusText = DebuggerUtilsEx.getThreadStatusText(thread.status());
+    //noinspection HardCodedStringLiteral
+    if (grname != null && !"SYSTEM".equalsIgnoreCase(grname)) {
+      return DebuggerBundle.message("label.thread.node.in.group", name, thread.uniqueID(), threadStatusText, grname);
+    }
+    return DebuggerBundle.message("label.thread.node", name, thread.uniqueID(), threadStatusText);
   }
 }
