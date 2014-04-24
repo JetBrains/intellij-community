@@ -40,6 +40,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -118,6 +119,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
     JPanel treePanel = new JPanel(new BorderLayout());
     treePanel.add(ScrollPaneFactory.createScrollPane(myFrameworksTree), BorderLayout.CENTER);
+    myAssociatedFrameworksPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 3, 0));
     treePanel.add(myAssociatedFrameworksPanel, BorderLayout.NORTH);
     treePanel.setMinimumSize(new Dimension(200, 300));
 
@@ -167,6 +169,18 @@ public class AddSupportForFrameworksPanel implements Disposable {
         myAssociatedFrameworksPanel.add(panel);
       }
     }
+
+    // align labels
+    List<JLabel> labels = UIUtil.findComponentsOfType(myAssociatedFrameworksPanel, JLabel.class);
+    int width = 0;
+    for (JLabel label : labels) {
+      width = Math.max(width, label.getPreferredSize().width);
+    }
+    for (JLabel label : labels) {
+      label.setPreferredSize(new Dimension(width, label.getPreferredSize().height));
+    }
+    myAssociatedFrameworksPanel.revalidate();
+    myAssociatedFrameworksPanel.repaint();
   }
 
   protected void onFrameworkStateChanged() {}
@@ -261,7 +275,10 @@ public class AddSupportForFrameworksPanel implements Disposable {
   }
 
   private static JScrollPane wrapInScrollPane(JPanel panel) {
-    return ScrollPaneFactory.createScrollPane(panel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+    JPanel wrapper = new JPanel(new BorderLayout());
+    wrapper.add(panel);
+    wrapper.setBorder(IdeBorderFactory.createEmptyBorder(5));
+    return ScrollPaneFactory.createScrollPane(wrapper, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                               ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
   }
 
