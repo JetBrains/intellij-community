@@ -20,6 +20,7 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.impl.watch.MethodsTracker;
+import com.intellij.icons.AllIcons;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,8 +37,8 @@ public class JavaExecutionStack extends XExecutionStack {
   private final JavaStackFrame myTopFrame;
   private final MethodsTracker myTracker = new MethodsTracker();
 
-  public JavaExecutionStack(@NotNull ThreadReferenceProxyImpl threadProxy, @NotNull DebugProcessImpl debugProcess) {
-    super(threadProxy.name());
+  public JavaExecutionStack(@NotNull ThreadReferenceProxyImpl threadProxy, @NotNull DebugProcessImpl debugProcess, boolean current) {
+    super(threadProxy.name(), current ? AllIcons.Debugger.ThreadCurrent : AllIcons.Debugger.ThreadSuspended);
     myThreadProxy = threadProxy;
     myDebugProcess = debugProcess;
     JavaStackFrame topFrame = null;

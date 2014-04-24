@@ -249,7 +249,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     Collection<JavaExecutionStack> res = new ArrayList<JavaExecutionStack>();
     Collection<ThreadReferenceProxyImpl> threads = getDebugProcess().getVirtualMachineProxy().allThreads();
     for (ThreadReferenceProxyImpl thread : threads) {
-      res.add(new JavaExecutionStack(thread, myDebugProcess));
+      res.add(new JavaExecutionStack(thread, myDebugProcess, thread == myThread));
     }
     myExecutionStacks = res.toArray(new JavaExecutionStack[res.size()]);
   }
