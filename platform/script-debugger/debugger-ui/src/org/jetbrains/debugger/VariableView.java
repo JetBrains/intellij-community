@@ -49,7 +49,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
   private volatile List<Variable> remainingChildren;
   private volatile int remainingChildrenOffset;
 
-  public VariableView(@NotNull VariableContext context, @NotNull Variable variable) {
+  public VariableView(@NotNull Variable variable, @NotNull VariableContext context) {
     super(context.getMemberFilter().normalizeMemberName(variable));
 
     this.context = context;
@@ -351,7 +351,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
     }
 
     for (int i = notGroupedVariablesOffset; i < variables.size(); i++) {
-      groupList.add(new VariableView(this, variables.get(i)));
+      groupList.add(new VariableView(variables.get(i), this));
     }
 
     node.addChildren(groupList, true);
