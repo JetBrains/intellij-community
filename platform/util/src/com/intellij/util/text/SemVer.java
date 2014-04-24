@@ -77,6 +77,11 @@ public class SemVer {
     return result;
   }
 
+  @Override
+  public String toString() {
+    return myRawVersion;
+  }
+
   @Nullable
   public static SemVer parseFromText(@NotNull String text) {
     String[] comps = text.split(Pattern.quote("."), 3);
