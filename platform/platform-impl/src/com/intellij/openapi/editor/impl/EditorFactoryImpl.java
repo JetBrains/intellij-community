@@ -242,6 +242,7 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
   }
 
   @Override
+  @Deprecated
   public void addEditorFactoryListener(@NotNull EditorFactoryListener listener) {
     myEditorFactoryEventDispatcher.addListener(listener);
   }
@@ -252,6 +253,7 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
   }
 
   @Override
+  @Deprecated
   public void removeEditorFactoryListener(@NotNull EditorFactoryListener listener) {
     myEditorFactoryEventDispatcher.removeListener(listener);
   }
