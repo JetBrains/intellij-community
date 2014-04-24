@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
@@ -142,6 +143,7 @@ public class ResolveUtil {
     return PsiTreeUtil.treeWalkUp(place, maxScope, new PairProcessor<PsiElement, PsiElement>() {
       @Override
       public boolean process(PsiElement scope, PsiElement lastParent) {
+        ProgressManager.checkCanceled();
         if (!doProcessDeclarations(originalPlace, lastParent, scope, substituteProcessor(processor, scope), nonCodeProcessor, state)) {
           return false;
         }
@@ -494,6 +496,7 @@ public class ResolveUtil {
     PsiElement lastParent = null;
 
     while (run != null) {
+      ProgressManager.checkCanceled();
       if (run instanceof GrMember) {
         inCodeBlock = false;
       }
