@@ -16,7 +16,9 @@
 package org.jetbrains.plugins.github;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,8 +31,7 @@ import static org.jetbrains.plugins.github.api.GithubGist.FileContent;
 /**
  * @author Aleksey Pivovarov
  */
-public class GithubCreateGistContentTest extends GithubCreateGistTestBase {
-
+public class GithubCreateGistContentTest extends GithubCreateGistContentTestBase {
   @Override
   protected void beforeTest() throws Exception {
     createProjectFiles();
