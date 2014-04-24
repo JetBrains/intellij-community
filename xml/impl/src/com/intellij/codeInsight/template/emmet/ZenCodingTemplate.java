@@ -413,7 +413,6 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
           public void run() {
             callback.getEditor().getCaretModel().runForEachCaret(new CaretAction() {
               public void perform(Caret caret) {
-                callback.fixInitialState(true);
                 String selectedText = callback.getEditor().getSelectionModel().getSelectedText();
                 if (selectedText != null) {
                   String selection = selectedText.trim();
