@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,29 +23,16 @@ import org.jetbrains.annotations.NotNull;
  */
 class FoldingData {
 
-  int widthInColumns = -1;
-  int startX;
-  private final Editor myEditor;
-  private final EditorTextRepresentationHelper myRepresentationHelper;
+  private final int widthInColumns;
   private final FoldRegion myFoldRegion;
 
-  FoldingData(@NotNull FoldRegion foldRegion, int startX, @NotNull EditorTextRepresentationHelper representationHelper,
-              @NotNull Editor editor) 
+  FoldingData(@NotNull FoldRegion foldRegion, int widthInColumns)
   {
     myFoldRegion = foldRegion;
-    this.startX = startX;
-    myRepresentationHelper = representationHelper;
-    myEditor = editor;
+    this.widthInColumns = widthInColumns;
   }
 
   public int getCollapsedSymbolsWidthInColumns() {
-    if (widthInColumns < 0) {
-      Document document = myEditor.getDocument();
-      widthInColumns = myRepresentationHelper.toVisualColumnSymbolsNumber(
-        document.getCharsSequence(), myFoldRegion.getStartOffset(), myFoldRegion.getEndOffset(), startX
-      );
-    }
-
     return widthInColumns;
   }
 
@@ -59,6 +43,6 @@ class FoldingData {
 
   @Override
   public String toString() {
-    return "width in columns: " + widthInColumns + ", start X: " + startX + ", fold region: " + myFoldRegion;
+    return "width in columns: " + widthInColumns + ", fold region: " + myFoldRegion;
   }
 }
