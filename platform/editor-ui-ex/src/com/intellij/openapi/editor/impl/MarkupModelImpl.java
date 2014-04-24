@@ -105,6 +105,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     return myCachedHighlighters;
   }
 
+  @NotNull
   @Override
   public RangeHighlighterEx addRangeHighlighterAndChangeAttributes(int startOffset,
                                                                    int endOffset,
@@ -119,6 +120,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
                                                           false), changeAttributesAction);
   }
 
+  @NotNull
   private RangeHighlighterEx addRangeHighlighter(@NotNull RangeHighlighterImpl highlighter,
                                                  @Nullable Consumer<RangeHighlighterEx> changeAttributesAction) {
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -141,7 +143,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   @Override
-  public void addRangeHighlighter(RangeHighlighterEx marker,
+  public void addRangeHighlighter(@NotNull RangeHighlighterEx marker,
                                   int start,
                                   int end,
                                   boolean greedyToLeft,

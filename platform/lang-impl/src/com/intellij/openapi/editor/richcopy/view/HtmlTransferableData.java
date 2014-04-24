@@ -38,6 +38,7 @@ public class HtmlTransferableData extends AbstractSyntaxAwareReaderTransferableD
   private StringBuilder    myResultBuffer;
   private ColorRegistry    myColorRegistry;
   private FontNameRegistry myFontNameRegistry;
+  private int myMaxLength;
 
   private int     myForeground;
   private int     myBackground;
@@ -56,6 +57,7 @@ public class HtmlTransferableData extends AbstractSyntaxAwareReaderTransferableD
     myResultBuffer = holder;
     myColorRegistry = mySyntaxInfo.getColorRegistry();
     myFontNameRegistry = mySyntaxInfo.getFontNameRegistry();
+    myMaxLength = maxLength;
     try {
       buildColorMap();
       myResultBuffer.append("<pre style=\"background-color:");
@@ -70,19 +72,8 @@ public class HtmlTransferableData extends AbstractSyntaxAwareReaderTransferableD
       appendColor(myResultBuffer, mySyntaxInfo.getDefaultBackground());
       myResultBuffer.append("\">");
 
-      SyntaxInfo.MarkupIterator it = mySyntaxInfo.new MarkupIterator();
-      try {
-        while(it.hasNext()) {
-          it.processNext(this);
-          if (myResultBuffer.length() > maxLength) {
-            myResultBuffer.append("... truncated ...");
-            break;
-          }
-        }
-      }
-      finally {
-        it.dispose();
-      }
+      mySyntaxInfo.processOutputInfo(this);
+
       myResultBuffer.append("</pre>");
     }
     finally {
@@ -217,5 +208,14 @@ public class HtmlTransferableData extends AbstractSyntaxAwareReaderTransferableD
   public void handleStyle(int style) throws Exception {
     myBold = (Font.BOLD & style) != 0;
     myItalic = (Font.ITALIC & style) != 0;
+  }
+
+  @Override
+  public boolean canHandleMore() {
+    if (myResultBuffer.length() > myMaxLength) {
+      myResultBuffer.append("... truncated ...");
+      return false;
+    }
+    return true;
   }
 }

@@ -96,20 +96,7 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
   }
 
   private static void content(@NotNull SyntaxInfo syntaxInfo, @NotNull StringBuilder buffer, @NotNull String rawText, int maxLength) {
-    MyVisitor visitor = new MyVisitor(buffer, rawText, syntaxInfo);
-    SyntaxInfo.MarkupIterator it = syntaxInfo.new MarkupIterator();
-    try {
-      while(it.hasNext()) {
-        it.processNext(visitor);
-        if (buffer.length() > maxLength) {
-          buffer.append("... truncated ...");
-          break;
-        }
-      }
-    }
-    finally {
-      it.dispose();
-    }
+    syntaxInfo.processOutputInfo(new MyVisitor(buffer, rawText, syntaxInfo, maxLength));
   }
 
   private static void addFontSize(StringBuilder buffer, int fontSize) {
@@ -120,6 +107,7 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
 
     @NotNull private final StringBuilder myBuffer;
     @NotNull private final String        myRawText;
+    private final int myMaxLength;
 
     private final int myDefaultBackgroundId;
     private final int myFontSize;
@@ -127,9 +115,10 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
     private int myFontNameId   = -1;
     private int myFontStyle    = -1;
 
-    MyVisitor(@NotNull StringBuilder buffer, @NotNull String rawText, @NotNull SyntaxInfo syntaxInfo) {
+    MyVisitor(@NotNull StringBuilder buffer, @NotNull String rawText, @NotNull SyntaxInfo syntaxInfo, int maxLength) {
       myBuffer = buffer;
       myRawText = rawText;
+      myMaxLength = maxLength;
 
       myDefaultBackgroundId = syntaxInfo.getDefaultBackground();
       myFontSize = syntaxInfo.getSingleFontSize();
@@ -210,6 +199,15 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
       }
       myBuffer.append('\n');
       myFontStyle = style;
+    }
+
+    @Override
+    public boolean canHandleMore() {
+      if (myBuffer.length() > myMaxLength) {
+        myBuffer.append("... truncated ...");
+        return false;
+      }
+      return true;
     }
   }
 }
