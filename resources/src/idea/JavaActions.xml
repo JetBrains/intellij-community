@@ -102,6 +102,7 @@
 
     <action id="Debugger.PopFrame" class="com.intellij.debugger.actions.PopFrameAction" icon="AllIcons.Actions.PopFrame">
       <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="ForceRunToCursor"/>
+      <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="first"/>
     </action>
 
     <action id="Debugger.AddSteppingFilter" class="com.intellij.debugger.actions.AddSteppingFilterAction" text="Add Stepping Filter..."/>
@@ -115,7 +116,7 @@
 
     <action id="ExportThreads" class="com.intellij.debugger.actions.ExportThreadsAction" icon="AllIcons.Actions.Export">
       <add-to-group group-id="RunMenu" anchor="last"/>
-      <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="first"/>
+      <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="before" relative-to-action="Debugger.CustomizeThreadsView"/>
     </action>
     <action id="DumpThreads" class="com.intellij.debugger.actions.ThreadDumpAction" text="Get thread dump" icon="AllIcons.Actions.Dump">
       <add-to-group group-id="RunMenu" anchor="last"/>

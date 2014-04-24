@@ -226,4 +226,8 @@ public class JavaStackFrame extends XStackFrame {
       //myChildren.add(variableNode);
     }
   }
+
+  public StackFrameProxyImpl getStackFrameProxy() {
+    return myStackFrameProxy;
+  }
 }
