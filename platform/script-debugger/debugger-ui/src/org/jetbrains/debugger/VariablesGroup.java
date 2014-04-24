@@ -7,21 +7,29 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class VariablesGroup extends XValueGroup {
-  private final int from;
-  private final int to;
-  private final List<Variable> variables;
-  private final VariableContext variableContext;
+  public static final ValueGroupFactory<List<Variable>> GROUP_FACTORY = new ValueGroupFactory<List<Variable>>() {
+    @Override
+    public XValueGroup create(@NotNull List<Variable> variables, int start, int end, @NotNull VariableContext context) {
+      return createArrayRangeGroup(start, end, variables, context);
+    }
+  };
 
-  public VariablesGroup(@NotNull String name, @NotNull List<Variable> variables, VariableContext variableContext) {
-    this(0, variables.size(), variables, variableContext, name);
+  private final int start;
+  private final int end;
+  private final List<Variable> variables;
+  private final VariableContext context;
+
+  public VariablesGroup(@NotNull String name, @NotNull List<Variable> variables, VariableContext context) {
+    this(0, variables.size(), variables, context, name);
   }
 
-  private VariablesGroup(int from, int to, @NotNull List<Variable> variables, @NotNull VariableContext variableContext, final String name) {
+  private VariablesGroup(int start, int end, @NotNull List<Variable> variables, @NotNull VariableContext context, @NotNull String name) {
     super(name);
-    this.from = from;
-    this.to = to;
+
+    this.start = start;
+    this.end = end;
     this.variables = variables;
-    this.variableContext = variableContext;
+    this.context = context;
   }
 
   public static VariablesGroup createArrayRangeGroup(int start, int end, List<Variable> variables, VariableContext variableContext) {
@@ -32,6 +40,6 @@ public class VariablesGroup extends XValueGroup {
   @Override
   public void computeChildren(@NotNull XCompositeNode node) {
     node.setAlreadySorted(true);
-    node.addChildren(Variables.createVariablesList(variables, from, to, variableContext), true);
+    node.addChildren(Variables.createVariablesList(variables, start, end, context), true);
   }
 }

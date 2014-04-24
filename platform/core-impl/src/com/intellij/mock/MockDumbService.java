@@ -16,6 +16,7 @@
 package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbService;
@@ -66,5 +67,13 @@ public class MockDumbService extends DumbService {
   @Override
   public Project getProject() {
     return myProject;
+  }
+
+  public void smartInvokeLater(@NotNull final Runnable runnable) {
+    runnable.run();
+  }
+
+  public void smartInvokeLater(@NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
+    runnable.run();
   }
 }

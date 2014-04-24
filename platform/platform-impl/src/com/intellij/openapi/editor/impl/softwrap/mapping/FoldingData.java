@@ -22,18 +22,16 @@ import org.jetbrains.annotations.NotNull;
  * Caches information about number of logical columns inside the collapsed single line folding.
  */
 class FoldingData {
-
-  private final int widthInColumns;
+  private final int myWidthInColumns;
   private final FoldRegion myFoldRegion;
 
-  FoldingData(@NotNull FoldRegion foldRegion, int widthInColumns)
-  {
+  FoldingData(@NotNull FoldRegion foldRegion, int widthInColumns) {
     myFoldRegion = foldRegion;
-    this.widthInColumns = widthInColumns;
+    myWidthInColumns = widthInColumns;
   }
 
   public int getCollapsedSymbolsWidthInColumns() {
-    return widthInColumns;
+    return myWidthInColumns;
   }
 
   @NotNull
@@ -43,6 +41,6 @@ class FoldingData {
 
   @Override
   public String toString() {
-    return "width in columns: " + widthInColumns + ", fold region: " + myFoldRegion;
+    return "width in columns: " + myWidthInColumns + ", fold region: " + myFoldRegion;
   }
 }

@@ -86,42 +86,42 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
   }
 
   private static void rectangularBackground(@NotNull SyntaxInfo syntaxInfo, @NotNull StringBuilder buffer, @NotNull Runnable next) {
-    buffer.append("\n\\s0\\box").append("\\cbpat").append(syntaxInfo.getDefaultBackground());
-    saveBackground(buffer, syntaxInfo.getDefaultBackground());
-    buffer.append("\\fs").append(syntaxInfo.getSingleFontSize() * 2).append('\n');
+    buffer.append("\n\\s0\\box")
+      .append("\\cbpat").append(syntaxInfo.getDefaultBackground())
+      .append("\\cb").append(syntaxInfo.getDefaultBackground());
+    addFontSize(buffer, syntaxInfo.getSingleFontSize());
+    buffer.append('\n');
     next.run();
     buffer.append("\\par");
   }
 
   private static void content(@NotNull SyntaxInfo syntaxInfo, @NotNull StringBuilder buffer, @NotNull String rawText, int maxLength) {
-    MyVisitor visitor = new MyVisitor(buffer, rawText);
-    SyntaxInfo.MarkupIterator it = syntaxInfo.new MarkupIterator();
-    try {
-      while(it.hasNext()) {
-        it.processNext(visitor);
-        if (buffer.length() > maxLength) {
-          buffer.append("... truncated ...");
-          break;
-        }
-      }
-    }
-    finally {
-      it.dispose();
-    }
+    syntaxInfo.processOutputInfo(new MyVisitor(buffer, rawText, syntaxInfo, maxLength));
   }
 
-  private static void saveBackground(@NotNull StringBuilder buffer, int id) {
-    buffer.append("\\cb").append(id);
+  private static void addFontSize(StringBuilder buffer, int fontSize) {
+    buffer.append("\\fs").append(fontSize * 2);
   }
 
   private static class MyVisitor implements MarkupHandler {
 
     @NotNull private final StringBuilder myBuffer;
     @NotNull private final String        myRawText;
+    private final int myMaxLength;
 
-    MyVisitor(@NotNull StringBuilder buffer, @NotNull String rawText) {
+    private final int myDefaultBackgroundId;
+    private final int myFontSize;
+    private int myForegroundId = -1;
+    private int myFontNameId   = -1;
+    private int myFontStyle    = -1;
+
+    MyVisitor(@NotNull StringBuilder buffer, @NotNull String rawText, @NotNull SyntaxInfo syntaxInfo, int maxLength) {
       myBuffer = buffer;
       myRawText = rawText;
+      myMaxLength = maxLength;
+
+      myDefaultBackgroundId = syntaxInfo.getDefaultBackground();
+      myFontSize = syntaxInfo.getSingleFontSize();
     }
 
     @Override
@@ -152,18 +152,39 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
     }
 
     @Override
-    public void handleForeground(int foregroundId) throws Exception {
-      myBuffer.append("\\cf").append(foregroundId);
+    public void handleBackground(int backgroundId) throws Exception {
+      if (backgroundId == myDefaultBackgroundId) {
+        myBuffer.append("\\plain"); // we cannot use \chcbpat with default background id, as it doesn't work in MS Word,
+                                    // and we cannot use \chcbpat0 as it doesn't work in OpenOffice
+
+        addFontSize(myBuffer, myFontSize);
+        if (myFontNameId >= 0) {
+          handleFont(myFontNameId);
+        }
+        if (myForegroundId >= 0) {
+          handleForeground(myForegroundId);
+        }
+        if (myFontStyle >= 0) {
+          handleStyle(myFontStyle);
+        }
+      }
+      else {
+        myBuffer.append("\\chcbpat").append(backgroundId);
+      }
+      myBuffer.append("\\cb").append(backgroundId);
+      myBuffer.append('\n');
     }
 
     @Override
-    public void handleBackground(int backgroundId) throws Exception {
-      saveBackground(myBuffer, backgroundId);
+    public void handleForeground(int foregroundId) throws Exception {
+      myBuffer.append("\\cf").append(foregroundId).append('\n');
+      myForegroundId = foregroundId;
     }
 
     @Override
     public void handleFont(int fontNameId) throws Exception {
-      myBuffer.append("\\f").append(fontNameId);
+      myBuffer.append("\\f").append(fontNameId).append('\n');
+      myFontNameId = fontNameId;
     }
 
     @Override
@@ -177,6 +198,16 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
         myBuffer.append('0');
       }
       myBuffer.append('\n');
+      myFontStyle = style;
+    }
+
+    @Override
+    public boolean canHandleMore() {
+      if (myBuffer.length() > myMaxLength) {
+        myBuffer.append("... truncated ...");
+        return false;
+      }
+      return true;
     }
   }
 }

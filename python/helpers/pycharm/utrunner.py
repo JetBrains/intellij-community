@@ -108,7 +108,7 @@ if __name__ == "__main__":
           debug("/ from folder " + a_splitted[0] + ". Use pattern: " + a_splitted[1])
           modules = loadModulesFromFolderRec(a_splitted[0], a_splitted[1])
       else:
-        if a[0].endswith("/"):
+        if a[0].endswith(os.path.sep):
           debug("/ from folder " + a[0])
           modules = loadModulesFromFolderRec(a[0])
         else:

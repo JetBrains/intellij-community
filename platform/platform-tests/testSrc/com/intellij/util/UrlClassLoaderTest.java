@@ -13,13 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.editor.richcopy.model;
+package com.intellij.util;
 
-public interface MarkupHandler {
-  void handleText(int startOffset, int endOffset) throws Exception;
-  void handleForeground(int foregroundId)  throws Exception;
-  void handleBackground(int backgroundId)  throws Exception;
-  void handleFont(int fontNameId)  throws Exception;
-  void handleStyle(int style)  throws Exception;
-  boolean canHandleMore();
+import com.intellij.util.lang.UrlClassLoader;
+import junit.framework.TestCase;
+
+/**
+ * @author Dmitry Avdeev
+ */
+public class UrlClassLoaderTest extends TestCase {
+
+  public void testBootstrapResources() {
+    String name = "com/sun/xml/internal/messaging/saaj/soap/LocalStrings.properties";
+    assertNotNull(UrlClassLoaderTest.class.getClassLoader().getResourceAsStream(name));
+    assertNull(UrlClassLoader.build().get().getResourceAsStream(name));
+    assertNotNull(UrlClassLoader.build().allowBootstrapResources().get().getResourceAsStream(name));
+  }
 }

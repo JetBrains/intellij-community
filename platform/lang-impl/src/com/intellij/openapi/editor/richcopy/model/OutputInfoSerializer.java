@@ -77,6 +77,11 @@ public class OutputInfoSerializer {
       myOutputStream.write(STYLE_ID);
       myOutputStream.writeInt(style);
     }
+
+    @Override
+    public boolean canHandleMore() {
+      return true;
+    }
   }
 
   public static class InputStream {
