@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.params;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
@@ -49,7 +48,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrParameterStub;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer;
-import org.jetbrains.plugins.groovy.lang.resolve.KnownRecursionManager;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -102,12 +100,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
       return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_EXCEPTION, this);
     }
 
-    return KnownRecursionManager.getInstance().run(this, new Computable<PsiType>() {
-      @Override
-      public PsiType compute() {
-        return GrVariableEnhancer.getEnhancedType(GrParameterImpl.this);
-      }
-    }, getDeclarationScope());
+    return GrVariableEnhancer.getEnhancedType(this);
   }
 
 
