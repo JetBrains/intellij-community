@@ -4,6 +4,7 @@ import com.intellij.openapi.util.AsyncResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.values.FunctionValue;
+import org.jetbrains.debugger.values.ObjectValue;
 import org.jetbrains.debugger.values.Value;
 
 /**
@@ -42,5 +43,5 @@ public interface ObjectProperty extends Variable {
    * Asynchronously evaluates property getter and returns property value
    */
   @NotNull
-  AsyncResult<Value> evaluateGet(@NotNull EvaluateContext evaluateContext);
+  AsyncResult<Value> evaluateGet(@NotNull ObjectValue host, @NotNull EvaluateContext evaluateContext);
 }
