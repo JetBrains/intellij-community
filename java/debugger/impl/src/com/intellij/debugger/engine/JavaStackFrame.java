@@ -135,11 +135,9 @@ public class JavaStackFrame extends XStackFrame {
     });
   }
 
-  // TODO: need to act on option change
-  private static boolean myAutoWatchMode = DebuggerSettings.getInstance().AUTO_VARIABLES_MODE;
-
   // copied from FrameVariablesTree
   private void buildVariables(DebuggerContextImpl debuggerContext, XValueChildrenList children) throws EvaluateException {
+    boolean myAutoWatchMode = DebuggerSettings.getInstance().AUTO_VARIABLES_MODE;
     EvaluationContextImpl evaluationContext = debuggerContext.createEvaluationContext();
     final SourcePosition sourcePosition = debuggerContext.getSourcePosition();
     if (sourcePosition == null) {

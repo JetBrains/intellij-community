@@ -32,6 +32,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -349,5 +350,14 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   @Nullable
   public static Editor createEditor(@NotNull OpenFileDescriptor descriptor) {
     return descriptor.canNavigate() ? FileEditorManager.getInstance(descriptor.getProject()).openTextEditor(descriptor, false) : null;
+  }
+
+  public static void rebuildAllSessionsViews(@Nullable Project project) {
+    if (project == null) return;
+    for (XDebugSession session : XDebuggerManager.getInstance(project).getDebugSessions()) {
+      if (session.isSuspended()) {
+        session.rebuildViews();
+      }
+    }
   }
 }
