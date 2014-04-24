@@ -428,7 +428,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     Map<VirtualFile, Collection<VcsRef>> refsByRoot = ContainerUtil.newHashMap();
     int topCommitCount = myLogData.getTopCommitsCount();
 
-    for (Map.Entry<VirtualFile, RecentCommitsInfo> entry : collectInfoFromVcs(false, mySettings.getRecentCommitsCount())) {
+    for (Map.Entry<VirtualFile, RecentCommitsInfo> entry : collectInfoFromVcs(true, mySettings.getRecentCommitsCount())) {
       VirtualFile root = entry.getKey();
       RecentCommitsInfo info = entry.getValue();
 
@@ -485,7 +485,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     Map<VirtualFile, List<? extends TimedVcsCommit>> logsToBuild = ContainerUtil.newHashMap();
     Map<VirtualFile, Collection<VcsRef>> refsByRoot = ContainerUtil.newHashMap();
 
-    for (Map.Entry<VirtualFile, RecentCommitsInfo> entry : collectInfoFromVcs(true, commitCount)) {
+    for (Map.Entry<VirtualFile, RecentCommitsInfo> entry : collectInfoFromVcs(false, commitCount)) {
       VirtualFile root = entry.getKey();
       RecentCommitsInfo info = entry.getValue();
 
@@ -520,7 +520,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     methodSW.report();
   }
 
-  private Set<Map.Entry<VirtualFile, RecentCommitsInfo>> collectInfoFromVcs(boolean ordered, int commitsCount) throws VcsException {
+  private Set<Map.Entry<VirtualFile, RecentCommitsInfo>> collectInfoFromVcs(boolean refresh, int commitsCount) throws VcsException {
     StopWatch methodTime = StopWatch.start("collectInfoFromVcs");
     Map<VirtualFile, RecentCommitsInfo> infoByRoot = ContainerUtil.newHashMap();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
@@ -534,7 +534,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
       sw = StopWatch.start("readFirstBlock for " + root.getName());
       Set<VcsRef> previousRefs = myLogData == null ? Collections.<VcsRef>emptySet() :
                                  ContainerUtil.newHashSet(myLogData.getRefs().get(root));
-      List<? extends VcsCommitMetadata> firstBlockDetails = logProvider.readFirstBlock(root, new RequirementsImpl(commitsCount, ordered,
+      List<? extends VcsCommitMetadata> firstBlockDetails = logProvider.readFirstBlock(root, new RequirementsImpl(commitsCount, refresh,
                                                                                                                   previousRefs, newRefs));
       sw.report();
       storeTopCommitsDetailsInCache(firstBlockDetails);

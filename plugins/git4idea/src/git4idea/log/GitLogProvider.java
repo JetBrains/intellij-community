@@ -74,10 +74,8 @@ public class GitLogProvider implements VcsLogProvider {
       return Collections.emptyList();
     }
 
-    int commitCount = requirements.getCommitCount();
-    if (requirements.isOrdered()) {
-      commitCount *= 2; // need to query more to sort them manually; this doesn't affect performance: it is equal for -1000 and -2000
-    }
+    // need to query more to sort them manually; this doesn't affect performance: it is equal for -1000 and -2000
+    int commitCount = requirements.getCommitCount() * 2;
 
     String[] params = new String[]{"HEAD", "--branches", "--remotes", "--max-count=" + commitCount};
     // NB: not specifying --tags, because it introduces great slowdown if there are many tags,
@@ -88,7 +86,7 @@ public class GitLogProvider implements VcsLogProvider {
       VcsLogProviderRequirementsEx rex = (VcsLogProviderRequirementsEx)requirements;
       // on refresh: get new tags, which point to commits not from the first block; then get history, walking down just from these tags
       // on init: just ignore such tagged-only branches. The price for speed-up.
-      if (!rex.isOrdered()) {
+      if (rex.isRefresh()) {
         Collection<VcsRef> newTags = getNewTags(rex.getCurrentRefs(), rex.getPreviousRefs());
         if (!newTags.isEmpty()) {
           final Set<Hash> firstBlockHashes = ContainerUtil.map2Set(firstBlock, new Function<VcsCommitMetadata, Hash>() {
@@ -107,10 +105,8 @@ public class GitLogProvider implements VcsLogProvider {
       }
     }
 
-    if (requirements.isOrdered()) {
-      firstBlock = VcsLogSorter.sortByDateTopoOrder(firstBlock);
-      firstBlock = new ArrayList<VcsCommitMetadata>(firstBlock.subList(0, Math.min(firstBlock.size(), requirements.getCommitCount())));
-    }
+    firstBlock = VcsLogSorter.sortByDateTopoOrder(firstBlock);
+    firstBlock = new ArrayList<VcsCommitMetadata>(firstBlock.subList(0, Math.min(firstBlock.size(), requirements.getCommitCount())));
     return firstBlock;
   }
 
