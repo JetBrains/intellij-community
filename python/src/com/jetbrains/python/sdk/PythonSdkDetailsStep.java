@@ -195,7 +195,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
 
   @Override
   public void canceled() {
-    if (getFinalRunnable() == null)
+    if (getFinalRunnable() == null && myMore != null)
       Disposer.dispose(myMore.getDisposable());
   }
 
