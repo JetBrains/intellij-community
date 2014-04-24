@@ -255,11 +255,12 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     myMacScrollbarFadeAnimator.reset();
     myMacScrollbarHidden = false;
     myMacScrollbarFadeLevel = 0;
-    
-    if (scrollbar != null) {
-      scrollbar.repaint();
 
-      if (!myMouseOverScrollbar && !scrollbar.getValueIsAdjusting()) {
+    JScrollBar sb = scrollbar; // concurrency in background editors initialization
+    if (sb != null) {
+      sb.repaint();
+
+      if (!myMouseOverScrollbar && !sb.getValueIsAdjusting()) {
         myMacScrollbarFadeAnimator.resume();
       }
     }
