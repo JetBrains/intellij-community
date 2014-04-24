@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -170,10 +170,6 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
     return result.get();
   }
   
-  public void store(FoldRegion foldRegion, int startX) {
-    store(new FoldingData(foldRegion, startX, myRepresentationHelper, myEditor), foldRegion.getStartOffset());
-  }
-
   public void store(FoldingData foldData, int offset) {
     if (myFoldingData == DUMMY) {
       myFoldingData = new TIntObjectHashMap<FoldingData>();

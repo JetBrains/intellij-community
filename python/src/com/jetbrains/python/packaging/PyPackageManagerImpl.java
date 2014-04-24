@@ -879,7 +879,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   }
 
   private static String quoteIfNeeded(String arg) {
-    return arg.replace(" ", "\\ ").replace("<", "\\<").replace(">", "\\>");
+    return arg.replace("<", "\\<").replace(">", "\\>"); //TODO: move this logic to ParametersListUtil.encode
   }
 
   @NotNull

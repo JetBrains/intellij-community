@@ -52,6 +52,8 @@ public class LibraryDependentToolWindowManager extends AbstractProjectComponent 
 
     DumbService.getInstance(myProject).smartInvokeLater(new Runnable() {
       public void run() {
+        if (myProject.isDisposed()) return;
+
         for (LibraryDependentToolWindow libraryToolWindow : Extensions.getExtensions(LibraryDependentToolWindow.EXTENSION_POINT_NAME)) {
           if (libraryToolWindow.getLibrarySearchHelper().isLibraryExists(myProject)) {
             ensureToolWindowExists(libraryToolWindow);

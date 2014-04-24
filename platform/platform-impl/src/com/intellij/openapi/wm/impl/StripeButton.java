@@ -174,7 +174,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
   }
 
   private void processDrag(final MouseEvent e) {
-    if (myDragCancelled) return;
+    if (myDragCancelled || !MouseDragHelper.checkModifiers(e)) return;
     if (!isDraggingNow()) {
       if (myPressedPoint == null) return;
       if (isWithinDeadZone(e)) return;

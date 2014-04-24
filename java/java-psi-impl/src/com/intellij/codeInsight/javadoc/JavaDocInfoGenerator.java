@@ -42,7 +42,9 @@ import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -260,7 +262,12 @@ public class JavaDocInfoGenerator {
         buffer.append("<html><body></body></html>");
       }
       String errorSection = "<p id=\"error\">Following external urls were checked:<br>&nbsp;&nbsp;&nbsp;<i>" +
-                   StringUtil.join(docURLs, "</i><br>&nbsp;&nbsp;&nbsp;<i>") +
+                   StringUtil.join(docURLs, new Function<String, String>() {
+                     @Override
+                     public String fun(String url) {
+                       return XmlStringUtil.escapeString(url);
+                     }
+                   }, "</i><br>&nbsp;&nbsp;&nbsp;<i>") +
                    "</i><br>The documentation for this element is not found. Please add all the needed paths to API docs in " +
                    "<a href=\"open://Project Settings\">Project Settings.</a></p>";
       buffer.insert(buffer.indexOf("<body>"), errorSection);

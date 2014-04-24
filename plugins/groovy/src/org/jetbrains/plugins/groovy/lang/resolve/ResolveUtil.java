@@ -599,6 +599,8 @@ public class ResolveUtil {
       PsiType t2 = substitutor2.substitute(p2.getType());
 
       if (!t1.equals(t2)) {
+        if (t1 instanceof PsiClassType) t1 = TypeConversionUtil.erasure(t1);
+        if (t2 instanceof PsiClassType) t2 = TypeConversionUtil.erasure(t2);
         //method1 is more general than method2
         return t1.isAssignableFrom(t2);
       }

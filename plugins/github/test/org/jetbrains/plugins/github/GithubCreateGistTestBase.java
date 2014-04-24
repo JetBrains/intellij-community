@@ -135,10 +135,6 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
     assertTrue("Gist content differs from sample", Comparing.haveEqualElements(files, expected));
   }
 
-  protected void checkEquals(@NotNull List<FileContent> expected, @NotNull List<FileContent> actual) {
-    assertTrue("Gist content differs from sample", Comparing.haveEqualElements(expected, actual));
-  }
-
   protected void registerCancelingLoginDialogHandler() {
     myDialogManager.registerDialogHandler(GithubLoginDialog.class, new TestDialogHandler<GithubLoginDialog>() {
       @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -157,13 +157,8 @@ class OffsetToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
     int targetLogicalLine = document.getLineNumber(myTargetOffset);
     if (targetLogicalLine == position.logicalLine) {
       // Target offset is located on the same logical line as folding start.
-      FoldingData cachedData = getFoldRegionData(foldRegion);
-      int x = 0;
-      if (cachedData != null) {
-        x = cachedData.startX;
-      }
       position.logicalColumn += myRepresentationHelper.toVisualColumnSymbolsNumber(
-        document.getCharsSequence(), foldRegion.getStartOffset(), myTargetOffset, x
+        document.getCharsSequence(), foldRegion.getStartOffset(), myTargetOffset, position.x
       );
     }
     else {

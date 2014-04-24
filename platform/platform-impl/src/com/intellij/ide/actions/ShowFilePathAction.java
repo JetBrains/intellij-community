@@ -38,6 +38,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -291,6 +292,9 @@ public class ShowFilePathAction extends AnAction {
   }
 
   private static void doOpen(@NotNull File dir, @Nullable File toSelect) throws IOException, ExecutionException {
+    dir = new File(FileUtil.toCanonicalPath(dir.getPath()));
+    toSelect = toSelect == null ? null : new File(FileUtil.toCanonicalPath(toSelect.getPath()));
+    
     if (SystemInfo.isWindows) {
       String cmd;
       if (toSelect != null) {

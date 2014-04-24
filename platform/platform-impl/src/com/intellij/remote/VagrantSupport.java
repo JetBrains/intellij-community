@@ -55,7 +55,7 @@ public abstract class VagrantSupport {
     });
   }
 
-  public abstract void checkVagrantAndRunIfDown(String folder);
+  public abstract boolean checkVagrantAndRunIfDown(String folder);
 
   public abstract Collection<? extends RemoteConnector> getVagrantInstancesConnectors(@NotNull Project project);
 

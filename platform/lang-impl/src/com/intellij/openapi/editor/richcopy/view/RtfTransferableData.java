@@ -34,7 +34,6 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
   @NotNull private static final String NEW_LINE      = "\\line\n";
   @NotNull private static final String BOLD          = "\\b";
   @NotNull private static final String ITALIC        = "\\i";
-  @NotNull private static final String PLAIN         = "\\plain\n";
 
   public RtfTransferableData(@NotNull SyntaxInfo syntaxInfo) {
     super(syntaxInfo, FLAVOR);
@@ -89,11 +88,13 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
   private static void rectangularBackground(@NotNull SyntaxInfo syntaxInfo, @NotNull StringBuilder buffer, @NotNull Runnable next) {
     buffer.append("\n\\s0\\box").append("\\cbpat").append(syntaxInfo.getDefaultBackground());
     saveBackground(buffer, syntaxInfo.getDefaultBackground());
+    buffer.append("\\fs").append(syntaxInfo.getSingleFontSize() * 2).append('\n');
     next.run();
+    buffer.append("\\par");
   }
 
   private static void content(@NotNull SyntaxInfo syntaxInfo, @NotNull StringBuilder buffer, @NotNull String rawText, int maxLength) {
-    MyVisitor visitor = new MyVisitor(buffer, rawText, syntaxInfo.getSingleFontSize());
+    MyVisitor visitor = new MyVisitor(buffer, rawText);
     SyntaxInfo.MarkupIterator it = syntaxInfo.new MarkupIterator();
     try {
       while(it.hasNext()) {
@@ -113,33 +114,14 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
     buffer.append("\\cb").append(id);
   }
 
-  private static void saveForeground(@NotNull StringBuilder buffer, int id) {
-    buffer.append("\\cf").append(id);
-  }
-
-  private static void saveFontName(@NotNull StringBuilder buffer, int id) {
-    buffer.append("\\f").append(id);
-  }
-
-  private static void saveFontSize(@NotNull StringBuilder buffer, int size) {
-    buffer.append("\\fs").append(size * 2);
-  }
-
   private static class MyVisitor implements MarkupHandler {
 
     @NotNull private final StringBuilder myBuffer;
     @NotNull private final String        myRawText;
 
-    private int myBackgroundId = -1;
-    private int myForegroundId = -1;
-    private int myFontNameId   = -1;
-    private int myFontStyle    = -1;
-    private int myFontSize     = -1;
-
-    MyVisitor(@NotNull StringBuilder buffer, @NotNull String rawText, int fontSize) {
+    MyVisitor(@NotNull StringBuilder buffer, @NotNull String rawText) {
       myBuffer = buffer;
       myRawText = rawText;
-      myFontSize = fontSize;
     }
 
     @Override
@@ -171,48 +153,30 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
 
     @Override
     public void handleForeground(int foregroundId) throws Exception {
-      saveForeground(myBuffer, foregroundId);
-      myForegroundId = foregroundId;
+      myBuffer.append("\\cf").append(foregroundId);
     }
 
     @Override
     public void handleBackground(int backgroundId) throws Exception {
       saveBackground(myBuffer, backgroundId);
-      myBackgroundId = backgroundId;
     }
 
     @Override
     public void handleFont(int fontNameId) throws Exception {
-      saveFontName(myBuffer, fontNameId);
-      myFontNameId = fontNameId;
+      myBuffer.append("\\f").append(fontNameId);
     }
 
     @Override
     public void handleStyle(int style) throws Exception {
-      // Reset formatting settings
-      myBuffer.append(PLAIN);
-
-      // Restore target formatting settings.
-      if (myForegroundId >= 0) {
-        saveForeground(myBuffer, myForegroundId);
+      myBuffer.append(ITALIC);
+      if ((style & Font.ITALIC) == 0) {
+        myBuffer.append('0');
       }
-      if (myBackgroundId >= 0) {
-        saveBackground(myBuffer, myBackgroundId);
+      myBuffer.append(BOLD);
+      if ((style & Font.BOLD) == 0) {
+        myBuffer.append('0');
       }
-      if (myFontNameId >= 0) {
-        saveFontName(myBuffer, myFontNameId);
-      }
-      if (myFontSize > 0) {
-        saveFontSize(myBuffer, myFontSize);
-      }
-
-      myFontStyle = style;
-      if ((myFontStyle & Font.ITALIC) > 0) {
-        myBuffer.append(ITALIC);
-      }
-      if ((myFontStyle & Font.BOLD) > 0) {
-        myBuffer.append(BOLD);
-      }
+      myBuffer.append('\n');
     }
   }
 }
