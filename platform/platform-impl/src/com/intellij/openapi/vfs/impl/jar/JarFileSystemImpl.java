@@ -49,18 +49,22 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   private static final JarFileSystemImplLock LOCK = new JarFileSystemImplLock();
 
   private final Set<String> myNoCopyJarPaths;
-  private File myNoCopyJarDir;
+  private final File myNoCopyJarDir;
   private final Map<String, JarHandler> myHandlers = ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
   private String[] myJarPathsCache;
 
-  public JarFileSystemImpl(MessageBus bus) {
+  public JarFileSystemImpl(@NotNull MessageBus bus) {
     boolean noCopy = SystemProperties.getBooleanProperty("idea.jars.nocopy", !SystemInfo.isWindows);
     myNoCopyJarPaths = noCopy ? null : new ConcurrentHashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
 
+    // to prevent platform .jar files from copying
+    boolean runningFromDist = new File(PathManager.getLibPath(), "openapi.jar").exists();
+    myNoCopyJarDir = !runningFromDist ? null : new File(PathManager.getHomePath());
+
     bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
       @Override
-      public void after(@NotNull final List<? extends VFileEvent> events) {
-        final List<VirtualFile> rootsToRefresh = new ArrayList<VirtualFile>();
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        List<VirtualFile> rootsToRefresh = new ArrayList<VirtualFile>();
 
         for (VFileEvent event : events) {
           if (event.getFileSystem() instanceof LocalFileSystem) {
@@ -87,12 +91,8 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
         }
 
         if (!rootsToRefresh.isEmpty()) {
-          for (VirtualFile root : rootsToRefresh) {
-            if (root.isValid()) {
-              ((NewVirtualFile)root).markDirtyRecursively();
-            }
-          }
-          RefreshQueue.getInstance().refresh(!ApplicationManager.getApplication().isUnitTestMode(), true, null, rootsToRefresh);
+          boolean async = !ApplicationManager.getApplication().isUnitTestMode();
+          RefreshQueue.getInstance().refresh(async, true, null, rootsToRefresh);
         }
       }
     });
@@ -120,27 +120,17 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   }
 
   @Override
-  public void initComponent() {
-    // we want to prevent Platform from copying its own jars when running from dist to save system resources
-    final boolean isRunningFromDist = new File(PathManager.getLibPath() + File.separatorChar + "openapi.jar").exists();
-    if (isRunningFromDist) {
-      myNoCopyJarDir = new File(new File(PathManager.getLibPath()).getParent());
-    }
-  }
+  public void initComponent() { }
 
   @Override
-  public void disposeComponent() {
-  }
+  public void disposeComponent() { }
 
   @Override
   public void setNoCopyJarForPath(String pathInJar) {
-    if (myNoCopyJarPaths == null || pathInJar == null) {
-      return;
-    }
+    if (myNoCopyJarPaths == null || pathInJar == null) return;
     int index = pathInJar.indexOf(JAR_SEPARATOR);
     if (index < 0) return;
-    String path = pathInJar.substring(0, index);
-    path = path.replace('/', File.separatorChar);
+    String path = FileUtil.toSystemIndependentName(pathInJar.substring(0, index));
     myNoCopyJarPaths.add(path);
   }
 
