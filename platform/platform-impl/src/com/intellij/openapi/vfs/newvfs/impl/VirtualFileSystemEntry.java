@@ -322,13 +322,13 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   @NotNull
-  public VirtualFile createChildDirectory(final Object requestor, final String name) throws IOException {
+  public VirtualFile createChildDirectory(final Object requestor, @NotNull final String name) throws IOException {
     validateName(name);
     return ourPersistence.createChildDirectory(requestor, this, name);
   }
 
-  private static void validateName(String name) throws IOException {
-    if (name == null || name.isEmpty()) throw new IOException("File name cannot be empty");
+  private static void validateName(@NotNull String name) throws IOException {
+    if (name.isEmpty()) throw new IOException("File name cannot be empty");
     if (name.indexOf('/') >= 0 || name.indexOf(File.separatorChar) >= 0) {
       throw new IOException("File name cannot contain file path separators: '" + name + "'");
     }

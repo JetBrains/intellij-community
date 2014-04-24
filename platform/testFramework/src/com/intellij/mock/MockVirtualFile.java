@@ -72,6 +72,7 @@ public class MockVirtualFile extends VirtualFile {
     myParent = parent;
   }
 
+  @NotNull
   @Override
   public VirtualFile createChildData(final Object requestor, @NotNull @NonNls final String name) {
     final MockVirtualFile file = new MockVirtualFile(name);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -166,11 +166,13 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
     return null;
   }
 
+  @NotNull
   protected File createTempDirectory() {
     try {
       if (myTempDir == null) {
-        File th = getTempHome();
-        myTempDir = th != null ? FileUtil.createTempDirectory(th, "unitTest", null,false) : FileUtil.createTempDirectory("unitTest", null,false);
+        File tempHome = getTempHome();
+        myTempDir = tempHome == null ? FileUtil.createTempDirectory("unitTest", null, false) :
+                    FileUtil.createTempDirectory(tempHome, "unitTest", null, false);
         myFilesToDelete.add(myTempDir);
       }
       return myTempDir;
