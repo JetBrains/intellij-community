@@ -37,7 +37,7 @@ public abstract class ObjectValueBase<VALUE_LOADER extends ValueManager> extends
     this.valueManager = valueManager;
   }
 
-  protected abstract void loadProperties(@NotNull AsyncResult<List<? extends Variable>> result);
+  protected abstract void loadProperties(@NotNull AsyncResult<List<Variable>> result);
 
   protected final void updateCacheStamp() {
     cacheStamp = valueManager.getCacheStamp();
