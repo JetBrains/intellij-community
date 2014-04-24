@@ -1334,6 +1334,12 @@ public class FileUtil extends FileUtilRt {
     FileUtilRt.setExecutableAttribute(path, executableFlag);
   }
 
+  public static void setLastModified(@NotNull File file, long timeStamp) throws IOException {
+    if (!file.setLastModified(timeStamp)) {
+      LOG.warn(file.getPath());
+    }
+  }
+
   @NotNull
   public static String loadFile(@NotNull File file) throws IOException {
     return FileUtilRt.loadFile(file);
