@@ -317,7 +317,12 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
         if (content instanceof FileContent) {
           FileContent fileContent = (FileContent)content;
-          savedInputId = ContentHashesSupport.calcContentHashIdWithFileType(fileContent.getContent(), fileContent.getFileType());
+          Integer previouslyCalculatedContentHashId = fileContent.getUserData(ourSavedContentHashIdKey);
+          if (previouslyCalculatedContentHashId == null) {
+            previouslyCalculatedContentHashId = ContentHashesSupport.calcContentHashIdWithFileType(fileContent.getContent(), fileContent.getFileType());
+            fileContent.putUserData(ourSavedContentHashIdKey, previouslyCalculatedContentHashId);
+          }
+          savedInputId = previouslyCalculatedContentHashId;
           if (!mySnapshotMapping.containsMapping(savedInputId)) { // save current snapshot keys out of index update write section
             mySnapshotMapping.put(savedInputId, data.keySet());
           }
@@ -371,6 +376,8 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
       }
     };
   }
+
+  private static final com.intellij.openapi.util.Key<Integer> ourSavedContentHashIdKey = com.intellij.openapi.util.Key.create("saved.content.hash.id");
 
   protected void updateWithMap(final int inputId,
                                int savedInputId, @NotNull Map<Key, Value> newData,
