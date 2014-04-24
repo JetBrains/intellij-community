@@ -21,4 +21,5 @@ public interface MarkupHandler {
   void handleBackground(int backgroundId)  throws Exception;
   void handleFont(int fontNameId)  throws Exception;
   void handleStyle(int style)  throws Exception;
+  boolean canHandleMore();
 }

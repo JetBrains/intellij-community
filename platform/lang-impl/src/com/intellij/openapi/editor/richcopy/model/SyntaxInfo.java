@@ -79,6 +79,21 @@ public class SyntaxInfo {
     return mySingleFontSize;
   }
 
+  public void processOutputInfo(MarkupHandler handler) {
+    MarkupIterator it = new MarkupIterator();
+    try {
+      while(it.hasNext()) {
+        it.processNext(handler);
+        if (!handler.canHandleMore()) {
+          break;
+        }
+      }
+    }
+    finally {
+      it.dispose();
+    }
+  }
+
   @Override
   public String toString() {
     final StringBuilder b = new StringBuilder();
@@ -114,6 +129,11 @@ public class SyntaxInfo {
           @Override
           public void handleStyle(int style) throws Exception {
             b.append("style(").append(style).append(")");
+          }
+
+          @Override
+          public boolean canHandleMore() {
+            return true;
           }
         });
         first = false;
