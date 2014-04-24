@@ -72,24 +72,7 @@ public interface DebuggerViewSupport extends MemberFilter {
     @NotNull
     @Override
     public String propertyNamesToString(@NotNull List<String> list, boolean quotedAware) {
-      // todo
-      StringBuilder builder = new StringBuilder();
-      for (int i = list.size() - 1; i >= 0; i--) {
-        String name = list.get(i);
-        boolean quoted = quotedAware && (name.charAt(0) == '"' || name.charAt(0) == '\'');
-        boolean useKeyNotation = !quoted;
-        if (builder.length() != 0) {
-          builder.append(useKeyNotation ? '.' : '[');
-        }
-        if (useKeyNotation) {
-          builder.append(name);
-        }
-        else {
-          builder.append(name);
-          builder.append(']');
-        }
-      }
-      return builder.toString();
+      return ValueModifierUtil.propertyNamesToString(list, quotedAware);
     }
 
     @Override
