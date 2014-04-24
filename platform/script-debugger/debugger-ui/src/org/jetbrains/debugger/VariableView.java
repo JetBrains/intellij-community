@@ -137,7 +137,9 @@ public final class VariableView extends XNamedValue implements VariableContext {
   public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
     value = variable.getValue();
     if (value == null) {
-      ObsolescentAsyncResults.consume(((ObjectProperty)variable).evaluateGet(context.getEvaluateContext()), node, new PairConsumer<Value, XValueNode>() {
+      ObjectValue host = (ObjectValue)((VariableView)context).getValue();
+      assert host != null;
+      ObsolescentAsyncResults.consume(((ObjectProperty)variable).evaluateGet(host, getEvaluateContext()), node, new PairConsumer<Value, XValueNode>() {
         @Override
         public void consume(Value value, XValueNode node) {
           VariableView.this.value = value;
