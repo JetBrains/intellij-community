@@ -63,6 +63,7 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
       }
     }
 
+    if (!(psiFile instanceof XmlFile)) return null;
     XmlFile xmlFile = (XmlFile)psiFile;
     try {
       XmlUtil.BUILDING_DOM_STUBS.set(Boolean.TRUE);
