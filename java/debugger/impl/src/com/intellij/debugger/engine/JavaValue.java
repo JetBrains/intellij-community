@@ -58,7 +58,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
   @Override
   public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
     Type type = myValueDescriptor.getType();
-    String typeName = type != null ? type.name() : "";
+    String typeName = type != null ? type.name() : null;
     node.setPresentation(null, typeName, myValueDescriptor.getValueText(), myValueDescriptor.isExpandable());
   }
 
