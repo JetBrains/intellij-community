@@ -256,11 +256,11 @@ public class DumbServiceImpl extends DumbService {
 
   private void updateFinished() {
     myDumb = false;
+    if (myProject.isDisposed()) return;
+
     try {
-      if (!myProject.isDisposed()) {
-        myPublisher.exitDumbMode();
-        FileEditorManagerEx.getInstanceEx(myProject).refreshIcons();
-      }
+      myPublisher.exitDumbMode();
+      FileEditorManagerEx.getInstanceEx(myProject).refreshIcons();
     }
     finally {
       // It may happen that one of the pending runWhenSmart actions triggers new dumb mode;

@@ -51,9 +51,6 @@ public class LibraryDependentToolWindowManager extends AbstractProjectComponent 
 
     DumbService.getInstance(project).smartInvokeLater(new Runnable() {
       public void run() {
-        if (project.isDisposed()) {
-          return;
-        }
         final PsiManager psiManager = PsiManager.getInstance(myProject);
         if (psiManager.isDisposed()) {
           return;

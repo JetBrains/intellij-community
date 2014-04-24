@@ -307,8 +307,6 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
       DumbService.getInstance(myProject).smartInvokeLater(new Runnable() {
         @Override
         public void run() {
-          if (myProject.isDisposed()) return;
-
           ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable(){
             @Override
             public void run(){
