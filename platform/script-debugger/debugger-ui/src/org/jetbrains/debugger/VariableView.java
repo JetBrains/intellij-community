@@ -1,6 +1,7 @@
 package org.jetbrains.debugger;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
@@ -47,7 +48,6 @@ public final class VariableView extends XNamedValue implements VariableContext {
 
   private volatile List<Variable> remainingChildren;
   private volatile int remainingChildrenOffset;
-  private volatile int childrenModificationStamp;
 
   public VariableView(@NotNull VariableContext context, @NotNull Variable variable) {
     super(context.getMemberFilter().normalizeMemberName(variable));
@@ -213,44 +213,85 @@ public final class VariableView extends XNamedValue implements VariableContext {
   }
 
   @Override
-  public void computeChildren(@NotNull XCompositeNode node) {
+  public void computeChildren(@NotNull final XCompositeNode node) {
     node.setAlreadySorted(true);
 
-    if (!(value instanceof ObjectValue) || ((ObjectValue)value).hasProperties() == ThreeState.NO) {
-      node.addChildren(XValueChildrenList.EMPTY, true);
+    List<Variable> list = remainingChildren;
+    if (list != null) {
+      int to = Math.min(remainingChildrenOffset + XCompositeNode.MAX_CHILDREN_TO_SHOW, list.size());
+      boolean isLast = to == list.size();
+      node.addChildren(Variables.createVariablesList(list, remainingChildrenOffset, to, this), isLast);
+      if (!isLast) {
+        node.tooManyChildren(list.size() - to);
+        remainingChildrenOffset += XCompositeNode.MAX_CHILDREN_TO_SHOW;
+      }
       return;
     }
 
-    ObsolescentAsyncResults.consume(((ObjectValue)value).getProperties(), node, new PairConsumer<List<Variable>, XCompositeNode>() {
+    boolean hasNamedProperties = value instanceof ObjectValue && ((ObjectValue)value).hasProperties() != ThreeState.NO;
+    boolean hasIndexedProperties = value instanceof ArrayValue;
+    ActionCallback.Chunk chunk = new ActionCallback.Chunk();
+    if (hasIndexedProperties) {
+      chunk.add(computeIndexedProperties((ArrayValue)value, node, !hasNamedProperties));
+    }
+
+    if (hasNamedProperties) {
+      chunk.add(computeNamedProperties((ObjectValue)value, node, !hasIndexedProperties));
+    }
+
+    if (hasIndexedProperties == hasNamedProperties) {
+      chunk.create().doWhenProcessed(new Runnable() {
+        @Override
+        public void run() {
+          if (!node.isObsolete()) {
+            node.addChildren(XValueChildrenList.EMPTY, true);
+          }
+        }
+      });
+    }
+  }
+
+  public abstract static class ObsolescentIndexedVariablesConsumer extends ArrayValue.IndexedVariablesConsumer {
+    protected final XCompositeNode node;
+
+    protected ObsolescentIndexedVariablesConsumer(@NotNull XCompositeNode node) {
+      this.node = node;
+    }
+
+    @Override
+    public boolean isObsolete() {
+      return node.isObsolete();
+    }
+  }
+
+  private ActionCallback computeIndexedProperties(@NotNull final ArrayValue value, @NotNull final XCompositeNode node, final boolean isLastChildren) {
+    return value.getVariables(0, value.getLength(), XCompositeNode.MAX_CHILDREN_TO_SHOW, new ObsolescentIndexedVariablesConsumer(node) {
       @Override
-      public void consume(List<Variable> variables, XCompositeNode node) {
-        if (value instanceof ArrayValue) {
-          // todo arrays could have not only indexes values
-          return;
-        }
-
-        if (value.getType() == ValueType.ARRAY) {
-          computeArrayRanges(variables, node);
-          return;
-        }
-
-        int maxPropertiesToShow;
-        if (value.getType() == ValueType.FUNCTION) {
-          maxPropertiesToShow = Integer.MAX_VALUE;
+      public void consumeRanges(@Nullable int[] ranges) {
+        if (ranges == null) {
+          XValueChildrenList groupList = new XValueChildrenList();
+          LazyVariablesGroup.addGroups(value, LazyVariablesGroup.GROUP_FACTORY, groupList, 0, value.getLength(), XCompositeNode.MAX_CHILDREN_TO_SHOW, VariableView.this);
+          node.addChildren(groupList, isLastChildren);
         }
         else {
-          maxPropertiesToShow = XCompositeNode.MAX_CHILDREN_TO_SHOW;
-          List<Variable> list = remainingChildren;
-          if (list != null && childrenModificationStamp == ((ObjectValue)value).getCacheStamp()) {
-            int to = Math.min(remainingChildrenOffset + XCompositeNode.MAX_CHILDREN_TO_SHOW, list.size());
-            boolean isLast = to == list.size();
-            node.addChildren(Variables.createVariablesList(list, remainingChildrenOffset, to, VariableView.this), isLast);
-            if (!isLast) {
-              node.tooManyChildren(list.size() - to);
-              remainingChildrenOffset += XCompositeNode.MAX_CHILDREN_TO_SHOW;
-            }
-            return;
-          }
+          LazyVariablesGroup.addRanges(value, ranges, node, VariableView.this, isLastChildren);
+        }
+      }
+
+      @Override
+      public void consumeVariables(@NotNull List<Variable> variables) {
+        node.addChildren(Variables.createVariablesList(variables, VariableView.this), isLastChildren);
+      }
+    });
+  }
+
+  private ActionCallback computeNamedProperties(@NotNull final ObjectValue value, @NotNull XCompositeNode node, final boolean isLastChildren) {
+    return ObsolescentAsyncResults.consume(value.getProperties(), node, new PairConsumer<List<Variable>, XCompositeNode>() {
+      @Override
+      public void consume(List<Variable> variables, XCompositeNode node) {
+        if (value.getType() == ValueType.ARRAY && !(value instanceof ArrayValue)) {
+          computeArrayRanges(variables, node);
+          return;
         }
 
         FunctionValue functionValue = value instanceof FunctionValue ? (FunctionValue)value : null;
@@ -258,44 +299,21 @@ public final class VariableView extends XNamedValue implements VariableContext {
           functionValue = null;
         }
 
-        remainingChildren = Variables.sortFilterAndAddValueList(variables, node, VariableView.this, maxPropertiesToShow, functionValue == null);
+        remainingChildren = Variables.sortFilterAndAddValueList(variables, node, VariableView.this, XCompositeNode.MAX_CHILDREN_TO_SHOW, functionValue == null);
         if (remainingChildren != null) {
-          remainingChildrenOffset = maxPropertiesToShow;
-          childrenModificationStamp = ((ObjectValue)value).getCacheStamp();
+          remainingChildrenOffset = XCompositeNode.MAX_CHILDREN_TO_SHOW;
         }
 
         if (functionValue != null) {
           // we pass context as variable context instead of this variable value - we cannot watch function scopes variables, so, this variable name doesn't matter
-          node.addChildren(XValueChildrenList.bottomGroup(new FunctionScopesValueGroup(functionValue, context)), true);
+          node.addChildren(XValueChildrenList.bottomGroup(new FunctionScopesValueGroup(functionValue, context)), isLastChildren);
         }
       }
     });
-
-    if (value instanceof ArrayValue) {
-      ObsolescentAsyncResults.consume(((ArrayValue)value).getVariables(), node, new PairConsumer<List<Variable>, XCompositeNode>() {
-        @Override
-        public void consume(List<Variable> variables, XCompositeNode node) {
-          computeIndexedValuesRanges(variables, node);
-        }
-      });
-    }
-  }
-
-  private void computeIndexedValuesRanges(@NotNull List<Variable> variables, @NotNull XCompositeNode node) {
-    int totalLength = variables.size();
-    int bucketSize = XCompositeNode.MAX_CHILDREN_TO_SHOW;
-    if (totalLength <= bucketSize) {
-      node.addChildren(Variables.createVariablesList(variables, this), true);
-      return;
-    }
-
-    XValueChildrenList groupList = new XValueChildrenList();
-    addGroups(variables, groupList, 0, totalLength, bucketSize);
-    node.addChildren(groupList, true);
   }
 
   private void computeArrayRanges(@NotNull List<? extends Variable> properties, @NotNull XCompositeNode node) {
-    List<Variable> variables = Variables.filterAndSort(properties, this, false);
+    final List<Variable> variables = Variables.filterAndSort(properties, this, false);
     int count = variables.size();
     int bucketSize = XCompositeNode.MAX_CHILDREN_TO_SHOW;
     if (count <= bucketSize) {
@@ -311,7 +329,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
 
     XValueChildrenList groupList = new XValueChildrenList();
     if (count > 0) {
-      addGroups(variables, groupList, 0, count, bucketSize);
+      LazyVariablesGroup.addGroups(variables, VariablesGroup.GROUP_FACTORY, groupList, 0, count, bucketSize, this);
     }
 
     int notGroupedVariablesOffset;
@@ -323,7 +341,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
       }
 
       if (notGroupedVariablesOffset > 0) {
-        addGroups(variables, groupList, count, notGroupedVariablesOffset, bucketSize);
+        LazyVariablesGroup.addGroups(variables, VariablesGroup.GROUP_FACTORY, groupList, count, notGroupedVariablesOffset, bucketSize, this);
       }
     }
     else {
@@ -335,29 +353,6 @@ public final class VariableView extends XNamedValue implements VariableContext {
     }
 
     node.addChildren(groupList, true);
-  }
-
-  private void addGroups(List<Variable> variables, XValueChildrenList groupList, int from, int limit, int bucketSize) {
-    int to = Math.min(bucketSize, limit);
-    boolean done = false;
-    do {
-      int groupFrom = from;
-      int groupTo = to;
-
-      from += bucketSize;
-      to = from + Math.min(bucketSize, limit - from);
-
-      // don't create group for only one member
-      if (to - from == 1) {
-        groupTo++;
-        done = true;
-      }
-      groupList.addTopGroup(VariablesGroup.createArrayRangeGroup(groupFrom, groupTo, variables, this));
-      if (from >= limit) {
-        break;
-      }
-    }
-    while (!done);
   }
 
   @NotNull
