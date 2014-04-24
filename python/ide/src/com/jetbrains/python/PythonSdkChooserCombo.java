@@ -80,6 +80,7 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
     PythonSdkDetailsStep.show(project, sdks, null, this, getButton().getLocationOnScreen(), new NullableConsumer<Sdk>() {
         @Override
         public void consume(@Nullable Sdk sdk) {
+          if(sdk == null) return;
           //noinspection unchecked
           getComboBox().setModel(new CollectionComboBoxModel(interpreterList.getAllPythonSdks(), sdk));
         }
