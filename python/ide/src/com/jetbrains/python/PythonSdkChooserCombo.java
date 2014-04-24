@@ -15,10 +15,13 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.impl.SdkListCellRenderer;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.CollectionComboBoxModel;
@@ -41,6 +44,7 @@ import java.util.List;
  */
 public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
   private final List<ActionListener> myChangedListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.PythonSdkChooserCombo");
 
   @SuppressWarnings("unchecked")
   public PythonSdkChooserCombo(final Project project, List<Sdk> sdks, final Condition<Sdk> acceptableSdkCondition) {
@@ -81,6 +85,16 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
         @Override
         public void consume(@Nullable Sdk sdk) {
           if(sdk == null) return;
+          final ProjectSdksModel projectSdksModel = interpreterList.getModel();
+          if (projectSdksModel.findSdk(sdk) == null) {
+            projectSdksModel.addSdk(sdk);
+            try {
+              projectSdksModel.apply();
+            }
+            catch (ConfigurationException e) {
+              LOG.error("Error adding new python interpreter " + e.getMessage());
+            }
+          }
           //noinspection unchecked
           getComboBox().setModel(new CollectionComboBoxModel(interpreterList.getAllPythonSdks(), sdk));
         }
