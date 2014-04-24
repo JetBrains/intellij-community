@@ -292,7 +292,7 @@ public class XFramesView implements XDebugView {
     private void addFrameListElements(final List<?> values, final boolean last) {
       if (myExecutionStack != null && myExecutionStack == mySelectedStack) {
         DefaultListModel model = myFramesList.getModel();
-        if (model.getElementAt(model.getSize() - 1) == null) {
+        if (!model.isEmpty() && model.getElementAt(model.getSize() - 1) == null) {
           model.removeElementAt(model.getSize() - 1);
         }
         for (Object value : values) {
