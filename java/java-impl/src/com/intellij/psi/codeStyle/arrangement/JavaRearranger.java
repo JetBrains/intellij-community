@@ -128,7 +128,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     and(matchRules, CLASS, STATIC);
     and(matchRules, CLASS);
 
-    DEFAULT_SETTINGS = new StdRulePriorityAwareSettings(groupingRules, matchRules);
+    DEFAULT_SETTINGS = StdArrangementSettings.createByMatchRules(groupingRules, matchRules);
   }
 
   private static final DefaultArrangementSettingsSerializer SETTINGS_SERIALIZER = new DefaultArrangementSettingsSerializer(DEFAULT_SETTINGS);

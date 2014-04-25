@@ -16,54 +16,45 @@
 package com.intellij.psi.codeStyle.arrangement.std;
 
 import com.intellij.psi.codeStyle.arrangement.ArrangementSettings;
+import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.RulePriorityAwareSettings;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * @deprecated use {@link StdArrangementSettings} instead
  * @author Svetlana.Zemlyanskaya
  */
 public class StdRulePriorityAwareSettings extends StdArrangementSettings implements RulePriorityAwareSettings {
-  @NotNull private final List<StdArrangementMatchRule> myRulesByPriority = new ArrayList<StdArrangementMatchRule>();
-
   public StdRulePriorityAwareSettings(@NotNull List<StdArrangementMatchRule> rules) {
-    super(rules);
+    super(wrapMatchRulesIntoSections(rules));
   }
 
   public StdRulePriorityAwareSettings(@NotNull List<ArrangementGroupingRule> groupingRules,
                                       @NotNull List<StdArrangementMatchRule> matchRules) {
-    super(groupingRules, matchRules);
+    super(groupingRules, wrapMatchRulesIntoSections(matchRules));
   }
 
   public StdRulePriorityAwareSettings() {
     super();
   }
 
-  @Override
-  public void addRule(@NotNull StdArrangementMatchRule rule) {
-    super.addRule(rule);
-    myRulesByPriority.clear();
-  }
-
-  @NotNull
-  @Override
-  public List<? extends ArrangementMatchRule> getRulesSortedByPriority() {
-    if (myRulesByPriority.isEmpty()) {
-      myRulesByPriority.addAll(myRules);
-      ContainerUtil.sort(myRulesByPriority);
-    }
-    return myRulesByPriority;
-  }
-
   @NotNull
   @Override
   public ArrangementSettings clone() {
-    return new StdRulePriorityAwareSettings(cloneGroupings(), cloneMatchRules());
+    return new StdRulePriorityAwareSettings(cloneGroupings(), ArrangementUtil.collectMatchRules(cloneSectionRules()));
+  }
+
+  private static List<ArrangementSectionRule> wrapMatchRulesIntoSections(@NotNull List<StdArrangementMatchRule> matchRules) {
+    final List<ArrangementSectionRule> sectionRules = new ArrayList<ArrangementSectionRule>();
+    for (StdArrangementMatchRule rule : matchRules) {
+      sectionRules.add(ArrangementSectionRule.create(rule));
+    }
+    return sectionRules;
   }
 }

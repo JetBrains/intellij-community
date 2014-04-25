@@ -24,14 +24,16 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettings
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens
-import com.intellij.psi.codeStyle.arrangement.std.StdRulePriorityAwareSettings
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 import org.junit.Assert
 
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.KEEP
@@ -62,6 +64,14 @@ abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTes
   @NotNull
   protected CommonCodeStyleSettings getCommonSettings() {
     CodeStyleSettingsManager.getInstance(myFixture.project).currentSettings.getCommonSettings(language)
+  }
+
+  protected static ArrangementSectionRule section(@NotNull StdArrangementMatchRule... rules) {
+    section(null, null, rules);
+  }
+
+  protected static ArrangementSectionRule section(@Nullable String start, @Nullable String end, @NotNull StdArrangementMatchRule... rules) {
+    ArrangementSectionRule.create(start, end, rules);
   }
 
   @NotNull
@@ -146,7 +156,9 @@ abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTes
     }
     
     def settings = CodeStyleSettingsManager.getInstance(myFixture.project).currentSettings.getCommonSettings(language)
-    settings.arrangementSettings = new StdRulePriorityAwareSettings(args.groups ?: [], args.rules ?: [])
+    def sectionRules = args.rules ? args.rules.collect { def section ->
+      section instanceof ArrangementSectionRule ? section : ArrangementSectionRule.create(section)} : [];
+    settings.arrangementSettings = new StdArrangementSettings(args.groups ?: [], sectionRules)
     ArrangementEngine engine = ServiceManager.getService(myFixture.project, ArrangementEngine)
     engine.arrange(myFixture.editor, myFixture.file, info.ranges);
     

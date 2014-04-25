@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,12 @@
  */
 package com.intellij.psi.codeStyle.arrangement;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
- * Stands for the {@link ArrangementSettings} which also provide arrangement rules sorted in order of entries matching.
- * <p/>
- * Example: 'public static' rule would have higher priority then 'public'
- *
- * @deprecated use {@link ArrangementSettings} instead
  * @author Svetlana.Zemlyanskaya
  */
-public interface RulePriorityAwareSettings extends ArrangementSettings {
+public interface TextAwareArrangementEntry {
+  @Nullable
+  String getText();
 }

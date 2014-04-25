@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.codeStyle.arrangement;
+package com.intellij.psi.codeStyle.arrangement.std;
 
 /**
- * Stands for the {@link ArrangementSettings} which also provide arrangement rules sorted in order of entries matching.
+ * Marker interface for settings that supports section rules
  * <p/>
- * Example: 'public static' rule would have higher priority then 'public'
+ * i.e. it's allowed to create rules like:
+ * "put comment '//region Methods' before rearranged methods and '//endregion methods' after it"
  *
- * @deprecated use {@link ArrangementSettings} instead
  * @author Svetlana.Zemlyanskaya
  */
-public interface RulePriorityAwareSettings extends ArrangementSettings {
+public interface ArrangementSectionRuleAwareSettings extends Cloneable {
 }
