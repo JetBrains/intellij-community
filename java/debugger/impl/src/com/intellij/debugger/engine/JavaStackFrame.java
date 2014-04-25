@@ -230,4 +230,10 @@ public class JavaStackFrame extends XStackFrame {
   public StackFrameProxyImpl getStackFrameProxy() {
     return myStackFrameProxy;
   }
+
+  @Nullable
+  @Override
+  public Object getEqualityObject() {
+    return myStackFrameProxy;
+  }
 }
