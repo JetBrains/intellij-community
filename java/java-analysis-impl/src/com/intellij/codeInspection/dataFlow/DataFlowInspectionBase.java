@@ -322,8 +322,11 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
             return;
           }
 
+          PsiElement problemElement = descriptor.getPsiElement();
+          if (problemElement == null) return;
+
           JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-          PsiElement newElement = descriptor.getPsiElement().replace(facade.getElementFactory().createExpressionFromText(exprText, null));
+          PsiElement newElement = problemElement.replace(facade.getElementFactory().createExpressionFromText(exprText, null));
           newElement = JavaCodeStyleManager.getInstance(project).shortenClassReferences(newElement);
           if (newElement instanceof PsiJavaCodeReferenceElement) {
             PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)newElement;

@@ -45,9 +45,7 @@ import java.util.Map;
 
 public class TrigramIndex extends ScalarIndexExtension<Integer> implements CustomInputsIndexFileBasedIndexExtension<Integer> {
   public static final boolean ENABLED = SystemProperties.getBooleanProperty("idea.internal.trigramindex.enabled",
-                                                                            ApplicationManager.getApplication().isInternal() &&
-                                                                            !ApplicationManager.getApplication().isUnitTestMode()
-  );
+                                                                            !ApplicationManager.getApplication().isUnitTestMode());
 
   public static final ID<Integer,Void> INDEX_ID = ID.create("Trigram.Index");
 
@@ -77,8 +75,8 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> implements Custo
       @Override
       @NotNull
       public Map<Integer, Void> map(@NotNull FileContent inputData) {
-        final Map<Integer, Void> result = new THashMap<Integer, Void>();
         TIntHashSet built = TrigramBuilder.buildTrigram(inputData.getContentAsText());
+        final Map<Integer, Void> result = new THashMap<Integer, Void>(built.size());
         built.forEach(new TIntProcedure() {
           @Override
           public boolean execute(int value) {

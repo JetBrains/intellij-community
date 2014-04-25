@@ -1,6 +1,7 @@
 class Test {
   Object method() {
       method(
-              factory());<caret>
+              factory());
+      <caret>
   }
 }

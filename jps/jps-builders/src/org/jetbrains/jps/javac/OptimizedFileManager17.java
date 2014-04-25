@@ -224,9 +224,11 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
     return fileKinds.contains(getKind(name));
   }
 
-  private class InputFileObject extends BaseFileObject {
+  private static class InputFileObject extends BaseFileObject {
+    private static final Kind[] ourAvailableKinds = Kind.values();
     private final String name;
     private final File file;
+    private final Kind kind;
     private Reference<File> absFileRef;
 
     public InputFileObject(JavacFileManager fileManager, File f) {
@@ -237,8 +239,8 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
       super(fileManager);
       this.name = name;
       this.file = f;
+      kind = findKind(name);
     }
-
 
     @Override
     public URI toUri() {
@@ -262,7 +264,11 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
 
     @Override
     public JavaFileObject.Kind getKind() {
-      for (Kind kind : Kind.values()) {
+      return kind;
+    }
+
+    private static JavaFileObject.Kind findKind(String name) {
+      for (Kind kind : ourAvailableKinds) {
         if (kind != Kind.OTHER && name.endsWith(kind.extension)) {
           return kind;
         }

@@ -45,7 +45,7 @@ public final class NettyUtil {
 
   static {
     // IDEA-120811
-    if (SystemProperties.getBooleanProperty("io.netty.random.id", false)) {
+    if (SystemProperties.getBooleanProperty("io.netty.random.id", true)) {
       String id = UUID.randomUUID().toString();
       System.setProperty("io.netty.machineId", id.substring(id.length() - 8));
       System.setProperty("io.netty.processId", Integer.toString(new Random().nextInt(65535)));

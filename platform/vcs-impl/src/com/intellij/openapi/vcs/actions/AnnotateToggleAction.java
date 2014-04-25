@@ -111,8 +111,11 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
     if (selectedFile == null) {
       return false;
     }
+
+    Project project = context.getProject();
+    if (project == null) return false;
     
-    for (FileEditor fileEditor : FileEditorManager.getInstance(context.getProject()).getEditors(selectedFile)) {
+    for (FileEditor fileEditor : FileEditorManager.getInstance(project).getEditors(selectedFile)) {
       if (fileEditor instanceof TextEditor) {
         if (isAnnotated(((TextEditor)fileEditor).getEditor())) {
           return true;

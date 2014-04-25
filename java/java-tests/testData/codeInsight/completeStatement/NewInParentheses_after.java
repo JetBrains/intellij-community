@@ -1,6 +1,7 @@
 
 class foo {
     {
-        Object d = ((String) new String());<caret>
+        Object d = ((String) new String());
+        <caret>
     }
 }

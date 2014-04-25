@@ -37,10 +37,7 @@ import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.components.impl.stores.XmlElementStorage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -447,7 +444,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           }
         });
       }
-    }, ProjectBundle.message("project.load.progress"), true, project);
+    }, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
 
     if (!ok) {
       closeProject(project, false, false, true);
@@ -470,6 +467,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
 
     return true;
+  }
+
+  private static boolean canCancelProjectLoading() {
+    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    return !(indicator instanceof NonCancelableSection);
   }
 
   private void cacheOpenProjects() {
@@ -580,7 +582,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           initProject(project, null);
           return project;
         }
-      }, ProjectBundle.message("project.load.progress"), true, project);
+      }, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
     }
     catch (StateStorageException e) {
       throw new IOException(e);

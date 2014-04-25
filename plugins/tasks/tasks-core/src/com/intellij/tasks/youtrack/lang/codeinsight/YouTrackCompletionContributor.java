@@ -101,7 +101,7 @@ public class YouTrackCompletionContributor extends CompletionContributor {
     }
     //int start = CharArrayUtil.shiftForward(text, lastSpace < 0 ? 0 : lastSpace + 1, "#{ ");
     int prefixStart = stopAt + 1;
-    if (prefixStart < text.length() && text.charAt(prefixStart) == '#') {
+    if (prefixStart < caretOffset && text.charAt(prefixStart) == '#') {
       prefixStart++;
     }
     return StringUtil.trimLeading(text.substring(prefixStart, caretOffset));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,8 +37,6 @@ import junit.framework.TestCase;
 import org.jetbrains.asm4.ClassWriter;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
@@ -332,19 +330,6 @@ public class AsmCodeGeneratorTest extends TestCase {
     TitledBorder border = (TitledBorder) panel.getBorder();
     assertEquals("BorderTitle", border.getTitle());
     assertTrue(border.getBorder().toString(), border.getBorder() instanceof EtchedBorder);
-  }
-  
-  public void testBorderWithoutTitle() throws Exception {
-    JPanel panel = (JPanel) getInstrumentedRootComponent("TestBorderWithoutTitle.form", "BindingTest");
-    Border border = panel.getBorder();
-    assertTrue(border.toString(), border instanceof EmptyBorder);
-  }
-  
-  public void testNoneBorderWithTitle() throws Exception {
-    JPanel panel = (JPanel) getInstrumentedRootComponent("TestNoneBorderWithTitle.form", "BindingTest");
-    assertTrue(panel.getBorder() instanceof TitledBorder);
-    TitledBorder border = (TitledBorder) panel.getBorder();
-    assertEquals("BorderTitle", border.getTitle());
   }
 
   public void testMnemonic() throws Exception {

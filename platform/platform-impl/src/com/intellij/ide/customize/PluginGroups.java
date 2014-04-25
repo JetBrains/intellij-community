@@ -22,6 +22,7 @@ import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,12 +33,12 @@ import java.util.*;
 
 class PluginGroups {
   static final String CORE = "Core";
-  private static final int MAX_DESCR_LENGTH = 50;
+  private static final int MAX_DESCR_LENGTH = 55;
 
 
   private static PluginGroups instance = null;
 
-  final Map<String, List<String>> myTree = new LinkedHashMap<String, List<String>>();
+  final Map<String, Pair<String, List<String>>> myTree = new LinkedHashMap<String, Pair<String, List<String>>>();
   final Map<String, String> myFeaturedPlugins = new LinkedHashMap<String, String>();
 
   private final Map<String, List<IdSet>> myGroups = new LinkedHashMap<String, List<IdSet>>();
@@ -67,7 +68,7 @@ class PluginGroups {
     PluginManager.loadDisabledPlugins(new File(PathManager.getConfigPath()).getPath(), myDisabledPluginIds);
 
 
-    myTree.put(CORE, Arrays.asList(
+    myTree.put(CORE, Pair.create((String)null, Arrays.asList(
       "com.intellij.copyright",
       "com.intellij.java-i18n",
       "org.intellij.intelliLang",
@@ -76,8 +77,8 @@ class PluginGroups {
       "Structural Search",
       "Type Migration",
       "ZKM"
-    ));
-    myTree.put("Java Frameworks", Arrays.asList(
+    )));
+    myTree.put("Java Frameworks", Pair.create("/plugins/JavaFrameworks.png", Arrays.asList(
       "com.intellij.appengine",
       "org.intellij.grails",
       "com.intellij.gwt",
@@ -112,13 +113,13 @@ class PluginGroups {
       "GuiceyIDEA",
       "com.intellij.aspectj",
       "Osmorc"
-    ));
-    myTree.put("Build Tools", Arrays.asList(
+    )));
+    myTree.put("Build Tools", Pair.create("/plugins/BuildTools.png", Arrays.asList(
       "AntSupport",
       "Maven:org.jetbrains.idea.maven,org.jetbrains.idea.maven.ext",
       "org.jetbrains.plugins.gradle"
-    ));
-    myTree.put("Web Development", Arrays.asList(
+    )));
+    myTree.put("Web Development", Pair.create("/plugins/WebDevelopment.png", Arrays.asList(
       "HTML:HtmlTools,QuirksMode,W3Validators",
       "org.jetbrains.plugins.haml",
       "com.jetbrains.plugins.jade",
@@ -131,8 +132,8 @@ class PluginGroups {
       "com.intellij.flex",
       "com.intellij.plugins.html.instantEditing",
       "com.jetbrains.restClient"
-    ));
-    myTree.put("Version Controls", Arrays.asList(
+    )));
+    myTree.put("Version Controls", Pair.create("/plugins/VersionControls.png", Arrays.asList(
       "ClearcasePlugin",
       "CVS",
       "Git4Idea",
@@ -141,15 +142,15 @@ class PluginGroups {
       "PerforceDirectPlugin",
       "Subversion",
       "TFS"
-    ));
-    myTree.put("Test Tools", Arrays.asList(
+    )));
+    myTree.put("Test Tools", Pair.create("/plugins/TestTools.png", Arrays.asList(
       "JUnit",
       "TestNG-J",
       "cucumber-java",
       "cucumber",
       "Coverage:Coverage,Emma"
-    ));
-    myTree.put("Application Servers", Arrays.asList(
+    )));
+    myTree.put("Application Servers", Pair.create("/plugins/ApplicationServers.png", Arrays.asList(
       "com.intellij.javaee.view",
       "Geronimo",
       "GlassFish",
@@ -161,26 +162,26 @@ class PluginGroups {
       "WebSphere",
       "com.intellij.dmserver",
       "JSR45Plugin"
-    ));
-    myTree.put("Clouds", Arrays.asList(
+    )));
+    myTree.put("Clouds", Pair.create("/plugins/Clouds.png", Arrays.asList(
       "CloudFoundry",
       "CloudBees",
       "Heroku",
       "OpenShift"
-    ));
+    )));
     //myTree.put("Groovy", Arrays.asList("org.intellij.grails"));
     //TODO Scala -> Play 2.x (Play 2.0 Support)
-    myTree.put("Swing", Arrays.asList(
+    myTree.put("Swing", Pair.create("/plugins/Swing.png", Arrays.asList(
       "com.intellij.uiDesigner"//TODO JavaFX?
-    ));
-    myTree.put("Android", Arrays.asList(
+    )));
+    myTree.put("Android", Pair.create("/plugins/Android.png", Arrays.asList(
       "org.jetbrains.android",
-      "com.intellij.android-designer"));
-    myTree.put("Database Tools", Arrays.asList(
+      "com.intellij.android-designer")));
+    myTree.put("Database Tools", Pair.create("/plugins/DatabaseTools.png", Arrays.asList(
       "com.intellij.sql",
       "com.intellij.persistence.database"
-    ));
-    myTree.put("Other Tools", Arrays.asList(
+    )));
+    myTree.put("Other Tools", Pair.create("/plugins/OtherTools.png", Arrays.asList(
       "ByteCodeViewer",
       "com.intellij.dsm",
       "org.jetbrains.idea.eclipse",
@@ -190,8 +191,8 @@ class PluginGroups {
       "com.intellij.diagram",
       "org.jetbrains.plugins.yaml",
       "XSLT and XPath:XPathView,XSLT-Debugger"
-    ));
-    myTree.put("Plugin Development", Arrays.asList("DevKit"));
+    )));
+    myTree.put("Plugin Development", Pair.create("/plugins/PluginDevelopment.png", Arrays.asList("DevKit")));
 
     myFeaturedPlugins.put("Scala", "Custom Languages:Plugin for Scala language support:org.intellij.scala");
     myFeaturedPlugins.put("Live Edit Tool", "Web Development:Provides live edit HTML/CSS/JavaScript:com.intellij.plugins.html.instantEditing");
@@ -204,13 +205,13 @@ class PluginGroups {
   private void initIfNeed() {
     if (myInitialized) return;
     myInitialized = true;
-    for (Map.Entry<String, List<String>> entry : myTree.entrySet()) {
+    for (Map.Entry<String, Pair<String, List<String>>> entry : myTree.entrySet()) {
       final String group = entry.getKey();
       if (CORE.equals(group)) continue;
 
       List<IdSet> idSets = new ArrayList<IdSet>();
       StringBuilder description = new StringBuilder();
-      for (String idDescription : entry.getValue()) {
+      for (String idDescription : entry.getValue().getSecond()) {
         IdSet idSet = new IdSet(idDescription);
         String idSetTitle = idSet.getTitle();
         if (idSetTitle == null) continue;
@@ -226,12 +227,12 @@ class PluginGroups {
         int lastWord = description.lastIndexOf(",", MAX_DESCR_LENGTH);
         description.delete(lastWord, description.length()).append("...");
       }
-      description.insert(0, "<html><body><i>");
+      description.insert(0, "<html><body><center><i>");
       myDescriptions.put(group, description.toString());
     }
   }
 
-  Map<String, List<String>> getTree() {
+  Map<String, Pair<String, List<String>>> getTree() {
     initIfNeed();
     return myTree;
   }

@@ -31,6 +31,7 @@ import java.awt.*;
  */
 public abstract class XFullValueEvaluator {
   private final String myLinkText;
+  private boolean myShowValuePopup = true;
 
   protected XFullValueEvaluator() {
     this(XDebuggerBundle.message("node.test.show.full.value"));
@@ -45,6 +46,15 @@ public abstract class XFullValueEvaluator {
    */
   protected XFullValueEvaluator(@NotNull String linkText) {
     myLinkText = linkText;
+  }
+
+  public boolean isShowValuePopup() {
+    return myShowValuePopup;
+  }
+
+  public XFullValueEvaluator setShowValuePopup(boolean value) {
+    myShowValuePopup = value;
+    return this;
   }
 
   /**
