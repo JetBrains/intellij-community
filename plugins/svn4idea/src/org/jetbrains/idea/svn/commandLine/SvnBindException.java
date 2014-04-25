@@ -18,16 +18,13 @@ package org.jetbrains.idea.svn.commandLine;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 
-import java.util.Map;
 import java.util.regex.Matcher;
 
 /**
@@ -43,7 +40,7 @@ public class SvnBindException extends VcsException {
   public static final int ERROR_BASE = 120000;
   public static final int CATEGORY_SIZE = 5000;
 
-  private Map<Integer, String> errors = new HashMap<Integer, String>();
+  @NotNull private final MultiMap<Integer, String> errors = MultiMap.create();
 
   public SvnBindException(String message) {
     super(message);
@@ -60,7 +57,7 @@ public class SvnBindException extends VcsException {
       SVNException e = (SVNException)throwable;
       int code = e.getErrorMessage().getErrorCode().getCode();
 
-      put(code, e.getMessage());
+      errors.putValue(code, e.getMessage());
     }
   }
 
@@ -91,18 +88,7 @@ public class SvnBindException extends VcsException {
     Matcher matcher = SvnUtil.ERROR_PATTERN.matcher(message);
 
     while (matcher.find()) {
-      put(Integer.valueOf(matcher.group(2)), matcher.group());
-    }
-  }
-
-  private void put(int code, @Nullable String message) {
-    if (errors.containsKey(code)) {
-      if (!StringUtil.isEmpty(message)) {
-        errors.put(code, errors.get(code) + LineSeparator.LF.getSeparatorString() + message);
-      }
-    }
-    else {
-      errors.put(code, message);
+      errors.putValue(Integer.valueOf(matcher.group(2)), matcher.group());
     }
   }
 }
