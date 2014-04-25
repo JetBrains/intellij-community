@@ -17,6 +17,7 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.actions.JavaValueModifier;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -30,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.frame.*;
 import com.sun.jdi.Type;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -53,6 +55,10 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
   @Override
   public NodeDescriptorImpl getDescriptor() {
     return myValueDescriptor;
+  }
+
+  public EvaluationContextImpl getEvaluationContext() {
+    return myEvaluationContext;
   }
 
   @Override
@@ -135,5 +141,11 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
   @Override
   public boolean canNavigateToTypeSource() {
     return super.canNavigateToTypeSource();
+  }
+
+  @Nullable
+  @Override
+  public XValueModifier getModifier() {
+    return myValueDescriptor.canSetValue() ? new JavaValueModifier(this) : null;
   }
 }
