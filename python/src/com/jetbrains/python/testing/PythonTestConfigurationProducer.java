@@ -262,7 +262,8 @@ abstract public class PythonTestConfigurationProducer extends RunConfigurationPr
   @Override
   public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
     final RunConfiguration configuration = self.getConfiguration();
-    if (configuration instanceof PythonUnitTestRunConfiguration && ((PythonUnitTestRunConfiguration)configuration).getTestType() == AbstractPythonTestRunConfiguration.TestType.TEST_FOLDER) {
+    if (configuration instanceof PythonUnitTestRunConfiguration &&
+        ((PythonUnitTestRunConfiguration)configuration).getTestType() == AbstractPythonTestRunConfiguration.TestType.TEST_FOLDER) {
       return true;
     }
     return other.isProducedBy(PythonTestConfigurationProducer.class) || other.isProducedBy(PythonRunConfigurationProducer.class);
