@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.portable;
+package org.jetbrains.idea.svn.status;
 
 import org.jetbrains.idea.svn.api.SvnClient;
 import org.tmatesoft.svn.core.SVNDepth;

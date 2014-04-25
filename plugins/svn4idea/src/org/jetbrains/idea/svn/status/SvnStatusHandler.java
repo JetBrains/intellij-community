@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.commandLine;
+package org.jetbrains.idea.svn.status;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Getter;
@@ -23,7 +23,8 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.portable.PortableStatus;
+import org.jetbrains.idea.svn.commandLine.CommandUtil;
+import org.jetbrains.idea.svn.commandLine.SVNLockWrapper;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.wc.SVNInfo;

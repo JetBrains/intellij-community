@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.commandLine;
+package org.jetbrains.idea.svn.status;
 
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.FileUtil;
@@ -25,8 +25,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
-import org.jetbrains.idea.svn.portable.PortableStatus;
-import org.jetbrains.idea.svn.portable.StatusClient;
+import org.jetbrains.idea.svn.commandLine.CommandExecutor;
+import org.jetbrains.idea.svn.commandLine.CommandUtil;
+import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.jetbrains.idea.svn.portable.SvnExceptionWrapper;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;

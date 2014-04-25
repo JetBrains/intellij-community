@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.portable;
+package org.jetbrains.idea.svn.status;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Getter;
-import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;

@@ -20,7 +20,7 @@ import org.jetbrains.idea.svn.diff.DiffClient;
 import org.jetbrains.idea.svn.history.HistoryClient;
 import org.jetbrains.idea.svn.integrate.MergeClient;
 import org.jetbrains.idea.svn.lock.LockClient;
-import org.jetbrains.idea.svn.portable.StatusClient;
+import org.jetbrains.idea.svn.status.StatusClient;
 import org.jetbrains.idea.svn.portable.SvnWcClientI;
 import org.jetbrains.idea.svn.properties.PropertyClient;
 import org.jetbrains.idea.svn.revert.RevertClient;

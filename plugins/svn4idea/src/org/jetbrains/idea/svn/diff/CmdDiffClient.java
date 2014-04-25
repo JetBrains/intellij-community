@@ -30,6 +30,7 @@ import org.jetbrains.idea.svn.SvnStatusConvertor;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.commandLine.*;
 import org.jetbrains.idea.svn.history.SvnRepositoryContentRevision;
+import org.jetbrains.idea.svn.status.SvnStatusHandler;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;

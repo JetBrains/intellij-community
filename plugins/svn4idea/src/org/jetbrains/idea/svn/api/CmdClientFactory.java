@@ -11,7 +11,7 @@ import org.jetbrains.idea.svn.checkin.CmdImportClient;
 import org.jetbrains.idea.svn.checkout.CmdCheckoutClient;
 import org.jetbrains.idea.svn.checkout.CmdExportClient;
 import org.jetbrains.idea.svn.cleanup.CmdCleanupClient;
-import org.jetbrains.idea.svn.commandLine.CmdStatusClient;
+import org.jetbrains.idea.svn.status.CmdStatusClient;
 import org.jetbrains.idea.svn.commandLine.SvnCommandLineInfoClient;
 import org.jetbrains.idea.svn.conflict.CmdConflictClient;
 import org.jetbrains.idea.svn.content.CmdContentClient;
