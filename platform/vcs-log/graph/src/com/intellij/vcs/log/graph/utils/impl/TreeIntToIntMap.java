@@ -20,7 +20,7 @@ import com.intellij.util.BooleanFunction;
 import com.intellij.vcs.log.graph.utils.UpdatableIntToIntMap;
 import org.jetbrains.annotations.NotNull;
 
-public class TreeIntToIntMap extends AbstractUpdatableIntToIntMap {
+public class TreeIntToIntMap extends AbstractIntToIntMap implements UpdatableIntToIntMap {
 
   public static UpdatableIntToIntMap newInstance(@NotNull final BooleanFunction<Integer> thisIsVisible, final int longSize) {
     if (longSize < 0)

@@ -16,9 +16,9 @@
 
 package com.intellij.vcs.log.graph.utils.impl;
 
-import com.intellij.vcs.log.graph.utils.UpdatableIntToIntMap;
+import com.intellij.vcs.log.graph.utils.IntToIntMap;
 
-public abstract class AbstractUpdatableIntToIntMap implements UpdatableIntToIntMap {
+public abstract class AbstractIntToIntMap implements IntToIntMap {
 
   @Override
   public int getShortIndex(int longIndex) {

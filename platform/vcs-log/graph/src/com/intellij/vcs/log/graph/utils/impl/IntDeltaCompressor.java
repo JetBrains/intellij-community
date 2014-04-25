@@ -16,7 +16,6 @@
 
 package com.intellij.vcs.log.graph.utils.impl;
 
-import com.intellij.util.BooleanFunction;
 import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.IntList;
 import com.intellij.vcs.log.graph.utils.IntToIntMap;
@@ -44,7 +43,7 @@ import org.jetbrains.annotations.NotNull;
       currentStartIndex += sizeOf;
     }
 
-    return new IntDeltaCompressor(compressedDeltas, startedDeltaIndex);
+    return new IntDeltaCompressor(compressedDeltas, startedDeltaIndex, deltaList.size());
   }
 
   @NotNull private final byte[] myCompressedDeltas;
@@ -52,15 +51,10 @@ import org.jetbrains.annotations.NotNull;
 
   @NotNull private final IntToIntMap myStartIndexMap;
 
-  private IntDeltaCompressor(@NotNull byte[] compressedDeltas, @NotNull final Flags startedDeltaIndex) {
+  private IntDeltaCompressor(@NotNull byte[] compressedDeltas, @NotNull final Flags startedDeltaIndex, int countDeltas) {
     myCompressedDeltas = compressedDeltas;
     myStartedDeltaIndex = startedDeltaIndex;
-    myStartIndexMap = ListIntToIntMap.newInstance(new BooleanFunction<Integer>() {
-      @Override
-      public boolean fun(Integer integer) {
-        return startedDeltaIndex.get(integer);
-      }
-    }, startedDeltaIndex.size());
+    myStartIndexMap = PermanentListIntToIntMap.newInstance(startedDeltaIndex, countDeltas);
   }
 
   // [left, right)
