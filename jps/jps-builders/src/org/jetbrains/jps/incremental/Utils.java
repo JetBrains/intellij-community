@@ -99,7 +99,7 @@ public class Utils {
       if (!p.startsWith("/")) {
         p = "/" + p;
       }
-      if (p.startsWith("//")) {
+      if (!p.startsWith("//")) {
         p = "//" + p;
       }
       return new URI("file", null, p, null);
