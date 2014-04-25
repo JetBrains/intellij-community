@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.commandLine.*;
-import org.jetbrains.idea.svn.commandLine.SvnExceptionWrapper;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
 import org.tmatesoft.svn.core.wc.SVNInfo;
@@ -212,8 +211,10 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
     try {
       command = execute(myVcs, SvnTarget.fromURL(url), SvnCommandName.info, parameters, null);
     }
-    catch (VcsException e) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
+    catch (SvnBindException e) {
+      SVNErrorCode code = e.contains(SVNErrorCode.RA_ILLEGAL_URL) ? SVNErrorCode.RA_ILLEGAL_URL : SVNErrorCode.IO_ERROR;
+
+      throw new SVNException(SVNErrorMessage.create(code, e), e);
     }
 
     parseResult(handler, null, command.getOutput());
