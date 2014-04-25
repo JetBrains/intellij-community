@@ -42,7 +42,7 @@ public class CmdImportClient extends BaseSvnClient implements ImportClient {
     CmdCheckinClient.CommandListener listener = new CmdCheckinClient.CommandListener(handler);
     listener.setBaseDirectory(path);
 
-    CommandUtil.execute(myVcs, SvnTarget.fromURL(url), SvnCommandName.importFolder, parameters, listener);
+    execute(myVcs, SvnTarget.fromURL(url), SvnCommandName.importFolder, parameters, listener);
 
     return listener.getCommittedRevision();
   }

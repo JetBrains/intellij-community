@@ -32,7 +32,7 @@ public class CmdDeleteClient extends BaseSvnClient implements DeleteClient {
       File workingDirectory = CommandUtil.getHomeDirectory();
       BaseUpdateCommandListener listener = new BaseUpdateCommandListener(workingDirectory, handler);
 
-      CommandUtil.execute(myVcs, SvnTarget.fromFile(path), workingDirectory, SvnCommandName.delete, parameters, listener);
+      execute(myVcs, SvnTarget.fromFile(path), workingDirectory, SvnCommandName.delete, parameters, listener);
 
       listener.throwWrappedIfException();
     }

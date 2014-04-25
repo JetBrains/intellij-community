@@ -55,7 +55,7 @@ public class CmdBrowseClient extends BaseSvnClient implements BrowseClient {
     CommandUtil.put(parameters, depth);
     parameters.add("--xml");
 
-    CommandExecutor command = CommandUtil.execute(myVcs, target, SvnCommandName.list, parameters, null);
+    CommandExecutor command = execute(myVcs, target, SvnCommandName.list, parameters, null);
 
     try {
       parseOutput(target.getURL(), command, handler);

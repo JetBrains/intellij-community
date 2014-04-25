@@ -101,7 +101,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
 
     CommandExecutor command;
     try {
-      command = CommandUtil.execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.st, parameters, null);
+      command = execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.st, parameters, null);
     }
     catch (VcsException e) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);

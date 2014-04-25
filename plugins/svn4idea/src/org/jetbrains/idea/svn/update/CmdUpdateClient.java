@@ -80,7 +80,7 @@ public class CmdUpdateClient extends SvnKitUpdateClient {
 
     final BaseUpdateCommandListener listener = createCommandListener(paths, updatedToRevision, base);
     try {
-      CommandUtil.execute(myVcs, SvnTarget.fromFile(base), command, parameters, listener);
+      execute(myVcs, SvnTarget.fromFile(base), command, parameters, listener);
     }
     catch (VcsException e) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e));

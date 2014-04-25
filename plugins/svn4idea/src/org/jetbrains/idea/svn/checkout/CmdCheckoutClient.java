@@ -61,7 +61,7 @@ public class CmdCheckoutClient extends BaseSvnClient implements CheckoutClient {
                    @NotNull List<String> parameters) throws VcsException {
     BaseUpdateCommandListener listener = new BaseUpdateCommandListener(destination, handler);
 
-    CommandUtil.execute(myVcs, source, SvnCommandName.checkout, parameters, listener);
+    execute(myVcs, source, SvnCommandName.checkout, parameters, listener);
 
     listener.throwWrappedIfException();
   }

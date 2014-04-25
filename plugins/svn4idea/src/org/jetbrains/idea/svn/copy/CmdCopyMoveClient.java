@@ -36,8 +36,7 @@ public class CmdCopyMoveClient extends BaseSvnClient implements CopyMoveClient {
     // directory being renamed will be blocked by svn process
     File workingDirectory =
       isMove && !SystemInfo.isFileSystemCaseSensitive && FileUtil.filesEqual(src, dst) ? CommandUtil.getHomeDirectory() : null;
-    CommandUtil
-      .execute(myVcs, SvnTarget.fromFile(dst), workingDirectory, isMove ? SvnCommandName.move : SvnCommandName.copy, parameters, null);
+    execute(myVcs, SvnTarget.fromFile(dst), workingDirectory, isMove ? SvnCommandName.move : SvnCommandName.copy, parameters, null);
   }
 
   @Override
@@ -68,7 +67,7 @@ public class CmdCopyMoveClient extends BaseSvnClient implements CopyMoveClient {
     if (source.isFile()) {
       listener.setBaseDirectory(source.getFile());
     }
-    CommandUtil.execute(myVcs, source, SvnCommandName.copy, parameters, listener);
+    execute(myVcs, source, SvnCommandName.copy, parameters, listener);
 
     return listener.getCommittedRevision();
   }
@@ -89,7 +88,7 @@ public class CmdCopyMoveClient extends BaseSvnClient implements CopyMoveClient {
     File workingDirectory = CommandUtil.getHomeDirectory();
     BaseUpdateCommandListener listener = new BaseUpdateCommandListener(workingDirectory, handler);
 
-    CommandUtil.execute(myVcs, source, workingDirectory, SvnCommandName.copy, parameters, listener);
+    execute(myVcs, source, workingDirectory, SvnCommandName.copy, parameters, listener);
 
     listener.throwWrappedIfException();
   }

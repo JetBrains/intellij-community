@@ -110,7 +110,7 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
     };
 
     try {
-      CommandExecutor command = CommandUtil.execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.info, parameters, listener);
+      CommandExecutor command = execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.info, parameters, listener);
 
       return command.getOutput();
     }
@@ -210,7 +210,7 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
     fillParameters(path, pegRevision, revision, depth, parameters);
     CommandExecutor command;
     try {
-      command = CommandUtil.execute(myVcs, SvnTarget.fromURL(url), SvnCommandName.info, parameters, null);
+      command = execute(myVcs, SvnTarget.fromURL(url), SvnCommandName.info, parameters, null);
     }
     catch (VcsException e) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);

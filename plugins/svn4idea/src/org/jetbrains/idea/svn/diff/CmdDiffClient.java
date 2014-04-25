@@ -64,7 +64,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
     parameters.add("--xml");
     parameters.add("--summarize");
 
-    CommandExecutor executor = CommandUtil.execute(myVcs, target1, SvnCommandName.diff, parameters, null);
+    CommandExecutor executor = execute(myVcs, target1, SvnCommandName.diff, parameters, null);
     return parseOutput(target1, target2, executor);
   }
 
