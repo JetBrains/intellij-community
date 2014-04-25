@@ -20,8 +20,8 @@ import org.jetbrains.idea.svn.diff.SvnKitDiffClient;
 import org.jetbrains.idea.svn.history.SvnKitHistoryClient;
 import org.jetbrains.idea.svn.integrate.SvnKitMergeClient;
 import org.jetbrains.idea.svn.lock.SvnKitLockClient;
-import org.jetbrains.idea.svn.portable.SvnStatusClientI;
-import org.jetbrains.idea.svn.portable.SvnkitSvnStatusClient;
+import org.jetbrains.idea.svn.portable.StatusClient;
+import org.jetbrains.idea.svn.portable.SvnKitStatusClient;
 import org.jetbrains.idea.svn.portable.SvnkitSvnWcClient;
 import org.jetbrains.idea.svn.properties.SvnKitPropertyClient;
 import org.jetbrains.idea.svn.revert.SvnKitRevertClient;
@@ -65,14 +65,14 @@ public class SvnKitClientFactory extends ClientFactory {
     myBrowseClient = new SvnKitBrowseClient();
     myDiffClient = new SvnKitDiffClient();
     myCheckinClient = new SvnKitCheckinClient();
-    statusClient = new SvnkitSvnStatusClient();
+    statusClient = new SvnKitStatusClient();
     infoClient = new SvnkitSvnWcClient(myVcs);
   }
 
   @NotNull
   @Override
-  public SvnStatusClientI createStatusClient(@Nullable ISVNStatusFileProvider provider, @NotNull ISVNEventHandler handler) {
-    return prepare(new SvnkitSvnStatusClient(provider, handler));
+  public StatusClient createStatusClient(@Nullable ISVNStatusFileProvider provider, @NotNull ISVNEventHandler handler) {
+    return prepare(new SvnKitStatusClient(provider, handler));
   }
 
   @NotNull

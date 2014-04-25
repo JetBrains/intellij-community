@@ -20,7 +20,7 @@ import org.jetbrains.idea.svn.diff.DiffClient;
 import org.jetbrains.idea.svn.history.HistoryClient;
 import org.jetbrains.idea.svn.integrate.MergeClient;
 import org.jetbrains.idea.svn.lock.LockClient;
-import org.jetbrains.idea.svn.portable.SvnStatusClientI;
+import org.jetbrains.idea.svn.portable.StatusClient;
 import org.jetbrains.idea.svn.portable.SvnWcClientI;
 import org.jetbrains.idea.svn.properties.PropertyClient;
 import org.jetbrains.idea.svn.revert.RevertClient;
@@ -44,7 +44,7 @@ public abstract class ClientFactory {
   protected HistoryClient historyClient;
   protected RevertClient revertClient;
   protected DeleteClient deleteClient;
-  protected SvnStatusClientI statusClient;
+  protected StatusClient statusClient;
   protected SvnWcClientI infoClient;
   protected CopyMoveClient copyMoveClient;
   protected ConflictClient conflictClient;
@@ -96,12 +96,12 @@ public abstract class ClientFactory {
   }
 
   @NotNull
-  public SvnStatusClientI createStatusClient() {
+  public StatusClient createStatusClient() {
     return prepare(statusClient);
   }
 
   @NotNull
-  public SvnStatusClientI createStatusClient(@Nullable ISVNStatusFileProvider provider, @NotNull ISVNEventHandler handler) {
+  public StatusClient createStatusClient(@Nullable ISVNStatusFileProvider provider, @NotNull ISVNEventHandler handler) {
     return createStatusClient();
   }
 

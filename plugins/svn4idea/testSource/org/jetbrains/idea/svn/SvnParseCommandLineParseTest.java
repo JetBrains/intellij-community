@@ -24,7 +24,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import junit.framework.Assert;
 import junit.framework.TestCase;
-import org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient;
+import org.jetbrains.idea.svn.commandLine.CmdStatusClient;
 import org.jetbrains.idea.svn.commandLine.SvnInfoHandler;
 import org.jetbrains.idea.svn.commandLine.SvnStatusHandler;
 import org.jetbrains.idea.svn.portable.IdeaSVNInfo;
@@ -671,14 +671,17 @@ public class SvnParseCommandLineParseTest extends TestCase {
     final String basePath = "C:\\TestProjects\\sortedProjects\\Subversion\\local2\\sep12main\\main";
     final SvnStatusHandler[] handler = new SvnStatusHandler[1];
     final File baseFile = new File(basePath);
-    final SvnStatusHandler.ExternalDataCallback callback = SvnCommandLineStatusClient.createStatusCallback(new ISVNStatusHandler() {
+    final SvnStatusHandler.ExternalDataCallback callback = CmdStatusClient.createStatusCallback(new ISVNStatusHandler() {
       @Override
       public void handleStatus(SVNStatus status) throws SVNException {
         System.out.println(status.getURL());
-        if (new File("C:\\TestProjects\\sortedProjects\\Subversion\\local2\\sep12main\\main\\slave\\src\\com\\slave\\MacMessagesParser.java").equals(status.getFile())) {
+        if (new File(
+          "C:\\TestProjects\\sortedProjects\\Subversion\\local2\\sep12main\\main\\slave\\src\\com\\slave\\MacMessagesParser.java")
+          .equals(status.getFile())) {
           Assert.assertEquals("http://external/src/com/slave/MacMessagesParser.java", status.getURL().toString());
         }
-        if (new File("C:\\TestProjects\\sortedProjects\\Subversion\\local2\\sep12main\\main\\slave\\src\\com\\slave\\SomeOtherClass.java").equals(status.getFile())) {
+        if (new File("C:\\TestProjects\\sortedProjects\\Subversion\\local2\\sep12main\\main\\slave\\src\\com\\slave\\SomeOtherClass.java")
+          .equals(status.getFile())) {
           Assert.assertEquals("http://external/src/com/slave/SomeOtherClass.java", status.getURL().toString());
         }
       }

@@ -31,17 +31,17 @@ import java.util.Collection;
  * Date: 1/24/12
  * Time: 9:47 AM
  */
-public class SvnkitSvnStatusClient extends BaseSvnClient implements SvnStatusClientI {
+public class SvnKitStatusClient extends BaseSvnClient implements StatusClient {
 
   private SVNStatusClient myStatusClient;
   @Nullable private final ISVNStatusFileProvider myProvider;
   @Nullable private final ISVNEventHandler myHandler;
 
-  public SvnkitSvnStatusClient() {
+  public SvnKitStatusClient() {
     this(null, null);
   }
 
-  public SvnkitSvnStatusClient(@Nullable ISVNStatusFileProvider provider, @Nullable ISVNEventHandler handler) {
+  public SvnKitStatusClient(@Nullable ISVNStatusFileProvider provider, @Nullable ISVNEventHandler handler) {
     myProvider = provider;
     myHandler = handler;
   }

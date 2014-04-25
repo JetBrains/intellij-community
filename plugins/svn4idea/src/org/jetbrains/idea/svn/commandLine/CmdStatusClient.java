@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,7 +27,7 @@ import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.portable.PortableStatus;
 import org.jetbrains.idea.svn.portable.SvnExceptionWrapper;
-import org.jetbrains.idea.svn.portable.SvnStatusClientI;
+import org.jetbrains.idea.svn.portable.StatusClient;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.*;
@@ -49,8 +48,7 @@ import java.util.*;
  * Date: 1/25/12
  * Time: 5:21 PM
  */
-public class SvnCommandLineStatusClient extends BaseSvnClient implements SvnStatusClientI {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient");
+public class CmdStatusClient extends BaseSvnClient implements StatusClient {
 
   @Override
   public long doStatus(File path, boolean recursive, boolean remote, boolean reportAll, boolean includeIgnored, ISVNStatusHandler handler)
@@ -184,7 +182,7 @@ public class SvnCommandLineStatusClient extends BaseSvnClient implements SvnStat
     CommandUtil.put(parameters, remote, "-u");
     CommandUtil.put(parameters, reportAll, "--verbose");
     CommandUtil.put(parameters, includeIgnored, "--no-ignore");
-    // TODO: Fix this check - update corresponding parameters in SvnStatusClientI
+    // TODO: Fix this check - update corresponding parameters in StatusClient
     CommandUtil.putChangeLists(parameters, changeLists);
     parameters.add("--xml");
   }

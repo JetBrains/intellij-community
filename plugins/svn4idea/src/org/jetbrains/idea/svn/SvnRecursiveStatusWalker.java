@@ -31,7 +31,7 @@ import com.intellij.util.Processor;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.portable.SvnStatusClientI;
+import org.jetbrains.idea.svn.portable.StatusClient;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
@@ -77,7 +77,7 @@ public class SvnRecursiveStatusWalker {
       if (path.isDirectory()) {
         myHandler.setCurrentItem(item);
         try {
-          final SvnStatusClientI client = item.getClient();
+          final StatusClient client = item.getClient();
           client.doStatus(ioFile, SVNRevision.WORKING, item.getDepth(), false, false, true, true, myHandler, null);
           myHandler.checkIfCopyRootWasReported(null, ioFile);
         }
@@ -117,10 +117,10 @@ public class SvnRecursiveStatusWalker {
   private static class MyItem {
     @NotNull private final FilePath myPath;
     @NotNull private final SVNDepth myDepth;
-    @NotNull private final SvnStatusClientI myStatusClient;
+    @NotNull private final StatusClient myStatusClient;
     private final boolean myIsInnerCopyRoot;
 
-    private MyItem(@NotNull FilePath path, @NotNull SVNDepth depth, boolean isInnerCopyRoot, @NotNull SvnStatusClientI statusClient) {
+    private MyItem(@NotNull FilePath path, @NotNull SVNDepth depth, boolean isInnerCopyRoot, @NotNull StatusClient statusClient) {
       myPath = path;
       myDepth = depth;
       myStatusClient = statusClient;
@@ -138,7 +138,7 @@ public class SvnRecursiveStatusWalker {
     }
 
     @NotNull
-    public SvnStatusClientI getClient() {
+    public StatusClient getClient() {
       return myStatusClient;
     }
 
@@ -206,7 +206,7 @@ public class SvnRecursiveStatusWalker {
 
   @NotNull
   private MyItem createItem(@NotNull FilePath path, @NotNull SVNDepth depth, boolean isInnerCopyRoot) {
-    SvnStatusClientI statusClient =
+    StatusClient statusClient =
       myVcs.getFactory(path.getIOFile()).createStatusClient(myPartner.getFileProvider(), myPartner.getEventHandler());
 
     return new MyItem(path, depth, isInnerCopyRoot, statusClient);
