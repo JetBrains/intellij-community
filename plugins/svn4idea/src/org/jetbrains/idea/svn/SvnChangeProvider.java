@@ -34,7 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.actions.CleanupWorker;
-import org.jetbrains.idea.svn.portable.SvnExceptionWrapper;
+import org.jetbrains.idea.svn.commandLine.SvnExceptionWrapper;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;

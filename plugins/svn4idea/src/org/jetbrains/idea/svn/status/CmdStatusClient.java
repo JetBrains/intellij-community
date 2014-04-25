@@ -28,7 +28,7 @@ import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
-import org.jetbrains.idea.svn.portable.SvnExceptionWrapper;
+import org.jetbrains.idea.svn.commandLine.SvnExceptionWrapper;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.*;

@@ -4,7 +4,7 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.SvnClient;
-import org.jetbrains.idea.svn.commandLine.CommitEventHandler;
+import org.jetbrains.idea.svn.checkin.CommitEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;

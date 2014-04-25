@@ -36,7 +36,7 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
-import org.jetbrains.idea.svn.commandLine.CommitEventHandler;
+import org.jetbrains.idea.svn.checkin.CommitEventHandler;
 import org.jetbrains.idea.svn.dialogs.CreateBranchOrTagDialog;
 import org.jetbrains.idea.svn.update.AutoSvnUpdater;
 import org.jetbrains.idea.svn.update.SingleRootSwitcher;

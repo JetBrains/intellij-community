@@ -45,7 +45,7 @@ import org.jetbrains.idea.svn.actions.ExclusiveBackgroundVcsAction;
 import org.jetbrains.idea.svn.actions.SvnExcludingIgnoredOperation;
 import org.jetbrains.idea.svn.api.ClientFactory;
 import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
-import org.jetbrains.idea.svn.commandLine.CommitEventHandler;
+import org.jetbrains.idea.svn.checkin.CommitEventHandler;
 import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
 import org.jetbrains.idea.svn.dialogs.UpgradeFormatDialog;
 import org.tmatesoft.svn.core.SVNCancelException;

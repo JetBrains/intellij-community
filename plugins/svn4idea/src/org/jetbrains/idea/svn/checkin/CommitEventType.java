@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.commandLine;
+package org.jetbrains.idea.svn.checkin;
 
 /**
  * Created with IntelliJ IDEA.

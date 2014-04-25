@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.commandLine.*;
-import org.jetbrains.idea.svn.portable.SvnExceptionWrapper;
+import org.jetbrains.idea.svn.commandLine.SvnExceptionWrapper;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
 import org.tmatesoft.svn.core.wc.SVNInfo;
