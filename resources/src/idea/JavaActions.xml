@@ -228,7 +228,7 @@
       <reference ref="Debugger.AdjustArrayRange"/>
       <reference ref="Debugger.Inspect"/>
       <reference ref="Debugger.MarkObject"/>
-      <reference ref="Debugger.SetValue"/>
+      <!--<reference ref="Debugger.SetValue"/>-->
       <reference ref="Debugger.EditNodeSource"/>
       <reference ref="Debugger.EditTypeSource"/>
       <separator/>
@@ -248,7 +248,7 @@
       <reference ref="Debugger.AdjustArrayRange"/>
       <reference ref="Debugger.Inspect"/>
       <reference ref="Debugger.MarkObject"/>
-      <reference ref="Debugger.SetValue"/>
+      <!--<reference ref="Debugger.SetValue"/>-->
       <reference ref="Debugger.EditNodeSource"/>
       <reference ref="Debugger.EditTypeSource"/>
       <separator/>
@@ -269,7 +269,7 @@
       <reference ref="Debugger.AdjustArrayRange"/>
       <reference ref="Debugger.Inspect"/>
       <reference ref="Debugger.MarkObject"/>
-      <reference ref="Debugger.SetValue"/>
+      <!--<reference ref="Debugger.SetValue"/>-->
       <reference ref="Debugger.EditNodeSource"/>
       <reference ref="Debugger.EditTypeSource"/>
       <separator/>
@@ -311,7 +311,7 @@
       <reference ref="Debugger.AdjustArrayRange"/>
       <reference ref="Debugger.Inspect"/>
       <reference ref="Debugger.MarkObject"/>
-      <reference ref="Debugger.SetValue"/>
+      <!--<reference ref="Debugger.SetValue"/>-->
       <reference ref="Debugger.EditNodeSource"/>
       <reference ref="Debugger.EditTypeSource"/>
       <separator/>

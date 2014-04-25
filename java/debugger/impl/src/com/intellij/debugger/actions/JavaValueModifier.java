@@ -352,7 +352,6 @@ public class JavaValueModifier extends XValueModifier {
           });
           callback.valueModified();
         } catch (EvaluateException e) {
-          e.printStackTrace();
           callback.errorOccurred(e.getMessage());
         }
         //String initialString = "";
