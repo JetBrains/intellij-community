@@ -17,6 +17,7 @@ package com.intellij.ui.components;
 
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -47,6 +48,7 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText {
   }
 
   private void init() {
+    UIUtil.addUndoRedoActions(this);
     myEmptyText = new StatusText(this) {
       @Override
       protected boolean isStatusVisible() {

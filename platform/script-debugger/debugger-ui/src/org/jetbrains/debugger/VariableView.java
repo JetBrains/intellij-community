@@ -49,7 +49,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
   private volatile List<Variable> remainingChildren;
   private volatile int remainingChildrenOffset;
 
-  public VariableView(@NotNull VariableContext context, @NotNull Variable variable) {
+  public VariableView(@NotNull Variable variable, @NotNull VariableContext context) {
     super(context.getMemberFilter().normalizeMemberName(variable));
 
     this.context = context;
@@ -137,7 +137,9 @@ public final class VariableView extends XNamedValue implements VariableContext {
   public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
     value = variable.getValue();
     if (value == null) {
-      ObsolescentAsyncResults.consume(((ObjectProperty)variable).evaluateGet(context.getEvaluateContext()), node, new PairConsumer<Value, XValueNode>() {
+      ObjectValue host = (ObjectValue)((VariableView)context).getValue();
+      assert host != null;
+      ObsolescentAsyncResults.consume(((ObjectProperty)variable).evaluateGet(host, getEvaluateContext()), node, new PairConsumer<Value, XValueNode>() {
         @Override
         public void consume(Value value, XValueNode node) {
           VariableView.this.value = value;
@@ -349,7 +351,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
     }
 
     for (int i = notGroupedVariablesOffset; i < variables.size(); i++) {
-      groupList.add(new VariableView(this, variables.get(i)));
+      groupList.add(new VariableView(variables.get(i), this));
     }
 
     node.addChildren(groupList, true);

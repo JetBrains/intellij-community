@@ -203,6 +203,8 @@ public class CacheUpdateRunner {
       return allFinished;
 
     }
+    catch (InterruptedException ignored) {
+    }
     catch (Throwable throwable) {
       LOG.error(throwable);
     }

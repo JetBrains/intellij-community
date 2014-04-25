@@ -217,9 +217,39 @@ public final class Variables {
 
   public static XValueChildrenList createVariablesList(@NotNull List<Variable> variables, int from, int to, @NotNull VariableContext variableContext) {
     XValueChildrenList list = new XValueChildrenList(to - from);
+
+    VariableContext getterOrSetterContext = null;
+
     for (int i = from; i < to; i++) {
-      list.add(new VariableView(variableContext, variables.get(i)));
+      Variable variable = variables.get(i);
+      list.add(new VariableView(variable, variableContext));
+      if (variable instanceof ObjectProperty) {
+        ObjectProperty property = (ObjectProperty)variable;
+        if (property.getGetter() != null) {
+          if (getterOrSetterContext == null) {
+            getterOrSetterContext = new NonWatchableVariableContext(variableContext);
+          }
+          list.add(new VariableView(new VariableImpl("get " + property.getName(), property.getGetter()), getterOrSetterContext));
+        }
+        if (property.getSetter() != null) {
+          if (getterOrSetterContext == null) {
+            getterOrSetterContext = new NonWatchableVariableContext(variableContext);
+          }
+          list.add(new VariableView(new VariableImpl("set " + property.getName(), property.getSetter()), getterOrSetterContext));
+        }
+      }
     }
     return list;
+  }
+
+  private static class NonWatchableVariableContext extends VariableContextWrapper {
+    public NonWatchableVariableContext(VariableContext variableContext) {
+      super(variableContext, null);
+    }
+
+    @Override
+    public boolean watchableAsEvaluationExpression() {
+      return false;
+    }
   }
 }

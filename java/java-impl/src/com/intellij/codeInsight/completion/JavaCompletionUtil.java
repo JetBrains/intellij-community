@@ -804,7 +804,7 @@ public class JavaCompletionUtil {
     }
   }
 
-  private static boolean insertTail(InsertionContext context, LookupElement item, TailType tailType, boolean hasTail) {
+  public static boolean insertTail(InsertionContext context, LookupElement item, TailType tailType, boolean hasTail) {
     TailType toInsert = tailType;
     LookupItem<?> lookupItem = item.as(LookupItem.CLASS_CONDITION_KEY);
     if (lookupItem == null || lookupItem.getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN) {
