@@ -107,33 +107,34 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
         final PsiElement reference = position.getParent();
         if (reference == null) return;
         if (reference instanceof GrReferenceElement) {
-          ((GrReferenceElement)reference).processVariants(result.getPrefixMatcher(), params, new Consumer<LookupElement>() {
-            public void consume(LookupElement variant) {
-              PsiType type = null;
+          GroovyCompletionUtil.processVariants((GrReferenceElement)reference, result.getPrefixMatcher(), params,
+                                               new Consumer<LookupElement>() {
+                                                 public void consume(LookupElement variant) {
+                                                   PsiType type = null;
 
-              Object o = variant.getObject();
-              if (o instanceof GroovyResolveResult) {
-                if (!((GroovyResolveResult)o).isAccessible()) return;
-                o = ((GroovyResolveResult)o).getElement();
-              }
+                                                   Object o = variant.getObject();
+                                                   if (o instanceof GroovyResolveResult) {
+                                                     if (!((GroovyResolveResult)o).isAccessible()) return;
+                                                     o = ((GroovyResolveResult)o).getElement();
+                                                   }
 
-              if (o instanceof PsiElement) {
-                type = getTypeByElement((PsiElement)o, position);
-              }
-              else if (o instanceof String) {
-                if ("true".equals(o) || "false".equals(o)) {
-                  type = PsiType.BOOLEAN;
-                }
-              }
-              if (type == null) return;
-              for (TypeConstraint info : infos) {
-                if (info.satisfied(type, position)) {
-                  result.addElement(variant);
-                  break;
-                }
-              }
-            }
-          });
+                                                   if (o instanceof PsiElement) {
+                                                     type = getTypeByElement((PsiElement)o, position);
+                                                   }
+                                                   else if (o instanceof String) {
+                                                     if ("true".equals(o) || "false".equals(o)) {
+                                                       type = PsiType.BOOLEAN;
+                                                     }
+                                                   }
+                                                   if (type == null) return;
+                                                   for (TypeConstraint info : infos) {
+                                                     if (info.satisfied(type, position)) {
+                                                       result.addElement(variant);
+                                                       break;
+                                                     }
+                                                   }
+                                                 }
+                                               });
         }
 
         addExpectedClassMembers(params, result);
@@ -225,7 +226,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
               result.addElement(element);
             }
           }
-        });
+        }, params);
       }
     });
 
