@@ -78,34 +78,41 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
     public void generateProject(@NotNull Project project, @NotNull final VirtualFile baseDir,
                                 @Nullable Object settings, @NotNull Module module) {
 
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    TaskManager taskManager = TaskManager.getInstance();
-                    taskManager.setCurrentTask(0);
-                    int tasksNumber = taskManager.getTasksNum();
-                    for (int task = 0; task < tasksNumber; task++) {
-                        VirtualFile taskDirectory = baseDir.createChildDirectory(this, "task" + (task + 1));
-                        for (int file = 0; file < taskManager.getTaskFileNum(task); file++) {
-                            final String curFileName = taskManager.getFileName(task, file);
-                            createFile(curFileName, taskDirectory);
-                        }
+        ApplicationManager.getApplication().invokeLater(
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    TaskManager taskManager = TaskManager.getInstance();
+                                    taskManager.setCurrentTask(0);
+                                    int tasksNumber = taskManager.getTasksNum();
+                                    for (int task = 0; task < tasksNumber; task++) {
+                                        VirtualFile taskDirectory = baseDir.createChildDirectory(this, "task" + (task + 1));
+                                        for (int file = 0; file < taskManager.getTaskFileNum(task); file++) {
+                                            final String curFileName = taskManager.getFileName(task, file);
+                                            createFile(curFileName, taskDirectory);
+                                        }
 
+                                    }
+                                    createFile("task1_tests.py", baseDir.findChild("task1"));
+                                    createFile("task2_tests.py", baseDir.findChild("task2"));
+                                    createFile("study_utrunner.py", baseDir.findChild(".idea"));
+                                    createFile("study_tcunittest.py", baseDir.findChild(".idea"));
+
+                                } catch (IOException e) {
+                                    Log.print("Problems with creating files");
+                                    Log.print(e.toString());
+                                    Log.flush();
+                                }
+
+                            }
+                        });
                     }
-                    createFile("task1_tests.py", baseDir.findChild("task1"));
-                    createFile("task2_tests.py", baseDir.findChild("task2"));
-                    createFile("study_utrunner.py", baseDir.findChild(".idea"));
-                    createFile("study_tcunittest.py", baseDir.findChild(".idea"));
-
-                } catch (IOException e) {
-                    Log.print("Problems with creating files");
-                    Log.print(e.toString());
-                    Log.flush();
                 }
-
-            }
-        });
+        );
         makeRunConfiguration(project, baseDir);
 
     }
