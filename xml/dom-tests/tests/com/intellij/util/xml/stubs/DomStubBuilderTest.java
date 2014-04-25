@@ -66,6 +66,16 @@ public class DomStubBuilderTest extends DomStubTest {
     assertNull(stubTree); // no stubs for invalid XML
   }
 
+  public void testInclusion() throws Exception {
+    myFixture.copyFileToProject("include.xml");
+    doBuilderTest("inclusion.xml", "File:foo\n" +
+                                   "  Element:foo\n" +
+                                   "    Element:bar\n" +
+                                   "      Attribute:string:xxx\n" +
+                                   "      Attribute:int:666\n" +
+                                   "    Element:bar\n");
+  }
+
   public static class TestExtender extends DomExtender<Bar> {
 
     @Override
