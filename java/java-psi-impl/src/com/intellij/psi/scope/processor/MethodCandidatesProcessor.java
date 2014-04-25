@@ -51,7 +51,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
   }
 
   public void addMethod(@NotNull PsiMethod method, final PsiSubstitutor substitutor, final boolean staticProblem) {
-    final boolean isAccessible = JavaResolveUtil.isAccessible(method, method.getContainingClass(), method.getModifierList(),
+    final boolean isAccessible = JavaResolveUtil.isAccessible(method, getContainingClass(method), method.getModifierList(),
                                                               myPlace, myAccessClass, myCurrentFileContext, myPlaceFile) &&
                                  !isShadowed(method);
     if (isAccepted(method)) {
@@ -61,6 +61,10 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
       }
       myHasAccessibleStaticCorrectCandidate |= isAccessible && !staticProblem;
     }
+  }
+
+  protected PsiClass getContainingClass(PsiMethod method) {
+    return method.getContainingClass();
   }
 
   protected boolean acceptVarargs() {
@@ -106,10 +110,10 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
       if (!candidate.isConstructor()) return false;
       if (myAccessClass == null) return true;
       if (myAccessClass instanceof PsiAnonymousClass) {
-        final PsiClass containingClass = candidate.getContainingClass();
+        final PsiClass containingClass = getContainingClass(candidate);
         return containingClass != null && containingClass.equals(myAccessClass.getSuperClass());
       }
-      return myAccessClass.isEquivalentTo(candidate.getContainingClass());
+      return myAccessClass.isEquivalentTo(getContainingClass(candidate));
     }
   }
 
