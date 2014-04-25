@@ -17,9 +17,14 @@ package org.jetbrains.idea.svn.portable;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.wc.*;
+import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
+import org.tmatesoft.svn.core.wc.SVNInfo;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
 import java.util.Collection;
@@ -30,13 +35,7 @@ import java.util.Collection;
  * Date: 1/20/12
  * Time: 6:55 PM
  */
-public class SvnkitSvnWcClient implements SvnWcClientI {
-  @NotNull
-  private final SvnVcs myVcs;
-
-  public SvnkitSvnWcClient(@NotNull SvnVcs vcs) {
-    myVcs = vcs;
-  }
+public class SvnkitSvnWcClient extends BaseSvnClient implements SvnWcClientI {
 
   public SVNWCClient getClient() {
     return myVcs.createWCClient();

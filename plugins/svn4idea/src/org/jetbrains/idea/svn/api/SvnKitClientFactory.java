@@ -66,7 +66,7 @@ public class SvnKitClientFactory extends ClientFactory {
     myDiffClient = new SvnKitDiffClient();
     myCheckinClient = new SvnKitCheckinClient();
     statusClient = new SvnKitStatusClient();
-    infoClient = new SvnkitSvnWcClient(myVcs);
+    infoClient = new SvnkitSvnWcClient();
   }
 
   @NotNull

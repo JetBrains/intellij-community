@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.commandLine.BaseUpdateCommandListener;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
-import org.jetbrains.idea.svn.commandLine.SvnCommandLineInfoClient;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.SVNEvent;
@@ -65,8 +64,7 @@ public class CmdUpdateClient extends SvnKitUpdateClient {
   }
 
   private void checkWorkingCopy(@NotNull File path) throws SVNException {
-    final SvnCommandLineInfoClient infoClient = new SvnCommandLineInfoClient(myVcs);
-    final SVNInfo info = infoClient.doInfo(path, SVNRevision.UNDEFINED);
+    final SVNInfo info = myFactory.createInfoClient().doInfo(path, SVNRevision.UNDEFINED);
 
     if (info == null || info.getURL() == null) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, path.getPath()));

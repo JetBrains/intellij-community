@@ -62,7 +62,7 @@ public class CmdClientFactory extends ClientFactory {
     myDiffClient = new CmdDiffClient();
     myCheckinClient = new CmdCheckinClient();
     statusClient = new CmdStatusClient();
-    infoClient = new SvnCommandLineInfoClient(myVcs);
+    infoClient = new SvnCommandLineInfoClient();
   }
 
   @NotNull

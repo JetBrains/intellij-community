@@ -17,8 +17,13 @@ package org.jetbrains.idea.svn.portable;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.wc.*;
+import org.jetbrains.idea.svn.api.SvnClient;
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
+import org.tmatesoft.svn.core.wc.SVNInfo;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.Collection;
@@ -29,7 +34,7 @@ import java.util.Collection;
  * Date: 1/20/12
  * Time: 6:54 PM
  */
-public interface SvnWcClientI extends SvnMarkerInterface {
+public interface SvnWcClientI extends SvnClient {
 
   void doInfo(File path, SVNRevision revision, boolean recursive, ISVNInfoHandler handler) throws SVNException;
   void doInfo(File path, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNInfoHandler handler) throws SVNException;

@@ -107,8 +107,7 @@ public abstract class ClientFactory {
 
   @NotNull
   public SvnWcClientI createInfoClient() {
-    // TODO: Update this in same like other clients - move to corresponding package, rename clients
-    return infoClient;
+    return prepare(infoClient);
   }
 
   // TODO: Update this in same like other clients - move to corresponding package, rename clients
