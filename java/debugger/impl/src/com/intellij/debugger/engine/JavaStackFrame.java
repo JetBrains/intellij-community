@@ -220,7 +220,7 @@ public class JavaStackFrame extends XStackFrame {
   protected void superBuildVariables(final EvaluationContextImpl evaluationContext, XValueChildrenList children) throws EvaluateException {
     final StackFrameProxyImpl frame = myStackFrameProxy;
     for (final LocalVariableProxyImpl local : frame.visibleVariables()) {
-      final LocalVariableDescriptorImpl descriptor = myNodeManager.getLocalVariableDescriptor(myDescriptor, local);
+      final LocalVariableDescriptorImpl descriptor = myNodeManager.getLocalVariableDescriptor(null, local);
       children.add(new JavaValue(descriptor, evaluationContext, myNodeManager));
       //final DebuggerTreeNodeImpl variableNode = myNodeManager.createNode(descriptor, evaluationContext);
       //myChildren.add(variableNode);

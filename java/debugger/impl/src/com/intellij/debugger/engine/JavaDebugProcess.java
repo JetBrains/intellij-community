@@ -101,6 +101,12 @@ public class JavaDebugProcess extends XDebugProcess {
         return node;
       }
     };
+    session.addSessionListener(new XDebugSessionAdapter() {
+      @Override
+      public void beforeSessionResume() {
+        myNodeManager.setHistoryByContext(myStateManager.getContext());
+      }
+    });
   }
 
   @NotNull
@@ -207,14 +213,12 @@ public class JavaDebugProcess extends XDebugProcess {
 
     @Override
     public DebuggerContextImpl getContext() {
-      final DebuggerSession session = myJavaSession;
-      return session.getContextManager().getContext();
+      return myJavaSession.getContextManager().getContext();
     }
 
     @Override
     public void setState(DebuggerContextImpl context, int state, int event, String description) {
-      final DebuggerSession session = myJavaSession;
-      session.getContextManager().setState(context, state, event, description);
+      myJavaSession.getContextManager().setState(context, state, event, description);
     }
   }
 
