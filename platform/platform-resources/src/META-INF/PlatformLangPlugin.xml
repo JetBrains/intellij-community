@@ -100,5 +100,8 @@
   <xi:include href="/META-INF/vcs-log.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
+  <xi:include href="/META-INF/vcs-log-graph.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
 
 </idea-plugin>
