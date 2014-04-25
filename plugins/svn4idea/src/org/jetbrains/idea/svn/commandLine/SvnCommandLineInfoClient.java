@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.portable.SvnExceptionWrapper;
-import org.jetbrains.idea.svn.portable.SvnkitSvnWcClient;
+import org.jetbrains.idea.svn.portable.SvnWcClientI;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
 import org.tmatesoft.svn.core.wc.SVNInfo;
@@ -52,14 +52,13 @@ import java.util.List;
  * Date: 1/27/12
  * Time: 12:59 PM
  */
-public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
+public class SvnCommandLineInfoClient implements SvnWcClientI {
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.commandLine.SvnCommandLineInfoClient");
 
   @NotNull private final SvnVcs myVcs;
 
   public SvnCommandLineInfoClient(@NotNull final SvnVcs vcs) {
-    super(vcs);
     myVcs = vcs;
   }
 
