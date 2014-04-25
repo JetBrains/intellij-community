@@ -19,6 +19,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerContextListener;
 import com.intellij.debugger.impl.DebuggerSession;
@@ -106,7 +107,16 @@ public class JavaDebugProcess extends XDebugProcess {
     session.addSessionListener(new XDebugSessionAdapter() {
       @Override
       public void beforeSessionResume() {
-        myNodeManager.setHistoryByContext(myStateManager.getContext());
+        myJavaSession.getProcess().getManagerThread().schedule(new DebuggerCommandImpl() {
+          @Override
+          protected void action() throws Exception {
+            myNodeManager.setHistoryByContext(myStateManager.getContext());
+          }
+          @Override
+          public Priority getPriority() {
+            return Priority.NORMAL;
+          }
+        });
       }
     });
   }
