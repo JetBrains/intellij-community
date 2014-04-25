@@ -107,7 +107,11 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     }
 
     if (handler != null) {
-      return handler.markDirty();
+      VirtualFile root = findFileByPath(handler.myBasePath + JarFileSystem.JAR_SEPARATOR);
+      if (root instanceof NewVirtualFile) {
+        ((NewVirtualFile)root).markDirty();
+      }
+      return root;
     }
 
     return null;
@@ -148,8 +152,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   @Nullable
   public File getMirroredFile(@NotNull VirtualFile vFile) {
     VirtualFile jar = getJarRootForLocalFile(vFile);
-    final JarHandler handler = jar == null ? null : getHandler(jar);
-    return handler == null ? null : handler.getMirrorFile(new File(vFile.getPath()));
+    return jar == null ? null : getHandler(jar).getMirrorFile(new File(vFile.getPath()));
   }
 
   @NotNull

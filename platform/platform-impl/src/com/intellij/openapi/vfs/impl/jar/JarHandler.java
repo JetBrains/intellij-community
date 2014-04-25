@@ -25,10 +25,8 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsBundle;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.io.DataExternalizer;
@@ -64,17 +62,6 @@ public class JarHandler extends JarHandlerBase {
     if (localJarFile != null) {
       localJarFile.markDirty();
     }
-  }
-
-  @Nullable
-  public VirtualFile markDirty() {
-    clear();
-
-    final VirtualFile root = JarFileSystem.getInstance().findFileByPath(myBasePath + JarFileSystem.JAR_SEPARATOR);
-    if (root instanceof NewVirtualFile) {
-      ((NewVirtualFile)root).markDirty();
-    }
-    return root;
   }
 
   @Override
