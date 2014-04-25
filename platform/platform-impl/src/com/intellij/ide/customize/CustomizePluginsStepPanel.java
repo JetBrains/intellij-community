@@ -17,6 +17,8 @@ package com.intellij.ide.customize;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.JBColor;
@@ -60,8 +62,8 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
     add(scrollPane, MAIN);
     add(myCustomizePanel, CUSTOMIZE);
 
-    Map<String, List<String>> groups = PluginGroups.getInstance().getTree();
-    for (Map.Entry<String, List<String>> entry : groups.entrySet()) {
+    Map<String, Pair<String, List<String>>> groups = PluginGroups.getInstance().getTree();
+    for (final Map.Entry<String, Pair<String, List<String>>> entry : groups.entrySet()) {
       final String group = entry.getKey();
       if (PluginGroups.CORE.equals(group)) continue;
 
@@ -74,18 +76,19 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
       };
       gridPanel.setOpaque(true);
       GridBagConstraints gbc = new GridBagConstraints();
-      gbc.insets = new Insets(0, 0, 10, 0);
       gbc.fill = GridBagConstraints.BOTH;
       gbc.gridwidth = GridBagConstraints.REMAINDER;
       gbc.weightx = 1;
-      JLabel titleLabel = new JLabel("<html><body><h2 style=\"text-align:left;\">" + group + "</h2></body></html>") {
+      JLabel titleLabel = new JLabel("<html><body><h2 style=\"text-align:left;\">" + group + "</h2></body></html>", SwingConstants.CENTER) {
         @Override
         public boolean isEnabled() {
           return isGroupEnabled(group);
         }
       };
+      groupPanel.add(new JLabel(IconLoader.getIcon(entry.getValue().getFirst())), gbc);
+      //gbc.insets.bottom = 5;
       groupPanel.add(titleLabel, gbc);
-      JLabel descriptionLabel = new JLabel(PluginGroups.getInstance().getDescription(group)) {
+      JLabel descriptionLabel = new JLabel(PluginGroups.getInstance().getDescription(group), SwingConstants.CENTER) {
         @Override
         public Dimension getPreferredSize() {
           Dimension size = super.getPreferredSize();
@@ -107,18 +110,16 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
       gbc.weighty = 1;
       groupPanel.add(Box.createVerticalGlue(), gbc);
       gbc.weighty = 0;
+      JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+      buttonsPanel.setOpaque(false);
       if (PluginGroups.getInstance().getSets(group).size() == 1) {
-        groupPanel.add(createLink(SWITCH_COMMAND + ":" + group, getGroupSwitchTextProvider(group)), gbc);
+        buttonsPanel.add(createLink(SWITCH_COMMAND + ":" + group, getGroupSwitchTextProvider(group)));
       }
       else {
-        JPanel buttonsPanel = new JPanel(new GridLayout(1, 2, 10, 5));
-        buttonsPanel.setOpaque(false);
-        LinkLabel customizeButton = createLink(CUSTOMIZE_COMMAND + ":" + group, CUSTOMIZE_TEXT_PROVIDER);
-        buttonsPanel.add(customizeButton);
-        LinkLabel disableAllButton = createLink(SWITCH_COMMAND + ":" + group, getGroupSwitchTextProvider(group));
-        buttonsPanel.add(disableAllButton);
-        groupPanel.add(buttonsPanel, gbc);
+        buttonsPanel.add(createLink(CUSTOMIZE_COMMAND + ":" + group, CUSTOMIZE_TEXT_PROVIDER));
+        buttonsPanel.add(createLink(SWITCH_COMMAND + ":" + group, getGroupSwitchTextProvider(group)));
       }
+      groupPanel.add(buttonsPanel, gbc);
       gridPanel.add(groupPanel);
     }
 
@@ -133,7 +134,7 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
           protected Color getColor() {
             return ColorUtil.withAlpha(JBColor.foreground(), .2);
           }
-        }, BorderFactory.createEmptyBorder(GAP, GAP, GAP, GAP)));
+        }, BorderFactory.createEmptyBorder(GAP / 2, GAP, GAP / 2, GAP)));
       cursor++;
     }
   }
