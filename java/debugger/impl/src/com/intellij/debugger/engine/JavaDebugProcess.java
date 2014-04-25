@@ -47,6 +47,7 @@ import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XSuspendContext;
+import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
@@ -57,6 +58,7 @@ import org.jetbrains.annotations.Nullable;
  * @author egor
  */
 public class JavaDebugProcess extends XDebugProcess {
+  private static final JavaValueMarker MARKER = new JavaValueMarker();
   private final DebuggerSession myJavaSession;
   private final JavaDebuggerEditorsProvider myEditorsProvider;
   private final XBreakpointHandler<?>[] myBreakpointHandlers;
@@ -354,5 +356,11 @@ public class JavaDebugProcess extends XDebugProcess {
 
   public NodeManagerImpl getNodeManager() {
     return myNodeManager;
+  }
+
+  @Nullable
+  @Override
+  public XValueMarkerProvider<?, ?> createValueMarkerProvider() {
+    return MARKER;
   }
 }
