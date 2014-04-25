@@ -35,7 +35,7 @@ import java.util.Collection;
  * Date: 1/20/12
  * Time: 6:55 PM
  */
-public class SvnkitSvnWcClient extends BaseSvnClient implements SvnWcClientI {
+public class SvnKitInfoClient extends BaseSvnClient implements InfoClient {
 
   public SVNWCClient getClient() {
     return myVcs.createWCClient();

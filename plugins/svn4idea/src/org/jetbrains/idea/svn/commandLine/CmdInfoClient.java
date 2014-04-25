@@ -27,8 +27,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.portable.InfoClient;
 import org.jetbrains.idea.svn.portable.SvnExceptionWrapper;
-import org.jetbrains.idea.svn.portable.SvnWcClientI;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
 import org.tmatesoft.svn.core.wc.SVNInfo;
@@ -52,9 +52,9 @@ import java.util.List;
  * Date: 1/27/12
  * Time: 12:59 PM
  */
-public class SvnCommandLineInfoClient extends BaseSvnClient implements SvnWcClientI {
+public class CmdInfoClient extends BaseSvnClient implements InfoClient {
 
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.commandLine.SvnCommandLineInfoClient");
+  private static final Logger LOG = Logger.getInstance(CmdInfoClient.class);
 
   @Override
   public void doInfo(File path, SVNRevision revision, boolean recursive, ISVNInfoHandler handler) throws SVNException {
@@ -91,7 +91,7 @@ public class SvnCommandLineInfoClient extends BaseSvnClient implements SvnWcClie
     List<String> parameters = new ArrayList<String>();
 
     fillParameters(path.getAbsolutePath(), pegRevision, revision, depth, parameters);
-    // TODO: Fix this check - update corresponding parameters in SvnWcClientI
+    // TODO: Fix this check - update corresponding parameters in InfoClient
     CommandUtil.putChangeLists(parameters, changeLists);
 
     parseResult(handler, base, execute(parameters, path));

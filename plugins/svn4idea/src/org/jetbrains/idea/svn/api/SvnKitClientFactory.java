@@ -22,7 +22,7 @@ import org.jetbrains.idea.svn.integrate.SvnKitMergeClient;
 import org.jetbrains.idea.svn.lock.SvnKitLockClient;
 import org.jetbrains.idea.svn.status.StatusClient;
 import org.jetbrains.idea.svn.status.SvnKitStatusClient;
-import org.jetbrains.idea.svn.portable.SvnkitSvnWcClient;
+import org.jetbrains.idea.svn.portable.SvnKitInfoClient;
 import org.jetbrains.idea.svn.properties.SvnKitPropertyClient;
 import org.jetbrains.idea.svn.revert.SvnKitRevertClient;
 import org.jetbrains.idea.svn.update.SvnKitRelocateClient;
@@ -66,7 +66,7 @@ public class SvnKitClientFactory extends ClientFactory {
     myDiffClient = new SvnKitDiffClient();
     myCheckinClient = new SvnKitCheckinClient();
     statusClient = new SvnKitStatusClient();
-    infoClient = new SvnkitSvnWcClient();
+    infoClient = new SvnKitInfoClient();
   }
 
   @NotNull

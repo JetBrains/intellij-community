@@ -34,7 +34,7 @@ import java.util.Collection;
  * Date: 1/20/12
  * Time: 6:54 PM
  */
-public interface SvnWcClientI extends SvnClient {
+public interface InfoClient extends SvnClient {
 
   void doInfo(File path, SVNRevision revision, boolean recursive, ISVNInfoHandler handler) throws SVNException;
   void doInfo(File path, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNInfoHandler handler) throws SVNException;
