@@ -1,0 +1,5 @@
+<foo  xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="include.xml" xpointer="xpointer(/foo/*)"/>
+  <bar string="xxx" int="666"></bar>
+  <bar></bar>
+</foo>

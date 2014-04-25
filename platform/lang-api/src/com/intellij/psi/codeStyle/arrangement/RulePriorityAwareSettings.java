@@ -15,24 +15,13 @@
  */
 package com.intellij.psi.codeStyle.arrangement;
 
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
-
 /**
  * Stands for the {@link ArrangementSettings} which also provide arrangement rules sorted in order of entries matching.
  * <p/>
  * Example: 'public static' rule would have higher priority then 'public'
  *
+ * @deprecated use {@link ArrangementSettings} instead
  * @author Svetlana.Zemlyanskaya
  */
 public interface RulePriorityAwareSettings extends ArrangementSettings {
-
-  /**
-   * <b>Note:</b> It's expected that rules sort is stable
-   * @return list of rules sorted in order of matching
-   */
-  @NotNull
-  List<? extends ArrangementMatchRule> getRulesSortedByPriority();
 }

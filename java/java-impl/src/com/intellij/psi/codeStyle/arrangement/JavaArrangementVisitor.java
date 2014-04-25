@@ -35,7 +35,7 @@ import java.util.*;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*;
 
-public class JavaArrangementVisitor extends JavaElementVisitor {
+public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
 
   private static final String NULL_CONTENT = "no content";
 
@@ -96,13 +96,6 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
       aClass, aClass.getTextRange(), ANONYMOUS_CLASS, aClass.getName(), false
     );
     processEntry(entry, null, aClass);
-  }
-
-  @Override
-  public void visitJavaFile(PsiJavaFile file) {
-    for (PsiClass psiClass : file.getClasses()) {
-      visitClass(psiClass);
-    }
   }
 
   @Override
@@ -348,36 +341,6 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
     }
   }
 
-  @Override
-  public void visitExpressionStatement(PsiExpressionStatement statement) {
-    statement.getExpression().acceptChildren(this);
-  }
-
-  @Override
-  public void visitNewExpression(PsiNewExpression expression) {
-    PsiAnonymousClass anonymousClass = expression.getAnonymousClass();
-    if (anonymousClass == null) {
-      return;
-    }
-    JavaElementArrangementEntry entry =
-      createNewEntry(anonymousClass, anonymousClass.getTextRange(), CLASS, anonymousClass.getName(), false);
-    processEntry(entry, null, anonymousClass);
-  }
-
-  @Override
-  public void visitExpressionList(PsiExpressionList list) {
-    for (PsiExpression expression : list.getExpressions()) {
-      expression.acceptChildren(this);
-    }
-  }
-
-  @Override
-  public void visitDeclarationStatement(PsiDeclarationStatement statement) {
-    for (PsiElement element : statement.getDeclaredElements()) {
-      element.acceptChildren(this);
-    }
-  }
-
   private void processEntry(@Nullable JavaElementArrangementEntry entry,
                             @Nullable PsiModifierListOwner modifier,
                             @Nullable PsiElement nextPsiRoot)
@@ -464,7 +427,7 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
   }
   
   private static class MethodBodyProcessor extends JavaRecursiveElementVisitor {
-    
+
     @NotNull private final JavaArrangementParseInfo myInfo;
     @Nullable private PsiMethod myBaseMethod;
 
@@ -485,7 +448,7 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
           myInfo.registerMethodCallDependency(myBaseMethod, m);
         }
       }
-      
+
       // We process all method call expression children because there is a possible case like below:
       //   new Runnable() {
       //     void test();

@@ -201,7 +201,10 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       return resolvedElement instanceof PsiClass;
     } else if (qualifierExpression != null) {
       return false;
-    } else {
+    } else if (ref instanceof PsiMethodReferenceExpression) {
+      return true;
+    }
+    else {
       assert PsiTreeUtil.isAncestor(targetClass, ref, true);
       PsiModifierListOwner owner = PsiTreeUtil.getParentOfType(ref, PsiModifierListOwner.class);
       if (owner instanceof PsiMethod && ((PsiMethod)owner).isConstructor()) {
@@ -309,7 +312,12 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     }
     else if (element instanceof PsiReferenceExpression) {
       qualifier = ((PsiReferenceExpression)element).getQualifierExpression();
-      if (qualifier == null) {
+      if (qualifier == null && element instanceof PsiMethodReferenceExpression) {
+        final PsiTypeElement qualifierTypeElement = ((PsiMethodReferenceExpression)element).getQualifierType();
+        if (qualifierTypeElement != null) {
+          psiClass = PsiUtil.resolveClassInType(qualifierTypeElement.getType());
+        }
+      } else if (qualifier == null) {
         final PsiElement parent = element.getParent();
         if (parent instanceof PsiSwitchLabelStatement) {
           final PsiSwitchStatement switchStatement = PsiTreeUtil.getParentOfType(parent, PsiSwitchStatement.class);

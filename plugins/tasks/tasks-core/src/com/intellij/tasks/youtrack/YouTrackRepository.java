@@ -42,7 +42,7 @@ import java.util.Map;
 @Tag("YouTrack")
 public class YouTrackRepository extends BaseRepositoryImpl {
 
-  private String myDefaultSearch = "for: me sort by: updated #Unresolved";
+  private String myDefaultSearch = "Assignee: me sort by: updated #Unresolved";
   private Map<TaskState, String> myCustomStateNames = new EnumMap<TaskState, String>(TaskState.class);
 
   // Default names for supported issues states

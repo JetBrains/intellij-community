@@ -84,7 +84,7 @@ public class ArrangementMatchNodeComponentFactory {
 
       @Override
       public void visit(@NotNull ArrangementCompositeMatchCondition condition) {
-        ref.set(new ArrangementAndMatchConditionComponent(rule, condition, ArrangementMatchNodeComponentFactory.this, mySettingsManager));
+        ref.set(new ArrangementAndMatchConditionComponent(rule, condition, ArrangementMatchNodeComponentFactory.this, mySettingsManager, allowModification));
       }
     });
     return ref.get();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -776,9 +776,8 @@ public final class FormSourceCodeGenerator {
     if (!borderNone || borderTitle != null) {
       startMethodCall(variable, "setBorder");
 
-      if (borderTitle != null) {
-        startStaticMethodCall(BorderFactory.class, "createTitledBorder");
-      }
+
+      startStaticMethodCall(BorderFactory.class, "createTitledBorder");
 
       if (!borderNone) {
         startStaticMethodCall(BorderFactory.class, borderFactoryMethodName);
@@ -802,25 +801,25 @@ public final class FormSourceCodeGenerator {
         push((String) null);
       }
 
-      if (borderTitle != null) {
-        push(borderTitle);
-        if (isCustomBorder(container)) {
-          push(container.getBorderTitleJustification(), ourTitleJustificationMap);
-          push(container.getBorderTitlePosition(), ourTitlePositionMap);
-          if (container.getBorderTitleFont() != null || container.getBorderTitleColor() != null) {
-            if (container.getBorderTitleFont() == null) {
-              push((String)null);
-            }
-            else {
-              pushFont(variable, container.getBorderTitleFont(), "getFont");
-            }
-            if (container.getBorderTitleColor() != null) {
-              pushColor(container.getBorderTitleColor());
-            }
+      push(borderTitle);
+
+      if (isCustomBorder(container)) {
+        push(container.getBorderTitleJustification(), ourTitleJustificationMap);
+        push(container.getBorderTitlePosition(), ourTitlePositionMap);
+        if (container.getBorderTitleFont() != null || container.getBorderTitleColor() != null) {
+          if (container.getBorderTitleFont() == null) {
+            push((String) null);
+          }
+          else {
+            pushFont(variable, container.getBorderTitleFont(), "getFont");
+          }
+          if (container.getBorderTitleColor() != null) {
+            pushColor(container.getBorderTitleColor());
           }
         }
-        endMethod(); // createTitledBorder
       }
+
+      endMethod(); // createTitledBorder
 
       endMethod(); // setBorder
     }
