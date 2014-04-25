@@ -3,6 +3,7 @@ class Foo {
     abstract void a();
     
     {
-        a();<caret>
+        a();
+        <caret>
     }
 }
