@@ -26,8 +26,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.portable.PortableStatus;
-import org.jetbrains.idea.svn.portable.SvnExceptionWrapper;
 import org.jetbrains.idea.svn.portable.StatusClient;
+import org.jetbrains.idea.svn.portable.SvnExceptionWrapper;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.*;
@@ -119,7 +119,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
 
     if (StringUtil.isEmptyOrSpaces(result)) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_GENERAL, "Status request returned nothing for command: " +
-                                                                             command.myCommandLine.getCommandLineString()));
+                                                                             command.getCommandText()));
     }
 
     try {
