@@ -19,7 +19,6 @@ package com.intellij.facet;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author nik
  */
-public class Facet<C extends FacetConfiguration> extends UserDataHolderBase implements UserDataHolder, Disposable, ModificationTracker {
+public class Facet<C extends FacetConfiguration> extends UserDataHolderBase implements UserDataHolder, Disposable {
   public static final Facet[] EMPTY_ARRAY = new Facet[0];
   @NotNull private final FacetType myFacetType;
   @NotNull private final Module myModule;
@@ -119,10 +118,5 @@ public class Facet<C extends FacetConfiguration> extends UserDataHolderBase impl
   @Override
   public String toString() {
     return getName() + " (" + getModule().getName() + ")";
-  }
-
-  @Override
-  public long getModificationCount() {
-    return isDisposed ? 1 : 0;
   }
 }
