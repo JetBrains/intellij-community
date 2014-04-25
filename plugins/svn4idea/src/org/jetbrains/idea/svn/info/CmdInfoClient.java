@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.commandLine;
+package org.jetbrains.idea.svn.info;
 
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -27,7 +27,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
-import org.jetbrains.idea.svn.portable.InfoClient;
+import org.jetbrains.idea.svn.commandLine.*;
 import org.jetbrains.idea.svn.portable.SvnExceptionWrapper;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
