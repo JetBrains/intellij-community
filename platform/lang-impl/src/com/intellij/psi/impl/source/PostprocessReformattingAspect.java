@@ -50,6 +50,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.TextRangeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -536,10 +537,23 @@ public class PostprocessReformattingAspect implements PomModelAspect {
             final int oldIndent = CodeEditUtil.getOldIndentation(element);
             CodeEditUtil.setOldIndentation(element, -1);
             LOG.assertTrue(oldIndent >= 0, "for not generated items old indentation must be defined: element " + element);
-            rangesToProcess.add(new ReindentTask(document.createRangeMarker(element.getTextRange()), oldIndent));
+            for (TextRange indentRange : getEnabledRanges(element.getPsi())) {
+              rangesToProcess.add(new ReindentTask(document.createRangeMarker(indentRange), oldIndent));
+            }
             inGeneratedContext = false;
           }
           return true;
+        }
+
+        private Iterable<TextRange> getEnabledRanges(@NotNull PsiElement element) {
+          List<TextRange> disabledRanges = new ArrayList<TextRange>();
+          for (DisabledIndentRangesProvider rangesProvider : DisabledIndentRangesProvider.EP_NAME.getExtensions()) {
+            Collection<TextRange> providedDisabledRanges = rangesProvider.getDisabledIndentRanges(element);
+            if (providedDisabledRanges != null) {
+              disabledRanges.addAll(providedDisabledRanges);
+            }
+          }
+          return TextRangeUtil.excludeRanges(element.getTextRange(), disabledRanges);
         }
 
         @Override
