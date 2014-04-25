@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
@@ -970,6 +971,29 @@ public class FoldersImportingTest extends MavenImportingTestCase {
 
     assertSources("project", "target/src/main");
     assertResources("project", "src/main/resources");
+  }
+
+  public void testDoesNotUnExcludeFoldersOnRemoval() throws Exception {
+    createStdProjectFolders();
+
+    final VirtualFile subDir = createProjectSubDir("target/foo");
+    createProjectSubDirsWithFile("target/generated-sources/baz");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertExcludes("project", "target/foo");
+    assertSources("project",
+                  "src/main/java",
+                  "target/generated-sources/baz");
+    assertResources("project", "src/main/resources");
+
+    final boolean delete = VfsUtilCore.virtualToIoFile(subDir).delete();
+    assertTrue(delete);
+
+    importProject();
+    assertExcludes("project", "target/foo");
   }
 
   public void testUnexcludeNewSources() throws Exception {
