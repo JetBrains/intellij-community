@@ -19,6 +19,7 @@ import com.intellij.application.options.codeStyle.arrangement.color.ArrangementC
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
@@ -152,8 +153,8 @@ public class ArrangementSectionRuleManager {
 
   @NotNull
   private String processSectionText(@NotNull String text) {
-    final String line = myCommenter.getLineCommentPrefix();
-    if (line != null && text.startsWith(line)) {
+    final String lineCommentPrefix = myCommenter.getLineCommentPrefix();
+    if (lineCommentPrefix != null && text.startsWith(lineCommentPrefix)) {
       return text;
     }
 
@@ -163,7 +164,8 @@ public class ArrangementSectionRuleManager {
         text.length() >= prefix.length() + suffix.length() && text.startsWith(prefix) && text.endsWith(suffix)) {
       return text;
     }
-    return line != null ? line + text : prefix != null && suffix != null ? prefix + text + suffix : "";
+    return lineCommentPrefix != null ? wrapIntoLineComment(lineCommentPrefix, text) :
+           prefix != null && suffix != null ? wrapIntoBlockComment(prefix, suffix, text) : "";
   }
 
   @NotNull
@@ -171,16 +173,24 @@ public class ArrangementSectionRuleManager {
     if (myCommenter != null) {
       final String lineCommentPrefix = myCommenter.getLineCommentPrefix();
       if (StringUtil.isNotEmpty(lineCommentPrefix)) {
-        return lineCommentPrefix;
+        return wrapIntoLineComment(lineCommentPrefix, "");
       }
 
       final String prefix = myCommenter.getBlockCommentPrefix();
       final String suffix = myCommenter.getBlockCommentSuffix();
       if (StringUtil.isNotEmpty(prefix) && StringUtil.isNotEmpty(suffix)) {
-        return prefix + " " + suffix;
+        return wrapIntoBlockComment(prefix, suffix, " ");
       }
     }
     return "";
+  }
+
+  private static String wrapIntoBlockComment(@NotNull String prefix, @NotNull String suffix, @NotNull String text) {
+    return prefix + text + suffix;
+  }
+
+  private static String wrapIntoLineComment(@NotNull String lineCommentPrefix, @NotNull String text) {
+    return lineCommentPrefix + text;
   }
 
   public static class ArrangementSectionRuleData {
