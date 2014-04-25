@@ -23,9 +23,11 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created with IntelliJ IDEA.
@@ -41,12 +43,14 @@ public class SvnBindException extends VcsException {
   public static final int CATEGORY_SIZE = 5000;
 
   @NotNull private final MultiMap<Integer, String> errors = MultiMap.create();
+  @NotNull private final MultiMap<Integer, String> warnings = MultiMap.create();
 
   public SvnBindException(String message) {
     super(message);
 
     if (!StringUtil.isEmpty(message)) {
-      parseErrors(message);
+      parse(message, SvnUtil.ERROR_PATTERN, errors);
+      parse(message, SvnUtil.WARNING_PATTERN, warnings);
     }
   }
 
@@ -56,39 +60,42 @@ public class SvnBindException extends VcsException {
     if (throwable instanceof SVNException) {
       SVNException e = (SVNException)throwable;
       int code = e.getErrorMessage().getErrorCode().getCode();
+      int type = e.getErrorMessage().getType();
 
-      errors.putValue(code, e.getMessage());
+      (type == SVNErrorMessage.TYPE_ERROR ? errors : warnings).putValue(code, e.getMessage());
     }
   }
 
-  public boolean contains(int error) {
-    return errors.containsKey(error);
+  public boolean contains(int code) {
+    return errors.containsKey(code) || warnings.containsKey(code);
   }
 
-  public boolean contains(@NotNull SVNErrorCode error) {
-    return errors.containsKey(error.getCode());
+  public boolean contains(@NotNull SVNErrorCode code) {
+    return contains(code.getCode());
   }
 
   public boolean containsCategory(int category) {
     final int categoryCode = getCategoryCode(category);
-
-    return ContainerUtil.exists(errors.keySet(), new Condition<Integer>() {
+    Condition<Integer> belongsToCategoryCondition = new Condition<Integer>() {
       @Override
       public boolean value(Integer code) {
         return getCategoryCode(code) == categoryCode;
       }
-    });
+    };
+
+    return ContainerUtil.exists(errors.keySet(), belongsToCategoryCondition) ||
+           ContainerUtil.exists(warnings.keySet(), belongsToCategoryCondition);
   }
 
   private static int getCategoryCode(int category) {
     return (category - ERROR_BASE) / CATEGORY_SIZE;
   }
 
-  private void parseErrors(@NotNull String message) {
-    Matcher matcher = SvnUtil.ERROR_PATTERN.matcher(message);
+  private static void parse(@NotNull String message, @NotNull Pattern pattern, @NotNull MultiMap<Integer, String> map) {
+    Matcher matcher = pattern.matcher(message);
 
     while (matcher.find()) {
-      errors.putValue(Integer.valueOf(matcher.group(2)), matcher.group());
+      map.putValue(Integer.valueOf(matcher.group(2)), matcher.group());
     }
   }
 }
