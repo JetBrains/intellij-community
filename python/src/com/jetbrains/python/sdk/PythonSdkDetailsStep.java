@@ -59,14 +59,15 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
 
   public static void show(final Project project,
                           final Sdk[] existingSdks,
-                          DialogWrapper moreDialog,
+                          @Nullable final DialogWrapper moreDialog,
                           JComponent ownerComponent, final Point popupPoint,
                           final NullableConsumer<Sdk> callback) {
 
     final ListPopupStep sdkHomesStep = new PythonSdkDetailsStep(project, moreDialog, ownerComponent, existingSdks, callback);
     final ListPopup popup = JBPopupFactory.getInstance().createListPopup(sdkHomesStep);
     Dimension size = new JLabel(VIRTUALENV, EmptyIcon.ICON_16, SwingConstants.LEFT).getMinimumSize();
-    final int height = size.height * 5 + 10;
+    int componentNum = moreDialog == null ? 4 : 5;
+    int height = size.height * componentNum + 2*componentNum;
     popup.setSize(new Dimension(size.width, height));
     popup.setMinimumSize(new Dimension(size.width, height));
     popup.showInScreenCoordinates(ownerComponent, popupPoint);
