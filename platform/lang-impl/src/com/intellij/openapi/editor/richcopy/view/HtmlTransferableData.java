@@ -32,7 +32,7 @@ import java.awt.datatransfer.DataFlavor;
  */
 public class HtmlTransferableData extends AbstractSyntaxAwareReaderTransferableData implements MarkupHandler {
 
-  @NotNull public static final DataFlavor FLAVOR = new DataFlavor("text/html;class=java.io.Reader", "HTML text");
+  @NotNull public static final DataFlavor FLAVOR = new DataFlavor("text/html; class=java.io.Reader; charset=UTF-8", "HTML text");
 
   private StringBuilder    myResultBuffer;
   private ColorRegistry    myColorRegistry;
@@ -64,7 +64,8 @@ public class HtmlTransferableData extends AbstractSyntaxAwareReaderTransferableD
     myMaxLength = maxLength;
     try {
       buildColorMap();
-      myResultBuffer.append("<pre style=\"background-color:");
+      myResultBuffer.append("<html><head><meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\"></head><body>")
+                    .append("<pre style=\"background-color:");
       appendColor(myResultBuffer, myDefaultBackground);
       myResultBuffer.append(";color:");
       appendColor(myResultBuffer, myDefaultForeground);
@@ -81,7 +82,7 @@ public class HtmlTransferableData extends AbstractSyntaxAwareReaderTransferableD
 
       mySyntaxInfo.processOutputInfo(this);
 
-      myResultBuffer.append("</pre>");
+      myResultBuffer.append("</pre></body></html>");
     }
     finally {
       myResultBuffer = null;
