@@ -37,8 +37,9 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
   private final ArrayList<File> myFilesToDelete = new ArrayList<File>();
   private File myTempDir;
 
+  @NotNull
   @Override
-  public VirtualFile copyFile(@NotNull VirtualFile file, String targetPath) {
+  public VirtualFile copyFile(@NotNull VirtualFile file, @NotNull String targetPath) {
     try {
       createTempDirectory();
       VirtualFile tempDir =
@@ -50,13 +51,15 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
     }
   }
 
+  @NotNull
   @Override
-  public VirtualFile copyAll(String dataDir, String targetDir) {
+  public VirtualFile copyAll(@NotNull String dataDir, @NotNull String targetDir) {
     return copyAll(dataDir, targetDir, VirtualFileFilter.ALL);
   }
 
+  @NotNull
   @Override
-  public VirtualFile copyAll(final String dataDir, final String targetDir, @NotNull final VirtualFileFilter filter) {
+  public VirtualFile copyAll(@NotNull final String dataDir, @NotNull final String targetDir, @NotNull final VirtualFileFilter filter) {
     createTempDirectory();
     return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
       @Override
@@ -84,6 +87,7 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
     });
   }
 
+  @NotNull
   @Override
   public String getTempDirPath() {
     return createTempDirectory().getAbsolutePath();
@@ -100,7 +104,7 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
 
   @Override
   @Nullable
-  public VirtualFile getFile(final String path) {
+  public VirtualFile getFile(@NotNull final String path) {
 
     final Ref<VirtualFile> result = new Ref<VirtualFile>(null);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -135,13 +139,13 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
 
   @Override
   @NotNull
-  public VirtualFile findOrCreateDir(String name) throws IOException {
+  public VirtualFile findOrCreateDir(@NotNull String name) throws IOException {
     return VfsUtil.createDirectories(new File(createTempDirectory(), name).getPath());
   }
 
   @Override
   @NotNull
-  public VirtualFile createFile(final String name, final String text) throws IOException {
+  public VirtualFile createFile(@NotNull final String name, final String text) throws IOException {
     final VirtualFile file = createFile(name);
     VfsUtil.saveText(file, text);
     return file;
