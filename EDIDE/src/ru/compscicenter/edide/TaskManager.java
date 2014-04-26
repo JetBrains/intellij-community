@@ -48,6 +48,8 @@ public class TaskManager {
                 for (com.google.gson.JsonElement fileName:files_in_task){
                     this.setFileName(taskIndex, fileName.getAsString());
                 }
+                String testFileName = e.getAsJsonObject().get("test").getAsString();
+                this.setTest(taskIndex, testFileName);
                 String taskTextFileName = Integer.toString(taskIndex + 1) + ".meta";
                 InputStream taskTextIS = StudyDirectoryProjectGenerator.class.getResourceAsStream(taskTextFileName);
                 BufferedReader taskTextReader = new BufferedReader(new InputStreamReader(taskTextIS));
@@ -84,6 +86,14 @@ public class TaskManager {
 
     public void setFileName(int index, String filename) {
         tasks.get(index).setFileName(filename);
+    }
+
+    public void setTest(int index, String filename) {
+        tasks.get(index).setTest(filename);
+    }
+
+    public String getTest(int index) {
+        return tasks.get(index).getTest();
     }
 
     public int getTaskFileNum(int index) {

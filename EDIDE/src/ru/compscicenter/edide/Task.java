@@ -10,6 +10,16 @@ import java.util.ArrayList;
 public class Task {
     ArrayList<String> fileNames;
     private StringBuilder taskText;
+    private  String test;
+
+    public String getTest() {
+        return test;
+    }
+
+    public void setTest(String test) {
+        this.test = test;
+    }
+
     public Task(int n) {
         fileNames =  new ArrayList<String>(n);
         taskText = new StringBuilder();
