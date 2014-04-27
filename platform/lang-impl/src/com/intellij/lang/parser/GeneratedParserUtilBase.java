@@ -186,18 +186,20 @@ public class GeneratedParserUtilBase {
     if (state.completionState != null) return true;
     boolean track = !state.suppressErrors && state.predicateCount < 2 && state.predicateSign;
     if (!track) return nextTokenIsFast(builder_, tokens);
-    boolean useFrameName = StringUtil.isNotEmpty(frameName);
-    IElementType tokenType = builder_.getTokenType();
-    if (tokenType == null) return false;
-    boolean result = false;
-    for (IElementType token : tokens) {
-      if (!useFrameName) addVariant(builder_, state, token);
-      result |= tokenType == token;
-    }
-    if (useFrameName) {
+    if (StringUtil.isNotEmpty(frameName)) {
       addVariantInner(state, builder_.rawTokenIndex(), frameName);
     }
-    return result;
+    else {
+      for (IElementType token : tokens) {
+        addVariant(builder_, state, token);
+      }
+    }
+    IElementType tokenType = builder_.getTokenType();
+    if (tokenType == null) return false;
+    for (IElementType token : tokens) {
+      if (tokenType == token) return true;
+    }
+    return false;
   }
 
   public static boolean nextTokenIs(PsiBuilder builder_, IElementType token) {
@@ -1003,7 +1005,7 @@ public class GeneratedParserUtilBase {
   }
 
   private static class MyList<E> extends ArrayList<E> {
-    public MyList(int initialCapacity) {
+    MyList(int initialCapacity) {
       super(initialCapacity);
     }
 
