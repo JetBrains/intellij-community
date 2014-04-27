@@ -113,7 +113,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
         ModifiableModuleModel moduleModel = ModuleManager.getInstance(getProject()).getModifiableModel();
         try {
           VirtualFile moduleDir = getProject().getBaseDir().createChildDirectory(this, "moduleWithoutContentRoot");
-          moduleName = moduleModel.newModule(moduleDir + "/moduleWithoutContentRoot.iml", EmptyModuleType.EMPTY_MODULE).getName();
+          moduleName = moduleModel.newModule(moduleDir.getPath() + "/moduleWithoutContentRoot.iml", EmptyModuleType.EMPTY_MODULE).getName();
           moduleModel.commit();
         }
         catch (Throwable t) {

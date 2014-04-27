@@ -171,8 +171,18 @@ public class MavenFoldersImporter {
       myModel.useModuleOutput(myMavenProject.getOutputDirectory(),
                               myMavenProject.getTestOutputDirectory());
     }
-    myModel.addExcludedFolder(myMavenProject.getOutputDirectory());
-    myModel.addExcludedFolder(myMavenProject.getTestOutputDirectory());
+
+    String buildDirPath = myModel.toPath(myMavenProject.getBuildDirectory()).getPath();
+    String outputDirPath = myModel.toPath(myMavenProject.getOutputDirectory()).getPath();
+
+    if ((!VfsUtilCore.isEqualOrAncestor(buildDirPath, outputDirPath))) {
+      myModel.addExcludedFolder(myMavenProject.getOutputDirectory());
+    }
+
+    String testOutputDirPath = myModel.toPath(myMavenProject.getTestOutputDirectory()).getPath();
+    if ((!VfsUtilCore.isEqualOrAncestor(buildDirPath, testOutputDirPath))) {
+      myModel.addExcludedFolder(myMavenProject.getTestOutputDirectory());
+    }
   }
 
   private void configGeneratedAndExcludedFolders() {
@@ -181,7 +191,7 @@ public class MavenFoldersImporter {
     String generatedDir = myMavenProject.getGeneratedSourcesDirectory(false);
     String generatedDirTest = myMavenProject.getGeneratedSourcesDirectory(true);
 
-    myModel.unregisterAll(targetDir.getPath(), true, false);
+    myModel.unregisterAll(targetDir.getPath(), false, false);
 
     if (myImportingSettings.getGeneratedSourcesFolder() != MavenImportingSettings.GeneratedSourcesFolder.IGNORE) {
       myModel.addGeneratedJavaSourceFolder(myMavenProject.getAnnotationProcessorDirectory(true), JavaSourceRootType.TEST_SOURCE);
@@ -220,13 +230,9 @@ public class MavenFoldersImporter {
     }
 
     if (myImportingSettings.isExcludeTargetFolder()) {
-      if (targetChildren == null || !myModel.hasRegisteredSourceSubfolder(targetDir)) {
+      if (!myModel.hasRegisteredSourceSubfolder(targetDir)) {
         myModel.addExcludedFolder(targetDir.getPath());
       }
-    }
-    else {
-      myModel.addExcludedFolder(myMavenProject.getOutputDirectory());
-      myModel.addExcludedFolder(myMavenProject.getTestOutputDirectory());
     }
   }
 

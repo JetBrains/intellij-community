@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
@@ -149,6 +150,7 @@ class DeclarationCacheKey {
 
   boolean processCachedDeclarations(PsiElement place, PsiScopeProcessor processor) {
     for (DeclarationHolder holder : getAllDeclarations(place)) {
+      ProgressManager.checkCanceled();
       if (!holder.processCachedDeclarations(processor)) {
         return false;
       }

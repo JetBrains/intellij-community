@@ -15,10 +15,10 @@
  */
 package org.jetbrains.plugins.github;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.ArrayList;
@@ -29,11 +29,20 @@ import static org.jetbrains.plugins.github.api.GithubGist.FileContent;
 /**
  * @author Aleksey Pivovarov
  */
-public class GithubCreateGistContentTest extends GithubCreateGistTestBase {
+public class GithubCreateGistContentTest extends GithubCreateGistContentTestBase {
+  protected Editor myEditor;
 
   @Override
   protected void beforeTest() throws Exception {
     createProjectFiles();
+  }
+
+  @Override
+  protected void afterTest() throws Exception {
+    if (myEditor != null) {
+      EditorFactory.getInstance().releaseEditor(myEditor);
+      myEditor = null;
+    }
   }
 
   public void testCreateFromFile() throws Throwable {
@@ -116,14 +125,17 @@ public class GithubCreateGistContentTest extends GithubCreateGistTestBase {
   public void testCreateFromEditor() throws Throwable {
     VirtualFile file = myProjectRoot.findFileByRelativePath("file.txt");
     assertNotNull(file);
-    Editor editor = FileEditorManager.getInstance(myProject).openTextEditor(new OpenFileDescriptor(myProject, file, 0), false);
-    assertNotNull(editor);
-    ((EditorImpl)editor).setCaretActive();
+
+    Document document = FileDocumentManager.getInstance().getDocument(file);
+    assertNotNull(document);
+
+    myEditor = EditorFactory.getInstance().createEditor(document, myProject);
+    assertNotNull(myEditor);
 
     List<FileContent> expected = new ArrayList<FileContent>();
     expected.add(new FileContent("file.txt", "file.txt content"));
 
-    List<FileContent> actual = GithubCreateGistAction.collectContents(myProject, editor, file, null);
+    List<FileContent> actual = GithubCreateGistAction.collectContents(myProject, myEditor, file, null);
 
     checkEquals(expected, actual);
   }
@@ -131,14 +143,17 @@ public class GithubCreateGistContentTest extends GithubCreateGistTestBase {
   public void testCreateFromEditorWithoutFile() throws Throwable {
     VirtualFile file = myProjectRoot.findFileByRelativePath("file.txt");
     assertNotNull(file);
-    Editor editor = FileEditorManager.getInstance(myProject).openTextEditor(new OpenFileDescriptor(myProject, file, 0), false);
-    assertNotNull(editor);
-    ((EditorImpl)editor).setCaretActive();
+
+    Document document = FileDocumentManager.getInstance().getDocument(file);
+    assertNotNull(document);
+
+    myEditor = EditorFactory.getInstance().createEditor(document, myProject);
+    assertNotNull(myEditor);
 
     List<FileContent> expected = new ArrayList<FileContent>();
     expected.add(new FileContent("", "file.txt content"));
 
-    List<FileContent> actual = GithubCreateGistAction.collectContents(myProject, editor, null, null);
+    List<FileContent> actual = GithubCreateGistAction.collectContents(myProject, myEditor, null, null);
 
     checkEquals(expected, actual);
   }

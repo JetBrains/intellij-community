@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,8 @@ class TextPainter extends BasePainter {
   private int myCurrentMethodSeparator;
   private final CodeStyleSettings myCodeStyleSettings;
   private final FileType myFileType;
+
+  private static final LineWrapper ourLineWrapper = new LineWrapper();
 
   @NonNls private static final String DEFAULT_MEASURE_HEIGHT_TEXT = "A";
   @NonNls private static final String DEFAULT_MEASURE_WIDTH_TEXT = "w";
@@ -485,20 +487,26 @@ class TextPainter extends BasePainter {
     return drawTabbedString(g, text, end - myOffset, position, clip, colNumber, backColor, underscoredColor);
   }
 
-  private boolean drawTabbedString(Graphics2D g, char[] text, int length, Point2D position, Rectangle2D clip,
+  private boolean drawTabbedString(final Graphics2D g, char[] text, int length, Point2D position, Rectangle2D clip,
                                    int colNumber, Color backColor, Color underscoredColor) {
     boolean ret = true;
     if (myOffset + length >= mySegmentEnd) {
       ret = false;
       length = mySegmentEnd - myOffset;
     }
-    if (length <= 0) { // How it can be?
+    if (length <= 0) { // can happen in recursive invocations below
       return false;
     }
     if (myPrintSettings.WRAP) {
       double w = getTextSegmentWidth(text, myOffset, length, position.getX(), g);
       if (position.getX() + w > clip.getWidth()) {
-        IntArrayList breakOffsets = calcBreakOffsets(g, text, myOffset, myOffset + length, colNumber, position, clip);
+        IntArrayList breakOffsets = ourLineWrapper.calcBreakOffsets(text, myOffset, myOffset + length, colNumber, position.getX(),
+                                                                    clip.getWidth(), new LineWrapper.WidthProvider() {
+          @Override
+          public double getWidth(char[] text, int start, int count, double x) {
+            return getTextSegmentWidth(text, start, count, x, g);
+          }
+        });
         int startOffset = myOffset;
         for (int i = 0; i < breakOffsets.size(); i++) {
           int breakOffset = breakOffsets.get(i);
@@ -508,10 +516,7 @@ class TextPainter extends BasePainter {
             return false;
           }
         }
-        if (myOffset > startOffset) {
-          drawTabbedString(g, text, startOffset + length - myOffset, position, clip, colNumber, backColor,
-                           underscoredColor);
-        }
+        drawTabbedString(g, text, startOffset + length - myOffset, position, clip, colNumber, backColor, underscoredColor);
         return ret;
       }
     }
@@ -572,69 +577,6 @@ class TextPainter extends BasePainter {
       return v.getLogicalBounds().getWidth();
     }
   }
-
-  private IntArrayList calcBreakOffsets(Graphics2D g, char[] text, int offset, int endOffset, int colNumber,
-                                        Point2D position, Rectangle2D clip) {
-    IntArrayList breakOffsets = new IntArrayList();
-    int nextOffset = offset;
-    double x = position.getX();
-    while (true) {
-      int prevOffset = nextOffset;
-      nextOffset = calcWordBreakOffset(g, text, nextOffset, endOffset, x, clip);
-      if (nextOffset == offset || nextOffset == prevOffset && colNumber == 0) {
-        nextOffset = calcCharBreakOffset(g, text, nextOffset, endOffset, x, clip);
-        if (nextOffset == prevOffset) { //it shouldn't be, but if clip.width is <= 1...
-          return breakOffsets;
-        }
-      }
-      if (nextOffset >= endOffset) {
-        break;
-      }
-      breakOffsets.add(nextOffset);
-      colNumber = 0;
-      x = 0;
-    }
-    return breakOffsets;
-  }
-
-  private int calcCharBreakOffset(Graphics2D g, char[] text, int offset, int endOffset, double x, Rectangle2D clip) {
-    double newX = x;
-    int breakOffset = offset;
-    while (breakOffset < endOffset) {
-      int nextOffset = breakOffset + 1;
-      newX += getTextSegmentWidth(text, breakOffset, nextOffset - breakOffset, newX, g);
-      if (newX > clip.getWidth()) {
-        return breakOffset;
-      }
-      breakOffset = nextOffset;
-    }
-    return breakOffset;
-  }
-
-  private int calcWordBreakOffset(Graphics2D g, char[] text, int offset, int endOffset, double x, Rectangle2D clip) {
-    double newX = x;
-    int breakOffset = offset;
-    while (breakOffset < endOffset) {
-      int nextOffset = getNextWordBreak(text, breakOffset, endOffset);
-      newX += getTextSegmentWidth(text, breakOffset, nextOffset - breakOffset, newX, g);
-      if (newX > clip.getWidth()) {
-        return breakOffset;
-      }
-      breakOffset = nextOffset;
-    }
-    return breakOffset;
-  }
-
-  private static int getNextWordBreak(char[] text, int offset, int endOffset) {
-    boolean isId = Character.isJavaIdentifierPart(text[offset]);
-    for (int i = offset + 1; i < endOffset; i++) {
-      if (isId != Character.isJavaIdentifierPart(text[i])) {
-        return i;
-      }
-    }
-    return endOffset;
-  }
-
   private double getTextSegmentWidth(char[] text, int offset, int length, double x, Graphics2D g) {
     int start = offset;
     double startX = x;

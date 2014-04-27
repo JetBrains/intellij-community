@@ -22,9 +22,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PlatformLangTestCase;
+import org.apache.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.jar.JarFile;
 
 public class PersistentFsTest extends PlatformLangTestCase {
   private PersistentFS myFs;
@@ -115,5 +119,41 @@ public class PersistentFsTest extends PlatformLangTestCase {
     File file = IoTestUtil.createTestFile("file.txt");
     String url = "jar://" + FileUtil.toSystemIndependentName(file.getPath()) + "!/";
     assertNull(VirtualFileManager.getInstance().findFileByUrl(url));
+  }
+
+  public void testBrokenJarRoots() throws Exception {
+    final File jarFile = IoTestUtil.createTestFile("empty.jar");
+
+    final int[] logCount = {0};
+    LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
+      @Override
+      public void processWarn(String message, Throwable t, @NotNull Logger logger) {
+        super.processWarn(message, t, logger);
+        if (message.contains(jarFile.getName())) logCount[0]++;
+      }
+    });
+
+    try {
+      String rootUrl = "jar://" + FileUtil.toSystemIndependentName(jarFile.getPath()) + "!/";
+      String entryUrl = rootUrl + JarFile.MANIFEST_NAME;
+      VirtualFile jarRoot = VirtualFileManager.getInstance().findFileByUrl(rootUrl);
+      assertNotNull(jarRoot);
+      assertTrue(jarRoot.isValid());
+      assertEquals(0, jarRoot.getChildren().length);
+      assertNull(VirtualFileManager.getInstance().findFileByUrl(entryUrl));
+
+      VirtualFile local = JarFileSystem.getInstance().getVirtualFileForJar(jarRoot);
+      assertNotNull(local);
+      IoTestUtil.createTestJar(jarFile);
+      local.refresh(false, false);
+      assertTrue(jarRoot.isValid());
+      assertEquals(1, jarRoot.getChildren().length);
+      assertNotNull(VirtualFileManager.getInstance().findFileByUrl(entryUrl));
+    }
+    finally {
+      LoggedErrorProcessor.restoreDefaultProcessor();
+    }
+
+    assertEquals(1, logCount[0]);
   }
 }

@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFile;
@@ -41,12 +42,13 @@ import java.util.zip.ZipFile;
 public class JarHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.jar.JarHandlerBase");
 
-  private static final long DEFAULT_LENGTH = 0L;
-  private static final long DEFAULT_TIMESTAMP = -1L;
+  protected static final long DEFAULT_LENGTH = 0L;
+  protected static final long DEFAULT_TIMESTAMP = -1L;
 
   private final TimedReference<JarFile> myJarFile = new TimedReference<JarFile>(null);
   private volatile Reference<Map<String, EntryInfo>> myRelPathsToEntries = new SoftReference<Map<String, EntryInfo>>(null);
-  private final Object lock = new Object();
+  private boolean myCorruptedJar = false;
+  private final Object myLock = new Object();
 
   protected final String myBasePath;
 
@@ -70,13 +72,6 @@ public class JarHandlerBase {
     myBasePath = path;
   }
 
-  protected void clear() {
-    synchronized (lock) {
-      myRelPathsToEntries = null;
-      myJarFile.set(null);
-    }
-  }
-
   public File getMirrorFile(@NotNull File originalFile) {
     return originalFile;
   }
@@ -85,12 +80,20 @@ public class JarHandlerBase {
   public JarFile getJar() {
     JarFile jar = myJarFile.get();
     if (jar == null) {
-      synchronized (lock) {
+      synchronized (myLock) {
+        if (myCorruptedJar) {
+          return null;
+        }
         jar = myJarFile.get();
         if (jar == null) {
-          jar = createJarFile();
-          if (jar != null) {
+          try {
+            jar = createJarFile();
             myJarFile.set(jar);
+          }
+          catch (IOException e) {
+            myCorruptedJar = true;
+            LOG.warn(e.getMessage() + ": " + myBasePath, e);
+            return null;
           }
         }
       }
@@ -98,97 +101,90 @@ public class JarHandlerBase {
     return jar;
   }
 
-  @Nullable
-  protected JarFile createJarFile() {
+  private JarFile createJarFile() throws IOException {
     final File originalFile = getOriginalFile();
-    try {
-      @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-      final ZipFile zipFile = new ZipFile(getMirrorFile(originalFile));
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+    final ZipFile zipFile = new ZipFile(getMirrorFile(originalFile));
 
-      class MyJarEntry implements JarFile.JarEntry {
-        private final ZipEntry myEntry;
+    class MyJarEntry implements JarFile.JarEntry {
+      private final ZipEntry myEntry;
 
-        MyJarEntry(ZipEntry entry) {
-          myEntry = entry;
-        }
-
-        @Override
-        public String getName() {
-          return myEntry.getName();
-        }
-
-        @Override
-        public long getSize() {
-          return myEntry.getSize();
-        }
-
-        @Override
-        public long getTime() {
-          return myEntry.getTime();
-        }
-
-        @Override
-        public boolean isDirectory() {
-          return myEntry.isDirectory();
-        }
+      MyJarEntry(ZipEntry entry) {
+        myEntry = entry;
       }
 
-      return new JarFile() {
-        @Override
-        public JarFile.JarEntry getEntry(String name) {
-          try {
-            ZipEntry entry = zipFile.getEntry(name);
-            if (entry != null) {
-              return new MyJarEntry(entry);
-            }
-          }
-          catch (RuntimeException e) {
-            LOG.warn("corrupted: " + zipFile.getName(), e);
-          }
-          return null;
-        }
+      @Override
+      public String getName() {
+        return myEntry.getName();
+      }
 
-        @Override
-        public InputStream getInputStream(JarFile.JarEntry entry) throws IOException {
-          return zipFile.getInputStream(((MyJarEntry)entry).myEntry);
-        }
+      @Override
+      public long getSize() {
+        return myEntry.getSize();
+      }
 
-        @Override
-        public Enumeration<? extends JarFile.JarEntry> entries() {
-          return new Enumeration<JarEntry>() {
-            private final Enumeration<? extends ZipEntry> entries = zipFile.entries();
+      @Override
+      public long getTime() {
+        return myEntry.getTime();
+      }
 
-            @Override
-            public boolean hasMoreElements() {
-              return entries.hasMoreElements();
-            }
-
-            @Override
-            public JarEntry nextElement() {
-              try {
-                ZipEntry entry = entries.nextElement();
-                if (entry != null) {
-                  return new MyJarEntry(entry);
-                }
-              }
-              catch (RuntimeException e) {
-                LOG.warn("corrupted: " + zipFile.getName(), e);
-              }
-              return null;
-            }
-          };
-        }
-
-        @Override
-        public ZipFile getZipFile() {
-          return zipFile;
-        }
-      };
+      @Override
+      public boolean isDirectory() {
+        return myEntry.isDirectory();
+      }
     }
-    catch (IOException e) {
-      LOG.warn(e.getMessage() + ": " + originalFile.getPath(), e);
-      return null;
-    }
+
+    return new JarFile() {
+      @Override
+      public JarEntry getEntry(String name) {
+        try {
+          ZipEntry entry = zipFile.getEntry(name);
+          if (entry != null) {
+            return new MyJarEntry(entry);
+          }
+        }
+        catch (RuntimeException e) {
+          LOG.warn("corrupted: " + zipFile.getName(), e);
+        }
+        return null;
+      }
+
+      @Override
+      public InputStream getInputStream(JarEntry entry) throws IOException {
+        return zipFile.getInputStream(((MyJarEntry)entry).myEntry);
+      }
+
+      @Override
+      public Enumeration<? extends JarEntry> entries() {
+        return new Enumeration<JarEntry>() {
+          private final Enumeration<? extends ZipEntry> entries = zipFile.entries();
+
+          @Override
+          public boolean hasMoreElements() {
+            return entries.hasMoreElements();
+          }
+
+          @Override
+          public JarEntry nextElement() {
+            try {
+              ZipEntry entry = entries.nextElement();
+              if (entry != null) {
+                return new MyJarEntry(entry);
+              }
+            }
+            catch (RuntimeException e) {
+              LOG.warn("corrupted: " + zipFile.getName(), e);
+            }
+            return null;
+          }
+        };
+      }
+
+      @Override
+      public ZipFile getZipFile() {
+        return zipFile;
+      }
+    };
   }
 
   @NotNull
@@ -227,7 +223,7 @@ public class JarHandlerBase {
   protected Map<String, EntryInfo> getEntriesMap() {
     Map<String, EntryInfo> map = SoftReference.dereference(myRelPathsToEntries);
     if (map == null) {
-      synchronized (lock) {
+      synchronized (myLock) {
         map = SoftReference.dereference(myRelPathsToEntries);
 
         if (map == null) {
@@ -313,7 +309,7 @@ public class JarHandlerBase {
   }
 
   public long getLength(@NotNull VirtualFile file) {
-    if (file.getParent() == null) return DEFAULT_LENGTH;
+    if (file.getParent() == null) return getOriginalFile().length();
     EntryInfo entry = getEntryInfo(file);
     return entry == null ? DEFAULT_LENGTH : entry.length;
   }
@@ -341,7 +337,8 @@ public class JarHandlerBase {
   @Nullable
   public FileAttributes getAttributes(@NotNull VirtualFile file) {
     if (file.getParent() == null) {
-      return new FileAttributes(true, false, false, false, DEFAULT_LENGTH, getOriginalFile().lastModified(), false);
+      FileAttributes attributes = FileSystemUtil.getAttributes(getOriginalFile());
+      return attributes == null ? null : new FileAttributes(true, false, false, false, attributes.length, attributes.lastModified, false);
     }
 
     EntryInfo entry = getEntryInfo(file);

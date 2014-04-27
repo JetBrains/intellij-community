@@ -22,6 +22,7 @@ import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.progress.*;
@@ -337,6 +338,24 @@ public class DumbServiceImpl extends DumbService {
     });
 
     return wrapper;
+  }
+
+  public void smartInvokeLater(@NotNull final Runnable runnable) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        runWhenSmart(runnable);
+      }
+    }, myProject.getDisposed());
+  }
+
+  public void smartInvokeLater(@NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        runWhenSmart(runnable);
+      }
+    }, modalityState, myProject.getDisposed());
   }
 
   private class IndexUpdateRunnable implements Runnable {

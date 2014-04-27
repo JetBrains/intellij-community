@@ -1,5 +1,6 @@
 public class Foo {
     public void fails() {
-        boolean[] a = new boolean[f()];<caret>
+        boolean[] a = new boolean[f()];
+        <caret>
     }
 }

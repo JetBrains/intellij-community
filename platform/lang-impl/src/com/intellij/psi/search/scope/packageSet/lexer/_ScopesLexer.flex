@@ -11,6 +11,10 @@ import com.intellij.lexer.FlexLexer;
     zzPushbackPos = 0;
     zzAtEOF = offset < zzEndRead;
   }
+
+  public _ScopesLexer() {
+    this((java.io.Reader)null);
+  }
 %}
 
 %unicode

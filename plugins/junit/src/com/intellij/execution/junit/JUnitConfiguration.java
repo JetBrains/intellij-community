@@ -51,6 +51,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
   @NonNls public static final String TEST_CLASS = "class";
   @NonNls public static final String TEST_PACKAGE = "package";
   @NonNls public static final String TEST_DIRECTORY = "directory";
+  @NonNls public static final String TEST_CATEGORY = "category";
   @NonNls public static final String TEST_METHOD = "method";
   @NonNls private static final String PATTERN_EL_NAME = "pattern";
   @NonNls public static final String TEST_PATTERN = PATTERN_EL_NAME;
@@ -295,6 +296,12 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       final String dirName = dirNameElement.getAttributeValue("value");
       getPersistentData().setDirName(FileUtil.toSystemDependentName(dirName));
     }
+
+    final Element categoryNameElement = element.getChild("category");
+    if (categoryNameElement != null) {
+      final String categoryName = categoryNameElement.getAttributeValue("value");
+      getPersistentData().setCategoryName(categoryName);
+    }
   }
 
   public void writeExternal(final Element element) throws WriteExternalException {
@@ -311,6 +318,14 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       dirNameElement.setAttribute("value", FileUtil.toSystemIndependentName(dirName));
       element.addContent(dirNameElement);
     }
+
+    final String categoryName = persistentData.getCategory();
+    if (!categoryName.isEmpty()) {
+      final Element categoryNameElement = new Element("category");
+      categoryNameElement.setAttribute("value", categoryName);
+      element.addContent(categoryNameElement);
+    }
+
     final Element patternsElement = new Element(PATTERNS_EL_NAME);
     for (String o : persistentData.getPatterns()) {
       final Element patternElement = new Element(PATTERN_EL_NAME);
@@ -379,6 +394,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
   public static class Data implements Cloneable {
     public String PACKAGE_NAME;
     private String DIR_NAME;
+    private String CATEGORY_NAME;
     public String MAIN_CLASS_NAME;
     public String METHOD_NAME;
     public String TEST_OBJECT = TEST_CLASS;
@@ -386,13 +402,13 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     public String PARAMETERS;
     public String WORKING_DIRECTORY;
     private String FORK_MODE = "none";
-    private Set<String> myPattern = new LinkedHashSet<String>();
 
+    private Set<String> myPattern = new LinkedHashSet<String>();
     //iws/ipr compatibility
     public String ENV_VARIABLES;
     private Map<String, String> myEnvs = new LinkedHashMap<String, String>();
-    public boolean PASS_PARENT_ENVS = true;
 
+    public boolean PASS_PARENT_ENVS = true;
     public TestSearchScope.Wrapper TEST_SEARCH_SCOPE = new TestSearchScope.Wrapper();
 
     public boolean equals(final Object object) {
@@ -407,7 +423,8 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
              Comparing.equal(PARAMETERS, second.PARAMETERS) &&
              Comparing.equal(myPattern, second.myPattern) &&
              Comparing.equal(FORK_MODE, second.FORK_MODE) &&
-             Comparing.equal(DIR_NAME, second.DIR_NAME);
+             Comparing.equal(DIR_NAME, second.DIR_NAME) &&
+             Comparing.equal(CATEGORY_NAME, second.CATEGORY_NAME);
     }
 
     public int hashCode() {
@@ -420,7 +437,8 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
              Comparing.hashcode(PARAMETERS) ^
              Comparing.hashcode(myPattern) ^
              Comparing.hashcode(FORK_MODE) ^
-             Comparing.hashcode(DIR_NAME);
+             Comparing.hashcode(DIR_NAME) ^
+             Comparing.hashcode(CATEGORY_NAME);
     }
 
     public TestSearchScope getScope() {
@@ -558,6 +576,14 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
 
     public void setDirName(String dirName) {
       DIR_NAME = dirName;
+    }
+
+    public String getCategory() {
+      return CATEGORY_NAME != null ? CATEGORY_NAME : "";
+    }
+
+    public void setCategoryName(String categoryName) {
+      CATEGORY_NAME = categoryName;
     }
   }
 

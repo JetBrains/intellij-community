@@ -153,6 +153,8 @@ public abstract class GithubTest extends GitPlatformTest {
 
   @Override
   protected final void setUp() throws Exception {
+    super.setUp();
+
     final String host = System.getenv("idea.test.github.host");
     final String login1 = System.getenv("idea.test.github.login1");
     final String login2 = System.getenv("idea.test.github.login2");
@@ -162,8 +164,6 @@ public abstract class GithubTest extends GitPlatformTest {
     assumeNotNull(host);
     assumeNotNull(login1);
     assumeNotNull(password);
-
-    super.setUp();
 
     myHost = host;
     myLogin1 = login1;

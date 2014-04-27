@@ -403,13 +403,16 @@ public class ExceptionUtil {
                                                           final boolean includeSelfCalls) {
     final JavaResolveResult result = methodCall.resolveMethodGenerics();
     final PsiMethod method = (PsiMethod)result.getElement();
+    if (method == null) {
+      return Collections.emptyList();
+    }
     final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class);
     if (!includeSelfCalls && method == containingMethod) {
       return Collections.emptyList();
     }
 
     final PsiSubstitutor substitutor = result.getSubstitutor();
-    if (method != null && !isArrayClone(method, methodCall) && methodCall instanceof PsiMethodCallExpression) {
+    if (!isArrayClone(method, methodCall) && methodCall instanceof PsiMethodCallExpression) {
       final PsiClassType[] thrownExceptions = method.getThrowsList().getReferencedTypes();
       if (thrownExceptions.length > 0) {
         final PsiFile containingFile = (containingMethod == null ? methodCall : containingMethod).getContainingFile();
@@ -537,11 +540,11 @@ public class ExceptionUtil {
   }
 
   @NotNull
-  public static List<PsiClassType> getUnhandledExceptions(@Nullable PsiMethod method,
-                                                           PsiElement element,
-                                                           PsiElement topElement,
-                                                           @NotNull PsiSubstitutor substitutor) {
-    if (method == null || isArrayClone(method, element)) {
+  public static List<PsiClassType> getUnhandledExceptions(@NotNull PsiMethod method,
+                                                          PsiElement element,
+                                                          PsiElement topElement,
+                                                          @NotNull PsiSubstitutor substitutor) {
+    if (isArrayClone(method, element)) {
       return Collections.emptyList();
     }
     final PsiClassType[] referencedTypes = method.getThrowsList().getReferencedTypes();

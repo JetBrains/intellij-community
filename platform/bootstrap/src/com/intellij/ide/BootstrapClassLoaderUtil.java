@@ -62,6 +62,7 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     addAdditionalClassPath(classpath);
     UrlClassLoader newClassLoader = UrlClassLoader.build()
       .urls(filterClassPath(classpath))
+      .allowBootstrapResources()
       .allowLock().useCache().get();
 
     // prepare plugins

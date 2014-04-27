@@ -55,6 +55,11 @@ public class SemVer {
     return myPatch;
   }
 
+  @NotNull
+  public String getParsedVersion() {
+    return myMajor + "." + myMinor + "." + myPatch;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -75,6 +80,11 @@ public class SemVer {
     result = 31 * result + myMinor;
     result = 31 * result + myPatch;
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return myRawVersion;
   }
 
   @Nullable

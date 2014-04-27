@@ -108,12 +108,25 @@ public class StdArrangementTokens {
     private General() {
     }
   }
+
+  public static class Section {
+    @NotNull public static final ArrangementSettingsToken START_SECTION = token("SECTION_START", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken END_SECTION = token("SECTION_END", StdArrangementTokenType.ENTRY_TYPE);
+
+    private Section() {
+
+    }
+  }
+
   public static class Regexp {
     @NotNull public static final StdArrangementSettingsToken NAME = token("NAME", "arrangement.settings.text.general.name",
                                                                           StdArrangementTokenType.REG_EXP);
 
     @NotNull public static final StdArrangementSettingsToken XML_NAMESPACE =
       token("XML_NAMESPACE", "arrangement.settings.text.general.xml.namespace", StdArrangementTokenType.REG_EXP);
+
+    @NotNull public static final StdArrangementSettingsToken TEXT = token("TEXT", "arrangement.settings.text.general.text",
+                                                                          StdArrangementTokenType.REG_EXP);
 
     private Regexp() {
     }

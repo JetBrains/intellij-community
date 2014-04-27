@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
  * User: evgeny.zakrevsky
  * Date: 9/24/12
  */
-public final class MantisFilter implements Comparable<MantisFilter> {
+public final class MantisFilter {
   // Used for "[Last task] filter"
   public static final int UNSPECIFIED_FILTER_ID = 0;
 
@@ -73,8 +73,4 @@ public final class MantisFilter implements Comparable<MantisFilter> {
     return getName();
   }
 
-  @Override
-  public int compareTo(@NotNull MantisFilter o) {
-    return getName().compareTo(o.getName());
-  }
 }

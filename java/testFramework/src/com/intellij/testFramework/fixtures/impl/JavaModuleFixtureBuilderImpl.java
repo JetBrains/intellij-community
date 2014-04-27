@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
     final HashMap<OrderRootType, String[]> map = new HashMap<OrderRootType, String[]>();
     for (String path : classPath) {
       if (!new File(path).exists()) {
-        System.out.println(path + " not exists");
+        System.out.println(path + " does not exist");
       }
     }
     map.put(OrderRootType.CLASSES, classPath);

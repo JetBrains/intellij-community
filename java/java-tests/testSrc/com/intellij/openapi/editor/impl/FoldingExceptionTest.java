@@ -26,7 +26,15 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
 public class FoldingExceptionTest extends LightCodeInsightTestCase {
 
   public void test() {
-    configureByFile("/codeInsight/folding/FoldingExceptionTest.java");
+    doTest("FoldingExceptionTest.java");
+  }
+
+  public void testAnother() {
+    doTest("FoldingException2Test.java");
+  }
+
+  private void doTest(String fileName) {
+    configureByFile("/codeInsight/folding/" + fileName);
     EditorTestUtil.configureSoftWraps(myEditor, 120);
     runFoldingPass();
     deleteLine();

@@ -29,8 +29,8 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ConcurrentHashSet;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,18 +49,22 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   private static final JarFileSystemImplLock LOCK = new JarFileSystemImplLock();
 
   private final Set<String> myNoCopyJarPaths;
-  private File myNoCopyJarDir;
-  private final Map<String, JarHandler> myHandlers = new THashMap<String, JarHandler>(FileUtil.PATH_HASHING_STRATEGY);
-  private String[] jarPathsCache;
+  private final File myNoCopyJarDir;
+  private final Map<String, JarHandler> myHandlers = ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
+  private String[] myJarPathsCache;
 
-  public JarFileSystemImpl(MessageBus bus) {
+  public JarFileSystemImpl(@NotNull MessageBus bus) {
     boolean noCopy = SystemProperties.getBooleanProperty("idea.jars.nocopy", !SystemInfo.isWindows);
     myNoCopyJarPaths = noCopy ? null : new ConcurrentHashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
 
+    // to prevent platform .jar files from copying
+    boolean runningFromDist = new File(PathManager.getLibPath(), "openapi.jar").exists();
+    myNoCopyJarDir = !runningFromDist ? null : new File(PathManager.getHomePath());
+
     bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
       @Override
-      public void after(@NotNull final List<? extends VFileEvent> events) {
-        final List<VirtualFile> rootsToRefresh = new ArrayList<VirtualFile>();
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        List<VirtualFile> rootsToRefresh = new ArrayList<VirtualFile>();
 
         for (VFileEvent event : events) {
           if (event.getFileSystem() instanceof LocalFileSystem) {
@@ -68,9 +72,9 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
 
             String[] jarPaths;
             synchronized (LOCK) {
-              jarPaths = jarPathsCache;
+              jarPaths = myJarPathsCache;
               if (jarPaths == null) {
-                jarPathsCache = jarPaths = ArrayUtil.toStringArray(myHandlers.keySet());
+                myJarPathsCache = jarPaths = ArrayUtil.toStringArray(myHandlers.keySet());
               }
             }
 
@@ -87,12 +91,8 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
         }
 
         if (!rootsToRefresh.isEmpty()) {
-          for (VirtualFile root : rootsToRefresh) {
-            if (root.isValid()) {
-              ((NewVirtualFile)root).markDirtyRecursively();
-            }
-          }
-          RefreshQueue.getInstance().refresh(!ApplicationManager.getApplication().isUnitTestMode(), true, null, rootsToRefresh);
+          boolean async = !ApplicationManager.getApplication().isUnitTestMode();
+          RefreshQueue.getInstance().refresh(async, true, null, rootsToRefresh);
         }
       }
     });
@@ -103,11 +103,15 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     final JarHandler handler;
     synchronized (LOCK) {
       handler = myHandlers.remove(path);
-      jarPathsCache = null;
+      myJarPathsCache = null;
     }
 
     if (handler != null) {
-      return handler.markDirty();
+      VirtualFile root = findFileByPath(handler.myBasePath + JarFileSystem.JAR_SEPARATOR);
+      if (root instanceof NewVirtualFile) {
+        ((NewVirtualFile)root).markDirty();
+      }
+      return root;
     }
 
     return null;
@@ -120,27 +124,17 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   }
 
   @Override
-  public void initComponent() {
-    // we want to prevent Platform from copying its own jars when running from dist to save system resources
-    final boolean isRunningFromDist = new File(PathManager.getLibPath() + File.separatorChar + "openapi.jar").exists();
-    if (isRunningFromDist) {
-      myNoCopyJarDir = new File(new File(PathManager.getLibPath()).getParent());
-    }
-  }
+  public void initComponent() { }
 
   @Override
-  public void disposeComponent() {
-  }
+  public void disposeComponent() { }
 
   @Override
   public void setNoCopyJarForPath(String pathInJar) {
-    if (myNoCopyJarPaths == null || pathInJar == null) {
-      return;
-    }
+    if (myNoCopyJarPaths == null || pathInJar == null) return;
     int index = pathInJar.indexOf(JAR_SEPARATOR);
     if (index < 0) return;
-    String path = pathInJar.substring(0, index);
-    path = path.replace('/', File.separatorChar);
+    String path = FileUtil.toSystemIndependentName(pathInJar.substring(0, index));
     myNoCopyJarPaths.add(path);
   }
 
@@ -158,8 +152,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   @Nullable
   public File getMirroredFile(@NotNull VirtualFile vFile) {
     VirtualFile jar = getJarRootForLocalFile(vFile);
-    final JarHandler handler = jar == null ? null : getHandler(jar);
-    return handler == null ? null : handler.getMirrorFile(new File(vFile.getPath()));
+    return jar == null ? null : getHandler(jar).getMirrorFile(new File(vFile.getPath()));
   }
 
   @NotNull
@@ -174,7 +167,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
       if (handler == null) {
         freshHandler = handler = new JarHandler(this, jarRootPath.substring(0, jarRootPath.length() - JAR_SEPARATOR.length()));
         myHandlers.put(jarRootPath, handler);
-        jarPathsCache = null;
+        myJarPathsCache = null;
       }
       else {
         freshHandler = null;
@@ -238,9 +231,8 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
 
   @Override
   @NotNull
-  public OutputStream getOutputStream(@NotNull final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp)
-    throws IOException {
-    throw new IOException("Read-only: "+file.getPresentableUrl());
+  public OutputStream getOutputStream(@NotNull VirtualFile file, Object requestor, long modStamp, long timeStamp) throws IOException {
+    throw new IOException("Read-only: " + file.getPresentableUrl());
   }
 
   public boolean isMakeCopyOfJar(@NotNull File originalJar) {
@@ -272,12 +264,12 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
 
   @Override
   public void setTimeStamp(@NotNull final VirtualFile file, final long modStamp) throws IOException {
-    throw new IOException("Read-only: "+file.getPresentableUrl());
+    throw new IOException("Read-only: " + file.getPresentableUrl());
   }
 
   @Override
   public void setWritable(@NotNull final VirtualFile file, final boolean writableFlag) throws IOException {
-    throw new IOException("Read-only: "+file.getPresentableUrl());
+    throw new IOException("Read-only: " + file.getPresentableUrl());
   }
 
   @Override
@@ -303,7 +295,10 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
 
   @NotNull
   @Override
-  public VirtualFile copyFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent, @NotNull String copyName) throws IOException {
+  public VirtualFile copyFile(Object requestor,
+                              @NotNull VirtualFile vFile,
+                              @NotNull VirtualFile newParent,
+                              @NotNull String copyName) throws IOException {
     throw new IOException(VfsBundle.message("jar.modification.not.supported.error", vFile.getUrl()));
   }
 
@@ -353,19 +348,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   }
 
   @Override
-  public FileAttributes getAttributes(@NotNull final VirtualFile file) {
-    final JarHandler handler = getHandler(file);
-    if (handler == null) return null;
-
-    if (file.getParent() == null) {
-      final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
-      final VirtualFile originalFile = localFileSystem.findFileByIoFile(handler.getOriginalFile());
-      if (originalFile == null) return null;
-      final FileAttributes attributes = localFileSystem.getAttributes(originalFile);
-      if (attributes == null) return null;
-      return new FileAttributes(true, false, false, false, attributes.length, attributes.lastModified, attributes.isWritable());
-    }
-
-    return handler.getAttributes(file);
+  public FileAttributes getAttributes(@NotNull VirtualFile file) {
+    return getHandler(file).getAttributes(file);
   }
 }

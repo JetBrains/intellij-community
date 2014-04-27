@@ -62,28 +62,36 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
 
   @NotNull
   public static List<PsiType[]> findFittingSignatures(GrClosableBlock closure) {
-
-    final GrParameter[] parameters = closure.getAllParameters();
-
     GrCall call = findCall(closure);
     if (call == null) return Collections.emptyList();
 
-    GroovyResolveResult resolveResult = call.advancedResolve();
-    PsiElement element = resolveResult.getElement();
+    List<PsiType[]> expectedSignatures = ContainerUtil.newArrayList();
 
-    if (!(element instanceof PsiMethod)) {
-      return Collections.emptyList();
+    GroovyResolveResult[] variants = call.getCallVariants(closure);
+    for (GroovyResolveResult variant : variants) {
+      expectedSignatures.addAll(inferExpectedSignatures(variant, call, closure));
     }
 
-    while (element instanceof PsiMirrorElement) {
-      element = ((PsiMirrorElement)element).getPrototype();
-    }
+    final GrParameter[] parameters = closure.getAllParameters();
+    return ContainerUtil.findAll(expectedSignatures, new Condition<PsiType[]>() {
+      @Override
+      public boolean value(PsiType[] types) {
+        return types.length == parameters.length;
+      }
+    });
+  }
 
-    List<Pair<PsiParameter,PsiType>> params = ResolveUtil.collectExpectedParamsByArg(closure,
-                                                                                     new GroovyResolveResult[]{resolveResult},
-                                                                                     call.getNamedArguments(),
-                                                                                     call.getExpressionArguments(),
-                                                                                     call.getClosureArguments(), closure);
+  private static List<PsiType[]> inferExpectedSignatures(@NotNull GroovyResolveResult variant, @NotNull GrCall call, @NotNull GrClosableBlock closure) {
+    PsiElement element = variant.getElement();
+
+    while (element instanceof PsiMirrorElement) element = ((PsiMirrorElement)element).getPrototype();
+    if (!(element instanceof PsiMethod)) return Collections.emptyList();
+
+    List<Pair<PsiParameter, PsiType>> params = ResolveUtil.collectExpectedParamsByArg(closure,
+                                                                                      new GroovyResolveResult[]{variant},
+                                                                                      call.getNamedArguments(),
+                                                                                      call.getExpressionArguments(),
+                                                                                      call.getClosureArguments(), closure);
     if (params.isEmpty()) return Collections.emptyList();
 
     Pair<PsiParameter, PsiType> pair = params.get(0);
@@ -104,16 +112,9 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
     SignatureHintProcessor signatureHintProcessor = SignatureHintProcessor.getHintProcessor(qnameOfClosureSignatureHint);
     if (signatureHintProcessor == null) return Collections.emptyList();
 
-    List<PsiType[]> expectedSignatures = signatureHintProcessor.inferExpectedSignatures((PsiMethod)element,
-                                                                                         resolveResult.getSubstitutor(),
-                                                                                         SignatureHintProcessor.buildOptions(anno));
-
-    return ContainerUtil.findAll(expectedSignatures, new Condition<PsiType[]>() {
-      @Override
-      public boolean value(PsiType[] types) {
-        return types.length == parameters.length;
-      }
-    });
+    return signatureHintProcessor.inferExpectedSignatures((PsiMethod)element,
+                                                          variant.getSubstitutor(),
+                                                          SignatureHintProcessor.buildOptions(anno));
   }
 
   private static boolean containsParametersWithDeclaredType(GrParameter[] parameters) {

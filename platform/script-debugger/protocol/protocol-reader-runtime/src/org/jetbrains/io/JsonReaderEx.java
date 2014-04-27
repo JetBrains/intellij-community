@@ -174,6 +174,11 @@ public final class JsonReaderEx implements Closeable {
     this.lenient = lenient;
   }
 
+  public final JsonReaderEx lenient(boolean lenient) {
+    this.lenient = lenient;
+    return this;
+  }
+
   @SuppressWarnings("UnusedDeclaration")
   public final boolean isLenient() {
     return lenient;

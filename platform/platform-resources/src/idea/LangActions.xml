@@ -829,6 +829,7 @@
     </action>
 
     <action id="Arrangement.Rule.Add" class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementRuleAction"/>
+    <action id="Arrangement.Rule.Section.Add" class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementSectionRuleAction"/>
     <action id="Arrangement.Rule.Remove" class="com.intellij.application.options.codeStyle.arrangement.action.RemoveArrangementRuleAction"/>
     <action id="Arrangement.Rule.Edit"
             class="com.intellij.application.options.codeStyle.arrangement.action.EditArrangementRuleAction"
@@ -848,12 +849,14 @@
 
     <group id="Arrangement.Rule.Match.Control.Context.Menu">
       <reference ref="Arrangement.Rule.Add"/>
+      <reference ref="Arrangement.Rule.Section.Add"/>
       <reference ref="Arrangement.Rule.Remove"/>
       <reference ref="Arrangement.Rule.Edit"/>
     </group>
 
     <group id="Arrangement.Rule.Match.Control.ToolBar">
       <reference ref="Arrangement.Rule.Add"/>
+      <reference ref="Arrangement.Rule.Section.Add"/>
       <reference ref="Arrangement.Rule.Remove"/>
       <reference ref="Arrangement.Rule.Match.Condition.Move.Up"/>
       <reference ref="Arrangement.Rule.Match.Condition.Move.Down"/>

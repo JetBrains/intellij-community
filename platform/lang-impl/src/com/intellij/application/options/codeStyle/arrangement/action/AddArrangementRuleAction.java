@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SystemInfoRt;
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
@@ -55,13 +56,22 @@ public class AddArrangementRuleAction extends AnAction implements DumbAware {
     int rowToEdit;
     if (rows.size() == 1) {
       rowToEdit = rows.get(0) + 1;
-      model.insertRow(rowToEdit, new Object[] { new EmptyArrangementRuleComponent(control.getEmptyRowHeight()) });
+      model.insertRow(rowToEdit, new Object[] {createNewRule(control)});
     }
     else {
       rowToEdit = model.getSize();
-      model.add(new EmptyArrangementRuleComponent(control.getEmptyRowHeight()));
+      model.add(createNewRule(control));
     }
-    control.showEditor(rowToEdit);
+    showEditor(control, rowToEdit);
     control.getSelectionModel().setSelectionInterval(rowToEdit, rowToEdit);
+  }
+
+  @NotNull
+  protected Object createNewRule(@NotNull ArrangementMatchingRulesControl control) {
+    return new EmptyArrangementRuleComponent(control.getEmptyRowHeight());
+  }
+
+  protected void showEditor(@NotNull ArrangementMatchingRulesControl control, int rowToEdit) {
+    control.showEditor(rowToEdit);
   }
 }

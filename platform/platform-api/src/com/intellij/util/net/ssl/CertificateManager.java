@@ -8,6 +8,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
@@ -15,11 +16,16 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
+import javax.crypto.BadPaddingException;
+import javax.net.ssl.*;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.LinkedHashSet;
 import java.util.concurrent.Callable;
@@ -109,8 +115,10 @@ public class CertificateManager implements ApplicationComponent, PersistentState
     try {
       // Don't do this: protocol created this way will ignore SSL tunnels. See IDEA-115708.
       // Protocol.registerProtocol("https", CertificateManager.createDefault().createProtocol());
-      SSLContext.setDefault(getSslContext());
-      LOG.debug("Default SSL context initialized");
+      if (Registry.is("ide.certificate.manager")) {
+        SSLContext.setDefault(getSslContext());
+        LOG.debug("Default SSL context initialized");
+      }
     }
     catch (Exception e) {
       LOG.error(e);
@@ -152,11 +160,20 @@ public class CertificateManager implements ApplicationComponent, PersistentState
           // SSLContext context = SSLContext.getDefault();
           // NOTE: existence of default trust manager can be checked here as
           // assert systemManager.getAcceptedIssuers().length != 0
-          context.init(null, new TrustManager[]{getTrustManager()}, null);
+          context.init(getDefaultKeyManagers(), new TrustManager[]{getTrustManager()}, null);
         }
-        catch (Exception e) {
+        catch (KeyManagementException e) {
           LOG.error(e);
         }
+      }
+      else {
+        // IDEA-124057 Do not touch default context at all if certificate manager was disabled.
+
+        // For some reason passing `null` as first parameter of SSLContext#init is not enough to
+        // use -Djavax.net.ssl.keyStore VM parameters, although -Djavax.net.ssl.trustStore is used
+        // successfully. See this question on Stackoverflow for details
+        // http://stackoverflow.com/questions/23205266/java-key-store-is-not-found-when-default-ssl-context-is-redefined
+        context = getDefaultSslContext();
       }
       mySslContext = context;
     }
@@ -179,8 +196,73 @@ public class CertificateManager implements ApplicationComponent, PersistentState
     }
     catch (KeyManagementException e) {
       LOG.error(e);
-      throw new AssertionError("Cannot initialize default SSL context");
+      throw new AssertionError("Cannot initialize system SSL context");
     }
+  }
+
+  @NotNull
+  private static SSLContext getDefaultSslContext() {
+    try {
+      return SSLContext.getDefault();
+    }
+    catch (NoSuchAlgorithmException e) {
+      LOG.error("Default SSL context not available. Using system instead.");
+      return getSystemSslContext();
+    }
+  }
+
+  /**
+   * Workaround for IDEA-124057. Manually find key store specified via VM options.
+   *
+   * @return key managers or {@code null} in case of any error
+   */
+  @Nullable
+  public static KeyManager[] getDefaultKeyManagers() {
+    String keyStorePath = System.getProperty("javax.net.ssl.keyStore");
+    if (keyStorePath != null) {
+      LOG.info("Loading custom key store specified with VM options: " + keyStorePath);
+      try {
+        KeyManagerFactory factory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        KeyStore keyStore;
+        String keyStoreType = System.getProperty("javax.net.ssl.keyStoreType", KeyStore.getDefaultType());
+        try {
+          keyStore = KeyStore.getInstance(keyStoreType);
+        }
+        catch (KeyStoreException e) {
+          if (e.getCause() instanceof NoSuchAlgorithmException) {
+            LOG.error("Wrong key store type: " + keyStoreType, e);
+            return null;
+          }
+          throw e;
+        }
+        String password = System.getProperty("javax.net.ssl.keyStorePassword", "");
+        InputStream inputStream = null;
+        try {
+          inputStream = new FileInputStream(keyStorePath);
+          keyStore.load(inputStream, password.toCharArray());
+          factory.init(keyStore, password.toCharArray());
+        }
+        catch (FileNotFoundException e) {
+          LOG.error("Key store file not found: " + keyStorePath);
+          return null;
+        }
+        catch (Exception e) {
+          if (e.getCause() instanceof BadPaddingException) {
+            LOG.error("Wrong key store password: " + password, e);
+            return null;
+          }
+          throw e;
+        }
+        finally {
+          StreamUtil.closeStream(inputStream);
+        }
+        return factory.getKeyManagers();
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
+    return null;
   }
 
   @NotNull

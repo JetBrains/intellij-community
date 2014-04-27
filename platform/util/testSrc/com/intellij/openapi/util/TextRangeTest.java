@@ -16,7 +16,12 @@
 
 package com.intellij.openapi.util;
 
+import com.intellij.util.text.TextRangeUtil;
 import junit.framework.TestCase;
+
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author dyoma
@@ -55,5 +60,33 @@ public class TextRangeTest extends TestCase {
     assertEquals("0a345", range.replace("012345", "a"));
     assertEquals("0345", range.replace("012345", ""));
     assertEquals("0abcdef345", range.replace("012345", "abcdef"));
+  }
+  
+  public void testExcludedRanges() {
+    List<TextRange> excludedRanges = 
+      Arrays.asList(
+        new TextRange(95,110),
+        new TextRange(15,40),
+        new TextRange(5,20),
+        new TextRange(105,120),
+        new TextRange(70,90),
+        new TextRange(50,57),
+        new TextRange(56,65),
+        new TextRange(50,60)
+      );
+    List<TextRange> expectedRanges = 
+      Arrays.asList(
+        new TextRange(40,50),
+        new TextRange(65,70),
+        new TextRange(90,95)
+      );
+    Iterable<TextRange> result = TextRangeUtil.excludeRanges(new TextRange(30,100), excludedRanges);
+    Iterator<TextRange> resultIterator = result.iterator();
+    for (TextRange expectedRange : expectedRanges) {
+      assertTrue("Less elements than expected", resultIterator.hasNext());
+      TextRange actualRange = resultIterator.next();
+      assertEquals("Ranges do not match", expectedRange, actualRange);
+    }
+    assertTrue("More elements than expected", !resultIterator.hasNext());
   }
 }

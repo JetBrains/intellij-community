@@ -24,7 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 
 class IdSet {
-  private static final List<String> BLACK_LIST = Arrays.asList("Support", "Integration", "integration");
+  private static final List<String> BLACK_LIST = Arrays.asList("Support", "support", "Integration", "integration");
 
   String myTitle;
   String[] myIds;

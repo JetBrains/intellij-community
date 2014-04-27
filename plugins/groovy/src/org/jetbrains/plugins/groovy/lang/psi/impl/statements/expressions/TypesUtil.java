@@ -73,7 +73,7 @@ public class TypesUtil {
 
   @NonNls
   public static final Map<String, PsiType> ourQNameToUnboxed = new HashMap<String, PsiType>();
-  public static final PsiPrimitiveType[] PRIMITIVES = new PsiPrimitiveType[]{
+  public static final PsiPrimitiveType[] PRIMITIVES = {
     PsiType.BYTE,
     PsiType.CHAR,
     PsiType.DOUBLE,

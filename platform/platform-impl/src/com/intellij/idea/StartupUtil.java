@@ -186,30 +186,40 @@ public class StartupUtil {
       return false;
     }
 
-    boolean tempAccessible = false;
     File ideTempDir = new File(PathManager.getTempPath());
+    String tempInaccessible = null;
 
-    if (ideTempDir.isDirectory() || ideTempDir.mkdirs()) {
-      File ideTempFile = new File(ideTempDir, "idea_tmp_check.sh");
+    if (!ideTempDir.isDirectory() && !ideTempDir.mkdirs()) {
+      tempInaccessible = "unable to create the directory";
+    }
+    else {
       try {
+        File ideTempFile = new File(ideTempDir, "idea_tmp_check.sh");
         FileUtil.writeToFile(ideTempFile, "#!/bin/sh\nexit 0");
 
-        tempAccessible = (SystemInfo.isWindows || SystemInfo.isMac) ||
-                         (ideTempFile.setExecutable(true, true) &&
-                          ideTempDir.canExecute() &&
-                          new ProcessBuilder(ideTempFile.getAbsolutePath()).start().waitFor() == 0);
+        if (SystemInfo.isWindows || SystemInfo.isMac) {
+          tempInaccessible = null;
+        }
+        else if (!ideTempFile.setExecutable(true, true)) {
+          tempInaccessible = "cannot set executable permission";
+        }
+        else if (new ProcessBuilder(ideTempFile.getAbsolutePath()).start().waitFor() != 0) {
+          tempInaccessible = "cannot execute test script";
+        }
 
         if (!FileUtilRt.delete(ideTempFile)) {
           ideTempFile.deleteOnExit();
         }
       }
-      catch (Exception ignored) { }
+      catch (Exception e) {
+        tempInaccessible = e.getClass().getSimpleName() + ": " + e.getMessage();
+      }
     }
 
-    if (!tempAccessible) {
+    if (tempInaccessible != null) {
       String message = "Temp directory '" + ideTempDir + "' is inaccessible.\n" +
                        "If you have modified the '" + PathManager.PROPERTY_SYSTEM_PATH + "' property please make sure it is correct,\n" +
-                       "otherwise please re-install the IDE.";
+                       "otherwise please re-install the IDE.\n\nDetails: " + tempInaccessible;
       Main.showMessage("Invalid System Path", message, true);
       return false;
     }

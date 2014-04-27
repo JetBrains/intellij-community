@@ -50,6 +50,10 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
     myTypeElement = type == null ? null : new GrLightTypeElement(type, scope.getManager());
   }
 
+  public void setModifierList(GrModifierList modifierList) {
+    myModifierList = modifierList;
+  }
+
   @NotNull
   private static PsiType getTypeNotNull(PsiType type, PsiElement scope) {
     return type != null ? type : PsiType.getJavaLangObject(scope.getManager(), scope.getResolveScope());

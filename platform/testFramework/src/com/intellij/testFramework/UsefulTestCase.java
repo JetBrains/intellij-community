@@ -647,11 +647,11 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static void assertExists(File file){
-    assertTrue("File should exists " + file, file.exists());
+    assertTrue("File should exist " + file, file.exists());
   }
 
   public static void assertDoesntExist(File file){
-    assertFalse("File should not exists " + file, file.exists());
+    assertFalse("File should not exist " + file, file.exists());
   }
 
   protected String getTestName(boolean lowercaseFirstLetter) {

@@ -40,7 +40,7 @@ public class XmlRearranger
   static {
     DEFAULT_MATCH_RULES.add(new StdArrangementMatchRule(new StdArrangementEntryMatcher(
       new ArrangementAtomMatchCondition(StdArrangementTokens.Regexp.NAME, "xmlns:.*"))));
-    DEFAULT_SETTINGS = new StdRulePriorityAwareSettings(
+    DEFAULT_SETTINGS = StdArrangementSettings.createByMatchRules(
       Collections.<ArrangementGroupingRule>emptyList(), DEFAULT_MATCH_RULES);
   }
 

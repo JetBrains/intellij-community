@@ -16,7 +16,6 @@
 package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
@@ -70,10 +69,18 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
                                        @NotNull ArrangementColorsProvider colorsProvider,
                                        @NotNull ArrangementMatchingRulesControl control)
   {
+    this(settingsManager, settingsManager.getSupportedMatchingTokens(), colorsProvider, control);
+  }
+
+  public ArrangementMatchingRuleEditor(@NotNull ArrangementStandardSettingsManager settingsManager,
+                                       @Nullable List<CompositeArrangementSettingsToken> tokens,
+                                       @NotNull ArrangementColorsProvider colorsProvider,
+                                       @NotNull ArrangementMatchingRulesControl control)
+  {
     mySettingsManager = settingsManager;
     myColorsProvider = colorsProvider;
     myControl = control;
-    init(settingsManager);
+    init(tokens);
     addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
@@ -82,11 +89,10 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
     });
   }
 
-  private void init(@NotNull ArrangementStandardSettingsManager settingsManager) {
+  private void init(@Nullable List<CompositeArrangementSettingsToken> tokens) {
     setLayout(new GridBagLayout());
     setBorder(IdeBorderFactory.createEmptyBorder(5));
 
-    List<CompositeArrangementSettingsToken> tokens = settingsManager.getSupportedMatchingTokens();
     if (tokens != null) {
       for (CompositeArrangementSettingsToken token : tokens) {
         addToken(token);
@@ -211,7 +217,10 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
         conditions.add(component.getMatchCondition());
       }
     }
-    if (orderType != null && !conditions.isEmpty()) {
+    if (!conditions.isEmpty()) {
+      if (orderType == null) {
+        orderType = StdArrangementTokens.Order.KEEP;
+      }
       return Pair.create(ArrangementUtil.combine(conditions.toArray(new ArrangementMatchCondition[conditions.size()])), orderType);
     }
     else {
@@ -281,7 +290,7 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
     try {
       for (ArrangementUiComponent component : myComponents.values()) {
         ArrangementSettingsToken token = component.getToken();
-        if (token != null && (component.getAvailableTokens().contains(orderType) || mySettingsManager.isEnabled(token, condition))) {
+        if (token != null && (component.getAvailableTokens().contains(orderType) || isEnabled(condition, token))) {
           component.setEnabled(true);
           if (component.getAvailableTokens().contains(orderType)) {
             component.chooseToken(orderType);
@@ -314,12 +323,16 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
       if (token == null) {
         continue;
       }
-      boolean enabled = mySettingsManager.isEnabled(token, condition);
+      boolean enabled = isEnabled(condition, token);
       component.setEnabled(enabled);
       if (!enabled) {
         component.setSelected(false);
       }
     }
+  }
+
+  private boolean isEnabled(@Nullable ArrangementMatchCondition condition, @NotNull ArrangementSettingsToken token) {
+    return ArrangementSectionRuleManager.isEnabled(token) || mySettingsManager.isEnabled(token, condition);
   }
 
   private void apply() {
@@ -362,7 +375,11 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
       }
       if (component.isEnabled()) {
         if (component.isSelected()) {
-          removeCondition(component);
+          // don't allow to remove start/end section indication
+          final Set<ArrangementSettingsToken> mutexes = ArrangementSectionRuleManager.getSectionMutexes();
+          if (!mutexes.contains(component.getToken())) {
+            removeCondition(component);
+          }
         }
         else {
           addCondition(component);
@@ -381,23 +398,28 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
 
       // Update 'mutex conditions', i.e. conditions which can't be active at the same time (e.g. type 'field' and type 'method').
       for (Set<ArrangementSettingsToken> mutex : mutexes) {
-        if (!mutex.contains(component.getToken())) {
-          continue;
-        }
-        for (ArrangementSettingsToken key : mutex) {
-          if (key.equals(component.getToken())) {
-            continue;
-          }
-          ArrangementUiComponent c = myComponents.get(key);
-          if (c != null && c.isEnabled()) {
-            removeCondition(c);
-          }
-        }
+        updateMutexConditions(component, mutex);
       }
+      updateMutexConditions(component, ArrangementSectionRuleManager.getSectionMutexes());
       refreshConditions();
     }
     finally {
       mySkipStateChange = false;
+    }
+  }
+
+  private void updateMutexConditions(@NotNull ArrangementUiComponent component, @NotNull Set<ArrangementSettingsToken> mutex) {
+    if (!mutex.contains(component.getToken())) {
+      return;
+    }
+    for (ArrangementSettingsToken key : mutex) {
+      if (key.equals(component.getToken())) {
+        continue;
+      }
+      ArrangementUiComponent c = myComponents.get(key);
+      if (c != null && c.isEnabled()) {
+        removeCondition(c);
+      }
     }
   }
 
