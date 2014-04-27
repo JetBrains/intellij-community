@@ -186,6 +186,7 @@ public class GeneratedParserUtilBase {
     if (state.completionState != null) return true;
     boolean track = !state.suppressErrors && state.predicateCount < 2 && state.predicateSign;
     if (!track) return nextTokenIsFast(builder_, tokens);
+    IElementType tokenType = builder_.getTokenType();
     if (StringUtil.isNotEmpty(frameName)) {
       addVariantInner(state, builder_.rawTokenIndex(), frameName);
     }
@@ -194,7 +195,6 @@ public class GeneratedParserUtilBase {
         addVariant(builder_, state, token);
       }
     }
-    IElementType tokenType = builder_.getTokenType();
     if (tokenType == null) return false;
     for (IElementType token : tokens) {
       if (tokenType == token) return true;
