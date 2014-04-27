@@ -38,20 +38,26 @@ public class TaskToolWindowFactory implements ToolWindowFactory{
     JButton nextTask = new JButton("next");
     JLabel task;
     JPanel panel = new JPanel(new BorderLayout());
-    public TaskToolWindowFactory() {
+
+    @Override
+    public void createToolWindowContent(final Project project, ToolWindow toolWindow) {
+        //JLabel task =  new JLabel("write your first program in python");
+        //int curTask = TaskManager.getInstance().getCurrentTask();
         nextTask.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 TaskManager tm = TaskManager.getInstance();
-                String basePath = ProjectManager.getInstance().getOpenProjects()[0].getBasePath();
+                String basePath = project.getBasePath();
+                tm.setCurrentTask(1);
                 String testFile =  basePath +
                         "/.idea/" + tm.getTest(tm.getCurrentTask());
                 String test_runner = basePath +
                         "/.idea/" + "study_utrunner.py";
-                //GeneralCommandLine cmd = new GeneralCommandLine();
-                //cmd.setWorkDirectory(basePath);
-                //cmd.addParameter("pwd\n");
+                GeneralCommandLine cmd = new GeneralCommandLine();
+                cmd.setWorkDirectory(basePath);
+                cmd.setExePath("python");
+                cmd.addParameter(testFile);
                 try {
-                    Process p = ProcessRunner.createProcess(basePath, "python", testFile);
+                    Process p = cmd.createProcess();
                     InputStream is = p.getInputStream();
                     BufferedReader bf = new BufferedReader(new InputStreamReader(is));
                     String line;
@@ -82,12 +88,6 @@ public class TaskToolWindowFactory implements ToolWindowFactory{
 
             }
         });
-    }
-
-    @Override
-    public void createToolWindowContent(Project project, ToolWindow toolWindow) {
-        //JLabel task =  new JLabel("write your first program in python");
-        //int curTask = TaskManager.getInstance().getCurrentTask();
         int curTask = 0;
         TaskManager tm = TaskManager.getInstance();
         String taskText;
