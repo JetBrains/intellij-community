@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.StripeTable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -100,7 +101,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
   }
 
-  private static class InspectorWindow extends JFrame {
+  private static class InspectorWindow extends JDialog {
     private InspectorTable myInspectorTable;
     private UiInspector myUiInspector;
     private JComponent myComponent;
@@ -110,6 +111,9 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     private final JPanel myWrapperPanel;
 
     private InspectorWindow(@NotNull final JComponent component, UiInspector uiInspector) throws HeadlessException {
+      super(findWindow(component));
+      final Window window = findWindow(component);
+      setModal(window instanceof JDialog && ((JDialog)window).isModal());
       myComponent = component;
       myUiInspector = uiInspector;
       getRootPane().setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -194,7 +198,15 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
       getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "CLOSE");
     }
-    
+
+    private static Window findWindow(JComponent component) {
+      final DialogWrapper dialogWrapper = DialogWrapper.findInstance(component);
+      if (dialogWrapper != null) {
+        return dialogWrapper.getPeer().getWindow();
+      }
+      return null;
+    }
+
     private InspectorTable getCurrentTable() {
       return myInspectorTable;
     }
@@ -806,6 +818,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         myComponentToInspector.put(c, window);
         window.pack();
         window.setVisible(true);
+        window.toFront();
       }
     }
 
@@ -817,7 +830,14 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
             case MouseEvent.MOUSE_CLICKED:
               if (me.getClickCount() == 1 && !me.isPopupTrigger()) {
                 Object source = me.getSource();
-                if (source instanceof JComponent) showInspector((JComponent) source);
+                if (source instanceof JComponent) {
+                  showInspector((JComponent) source);
+                } else {
+                  final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+                  if (owner instanceof JComponent) {
+                    showInspector((JComponent)owner);
+                  }
+                }
                 me.consume();
               }
 
