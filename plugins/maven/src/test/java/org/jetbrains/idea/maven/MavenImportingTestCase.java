@@ -179,7 +179,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       actual.add(folderUrl);
     }
 
-    assertUnorderedPathsAreEqual(actual, Arrays.asList(expected));
+    assertOrderedElementsAreEqual(actual, Arrays.asList(expected));
   }
 
   protected void assertModuleOutput(String moduleName, String output, String testOutput) {
