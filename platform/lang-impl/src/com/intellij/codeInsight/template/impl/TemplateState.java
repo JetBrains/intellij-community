@@ -53,7 +53,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
-import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
@@ -643,55 +642,50 @@ public class TemplateState implements Disposable {
     WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
       @Override
       public void run() {
-        final BitSet calcedSegments = new BitSet();
-        DocumentUtil.executeInBulk(myDocument, true, new Runnable() {
-          public void run() {
-            int maxAttempts = (myTemplate.getVariableCount() + 1) * 3;
-            do {
-              maxAttempts--;
-              calcedSegments.clear();
-              for (int i = myCurrentVariableNumber + 1; i < myTemplate.getVariableCount(); i++) {
-                String variableName = myTemplate.getVariableNameAt(i);
-                int segmentNumber = myTemplate.getVariableSegmentNumber(variableName);
-                if (segmentNumber < 0) continue;
-                Expression expression = myTemplate.getExpressionAt(i);
-                Expression defaultValue = myTemplate.getDefaultValueAt(i);
-                String oldValue = getVariableValueText(variableName);
-                recalcSegment(segmentNumber, isQuick, expression, defaultValue);
-                final TextResult value = getVariableValue(variableName);
-                assert value != null : "name=" + variableName + "\ntext=" + myTemplate.getTemplateText();
-                String newValue = value.getText();
-                if (!newValue.equals(oldValue)) {
-                  calcedSegments.set(segmentNumber);
-                }
-              }
+        BitSet calcedSegments = new BitSet();
+        int maxAttempts = (myTemplate.getVariableCount() + 1) * 3;
 
-              boolean selectionCalculated = false;
-              for (int i = 0; i < myTemplate.getSegmentsCount(); i++) {
-                if (!calcedSegments.get(i)) {
-                  String variableName = myTemplate.getSegmentName(i);
-                  if (variableName.equals(TemplateImpl.SELECTION)) {
-                    if (mySelectionCalculated) {
-                      continue;
-                    }
-                    selectionCalculated = true;
-                  }
-                  if (TemplateImpl.END.equals(variableName)) {
-                    continue; // No need to update end since it can be placed over some other variable
-                  }
-                  String newValue = getVariableValueText(variableName);
-                  int start = mySegments.getSegmentStart(i);
-                  int end = mySegments.getSegmentEnd(i);
-                  replaceString(newValue, start, end, i);
-                }
-              }
-              if (selectionCalculated) {
-                mySelectionCalculated = true;
-              }
+        do {
+          maxAttempts--;
+          calcedSegments.clear();
+          for (int i = myCurrentVariableNumber + 1; i < myTemplate.getVariableCount(); i++) {
+            String variableName = myTemplate.getVariableNameAt(i);
+            int segmentNumber = myTemplate.getVariableSegmentNumber(variableName);
+            if (segmentNumber < 0) continue;
+            Expression expression = myTemplate.getExpressionAt(i);
+            Expression defaultValue = myTemplate.getDefaultValueAt(i);
+            String oldValue = getVariableValueText(variableName);
+            recalcSegment(segmentNumber, isQuick, expression, defaultValue);
+            final TextResult value = getVariableValue(variableName);
+            assert value != null : "name=" + variableName + "\ntext=" + myTemplate.getTemplateText();
+            String newValue = value.getText();
+            if (!newValue.equals(oldValue)) {
+              calcedSegments.set(segmentNumber);
             }
-            while (!calcedSegments.isEmpty() && maxAttempts >= 0);
           }
-        });
+
+          boolean selectionCalculated = false;
+          for (int i = 0; i < myTemplate.getSegmentsCount(); i++) {
+            if (!calcedSegments.get(i)) {
+              String variableName = myTemplate.getSegmentName(i);
+              if (variableName.equals(TemplateImpl.SELECTION)) {
+                if (mySelectionCalculated) {
+                  continue;
+                }
+                selectionCalculated = true;
+              }
+              if (TemplateImpl.END.equals(variableName)) continue; // No need to update end since it can be placed over some other variable
+              String newValue = getVariableValueText(variableName);
+              int start = mySegments.getSegmentStart(i);
+              int end = mySegments.getSegmentEnd(i);
+              replaceString(newValue, start, end, i);
+            }
+          }
+          if (selectionCalculated) {
+            mySelectionCalculated = true;
+          }
+        }
+        while (!calcedSegments.isEmpty() && maxAttempts >= 0);
       }
     });
   }
@@ -1003,47 +997,37 @@ public class TemplateState implements Disposable {
   }
 
   private IntArrayList initEmptyVariables() {
-    final int endSegmentNumber = myTemplate.getEndSegmentNumber();
-    final int selStart = myTemplate.getSelectionStartSegmentNumber();
-    final int selEnd = myTemplate.getSelectionEndSegmentNumber();
-    final IntArrayList indices = new IntArrayList();
-    DocumentUtil.executeInBulk(myDocument, true, new Runnable() {
-      @Override
-      public void run() {
-        for (int i = 0; i < myTemplate.getSegmentsCount(); i++) {
-          int length = mySegments.getSegmentEnd(i) - mySegments.getSegmentStart(i);
-          if (length != 0) continue;
-          if (i == endSegmentNumber || i == selStart || i == selEnd) continue;
-          String name = myTemplate.getSegmentName(i);
-          for (int j = 0; j < myTemplate.getVariableCount(); j++) {
-            if (myTemplate.getVariableNameAt(j).equals(name)) {
-              Expression e = myTemplate.getExpressionAt(j);
-              @NonNls String marker = "a";
-              if (e instanceof MacroCallNode) {
-                marker = ((MacroCallNode)e).getMacro().getDefaultValue();
-              }
-              replaceString(marker, mySegments.getSegmentStart(i), mySegments.getSegmentEnd(i), i);
-              indices.add(i);
-              break;
-            }
+    int endSegmentNumber = myTemplate.getEndSegmentNumber();
+    int selStart = myTemplate.getSelectionStartSegmentNumber();
+    int selEnd = myTemplate.getSelectionEndSegmentNumber();
+    IntArrayList indices = new IntArrayList();
+    for (int i = 0; i < myTemplate.getSegmentsCount(); i++) {
+      int length = mySegments.getSegmentEnd(i) - mySegments.getSegmentStart(i);
+      if (length != 0) continue;
+      if (i == endSegmentNumber || i == selStart || i == selEnd) continue;
+
+      String name = myTemplate.getSegmentName(i);
+      for (int j = 0; j < myTemplate.getVariableCount(); j++) {
+        if (myTemplate.getVariableNameAt(j).equals(name)) {
+          Expression e = myTemplate.getExpressionAt(j);
+          @NonNls String marker = "a";
+          if (e instanceof MacroCallNode) {
+            marker = ((MacroCallNode)e).getMacro().getDefaultValue();
           }
+          replaceString(marker, mySegments.getSegmentStart(i), mySegments.getSegmentEnd(i), i);
+          indices.add(i);
+          break;
         }
       }
-    });
-
+    }
     return indices;
   }
 
-  private void restoreEmptyVariables(@NotNull final IntArrayList indices) {
-    DocumentUtil.executeInBulk(myDocument, true, new Runnable() {
-      @Override
-      public void run() {
-        for (int i = 0; i < indices.size(); i++) {
-          int index = indices.get(i);
-          myDocument.deleteString(mySegments.getSegmentStart(index), mySegments.getSegmentEnd(index));
-        }
-      }
-    });
+  private void restoreEmptyVariables(IntArrayList indices) {
+    for (int i = 0; i < indices.size(); i++) {
+      int index = indices.get(i);
+      myDocument.deleteString(mySegments.getSegmentStart(index), mySegments.getSegmentEnd(index));
+    }
   }
 
   private void initTabStopHighlighters() {
