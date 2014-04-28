@@ -92,11 +92,13 @@ public class PushedFilePropertiesUpdater {
           public void fileCreated(@NotNull final VirtualFileEvent event) {
             final VirtualFile file = event.getFile();
             final FilePropertyPusher[] pushers = file.isDirectory() ? myPushers : myFilePushers;
-            if (event.isFromRefresh()) {
-              schedulePushRecursively(file, pushers);
-            } else {
+            if (!event.isFromRefresh() || !file.isDirectory()) {
               // push synchronously to avoid entering dumb mode in the middle of a meaningful write action
+              // avoid dumb mode for just one file
               doPushRecursively(file, pushers, ProjectRootManager.getInstance(myProject).getFileIndex());
+            }
+            else {
+              schedulePushRecursively(file, pushers);
             }
           }
 
