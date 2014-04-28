@@ -17,7 +17,7 @@ public class TreeHashingUtils {
     final int statementsSize = statements.size();
 
     if (statementsSize > 0) {
-      final PsiFragment fragment = new TreePsiFragment(hasher, statements, 0, statementsSize - 1);
+      final PsiFragment fragment = treeHasher.buildFragment(hasher, statements, 0, statementsSize - 1);
       fragment.setParent(upper);
       int cost = 0;
       int hash = 0;
@@ -27,10 +27,10 @@ public class TreeHashingUtils {
         cost += res.getCost();
       }
 
-      TreeHashResult result = new TreeHashResult(hash, cost, new TreePsiFragment(hasher, statements, 0, statementsSize - 1));
+      TreeHashResult result = new TreeHashResult(hash, cost, treeHasher.buildFragment(hasher, statements, 0, statementsSize - 1));
       if (callBack != null && statementsSize > 1) callBack.add(hash, cost, fragment);
       return result;
     }
-    return new TreeHashResult(1, 0, new TreePsiFragment(hasher, statements, 0, statementsSize - 1));
+    return new TreeHashResult(1, 0, treeHasher.buildFragment(hasher, statements, 0, statementsSize - 1));
   }
 }

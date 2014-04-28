@@ -91,6 +91,18 @@ public abstract class AbstractTreeHasher implements TreeHasher {
     return new TreePsiFragment(hasher, root, cost);
   }
 
+  protected TreePsiFragment buildFragment(NodeSpecificHasher hasher, List<? extends PsiElement> elements, int from, int to) {
+    if (myForIndexing) {
+      return new TreePsiFragment(hasher, elements, from, to) {
+        @Override
+        protected PsiAnchor createAnchor(PsiElement element) {
+          return new PsiAnchor.HardReference(element);
+        }
+      };
+    }
+    return new TreePsiFragment(hasher, elements, from, to);
+  }
+
   protected abstract int getDiscardCost(PsiElement root);
 
   protected boolean ignoreChildHash(PsiElement element) {
@@ -119,7 +131,7 @@ public abstract class AbstractTreeHasher implements TreeHasher {
       if (statementsSize < 20 || forceHash) {   //todo should be configurable
         final PsiFragment[] frags = new PsiFragment[statementsSize];
 
-        final PsiFragment fragment = new TreePsiFragment(hasher, statements, 0, statementsSize - 1);
+        final PsiFragment fragment = buildFragment(hasher, statements, 0, statementsSize - 1);
         fragment.setParent(upper);
 
         // Fill all the statements costs and hashes
@@ -143,7 +155,7 @@ public abstract class AbstractTreeHasher implements TreeHasher {
               final PsiFragment curr =
                 beg == end
                 ? frags[beg]
-                : beg == 0 && end == statementsSize - 1 ? fragment : new TreePsiFragment(hasher, statements, beg, end);
+                : beg == 0 && end == statementsSize - 1 ? fragment : buildFragment(hasher, statements, beg, end);
               if (beg > 0) {
                 curr.setParent(parents[end]); //[beg, end].setParent([beg - 1, end])
               }
@@ -158,7 +170,7 @@ public abstract class AbstractTreeHasher implements TreeHasher {
         return new TreeHashResult(vector(hashes, 31), vector(costs), fragment);
       }
     }
-    return new TreeHashResult(1, 0, new TreePsiFragment(hasher, statements, 0, statementsSize - 1));
+    return new TreeHashResult(1, 0, buildFragment(hasher, statements, 0, statementsSize - 1));
   }
 
   protected int getCost(final PsiElement root){
