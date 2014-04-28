@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class SoutPostfixTemplate extends NonVoidPostfixTemplate {
   public SoutPostfixTemplate() {
-    super("sout", "Creates System.out.println call", "System.out.println(expr);");
+    super("sout", "System.out.println(expr);");
   }
 
   @Override

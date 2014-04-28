@@ -28,6 +28,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
@@ -37,6 +38,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.Comparator;
 import java.util.List;
@@ -48,11 +51,14 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
   @NotNull
   private final PostfixTemplatesSettings myTemplatesSettings;
 
+  private final PostfixDescriptionPanel myInnerPostfixDescriptionPanel = new PostfixDescriptionPanel();
+
   private JComponent myPanel;
   private JBCheckBox myCompletionEnabledCheckbox;
   private JBCheckBox myPostfixTemplatesEnabled;
   private JPanel myTemplatesListPanelContainer;
   private ComboBox myShortcutComboBox;
+  private JPanel myDescriptionPanel;
 
   private static final String SPACE = CodeInsightBundle.message("template.shortcut.space");
   private static final String TAB = CodeInsightBundle.message("template.shortcut.tab");
@@ -82,7 +88,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
     });
     myTemplatesListPanel = new PostfixTemplatesListPanel(templates);
     myTemplatesListPanelContainer.setLayout(new BorderLayout());
-    myTemplatesListPanelContainer.add(myTemplatesListPanel.getComponent(), BorderLayout.CENTER);
+    myTemplatesListPanelContainer.add(myTemplatesListPanel.getComponent());
     myPostfixTemplatesEnabled.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {
@@ -92,6 +98,30 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
     myShortcutComboBox.addItem(TAB);
     myShortcutComboBox.addItem(SPACE);
     myShortcutComboBox.addItem(ENTER);
+
+    myDescriptionPanel.setLayout(new BorderLayout());
+    myDescriptionPanel.add(myInnerPostfixDescriptionPanel.getComponent());
+
+    myTemplatesListPanel.addSelectionListener(new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+
+        resetDescriptionPanel();
+      }
+    });
+    myDescriptionPanel.setVisible(false);
+  }
+
+  private void resetDescriptionPanel() {
+    assert myTemplatesListPanel != null;
+    PostfixTemplate template = myTemplatesListPanel.getTemplate();
+    if (null != template) {
+      myDescriptionPanel.setVisible(true);
+      myInnerPostfixDescriptionPanel.reset(new PostfixTemplateMetaData(template));
+    }
+    else {
+      myDescriptionPanel.setVisible(false);
+    }
   }
 
   @NotNull
@@ -147,6 +177,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
       myPostfixTemplatesEnabled.setSelected(myTemplatesSettings.isPostfixTemplatesEnabled());
       myCompletionEnabledCheckbox.setSelected(myTemplatesSettings.isTemplatesCompletionEnabled());
       myShortcutComboBox.setSelectedItem(shortcutToString((char)myTemplatesSettings.getShortcut()));
+      resetDescriptionPanel();
       updateComponents();
     }
   }
@@ -164,6 +195,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
 
   @Override
   public void disposeUIResources() {
+    Disposer.dispose(myInnerPostfixDescriptionPanel);
     myTemplatesListPanel = null;
   }
 

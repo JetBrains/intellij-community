@@ -41,7 +41,7 @@ public class InstanceofExpressionPostfixTemplate extends PostfixTemplate {
   }
 
   public InstanceofExpressionPostfixTemplate(String alias) {
-    super(alias, "Surrounds expression with instanceof", "expr instanceof SomeType ? ((SomeType) expr). : null");
+    super(alias, "expr instanceof Type ? ((Type) expr). : null");
   }
 
   @Override

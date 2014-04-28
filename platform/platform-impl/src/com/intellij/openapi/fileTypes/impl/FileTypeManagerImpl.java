@@ -44,6 +44,7 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.*;
@@ -407,7 +408,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     fileType = getFileTypeByFileName(file.getNameSequence());
     if (fileType != UnknownFileType.INSTANCE) return fileType;
 
-    fileType = getOrDetectFromContent(file);
+    if (!(file instanceof StubVirtualFile)) {
+      fileType = getOrDetectFromContent(file);
+    }
 
     return fileType;
   }

@@ -31,11 +31,11 @@ public class NotExpressionPostfixTemplate extends ExpressionPostfixTemplateWithC
   };
 
   public NotExpressionPostfixTemplate() {
-    super("not", "Negates boolean expression", "!expr");
+    super("not",  "!expr");
   }
 
   public NotExpressionPostfixTemplate(String alias) {
-    super(alias, alias, "Negates boolean expression", "!expr");
+    super(alias, alias, "!expr");
   }
 
   @Override

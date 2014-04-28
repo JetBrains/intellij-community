@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class WhileStatementPostfixTemplate extends BooleanPostfixTemplate {
   public WhileStatementPostfixTemplate() {
-    super("while", "Iterating while boolean statement is 'true'", "while (expr)");
+    super("while", "while (expr)");
   }
 
   @Override

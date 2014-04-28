@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class FormatPostfixTemplate extends PostfixTemplate {
   public FormatPostfixTemplate() {
-    super("format", "Creates String.format call", "String.format(expr);");
+    super("format",  "String.format(expr);");
   }
 
   @Override

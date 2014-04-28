@@ -30,8 +30,8 @@ import org.jetbrains.annotations.NotNull;
  * @author ignatov
  */
 public abstract class NullCheckPostfixTemplate extends PostfixTemplate {
-  protected NullCheckPostfixTemplate(@NotNull String name, @NotNull String description, @NotNull String example) {
-    super(name, description, example);
+  protected NullCheckPostfixTemplate(@NotNull String name, @NotNull String example) {
+    super(name, example);
   }
 
   @NotNull

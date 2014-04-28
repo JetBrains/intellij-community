@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class SwitchStatementPostfixTemplate extends StatementPostfixTemplateBase {
   public SwitchStatementPostfixTemplate() {
-    super("switch", "Produces switch over integral/enum/string values", "switch (expr)");
+    super("switch", "switch (expr)");
   }
 
   private static boolean isSwitchCompatibleType(@Nullable PsiType type, @NotNull PsiElement context) {

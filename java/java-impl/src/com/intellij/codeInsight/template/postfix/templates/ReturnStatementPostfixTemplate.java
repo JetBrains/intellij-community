@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReturnStatementPostfixTemplate extends NonVoidPostfixTemplate {
   public ReturnStatementPostfixTemplate() {
-    super("return", "Returns value from containing method", "return expr;");
+    super("return", "return expr;");
   }
 
   @Override

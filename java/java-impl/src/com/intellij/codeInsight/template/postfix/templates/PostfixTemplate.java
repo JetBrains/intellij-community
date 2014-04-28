@@ -15,11 +15,14 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
+import com.intellij.codeInsight.template.postfix.settings.PostfixTemplateMetaData;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.IOException;
 
 public abstract class PostfixTemplate {
   @NotNull private final String myPresentableName;
@@ -27,15 +30,21 @@ public abstract class PostfixTemplate {
   @NotNull private final String myDescription;
   @NotNull private final String myExample;
 
-  protected PostfixTemplate(@NotNull String name, @NotNull String description, @NotNull String example) {
-    this(name, "." + name, description, example);
+  protected PostfixTemplate(@NotNull String name, @NotNull String example) {
+    this(name, "." + name, example);
   }
 
-  protected PostfixTemplate(@NotNull String name, @NotNull String key, @NotNull String description, @NotNull String example) {
+  protected PostfixTemplate(@NotNull String name, @NotNull String key, @NotNull String example) {
     myPresentableName = name;
     myKey = key;
-    myDescription = description;
     myExample = example;
+
+    try {
+      myDescription = new PostfixTemplateMetaData(this).getDescription().getText();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e.getMessage(), e);
+    }
   }
 
   @NotNull
