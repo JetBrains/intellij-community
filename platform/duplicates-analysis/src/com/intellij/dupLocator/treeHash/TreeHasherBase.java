@@ -24,16 +24,14 @@ class TreeHasherBase extends AbstractTreeHasher {
   private final FragmentsCollector myCallback;
   private final int myDiscardCost;
   private final DuplicatesProfile myProfile;
-  protected final boolean myForIndexing;
 
   TreeHasherBase(@Nullable FragmentsCollector callback,
                  @NotNull DuplicatesProfile profile,
                  int discardCost, boolean forIndexing) {
-    super(callback);
+    super(callback, forIndexing);
     myCallback = callback;
     myDiscardCost = discardCost;
     myProfile = profile;
-    myForIndexing = forIndexing;
   }
 
   @Override
@@ -102,7 +100,7 @@ class TreeHasherBase extends AbstractTreeHasher {
     final int[] childHashes = new int[size];
     final int[] childCosts = new int[size];
 
-    final PsiFragment fragment = new TreePsiFragment(hasher, root, getCost(root));
+    final PsiFragment fragment = buildFragment(hasher, root, getCost(root));
 
     if (upper != null) {
       fragment.setParent(upper);
@@ -161,7 +159,7 @@ class TreeHasherBase extends AbstractTreeHasher {
     final PsiElement element2 = DuplocatorUtil.skipNodeIfNeccessary(element, descriptor, ssrHasher.getNodeFilter());
     final boolean canSkip = element2 != element;
 
-    final PsiFragment fragment = new TreePsiFragment(hasher, element, 0);
+    final PsiFragment fragment = buildFragment(hasher, element, 0);
 
     if (parent != null) {
       fragment.setParent(parent);

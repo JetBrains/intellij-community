@@ -48,7 +48,7 @@ public abstract class PsiFragment {
     myLanguage = doGetLanguageForElement(element);
   }
 
-  private static PsiAnchor createAnchor(final PsiElement element) {
+  protected PsiAnchor createAnchor(final PsiElement element) {
     return ApplicationManager.getApplication().runReadAction(new Computable<PsiAnchor>() {
       public PsiAnchor compute() {
         return PsiAnchor.create(element);

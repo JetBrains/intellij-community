@@ -4,6 +4,7 @@ import com.intellij.dupLocator.NodeSpecificHasher;
 import com.intellij.dupLocator.TreeHasher;
 import com.intellij.dupLocator.util.PsiFragment;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import org.jetbrains.annotations.NotNull;
@@ -18,11 +19,12 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public abstract class AbstractTreeHasher implements TreeHasher {
-
+  protected final boolean myForIndexing;
   protected final FragmentsCollector myCallBack;
 
-  public AbstractTreeHasher(FragmentsCollector cb) {
+  public AbstractTreeHasher(FragmentsCollector cb, boolean forIndexing) {
     myCallBack = cb;
+    myForIndexing = forIndexing;
   }
 
   public final void hash(@NotNull final PsiElement root, @NotNull final NodeSpecificHasher hasher) {
@@ -42,7 +44,7 @@ public abstract class AbstractTreeHasher implements TreeHasher {
     final int[] childHashes = new int[size];
     final int[] childCosts = new int[size];
 
-    final PsiFragment fragment = new TreePsiFragment(hasher, root, getCost(root));
+    final PsiFragment fragment = buildFragment(hasher, root, getCost(root));
 
     if (upper != null) {
       fragment.setParent(upper);
@@ -58,7 +60,7 @@ public abstract class AbstractTreeHasher implements TreeHasher {
       childCosts[i] = res.getCost();
     }
 
-    final int c = hasher.getNodeCost(root) + AbstractTreeHasher.vector(childCosts);
+    final int c = hasher.getNodeCost(root) + vector(childCosts);
     final int h1 = hasher.getNodeHash(root);
 
     final int discardCost = getDiscardCost(root);
@@ -68,13 +70,25 @@ public abstract class AbstractTreeHasher implements TreeHasher {
         childHashes[i] = 0;
       }
     }
-    final int h = h1 + AbstractTreeHasher.vector(childHashes);
+    final int h = h1 + vector(childHashes);
 
     if (myCallBack != null) {
       myCallBack.add(h, c, fragment);
     }
 
     return new TreeHashResult(h, c, fragment);
+  }
+
+  protected TreePsiFragment buildFragment(NodeSpecificHasher hasher, PsiElement root,int cost) {
+    if (myForIndexing) {
+      return new TreePsiFragment(hasher, root, cost) {
+        @Override
+        protected PsiAnchor createAnchor(PsiElement element) {
+          return new PsiAnchor.HardReference(element);
+        }
+      };
+    }
+    return new TreePsiFragment(hasher, root, cost);
   }
 
   protected abstract int getDiscardCost(PsiElement root);
