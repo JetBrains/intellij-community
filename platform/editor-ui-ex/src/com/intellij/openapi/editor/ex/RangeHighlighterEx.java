@@ -28,6 +28,8 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Comparator;
+
 public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
   RangeHighlighterEx[] EMPTY_ARRAY = new RangeHighlighterEx[0];
   boolean isAfterEndOfLine();
@@ -36,8 +38,13 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
   int getAffectedAreaStartOffset();
 
   int getAffectedAreaEndOffset();
-  @Override
-  long getId();
 
   void setTextAttributes(@NotNull TextAttributes textAttributes);
+
+  Comparator<RangeHighlighterEx> BY_AFFECTED_START_OFFSET = new Comparator<RangeHighlighterEx>() {
+    @Override
+    public int compare(RangeHighlighterEx r1, RangeHighlighterEx r2) {
+      return r1.getAffectedAreaStartOffset() - r2.getAffectedAreaStartOffset();
+    }
+  };
 }

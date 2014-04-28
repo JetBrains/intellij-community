@@ -203,12 +203,12 @@ public class UpdateHighlightersUtil {
     final boolean[] changed = {false};
     RangeMarkerTree.sweep(new RangeMarkerTree.Generator<HighlightInfo>(){
       @Override
-      public boolean generate(Processor<HighlightInfo> processor) {
+      public boolean generateInStartOffsetOrder(@NotNull Processor<HighlightInfo> processor) {
         return ContainerUtil.process(infos, processor);
       }
     }, new SweepProcessor<HighlightInfo>() {
       @Override
-      public boolean process(int offset, HighlightInfo info, boolean atStart, Collection<HighlightInfo> overlappingIntervals) {
+      public boolean process(int offset, HighlightInfo info, boolean atStart, @NotNull Collection<HighlightInfo> overlappingIntervals) {
         if (!atStart) return true;
         if (!info.isFromInjection() && info.getEndOffset() < document.getTextLength() && (info.getEndOffset() <= startOffset || info.getStartOffset()>=endOffset)) return true; // injections are oblivious to restricting range
 
@@ -276,12 +276,12 @@ public class UpdateHighlightersUtil {
     final boolean[] changed = {false};
     RangeMarkerTree.sweep(new RangeMarkerTree.Generator<HighlightInfo>(){
       @Override
-      public boolean generate(final Processor<HighlightInfo> processor) {
+      public boolean generateInStartOffsetOrder(@NotNull final Processor<HighlightInfo> processor) {
         return ContainerUtil.process(infos, processor);
       }
     }, new SweepProcessor<HighlightInfo>() {
       @Override
-      public boolean process(int offset, HighlightInfo info, boolean atStart, Collection<HighlightInfo> overlappingIntervals) {
+      public boolean process(int offset, HighlightInfo info, boolean atStart, @NotNull Collection<HighlightInfo> overlappingIntervals) {
         if (!atStart) {
           return true;
         }

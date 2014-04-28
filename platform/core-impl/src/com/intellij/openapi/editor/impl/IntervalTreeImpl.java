@@ -558,8 +558,38 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     return processContaining(root.getRight(), offset, processor, modCountBefore, delta);
   }
 
+  public interface PeekableIterator<T> extends DisposableIterator<T> {
+    T peek();
+    PeekableIterator EMPTY = new PeekableIterator() {
+      @Override
+      public Object peek() {
+        return null;
+      }
+
+      @Override
+      public void dispose() {
+
+      }
+
+      @Override
+      public boolean hasNext() {
+        return false;
+      }
+
+      @Override
+      public Object next() {
+        return null;
+      }
+
+      @Override
+      public void remove() {
+        throw new UnsupportedOperationException("remove");
+      }
+    };
+  }
+
   @NotNull
-  DisposableIterator<T> overlappingIterator(@NotNull final TextRangeInterval rangeInterval) {
+  PeekableIterator<T> overlappingIterator(@NotNull final TextRangeInterval rangeInterval) {
     TextRange.assertProperRange(rangeInterval);
 
     l.readLock().lock();
@@ -570,13 +600,13 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       final IntervalNode<T> firstOverlap = findMinOverlappingWith(getRoot(), rangeInterval, modCount, 0);
       if (firstOverlap == null) {
         l.readLock().unlock();
-        return DisposableIterator.EMPTY;
+        return PeekableIterator.EMPTY;
       }
       final int firstOverlapDelta = firstOverlap.computeDeltaUpToRoot();
       final int firstOverlapStart = firstOverlap.intervalStart() + firstOverlapDelta;
       final int modCountBefore = modCount;
 
-      return new DisposableIterator<T>() {
+      return new PeekableIterator<T>() {
         private IntervalNode<T> currentNode = firstOverlap;
         private int deltaUpToRootExclusive = firstOverlapDelta-firstOverlap.delta;
         private int indexInCurrentList = 0;
@@ -622,6 +652,12 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
           T t = current;
           current = null;
           return t;
+        }
+
+        @Override
+        public T peek() {
+          if (!hasNext()) throw new NoSuchElementException();
+          return current;
         }
 
         @Override

@@ -24,16 +24,21 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Processor;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 public final class IterationState {
@@ -73,12 +78,6 @@ public final class IterationState {
       }
 
       return result;
-    }
-  };
-  private static final Comparator<RangeHighlighterEx> BY_AFFECTED_START_OFFSET = new Comparator<RangeHighlighterEx>() {
-    @Override
-    public int compare(RangeHighlighterEx r1, RangeHighlighterEx r2) {
-      return r1.getAffectedAreaStartOffset() - r2.getAffectedAreaStartOffset();
     }
   };
 
@@ -193,15 +192,9 @@ public final class IterationState {
       // we have to get all highlighters in advance and sort them by affected offsets
       // since these can be different from the real offsets the highlighters are sorted by in the tree.  (See LINES_IN_RANGE perverts)
       final List<RangeHighlighterEx> list = new ArrayList<RangeHighlighterEx>();
-      markupModel.processRangeHighlightersOverlappingWith(start, end, new Processor<RangeHighlighterEx>() {
-        @Override
-        public boolean process(RangeHighlighterEx highlighter) {
-          list.add(highlighter);
-          return true;
-        }
-      });
+      markupModel.processRangeHighlightersOverlappingWith(start, end, new CommonProcessors.CollectProcessor<RangeHighlighterEx>(list));
       highlighters = list.isEmpty() ? RangeHighlighterEx.EMPTY_ARRAY : list.toArray(new RangeHighlighterEx[list.size()]);
-      Arrays.sort(highlighters, BY_AFFECTED_START_OFFSET);
+      Arrays.sort(highlighters, RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
 
       int skipped = 0;
       while (i < highlighters.length) {
