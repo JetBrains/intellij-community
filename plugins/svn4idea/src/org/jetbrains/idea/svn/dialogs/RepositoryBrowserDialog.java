@@ -67,8 +67,6 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc.SVNCopyClient;
-import org.tmatesoft.svn.core.wc.SVNCopySource;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -1025,7 +1023,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   }
 
   private void doCopy(final SVNURL src, final SVNURL dst, final boolean move, final String comment) {
-    final SVNException[] exception = new SVNException[1];
+    final Ref<Exception> exception = new Ref<Exception>();
     Runnable command = new Runnable() {
       public void run() {
         ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
@@ -1035,19 +1033,18 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         }
         SvnVcs vcs = SvnVcs.getInstance(myProject);
         try {
-          SVNCopyClient committer = vcs.createCopyClient();
-          final SVNCopySource[] copySource = new SVNCopySource[] {new SVNCopySource(SVNRevision.HEAD, SVNRevision.HEAD, src)};
-          committer.doCopy(copySource, dst, move, true, true, comment, null);
+          vcs.getFactoryFromSettings().createCopyMoveClient().copy(SvnTarget.fromURL(src), SvnTarget.fromURL(dst), SVNRevision.HEAD, true,
+                                                                   move, comment, null);
         }
-        catch (SVNException e) {
-          exception[0] = e;
+        catch (VcsException e) {
+          exception.set(e);
         }
       }
     };
     String progressTitle = move ? SvnBundle.message("progress.title.browser.move") : SvnBundle.message("progress.title.browser.copy");
     ProgressManager.getInstance().runProcessWithProgressSynchronously(command, progressTitle, false, myProject);
-    if (exception[0] != null) {
-      Messages.showErrorDialog(exception[0].getMessage(), SvnBundle.message("message.text.error"));
+    if (!exception.isNull()) {
+      Messages.showErrorDialog(exception.get().getMessage(), SvnBundle.message("message.text.error"));
     }
   }
 
