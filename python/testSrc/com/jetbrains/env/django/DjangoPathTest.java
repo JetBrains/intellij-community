@@ -24,7 +24,7 @@ public class DjangoPathTest extends PyEnvTestCase {
   /**
    * This string is printed after printing sys.path in djangoPath/settings.py
    */
-  public static final String THE_END_OF_SYS_PATH = "The end of sys.path";
+  public static final String THE_END_OF_PROCESS = "Process finished with exit code 0";
 
   public void testRunserverPath() throws IOException {
     runPythonTest(new DjangoPathTestTask() {
@@ -43,7 +43,7 @@ public class DjangoPathTest extends PyEnvTestCase {
 
 
       public void testing() throws Exception {
-        waitForOutput(THE_END_OF_SYS_PATH);
+        waitForOutput(THE_END_OF_PROCESS);
 
         doTest(output(), getTestDataPath());
       }
@@ -53,15 +53,14 @@ public class DjangoPathTest extends PyEnvTestCase {
   private static void doTest(String output, String testDataPath) {
     final String[] splittedOutput = output.split("\\n");
     final ArrayList<String> outputList = Lists.newArrayList();
+
+    boolean add = false;
     for (String s : splittedOutput) {
-      if (s.equals(THE_END_OF_SYS_PATH)) {
-        break;
-      }
-      outputList.add(norm(s));
+      if ("sys.path end".equals(s)) add = false;
+      if (add) outputList.add(norm(s));
+      if ("sys.path start".equals(s)) add = true;
     }
-
     testDataPath = norm(testDataPath);
-
 
     Assert.assertEquals(testDataPath, outputList.get(1));
 
@@ -99,7 +98,7 @@ public class DjangoPathTest extends PyEnvTestCase {
       }
 
       public void testing() throws Exception {
-        waitForOutput(THE_END_OF_SYS_PATH);
+        waitForOutput(THE_END_OF_PROCESS);
         doTest(output(), getTestDataPath());
       }
     });
@@ -115,12 +114,12 @@ public class DjangoPathTest extends PyEnvTestCase {
       }
 
       public void testing() throws Exception {
-        waitForOutput(THE_END_OF_SYS_PATH);
+        waitForOutput(THE_END_OF_PROCESS);
 
         final String[] splittedOutput = output().split("\\n");
         final ArrayList<String> outputList = Lists.newArrayList();
         for (String s : splittedOutput) {
-          if (s.equals(THE_END_OF_SYS_PATH)) {
+          if (s.equals(THE_END_OF_PROCESS)) {
             break;
           }
           outputList.add(s);
