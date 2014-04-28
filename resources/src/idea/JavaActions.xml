@@ -153,7 +153,9 @@
     <group id="JavaDebuggerActions">
       <action id="Debugger.AdjustArrayRange" class="com.intellij.debugger.actions.AdjustArrayRangeAction"/>
       <action id="Debugger.Inspect" class="com.intellij.debugger.actions.InspectAction"/>
-      <action id="Debugger.ViewText" class="com.intellij.debugger.actions.ViewTextAction"/>
+      <action id="Debugger.ViewText" class="com.intellij.debugger.actions.ViewTextAction">
+        <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="before" relative-to-action="Debugger.ViewAsGroup"/>
+      </action>
       <action id="Debugger.CopyValue" class="com.intellij.debugger.actions.CopyValueAction"/>
       <action id="Debugger.CompareValueWithClipboard" class="com.intellij.debugger.actions.CompareValueWithClipboardAction"/>
       <action id="Debugger.CustomizeContextView" class="com.intellij.debugger.actions.CustomizeContextViewAction">
