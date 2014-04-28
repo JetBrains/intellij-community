@@ -139,7 +139,7 @@ public abstract class AbstractPrintElementsManager<CommitId> implements PrintEle
 
     CommitId headCommitId = myPrintedLinearGraph.getOneOfHeads(upNodeIndex);
     if (upLayoutIndex != downLayoutIndex) {
-      return myColorManager.getColorOfFragment(headCommitId, upLayoutIndex * downLayoutIndex);
+      return myColorManager.getColorOfFragment(headCommitId, Math.max(upLayoutIndex, downLayoutIndex));
     }
 
     if (upLayoutIndex == myPrintedLinearGraph.getHeadLayoutIndex(upNodeIndex))
