@@ -43,20 +43,20 @@ public class CompressedIntList implements IntList {
   }
 
   @NotNull
-  public static IntList newInstance(final IntList delegateList, int blockSize) {
+  public static IntList newInstance(final IntList delegateList, final int blockSize) {
     if (blockSize  < 1) throw new IllegalArgumentException("Unsupported blockSize:" + blockSize);
 
     if (delegateList.size() == 0) return new FullIntList(new int[0]);
 
-    IntDeltaCompressor intDeltaCompressor = IntDeltaCompressor.newInstance(new IntList() {
+    IntList intDeltaCompressor = SmartDeltaCompressor.newInstance(new IntList() {
       @Override
       public int size() {
-        return delegateList.size() - 1;
+        return delegateList.size();
       }
 
       @Override
       public int get(int index) {
-        return delegateList.get(index + 1) - delegateList.get(index);
+        return delegateList.get(index) - delegateList.get(index - (index % blockSize));
       }
     });
 
@@ -73,9 +73,9 @@ public class CompressedIntList implements IntList {
   private final int[] myStrongValues;
 
   @NotNull
-  private final IntDeltaCompressor myCompressedDeltas;
+  private final IntList myCompressedDeltas;
 
-  private CompressedIntList(int blockSize, @NotNull int[] strongValues, @NotNull final IntDeltaCompressor compressedDeltas) {
+  private CompressedIntList(int blockSize, @NotNull int[] strongValues, @NotNull final IntList compressedDeltas) {
     myBlockSize = blockSize;
     myStrongValues = strongValues;
     myCompressedDeltas = compressedDeltas;
@@ -83,13 +83,13 @@ public class CompressedIntList implements IntList {
 
   @Override
   public int size() {
-    return myCompressedDeltas.size() + 1;
+    return myCompressedDeltas.size();
   }
 
   @Override
   public int get(int index) {
     int strongIndex = index / myBlockSize;
-    return myStrongValues[strongIndex] + myCompressedDeltas.getSumOfInterval(strongIndex * myBlockSize, index);
+    return myStrongValues[strongIndex] + myCompressedDeltas.get(index);
   }
 
 }

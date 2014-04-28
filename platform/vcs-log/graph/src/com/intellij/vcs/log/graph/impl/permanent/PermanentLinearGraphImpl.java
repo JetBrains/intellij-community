@@ -21,7 +21,6 @@ import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.IntList;
 import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;
-import com.intellij.vcs.log.graph.utils.impl.FullIntList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -36,8 +35,8 @@ public class PermanentLinearGraphImpl implements LinearGraph {
 
   /*package*/ PermanentLinearGraphImpl(Flags simpleNodes, int[] nodeToEdgeIndex, int[] longEdges) {
     mySimpleNodes = simpleNodes;
-    myNodeToEdgeIndex = new FullIntList(nodeToEdgeIndex);
-    myLongEdges = CompressedIntList.newInstance(longEdges, 10);
+    myNodeToEdgeIndex = CompressedIntList.newInstance(nodeToEdgeIndex);
+    myLongEdges = CompressedIntList.newInstance(longEdges);
   }
 
   @Override
