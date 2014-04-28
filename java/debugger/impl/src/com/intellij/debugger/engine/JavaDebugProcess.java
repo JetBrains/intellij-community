@@ -339,26 +339,6 @@ public class JavaDebugProcess extends XDebugProcess {
     }
   }
 
-  private static class UnmuteOnStopAction extends ToggleAction {
-    private volatile boolean myUnmuteOnStop;
-
-    private UnmuteOnStopAction() {
-      super(DebuggerBundle.message("action.unmute.on.stop.text"), DebuggerBundle.message("action.unmute.on.stop.text"), null);
-      myUnmuteOnStop = DebuggerSettings.getInstance().UNMUTE_ON_STOP;
-    }
-
-    @Override
-    public boolean isSelected(AnActionEvent e) {
-      return myUnmuteOnStop;
-    }
-
-    @Override
-    public void setSelected(AnActionEvent e, boolean state) {
-      myUnmuteOnStop = state;
-      DebuggerSettings.getInstance().UNMUTE_ON_STOP = state;
-    }
-  }
-
   private static void addActionToGroup(final DefaultActionGroup group, final String actionId) {
     AnAction action = ActionManager.getInstance().getAction(actionId);
     if (action != null) group.add(action);

@@ -106,6 +106,10 @@
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" anchor="before" relative-to-action="RunToCursor"/>
     </action>
 
+    <action id="Debugger.ShowLibraryFrames" class="com.intellij.debugger.actions.ShowLibraryFramesAction">
+      <add-to-group group-id="XDebugger.Frames.TopToolbar"/>
+    </action>
+
     <action id="Debugger.AddSteppingFilter" class="com.intellij.debugger.actions.AddSteppingFilterAction" text="Add Stepping Filter..."/>
 
     <group id="ToggleBreakpointAction">

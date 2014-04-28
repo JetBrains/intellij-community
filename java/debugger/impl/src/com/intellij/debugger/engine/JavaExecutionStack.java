@@ -22,6 +22,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.impl.watch.MethodsTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.xdebugger.frame.XExecutionStack;
@@ -74,6 +75,7 @@ public class JavaExecutionStack extends XExecutionStack {
     myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
       @Override
       protected void action() throws Exception {
+        boolean showLibraryStackframes = DebuggerSettings.getInstance().SHOW_LIBRARY_STACKFRAMES;
         List<JavaStackFrame> frames = new ArrayList<JavaStackFrame>();
         if (!myThreadProxy.isCollected() && myDebugProcess.getSuspendManager().isSuspended(myThreadProxy)) {
           int status = myThreadProxy.status();
@@ -87,11 +89,10 @@ public class JavaExecutionStack extends XExecutionStack {
                   framesToSkip--;
                   continue;
                 }
-                //Method method = stackFrame.location().method();
-                //ToDo :check whether is synthetic if (shouldDisplay(method)) {
-                //myChildren.add(myNodeManager.createNode(myNodeManager.getStackFrameDescriptor(threadDescriptor, stackFrame),
-                //                                        getDebuggerContext().createEvaluationContext()));
-                frames.add(new JavaStackFrame(stackFrame, myDebugProcess, myTracker));
+                JavaStackFrame frame = new JavaStackFrame(stackFrame, myDebugProcess, myTracker);
+                if (showLibraryStackframes || (!frame.getDescriptor().isSynthetic() && !frame.getDescriptor().isInLibraryContent())) {
+                  frames.add(frame);
+                }
               }
             }
             catch (EvaluateException e) {

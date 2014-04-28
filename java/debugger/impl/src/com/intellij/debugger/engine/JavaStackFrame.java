@@ -73,6 +73,10 @@ public class JavaStackFrame extends XStackFrame {
     myDescriptor.updateRepresentation(null, DescriptorLabelListener.DUMMY_LISTENER);
   }
 
+  public StackFrameDescriptorImpl getDescriptor() {
+    return myDescriptor;
+  }
+
   private XSourcePosition calcSourcePosition() {
     final CompoundPositionManager positionManager = myDebugProcess.getPositionManager();
     if (positionManager == null) {
