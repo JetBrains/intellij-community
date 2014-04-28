@@ -94,7 +94,7 @@ public class JavaValueModifier extends XValueModifier {
 
     //final DebuggerTree tree = getTree(event.getDataContext());
     //final DebuggerContextImpl debuggerContext = getDebuggerContext(event.getDataContext());
-    final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(myJavaValue.getEvaluationContext().getProject()).getContext();
+    final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(myJavaValue.getProject()).getContext();
     //tree.saveState(node);
 
     if (descriptor instanceof FieldDescriptorImpl) {
@@ -175,7 +175,7 @@ public class JavaValueModifier extends XValueModifier {
       if (array != null) {
         if (VirtualMachineProxyImpl.isCollected(array)) {
           // will only be the case if debugger does not use ObjectReference.disableCollection() because of Patches.IBM_JDK_DISABLE_COLLECTION_BUG
-          Messages.showWarningDialog(myJavaValue.getEvaluationContext().getProject(), DebuggerBundle.message("evaluation.error.array.collected") + "\n"+ DebuggerBundle.message("warning.recalculate"), DebuggerBundle.message("title.set.value"));
+          Messages.showWarningDialog(myJavaValue.getProject(), DebuggerBundle.message("evaluation.error.array.collected") + "\n"+ DebuggerBundle.message("warning.recalculate"), DebuggerBundle.message("title.set.value"));
           //node.getParent().calcValue();
           return;
         }

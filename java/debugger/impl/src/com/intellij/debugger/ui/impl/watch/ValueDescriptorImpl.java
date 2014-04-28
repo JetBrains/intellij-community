@@ -17,16 +17,14 @@ package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.Patches;
 import com.intellij.debugger.DebuggerContext;
-import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
-import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
+import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.*;
@@ -364,23 +362,50 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   //returns expression that evaluates tree to this descriptor
-  public PsiExpression getTreeEvaluation(DebuggerTreeNodeImpl debuggerTreeNode, DebuggerContextImpl context) throws EvaluateException {
-    if(debuggerTreeNode.getParent() != null && debuggerTreeNode.getParent().getDescriptor() instanceof ValueDescriptor) {
-      final NodeDescriptorImpl descriptor = debuggerTreeNode.getParent().getDescriptor();
+  public PsiExpression getTreeEvaluation(JavaValue value, DebuggerContextImpl context) throws EvaluateException {
+    if(value.getParent() != null) {
+      final NodeDescriptorImpl descriptor = value.getParent().getDescriptor();
       final ValueDescriptorImpl vDescriptor = ((ValueDescriptorImpl)descriptor);
-      final PsiExpression parentEvaluation = vDescriptor.getTreeEvaluation(debuggerTreeNode.getParent(), context);
+      final PsiExpression parentEvaluation = vDescriptor.getTreeEvaluation(value.getParent(), context);
 
       if (parentEvaluation == null) {
         return null;
       }
 
       return DebuggerTreeNodeExpression.substituteThis(
-        vDescriptor.getRenderer(context.getDebugProcess()).getChildValueExpression(debuggerTreeNode, context),
+        vDescriptor.getRenderer(context.getDebugProcess()).getChildValueExpression(new DebuggerTreeNodeMock(value), context),
         parentEvaluation, vDescriptor.getValue()
       );
     }
 
     return getDescriptorEvaluation(context);
+  }
+
+  private static class DebuggerTreeNodeMock implements DebuggerTreeNode {
+    private final JavaValue value;
+
+    public DebuggerTreeNodeMock(JavaValue value) {
+      this.value = value;
+    }
+
+    @Override
+    public DebuggerTreeNode getParent() {
+      return new DebuggerTreeNodeMock(value.getParent());
+    }
+
+    @Override
+    public ValueDescriptorImpl getDescriptor() {
+      return value.getDescriptor();
+    }
+
+    @Override
+    public Project getProject() {
+      return value.getProject();
+    }
+
+    @Override
+    public void setRenderer(NodeRenderer renderer) {
+    }
   }
 
   //returns expression that evaluates descriptor value

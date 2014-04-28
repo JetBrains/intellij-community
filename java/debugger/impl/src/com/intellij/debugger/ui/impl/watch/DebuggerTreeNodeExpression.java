@@ -258,7 +258,8 @@ public class DebuggerTreeNodeExpression {
 
   public static PsiExpression getEvaluationExpression(DebuggerTreeNodeImpl node, DebuggerContextImpl context) throws EvaluateException {
     if(node.getDescriptor() instanceof ValueDescriptorImpl) {
-      return ((ValueDescriptorImpl)node.getDescriptor()).getTreeEvaluation(node, context);
+      throw new IllegalStateException("Not supported any more");
+      //return ((ValueDescriptorImpl)node.getDescriptor()).getTreeEvaluation(node, context);
     }
     else {
       LOG.error(node.getDescriptor() != null ? node.getDescriptor().getClass().getName() : "null");
