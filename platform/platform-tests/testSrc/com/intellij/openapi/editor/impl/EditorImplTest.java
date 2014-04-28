@@ -16,11 +16,11 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.VisualPosition;
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.testFramework.EditorTestUtil;
 
 import java.io.IOException;
 
-public class EditorImplTest extends LightPlatformCodeInsightTestCase {
+public class EditorImplTest extends AbstractEditorTest {
   public void testPositionCalculationForZeroWidthChars() throws Exception {
     init("some\u2044text");
     VisualPosition pos = new VisualPosition(0, 6);
@@ -35,6 +35,14 @@ public class EditorImplTest extends LightPlatformCodeInsightTestCase {
     VisualPosition pos = new VisualPosition(1, 0);
     VisualPosition recalculatedPos = myEditor.xyToVisualPosition(myEditor.visualPositionToXY(pos));
     assertEquals(pos, recalculatedPos);
+  }
+
+  public void testShiftDragAddsToSelection() throws Exception {
+    init("A quick brown fox");
+    EditorTestUtil.setEditorVisibleSize(myEditor, 1000, 1000); // enable drag testing
+    mouse().clickAt(0, 1);
+    mouse().shift().clickAt(0, 2).dragTo(0, 3).release();
+    checkResultByText("A<selection> q<caret></selection>uick brown fox");
   }
 
   private void init(String text) throws IOException {
