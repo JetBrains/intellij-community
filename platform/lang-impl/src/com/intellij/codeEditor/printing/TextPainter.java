@@ -18,6 +18,7 @@ package com.intellij.codeEditor.printing;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -26,6 +27,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -42,12 +44,12 @@ import java.awt.geom.Area;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.print.PageFormat;
-import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.util.List;
 
 class TextPainter extends BasePainter {
   private final DocumentEx myDocument;
+  private RangeMarker myRangeToPrint;
   private int myOffset = 0;
   private int myLineNumber = 1;
   private float myLineHeight = -1;
@@ -75,7 +77,7 @@ class TextPainter extends BasePainter {
   @NonNls private static final String HEADER_TOKEN_PAGE = "PAGE";
   @NonNls private static final String HEADER_TOKEN_FILE = "FILE";
 
-  public TextPainter(DocumentEx editorDocument,
+  public TextPainter(@NotNull DocumentEx editorDocument,
                      EditorHighlighter highlighter,
                      String fileName,
                      @NotNull PsiFile psiFile,
@@ -85,7 +87,7 @@ class TextPainter extends BasePainter {
          FileSeparatorProvider.getInstance().getFileSeparators(psiFile, editorDocument, editor));
   }
 
-  public TextPainter(DocumentEx editorDocument,
+  public TextPainter(@NotNull DocumentEx editorDocument,
                      EditorHighlighter highlighter,
                      String fileName,
                      Project project,
@@ -103,16 +105,17 @@ class TextPainter extends BasePainter {
     myHighlighter = highlighter;
     myHeaderFont = new Font(myPrintSettings.FOOTER_HEADER_FONT_NAME, Font.PLAIN, myPrintSettings.FOOTER_HEADER_FONT_SIZE);
     myFileName = fileName;
-    mySegmentEnd = myDocument.getTextLength();
+    myRangeToPrint = editorDocument.createRangeMarker(0, myDocument.getTextLength());
     myFileType = fileType;
     myMethodSeparators = separators != null ? separators.toArray(new LineMarkerInfo[separators.size()]) : new LineMarkerInfo[0];
     myCurrentMethodSeparator = 0;
   }
 
-  public void setSegment(int segmentStart, int segmentEnd, int firstLineNumber) {
-    myOffset = segmentStart;
-    mySegmentEnd = segmentEnd;
-    myLineNumber = firstLineNumber;
+  public void setSegment(int segmentStart, int segmentEnd) {
+    if (myRangeToPrint != null) {
+      myRangeToPrint.dispose();
+    }
+    myRangeToPrint = myDocument.createRangeMarker(segmentStart, segmentEnd);
   }
 
   private float getLineHeight(Graphics g) {
@@ -150,47 +153,61 @@ class TextPainter extends BasePainter {
 
   @Override
   public int print(final Graphics g, final PageFormat pageFormat, final int pageIndex) throws PrinterException {
-    if (myOffset >= mySegmentEnd || myProgress.isCanceled()) {
-      return Printable.NO_SUCH_PAGE;
-    }
-    isPrintingPass = !isPrintingPass;
-    if (!isPrintingPass) {
-      return Printable.PAGE_EXISTS;
-    }
-
-    myProgress.setText(CodeEditorBundle.message("print.file.page.progress", myFileName, (pageIndex + 1)));
-
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
       @Override
-      public void run() {
+      public Integer compute() {
+        if (myProgress.isCanceled() || myRangeToPrint == null || !myRangeToPrint.isValid()) {
+          return NO_SUCH_PAGE;
+        }
+        int startOffset = myRangeToPrint.getStartOffset();
+        myOffset = startOffset;
+        mySegmentEnd = myRangeToPrint.getEndOffset();
+        myLineNumber = myDocument.getLineNumber(myOffset) + 1;
+
+        if (myOffset >= mySegmentEnd) {
+          return NO_SUCH_PAGE;
+        }
+        isPrintingPass = !isPrintingPass;
+        if (!isPrintingPass) {
+          return PAGE_EXISTS;
+        }
+
+        myProgress.setText(CodeEditorBundle.message("print.file.page.progress", myFileName, (pageIndex + 1)));
         myPageIndex = pageIndex;
         Graphics2D g2D = (Graphics2D) g;
         Rectangle2D.Double clip = new Rectangle2D.Double(pageFormat.getImageableX(), pageFormat.getImageableY(),
                                                          pageFormat.getImageableWidth(),
                                                          pageFormat.getImageableHeight());
 
-        double headerHeight = drawHeader(g2D, clip);
-        clip.y += headerHeight;
-        clip.height -= headerHeight;
-        double footerHeight = drawFooter(g2D, clip);
-        clip.height -= footerHeight;
+        draw(g2D, clip);
 
-        Rectangle2D.Double border = (Rectangle2D.Double) clip.clone();
-        clip.x += getCharWidth(g2D) / 2;
-        clip.width -= getCharWidth(g2D);
-        if (myPrintSettings.PRINT_LINE_NUMBERS) {
-          double numbersStripWidth = calcNumbersStripWidth(g2D, clip) + getCharWidth(g2D) / 2;
-          clip.x += numbersStripWidth;
-          clip.width -= numbersStripWidth;
-        }
-        clip.x += getCharWidth(g2D) / 2;
-        clip.width -= getCharWidth(g2D);
-        drawText(g2D, clip);
-        drawBorder(g2D, border);
+        myRangeToPrint.dispose();
+        // stop printing if there was no progress (to avoid an infinite loop) or if the whole range was processed
+        myRangeToPrint = myOffset > startOffset && myOffset < mySegmentEnd ? myDocument.createRangeMarker(myOffset, mySegmentEnd) : null;
+        return PAGE_EXISTS;
       }
     });
+  }
 
-    return Printable.PAGE_EXISTS;
+  private void draw(Graphics2D g2D, Rectangle2D.Double clip) {
+    double headerHeight = drawHeader(g2D, clip);
+    clip.y += headerHeight;
+    clip.height -= headerHeight;
+    double footerHeight = drawFooter(g2D, clip);
+    clip.height -= footerHeight;
+
+    Rectangle2D.Double border = (Rectangle2D.Double) clip.clone();
+    clip.x += getCharWidth(g2D) / 2;
+    clip.width -= getCharWidth(g2D);
+    if (myPrintSettings.PRINT_LINE_NUMBERS) {
+      double numbersStripWidth = calcNumbersStripWidth(g2D, clip) + getCharWidth(g2D) / 2;
+      clip.x += numbersStripWidth;
+      clip.width -= numbersStripWidth;
+    }
+    clip.x += getCharWidth(g2D) / 2;
+    clip.width -= getCharWidth(g2D);
+    drawText(g2D, clip);
+    drawBorder(g2D, border);
   }
 
   private void drawBorder(Graphics2D g, Rectangle2D clip) {
@@ -616,5 +633,13 @@ class TextPainter extends BasePainter {
 
     int nTabs = (int) (x / tabSize);
     return (nTabs + 1) * tabSize;
+  }
+
+  @Override
+  void dispose() {
+    if (myRangeToPrint != null) {
+      myRangeToPrint.dispose();
+      myRangeToPrint = null;
+    }
   }
 }
