@@ -18,6 +18,7 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.actions.JavaValueModifier;
+import com.intellij.debugger.actions.JumpToObjectAction;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -130,17 +131,36 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
     DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(project).getContext();
     if (myValueDescriptor instanceof FieldDescriptorImpl) {
       SourcePosition position = ((FieldDescriptorImpl)myValueDescriptor).getSourcePosition(project, debuggerContext);
-      navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(position));
+      if (position != null) {
+        navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(position));
+      }
     }
     if (myValueDescriptor instanceof LocalVariableDescriptorImpl) {
       SourcePosition position = ((LocalVariableDescriptorImpl)myValueDescriptor).getSourcePosition(project, debuggerContext);
-      navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(position));
+      if (position != null) {
+        navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(position));
+      }
     }
   }
 
   @Override
   public boolean canNavigateToTypeSource() {
-    return super.canNavigateToTypeSource();
+    return true;
+  }
+
+  @Override
+  public void computeTypeSourcePosition(@NotNull final XNavigatable navigatable) {
+    Project project = myEvaluationContext.getProject();
+    DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(project).getContext();
+    DebugProcessImpl debugProcess = myEvaluationContext.getDebugProcess();
+    debugProcess.getManagerThread().schedule(new JumpToObjectAction.NavigateCommand(debuggerContext, myValueDescriptor, debugProcess, null) {
+      @Override
+      protected void doAction(@Nullable SourcePosition sourcePosition) {
+        if (sourcePosition != null) {
+          navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(sourcePosition));
+        }
+      }
+    });
   }
 
   @Nullable

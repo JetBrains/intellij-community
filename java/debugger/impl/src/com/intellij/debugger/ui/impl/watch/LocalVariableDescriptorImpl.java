@@ -35,6 +35,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements LocalVariableDescriptor {
   private final StackFrameProxyImpl myFrameProxy;
@@ -58,6 +59,7 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
     return myLocalVariable;
   }
 
+  @Nullable
   public SourcePosition getSourcePosition(final Project project, final DebuggerContextImpl context) {
     StackFrameProxyImpl frame = context.getFrameProxy();
     if (frame == null) return null;
