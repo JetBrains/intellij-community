@@ -40,6 +40,7 @@ public class SvnKitCopyMoveClient extends BaseSvnClient implements CopyMoveClien
                    @NotNull SvnTarget destination,
                    @Nullable SVNRevision revision,
                    boolean makeParents,
+                   boolean isMove,
                    @NotNull String message,
                    @Nullable CommitEventHandler handler) throws VcsException {
 
@@ -53,7 +54,8 @@ public class SvnKitCopyMoveClient extends BaseSvnClient implements CopyMoveClien
 
     SVNCommitInfo info;
     try {
-      info = client.doCopy(new SVNCopySource[]{copySource}, destination.getURL(), false, makeParents, true, message, null);
+      info = client
+        .doCopy(new SVNCopySource[]{copySource}, destination.getURL(), isMove, makeParents, true, message, null);
     }
     catch (SVNException e) {
       throw new VcsException(e);

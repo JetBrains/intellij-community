@@ -23,6 +23,7 @@ public interface CopyMoveClient extends SvnClient {
    * @param destination
    * @param revision
    * @param makeParents
+   * @param isMove
    * @param message
    * @param handler
    * @return new revision number
@@ -32,6 +33,7 @@ public interface CopyMoveClient extends SvnClient {
             @NotNull SvnTarget destination,
             @Nullable SVNRevision revision,
             boolean makeParents,
+            boolean isMove,
             @NotNull String message,
             @Nullable CommitEventHandler handler) throws VcsException;
 

@@ -111,7 +111,7 @@ public class CreateBranchOrTagAction extends BasicAction {
 
             SvnTarget source = isSrcFile ? SvnTarget.fromFile(srcFile, revision) : SvnTarget.fromURL(srcUrl, revision);
             long newRevision = activeVcs.getFactory(source).createCopyMoveClient()
-              .copy(source, SvnTarget.fromURL(dstSvnUrl), revision, true, comment, handler);
+              .copy(source, SvnTarget.fromURL(dstSvnUrl), revision, true, false, comment, handler);
 
             updateStatusBar(newRevision, project);
           }
