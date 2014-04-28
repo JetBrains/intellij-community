@@ -31,4 +31,6 @@ public interface BrowseClient extends SvnClient {
 
   void list(@NotNull SvnTarget target, @Nullable SVNRevision revision, @Nullable SVNDepth depth, @Nullable ISVNDirEntryHandler handler)
     throws VcsException;
+
+  long createDirectory(@NotNull SvnTarget target, @NotNull String message, boolean makeParents) throws VcsException;
 }

@@ -52,7 +52,9 @@ public enum SvnCommandName {
   export("export", false),
   upgrade("upgrade", true),
   list("list", false),
-  diff("diff", false);
+  diff("diff", false),
+  // currently used to create only folders directly in repository - so writable = false
+  mkdir("mkdir", false);
 
   private final String myName;
   private final boolean myWriteable;
