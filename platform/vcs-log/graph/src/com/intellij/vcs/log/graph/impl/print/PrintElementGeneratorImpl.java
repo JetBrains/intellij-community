@@ -16,7 +16,6 @@
 
 package com.intellij.vcs.log.graph.impl.print;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.SLRUMap;
@@ -223,31 +222,51 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
   private class GraphElementComparator implements Comparator<GraphElement> {
     @Override
     public int compare(@NotNull GraphElement o1, @NotNull GraphElement o2) {
-      Pair<Integer, Integer> layoutIndexes1 = getLayoutIndexes(o1);
-      Pair<Integer, Integer> layoutIndexes2 = getLayoutIndexes(o2);
+      if (o1 instanceof GraphEdge && o2 instanceof GraphEdge) {
+        int upNodeIndex1 = ((GraphEdge)o1).getUpNodeIndex();
+        int upNodeIndex2 = ((GraphEdge)o2).getUpNodeIndex();
 
+        if (upNodeIndex1 == upNodeIndex2) {
+          int downNodeIndex1 = ((GraphEdge)o1).getDownNodeIndex();
+          int downNodeIndex2 = ((GraphEdge)o2).getDownNodeIndex();
+          if (downNodeIndex1 == LinearGraph.NOT_LOAD_COMMIT)
+            return 1;
+          if (downNodeIndex2 == LinearGraph.NOT_LOAD_COMMIT)
+            return -1;
 
-      if (layoutIndexes1.first.equals(layoutIndexes2.first))
-        return layoutIndexes1.second - layoutIndexes2.second;
+          if (getLayoutIndex(downNodeIndex1) != getLayoutIndex(downNodeIndex2))
+            return getLayoutIndex(downNodeIndex1) - getLayoutIndex(downNodeIndex2);
+          else
+            return downNodeIndex1 - downNodeIndex2;
+        }
 
-      return Math.max(layoutIndexes1.first, layoutIndexes1.second) - Math.max(layoutIndexes2.first, layoutIndexes2.second);
+        if (upNodeIndex1 < upNodeIndex2)
+          return compare(o1, new GraphNode(upNodeIndex2));
+        else
+          return compare(new GraphNode(upNodeIndex1), o2);
+      }
+
+      if (o1 instanceof GraphEdge && o2 instanceof GraphNode)
+        return compare2((GraphEdge) o1, (GraphNode) o2);
+
+      if (o1 instanceof GraphNode && o2 instanceof GraphEdge)
+        return - compare2((GraphEdge) o2, (GraphNode) o1);
+
+      assert false;
+      return 0;
     }
 
-    private Pair<Integer, Integer> getLayoutIndexes(GraphElement graphElement) {
-      int upLayoutIndex, downLayoutIndex;
-      if (graphElement instanceof GraphEdge) {
-        GraphEdge graphEdge = (GraphEdge)graphElement;
-        upLayoutIndex = getLayoutIndex(graphEdge.getUpNodeIndex());
-        if (graphEdge.getDownNodeIndex() == LinearGraph.NOT_LOAD_COMMIT)
-          downLayoutIndex = upLayoutIndex;
-        else
-          downLayoutIndex = getLayoutIndex(graphEdge.getDownNodeIndex());
-      } else {
-        assert graphElement instanceof GraphNode;
-        upLayoutIndex = getLayoutIndex(((GraphNode)graphElement).getNodeIndex());
-        downLayoutIndex = upLayoutIndex;
-      }
-      return new Pair<Integer, Integer>(upLayoutIndex, downLayoutIndex);
+    private int compare2(@NotNull GraphEdge edge, @NotNull GraphNode node) {
+      int upEdgeLI = getLayoutIndex(edge.getUpNodeIndex());
+      int downEdgeLI = upEdgeLI;
+      if (edge.getDownNodeIndex() != LinearGraph.NOT_LOAD_COMMIT)
+        downEdgeLI = getLayoutIndex(edge.getDownNodeIndex());
+
+      int nodeLI = getLayoutIndex(node.getNodeIndex());
+      if (Math.max(upEdgeLI, downEdgeLI) != nodeLI)
+        return Math.max(upEdgeLI, downEdgeLI) - nodeLI;
+      else
+        return edge.getUpNodeIndex() - node.getNodeIndex();
     }
 
     private int getLayoutIndex(int nodeIndex) {
