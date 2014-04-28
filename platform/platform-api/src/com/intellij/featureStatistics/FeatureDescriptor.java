@@ -16,6 +16,7 @@
 package com.intellij.featureStatistics;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -88,8 +89,8 @@ public class FeatureDescriptor{
     myId = element.getAttributeValue(ATTRIBUTE_ID);
     myTipFileName = element.getAttributeValue(ATTRIBUTE_TIP_FILE);
     myDisplayName = FeatureStatisticsBundle.message(myId);
-    myDaysBeforeFirstShowUp = Integer.parseInt(element.getAttributeValue(ATTRIBUTE_FIRST_SHOW));
-    myDaysBetweenSuccesiveShowUps = Integer.parseInt(element.getAttributeValue(ATTRIBUTE_SUCCESSIVE_SHOW));
+    myDaysBeforeFirstShowUp = StringUtil.parseInt(element.getAttributeValue(ATTRIBUTE_FIRST_SHOW), 1);
+    myDaysBetweenSuccesiveShowUps = StringUtil.parseInt(element.getAttributeValue(ATTRIBUTE_SUCCESSIVE_SHOW), 3);
     String minUsageCount = element.getAttributeValue(ATTRIBUTE_MIN_USAGE_COUNT);
     myMinUsageCount = minUsageCount == null ? 1 : Integer.parseInt(minUsageCount);
     List dependencies = element.getChildren(ELEMENT_DEPENDENCY);
