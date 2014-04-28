@@ -4154,8 +4154,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myScrollingTimer.stop();
 
       SelectionModel selectionModel = getSelectionModel();
-      int oldSelectionStart = selectionModel.getLeadSelectionOffset();
-      VisualPosition oldVisLeadSelectionStart = selectionModel.getLeadSelectionPosition();
+      Caret leadCaret = getLeadCaret();
+      int oldSelectionStart = leadCaret.getLeadSelectionOffset();
+      VisualPosition oldVisLeadSelectionStart = leadCaret.getLeadSelectionPosition();
       int oldCaretOffset = getCaretModel().getOffset();
       LogicalPosition oldLogicalCaret = getCaretModel().getLogicalPosition();
       boolean multiCaretSelection = myCaretModel.supportsMultipleCarets() && (isColumnMode() || e.isAltDown());
@@ -4226,10 +4227,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
 
           if (!myMousePressedInsideSelection) {
-            if (myCaretModel.supportsMultipleCarets() && myLastMousePressedLocation != null) {
-              oldSelectionStart = logicalPositionToOffset(myLastMousePressedLocation);
-              oldVisLeadSelectionStart = logicalToVisualPosition(myLastMousePressedLocation);
-            }
             // There is a possible case that lead selection position should be adjusted in accordance with the mouse move direction.
             // E.g. consider situation when user selects the whole line by clicking at 'line numbers' area. 'Line end' is considered
             // to be lead selection point then. However, when mouse is dragged down we want to consider 'line start' to be
@@ -4275,6 +4272,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     else {
       myScrollingTimer.start(dx, dy);
       onSubstantialDrag(e);
+    }
+  }
+
+  private Caret getLeadCaret() {
+    List<Caret> allCarets = myCaretModel.getAllCarets();
+    Caret firstCaret = allCarets.get(0);
+    if (firstCaret == myCaretModel.getPrimaryCaret()) {
+      return allCarets.get(allCarets.size() - 1);
+    }
+    else {
+      return firstCaret;
     }
   }
 

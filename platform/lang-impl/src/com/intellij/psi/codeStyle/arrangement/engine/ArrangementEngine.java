@@ -394,7 +394,7 @@ public class ArrangementEngine {
       arranged.addAll(arrange(toArrange, context.sectionRules, context.rulesByPriority, entryToSection));
     }
 
-    final NewSectionInfo<E> newSectionsInfo = NewSectionInfo.getInstance(arranged, entryToSection);
+    final NewSectionInfo<E> newSectionsInfo = NewSectionInfo.create(arranged, entryToSection);
     context.changer.prepare(wrappers, context);
     // We apply changes from the last position to the first position in order not to bother with offsets shifts.
     for (int i = arranged.size() - 1; i >= 0; i--) {
@@ -423,8 +423,8 @@ public class ArrangementEngine {
     private final Map<E, String> mySectionStarts = ContainerUtil.newHashMap();
     private final Map<E, String> mySectionEnds = ContainerUtil.newHashMap();
 
-    private static <E extends ArrangementEntry> NewSectionInfo getInstance(@NotNull List<E> arranged,
-                                                                           @NotNull Map<E, ArrangementSectionRule> entryToSection) {
+    private static <E extends ArrangementEntry> NewSectionInfo create(@NotNull List<E> arranged,
+                                                                      @NotNull Map<E, ArrangementSectionRule> entryToSection) {
       final NewSectionInfo<E> info = new NewSectionInfo<E>();
 
       boolean sectionIsOpen = false;

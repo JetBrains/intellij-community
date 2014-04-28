@@ -30,6 +30,10 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Se
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Section.START_SECTION;
 
 /**
+ * Class that is able to detect arrangement section start/end from comment element.
+ * <p/>
+ * The detection is based on arrangement settings.
+ *
  * @author Svetlana.Zemlyanskaya
  */
 public class ArrangementSectionDetector {
@@ -51,17 +55,16 @@ public class ArrangementSectionDetector {
   public void processComment(@NotNull PsiComment comment) {
     final TextRange range = comment.getTextRange();
     final TextRange expandedRange = myDocument == null ? range : ArrangementUtil.expandToLineIfPossible(range, myDocument);
-    final int startOffset = expandedRange.getStartOffset();
-    final int endOffset = expandedRange.getEndOffset();
+    final TextRange sectionTextRange = new TextRange(expandedRange.getStartOffset(), expandedRange.getEndOffset());
 
     final String commentText = comment.getText().trim();
     final boolean start = isSectionStartComment(mySettings, commentText);
     if (start) {
-      mySectionEntryProducer.consume(new ArrangementSectionEntryTemplate(comment, START_SECTION, startOffset, endOffset, commentText));
+      mySectionEntryProducer.consume(new ArrangementSectionEntryTemplate(comment, START_SECTION, sectionTextRange, commentText));
       myCurrentSection = commentText;
     }
     else if (myCurrentSection != null && isSectionEndComment(mySettings, commentText)) {
-      mySectionEntryProducer.consume(new ArrangementSectionEntryTemplate(comment, END_SECTION, startOffset, endOffset, commentText));
+      mySectionEntryProducer.consume(new ArrangementSectionEntryTemplate(comment, END_SECTION, sectionTextRange, commentText));
       myCurrentSection = null;
     }
   }
@@ -87,17 +90,16 @@ public class ArrangementSectionDetector {
   public static class ArrangementSectionEntryTemplate {
     private PsiElement myElement;
     private ArrangementSettingsToken myToken;
-    private int myStartOffset;
-    private int myEndOffset;
+    private TextRange myTextRange;
     private String myText;
 
     public ArrangementSectionEntryTemplate(@NotNull PsiElement element,
                                            @NotNull ArrangementSettingsToken token,
-                                           int startOffset, int endOffset, String text) {
+                                           @NotNull TextRange range,
+                                           @NotNull String text) {
       myElement = element;
       myToken = token;
-      myStartOffset = startOffset;
-      myEndOffset = endOffset;
+      myTextRange = range;
       myText = text;
     }
 
@@ -109,12 +111,8 @@ public class ArrangementSectionDetector {
       return myToken;
     }
 
-    public int getStartOffset() {
-      return myStartOffset;
-    }
-
-    public int getEndOffset() {
-      return myEndOffset;
+    public TextRange getTextRange() {
+      return myTextRange;
     }
 
     public String getText() {

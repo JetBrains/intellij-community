@@ -15,16 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
-import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.PrefixMatcher;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,10 +89,6 @@ public class GrLightClassReferenceElement extends LightElement implements GrCode
   @Override
   public GrTypeArgumentList getTypeArgumentList() {
     return null;
-  }
-
-  @Override
-  public void processVariants(PrefixMatcher matcher, CompletionParameters parameters, Consumer<LookupElement> consumer) {
   }
 
   @Override

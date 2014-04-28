@@ -18,9 +18,15 @@ package com.intellij.psi.codeStyle.arrangement;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Svetlana.Zemlyanskaya
+ * Stands for the {@link ArrangementEntry} which provides information about its text.
+ * E.g. this entry can be used for section start/end element to match section comments by whole text.
+ * <p/>
+ * Implementations of this interface are not obliged to be thread-safe.
+ *
+ * @author Svetlana Zemlyanskaya
+ * @since 25/04/14 08:17 PM
  */
-public interface TextAwareArrangementEntry {
+public interface TextAwareArrangementEntry extends ArrangementEntry {
   @Nullable
   String getText();
 }

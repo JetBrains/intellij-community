@@ -2,6 +2,7 @@ package org.jetbrains.jsonProtocol;
 
 import com.google.gson.stream.JsonToken;
 import com.intellij.util.ArrayUtilRt;
+import gnu.trove.TDoubleArrayList;
 import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TLongArrayList;
@@ -243,6 +244,23 @@ public final class JsonReaders {
     TLongArrayList result = new TLongArrayList();
     do {
       result.add(reader.nextLong());
+    }
+    while (reader.hasNext());
+    reader.endArray();
+    return result.toNativeArray();
+  }
+
+  public static double[] readDoubleArray(JsonReaderEx reader) {
+    checkIsNull(reader, null);
+    reader.beginArray();
+    if (!reader.hasNext()) {
+      reader.endArray();
+      return new double[]{0};
+    }
+
+    TDoubleArrayList result = new TDoubleArrayList();
+    do {
+      result.add(reader.nextDouble());
     }
     while (reader.hasNext());
     reader.endArray();

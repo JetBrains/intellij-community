@@ -103,10 +103,11 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
         final T value = valueIterator.next();
         myExternalizer.save(out, value);
         ValueContainer.IntIterator ids = container.getInputIdsIterator(value);
-        DataInputOutputUtil.writeINT(out, ids.size());
+
         if (ids.size() == 1) {
           DataInputOutputUtil.writeINT(out, ids.next()); // most common 90% case during index building
         } else {
+          DataInputOutputUtil.writeINT(out, -ids.size());
           // serialize positive file ids with delta encoding after sorting numbers via bitset
           // todo it would be nice to have compressed random access serializable bitset or at least file ids sorted
           int max = 0, min = Integer.MAX_VALUE;
@@ -157,13 +158,18 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
         else {
           for (int valueIdx = 0; valueIdx < valueCount; valueIdx++) {
             final T value = myExternalizer.read(in);
-            final int idCount = DataInputOutputUtil.readINT(in);
-            valueContainer.ensureFileSetCapacityForValue(value, idCount);
-            int prev = 0;
-            for (int i = 0; i < idCount; i++) {
-              final int id = DataInputOutputUtil.readINT(in);
-              valueContainer.addValue(prev + id, value);
-              prev += id;
+            int idCountOrSingleValue = DataInputOutputUtil.readINT(in);
+            if (idCountOrSingleValue > 0) {
+              valueContainer.addValue(idCountOrSingleValue, value);
+            } else {
+              idCountOrSingleValue = -idCountOrSingleValue;
+              valueContainer.ensureFileSetCapacityForValue(value, idCountOrSingleValue);
+              int prev = 0;
+              for (int i = 0; i < idCountOrSingleValue; i++) {
+                final int id = DataInputOutputUtil.readINT(in);
+                valueContainer.addValue(prev + id, value);
+                prev += id;
+              }
             }
           }
         }

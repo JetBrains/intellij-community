@@ -132,14 +132,7 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   public void runPostStartupActivitiesFromExtensions() {
-    final StartupActivity[] extensions = Extensions.getExtensions(StartupActivity.POST_STARTUP_ACTIVITY);
-    if (extensions.length == 0) {
-      return;
-    }
-
-    final List<Runnable> dumbAwareActivities = new ArrayList<Runnable>();
-    final List<Runnable> normalActivities = new ArrayList<Runnable>();
-    for (final StartupActivity extension : extensions) {
+    for (final StartupActivity extension : Extensions.getExtensions(StartupActivity.POST_STARTUP_ACTIVITY)) {
       final Runnable runnable = new Runnable() {
         public void run() {
           if (!myProject.isDisposed()) {
@@ -148,22 +141,22 @@ public class StartupManagerImpl extends StartupManagerEx {
         }
       };
       if (extension instanceof DumbAware) {
-        dumbAwareActivities.add(runnable);
+        runActivity(runnable);
       }
       else {
-        normalActivities.add(runnable);
+        queueSmartModeActivity(runnable);
       }
     }
+  }
 
-    runActivities(dumbAwareActivities);
-
-    if (!normalActivities.isEmpty()) {
-      DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
-        public void run() {
-          runActivities(normalActivities);
-        }
-      });
-    }
+  // queue each activity in smart mode separately so that if one of them starts dumb mode, the next ones just wait for it to finish
+  private void queueSmartModeActivity(final Runnable activity) {
+    DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
+      @Override
+      public void run() {
+        runActivity(activity);
+      }
+    });
   }
 
   public synchronized void runPostStartupActivities() {
@@ -178,8 +171,18 @@ public class StartupManagerImpl extends StartupManagerEx {
         synchronized (StartupManagerImpl.this) {
           app.assertIsDispatchThread();
           runActivities(myDumbAwarePostStartupActivities); // they can register activities while in the dumb mode
-          runActivities(myNotDumbAwarePostStartupActivities);
-          myPostStartupActivitiesPassed = true;
+
+          if (!myNotDumbAwarePostStartupActivities.isEmpty()) {
+            while (!myNotDumbAwarePostStartupActivities.isEmpty()) {
+              queueSmartModeActivity(myNotDumbAwarePostStartupActivities.remove(0));
+            }
+
+            // return here later to set myPostStartupActivitiesPassed
+            DumbService.getInstance(myProject).runWhenSmart(this);
+          }
+          else {
+            myPostStartupActivitiesPassed = true;
+          }
         }
       }
     });
@@ -274,20 +277,22 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   private static void runActivities(@NotNull List<Runnable> activities) {
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     while (!activities.isEmpty()) {
-      final Runnable runnable = activities.remove(0);
-      if (indicator != null) indicator.checkCanceled();
+      runActivity(activities.remove(0));
+    }
+  }
 
-      try {
-        runnable.run();
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Throwable ex) {
-        LOG.error(ex);
-      }
+  private static void runActivity(Runnable runnable) {
+    ProgressManager.checkCanceled();
+
+    try {
+      runnable.run();
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable ex) {
+      LOG.error(ex);
     }
   }
 

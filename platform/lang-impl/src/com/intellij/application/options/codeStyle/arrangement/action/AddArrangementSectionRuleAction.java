@@ -47,10 +47,8 @@ public class AddArrangementSectionRuleAction extends AddArrangementRuleAction {
   @Override
   protected Object createNewRule(@NotNull ArrangementMatchingRulesControl control) {
     final ArrangementSectionRuleManager manager = control.getSectionRuleManager();
-    if (manager != null) {
-      return manager.createDefaultSectionRule();
-    }
-    return super.createNewRule(control);
+    assert manager != null;
+    return manager.createDefaultSectionRule();
   }
 
   @Override
