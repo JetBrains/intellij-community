@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ class MultiFilePainter extends BasePainter {
   private final List<Pair<PsiFile, Editor>> myFilesList;
   private int myFileIndex = 0;
   private int myStartPageIndex = 0;
-  private Printable myTextPainter = null;
+  private TextPainter myTextPainter = null;
 
   public MultiFilePainter(List<Pair<PsiFile, Editor>> filesList) {
     myFilesList = filesList;
@@ -47,7 +47,7 @@ class MultiFilePainter extends BasePainter {
         myTextPainter = PrintManager.initTextPainter(pair.first, pair.second);
       }
       if (myTextPainter != null) {
-        ((TextPainter)myTextPainter).setProgress(myProgress);
+        myTextPainter.setProgress(myProgress);
 
         int ret = 0;
         try {
@@ -61,11 +61,20 @@ class MultiFilePainter extends BasePainter {
         if (ret == Printable.PAGE_EXISTS) {
           return Printable.PAGE_EXISTS;
         }
+        myTextPainter.dispose();
         myTextPainter = null;
         myStartPageIndex = pageIndex;
       }
       myFileIndex++;
     }
     return Printable.NO_SUCH_PAGE;
+  }
+
+  @Override
+  void dispose() {
+    if (myTextPainter != null) {
+      myTextPainter.dispose();
+      myTextPainter = null;
+    }
   }
 }
