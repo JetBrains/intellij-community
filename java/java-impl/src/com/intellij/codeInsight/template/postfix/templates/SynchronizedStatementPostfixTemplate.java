@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class SynchronizedStatementPostfixTemplate extends StatementPostfixTemplateBase {
   public SynchronizedStatementPostfixTemplate() {
-    super("synchronized", "Produces synchronization statement", "synchronized (expr)");
+    super("synchronized", "synchronized (expr)");
   }
 
   @Override

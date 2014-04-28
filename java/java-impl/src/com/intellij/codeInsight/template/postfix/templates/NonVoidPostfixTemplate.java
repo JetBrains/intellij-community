@@ -22,8 +22,8 @@ import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 
 abstract public class NonVoidPostfixTemplate extends PostfixTemplate {
-  protected NonVoidPostfixTemplate(@NotNull String name, @NotNull String description, @NotNull String example) {
-    super(name, description, example);
+  protected NonVoidPostfixTemplate(@NotNull String name, @NotNull String example) {
+    super(name, example);
   }
 
   @Override

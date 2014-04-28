@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.util.Arrays;
@@ -48,24 +49,6 @@ public class PostfixTemplatesListPanel {
       }
     };
 
-  private static final NotNullFunction<PostfixTemplate, String> GET_DESCRIPTION_FUNCTION =
-    new NotNullFunction<PostfixTemplate, String>() {
-      @NotNull
-      @Override
-      public String fun(@NotNull PostfixTemplate template) {
-        return template.getDescription();
-      }
-    };
-
-  private static final NotNullFunction<PostfixTemplate, String> GET_EXAMPLE_FUNCTION =
-    new NotNullFunction<PostfixTemplate, String>() {
-      @NotNull
-      @Override
-      public String fun(@NotNull PostfixTemplate template) {
-        return template.getExample();
-      }
-    };
-
   @NotNull private final Map<String, Boolean> myTemplatesState = ContainerUtil.newHashMap();
   @NotNull private final JPanel myPanelWithTableView;
   private final TableView<PostfixTemplate> myTemplatesTableView;
@@ -79,7 +62,7 @@ public class PostfixTemplatesListPanel {
     myTemplatesTableView.setAutoCreateRowSorter(true);
     myTemplatesTableView.setShowGrid(false);
     myTemplatesTableView.setBorder(null);
-
+    myTemplatesTableView.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     new TableViewSpeedSearch<PostfixTemplate>(myTemplatesTableView) {
       @Override
       protected String getItemText(@NotNull PostfixTemplate template) {
@@ -94,21 +77,19 @@ public class PostfixTemplatesListPanel {
       .disableUpDownActions().createPanel();
   }
 
+  public PostfixTemplate getTemplate() {
+    return ContainerUtil.getFirstItem(myTemplatesTableView.getSelection());
+  }
+
   @NotNull
   private ColumnInfo[] generateColumns(@NotNull List<PostfixTemplate> templates) {
     String longestTemplateName = "";
-    String longestDescription = "";
-    String longestExample = "";
     for (PostfixTemplate template : templates) {
       longestTemplateName = longestString(longestTemplateName, GET_SHORTCUT_FUNCTION.fun(template));
-      longestDescription = longestString(longestDescription, GET_DESCRIPTION_FUNCTION.fun(template));
-      longestExample = longestString(longestExample, GET_EXAMPLE_FUNCTION.fun(template));
     }
     return new ColumnInfo[]{
       new BooleanColumnInfo(),
-      new StringColumnInfo("Shortcut", GET_SHORTCUT_FUNCTION, longestTemplateName),
-      new StringColumnInfo("Description", GET_DESCRIPTION_FUNCTION, longestDescription),
-      new StringColumnInfo("Example", GET_EXAMPLE_FUNCTION, longestExample),
+      new StringColumnInfo("Shortcut", GET_SHORTCUT_FUNCTION, longestTemplateName)
     };
   }
 
@@ -227,5 +208,9 @@ public class PostfixTemplatesListPanel {
     public String valueOf(final PostfixTemplate template) {
       return myValueOfFunction.fun(template);
     }
+  }
+
+  public void addSelectionListener(ListSelectionListener listener) {
+    myTemplatesTableView.getSelectionModel().addListSelectionListener(listener);
   }
 }

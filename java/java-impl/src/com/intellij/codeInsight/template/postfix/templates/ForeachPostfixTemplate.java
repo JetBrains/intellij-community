@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ForeachPostfixTemplate extends PostfixTemplate {
   public ForeachPostfixTemplate() {
-    super("for", "Iterates over enumerable collection", "for (T item : collection)");
+    super("for", "for (T item : collection)");
   }
 
   @Override

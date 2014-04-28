@@ -28,8 +28,8 @@ import com.intellij.psi.util.PsiTreeUtil;
  * @author ignatov
  */
 public abstract class StatementPostfixTemplateBase extends PostfixTemplate {
-  protected StatementPostfixTemplateBase(String name, String description, String example) {
-    super(name, description, example);
+  protected StatementPostfixTemplateBase(String name, String example) {
+    super(name, example);
   }
 
   protected void surroundWith(PsiElement context, Editor editor, String text) {

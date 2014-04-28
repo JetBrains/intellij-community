@@ -31,8 +31,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class ForIndexedPostfixTemplate extends PostfixTemplate {
-  protected ForIndexedPostfixTemplate(@NotNull String key, @NotNull String description, @NotNull String example) {
-    super(key, description, example);
+  protected ForIndexedPostfixTemplate(@NotNull String key, @NotNull String example) {
+    super(key, example);
   }
 
   @Override

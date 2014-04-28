@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ElseStatementPostfixTemplate extends BooleanPostfixTemplate {
   public ElseStatementPostfixTemplate() {
-    super("else", "Checks boolean expression to be 'false'", "if (!expr)");
+    super("else", "if (!expr)");
   }
 
   @Override

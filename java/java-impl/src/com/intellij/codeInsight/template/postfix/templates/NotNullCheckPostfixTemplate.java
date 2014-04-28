@@ -24,7 +24,7 @@ public class NotNullCheckPostfixTemplate extends NullCheckPostfixTemplate {
   }
 
   public NotNullCheckPostfixTemplate(String alias) {
-    super(alias, "Checks expression to be not-null", "if (expr != null)");
+    super(alias, "if (expr != null)");
   }
 
   @NotNull

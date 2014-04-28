@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ThrowExceptionPostfixTemplate extends PostfixTemplate {
   public ThrowExceptionPostfixTemplate() {
-    super("throw", "Throws expression of 'Throwable' type", "throw expr;");
+    super("throw", "throw expr;");
   }
 
   @Override

@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public class TryStatementPostfixTemplate extends PostfixTemplate {
 
   protected TryStatementPostfixTemplate() {
-    super("try", "Insert statement in try-catch block", "try { exp } catch (Exception e) { e.printStackTrace(); }");
+    super("try", "try { exp } catch(Ex e) { e.printStackTrace(); }");
   }
 
   @Override

@@ -38,15 +38,14 @@ import java.util.List;
  * @author ignatov
  */
 public abstract class ExpressionPostfixTemplateWithChooser extends PostfixTemplate {
-  protected ExpressionPostfixTemplateWithChooser(@NotNull String name, @NotNull String description, @NotNull String example) {
-    super(name, description, example);
+  protected ExpressionPostfixTemplateWithChooser(@NotNull String name, @NotNull String example) {
+    super(name, example);
   }
 
   protected ExpressionPostfixTemplateWithChooser(@NotNull String name,
                                                  @NotNull String key,
-                                                 @NotNull String description,
                                                  @NotNull String example) {
-    super(name, key, description, example);
+    super(name, key, example);
   }
 
   @Override

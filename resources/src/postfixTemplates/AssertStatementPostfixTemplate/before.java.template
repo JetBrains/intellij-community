@@ -1,0 +1,3 @@
+public void m(boolean value) {
+  <spot>value</spot>$key
+}
