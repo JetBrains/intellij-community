@@ -102,89 +102,8 @@ public class JarHandlerBase {
   }
 
   private JarFile createJarFile() throws IOException {
-    final File originalFile = getOriginalFile();
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-    final ZipFile zipFile = new ZipFile(getMirrorFile(originalFile));
-
-    class MyJarEntry implements JarFile.JarEntry {
-      private final ZipEntry myEntry;
-
-      MyJarEntry(ZipEntry entry) {
-        myEntry = entry;
-      }
-
-      @Override
-      public String getName() {
-        return myEntry.getName();
-      }
-
-      @Override
-      public long getSize() {
-        return myEntry.getSize();
-      }
-
-      @Override
-      public long getTime() {
-        return myEntry.getTime();
-      }
-
-      @Override
-      public boolean isDirectory() {
-        return myEntry.isDirectory();
-      }
-    }
-
-    return new JarFile() {
-      @Override
-      public JarEntry getEntry(String name) {
-        try {
-          ZipEntry entry = zipFile.getEntry(name);
-          if (entry != null) {
-            return new MyJarEntry(entry);
-          }
-        }
-        catch (RuntimeException e) {
-          LOG.warn("corrupted: " + zipFile.getName(), e);
-        }
-        return null;
-      }
-
-      @Override
-      public InputStream getInputStream(JarEntry entry) throws IOException {
-        return zipFile.getInputStream(((MyJarEntry)entry).myEntry);
-      }
-
-      @Override
-      public Enumeration<? extends JarEntry> entries() {
-        return new Enumeration<JarEntry>() {
-          private final Enumeration<? extends ZipEntry> entries = zipFile.entries();
-
-          @Override
-          public boolean hasMoreElements() {
-            return entries.hasMoreElements();
-          }
-
-          @Override
-          public JarEntry nextElement() {
-            try {
-              ZipEntry entry = entries.nextElement();
-              if (entry != null) {
-                return new MyJarEntry(entry);
-              }
-            }
-            catch (RuntimeException e) {
-              LOG.warn("corrupted: " + zipFile.getName(), e);
-            }
-            return null;
-          }
-        };
-      }
-
-      @Override
-      public ZipFile getZipFile() {
-        return zipFile;
-      }
-    };
+    File mirrorFile = getMirrorFile(getOriginalFile());
+    return new MyJarFile(new ZipFile(mirrorFile));
   }
 
   @NotNull
@@ -368,5 +287,91 @@ public class JarHandlerBase {
       }
     }
     return ArrayUtil.EMPTY_BYTE_ARRAY;
+  }
+
+  private static class MyJarFile implements JarFile {
+    private static class MyJarEntry implements JarFile.JarEntry {
+      private final ZipEntry myEntry;
+
+      MyJarEntry(ZipEntry entry) {
+        myEntry = entry;
+      }
+
+      @Override
+      public String getName() {
+        return myEntry.getName();
+      }
+
+      @Override
+      public long getSize() {
+        return myEntry.getSize();
+      }
+
+      @Override
+      public long getTime() {
+        return myEntry.getTime();
+      }
+
+      @Override
+      public boolean isDirectory() {
+        return myEntry.isDirectory();
+      }
+    }
+
+    private final ZipFile myZipFile;
+
+    public MyJarFile(ZipFile zipFile) {
+      myZipFile = zipFile;
+    }
+
+    @Override
+    public JarEntry getEntry(String name) {
+      try {
+        ZipEntry entry = myZipFile.getEntry(name);
+        if (entry != null) {
+          return new MyJarEntry(entry);
+        }
+      }
+      catch (RuntimeException e) {
+        LOG.warn("corrupted: " + myZipFile.getName(), e);
+      }
+      return null;
+    }
+
+    @Override
+    public InputStream getInputStream(JarEntry entry) throws IOException {
+      return myZipFile.getInputStream(((MyJarEntry)entry).myEntry);
+    }
+
+    @Override
+    public Enumeration<? extends JarEntry> entries() {
+      return new Enumeration<JarEntry>() {
+        private final Enumeration<? extends ZipEntry> entries = myZipFile.entries();
+
+        @Override
+        public boolean hasMoreElements() {
+          return entries.hasMoreElements();
+        }
+
+        @Override
+        public JarEntry nextElement() {
+          try {
+            ZipEntry entry = entries.nextElement();
+            if (entry != null) {
+              return new MyJarEntry(entry);
+            }
+          }
+          catch (RuntimeException e) {
+            LOG.warn("corrupted: " + myZipFile.getName(), e);
+          }
+          return null;
+        }
+      };
+    }
+
+    @Override
+    public ZipFile getZipFile() {
+      return myZipFile;
+    }
   }
 }
