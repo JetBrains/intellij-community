@@ -52,7 +52,7 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
     myTreeStructure = treeStructure;
   }
 
-  private PsiMethod getMethod(final PsiClass aClass, final boolean checkBases) {
+  PsiMethod getMethod(final PsiClass aClass, final boolean checkBases) {
     return MethodHierarchyUtil.findBaseMethodInClass(myTreeStructure.getBaseMethod(), aClass, checkBases);
   }
 

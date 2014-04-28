@@ -122,11 +122,13 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
       LOG.debug("Image Fetcher thread is detected. Certificate check will be skipped.");
       return true;
     }
-    if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
+    CertificateManager.Config config = CertificateManager.getInstance().getState();
+    if (app.isUnitTestMode() || app.isHeadlessEnvironment() || config.ACCEPT_AUTOMATICALLY) {
+      LOG.debug("Certificate will be accepted automatically");
       myCustomManager.addCertificate(endPoint);
       return true;
     }
-    boolean accepted = CertificatesManager.showAcceptDialog(new Callable<DialogWrapper>() {
+    boolean accepted = CertificateManager.showAcceptDialog(new Callable<DialogWrapper>() {
       @Override
       public DialogWrapper call() throws Exception {
         // TODO may be another kind of warning, if default trust store is missing
@@ -134,7 +136,7 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
       }
     });
     if (accepted) {
-      LOG.info("Certificate was accepted");
+      LOG.info("Certificate was accepted by user");
       myCustomManager.addCertificate(endPoint);
     }
     return accepted;

@@ -76,7 +76,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           final PsiStatement body = statement.getBody();
           if (iteratedValue != null && body != null) {
             final PsiType iteratedValueType = iteratedValue.getType();
-            if (InheritanceUtil.isInheritor(iteratedValueType, CommonClassNames.JAVA_LANG_ITERABLE)) {
+            if (InheritanceUtil.isInheritor(iteratedValueType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
               final PsiClass iteratorClass = PsiUtil.resolveClassInType(iteratedValueType);
               LOG.assertTrue(iteratorClass != null);
               try {
@@ -256,7 +256,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           final PsiIfStatement ifStmt = extractIfStatement(body);
 
           String foreEachText = wrapInBlock(body);
-          String iterated = iteratedValue.getText();
+          String iterated = iteratedValue instanceof PsiCallExpression || 
+                            iteratedValue instanceof PsiReferenceExpression ||
+                            iteratedValue instanceof PsiQualifiedExpression ||
+                            iteratedValue instanceof PsiParenthesizedExpression ? iteratedValue.getText() : "(" + iteratedValue.getText() + ")";
           if (ifStmt != null) {
             final PsiExpression condition = ifStmt.getCondition();
             if (condition != null) {

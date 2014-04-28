@@ -421,9 +421,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
     if (interfaceMethod != null) {
       final PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(left);
 
-      LOG.assertTrue(interfaceReturnType != null);
-
-      if (interfaceReturnType == PsiType.VOID) {
+      if (interfaceReturnType == PsiType.VOID || interfaceReturnType == null) {
         return true;
       }
 

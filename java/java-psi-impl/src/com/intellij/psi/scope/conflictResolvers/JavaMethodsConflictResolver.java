@@ -624,11 +624,11 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
             }
   
             if (!applicable12ignoreFunctionalType && applicable21ignoreFunctionalType) {
-              return specifics == Specifics.SECOND ? Specifics.SECOND : Specifics.NEITHER;
+              return specifics == Specifics.FIRST ? Specifics.FIRST : Specifics.NEITHER;
             }
   
             if (!applicable21ignoreFunctionalType && applicable12ignoreFunctionalType) {
-              return specifics == Specifics.FIRST ? Specifics.FIRST : Specifics.NEITHER;
+              return specifics == Specifics.SECOND ? Specifics.SECOND : Specifics.NEITHER;
             }
   
             return specifics;
@@ -719,8 +719,11 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       LOG.assertTrue(typeParameter != null);
       if (!substitutor.getSubstitutionMap().containsKey(typeParameter)) {
         PsiType type = siteSubstitutor.substitute(typeParameter);
-        if (type instanceof PsiClassType && ((PsiClassType)type).resolve() instanceof PsiTypeParameter) {
-          type = TypeConversionUtil.erasure(type, siteSubstitutor);
+        if (type instanceof PsiClassType && typeParameter.getOwner() == method) {
+          final PsiClass aClass = ((PsiClassType)type).resolve();
+          if (aClass instanceof PsiTypeParameter && ((PsiTypeParameter)aClass).getOwner() == method) {
+            type = TypeConversionUtil.erasure(type, siteSubstitutor);
+          }
         }
         substitutor = substitutor.put(typeParameter, type);
       } else {

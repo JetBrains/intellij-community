@@ -30,7 +30,7 @@ public abstract class JiraRestApi extends JiraRemoteApi {
   private static final Logger LOG = Logger.getInstance(JiraRestApi.class);
 
   public static JiraRestApi fromJiraVersion(@NotNull JiraVersion jiraVersion, @NotNull JiraRepository repository) {
-    LOG.debug("JIRA version is " + jiraVersion);
+    LOG.info("JIRA version is " + jiraVersion);
     if (jiraVersion.getMajorNumber() == 4 && jiraVersion.getMinorNumber() >= 2) {
       return new JiraRestApi20Alpha1(repository);
     }

@@ -38,7 +38,7 @@ public abstract class IntentionAndQuickFixAction implements LocalQuickFix, Inten
   @NotNull
   public abstract String getFamilyName();
 
-  public abstract void applyFix(final Project project, final PsiFile file, @Nullable final Editor editor);
+  public abstract void applyFix(@NotNull Project project, final PsiFile file, @Nullable final Editor editor);
 
   @Override
   @NotNull

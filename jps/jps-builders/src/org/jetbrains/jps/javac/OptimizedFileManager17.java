@@ -21,7 +21,6 @@ import com.sun.tools.javac.file.RelativePath;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
-import org.jetbrains.jps.incremental.Utils;
 
 import javax.lang.model.SourceVersion;
 import javax.tools.JavaFileObject;
@@ -30,6 +29,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Field;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharsetDecoder;
@@ -84,12 +84,12 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
     }
 
     RelativePath.RelativeDirectory subdirectory = new RelativePath.RelativeDirectory(packageName.replace('.', '/'));
-    
+
     ListBuffer<JavaFileObject> results = new ListBuffer<JavaFileObject>();
 
     for (File root : locationRoots) {
       Archive archive = myArchives.get(root);
-      
+
       final boolean isFile;
       if (archive != null) {
         isFile = true;
@@ -97,7 +97,7 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
       else {
         isFile = isFile(root);
       }
-      
+
       if (isFile) {
         // Not a directory; either a file or non-existant, create the archive
         try {
@@ -105,7 +105,7 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
             archive = openArchive(root);
           }
           listArchive(archive, subdirectory, kinds, recurse, results);
-        } 
+        }
         catch (IOException ex) {
           log.error("error.reading.file", root, getMessage(ex));
         }
@@ -119,7 +119,7 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
           listDirectory(dir, kinds, results);
         }
       }
-      
+
     }
     return results.toList();
   }
@@ -146,7 +146,7 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
       }
     }
   }
-  
+
   private void listDirectory(File directory, Set<JavaFileObject.Kind> fileKinds, ListBuffer<JavaFileObject> resultList) {
     final File[] files = listChildren(directory);
     if (files != null) {
@@ -187,7 +187,7 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
       }
     }
   }
-  
+
   private File[] listChildren(File file) {
     File[] cached = myDirectoryCache.get(file);
     if (cached == null) {
@@ -224,9 +224,11 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
     return fileKinds.contains(getKind(name));
   }
 
-  private class InputFileObject extends BaseFileObject {
+  private static class InputFileObject extends BaseFileObject {
+    private static final Kind[] ourAvailableKinds = Kind.values();
     private final String name;
     private final File file;
+    private final Kind kind;
     private Reference<File> absFileRef;
 
     public InputFileObject(JavacFileManager fileManager, File f) {
@@ -237,17 +239,28 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
       super(fileManager);
       this.name = name;
       this.file = f;
+      kind = findKind(name);
     }
-
 
     @Override
     public URI toUri() {
       try {
-        return Utils.toURI(file.getPath());
+        return convertToURI(file.getPath());
       }
       catch (Throwable e) {
         return file.toURI().normalize(); // fallback
       }
+    }
+
+    private static URI convertToURI(String localPath) throws URISyntaxException {
+      String p = localPath.replace('\\', '/');
+      if (!p.startsWith("/")) {
+        p = "/" + p;
+      }
+      if (!p.startsWith("//")) {
+        p = "//" + p;
+      }
+      return new URI("file", null, p, null);
     }
 
     @Override
@@ -262,7 +275,11 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
 
     @Override
     public JavaFileObject.Kind getKind() {
-      for (Kind kind : Kind.values()) {
+      return kind;
+    }
+
+    private static JavaFileObject.Kind findKind(String name) {
+      for (Kind kind : ourAvailableKinds) {
         if (kind != Kind.OTHER && name.endsWith(kind.extension)) {
           return kind;
         }
@@ -272,7 +289,7 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
 
     @Override
     public InputStream openInputStream() throws IOException {
-        return new FileInputStream(file);
+      return new FileInputStream(file);
     }
 
     @Override

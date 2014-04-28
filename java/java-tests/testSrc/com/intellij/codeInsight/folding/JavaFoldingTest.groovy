@@ -29,6 +29,7 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
@@ -39,6 +40,11 @@ public class JavaFoldingTest extends LightCodeInsightFixtureTestCase {
 
   def JavaCodeFoldingSettingsImpl myFoldingSettings
   def JavaCodeFoldingSettingsImpl myFoldingStateToRestore
+
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_1_7
+  }
 
   @Override
   public void setUp() {

@@ -156,7 +156,11 @@ class MethodReferenceResolver implements ResolveCache.PolyVariantResolver<PsiMet
                       final PsiSubstitutor receiverSubstitutor = pClass != null ? TypeConversionUtil
                         .getClassSubstitutor(containingClass, pClass, pResult.getSubstitutor()) : null;
                       if (receiverSubstitutor != null) {
-                        if (!method.hasTypeParameters() && signature.getParameterTypes().length == 1) return receiverSubstitutor;
+                        if (!method.hasTypeParameters()) {
+                          if (signature.getParameterTypes().length == 1 || PsiUtil.isRawSubstitutor(containingClass, receiverSubstitutor)) {
+                            return receiverSubstitutor;
+                          }
+                        }
                         psiSubstitutor = receiverSubstitutor;
                       }
                     }
@@ -175,7 +179,7 @@ class MethodReferenceResolver implements ResolveCache.PolyVariantResolver<PsiMet
                     return substitutor;
                   }
 
-                  if (interfaceMethodReturnType != PsiType.VOID) {
+                  if (interfaceMethodReturnType != PsiType.VOID && interfaceMethodReturnType != null) {
                     final PsiType returnType = method.isConstructor() ? composeReturnType(containingClass, substitutor) : method.getReturnType();
                     if (returnType != null) {
                       session.registerConstraints(returnType, interfaceMethodReturnType);
