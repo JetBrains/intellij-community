@@ -989,8 +989,16 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "target/generated-sources/baz");
     assertResources("project", "src/main/resources");
 
-    final boolean delete = VfsUtilCore.virtualToIoFile(subDir).delete();
-    assertTrue(delete);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        try {
+          subDir.delete(this);
+        }
+        catch (IOException e) {
+          fail("Unable to delete the file: " + e.getMessage());
+        }
+      }
+    });
 
     importProject();
     assertExcludes("project", "target/foo");
