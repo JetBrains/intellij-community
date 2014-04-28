@@ -217,10 +217,10 @@ public abstract class PsiAnchor {
     }
   }
 
-  private static class HardReference extends PsiAnchor {
+  public static class HardReference extends PsiAnchor {
     private final PsiElement myElement;
 
-    private HardReference(final PsiElement element) {
+    public HardReference(final PsiElement element) {
       myElement = element;
     }
 
