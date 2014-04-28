@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.InheritanceUtil;
@@ -60,6 +61,12 @@ public class GrReferenceResolveUtil {
 
   static boolean resolveImpl(@NotNull ResolverProcessor processor,
                              @NotNull GrReferenceExpression place) {
+    boolean b = doResolve(processor, place);
+    ProgressManager.checkCanceled();
+    return b;
+  }
+
+  private static boolean doResolve(ResolverProcessor processor, GrReferenceExpression place) {
     GrExpression qualifier = place.getQualifier();
     if (qualifier == null) {
       if (!ResolveUtil.treeWalkUp(place, processor, true)) return false;

@@ -19,10 +19,6 @@ import com.intellij.application.options.codeStyle.arrangement.color.ArrangementC
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
-import com.intellij.psi.codeStyle.arrangement.std.CompositeArrangementSettingsToken;
-import com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettings;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -119,6 +115,10 @@ public class ArrangementStandardSettingsManager {
   @Nullable
   public StdArrangementSettings getDefaultSettings() {
     return myDefaultSettings;
+  }
+
+  public boolean isSectionRulesSupported() {
+    return myDelegate instanceof ArrangementSectionRuleAwareSettings;
   }
 
   /**

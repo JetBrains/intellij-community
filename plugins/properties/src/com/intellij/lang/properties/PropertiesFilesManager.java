@@ -55,7 +55,6 @@ public class PropertiesFilesManager extends AbstractProjectComponent {
             public void run() {
               ApplicationManager.getApplication().runWriteAction(new Runnable(){
                 public void run() {
-                  if (myProject.isDisposed()) return;
                   Collection<VirtualFile> filesToRefresh = FileBasedIndex.getInstance()
                     .getContainingFiles(FileTypeIndex.NAME, PropertiesFileType.INSTANCE, GlobalSearchScope.allScope(myProject));
                   VirtualFile[] virtualFiles = VfsUtil.toVirtualFileArray(filesToRefresh);

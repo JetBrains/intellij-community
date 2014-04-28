@@ -250,11 +250,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
           @Override
           public VirtualFile fun(VFileEvent event) {
             VirtualFile file = event instanceof VFileCreateEvent ? null : event.getFile();
-            return file != null && isDetectable(file) && wasAutoDetectedBefore(file) ? file : null;
+            return file != null && wasAutoDetectedBefore(file) && isDetectable(file) ? file : null;
           }
         });
         files.remove(null);
-        reDetectQueue.offer(files);
+        if (!files.isEmpty()) {
+          reDetectQueue.offer(files);
+        }
       }
     });
   }
@@ -274,15 +276,16 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private void reDetect(@NotNull Collection<VirtualFile> files) {
     final List<VirtualFile> changed = new ArrayList<VirtualFile>();
     for (VirtualFile file : files) {
-      if (isDetectable(file) && wasAutoDetectedBefore(file)) {
+      if (wasAutoDetectedBefore(file) && isDetectable(file)) {
         FileType before = file.getFileType();
         FileType after = detectFromContent(file);
         if (before != after) {
           changed.add(file);
+          LOG.debug(file+" type was re-detected. Was: "+before+"; now: "+after);
         }
       }
     }
-    if (!changed.isEmpty()) {
+    if (!changed.isEmpty() && !ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {

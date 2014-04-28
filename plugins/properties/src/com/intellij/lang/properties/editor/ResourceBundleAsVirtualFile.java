@@ -104,11 +104,13 @@ public class ResourceBundleAsVirtualFile extends VirtualFile {
     return EMPTY_ARRAY;
   }
 
+  @NotNull
   @Override
-  public VirtualFile createChildDirectory(Object requestor, String name) throws IOException {
+  public VirtualFile createChildDirectory(Object requestor, @NotNull String name) throws IOException {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public VirtualFile createChildData(Object requestor, @NotNull String name) throws IOException {
     throw new UnsupportedOperationException();

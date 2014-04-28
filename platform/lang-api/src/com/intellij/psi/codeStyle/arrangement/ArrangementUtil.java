@@ -28,6 +28,7 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCon
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVisitor;
 import com.intellij.psi.codeStyle.arrangement.std.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.text.CharArrayUtil;
 import org.jdom.Element;
@@ -303,10 +304,14 @@ public class ArrangementUtil {
     return result;
   }
 
+  //region Arrangement Sections
   @NotNull
-  public static List<? extends ArrangementMatchRule> getRulesSortedByPriority(@NotNull ArrangementSettings arrangementSettings) {
-    return arrangementSettings instanceof RulePriorityAwareSettings ?
-           ((RulePriorityAwareSettings)arrangementSettings).getRulesSortedByPriority() :
-           arrangementSettings.getRules();
+  public static List<StdArrangementMatchRule> collectMatchRules(@NotNull List<ArrangementSectionRule> sections) {
+    final List<StdArrangementMatchRule> matchRules = ContainerUtil.newArrayList();
+    for (ArrangementSectionRule section : sections) {
+      matchRules.addAll(section.getMatchRules());
+    }
+    return matchRules;
   }
+  //endregion
 }

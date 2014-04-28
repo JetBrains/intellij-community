@@ -393,7 +393,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return <code>VirtualFile</code> representing the created directory
    * @throws java.io.IOException if directory failed to be created
    */
-  public VirtualFile createChildDirectory(Object requestor, @NonNls String name) throws IOException {
+  @NotNull
+  public VirtualFile createChildDirectory(Object requestor, @NotNull @NonNls String name) throws IOException {
     if (!isDirectory()) {
       throw new IOException(VfsBundle.message("directory.create.wrong.parent.error"));
     }
@@ -423,6 +424,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return <code>VirtualFile</code> representing the created file
    * @throws IOException if file failed to be created
    */
+  @NotNull
   public VirtualFile createChildData(Object requestor, @NotNull @NonNls String name) throws IOException {
     if (!isDirectory()) {
       throw new IOException(VfsBundle.message("file.create.wrong.parent.error"));

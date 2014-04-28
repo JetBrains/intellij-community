@@ -1698,7 +1698,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     myChangedFilesCollector.ensureAllInvalidateTasksCompleted();
     final VirtualFile file = content.getVirtualFile();
 
-    FileTypeManagerImpl.cacheFileType(file, file.getFileType());
+    FileType fileType = file.getFileType();
+    FileTypeManagerImpl.cacheFileType(file, fileType);
 
     try {
       PsiFile psiFile = null;
@@ -1711,13 +1712,16 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         if (shouldIndexFile(file, indexId)) {
           if (fc == null) {
             byte[] currentBytes;
+            int hashId;
             try {
               currentBytes = content.getBytes();
+              hashId = ContentHashesSupport.calcContentHashIdWithFileType(currentBytes, fileType);
             }
             catch (IOException e) {
               currentBytes = ArrayUtil.EMPTY_BYTE_ARRAY;
+              hashId = -1;
             }
-            fc = new FileContentImpl(file, currentBytes);
+            fc = new FileContentImpl(file, currentBytes, hashId);
             if (project == null) {
               project = ProjectUtil.guessProjectForFile(file);
             }

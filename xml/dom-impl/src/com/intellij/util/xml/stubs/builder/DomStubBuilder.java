@@ -58,12 +58,11 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
     Project project = fileContent.getProject();
     if (document != null) {
       PsiFile existingPsi = PsiDocumentManager.getInstance(project).getPsiFile(document);
-      if (existingPsi != null) {
+      if (existingPsi instanceof XmlFile) {
         psiFile = existingPsi;
       }
     }
 
-    if (!(psiFile instanceof XmlFile)) return null;
     XmlFile xmlFile = (XmlFile)psiFile;
     try {
       XmlUtil.BUILDING_DOM_STUBS.set(Boolean.TRUE);

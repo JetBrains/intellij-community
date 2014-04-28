@@ -49,8 +49,7 @@ import com.intellij.openapi.vfs.VirtualFilePathWrapper;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -100,22 +99,10 @@ public class Switcher extends AnAction implements DumbAware {
       }
     }
   };
-  private static final Map<String, Integer> TW_KEYMAP = new HashMap<String, Integer>();
   private static final CustomShortcutSet TW_SHORTCUT;
 
   static {
-    TW_KEYMAP.put("Messages",  0);
-    TW_KEYMAP.put("Project",   1);
-    TW_KEYMAP.put("Favorites", 2);
-    TW_KEYMAP.put("Find",      3);
-    TW_KEYMAP.put("Run",       4);
-    TW_KEYMAP.put("Debug",     5);
-    TW_KEYMAP.put("TODO",      6);
-    TW_KEYMAP.put("Structure", 7);
-    TW_KEYMAP.put("Hierarchy", 8);
-    TW_KEYMAP.put("Changes",   9);
-
-    ArrayList<Shortcut> shortcuts = new ArrayList<Shortcut>();
+    List<Shortcut> shortcuts = ContainerUtil.newArrayList();
     for (char ch = '0'; ch <= '9'; ch++) {
       shortcuts.add(CustomShortcutSet.fromString("control " + ch).getShortcuts()[0]);
     }
@@ -191,7 +178,6 @@ public class Switcher extends AnAction implements DumbAware {
   public static class SwitcherPanel extends JPanel implements KeyListener, MouseListener, MouseMotionListener {
     private final int MAX_FILES_IN_SWITCHER;
     final JBPopup myPopup;
-    final Map<ToolWindow, String> ids = new HashMap<ToolWindow, String>();
     final MyList toolWindows;
     final MyList files;
     final JPanel separator;
@@ -251,14 +237,14 @@ public class Switcher extends AnAction implements DumbAware {
       descriptions.add(pathLabel, BorderLayout.CENTER);
       twManager = ToolWindowManager.getInstance(project);
       DefaultListModel twModel = new DefaultListModel();
-      for (String id : twManager.getToolWindowIds()) {
-        final ToolWindow tw = twManager.getToolWindow(id);
+      List<ActivateToolWindowAction> actions = ToolWindowsGroup.getToolWindowActions(project);
+      List<ToolWindow> windows = ContainerUtil.newArrayList();
+      for (ActivateToolWindowAction action : actions) {
+        ToolWindow tw = twManager.getToolWindow(action.getToolWindowId());
         if (tw.isAvailable()) {
-          ids.put(tw, id);
+          windows.add(tw);
         }
       }
-
-      final ArrayList<ToolWindow> windows = new ArrayList<ToolWindow>(ids.keySet());
       twShortcuts = createShortcuts(windows);
       final Map<ToolWindow, String> map = ContainerUtil.reverseMap(twShortcuts);
       Collections.sort(windows, new Comparator<ToolWindow>() {
@@ -276,7 +262,7 @@ public class Switcher extends AnAction implements DumbAware {
         new NameFilteringListModel<ToolWindow>(toolWindows, new Function<ToolWindow, String>() {
           @Override
           public String fun(ToolWindow window) {
-            return ids.get(window);
+            return window.getStripeTitle();
           }
         }, new Condition<String>() {
           @Override
@@ -290,7 +276,7 @@ public class Switcher extends AnAction implements DumbAware {
 
       toolWindows.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 20));
       toolWindows.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
-      toolWindows.setCellRenderer(new SwitcherToolWindowsListRenderer(mySpeedSearch, ids, map, myPinned) {
+      toolWindows.setCellRenderer(new SwitcherToolWindowsListRenderer(mySpeedSearch, map, myPinned) {
         @Override
         public Component getListCellRendererComponent(JList list,
                                                       Object value,
@@ -516,7 +502,6 @@ public class Switcher extends AnAction implements DumbAware {
       ALT_KEY = isAlt ? VK_CONTROL : VK_ALT;
       CTRL_KEY = isAlt ? VK_ALT : VK_CONTROL;
 
-      final IdeFrameImpl ideFrame = WindowManagerEx.getInstanceEx().getFrame(project);
       myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(this, this)
         .setResizable(pinned)
         .setModalContext(false)
@@ -567,27 +552,31 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
 
-    private Map<String, ToolWindow> createShortcuts(List<ToolWindow> windows) {
+    private static Map<String, ToolWindow> createShortcuts(List<ToolWindow> windows) {
       final Map<String, ToolWindow> keymap = new HashMap<String, ToolWindow>(windows.size());
-      final List<ToolWindow> pluginToolWindows = new ArrayList<ToolWindow>();
+      final List<ToolWindow> otherTW = new ArrayList<ToolWindow>();
       for (ToolWindow window : windows) {
-        final Integer index = TW_KEYMAP.get(ids.get(window));
-        if (index != null) {
-          keymap.put(Integer.toString(index, index + 1).toUpperCase(), window);
-        } else {
-          pluginToolWindows.add(window);
+        int index = ActivateToolWindowAction.getMnemonicForToolWindow(((ToolWindowImpl)window).getId());
+        if (index >= '0' && index <= '9') {
+          keymap.put(getIndexShortcut(index - '0'), window);
+        }
+        else {
+          otherTW.add(window);
         }
       }
-      final Iterator<ToolWindow> iterator = pluginToolWindows.iterator();
       int i = 0;
-      while (iterator.hasNext()) {
-        while (keymap.get(Integer.toString(i, i + 1).toUpperCase()) != null) {
+      for (ToolWindow window : otherTW) {
+        while (keymap.get(getIndexShortcut(i)) != null) {
           i++;
         }
-        keymap.put(Integer.toString(i, i + 1).toUpperCase(), iterator.next());
+        keymap.put(getIndexShortcut(i), window);
         i++;
       }
       return keymap;
+    }
+
+    private static String getIndexShortcut(int index) {
+      return StringUtil.toUpperCase(Integer.toString(index, index + 1));
     }
 
     private static int getModifiers(ShortcutSet shortcutSet) {
@@ -713,7 +702,7 @@ public class Switcher extends AnAction implements DumbAware {
           final ToolWindow toolWindow = (ToolWindow)value;
           if (twManager instanceof ToolWindowManagerImpl) {
             ToolWindowManagerImpl manager = (ToolWindowManagerImpl)twManager;
-            manager.hideToolWindow(ids.get(toolWindow), false, false);
+            manager.hideToolWindow(((ToolWindowImpl)toolWindow).getId(), false, false);
           }
           else {
             toolWindow.hide(null);
@@ -1011,7 +1000,7 @@ public class Switcher extends AnAction implements DumbAware {
       @Override
       protected String getElementText(Object element) {
         if (element instanceof ToolWindow) {
-          return ids.get(element);
+          return ((ToolWindow)element).getStripeTitle();
         } else if (element instanceof FileInfo) {
           final VirtualFile file = ((FileInfo)element).getFirst();
           return file instanceof VirtualFilePathWrapper ? ((VirtualFilePathWrapper)file).getPresentablePath() : file.getName();

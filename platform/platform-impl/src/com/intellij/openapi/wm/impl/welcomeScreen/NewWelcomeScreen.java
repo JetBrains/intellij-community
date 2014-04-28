@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,11 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
     root.add(buildRootGroup(AllIcons.General.Configure, "Configure", IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE));
     root.add(buildRootGroup(AllIcons.General.ReadHelp, "Docs and How-Tos", IdeActions.GROUP_WELCOME_SCREEN_DOC));
 
+    // so, we sure this is the last action
+    final AnAction register = actionManager.getAction("WelcomeScreen.Register");
+    if (register != null) {
+      root.add(register);
+    }
     return new WelcomePane(root, screen);
   }
 

@@ -494,14 +494,16 @@ public class Mock {
       return new VirtualFile[0];
     }
 
+    @NotNull
     @Override
-    public VirtualFile createChildDirectory(Object requestor, String name) throws IOException {
-      return null;
+    public VirtualFile createChildDirectory(Object requestor, @NotNull String name) throws IOException {
+      throw new IOException(name);
     }
 
+    @NotNull
     @Override
     public VirtualFile createChildData(Object requestor, @NotNull String name) throws IOException {
-      return null;
+      throw new IOException(name);
     }
 
     @Override

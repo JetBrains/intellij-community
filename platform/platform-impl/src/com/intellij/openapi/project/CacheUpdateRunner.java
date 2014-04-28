@@ -88,9 +88,9 @@ public class CacheUpdateRunner {
   }
 
   public static void processFiles(final ProgressIndicator indicator,
-                           boolean processInReadAction,
-                           Collection<VirtualFile> files,
-                           Project project, Consumer<FileContent> processor) {
+                                  boolean processInReadAction,
+                                  Collection<VirtualFile> files,
+                                  Project project, Consumer<FileContent> processor) {
     indicator.checkCanceled();
     final FileContentQueue queue = new FileContentQueue();
     final double total = files.size();
@@ -139,10 +139,10 @@ public class CacheUpdateRunner {
   }
 
   private static boolean processSomeFilesWhileUserIsInactive(@NotNull FileContentQueue queue,
-                                                      @NotNull Consumer<VirtualFile> progressUpdater,
-                                                      final boolean processInReadAction,
-                                                      @NotNull Project project,
-                                                      @NotNull Consumer<FileContent> fileProcessor) {
+                                                             @NotNull Consumer<VirtualFile> progressUpdater,
+                                                             final boolean processInReadAction,
+                                                             @NotNull Project project,
+                                                             @NotNull Consumer<FileContent> fileProcessor) {
     final ProgressIndicatorBase innerIndicator = new ProgressIndicatorBase() {
       @Override
       protected boolean isCancelable() {

@@ -65,7 +65,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.CompleteReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.CompleteReferencesWithSameQualifier;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.DefaultGroovyVariableNameValidator;
@@ -432,8 +432,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
     final PsiType qualifierType = qualifier instanceof GrExpression ? ((GrExpression)qualifier).getType() : null;
 
     if (reference instanceof GrReferenceExpression && (qualifier instanceof GrExpression || qualifier == null)) {
-      for (String string : CompleteReferenceExpression.getVariantsWithSameQualifier(matcher, (GrExpression)qualifier,
-                                                                                                   (GrReferenceExpression)reference)) {
+      for (String string : CompleteReferencesWithSameQualifier.getVariantsWithSameQualifier((GrReferenceExpression)reference, matcher, (GrExpression)qualifier)) {
         consumer.consume(LookupElementBuilder.create(string).withItemTextUnderlined(true));
       }
       if (parameters.getInvocationCount() < 2 && qualifier != null && qualifierType == null &&
@@ -446,7 +445,8 @@ public class GroovyCompletionContributor extends CompletionContributor {
     }
 
     final List<LookupElement> zeroPriority = newArrayList();
-    reference.processVariants(matcher, parameters, new Consumer<LookupElement>() {
+
+    GroovyCompletionUtil.processVariants(reference, matcher, parameters, new Consumer<LookupElement>() {
       @Override
       public void consume(LookupElement lookupElement) {
         Object object = lookupElement.getObject();

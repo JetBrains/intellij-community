@@ -45,6 +45,7 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
   private byte[] myContent;
   private CharSequence myContentAsText;
   private final long myStamp;
+  private final int myHashId;
 
   @Override
   public Project getProject() {
@@ -90,26 +91,32 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
   }
 
   public FileContentImpl(@NotNull final VirtualFile file, @NotNull final CharSequence contentAsText, final Charset charset) {
-    this(file, contentAsText, null, charset, -1);
+    this(file, contentAsText, null, charset, -1, -1);
   }
 
   public FileContentImpl(@NotNull final VirtualFile file, @NotNull final CharSequence contentAsText, final Charset charset, long documentStamp) {
-    this(file, contentAsText, null, charset, documentStamp);
+    this(file, contentAsText, null, charset, documentStamp, -1);
   }
 
   public FileContentImpl(@NotNull final VirtualFile file, @NotNull final byte[] content) {
-    this(file, null, content, LoadTextUtil.detectCharsetAndSetBOM(file, content), -1);
+    this(file, content, -1);
+  }
+
+  public FileContentImpl(@NotNull final VirtualFile file, @NotNull final byte[] content, int hashId) {
+    this(file, null, content, LoadTextUtil.detectCharsetAndSetBOM(file, content), -1, hashId);
   }
 
   public FileContentImpl(@NotNull final VirtualFile file) {
-    this(file, null, null, null, -1);
+    this(file, null, null, null, -1, -1);
   }
 
   private FileContentImpl(@NotNull VirtualFile file,
                           CharSequence contentAsText,
                           byte[] content,
                           Charset charset,
-                          long stamp) {
+                          long stamp,
+                          int hashId
+  ) {
     myFile = file;
     myContentAsText = contentAsText;
     myContent = content;
@@ -118,6 +125,7 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
     // remember name explicitly because the file could be renamed afterwards
     myFileName = file.getName();
     myStamp = stamp;
+    myHashId = hashId;
   }
 
   @NotNull
@@ -208,5 +216,9 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
   @Override
   public String toString() {
     return myFileName;
+  }
+
+  public int getHashId() {
+    return myHashId;
   }
 }

@@ -317,8 +317,8 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
         if (content instanceof FileContent) {
           FileContent fileContent = (FileContent)content;
-          Integer previouslyCalculatedContentHashId = fileContent.getUserData(ourSavedContentHashIdKey);
-          if (previouslyCalculatedContentHashId == null) {
+          int previouslyCalculatedContentHashId = fileContent instanceof FileContentImpl ? ((FileContentImpl)fileContent).getHashId():-1;
+          if (previouslyCalculatedContentHashId == -1) {
             previouslyCalculatedContentHashId = ContentHashesSupport.calcContentHashIdWithFileType(fileContent.getContent(), fileContent.getFileType());
             fileContent.putUserData(ourSavedContentHashIdKey, previouslyCalculatedContentHashId);
           }

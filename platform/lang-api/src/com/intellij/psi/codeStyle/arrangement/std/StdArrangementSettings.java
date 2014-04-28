@@ -16,8 +16,12 @@
 package com.intellij.psi.codeStyle.arrangement.std;
 
 import com.intellij.psi.codeStyle.arrangement.ArrangementSettings;
+import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -27,29 +31,33 @@ import java.util.*;
  * @since 9/17/12 11:53 AM
  */
 public class StdArrangementSettings implements ArrangementSettings {
-
+  @NotNull private final   List<ArrangementSectionRule> mySectionRules     = new ArrayList<ArrangementSectionRule>();
   @NotNull private final   List<ArrangementGroupingRule> myGroupings       = new ArrayList<ArrangementGroupingRule>();
-  @NotNull protected final List<StdArrangementMatchRule> myRules           = new ArrayList<StdArrangementMatchRule>();
+
+  // cached values
+  @NotNull protected final List<StdArrangementMatchRule> myRulesByPriority = new ArrayList<StdArrangementMatchRule>();
 
   public StdArrangementSettings() {
   }
 
   @SuppressWarnings("unchecked")
-  public StdArrangementSettings(@NotNull List<StdArrangementMatchRule> rules) {
+  public StdArrangementSettings(@NotNull List<ArrangementSectionRule> rules) {
     this(Collections.EMPTY_LIST, rules);
   }
 
   public StdArrangementSettings(@NotNull List<ArrangementGroupingRule> groupingRules,
-                                @NotNull List<StdArrangementMatchRule> matchRules)
-  {
+                                @NotNull List<ArrangementSectionRule> sectionRules) {
     myGroupings.addAll(groupingRules);
-    myRules.addAll(matchRules);
+    mySectionRules.addAll(sectionRules);
   }
 
-  @NotNull
-  @Override
-  public List<StdArrangementMatchRule> getRules() {
-    return myRules;
+  public static StdArrangementSettings createByMatchRules(@NotNull List<ArrangementGroupingRule> groupingRules,
+                                                          @NotNull List<StdArrangementMatchRule> matchRules) {
+    final List<ArrangementSectionRule> sectionRules = new ArrayList<ArrangementSectionRule>();
+    for (StdArrangementMatchRule rule : matchRules) {
+      sectionRules.add(ArrangementSectionRule.create(rule));
+    }
+    return new StdArrangementSettings(groupingRules, sectionRules);
   }
 
   @NotNull
@@ -62,9 +70,9 @@ public class StdArrangementSettings implements ArrangementSettings {
   }
 
   @NotNull
-  protected List<StdArrangementMatchRule> cloneMatchRules() {
-    final ArrayList<StdArrangementMatchRule> rules = new ArrayList<StdArrangementMatchRule>();
-    for (StdArrangementMatchRule rule : myRules) {
+  protected List<ArrangementSectionRule> cloneSectionRules() {
+    final ArrayList<ArrangementSectionRule> rules = new ArrayList<ArrangementSectionRule>();
+    for (ArrangementSectionRule rule : mySectionRules) {
       rules.add(rule.clone());
     }
     return rules;
@@ -73,7 +81,7 @@ public class StdArrangementSettings implements ArrangementSettings {
   @NotNull
   @Override
   public ArrangementSettings clone() {
-    return new StdArrangementSettings(cloneGroupings(), cloneMatchRules());
+    return new StdArrangementSettings(cloneGroupings(), cloneSectionRules());
   }
 
   @Override
@@ -82,8 +90,37 @@ public class StdArrangementSettings implements ArrangementSettings {
     return myGroupings;
   }
 
+  @NotNull
+  @Override
+  public List<ArrangementSectionRule> getSections() {
+    return mySectionRules;
+  }
+
+  @NotNull
+  @Override
+  public List<StdArrangementMatchRule> getRules() {
+    return ArrangementUtil.collectMatchRules(mySectionRules);
+  }
+
+  @NotNull
+  @Override
+  public List<? extends ArrangementMatchRule> getRulesSortedByPriority() {
+    if (myRulesByPriority.isEmpty()) {
+      for (ArrangementSectionRule rule : mySectionRules) {
+        myRulesByPriority.addAll(rule.getMatchRules());
+      }
+      ContainerUtil.sort(myRulesByPriority);
+    }
+    return myRulesByPriority;
+  }
+
   public void addRule(@NotNull StdArrangementMatchRule rule) {
-    myRules.add(rule);
+    addRule(ArrangementSectionRule.create(rule));
+  }
+
+  public void addRule(@NotNull ArrangementSectionRule rule) {
+    mySectionRules.add(rule);
+    myRulesByPriority.clear();
   }
 
   public void addGrouping(@NotNull ArrangementGroupingRule rule) {
@@ -92,7 +129,7 @@ public class StdArrangementSettings implements ArrangementSettings {
 
   @Override
   public int hashCode() {
-    int result = myRules.hashCode();
+    int result = mySectionRules.hashCode();
     result = 31 * result + myGroupings.hashCode();
     return result;
   }
@@ -105,7 +142,7 @@ public class StdArrangementSettings implements ArrangementSettings {
     StdArrangementSettings settings = (StdArrangementSettings)o;
 
     if (!myGroupings.equals(settings.myGroupings)) return false;
-    if (!myRules.equals(settings.myRules)) return false;
+    if (!mySectionRules.equals(settings.mySectionRules)) return false;
 
     return true;
   }

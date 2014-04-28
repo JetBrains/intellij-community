@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     return Result.CONTINUE;
   }
 
-  public static void invokeCompletion(CompletionType completionType,
+  public static void invokeCompletion(@NotNull CompletionType completionType,
                                       boolean autopopup,
                                       Project project, Editor editor, int time, boolean restart) {
     if (editor.isDisposed()) {

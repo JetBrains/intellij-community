@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.util.IncorrectOperationException;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -54,11 +55,11 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
     myModifiers |= code;
   }
 
-  public void addModifier(int modifier) {
+  public void addModifier(@MagicConstant(flagsFromClass = GrModifierFlags.class) int modifier) {
     myModifiers |= modifier;
   }
 
-  public void removeModifier(int modifier) {
+  public void removeModifier(@MagicConstant(flagsFromClass = GrModifierFlags.class) int modifier) {
     myModifiers &= ~modifier;
   }
 
