@@ -87,7 +87,7 @@ public class CreateBranchOrTagAction extends BasicAction {
         dstSvnUrl = SVNURL.parseURIEncoded(dstURL);
         parentUrl = dstSvnUrl.removePathTail();
 
-        if (!dirExists(activeVcs, project, parentUrl)) {
+        if (!dirExists(activeVcs, parentUrl)) {
           int rc = Messages.showYesNoDialog(project, "The repository path '" + parentUrl + "' does not exist. Would you like to create it?",
                                             "Branch or Tag", Messages.getQuestionIcon());
           if (rc == Messages.NO) {
@@ -145,7 +145,7 @@ public class CreateBranchOrTagAction extends BasicAction {
     }
   }
 
-  private static boolean dirExists(@NotNull final SvnVcs vcs, @NotNull Project project, @NotNull final SVNURL url) throws SVNException {
+  private static boolean dirExists(@NotNull final SvnVcs vcs, @NotNull final SVNURL url) throws SVNException {
     final Ref<SVNException> excRef = new Ref<SVNException>();
     final Ref<Boolean> resultRef = new Ref<Boolean>(Boolean.TRUE);
 
@@ -155,7 +155,6 @@ public class CreateBranchOrTagAction extends BasicAction {
           vcs.getInfo(url, SVNRevision.HEAD);
         }
         catch (SVNException e) {
-          // TODO: Check what error code returned by cmd client and implement corresponding support
           if (e.getErrorMessage().getErrorCode().equals(SVNErrorCode.RA_ILLEGAL_URL)) {
             resultRef.set(Boolean.FALSE);
           }
@@ -168,7 +167,7 @@ public class CreateBranchOrTagAction extends BasicAction {
 
     final Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(taskImpl, "Checking target folder", true, project);
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(taskImpl, "Checking target folder", true, vcs.getProject());
     }
     else {
       taskImpl.run();
