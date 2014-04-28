@@ -35,7 +35,7 @@ public class CompilerWorkspaceConfiguration implements PersistentStateComponent<
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerWorkspaceConfiguration");
   
   public static final int DEFAULT_COMPILE_PROCESS_HEAP_SIZE = 700;
-  public static final String DEFAULT_COMPILE_PROCESS_VM_OPTIONS = "-ea";
+  public static final String DEFAULT_COMPILE_PROCESS_VM_OPTIONS = "";
   static {
     LOG.info("Available processors: " + Runtime.getRuntime().availableProcessors());
   }
