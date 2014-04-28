@@ -67,7 +67,6 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc.SVNCommitClient;
 import org.tmatesoft.svn.core.wc.SVNCopyClient;
 import org.tmatesoft.svn.core.wc.SVNCopySource;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -809,7 +808,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       }
     }
     private boolean doDelete(final SVNURL url, final String comment) {
-      final SVNException[] exception = new SVNException[1];
+      final Ref<Exception> exception = new Ref<Exception>();
       final Project project = myBrowserComponent.getProject();
       Runnable command = new Runnable() {
         public void run() {
@@ -819,19 +818,18 @@ public class RepositoryBrowserDialog extends DialogWrapper {
           }
           SvnVcs vcs = SvnVcs.getInstance(project);
           try {
-            SVNCommitClient committer = vcs.createCommitClient();
-            committer.doDelete(new SVNURL[]{url}, comment);
+            vcs.getFactoryFromSettings().createDeleteClient().delete(url, comment);
           }
-          catch (SVNException e) {
-            exception[0] = e;
+          catch (VcsException e) {
+            exception.set(e);
           }
         }
       };
       ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.title.browser.delete"), false, project);
-      if (exception[0] != null) {
-        Messages.showErrorDialog(exception[0].getMessage(), SvnBundle.message("message.text.error"));
+      if (!exception.isNull()) {
+        Messages.showErrorDialog(exception.get().getMessage(), SvnBundle.message("message.text.error"));
       }
-      return exception[0] == null;
+      return exception.isNull();
     }
   }
 
