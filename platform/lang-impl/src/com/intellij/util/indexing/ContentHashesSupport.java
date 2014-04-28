@@ -60,6 +60,14 @@ class ContentHashesSupport {
 
 
   static int calcContentHashIdWithFileType(@NotNull byte[] bytes, @NotNull FileType fileType) throws IOException {
+    return enumerateHash(calcContentHashWithFileType(bytes, fileType));
+  }
+
+  static int enumerateHash(@NotNull byte[] digest) throws IOException {
+    return ourHashesWithFileType.enumerate(digest);
+  }
+
+  static byte[] calcContentHashWithFileType(@NotNull byte[] bytes, @NotNull FileType fileType) throws IOException {
     MessageDigest messageDigest = ContentHashesUtil.HASHER_CACHE.getValue();
 
     Charset defaultCharset = Charset.defaultCharset();
@@ -68,8 +76,6 @@ class ContentHashesSupport {
     messageDigest.update(String.valueOf(bytes.length).getBytes(defaultCharset));
     messageDigest.update((byte)0);
     messageDigest.update(bytes, 0, bytes.length);
-    byte[] digest = messageDigest.digest();
-
-    return ourHashesWithFileType.enumerate(digest);
+    return messageDigest.digest();
   }
 }

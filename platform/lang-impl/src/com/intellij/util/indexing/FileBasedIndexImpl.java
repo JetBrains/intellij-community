@@ -1712,16 +1712,16 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         if (shouldIndexFile(file, indexId)) {
           if (fc == null) {
             byte[] currentBytes;
-            int hashId;
+            byte[] hash;
             try {
               currentBytes = content.getBytes();
-              hashId = ContentHashesSupport.calcContentHashIdWithFileType(currentBytes, fileType);
+              hash = fileType.isBinary() ? null:ContentHashesSupport.calcContentHashWithFileType(currentBytes, fileType);
             }
             catch (IOException e) {
               currentBytes = ArrayUtil.EMPTY_BYTE_ARRAY;
-              hashId = -1;
+              hash = null;
             }
-            fc = new FileContentImpl(file, currentBytes, hashId);
+            fc = new FileContentImpl(file, currentBytes, hash);
             if (project == null) {
               project = ProjectUtil.guessProjectForFile(file);
             }

@@ -317,11 +317,17 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
         if (content instanceof FileContent) {
           FileContent fileContent = (FileContent)content;
-          int previouslyCalculatedContentHashId = fileContent instanceof FileContentImpl ? ((FileContentImpl)fileContent).getHashId():-1;
-          if (previouslyCalculatedContentHashId == -1) {
-            previouslyCalculatedContentHashId = ContentHashesSupport.calcContentHashIdWithFileType(fileContent.getContent(), fileContent.getFileType());
+          Integer previouslyCalculatedContentHashId = fileContent.getUserData(ourSavedContentHashIdKey);
+          if (previouslyCalculatedContentHashId == null) {
+            byte[] hash = fileContent instanceof FileContentImpl ? ((FileContentImpl)fileContent).getHash():null;
+            if (hash == null) {
+              previouslyCalculatedContentHashId = ContentHashesSupport.calcContentHashIdWithFileType(fileContent.getContent(), fileContent.getFileType());
+            } else {
+              previouslyCalculatedContentHashId =  ContentHashesSupport.enumerateHash(hash);
+            }
             fileContent.putUserData(ourSavedContentHashIdKey, previouslyCalculatedContentHashId);
           }
+
           savedInputId = previouslyCalculatedContentHashId;
           if (!mySnapshotMapping.containsMapping(savedInputId)) { // save current snapshot keys out of index update write section
             mySnapshotMapping.put(savedInputId, data.keySet());
