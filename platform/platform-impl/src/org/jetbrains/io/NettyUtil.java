@@ -82,7 +82,7 @@ public final class NettyUtil {
             Thread.sleep(attemptCount * MIN_START_TIME);
           }
           else {
-            asyncResult.reject("Cannot connect");
+            asyncResult.reject("Cannot connect: " + e.getMessage());
             return null;
           }
         }
