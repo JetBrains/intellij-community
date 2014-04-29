@@ -511,35 +511,48 @@ public class ArrangementMatchingRulesControl extends JBTable {
   }
 
   private class MyValidator {
-    private final String DUPLICATE_SECTION = ApplicationBundle.message("arrangement.settings.validation.duplicate.section.text");
-
     @Nullable
     private String validate(int index) {
       if (mySectionRuleManager == null || getModel().getSize() < index) {
         return null;
       }
 
+      int startSectionIndex = -1;
       final Set<String> rules = ContainerUtil.newHashSet();
       for (int i = 0; i < index; i++) {
-        final String section = extractSectionText(i);
-        if (StringUtil.isNotEmpty(section)) {
-          rules.add(section);
+        final ArrangementSectionRuleData section = extractSectionText(i);
+        if (section != null) {
+          startSectionIndex = section.isSectionStart() ? i : -1;
+          if (StringUtil.isNotEmpty(section.getText())) {
+            rules.add(section.getText());
+          }
         }
       }
 
-      final String text = extractSectionText(index);
-      return StringUtil.isNotEmpty(text) && rules.contains(text) ? DUPLICATE_SECTION : null;
+      final ArrangementSectionRuleData data = extractSectionText(index);
+      if (data != null) {
+        if (StringUtil.isNotEmpty(data.getText()) && rules.contains(data.getText())) {
+          return ApplicationBundle.message("arrangement.settings.validation.duplicate.section.text");
+        }
+
+        if (!data.isSectionStart()) {
+          if (startSectionIndex == -1) {
+            return ApplicationBundle.message("arrangement.settings.validation.end.section.rule.without.start");
+          }
+          else if (startSectionIndex == index - 1) {
+            return ApplicationBundle.message("arrangement.settings.validation.empty.section.rule");
+          }
+        }
+      }
+      return null;
     }
 
     @Nullable
-    private String extractSectionText(int i) {
+    private ArrangementSectionRuleData extractSectionText(int i) {
       Object element = getModel().getElementAt(i);
       if (element instanceof StdArrangementMatchRule) {
         assert mySectionRuleManager != null;
-        final ArrangementSectionRuleData sectionRule = mySectionRuleManager.getSectionRuleData((StdArrangementMatchRule)element);
-        if (sectionRule != null) {
-          return sectionRule.getText();
-        }
+        return mySectionRuleManager.getSectionRuleData((StdArrangementMatchRule)element);
       }
       return null;
     }
