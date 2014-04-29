@@ -95,7 +95,12 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
     }
 
     modifiableRootModel.addContentEntry(modelContentRootDir);
-    modifiableRootModel.inheritSdk();
+    // todo this should be moved to generic ModuleBuilder
+    if (myJdk != null){
+      modifiableRootModel.setSdk(myJdk);
+    } else {
+      modifiableRootModel.inheritSdk();
+    }
 
     final Project project = modifiableRootModel.getProject();
 
