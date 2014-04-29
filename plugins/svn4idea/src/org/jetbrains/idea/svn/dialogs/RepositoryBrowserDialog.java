@@ -87,9 +87,6 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   protected final SvnVcs myVCS;
   private RepositoryBrowserComponent myRepositoryBrowser;
 
-  @NonNls public static final String COPY_OF_PREFIX = "CopyOf";
-  @NonNls public static final String NEW_FOLDER_POSTFIX = "NewFolder";
-
   private final DeleteAction myDeleteAction;
   private AnAction copyUrlAction;
   private AnAction mkDirAction;
@@ -1181,16 +1178,6 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       return;
     }
     final Collection<Change> changesList = changes.values();
-    /*final Collection<Change> changesListConverted = new ArrayList<Change>(changesList.size());
-    for (Change change : changesList) {
-      final FilePath path = ChangesUtil.getFilePath(change);
-      final Change newChange = new Change(
-          new UrlContentRevision(change.getBeforeRevision(),
-                                 FilePathImpl.createNonLocal(SVNPathUtil.append(sourceUrl.toString(), path.getName()), path.isDirectory()), revision),
-          new UrlContentRevision(change.getAfterRevision(),
-                                 FilePathImpl.createNonLocal(SVNPathUtil.append(targetUrl.toString(), path.getName()), path.isDirectory()), revision));
-      changesListConverted.add(newChange);
-    }*/
 
     final String title = SvnBundle.message("repository.browser.compare.title", sourceTitle, targetTitle);
     SwingUtilities.invokeLater(new Runnable() {
@@ -1226,10 +1213,6 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       e.getPresentation().setDescription("Close this tool window");
       e.getPresentation().setIcon(AllIcons.Actions.Cancel);
     }
-  }
-
-  public void setDefaultExpander(final NotNullFunction<RepositoryBrowserComponent, Expander> expanderFactory) {
-    myRepositoryBrowser.setLazyLoadingExpander(expanderFactory);
   }
 
   private static class UrlContentRevision implements ContentRevision {
