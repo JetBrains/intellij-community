@@ -31,6 +31,7 @@ import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -61,12 +62,15 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   private final XBreakpointManagerImpl myBreakpointManager;
   private Icon myIcon;
   private CustomizedBreakpointPresentation myCustomizedPresentation;
+  private XExpression myCondition;
+  private XExpression myLogExpression;
 
   public XBreakpointBase(final XBreakpointType<Self, P> type, XBreakpointManagerImpl breakpointManager, final @Nullable P properties, final S state) {
     myState = state;
     myType = type;
     myProperties = properties;
     myBreakpointManager = breakpointManager;
+    initExpressions();
   }
 
   protected XBreakpointBase(final XBreakpointType<Self, P> type, XBreakpointManagerImpl breakpointManager, S breakpointState) {
@@ -77,6 +81,14 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     if (myProperties != null) {
       ComponentSerializationUtil.loadComponentState(myProperties, myState.getPropertiesElement());
     }
+    initExpressions();
+  }
+
+  private void initExpressions() {
+    BreakpointState.Condition condition = myState.getCondition();
+    myCondition = condition != null ? condition.toXExpression() : null;
+    BreakpointState.LogExpression expression = myState.getLogExpression();
+    myLogExpression = expression != null ? expression.toXExpression() : null;
   }
 
   public final Project getProject() {
@@ -148,26 +160,54 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   @Override
   public String getLogExpression() {
-    return myState.getLogExpression();
+    return myLogExpression != null ? myLogExpression.getExpression() : null;
   }
 
   @Override
   public void setLogExpression(@Nullable final String expression) {
     if (!Comparing.equal(getLogExpression(), expression)) {
-      myState.setLogExpression(expression);
+      myLogExpression = XExpressionImpl.fromText(expression);
+      fireBreakpointChanged();
+    }
+  }
+
+  @Nullable
+  @Override
+  public XExpression getLogExpressionObject() {
+    return myLogExpression;
+  }
+
+  @Override
+  public void setLogExpressionObject(@Nullable XExpression expression) {
+    if (!Comparing.equal(getLogExpressionObject(), expression)) {
+      myLogExpression = expression;
       fireBreakpointChanged();
     }
   }
 
   @Override
   public String getCondition() {
-    return myState.getCondition();
+    return myCondition != null ? myCondition.getExpression() : null;
   }
 
   @Override
   public void setCondition(@Nullable final String condition) {
     if (!Comparing.equal(condition, getCondition())) {
-      myState.setCondition(condition);
+      myCondition = XExpressionImpl.fromText(condition);
+      fireBreakpointChanged();
+    }
+  }
+
+  @Nullable
+  @Override
+  public XExpression getConditionExpression() {
+    return myCondition;
+  }
+
+  @Override
+  public void setConditionExpression(@Nullable XExpression condition) {
+    if (!Comparing.equal(condition, getConditionExpression())) {
+      myCondition = condition;
       fireBreakpointChanged();
     }
   }
@@ -195,6 +235,8 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   public S getState() {
     Element propertiesElement = myProperties != null ? XmlSerializer.serialize(myProperties.getState(), SERIALIZATION_FILTERS) : null;
+    myState.setCondition(myCondition != null ? new BreakpointState.Condition(myCondition) : null);
+    myState.setLogExpression(myLogExpression != null ? new BreakpointState.LogExpression(myLogExpression) : null);
     myState.setPropertiesElement(propertiesElement);
     return myState;
   }

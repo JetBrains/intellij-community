@@ -1,13 +1,11 @@
 package org.jetbrains.java.debugger;
 
-import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.ui.DebuggerExpressionComboBox;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaCodeFragmentFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -43,16 +41,18 @@ public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase im
       @Override
       public void saveTo(@NotNull XBreakpoint<?> breakpoint) {
         TextWithImports text = myComboBox.getText();
-        final String condition = !text.getText().isEmpty() ? text.toExternalForm() : null;
-        breakpoint.setCondition(condition);
-        if (condition != null) {
+        breakpoint.setConditionExpression(TextWithImportsImpl.toXExpression(text));
+        if (!text.getText().isEmpty()) {
           myComboBox.addRecent(text);
         }
       }
 
       @Override
       public void loadFrom(@NotNull XBreakpoint<?> breakpoint) {
-        myComboBox.setText(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, StringUtil.notNullize(breakpoint.getCondition())));
+        TextWithImports text = TextWithImportsImpl.fromXExpression(breakpoint.getConditionExpression());
+        if (text != null) {
+          myComboBox.setText(text);
+        }
       }
     };
   }
@@ -66,7 +66,7 @@ public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase im
       @Override
       public void saveTo(@NotNull XBreakpoint<?> breakpoint) {
         TextWithImports text = myComboBox.getText();
-        breakpoint.setLogExpression(myComboBox.isEnabled() && !text.getText().isEmpty() ? text.toExternalForm() : null);
+        breakpoint.setLogExpressionObject(myComboBox.isEnabled() ? TextWithImportsImpl.toXExpression(text) : null);
         if (text != null) {
           myComboBox.addRecent(text);
         }
@@ -74,7 +74,10 @@ public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase im
 
       @Override
       public void loadFrom(@NotNull XBreakpoint<?> breakpoint) {
-        myComboBox.setText(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, StringUtil.notNullize(breakpoint.getLogExpression())));
+        TextWithImports text = TextWithImportsImpl.fromXExpression(breakpoint.getLogExpressionObject());
+        if (text != null) {
+          myComboBox.setText(text);
+        }
       }
     };
   }
