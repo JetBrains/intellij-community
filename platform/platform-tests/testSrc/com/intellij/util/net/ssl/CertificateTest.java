@@ -36,6 +36,10 @@ public class CertificateTest extends PlatformTestCase {
   @NonNls private static final String WRONG_HOSTNAME_CERT_CN = "illegal.certificates-tests.labs.intellij.net";
   @NonNls private static final String WRONG_HOSTNAME_CERT_URL = "https://wrong-hostname.certificates-tests.labs.intellij.net";
 
+  // TODO: Add proper tests of client authentication, when it'll be supported (see IDEA-124209).
+  // By now client certificate should be specified manually via VM options like -Djavax.net.ssl.keyStore.
+  @SuppressWarnings("UnusedDeclaration") @NonNls private static final String CLIENT_AUTH_CERT_CN = "client-auth.certificates-tests.labs.intellij.net";
+
   //private static final Logger LOG = Logger.getInstance(CertificateTest.class);
 
   private CloseableHttpClient myClient;
