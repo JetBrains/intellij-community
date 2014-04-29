@@ -41,6 +41,7 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * @author yole
@@ -116,7 +117,7 @@ public class AppUIUtil {
   }
 
   public static String getFrameClass() {
-    String name = ApplicationNamesInfo.getInstance().getProductName().toLowerCase();
+    String name = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
     String wmClass = VENDOR_PREFIX + StringUtil.replaceChar(name, ' ', '-');
     if ("true".equals(System.getProperty("idea.debug.mode"))) {
       wmClass += "-debug";
