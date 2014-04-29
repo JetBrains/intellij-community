@@ -80,7 +80,10 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
       oldFeature.cancel(true);
     }
 
-    myAlarm.addRequest(future, DELAY_PERIOD);
+    if (!myAlarm.isDisposed()) {
+      myAlarm.addRequest(future, DELAY_PERIOD);
+      return false;
+    }
 
     try {
       List<Task> tasks = future.get();
@@ -155,6 +158,7 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
 
   @Override
   public void dispose() {
-    // do nothing, only used to invoke dispose on Alarm
+    // Alarm should be disposed already
+    myFutureReference.get().cancel(true);
   }
 }
