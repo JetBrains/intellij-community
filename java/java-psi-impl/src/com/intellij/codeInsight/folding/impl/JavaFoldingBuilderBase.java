@@ -832,6 +832,10 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
   @Override
   protected boolean isCustomFoldingRoot(ASTNode node) {
     IElementType nodeType = node.getElementType();
-    return nodeType == JavaElementType.CLASS || nodeType == JavaElementType.CODE_BLOCK;
+    if (nodeType == JavaElementType.CLASS) {
+      ASTNode parent = node.getTreeParent();
+      return parent == null || parent.getElementType() != JavaElementType.CLASS;
+    }
+    return nodeType == JavaElementType.CODE_BLOCK;
   }
 }
