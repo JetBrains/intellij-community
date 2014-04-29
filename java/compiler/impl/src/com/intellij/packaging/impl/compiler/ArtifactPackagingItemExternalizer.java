@@ -29,13 +29,11 @@ import java.io.IOException;
 * @author nik
 */
 public class ArtifactPackagingItemExternalizer implements DataExternalizer<ArtifactPackagingItemOutputState> {
-  private byte[] myBuffer = IOUtil.allocReadWriteUTFBuffer();
-
   @Override
   public void save(@NotNull DataOutput out, ArtifactPackagingItemOutputState value) throws IOException {
     out.writeInt(value.myDestinations.size());
     for (Pair<String, Long> pair : value.myDestinations) {
-      IOUtil.writeUTFFast(myBuffer, out, pair.getFirst());
+      IOUtil.writeUTF(out, pair.getFirst());
       out.writeLong(pair.getSecond());
     }
   }
@@ -45,7 +43,7 @@ public class ArtifactPackagingItemExternalizer implements DataExternalizer<Artif
     int size = in.readInt();
     SmartList<Pair<String, Long>> destinations = new SmartList<Pair<String, Long>>();
     while (size-- > 0) {
-      String path = IOUtil.readUTFFast(myBuffer, in);
+      String path = IOUtil.readUTF(in);
       long outputTimestamp = in.readLong();
       destinations.add(Pair.create(path, outputTimestamp));
     }

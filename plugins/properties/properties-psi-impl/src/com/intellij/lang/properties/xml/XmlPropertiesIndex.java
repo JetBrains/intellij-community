@@ -154,20 +154,18 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
     return builder;
   }
 
-  private final byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
-
   @Override
   public void save(@NotNull DataOutput out, Key value) throws IOException {
     out.writeBoolean(value.isMarker);
     if (value.key != null) {
-      IOUtil.writeUTFFast(buffer, out, value.key);
+      IOUtil.writeUTF(out, value.key);
     }
   }
 
   @Override
   public Key read(@NotNull DataInput in) throws IOException {
     boolean isMarker = in.readBoolean();
-    return isMarker ? MARKER_KEY : new Key(IOUtil.readUTFFast(buffer, in));
+    return isMarker ? MARKER_KEY : new Key(IOUtil.readUTF(in));
   }
 
   @Override
