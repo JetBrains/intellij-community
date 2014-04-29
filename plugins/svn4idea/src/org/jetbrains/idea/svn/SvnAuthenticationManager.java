@@ -25,10 +25,12 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.EventDispatcher;
@@ -563,7 +565,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     }
   }
 
-  public void acknowledgeForSSL(boolean accepted, String kind, String realm, SVNErrorMessage message, SVNAuthentication proxy) {
+  public void acknowledgeForSSL(boolean accepted, SVNAuthentication proxy) {
     if (accepted && proxy instanceof SVNSSLAuthentication && (((SVNSSLAuthentication) proxy).getCertificateFile() != null)) {
       final SVNSSLAuthentication svnsslAuthentication = (SVNSSLAuthentication)proxy;
       final SVNURL url = svnsslAuthentication.getURL();
@@ -572,13 +574,9 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
       final SVNCompositeConfigFile serversFile = provider.getServersFile();
       String groupName = getGroupName(serversFile.getProperties("groups"), url.getHost());
 
-      if (StringUtil.isEmptyOrSpaces(groupName)) {
-        serversFile.setPropertyValue("global", SvnServerFileKeys.SSL_CLIENT_CERT_FILE, svnsslAuthentication.getCertificateFile().getPath(), true);
-        //serversFile.setPropertyValue("global", SvnServerFileKeys.SSL_CLIENT_CERT_PASSWORD, null, true);
-      } else {
-        serversFile.setPropertyValue(groupName, SvnServerFileKeys.SSL_CLIENT_CERT_FILE, svnsslAuthentication.getCertificateFile().getPath(), true);
-        //serversFile.setPropertyValue(groupName, SvnServerFileKeys.SSL_CLIENT_CERT_PASSWORD, null, true);
-      }
+      groupName = StringUtil.isEmptyOrSpaces(groupName) ? "global" : groupName;
+      serversFile
+        .setPropertyValue(groupName, SvnServerFileKeys.SSL_CLIENT_CERT_FILE, svnsslAuthentication.getCertificateFile().getPath(), true);
       serversFile.save();
     }
   }
@@ -597,7 +595,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     String host = url.getHost();
 
     String proxyHost = getServersPropertyIdea(host, HTTP_PROXY_HOST);
-    if ((proxyHost == null) || "".equals(proxyHost.trim())) {
+    if (StringUtil.isEmptyOrSpaces(proxyHost)) {
       if (getConfig().isIsUseDefaultProxy()) {
         // ! use common proxy if it is set
         try {
@@ -607,8 +605,8 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
               if (HttpConfigurable.isRealProxy(proxy) && Proxy.Type.HTTP.equals(proxy.type())) {
                 final SocketAddress address = proxy.address();
                 if (address instanceof InetSocketAddress) {
-                  return new MyPromptingProxyManager(((InetSocketAddress)address).getHostName(), "" + ((InetSocketAddress)address).getPort(),
-                                                     url.getProtocol());
+                  return new MyPromptingProxyManager(((InetSocketAddress)address).getHostName(),
+                                                     String.valueOf(((InetSocketAddress)address).getPort()), url.getProtocol());
                 }
               }
             }
@@ -642,7 +640,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
 
 
   private static class MyPromptingProxyManager extends MySimpleProxyManager {
-    private static final String ourPrompt = "Proxy authentication";
+
     private final String myProtocol;
 
     private MyPromptingProxyManager(final String host, final String port, String protocol) {
@@ -766,7 +764,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     return getPropertyIdea(host, serversFile, name);
   }
 
-  private String getPropertyIdea(String host, SVNCompositeConfigFile serversFile, final String name) {
+  private static String getPropertyIdea(String host, SVNCompositeConfigFile serversFile, final String name) {
     String groupName = getGroupName(serversFile.getProperties("groups"), host);
     if (groupName != null) {
       Map hostProps = serversFile.getProperties(groupName);
@@ -837,7 +835,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     return value == null || "yes".equalsIgnoreCase(value) || "on".equalsIgnoreCase(value) || "true".equalsIgnoreCase(value);
   }
 
-  private ModalityState getCurrent() {
+  private static ModalityState getCurrent() {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       return ModalityState.current();
     }
@@ -846,18 +844,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
       return ModalityState.defaultModalityState();
     }
     return pi.getModalityState();
-  }
-
-  /**
-   * Shows a yes/no question whether user wants to store his password in plain text and returns his answer.
-   * @param title   title of the questioning dialog.
-   * @param message questioning message to be displayed.
-   * @return true if user agrees to store his password in plaintext, false if he doesn't.
-   */
-  @CalledInAwt
-  private boolean askToStoreUnencrypted(String title, String message) {
-    final int answer = Messages.showYesNoDialog(myProject, message, title, Messages.getQuestionIcon());
-    return answer == Messages.YES;
   }
 
   public void setInteraction(SvnAuthenticationInteraction interaction) {
@@ -912,10 +898,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     public void dispose() {
       myProject = null;
     }
-  }
-
-  private static boolean isLion() {
-    return SystemInfo.isMac && SystemInfo.isMacOSSnowLeopard && ! SystemInfo.OS_VERSION.startsWith("10.6");
   }
 
   public class IdeaSVNHostOptionsProvider extends DefaultSVNHostOptionsProvider {

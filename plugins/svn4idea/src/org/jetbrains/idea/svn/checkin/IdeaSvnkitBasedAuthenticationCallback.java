@@ -654,9 +654,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
 
   private boolean acknowledgeSSL(SvnAuthenticationManager manager, SVNAuthentication svnAuthentication) throws SVNException {
     if (svnAuthentication instanceof SVNSSLAuthentication && (((SVNSSLAuthentication) svnAuthentication).getCertificateFile() != null)) {
-      manager.acknowledgeForSSL(true, getFromType(svnAuthentication),
-                                              ((SVNSSLAuthentication) svnAuthentication).getCertificateFile().getPath(),
-                                              null, svnAuthentication);
+      manager.acknowledgeForSSL(true, svnAuthentication);
       manager.acknowledgeAuthentication(true, getFromType(svnAuthentication),
                                         ((SVNSSLAuthentication) svnAuthentication).getCertificateFile().getPath(),
                                         null, svnAuthentication, svnAuthentication.getURL());
