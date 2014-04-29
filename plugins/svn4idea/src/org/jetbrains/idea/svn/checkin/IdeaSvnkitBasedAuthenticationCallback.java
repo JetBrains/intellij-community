@@ -34,7 +34,10 @@ import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.proxy.CommonProxy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.SvnAuthenticationManager;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnConfiguration;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.commandLine.AuthenticationCallback;
 import org.jetbrains.idea.svn.dialogs.SimpleCredentialsDialog;
 import org.jetbrains.idea.svn.dialogs.SvnInteractiveAuthenticationProvider;
@@ -122,7 +125,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     // we return credentials from cache if they are asked for the first time during command execution, otherwise - user is asked
     if (data != null && !myRequestedCredentials.contains(getKey(realm, type))) {
       // we already have credentials in memory cache
-      result = (T) data;
+      result = (T)data;
       myRequestedCredentials.add(getKey(realm, type));
     }
     else {
@@ -208,24 +211,6 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
            (instance.USE_HTTP_PROXY || instance.USE_PROXY_PAC);
   }
 
-  // TODO: not used - should be removed.
-  @Override
-  public boolean persistDataToTmpConfig(final SVNURL repositoryUrl) throws IOException {
-    // TODO: Make repositoryUrl @NotNull after SvnLineCommand.runWithAuthenticationAttempt refactored
-    if (repositoryUrl == null) {
-      return false;
-    }
-
-    final SvnConfiguration configuration = SvnConfiguration.getInstance(myVcs.getProject());
-    initTmpDir(configuration);
-
-    final Proxy proxy = getIdeaDefinedProxy(repositoryUrl);
-    if (proxy != null){
-      IdeaSVNConfigFile.putProxyIntoServersFile(myTempDirectory, repositoryUrl.getHost(), proxy);
-    }
-    return true;
-  }
-
   @Nullable
   public static Proxy getIdeaDefinedProxy(@NotNull final SVNURL url) {
     // SVNKit authentication implementation sets repositories as noProxy() to provide custom proxy authentication logic - see for instance,
@@ -239,7 +224,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     CommonProxy.getInstance().removeNoProxy(url.getProtocol(), url.getHost(), url.getPort());
 
     final List<Proxy> proxies = CommonProxy.getInstance().select(URI.create(url.toString()));
-    if (proxies != null && ! proxies.isEmpty()) {
+    if (proxies != null && !proxies.isEmpty()) {
       for (Proxy proxy : proxies) {
         if (HttpConfigurable.isRealProxy(proxy) && Proxy.Type.HTTP.equals(proxy.type())) {
           return proxy;
@@ -254,12 +239,14 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
   public PasswordAuthentication getProxyAuthentication(@NotNull SVNURL repositoryUrl) {
     final Proxy proxy = getIdeaDefinedProxy(repositoryUrl);
     if (proxy == null) return null;
-    if (myProxyCredentialsWereReturned){
+    if (myProxyCredentialsWereReturned) {
       // ask loud
       final HttpConfigurable instance = HttpConfigurable.getInstance();
       if (instance.USE_HTTP_PROXY || instance.USE_PROXY_PAC) {
-        PopupUtil.showBalloonForActiveComponent("Failed to authenticate to proxy. You can change proxy credentials in HTTP proxy settings.", MessageType.ERROR);
-      } else {
+        PopupUtil.showBalloonForActiveComponent("Failed to authenticate to proxy. You can change proxy credentials in HTTP proxy settings.",
+                                                MessageType.ERROR);
+      }
+      else {
         PopupUtil.showBalloonForActiveComponent("Failed to authenticate to proxy.", MessageType.ERROR);
       }
       return null;
@@ -271,7 +258,8 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
         .requestPasswordAuthentication(repositoryUrl.getHost(), address.getAddress(), repositoryUrl.getPort(), repositoryUrl.getProtocol(),
                                        repositoryUrl.getHost(), repositoryUrl.getProtocol(), new URL(repositoryUrl.toString()),
                                        Authenticator.RequestorType.PROXY);
-    } catch (MalformedURLException e) {
+    }
+    catch (MalformedURLException e) {
       LOG.info(e);
       return null;
     }
@@ -281,29 +269,6 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     }
 
     return authentication;
-  }
-
-  // TODO: not used - should be removed.
-  @Override
-  public boolean askProxyCredentials(SVNURL repositoryUrl) {
-    if (repositoryUrl == null) {
-      return false;
-    }
-
-    PasswordAuthentication authentication = getProxyAuthentication(repositoryUrl);
-
-    if (authentication != null) {
-      // for 'generic' proxy variant (suppose user defined proxy in Subversion config but no password)
-      try {
-        initTmpDir(SvnConfiguration.getInstance(myVcs.getProject()));
-      }
-      catch (IOException e) {
-        PopupUtil.showBalloonForActiveComponent("Failed to authenticate to proxy: " + e.getMessage(), MessageType.ERROR);
-        return false;
-      }
-      return IdeaSVNConfigFile.putProxyCredentialsIntoServerFile(myTempDirectory, repositoryUrl.getHost(), authentication);
-    }
-    return false;
   }
 
   public void reset() {
@@ -336,7 +301,8 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
         if (myStoreInUsual) {
           manager.setArtificialSaving(true);
           return acknowledge(manager, svnAuthentication);
-        } else {
+        }
+        else {
           if (myTmpDirManager == null) {
             initTmpDir(configuration);
             myTmpDirManager = createTmpManager();
@@ -386,7 +352,8 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
       connection = project.getMessageBus().connect(project);
       connection.subscribe(SvnAuthenticationManager.AUTHENTICATION_PROVIDER_LISTENER, listener);
       runnable.run();
-    } finally {
+    }
+    finally {
       if (connection != null) {
         connection.disconnect();
       }
@@ -417,7 +384,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
 
     @Override
     protected Boolean getWithPassive(SvnAuthenticationManager passive) throws SVNException {
-      String stored = (String) passive.getRuntimeAuthStorage().getData("svn.ssl.server", myRealm);
+      String stored = (String)passive.getRuntimeAuthStorage().getData("svn.ssl.server", myRealm);
       if (stored == null) return null;
       CertificateFactory cf;
       try {
@@ -481,9 +448,10 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     protected boolean acknowledge(SvnAuthenticationManager manager, Boolean svnAuthentication) throws SVNException {
       // we should store certificate, if it wasn't accepted (if temporally tmp)
       if (myCertificate == null) {   // this is if certificate was stored only in passive area
-        String stored = (String) manager.getRuntimeAuthStorage().getData("svn.ssl.server", myRealm);
+        String stored = (String)manager.getRuntimeAuthStorage().getData("svn.ssl.server", myRealm);
         if (StringUtil.isEmptyOrSpaces(stored)) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_UNAVAILABLE, "No stored server certificate was found in runtime"));
+          throw new SVNException(
+            SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_UNAVAILABLE, "No stored server certificate was found in runtime"));
         }
         CertificateFactory cf;
         try {
@@ -498,10 +466,10 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
         myCertificateRealm = myRealm;
       }
       if (myTempDirectory != null && myCertificate != null) {
-        if (! (myCertificate instanceof X509Certificate)) {
+        if (!(myCertificate instanceof X509Certificate)) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not store server certificate: " + myCertificate));
         }
-        X509Certificate x509Certificate = (X509Certificate) myCertificate;
+        X509Certificate x509Certificate = (X509Certificate)myCertificate;
         String stored;
         try {
           stored = SVNBase64.byteArrayToBase64(x509Certificate.getEncoded());
@@ -534,7 +502,8 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
       File tmpFile = SVNFileUtil.createUniqueFile(configDir, "auth", ".tmp", true);
       try {
         SVNWCProperties.setProperties(SVNProperties.wrap(map), file, tmpFile, SVNWCProperties.SVN_HASH_TERMINATOR);
-      } finally {
+      }
+      finally {
         SVNFileUtil.deleteFile(tmpFile);
       }
     }
@@ -548,7 +517,8 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
         realm = ((SVNSSLAuthentication)authentication).getCertificateFile().getPath();
       }
       manager.acknowledgeAuthentication(true, getFromType(authentication), realm, null, authentication, authentication.getURL());
-    } catch (SvnAuthenticationManager.CredentialsSavedException e) {
+    }
+    catch (SvnAuthenticationManager.CredentialsSavedException e) {
       return e.isSuccess();
     }
     return true;
@@ -573,7 +543,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
       final List<String> kinds = getKinds(url, passwordRequest);
       for (String kind : kinds) {
         myKind = kind;
-        if (! tryAuthenticate()) {
+        if (!tryAuthenticate()) {
           return false;
         }
       }
@@ -583,8 +553,9 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     @Override
     protected SVNAuthentication getWithPassive(SvnAuthenticationManager passive) throws SVNException {
       final SVNAuthentication impl = getWithPassiveImpl(passive);
-      if (impl != null && ! checkAuthOk(impl)) {
-        clearPassiveCredentials(myRealm, myUrl, impl instanceof SVNPasswordAuthentication);  //clear passive also take into acconut ssl filepath
+      if (impl != null && !checkAuthOk(impl)) {
+        clearPassiveCredentials(myRealm, myUrl,
+                                impl instanceof SVNPasswordAuthentication);  //clear passive also take into acconut ssl filepath
         return null;
       }
       return impl;
@@ -593,7 +564,8 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     private SVNAuthentication getWithPassiveImpl(SvnAuthenticationManager passive) throws SVNException {
       try {
         return passive.getFirstAuthentication(myKind, myRealm, myUrl);
-      } catch (SVNCancelException e) {
+      }
+      catch (SVNCancelException e) {
         return null;
       }
     }
@@ -647,7 +619,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
 
     @Override
     protected boolean acknowledge(SvnAuthenticationManager manager, SVNAuthentication svnAuthentication) throws SVNException {
-      if (! StringUtil.isEmptyOrSpaces(myRealm2) && ! myRealm2.equals(myRealm)) {
+      if (!StringUtil.isEmptyOrSpaces(myRealm2) && !myRealm2.equals(myRealm)) {
         storeCredentials(manager, svnAuthentication, myRealm2);
       }
       return storeCredentials(manager, svnAuthentication, myRealm);
@@ -658,11 +630,14 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
   private static List<String> getKinds(final SVNURL url, boolean passwordRequest) {
     if (passwordRequest || "http".equals(url.getProtocol())) {
       return Collections.singletonList(ISVNAuthenticationManager.PASSWORD);
-    } else if ("https".equals(url.getProtocol())) {
+    }
+    else if ("https".equals(url.getProtocol())) {
       return Collections.singletonList(ISVNAuthenticationManager.SSL);
-    } else if ("svn".equals(url.getProtocol())) {
+    }
+    else if ("svn".equals(url.getProtocol())) {
       return Collections.singletonList(ISVNAuthenticationManager.PASSWORD);
-    } else if (url.getProtocol().contains("svn+")) {  // todo +-
+    }
+    else if (url.getProtocol().contains("svn+")) {  // todo +-
       return Arrays.asList(ISVNAuthenticationManager.SSH, ISVNAuthenticationManager.USERNAME);
     }
     return Collections.singletonList(ISVNAuthenticationManager.USERNAME);
