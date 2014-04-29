@@ -171,7 +171,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
           return newBound;
         }
 
-        return rebound(wildcardType, newBound);
+        return newBound == PsiType.NULL ? newBound : rebound(wildcardType, newBound);
       }
     }
 
