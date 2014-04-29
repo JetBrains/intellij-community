@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.introduceField;
 
+import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -282,6 +283,7 @@ public abstract class LocalToFieldHandler {
 
     public void run() {
       try {
+        ChangeContextUtil.encodeContextInfo(myDestinationClass, true);
         final boolean rebindNeeded2 = !myVariableName.equals(myFieldName) || myRebindNeeded;
         final PsiReference[] refs;
         if (rebindNeeded2) {
@@ -342,6 +344,7 @@ public abstract class LocalToFieldHandler {
             }
           }
           //RefactoringUtil.renameVariableReferences(local, pPrefix + fieldName, GlobalSearchScope.projectScope(myProject));
+          ChangeContextUtil.decodeContextInfo(myDestinationClass, myDestinationClass, null);
         }
       }
       catch (IncorrectOperationException e) {
