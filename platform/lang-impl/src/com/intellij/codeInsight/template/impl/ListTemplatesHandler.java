@@ -50,6 +50,9 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 public class ListTemplatesHandler implements CodeInsightActionHandler {
+
+  private static final Logger LOG = Logger.getInstance(ListTemplatesHandler.class);
+
   @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
     if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
@@ -82,8 +85,8 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
   public static Map<TemplateImpl, String> filterTemplatesByPrefix(@NotNull Collection<TemplateImpl> templates, @NotNull Editor editor,
                                                                   int offset, boolean fullMatch, boolean searchInDescription) {
     if (offset > editor.getDocument().getTextLength()) {
-      Logger.getInstance(ListTemplatesHandler.class).error("Cannot filter templates, index out of bounds. Offset: " + offset,
-                                                           AttachmentFactory.createAttachment(editor.getDocument()));
+      LOG.error("Cannot filter templates, index out of bounds. Offset: " + offset,
+                AttachmentFactory.createAttachment(editor.getDocument()));
     }
     CharSequence documentText = editor.getDocument().getCharsSequence().subSequence(0, offset);
 
