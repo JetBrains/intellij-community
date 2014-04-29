@@ -37,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.net.URL;
@@ -137,12 +136,13 @@ public class AppUIUtil {
   }
 
   private static void registerFont(@NonNls String name) {
-    try {
-      URL url = AppUIUtil.class.getResource(name);
-      if (url == null) {
-        throw new IOException("Resource missing: " + name);
-      }
+    URL url = AppUIUtil.class.getResource(name);
+    if (url == null) {
+      Logger.getInstance(AppUIUtil.class).warn("Resource missing: " + name);
+      return;
+    }
 
+    try {
       InputStream is = url.openStream();
       try {
         Font font = Font.createFont(Font.TRUETYPE_FONT, is);
@@ -152,8 +152,8 @@ public class AppUIUtil {
         is.close();
       }
     }
-    catch (Exception e) {
-      Logger.getInstance(AppUIUtil.class).error("Cannot register font: " + name, e);
+    catch (Throwable t) {
+      Logger.getInstance(AppUIUtil.class).warn("Cannot register font: " + url, t);
     }
   }
 
