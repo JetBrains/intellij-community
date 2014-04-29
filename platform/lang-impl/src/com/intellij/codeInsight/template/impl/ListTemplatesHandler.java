@@ -81,8 +81,8 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
 
   public static Map<TemplateImpl, String> filterTemplatesByPrefix(@NotNull Collection<TemplateImpl> templates, @NotNull Editor editor,
                                                                   int offset, boolean fullMatch, boolean searchInDescription) {
-    if (offset >= editor.getDocument().getTextLength()) {
-      Logger.getInstance(ListTemplatesHandler.class).error("Cannot filter templates, index out of bounds. Offset: " + offset, 
+    if (offset > editor.getDocument().getTextLength()) {
+      Logger.getInstance(ListTemplatesHandler.class).error("Cannot filter templates, index out of bounds. Offset: " + offset,
                                                            AttachmentFactory.createAttachment(editor.getDocument()));
     }
     CharSequence documentText = editor.getDocument().getCharsSequence().subSequence(0, offset);
