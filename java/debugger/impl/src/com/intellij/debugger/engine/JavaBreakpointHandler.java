@@ -15,21 +15,20 @@
  */
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
-import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.ui.breakpoints.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
+import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author egor
  */
-public abstract class JavaBreakpointHandler extends XBreakpointHandler {
-  private final DebugProcessImpl myProcess;
+public class JavaBreakpointHandler extends XBreakpointHandler {
+  protected final DebugProcessImpl myProcess;
 
-  public JavaBreakpointHandler(@NotNull Class<? extends JavaBreakpointType> breakpointTypeClass, DebugProcessImpl process) {
+  public JavaBreakpointHandler(@NotNull Class<? extends XBreakpointType<?, ?>> breakpointTypeClass, DebugProcessImpl process) {
     super(breakpointTypeClass);
     myProcess = process;
   }

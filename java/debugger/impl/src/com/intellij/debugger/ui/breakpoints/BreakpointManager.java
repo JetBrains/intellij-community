@@ -48,8 +48,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiField;
-import com.intellij.util.Alarm;
-import com.intellij.util.EventDispatcher;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.*;
@@ -122,19 +120,7 @@ public class BreakpointManager {
 
   public void init() {
     XBreakpointManager manager = XDebuggerManager.getInstance(myProject).getBreakpointManager();
-    manager.addBreakpointListener(new XBreakpointListener() {
-      @Override
-      public void breakpointAdded(@NotNull XBreakpoint xBreakpoint) {
-        if (isJavaType(xBreakpoint)) {
-          //onBreakpointAdded(xBreakpoint);
-        }
-      }
-
-      @Override
-      public void breakpointRemoved(@NotNull XBreakpoint xBreakpoint) {
-        //onBreakpointRemoved(xBreakpoint);
-      }
-
+    manager.addBreakpointListener(new XBreakpointAdapter<XBreakpoint<?>>() {
       @Override
       public void breakpointChanged(@NotNull XBreakpoint xBreakpoint) {
         Breakpoint breakpoint = myBreakpoints.get(xBreakpoint);
@@ -506,7 +492,9 @@ public class BreakpointManager {
   public static Breakpoint addBreakpointInt(@NotNull XBreakpoint xBreakpoint) {
     Project project = ((XBreakpointBase)xBreakpoint).getProject();
     BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
-    return breakpointManager.onBreakpointAdded(xBreakpoint);
+    Breakpoint breakpoint = breakpointManager.createJavaBreakpoint(xBreakpoint);
+    breakpointManager.addBreakpoint(breakpoint);
+    return breakpoint;
   }
 
   //used in Fabrique
@@ -515,12 +503,6 @@ public class BreakpointManager {
     myBreakpointsListForIteration = null;
     breakpoint.updateUI();
     checkAndNotifyPossiblySlowBreakpoint(breakpoint.myXBreakpoint);
-  }
-
-  private synchronized Breakpoint onBreakpointAdded(XBreakpoint xBreakpoint) {
-    Breakpoint breakpoint = createJavaBreakpoint(xBreakpoint);
-    addBreakpoint(breakpoint);
-    return breakpoint;
   }
 
   public void removeBreakpoint(@Nullable final Breakpoint breakpoint) {

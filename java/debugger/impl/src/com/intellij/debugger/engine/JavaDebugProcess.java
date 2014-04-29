@@ -40,6 +40,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
@@ -54,6 +55,9 @@ import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author egor
@@ -71,13 +75,20 @@ public class JavaDebugProcess extends XDebugProcess {
     myJavaSession = javaSession;
     myEditorsProvider = new JavaDebuggerEditorsProvider();
     DebugProcessImpl process = javaSession.getProcess();
-    myBreakpointHandlers = new XBreakpointHandler[]{
-      new JavaBreakpointHandler.JavaLineBreakpointHandler(process),
-      new JavaBreakpointHandler.JavaExceptionBreakpointHandler(process),
-      new JavaBreakpointHandler.JavaFieldBreakpointHandler(process),
-      new JavaBreakpointHandler.JavaMethodBreakpointHandler(process),
-      new JavaBreakpointHandler.JavaWildcardBreakpointHandler(process),
-    };
+
+    List<XBreakpointHandler> handlers = new ArrayList<XBreakpointHandler>();
+    handlers.add(new JavaBreakpointHandler.JavaLineBreakpointHandler(process));
+    handlers.add(new JavaBreakpointHandler.JavaExceptionBreakpointHandler(process));
+    handlers.add(new JavaBreakpointHandler.JavaFieldBreakpointHandler(process));
+    handlers.add(new JavaBreakpointHandler.JavaMethodBreakpointHandler(process));
+    handlers.add(new JavaBreakpointHandler.JavaWildcardBreakpointHandler(process));
+
+    for (JavaBreakpointHandlerFactory factory : Extensions.getExtensions(JavaBreakpointHandlerFactory.EP_NAME)) {
+      handlers.add(factory.createHandler(process));
+    }
+
+    myBreakpointHandlers = handlers.toArray(new XBreakpointHandler[handlers.size()]);
+
     process.addDebugProcessListener(new DebugProcessAdapter() {
       @Override
       public void paused(final SuspendContext suspendContext) {

@@ -90,6 +90,9 @@
     <extensionPoint name="debugger.javaDebugAware"
                     interface="com.intellij.debugger.engine.JavaDebugAware"/>
 
+    <extensionPoint name="debugger.javaBreakpointHandlerFactory"
+                    interface="com.intellij.debugger.engine.JavaBreakpointHandlerFactory"/>
+
     <extensionPoint name="debugger.positionManagerFactory"
                     interface="com.intellij.debugger.PositionManagerFactory"
                     area="IDEA_PROJECT"/>
