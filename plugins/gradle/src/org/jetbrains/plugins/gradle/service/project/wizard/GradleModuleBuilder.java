@@ -52,6 +52,7 @@ import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
@@ -123,7 +124,17 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
   @Nullable
   @Override
   public ModuleWizardStep getCustomOptionsStep(WizardContext context, Disposable parentDisposable) {
-    if (!myWizardContext.isCreatingNewProject()) return null;
+    if (!myWizardContext.isCreatingNewProject()) return new ModuleWizardStep() {
+      @Override
+      public JComponent getComponent() {
+        return new JPanel();
+      }
+
+      @Override
+      public void updateDataModel() {
+
+      }
+    };
     final GradleProjectSettingsControl settingsControl = new GradleProjectSettingsControl(getExternalProjectSettings());
     return new ExternalModuleSettingsStep<GradleProjectSettings>(this, settingsControl);
   }
