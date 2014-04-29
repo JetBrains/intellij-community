@@ -81,7 +81,6 @@ import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -696,7 +695,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }).setAsSecondary(true);
     }
 
-    if (!PlatformUtils.isCidr()) {
+    if (isShowMembersOptionSupported()) {
       myActionGroup.addAction(new PaneOptionAction(myShowMembers, IdeBundle.message("action.show.members"),
                                                    IdeBundle.message("action.show.hide.members"),
                                                    AllIcons.ObjectBrowser.ShowMembers, ourShowMembersDefaults))
@@ -737,6 +736,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }, getComponent());
     myActionGroup.add(collapseAllAction);
     getCurrentProjectViewPane().addToolbarActions(myActionGroup);
+  }
+
+  protected boolean isShowMembersOptionSupported() {
+    return true;
   }
 
   @Override

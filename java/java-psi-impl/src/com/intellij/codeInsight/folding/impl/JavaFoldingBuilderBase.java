@@ -29,6 +29,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
@@ -422,7 +423,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
   }
 
   private boolean addToFold(List<FoldingDescriptor> list, PsiElement elementToFold, Document document, boolean allowOneLiners) {
-    LOG.assertTrue(elementToFold.isValid());
+    PsiUtilCore.ensureValid(elementToFold);
     TextRange range = getRangeToFold(elementToFold);
     if (range == null) return false;
     return addFoldRegion(list, elementToFold, document, allowOneLiners, range);
@@ -831,6 +832,10 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
   @Override
   protected boolean isCustomFoldingRoot(ASTNode node) {
     IElementType nodeType = node.getElementType();
-    return nodeType == JavaElementType.CLASS || nodeType == JavaElementType.CODE_BLOCK;
+    if (nodeType == JavaElementType.CLASS) {
+      ASTNode parent = node.getTreeParent();
+      return parent == null || parent.getElementType() != JavaElementType.CLASS;
+    }
+    return nodeType == JavaElementType.CODE_BLOCK;
   }
 }

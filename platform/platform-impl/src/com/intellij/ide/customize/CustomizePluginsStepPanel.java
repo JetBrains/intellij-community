@@ -59,6 +59,7 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
     JBScrollPane scrollPane =
       new JBScrollPane(gridPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     scrollPane.getVerticalScrollBar().setUnitIncrement(10);
+    scrollPane.setBorder(null);
     add(scrollPane, MAIN);
     add(myCustomizePanel, CUSTOMIZE);
 

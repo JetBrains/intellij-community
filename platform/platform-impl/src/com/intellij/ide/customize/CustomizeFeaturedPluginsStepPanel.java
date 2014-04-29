@@ -56,6 +56,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
     JBScrollPane scrollPane =
       new JBScrollPane(gridPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     scrollPane.getVerticalScrollBar().setUnitIncrement(10);
+    scrollPane.setBorder(null);
 
     Map<String, String> config = PluginGroups.getInstance().getFeaturedPlugins();
     boolean isEmptyOrOffline = true;
