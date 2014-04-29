@@ -19,7 +19,7 @@ import com.intellij.util.containers.IntArrayList;
 
 public class LineWrapper {
 
-  public IntArrayList calcBreakOffsets(char[] text, int startOffset, int endOffset, int column, double x, double clipX, WidthProvider widthProvider) {
+  public static IntArrayList calcBreakOffsets(char[] text, int startOffset, int endOffset, int column, double x, double clipX, WidthProvider widthProvider) {
     IntArrayList breakOffsets = new IntArrayList();
     int nextOffset = startOffset;
     while (true) {
