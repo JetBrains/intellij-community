@@ -764,16 +764,39 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     return null;
   }
 
+    // TODO remove as soon as an arrangement sub-system is provided for groovy.
+  public static int getMemberOrderWeight(PsiElement member, CodeStyleSettings settings) {
+    if (member instanceof PsiField) {
+      if (member instanceof PsiEnumConstant) {
+        return 1;
+      }
+      return ((PsiField)member).hasModifierProperty(PsiModifier.STATIC) ? settings.STATIC_FIELDS_ORDER_WEIGHT + 1
+                                                                        : settings.FIELDS_ORDER_WEIGHT + 1;
+    }
+    if (member instanceof PsiMethod) {
+      if (((PsiMethod)member).isConstructor()) {
+        return settings.CONSTRUCTORS_ORDER_WEIGHT + 1;
+      }
+      return ((PsiMethod)member).hasModifierProperty(PsiModifier.STATIC) ? settings.STATIC_METHODS_ORDER_WEIGHT + 1
+                                                                         : settings.METHODS_ORDER_WEIGHT + 1;
+    }
+    if (member instanceof PsiClass) {
+      return ((PsiClass)member).hasModifierProperty(PsiModifier.STATIC) ? settings.STATIC_INNER_CLASSES_ORDER_WEIGHT + 1
+                                                                        : settings.INNER_CLASSES_ORDER_WEIGHT + 1;
+    }
+    return -1;
+  }
+
   @Nullable
   private PsiElement getDefaultAnchor(GrTypeDefinitionBody body, PsiMember member) {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
 
-    int order = JavaPsiImplementationHelperImpl.getMemberOrderWeight(member, settings);
+    int order = getMemberOrderWeight(member, settings);
     if (order < 0) return null;
 
     PsiElement lastMember = null;
     for (PsiElement child = body.getFirstChild(); child != null; child = child.getNextSibling()) {
-      int order1 = JavaPsiImplementationHelperImpl.getMemberOrderWeight(getAnyMember(child), settings);
+      int order1 = getMemberOrderWeight(getAnyMember(child), settings);
       if (order1 < 0) continue;
       if (order1 > order) {
         final PsiElement lBrace = body.getLBrace();
