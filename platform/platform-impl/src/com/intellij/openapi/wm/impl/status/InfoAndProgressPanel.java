@@ -649,7 +649,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       myUpdateQueue.queue(new Update(MyInlineProgressIndicator.this, false, 1) {
         @Override
         public void run() {
-          ApplicationManager.getApplication().invokeLater(update);
+          update.run();
         }
       });
     }
