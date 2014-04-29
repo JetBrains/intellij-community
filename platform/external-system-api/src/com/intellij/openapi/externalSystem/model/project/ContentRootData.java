@@ -10,10 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Denis Zhdanov
@@ -64,7 +61,7 @@ public class ContentRootData extends AbstractExternalEntityData {
     if (FileUtil.isAncestor(new File(getRootPath()), new File(path), false)) {
       Collection<SourceRoot> paths = myData.get(type);
       if (paths == null) {
-        myData.put(type, paths = ContainerUtilRt.newHashSet());
+        myData.put(type, paths = new TreeSet<SourceRoot>(SourceRootComparator.INSTANCE));
       }
       paths.add(new SourceRoot(
         ExternalSystemApiUtil.toCanonicalPath(path),
@@ -146,6 +143,15 @@ public class ContentRootData extends AbstractExternalEntityData {
       }
       buffer.append(")");
       return buffer.toString();
+    }
+  }
+
+  private static final class SourceRootComparator implements Comparator<SourceRoot> {
+    private static final SourceRootComparator INSTANCE = new SourceRootComparator();
+
+    @Override
+    public int compare(@NotNull SourceRoot o1, @NotNull SourceRoot o2) {
+      return StringUtil.naturalCompare(o1.myPath, o2.myPath);
     }
   }
 }
