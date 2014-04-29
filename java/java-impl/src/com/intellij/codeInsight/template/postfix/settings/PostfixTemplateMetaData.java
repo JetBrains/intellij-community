@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -32,9 +33,18 @@ import java.util.List;
 
 public final class PostfixTemplateMetaData extends BeforeAfterActionMetaData {
 
+  public static final String KEY = "$key";
+
+  private static final PostfixTemplateMetaData EMPTY_METADATA = new PostfixTemplateMetaData();
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.postfix.settings.PostfixTemplateMetaData");
   private static final String DESCRIPTION_FOLDER = "postfixTemplates";
-  public static final String KEY = "$key";
+
+  @NotNull
+  static PostfixTemplateMetaData createMetaData(@Nullable PostfixTemplate template) {
+    if (template == null) return EMPTY_METADATA;
+
+    return new PostfixTemplateMetaData(template);
+  }
 
   private URL urlDir = null;
   private PostfixTemplate myTemplate;
@@ -44,14 +54,19 @@ public final class PostfixTemplateMetaData extends BeforeAfterActionMetaData {
     myTemplate = template;
   }
 
+  PostfixTemplateMetaData() {
+    super(EMPTY_DESCRIPTION, EMPTY_EXAMPLE, EMPTY_EXAMPLE);
+  }
+
   @NotNull
   @Override
   public TextDescriptor[] getExampleUsagesBefore() {
 
-    return decorateTextDescription(super.getExampleUsagesBefore());
+    return decorateTextDescriptor(super.getExampleUsagesBefore());
   }
 
-  private TextDescriptor[] decorateTextDescription(TextDescriptor[] before) {
+  @NotNull
+  private TextDescriptor[] decorateTextDescriptor(TextDescriptor[] before) {
     List<TextDescriptor> list = ContainerUtil.newArrayList();
     for (final TextDescriptor descriptor : before) {
       list.add(new TextDescriptor() {
@@ -72,7 +87,7 @@ public final class PostfixTemplateMetaData extends BeforeAfterActionMetaData {
   @NotNull
   @Override
   public TextDescriptor[] getExampleUsagesAfter() {
-    return decorateTextDescription(super.getExampleUsagesAfter());
+    return decorateTextDescriptor(super.getExampleUsagesAfter());
   }
 
   @Override

@@ -109,18 +109,11 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
         resetDescriptionPanel();
       }
     });
-    myDescriptionPanel.setVisible(false);
   }
 
   private void resetDescriptionPanel() {
-    assert myTemplatesListPanel != null;
-    PostfixTemplate template = myTemplatesListPanel.getTemplate();
-    if (null != template) {
-      myDescriptionPanel.setVisible(true);
-      myInnerPostfixDescriptionPanel.reset(new PostfixTemplateMetaData(template));
-    }
-    else {
-      myDescriptionPanel.setVisible(false);
+    if (null != myTemplatesListPanel) {
+      myInnerPostfixDescriptionPanel.reset(PostfixTemplateMetaData.createMetaData(myTemplatesListPanel.getTemplate()));
     }
   }
 
