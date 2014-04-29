@@ -27,9 +27,11 @@ import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.codeInsight.template.CustomLiveTemplateBase;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -79,6 +81,10 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
 
   public static Map<TemplateImpl, String> filterTemplatesByPrefix(@NotNull Collection<TemplateImpl> templates, @NotNull Editor editor,
                                                                   int offset, boolean fullMatch, boolean searchInDescription) {
+    if (offset >= editor.getDocument().getTextLength()) {
+      Logger.getInstance(ListTemplatesHandler.class).error("Cannot filter templates, index out of bounds. Offset: " + offset, 
+                                                           AttachmentFactory.createAttachment(editor.getDocument()));
+    }
     CharSequence documentText = editor.getDocument().getCharsSequence().subSequence(0, offset);
 
     String prefixWithoutDots = computeDescriptionMatchingPrefix(editor.getDocument(), offset);
