@@ -540,12 +540,14 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     }
   }
 
-  private boolean storeCredentials(SvnAuthenticationManager manager, final SVNAuthentication authentication, final String realm) throws SVNException {
+  private static boolean storeCredentials(@NotNull SvnAuthenticationManager manager, final SVNAuthentication authentication, String realm)
+    throws SVNException {
     try {
-      final String kind = getFromType(authentication);
-      if (! acknowledgeSSL(manager, authentication)) {
-        manager.acknowledgeAuthentication(true, kind, realm, null, authentication, authentication.getURL());
+      if (authentication instanceof SVNSSLAuthentication && (((SVNSSLAuthentication)authentication).getCertificateFile() != null)) {
+        manager.acknowledgeForSSL(true, authentication);
+        realm = ((SVNSSLAuthentication)authentication).getCertificateFile().getPath();
       }
+      manager.acknowledgeAuthentication(true, getFromType(authentication), realm, null, authentication, authentication.getURL());
     } catch (SvnAuthenticationManager.CredentialsSavedException e) {
       return e.isSuccess();
     }
@@ -652,17 +654,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     }
   }
 
-  private boolean acknowledgeSSL(SvnAuthenticationManager manager, SVNAuthentication svnAuthentication) throws SVNException {
-    if (svnAuthentication instanceof SVNSSLAuthentication && (((SVNSSLAuthentication) svnAuthentication).getCertificateFile() != null)) {
-      manager.acknowledgeForSSL(true, svnAuthentication);
-      manager.acknowledgeAuthentication(true, getFromType(svnAuthentication),
-                                        ((SVNSSLAuthentication) svnAuthentication).getCertificateFile().getPath(),
-                                        null, svnAuthentication, svnAuthentication.getURL());
-      return true;
-    }
-    return false;
-  }
-
+  @NotNull
   private static List<String> getKinds(final SVNURL url, boolean passwordRequest) {
     if (passwordRequest || "http".equals(url.getProtocol())) {
       return Collections.singletonList(ISVNAuthenticationManager.PASSWORD);
@@ -672,8 +664,6 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
       return Collections.singletonList(ISVNAuthenticationManager.PASSWORD);
     } else if (url.getProtocol().contains("svn+")) {  // todo +-
       return Arrays.asList(ISVNAuthenticationManager.SSH, ISVNAuthenticationManager.USERNAME);
-    } else if ("file".equals(url.getProtocol())) {
-      return Collections.singletonList(ISVNAuthenticationManager.USERNAME);
     }
     return Collections.singletonList(ISVNAuthenticationManager.USERNAME);
   }
@@ -684,7 +674,8 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     return myTempDirectory != null ? myTempDirectory : new File(myConfiguration.getConfigurationDirectory());
   }
 
-  private String getFromType(SVNAuthentication authentication) {
+  @NotNull
+  private static String getFromType(SVNAuthentication authentication) {
     if (authentication instanceof SVNPasswordAuthentication) {
       return ISVNAuthenticationManager.PASSWORD;
     }
