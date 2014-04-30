@@ -117,8 +117,8 @@ public final class VariableView extends XNamedValue implements VariableContext {
 
   @NotNull
   @Override
-  public DebuggerViewSupport getDebugProcess() {
-    return context.getDebugProcess();
+  public DebuggerViewSupport getViewSupport() {
+    return context.getViewSupport();
   }
 
   @Nullable
@@ -186,7 +186,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
     switch (value.getType()) {
       case OBJECT:
       case NODE:
-        context.getDebugProcess().computeObjectPresentation(((ObjectValue)value), variable, context, node, getIcon());
+        context.getViewSupport().computeObjectPresentation(((ObjectValue)value), variable, context, node, getIcon());
         break;
 
       case FUNCTION:
@@ -194,7 +194,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
         break;
 
       case ARRAY:
-        context.getDebugProcess().computeArrayPresentation(value, variable, context, node, getIcon());
+        context.getViewSupport().computeArrayPresentation(value, variable, context, node, getIcon());
         break;
 
       case BOOLEAN:
@@ -434,7 +434,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
 
   @Override
   public boolean canNavigateToSource() {
-    return value instanceof FunctionValue || getDebugProcess().canNavigateToSource(variable, context);
+    return value instanceof FunctionValue || getViewSupport().canNavigateToSource(variable, context);
   }
 
   @Override
@@ -443,17 +443,17 @@ public final class VariableView extends XNamedValue implements VariableContext {
       ((FunctionValue)value).resolve().doWhenDone(new Consumer<FunctionValue>() {
         @Override
         public void consume(final FunctionValue function) {
-          getDebugProcess().getVm().getScriptManager().getScript(function).doWhenDone(new Consumer<Script>() {
+          getViewSupport().getVm().getScriptManager().getScript(function).doWhenDone(new Consumer<Script>() {
             @Override
             public void consume(Script script) {
-              navigatable.setSourcePosition(script == null ? null : getDebugProcess().getSourceInfo(null, script, function.getOpenParenLine(), function.getOpenParenColumn()));
+              navigatable.setSourcePosition(script == null ? null : getViewSupport().getSourceInfo(null, script, function.getOpenParenLine(), function.getOpenParenColumn()));
             }
           });
         }
       });
     }
     else {
-      getDebugProcess().computeSourcePosition(variable, context, navigatable);
+      getViewSupport().computeSourcePosition(variable, context, navigatable);
     }
   }
 
@@ -470,7 +470,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
       list.add(parent.getName());
       parent = parent.getParent();
     }
-    return context.getDebugProcess().propertyNamesToString(list, false);
+    return context.getViewSupport().propertyNamesToString(list, false);
   }
 
   private static class MyFullValueEvaluator extends XFullValueEvaluator {

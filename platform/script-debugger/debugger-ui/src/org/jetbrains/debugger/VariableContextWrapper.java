@@ -32,8 +32,8 @@ class VariableContextWrapper implements VariableContext {
 
   @NotNull
   @Override
-  public DebuggerViewSupport getDebugProcess() {
-    return parentContext.getDebugProcess();
+  public DebuggerViewSupport getViewSupport() {
+    return parentContext.getViewSupport();
   }
 
   @Override
