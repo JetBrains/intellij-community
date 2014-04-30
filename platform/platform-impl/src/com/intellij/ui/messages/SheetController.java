@@ -16,6 +16,7 @@
 package com.intellij.ui.messages;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.Gray;
@@ -25,16 +26,21 @@ import org.jdesktop.swingx.graphics.GraphicsUtilities;
 import org.jdesktop.swingx.graphics.ShadowRenderer;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.net.URISyntaxException;
 
 /**
  * Created by Denis Fokin
  */
 public class SheetController {
 
+  private static final Logger LOG = Logger.getInstance(SheetController.class);
   private static final int SHEET_MINIMUM_HEIGHT = 143;
   private static String fontName = "Lucida Grande";
   private static Font regularFont = new Font(fontName, Font.PLAIN, 10);
@@ -261,6 +267,24 @@ public class SheetController {
     messageTextPane.setEditable(false);
 
     messageTextPane.setContentType("text/html");
+
+    messageTextPane.addHyperlinkListener(new HyperlinkListener() {
+      public void hyperlinkUpdate(HyperlinkEvent he) {
+        if (he.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          if (Desktop.isDesktopSupported()) {
+            try {
+              Desktop.getDesktop().browse(he.getURL().toURI());
+            }
+            catch (IOException e) {
+              LOG.error(e);
+            }
+            catch (URISyntaxException e) {
+              LOG.error(e);
+            }
+          }
+        }
+      }
+    });
 
     FontMetrics fontMetrics = mySheetMessage.getFontMetrics(regularFont);
 
