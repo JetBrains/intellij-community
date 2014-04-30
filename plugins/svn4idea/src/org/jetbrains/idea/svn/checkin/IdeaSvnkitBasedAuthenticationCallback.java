@@ -54,10 +54,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.*;
-import java.security.cert.CertificateEncodingException;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
+import java.security.cert.*;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -237,38 +234,46 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
   @Override
   @Nullable
   public PasswordAuthentication getProxyAuthentication(@NotNull SVNURL repositoryUrl) {
-    final Proxy proxy = getIdeaDefinedProxy(repositoryUrl);
-    if (proxy == null) return null;
-    if (myProxyCredentialsWereReturned) {
-      // ask loud
-      final HttpConfigurable instance = HttpConfigurable.getInstance();
-      if (instance.USE_HTTP_PROXY || instance.USE_PROXY_PAC) {
-        PopupUtil.showBalloonForActiveComponent("Failed to authenticate to proxy. You can change proxy credentials in HTTP proxy settings.",
-                                                MessageType.ERROR);
+    Proxy proxy = getIdeaDefinedProxy(repositoryUrl);
+    PasswordAuthentication result = null;
+
+    if (proxy != null) {
+      if (myProxyCredentialsWereReturned) {
+        showFailedAuthenticateProxy();
       }
       else {
-        PopupUtil.showBalloonForActiveComponent("Failed to authenticate to proxy.", MessageType.ERROR);
+        result = getProxyAuthentication(proxy, repositoryUrl);
+        myProxyCredentialsWereReturned = result != null;
       }
-      return null;
     }
-    final InetSocketAddress address = (InetSocketAddress)proxy.address();
-    final PasswordAuthentication authentication;
+
+    return result;
+  }
+
+  private static void showFailedAuthenticateProxy() {
+    HttpConfigurable instance = HttpConfigurable.getInstance();
+    String message = instance.USE_HTTP_PROXY || instance.USE_PROXY_PAC
+                     ? "Failed to authenticate to proxy. You can change proxy credentials in HTTP proxy settings."
+                     : "Failed to authenticate to proxy.";
+
+    PopupUtil.showBalloonForActiveComponent(message, MessageType.ERROR);
+  }
+
+  @Nullable
+  private static PasswordAuthentication getProxyAuthentication(@NotNull Proxy proxy, @NotNull SVNURL repositoryUrl) {
+    PasswordAuthentication result = null;
+
     try {
-      authentication = Authenticator
-        .requestPasswordAuthentication(repositoryUrl.getHost(), address.getAddress(), repositoryUrl.getPort(), repositoryUrl.getProtocol(),
-                                       repositoryUrl.getHost(), repositoryUrl.getProtocol(), new URL(repositoryUrl.toString()),
-                                       Authenticator.RequestorType.PROXY);
+      result = Authenticator.requestPasswordAuthentication(repositoryUrl.getHost(), ((InetSocketAddress)proxy.address()).getAddress(),
+                                                           repositoryUrl.getPort(), repositoryUrl.getProtocol(), repositoryUrl.getHost(),
+                                                           repositoryUrl.getProtocol(), new URL(repositoryUrl.toString()),
+                                                           Authenticator.RequestorType.PROXY);
     }
     catch (MalformedURLException e) {
       LOG.info(e);
-      return null;
     }
 
-    if (authentication != null) {
-      myProxyCredentialsWereReturned = true;
-    }
-
-    return authentication;
+    return result;
   }
 
   public void reset() {
@@ -291,26 +296,16 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     }
 
     protected boolean tryAuthenticate() {
-      final SvnConfiguration configuration = SvnConfiguration.getInstance(myVcs.getProject());
-      final SvnAuthenticationManager passive = configuration.getPassiveAuthenticationManager(myVcs.getProject());
-      final SvnAuthenticationManager manager = configuration.getAuthenticationManager(myVcs);
+      final SvnAuthenticationManager passive = myVcs.getSvnConfiguration().getPassiveAuthenticationManager(myVcs.getProject());
+      final SvnAuthenticationManager active = myVcs.getSvnConfiguration().getAuthenticationManager(myVcs);
 
       try {
-        boolean authenticated = getWithPassive(passive) || getWithActive(manager);
+        boolean authenticated = getWithPassive(passive) || getWithActive(active);
         if (!authenticated) return false;
 
-        if (myStoreInUsual) {
-          manager.setArtificialSaving(true);
-          return acknowledge(manager);
-        }
-        else {
-          if (myTmpDirManager == null) {
-            initTmpDir(configuration);
-            myTmpDirManager = createTmpManager();
-          }
-          myTmpDirManager.setArtificialSaving(true);
-          return acknowledge(myTmpDirManager);
-        }
+        SvnAuthenticationManager manager = myStoreInUsual ? active : createTmpManager();
+        manager.setArtificialSaving(true);
+        return acknowledge(manager);
       }
       catch (IOException e) {
         LOG.info(e);
@@ -324,13 +319,16 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
       }
     }
 
-    protected SvnAuthenticationManager createTmpManager() {
-      final SvnAuthenticationManager interactive = new SvnAuthenticationManager(myVcs.getProject(), myTempDirectory);
+    @NotNull
+    protected SvnAuthenticationManager createTmpManager() throws IOException {
+      if (myTmpDirManager == null) {
+        initTmpDir(myVcs.getSvnConfiguration());
+        myTmpDirManager = new SvnAuthenticationManager(myVcs.getProject(), myTempDirectory);
+        myTmpDirManager.setRuntimeStorage(SvnConfiguration.RUNTIME_AUTH_CACHE);
+        myTmpDirManager.setAuthenticationProvider(new SvnInteractiveAuthenticationProvider(myVcs, myTmpDirManager));
+      }
 
-      interactive.setRuntimeStorage(SvnConfiguration.RUNTIME_AUTH_CACHE);
-      interactive.setAuthenticationProvider(new SvnInteractiveAuthenticationProvider(myVcs, interactive));
-
-      return interactive;
+      return myTmpDirManager;
     }
 
     protected boolean getWithActive(SvnAuthenticationManager active) throws SVNException {
@@ -413,18 +411,10 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     protected boolean getWithPassive(SvnAuthenticationManager passive) throws SVNException {
       String stored = (String)passive.getRuntimeAuthStorage().getData("svn.ssl.server", myRealm);
       if (stored == null) return false;
-      CertificateFactory cf;
-      try {
-        cf = CertificateFactory.getInstance("X509");
-        final byte[] buffer = new byte[stored.length()];
-        SVNBase64.base64ToByteArray(new StringBuffer(stored), buffer);
-        myCertificate = cf.generateCertificate(new ByteArrayInputStream(buffer));
-      }
-      catch (CertificateException e) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_UNAVAILABLE, e));
-      }
+
+      myCertificate = createCertificate(stored);
       myCertificateRealm = myRealm;
-      return myCertificate != null;
+      return true;
     }
 
     @Override
@@ -462,38 +452,50 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
           throw new SVNException(
             SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_UNAVAILABLE, "No stored server certificate was found in runtime"));
         }
-        CertificateFactory cf;
-        try {
-          cf = CertificateFactory.getInstance("X509");
-          final byte[] buffer = new byte[stored.length()];
-          SVNBase64.base64ToByteArray(new StringBuffer(stored), buffer);
-          myCertificate = cf.generateCertificate(new ByteArrayInputStream(buffer));
-        }
-        catch (CertificateException e) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_UNAVAILABLE, e));
-        }
+        myCertificate = createCertificate(stored);
         myCertificateRealm = myRealm;
       }
       if (myTempDirectory != null && myCertificate != null) {
-        if (!(myCertificate instanceof X509Certificate)) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not store server certificate: " + myCertificate));
-        }
-        X509Certificate x509Certificate = (X509Certificate)myCertificate;
-        String stored;
-        try {
-          stored = SVNBase64.byteArrayToBase64(x509Certificate.getEncoded());
-        }
-        catch (CertificateEncodingException e) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e));
-        }
-        int failures = SVNSSLUtil.getServerCertificateFailures(x509Certificate, myUrl.getHost());
-        storeServerCertificate(myTempDirectory, myCertificateRealm, stored, failures);
+        storeServerCertificate();
+
         if (myAuthentication != null) {
           final String realm = myCredentialsRealm == null ? myCertificateRealm : myCredentialsRealm;
           return storeCredentials(manager, myAuthentication, realm);
         }
       }
       return true;
+    }
+
+    @NotNull
+    private Certificate createCertificate(@NotNull String stored) throws SVNException {
+      CertificateFactory factory;
+      try {
+        factory = CertificateFactory.getInstance("X509");
+        final byte[] buffer = new byte[stored.length()];
+        SVNBase64.base64ToByteArray(new StringBuffer(stored), buffer);
+
+        return factory.generateCertificate(new ByteArrayInputStream(buffer));
+      }
+      catch (CertificateException e) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_UNAVAILABLE, e));
+      }
+    }
+
+    private void storeServerCertificate() throws SVNException {
+      if (!(myCertificate instanceof X509Certificate)) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not store server certificate: " + myCertificate));
+      }
+      X509Certificate x509Certificate = (X509Certificate)myCertificate;
+      String stored;
+      try {
+        stored = SVNBase64.byteArrayToBase64(x509Certificate.getEncoded());
+      }
+      catch (CertificateEncodingException e) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e));
+      }
+
+      int failures = SVNSSLUtil.getServerCertificateFailures(x509Certificate, myUrl.getHost());
+      storeServerCertificate(myTempDirectory, myCertificateRealm, stored, failures);
     }
 
     private void storeServerCertificate(final File configDir, String realm, String data, int failures) throws SVNException {
