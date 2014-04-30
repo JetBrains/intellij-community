@@ -58,12 +58,12 @@ public class PyStubsTest extends PyTestCase {
   }
 
   public void testStubStructure() {
-    final PyFile file = getTestFile();
     // vfile is problematic, but we need an SDK to check builtins
-    final Project project = file.getProject();
+    final Project project = myFixture.getProject();
 
+    PythonLanguageLevelPusher.setForcedLanguageLevel(project, LanguageLevel.PYTHON26); // we need 2.6+ for @foo.setter
     try {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(project, LanguageLevel.PYTHON26); // we need 2.6+ for @foo.setter
+      final PyFile file = getTestFile();
       final List<PyClass> classes = file.getTopLevelClasses();
       assertEquals(3, classes.size());
       PyClass pyClass = classes.get(0);

@@ -26,8 +26,6 @@ import com.intellij.psi.impl.JavaPsiFacadeEx;
  * A TestCase for single PsiFile being opened in Editor conversion. See configureXXX and checkResultXXX method docs.
  */
 public abstract class LightCodeInsightTestCase extends LightPlatformCodeInsightTestCase {
-  private LanguageLevel myOldLanguageLevel;
-
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   protected LightCodeInsightTestCase() {
     IdeaTestCase.initPlatformPrefix();
@@ -40,18 +38,11 @@ public abstract class LightCodeInsightTestCase extends LightPlatformCodeInsightT
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myOldLanguageLevel = LanguageLevelProjectExtension.getInstance(getProject()).getLanguageLevel();
     setLanguageLevel(getLanguageLevel());
   }
 
   protected LanguageLevel getLanguageLevel() {
     return LanguageLevel.HIGHEST;
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    setLanguageLevel(myOldLanguageLevel);
-    super.tearDown();
   }
 
   protected static void setLanguageLevel(final LanguageLevel level) {
