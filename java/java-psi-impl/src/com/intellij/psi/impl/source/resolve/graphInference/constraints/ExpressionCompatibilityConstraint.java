@@ -145,7 +145,9 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
           if (!accepted) {
             return false;
           }
-          callSession.registerConstraints(method != null && !PsiUtil.isRawSubstitutor(method, siteSubstitutor) ? siteSubstitutor.substitute(returnType) : returnType, substitutor.substitute(returnType));
+          callSession.registerReturnTypeConstraints(
+            method != null && !PsiUtil.isRawSubstitutor(method, siteSubstitutor) ? siteSubstitutor.substitute(returnType) : returnType,
+            substitutor.substitute(returnType));
           if (callSession.repeatInferencePhases(true)) {
             final Collection<InferenceVariable> inferenceVariables = callSession.getInferenceVariables();
             if (sameMethodCall) {

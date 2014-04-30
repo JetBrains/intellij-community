@@ -20,7 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
-import com.intellij.psi.impl.source.tree.java.PsiMethodReferenceExpressionImpl;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -68,7 +68,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
     } else {
       final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(myExpression);
       PsiSubstitutor psiSubstitutor = qualifierResolveResult.getSubstitutor();
-      final PsiMember applicableMember = ((PsiMethodReferenceExpressionImpl)myExpression).getPotentiallyApplicableMember();
+      final PsiMember applicableMember = myExpression.getPotentiallyApplicableMember();
       LOG.assertTrue(applicableMember != null);
       PsiType applicableMethodReturnType = applicableMember instanceof PsiMethod ? ((PsiMethod)applicableMember).getReturnType() : null;
       int idx = 0;
@@ -111,16 +111,17 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
 
     final Map<PsiMethodReferenceExpression, PsiType> map = PsiMethodReferenceUtil.getFunctionalTypeMap();
     final PsiType added = map.put(myExpression, groundTargetType);
-    final PsiElement resolve;
+    final JavaResolveResult resolve;
     try {
-      resolve = myExpression.resolve();
+      resolve = myExpression.advancedResolve(true);
     }
     finally {
       if (added == null) {
         map.remove(myExpression);
       }
     }
-    if (resolve == null) {
+    final PsiElement element = resolve.getElement();
+    if (element == null) {
       return false;
     }
 
@@ -128,8 +129,8 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       return true;
     }
 
-    if (resolve instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)resolve;
+    if (element instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod)element;
       final PsiType referencedMethodReturnType;
       final PsiClass containingClass = method.getContainingClass();
       LOG.assertTrue(containingClass != null, method);
@@ -158,8 +159,8 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
                                                          ContainerUtil.newHashSet(method.getTypeParameters()))) {
           //the constraint reduces to the bound set B3 which would be used to determine the method reference's invocation type 
           //when targeting the return type of the function type, as defined in 18.5.2.
-          //as there is no parameters, only constraint for return types is left. Here you are:
-          session.registerConstraints(referencedMethodReturnType, returnType);
+          session.collectApplicabilityConstraints(myExpression, ((MethodCandidateInfo)resolve), groundTargetType);
+          session.registerReturnTypeConstraints(referencedMethodReturnType, returnType);
           return true;
         }
       }
