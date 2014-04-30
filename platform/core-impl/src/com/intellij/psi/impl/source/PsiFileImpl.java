@@ -177,6 +177,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return derefTreeElement() != null;
   }
 
+  @NotNull
   private FileElement loadTreeElement() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
@@ -354,7 +355,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     });
   }
 
-  protected FileElement createFileElement(final CharSequence docText) {
+  @NotNull
+  protected FileElement createFileElement(CharSequence docText) {
     final FileElement treeElement;
     final TreeElement contentLeaf = createContentLeafElement(docText);
 
@@ -733,6 +735,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return this;
   }
 
+  @NotNull
   public final FileElement calcTreeElement() {
     // Attempt to find (loaded) tree element without taking lock first.
     FileElement treeElement = getTreeElement();
@@ -942,6 +945,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return manager.getProject();
   }
 
+  @NotNull
   @Override
   public FileASTNode getNode() {
     return calcTreeElement();
