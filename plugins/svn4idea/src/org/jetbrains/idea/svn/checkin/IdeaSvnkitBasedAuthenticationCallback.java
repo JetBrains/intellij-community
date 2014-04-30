@@ -300,7 +300,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
 
         if (myStoreInUsual) {
           manager.setArtificialSaving(true);
-          return acknowledge(manager, svnAuthentication);
+          return acknowledge(manager);
         }
         else {
           if (myTmpDirManager == null) {
@@ -308,7 +308,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
             myTmpDirManager = createTmpManager();
           }
           myTmpDirManager.setArtificialSaving(true);
-          return acknowledge(myTmpDirManager, svnAuthentication);
+          return acknowledge(myTmpDirManager);
         }
       }
       catch (IOException e) {
@@ -334,7 +334,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
 
     protected abstract T getWithPassive(SvnAuthenticationManager passive) throws SVNException;
     protected abstract T getWithActive(SvnAuthenticationManager active) throws SVNException;
-    protected abstract boolean acknowledge(SvnAuthenticationManager manager, T svnAuthentication) throws SVNException;
+    protected abstract boolean acknowledge(SvnAuthenticationManager manager) throws SVNException;
   }
 
   private void initTmpDir(SvnConfiguration configuration) throws IOException {
@@ -445,7 +445,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     }
 
     @Override
-    protected boolean acknowledge(SvnAuthenticationManager manager, Boolean svnAuthentication) throws SVNException {
+    protected boolean acknowledge(SvnAuthenticationManager manager) throws SVNException {
       // we should store certificate, if it wasn't accepted (if temporally tmp)
       if (myCertificate == null) {   // this is if certificate was stored only in passive area
         String stored = (String)manager.getRuntimeAuthStorage().getData("svn.ssl.server", myRealm);
@@ -552,13 +552,13 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
 
     @Override
     protected SVNAuthentication getWithPassive(SvnAuthenticationManager passive) throws SVNException {
-      final SVNAuthentication impl = getWithPassiveImpl(passive);
-      if (impl != null && !checkAuthOk(impl)) {
+      myAuthentication = getWithPassiveImpl(passive);
+      if (myAuthentication != null && !checkAuthOk(myAuthentication)) {
         clearPassiveCredentials(myRealm, myUrl,
-                                impl instanceof SVNPasswordAuthentication);  //clear passive also take into acconut ssl filepath
-        return null;
+                                myAuthentication instanceof SVNPasswordAuthentication);  //clear passive also take into acconut ssl filepath
+        myAuthentication = null;
       }
-      return impl;
+      return myAuthentication;
     }
 
     private SVNAuthentication getWithPassiveImpl(SvnAuthenticationManager passive) throws SVNException {
@@ -618,11 +618,11 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     }
 
     @Override
-    protected boolean acknowledge(SvnAuthenticationManager manager, SVNAuthentication svnAuthentication) throws SVNException {
+    protected boolean acknowledge(SvnAuthenticationManager manager) throws SVNException {
       if (!StringUtil.isEmptyOrSpaces(myRealm2) && !myRealm2.equals(myRealm)) {
-        storeCredentials(manager, svnAuthentication, myRealm2);
+        storeCredentials(manager, myAuthentication, myRealm2);
       }
-      return storeCredentials(manager, svnAuthentication, myRealm);
+      return storeCredentials(manager, myAuthentication, myRealm);
     }
   }
 
