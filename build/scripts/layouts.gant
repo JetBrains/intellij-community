@@ -677,18 +677,17 @@ def layoutAndroid(String androidHome) {
       }
     }
 
-    dir("android-designer") {
+    pluginDir("android") {
       dir("lib") {
         jar("resources_en.jar") {
           module("ui-designer-core") {
             patternset(refid: "resources.included")
           }
         }
-        jar("android-designer.jar") {
+        jar("ui-designer-core.jar") {
           module("ui-designer-core") {
             patternset(refid: "resources.excluded")
           }
-          module("android-designer")
         }
       }
     }
