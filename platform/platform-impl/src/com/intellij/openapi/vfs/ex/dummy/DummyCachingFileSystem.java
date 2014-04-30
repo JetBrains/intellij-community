@@ -106,7 +106,11 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
   @NotNull
   public String extractPresentableUrl(@NotNull String path) {
     VirtualFile file = findFileByPath(path);
-    return file != null ? file.getPresentableName() : super.extractPresentableUrl(path);
+    return file != null ? getPresentableUrl(file) : super.extractPresentableUrl(path);
+  }
+
+  protected String getPresentableUrl(@NotNull VirtualFile file) {
+    return file.getPresentableName();
   }
 
   protected abstract T findFileByPathInner(@NotNull String path);
