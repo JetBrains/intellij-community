@@ -26,12 +26,12 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.proxy.CommonProxy;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnAuthenticationManager;
@@ -333,30 +333,59 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
       return interactive;
     }
 
+    protected boolean getWithActive(SvnAuthenticationManager active) throws SVNException {
+      MessageBusConnection connection = null;
+      try {
+        final Project project = myVcs.getProject();
+        connection = project.getMessageBus().connect(project);
+        connection.subscribe(SvnAuthenticationManager.AUTHENTICATION_PROVIDER_LISTENER, new MyAuthenticationProviderListener());
+
+        makeAuthCall(active);
+      }
+      finally {
+        if (connection != null) {
+          connection.disconnect();
+        }
+      }
+
+      return afterAuthCall();
+    }
+
+    protected void makeAuthCall(@NotNull SvnAuthenticationManager manager) throws SVNException {
+      myVcs.createWCClient(manager).doInfo(myUrl, SVNRevision.UNDEFINED, SVNRevision.HEAD);
+    }
+
+    protected void acceptServerAuthentication(SVNURL url, String realm, Object certificate, @MagicConstant int acceptResult) {
+    }
+
+    public void requestClientAuthentication(SVNURL url, String realm, SVNAuthentication authentication) {
+    }
+
+    protected abstract boolean afterAuthCall();
+
     protected abstract boolean getWithPassive(SvnAuthenticationManager passive) throws SVNException;
-    protected abstract boolean getWithActive(SvnAuthenticationManager active) throws SVNException;
+
     protected abstract boolean acknowledge(SvnAuthenticationManager manager) throws SVNException;
-  }
 
-  private void initTmpDir(SvnConfiguration configuration) throws IOException {
-    if (myTempDirectory == null) {
-      myTempDirectory = FileUtil.createTempDirectory("tmp", "Subversion");
-      FileUtil.copyDir(new File(configuration.getConfigurationDirectory()), myTempDirectory);
-    }
-  }
+    private class MyAuthenticationProviderListener implements SvnAuthenticationManager.ISVNAuthenticationProviderListener {
+      @Override
+      public void requestClientAuthentication(String kind,
+                                              SVNURL url,
+                                              String realm,
+                                              SVNErrorMessage errorMessage,
+                                              SVNAuthentication previousAuth,
+                                              boolean authMayBeStored,
+                                              SVNAuthentication authentication) {
+        AbstractAuthenticator.this.requestClientAuthentication(url, realm, authentication);
+      }
 
-  private void doWithSubscribeToAuthProvider(SvnAuthenticationManager.ISVNAuthenticationProviderListener listener,
-                                             final ThrowableRunnable<SVNException> runnable) throws SVNException {
-    MessageBusConnection connection = null;
-    try {
-      final Project project = myVcs.getProject();
-      connection = project.getMessageBus().connect(project);
-      connection.subscribe(SvnAuthenticationManager.AUTHENTICATION_PROVIDER_LISTENER, listener);
-      runnable.run();
-    }
-    finally {
-      if (connection != null) {
-        connection.disconnect();
+      @Override
+      public void acceptServerAuthentication(SVNURL url,
+                                             String realm,
+                                             Object certificate,
+                                             boolean resultMayBeStored,
+                                             @MagicConstant int acceptResult) {
+        AbstractAuthenticator.this.acceptServerAuthentication(url, realm, certificate, acceptResult);
       }
     }
   }
@@ -399,45 +428,25 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     }
 
     @Override
-    protected boolean getWithActive(final SvnAuthenticationManager active) throws SVNException {
-      doWithSubscribeToAuthProvider(new SvnAuthenticationManager.ISVNAuthenticationProviderListener() {
-                                      @Override
-                                      public void requestClientAuthentication(String kind,
-                                                                              SVNURL url,
-                                                                              String realm,
-                                                                              SVNErrorMessage errorMessage,
-                                                                              SVNAuthentication previousAuth,
-                                                                              boolean authMayBeStored,
-                                                                              SVNAuthentication authentication) {
-                                        if (!myUrl.equals(url)) return;
-                                        myCredentialsRealm = realm;
-                                        myAuthentication = authentication;
-                                        if (myAuthentication != null) {
-                                          myStoreInUsual &= myAuthentication.isStorageAllowed();
-                                        }
-                                      }
+    public void requestClientAuthentication(SVNURL url, String realm, SVNAuthentication authentication) {
+      if (!myUrl.equals(url)) return;
+      myCredentialsRealm = realm;
+      myAuthentication = authentication;
+      if (myAuthentication != null) {
+        myStoreInUsual &= myAuthentication.isStorageAllowed();
+      }
+    }
 
-                                      @Override
-                                      public void acceptServerAuthentication(SVNURL url,
-                                                                             String realm,
-                                                                             Object certificate,
-                                                                             boolean resultMayBeStored,
-                                                                             int accepted) {
-                                        if (!myUrl.equals(url)) return;
-                                        myCertificateRealm = realm;
-                                        myCertificate = certificate;
-                                        myResult = accepted;
-                                      }
-                                    }, new ThrowableRunnable<SVNException>() {
-                                      @Override
-                                      public void run() throws SVNException {
-                                        // NOTE: DO NOT replace this call - SSL authentication highly tied to SVNKit
-                                        myVcs.createWCClient(active).doInfo(myUrl, SVNRevision.UNDEFINED, SVNRevision.HEAD);
-                                        //myVcs.getInfo(myUrl, SVNRevision.HEAD, active);
-                                      }
-                                    }
-      );
+    @Override
+    public void acceptServerAuthentication(SVNURL url, String realm, Object certificate, @MagicConstant int acceptResult) {
+      if (!myUrl.equals(url)) return;
+      myCertificateRealm = realm;
+      myCertificate = certificate;
+      myResult = acceptResult;
+    }
 
+    @Override
+    protected boolean afterAuthCall() {
       myStoreInUsual &= myCertificate != null && ISVNAuthenticationProvider.ACCEPTED == myResult;
       // TODO: Previous code always returned not null value, so Boolean == null check was always false in tryAuthenticate().
       // TODO: This was most likely error in code - check once again.
@@ -576,40 +585,23 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     @Override
     protected boolean getWithActive(final SvnAuthenticationManager active) throws SVNException {
       if (ISVNAuthenticationManager.SSL.equals(myKind)) {
-        doWithSubscribeToAuthProvider(new SvnAuthenticationManager.ISVNAuthenticationProviderListener() {
-                                        @Override
-                                        public void requestClientAuthentication(String kind,
-                                                                                SVNURL url,
-                                                                                String realm,
-                                                                                SVNErrorMessage errorMessage,
-                                                                                SVNAuthentication previousAuth,
-                                                                                boolean authMayBeStored,
-                                                                                SVNAuthentication authentication) {
-                                          if (!myUrl.equals(url)) return;
-                                          myAuthentication = authentication;
-                                          myRealm2 = realm;
-                                          myStoreInUsual = myAuthentication != null && myAuthentication.isStorageAllowed();
-                                        }
-
-                                        @Override
-                                        public void acceptServerAuthentication(SVNURL url,
-                                                                               String realm,
-                                                                               Object certificate,
-                                                                               boolean resultMayBeStored,
-                                                                               int accepted) {
-                                        }
-                                      }, new ThrowableRunnable<SVNException>() {
-                                        @Override
-                                        public void run() throws SVNException {
-                                          myVcs.createWCClient(active).doInfo(myUrl, SVNRevision.UNDEFINED, SVNRevision.HEAD);
-                                        }
-                                      }
-        );
-        if (myAuthentication != null) return true;
+        if (super.getWithActive(active)) return true;
       }
       myAuthentication = active.getProvider().requestClientAuthentication(myKind, myUrl, myRealm, null, null, true);
       myStoreInUsual = myTempDirectory == null && myAuthentication != null && myAuthentication.isStorageAllowed();
 
+      return myAuthentication != null;
+    }
+
+    public void requestClientAuthentication(SVNURL url, String realm, SVNAuthentication authentication) {
+      if (!myUrl.equals(url)) return;
+      myAuthentication = authentication;
+      myRealm2 = realm;
+      myStoreInUsual = myAuthentication != null && myAuthentication.isStorageAllowed();
+    }
+
+    @Override
+    protected boolean afterAuthCall() {
       return myAuthentication != null;
     }
 
@@ -643,6 +635,13 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
   @Override
   public File getSpecialConfigDir() {
     return myTempDirectory != null ? myTempDirectory : new File(myConfiguration.getConfigurationDirectory());
+  }
+
+  private void initTmpDir(SvnConfiguration configuration) throws IOException {
+    if (myTempDirectory == null) {
+      myTempDirectory = FileUtil.createTempDirectory("tmp", "Subversion");
+      FileUtil.copyDir(new File(configuration.getConfigurationDirectory()), myTempDirectory);
+    }
   }
 
   @NotNull
