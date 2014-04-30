@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,10 +141,19 @@ public class AnActionEvent implements PlaceProvider<String> {
   }
 
   @NotNull
-  public <T> T getRequiredData(@NotNull DataKey<T> key) {
+  public <T> T getDataChecked(@NotNull DataKey<T> key) {
     T data = getData(key);
     assert data != null;
     return data;
+  }
+
+  /**
+   * @deprecated
+   * @use getDataChecked
+   */
+  @NotNull
+  public <T> T getRequiredData(@NotNull DataKey<T> key) {
+    return getDataChecked(key);
   }
 
   /**
