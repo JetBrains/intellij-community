@@ -13,6 +13,19 @@ public class BasicGutterContentProvider extends GutterContentProvider {
   public static final String EVAL_OUT_MARKER = "\u200C";
   public static final String EVAL_IN_MARKER = EVAL_OUT_MARKER + EVAL_OUT_MARKER;
 
+  protected final boolean isLineRelationshipComputable;
+
+  public BasicGutterContentProvider() {
+    this(true);
+  }
+
+  /**
+   * @param isLineRelationshipComputable true if you can compute line relationship for all lines (override {@link #doIsShowSeparatorLine})
+   */
+  public BasicGutterContentProvider(boolean isLineRelationshipComputable) {
+    this.isLineRelationshipComputable = isLineRelationshipComputable;
+  }
+
   @Override
   public boolean hasText() {
     return false;
@@ -62,13 +75,19 @@ public class BasicGutterContentProvider extends GutterContentProvider {
     if (markerCount == EVAL_IN_MARKER.length()) {
       return getMarkerCount(line + 1, document) != EVAL_OUT_MARKER.length();
     }
+    else if (!isLineRelationshipComputable && markerCount == EVAL_OUT_MARKER.length()) {
+      return getMarkerCount(line + 1, document) == EVAL_IN_MARKER.length();
+    }
+    else if (!isLineRelationshipComputable && markerCount == 0) {
+      return getMarkerCount(line + 1, document) != 0 || (line != 0 && getMarkerCount(line - 1, document) != 0);
+    }
     else {
       return doIsShowSeparatorLine(line, editor, document);
     }
   }
 
   protected boolean doIsShowSeparatorLine(int line, @NotNull Editor editor, @NotNull Document document) {
-    return true;
+    return isLineRelationshipComputable;
   }
 
   private static int getMarkerCount(int line, @NotNull Document document) {

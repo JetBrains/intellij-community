@@ -21,13 +21,17 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.stubs.ObjectStubTree;
 import com.intellij.psi.stubs.StubTreeLoader;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtenderEP;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
 import com.intellij.util.xml.stubs.model.Bar;
 import com.intellij.util.xml.stubs.model.Custom;
+import com.intellij.util.xml.stubs.model.Foo;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -89,6 +93,11 @@ public class DomStubBuilderTest extends DomStubTest {
                                    "      Attribute:string:xxx\n" +
                                    "      Attribute:int:666\n" +
                                    "    Element:bar\n");
+
+    PsiFile file = myFixture.getFile();
+    DomFileElement<Foo> element = DomManager.getDomManager(getProject()).getFileElement((XmlFile)file, Foo.class);
+    assert element != null;
+    assertEquals(2, element.getRootElement().getBars().size());
   }
 
   public static class TestExtender extends DomExtender<Bar> {

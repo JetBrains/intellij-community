@@ -50,8 +50,8 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
   private PostfixTemplatesListPanel myTemplatesListPanel;
   @NotNull
   private final PostfixTemplatesSettings myTemplatesSettings;
-
-  private final PostfixDescriptionPanel myInnerPostfixDescriptionPanel = new PostfixDescriptionPanel();
+  @Nullable
+  private PostfixDescriptionPanel myInnerPostfixDescriptionPanel;
 
   private JComponent myPanel;
   private JBCheckBox myCompletionEnabledCheckbox;
@@ -100,7 +100,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
     myShortcutComboBox.addItem(ENTER);
 
     myDescriptionPanel.setLayout(new BorderLayout());
-    myDescriptionPanel.add(myInnerPostfixDescriptionPanel.getComponent());
+
 
     myTemplatesListPanel.addSelectionListener(new ListSelectionListener() {
       @Override
@@ -109,18 +109,11 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
         resetDescriptionPanel();
       }
     });
-    myDescriptionPanel.setVisible(false);
   }
 
   private void resetDescriptionPanel() {
-    assert myTemplatesListPanel != null;
-    PostfixTemplate template = myTemplatesListPanel.getTemplate();
-    if (null != template) {
-      myDescriptionPanel.setVisible(true);
-      myInnerPostfixDescriptionPanel.reset(new PostfixTemplateMetaData(template));
-    }
-    else {
-      myDescriptionPanel.setVisible(false);
+    if (null != myTemplatesListPanel && null != myInnerPostfixDescriptionPanel) {
+      myInnerPostfixDescriptionPanel.reset(PostfixTemplateMetaData.createMetaData(myTemplatesListPanel.getTemplate()));
     }
   }
 
@@ -150,6 +143,11 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
   @NotNull
   @Override
   public JComponent createComponent() {
+    if (null == myInnerPostfixDescriptionPanel) {
+      myInnerPostfixDescriptionPanel = new PostfixDescriptionPanel();
+      myDescriptionPanel.add(myInnerPostfixDescriptionPanel.getComponent());
+    }
+
     return myPanel;
   }
 
@@ -195,7 +193,9 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
 
   @Override
   public void disposeUIResources() {
-    Disposer.dispose(myInnerPostfixDescriptionPanel);
+    if (myInnerPostfixDescriptionPanel != null) {
+      Disposer.dispose(myInnerPostfixDescriptionPanel);
+    }
     myTemplatesListPanel = null;
   }
 

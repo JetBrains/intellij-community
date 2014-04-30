@@ -64,6 +64,8 @@ public class PluginsAdvertiser implements StartupActivity {
 
   public static final String ULTIMATE_EDITION_SUGGESTION = "Do not suggest Ultimate Edition";
   public static final String CHECK_ULTIMATE_EDITION_TITLE = "Check IntelliJ IDEA Ultimate Edition";
+  public static final String DISPLAY_ID = "Plugins Suggestion";
+  public static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup(DISPLAY_ID, NotificationDisplayType.STICKY_BALLOON, true);
 
   public static List<Plugin> retrieve(UnknownFeature unknownFeature) {
     final String featureType = unknownFeature.getFeatureType();
@@ -322,10 +324,8 @@ public class PluginsAdvertiser implements StartupActivity {
             }
 
             if (message != null) {
-              final String displayId = "Plugins Suggestion";
               final ConfigurePluginsListener notificationListener = new ConfigurePluginsListener(unknownFeatures, project, myAllPlugins, myPlugins, myDisabledPlugins);
-              new NotificationGroup(displayId, NotificationDisplayType.STICKY_BALLOON, true)
-                                   .createNotification(displayId, message, NotificationType.INFORMATION, notificationListener).notify(project);
+              NOTIFICATION_GROUP.createNotification(DISPLAY_ID, message, NotificationType.INFORMATION, notificationListener).notify(project);
             }
           }
         });

@@ -319,10 +319,35 @@ public class IdeEventQueue extends EventQueue {
     return myCurrentEvent;
   }
 
+  private static class InertialMouseRouter {
+    private static int MOUSE_WHEEL_RESTART_THRESHOLD = 50;
+    private static Component wheelDestinationComponent = null;
+    private static long lastMouseWheel = 0;
+
+    private static AWTEvent changeSourceIfNeeded(AWTEvent awtEvent) {
+      if (SystemInfo.isMac && Registry.is("ide.inertial.mouse.fix") && awtEvent instanceof MouseWheelEvent) {
+        MouseWheelEvent mwe = (MouseWheelEvent) awtEvent;
+        if (mwe.getWhen() - lastMouseWheel > MOUSE_WHEEL_RESTART_THRESHOLD) {
+          wheelDestinationComponent = SwingUtilities.getDeepestComponentAt(mwe.getComponent(), mwe.getX(), mwe.getY());
+        }
+        lastMouseWheel = System.currentTimeMillis();
+
+        MouseWheelEvent newMouseWheelEvent = new MouseWheelEvent(
+          wheelDestinationComponent, mwe.getID(), lastMouseWheel, mwe.getModifiers(), mwe.getX(), mwe.getY(),
+          mwe.getClickCount(), mwe.isPopupTrigger(), mwe.getScrollType(), mwe.getScrollAmount(), mwe.getWheelRotation()
+        );
+        return newMouseWheelEvent;
+      }
+      return awtEvent;
+    }
+  }
+
   @Override
   public void dispatchEvent(AWTEvent e) {
 
     fixNonEnglishKeyboardLayouts(e);
+
+    e = InertialMouseRouter.changeSourceIfNeeded(e);
 
     e = mapEvent(e);
 

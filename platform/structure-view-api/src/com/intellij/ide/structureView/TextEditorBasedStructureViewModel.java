@@ -31,6 +31,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -46,6 +47,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
   private final PsiFile myPsiFile;
   private final Disposable myDisposable = Disposer.newDisposable();
   private final List<FileEditorPositionListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private List<ModelListener> myModelListeners = new ArrayList<ModelListener>(2);
 
   /**
    * Creates a structure view model instance linked to a text editor displaying the specified
@@ -97,6 +99,13 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
   @Override
   public void dispose() {
     Disposer.dispose(myDisposable);
+    myModelListeners.clear();
+  }
+
+  public void fireModelUpdate() {
+    for (ModelListener listener : myModelListeners) {
+      listener.onModelChanged();
+    }
   }
 
   @Override
@@ -137,12 +146,12 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
 
   @Override
   public void addModelListener(@NotNull ModelListener modelListener) {
-
+    myModelListeners.add(modelListener);
   }
 
   @Override
   public void removeModelListener(@NotNull ModelListener modelListener) {
-
+    myModelListeners.remove(modelListener);
   }
 
   /**

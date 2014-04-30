@@ -10,6 +10,7 @@ import com.intellij.util.UrlImpl;
 import com.intellij.util.Urls;
 import com.intellij.util.containers.ObjectIntHashMap;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +22,7 @@ public class SourceResolver {
   private final List<String> rawSources;
 
   final Url[] canonicalizedSources;
-  final ObjectIntHashMap<Url> canonicalizedSourcesMap;
+  private final ObjectIntHashMap<Url> canonicalizedSourcesMap;
 
   private TObjectIntHashMap<String> absoluteLocalPathToSourceIndex;
   // absoluteLocalPathToSourceIndex contains canonical paths too, but this map contains only used (specified in the source map) path
@@ -30,7 +31,9 @@ public class SourceResolver {
   public SourceResolver(@NotNull List<String> sources, boolean trimFileScheme, @Nullable Url baseFileUrl) {
     rawSources = sources;
     canonicalizedSources = new Url[sources.size()];
-    canonicalizedSourcesMap = new ObjectIntHashMap<Url>(canonicalizedSources.length);
+    canonicalizedSourcesMap = SystemInfo.isFileSystemCaseSensitive
+                              ? new ObjectIntHashMap<Url>(canonicalizedSources.length)
+                              : new ObjectIntHashMap<Url>(canonicalizedSources.length, Urls.getCaseInsensitiveUrlHashingStrategy());
     for (int i = 0; i < sources.size(); i++) {
       Url url = canonicalizeUrl(sources.get(i), baseFileUrl, trimFileScheme, i);
       canonicalizedSources[i] = url;
@@ -76,7 +79,9 @@ public class SourceResolver {
       if (file != null) {
         if (absoluteLocalPathToSourceIndex == null) {
           // must be linked, on iterate original path must be first
-          absoluteLocalPathToSourceIndex = new TObjectIntHashMap<String>(rawSources.size());
+          absoluteLocalPathToSourceIndex = SystemInfo.isFileSystemCaseSensitive
+                                           ? new ObjectIntHashMap<String>(rawSources.size())
+                                           : new ObjectIntHashMap<String>(rawSources.size(), CaseInsensitiveStringHashingStrategy.INSTANCE);
           sourceIndexToAbsoluteLocalPath = new String[rawSources.size()];
         }
         absoluteLocalPathToSourceIndex.put(path, sourceIndex);

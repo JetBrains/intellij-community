@@ -306,7 +306,7 @@ public class TargetElementUtilBase {
   /**
    * Tries to find target element for argument using installed {@link com.intellij.codeInsight.TargetElementExtensionPoint}.
    * @param element element to search target for
-   * @return target element (first one, of several exist) or null if no extention supports this element or no extension installed
+   * @return target element (first one, of several exist) or null if no extension supports this element or no extension installed
    */
   @Nullable
   protected static PsiElement getTargetElementByExtensions(@NotNull final PsiElement element) {

@@ -231,7 +231,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       if (isIgnored()) return null;
 
       final Project project = myManager.getProject();
-      if (isPhysical()) { // check directories consistency
+      if (isPhysical() && vFile.isInLocalFileSystem()) { // check directories consistency
         final VirtualFile parent = vFile.getParent();
         if (parent == null) return null;
         final PsiDirectory psiDir = getManager().findDirectory(parent);

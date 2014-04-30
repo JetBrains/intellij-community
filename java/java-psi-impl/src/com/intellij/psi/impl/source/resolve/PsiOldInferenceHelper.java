@@ -512,14 +512,14 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
                                                                                     PsiType patternType,
                                                                                     final ConstraintType constraintType,
                                                                                     final int depth) {
+    if (patternType.equals(param)) {
+      return processArgType(arg, constraintType, depth < 2);
+    }
+
     if (arg instanceof PsiCapturedWildcardType && (depth < 2 || 
                                                    constraintType != ConstraintType.EQUALS || 
                                                    param instanceof PsiWildcardType)) {
       arg = ((PsiCapturedWildcardType)arg).getWildcard(); //reopen
-    }
-
-    if (patternType.equals(param)) {
-      return processArgType(arg, constraintType, depth < 2);
     }
 
     if (param instanceof PsiWildcardType) {

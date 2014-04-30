@@ -136,7 +136,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   };
 
   private PsiManagerImpl myPsiManager;
-  private PsiFile myFile;
+  private VirtualFile myFile;
   private Editor myEditor;
   private String myTestDataPath;
   private boolean myEmptyLookup;
@@ -380,7 +380,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     long elapsed = 0;
     for (Trinity<PsiFile, Editor, ExpectedHighlightingData> trinity : datas) {
       myEditor = trinity.second;
-      myFile = trinity.first;
+      myFile = trinity.first.getVirtualFile();
       elapsed += collectAndCheckHighlighting(trinity.third);
     }
     return elapsed;
@@ -427,7 +427,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       @Override
       public HighlightTestInfo doTest() {
         configureByFiles(filePaths);
-        ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, myFile);
+        ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, getFile());
         if (checkSymbolNames) data.checkSymbolNames();
         data.init();
         collectAndCheckHighlighting(data);
@@ -437,7 +437,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public void openFileInEditor(@NotNull final VirtualFile file) {
-    myFile = myPsiManager.findFile(file);
+    myFile = file;
     myEditor = createEditor(file);
   }
 
@@ -680,7 +680,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     
     assert element != null : "element not found in file " + myFile.getName() +
                              " at caret position, offset " + myEditor.getCaretModel().getOffset() + "\"" +
-                             " psi structure: " + DebugUtil.psiToString(myFile, true, true);
+                             " psi structure: " + DebugUtil.psiToString(getFile(), true, true);
     return element;
   }
 
@@ -870,7 +870,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         assert file != null : "Directory " + to + " not found";
         assert file.isDirectory() : to + " is not a directory";
         final PsiDirectory directory = myPsiManager.findDirectory(file);
-        new MoveFilesOrDirectoriesProcessor(project, new PsiElement[]{myFile}, directory,
+        new MoveFilesOrDirectoriesProcessor(project, new PsiElement[]{getFile()}, directory,
                                             false, false, null, null).run();
       }
     }.execute().throwException();
@@ -1029,7 +1029,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Nullable
   protected Editor getCompletionEditor() {
-    return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile);
+    return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, getFile());
   }
 
   @Override
@@ -1271,7 +1271,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public PsiFile configureByFile(@NotNull final String file) {
     configureByFilesInner(file);
-    return myFile;
+    return getFile();
   }
 
   @NotNull
@@ -1329,7 +1329,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         configureInner(vFile, SelectionAndCaretMarkupLoader.fromFile(vFile));
       }
     }.execute();
-    return myFile;
+    return getFile();
   }
 
   @Override
@@ -1373,7 +1373,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         catch (IOException e) {
           throw new RuntimeException(e);
         }
-        myFile = myPsiManager.findFile(copy);
+        myFile = copy;
         myEditor = createEditor(copy);
         assert myEditor != null : "Editor couldn't be created for file: " +
                                   copy.getPath() +
@@ -1394,16 +1394,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }.execute().throwException();
 
 
-    return myFile;
+    return getFile();
   }
 
   protected void prepareVirtualFile(@NotNull VirtualFile file) {
   }
 
   private void setupEditorForInjectedLanguage() {
-    Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile);
+    Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, getFile());
     if (editor instanceof EditorWindow) {
-      myFile = ((EditorWindow)editor).getInjectedFile();
+      myFile = ((EditorWindow)editor).getInjectedFile().getViewProvider().getVirtualFile();
       myEditor = editor;
     }
   }
@@ -1438,7 +1438,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   private PsiFile getHostFile() {
-    return InjectedLanguageUtil.getTopLevelFile(myFile);
+    return InjectedLanguageUtil.getTopLevelFile(getFile());
   }
 
   private long collectAndCheckHighlighting(@NotNull ExpectedHighlightingData data) {
@@ -1580,7 +1580,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public PsiFile getFile() {
-    return myFile;
+    return myFile == null ? null : PsiManager.getInstance(getProject()).findFile(myFile);
   }
 
   public static List<IntentionAction> getAvailableIntentions(@NotNull final Editor editor, @NotNull final PsiFile file) {
@@ -1858,13 +1858,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void testStructureView(@NotNull Consumer<StructureViewComponent> consumer) {
     assert myFile != null : "configure first";
 
-    final VirtualFile vFile = myFile.getVirtualFile();
-    assert vFile != null : "no virtual file for " + myFile;
+    final FileEditor fileEditor = FileEditorManager.getInstance(getProject()).getSelectedEditor(myFile);
+    assert fileEditor != null : "editor not opened for " + myFile;
 
-    final FileEditor fileEditor = FileEditorManager.getInstance(getProject()).getSelectedEditor(vFile);
-    assert fileEditor != null : "editor not opened for " + vFile;
-
-    final StructureViewBuilder builder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(myFile);
+    final StructureViewBuilder builder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(getFile());
     assert builder != null : "no builder for " + myFile;
 
     StructureViewComponent component = null;
@@ -1891,7 +1888,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     if (myEditor instanceof EditorWindow) {
       Document document = ((DocumentWindow)myEditor.getDocument()).getDelegate();
-      myFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
+      myFile = FileDocumentManager.getInstance().getFile(document);
       myEditor = ((EditorWindow)myEditor).getDelegate();
     }
   }

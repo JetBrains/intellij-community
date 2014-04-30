@@ -31,6 +31,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
@@ -38,9 +39,15 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.TransferToEDTQueue;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -284,6 +291,34 @@ public class PushedFilePropertiesUpdater {
       catch (IOException e) {
         LOG.error(e);
       }
+    }
+  }
+
+  public static void filePropertiesChanged(@NotNull final VirtualFile file) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    FileBasedIndex.getInstance().requestReindex(file);
+    for (final Project project : ProjectManager.getInstance().getOpenProjects()) {
+      reloadPsi(file, project);
+    }
+  }
+
+  private static void reloadPsi(final VirtualFile file, final Project project) {
+    final FileManagerImpl fileManager = (FileManagerImpl)((PsiManagerEx)PsiManager.getInstance(project)).getFileManager();
+    if (fileManager.findCachedViewProvider(file) != null) {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          if (project.isDisposed()) {
+            return;
+          }
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              fileManager.forceReload(file);
+            }
+          });
+        }
+      });
     }
   }
 }

@@ -70,7 +70,12 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     final VirtualFile root = createAndGetContentEntry();
     rootModel.addContentEntry(root);
 
-    rootModel.inheritSdk();
+    // todo this should be moved to generic ModuleBuilder
+    if (myJdk != null){
+      rootModel.setSdk(myJdk);
+    } else {
+      rootModel.inheritSdk();
+    }
 
     MavenUtil.runWhenInitialized(project, new DumbAwareRunnable() {
       public void run() {

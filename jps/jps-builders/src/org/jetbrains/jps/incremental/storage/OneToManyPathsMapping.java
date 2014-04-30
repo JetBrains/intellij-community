@@ -82,10 +82,9 @@ public class OneToManyPathsMapping extends AbstractStateStorage<String, Collecti
   }
 
   private static class PathCollectionExternalizer implements DataExternalizer<Collection<String>> {
-    private final byte[] myBuffer = IOUtil.allocReadWriteUTFBuffer();
     public void save(@NotNull DataOutput out, Collection<String> value) throws IOException {
       for (String str : value) {
-        IOUtil.writeUTFFast(myBuffer, out, str);
+        IOUtil.writeUTF(out, str);
       }
     }
 
@@ -93,7 +92,7 @@ public class OneToManyPathsMapping extends AbstractStateStorage<String, Collecti
       final Set<String> result = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
       final DataInputStream stream = (DataInputStream)in;
       while (stream.available() > 0) {
-        final String str = IOUtil.readUTFFast(myBuffer, stream);
+        final String str = IOUtil.readUTF(stream);
         result.add(str);
       }
       return result;

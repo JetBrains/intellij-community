@@ -234,18 +234,17 @@ public class JarHandler extends JarHandlerBase {
         try {
           info = new PersistentHashMap<String, CacheLibraryInfo>(
             file, new EnumeratorStringDescriptor(), new DataExternalizer<CacheLibraryInfo>() {
-            private final byte[] myBuffer = IOUtil.allocReadWriteUTFBuffer();
 
             @Override
             public void save(@NotNull DataOutput out, CacheLibraryInfo value) throws IOException {
-              IOUtil.writeUTFFast(myBuffer, out, value.mySnapshotPath);
+              IOUtil.writeUTF(out, value.mySnapshotPath);
               out.writeLong(value.myModificationTime);
               out.writeLong(value.myFileLength);
             }
 
             @Override
             public CacheLibraryInfo read(@NotNull DataInput in) throws IOException {
-              return new CacheLibraryInfo(IOUtil.readUTFFast(myBuffer, in), in.readLong(), in.readLong());
+              return new CacheLibraryInfo(IOUtil.readUTF(in), in.readLong(), in.readLong());
             }
           }
           );

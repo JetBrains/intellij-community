@@ -64,14 +64,12 @@ public class VirtualFileSetState {
 
 
   private static class VirtualFileWithDependenciesExternalizer implements DataExternalizer<VirtualFileSetState> {
-    private byte[] myBuffer = IOUtil.allocReadWriteUTFBuffer();
-
     @Override
     public void save(@NotNull DataOutput out, VirtualFileSetState value) throws IOException {
       final Map<String, Long> dependencies = value.myTimestamps;
       out.writeInt(dependencies.size());
       for (Map.Entry<String, Long> entry : dependencies.entrySet()) {
-        IOUtil.writeUTFFast(myBuffer, out, entry.getKey());
+        IOUtil.writeUTF(out, entry.getKey());
         out.writeLong(entry.getValue());
       }
     }
@@ -81,7 +79,7 @@ public class VirtualFileSetState {
       final VirtualFileSetState state = new VirtualFileSetState();
       int size = in.readInt();
       while (size-- > 0) {
-        final String url = IOUtil.readUTFFast(myBuffer, in);
+        final String url = IOUtil.readUTF(in);
         final long timestamp = in.readLong();
         state.myTimestamps.put(url, timestamp);
       }

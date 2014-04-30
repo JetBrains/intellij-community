@@ -30,22 +30,16 @@ import java.util.Collection;
  * Date: 29.01.11
  */
 public class RW {
-  private static final byte[] ourStringBuffer = IOUtil.allocReadWriteUTFBuffer();
-
   private RW() {
 
   }
 
   protected static String readUTF(DataInput in) throws IOException {
-    synchronized (ourStringBuffer) {
-      return IOUtil.readUTFFast(ourStringBuffer, in);
-    }
+    return IOUtil.readUTF(in);
   }
 
   protected static void writeUTF(DataOutput out, String value) throws IOException {
-    synchronized (ourStringBuffer) {
-      IOUtil.writeUTFFast(ourStringBuffer, out, value);
-    }
+    IOUtil.writeUTF(out, value);
   }
 
   public interface Savable {

@@ -38,6 +38,9 @@ import java.util.List;
 public abstract class BeforeAfterActionMetaData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.BeforeAfterActionMetaData");
 
+  protected static final TextDescriptor[] EMPTY_EXAMPLE = new TextDescriptor[0];
+  protected static final TextDescriptor EMPTY_DESCRIPTION = new PlainTextDescriptor("", "");
+
   @NonNls protected static final String DESCRIPTION_FILE_NAME = "description.html";
   @NonNls static final String EXAMPLE_USAGE_URL_SUFFIX = ".template";
   @NonNls private static final String BEFORE_TEMPLATE_PREFIX = "before";
@@ -64,7 +67,6 @@ public abstract class BeforeAfterActionMetaData {
     myExampleUsagesAfter = exampleUsagesAfter;
     myDescription = description;
   }
-
 
   @NotNull
   private static TextDescriptor[] retrieveURLs(@NotNull URL descriptionDirectory, @NotNull String prefix, @NotNull String suffix)
@@ -113,7 +115,7 @@ public abstract class BeforeAfterActionMetaData {
                 descriptionDirectory +
                 "'" +
                 (children == null ? "" : "; directory contents: " + Arrays.asList(children)), cause);
-      return new TextDescriptor[0];
+      return EMPTY_EXAMPLE;
     }
     return urls.toArray(new TextDescriptor[urls.size()]);
   }
@@ -126,6 +128,7 @@ public abstract class BeforeAfterActionMetaData {
       }
       catch (MalformedURLException e) {
         LOG.error(e);
+        return EMPTY_EXAMPLE;
       }
     }
     return myExampleUsagesBefore;
@@ -139,6 +142,7 @@ public abstract class BeforeAfterActionMetaData {
       }
       catch (MalformedURLException e) {
         LOG.error(e);
+        return EMPTY_EXAMPLE;
       }
     }
     return myExampleUsagesAfter;
@@ -154,6 +158,7 @@ public abstract class BeforeAfterActionMetaData {
       }
       catch (MalformedURLException e) {
         LOG.error(e);
+        return EMPTY_DESCRIPTION;
       }
     }
     return myDescription;

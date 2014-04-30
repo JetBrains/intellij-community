@@ -1688,11 +1688,11 @@ abstract class ClassLoader {
 
         for(int i=0; i<directives.<error descr="Cannot resolve symbol 'classes'">classes</error>.length; i++)
             classAssertionStatus.put(directives.<error descr="Cannot resolve symbol 'classes'">classes</error>[i],
-                              Boolean.valueOf<error descr="Cannot resolve method 'valueOf(?)'">(directives.<error descr="Cannot resolve symbol 'classEnabled'">classEnabled</error>[i])</error>);
+                              Boolean.valueOf(directives.<error descr="Cannot resolve symbol 'classEnabled'">classEnabled</error>[i]));
 
         for(int i=0; i<directives.<error descr="Cannot resolve symbol 'packages'">packages</error>.length; i++)
             packageAssertionStatus.put(directives.<error descr="Cannot resolve symbol 'packages'">packages</error>[i],
-                              Boolean.valueOf<error descr="Cannot resolve method 'valueOf(?)'">(directives.<error descr="Cannot resolve symbol 'packageEnabled'">packageEnabled</error>[i])</error>);
+                              Boolean.valueOf(directives.<error descr="Cannot resolve symbol 'packageEnabled'">packageEnabled</error>[i]));
 
         defaultAssertionStatus = directives.<error descr="Cannot resolve symbol 'deflt'">deflt</error>;
     }
