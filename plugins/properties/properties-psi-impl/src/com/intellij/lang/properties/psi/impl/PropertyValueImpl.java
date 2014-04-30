@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,15 +26,17 @@ import org.jetbrains.annotations.NotNull;
  * @author cdr
  */
 public class PropertyValueImpl extends LeafPsiElement {
-  public PropertyValueImpl(IElementType type, CharSequence text) {
+  public PropertyValueImpl(@NotNull IElementType type, CharSequence text) {
     super(type, text);
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this, PropertyValueImpl.class);
   }
 
+  @Override
   public PsiReference getReference() {
     PsiReference[] references = getReferences();
     return references.length == 0 ? null : references[0];
