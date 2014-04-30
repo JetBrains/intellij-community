@@ -121,7 +121,7 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
 
       LocalQuickFix fix = createNavigateToDupeFix(file, offsetInOtherFile);
       ProblemDescriptor descriptor = manager
-        .createProblemDescriptor(targetElement, rangeInElement, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly, fix);
+        .createProblemDescriptor(targetElement, rangeInElement, message, ProblemHighlightType.WEAK_WARNING, isOnTheFly, fix);
       descriptors.add(descriptor);
     }
 
