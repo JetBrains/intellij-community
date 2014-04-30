@@ -150,34 +150,34 @@ public class ClassPath {
 
   @Nullable
   private Loader getLoader(final URL url, int index) throws IOException {
-    String s;
+    String path;
 
     if (myAcceptUnescapedUrls) {
-      s = url.getFile();
+      path = url.getFile();
     }
     else {
       try {
-        s = url.toURI().getSchemeSpecificPart();
+        path = url.toURI().getSchemeSpecificPart();
       }
       catch (URISyntaxException thisShouldNotHappen) {
         //noinspection CallToPrintStackTrace
         thisShouldNotHappen.printStackTrace();
-        s = url.getFile();
+        path = url.getFile();
       }
     }
 
     Loader loader = null;
-    if (s != null && new File(s).isDirectory()) {
-      if (URLUtil.FILE_PROTOCOL.equals(url.getProtocol())) {
+    if (path != null && URLUtil.FILE_PROTOCOL.equals(url.getProtocol())) {
+      File file = new File(path);
+      if (file.isDirectory()) {
         loader = new FileLoader(url, index);
       }
-    }
-    else {
-      JarLoader jarLoader = new JarLoader(url, myCanLockJars, index);
-      if (myPreloadJarContents) {
-        jarLoader.preLoadClasses();
+      else if (file.isFile()) {
+        loader = new JarLoader(url, myCanLockJars, index);
+        if (myPreloadJarContents) {
+          ((JarLoader)loader).preloadClasses();
+        }
       }
-      loader = jarLoader;
     }
 
     if (loader != null && myCanUseCache) {
