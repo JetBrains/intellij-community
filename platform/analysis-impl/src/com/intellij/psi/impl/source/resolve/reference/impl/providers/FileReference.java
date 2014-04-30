@@ -249,7 +249,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
       try {
         return StringUtil.notNullize(new URI(_text).getPath(), text);
       }
-      catch (Exception e) {
+      catch (Exception ignored) {
         return text;
       }
     }
@@ -300,7 +300,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
     try {
       return new URI(null, null, name, null).toString();
     }
-    catch (Exception e) {
+    catch (Exception ignored) {
       return name;
     }
   }
