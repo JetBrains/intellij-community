@@ -419,6 +419,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         waitForFileWatcher(indicator);
       }
+
+      @Override
+      public String toString() {
+        return "wait for file watcher";
+      }
     });
 
     final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);

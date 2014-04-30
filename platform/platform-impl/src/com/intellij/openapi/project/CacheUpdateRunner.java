@@ -34,6 +34,7 @@ import com.intellij.util.Consumer;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.Future;
@@ -50,6 +51,11 @@ public class CacheUpdateRunner {
   CacheUpdateRunner(@NotNull Project project, @NotNull Collection<CacheUpdater> updaters) {
     myProject = project;
     myUpdaters = updaters;
+  }
+
+  @Override
+  public String toString() {
+    return new ArrayList<CacheUpdater>(myUpdaters).toString();
   }
 
   public int queryNeededFiles(@NotNull ProgressIndicator indicator) {

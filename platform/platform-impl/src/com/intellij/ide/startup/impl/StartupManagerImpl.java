@@ -262,10 +262,17 @@ public class StartupManagerImpl extends StartupManagerEx {
               }
             });
           }
+
+          @Override
+          public String toString() {
+            return "initial refresh";
+          }
         });
       }
 
-      dumbService.queueCacheUpdateInDumbMode(myCacheUpdaters);
+      if (!myCacheUpdaters.isEmpty()) {
+        dumbService.queueCacheUpdateInDumbMode(myCacheUpdaters);
+      }
     }
     catch (ProcessCanceledException e) {
       throw e;
