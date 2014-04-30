@@ -461,7 +461,7 @@
 
     <pom.declarationSearcher implementation="org.jetbrains.plugins.groovy.spock.SpockPomDeclarationSearcher"/>
 
-    <typeDeclarationProvider implementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyTypeDeclarationProvider" order="first"/>
+    <typeDeclarationProvider implementation="org.jetbrains.plugins.groovy.editor.GroovyTypeDeclarationProvider" order="first"/>
 
     <!--Run/debug-->
     <configurationType implementation="org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType"/>
