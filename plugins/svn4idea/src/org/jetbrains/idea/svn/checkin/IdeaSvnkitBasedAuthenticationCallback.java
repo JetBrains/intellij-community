@@ -277,7 +277,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     }
   }
 
-  private abstract class AbstractAuthenticator<T> {
+  private abstract class AbstractAuthenticator {
     protected final SvnVcs myVcs;
     protected boolean myStoreInUsual;
     protected SvnAuthenticationManager myTmpDirManager;
@@ -292,11 +292,8 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
       final SvnAuthenticationManager manager = configuration.getAuthenticationManager(myVcs);
 
       try {
-        T svnAuthentication = getWithPassive(passive);
-        if (svnAuthentication == null) {
-          svnAuthentication = getWithActive(manager);
-        }
-        if (svnAuthentication == null) return false;
+        boolean authenticated = getWithPassive(passive) || getWithActive(manager);
+        if (!authenticated) return false;
 
         if (myStoreInUsual) {
           manager.setArtificialSaving(true);
@@ -332,8 +329,8 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
       return interactive;
     }
 
-    protected abstract T getWithPassive(SvnAuthenticationManager passive) throws SVNException;
-    protected abstract T getWithActive(SvnAuthenticationManager active) throws SVNException;
+    protected abstract boolean getWithPassive(SvnAuthenticationManager passive) throws SVNException;
+    protected abstract boolean getWithActive(SvnAuthenticationManager active) throws SVNException;
     protected abstract boolean acknowledge(SvnAuthenticationManager manager) throws SVNException;
   }
 
@@ -361,7 +358,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
   }
 
   // plus seems that we also should ask for credentials; but we didn't receive realm name yet
-  private class SSLServerCertificateAuthenticator extends AbstractAuthenticator<Boolean> {
+  private class SSLServerCertificateAuthenticator extends AbstractAuthenticator {
     private SVNURL myUrl;
     private String myRealm;
     private String myCertificateRealm;
@@ -383,9 +380,9 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     }
 
     @Override
-    protected Boolean getWithPassive(SvnAuthenticationManager passive) throws SVNException {
+    protected boolean getWithPassive(SvnAuthenticationManager passive) throws SVNException {
       String stored = (String)passive.getRuntimeAuthStorage().getData("svn.ssl.server", myRealm);
-      if (stored == null) return null;
+      if (stored == null) return false;
       CertificateFactory cf;
       try {
         cf = CertificateFactory.getInstance("X509");
@@ -397,11 +394,11 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_UNAVAILABLE, e));
       }
       myCertificateRealm = myRealm;
-      return myCertificate != null ? true : null;
+      return myCertificate != null;
     }
 
     @Override
-    protected Boolean getWithActive(final SvnAuthenticationManager active) throws SVNException {
+    protected boolean getWithActive(final SvnAuthenticationManager active) throws SVNException {
       doWithSubscribeToAuthProvider(new SvnAuthenticationManager.ISVNAuthenticationProviderListener() {
                                       @Override
                                       public void requestClientAuthentication(String kind,
@@ -441,6 +438,8 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
       );
 
       myStoreInUsual &= myCertificate != null && ISVNAuthenticationProvider.ACCEPTED == myResult;
+      // TODO: Previous code always returned not null value, so Boolean == null check was always false in tryAuthenticate().
+      // TODO: This was most likely error in code - check once again.
       return ISVNAuthenticationProvider.REJECTED != myResult && myCertificate != null;
     }
 
@@ -524,7 +523,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     return true;
   }
 
-  private class CredentialsAuthenticator extends AbstractAuthenticator<SVNAuthentication> {
+  private class CredentialsAuthenticator extends AbstractAuthenticator {
     private String myKind;
     private String myRealm;
     // sometimes realm string is different (with <>), so store credentials for both strings..
@@ -551,14 +550,14 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     }
 
     @Override
-    protected SVNAuthentication getWithPassive(SvnAuthenticationManager passive) throws SVNException {
+    protected boolean getWithPassive(SvnAuthenticationManager passive) throws SVNException {
       myAuthentication = getWithPassiveImpl(passive);
       if (myAuthentication != null && !checkAuthOk(myAuthentication)) {
         clearPassiveCredentials(myRealm, myUrl,
                                 myAuthentication instanceof SVNPasswordAuthentication);  //clear passive also take into acconut ssl filepath
         myAuthentication = null;
       }
-      return myAuthentication;
+      return myAuthentication != null;
     }
 
     private SVNAuthentication getWithPassiveImpl(SvnAuthenticationManager passive) throws SVNException {
@@ -579,7 +578,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     }
 
     @Override
-    protected SVNAuthentication getWithActive(final SvnAuthenticationManager active) throws SVNException {
+    protected boolean getWithActive(final SvnAuthenticationManager active) throws SVNException {
       if (ISVNAuthenticationManager.SSL.equals(myKind)) {
         doWithSubscribeToAuthProvider(new SvnAuthenticationManager.ISVNAuthenticationProviderListener() {
                                         @Override
@@ -610,11 +609,12 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
                                         }
                                       }
         );
-        if (myAuthentication != null) return myAuthentication;
+        if (myAuthentication != null) return true;
       }
       myAuthentication = active.getProvider().requestClientAuthentication(myKind, myUrl, myRealm, null, null, true);
       myStoreInUsual = myTempDirectory == null && myAuthentication != null && myAuthentication.isStorageAllowed();
-      return myAuthentication;
+
+      return myAuthentication != null;
     }
 
     @Override
