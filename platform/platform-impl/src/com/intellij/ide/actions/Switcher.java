@@ -428,15 +428,13 @@ public class Switcher extends AnAction implements DumbAware {
         }
 
         private void updatePathLabel() {
-          final Object[] values = files.getSelectedValues();
+          Object[] values = files.getSelectedValues();
           if (values != null && values.length == 1) {
-            final VirtualFile parent = ((FileInfo)values[0]).first.getParent();
-            if (parent != null) {
-              pathLabel.setText(getTitle2Text(FileUtil.getLocationRelativeToUserHome(parent.getPresentableUrl())));
-            } else {
-              pathLabel.setText(" ");
-            }
-          } else {
+            VirtualFile file = ((FileInfo)values[0]).first;
+            String presentableUrl = ObjectUtils.notNull(file.getParent(), file).getPresentableUrl();
+            pathLabel.setText(getTitle2Text(FileUtil.getLocationRelativeToUserHome(presentableUrl)));
+          }
+          else {
             pathLabel.setText(" ");
           }
         }

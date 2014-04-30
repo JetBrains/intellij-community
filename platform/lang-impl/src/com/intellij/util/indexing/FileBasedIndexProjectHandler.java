@@ -22,7 +22,9 @@ package com.intellij.util.indexing;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.*;
@@ -42,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public class FileBasedIndexProjectHandler extends AbstractProjectComponent implements IndexableFileSet {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndexProjectHandler");
   private final FileBasedIndexImpl myIndex;
   private final ProjectRootManagerEx myRootManager;
   private final FileTypeManager myFileTypeManager;
@@ -51,6 +54,18 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
     myIndex = index;
     myRootManager = rootManager;
     myFileTypeManager = ftManager;
+
+    if (ApplicationManager.getApplication().isInternal()) {
+      project.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+
+        public void enteredDumbMode() {
+        }
+
+        public void exitDumbMode() {
+          LOG.info("Has changed files: " + (createChangedFilesIndexingTask(project) != null) + "; project=" + project);
+        }
+      });
+    }
 
     final StartupManagerEx startupManager = (StartupManagerEx)StartupManager.getInstance(project);
     if (startupManager != null) {

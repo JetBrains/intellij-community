@@ -192,7 +192,14 @@ public final class Urls {
     return fileUrl != null && fileUrl.equalsIgnoreParameters(url);
   }
 
-  public static boolean equals(@NotNull Url url1, @NotNull Url url2, boolean caseSensitive, boolean ignoreParameters) {
+  public static boolean equals(@Nullable Url url1, @Nullable Url url2, boolean caseSensitive, boolean ignoreParameters) {
+    if (url1 == null) {
+      return url2 == null;
+    }
+    if (url2 == null) {
+      return url1 == null;
+    }
+
     Url o1 = ignoreParameters ? url1.trimParameters() : url1;
     Url o2 = ignoreParameters ? url2.trimParameters() : url2;
     return caseSensitive ? o1.equals(o2) : o1.equalsIgnoreCase(o2);
@@ -222,7 +229,7 @@ public final class Urls {
 
     @Override
     public int computeHashCode(Url url) {
-      return url.hashCodeCaseInsensitive();
+      return url == null ? 0 : url.hashCodeCaseInsensitive();
     }
 
     @Override

@@ -77,6 +77,11 @@ public class JavacMain {
     final boolean usingJavac = compilingTool instanceof JavacCompilerTool;
     final JavacFileManager fileManager = new JavacFileManager(new ContextImpl(compiler, diagnosticConsumer, outputSink, canceledStatus, usingJavac), transformers);
 
+    if (!platformClasspath.isEmpty()) {
+      // for javac6 this will prevent lazy initialization of Paths.bootClassPathRtJar 
+      // and thus usage of symbol file for resolution, when this file is not expected to be used
+      fileManager.handleOption("-bootclasspath", Collections.singleton("").iterator());
+    }
     fileManager.handleOption("-extdirs", Collections.singleton("").iterator()); // this will clear cached stuff
     fileManager.handleOption("-endorseddirs", Collections.singleton("").iterator()); // this will clear cached stuff
     final Collection<String> _options = prepareOptions(options, compilingTool);

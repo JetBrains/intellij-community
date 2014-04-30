@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.codeInsight.navigation.actions.TypeDeclarationProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -27,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
  */
 public class GroovyTypeDeclarationProvider implements TypeDeclarationProvider {
   @Nullable
-  public PsiElement[] getSymbolTypeDeclarations(final PsiElement targetElement) {
+  public PsiElement[] getSymbolTypeDeclarations(@NotNull final PsiElement targetElement) {
     PsiType type;
     if (targetElement instanceof GrVariable){
       type = ((GrVariable)targetElement).getTypeGroovy();

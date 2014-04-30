@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.psi.stubs;
 
-package com.intellij.codeInsight.navigation.actions;
-
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
- * @author yole
+ * @author peter
  */
-public interface TypeDeclarationProvider {
-  ExtensionPointName<TypeDeclarationProvider> EP_NAME = ExtensionPointName.create("com.intellij.typeDeclarationProvider");
+public class EmptyStub<T extends PsiElement> extends StubBase<T> {
 
-  @Nullable
-  PsiElement[] getSymbolTypeDeclarations(@NotNull PsiElement symbol);
+  public EmptyStub(StubElement parent, IStubElementType elementType) {
+    super(parent, elementType);
+  }
 }

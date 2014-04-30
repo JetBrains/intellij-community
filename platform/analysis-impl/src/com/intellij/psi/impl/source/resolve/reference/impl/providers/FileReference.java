@@ -183,6 +183,13 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
         if (context instanceof PackagePrefixFileSystemItem) {
           context = ((PackagePrefixFileSystemItem)context).getDirectory();
         }
+        else if (context instanceof FileReferenceResolver) {
+          PsiFileSystemItem child = ((FileReferenceResolver)context).resolveFileReference(this, decoded);
+          if (child != null) {
+            result.add(new PsiElementResolveResult(getOriginalFile(child)));
+            return;
+          }
+        }
 
         if (context.getParent() == null && FileUtil.namesEqual(decoded, context.getName())) {
           // match filesystem roots
@@ -241,15 +248,16 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
   public String decode(@NotNull final String text) {
     // strip http get parameters
     String _text = text;
-    if (text.indexOf('?') >= 0) {
-      _text = text.substring(0, text.lastIndexOf('?'));
+    int paramIndex = text.lastIndexOf('?');
+    if (paramIndex >= 0) {
+      _text = text.substring(0, paramIndex);
     }
 
     if (myFileReferenceSet.isUrlEncoded()) {
       try {
         return StringUtil.notNullize(new URI(_text).getPath(), text);
       }
-      catch (Exception e) {
+      catch (Exception ignored) {
         return text;
       }
     }
@@ -300,7 +308,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
     try {
       return new URI(null, null, name, null).toString();
     }
-    catch (Exception e) {
+    catch (Exception ignored) {
       return name;
     }
   }

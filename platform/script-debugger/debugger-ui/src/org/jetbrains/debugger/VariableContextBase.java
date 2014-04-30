@@ -19,7 +19,7 @@ public abstract class VariableContextBase implements VariableContext {
   @NotNull
   @Override
   public MemberFilter getMemberFilter() {
-    return getDebugProcess();
+    return getViewSupport();
   }
 
   @Nullable

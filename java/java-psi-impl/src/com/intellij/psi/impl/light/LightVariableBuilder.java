@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.light;
 
-import com.intellij.codeInsight.completion.originInfo.OriginInfoAwareElement;
+import com.intellij.psi.OriginInfoAwareElement;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.navigation.NavigationItem;

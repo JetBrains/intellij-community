@@ -107,7 +107,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     return findChildByType(TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS);
   }
 
-  enum ReferenceKind {
+  public enum ReferenceKind {
     CLASS,
     CLASS_OR_PACKAGE,
     PACKAGE_FQ,

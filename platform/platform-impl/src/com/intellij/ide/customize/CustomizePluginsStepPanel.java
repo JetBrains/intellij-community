@@ -16,6 +16,7 @@
 package com.intellij.ide.customize;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
@@ -162,6 +163,14 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
     if (CUSTOMIZE_COMMAND.equals(command)) {
       myCustomizePanel.update(group);
       myCardLayout.show(this, CUSTOMIZE);
+      setButtonsVisible(false);
+    }
+  }
+
+  private void setButtonsVisible(boolean visible) {
+    DialogWrapper window = DialogWrapper.findInstance(this);
+    if (window instanceof CustomizeIDEWizardDialog) {
+      ((CustomizeIDEWizardDialog)window).setButtonsVisible(visible);
     }
   }
 
@@ -225,15 +234,21 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
       setLayout(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, GAP, true, false));
       add(myTitleLabel);
       add(myContentPanel);
-      JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 25, 5));
-      buttonPanel.add(mySaveButton);
-      buttonPanel.add(new LinkLabel<String>("Enable All", null, this, "enable"));
-      buttonPanel.add(new LinkLabel<String>("Disable All", null, this, "disable"));
+      JPanel buttonPanel = new JPanel(new GridBagLayout());
+      GridBagConstraints gbc = new GridBagConstraints();
+      gbc.insets.right = 25;
+      gbc.gridy = 0;
+      buttonPanel.add(mySaveButton, gbc);
+      buttonPanel.add(new LinkLabel<String>("Enable All", null, this, "enable"), gbc);
+      buttonPanel.add(new LinkLabel<String>("Disable All", null, this, "disable"), gbc);
+      gbc.weightx = 1;
+      buttonPanel.add(Box.createHorizontalGlue(), gbc);
       add(buttonPanel);
       mySaveButton.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
           myCardLayout.show(CustomizePluginsStepPanel.this, MAIN);
+          setButtonsVisible(true);
         }
       });
     }

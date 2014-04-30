@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
-import com.intellij.codeInsight.completion.originInfo.OriginInfoAwareElement;
+import com.intellij.psi.OriginInfoAwareElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;

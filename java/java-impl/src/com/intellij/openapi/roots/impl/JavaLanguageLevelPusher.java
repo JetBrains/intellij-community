@@ -20,12 +20,10 @@ import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
@@ -106,7 +104,7 @@ public class JavaLanguageLevelPusher implements FilePropertyPusher<LanguageLevel
 
     for (VirtualFile child : fileOrDir.getChildren()) {
       if (!child.isDirectory() && StdFileTypes.JAVA.equals(child.getFileType())) {
-        FileBasedIndex.getInstance().requestReindex(child);
+        PushedFilePropertiesUpdater.filePropertiesChanged(child);
       }
     }
   }

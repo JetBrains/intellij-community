@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,9 +43,7 @@ class JarLoader extends Loader {
     @NotNull
     protected ZipFile calc() {
       try {
-        final ZipFile zipFile = doGetZipFile();
-        if (zipFile == null) throw new RuntimeException("Can't load zip file");
-        return zipFile;
+        return doGetZipFile();
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -59,7 +57,7 @@ class JarLoader extends Loader {
     myCanLockJar = canLockJar;
   }
 
-  void preLoadClasses() {
+  void preloadClasses() {
     ZipFile zipFile = null;
     try {
       zipFile = acquireZipFile();
@@ -102,19 +100,8 @@ class JarLoader extends Loader {
     }
   }
 
-  @Nullable
   private ZipFile doGetZipFile() throws IOException {
-    if (URLUtil.FILE_PROTOCOL.equals(myURL.getProtocol())) {
-      String s = FileUtil.unquote(myURL.getFile());
-      if (!new File(s).exists()) {
-        throw new FileNotFoundException(s);
-      }
-      else {
-        return new ZipFile(s);
-      }
-    }
-
-    return null;
+    return new ZipFile(FileUtil.unquote(myURL.getFile()));
   }
 
   @Override

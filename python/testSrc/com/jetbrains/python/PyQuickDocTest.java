@@ -175,9 +175,9 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   }
 
   public void testPropNewSetter() {
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON26);
     Map<String, PsiElement> marks = loadTest();
     PsiElement ref_elt = marks.get("<the_ref>");
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON26);
     try {
       final PyDocStringOwner doc_owner = (PyDocStringOwner)((PyTargetExpression)(ref_elt.getParent())).getReference().resolve();
       checkByHTML(myProvider.generateDoc(doc_owner, ref_elt));
@@ -188,9 +188,9 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   }
 
   public void testPropNewDeleter() {
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON26);
     Map<String, PsiElement> marks = loadTest();
     PsiElement ref_elt = marks.get("<the_ref>");
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON26);
     try {
       final PyDocStringOwner doc_owner = (PyDocStringOwner)((PyReferenceExpression)(ref_elt.getParent())).getReference().resolve();
       checkByHTML(myProvider.generateDoc(doc_owner, ref_elt));
