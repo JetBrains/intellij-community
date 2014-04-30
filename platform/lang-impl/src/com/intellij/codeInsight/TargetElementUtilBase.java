@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,7 +96,7 @@ public class TargetElementUtilBase {
   }
 
   @Nullable
-  public static PsiReference findReference(Editor editor, int offset) {
+  public static PsiReference findReference(@NotNull Editor editor, int offset) {
     Project project = editor.getProject();
     if (project == null) return null;
 
@@ -172,7 +172,7 @@ public class TargetElementUtilBase {
   }
 
   @Nullable
-  public PsiElement findTargetElement(Editor editor, int flags, int offset) {
+  public PsiElement findTargetElement(@NotNull Editor editor, int flags, int offset) {
     Project project = editor.getProject();
     if (project == null) return null;
 
