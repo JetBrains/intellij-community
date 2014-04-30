@@ -17,10 +17,7 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.completion.CodeCompletionFeatures;
-import com.intellij.codeInsight.completion.CompletionLookupArranger;
-import com.intellij.codeInsight.completion.PrefixMatcher;
-import com.intellij.codeInsight.completion.ShowHideIntentionIconLookupAction;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
@@ -226,23 +223,37 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     refreshUi(true, true);
   }
 
-  public void addItem(LookupElement item, PrefixMatcher matcher) {
+  public boolean addItem(LookupElement item, PrefixMatcher matcher) {
+    LookupElementPresentation presentation = renderItemApproximately(item);
+    if (containsDummyIdentifier(presentation.getItemText()) || 
+        containsDummyIdentifier(presentation.getTailText()) || 
+        containsDummyIdentifier(presentation.getTypeText())) {
+      return false;
+    }
+    
     myMatchers.put(item, matcher);
-    LookupElementPresentation presentation = updateLookupWidth(item);
+    updateLookupWidth(item, presentation);
     synchronized (myList) {
       myArranger.addElement(this, item, presentation);
     }
+    return true;
   }
 
-  public LookupElementPresentation updateLookupWidth(LookupElement item) {
-    final LookupElementPresentation presentation = renderItemApproximately(item);
+  private static boolean containsDummyIdentifier(@Nullable final String s) {
+    return s != null && s.contains(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
+  }
+
+  public void updateLookupWidth(LookupElement item) {
+    updateLookupWidth(item, renderItemApproximately(item));
+  }
+
+  private void updateLookupWidth(LookupElement item, LookupElementPresentation presentation) {
     final Font customFont = myCellRenderer.getFontAbleToDisplay(presentation);
     if (customFont != null) {
       myCustomFonts.put(item, customFont);
     }
     int maxWidth = myCellRenderer.updateMaximumWidth(presentation, item);
     myLookupTextWidth = Math.max(maxWidth, myLookupTextWidth);
-    return presentation;
   }
 
   @Nullable
@@ -1106,6 +1117,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public void addAdvertisement(@NotNull final String text, final @Nullable Color bgColor) {
+    if (containsDummyIdentifier(text)) {
+      return;
+    }
+
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
@@ -1120,7 +1135,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     };
     if (ApplicationManager.getApplication().isDispatchThread()) {
       runnable.run();
-    } else {
+    }
+    else {
       ApplicationManager.getApplication().invokeLater(runnable);
     }
   }

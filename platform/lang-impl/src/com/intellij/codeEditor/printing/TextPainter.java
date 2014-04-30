@@ -70,8 +70,6 @@ class TextPainter extends BasePainter {
   private final CodeStyleSettings myCodeStyleSettings;
   private final FileType myFileType;
 
-  private static final LineWrapper ourLineWrapper = new LineWrapper();
-
   @NonNls private static final String DEFAULT_MEASURE_HEIGHT_TEXT = "A";
   @NonNls private static final String DEFAULT_MEASURE_WIDTH_TEXT = "w";
   @NonNls private static final String HEADER_TOKEN_PAGE = "PAGE";
@@ -517,7 +515,7 @@ class TextPainter extends BasePainter {
     if (myPrintSettings.WRAP) {
       double w = getTextSegmentWidth(text, myOffset, length, position.getX(), g);
       if (position.getX() + w > clip.getWidth()) {
-        IntArrayList breakOffsets = ourLineWrapper.calcBreakOffsets(text, myOffset, myOffset + length, colNumber, position.getX(),
+        IntArrayList breakOffsets = LineWrapper.calcBreakOffsets(text, myOffset, myOffset + length, colNumber, position.getX(),
                                                                     clip.getWidth(), new LineWrapper.WidthProvider() {
           @Override
           public double getWidth(char[] text, int start, int count, double x) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DefaultLogger extends Logger {
-  public DefaultLogger(String category) {
-  }
+  @SuppressWarnings("UnusedParameters")
+  public DefaultLogger(String category) { }
 
   @Override
   public boolean isDebugEnabled() {
@@ -30,22 +30,32 @@ public class DefaultLogger extends Logger {
   }
 
   @Override
-  public void debug(String message) {
+  public void debug(String message) { }
+
+  @Override
+  public void debug(Throwable t) { }
+
+  @Override
+  public void debug(@NonNls String message, Throwable t) { }
+
+  @Override
+  public void info(String message) { }
+
+  @Override
+  public void info(String message, Throwable t) { }
+
+  @Override
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  public void warn(@NonNls String message, @Nullable Throwable t) {
+    System.err.println("WARN: " + message);
+    if (t != null) t.printStackTrace(System.err);
   }
 
   @Override
-  public void debug(Throwable t) {
-  }
-
-  @Override
-  public void debug(@NonNls String message, Throwable t) {
-  }
-
-  @Override
-  @SuppressWarnings({"HardCodedStringLiteral", "UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public void error(String message, @Nullable Throwable t, @NotNull String... details) {
     System.err.println("ERROR: " + message);
-    if (t != null) t.printStackTrace();
+    if (t != null) t.printStackTrace(System.err);
     if (details.length > 0) {
       System.out.println("details: ");
       for (String detail : details) {
@@ -59,18 +69,5 @@ public class DefaultLogger extends Logger {
   }
 
   @Override
-  public void info(String message) {
-  }
-
-  @Override
-  public void info(String message, Throwable t) {
-  }
-
-  @Override
-  public void warn(@NonNls String message, Throwable t) {
-  }
-
-  @Override
-  public void setLevel(Level level) {
-  }
+  public void setLevel(Level level) { }
 }

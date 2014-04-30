@@ -107,6 +107,7 @@ public class MavenFoldersImporter {
       configOutputFolders();
     }
     configGeneratedAndExcludedFolders();
+    myModel.sortSourceFolders();
   }
 
   private void configSourceFolders() {

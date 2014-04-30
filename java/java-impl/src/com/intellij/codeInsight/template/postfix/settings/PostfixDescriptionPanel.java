@@ -20,10 +20,11 @@ import com.intellij.codeInsight.intention.impl.config.TextDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.TitledSeparator;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -38,50 +39,58 @@ class PostfixDescriptionPanel implements Disposable {
   private JPanel myBeforePanel;
   private JEditorPane myDescriptionBrowser;
 
+  public PostfixDescriptionPanel() {
+    initializeExamplePanel(myAfterPanel);
+    initializeExamplePanel(myBeforePanel);
+  }
 
-  public void reset(PostfixTemplateMetaData actionMetaData) {
+
+  public void reset(@NotNull PostfixTemplateMetaData actionMetaData) {
+
+    final TextDescriptor url = actionMetaData.getDescription();
+    final String description = getDescription(url);
+    myDescriptionBrowser.setText(description);
+
+    showUsages(myBeforePanel, ArrayUtil.getFirstElement(actionMetaData.getExampleUsagesBefore()));
+    showUsages(myAfterPanel, ArrayUtil.getFirstElement(actionMetaData.getExampleUsagesAfter()));
+  }
+
+  @NotNull
+  private static String getDescription(TextDescriptor url) {
     try {
-      final TextDescriptor url = actionMetaData.getDescription();
-      final String description = url == null ? "" : url.getText();
-      myDescriptionBrowser.setText(description);
-
-      showUsages(myBeforePanel, ArrayUtil.getFirstElement(actionMetaData.getExampleUsagesBefore()));
-      showUsages(myAfterPanel, ArrayUtil.getFirstElement(actionMetaData.getExampleUsagesAfter()));
+      return url.getText();
     }
     catch (IOException e) {
       LOG.error(e);
     }
+    return "";
   }
 
-  private void showUsages(final JPanel panel, @Nullable final TextDescriptor exampleUsage) throws IOException {
-    boolean createMode = exampleUsage == null || panel.getComponents().length == 0;
-    if (createMode) {
-      panel.setLayout(new BorderLayout());
-      panel.removeAll();
-    }
-
+  private static void showUsages(@NotNull JPanel panel, @Nullable TextDescriptor exampleUsage) {
+    String text = "";
+    FileType fileType = PlainTextFileType.INSTANCE;
     if (exampleUsage != null) {
-      final String name = exampleUsage.getFileName();
-      final FileTypeManagerEx fileTypeManager = FileTypeManagerEx.getInstanceEx();
-      final String extension = fileTypeManager.getExtension(name);
-      final FileType fileType = fileTypeManager.getFileTypeByExtension(extension);
-
-      ActionUsagePanel actionUsagePanel;
-      if (createMode) {
-        actionUsagePanel = new ActionUsagePanel();
-        Disposer.register(this, actionUsagePanel);
+      try {
+        text = exampleUsage.getText();
+        String name = exampleUsage.getFileName();
+        FileTypeManagerEx fileTypeManager = FileTypeManagerEx.getInstanceEx();
+        String extension = fileTypeManager.getExtension(name);
+        fileType = fileTypeManager.getFileTypeByExtension(extension);
       }
-      else {
-        actionUsagePanel = (ActionUsagePanel)panel.getComponent(0);
-      }
-
-      actionUsagePanel.reset(exampleUsage.getText(), fileType);
-
-      if (createMode) {
-        panel.add(actionUsagePanel);
+      catch (IOException e) {
+        LOG.error(e);
       }
     }
+
+    ((ActionUsagePanel)panel.getComponent(0)).reset(text, fileType);
     panel.repaint();
+  }
+
+  private void initializeExamplePanel(@NotNull JPanel panel) {
+    panel.setLayout(new BorderLayout());
+    ActionUsagePanel actionUsagePanel = new ActionUsagePanel();
+    panel.add(actionUsagePanel);
+    Disposer.register(this, actionUsagePanel);
   }
 
   JPanel getComponent() {
@@ -90,25 +99,5 @@ class PostfixDescriptionPanel implements Disposable {
 
   @Override
   public void dispose() {
-  }
-
-  public void init(final int preferredWidth) {
-    double height =
-      (myDescriptionBrowser.getSize().getHeight() + myBeforePanel.getSize().getHeight() + myAfterPanel.getSize().getHeight()) / 3;
-    Dimension newd = new Dimension(preferredWidth, (int)height);
-    myDescriptionBrowser.setSize(newd);
-    myDescriptionBrowser.setPreferredSize(newd);
-    myDescriptionBrowser.setMaximumSize(newd);
-    myDescriptionBrowser.setMinimumSize(newd);
-
-    myBeforePanel.setSize(newd);
-    myBeforePanel.setPreferredSize(newd);
-    myBeforePanel.setMaximumSize(newd);
-    myBeforePanel.setMinimumSize(newd);
-
-    myAfterPanel.setSize(newd);
-    myAfterPanel.setPreferredSize(newd);
-    myAfterPanel.setMaximumSize(newd);
-    myAfterPanel.setMinimumSize(newd);
   }
 }

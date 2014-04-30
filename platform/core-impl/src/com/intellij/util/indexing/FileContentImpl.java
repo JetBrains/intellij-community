@@ -45,7 +45,7 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
   private byte[] myContent;
   private CharSequence myContentAsText;
   private final long myStamp;
-  private final int myHashId;
+  private final byte[] myHash;
 
   @Override
   public Project getProject() {
@@ -91,23 +91,23 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
   }
 
   public FileContentImpl(@NotNull final VirtualFile file, @NotNull final CharSequence contentAsText, final Charset charset) {
-    this(file, contentAsText, null, charset, -1, -1);
+    this(file, contentAsText, null, charset, -1, null);
   }
 
   public FileContentImpl(@NotNull final VirtualFile file, @NotNull final CharSequence contentAsText, final Charset charset, long documentStamp) {
-    this(file, contentAsText, null, charset, documentStamp, -1);
+    this(file, contentAsText, null, charset, documentStamp, null);
   }
 
   public FileContentImpl(@NotNull final VirtualFile file, @NotNull final byte[] content) {
-    this(file, content, -1);
+    this(file, content, null);
   }
 
-  public FileContentImpl(@NotNull final VirtualFile file, @NotNull final byte[] content, int hashId) {
-    this(file, null, content, LoadTextUtil.detectCharsetAndSetBOM(file, content), -1, hashId);
+  public FileContentImpl(@NotNull final VirtualFile file, @NotNull final byte[] content, byte[] hash) {
+    this(file, null, content, LoadTextUtil.detectCharsetAndSetBOM(file, content), -1, hash);
   }
 
   public FileContentImpl(@NotNull final VirtualFile file) {
-    this(file, null, null, null, -1, -1);
+    this(file, null, null, null, -1, null);
   }
 
   private FileContentImpl(@NotNull VirtualFile file,
@@ -115,7 +115,7 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
                           byte[] content,
                           Charset charset,
                           long stamp,
-                          int hashId
+                          byte[] hash
   ) {
     myFile = file;
     myContentAsText = contentAsText;
@@ -125,7 +125,7 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
     // remember name explicitly because the file could be renamed afterwards
     myFileName = file.getName();
     myStamp = stamp;
-    myHashId = hashId;
+    myHash = hash;
   }
 
   @NotNull
@@ -218,7 +218,7 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
     return myFileName;
   }
 
-  public int getHashId() {
-    return myHashId;
+  public byte[] getHash() {
+    return myHash;
   }
 }

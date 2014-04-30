@@ -38,13 +38,11 @@ public class EnumeratorStringDescriptor implements KeyDescriptor<String> {
 
   @Override
   public void save(@NotNull final DataOutput storage, @NotNull final String value) throws IOException {
-    final byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
-    IOUtil.writeUTFFast(buffer, storage, value);
+    IOUtil.writeUTF(storage, value);
   }
 
   @Override
   public String read(@NotNull final DataInput storage) throws IOException {
-    final byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
-    return IOUtil.readUTFFast(buffer, storage);
+    return IOUtil.readUTF(storage);
   }
 }

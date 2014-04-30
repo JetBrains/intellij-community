@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -40,12 +41,15 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.Path;
 import org.jetbrains.idea.maven.utils.Url;
 import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.File;
+import java.util.Comparator;
 import java.util.Set;
+import java.util.TreeSet;
 
 public class MavenRootModelAdapter {
 
@@ -499,6 +503,70 @@ public class MavenRootModelAdapter {
     }
     catch (IllegalArgumentException e) {
       //bad value was stored
+    }
+  }
+
+  public void sortSourceFolders() {
+    for (ContentEntry eachEntry : myRootModel.getContentEntries()) {
+      final Set<SourceFolderData> sourceFolders = new TreeSet<SourceFolderData>(SourceFolderDataComparator.INSTANCE);
+      for (SourceFolder eachFolder : eachEntry.getSourceFolders()) {
+        final JpsElement properties = eachFolder.getJpsElement().getProperties();
+        //noinspection unchecked
+        JpsModuleSourceRootType<JpsElement> sourceRootType = (JpsModuleSourceRootType<JpsElement>)eachFolder.getRootType();
+        if (properties instanceof JavaSourceRootProperties) {
+          sourceFolders.add(
+            new SourceFolderData<JpsElement>(eachFolder.getUrl(), sourceRootType, ((JavaSourceRootProperties)properties).createCopy())
+          );
+        }
+        else {
+          sourceFolders.add(new SourceFolderData<JpsElement>(eachFolder.getUrl(), sourceRootType, null));
+        }
+        eachEntry.removeSourceFolder(eachFolder);
+      }
+      for (SourceFolderData data : sourceFolders) {
+        if (data.getProperties() == null) {
+          eachEntry.addSourceFolder(data.getUrl(), data.getType());
+        }
+        else {
+          eachEntry.addSourceFolder(data.getUrl(), data.getType(), data.getProperties());
+        }
+      }
+    }
+  }
+
+  private static final class SourceFolderData<P extends JpsElement> {
+    @NotNull private final String url;
+    @NotNull private final JpsModuleSourceRootType<P> type;
+    @Nullable private final P properties;
+
+    private SourceFolderData(@NotNull String url, @NotNull JpsModuleSourceRootType<P> type, @Nullable P properties) {
+      this.url = url;
+      this.type = type;
+      this.properties = properties;
+    }
+
+    @NotNull
+    public String getUrl() {
+      return url;
+    }
+
+    @NotNull
+    public JpsModuleSourceRootType<P> getType() {
+      return type;
+    }
+
+    @Nullable
+    public P getProperties() {
+      return properties;
+    }
+  }
+
+  private static final class SourceFolderDataComparator implements Comparator<SourceFolderData> {
+    public static final SourceFolderDataComparator INSTANCE = new SourceFolderDataComparator();
+
+    @Override
+    public int compare(@NotNull SourceFolderData o1, @NotNull SourceFolderData o2) {
+      return StringUtil.naturalCompare(o1.getUrl(), o2.getUrl());
     }
   }
 }

@@ -377,7 +377,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     LOG.assertTrue(myParameters.getPosition().isValid());
 
     myItemSorters.put(item.getLookupElement(), (CompletionSorterImpl)item.getSorter());
-    myLookup.addItem(item.getLookupElement(), item.getPrefixMatcher());
+    if (!myLookup.addItem(item.getLookupElement(), item.getPrefixMatcher())) {
+      return;
+    }
     myCount++;
 
     if (myCount == 1) {

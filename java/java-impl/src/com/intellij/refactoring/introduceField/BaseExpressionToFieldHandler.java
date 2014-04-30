@@ -60,10 +60,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.rename.RenameJavaVariableProcessor;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.EnumConstantsUtil;
-import com.intellij.refactoring.util.RefactoringChangeUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
@@ -715,9 +712,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
         if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, destClass.getContainingFile())) return;
 
-        if (initializer != null) {
-          ChangeContextUtil.encodeContextInfo(initializer, true);
-        }
+        ChangeContextUtil.encodeContextInfo(destClass, true);
+
         myField = mySettings.isIntroduceEnumConstant() ? EnumConstantsUtil.createEnumConstant(destClass, myFieldName, initializer) :
                          createField(myFieldName, myType, initializer, initializerPlace == InitializationPlace.IN_FIELD_DECLARATION && initializer != null,
                                      myParentClass);
@@ -847,9 +843,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           }
         }
 
-        if (initializer != null) {
-          ChangeContextUtil.clearContextInfo(initializer);
-        }
+        ChangeContextUtil.decodeContextInfo(destClass, destClass, null);
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);

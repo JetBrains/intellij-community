@@ -36,7 +36,7 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  * @author evgeny.zakrevsky
- * Date: 9/21/12
+ *         Date: 9/21/12
  */
 public class MantisRepositoryEditor extends BaseRepositoryEditor<MantisRepository> {
   private ComboBox myProjectCombobox;
@@ -104,6 +104,10 @@ public class MantisRepositoryEditor extends BaseRepositoryEditor<MantisRepositor
     super.afterTestConnection(connectionSuccessful);
     if (connectionSuccessful) {
       new FetchMantisProjects().queue();
+    }
+    else {
+      myProjectCombobox.removeAllItems();
+      myFilterCombobox.removeAllItems();
     }
   }
 

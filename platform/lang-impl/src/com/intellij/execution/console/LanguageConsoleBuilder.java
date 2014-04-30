@@ -4,6 +4,9 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
@@ -11,9 +14,14 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
+import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
@@ -128,6 +136,7 @@ public final class LanguageConsoleBuilder {
   /**
    * @see {@link com.intellij.openapi.editor.ex.EditorEx#setOneLineMode(boolean)}
    */
+  @SuppressWarnings("UnusedDeclaration")
   public LanguageConsoleBuilder oneLineInput() {
     oneLineInput(true);
     return this;
@@ -297,7 +306,31 @@ public final class LanguageConsoleBuilder {
       private final ConsoleGutterComponent lineEndGutter;
 
       private Task gutterSizeUpdater;
-      private RangeHighlighterEx lineSeparatorPainter;
+      private RangeHighlighter lineSeparatorPainter;
+
+      private final CustomHighlighterRenderer renderer = new CustomHighlighterRenderer() {
+        @Override
+        public void paint(@NotNull Editor editor, @NotNull RangeHighlighter highlighter, @NotNull Graphics g) {
+          Rectangle clip = g.getClipBounds();
+          int lineHeight = editor.getLineHeight();
+          int startLine = clip.y / lineHeight;
+          int endLine = Math.min(((clip.y + clip.height) / lineHeight) + 1, ((EditorImpl)editor).getVisibleLineCount());
+          if (startLine >= endLine) {
+            return;
+          }
+
+          // workaround - editor ask us to paint line 4-6, but we should draw line for line 3 (startLine - 1) also, otherwise it will be not rendered
+          int actualStartLine = startLine == 0 ? 0 : startLine - 1;
+          int y = (actualStartLine + 1) * lineHeight;
+          g.setColor(editor.getColorsScheme().getColor(EditorColors.INDENT_GUIDE_COLOR));
+          for (int visualLine = actualStartLine; visualLine < endLine; visualLine++) {
+            if (gutterContentProvider.isShowSeparatorLine(editor.visualToLogicalPosition(new VisualPosition(visualLine, 0)).line, editor)) {
+              g.drawLine(clip.x, y, clip.x + clip.width, y);
+            }
+            y += lineHeight;
+          }
+        }
+      };
 
       public GutterUpdateScheduler(@NotNull ConsoleGutterComponent lineStartGutter, @NotNull ConsoleGutterComponent lineEndGutter) {
         this.lineStartGutter = lineStartGutter;
@@ -319,9 +352,10 @@ public final class LanguageConsoleBuilder {
           return;
         }
 
-        EditorEx editor = getHistoryViewer();
-        int endOffset = getDocument().getTextLength();
-        lineSeparatorPainter = new LineSeparatorPainter(gutterContentProvider, editor, endOffset);
+        RangeHighlighter highlighter = getHistoryViewer().getMarkupModel().addRangeHighlighter(0, getDocument().getTextLength(), HighlighterLayer.ADDITIONAL_SYNTAX, null, HighlighterTargetArea.EXACT_RANGE);
+        highlighter.setGreedyToRight(true);
+        highlighter.setCustomRenderer(renderer);
+        lineSeparatorPainter = highlighter;
       }
 
       private DocumentEx getDocument() {

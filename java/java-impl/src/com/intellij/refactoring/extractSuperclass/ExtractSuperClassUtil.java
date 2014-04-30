@@ -199,20 +199,13 @@ public class ExtractSuperClassUtil {
     for (final MemberInfo info : selectedMembers) {
       movedElements.add(info.getMember());
     }
-    final PsiTypeParameterList typeParameterList = RefactoringUtil.createTypeParameterListWithUsedTypeParameters(null,
-                                                                                                                 new Condition<PsiTypeParameter>() {
-                                                                                                                   @Override
-                                                                                                                   public boolean value(
-                                                                                                                     PsiTypeParameter parameter) {
-                                                                                                                     return
-                                                                                                                       findTypeParameterInDerived(
-                                                                                                                         derivedClass,
-                                                                                                                         parameter
-                                                                                                                           .getName()) !=
-                                                                                                                       null;
-                                                                                                                   }
-                                                                                                                 }, PsiUtilCore
-      .toPsiElementArray(movedElements));
+    final Condition<PsiTypeParameter> filter = new Condition<PsiTypeParameter>() {
+      @Override
+      public boolean value(PsiTypeParameter parameter) {
+        return findTypeParameterInDerived(derivedClass, parameter.getName()) == parameter;
+      }
+    };
+    final PsiTypeParameterList typeParameterList = RefactoringUtil.createTypeParameterListWithUsedTypeParameters(null, filter, PsiUtilCore.toPsiElementArray(movedElements));
     final PsiTypeParameterList originalTypeParameterList = superClass.getTypeParameterList();
     assert originalTypeParameterList != null;
     final PsiTypeParameterList newList = typeParameterList != null ? (PsiTypeParameterList)originalTypeParameterList.replace(typeParameterList) : originalTypeParameterList;

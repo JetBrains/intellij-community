@@ -28,6 +28,10 @@ public interface Url {
 
   boolean equalsIgnoreParameters(@Nullable Url url);
 
+  boolean equalsIgnoreCase(@Nullable Url url);
+
   @NotNull
   Url trimParameters();
+
+  int hashCodeCaseInsensitive();
 }
