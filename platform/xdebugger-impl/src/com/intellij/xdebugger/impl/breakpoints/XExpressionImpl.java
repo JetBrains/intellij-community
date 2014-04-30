@@ -17,21 +17,24 @@ package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.lang.Language;
 import com.intellij.xdebugger.XExpression;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
 * @author egor
 */
 public class XExpressionImpl implements XExpression {
-  public final String myExpression;
+  @NotNull public final String myExpression;
   public final Language myLanguage;
   public final String myCustomInfo;
 
-  public XExpressionImpl(String expression, Language language, String customInfo) {
+  public XExpressionImpl(@NotNull String expression, Language language, String customInfo) {
     myExpression = expression;
     myLanguage = language;
     myCustomInfo = customInfo;
   }
 
+  @NotNull
   @Override
   public String getExpression() {
     return myExpression;
@@ -47,7 +50,8 @@ public class XExpressionImpl implements XExpression {
     return myCustomInfo;
   }
 
-  public static XExpressionImpl fromText(String text) {
+  @Nullable
+  public static XExpressionImpl fromText(@Nullable String text) {
     return text != null ? new XExpressionImpl(text, null, null) : null;
   }
 
@@ -59,7 +63,7 @@ public class XExpressionImpl implements XExpression {
     XExpressionImpl that = (XExpressionImpl)o;
 
     if (myCustomInfo != null ? !myCustomInfo.equals(that.myCustomInfo) : that.myCustomInfo != null) return false;
-    if (myExpression != null ? !myExpression.equals(that.myExpression) : that.myExpression != null) return false;
+    if (!myExpression.equals(that.myExpression)) return false;
     if (myLanguage != null ? !myLanguage.equals(that.myLanguage) : that.myLanguage != null) return false;
 
     return true;
@@ -67,7 +71,7 @@ public class XExpressionImpl implements XExpression {
 
   @Override
   public int hashCode() {
-    int result = myExpression != null ? myExpression.hashCode() : 0;
+    int result = myExpression.hashCode();
     result = 31 * result + (myLanguage != null ? myLanguage.hashCode() : 0);
     result = 31 * result + (myCustomInfo != null ? myCustomInfo.hashCode() : 0);
     return result;

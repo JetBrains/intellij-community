@@ -16,13 +16,14 @@
 package com.intellij.xdebugger;
 
 import com.intellij.lang.Language;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
 * @author egor
 */
 public interface XExpression {
-  @Nullable String getExpression();
+  @NotNull String getExpression();
   @Nullable Language getLanguage();
   @Nullable String getCustomInfo();
 }

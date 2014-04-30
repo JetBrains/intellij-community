@@ -213,7 +213,7 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
     public XExpressionState() {
     }
 
-    public XExpressionState(String expression, String language, String customInfo) {
+    public XExpressionState(@NotNull String expression, String language, String customInfo) {
       myExpression = expression;
       myLanguage = language;
       myCustomInfo = customInfo;
