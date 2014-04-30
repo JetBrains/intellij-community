@@ -24,6 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;

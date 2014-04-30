@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.checkin;
+package org.jetbrains.idea.svn.auth;
 
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,13 +34,11 @@ import com.intellij.util.proxy.CommonProxy;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnAuthenticationManager;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.commandLine.AuthenticationCallback;
 import org.jetbrains.idea.svn.dialogs.SimpleCredentialsDialog;
-import org.jetbrains.idea.svn.dialogs.SvnInteractiveAuthenticationProvider;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.auth.*;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
@@ -68,7 +66,7 @@ import java.util.Set;
  */
 public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCallback {
   @NotNull private final SvnVcs myVcs;
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.checkin.IdeaSvnkitBasedAuthenticationCallback");
+  private static final Logger LOG = Logger.getInstance(IdeaSvnkitBasedAuthenticationCallback.class);
   private File myTempDirectory;
   private boolean myProxyCredentialsWereReturned;
   private SvnConfiguration myConfiguration;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.dialogs;
+package org.jetbrains.idea.svn.auth;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,11 +31,10 @@ import com.jcraft.jsch.agentproxy.ConnectorFactory;
 import com.jcraft.jsch.agentproxy.TrileadAgentProxy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnAuthenticationManager;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.auth.ProviderType;
+import org.jetbrains.idea.svn.dialogs.*;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.*;
@@ -47,7 +46,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.security.cert.X509Certificate;
 
 public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationProvider {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.dialogs.SvnInteractiveAuthenticationProvider");
+  private static final Logger LOG = Logger.getInstance(SvnInteractiveAuthenticationProvider.class);
   private final Project myProject;
   private static final ThreadLocal<MyCallState> myCallState = new ThreadLocal<MyCallState>();
   private final SvnAuthenticationManager myManager;

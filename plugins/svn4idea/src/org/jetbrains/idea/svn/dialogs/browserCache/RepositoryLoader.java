@@ -23,7 +23,7 @@ import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
-import org.jetbrains.idea.svn.dialogs.SvnAuthenticationProvider;
+import org.jetbrains.idea.svn.auth.SvnAuthenticationProvider;
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorMessage;

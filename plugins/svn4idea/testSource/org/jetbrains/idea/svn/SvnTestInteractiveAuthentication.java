@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.idea.svn.auth.ProviderType;
+import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.*;

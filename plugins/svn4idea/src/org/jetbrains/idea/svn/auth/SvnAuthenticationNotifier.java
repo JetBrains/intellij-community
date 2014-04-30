@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn;
+package org.jetbrains.idea.svn.auth;
 
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.Application;
@@ -44,7 +44,7 @@ import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.proxy.CommonProxy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.dialogs.SvnInteractiveAuthenticationProvider;
+import org.jetbrains.idea.svn.*;
 import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
@@ -64,7 +64,7 @@ import java.util.List;
 import java.util.Timer;
 
 public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthenticationNotifier.AuthenticationRequest, SVNURL> {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnAuthenticationNotifier");
+  private static final Logger LOG = Logger.getInstance(SvnAuthenticationNotifier.class);
 
   private static final List<String> ourAuthKinds = Arrays.asList(ISVNAuthenticationManager.PASSWORD, ISVNAuthenticationManager.SSH,
     ISVNAuthenticationManager.SSL, ISVNAuthenticationManager.USERNAME, "svn.ssl.server", "svn.ssh.server");

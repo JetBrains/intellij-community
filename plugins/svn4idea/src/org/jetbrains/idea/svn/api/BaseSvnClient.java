@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
-import org.jetbrains.idea.svn.checkin.IdeaSvnkitBasedAuthenticationCallback;
+import org.jetbrains.idea.svn.auth.IdeaSvnkitBasedAuthenticationCallback;
 import org.jetbrains.idea.svn.commandLine.*;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;

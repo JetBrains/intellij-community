@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn;
+package org.jetbrains.idea.svn.auth;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -42,9 +42,7 @@ import com.intellij.util.ui.UIUtil;
 import com.trilead.ssh2.auth.AgentProxy;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.auth.ProviderType;
-import org.jetbrains.idea.svn.auth.SvnAuthenticationInteraction;
-import org.jetbrains.idea.svn.auth.SvnAuthenticationListener;
+import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.config.ProxyGroup;
 import org.jetbrains.idea.svn.config.SvnServerFileKeys;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -64,7 +62,7 @@ import java.util.*;
  * @author alex
  */
 public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager implements SvnAuthenticationListener, ISVNAuthenticationManagerExt {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnAuthenticationManager");
+  private static final Logger LOG = Logger.getInstance(SvnAuthenticationManager.class);
   // while Mac storage not working for IDEA, we use this key to check whether to prompt abt plaintext or just store
   public static final String SVN_SSH = "svn+ssh";
   public static final String HTTP = "http";

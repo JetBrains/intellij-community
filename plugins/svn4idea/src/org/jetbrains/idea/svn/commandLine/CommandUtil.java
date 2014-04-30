@@ -2,11 +2,8 @@ package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.checkin.IdeaSvnkitBasedAuthenticationCallback;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
