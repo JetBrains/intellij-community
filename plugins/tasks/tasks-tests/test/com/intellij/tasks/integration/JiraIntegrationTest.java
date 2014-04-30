@@ -194,7 +194,7 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    TaskSettings.getInstance().CONNECTION_TIMEOUT = 10000;
+    TaskSettings.getInstance().CONNECTION_TIMEOUT = 20000;
     myRepository = new JiraRepository(new JiraRepositoryType());
     myRepository.setUrl(JIRA_5_TEST_SERVER_URL);
     myRepository.setUsername("buildtest");
