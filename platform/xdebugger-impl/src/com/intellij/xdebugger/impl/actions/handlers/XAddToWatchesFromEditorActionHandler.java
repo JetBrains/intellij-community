@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,6 +58,6 @@ public class XAddToWatchesFromEditorActionHandler extends XDebuggerActionHandler
     final String text = getTextToEvaluate(dataContext, session);
     if (text == null) return;
 
-    ((XDebugSessionImpl)session).getSessionTab().getWatchesView().addWatchExpression(text, -1, true);
+    ((XDebugSessionImpl)session).getSessionTab().getWatchesView().addWatchExpression(XExpressionImpl.fromText(text), -1, true);
   }
 }

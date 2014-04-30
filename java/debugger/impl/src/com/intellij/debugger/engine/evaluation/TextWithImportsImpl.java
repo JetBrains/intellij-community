@@ -30,6 +30,7 @@ import com.intellij.psi.PsiExpressionCodeFragment;
 import com.intellij.psi.PsiFile;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -138,14 +139,14 @@ public final class TextWithImportsImpl implements TextWithImports{
   @Nullable
   public static XExpression toXExpression(TextWithImports text) {
     if (!text.getText().isEmpty()) {
-      return new XExpressionImpl(text.getText(), getLanguage(text.getFileType()), StringUtil.nullize(text.getImports()));
+      return new XExpressionImpl(text.getText(), XDebuggerEditorBase.getFileTypeLanguage(text.getFileType()), StringUtil.nullize(text.getImports()));
     }
     return null;
   }
 
   @Nullable
   public static TextWithImports fromXExpression(@Nullable XExpression expression) {
-    if (expression == null || StringUtil.isEmpty(expression.getExpression())) return null;
+    if (expression == null) return null;
 
     if (expression.getCustomInfo() == null && expression.getLanguage() == null) {
       return new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expression.getExpression());
@@ -156,12 +157,5 @@ public final class TextWithImportsImpl implements TextWithImports{
                                      StringUtil.notNullize(expression.getCustomInfo()),
                                      expression.getLanguage() != null ? expression.getLanguage().getAssociatedFileType() : null);
     }
-  }
-
-  private static Language getLanguage(FileType fileType) {
-    if (fileType instanceof LanguageFileType) {
-      return ((LanguageFileType)fileType).getLanguage();
-    }
-    return null;
   }
 }

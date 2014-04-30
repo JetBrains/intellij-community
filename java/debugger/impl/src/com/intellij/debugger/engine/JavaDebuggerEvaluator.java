@@ -15,15 +15,16 @@
  */
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,10 +44,18 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator {
   public void evaluate(@NotNull final String expression,
                        @NotNull final XEvaluationCallback callback,
                        @Nullable XSourcePosition expressionPosition) {
+    evaluate(XExpressionImpl.fromText(expression), callback, expressionPosition);
+  }
+
+  @Override
+  public void evaluate(@NotNull final XExpression expression,
+                       @NotNull final XEvaluationCallback callback,
+                       @Nullable XSourcePosition expressionPosition) {
     myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
       @Override
       protected void action() throws Exception {
-        WatchItemDescriptor descriptor = new WatchItemDescriptor(myDebugProcess.getProject(), new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expression));
+        WatchItemDescriptor descriptor = new WatchItemDescriptor(myDebugProcess.getProject(), TextWithImportsImpl.fromXExpression(
+          expression));
         EvaluationContextImpl evalContext = myDebuggerContext.createEvaluationContext();
         descriptor.setContext(evalContext);
         descriptor.updateRepresentation(evalContext, DescriptorLabelListener.DUMMY_LISTENER);

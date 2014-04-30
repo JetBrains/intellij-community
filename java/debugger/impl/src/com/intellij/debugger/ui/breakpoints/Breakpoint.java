@@ -47,6 +47,7 @@ import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.DefaultLogExpressionComboBoxPanel;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
@@ -442,10 +443,10 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     try {
       String logMessage = JDOMExternalizerUtil.readField(parentNode, LOG_MESSAGE_OPTION_NAME);
       if (logMessage != null && !logMessage.isEmpty()) {
-        TextWithImportsImpl text = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, logMessage);
-        XDebuggerHistoryManager.getInstance(myProject).addRecentExpression(DefaultLogExpressionComboBoxPanel.HISTORY_KEY, text.getText());
+        XExpressionImpl expression = XExpressionImpl.fromText(logMessage);
+        XDebuggerHistoryManager.getInstance(myProject).addRecentExpression(DefaultLogExpressionComboBoxPanel.HISTORY_KEY, expression);
         if (Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "LOG_EXPRESSION_ENABLED"))) {
-          setLogMessage(text);
+          myXBreakpoint.setLogExpressionObject(expression);
         }
       }
     }
@@ -601,10 +602,6 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   public void setSuspendPolicy(String policy) {
     myXBreakpoint.setSuspendPolicy(transformSuspendPolicy(policy));
-  }
-
-  protected void setLogMessage(@Nullable TextWithImports logMessage) {
-    myXBreakpoint.setLogExpressionObject(TextWithImportsImpl.toXExpression(logMessage));
   }
 
   protected boolean isConditionEnabled() {

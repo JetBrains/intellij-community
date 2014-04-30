@@ -16,10 +16,7 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
-import com.intellij.debugger.engine.evaluation.CodeFragmentFactoryContextWrapper;
-import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
-import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PositionUtil;
@@ -272,7 +269,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
 
   public void addRecent(TextWithImports text) {
     if(getRecentsId() != null && text != null && !text.isEmpty()){
-      XDebuggerHistoryManager.getInstance(getProject()).addRecentExpression(getRecentsId(), text.getText());
+      XDebuggerHistoryManager.getInstance(getProject()).addRecentExpression(getRecentsId(), TextWithImportsImpl.toXExpression(text));
     }
   }
 

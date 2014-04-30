@@ -24,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
 * @author egor
 */
 public class XExpressionImpl implements XExpression {
+  public static final XExpression EMPTY = fromText("");
+
   @NotNull public final String myExpression;
   public final Language myLanguage;
   public final String myCustomInfo;

@@ -22,15 +22,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebugSessionAdapter;
-import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
@@ -63,7 +61,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   public XDebuggerEvaluationDialog(@NotNull XDebugSession session,
                                    @NotNull XDebuggerEditorsProvider editorsProvider,
                                    @NotNull XDebuggerEvaluator evaluator,
-                                   @NotNull String text,
+                                   @NotNull XExpression text,
                                    @Nullable XSourcePosition sourcePosition) {
     super(session.getProject(), true);
     mySession = session;
@@ -109,12 +107,12 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
     EvaluationMode mode = EvaluationMode.EXPRESSION;
     myIsCodeFragmentEvaluationSupported = evaluator.isCodeFragmentEvaluationSupported();
-    if (text.indexOf('\n') != -1) {
+    if (text.getExpression().indexOf('\n') != -1) {
       if (myIsCodeFragmentEvaluationSupported) {
         mode = EvaluationMode.CODE_FRAGMENT;
       }
       else {
-        text = StringUtil.replace(text, "\n", " ");
+        text = new XExpressionImpl(StringUtil.replace(text.getExpression(), "\n", " "), text.getLanguage(), text.getCustomInfo());
       }
     }
     switchToMode(mode, text);
@@ -148,8 +146,8 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     return button;
   }
 
-  public String getExpression() {
-    return myInputComponent.getInputEditor().getText();
+  public XExpression getExpression() {
+    return myInputComponent.getInputEditor().getExpression();
   }
 
   private static String getSwitchButtonText(EvaluationMode mode) {
@@ -158,7 +156,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
            : XDebuggerBundle.message("button.text.code.fragment.mode");
   }
 
-  private void switchToMode(EvaluationMode mode, String text) {
+  private void switchToMode(EvaluationMode mode, XExpression text) {
     if (myMode == mode) return;
     myMode = mode;
 
@@ -174,7 +172,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     }
   }
 
-  private EvaluationInputComponent createInputComponent(EvaluationMode mode, String text) {
+  private EvaluationInputComponent createInputComponent(EvaluationMode mode, XExpression text) {
     final Project project = mySession.getProject();
     if (mode == EvaluationMode.EXPRESSION) {
       return new ExpressionInputComponent(project, myEditorsProvider, mySourcePosition, text);
@@ -210,7 +208,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   public void startEvaluation(@NotNull XDebuggerEvaluator.XEvaluationCallback evaluationCallback) {
     final XDebuggerEditorBase inputEditor = myInputComponent.getInputEditor();
     inputEditor.saveTextInHistory();
-    String expression = inputEditor.getText();
+    XExpression expression = inputEditor.getExpression();
 
     XDebuggerEvaluator evaluator = mySession.getDebugProcess().getEvaluator();
     if (evaluator == null) {
@@ -229,12 +227,12 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   private class SwitchModeAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
-      String text = myInputComponent.getInputEditor().getText();
+      XExpression text = myInputComponent.getInputEditor().getExpression();
       if (myMode == EvaluationMode.EXPRESSION) {
         switchToMode(EvaluationMode.CODE_FRAGMENT, text);
       }
       else {
-        if (text.indexOf('\n') != -1) text = "";
+        if (text.getExpression().indexOf('\n') != -1) text = XExpressionImpl.EMPTY;
         switchToMode(EvaluationMode.EXPRESSION, text);
       }
     }

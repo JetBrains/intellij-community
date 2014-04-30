@@ -15,12 +15,17 @@
  */
 package com.intellij.xdebugger.evaluation;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.Collections;
 
 public abstract class XDebuggerEditorsProvider {
   @NotNull
@@ -31,4 +36,21 @@ public abstract class XDebuggerEditorsProvider {
                                           @NotNull String text,
                                           @Nullable XSourcePosition sourcePosition,
                                           @NotNull EvaluationMode mode);
+
+  @NotNull
+  public Document createDocument(@NotNull Project project,
+                                          @NotNull XExpression expression,
+                                          @Nullable XSourcePosition sourcePosition,
+                                          @NotNull EvaluationMode mode) {
+    return createDocument(project, expression.getExpression(), sourcePosition, mode);
+  }
+
+  public Collection<Language> getAvailableLanguages(@NotNull Project project, @Nullable XSourcePosition sourcePosition) {
+    return Collections.emptyList();
+  }
+
+  @Nullable
+  public XExpression createExpression(@NotNull Project project, @NotNull Document document, Language language) {
+    return null;
+  }
 }

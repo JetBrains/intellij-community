@@ -1,27 +1,30 @@
 package org.jetbrains.java.debugger;
 
-import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
+import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
-import com.intellij.debugger.ui.DebuggerExpressionComboBox;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.ui.DebuggerEditorImpl;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.lang.Language;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaCodeFragmentFactory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
-import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProviderBase;
-import com.intellij.xdebugger.impl.breakpoints.ui.XDebuggerComboBoxProvider;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
-public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase implements XDebuggerComboBoxProvider {
+public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase {
   @NotNull
   @Override
   public FileType getFileType() {
@@ -29,80 +32,59 @@ public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase im
   }
 
   @Override
-  protected PsiFile createExpressionCodeFragment(@NotNull Project project, @NotNull String text, @Nullable PsiElement context, boolean isPhysical) {
+  protected PsiFile createExpressionCodeFragment(@NotNull Project project,
+                                                 @NotNull String text,
+                                                 @Nullable PsiElement context,
+                                                 boolean isPhysical) {
     return JavaCodeFragmentFactory.getInstance(project).createExpressionCodeFragment(text, context, null, isPhysical);
   }
 
   @Override
-  public XBreakpointCustomPropertiesPanel<XBreakpoint<?>> createConditionComboBoxPanel(Project project,
-                                                                                       XDebuggerEditorsProvider debuggerEditorsProvider,
-                                                                                       String historyId,
-                                                                                       XSourcePosition sourcePosition) {
-    return new ExpressionComboBoxPanel(project, historyId, sourcePosition) {
-      @Override
-      public void saveTo(@NotNull XBreakpoint<?> breakpoint) {
-        TextWithImports text = myComboBox.getText();
-        breakpoint.setConditionExpression(TextWithImportsImpl.toXExpression(text));
-        if (!text.getText().isEmpty()) {
-          myComboBox.addRecent(text);
-        }
+  public Collection<Language> getAvailableLanguages(@NotNull Project project, @Nullable XSourcePosition sourcePosition) {
+    PsiElement context = null;
+    if (sourcePosition != null) {
+      context = getContextElement(sourcePosition.getFile(), sourcePosition.getOffset(), project);
+      Collection<Language> res = new ArrayList<Language>();
+      for (CodeFragmentFactory factory : DebuggerUtilsEx.getCodeFragmentFactories(context)) {
+        res.add(factory.getFileType().getLanguage());
       }
-
-      @Override
-      public void loadFrom(@NotNull XBreakpoint<?> breakpoint) {
-        TextWithImports text = TextWithImportsImpl.fromXExpression(breakpoint.getConditionExpression());
-        if (text != null) {
-          myComboBox.setText(text);
-        }
-      }
-    };
+      return res;
+    }
+    return Collections.emptyList();
   }
 
   @Override
-  public XBreakpointCustomPropertiesPanel<XBreakpoint<?>> createLogExpressionComboBoxPanel(Project project,
-                                                                                           XDebuggerEditorsProvider debuggerEditorsProvider,
-                                                                                           String historyId,
-                                                                                           XSourcePosition sourcePosition) {
-    return new ExpressionComboBoxPanel(project, historyId, sourcePosition) {
-      @Override
-      public void saveTo(@NotNull XBreakpoint<?> breakpoint) {
-        TextWithImports text = myComboBox.getText();
-        breakpoint.setLogExpressionObject(myComboBox.isEnabled() ? TextWithImportsImpl.toXExpression(text) : null);
-        if (text != null) {
-          myComboBox.addRecent(text);
-        }
-      }
-
-      @Override
-      public void loadFrom(@NotNull XBreakpoint<?> breakpoint) {
-        TextWithImports text = TextWithImportsImpl.fromXExpression(breakpoint.getLogExpressionObject());
-        if (text != null) {
-          myComboBox.setText(text);
-        }
-      }
-    };
+  public XExpression createExpression(@NotNull Project project, @NotNull Document document, Language language) {
+    PsiDocumentManager.getInstance(project).commitDocument(document);
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    if (psiFile != null) {
+      return new XExpressionImpl(psiFile.getText(), language, ((JavaCodeFragment)psiFile).importsToString());
+    }
+    return null;
   }
 
-  private abstract class ExpressionComboBoxPanel extends XBreakpointCustomPropertiesPanel<XBreakpoint<?>> {
-    protected final DebuggerExpressionComboBox myComboBox;
-
-    private ExpressionComboBoxPanel(Project project,
-                                    String historyId,
-                                    XSourcePosition sourcePosition) {
-      PsiElement element = getContextElement(sourcePosition.getFile(), sourcePosition.getOffset(), project);
-      myComboBox = new DebuggerExpressionComboBox(project, element, historyId, DefaultCodeFragmentFactory.getInstance());
-      myComboBox.setContext(element);
+  @Override
+  protected PsiFile createExpressionCodeFragment(@NotNull Project project,
+                                                 @NotNull XExpression expression,
+                                                 @Nullable PsiElement context,
+                                                 boolean isPhysical) {
+    TextWithImports text = TextWithImportsImpl.fromXExpression(expression);
+    if (text != null && context != null) {
+      CodeFragmentFactory factory = DebuggerEditorImpl.findAppropriateFactory(text, context);
+      JavaCodeFragment codeFragment = factory.createPresentationCodeFragment(text, context, project);
+      codeFragment.forceResolveScope(GlobalSearchScope.allScope(project));
+      if (context != null) {
+        final PsiClass contextClass = PsiTreeUtil.getNonStrictParentOfType(context, PsiClass.class);
+        if (contextClass != null) {
+          final PsiClassType contextType =
+            JavaPsiFacade.getInstance(codeFragment.getProject()).getElementFactory().createType(contextClass);
+          codeFragment.setThisType(contextType);
+        }
+      }
+      return codeFragment;
     }
-
-    @NotNull
-    @Override
-    public JComponent getComponent() {
-      return myComboBox;
-    }
-
-    @Override
-    public void dispose() {
-      myComboBox.dispose();
+    else {
+      return super.createExpressionCodeFragment(project, expression, context, isPhysical);
     }
   }
 }
