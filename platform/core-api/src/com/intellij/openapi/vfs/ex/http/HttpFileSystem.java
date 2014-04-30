@@ -42,4 +42,5 @@ public abstract class HttpFileSystem extends DeprecatedVirtualFileSystem {
 
   public abstract void removeFileListener(@NotNull HttpVirtualFileListener listener);
 
+  public abstract VirtualFile createChild(@NotNull VirtualFile parent, @NotNull String name, boolean isDirectory);
 }

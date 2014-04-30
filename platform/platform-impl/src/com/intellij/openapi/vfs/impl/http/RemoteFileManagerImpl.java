@@ -24,8 +24,8 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.Url;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -55,17 +55,17 @@ public class RemoteFileManagerImpl extends RemoteFileManager implements Disposab
     return myDefaultRemoteContentProvider;
   }
 
-  public synchronized VirtualFileImpl getOrCreateFile(final @NotNull Url url, final @NotNull String path, final boolean directory) throws IOException {
+  public synchronized VirtualFileImpl getOrCreateFile(@Nullable VirtualFileImpl parent, @NotNull Url url, @NotNull String path, final boolean directory) {
     Pair<Boolean, Url> key = Pair.create(directory, url);
     VirtualFileImpl file = myRemoteFiles.get(key);
     if (file == null) {
-      if (!directory) {
-        RemoteFileInfoImpl fileInfo = new RemoteFileInfoImpl(url, this);
-        file = new VirtualFileImpl(getHttpFileSystem(url), path, fileInfo);
-        fileInfo.addDownloadingListener(new MyDownloadingListener(file));
+      if (directory) {
+        file = new VirtualFileImpl(getHttpFileSystem(url), parent, path, null);
       }
       else {
-        file = new VirtualFileImpl(getHttpFileSystem(url), path, null);
+        RemoteFileInfoImpl fileInfo = new RemoteFileInfoImpl(url, this);
+        file = new VirtualFileImpl(getHttpFileSystem(url), parent, path, fileInfo);
+        fileInfo.addDownloadingListener(new MyDownloadingListener(file));
       }
       myRemoteFiles.put(key, file);
     }

@@ -41,12 +41,7 @@ public abstract class HttpFileSystemBase extends HttpFileSystem {
   }
 
   public VirtualFile findFileByPath(@NotNull String path, boolean isDirectory) {
-    try {
-      return getRemoteFileManager().getOrCreateFile(Urls.newFromIdea(VirtualFileManager.constructUrl(myProtocol, path)), path, isDirectory);
-    }
-    catch (IOException e) {
-      return null;
-    }
+    return getRemoteFileManager().getOrCreateFile(null, Urls.newFromIdea(VirtualFileManager.constructUrl(myProtocol, path)), path, isDirectory);
   }
 
   @Override
@@ -71,14 +66,20 @@ public abstract class HttpFileSystemBase extends HttpFileSystem {
 
   @Override
   @NotNull
+  public VirtualFile createChild(@NotNull VirtualFile parent, @NotNull String name, boolean isDirectory) {
+    return getRemoteFileManager().getOrCreateFile((VirtualFileImpl)parent, Urls.newFromIdea(parent.getUrl() + '/' + name), parent.getPath() + '/' + name, isDirectory);
+  }
+
+  @Override
+  @NotNull
   public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
-    throw new UnsupportedOperationException();
+    return createChild(vDir, dirName, true);
   }
 
   @NotNull
   @Override
   public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
-    throw new UnsupportedOperationException();
+    return createChild(vDir, fileName, false);
   }
 
   @Override

@@ -18,17 +18,22 @@ package com.intellij.openapi.vfs.impl.http;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.FileContentUtilCore;
+import com.intellij.util.SmartList;
 import com.intellij.util.UriUtil;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 
 class VirtualFileImpl extends HttpVirtualFile {
   private final HttpFileSystemBase myFileSystem;
@@ -38,7 +43,16 @@ class VirtualFileImpl extends HttpVirtualFile {
   private final String myParentPath;
   private final String myName;
 
-  VirtualFileImpl(HttpFileSystemBase fileSystem, String path, @Nullable final RemoteFileInfoImpl fileInfo) {
+  private List<VirtualFile> myChildren;
+
+  VirtualFileImpl(@NotNull HttpFileSystemBase fileSystem, @Nullable VirtualFileImpl parent, String path, @Nullable RemoteFileInfoImpl fileInfo) {
+    if (parent != null) {
+      if (parent.myChildren == null) {
+        parent.myChildren = new SmartList<VirtualFile>();
+      }
+      parent.myChildren.add(this);
+    }
+
     myFileSystem = fileSystem;
     myPath = path;
     myFileInfo = fileInfo;
@@ -142,7 +156,20 @@ class VirtualFileImpl extends HttpVirtualFile {
 
   @Override
   public VirtualFile[] getChildren() {
-    return EMPTY_ARRAY;
+    return ContainerUtil.isEmpty(myChildren) ? EMPTY_ARRAY : myChildren.toArray(new VirtualFile[myChildren.size()]);
+  }
+
+  @Nullable
+  @Override
+  public VirtualFile findChild(@NotNull @NonNls String name) {
+    if (!ContainerUtil.isEmpty(myChildren)) {
+      for (VirtualFile child : myChildren) {
+        if (StringUtil.equals(child.getNameSequence(), name)) {
+          return child;
+        }
+      }
+    }
+    return null;
   }
 
   @Override

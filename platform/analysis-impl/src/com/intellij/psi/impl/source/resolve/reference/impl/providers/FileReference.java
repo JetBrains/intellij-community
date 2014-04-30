@@ -183,6 +183,13 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
         if (context instanceof PackagePrefixFileSystemItem) {
           context = ((PackagePrefixFileSystemItem)context).getDirectory();
         }
+        else if (context instanceof FileReferenceResolver) {
+          PsiFileSystemItem child = ((FileReferenceResolver)context).resolveFileReference(this, decoded);
+          if (child != null) {
+            result.add(new PsiElementResolveResult(getOriginalFile(child)));
+            return;
+          }
+        }
 
         if (context.getParent() == null && FileUtil.namesEqual(decoded, context.getName())) {
           // match filesystem roots
