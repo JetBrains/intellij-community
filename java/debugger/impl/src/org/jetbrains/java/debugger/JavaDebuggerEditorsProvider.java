@@ -1,5 +1,6 @@
 package org.jetbrains.java.debugger;
 
+import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.ui.DebuggerExpressionComboBox;
@@ -88,14 +89,9 @@ public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase im
     private ExpressionComboBoxPanel(Project project,
                                     String historyId,
                                     XSourcePosition sourcePosition) {
-      myComboBox = new DebuggerExpressionComboBox(project, historyId);
-      if (sourcePosition != null) {
-        PsiElement element = getContextElement(sourcePosition.getFile(), sourcePosition.getOffset(), project);
-        myComboBox.setContext(element);
-      }
-      else {
-        myComboBox.setContext(null);
-      }
+      PsiElement element = getContextElement(sourcePosition.getFile(), sourcePosition.getOffset(), project);
+      myComboBox = new DebuggerExpressionComboBox(project, element, historyId, DefaultCodeFragmentFactory.getInstance());
+      myComboBox.setContext(element);
     }
 
     @NotNull
