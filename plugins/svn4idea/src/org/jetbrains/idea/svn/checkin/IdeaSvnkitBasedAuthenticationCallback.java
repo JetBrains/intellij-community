@@ -80,12 +80,22 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     myRequestedCredentials = ContainerUtil.newHashSet();
   }
 
+  @NotNull
+  public SvnVcs getVcs() {
+    return myVcs;
+  }
+
+  @Nullable
+  public File getTempDirectory() {
+    return myTempDirectory;
+  }
+
   @Override
   public boolean authenticateFor(String realm, SVNURL repositoryUrl, boolean previousFailed, boolean passwordRequest) {
     if (repositoryUrl == null) {
       return false;
     }
-    return new CredentialsAuthenticator(myVcs, repositoryUrl, realm).tryAuthenticate(passwordRequest);
+    return new CredentialsAuthenticator(this, repositoryUrl, realm).tryAuthenticate(passwordRequest);
   }
 
   @Nullable
@@ -184,7 +194,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
       return false;
     }
 
-    return new SSLServerCertificateAuthenticator(myVcs, repositoryUrl, realm).tryAuthenticate();
+    return new SSLServerCertificateAuthenticator(this, repositoryUrl, realm).tryAuthenticate();
   }
 
   @Override
@@ -282,15 +292,17 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     }
   }
 
-  private abstract class AbstractAuthenticator {
+  private static abstract class AbstractAuthenticator {
+    @NotNull protected final IdeaSvnkitBasedAuthenticationCallback myAuthService;
     @NotNull protected final SvnVcs myVcs;
     @NotNull protected final SVNURL myUrl;
     protected final String myRealm;
     protected boolean myStoreInUsual;
     protected SvnAuthenticationManager myTmpDirManager;
 
-    protected AbstractAuthenticator(@NotNull SvnVcs vcs, @NotNull SVNURL url, String realm) {
-      myVcs = vcs;
+    protected AbstractAuthenticator(@NotNull IdeaSvnkitBasedAuthenticationCallback authService, @NotNull SVNURL url, String realm) {
+      myAuthService = authService;
+      myVcs = myAuthService.getVcs();
       myUrl = url;
       myRealm = realm;
     }
@@ -322,8 +334,8 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     @NotNull
     protected SvnAuthenticationManager createTmpManager() throws IOException {
       if (myTmpDirManager == null) {
-        initTmpDir(myVcs.getSvnConfiguration());
-        myTmpDirManager = new SvnAuthenticationManager(myVcs.getProject(), myTempDirectory);
+        myAuthService.initTmpDir(myVcs.getSvnConfiguration());
+        myTmpDirManager = new SvnAuthenticationManager(myVcs.getProject(), myAuthService.getTempDirectory());
         myTmpDirManager.setRuntimeStorage(SvnConfiguration.RUNTIME_AUTH_CACHE);
         myTmpDirManager.setAuthenticationProvider(new SvnInteractiveAuthenticationProvider(myVcs, myTmpDirManager));
       }
@@ -389,15 +401,17 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
   }
 
   // plus seems that we also should ask for credentials; but we didn't receive realm name yet
-  private class SSLServerCertificateAuthenticator extends AbstractAuthenticator {
+  private static class SSLServerCertificateAuthenticator extends AbstractAuthenticator {
     private String myCertificateRealm;
     private String myCredentialsRealm;
     private Object myCertificate;
     private int myResult;
     private SVNAuthentication myAuthentication;
 
-    protected SSLServerCertificateAuthenticator(@NotNull SvnVcs vcs, @NotNull SVNURL url, String realm) {
-      super(vcs, url, realm);
+    protected SSLServerCertificateAuthenticator(@NotNull IdeaSvnkitBasedAuthenticationCallback authService,
+                                                @NotNull SVNURL url,
+                                                String realm) {
+      super(authService, url, realm);
     }
 
     @Override
@@ -455,7 +469,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
         myCertificate = createCertificate(stored);
         myCertificateRealm = myRealm;
       }
-      if (myTempDirectory != null && myCertificate != null) {
+      if (myAuthService.getTempDirectory() != null && myCertificate != null) {
         storeServerCertificate();
 
         if (myAuthentication != null) {
@@ -495,7 +509,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
       }
 
       int failures = SVNSSLUtil.getServerCertificateFailures(x509Certificate, myUrl.getHost());
-      storeServerCertificate(myTempDirectory, myCertificateRealm, stored, failures);
+      storeServerCertificate(myAuthService.getTempDirectory(), myCertificateRealm, stored, failures);
     }
 
     private void storeServerCertificate(final File configDir, String realm, String data, int failures) throws SVNException {
@@ -535,14 +549,16 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     return true;
   }
 
-  private class CredentialsAuthenticator extends AbstractAuthenticator {
+  private static class CredentialsAuthenticator extends AbstractAuthenticator {
     private String myKind;
     // sometimes realm string is different (with <>), so store credentials for both strings..
     private String myRealm2;
     private SVNAuthentication myAuthentication;
 
-    protected CredentialsAuthenticator(@NotNull SvnVcs vcs, @NotNull SVNURL url, @Nullable String realm) {
-      super(vcs, url, realm == null ? url.getHost() : realm);
+    protected CredentialsAuthenticator(@NotNull IdeaSvnkitBasedAuthenticationCallback authService,
+                                       @NotNull SVNURL url,
+                                       @Nullable String realm) {
+      super(authService, url, realm == null ? url.getHost() : realm);
     }
 
     public boolean tryAuthenticate(boolean passwordRequest) {
@@ -560,8 +576,8 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     protected boolean getWithPassive(SvnAuthenticationManager passive) throws SVNException {
       myAuthentication = getWithPassiveImpl(passive);
       if (myAuthentication != null && !checkAuthOk(myAuthentication)) {
-        clearPassiveCredentials(myRealm, myUrl,
-                                myAuthentication instanceof SVNPasswordAuthentication);  //clear passive also take into acconut ssl filepath
+        myAuthService.clearPassiveCredentials(myRealm, myUrl,
+                                              myAuthentication instanceof SVNPasswordAuthentication);  //clear passive also take into acconut ssl filepath
         myAuthentication = null;
       }
       return myAuthentication != null;
@@ -590,7 +606,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
         if (super.getWithActive(active)) return true;
       }
       myAuthentication = active.getProvider().requestClientAuthentication(myKind, myUrl, myRealm, null, null, true);
-      myStoreInUsual = myTempDirectory == null && myAuthentication != null && myAuthentication.isStorageAllowed();
+      myStoreInUsual = myAuthService.getTempDirectory() == null && myAuthentication != null && myAuthentication.isStorageAllowed();
 
       return myAuthentication != null;
     }
@@ -639,7 +655,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     return myTempDirectory != null ? myTempDirectory : new File(myConfiguration.getConfigurationDirectory());
   }
 
-  private void initTmpDir(SvnConfiguration configuration) throws IOException {
+  public void initTmpDir(SvnConfiguration configuration) throws IOException {
     if (myTempDirectory == null) {
       myTempDirectory = FileUtil.createTempDirectory("tmp", "Subversion");
       FileUtil.copyDir(new File(configuration.getConfigurationDirectory()), myTempDirectory);
