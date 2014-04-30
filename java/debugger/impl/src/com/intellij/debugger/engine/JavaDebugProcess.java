@@ -55,6 +55,7 @@ import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 
 import java.util.ArrayList;
 import java.util.List;

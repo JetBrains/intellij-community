@@ -39,13 +39,11 @@ import java.awt.*;
 public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   private final ComboBox myComboBox;
   private EditorComboBoxEditor myEditor;
-  private final XDebuggerEditorsProvider myDebuggerEditorsProvider;
   private String myExpression;
 
   public XDebuggerExpressionComboBox(final @NotNull Project project, final @NotNull XDebuggerEditorsProvider debuggerEditorsProvider, final @Nullable @NonNls String historyId,
                                      final @Nullable XSourcePosition sourcePosition) {
     super(project, debuggerEditorsProvider, EvaluationMode.EXPRESSION, historyId, sourcePosition);
-    myDebuggerEditorsProvider = debuggerEditorsProvider;
     myComboBox = new ComboBox();
     myComboBox.setEditable(true);
     myExpression = "";
@@ -89,7 +87,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   }
 
   private void initEditor() {
-    myEditor = new EditorComboBoxEditor(getProject(), myDebuggerEditorsProvider.getFileType()) {
+    myEditor = new EditorComboBoxEditor(getProject(), getEditorsProvider().getFileType()) {
       @Override
       public void setItem(Object anObject) {
         super.setItem(createDocument(StringUtil.notNullize((String)anObject)));
