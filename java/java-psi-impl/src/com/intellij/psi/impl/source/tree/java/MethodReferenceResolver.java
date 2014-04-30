@@ -21,7 +21,6 @@ import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
-import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeCompatibilityConstraint;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -41,7 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-class MethodReferenceResolver implements ResolveCache.PolyVariantContextResolver<PsiMethodReferenceExpressionImpl> {
+public class MethodReferenceResolver implements ResolveCache.PolyVariantContextResolver<PsiMethodReferenceExpressionImpl> {
   private static final Logger LOG = Logger.getInstance("#" + MethodReferenceResolver.class.getName());
 
   @NotNull
@@ -70,7 +69,7 @@ class MethodReferenceResolver implements ResolveCache.PolyVariantContextResolver
             final PsiClassType returnType = composeReturnType(containingClass, substitutor);
             final InferenceSession session = new InferenceSession(containingClass.getTypeParameters(), substitutor, reference.getManager(), null);
             if (!(session.isProperType(returnType) && session.isProperType(interfaceMethodReturnType))) {
-              session.registerConstraints(returnType, interfaceMethodReturnType);
+              session.registerReturnTypeConstraints(returnType, interfaceMethodReturnType);
               substitutor = session.infer();
             }
           }
@@ -111,12 +110,11 @@ class MethodReferenceResolver implements ResolveCache.PolyVariantContextResolver
                 @NotNull
                 @Override
                 public PsiSubstitutor inferTypeArguments(@NotNull ParameterTypeInferencePolicy policy, boolean includeReturnConstraint) {
-                  return inferTypeArguments(varargs);
+                  return inferTypeArguments();
                 }
 
-                public PsiSubstitutor inferTypeArguments(boolean varargs) {
+                private PsiSubstitutor inferTypeArguments() {
                   if (interfaceMethod == null) return substitutor;
-                  final PsiSubstitutor qualifierResultSubstitutor = qualifierResolveResult.getSubstitutor();
                   final InferenceSession session = new InferenceSession(method.getTypeParameters(), substitutor, reference.getManager(), reference);
 
                   //lift parameters from outer call
@@ -125,53 +123,9 @@ class MethodReferenceResolver implements ResolveCache.PolyVariantContextResolver
                     session.initBounds(methodSubstitutorPair.getMethod().getTypeParameters());
                   }
 
-                  final PsiParameter[] functionalMethodParameters = interfaceMethod.getParameterList().getParameters();
-                  final PsiParameter[] parameters = method.getParameterList().getParameters();
-                  final boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
-                  if (parameters.length == functionalMethodParameters.length && !varargs || isStatic && varargs) {//static methods
-
-                    if (method.isConstructor() && PsiUtil.isRawSubstitutor(containingClass, qualifierResultSubstitutor)) {
-                      session.initBounds(containingClass.getTypeParameters());
-                    }
-
-                    for (int i = 0; i < functionalMethodParameters.length; i++) {
-                      final PsiType pType = signature.getParameterTypes()[i];
-                      session.addConstraint(new TypeCompatibilityConstraint(getParameterType(parameters, i, varargs), pType));
-                    }
-                  }
-                  else if (parameters.length + 1 == functionalMethodParameters.length && !varargs || !isStatic && varargs && functionalMethodParameters.length > 0) { //instance methods
-                    final PsiClass aClass = qualifierResolveResult.getContainingClass();
-                    session.initBounds(aClass.getTypeParameters());
-
-                    final PsiType pType = signature.getParameterTypes()[0];
-
-                    PsiSubstitutor psiSubstitutor = qualifierResultSubstitutor;
-                    // 15.28.1 If the ReferenceType is a raw type, and there exists a parameterization of this type, T, that is a supertype of P1,
-                    // the type to search is the result of capture conversion (5.1.10) applied to T; 
-                    // otherwise, the type to search is the same as the type of the first search. Again, the type arguments, if any, are given by the method reference.
-                    if (PsiUtil.isRawSubstitutor(containingClass, qualifierResultSubstitutor)) {
-                      final PsiClassType.ClassResolveResult pResult = PsiUtil.resolveGenericsClassInType(pType);
-                      final PsiClass pClass = pResult.getElement();
-                      final PsiSubstitutor receiverSubstitutor = pClass != null ? TypeConversionUtil
-                        .getClassSubstitutor(containingClass, pClass, pResult.getSubstitutor()) : null;
-                      if (receiverSubstitutor != null) {
-                        if (!method.hasTypeParameters()) {
-                          if (signature.getParameterTypes().length == 1 || PsiUtil.isRawSubstitutor(containingClass, receiverSubstitutor)) {
-                            return receiverSubstitutor;
-                          }
-                        }
-                        psiSubstitutor = receiverSubstitutor;
-                      }
-                    }
-
-                    final PsiType qType = JavaPsiFacade.getElementFactory(reference.getProject()).createType(containingClass, psiSubstitutor);
-
-                    session.addConstraint(new TypeCompatibilityConstraint(qType, pType));
-                    
-                    for (int i = 0; i < signature.getParameterTypes().length - 1; i++) {
-                      final PsiType interfaceParamType = signature.getParameterTypes()[i + 1];
-                      session.addConstraint(new TypeCompatibilityConstraint(getParameterType(parameters, i, varargs), interfaceParamType));
-                    }
+                  final PsiSubstitutor psiSubstitutor = session.collectApplicabilityConstraints(reference, this, functionalInterfaceType);
+                  if (psiSubstitutor != null) {
+                    return psiSubstitutor;
                   }
 
                   if (!session.repeatInferencePhases(false)) {
@@ -181,19 +135,10 @@ class MethodReferenceResolver implements ResolveCache.PolyVariantContextResolver
                   if (interfaceMethodReturnType != PsiType.VOID && interfaceMethodReturnType != null) {
                     final PsiType returnType = method.isConstructor() ? composeReturnType(containingClass, substitutor) : method.getReturnType();
                     if (returnType != null) {
-                      session.registerConstraints(returnType, interfaceMethodReturnType);
+                      session.registerReturnTypeConstraints(returnType, interfaceMethodReturnType);
                     }
                   }
-                  return session.infer(parameters, null, null);
-                }
-
-                private PsiType getParameterType(PsiParameter[] parameters, int i, boolean varargs) {
-                  if (varargs && i >= parameters.length - 1) {
-                    final PsiType type = parameters[parameters.length - 1].getType();
-                    LOG.assertTrue(type instanceof PsiEllipsisType);
-                    return ((PsiEllipsisType)type).getComponentType();
-                  }
-                  return parameters[i].getType();
+                  return session.infer(method.getParameterList().getParameters(), null, null);
                 }
               };
             }
@@ -254,8 +199,7 @@ class MethodReferenceResolver implements ResolveCache.PolyVariantContextResolver
 
   private static PsiClassType composeReturnType(PsiClass containingClass, PsiSubstitutor substitutor) {
     final boolean isRawSubst = PsiUtil.isRawSubstitutor(containingClass, substitutor);
-    return JavaPsiFacade.getElementFactory(containingClass.getProject())
-      .createType(containingClass, isRawSubst ? PsiSubstitutor.EMPTY : substitutor);
+    return JavaPsiFacade.getElementFactory(containingClass.getProject()).createType(containingClass, isRawSubst ? PsiSubstitutor.EMPTY : substitutor);
   }
 
   private static class MethodReferenceConflictResolver extends JavaMethodsConflictResolver {
