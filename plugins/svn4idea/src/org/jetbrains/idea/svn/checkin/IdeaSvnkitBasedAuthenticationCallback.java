@@ -70,14 +70,14 @@ import java.util.Set;
  * Time: 1:27 PM
  */
 public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCallback {
-  private final SvnVcs myVcs;
+  @NotNull private final SvnVcs myVcs;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.checkin.IdeaSvnkitBasedAuthenticationCallback");
   private File myTempDirectory;
   private boolean myProxyCredentialsWereReturned;
   private SvnConfiguration myConfiguration;
   private final Set<String> myRequestedCredentials;
 
-  public IdeaSvnkitBasedAuthenticationCallback(SvnVcs vcs) {
+  public IdeaSvnkitBasedAuthenticationCallback(@NotNull SvnVcs vcs) {
     myVcs = vcs;
     myConfiguration = SvnConfiguration.getInstance(myVcs.getProject());
     myRequestedCredentials = ContainerUtil.newHashSet();
@@ -88,7 +88,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     if (repositoryUrl == null) {
       return false;
     }
-    return new CredentialsAuthenticator(myVcs).tryAuthenticate(realm, repositoryUrl, previousFailed, passwordRequest);
+    return new CredentialsAuthenticator(myVcs, repositoryUrl, realm).tryAuthenticate(passwordRequest);
   }
 
   @Nullable
@@ -187,7 +187,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
       return false;
     }
 
-    return new SSLServerCertificateAuthenticator(myVcs).tryAuthenticate(repositoryUrl, realm);
+    return new SSLServerCertificateAuthenticator(myVcs, repositoryUrl, realm).tryAuthenticate();
   }
 
   @Override
@@ -278,12 +278,16 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
   }
 
   private abstract class AbstractAuthenticator {
-    protected final SvnVcs myVcs;
+    @NotNull protected final SvnVcs myVcs;
+    @NotNull protected final SVNURL myUrl;
+    protected final String myRealm;
     protected boolean myStoreInUsual;
     protected SvnAuthenticationManager myTmpDirManager;
 
-    protected AbstractAuthenticator(SvnVcs vcs) {
+    protected AbstractAuthenticator(@NotNull SvnVcs vcs, @NotNull SVNURL url, String realm) {
       myVcs = vcs;
+      myUrl = url;
+      myRealm = realm;
     }
 
     protected boolean tryAuthenticate() {
@@ -359,24 +363,21 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
 
   // plus seems that we also should ask for credentials; but we didn't receive realm name yet
   private class SSLServerCertificateAuthenticator extends AbstractAuthenticator {
-    private SVNURL myUrl;
-    private String myRealm;
     private String myCertificateRealm;
     private String myCredentialsRealm;
     private Object myCertificate;
     private int myResult;
     private SVNAuthentication myAuthentication;
 
-    protected SSLServerCertificateAuthenticator(SvnVcs vcs) {
-      super(vcs);
+    protected SSLServerCertificateAuthenticator(@NotNull SvnVcs vcs, @NotNull SVNURL url, String realm) {
+      super(vcs, url, realm);
     }
 
-    public boolean tryAuthenticate(final SVNURL url, final String realm) {
-      myUrl = url;
-      myRealm = realm;
+    @Override
+    public boolean tryAuthenticate() {
       myResult = ISVNAuthenticationProvider.ACCEPTED_TEMPORARY;
       myStoreInUsual = false;
-      return tryAuthenticate();
+      return super.tryAuthenticate();
     }
 
     @Override
@@ -525,21 +526,16 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
 
   private class CredentialsAuthenticator extends AbstractAuthenticator {
     private String myKind;
-    private String myRealm;
     // sometimes realm string is different (with <>), so store credentials for both strings..
     private String myRealm2;
-    private SVNURL myUrl;
     private SVNAuthentication myAuthentication;
 
-    protected CredentialsAuthenticator(SvnVcs vcs) {
-      super(vcs);
+    protected CredentialsAuthenticator(@NotNull SvnVcs vcs, @NotNull SVNURL url, @Nullable String realm) {
+      super(vcs, url, realm == null ? url.getHost() : realm);
     }
 
-    public boolean tryAuthenticate(String realm, SVNURL url, boolean previousFailed, boolean passwordRequest) {
-      realm = realm == null ? url.getHost() : realm;
-      myRealm = realm;
-      myUrl = url;
-      final List<String> kinds = getKinds(url, passwordRequest);
+    public boolean tryAuthenticate(boolean passwordRequest) {
+      final List<String> kinds = getKinds(myUrl, passwordRequest);
       for (String kind : kinds) {
         myKind = kind;
         if (!tryAuthenticate()) {
