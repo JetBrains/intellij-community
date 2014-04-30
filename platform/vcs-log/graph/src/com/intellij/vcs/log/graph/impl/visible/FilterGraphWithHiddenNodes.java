@@ -19,6 +19,7 @@ package com.intellij.vcs.log.graph.impl.visible;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
+import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.LinearGraphWithHiddenNodes;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
@@ -107,7 +108,7 @@ public class FilterGraphWithHiddenNodes implements LinearGraphWithHiddenNodes {
   public List<Integer> getDownNodes(int nodeIndex) {
     List<Integer> downNodes = new SmartList<Integer>();
     for (int downNode : myDelegateGraph.getDownNodes(nodeIndex)) {
-      if (nodeIsVisible(downNode))
+      if (downNode != LinearGraph.NOT_LOAD_COMMIT && nodeIsVisible(downNode))
         downNodes.add(downNode);
     }
     return downNodes;
