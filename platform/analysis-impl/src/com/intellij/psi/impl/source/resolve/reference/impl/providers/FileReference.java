@@ -241,8 +241,9 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
   public String decode(@NotNull final String text) {
     // strip http get parameters
     String _text = text;
-    if (text.indexOf('?') >= 0) {
-      _text = text.substring(0, text.lastIndexOf('?'));
+    int paramIndex = text.lastIndexOf('?');
+    if (paramIndex >= 0) {
+      _text = text.substring(0, paramIndex);
     }
 
     if (myFileReferenceSet.isUrlEncoded()) {
