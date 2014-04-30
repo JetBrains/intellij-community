@@ -64,10 +64,6 @@ public interface XBreakpoint<P extends XBreakpointProperties> extends UserDataHo
   @Nullable
   String getLogExpression();
 
-  /**
-   * @deprecated use {@link #setLogExpressionObject(com.intellij.xdebugger.XExpression)} instead
-   */
-  @Deprecated
   void setLogExpression(@Nullable String expression);
 
   @Nullable
@@ -82,10 +78,6 @@ public interface XBreakpoint<P extends XBreakpointProperties> extends UserDataHo
   @Nullable
   String getCondition();
 
-  /**
-   * @deprecated use {@link #setConditionExpression(com.intellij.xdebugger.XExpression)} instead
-   */
-  @Deprecated
   void setCondition(@Nullable String condition);
 
   @Nullable
