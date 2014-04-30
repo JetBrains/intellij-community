@@ -40,6 +40,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -52,6 +55,7 @@ import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.facet.LibraryContributingFacet;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
+import com.jetbrains.python.library.PythonLibraryType;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
@@ -378,9 +382,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   private static void addLibrariesFromModule(Module module, Collection<String> list) {
-    if (PlatformUtils.isPyCharm()) {
-      return;
-    }
     final OrderEntry[] entries = ModuleRootManager.getInstance(module).getOrderEntries();
     for (OrderEntry entry : entries) {
       if (entry instanceof LibraryOrderEntry) {
@@ -390,7 +391,16 @@ public abstract class PythonCommandLineState extends CommandLineState {
           continue;
         }
         for (VirtualFile root : ((LibraryOrderEntry)entry).getRootFiles(OrderRootType.CLASSES)) {
-          addToPythonPath(root, list);
+          final Library library = ((LibraryOrderEntry)entry).getLibrary();
+          if (!PlatformUtils.isPyCharm()) {
+            addToPythonPath(root, list);
+          }
+          else if (library instanceof LibraryImpl) {
+            final PersistentLibraryKind<?> kind = ((LibraryImpl)library).getKind();
+            if (kind == PythonLibraryType.getInstance().getKind()) {
+              addToPythonPath(root, list);
+            }
+          }
         }
       }
     }
