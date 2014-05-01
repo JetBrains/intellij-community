@@ -67,6 +67,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.ui.EditorNotificationPanel;
+import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
@@ -129,6 +130,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private boolean myInSpareTimeUpdate;
   private boolean myInDocumentUpdate;
+  private HyperlinkLabel processAllOutputLinkLabel;
 
   // If true, then a document is being cleared right now.
   // Should be accessed in EDT only.
@@ -298,6 +300,15 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
     myHeavyUpdateTicket = 0;
     myHeavyAlarm = myPredefinedMessageFilter.isAnyHeavy() ? new Alarm(Alarm.ThreadToUse.SHARED_THREAD, this) : null;
+    processAllOutputLinkLabel = new EditorNotificationPanel().createActionLabel("Start processing of the text again", new Runnable() {
+      @Override
+      public void run() {
+        clearHyperlinkAndFoldings();
+        highlightHyperlinksAndFoldings(0, myEditor.getDocument().getLineCount() - 1);
+        ConsoleViewImpl.this.remove(processAllOutputLinkLabel);
+        myInSpareTimeUpdate=false;
+      }
+    });
 
     ConsoleInputFilterProvider[] inputFilters = Extensions.getExtensions(ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS);
     if (inputFilters.length > 0) {
@@ -669,9 +680,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     final Document document = myEditor.getDocument();
     final int oldLineCount = document.getLineCount();
     final boolean isAtEndOfDocument = myEditor.getCaretModel().getOffset() == document.getTextLength();
+    //TODO if the buffer is filled and then the output slows down, this thing stills is true -> have to clear the buffer to enable filters again
     boolean cycleUsed = myBuffer.isUseCyclicBuffer() && document.getTextLength() + text.length() > myBuffer.getCyclicBufferSize();
     if (cycleUsed) {
-      clearHyperlinkAndFoldings();
+      //TODO why to call this? 
+      //clearHyperlinkAndFoldings();
     }
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
@@ -722,7 +735,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
     myPsiDisposedCheck.performCheck();
     final int newLineCount = document.getLineCount();
-    if (cycleUsed) {
+    if (cycleUsed || myInSpareTimeUpdate) {
       if (!myInSpareTimeUpdate) {
         myInSpareTimeUpdate = true;
         final EditorNotificationPanel comp = new EditorNotificationPanel().text("Too much output to process").icon(AllIcons.General.ExclMark);
@@ -730,14 +743,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         performWhenNoDeferredOutput(new Runnable() {
           @Override
           public void run() {
-            try {
-              clearHyperlinkAndFoldings();
-              highlightHyperlinksAndFoldings(0, document.getLineCount() - 1);
-            }
-            finally {
-              myInSpareTimeUpdate = false;
               remove(comp);
-            }
+              add(processAllOutputLinkLabel, BorderLayout.NORTH);
           }
         });
       }
