@@ -103,7 +103,13 @@ public abstract class MavenTestCase extends UsefulTestCase {
             try {
               setUpInWriteAction();
             }
-            catch (Exception e) {
+            catch (Throwable e) {
+              try {
+                tearDown();
+              }
+              catch (Exception e1) {
+                e1.printStackTrace();
+              }
               throw new RuntimeException(e);
             }
           }
