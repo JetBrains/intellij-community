@@ -285,11 +285,20 @@ public class InferenceSession {
     }
   }
 
-  private void collectAdditionalConstraints(Set<ConstraintFormula> additionalConstraints,
-                                            PsiCallExpression callExpression) {
+  private void collectAdditionalConstraints(final Set<ConstraintFormula> additionalConstraints,
+                                            final PsiCallExpression callExpression) {
     PsiExpressionList argumentList = callExpression.getArgumentList();
     if (argumentList != null) {
-      final JavaResolveResult result = callExpression.resolveMethodGenerics();
+      final PsiLambdaExpression expression = PsiTreeUtil.getParentOfType(argumentList, PsiLambdaExpression.class);
+      final Computable<JavaResolveResult> computableResolve = new Computable<JavaResolveResult>() {
+        @Override
+        public JavaResolveResult compute() {
+          return callExpression.resolveMethodGenerics();
+        }
+      };
+      final JavaResolveResult result = expression == null
+                                       ? computableResolve.compute()
+                                       : PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, false, computableResolve);
       if (result instanceof MethodCandidateInfo) {
         final PsiMethod method = ((MethodCandidateInfo)result).getElement();
         //need to get type parameters for 2 level nested expressions (they won't be covered by expression constraints on this level?!) 
