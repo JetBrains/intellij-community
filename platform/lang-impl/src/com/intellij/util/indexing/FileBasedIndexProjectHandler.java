@@ -32,6 +32,7 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ProjectRootManagerComponent;
+import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -72,6 +73,8 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
       startupManager.registerPreStartupActivity(new Runnable() {
         @Override
         public void run() {
+          PushedFilePropertiesUpdater.getInstance(project).initializeProperties();
+
           // dumb mode should start before post-startup activities
           // only when queueTask is called from UI thread, we can guarantee that
           // when the method returns, the application has entered dumb mode
