@@ -199,7 +199,7 @@ public abstract class GitChangeProviderTest extends GitSingleRepoTest {
       if (file == null) { // if a file was deleted, just find the reference in the original list of files and use it. 
         String path = change.getBeforeRevision().getFile().getPath();
         for (FilePath fp : changedPaths) {
-          if (fp.getPath().equals(path)) {
+          if (FileUtil.pathsEqual(fp.getPath(), path)) {
             filePath = fp;
             break;
           }
