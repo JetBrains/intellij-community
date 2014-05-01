@@ -63,7 +63,7 @@ public abstract class GitPlatformTest extends UsefulTestCase {
     super.setUp();
 
     try {
-      myProjectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getTestName(true)).getFixture();
+      myProjectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getDirName()).getFixture();
       myProjectFixture.setUp();
     }
     catch (Exception e) {
@@ -88,6 +88,16 @@ public abstract class GitPlatformTest extends UsefulTestCase {
     initChangeListManager();
     addSilently();
     removeSilently();
+  }
+
+  @NotNull
+  public String getDirName() {
+    String name = getTestName(true);
+    name = name.trim().replace(' ', '_');
+    if (name.length() > 50) {
+      name = name.substring(0, 50);
+    }
+    return name;
   }
 
   private void initChangeListManager() {
