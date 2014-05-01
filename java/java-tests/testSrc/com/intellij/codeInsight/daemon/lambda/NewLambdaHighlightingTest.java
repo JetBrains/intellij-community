@@ -206,6 +206,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testInferenceFromReturnStatements() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

@@ -525,11 +525,22 @@ public class InferenceSession {
       return getTargetType((PsiExpression)parent);
     }
     else if (parent instanceof PsiLambdaExpression) {
-      if (PsiUtil.skipParenthesizedExprUp(parent.getParent()) instanceof PsiExpressionList) {
-        final PsiType typeTypeByParentCall = getTargetType((PsiLambdaExpression)parent);
-        return LambdaUtil.getFunctionalInterfaceReturnType(FunctionalInterfaceParameterizationUtil.getGroundTargetType(typeTypeByParentCall, (PsiLambdaExpression)parent));
+      return getTargetTypeByContainingLambda((PsiLambdaExpression)parent);
+    }
+    else if (parent instanceof PsiReturnStatement) {
+      return getTargetTypeByContainingLambda(PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class));
+    }
+    return null;
+  }
+
+  private static PsiType getTargetTypeByContainingLambda(PsiLambdaExpression lambdaExpression) {
+    if (lambdaExpression != null) {
+      if (PsiUtil.skipParenthesizedExprUp(lambdaExpression.getParent()) instanceof PsiExpressionList) {
+        final PsiType typeTypeByParentCall = getTargetType(lambdaExpression);
+        return LambdaUtil.getFunctionalInterfaceReturnType(
+          FunctionalInterfaceParameterizationUtil.getGroundTargetType(typeTypeByParentCall, lambdaExpression));
       }
-      return LambdaUtil.getFunctionalInterfaceReturnType(((PsiLambdaExpression)parent).getFunctionalInterfaceType());
+      return LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression.getFunctionalInterfaceType());
     }
     return null;
   }

@@ -202,7 +202,7 @@ public class PsiTypesUtil {
     else if (parent instanceof PsiReturnStatement) {
       final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class);
       if (lambdaExpression != null) {
-        return LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression.getFunctionalInterfaceType());
+        return null;
       }
       else {
         PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
