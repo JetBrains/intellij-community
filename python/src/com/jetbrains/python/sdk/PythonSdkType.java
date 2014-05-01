@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -241,7 +241,8 @@ public class PythonSdkType extends SdkType {
   @Override
   public FileChooserDescriptor getHomeChooserDescriptor() {
     final boolean is_windows = SystemInfo.isWindows;
-    FileChooserDescriptor result = new FileChooserDescriptor(true, false, false, false, false, false) {
+    return new FileChooserDescriptor(true, false, false, false, false, false) {
+      @Override
       public void validateSelectedFiles(VirtualFile[] files) throws Exception {
         if (files.length != 0) {
           if (!isValidSdkHome(files[0].getPath())) {
@@ -268,9 +269,7 @@ public class PythonSdkType extends SdkType {
         }
         return super.isFileVisible(file, showHiddenFiles);
       }
-    };
-    result.setTitle(PyBundle.message("sdk.select.path"));
-    return result;
+    }.withTitle(PyBundle.message("sdk.select.path")).withShowHiddenFiles(SystemInfo.isUnix);
   }
 
   public boolean supportsCustomCreateUI() {

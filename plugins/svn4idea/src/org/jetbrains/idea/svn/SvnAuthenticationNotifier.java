@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -234,7 +234,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     final Boolean keptResult = myCopiesPassiveResults.get(wcCopy.getUrl());
     if (Boolean.TRUE.equals(keptResult)) return ThreeState.YES;
     if (Boolean.FALSE.equals(keptResult)) return ThreeState.NO;
-    
+
     // check have credentials
     final boolean calculatedResult = passiveValidation(myVcs.getProject(), wcCopy.getUrl());
     myCopiesPassiveResults.put(wcCopy.getUrl(), calculatedResult);
@@ -300,7 +300,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
       return myRealm;
     }
   }
-  
+
   static void log(final Throwable t) {
     LOG.debug(t);
   }
@@ -432,7 +432,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
                                                         @Override
                                                         public void run() {
                                                           SvnConfigurable
-                                                            .selectConfigirationDirectory(configuration.getConfigurationDirectory(),
+                                                            .selectConfigurationDirectory(configuration.getConfigurationDirectory(),
                                                                                           new Consumer<String>() {
                                                                                             @Override
                                                                                             public void consume(String s) {

@@ -50,6 +50,7 @@ public class FileChooserDescriptor implements Cloneable {
   private final List<VirtualFile> myRoots = new ArrayList<VirtualFile>();
   private boolean myShowFileSystemRoots = true;
   private boolean myTreeRootVisible = false;
+  private boolean myShowHiddenFiles = false;
 
   private final Map<String, Object> myUserData = new HashMap<String, Object>();
 
@@ -79,6 +80,13 @@ public class FileChooserDescriptor implements Cloneable {
 
   public FileChooserDescriptor(@NotNull FileChooserDescriptor d) {
     this(d.isChooseFiles(), d.isChooseFolders(), d.isChooseJars(), d.isChooseJarsAsFiles(), d.isChooseJarContents(), d.isChooseMultiple());
+    withTitle(d.getTitle());
+    withDescription(d.getDescription());
+    withHideIgnored(d.isHideIgnored());
+    withRoots(d.getRoots());
+    withShowFileSystemRoots(d.isShowFileSystemRoots());
+    withTreeRootVisible(d.isTreeRootVisible());
+    withShowHiddenFiles(d.isShowHiddenFiles());
   }
 
   public boolean isChooseFiles() {
@@ -198,6 +206,15 @@ public class FileChooserDescriptor implements Cloneable {
   @SuppressWarnings("UnusedDeclaration")
   public FileChooserDescriptor setIsTreeRootVisible(boolean treeRootVisible) {
     return withTreeRootVisible(treeRootVisible);
+  }
+
+  public boolean isShowHiddenFiles() {
+    return myShowHiddenFiles;
+  }
+
+  public FileChooserDescriptor withShowHiddenFiles(boolean showHiddenFiles) {
+    myShowHiddenFiles = showHiddenFiles;
+    return this;
   }
 
   /**
