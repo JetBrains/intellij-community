@@ -24,6 +24,7 @@ class Test1 {
 
 
   public static void main(String[] args) {
+    Extractor<String, Integer> e0 = s -> s.equals("1") ? Option.option(1) : Option.none();
     Extractor<String, Integer> e = s -> {
       if (s.equals("1")) {
         return Option.option(1);
