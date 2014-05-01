@@ -43,8 +43,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexProjectHandler;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -170,12 +170,21 @@ public class PushedFilePropertiesUpdater {
   }
 
   public void performPushTasks(ProgressIndicator indicator) {
+    boolean hadTasks = false;
     while (true) {
       DumbModeTask task = myTasks.poll();
       if (task == null) {
         break;
       }
+      hadTasks = true;
       task.performInDumbMode(indicator);
+    }
+
+    if (hadTasks && !myProject.isDisposed()) {
+      DumbModeTask task = FileBasedIndexProjectHandler.createChangedFilesIndexingTask(myProject);
+      if (task != null) {
+        DumbService.getInstance(myProject).queueTask(task);
+      }
     }
   }
 
