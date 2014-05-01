@@ -7,7 +7,7 @@ class A<T> {
     foo(new A<>("", ""));
     bar(new A<>("", ""));
     bar(new A<>(get()));
-    //bar(new A<>(get( ), ""));
+    bar(new A<>(get( ), ""));
   }
 
   void foo(A<String> s) {}
