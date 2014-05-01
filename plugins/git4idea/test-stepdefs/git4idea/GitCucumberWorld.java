@@ -22,6 +22,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
@@ -195,6 +196,23 @@ public class GitCucumberWorld {
 
   @After
   @Order(3)
+  public void tearDownFixture() throws Exception {
+    edt(new ThrowableRunnable<Exception>() {
+      @Override
+      public void run() throws Exception {
+        myProjectFixture.tearDown();
+      }
+    });
+  }
+
+  @After
+  @Order(2)
+  public void cleanupDir() {
+    FileUtil.delete(new File(myTestRoot));
+  }
+
+  @After
+  @Order(1)
   public void cleanupWorld() throws IllegalAccessException {
     for (Field field : GitCucumberWorld.class.getDeclaredFields()) {
       if (Modifier.isStatic(field.getModifiers())) {
@@ -204,22 +222,11 @@ public class GitCucumberWorld {
   }
 
   @After
-  @Order(2)
+  @Order(0)
   public void dumpToLog(@NotNull ScenarioResult result) throws IOException {
     if (result.isFailed()) {
       TestLoggerFactory.dumpLogToStdout(getStartTestMarker());
     }
-  }
-
-  @After
-  @Order(1)
-  public void tearDownFixture() throws Exception {
-    edt(new ThrowableRunnable<Exception>() {
-      @Override
-      public void run() throws Exception {
-        myProjectFixture.tearDown();
-      }
-    });
   }
 
   public static void executeOnPooledThread(Runnable runnable) {
