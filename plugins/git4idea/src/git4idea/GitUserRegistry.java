@@ -17,7 +17,6 @@ package git4idea;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -43,11 +42,13 @@ public class GitUserRegistry implements Disposable, VcsListener {
 
   @NotNull private final Project myProject;
   @NotNull private final ProjectLevelVcsManager myVcsManager;
+  @NotNull private final VcsLogObjectsFactory myFactory;
   @NotNull private final Map<VirtualFile, VcsUser> myUserMap = ContainerUtil.newConcurrentMap();
 
-  public GitUserRegistry(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManager) {
+  public GitUserRegistry(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManager, @NotNull VcsLogObjectsFactory factory) {
     myProject = project;
     myVcsManager = vcsManager;
+    myFactory = factory;
     Disposer.register(myProject, this);
   }
 
@@ -79,11 +80,10 @@ public class GitUserRegistry implements Disposable, VcsListener {
   }
 
   @Nullable
-  private static VcsUser readCurrentUser(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
+  private VcsUser readCurrentUser(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
     String userName = GitConfigUtil.getValue(project, root, GitConfigUtil.USER_NAME);
     String userEmail = StringUtil.notNullize(GitConfigUtil.getValue(project, root, GitConfigUtil.USER_EMAIL));
-    VcsLogObjectsFactory factory = ServiceManager.getService(project, VcsLogObjectsFactory.class);
-    return userName == null ? null : factory.createUser(userName, userEmail);
+    return userName == null ? null : myFactory.createUser(userName, userEmail);
   }
 
   @Override
