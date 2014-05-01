@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -33,7 +31,6 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,25 +46,21 @@ import java.util.*;
  * @author yole
  */
 public class SdkConfigurationUtil {
-  private SdkConfigurationUtil() {
-  }
+  private SdkConfigurationUtil() { }
 
   public static void createSdk(@Nullable final Project project,
                                final Sdk[] existingSdks,
-                               final NullableConsumer<Sdk> onSdkCreatedCallBack, final boolean createIfExists,
+                               final NullableConsumer<Sdk> onSdkCreatedCallBack,
+                               final boolean createIfExists,
                                final SdkType... sdkTypes) {
     if (sdkTypes.length == 0) {
       onSdkCreatedCallBack.consume(null);
       return;
     }
-    final FileChooserDescriptor descriptor = createCompositeDescriptor(sdkTypes);
-    if (SystemInfo.isMac) {
-      descriptor.putUserData(PathChooserDialog.NATIVE_MAC_CHOOSER_SHOW_HIDDEN_FILES, Boolean.TRUE);
-    }
+
+    FileChooserDescriptor descriptor = createCompositeDescriptor(sdkTypes);
     String suggestedPath = sdkTypes[0].suggestHomePath();
-    VirtualFile suggestedDir = suggestedPath == null
-                               ? null
-                               : LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(suggestedPath));
+    VirtualFile suggestedDir = suggestedPath == null ? null : LocalFileSystem.getInstance().findFileByPath(suggestedPath);
     FileChooser.chooseFiles(descriptor, project, suggestedDir, new FileChooser.FileChooserConsumer() {
       @Override
       public void consume(List<VirtualFile> selectedFiles) {
@@ -79,11 +72,13 @@ public class SdkConfigurationUtil {
               for (Sdk sdk : existingSdks) {
                 if (path.equals(sdk.getHomePath())) {
                   newSdk = sdk;
+                  break;
                 }
               }
             }
-            if (newSdk == null)
+            if (newSdk == null) {
               newSdk = setupSdk(existingSdks, selectedFiles.get(0), sdkType, false, null, null);
+            }
             onSdkCreatedCallBack.consume(newSdk);
             return;
           }
@@ -96,7 +91,6 @@ public class SdkConfigurationUtil {
         onSdkCreatedCallBack.consume(null);
       }
     });
-
   }
 
   public static void createSdk(@Nullable final Project project,
@@ -107,11 +101,7 @@ public class SdkConfigurationUtil {
   }
 
   private static FileChooserDescriptor createCompositeDescriptor(final SdkType... sdkTypes) {
-    FileChooserDescriptor descriptor0 = sdkTypes[0].getHomeChooserDescriptor();
-    FileChooserDescriptor descriptor = new FileChooserDescriptor(descriptor0.isChooseFiles(), descriptor0.isChooseFolders(),
-                                                                 descriptor0.isChooseJars(), descriptor0.isChooseJarsAsFiles(),
-                                                                 descriptor0.isChooseJarContents(), descriptor0.isChooseMultiple()) {
-
+    return new FileChooserDescriptor(sdkTypes[0].getHomeChooserDescriptor()) {
       @Override
       public void validateSelectedFiles(final VirtualFile[] files) throws Exception {
         if (files.length > 0) {
@@ -121,14 +111,10 @@ public class SdkConfigurationUtil {
             }
           }
         }
-        String message = files.length > 0 && files[0].isDirectory()
-                         ? ProjectBundle.message("sdk.configure.home.invalid.error", sdkTypes[0].getPresentableName())
-                         : ProjectBundle.message("sdk.configure.home.file.invalid.error", sdkTypes[0].getPresentableName());
-        throw new Exception(message);
+        String key = files.length > 0 && files[0].isDirectory() ? "sdk.configure.home.invalid.error" : "sdk.configure.home.file.invalid.error";
+        throw new Exception(ProjectBundle.message(key, sdkTypes[0].getPresentableName()));
       }
     };
-    descriptor.setTitle(descriptor0.getTitle());
-    return descriptor;
   }
 
   public static void addSdk(@NotNull final Sdk sdk) {
@@ -314,9 +300,8 @@ public class SdkConfigurationUtil {
 
   @Nullable
   public static VirtualFile getSuggestedSdkRoot(SdkType sdkType) {
-    final String homepath = sdkType.suggestHomePath();
-    if (homepath == null) return null;
-    return LocalFileSystem.getInstance().findFileByPath(homepath);
+    final String homePath = sdkType.suggestHomePath();
+    return homePath == null ? null : LocalFileSystem.getInstance().findFileByPath(homePath);
   }
 
   public static List<String> filterExistingPaths(SdkType sdkType, Collection<String> sdkHomes, final Sdk[] sdks) {

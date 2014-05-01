@@ -43,8 +43,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexProjectHandler;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -79,10 +79,6 @@ public class PushedFilePropertiesUpdater {
     StartupManager.getInstance(project).registerPreStartupActivity(new Runnable() {
       @Override
       public void run() {
-        long l = System.currentTimeMillis();
-        pushAll(myPushers);
-        LOG.info("File properties pushed in " + (System.currentTimeMillis() - l) + " ms");
-
         final MessageBusConnection connection = bus.connect();
         connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
           @Override
@@ -121,21 +117,26 @@ public class PushedFilePropertiesUpdater {
             doPushRecursively(file, pushers, ProjectRootManager.getInstance(myProject).getFileIndex());
           }
         }));
-        for (final FilePropertyPusher pusher : myPushers) {
-          pusher.initExtra(project, bus, new FilePropertyPusher.Engine() {
-            @Override
-            public void pushAll() {
-              PushedFilePropertiesUpdater.this.pushAll(pusher);
-            }
-
-            @Override
-            public void pushRecursively(VirtualFile file, Project project) {
-              PushedFilePropertiesUpdater.this.schedulePushRecursively(file, pusher);
-            }
-          });
-        }
       }
     });
+  }
+
+  public void initializeProperties() {
+    pushAll(myPushers);
+
+    for (final FilePropertyPusher pusher : myPushers) {
+      pusher.initExtra(myProject, myProject.getMessageBus(), new FilePropertyPusher.Engine() {
+        @Override
+        public void pushAll() {
+          PushedFilePropertiesUpdater.this.pushAll(pusher);
+        }
+
+        @Override
+        public void pushRecursively(VirtualFile file, Project project) {
+          PushedFilePropertiesUpdater.this.schedulePushRecursively(file, pusher);
+        }
+      });
+    }
   }
 
   private void schedulePushRecursively(final VirtualFile dir, final FilePropertyPusher... pushers) {
@@ -170,12 +171,21 @@ public class PushedFilePropertiesUpdater {
   }
 
   public void performPushTasks(ProgressIndicator indicator) {
+    boolean hadTasks = false;
     while (true) {
       DumbModeTask task = myTasks.poll();
       if (task == null) {
         break;
       }
+      hadTasks = true;
       task.performInDumbMode(indicator);
+    }
+
+    if (hadTasks && !myProject.isDisposed()) {
+      DumbModeTask task = FileBasedIndexProjectHandler.createChangedFilesIndexingTask(myProject);
+      if (task != null) {
+        DumbService.getInstance(myProject).queueTask(task);
+      }
     }
   }
 

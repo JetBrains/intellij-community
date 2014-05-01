@@ -90,6 +90,17 @@ public abstract class GitPlatformTest extends UsefulTestCase {
     removeSilently();
   }
 
+  @Override
+  @NotNull
+  public String getTestName(boolean lowercaseFirstLetter) {
+    String name = super.getTestName(lowercaseFirstLetter);
+    name = name.trim().replace(' ', '_');
+    if (name.length() > 50) {
+      name = name.substring(0, 50);
+    }
+    return name;
+  }
+
   private void initChangeListManager() {
     ((ProjectComponent) ChangeListManager.getInstance(myProject)).projectOpened();
     ((ProjectComponent) VcsDirtyScopeManager.getInstance(myProject)).projectOpened();

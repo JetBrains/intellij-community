@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,6 +119,10 @@ public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
       final Field field = getClass().getField(fieldName);
       valueField.setValue(field.get(this));
       valueField.setColumns(2);
+
+      // hack to work around text field becoming unusably small sometimes when using GridBagLayout
+      valueField.setMinimumSize(valueField.getPreferredSize());
+
       UIUtil.fixFormattedField(valueField);
       final Document document = valueField.getDocument();
       document.addDocumentListener(new DocumentAdapter() {

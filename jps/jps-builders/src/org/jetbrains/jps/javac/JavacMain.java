@@ -442,7 +442,10 @@ public class JavacMain {
       final Object emptyList = NameTableCleanupDataHolder.emptyList;
       // both parameters should be non-null if properly initialized
       if (freelistField != null && emptyList != null) {
-        freelistField.set(null, emptyList);
+        // the access to static 'freeList' field is synchronized inside javac, so we must use "synchronized" too
+        synchronized (freelistField.getDeclaringClass()) { 
+          freelistField.set(null, emptyList);
+        }
       }
     }
     catch (Throwable ignored) {
