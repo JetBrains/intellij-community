@@ -20,6 +20,8 @@
 package com.intellij.util.messages;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.messages.impl.MessageBusImpl;
 import junit.framework.TestCase;
 
 import java.util.ArrayList;
@@ -195,6 +197,33 @@ public class MessageBusTest extends TestCase {
                  "C2T2Handler:t21",
                  "inside:t11:done",
                  "C2T1Handler:t12");
+  }
+
+  public void testPostingPerformanceWithLowListenerDensityInHierarchy() {
+    //simulating million fileWithNoDocumentChanged events on refresh in a thousand-module project
+    MessageBusImpl childBus = new MessageBusImpl(this, myBus);
+    childBus.connect().subscribe(TOPIC1, new T1Listener() {
+      @Override
+      public void t11() {
+      }
+
+      @Override
+      public void t12() {
+      }
+    });
+    for (int i = 0; i < 1000; i++) {
+      new MessageBusImpl(this, childBus);
+    }
+
+    PlatformTestUtil.assertTiming("Too long", 2000, new Runnable() {
+      @Override
+      public void run() {
+        T1Listener publisher = myBus.syncPublisher(TOPIC1);
+        for (int i = 0; i < 1000000; i++) {
+          publisher.t11();
+        }
+      }
+    });
   }
   
   private void assertEvents(String... expected) {

@@ -2122,5 +2122,15 @@ public class ContainerUtil extends ContainerUtilRt {
     // IBM JDK provides correct version in java.version property, but not in java.runtime.version property
     return StringUtil.compareVersionNumbers(SystemInfo.JAVA_VERSION, "1.7") >= 0;
   }
+
+  public static <T extends Comparable<T>> int compareLexicographically(List<T> o1, List<T> o2) {
+    for (int i = 0; i < Math.min(o1.size(), o2.size()); i++) {
+      int result = o1.get(i).compareTo(o2.get(i));
+      if (result != 0) {
+        return result;
+      }
+    }
+    return o1.size() < o2.size() ? -1 : o1.size() == o2.size() ? 0 : 1;
+  }
 }
 
