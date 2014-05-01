@@ -50,6 +50,7 @@ import org.junit.Assert;
 import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -180,17 +181,39 @@ public class GitCucumberWorld {
   }
 
   @After("@remote")
-  @Order(1)
+  @Order(5)
   public void tearDownRemoteOperations() {
   }
 
   @After
-  public void tearDown(@NotNull ScenarioResult result) throws Throwable {
-    waitForPendingTasks();
-    nullifyStaticFields();
+  @Order(4)
+  public void waitForPendingTasks() throws InterruptedException, ExecutionException, TimeoutException {
+    for (Future future : myAsyncTasks) {
+      future.get(30, TimeUnit.SECONDS);
+    }
+  }
+
+  @After
+  @Order(3)
+  public void cleanupWorld() throws IllegalAccessException {
+    for (Field field : GitCucumberWorld.class.getDeclaredFields()) {
+      if (Modifier.isStatic(field.getModifiers())) {
+        field.set(null, null);
+      }
+    }
+  }
+
+  @After
+  @Order(2)
+  public void dumpToLog(@NotNull ScenarioResult result) throws IOException {
     if (result.isFailed()) {
       TestLoggerFactory.dumpLogToStdout(getStartTestMarker());
     }
+  }
+
+  @After
+  @Order(1)
+  public void tearDownFixture() throws Exception {
     edt(new ThrowableRunnable<Exception>() {
       @Override
       public void run() throws Exception {
@@ -201,20 +224,6 @@ public class GitCucumberWorld {
 
   public static void executeOnPooledThread(Runnable runnable) {
     myAsyncTasks.add(ApplicationManager.getApplication().executeOnPooledThread(runnable));
-  }
-
-  private static void waitForPendingTasks() throws InterruptedException, ExecutionException, TimeoutException {
-    for (Future future : myAsyncTasks) {
-      future.get(30, TimeUnit.SECONDS);
-    }
-  }
-
-  private static void nullifyStaticFields() throws IllegalAccessException {
-    for (Field field : GitCucumberWorld.class.getDeclaredFields()) {
-      if (Modifier.isStatic(field.getModifiers())) {
-        field.set(null, null);
-      }
-    }
   }
 
   @SuppressWarnings("unchecked")
