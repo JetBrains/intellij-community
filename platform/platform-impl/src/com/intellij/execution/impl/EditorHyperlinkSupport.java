@@ -68,12 +68,10 @@ public class EditorHyperlinkSupport {
   @NotNull private final Project myProject;
   private final SortedMap<RangeHighlighter, HyperlinkInfo> myHighlighterToMessageInfoMap = new TreeMap<RangeHighlighter, HyperlinkInfo>(START_OFFSET_COMPARATOR);
   private int myLastIndex = NO_INDEX;
-  private final List<RangeHighlighter> myHighlighters;
 
   public EditorHyperlinkSupport(@NotNull final Editor editor, @NotNull final Project project) {
     myEditor = editor;
     myProject = project;
-    myHighlighters = new SmartList<RangeHighlighter>();
 
     editor.addEditorMouseListener(new EditorMouseAdapter() {
       @Override
@@ -155,16 +153,6 @@ public class EditorHyperlinkSupport {
         myEditor.getMarkupModel().removeHighlighter(found);
         return;
       }
-      final Iterator<RangeHighlighter> iterator = myHighlighters.iterator();
-      while (iterator.hasNext()) {
-        final RangeHighlighter highlighter = iterator.next();
-        if (highlighter.getStartOffset() == highlight.getStart() && highlighter.getEndOffset() == highlight.getEnd()) {
-          iterator.remove();
-          final TextAttributes textAttributes = highlight.getTextAttributes(highlighter.getTextAttributes());
-          addHighlighter(highlight.getStart(), highlight.getEnd(), textAttributes);
-          return;
-        }
-      }
       final TextAttributes textAttributes = highlight.getTextAttributes(null);
       addHighlighter(highlight.getStart(), highlight.getEnd(), textAttributes);
     }
@@ -172,7 +160,6 @@ public class EditorHyperlinkSupport {
 
   public void clearHyperlinks() {
     myHighlighterToMessageInfoMap.clear();
-    myHighlighters.clear();
     myLastIndex = NO_INDEX;
   }
 
@@ -297,7 +284,6 @@ public class EditorHyperlinkSupport {
                                                                                        HIGHLIGHT_LAYER,
                                                                                        highlightAttributes,
                                                                                        HighlighterTargetArea.EXACT_RANGE);
-    myHighlighters.add(highlighter);
   }
 
   private static TextAttributes getHyperlinkAttributes() {
