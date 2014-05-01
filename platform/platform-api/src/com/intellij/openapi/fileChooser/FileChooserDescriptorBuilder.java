@@ -20,9 +20,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author traff
- */
+/** @deprecated use {@link FileChooserDescriptor} or {@link FileChooserDescriptorFactory} (to be removed in IDEA 15) */
+@SuppressWarnings({"UnusedDeclaration", "deprecation"})
 public class FileChooserDescriptorBuilder {
   private boolean myChooseFiles;
   private boolean myChooseFolders;
@@ -34,20 +33,16 @@ public class FileChooserDescriptorBuilder {
   private String myTitle = null;
   private String myDescription = null;
   private Boolean myShowFileSystemRoots = null;
-
   private Boolean myHideIgnored = null;
   private Boolean myTreeRootVisible = null;
-  
   private List<VirtualFile> myRoots = null;
-  
-  
 
   public FileChooserDescriptorBuilder(boolean chooseFiles,
-                               boolean chooseFolders,
-                               boolean chooseJars,
-                               boolean chooseJarsAsFiles,
-                               boolean chooseJarContents,
-                               boolean chooseMultiple) {
+                                      boolean chooseFolders,
+                                      boolean chooseJars,
+                                      boolean chooseJarsAsFiles,
+                                      boolean chooseJarContents,
+                                      boolean chooseMultiple) {
     myChooseFiles = chooseFiles;
     myChooseFolders = chooseFolders;
     myChooseJars = chooseJars;
@@ -55,8 +50,7 @@ public class FileChooserDescriptorBuilder {
     myChooseJarContents = chooseJarContents;
     myChooseMultiple = chooseMultiple;
   }
-  
-  
+
   public static FileChooserDescriptorBuilder onlyFiles() {
     return new FileChooserDescriptorBuilder(true, false, false, false, false, false);
   }
@@ -64,11 +58,11 @@ public class FileChooserDescriptorBuilder {
   public static FileChooserDescriptorBuilder onlyFolders() {
     return new FileChooserDescriptorBuilder(false, true, false, false, false, false);
   }
-  
+
   public static FileChooserDescriptorBuilder filesAndFolders() {
     return new FileChooserDescriptorBuilder(true, true, false, false, false, false);
   }
-  
+
   public FileChooserDescriptorBuilder chooseMultiple() {
     myChooseMultiple = true;
     return this;
@@ -80,68 +74,65 @@ public class FileChooserDescriptorBuilder {
     myChooseJarContents = chooseJarContents;
     return this;
   }
-  
+
   public FileChooserDescriptorBuilder withTitle(@NotNull String title) {
     myTitle = title;
     return this;
   }
-  
+
   public FileChooserDescriptorBuilder withDescription(@NotNull String description) {
     myDescription = description;
     return this;
   }
 
-  /**
-   * Don't show system roots in case of empty root list
-   */
   public FileChooserDescriptorBuilder hideSystemRoots() {
     myShowFileSystemRoots = false;
     return this;
   }
-  
+
   public FileChooserDescriptorBuilder showIgnored() {
     myHideIgnored = false;
     return this;
   }
-  
+
   public FileChooserDescriptorBuilder withTreeRootVisible(boolean isTreeRootVisible) {
     myTreeRootVisible = isTreeRootVisible;
     return this;
   }
-  
+
   public FileChooserDescriptorBuilder withRoots(List<VirtualFile> roots) {
     myRoots = roots;
     return this;
   }
-  
-  
+
   public FileChooserDescriptor build() {
-    FileChooserDescriptor descriptor = new FileChooserDescriptor(myChooseFiles, myChooseFolders, myChooseJars, myChooseJarsAsFiles, myChooseJarContents, myChooseMultiple);
-    
+    FileChooserDescriptor descriptor =
+      new FileChooserDescriptor(myChooseFiles, myChooseFolders, myChooseJars, myChooseJarsAsFiles, myChooseJarContents, myChooseMultiple);
+
     if (myTitle != null) {
       descriptor.setTitle(myTitle);
     }
-    
+
     if (myDescription != null) {
       descriptor.setDescription(myDescription);
     }
-    
+
     if (myShowFileSystemRoots != null) {
       descriptor.setShowFileSystemRoots(myShowFileSystemRoots);
     }
-    
+
     if (myHideIgnored != null) {
       descriptor.setHideIgnored(myHideIgnored);
     }
-    
+
     if (myTreeRootVisible != null) {
-      descriptor.setIsTreeRootVisible(myTreeRootVisible);
+      descriptor.withTreeRootVisible(myTreeRootVisible);
     }
-    
+
     if (myRoots != null) {
       descriptor.setRoots(myRoots);
     }
-    
+
     return descriptor;
   }
 }

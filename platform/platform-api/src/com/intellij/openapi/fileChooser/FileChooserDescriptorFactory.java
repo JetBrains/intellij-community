@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
 
 public class FileChooserDescriptorFactory {
-  private FileChooserDescriptorFactory() {
-  }
+  private FileChooserDescriptorFactory() { }
 
   public static FileChooserDescriptor createAllButJarContentsDescriptor() {
     return new FileChooserDescriptor(true, true, true, true, false, true);
@@ -71,14 +70,6 @@ public class FileChooserDescriptorFactory {
     return new FileChooserDescriptor(true, true, false, false, false, false);
   }
 
-  public static FileChooserDescriptorBuilder onlyFiles() {
-    return FileChooserDescriptorBuilder.onlyFiles();
-  }
-
-  public static FileChooserDescriptorBuilder filesAndFolders() {
-    return FileChooserDescriptorBuilder.filesAndFolders();
-  }
-
   public static FileChooserDescriptor getDirectoryChooserDescriptor(String aSearchedObjectName) {
     final FileChooserDescriptor singleFolderDescriptor = createSingleFolderDescriptor();
     singleFolderDescriptor.setTitle(UIBundle.message("file.chooser.select.object.title", aSearchedObjectName));
@@ -103,5 +94,17 @@ public class FileChooserDescriptorFactory {
         return super.isFileSelectable(file) && file.getFileType() == fileType;
       }
     };
+  }
+
+  /** @deprecated use {@link #createSingleFileNoJarsDescriptor()} (to be removed in IDEA 15) */
+  @SuppressWarnings({"UnusedDeclaration", "deprecation"})
+  public static FileChooserDescriptorBuilder onlyFiles() {
+    return FileChooserDescriptorBuilder.onlyFiles();
+  }
+
+  /** @deprecated use {@link #createSingleFileOrFolderDescriptor()} ()} (to be removed in IDEA 15) */
+  @SuppressWarnings({"UnusedDeclaration", "deprecation"})
+  public static FileChooserDescriptorBuilder filesAndFolders() {
+    return FileChooserDescriptorBuilder.filesAndFolders();
   }
 }
