@@ -48,7 +48,7 @@ public class NodeSpecificHasherBase extends NodeSpecificHasher {
                                 @NotNull FragmentsCollector callback,
                                 @NotNull DuplicatesProfileBase duplicatesProfile,
                                 boolean forIndexing) {
-    myTreeHasher = new TreeHasherBase(callback, duplicatesProfile, -1, forIndexing);
+    myTreeHasher = new TreeHasherBase(callback, duplicatesProfile, forIndexing ? 0:-1, forIndexing);
     mySettings = settings;
     myDuplicatesProfile = duplicatesProfile;
     myForIndexing = forIndexing;

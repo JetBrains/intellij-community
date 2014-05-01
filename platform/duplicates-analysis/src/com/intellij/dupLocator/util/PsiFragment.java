@@ -45,7 +45,11 @@ public abstract class PsiFragment {
     myNested = false;
     myParents = null;
     myCost = cost;
-    myLanguage = doGetLanguageForElement(element);
+    myLanguage = calcLanguage(element);
+  }
+
+  protected Language calcLanguage(PsiElement element) {
+    return doGetLanguageForElement(element);
   }
 
   protected PsiAnchor createAnchor(final PsiElement element) {
@@ -72,7 +76,7 @@ public abstract class PsiFragment {
     myNested = false;
     myParents = null;
     myLanguage = to >= from && from < elements.size()
-                 ? doGetLanguageForElement(elements.get(from))
+                 ? calcLanguage(elements.get(from))
                  : null;
   }
 
