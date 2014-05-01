@@ -265,7 +265,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
     }
   }
 
-  public abstract static class ObsolescentIndexedVariablesConsumer extends ArrayValue.IndexedVariablesConsumer {
+  public abstract static class ObsolescentIndexedVariablesConsumer extends IndexedVariablesConsumer {
     protected final XCompositeNode node;
 
     protected ObsolescentIndexedVariablesConsumer(@NotNull XCompositeNode node) {

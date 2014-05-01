@@ -3,9 +3,6 @@ package org.jetbrains.debugger.values;
 import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.debugger.Variable;
-
-import java.util.List;
 
 public interface ArrayValue extends Value {
   /**
@@ -24,15 +21,4 @@ public interface ArrayValue extends Value {
    */
   @Nullable
   ActionCallback getVariables(int from, int to, int bucketThreshold, @NotNull IndexedVariablesConsumer consumer);
-
-  abstract class IndexedVariablesConsumer {
-    // null if array is not sparse
-    public abstract void consumeRanges(@Nullable int[] ranges);
-
-    public abstract void consumeVariables(@NotNull List<Variable> variables);
-
-    public boolean isObsolete() {
-      return false;
-    }
-  }
 }
