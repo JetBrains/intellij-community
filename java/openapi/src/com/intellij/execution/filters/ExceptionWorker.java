@@ -89,60 +89,70 @@ public class ExceptionWorker {
     final int colonIndex = fileAndLine.lastIndexOf(':');
     if (colonIndex < 0) return;
 
-    final String lineString = fileAndLine.substring(colonIndex + 1);
-    try {
-      final int lineNumber = Integer.parseInt(lineString);
-      Pair<PsiClass[], PsiFile[]> pair = myCache.resolveClass(myInfo.first.substring(line).trim());
-      myClasses = pair.first;
-      myFiles = pair.second;
-      if (myFiles.length == 0) {
-        // try find the file with the required name
-        //todo[nik] it would be better to use FilenameIndex here to honor the scope by it isn't accessible in Open API
-        myFiles = PsiShortNamesCache.getInstance(myProject).getFilesByName(fileAndLine.substring(0, colonIndex).trim());
-      }
-      if (myFiles.length == 0) return;
+    final int lineNumber = getLineNumber(fileAndLine.substring(colonIndex + 1));
+    if (lineNumber < 0) return;
 
-      /*
-       IDEADEV-4976: Some scramblers put something like SourceFile mock instead of real class name.
-      final String filePath = fileAndLine.substring(0, colonIndex).replace('/', File.separatorChar);
-      final int slashIndex = filePath.lastIndexOf(File.separatorChar);
-      final String shortFileName = slashIndex < 0 ? filePath : filePath.substring(slashIndex + 1);
-      if (!file.getName().equalsIgnoreCase(shortFileName)) return null;
-      */
+    Pair<PsiClass[], PsiFile[]> pair = myCache.resolveClass(myInfo.first.substring(line).trim());
+    myClasses = pair.first;
+    myFiles = pair.second;
+    if (myFiles.length == 0) {
+      // try find the file with the required name
+      //todo[nik] it would be better to use FilenameIndex here to honor the scope by it isn't accessible in Open API
+      myFiles = PsiShortNamesCache.getInstance(myProject).getFilesByName(fileAndLine.substring(0, colonIndex).trim());
+    }
+    if (myFiles.length == 0) return;
 
-      final int textStartOffset = textEndOffset - line.length();
+    /*
+     IDEADEV-4976: Some scramblers put something like SourceFile mock instead of real class name.
+    final String filePath = fileAndLine.substring(0, colonIndex).replace('/', File.separatorChar);
+    final int slashIndex = filePath.lastIndexOf(File.separatorChar);
+    final String shortFileName = slashIndex < 0 ? filePath : filePath.substring(slashIndex + 1);
+    if (!file.getName().equalsIgnoreCase(shortFileName)) return null;
+    */
 
-      final int highlightStartOffset = textStartOffset + lparenthIndex + 1;
-      final int highlightEndOffset = textStartOffset + rparenthIndex;
+    final int textStartOffset = textEndOffset - line.length();
 
-      ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
-      List<VirtualFile> virtualFilesInLibraries = new ArrayList<VirtualFile>();
-      List<VirtualFile> virtualFilesInContent = new ArrayList<VirtualFile>();
-      for (PsiFile file : myFiles) {
-        VirtualFile virtualFile = file.getVirtualFile();
-        if (index.isInContent(virtualFile)) {
-          virtualFilesInContent.add(virtualFile);
-        }
-        else {
-          virtualFilesInLibraries.add(virtualFile);
-        }
-      }
+    final int highlightStartOffset = textStartOffset + lparenthIndex + 1;
+    final int highlightEndOffset = textStartOffset + rparenthIndex;
 
-      List<VirtualFile> virtualFiles;
-      TextAttributes attributes;
-      if (virtualFilesInContent.isEmpty()) {
-        attributes = LIBRARY_HYPERLINK_ATTRIBUTES;
-        virtualFiles = virtualFilesInLibraries;
+    ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
+    List<VirtualFile> virtualFilesInLibraries = new ArrayList<VirtualFile>();
+    List<VirtualFile> virtualFilesInContent = new ArrayList<VirtualFile>();
+    for (PsiFile file : myFiles) {
+      VirtualFile virtualFile = file.getVirtualFile();
+      if (index.isInContent(virtualFile)) {
+        virtualFilesInContent.add(virtualFile);
       }
       else {
-        attributes = HYPERLINK_ATTRIBUTES;
-        virtualFiles = virtualFilesInContent;
+        virtualFilesInLibraries.add(virtualFile);
       }
-      HyperlinkInfo linkInfo = HyperlinkInfoFactory.getInstance().createMultipleFilesHyperlinkInfo(virtualFiles, lineNumber - 1, myProject);
-      myResult = new Filter.Result(highlightStartOffset, highlightEndOffset, linkInfo, attributes);
+    }
+
+    List<VirtualFile> virtualFiles;
+    TextAttributes attributes;
+    if (virtualFilesInContent.isEmpty()) {
+      attributes = LIBRARY_HYPERLINK_ATTRIBUTES;
+      virtualFiles = virtualFilesInLibraries;
+    }
+    else {
+      attributes = HYPERLINK_ATTRIBUTES;
+      virtualFiles = virtualFilesInContent;
+    }
+    HyperlinkInfo linkInfo = HyperlinkInfoFactory.getInstance().createMultipleFilesHyperlinkInfo(virtualFiles, lineNumber - 1, myProject);
+    myResult = new Filter.Result(highlightStartOffset, highlightEndOffset, linkInfo, attributes);
+  }
+
+  private static int getLineNumber(String lineString) {
+    // some quick checks to avoid costly exceptions
+    if (lineString.isEmpty() || lineString.length() > 9 || !Character.isDigit(lineString.charAt(0))) {
+      return -1;
+    }
+
+    try {
+      return Integer.parseInt(lineString);
     }
     catch (NumberFormatException e) {
-      //
+      return -1;
     }
   }
 
