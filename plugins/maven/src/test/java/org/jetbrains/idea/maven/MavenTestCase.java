@@ -140,28 +140,31 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myProject = null;
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          tearDownFixtures();
+    try {
+      myProject = null;
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            tearDownFixtures();
+          }
+          catch (Exception e) {
+            throw new RuntimeException(e);
+          }
         }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+      });
+      if (!FileUtil.delete(myDir) && myDir.exists()) {
+        System.err.println("Cannot delete " + myDir);
+        //printDirectoryContent(myDir);
+        myDir.deleteOnExit();
       }
-    });
-    if (!FileUtil.delete(myDir) && myDir.exists()) {
-      System.err.println("Cannot delete " + myDir);
-      //printDirectoryContent(myDir);
-      myDir.deleteOnExit();
+
+      MavenIndicesManager.getInstance().clear();
     }
-
-    MavenIndicesManager.getInstance().clear();
-
-    super.tearDown();
-    resetClassFields(getClass());
+    finally {
+      super.tearDown();
+      resetClassFields(getClass());
+    }
   }
 
   private static void printDirectoryContent(File dir) {
