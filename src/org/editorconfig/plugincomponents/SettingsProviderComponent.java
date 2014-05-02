@@ -43,13 +43,9 @@ public class SettingsProviderComponent implements ApplicationComponent {
         }   
     }
     
-    public void initComponent() {
-        // TODO: insert component initialization logic here
-    }
+    public void initComponent() {}
 
-    public void disposeComponent() {
-        // TODO: insert component disposal logic here
-    }
+    public void disposeComponent() {}
 
     @NotNull
     public String getComponentName() {

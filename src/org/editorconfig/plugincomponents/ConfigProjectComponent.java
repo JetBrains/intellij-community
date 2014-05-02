@@ -28,13 +28,9 @@ public class ConfigProjectComponent implements ProjectComponent {
         bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, encodingManager);
     }
 
-    public void initComponent() {
-        // TODO: insert component initialization logic here
-    }
+    public void initComponent() {}
 
-    public void disposeComponent() {
-        // TODO: insert component disposal logic here
-    }
+    public void disposeComponent() {}
 
     @NotNull
     public String getComponentName() {

@@ -5,10 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
@@ -25,7 +22,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
 import java.util.List;
 
-public class CodeStyleManager implements FileEditorManagerListener, WindowFocusListener {
+public class CodeStyleManager extends FileEditorManagerAdapter implements WindowFocusListener {
     // Handles the following EditorConfig settings:
     private static final String indentSizeKey = "indent_size";
     private static final String tabWidthKey = "tab_width";
@@ -47,11 +44,6 @@ public class CodeStyleManager implements FileEditorManagerListener, WindowFocusL
     }
 
     @Override
-    public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-        // Not used
-    }
-
-    @Override
     public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         final VirtualFile file = event.getNewFile();
         applySettings(file);
@@ -68,9 +60,7 @@ public class CodeStyleManager implements FileEditorManagerListener, WindowFocusL
     }
 
     @Override
-    public void windowLostFocus(WindowEvent e) {
-        // Not used
-    }
+    public void windowLostFocus(WindowEvent e) {}
     
     private void applySettings(final VirtualFile file) {
         if (file != null) {

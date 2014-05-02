@@ -3,13 +3,13 @@ package org.editorconfig.configmanagement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
+import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
-import org.editorconfig.plugincomponents.SettingsProviderComponent;
-import org.editorconfig.core.EditorConfig.OutPair;
 import org.editorconfig.Utils;
+import org.editorconfig.core.EditorConfig.OutPair;
+import org.editorconfig.plugincomponents.SettingsProviderComponent;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class EncodingManager implements FileDocumentManagerListener {
+public class EncodingManager extends FileDocumentManagerAdapter {
     // Handles the following EditorConfig settings:
     private static final String charsetKey = "charset";
 
@@ -42,63 +42,12 @@ public class EncodingManager implements FileDocumentManagerListener {
         isApplyingSettings = false;
     }
 
-    public void initComponent() {
-        // TODO: insert component initialization logic here
-    }
-
-    public void disposeComponent() {
-        // TODO: insert component disposal logic here
-    }
-
-    @NotNull
-    public String getComponentName() {
-        return "EncodingManager";
-    }
-
-    public void projectOpened() {
-        // Not used
-    }
-
-    public void projectClosed() {
-        // Not used
-    }
-
-    @Override
-    public void beforeAllDocumentsSaving() {
-        // Not used
-    }
-
     @Override
     public void beforeDocumentSaving(@NotNull Document document) {
         final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
         if(!isApplyingSettings) {
             applySettings(file);
         }
-    }
-
-    @Override
-    public void beforeFileContentReload(VirtualFile file, @NotNull Document document) {
-        // Not used
-    }
-
-    @Override
-    public void fileWithNoDocumentChanged(@NotNull VirtualFile file) {
-        // Not used
-    }
-
-    @Override
-    public void fileContentReloaded(VirtualFile file, @NotNull Document document) {
-        // Not used
-    }
-
-    @Override
-    public void fileContentLoaded(@NotNull VirtualFile file, @NotNull Document document) {
-        // Not used
-    }
-
-    @Override
-    public void unsavedDocumentsDropped() {
-        // Not used
     }
 
     private void applySettings(VirtualFile file) {
