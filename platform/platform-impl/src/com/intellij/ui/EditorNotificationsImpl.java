@@ -29,6 +29,7 @@ import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,14 +38,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author peter
  */
 public class EditorNotificationsImpl extends EditorNotifications {
   private static final ExtensionPointName<Provider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.editorNotificationProvider");
-  private final Map<VirtualFile, ProgressIndicator> myCurrentUpdates = new ConcurrentHashMap<VirtualFile, ProgressIndicator>();
+  private final Map<VirtualFile, ProgressIndicator> myCurrentUpdates = new ConcurrentWeakHashMap<VirtualFile, ProgressIndicator>();
 
   public EditorNotificationsImpl(Project project) {
     super(project);
@@ -81,7 +81,7 @@ public class EditorNotificationsImpl extends EditorNotifications {
     return new ReadTask() {
 
       private boolean isOutdated() {
-        return myProject.isDisposed() || indicator != myCurrentUpdates.get(file);
+        return myProject.isDisposed() || !file.isValid() || indicator != myCurrentUpdates.get(file);
       }
 
       @Override
