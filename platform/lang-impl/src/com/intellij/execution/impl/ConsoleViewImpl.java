@@ -67,7 +67,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.ui.EditorNotificationPanel;
-import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
@@ -128,10 +127,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private boolean myAllowHeavyFilters = false;
   private static final int myFlushDelay = DEFAULT_FLUSH_DELAY;
 
-  private boolean myInSpareTimeUpdate;
+  private boolean myTooMuchOfOutput;
   private boolean myInDocumentUpdate;
-  private HyperlinkLabel processAllOutputLinkLabel;
-  private RangeMarker lastProcessedOutput;
 
   // If true, then a document is being cleared right now.
   // Should be accessed in EDT only.
@@ -301,16 +298,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
     myHeavyUpdateTicket = 0;
     myHeavyAlarm = myPredefinedMessageFilter.isAnyHeavy() ? new Alarm(Alarm.ThreadToUse.SHARED_THREAD, this) : null;
-    processAllOutputLinkLabel = new EditorNotificationPanel().createActionLabel("Start processing of the text again", new Runnable() {
-      @Override
-      public void run() {
-        final int endOffset = lastProcessedOutput.getEndOffset();
-        final int lineNumber = lastProcessedOutput.isValid() ? myEditor.getDocument().getLineNumber(endOffset) : 0;
-        highlightHyperlinksAndFoldings(lineNumber, myEditor.getDocument().getLineCount() - 1);
-        ConsoleViewImpl.this.remove(processAllOutputLinkLabel);
-        myInSpareTimeUpdate = false;
-      }
-    });
+
 
     ConsoleInputFilterProvider[] inputFilters = Extensions.getExtensions(ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS);
     if (inputFilters.length > 0) {
@@ -725,24 +713,35 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
     }
     myPsiDisposedCheck.performCheck();
-    if (addedText.length() > myBuffer.getCyclicBufferSize()/10  || myInSpareTimeUpdate) {
-      if (!myInSpareTimeUpdate) {
-        final int lastProcessedOffset = Math.max(0,myEditor.getDocument().getTextLength() - addedText.length() - 1);
-        lastProcessedOutput = document.createRangeMarker(lastProcessedOffset, lastProcessedOffset);
-        myInSpareTimeUpdate = true;
+    if (addedText.length() > myBuffer.getCyclicBufferSize() / 10 || myTooMuchOfOutput) {
+      if (!myTooMuchOfOutput) {
+        final int lastProcessedOffset = Math.max(0, myEditor.getDocument().getTextLength() - addedText.length() - 1);
+        final RangeMarker lastProcessedOutput = document.createRangeMarker(lastProcessedOffset, lastProcessedOffset);
+        myTooMuchOfOutput = true;
         final EditorNotificationPanel comp =
           new EditorNotificationPanel().text("Too much output to process").icon(AllIcons.General.ExclMark);
         add(comp, BorderLayout.NORTH);
         performWhenNoDeferredOutput(new Runnable() {
           @Override
           public void run() {
-            remove(comp);
-            add(processAllOutputLinkLabel, BorderLayout.NORTH);
+            try {
+              final int startLine =
+                lastProcessedOutput.isValid() ? myEditor.getDocument().getLineNumber(lastProcessedOutput.getEndOffset()) : 0;
+              //foldings are expensive, rather do not do them for all this text.
+              final boolean oldUpdateFoldingsEnabled = myUpdateFoldingsEnabled;
+              myUpdateFoldingsEnabled = false;
+              highlightHyperlinksAndFoldings(startLine, myEditor.getDocument().getLineCount() - 1);
+              myUpdateFoldingsEnabled = oldUpdateFoldingsEnabled;
+            }
+            finally {
+              myTooMuchOfOutput = false;
+              remove(comp);
+            }
           }
         });
       }
     }
-    else  {
+    else {
       //TODO can this be executed multiple times for one line? because it was not executed before...
       final int lineNumber = document.getLineNumber(myEditor.getDocument().getTextLength() - addedText.length());
       highlightHyperlinksAndFoldings(lineNumber, document.getLineCount() - 1);
