@@ -39,6 +39,9 @@ public abstract class AbstractTreeHasher implements TreeHasher {
    * Creates only single PsiFragment.
    */
   protected TreeHashResult computeElementHash(@NotNull final PsiElement root, final PsiFragment upper, final NodeSpecificHasher hasher) {
+    if (myForIndexing) {
+      return TreeHashingUtils.computeElementHashForIndexing(this, myCallBack, root, upper, hasher);
+    }
     ProgressManager.checkCanceled();
     final List<PsiElement> children = hasher.getNodeChildren(root);
     final int size = children.size();
@@ -198,5 +201,9 @@ public abstract class AbstractTreeHasher implements TreeHasher {
       sum = mult * sum + arg;
     }
     return sum;
+  }
+
+  public boolean shouldAnonymize(PsiElement root, NodeSpecificHasher hasher) {
+    return false;
   }
 }

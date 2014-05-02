@@ -1,6 +1,9 @@
 package com.intellij.dupLocator.treeHash;
 
-import com.intellij.dupLocator.*;
+import com.intellij.dupLocator.DuplicatesProfile;
+import com.intellij.dupLocator.ExternalizableDuplocatorState;
+import com.intellij.dupLocator.NodeSpecificHasher;
+import com.intellij.dupLocator.PsiElementRole;
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptor;
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider;
 import com.intellij.dupLocator.equivalence.MultiChildDescriptor;
@@ -94,7 +97,16 @@ class TreeHasherBase extends AbstractTreeHasher {
   }
 
   @Override
+  public boolean shouldAnonymize(PsiElement root, NodeSpecificHasher hasher) {
+    return shouldBeAnonymized(root, (NodeSpecificHasherBase)hasher);
+  }
+
+  @Override
   protected TreeHashResult computeElementHash(@NotNull PsiElement root, PsiFragment upper, NodeSpecificHasher hasher) {
+    if (myForIndexing) {
+      return TreeHashingUtils.computeElementHashForIndexing(this, myCallBack, root, upper, hasher);
+    }
+
     final List<PsiElement> children = hasher.getNodeChildren(root);
     final int size = children.size();
     final int[] childHashes = new int[size];
