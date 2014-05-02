@@ -713,7 +713,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
     }
     myPsiDisposedCheck.performCheck();
-    if (addedText.length() > myBuffer.getCyclicBufferSize() / 10 || myTooMuchOfOutput) {
+    if (addedText.length() > myBuffer.getCyclicBufferSize() / 100 || myTooMuchOfOutput) {
       if (!myTooMuchOfOutput) {
         final int lastProcessedOffset = Math.max(0, myEditor.getDocument().getTextLength() - addedText.length() - 1);
         final RangeMarker lastProcessedOutput = document.createRangeMarker(lastProcessedOffset, lastProcessedOffset);
