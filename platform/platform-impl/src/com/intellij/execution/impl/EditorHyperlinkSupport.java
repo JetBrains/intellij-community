@@ -172,7 +172,6 @@ public class EditorHyperlinkSupport {
                                                                    getHyperlinkInfo(rangeHighlighterEx) != null;
                                                           }
                                                         }, processor));
-    //todo sort it?
     list.addAll(processor.getResults());
     return list;
   }
@@ -255,7 +254,6 @@ public class EditorHyperlinkSupport {
   public static OccurenceNavigator.OccurenceInfo getNextOccurrence(final Editor editor,
                                                                    final int delta,
                                                                    final Consumer<RangeHighlighter> action) {
-    //todo optimize this all?
     final List<RangeHighlighter> ranges = getHyperlinks(0, editor.getDocument().getTextLength(),editor);
     if (ranges.isEmpty()) {
       return null;
