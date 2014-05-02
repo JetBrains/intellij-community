@@ -728,6 +728,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (addedText.length() > myBuffer.getCyclicBufferSize()/10  || myInSpareTimeUpdate) {
       if (!myInSpareTimeUpdate) {
         final int lastProcessedOffset = Math.max(0,myEditor.getDocument().getTextLength() - addedText.length() - 1);
+        lastProcessedOutput = document.createRangeMarker(lastProcessedOffset, lastProcessedOffset);
         myInSpareTimeUpdate = true;
         final EditorNotificationPanel comp =
           new EditorNotificationPanel().text("Too much output to process").icon(AllIcons.General.ExclMark);
