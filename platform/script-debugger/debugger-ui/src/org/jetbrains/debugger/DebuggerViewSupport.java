@@ -1,6 +1,8 @@
 package org.jetbrains.debugger;
 
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XNavigatable;
 import com.intellij.xdebugger.frame.XValueNode;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +44,10 @@ public interface DebuggerViewSupport extends MemberFilter {
   boolean canNavigateToSource(@NotNull Variable variable, @NotNull VariableContext context);
 
   void computeSourcePosition(@NotNull Variable variable, @NotNull VariableContext context, @NotNull XNavigatable navigatable);
+
+  // return null if you don't need to add additional properties
+  @Nullable
+  ActionCallback computeAdditionalObjectProperties(@NotNull ObjectValue value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XCompositeNode node);
 
   class SimpleDebuggerViewSupport implements DebuggerViewSupport {
     public static final DebuggerViewSupport INSTANCE = new SimpleDebuggerViewSupport();
@@ -98,6 +104,12 @@ public interface DebuggerViewSupport extends MemberFilter {
 
     @Override
     public void computeSourcePosition(@NotNull Variable variable, @NotNull VariableContext context, @NotNull XNavigatable navigatable) {
+    }
+
+    @Nullable
+    @Override
+    public ActionCallback computeAdditionalObjectProperties(@NotNull ObjectValue value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XCompositeNode node) {
+      return null;
     }
 
     @Override

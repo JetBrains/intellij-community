@@ -217,9 +217,7 @@ public final class Variables {
 
   public static XValueChildrenList createVariablesList(@NotNull List<Variable> variables, int from, int to, @NotNull VariableContext variableContext) {
     XValueChildrenList list = new XValueChildrenList(to - from);
-
     VariableContext getterOrSetterContext = null;
-
     for (int i = from; i < to; i++) {
       Variable variable = variables.get(i);
       list.add(new VariableView(variable, variableContext));

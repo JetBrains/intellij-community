@@ -1,5 +1,6 @@
 package org.jetbrains.debugger.values;
 
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.AsyncValueLoaderManager;
 import com.intellij.util.ThreeState;
@@ -59,6 +60,18 @@ public abstract class ObjectValueBase<VALUE_LOADER extends ValueManager> extends
   @Override
   public ThreeState hasProperties() {
     return ThreeState.UNSURE;
+  }
+
+  @NotNull
+  @Override
+  public ThreeState hasIndexedProperties() {
+    return ThreeState.NO;
+  }
+
+  @NotNull
+  @Override
+  public ActionCallback getIndexedProperties(int from, int to, int bucketThreshold, @NotNull IndexedVariablesConsumer consumer, @Nullable ValueType componentType) {
+    return ActionCallback.REJECTED;
   }
 
   @Override
