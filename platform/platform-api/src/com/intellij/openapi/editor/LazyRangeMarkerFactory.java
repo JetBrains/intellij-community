@@ -44,7 +44,7 @@ public class LazyRangeMarkerFactory {
 
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentAdapter() {
       @Override
-      public void beforeDocumentChange(DocumentEvent e) {
+      public void documentChanged(DocumentEvent e) {
         VirtualFile file = fileDocumentManager.getFile(e.getDocument());
         if (file == null) {
           return;
@@ -129,6 +129,12 @@ public class LazyRangeMarkerFactory {
     @NotNull
     public VirtualFile getFile() {
       return myFile;
+    }
+
+    void documentChanged(@NotNull Document document) {
+      if (myDelegate == null) {
+        myDelegate = createDelegate(myFile, document);
+      }
     }
 
     @Nullable
