@@ -6471,6 +6471,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         List<? extends SoftWrap> softWraps = getSoftWrapModel().getRegisteredSoftWraps();
         int softWrapsIndex = -1;
 
+        CharWidthCache charWidthCache = new CharWidthCache(EditorImpl.this);
+
         for (int line = 0; line < lineCount; line++) {
           if (myLineWidths.getQuick(line) != -1) continue;
           if (line == lineCount - 1) {
@@ -6545,7 +6547,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             if (collapsed != null) {
               String placeholder = collapsed.getPlaceholderText();
               for (int i = 0; i < placeholder.length(); i++) {
-                x += EditorUtil.charWidth(placeholder.charAt(i), fontType, EditorImpl.this);
+                x += charWidthCache.charWidth(placeholder.charAt(i), fontType);
               }
               offset = collapsed.getEndOffset();
               line = myDocument.getLineNumber(offset);
@@ -6568,7 +6570,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               }
             }
             else {
-              x += EditorUtil.charWidth(c, fontType, EditorImpl.this);
+              x += charWidthCache.charWidth(c, fontType);
               offset++;
             }
           }
