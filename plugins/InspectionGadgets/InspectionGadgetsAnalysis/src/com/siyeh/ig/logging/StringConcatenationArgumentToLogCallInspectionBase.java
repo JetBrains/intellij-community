@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ig.logging;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -29,6 +30,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +43,7 @@ import java.util.Set;
 /**
  * @author Bas Leijdekkers
  */
-public class StringConcatenationArgumentToLogCallInspection extends BaseInspection {
+public class StringConcatenationArgumentToLogCallInspectionBase extends BaseInspection {
 
   @NonNls
   private static final Set<String> logNames = new THashSet<String>();
@@ -52,6 +54,8 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
     logNames.add("warn");
     logNames.add("error");
   }
+
+  @SuppressWarnings("PublicField") public int warnLevel = 0;
 
   @Nls
   @NotNull
@@ -64,6 +68,13 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
   @Override
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("string.concatenation.argument.to.log.call.problem.descriptor");
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    if (warnLevel != 0) {
+      node.addContent(new Element("option").setAttribute("name", "warnLevel").setAttribute("value", String.valueOf(warnLevel)));
+    }
   }
 
   @Nullable
@@ -239,7 +250,7 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
     return new StringConcatenationArgumentToLogCallVisitor();
   }
 
-  private static class StringConcatenationArgumentToLogCallVisitor extends BaseInspectionVisitor {
+  private class StringConcatenationArgumentToLogCallVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
@@ -248,6 +259,12 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
       final String referenceName = methodExpression.getReferenceName();
       if (!logNames.contains(referenceName)) {
         return;
+      }
+      switch (warnLevel) {
+        case 4: if ("debug".equals(referenceName)) return;
+        case 3: if ("info".equals(referenceName)) return;
+        case 2: if ("warn".equals(referenceName)) return;
+        case 1: if ("error".equals(referenceName)) return;
       }
       final PsiMethod method = expression.resolveMethod();
       if (method == null) {
@@ -278,7 +295,7 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
       registerMethodCallError(expression, argument);
     }
 
-    private static boolean containsNonConstantConcatenation(@Nullable PsiExpression expression) {
+    private boolean containsNonConstantConcatenation(@Nullable PsiExpression expression) {
       if (expression instanceof PsiParenthesizedExpression) {
         final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
         return containsNonConstantConcatenation(parenthesizedExpression.getExpression());
