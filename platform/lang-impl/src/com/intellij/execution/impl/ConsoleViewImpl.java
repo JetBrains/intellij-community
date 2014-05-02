@@ -364,10 +364,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       myBuffer.clear();
       myFolding.clear();
 
-      final EditorHyperlinkSupport hyperlinks = myHyperlinks;
-      if (hyperlinks != null) {
-        hyperlinks.clearHyperlinks();
-      }
+      clearHyperlinkAndFoldings();
     }
     if (myFlushAlarm.isDisposed()) return;
     cancelAllFlushRequests();
@@ -630,7 +627,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (clear) {
       final DocumentEx document;
       synchronized (LOCK) {
-        myHyperlinks.clearHyperlinks();
         myTokens.clear();
         editor.getMarkupModel().removeAllHighlighters();
         document = editor.getDocument();
@@ -753,7 +749,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void clearHyperlinkAndFoldings() {
-    myHyperlinks.clearHyperlinks();
     myEditor.getMarkupModel().removeAllHighlighters();
 
     myPendingFoldRegions.clear();
@@ -997,7 +992,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
                 @Override
                 public void doRun() {
                   if (myHeavyUpdateTicket != currentValue) return;
-                  myHyperlinks.adjustHighlighters(Collections.singletonList(additionalHighlight));
+                  myHyperlinks.addHighlighter(additionalHighlight.getStart(), additionalHighlight.getEnd(),
+                                              additionalHighlight.getTextAttributes(null));
                 }
 
                 @Override
@@ -1397,13 +1393,15 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       return null;
     }
 
-    return EditorHyperlinkSupport.getNextOccurrence(myEditor, hyperlinks.getHyperlinks().keySet(), delta, new Consumer<RangeHighlighter>() {
+    return EditorHyperlinkSupport.getNextOccurrence(myEditor, delta, new Consumer<RangeHighlighter>() {
       @Override
       public void consume(RangeHighlighter next) {
         int offset = next.getStartOffset();
         scrollTo(offset);
-        final HyperlinkInfo hyperlinkInfo = hyperlinks.getHyperlinks().get(next);
-        if (hyperlinkInfo != null) {
+        final EditorHyperlinkSupport.HyperlinkInfoTextAttributes userData =
+          (EditorHyperlinkSupport.HyperlinkInfoTextAttributes)next.getUserData(EditorHyperlinkSupport.HYPERLINK);
+        if (userData != null && userData.getHyperlinkInfo() != null) {
+          final HyperlinkInfo hyperlinkInfo = userData.getHyperlinkInfo();
           if (hyperlinkInfo instanceof HyperlinkInfoBase) {
             VisualPosition position = myEditor.offsetToVisualPosition(offset);
             Point point = myEditor.visualPositionToXY(new VisualPosition(position.getLine() + 1, position.getColumn()));
