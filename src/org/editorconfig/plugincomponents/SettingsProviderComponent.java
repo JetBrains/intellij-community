@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.editorconfig.core.EditorConfig;
 import org.editorconfig.core.EditorConfig.OutPair;
 import org.editorconfig.core.EditorConfigException;
-import org.editorconfig.core.PythonException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -19,12 +18,7 @@ public class SettingsProviderComponent implements ApplicationComponent {
     private EditorConfig editorConfig;
     
     public SettingsProviderComponent() {
-        try {
-            editorConfig = new EditorConfig();
-        }
-        catch (PythonException error) {
-            LOG.error(error.getStackTrace());
-        }
+        editorConfig = new EditorConfig();
     }
     
     public static SettingsProviderComponent getInstance() {

@@ -11,11 +11,12 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../editorconfig-core-java-binding/build/editorconfig.jar!/" />
+          <root url="jar://$MODULE_DIR$/../editorconfig-core-java/lib/editorconfig-core-java.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/../editorconfig-core-java-binding/build/editorconfig.jar!/Lib" />
+          <root url="jar://$MODULE_DIR$/../editorconfig-core-java/lib/editorconfig-core-java.jar!/" />
+          <root url="jar://$MODULE_DIR$/../editorconfig-core-java/lib/editorconfig-core-java.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
