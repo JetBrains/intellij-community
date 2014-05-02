@@ -63,7 +63,7 @@ public class CodeStyleManager extends FileEditorManagerAdapter implements Window
     public void windowLostFocus(WindowEvent e) {}
     
     private void applySettings(final VirtualFile file) {
-        if (file != null) {
+        if (file != null && file.isInLocalFileSystem()) {
             // Always drop any current temporary settings so that the defaults will be applied if
             // this is a non-editorconfig-managed file
             codeStyleSettingsManager.dropTemporarySettings();

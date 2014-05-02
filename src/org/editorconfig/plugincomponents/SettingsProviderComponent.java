@@ -32,7 +32,7 @@ public class SettingsProviderComponent implements ApplicationComponent {
             return outPairs;
         }
         catch (EditorConfigException error) {
-            LOG.error(error.getStackTrace());
+            LOG.error(error);
             return new ArrayList<OutPair>();
         }   
     }
