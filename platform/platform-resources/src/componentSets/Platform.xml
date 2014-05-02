@@ -181,7 +181,8 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.ui.EditorNotifications</implementation-class>
+      <interface-class>com.intellij.ui.EditorNotifications</interface-class>
+      <implementation-class>com.intellij.ui.EditorNotificationsImpl</implementation-class>
     </component>
 
     <component>
