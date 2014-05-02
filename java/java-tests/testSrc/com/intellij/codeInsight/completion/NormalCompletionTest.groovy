@@ -1451,4 +1451,9 @@ class Bar {
     assertStringItems('abcdefgXxx')
   }
 
+  public void testProtectedFieldInAnotherPackage() {
+    myFixture.addClass("package foo; public class Super { protected String myString; }");
+    doTest()
+  }
+
 }

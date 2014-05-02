@@ -25,6 +25,7 @@ import java.util.regex.Pattern;
 
 public final class VariableView extends XNamedValue implements VariableContext {
   private static final Pattern ARRAY_DESCRIPTION_PATTERN = Pattern.compile("^[a-zA-Z]+\\[\\d+\\]$");
+
   private static final class ArrayPresentation extends XValuePresentation {
     private final String length;
 
@@ -230,6 +231,11 @@ public final class VariableView extends XNamedValue implements VariableContext {
   public void computeChildren(@NotNull final XCompositeNode node) {
     node.setAlreadySorted(true);
 
+    if (!(value instanceof ObjectValue)) {
+      node.addChildren(XValueChildrenList.EMPTY, true);
+      return;
+    }
+
     List<Variable> list = remainingChildren;
     if (list != null) {
       int to = Math.min(remainingChildrenOffset + XCompositeNode.MAX_CHILDREN_TO_SHOW, list.size());
@@ -242,18 +248,41 @@ public final class VariableView extends XNamedValue implements VariableContext {
       return;
     }
 
-    boolean hasNamedProperties = value instanceof ObjectValue && ((ObjectValue)value).hasProperties() != ThreeState.NO;
-    boolean hasIndexedProperties = value instanceof ArrayValue;
+    final ObjectValue objectValue = (ObjectValue)value;
+
+    final boolean hasNamedProperties = objectValue.hasProperties() != ThreeState.NO;
+    boolean hasIndexedProperties = objectValue.hasIndexedProperties() != ThreeState.NO;
     ActionCallback.Chunk chunk = new ActionCallback.Chunk();
+
+    ActionCallback additionalProperties = getViewSupport().computeAdditionalObjectProperties(objectValue, variable, this, node);
+    if (additionalProperties != null) {
+      chunk.add(additionalProperties);
+    }
+
+    // we don't support indexed properties if additional properties added - behavior is undefined if object has indexed properties and additional properties also specified
     if (hasIndexedProperties) {
-      chunk.add(computeIndexedProperties((ArrayValue)value, node, !hasNamedProperties));
+      chunk.add(computeIndexedProperties((ArrayValue)objectValue, node, !hasNamedProperties && additionalProperties == null));
     }
 
     if (hasNamedProperties) {
-      chunk.add(computeNamedProperties((ObjectValue)value, node, !hasIndexedProperties));
+      // named properties should be added after additional properties
+      final ActionCallback namedPropertiesCallback;
+      if (additionalProperties == null || additionalProperties.isProcessed()) {
+        namedPropertiesCallback = computeNamedProperties(objectValue, node, !hasIndexedProperties && additionalProperties == null);
+      }
+      else {
+        namedPropertiesCallback = new ActionCallback();
+        additionalProperties.doWhenDone(new Runnable() {
+          @Override
+          public void run() {
+            computeNamedProperties(objectValue, node, true).notify(namedPropertiesCallback);
+          }
+        }).notifyWhenRejected(namedPropertiesCallback);
+      }
+      chunk.add(namedPropertiesCallback);
     }
 
-    if (hasIndexedProperties == hasNamedProperties) {
+    if (hasIndexedProperties == hasNamedProperties || additionalProperties != null) {
       chunk.create().doWhenProcessed(new Runnable() {
         @Override
         public void run() {
@@ -265,7 +294,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
     }
   }
 
-  public abstract static class ObsolescentIndexedVariablesConsumer extends ArrayValue.IndexedVariablesConsumer {
+  public abstract static class ObsolescentIndexedVariablesConsumer extends IndexedVariablesConsumer {
     protected final XCompositeNode node;
 
     protected ObsolescentIndexedVariablesConsumer(@NotNull XCompositeNode node) {
@@ -278,8 +307,9 @@ public final class VariableView extends XNamedValue implements VariableContext {
     }
   }
 
+  @NotNull
   private ActionCallback computeIndexedProperties(@NotNull final ArrayValue value, @NotNull final XCompositeNode node, final boolean isLastChildren) {
-    return value.getVariables(0, value.getLength(), XCompositeNode.MAX_CHILDREN_TO_SHOW, new ObsolescentIndexedVariablesConsumer(node) {
+    return value.getIndexedProperties(0, value.getLength(), XCompositeNode.MAX_CHILDREN_TO_SHOW, new ObsolescentIndexedVariablesConsumer(node) {
       @Override
       public void consumeRanges(@Nullable int[] ranges) {
         if (ranges == null) {
@@ -296,7 +326,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
       public void consumeVariables(@NotNull List<Variable> variables) {
         node.addChildren(Variables.createVariablesList(variables, VariableView.this), isLastChildren);
       }
-    });
+    }, null);
   }
 
   private ActionCallback computeNamedProperties(@NotNull final ObjectValue value, @NotNull XCompositeNode node, final boolean isLastChildren) {
@@ -313,7 +343,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
           functionValue = null;
         }
 
-        remainingChildren = Variables.sortFilterAndAddValueList(variables, node, VariableView.this, XCompositeNode.MAX_CHILDREN_TO_SHOW, functionValue == null);
+        remainingChildren = Variables.sortFilterAndAddValueList(variables, node, VariableView.this, XCompositeNode.MAX_CHILDREN_TO_SHOW, isLastChildren && functionValue == null);
         if (remainingChildren != null) {
           remainingChildrenOffset = XCompositeNode.MAX_CHILDREN_TO_SHOW;
         }

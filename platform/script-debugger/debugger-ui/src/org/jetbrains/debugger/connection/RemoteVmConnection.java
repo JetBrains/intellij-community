@@ -14,7 +14,7 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
-public abstract class ProcessBackedVmConnection extends VmConnection<Vm> {
+public abstract class RemoteVmConnection extends VmConnection<Vm> {
   private final AtomicReference<Runnable> connectCancelHandler = new AtomicReference<Runnable>();
 
   @Nullable
@@ -46,7 +46,7 @@ public abstract class ProcessBackedVmConnection extends VmConnection<Vm> {
         result.doWhenDone(new Consumer<Vm>() {
           @Override
           public void consume(@NotNull Vm vm) {
-            ProcessBackedVmConnection.this.vm = vm;
+            RemoteVmConnection.this.vm = vm;
             setState(ConnectionStatus.CONNECTED, "Connected to " + address.getHostName() + ":" + address.getPort());
             startProcessing();
           }
