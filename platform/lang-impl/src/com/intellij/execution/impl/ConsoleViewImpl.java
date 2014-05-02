@@ -131,6 +131,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private boolean myInSpareTimeUpdate;
   private boolean myInDocumentUpdate;
   private HyperlinkLabel processAllOutputLinkLabel;
+  private RangeMarker lastProcessedOutput;
 
   // If true, then a document is being cleared right now.
   // Should be accessed in EDT only.
@@ -303,10 +304,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     processAllOutputLinkLabel = new EditorNotificationPanel().createActionLabel("Start processing of the text again", new Runnable() {
       @Override
       public void run() {
-        clearHyperlinkAndFoldings();
-        highlightHyperlinksAndFoldings(0, myEditor.getDocument().getLineCount() - 1);
+        final int endOffset = lastProcessedOutput.getEndOffset();
+        final int lineNumber = lastProcessedOutput.isValid() ? myEditor.getDocument().getLineNumber(endOffset) : 0;
+        highlightHyperlinksAndFoldings(lineNumber, myEditor.getDocument().getLineCount() - 1);
         ConsoleViewImpl.this.remove(processAllOutputLinkLabel);
-        myInSpareTimeUpdate=false;
+        myInSpareTimeUpdate = false;
       }
     });
 
@@ -725,14 +727,16 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myPsiDisposedCheck.performCheck();
     if (addedText.length() > myBuffer.getCyclicBufferSize()/10  || myInSpareTimeUpdate) {
       if (!myInSpareTimeUpdate) {
+        final int lastProcessedOffset = Math.max(0,myEditor.getDocument().getTextLength() - addedText.length() - 1);
         myInSpareTimeUpdate = true;
-        final EditorNotificationPanel comp = new EditorNotificationPanel().text("Too much output to process").icon(AllIcons.General.ExclMark);
+        final EditorNotificationPanel comp =
+          new EditorNotificationPanel().text("Too much output to process").icon(AllIcons.General.ExclMark);
         add(comp, BorderLayout.NORTH);
         performWhenNoDeferredOutput(new Runnable() {
           @Override
           public void run() {
-              remove(comp);
-              add(processAllOutputLinkLabel, BorderLayout.NORTH);
+            remove(comp);
+            add(processAllOutputLinkLabel, BorderLayout.NORTH);
           }
         });
       }
