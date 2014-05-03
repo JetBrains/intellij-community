@@ -669,6 +669,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       cancelHeavyAlarm();
     }
     final Document document = myEditor.getDocument();
+    final int oldLineCount = document.getLineCount();
     final boolean isAtEndOfDocument = myEditor.getCaretModel().getOffset() == document.getTextLength();
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
@@ -719,6 +720,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
     myPsiDisposedCheck.performCheck();
     myLastAddedTextLength = addedText.length();
+    final int newLineCount = document.getLineCount();
     if (myLastAddedTextLength > myBuffer.getCyclicBufferSize() / 50 || myTooMuchOfOutput) {
       if (!myTooMuchOfOutput) {
         final int lastProcessedOffset = Math.max(0, myEditor.getDocument().getTextLength() - addedText.length() - 1);
@@ -752,10 +754,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         });
       }
     }
-    else {
-      //TODO can this be executed multiple times for one line? because it was not executed before...
-      final int lineNumber = document.getLineNumber(myEditor.getDocument().getTextLength() - addedText.length());
-      highlightHyperlinksAndFoldings(lineNumber, document.getLineCount() - 1);
+    else if (oldLineCount < newLineCount) {
+      highlightHyperlinksAndFoldings(oldLineCount - 1, newLineCount - 1);
     }
 
     if (isAtEndOfDocument) {
