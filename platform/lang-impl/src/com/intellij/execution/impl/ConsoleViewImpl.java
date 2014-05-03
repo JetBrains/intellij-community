@@ -1414,18 +1414,14 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       public void consume(RangeHighlighter next) {
         int offset = next.getStartOffset();
         scrollTo(offset);
-        final EditorHyperlinkSupport.HyperlinkInfoTextAttributes userData =
-          (EditorHyperlinkSupport.HyperlinkInfoTextAttributes)next.getUserData(EditorHyperlinkSupport.HYPERLINK);
-        if (userData != null && userData.getHyperlinkInfo() != null) {
-          final HyperlinkInfo hyperlinkInfo = userData.getHyperlinkInfo();
-          if (hyperlinkInfo instanceof HyperlinkInfoBase) {
-            VisualPosition position = myEditor.offsetToVisualPosition(offset);
-            Point point = myEditor.visualPositionToXY(new VisualPosition(position.getLine() + 1, position.getColumn()));
-            ((HyperlinkInfoBase)hyperlinkInfo).navigate(myProject, new RelativePoint(myEditor.getContentComponent(), point));
-          }
-          else {
-            hyperlinkInfo.navigate(myProject);
-          }
+        final HyperlinkInfo hyperlinkInfo = EditorHyperlinkSupport.getHyperlinkInfo(next);
+        if (hyperlinkInfo instanceof HyperlinkInfoBase) {
+          VisualPosition position = myEditor.offsetToVisualPosition(offset);
+          Point point = myEditor.visualPositionToXY(new VisualPosition(position.getLine() + 1, position.getColumn()));
+          ((HyperlinkInfoBase)hyperlinkInfo).navigate(myProject, new RelativePoint(myEditor.getContentComponent(), point));
+        }
+        else if (hyperlinkInfo != null) {
+          hyperlinkInfo.navigate(myProject);
         }
       }
     });

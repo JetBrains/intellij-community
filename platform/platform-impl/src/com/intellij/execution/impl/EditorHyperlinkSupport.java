@@ -51,7 +51,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -59,7 +58,7 @@ import java.util.List;
  */
 public class EditorHyperlinkSupport {
   public static final Key<TextAttributes> OLD_HYPERLINK_TEXT_ATTRIBUTES = Key.create("OLD_HYPERLINK_TEXT_ATTRIBUTES");
-  public static final Key<TextAttributes> HYPERLINK = Key.create("HYPERLINK");
+  private static final Key<HyperlinkInfoTextAttributes> HYPERLINK = Key.create("HYPERLINK");
   private static final int HYPERLINK_LAYER = HighlighterLayer.SELECTION - 123;
   private static final int HIGHLIGHT_LAYER = HighlighterLayer.SELECTION - 111;
 
@@ -128,13 +127,10 @@ public class EditorHyperlinkSupport {
     return null;
   }
 
-  public static HyperlinkInfo getHyperlinkInfo(RangeHighlighter range) {
-    final HyperlinkInfoTextAttributes userData = (HyperlinkInfoTextAttributes)range.getUserData(HYPERLINK);
-    HyperlinkInfo hyperlinkInfo = null;
-    if (userData != null) {
-      hyperlinkInfo = userData.getHyperlinkInfo();
-    }
-    return hyperlinkInfo;
+  @Nullable
+  public static HyperlinkInfo getHyperlinkInfo(@NotNull RangeHighlighter range) {
+    final HyperlinkInfoTextAttributes attributes = range.getUserData(HYPERLINK);
+    return attributes != null ? attributes.getHyperlinkInfo() : null;
   }
 
   @Nullable
@@ -185,6 +181,7 @@ public class EditorHyperlinkSupport {
     return getHyperlinkAt(myEditor.logicalPositionToOffset(new LogicalPosition(line, col)));
   }
 
+  @NotNull
   public RangeHighlighter addHyperlink(final int highlightStartOffset,
                                        final int highlightEndOffset,
                                        @Nullable final TextAttributes highlightAttributes,
@@ -195,8 +192,12 @@ public class EditorHyperlinkSupport {
                                                                                        HYPERLINK_LAYER,
                                                                                        textAttributes,
                                                                                        HighlighterTargetArea.EXACT_RANGE);
-    highlighter.putUserData(HYPERLINK, new HyperlinkInfoTextAttributes(hyperlinkInfo));
+    associateHyperlink(highlighter, hyperlinkInfo);
     return highlighter;
+  }
+
+  public static void associateHyperlink(@NotNull RangeHighlighter highlighter, @NotNull HyperlinkInfo hyperlinkInfo) {
+    highlighter.putUserData(HYPERLINK, new HyperlinkInfoTextAttributes(hyperlinkInfo));
   }
 
   @Nullable
@@ -312,13 +313,14 @@ public class EditorHyperlinkSupport {
     return document.getCharsSequence().subSequence(document.getLineStartOffset(lineNumber), endOffset).toString();
   }
 
-  public class HyperlinkInfoTextAttributes extends TextAttributes {
+  public static class HyperlinkInfoTextAttributes extends TextAttributes {
     private HyperlinkInfo myHyperlinkInfo;
 
-    public HyperlinkInfoTextAttributes(HyperlinkInfo hyperlinkInfo) {
+    public HyperlinkInfoTextAttributes(@NotNull HyperlinkInfo hyperlinkInfo) {
       myHyperlinkInfo = hyperlinkInfo;
     }
 
+    @NotNull
     public HyperlinkInfo getHyperlinkInfo() {
       return myHyperlinkInfo;
     }
