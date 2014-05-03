@@ -720,9 +720,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
     myPsiDisposedCheck.performCheck();
     myLastAddedTextLength = addedText.length();
-    final int newLineCount = document.getLineCount();
-    if (isTheAmountOfTextTooBig(myLastAddedTextLength) || myTooMuchOfOutput) {
-      if (!myTooMuchOfOutput) {
+    if (!myTooMuchOfOutput) {
+      final int newLineCount = document.getLineCount();
+      if (isTheAmountOfTextTooBig(myLastAddedTextLength)) { // disable hyperlinks and folding until new output arriving slows down again
         final int lastProcessedOffset = Math.max(0, myEditor.getDocument().getTextLength() - addedText.length() - 1);
         final RangeMarker lastProcessedOutput = document.createRangeMarker(lastProcessedOffset, lastProcessedOffset);
         myTooMuchOfOutput = true;
@@ -750,9 +750,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           }
         });
       }
-    }
-    else if (oldLineCount < newLineCount) {
-      highlightHyperlinksAndFoldings(oldLineCount - 1, newLineCount - 1);
+      else if (oldLineCount < newLineCount) {
+        highlightHyperlinksAndFoldings(oldLineCount - 1, newLineCount - 1);
+      }
     }
 
     if (isAtEndOfDocument) {
