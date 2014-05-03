@@ -669,7 +669,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       cancelHeavyAlarm();
     }
     final Document document = myEditor.getDocument();
-    RangeMarker oldEndMarker = document.createRangeMarker(document.getTextLength(), document.getTextLength());
+    final RangeMarker lastProcessedOutput = document.createRangeMarker(document.getTextLength(), document.getTextLength());
     final boolean isAtEndOfDocument = myEditor.getCaretModel().getOffset() == document.getTextLength();
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
@@ -722,8 +722,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myLastAddedTextLength = addedText.length();
     if (!myTooMuchOfOutput) {
       if (isTheAmountOfTextTooBig(myLastAddedTextLength)) { // disable hyperlinks and folding until new output arriving slows down again
-        final int lastProcessedOffset = Math.max(0, myEditor.getDocument().getTextLength() - addedText.length() - 1);
-        final RangeMarker lastProcessedOutput = document.createRangeMarker(lastProcessedOffset, lastProcessedOffset);
         myTooMuchOfOutput = true;
         final EditorNotificationPanel comp =
           new EditorNotificationPanel().text("Too much output to process").icon(AllIcons.General.ExclMark);
@@ -733,9 +731,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           public void run() {
             if (!isTheAmountOfTextTooBig(myLastAddedTextLength)) {
               try {
-                final int startLine =
-                  lastProcessedOutput.isValid() ? myEditor.getDocument().getLineNumber(lastProcessedOutput.getEndOffset()) : 0;
-                highlightHyperlinksAndFoldings(startLine, myEditor.getDocument().getLineCount() - 1);
+                highlightHyperlinksAndFoldings(lastProcessedOutput);
               }
               finally {
                 myTooMuchOfOutput = false;
@@ -750,15 +746,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         });
       }
       else {
-        final int newLastLine = document.getLineCount() - 1;
-        if (!oldEndMarker.isValid()) {
-          highlightHyperlinksAndFoldings(0, newLastLine);
-        } else {
-          int oldLastLine = document.getLineNumber(oldEndMarker.getEndOffset());
-          if (oldLastLine < newLastLine) {
-            highlightHyperlinksAndFoldings(oldLastLine + 1, newLastLine);
-          }
-        }
+        highlightHyperlinksAndFoldings(lastProcessedOutput);
       }
     }
 
@@ -970,12 +958,15 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     menu.getComponent().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
   }
 
-  private void highlightHyperlinksAndFoldings(final int line1, final int endLine) {
+  private void highlightHyperlinksAndFoldings(RangeMarker lastProcessedOutput) {
     boolean canHighlightHyperlinks = !myCustomFilter.isEmpty() || !myPredefinedMessageFilter.isEmpty();
 
     if (!canHighlightHyperlinks && myUpdateFoldingsEnabled) {
       return;
     }
+    final int line1 = lastProcessedOutput.isValid() ? myEditor.getDocument().getLineNumber(lastProcessedOutput.getEndOffset()) : 0;
+    lastProcessedOutput.dispose();
+    int endLine = myEditor.getDocument().getLineCount() - 1;
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     if (canHighlightHyperlinks) {
