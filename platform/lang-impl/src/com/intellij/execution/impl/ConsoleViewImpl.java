@@ -721,7 +721,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myPsiDisposedCheck.performCheck();
     myLastAddedTextLength = addedText.length();
     final int newLineCount = document.getLineCount();
-    if (myLastAddedTextLength > myBuffer.getCyclicBufferSize() / 50 || myTooMuchOfOutput) {
+    if (isTheAmountOfTextTooBig(myLastAddedTextLength) || myTooMuchOfOutput) {
       if (!myTooMuchOfOutput) {
         final int lastProcessedOffset = Math.max(0, myEditor.getDocument().getTextLength() - addedText.length() - 1);
         final RangeMarker lastProcessedOutput = document.createRangeMarker(lastProcessedOffset, lastProcessedOffset);
@@ -732,7 +732,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         performWhenNoDeferredOutput(new Runnable() {
           @Override
           public void run() {
-            if (myLastAddedTextLength < myBuffer.getCyclicBufferSize() / 50) {
+            if (!isTheAmountOfTextTooBig(myLastAddedTextLength)) {
               try {
                 final int startLine =
                   lastProcessedOutput.isValid() ? myEditor.getDocument().getLineNumber(lastProcessedOutput.getEndOffset()) : 0;
@@ -748,6 +748,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
               }
             }
             else {
+              myLastAddedTextLength = 0;
               performLaterWhenNoDeferredOutput(this);
             }
           }
@@ -761,6 +762,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (isAtEndOfDocument) {
       EditorUtil.scrollToTheEnd(myEditor);
     }
+  }
+
+  private boolean isTheAmountOfTextTooBig(final int textLength) {
+    return textLength > myBuffer.getCyclicBufferSize() / 50; //magic number, it has no deep meaning
   }
 
   private void clearHyperlinkAndFoldings() {
