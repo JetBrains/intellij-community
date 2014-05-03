@@ -669,7 +669,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       cancelHeavyAlarm();
     }
     final Document document = myEditor.getDocument();
-    final int oldLineCount = document.getLineCount();
+    RangeMarker oldEndMarker = document.createRangeMarker(document.getTextLength(), document.getTextLength());
     final boolean isAtEndOfDocument = myEditor.getCaretModel().getOffset() == document.getTextLength();
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
@@ -721,7 +721,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myPsiDisposedCheck.performCheck();
     myLastAddedTextLength = addedText.length();
     if (!myTooMuchOfOutput) {
-      final int newLineCount = document.getLineCount();
       if (isTheAmountOfTextTooBig(myLastAddedTextLength)) { // disable hyperlinks and folding until new output arriving slows down again
         final int lastProcessedOffset = Math.max(0, myEditor.getDocument().getTextLength() - addedText.length() - 1);
         final RangeMarker lastProcessedOutput = document.createRangeMarker(lastProcessedOffset, lastProcessedOffset);
@@ -750,8 +749,16 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           }
         });
       }
-      else if (oldLineCount < newLineCount) {
-        highlightHyperlinksAndFoldings(oldLineCount - 1, newLineCount - 1);
+      else {
+        final int newLastLine = document.getLineCount() - 1;
+        if (!oldEndMarker.isValid()) {
+          highlightHyperlinksAndFoldings(0, newLastLine);
+        } else {
+          int oldLastLine = document.getLineNumber(oldEndMarker.getEndOffset());
+          if (oldLastLine < newLastLine) {
+            highlightHyperlinksAndFoldings(oldLastLine + 1, newLastLine);
+          }
+        }
       }
     }
 
