@@ -150,8 +150,11 @@ class EventLogConsole {
     editor.getMarkupModel().addRangeHighlighter(msgStart, document.getTextLength(), layer, attributes, HighlighterTargetArea.EXACT_RANGE);
 
     for (Pair<TextRange, HyperlinkInfo> link : pair.links) {
-      myHyperlinkSupport.getValue().addHyperlink(link.first.getStartOffset() + msgStart, link.first.getEndOffset() + msgStart, null,
-                                                 link.second);
+      final RangeHighlighter rangeHighlighter = myHyperlinkSupport.getValue()
+        .addHyperlink(link.first.getStartOffset() + msgStart, link.first.getEndOffset() + msgStart, null, link.second);
+      if (link.second instanceof EventLog.ShowBalloon) {
+        ((EventLog.ShowBalloon)link.second).setRangeHighlighter(rangeHighlighter);
+      }
     }
 
     append(document, "\n");
@@ -216,10 +219,9 @@ class EventLogConsole {
   }
 
   @Nullable
-  public RelativePoint getHyperlinkLocation(HyperlinkInfo info) {
+  public RelativePoint getRangeHighlighterLocation(RangeHighlighter range) {
     Editor editor = myLogEditor.getValue();
     Project project = editor.getProject();
-    RangeHighlighter range = myHyperlinkSupport.getValue().findHyperlinkRange(info);
     Window window = NotificationsManagerImpl.findWindowForBalloon(project);
     if (range != null && window != null) {
       Point point = editor.visualPositionToXY(editor.offsetToVisualPosition(range.getStartOffset()));

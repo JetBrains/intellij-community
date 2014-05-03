@@ -103,7 +103,8 @@ class AnnotateStackTraceAction extends AnAction implements DumbAware {
             final VcsFileRevision revision = cache.get(lineNum);
             final List<RangeHighlighter> links = myHyperlinks.findAllHyperlinksOnLine(lineNum);
             if (!links.isEmpty()) {
-              HyperlinkInfo info = myHyperlinks.getHyperlinks().get(links.get(links.size() - 1));
+              final RangeHighlighter key = links.get(links.size() - 1);
+              HyperlinkInfo info = EditorHyperlinkSupport.getHyperlinkInfo(key);
 
               if (info instanceof FileHyperlinkInfo) {
                 final VirtualFile file = ((FileHyperlinkInfo)info).getDescriptor().getFile();
@@ -196,7 +197,8 @@ class AnnotateStackTraceAction extends AnAction implements DumbAware {
           indicator.checkCanceled();
           final List<RangeHighlighter> links = myHyperlinks.findAllHyperlinksOnLine(line);
           if (links.size() > 0) {
-            final HyperlinkInfo info = myHyperlinks.getHyperlinks().get(links.get(links.size() - 1));
+            final RangeHighlighter key = links.get(links.size() - 1);
+            final HyperlinkInfo info = EditorHyperlinkSupport.getHyperlinkInfo(key);
             if (info instanceof FileHyperlinkInfo) {
               final OpenFileDescriptor fileDescriptor = ((FileHyperlinkInfo)info).getDescriptor();
               if (fileDescriptor != null) {

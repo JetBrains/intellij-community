@@ -127,13 +127,14 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private boolean myAllowHeavyFilters = false;
   private static final int myFlushDelay = DEFAULT_FLUSH_DELAY;
 
-  private boolean myInSpareTimeUpdate;
+  private boolean myTooMuchOfOutput;
   private boolean myInDocumentUpdate;
 
   // If true, then a document is being cleared right now.
   // Should be accessed in EDT only.
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private boolean myDocumentClearing;
+  protected int myLastAddedTextLength;
 
   public Editor getEditor() {
     return myEditor;
@@ -299,6 +300,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myHeavyUpdateTicket = 0;
     myHeavyAlarm = myPredefinedMessageFilter.isAnyHeavy() ? new Alarm(Alarm.ThreadToUse.SHARED_THREAD, this) : null;
 
+
     ConsoleInputFilterProvider[] inputFilters = Extensions.getExtensions(ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS);
     if (inputFilters.length > 0) {
       CompositeInputFilter compositeInputFilter = new CompositeInputFilter(project);
@@ -353,10 +355,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       myBuffer.clear();
       myFolding.clear();
 
-      final EditorHyperlinkSupport hyperlinks = myHyperlinks;
-      if (hyperlinks != null) {
-        hyperlinks.clearHyperlinks();
-      }
+      clearHyperlinkAndFoldings();
     }
     if (myFlushAlarm.isDisposed()) return;
     cancelAllFlushRequests();
@@ -453,18 +452,22 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       runnable.run();
     }
     else {
-      if (mySpareTimeAlarm.isDisposed()) return;
-      mySpareTimeAlarm.addRequest(
-        new Runnable() {
-          @Override
-          public void run() {
-            performWhenNoDeferredOutput(runnable);
-          }
-        },
-        100,
-        ModalityState.stateForComponent(myJLayeredPane)
-      );
+      performLaterWhenNoDeferredOutput(runnable);
     }
+  }
+
+  private void performLaterWhenNoDeferredOutput(final Runnable runnable) {
+    if (mySpareTimeAlarm.isDisposed()) return;
+    mySpareTimeAlarm.addRequest(
+      new Runnable() {
+        @Override
+        public void run() {
+          performWhenNoDeferredOutput(runnable);
+        }
+      },
+      100,
+      ModalityState.stateForComponent(myJLayeredPane)
+    );
   }
 
   @Override
@@ -619,7 +622,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (clear) {
       final DocumentEx document;
       synchronized (LOCK) {
-        myHyperlinks.clearHyperlinks();
         myTokens.clear();
         editor.getMarkupModel().removeAllHighlighters();
         document = editor.getDocument();
@@ -648,14 +650,14 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
 
 
-    final String text;
+    final String addedText;
     final Collection<ConsoleViewContentType> contentTypes;
     int deferredTokensSize;
     synchronized (LOCK) {
       if (myOutputPaused) return;
       if (myBuffer.isEmpty()) return;
 
-      text = myBuffer.getText();
+      addedText = myBuffer.getText();
 
       contentTypes = Collections.unmodifiableCollection(new HashSet<ConsoleViewContentType>(myBuffer.getDeferredTokenTypes()));
       List<TokenInfo> deferredTokens = myBuffer.getDeferredTokens();
@@ -669,10 +671,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     final Document document = myEditor.getDocument();
     final int oldLineCount = document.getLineCount();
     final boolean isAtEndOfDocument = myEditor.getCaretModel().getOffset() == document.getTextLength();
-    boolean cycleUsed = myBuffer.isUseCyclicBuffer() && document.getTextLength() + text.length() > myBuffer.getCyclicBufferSize();
-    if (cycleUsed) {
-      clearHyperlinkAndFoldings();
-    }
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       @Override
@@ -684,7 +682,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         }
         try {
           myInDocumentUpdate = true;
-          String[] strings = text.split("\\r");
+          String[] strings = addedText.split("\\r");
           for (int i = 0; i < strings.length - 1; i++) {
             document.insertString(document.getTextLength(), strings[i]);
             int lastLine = document.getLineCount() - 1;
@@ -721,22 +719,33 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
     }
     myPsiDisposedCheck.performCheck();
+    myLastAddedTextLength = addedText.length();
     final int newLineCount = document.getLineCount();
-    if (cycleUsed) {
-      if (!myInSpareTimeUpdate) {
-        myInSpareTimeUpdate = true;
-        final EditorNotificationPanel comp = new EditorNotificationPanel().text("Too much output to process").icon(AllIcons.General.ExclMark);
+    if (isTheAmountOfTextTooBig(myLastAddedTextLength) || myTooMuchOfOutput) {
+      if (!myTooMuchOfOutput) {
+        final int lastProcessedOffset = Math.max(0, myEditor.getDocument().getTextLength() - addedText.length() - 1);
+        final RangeMarker lastProcessedOutput = document.createRangeMarker(lastProcessedOffset, lastProcessedOffset);
+        myTooMuchOfOutput = true;
+        final EditorNotificationPanel comp =
+          new EditorNotificationPanel().text("Too much output to process").icon(AllIcons.General.ExclMark);
         add(comp, BorderLayout.NORTH);
         performWhenNoDeferredOutput(new Runnable() {
           @Override
           public void run() {
-            try {
-              clearHyperlinkAndFoldings();
-              highlightHyperlinksAndFoldings(0, document.getLineCount() - 1);
+            if (!isTheAmountOfTextTooBig(myLastAddedTextLength)) {
+              try {
+                final int startLine =
+                  lastProcessedOutput.isValid() ? myEditor.getDocument().getLineNumber(lastProcessedOutput.getEndOffset()) : 0;
+                highlightHyperlinksAndFoldings(startLine, myEditor.getDocument().getLineCount() - 1);
+              }
+              finally {
+                myTooMuchOfOutput = false;
+                remove(comp);
+              }
             }
-            finally {
-              myInSpareTimeUpdate = false;
-              remove(comp);
+            else {
+              myLastAddedTextLength = 0;
+              performLaterWhenNoDeferredOutput(this);
             }
           }
         });
@@ -751,8 +760,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
+  private boolean isTheAmountOfTextTooBig(final int textLength) {
+    return textLength > myBuffer.getCyclicBufferSize() / 50; //magic number, it has no deep meaning
+  }
+
   private void clearHyperlinkAndFoldings() {
-    myHyperlinks.clearHyperlinks();
     myEditor.getMarkupModel().removeAllHighlighters();
 
     myPendingFoldRegions.clear();
@@ -996,7 +1008,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
                 @Override
                 public void doRun() {
                   if (myHeavyUpdateTicket != currentValue) return;
-                  myHyperlinks.adjustHighlighters(Collections.singletonList(additionalHighlight));
+                  myHyperlinks.addHighlighter(additionalHighlight.getStart(), additionalHighlight.getEnd(),
+                                              additionalHighlight.getTextAttributes(null));
                 }
 
                 @Override
@@ -1396,13 +1409,15 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       return null;
     }
 
-    return EditorHyperlinkSupport.getNextOccurrence(myEditor, hyperlinks.getHyperlinks().keySet(), delta, new Consumer<RangeHighlighter>() {
+    return EditorHyperlinkSupport.getNextOccurrence(myEditor, delta, new Consumer<RangeHighlighter>() {
       @Override
       public void consume(RangeHighlighter next) {
         int offset = next.getStartOffset();
         scrollTo(offset);
-        final HyperlinkInfo hyperlinkInfo = hyperlinks.getHyperlinks().get(next);
-        if (hyperlinkInfo != null) {
+        final EditorHyperlinkSupport.HyperlinkInfoTextAttributes userData =
+          (EditorHyperlinkSupport.HyperlinkInfoTextAttributes)next.getUserData(EditorHyperlinkSupport.HYPERLINK);
+        if (userData != null && userData.getHyperlinkInfo() != null) {
+          final HyperlinkInfo hyperlinkInfo = userData.getHyperlinkInfo();
           if (hyperlinkInfo instanceof HyperlinkInfoBase) {
             VisualPosition position = myEditor.offsetToVisualPosition(offset);
             Point point = myEditor.visualPositionToXY(new VisualPosition(position.getLine() + 1, position.getColumn()));
