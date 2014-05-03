@@ -8,6 +8,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.messages.MessageBus;
 import org.editorconfig.configmanagement.CodeStyleManager;
+import org.editorconfig.configmanagement.EditorSettingsManager;
 import org.editorconfig.configmanagement.EncodingManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,9 +24,11 @@ public class ConfigProjectComponent implements ProjectComponent {
         // Register project-level config managers
         MessageBus bus = project.getMessageBus();
         codeStyleManager = new CodeStyleManager(project);
+        EditorSettingsManager editorSettingsManager = new EditorSettingsManager();
         EncodingManager encodingManager = new EncodingManager(project);
         bus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, codeStyleManager);
         bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, encodingManager);
+        bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, editorSettingsManager);
     }
 
     public void initComponent() {}
