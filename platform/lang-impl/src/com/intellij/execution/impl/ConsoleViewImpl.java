@@ -134,6 +134,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   // Should be accessed in EDT only.
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private boolean myDocumentClearing;
+  protected int myLastAddedTextLength;
 
   public Editor getEditor() {
     return myEditor;
@@ -451,18 +452,22 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       runnable.run();
     }
     else {
-      if (mySpareTimeAlarm.isDisposed()) return;
-      mySpareTimeAlarm.addRequest(
-        new Runnable() {
-          @Override
-          public void run() {
-            performWhenNoDeferredOutput(runnable);
-          }
-        },
-        100,
-        ModalityState.stateForComponent(myJLayeredPane)
-      );
+      performLaterWhenNoDeferredOutput(runnable);
     }
+  }
+
+  private void performLaterWhenNoDeferredOutput(final Runnable runnable) {
+    if (mySpareTimeAlarm.isDisposed()) return;
+    mySpareTimeAlarm.addRequest(
+      new Runnable() {
+        @Override
+        public void run() {
+          performWhenNoDeferredOutput(runnable);
+        }
+      },
+      100,
+      ModalityState.stateForComponent(myJLayeredPane)
+    );
   }
 
   @Override
@@ -713,7 +718,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
     }
     myPsiDisposedCheck.performCheck();
-    if (addedText.length() > myBuffer.getCyclicBufferSize() / 100 || myTooMuchOfOutput) {
+    myLastAddedTextLength = addedText.length();
+    if (myLastAddedTextLength > myBuffer.getCyclicBufferSize() / 50 || myTooMuchOfOutput) {
       if (!myTooMuchOfOutput) {
         final int lastProcessedOffset = Math.max(0, myEditor.getDocument().getTextLength() - addedText.length() - 1);
         final RangeMarker lastProcessedOutput = document.createRangeMarker(lastProcessedOffset, lastProcessedOffset);
@@ -724,18 +730,23 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         performWhenNoDeferredOutput(new Runnable() {
           @Override
           public void run() {
-            try {
-              final int startLine =
-                lastProcessedOutput.isValid() ? myEditor.getDocument().getLineNumber(lastProcessedOutput.getEndOffset()) : 0;
-              //foldings are expensive, rather do not do them for all this text.
-              final boolean oldUpdateFoldingsEnabled = myUpdateFoldingsEnabled;
-              myUpdateFoldingsEnabled = false;
-              highlightHyperlinksAndFoldings(startLine, myEditor.getDocument().getLineCount() - 1);
-              myUpdateFoldingsEnabled = oldUpdateFoldingsEnabled;
+            if (myLastAddedTextLength < myBuffer.getCyclicBufferSize() / 50) {
+              try {
+                final int startLine =
+                  lastProcessedOutput.isValid() ? myEditor.getDocument().getLineNumber(lastProcessedOutput.getEndOffset()) : 0;
+                //foldings are expensive, rather do not do them for all this text.
+                final boolean oldUpdateFoldingsEnabled = myUpdateFoldingsEnabled;
+                myUpdateFoldingsEnabled = false;
+                highlightHyperlinksAndFoldings(startLine, myEditor.getDocument().getLineCount() - 1);
+                myUpdateFoldingsEnabled = oldUpdateFoldingsEnabled;
+              }
+              finally {
+                myTooMuchOfOutput = false;
+                remove(comp);
+              }
             }
-            finally {
-              myTooMuchOfOutput = false;
-              remove(comp);
+            else {
+              performLaterWhenNoDeferredOutput(this);
             }
           }
         });
