@@ -736,11 +736,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
               try {
                 final int startLine =
                   lastProcessedOutput.isValid() ? myEditor.getDocument().getLineNumber(lastProcessedOutput.getEndOffset()) : 0;
-                //foldings are expensive, rather do not do them for all this text.
-                final boolean oldUpdateFoldingsEnabled = myUpdateFoldingsEnabled;
-                myUpdateFoldingsEnabled = false;
                 highlightHyperlinksAndFoldings(startLine, myEditor.getDocument().getLineCount() - 1);
-                myUpdateFoldingsEnabled = oldUpdateFoldingsEnabled;
               }
               finally {
                 myTooMuchOfOutput = false;
