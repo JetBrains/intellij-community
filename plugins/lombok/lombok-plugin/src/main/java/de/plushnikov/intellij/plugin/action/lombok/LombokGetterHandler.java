@@ -13,11 +13,6 @@ import java.util.Map;
 
 public class LombokGetterHandler extends BaseLombokHandler {
 
-  @Override
-  protected Class<Getter> getAnnotationClass() {
-    return Getter.class;
-  }
-
   protected void processClass(@NotNull PsiClass psiClass) {
     final Map<PsiField, PsiMethod> fieldMethodMap = new HashMap<PsiField, PsiMethod>();
     for (PsiField psiField : psiClass.getFields()) {
@@ -28,7 +23,7 @@ public class LombokGetterHandler extends BaseLombokHandler {
       }
     }
 
-    processIntern(fieldMethodMap, psiClass);
+    processIntern(fieldMethodMap, psiClass, Getter.class);
   }
 
 }

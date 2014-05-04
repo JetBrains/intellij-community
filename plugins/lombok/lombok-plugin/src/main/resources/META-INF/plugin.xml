@@ -86,11 +86,21 @@
     <group id="LombokActionGroup" text="Lombok" description="Refactor code with lombok annotations"
            icon="/icons/lombok.png" popup="true">
 
+      <action id="defaultLombokData" class="de.plushnikov.intellij.plugin.action.lombok.LombokDataAction"
+              text="Default @Data" description="Action to replace getter/setter/equals/hashcode/toString methods with lombok @Data annotation">
+      </action>
+      <separator/>
       <action id="defaultLombokGetter" class="de.plushnikov.intellij.plugin.action.lombok.LombokGetterAction"
               text="Default @Getter" description="Action to replace all getter methods with lombok @Getter annotation">
       </action>
       <action id="defaultLombokSetter" class="de.plushnikov.intellij.plugin.action.lombok.LombokSetterAction"
               text="Default @Setter" description="Action to replace all setter methods with lombok @Setter annotation">
+      </action>
+      <action id="defaultLombokEqualsAndHashcode" class="de.plushnikov.intellij.plugin.action.lombok.LombokEqualsAndHashcodeAction"
+              text="Default @EqualsAndHashcode" description="Action to replace equals and hashcode methods with lombok @EqualsAndHashcode annotation">
+      </action>
+      <action id="defaultLombokToString" class="de.plushnikov.intellij.plugin.action.lombok.LombokToStringAction"
+              text="Default @ToString" description="Action to replace toString method with lombok @ToString annotation">
       </action>
       <separator/>
       <action id="defaultLombokLogger" class="de.plushnikov.intellij.plugin.action.lombok.LombokLoggerAction"
@@ -162,6 +172,7 @@
 		<ul>
 		<li>0.8.6
 				<ol>
+				    <li>Added basic refactoring actions for Lombok @Data, @ToString and @EqualsAndHashcode methods</li>
 				    <li>Fixed #46 : @SneakyThrows does not work on methods which throws multiple exceptions</li>
 				</ol>
 			</li>

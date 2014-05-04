@@ -13,7 +13,6 @@ import de.plushnikov.intellij.plugin.processor.clazz.log.Log4jProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.LogProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.Slf4jProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.XSlf4jProcessor;
-import lombok.extern.java.Log;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -22,11 +21,6 @@ import java.util.Collection;
 public class LombokLoggerHandler extends BaseLombokHandler {
 
   private static final String LOMBOK_LOGGER_NAME = AbstractLogProcessor.getLoggerName();
-
-  @Override
-  protected Class<Log> getAnnotationClass() {
-    return Log.class;
-  }
 
   protected void processClass(@NotNull PsiClass psiClass) {
     final Collection<AbstractLogProcessor> logProcessors = Arrays.asList(

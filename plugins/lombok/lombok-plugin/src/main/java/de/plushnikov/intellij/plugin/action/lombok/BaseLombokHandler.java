@@ -6,6 +6,7 @@ import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationParameterList;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
@@ -13,11 +14,16 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.util.Collection;
@@ -26,8 +32,6 @@ import java.util.Map;
 import java.util.Set;
 
 public abstract class BaseLombokHandler implements CodeInsightActionHandler {
-
-  protected abstract Class<? extends Annotation> getAnnotationClass();
 
   public boolean startInWriteAction() {
     return true;
@@ -46,7 +50,7 @@ public abstract class BaseLombokHandler implements CodeInsightActionHandler {
 
   protected abstract void processClass(@NotNull PsiClass psiClass);
 
-  protected void processIntern(@NotNull Map<PsiField, PsiMethod> fieldMethodMap, @NotNull PsiClass psiClass) {
+  protected void processIntern(@NotNull Map<PsiField, PsiMethod> fieldMethodMap, @NotNull PsiClass psiClass, @NotNull Class<? extends Annotation> annotationClass) {
     if (fieldMethodMap.isEmpty()) {
       return;
     }
@@ -54,10 +58,10 @@ public abstract class BaseLombokHandler implements CodeInsightActionHandler {
     final PsiMethod firstPropertyMethod = fieldMethodMap.values().iterator().next();
 
     final boolean useAnnotationOnClass = haveAllMethodsSameAccessLevel(fieldMethodMap.values()) &&
-        isNotAnnotatedWithOrSameAccessLevelAs(psiClass, firstPropertyMethod);
+        isNotAnnotatedWithOrSameAccessLevelAs(psiClass, firstPropertyMethod, annotationClass);
 
     if (useAnnotationOnClass) {
-      addAnnotation(psiClass, firstPropertyMethod, getAnnotationClass());
+      addAnnotation(psiClass, firstPropertyMethod, annotationClass);
     }
 
     for (Map.Entry<PsiField, PsiMethod> fieldMethodEntry : fieldMethodMap.entrySet()) {
@@ -67,7 +71,7 @@ public abstract class BaseLombokHandler implements CodeInsightActionHandler {
       if (null != propertyField) {
         boolean isStatic = propertyField.hasModifierProperty(PsiModifier.STATIC);
         if (isStatic || !useAnnotationOnClass) {
-          addAnnotation(propertyField, propertyMethod, getAnnotationClass());
+          addAnnotation(propertyField, propertyMethod, annotationClass);
         }
 
         propertyMethod.delete();
@@ -75,8 +79,8 @@ public abstract class BaseLombokHandler implements CodeInsightActionHandler {
     }
   }
 
-  private boolean isNotAnnotatedWithOrSameAccessLevelAs(PsiClass psiClass, PsiMethod firstPropertyMethod) {
-    final PsiAnnotation presentAnnotation = PsiAnnotationUtil.findAnnotation(psiClass, getAnnotationClass());
+  private boolean isNotAnnotatedWithOrSameAccessLevelAs(PsiClass psiClass, PsiMethod firstPropertyMethod, Class<? extends Annotation> annotationClass) {
+    final PsiAnnotation presentAnnotation = PsiAnnotationUtil.findAnnotation(psiClass, annotationClass);
     if (null != presentAnnotation) {
 
       final String presentAccessModifier = LombokProcessorUtil.getMethodModifier(presentAnnotation);
@@ -126,5 +130,54 @@ public abstract class BaseLombokHandler implements CodeInsightActionHandler {
       presentAnnotation.setDeclaredAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME,
           newPsiAnnotation.findDeclaredAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME));
     }
+  }
+
+  protected void removeDefaultAnnotation(@NotNull PsiModifierListOwner targetElement, @NotNull Class<? extends Annotation> annotationClass) {
+    final PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(targetElement, annotationClass);
+    if (null != psiAnnotation) {
+      boolean hasOnlyDefaultValues = true;
+
+      final PsiAnnotationParameterList psiAnnotationParameterList = psiAnnotation.getParameterList();
+      for (PsiNameValuePair nameValuePair : psiAnnotationParameterList.getAttributes()) {
+        if (null != psiAnnotation.findDeclaredAttributeValue(nameValuePair.getName())) {
+          hasOnlyDefaultValues = false;
+          break;
+        }
+      }
+
+      if (hasOnlyDefaultValues) {
+        psiAnnotation.delete();
+      }
+    }
+  }
+
+  @Nullable
+  protected PsiMethod findPublicNonStaticMethod(@NotNull PsiClass psiClass, @NotNull String methodName, @NotNull PsiType returnType, PsiType... params) {
+    final PsiMethod[] toStringMethods = psiClass.findMethodsByName(methodName, false);
+    for (PsiMethod method : toStringMethods) {
+      if (method.hasModifierProperty(PsiModifier.PUBLIC) &&
+          !method.hasModifierProperty(PsiModifier.STATIC) &&
+          returnType.equals(method.getReturnType())) {
+
+        final PsiParameterList parameterList = method.getParameterList();
+        final PsiParameter[] psiParameters = parameterList.getParameters();
+        final int paramsCount = params.length;
+
+        if (psiParameters.length == paramsCount) {
+          boolean allParametersFound = true;
+          for (int i = 0; i < paramsCount; i++) {
+
+            if (!psiParameters[i].getType().equals(params[i])) {
+              allParametersFound = false;
+              break;
+            }
+          }
+          if (allParametersFound) {
+            return method;
+          }
+        }
+      }
+    }
+    return null;
   }
 }
