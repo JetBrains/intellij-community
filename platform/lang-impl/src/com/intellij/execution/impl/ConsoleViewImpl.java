@@ -62,6 +62,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -134,7 +135,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   // Should be accessed in EDT only.
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private boolean myDocumentClearing;
-  protected int myLastAddedTextLength;
+  private int myLastAddedTextLength;
+  private int consoleTooMuchTextBufferRatio;
 
   public Editor getEditor() {
     return myEditor;
@@ -339,6 +341,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         myJLayeredPane.finishUpdating();
       }
     };
+    consoleTooMuchTextBufferRatio = Registry.intValue("console.too.much.text.buffer.ratio");
   }
 
   @Override
@@ -751,7 +754,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private boolean isTheAmountOfTextTooBig(final int textLength) {
-    return textLength > myBuffer.getCyclicBufferSize() / 10; //magic number, it has no deep meaning
+    return textLength > myBuffer.getCyclicBufferSize() / consoleTooMuchTextBufferRatio;
   }
 
   private void clearHyperlinkAndFoldings() {
