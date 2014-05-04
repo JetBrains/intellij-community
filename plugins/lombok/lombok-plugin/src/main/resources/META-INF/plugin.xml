@@ -3,7 +3,7 @@
   <id>Lombook Plugin</id>
   <name>Lombok Plugin</name>
   <vendor url="https://github.com/mplushnikov/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
-  <version>0.8.6</version>
+  <version>0.8.7</version>
 
   <idea-version since-build="133.00"/>
 
@@ -170,6 +170,11 @@
   <!--TODO @Builder is not supported on constructors with constructor type parameters..-->
   <change-notes><![CDATA[
 		<ul>
+		<li>0.8.7
+				<ol>
+				    <li>...</li>
+				</ol>
+			</li>
 		<li>0.8.6
 				<ol>
 				    <li>Added basic refactoring actions for Lombok @Data, @ToString and @EqualsAndHashcode methods</li>
