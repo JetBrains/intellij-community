@@ -50,9 +50,11 @@ public abstract class CommandLineState implements RunProfileState {
 
   protected CommandLineState(ExecutionEnvironment environment) {
     myEnvironment = environment;
-    final Project project = myEnvironment.getProject();
-    final GlobalSearchScope searchScope = SearchScopeProvider.createSearchScope(project, myEnvironment.getRunProfile());
-    myConsoleBuilder = myEnvironment != null ? TextConsoleBuilderFactory.getInstance().createBuilder(project, searchScope) : null;
+    if (myEnvironment != null) {
+      final Project project = myEnvironment.getProject();
+      final GlobalSearchScope searchScope = SearchScopeProvider.createSearchScope(project, myEnvironment.getRunProfile());
+      myConsoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project, searchScope);
+    }
   }
 
   public ExecutionEnvironment getEnvironment() {
