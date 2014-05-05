@@ -31,6 +31,8 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +50,9 @@ public abstract class CommandLineState implements RunProfileState {
 
   protected CommandLineState(ExecutionEnvironment environment) {
     myEnvironment = environment;
-    myConsoleBuilder = myEnvironment != null ? TextConsoleBuilderFactory.getInstance().createBuilder(myEnvironment.getProject()) : null;
+    final Project project = myEnvironment.getProject();
+    final GlobalSearchScope searchScope = SearchScopeProvider.createSearchScope(project, myEnvironment.getRunProfile());
+    myConsoleBuilder = myEnvironment != null ? TextConsoleBuilderFactory.getInstance().createBuilder(project, searchScope) : null;
   }
 
   public ExecutionEnvironment getEnvironment() {

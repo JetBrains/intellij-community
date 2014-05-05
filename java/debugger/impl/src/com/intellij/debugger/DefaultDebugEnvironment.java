@@ -19,9 +19,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 
@@ -55,15 +53,11 @@ public class DefaultDebugEnvironment implements DebugEnvironment {
     myRemoteConnection = remoteConnection;
     myPollConnection = pollConnection;
 
-    mySearchScope = RunContentBuilder.createSearchScope(project, runProfile);
+    mySearchScope = SearchScopeProvider.createSearchScope(project, runProfile);
   }
 
   @Override
   public ExecutionResult createExecutionResult() throws ExecutionException {
-    if (myState instanceof CommandLineState) {
-      final CommandLineState state = (CommandLineState)myState;
-      state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(myProject, mySearchScope));
-    }
     return myState.execute(myExecutor, myRunner);
   }
 

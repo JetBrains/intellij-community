@@ -18,8 +18,10 @@ package com.intellij.execution.runners;
 import com.intellij.diagnostic.logging.LogConsoleManagerBase;
 import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.diagnostic.logging.OutputFileUtil;
-import com.intellij.execution.*;
-import com.intellij.execution.configurations.ModuleRunProfile;
+import com.intellij.execution.DefaultExecutionResult;
+import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -32,10 +34,8 @@ import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import org.jetbrains.annotations.NonNls;
@@ -44,6 +44,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
+
+import static com.intellij.execution.configurations.SearchScopeProvider.createSearchScope;
 
 /**
  * @author dyoma
@@ -92,24 +94,6 @@ public class RunContentBuilder extends LogConsoleManagerBase {
     myManager = new LogFilesManager(project, this, this);
   }
 
-  @NotNull
-  public static GlobalSearchScope createSearchScope(Project project, RunProfile runProfile) {
-    Module[] modules = null;
-    if (runProfile instanceof ModuleRunProfile) {
-      modules = ((ModuleRunProfile)runProfile).getModules();
-    }
-    if (modules == null || modules.length == 0) {
-      return GlobalSearchScope.allScope(project);
-    }
-    else {
-      GlobalSearchScope scope = GlobalSearchScope.moduleRuntimeScope(modules[0], true);
-      for (int idx = 1; idx < modules.length; idx++) {
-        Module module = modules[idx];
-        scope = scope.uniteWith(GlobalSearchScope.moduleRuntimeScope(module, true));
-      }
-      return scope;
-    }
-  }
 
   public ExecutionResult getExecutionResult() {
     return myExecutionResult;
