@@ -354,8 +354,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       myContentSize = 0;
       myBuffer.clear();
       myFolding.clear();
-
-      clearHyperlinkAndFoldings();
     }
     if (myFlushAlarm.isDisposed()) return;
     cancelAllFlushRequests();
@@ -620,13 +618,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       return;
     }
     if (clear) {
-      final DocumentEx document;
+      final DocumentEx document = editor.getDocument();
       synchronized (LOCK) {
         myTokens.clear();
-        editor.getMarkupModel().removeAllHighlighters();
-        document = editor.getDocument();
-        myFoldingAlarm.cancelAllRequests();
-        cancelHeavyAlarm();
+        clearHyperlinkAndFoldings();
       }
       final int documentTextLength = document.getTextLength();
       if (documentTextLength > 0) {
