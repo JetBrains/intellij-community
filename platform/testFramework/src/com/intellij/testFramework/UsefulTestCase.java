@@ -932,20 +932,4 @@ public abstract class UsefulTestCase extends TestCase {
     }.process(test);
     return testSuite;
   }
-
-  protected void findHandlerAndDoRename(final String newName, Editor editor, Project project, PsiFile file) {
-    final DataContext editorContext = ((EditorEx)editor).getDataContext();
-    final DataContext context = new DataContext() {
-      @Override
-      public Object getData(@NonNls String dataId) {
-        return PsiElementRenameHandler.DEFAULT_NAME.getName().equals(dataId)
-               ? newName
-               : editorContext.getData(dataId);
-      }
-    };
-    final RenameHandler renameHandler = RenameHandlerRegistry.getInstance().getRenameHandler(context);
-    assertNotNull(renameHandler);
-
-    renameHandler.invoke(project, editor, file, context);
-  }
 }

@@ -2,7 +2,7 @@ package com.jetbrains.python.magicLiteral;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.StringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +23,7 @@ public final class PyMagicLiteralTools {
    * @return true if magic
    */
   public static boolean isMagicLiteral(@NotNull final PsiElement element) {
-    return (element instanceof PyStringLiteralExpression) && (getPoint((PyStringLiteralExpression)element) != null);
+    return (element instanceof StringLiteralExpression) && (getPoint((StringLiteralExpression)element) != null);
   }
 
   /**
@@ -33,7 +33,7 @@ public final class PyMagicLiteralTools {
    * @return extension point (if any) or null if literal is unknown to all installed magic literal extesnion points
    */
   @Nullable
-  public static PyMagicLiteralExtensionPoint getPoint(@NotNull final PyStringLiteralExpression element) {
+  public static PyMagicLiteralExtensionPoint getPoint(@NotNull final StringLiteralExpression element) {
     final PyMagicLiteralExtensionPoint[] magicLiteralExtPoints =
       ApplicationManager.getApplication().getExtensions(PyMagicLiteralExtensionPoint.EP_NAME);
 

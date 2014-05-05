@@ -469,9 +469,16 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   void renameElementAtCaret(String newName);
 
-  void renameElement(PsiElement element, String newName);
+  /**
+   * Renames element at caret using injected {@link com.intellij.refactoring.rename.RenameHandler}s.
+   * Very close to {@link #renameElementAtCaret(String)} but uses handlers.
+   * @param newName new name for the element.
+   */
+  void renameElementAtCaretUsingHandler(@NotNull String newName);
 
-  void allowTreeAccessForFile(VirtualFile file);
+  void renameElement(@NotNull PsiElement element, @NotNull String newName);
+
+  void allowTreeAccessForFile(@NotNull VirtualFile file);
 
   void allowTreeAccessForAllFiles();
 
