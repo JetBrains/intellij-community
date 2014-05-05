@@ -143,6 +143,9 @@ public class JavaStackFrame extends XStackFrame {
   private void buildVariables(DebuggerContextImpl debuggerContext, XValueChildrenList children) throws EvaluateException {
     boolean myAutoWatchMode = DebuggerSettings.getInstance().AUTO_VARIABLES_MODE;
     EvaluationContextImpl evaluationContext = debuggerContext.createEvaluationContext();
+    if (evaluationContext == null) {
+      return;
+    }
     final SourcePosition sourcePosition = debuggerContext.getSourcePosition();
     if (sourcePosition == null) {
       return;

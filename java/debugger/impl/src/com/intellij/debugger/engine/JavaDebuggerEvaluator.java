@@ -66,6 +66,10 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator {
         WatchItemDescriptor descriptor = new WatchItemDescriptor(myDebugProcess.getProject(), TextWithImportsImpl.fromXExpression(
           expression));
         EvaluationContextImpl evalContext = myDebuggerContext.createEvaluationContext();
+        if (evalContext == null) {
+          callback.errorOccurred("Context is not available");
+          return;
+        }
         descriptor.setContext(evalContext);
         descriptor.updateRepresentation(evalContext, DescriptorLabelListener.DUMMY_LISTENER);
         callback.evaluated(new JavaValue(descriptor, evalContext, myDebugProcess.getXdebugProcess().getNodeManager()));
