@@ -33,9 +33,11 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -285,8 +287,19 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
           @Override
           public boolean process(JBPopup popup) {
             usageView.set(component.showInUsageView());
+            myTaskRef = new WeakReference<BackgroundUpdaterTask>(null);
             popup.cancel();
             return false;
+          }
+        })
+        .setCancelCallback(new Computable<Boolean>() {
+          @Override
+          public Boolean compute() {
+            final BackgroundUpdaterTask task = myTaskRef.get();
+            if (task != null) {
+              task.setCanceled();
+            }
+            return Boolean.TRUE;
           }
         })
         .createPopup();
@@ -315,7 +328,12 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     task.init(popup, component, usageView);
 
     myTaskRef = new WeakReference<BackgroundUpdaterTask>(task);
-    ProgressManager.getInstance().run(task);
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, new BackgroundableProcessIndicator(task) {
+      @Override
+      public boolean isCanceled() {
+        return super.isCanceled() || task.isCanceled();
+      }
+    });
   }
 
   protected boolean isIncludeAlwaysSelf() {
