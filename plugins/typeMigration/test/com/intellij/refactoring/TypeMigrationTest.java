@@ -852,6 +852,31 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
                          myFactory.createTypeFromText("java.util.Collection<java.lang.String>", null));
   }
 
+  public void testT139() {
+    doTestForeachParameter(myFactory.createTypeFromText("java.lang.String", null),
+                           myFactory.createTypeFromText("java.lang.Integer", null));
+  }
+
+  private void doTestForeachParameter(final PsiType rootType, final PsiType migrationType) {
+    start(new RulesProvider() {
+      @Override
+      public TypeMigrationRules provide() {
+        final TypeMigrationRules rules = new TypeMigrationRules(rootType);
+        rules.setBoundScope(GlobalSearchScope.projectScope(getProject()));
+        rules.setMigrationRootType(migrationType);
+        return rules;
+      }
+
+      @Override
+      public PsiElement victims(final PsiClass aClass) {
+        final PsiForeachStatement foreachStatement = PsiTreeUtil.findChildOfType(aClass, PsiForeachStatement.class);
+        assert foreachStatement != null : aClass.getText();
+        return foreachStatement.getIterationParameter();
+      }
+    });
+  }
+
+
   public void testTypeAnno() {
     doTestFieldType("list", "Test",
                     myFactory.createTypeFromText("java.util.ArrayList<java.lang.@TA Integer>", null),
