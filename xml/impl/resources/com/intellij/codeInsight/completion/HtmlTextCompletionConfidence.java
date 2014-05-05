@@ -34,7 +34,7 @@ public class HtmlTextCompletionConfidence extends CompletionConfidence {
       PsiElement parent = contextElement.getParent();
       if (parent instanceof XmlText || parent instanceof XmlDocument) {
         String prefix = contextElement.getText().substring(0, offset - contextElement.getTextRange().getStartOffset());
-        if (StringUtil.isJavaIdentifier(prefix)) {
+        if (!StringUtil.startsWithChar(prefix, '<') && !StringUtil.startsWithChar(prefix, '&')) {
           return ThreeState.YES;
         }
       }
