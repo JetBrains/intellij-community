@@ -20,8 +20,6 @@ import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.DebuggerContextListener;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -42,6 +40,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
@@ -68,7 +67,6 @@ public class JavaDebugProcess extends XDebugProcess {
   private final DebuggerSession myJavaSession;
   private final JavaDebuggerEditorsProvider myEditorsProvider;
   private final XBreakpointHandler<?>[] myBreakpointHandlers;
-  private final MyDebuggerStateManager myStateManager = new MyDebuggerStateManager();
   private final NodeManagerImpl myNodeManager;
 
   public JavaDebugProcess(@NotNull XDebugSession session, DebuggerSession javaSession) {
@@ -101,12 +99,6 @@ public class JavaDebugProcess extends XDebugProcess {
       }
     });
 
-    myJavaSession.getContextManager().addListener(new DebuggerContextListener() {
-      @Override
-      public void changeEvent(DebuggerContextImpl newContext, int event) {
-        myStateManager.fireStateChanged(newContext, event);
-      }
-    });
     myNodeManager = new NodeManagerImpl(session.getProject(), null) {
       @Override
       public DebuggerTreeNodeImpl createNode(final NodeDescriptor descriptor, EvaluationContext evaluationContext) {
@@ -122,7 +114,7 @@ public class JavaDebugProcess extends XDebugProcess {
         myJavaSession.getProcess().getManagerThread().schedule(new DebuggerCommandImpl() {
           @Override
           protected void action() throws Exception {
-            myNodeManager.setHistoryByContext(myStateManager.getContext());
+            myNodeManager.setHistoryByContext(getDebuggerStateManager().getContext());
           }
           @Override
           public Priority getPriority() {
@@ -131,6 +123,10 @@ public class JavaDebugProcess extends XDebugProcess {
         });
       }
     });
+  }
+
+  private DebuggerStateManager getDebuggerStateManager() {
+    return myJavaSession.getContextManager();
   }
 
   @NotNull
@@ -156,6 +152,7 @@ public class JavaDebugProcess extends XDebugProcess {
 
   @Override
   public void stop() {
+    myJavaSession.getProcess().dispose();
   }
 
   @Override
@@ -203,10 +200,11 @@ public class JavaDebugProcess extends XDebugProcess {
     return new XDebugTabLayouter() {
       @Override
       public void registerAdditionalContent(@NotNull RunnerLayoutUi ui) {
-        final ThreadsPanel panel = new ThreadsPanel(myJavaSession.getProject(), myStateManager);
+        final ThreadsPanel panel = new ThreadsPanel(myJavaSession.getProject(), getDebuggerStateManager());
         final Content threadsContent = ui.createContent(
           DebuggerContentInfo.THREADS_CONTENT, panel, XDebuggerBundle.message("debugger.session.tab.threads.title"),
           AllIcons.Debugger.Threads, null);
+        Disposer.register(threadsContent, panel);
         threadsContent.setCloseable(false);
         ui.addContent(threadsContent, 0, PlaceInGrid.left, true);
         ui.addListener(new ContentManagerAdapter() {
@@ -227,23 +225,6 @@ public class JavaDebugProcess extends XDebugProcess {
         }, threadsContent);
       }
     };
-  }
-
-  private class MyDebuggerStateManager extends DebuggerStateManager {
-    @Override
-    public void fireStateChanged(DebuggerContextImpl newContext, int event) {
-      super.fireStateChanged(newContext, event);
-    }
-
-    @Override
-    public DebuggerContextImpl getContext() {
-      return myJavaSession.getContextManager().getContext();
-    }
-
-    @Override
-    public void setState(DebuggerContextImpl context, int state, int event, String description) {
-      myJavaSession.getContextManager().setState(context, state, event, description);
-    }
   }
 
   @Override

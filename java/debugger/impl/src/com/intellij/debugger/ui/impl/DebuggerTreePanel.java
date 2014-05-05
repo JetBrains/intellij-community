@@ -37,7 +37,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 
-public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements DataProvider {
+public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements DataProvider, Disposable {
   public static final DataKey<DebuggerTreePanel> DATA_KEY = DataKey.create("DebuggerPanel");
   
   private final SingleAlarm myRebuildAlarm = new SingleAlarm(new Runnable() {
