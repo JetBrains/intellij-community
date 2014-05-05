@@ -51,13 +51,20 @@ public class TaskToolWindowFactory implements ToolWindowFactory{
                     BufferedReader bf = new BufferedReader(new InputStreamReader(is));
                     BufferedReader bf_err = new BufferedReader(new InputStreamReader(is_err));
                     String line;
+                    String testResult = "test failed";
                     while ((line = bf.readLine())!=null) {
+                        if (line.equals("OK")) {
+                            testResult = "test passed";
+                        }
                         System.out.println(line);
                     }
                     while ((line = bf_err.readLine())!=null) {
+                        if (line == "OK") {
+                            testResult = "test passed";
+                        }
                         System.out.println(line);
                     }
-                    JOptionPane.showMessageDialog(panel, "Some message text", "Message header", JOptionPane.DEFAULT_OPTION );
+                    JOptionPane.showMessageDialog(panel, testResult, "", JOptionPane.DEFAULT_OPTION );
 
 
                 } catch (ExecutionException e1) {
