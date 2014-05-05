@@ -49,4 +49,8 @@ public class DeprecationInspectionTest extends InspectionTestCase {
     doTest();
   }
 
+  public void testDeprecatedDefaultConstructorFromTypeParameter() throws Exception {
+    doTest();
+  }
+
 }
