@@ -45,6 +45,13 @@ class PropertyAccessor implements Accessor {
     myReadMethod = readMethod;
     myWriteMethod = writeMethod;
     myGenericType = myReadMethod.getGenericReturnType();
+
+    try {
+      myReadMethod.setAccessible(true);
+      myWriteMethod.setAccessible(true);
+    }
+    catch (SecurityException ignored) {
+    }
   }
 
   @Override

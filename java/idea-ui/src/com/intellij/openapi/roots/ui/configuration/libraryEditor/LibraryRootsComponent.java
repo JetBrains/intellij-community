@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -533,7 +533,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       Set<VirtualFile> roots = getNotExcludedRoots();
       descriptor.setRoots(roots.toArray(new VirtualFile[roots.size()]));
       if (roots.size() < 2) {
-        descriptor.setIsTreeRootVisible(true);
+        descriptor.withTreeRootVisible(true);
       }
       VirtualFile toSelect = null;
       for (Object o : getSelectedElements()) {

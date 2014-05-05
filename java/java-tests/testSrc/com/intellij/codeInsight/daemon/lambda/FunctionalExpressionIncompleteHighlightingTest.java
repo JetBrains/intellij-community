@@ -38,6 +38,10 @@ public class FunctionalExpressionIncompleteHighlightingTest extends LightDaemonA
     doTest();
   }
 
+  public void testInsideParenthesis() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

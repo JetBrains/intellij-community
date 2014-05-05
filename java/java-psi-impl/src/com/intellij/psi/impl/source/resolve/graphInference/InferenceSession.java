@@ -285,11 +285,20 @@ public class InferenceSession {
     }
   }
 
-  private void collectAdditionalConstraints(Set<ConstraintFormula> additionalConstraints,
-                                            PsiCallExpression callExpression) {
+  private void collectAdditionalConstraints(final Set<ConstraintFormula> additionalConstraints,
+                                            final PsiCallExpression callExpression) {
     PsiExpressionList argumentList = callExpression.getArgumentList();
     if (argumentList != null) {
-      final JavaResolveResult result = callExpression.resolveMethodGenerics();
+      final PsiLambdaExpression expression = PsiTreeUtil.getParentOfType(argumentList, PsiLambdaExpression.class);
+      final Computable<JavaResolveResult> computableResolve = new Computable<JavaResolveResult>() {
+        @Override
+        public JavaResolveResult compute() {
+          return callExpression.resolveMethodGenerics();
+        }
+      };
+      final JavaResolveResult result = expression == null
+                                       ? computableResolve.compute()
+                                       : PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, false, computableResolve);
       if (result instanceof MethodCandidateInfo) {
         final PsiMethod method = ((MethodCandidateInfo)result).getElement();
         //need to get type parameters for 2 level nested expressions (they won't be covered by expression constraints on this level?!) 
@@ -525,11 +534,22 @@ public class InferenceSession {
       return getTargetType((PsiExpression)parent);
     }
     else if (parent instanceof PsiLambdaExpression) {
-      if (PsiUtil.skipParenthesizedExprUp(parent.getParent()) instanceof PsiExpressionList) {
-        final PsiType typeTypeByParentCall = getTargetType((PsiLambdaExpression)parent);
-        return LambdaUtil.getFunctionalInterfaceReturnType(FunctionalInterfaceParameterizationUtil.getGroundTargetType(typeTypeByParentCall, (PsiLambdaExpression)parent));
+      return getTargetTypeByContainingLambda((PsiLambdaExpression)parent);
+    }
+    else if (parent instanceof PsiReturnStatement) {
+      return getTargetTypeByContainingLambda(PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class));
+    }
+    return null;
+  }
+
+  private static PsiType getTargetTypeByContainingLambda(PsiLambdaExpression lambdaExpression) {
+    if (lambdaExpression != null) {
+      if (PsiUtil.skipParenthesizedExprUp(lambdaExpression.getParent()) instanceof PsiExpressionList) {
+        final PsiType typeTypeByParentCall = getTargetType(lambdaExpression);
+        return LambdaUtil.getFunctionalInterfaceReturnType(
+          FunctionalInterfaceParameterizationUtil.getGroundTargetType(typeTypeByParentCall, lambdaExpression));
       }
-      return LambdaUtil.getFunctionalInterfaceReturnType(((PsiLambdaExpression)parent).getFunctionalInterfaceType());
+      return LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression.getFunctionalInterfaceType());
     }
     return null;
   }

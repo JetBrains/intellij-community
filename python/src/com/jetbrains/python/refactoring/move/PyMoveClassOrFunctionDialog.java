@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ public class PyMoveClassOrFunctionDialog extends RefactoringDialog {
 
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
     descriptor.setRoots(ProjectRootManager.getInstance(project).getContentRoots());
-    descriptor.setIsTreeRootVisible(true);
+    descriptor.withTreeRootVisible(true);
 
     myPanel.getBrowseTargetFileButton().addBrowseFolderListener(PyBundle.message("refactoring.move.class.or.function.choose.destination.file.title"),
                                                                 null, project, descriptor,

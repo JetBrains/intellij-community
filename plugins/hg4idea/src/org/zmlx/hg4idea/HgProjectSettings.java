@@ -67,9 +67,8 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
   }
 
   public void setIgnoreWhitespacesInAnnotations(boolean ignoreWhitespacesInAnnotations) {
-    final boolean changed = myState.myIgnoreWhitespacesInAnnotations != ignoreWhitespacesInAnnotations;
-    myState.myIgnoreWhitespacesInAnnotations = ignoreWhitespacesInAnnotations;
-    if (changed) {
+    if (myState.myIgnoreWhitespacesInAnnotations != ignoreWhitespacesInAnnotations) {
+      myState.myIgnoreWhitespacesInAnnotations = ignoreWhitespacesInAnnotations;
       myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).configurationChanged(HgVcs.getKey());
     }
   }

@@ -47,7 +47,10 @@ public class ActionGroupUtil {
       if (action instanceof Separator) continue;
       if (isActionEnabledAndVisible(e, action2presentation, action)) {
         if (action instanceof ActionGroup) {
-          return isGroupEmpty((ActionGroup)action, e, action2presentation);
+          if (!isGroupEmpty((ActionGroup)action, e, action2presentation)) {
+            return false;
+          }
+          // else continue for-loop
         }
         else {
           return false;

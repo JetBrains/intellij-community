@@ -165,10 +165,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
         return parent;
       }
     }
-    if (element == null) {
-      return null;
-    }
-    return getTargetElementByExtensions(element);
+    return null;
   }
 
   @Nullable

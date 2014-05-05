@@ -233,6 +233,23 @@ public final class JsonReaders {
     return list;
   }
 
+  public static List<String> readListOfPrimitive(JsonReaderEx reader) {
+    reader.beginArray();
+    if (!reader.hasNext()) {
+      reader.endArray();
+      return Collections.emptyList();
+    }
+
+    List<String> list = new ArrayList<String>();
+    do {
+      //noinspection unchecked
+      list.add(reader.nextString(true));
+    }
+    while (reader.hasNext());
+    reader.endArray();
+    return list;
+  }
+
   public static long[] readLongArray(JsonReaderEx reader) {
     checkIsNull(reader, null);
     reader.beginArray();

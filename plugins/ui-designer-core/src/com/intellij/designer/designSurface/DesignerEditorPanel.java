@@ -182,7 +182,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
     myToolProvider = createToolProvider();
 
-    myGlassLayer = new GlassLayer(myToolProvider, mySurfaceArea);
+    myGlassLayer = createGlassLayer(myToolProvider, mySurfaceArea);
     myLayeredPane.add(myGlassLayer, LAYER_GLASS);
 
     myDecorationLayer = createDecorationLayer();
@@ -260,12 +260,16 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     return new DesignerToolProvider();
   }
 
+  protected GlassLayer createGlassLayer(ToolProvider provider, EditableArea area) {
+    return new GlassLayer(provider, area);
+  }
+
   protected DecorationLayer createDecorationLayer() {
     return new DecorationLayer(this, mySurfaceArea);
   }
 
   protected FeedbackLayer createFeedbackLayer() {
-    return new FeedbackLayer();
+    return new FeedbackLayer(this);
   }
 
   protected InplaceEditingLayer createInplaceEditingLayer() {
@@ -743,7 +747,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   @NotNull
   public DesignerEditorState createState() {
-    return new DesignerEditorState(myFile);
+    return new DesignerEditorState(myFile, getZoom());
   }
 
   public boolean isEditorValid() {

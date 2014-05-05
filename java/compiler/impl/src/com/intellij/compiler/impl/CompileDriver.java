@@ -946,7 +946,7 @@ public class CompileDriver {
           if (!myProject.isDisposed()) {
             final String statusMessage = createStatusMessage(_status, warningCount, errorCount, duration);
             final MessageType messageType = errorCount > 0 ? MessageType.ERROR : warningCount > 0 ? MessageType.WARNING : MessageType.INFO;
-            if (duration > ONE_MINUTE_MS) {
+            if (duration > ONE_MINUTE_MS && CompilerWorkspaceConfiguration.getInstance(myProject).DISPLAY_NOTIFICATION_POPUP) {
               ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.MESSAGES_WINDOW, messageType, statusMessage);
             }
             CompilerManager.NOTIFICATION_GROUP.createNotification(statusMessage, messageType).notify(myProject);

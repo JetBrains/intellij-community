@@ -205,7 +205,7 @@ public class ResolveClassTest extends ResolveTestCase {
     long start = System.currentTimeMillis();
     assertNull(ref.resolve());
     long elapsed = System.currentTimeMillis() - start;
-    PlatformTestUtil.assertTiming("exponent?", 200, elapsed);
+    PlatformTestUtil.assertTiming("exponent?", 500, elapsed);
   }
 
   public void testStaticImportNetwork() throws Exception {

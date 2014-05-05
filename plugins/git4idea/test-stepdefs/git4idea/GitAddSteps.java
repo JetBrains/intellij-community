@@ -15,10 +15,11 @@
  */
 package git4idea;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Lists;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import cucumber.annotation.en.Given;
 import cucumber.annotation.en.Then;
 import cucumber.annotation.en.When;
@@ -26,55 +27,45 @@ import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
-import static git4idea.GitCucumberWorld.*;
-import static git4idea.test.GitExecutor.*;
+import static git4idea.GitCucumberWorld.myProject;
+import static git4idea.test.GitExecutor.cd;
+import static git4idea.test.GitExecutor.git;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-/**
- * @author Kirill Likhodedov
- */
 public class GitAddSteps {
 
   @Given("^unversioned file (.*)$")
   public void unversioned_file(String filePath) throws Throwable {
-    cd(myRepository);
-    VfsTestUtil.createFile(myProjectDir, filePath);
+    cd(GitCucumberWorld.myRepository);
+    VirtualFile file = VfsTestUtil.createFile(GitCucumberWorld.myProjectDir, filePath);
+    VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
   }
 
   @When("^I add (.*) to VCS$")
   public void I_add_file_to_VCS(List<String> files) throws Throwable {
-    List<VirtualFile> vFiles = Lists.transform(files, new Function<String, VirtualFile>() {
+    List<VirtualFile> vFiles = ContainerUtil.map(files, new Function<String, VirtualFile>() {
       @Override
-      public VirtualFile apply(@Nullable String file) {
+      public VirtualFile fun(@Nullable String file) {
         assertNotNull(file);
         if ("the project dir".equals(file)) {
-          return myRepository.getRoot();
+          return GitCucumberWorld.myRepository.getRoot();
         }
-        return myRepository.getRoot().findFileByRelativePath(file);
+        return GitCucumberWorld.myRepository.getRoot().findFileByRelativePath(file);
       }
     });
-    final CountDownLatch latch = new CountDownLatch(1);
-    //executeOnPooledThread(new Runnable() {
-    //  public void run() {
-    //    myChangeListManager.ensureUpToDate(false);
-    //    latch.countDown();
-    //  }
-    //});
-    latch.await(5, TimeUnit.SECONDS);
-    myChangeListManager.addUnversionedFiles(myChangeListManager.addChangeList("dummy", null), vFiles);
+    GitCucumberWorld.myChangeListManager.ensureUpToDate(false);
+    GitCucumberWorld.myChangeListManager.addUnversionedFiles(GitCucumberWorld.myChangeListManager.addChangeList("dummy", null), vFiles);
   }
-
 
   @Then("^(.*) should become ADDED$")
   public void file_should_become_ADDED(String filePath) throws Throwable {
-    VirtualFile vf = myProjectDir.findFileByRelativePath(filePath);
+    VirtualFile vf = GitCucumberWorld.myProjectDir.findFileByRelativePath(filePath);
     assertNotNull(vf);
-    GitRepository repo = myPlatformFacade.getRepositoryManager(myProject).getRepositoryForFile(vf);
+    GitRepository repo = GitCucumberWorld.myPlatformFacade.getRepositoryManager(GitCucumberWorld.myProject).getRepositoryForFile(vf);
     String status = git(repo, "status --porcelain " + vf.getPath());
+    assertTrue("File status is not-changed: " + status, !status.isEmpty());
     assertTrue("File status is not added: " + status, 'A' == status.charAt(0));
   }
 }

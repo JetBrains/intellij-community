@@ -36,7 +36,7 @@ public abstract class ToolProvider implements ZoomProvider {
   private MouseEvent myEvent;
 
   public void processKeyEvent(KeyEvent event, EditableArea area) {
-    if (myTool != null) {
+      if (myTool != null) {
       try {
         switch (event.getID()) {
           case KeyEvent.KEY_PRESSED:

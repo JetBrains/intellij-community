@@ -20,8 +20,8 @@ class VariableContextWrapper implements VariableContext {
 
   @NotNull
   @Override
-  public MemberFilter getMemberFilter() {
-    return parentContext.getMemberFilter();
+  public MemberFilter createMemberFilter() {
+    return parentContext.getViewSupport().createMemberFilter(this);
   }
 
   @NotNull

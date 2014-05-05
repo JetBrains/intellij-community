@@ -136,16 +136,14 @@ public class ExecutionPointHighlighter {
   }
 
   private void removeHighlighter() {
-    if (myRangeHighlighter == null || myEditor == null) {
-      return;
-    }
-
-    if (myUseSelection) {
+    if (myUseSelection && myEditor != null) {
       myEditor.getSelectionModel().removeSelection();
     }
 
-    myRangeHighlighter.dispose();
-    myRangeHighlighter = null;
+    if (myRangeHighlighter != null) {
+      myRangeHighlighter.dispose();
+      myRangeHighlighter = null;
+    }
   }
 
   private void addHighlighter() {

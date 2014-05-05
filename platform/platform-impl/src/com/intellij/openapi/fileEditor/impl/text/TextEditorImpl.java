@@ -157,8 +157,8 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
 
   @Override
   public boolean canNavigateTo(@NotNull final Navigatable navigatable) {
-    return navigatable instanceof OpenFileDescriptor && (((OpenFileDescriptor)navigatable).getOffset() >= 0 ||
-                                                         ((OpenFileDescriptor)navigatable).getLine() != -1);
+    return navigatable instanceof OpenFileDescriptor && (((OpenFileDescriptor)navigatable).getLine() != -1 ||
+                                                         ((OpenFileDescriptor)navigatable).getOffset() >= 0);
   }
 
   @Override

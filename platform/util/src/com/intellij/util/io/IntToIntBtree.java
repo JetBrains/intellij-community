@@ -73,7 +73,7 @@ class IntToIntBtree {
       FileUtil.delete(file);
     }
 
-    storage = new ResizeableMappedFile(file, pageSize, storageLockContext, pageSize, true, IOUtil.ourByteBuffersUseNativeByteOrder);
+    storage = new ResizeableMappedFile(file, pageSize, storageLockContext, 1024 * 1024, true, IOUtil.ourByteBuffersUseNativeByteOrder);
     root = new BtreeIndexNodeView(this);
 
     if (initial) {

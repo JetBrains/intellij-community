@@ -52,56 +52,56 @@ class GitCrlfProblemsDetectorTest extends GitSingleRepoTest {
     super.tearDown();
   }
 
-  void "test autocrlf is true = warning"() {
+  void "test no warning if autocrlf is true"() {
     git ("config core.autocrlf true")
     assertFalse "No warning should be done if core.autocrlf is true", detect("temp").shouldWarn()
   }
 
-  void "test autocrlf is input = no warning"() {
+  void "test no warning if autocrlf is input"() {
     git ("config core.autocrlf input")
     assertFalse "No warning should be done if core.autocrlf is input", detect("temp").shouldWarn()
   }
 
-  void "test no files with CRLF = no warning"() {
+  void "test no warning if no files with CRLF"() {
     createFile("temp", "Unix file\nNice separators\nOnly LF\n")
     assertFalse "No warning should be done if all files are LFs", detect("temp").shouldWarn()
   }
 
-  void "test file with CRLF, no attrs, autocrlf is false = warning"() {
+  void "test no warning if file with CRLF, no attrs, autocrlf is false"() {
     createCrlfFile("win")
     assertFalse "Warning should be done for a CRLF file with core.autocrlf = false", detect("temp").shouldWarn()
   }
 
-  void "test file with CRLF, but text is set = no warning"() {
+  void "test no warning if file with CRLF, but text is set"() {
     gitattributes("*       text=auto")
     createCrlfFile("win")
     assertFalse "No warning should be done if the file has a text attribute", detect("win").shouldWarn()
   }
 
-  void "test file with CRLF, but crlf is set = no warning"() {
+  void "test no warning if file with CRLF, but crlf is set"() {
     gitattributes("win       crlf")
     createCrlfFile("win")
     assertFalse "No warning should be done if the file has a crlf attribute", detect("win").shouldWarn()
   }
 
-  void "test file with CRLF, but crlf is explicitly unset = no warning"() {
+  void "test no warning if file with CRLF, but crlf is explicitly unset"() {
     gitattributes("win       -crlf")
     createCrlfFile("win")
     assertFalse "No warning should be done if the file has an explicitly unset crlf attribute", detect("win").shouldWarn()
   }
 
-  void "test file with CRLF, but crlf is set to input = no warning"() {
+  void "test no warning if file with CRLF, but crlf is set to input"() {
     gitattributes("wi*       crlf=input")
     createCrlfFile("win")
     assertFalse "No warning should be done if the file has a crlf attribute", detect("win").shouldWarn()
   }
 
-  void "test file with CRLF, nothing is set = warning"() {
+  void "test warning if file with CRLF, nothing is set"() {
     createCrlfFile("win")
     assertTrue "Warning should be done if the file has CRLFs inside, and no explicit attributes", detect("win").shouldWarn()
   }
 
-  void "test various files with various attributes, one doesn't match = warning"() {
+  void "test warning if various files with various attributes, one doesnt match"() {
     gitattributes """
 win1 text crlf diff
 win2 -text

@@ -22,17 +22,16 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
@@ -46,20 +45,30 @@ public class LazyRangeMarkerFactory {
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentAdapter() {
       @Override
       public void beforeDocumentChange(DocumentEvent e) {
-        VirtualFile docFile = fileDocumentManager.getFile(e.getDocument());
-        if (docFile == null) return;
-        WeakList<LazyMarker> lazyMarkers = myMarkers.get(docFile);
-        if (lazyMarkers == null) return;
+        VirtualFile file = fileDocumentManager.getFile(e.getDocument());
+        if (file == null) {
+          return;
+        }
+
+        WeakList<LazyMarker> lazyMarkers = myMarkers.get(file);
+        if (lazyMarkers == null) {
+          return;
+        }
 
         List<LazyMarker> markers = lazyMarkers.toStrongList();
-        List<LazyMarker> markersToRemove = new ArrayList<LazyMarker>();
-        for (final LazyMarker marker : markers) {
-          if (Comparing.equal(marker.getFile(), docFile)) {
+        List<LazyMarker> markersToRemove = null;
+        for (LazyMarker marker : markers) {
+          if (file.equals(marker.getFile())) {
             marker.getOrCreateDelegate();
+            if (markersToRemove == null) {
+              markersToRemove = new SmartList<LazyMarker>();
+            }
             markersToRemove.add(marker);
           }
         }
-        lazyMarkers.removeAll(markersToRemove);
+        if (markersToRemove != null) {
+          lazyMarkers.removeAll(markersToRemove);
+        }
       }
     }, project);
   }

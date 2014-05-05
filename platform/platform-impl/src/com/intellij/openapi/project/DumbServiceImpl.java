@@ -97,6 +97,11 @@ public class DumbServiceImpl extends DumbService {
       public void canceled() {
 
       }
+
+      @Override
+      public String toString() {
+        return task.toString();
+      }
     };
     queueCacheUpdateInDumbMode(Arrays.asList(wrapper));
   }
@@ -257,6 +262,8 @@ public class DumbServiceImpl extends DumbService {
   private void updateFinished() {
     myDumb = false;
     if (myProject.isDisposed()) return;
+
+    if (ApplicationManager.getApplication().isInternal()) LOG.info("updateFinished");
 
     try {
       myPublisher.exitDumbMode();
@@ -425,6 +432,7 @@ public class DumbServiceImpl extends DumbService {
         private void runAction(ProgressIndicator indicator, CacheUpdateRunner updateRunner) {
           while (updateRunner != null) {
             try {
+              if (ApplicationManager.getApplication().isInternal()) LOG.info("Running dumb mode task: " + updateRunner);
               indicator.checkCanceled();
               indicator.setIndeterminate(true);
               indicator.setText(IdeBundle.message("progress.indexing.scanning"));

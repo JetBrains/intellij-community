@@ -37,46 +37,46 @@ public final class Variables {
                                            @NotNull final VariableContext context,
                                            final @Nullable ActionCallback compoundActionCallback) {
     final boolean isLast = compoundActionCallback == null;
-    AsyncResult<?> result =
-      ObsolescentAsyncResults.consume(scope.getVariables(), node, new PairConsumer<List<Variable>, XCompositeNode>() {
-        @Override
-        public void consume(List<Variable> variables, XCompositeNode node) {
-          List<Variable> properties = new ArrayList<Variable>(variables.size());
-          List<Variable> functions = new SmartList<Variable>();
-          for (Variable variable : variables) {
-            if (context.getMemberFilter().isMemberVisible(variable, false)) {
-              Value value = variable.getValue();
-              if (value != null &&
-                  value.getType() == ValueType.FUNCTION &&
-                  value.getValueString() != null &&
-                  !UNNAMED_FUNCTION_PATTERN.matcher(value.getValueString()).lookingAt()) {
-                functions.add(variable);
-              }
-              else {
-                properties.add(variable);
-              }
+    AsyncResult<?> result = ObsolescentAsyncResults.consume(scope.getVariables(), node, new PairConsumer<List<Variable>, XCompositeNode>() {
+      @Override
+      public void consume(List<Variable> variables, XCompositeNode node) {
+        List<Variable> properties = new ArrayList<Variable>(variables.size());
+        List<Variable> functions = new SmartList<Variable>();
+        MemberFilter memberFilter = context.createMemberFilter();
+        for (Variable variable : variables) {
+          if (memberFilter.isMemberVisible(variable, false)) {
+            Value value = variable.getValue();
+            if (value != null &&
+                value.getType() == ValueType.FUNCTION &&
+                value.getValueString() != null &&
+                !UNNAMED_FUNCTION_PATTERN.matcher(value.getValueString()).lookingAt()) {
+              functions.add(variable);
+            }
+            else {
+              properties.add(variable);
             }
           }
-
-          sort(properties);
-          sort(functions);
-
-          if (!properties.isEmpty()) {
-            node.addChildren(createVariablesList(properties, context), functions.isEmpty() && isLast);
-          }
-
-          if (!functions.isEmpty()) {
-            node.addChildren(XValueChildrenList.bottomGroup(new VariablesGroup("Functions", functions, context)), isLast);
-          }
-          else if (isLast && properties.isEmpty()) {
-            node.addChildren(XValueChildrenList.EMPTY, true);
-          }
-
-          if (!isLast) {
-            compoundActionCallback.setDone();
-          }
         }
-      });
+
+        sort(properties);
+        sort(functions);
+
+        if (!properties.isEmpty()) {
+          node.addChildren(createVariablesList(properties, context), functions.isEmpty() && isLast);
+        }
+
+        if (!functions.isEmpty()) {
+          node.addChildren(XValueChildrenList.bottomGroup(new VariablesGroup("Functions", functions, context)), isLast);
+        }
+        else if (isLast && properties.isEmpty()) {
+          node.addChildren(XValueChildrenList.EMPTY, true);
+        }
+
+        if (!isLast) {
+          compoundActionCallback.setDone();
+        }
+      }
+    });
     if (!isLast) {
       result.notifyWhenRejected(compoundActionCallback);
     }
@@ -115,7 +115,7 @@ public final class Variables {
 
     List<Variable> result = new ArrayList<Variable>(variables.size());
     for (Variable variable : variables) {
-      if (context.getMemberFilter().isMemberVisible(variable, filterFunctions)) {
+      if (context.createMemberFilter().isMemberVisible(variable, filterFunctions)) {
         result.add(variable);
       }
     }
@@ -217,9 +217,7 @@ public final class Variables {
 
   public static XValueChildrenList createVariablesList(@NotNull List<Variable> variables, int from, int to, @NotNull VariableContext variableContext) {
     XValueChildrenList list = new XValueChildrenList(to - from);
-
     VariableContext getterOrSetterContext = null;
-
     for (int i = from; i < to; i++) {
       Variable variable = variables.get(i);
       list.add(new VariableView(variable, variableContext));

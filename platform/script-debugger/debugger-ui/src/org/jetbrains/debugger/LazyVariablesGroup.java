@@ -5,25 +5,34 @@ import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.frame.XValueGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.debugger.values.ArrayValue;
+import org.jetbrains.debugger.values.ObjectValue;
+import org.jetbrains.debugger.values.ValueType;
 
+import java.util.ArrayList;
 import java.util.List;
 
-final class LazyVariablesGroup extends XValueGroup {
-  public static final ValueGroupFactory<ArrayValue> GROUP_FACTORY = new ValueGroupFactory<ArrayValue>() {
+public final class LazyVariablesGroup extends XValueGroup {
+  public static final ValueGroupFactory<ObjectValue> GROUP_FACTORY = new ValueGroupFactory<ObjectValue>() {
     @Override
-    public XValueGroup create(@NotNull ArrayValue value, int start, int end, @NotNull VariableContext context) {
+    public XValueGroup create(@NotNull ObjectValue value, int start, int end, @NotNull VariableContext context) {
       return new LazyVariablesGroup(value, start, end, context);
     }
   };
 
-  private final ArrayValue value;
+  private final ObjectValue value;
 
   private final int start;
   private final int end;
   private final VariableContext context;
 
-  public LazyVariablesGroup(@NotNull ArrayValue value, int start, int end, @NotNull VariableContext context) {
+  private final ValueType componentType;
+  private final boolean sparse;
+
+  public LazyVariablesGroup(@NotNull ObjectValue value, int start, int end, @NotNull VariableContext context) {
+    this(value, start, end, context, null, true);
+  }
+
+  public LazyVariablesGroup(@NotNull ObjectValue value, int start, int end, @NotNull VariableContext context, @Nullable ValueType componentType, boolean sparse) {
     super(String.format("[%,d \u2026 %,d]", start, end));
 
     this.value = value;
@@ -32,13 +41,23 @@ final class LazyVariablesGroup extends XValueGroup {
     this.end = end;
 
     this.context = context;
+
+    this.componentType = componentType;
+    this.sparse = sparse;
   }
 
   @Override
   public void computeChildren(@NotNull XCompositeNode node) {
     node.setAlreadySorted(true);
 
-    value.getVariables(start, end, XCompositeNode.MAX_CHILDREN_TO_SHOW, new VariableView.ObsolescentIndexedVariablesConsumer(node) {
+    int bucketThreshold = XCompositeNode.MAX_CHILDREN_TO_SHOW;
+    int size = end - start;
+    if (!sparse && size > bucketThreshold) {
+      node.addChildren(XValueChildrenList.topGroups(computeNotSparseGroups(value, context, start, end, bucketThreshold)), true);
+      return;
+    }
+
+    value.getIndexedProperties(start, end + 1, bucketThreshold, new VariableView.ObsolescentIndexedVariablesConsumer(node) {
       @Override
       public void consumeRanges(@Nullable int[] ranges) {
         if (ranges == null) {
@@ -55,10 +74,21 @@ final class LazyVariablesGroup extends XValueGroup {
       public void consumeVariables(@NotNull List<Variable> variables) {
         node.addChildren(Variables.createVariablesList(variables, context), true);
       }
-    });
+    }, componentType);
   }
 
-  public static void addRanges(@NotNull ArrayValue value, int[] ranges, @NotNull XCompositeNode node, @NotNull VariableContext context, boolean isLast) {
+  @NotNull
+  public static List<XValueGroup> computeNotSparseGroups(@NotNull ObjectValue value, @NotNull VariableContext context, int from, int to, int bucketThreshold) {
+    int size = to - from;
+    int bucketSize = (int)Math.pow(bucketThreshold, Math.ceil(Math.log(size) / Math.log(bucketThreshold)) - 1);
+    List<XValueGroup> groupList = new ArrayList<XValueGroup>((int)Math.ceil(size / bucketSize));
+    for (; from < to; from += bucketSize) {
+      groupList.add(new LazyVariablesGroup(value, from, from + (Math.min(bucketSize, to - from) - 1), context, ValueType.NUMBER, false));
+    }
+    return groupList;
+  }
+
+  public static void addRanges(@NotNull ObjectValue value, int[] ranges, @NotNull XCompositeNode node, @NotNull VariableContext context, boolean isLast) {
     XValueChildrenList groupList = new XValueChildrenList(ranges.length / 2);
     for (int i = 0, n = ranges.length; i < n; i += 2) {
       groupList.addTopGroup(new LazyVariablesGroup(value, ranges[i], ranges[i + 1], context));

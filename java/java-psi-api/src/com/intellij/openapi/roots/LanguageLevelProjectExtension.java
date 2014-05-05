@@ -34,5 +34,5 @@ public abstract class LanguageLevelProjectExtension {
 
   public abstract void setLanguageLevel(@NotNull LanguageLevel languageLevel);
 
-  public abstract void reloadProjectOnLanguageLevelChange(@NotNull LanguageLevel languageLevel, boolean forceReload);
+  public abstract void languageLevelsChanged();
 }

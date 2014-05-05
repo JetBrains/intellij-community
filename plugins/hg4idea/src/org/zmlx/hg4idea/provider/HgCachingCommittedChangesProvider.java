@@ -32,6 +32,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -348,7 +349,7 @@ public class HgCachingCommittedChangesProvider implements CachingCommittedChange
       new HgCommandResultNotifier(project).notifyError(null, HgVcsMessages.message("hg4idea.error.log.command.execution"), e.getMessage());
       return null;
     }
-    if (revisions == null || revisions.isEmpty()) {
+    if (ContainerUtil.isEmpty(revisions)) {
       return null;
     }
     HgFileRevision localRevision = revisions.get(0);
