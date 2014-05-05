@@ -28,10 +28,7 @@ import com.intellij.codeInsight.template.emmet.nodes.*;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.emmet.tokens.TextToken;
 import com.intellij.codeInsight.template.emmet.tokens.ZenCodingToken;
-import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
-import com.intellij.codeInsight.template.impl.TemplateSettings;
-import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.codeInsight.template.impl.*;
 import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.util.PropertiesComponent;
@@ -513,7 +510,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
 
             CompletionResultSet resultSet = result.withPrefixMatcher(result.getPrefixMatcher().cloneWithPrefix(templatePrefix));
             resultSet.restartCompletionOnPrefixChange(StandardPatterns.string().startsWith(templatePrefix));
-            resultSet.addElement(generator.createLookupElement(this, template));
+            resultSet.addElement(new CustomLiveTemplateLookupElement(this, template.getKey(), template.getKey(), template.getDescription(), true, true));
           }
         }
       }
