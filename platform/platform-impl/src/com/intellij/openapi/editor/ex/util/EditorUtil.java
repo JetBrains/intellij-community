@@ -765,8 +765,13 @@ public final class EditorUtil {
   }
 
   public static void scrollToTheEnd(@NotNull Editor editor) {
-    editor.getCaretModel().moveToOffset(editor.getDocument().getTextLength());
     editor.getSelectionModel().removeSelection();
+    int lastLine = Math.max(0, editor.getDocument().getLineCount() - 1);
+    if (editor.getCaretModel().getLogicalPosition().line == lastLine) {
+      editor.getCaretModel().moveToOffset(editor.getDocument().getTextLength());
+    } else {
+      editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(lastLine, 0));
+    }
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
