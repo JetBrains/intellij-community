@@ -228,7 +228,11 @@ public class GitBranchUtil {
       String branchName = stdName.substring(slash + 1);
       GitRemote remote = findRemoteByName(remoteName, remotes);
       if (remote == null) {
-        return null;
+        // user may remove the remote section from .git/config, but leave remote refs untouched in .git/refs/remotes
+        LOG.info(String.format("No remote found with the name [%s]. All remotes: %s", remoteName, remotes));
+        GitRemote fakeRemote = new GitRemote(remoteName, ContainerUtil.<String>emptyList(), Collections.<String>emptyList(),
+                                             Collections.<String>emptyList(), Collections.<String>emptyList());
+        return new GitStandardRemoteBranch(fakeRemote, branchName, hash);
       }
       return new GitStandardRemoteBranch(remote, branchName, hash);
     }
@@ -241,8 +245,6 @@ public class GitBranchUtil {
         return remote;
       }
     }
-    // user may remove the remote section from .git/config, but leave remote refs untouched in .git/refs/remotes
-    LOG.info(String.format("No remote found with the name [%s]. All remotes: %s", remoteName, remotes));
     return null;
   }
 
