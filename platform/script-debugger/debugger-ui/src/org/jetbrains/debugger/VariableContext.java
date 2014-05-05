@@ -22,7 +22,7 @@ public interface VariableContext {
   DebuggerViewSupport getViewSupport();
 
   @NotNull
-  MemberFilter getMemberFilter();
+  MemberFilter createMemberFilter();
 
   @Nullable
   Scope getScope();

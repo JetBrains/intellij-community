@@ -10,6 +10,7 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.evaluation.ExpressionInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.debugger.MemberFilter;
 
 public abstract class JavaScriptDebugAware {
   public static final ExtensionPointName<JavaScriptDebugAware> EP_NAME = ExtensionPointName.create("com.jetbrains.javaScriptDebugAware");
@@ -56,5 +57,10 @@ public abstract class JavaScriptDebugAware {
 
   public static boolean isBreakpointAware(@Nullable FileType fileType) {
     return find(fileType) != null;
+  }
+
+  @Nullable
+  public MemberFilter createMemberFilter(@NotNull PsiElement element, int end) {
+    return null;
   }
 }
