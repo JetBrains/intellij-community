@@ -51,7 +51,7 @@ public class EncodingManager extends FileDocumentManagerAdapter {
     }
 
     private void applySettings(VirtualFile file) {
-        if (!file.isInLocalFileSystem()) return;
+        if (file == null || !file.isInLocalFileSystem()) return;
         // Prevent "setEncoding" calling "saveAll" from causing an endless loop
         isApplyingSettings = true;
         final String filePath = file.getCanonicalPath();

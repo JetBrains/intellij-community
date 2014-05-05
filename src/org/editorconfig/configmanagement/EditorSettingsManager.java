@@ -48,7 +48,7 @@ public class EditorSettingsManager extends FileDocumentManagerAdapter {
     }
 
     private static void applySettings(VirtualFile file) {
-        if (!file.isInLocalFileSystem()) return;
+        if (file == null || !file.isInLocalFileSystem()) return;
         // Get editorconfig settings
         final String filePath = file.getCanonicalPath();
         final SettingsProviderComponent settingsProvider = SettingsProviderComponent.getInstance();
