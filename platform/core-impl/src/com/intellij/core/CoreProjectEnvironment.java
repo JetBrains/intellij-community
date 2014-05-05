@@ -40,7 +40,8 @@ import com.intellij.psi.search.ProjectScopeBuilder;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.CachedValuesManagerImpl;
-import com.intellij.util.messages.impl.MessageBusImpl;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusFactory;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.PicoContainer;
 
@@ -51,7 +52,7 @@ public class CoreProjectEnvironment {
   protected final FileIndexFacade myFileIndexFacade;
   protected final PsiManagerImpl myPsiManager;
   protected final MockProject myProject;
-  protected final MessageBusImpl myMessageBus;
+  protected final MessageBus myMessageBus;
 
   public CoreProjectEnvironment(Disposable parentDisposable, CoreApplicationEnvironment applicationEnvironment) {
     myParentDisposable = parentDisposable;
@@ -61,7 +62,7 @@ public class CoreProjectEnvironment {
     preregisterServices();
 
     myFileIndexFacade = createFileIndexFacade();
-    myMessageBus = new MessageBusImpl("CoreProjectEnvironment", null);
+    myMessageBus = MessageBusFactory.newMessageBus("CoreProjectEnvironment");
 
     PsiModificationTrackerImpl modificationTracker = new PsiModificationTrackerImpl(myProject);
     myProject.registerService(PsiModificationTracker.class, modificationTracker);

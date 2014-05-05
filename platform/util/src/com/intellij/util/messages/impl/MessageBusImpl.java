@@ -50,15 +50,6 @@ public class MessageBusImpl implements MessageBus {
   private final ThreadLocal<Queue<DeliveryJob>> myMessageQueue = createThreadLocalQueue();
 
   /**
-   * Holds the counts of pending messages for all message buses in the hierarchy
-   * This field is null for non-root buses
-   * The map's keys are sorted by {@link #myOrder}
-   *
-   * Used to avoid traversing the whole hierarchy when there are no messages to be sent in most of it
-   */
-  private final ThreadLocal<SortedMap<MessageBusImpl, Integer>> myWaitingBuses;
-
-  /**
    * Root's order is empty
    * Child bus's order is its parent order plus one more element, an int that's bigger than that of all sibling buses that come before
    * Sorting by these vectors lexicographically gives DFS order
@@ -89,22 +80,16 @@ public class MessageBusImpl implements MessageBus {
   private final Object myOwner;
   private boolean myDisposed;
 
-  @SuppressWarnings("UnusedDeclaration")
-  public MessageBusImpl() {
-    this("?", null);
-  }
-
-  public MessageBusImpl(@NotNull Object owner, MessageBus parentBus) {
+  public MessageBusImpl(@NotNull Object owner, @NotNull MessageBus parentBus) {
     myOwner = owner.toString();
     myParentBus = (MessageBusImpl)parentBus;
-    if (myParentBus != null) {
-      myOrder = myParentBus.notifyChildBusCreated(this);
-      LOG.assertTrue(myParentBus.myChildBuses.contains(this));
-      myWaitingBuses = null;
-    } else {
-      myOrder = Collections.emptyList();
-      myWaitingBuses = new ThreadLocal<SortedMap<MessageBusImpl, Integer>>();
-    }
+    myOrder = myParentBus.notifyChildBusCreated(this);
+    LOG.assertTrue(myParentBus.myChildBuses.contains(this));
+  }
+
+  private MessageBusImpl(Object owner) {
+    myOwner = owner.toString();
+    myOrder = Collections.emptyList();
   }
 
   @Override
@@ -113,8 +98,12 @@ public class MessageBusImpl implements MessageBus {
   }
 
   @NotNull
-  private MessageBusImpl getRootBus() {
-    return myParentBus != null ? myParentBus.getRootBus() : this;
+  private RootBus getRootBus() {
+    return myParentBus != null ? myParentBus.getRootBus() : asRoot();
+  }
+
+  private RootBus asRoot() {
+    return (RootBus)this;
   }
 
   private List<Integer> notifyChildBusCreated(final MessageBusImpl childBus) {
@@ -227,7 +216,7 @@ public class MessageBusImpl implements MessageBus {
       myParentBus.notifyChildBusDisposed(this);
       myParentBus = null;
     } else {
-      myWaitingBuses.remove();
+      asRoot().myWaitingBuses.remove();
     }
     myDisposed = true;
   }
@@ -304,7 +293,7 @@ public class MessageBusImpl implements MessageBus {
       myParentBus.pumpMessages();
     }
     else {
-      Map<MessageBusImpl, Integer> map = myWaitingBuses.get();
+      Map<MessageBusImpl, Integer> map = asRoot().myWaitingBuses.get();
       if (map != null) {
         Set<MessageBusImpl> buses = map.keySet();
         if (!buses.isEmpty()) {
@@ -339,7 +328,7 @@ public class MessageBusImpl implements MessageBus {
     getRootBus().clearSubscriberCache();
   }
 
-  private void clearSubscriberCache() {
+  void clearSubscriberCache() {
     mySubscriberCache.clear();
     for (MessageBusImpl bus : myChildBuses) {
       bus.clearSubscriberCache();
@@ -379,5 +368,20 @@ public class MessageBusImpl implements MessageBus {
         return new ConcurrentLinkedQueue<T>();
       }
     };
+  }
+
+  public static class RootBus extends MessageBusImpl {
+    /**
+     * Holds the counts of pending messages for all message buses in the hierarchy
+     * This field is null for non-root buses
+     * The map's keys are sorted by {@link #myOrder}
+     *
+     * Used to avoid traversing the whole hierarchy when there are no messages to be sent in most of it
+     */
+    private final ThreadLocal<SortedMap<MessageBusImpl, Integer>> myWaitingBuses = new ThreadLocal<SortedMap<MessageBusImpl, Integer>>();
+
+    public RootBus(@NotNull Object owner) {
+      super(owner);
+    }
   }
 }

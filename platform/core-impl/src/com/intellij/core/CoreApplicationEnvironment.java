@@ -57,7 +57,7 @@ import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
-import com.intellij.util.messages.impl.MessageBusImpl;
+import com.intellij.util.messages.MessageBusFactory;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.MutablePicoContainer;
 
@@ -105,7 +105,7 @@ public class CoreApplicationEnvironment {
     }, null));
 
     VirtualFileSystem[] fs = {myLocalFileSystem, myJarFileSystem};
-    VirtualFileManagerImpl virtualFileManager = new VirtualFileManagerImpl(fs, new MessageBusImpl(myApplication, null));
+    VirtualFileManagerImpl virtualFileManager = new VirtualFileManagerImpl(fs, MessageBusFactory.newMessageBus(myApplication));
     registerComponentInstance(appContainer, VirtualFileManager.class, virtualFileManager);
 
     registerApplicationService(VirtualFilePointerManager.class, createVirtualFilePointerManager());

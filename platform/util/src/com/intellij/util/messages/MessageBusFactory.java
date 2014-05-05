@@ -21,15 +21,16 @@ package com.intellij.util.messages;
 
 import com.intellij.util.messages.impl.MessageBusImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class MessageBusFactory {
   private MessageBusFactory() {}
 
   public static MessageBus newMessageBus(@NotNull Object owner) {
-    return new MessageBusImpl(owner, null);
+    return new MessageBusImpl.RootBus(owner);
   }
 
-  public static MessageBus newMessageBus(@NotNull Object owner, MessageBus parentBus) {
-    return new MessageBusImpl(owner, parentBus);
+  public static MessageBus newMessageBus(@NotNull Object owner, @Nullable MessageBus parentBus) {
+    return parentBus == null ? newMessageBus(owner) : new MessageBusImpl(owner, parentBus);
   }
 }
