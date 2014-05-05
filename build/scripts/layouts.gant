@@ -621,74 +621,66 @@ def reorder(String home, String targetDirectory) {
 
 def layoutAndroid(String androidHome) {
   dir("plugins") {
-    layoutPlugin("android") {
-      fileset(dir: "${androidHome}/android/lib") {
-        include(name: "**/*.jar")
-        exclude(name: "**/ddmlib_1.jar")
-        exclude(name: "src/*.jar")
-      }
-
-      jar("android-common.jar") {
-        module("android-common")
-      }
-
-      jar("android-rt.jar") {
-        module("android-rt")
-      }
-
-      jar("common.jar") {
-        module("common")
-      }
-      jar("sdklib.jar") {
-        module("sdklib")
-      }
-      jar("layoutlib-api.jar") {
-        module("layoutlib-api")
-      }
-      jar("manifest-merger.jar") {
-        module("manifest-merger")
-      }
-      jar("sdk-tools.jar") {
-        module("assetstudio")
-        module("ddmlib")
-        module("dvlib")
-        module("draw9patch")
-        module("lint-api")
-        module("lint-checks")
-        module("ninepatch")
-        module("sdk-common")
-        module("perflib")
-      }
-      jar("androidAnnotations.jar") {
-        fileset(dir: "$androidHome/android/annotations")
-      }
-      dir("jps") {
-        jar("android-gradle-jps.jar") { module("android-gradle-jps") }
-      }
-      dir("device-art-resources") {
-        fileset(dir: "$androidHome/android/device-art-resources")
-      }
-
-      dir("jps") {
-        jar("android-jps-plugin.jar") { module("android-jps-plugin") }
-      }
-      dir("templates") {
-        fileset(dir: "$androidHome/tools-base/templates")
-      }
-    }
-
     pluginDir("android") {
       dir("lib") {
-        jar("resources_en.jar") {
-          module("ui-designer-core") {
-            patternset(refid: "resources.included")
-          }
+        jar("android.jar") {
+          noResources("android")
+          noResources("ui-designer-core")
         }
-        jar("ui-designer-core.jar") {
-          module("ui-designer-core") {
-            patternset(refid: "resources.excluded")
-          }
+        fileset(dir: "${androidHome}/android/lib") {
+          include(name: "**/*.jar")
+          exclude(name: "**/ddmlib_1.jar")
+          exclude(name: "src/*.jar")
         }
+
+        jar("android-common.jar") {
+          module("android-common")
+        }
+
+        jar("android-rt.jar") {
+          module("android-rt")
+        }
+
+        jar("common.jar") {
+          module("common")
+        }
+        jar("sdklib.jar") {
+          module("sdklib")
+        }
+        jar("layoutlib-api.jar") {
+          module("layoutlib-api")
+        }
+        jar("manifest-merger.jar") {
+          module("manifest-merger")
+        }
+        jar("sdk-tools.jar") {
+          module("assetstudio")
+          module("ddmlib")
+          module("dvlib")
+          module("draw9patch")
+          module("lint-api")
+          module("lint-checks")
+          module("ninepatch")
+          module("sdk-common")
+          module("perflib")
+        }
+        jar("androidAnnotations.jar") {
+          fileset(dir: "$androidHome/android/annotations")
+        }
+        dir("jps") {
+          jar("android-gradle-jps.jar") { module("android-gradle-jps") }
+        }
+        dir("device-art-resources") {
+          fileset(dir: "$androidHome/android/device-art-resources")
+        }
+
+        dir("jps") {
+          jar("android-jps-plugin.jar") { module("android-jps-plugin") }
+        }
+        dir("templates") {
+          fileset(dir: "$androidHome/tools-base/templates")
+        }
+        resources(["android", "ui-designer-core"])
       }
     }
   }
