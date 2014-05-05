@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -529,8 +529,6 @@ public class FileWatcher {
       notifyOnEvent();
     }
 
-    private int myChangeRequests, myFilteredRequests;
-
     private void processChange(String path, WatcherOp op) {
       if (SystemInfo.isWindows && op == WatcherOp.RECDIRTY && path.length() == 3 && Character.isLetter(path.charAt(0))) {
         VirtualFile root = LocalFileSystem.getInstance().findFileByPath(path);
@@ -547,23 +545,15 @@ public class FileWatcher {
         // collapse subsequent change file change notifications that happen once we copy large file,
         // this allows reduction of path checks at least 20% for Windows
         synchronized (myLock) {
-          ++myChangeRequests;
-
-          // TODO: remove logging once finalized
-          if ((myChangeRequests & 0x3fff) == 0) {
-            LOG.info("Change requests:" + myChangeRequests + ", filtered:" + myFilteredRequests);
-          }
-
-          for(int i = 0; i < myLastChangedPaths.length; ++i) {
+          for (int i = 0; i < myLastChangedPaths.length; ++i) {
             int last = myLastChangedPathIndex - i - 1;
             if (last < 0) last += myLastChangedPaths.length;
             String lastChangedPath = myLastChangedPaths[last];
             if (lastChangedPath != null && lastChangedPath.equals(path)) {
-              ++myFilteredRequests;
               return;
             }
           }
-          myLastChangedPaths[myLastChangedPathIndex ++] = path;
+          myLastChangedPaths[myLastChangedPathIndex++] = path;
           if (myLastChangedPathIndex == myLastChangedPaths.length) myLastChangedPathIndex = 0;
         }
       }

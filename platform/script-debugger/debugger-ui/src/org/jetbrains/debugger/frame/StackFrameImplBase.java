@@ -3,7 +3,6 @@ package org.jetbrains.debugger.frame;
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XStackFrame;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +29,8 @@ public abstract class StackFrameImplBase extends XStackFrame {
   protected abstract XDebuggerEvaluator createEvaluator();
 
   @Override
-  public XSourcePosition getSourcePosition() {
+  @Nullable
+  public SourceInfo getSourcePosition() {
     return sourceInfo;
   }
 
