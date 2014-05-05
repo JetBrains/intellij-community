@@ -30,8 +30,9 @@ public class SuspiciousMethodCallUtil {
                                   GlobalSearchScope searchScope,
                                   List<PsiMethod> patternMethods,
                                   IntArrayList indices) {
+    final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(manager.getProject());
     final PsiClass
-      collectionClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_UTIL_COLLECTION, searchScope);
+      collectionClass = javaPsiFacade.findClass(CommonClassNames.JAVA_UTIL_COLLECTION, searchScope);
     PsiType[] javaLangObject = {PsiType.getJavaLangObject(manager, searchScope)};
     MethodSignature removeSignature = MethodSignatureUtil
       .createMethodSignature("remove", javaLangObject, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
@@ -43,7 +44,7 @@ public class SuspiciousMethodCallUtil {
       addMethod(contains, 0, patternMethods, indices);
     }
 
-    final PsiClass listClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_UTIL_LIST, searchScope);
+    final PsiClass listClass = javaPsiFacade.findClass(CommonClassNames.JAVA_UTIL_LIST, searchScope);
     if (listClass != null) {
       MethodSignature indexofSignature = MethodSignatureUtil.createMethodSignature("indexOf", javaLangObject, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
       PsiMethod indexof = MethodSignatureUtil.findMethodBySignature(listClass, indexofSignature, false);
@@ -53,7 +54,7 @@ public class SuspiciousMethodCallUtil {
       addMethod(lastindexof, 0, patternMethods, indices);
     }
 
-    final PsiClass mapClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_UTIL_MAP, searchScope);
+    final PsiClass mapClass = javaPsiFacade.findClass(CommonClassNames.JAVA_UTIL_MAP, searchScope);
     if (mapClass != null) {
       PsiMethod remove = MethodSignatureUtil.findMethodBySignature(mapClass, removeSignature, false);
       addMethod(remove, 0, patternMethods, indices);
@@ -66,6 +67,13 @@ public class SuspiciousMethodCallUtil {
       MethodSignature containsValueSignature = MethodSignatureUtil.createMethodSignature("containsValue", javaLangObject, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
       PsiMethod containsValue = MethodSignatureUtil.findMethodBySignature(mapClass, containsValueSignature, false);
       addMethod(containsValue, 1, patternMethods, indices);
+    }
+
+    final PsiClass concurrentMapClass = javaPsiFacade.findClass(CommonClassNames.JAVA_UTIL_CONCURRENT_HASH_MAP, searchScope);
+    if (concurrentMapClass != null) {
+      MethodSignature containsSignature = MethodSignatureUtil.createMethodSignature("contains", javaLangObject, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
+      PsiMethod contains = MethodSignatureUtil.findMethodBySignature(concurrentMapClass, containsSignature, false);
+      addMethod(contains, 1, patternMethods, indices);
     }
   }
 
