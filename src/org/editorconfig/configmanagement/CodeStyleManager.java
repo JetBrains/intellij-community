@@ -148,7 +148,9 @@ public class CodeStyleManager extends FileEditorManagerAdapter implements Window
 
     private boolean applyIndentSize(final CommonCodeStyleSettings.IndentOptions indentOptions, final String indentSize) {
         try {
-            indentOptions.INDENT_SIZE = Integer.parseInt(indentSize);
+            int indent = Integer.parseInt(indentSize);
+            indentOptions.INDENT_SIZE = indent;
+            indentOptions.CONTINUATION_INDENT_SIZE = indent;
             return true;
         } catch (NumberFormatException e) {
             return false;
