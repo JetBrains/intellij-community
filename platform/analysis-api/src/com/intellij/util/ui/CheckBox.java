@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,9 +40,9 @@ public class CheckBox extends JCheckBox {
     private static boolean getPropertyValue(InspectionProfileEntry owner,
                                             String property) {
         try {
-            final Class<? extends InspectionProfileEntry> aClass =
-                    owner.getClass();
-            final Field field = aClass.getField(property);
+            final Class<? extends InspectionProfileEntry> aClass = owner.getClass();
+            final Field field = aClass.getDeclaredField(property);
+            field.setAccessible(true);
             return field.getBoolean(owner);
         } catch (IllegalAccessException ignore) {
             return false;
@@ -73,9 +73,9 @@ public class CheckBox extends JCheckBox {
                                              String property,
                                              boolean selected) {
             try {
-                final Class<? extends InspectionProfileEntry> aClass =
-                        owner.getClass();
-                final Field field = aClass.getField(property);
+                final Class<? extends InspectionProfileEntry> aClass = owner.getClass();
+                final Field field = aClass.getDeclaredField(property);
+                field.setAccessible(true);
                 field.setBoolean(owner, selected);
             } catch (IllegalAccessException ignore) {
                 // do nothing
