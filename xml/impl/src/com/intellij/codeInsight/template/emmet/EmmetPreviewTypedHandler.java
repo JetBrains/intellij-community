@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.template.emmet;
 
+import com.intellij.application.options.emmet.EmmetOptions;
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.Template;
@@ -50,38 +51,40 @@ import java.util.Map;
 public class EmmetPreviewTypedHandler extends TypedHandlerDelegate {
   @Override
   public Result charTyped(char c, @NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
-    EmmetPreviewHint existingBalloon = EmmetPreviewHint.getExistingHint(editor);
-    if (existingBalloon == null) {
-      String templateText = calculateTemplateText(editor, file);
-      if (!StringUtil.isEmpty(templateText)) {
-        EmmetPreviewHint previewBalloon = EmmetPreviewHint.createHint(editor, templateText, file.getFileType());
-        previewBalloon.showHint();
-        
-        editor.getDocument().addDocumentListener(new DocumentAdapter() {
-          @Override
-          public void documentChanged(@NotNull DocumentEvent e) {
-            EmmetPreviewHint existingHint = EmmetPreviewHint.getExistingHint(editor);
-            if (existingHint != null) {
-              existingHint.updateText(calculateTemplateText(editor, file));
+    if (EmmetOptions.getInstance().isPreviewEnabled()) {
+      EmmetPreviewHint existingBalloon = EmmetPreviewHint.getExistingHint(editor);
+      if (existingBalloon == null) {
+        String templateText = calculateTemplateText(editor, file);
+        if (!StringUtil.isEmpty(templateText)) {
+          EmmetPreviewHint previewBalloon = EmmetPreviewHint.createHint(editor, templateText, file.getFileType());
+          previewBalloon.showHint();
+          
+          editor.getDocument().addDocumentListener(new DocumentAdapter() {
+            @Override
+            public void documentChanged(@NotNull DocumentEvent e) {
+              EmmetPreviewHint existingHint = EmmetPreviewHint.getExistingHint(editor);
+              if (existingHint != null) {
+                existingHint.updateText(calculateTemplateText(editor, file));
+              }
+              else {
+                e.getDocument().removeDocumentListener(this);
+              }
             }
-            else {
-              e.getDocument().removeDocumentListener(this);
+          });
+  
+          editor.getCaretModel().addCaretListener(new CaretAdapter() {
+            @Override
+            public void caretPositionChanged(@NotNull CaretEvent e) {
+              EmmetPreviewHint existingHint = EmmetPreviewHint.getExistingHint(e.getEditor());
+              if (existingHint != null) {
+                existingHint.updateText(calculateTemplateText(editor, file));
+              }
+              else {
+                e.getEditor().getCaretModel().removeCaretListener(this);
+              }
             }
-          }
-        });
-
-        editor.getCaretModel().addCaretListener(new CaretAdapter() {
-          @Override
-          public void caretPositionChanged(@NotNull CaretEvent e) {
-            EmmetPreviewHint existingHint = EmmetPreviewHint.getExistingHint(e.getEditor());
-            if (existingHint != null) {
-              existingHint.updateText(calculateTemplateText(editor, file));
-            }
-            else {
-              e.getEditor().getCaretModel().removeCaretListener(this);
-            }
-          }
-        });
+          });
+        }
       }
     }
 
