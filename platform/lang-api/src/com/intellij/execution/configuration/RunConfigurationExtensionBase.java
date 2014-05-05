@@ -107,7 +107,8 @@ public abstract class RunConfigurationExtensionBase<T extends RunConfigurationBa
    * @throws ExecutionException if there was an error configuring the command line and the execution should be canceled.
    */
   protected abstract void patchCommandLine(@NotNull final T configuration,
-                                           RunnerSettings runnerSettings, @NotNull final GeneralCommandLine cmdLine,
+                                           @Nullable RunnerSettings runnerSettings, 
+                                           @NotNull final GeneralCommandLine cmdLine,
                                            @NotNull final String runnerId) throws ExecutionException;
 
   /**
@@ -119,7 +120,7 @@ public abstract class RunConfigurationExtensionBase<T extends RunConfigurationBa
    */
   protected void attachToProcess(@NotNull final T configuration,
                                  @NotNull final ProcessHandler handler,
-                                 RunnerSettings runnerSettings) {
+                                 @Nullable RunnerSettings runnerSettings) {
 
   }
 
