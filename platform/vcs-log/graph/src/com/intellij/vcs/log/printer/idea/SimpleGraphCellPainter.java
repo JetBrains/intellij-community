@@ -79,20 +79,20 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
 
   private void paintDownArrow(int position, Color color) {
     int x0 = PrintParameters.WIDTH_NODE * position + PrintParameters.WIDTH_NODE / 2;
-    int y0 = PrintParameters.HEIGHT_CELL / 2;
     int r = PrintParameters.CIRCLE_RADIUS;
+    int y0 = PrintParameters.HEIGHT_CELL - r - 2;
     g2.setColor(color);
-    g2.drawLine(x0, y0, x0, y0 + r);
+    g2.drawLine(x0, PrintParameters.HEIGHT_CELL / 2, x0, y0 + r);
     g2.drawLine(x0, y0 + r, x0 + r, y0);
     g2.drawLine(x0, y0 + r, x0 - r, y0);
   }
 
   private void paintUpArrow(int position, Color color) {
     int x0 = PrintParameters.WIDTH_NODE * position + PrintParameters.WIDTH_NODE / 2;
-    int y0 = PrintParameters.HEIGHT_CELL / 2;
     int r = PrintParameters.CIRCLE_RADIUS;
+    int y0 = r + 2;
     g2.setColor(color);
-    g2.drawLine(x0, y0, x0, y0 - r);
+    g2.drawLine(x0, PrintParameters.HEIGHT_CELL / 2, x0, y0 - r);
     g2.drawLine(x0, y0 - r, x0 + r, y0);
     g2.drawLine(x0, y0 - r, x0 - r, y0);
   }
@@ -208,10 +208,13 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   public PrintElement mouseOver(@NotNull Collection<PrintElement> printElements, int x, int y) {
     for (PrintElement printElement : printElements) {
       if (printElement instanceof SimplePrintElement) {
-        if (PositionUtil.overNode(printElement.getPositionInCurrentRow(), x, y)) {
+        if (PositionUtil.overNode(printElement.getPositionInCurrentRow(), x, y, ((SimplePrintElement)printElement).getType())) {
           return printElement;
         }
       }
+    }
+
+    for (PrintElement printElement : printElements) {
       if (printElement instanceof EdgePrintElement) {
         EdgePrintElement edgePrintElement = (EdgePrintElement)printElement;
         if (edgePrintElement.getType() == EdgePrintElement.Type.DOWN) {
