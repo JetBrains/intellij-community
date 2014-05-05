@@ -29,6 +29,7 @@ public abstract class StackFrameImplBase extends XStackFrame {
   protected abstract XDebuggerEvaluator createEvaluator();
 
   @Override
+  @Nullable
   public SourceInfo getSourcePosition() {
     return sourceInfo;
   }
