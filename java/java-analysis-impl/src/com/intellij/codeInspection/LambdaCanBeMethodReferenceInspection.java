@@ -91,6 +91,8 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
                                                                  PsiType functionalInterfaceType) {
     PsiCallExpression methodCall = extractMethodCallFromBlock(body);
 
+    if (methodCall instanceof PsiNewExpression && ((PsiNewExpression)methodCall).getAnonymousClass() != null) return null;
+
     if (methodCall != null) {
       final PsiExpressionList argumentList = methodCall.getArgumentList();
       if (argumentList != null) {
@@ -102,7 +104,6 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
         if (psiMethod == null) {
           isConstructor = true;
           if (!(methodCall instanceof PsiNewExpression)) return null;
-          if (((PsiNewExpression)methodCall).getAnonymousClass() != null) return null;
           final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)methodCall).getClassOrAnonymousClassReference();
           if (classReference == null) return null;
           containingClass = (PsiClass)classReference.resolve();
