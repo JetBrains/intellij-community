@@ -257,6 +257,23 @@ public class EclipseCodeStyleSchemeImporter implements SchemeImporter<CodeStyleS
         commonSettings.KEEP_BLANK_LINES_IN_DECLARATIONS = intValue;
         commonSettings.KEEP_BLANK_LINES_BEFORE_RBRACE = intValue;
       }
+      else if (OPTION_SPACE_AFTER_CLOSING_BRACE_IN_BLOCK.equals(key)) {
+        boolean insertSpace = valueToBoolean(key, value);
+        commonSettings.SPACE_BEFORE_ELSE_KEYWORD = insertSpace;
+        commonSettings.SPACE_BEFORE_CATCH_KEYWORD = insertSpace;
+        commonSettings.SPACE_BEFORE_FINALLY_KEYWORD = insertSpace;
+      }
+      else if (OPTION_SPACE_BEFORE_OPENING_BRACE_IN_BLOCK.equals(key)) {
+        boolean insertSpace = valueToBoolean(key, value);
+        commonSettings.SPACE_BEFORE_IF_LBRACE = insertSpace;
+        commonSettings.SPACE_BEFORE_FOR_LBRACE = insertSpace;
+        commonSettings.SPACE_BEFORE_WHILE_LBRACE = insertSpace;
+        commonSettings.SPACE_BEFORE_DO_LBRACE = insertSpace;
+        commonSettings.SPACE_BEFORE_TRY_LBRACE = insertSpace;
+        commonSettings.SPACE_BEFORE_CATCH_LBRACE = insertSpace;
+        commonSettings.SPACE_BEFORE_FINALLY_LBRACE = insertSpace;
+        commonSettings.SPACE_BEFORE_SYNCHRONIZED_LBRACE = insertSpace;
+      }
     }
     else if (object instanceof CommonCodeStyleSettings.IndentOptions) {
       CommonCodeStyleSettings.IndentOptions indentOptions = (CommonCodeStyleSettings.IndentOptions)object;

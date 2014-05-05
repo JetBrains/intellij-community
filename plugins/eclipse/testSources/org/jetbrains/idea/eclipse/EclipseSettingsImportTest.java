@@ -129,6 +129,20 @@ public class EclipseSettingsImportTest extends PlatformTestCase {
     indentOptions.SMART_TABS = false;
     indentOptions.TAB_SIZE = 3;
     settings.FORMATTER_TAGS_ENABLED = false;
+    javaSettings.SPACE_BEFORE_ELSE_KEYWORD = false;
+    javaSettings.SPACE_BEFORE_FINALLY_KEYWORD = false;
+    javaSettings.SPACE_BEFORE_CATCH_KEYWORD = false;
+    javaSettings.SPACE_BEFORE_IF_LBRACE = false;
+    javaSettings.SPACE_BEFORE_FOR_LBRACE = false;
+    javaSettings.SPACE_BEFORE_WHILE_LBRACE = false;
+    javaSettings.SPACE_BEFORE_DO_LBRACE = false;
+    javaSettings.SPACE_BEFORE_TRY_LBRACE = false;
+    javaSettings.SPACE_BEFORE_CATCH_LBRACE = false;
+    javaSettings.SPACE_BEFORE_FINALLY_LBRACE = false;
+    javaSettings.SPACE_BEFORE_SYNCHRONIZED_LBRACE = false;
+    javaSettings.SPACE_BEFORE_METHOD_LBRACE = false;
+    javaSettings.SPACE_BEFORE_CLASS_LBRACE = false;
+    javaSettings.SPACE_BEFORE_ANOTATION_PARAMETER_LIST = true;
 
     InputStream inputStream = new FileInputStream(input);
     try {
@@ -229,6 +243,20 @@ public class EclipseSettingsImportTest extends PlatformTestCase {
       assertEquals(5, javaSettings.KEEP_BLANK_LINES_IN_CODE);
       assertEquals(5, javaSettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
       assertEquals(5, javaSettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
+      assertTrue(javaSettings.SPACE_BEFORE_ELSE_KEYWORD);
+      assertTrue(javaSettings.SPACE_BEFORE_FINALLY_KEYWORD);
+      assertTrue(javaSettings.SPACE_BEFORE_CATCH_KEYWORD);
+      assertTrue(javaSettings.SPACE_BEFORE_IF_LBRACE);
+      assertTrue(javaSettings.SPACE_BEFORE_FOR_LBRACE);
+      assertTrue(javaSettings.SPACE_BEFORE_WHILE_LBRACE);
+      assertTrue(javaSettings.SPACE_BEFORE_DO_LBRACE);
+      assertTrue(javaSettings.SPACE_BEFORE_TRY_LBRACE);
+      assertTrue(javaSettings.SPACE_BEFORE_CATCH_LBRACE);
+      assertTrue(javaSettings.SPACE_BEFORE_FINALLY_LBRACE);
+      assertTrue(javaSettings.SPACE_BEFORE_SYNCHRONIZED_LBRACE);
+      assertTrue(javaSettings.SPACE_BEFORE_METHOD_LBRACE);
+      assertTrue(javaSettings.SPACE_BEFORE_CLASS_LBRACE);
+      assertFalse(javaSettings.SPACE_BEFORE_ANOTATION_PARAMETER_LIST);
     }
     finally {
       inputStream.close();
