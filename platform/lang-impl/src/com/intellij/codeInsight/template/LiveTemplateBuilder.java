@@ -36,7 +36,7 @@ public class LiveTemplateBuilder {
   private final StringBuilder myText = new StringBuilder();
   private final List<Variable> myVariables = new ArrayList<Variable>();
   private final Set<String> myVarNames = new HashSet<String>();
-  private final List<VarOccurence> myVariableOccurences = new ArrayList<VarOccurence>();
+  private final List<VarOccurence> myVariableOccurrences = new ArrayList<VarOccurence>();
   private final List<Marker> myMarkers = new ArrayList<Marker>();
   private final int mySegmentLimit;
   private String myLastEndVarName;
@@ -75,7 +75,7 @@ public class LiveTemplateBuilder {
   }
 
   public boolean findVarOccurence(String name) {
-    for (VarOccurence occurence : myVariableOccurences) {
+    for (VarOccurence occurence : myVariableOccurrences) {
       if (occurence.myName.equals(name)) {
         return true;
       }
@@ -97,7 +97,7 @@ public class LiveTemplateBuilder {
       }
       if (myLastEndVarName != null) {
         int endOffset = -1;
-        Iterator<VarOccurence> it = myVariableOccurences.iterator();
+        Iterator<VarOccurence> it = myVariableOccurrences.iterator();
         while (it.hasNext()) {
           VarOccurence occurence = it.next();
           if (occurence.myName.equals(myLastEndVarName)) {
@@ -113,7 +113,7 @@ public class LiveTemplateBuilder {
               it1.remove();
             }
           }
-          myVariableOccurences.add(new VarOccurence(TemplateImpl.END, endOffset));
+          myVariableOccurrences.add(new VarOccurence(TemplateImpl.END, endOffset));
         }
       }
     }
@@ -122,7 +122,7 @@ public class LiveTemplateBuilder {
       template.addVariable(variable.getName(), variable.getExpressionString(), variable.getDefaultValueString(), variable.isAlwaysStopAt());
     }
 
-    List<VarOccurence> variableOccurrences = getListWithLimit(myVariableOccurences);
+    List<VarOccurence> variableOccurrences = getListWithLimit(myVariableOccurrences);
     Collections.sort(variableOccurrences, new Comparator<VarOccurence>() {
       @Override
       public int compare(VarOccurence o1, VarOccurence o2) {
@@ -157,7 +157,7 @@ public class LiveTemplateBuilder {
   public void insertText(int offset, String text, boolean disableEndVariable) {
     if (disableEndVariable) {
       String varName = null;
-      for (VarOccurence occurence : myVariableOccurences) {
+      for (VarOccurence occurence : myVariableOccurrences) {
         if (!isEndVariable(occurence.myName)) {
           continue;
         }
@@ -177,7 +177,7 @@ public class LiveTemplateBuilder {
       }
     }
     int delta = text.length();
-    for (VarOccurence occurence : myVariableOccurences) {
+    for (VarOccurence occurence : myVariableOccurrences) {
       if (occurence.myOffset > offset || !disableEndVariable && occurence.myOffset == offset) {
         occurence.myOffset += delta;
       }
@@ -264,7 +264,7 @@ public class LiveTemplateBuilder {
         if (newVarNames.containsKey(segmentName)) {
           segmentName = newVarNames.get(segmentName);
         }
-        myVariableOccurences.add(new VarOccurence(segmentName, offset + localOffset));
+        myVariableOccurrences.add(new VarOccurence(segmentName, offset + localOffset));
       }
     }
     int endOffset = end >= 0 ? end : offset + text.length();
@@ -275,13 +275,13 @@ public class LiveTemplateBuilder {
       myLastEndVarName = generateUniqueVarName(myVarNames, true);
       myVariables.add(new Variable(myLastEndVarName, "", "", true));
       myVarNames.add(myLastEndVarName);
-      myVariableOccurences.add(new VarOccurence(myLastEndVarName, endOffset));
+      myVariableOccurrences.add(new VarOccurence(myLastEndVarName, endOffset));
     }
     return endOffset;
   }
 
   private void removeEndVarAtOffset(int offset) {
-    for (Iterator<VarOccurence> it = myVariableOccurences.iterator(); it.hasNext();) {
+    for (Iterator<VarOccurence> it = myVariableOccurrences.iterator(); it.hasNext();) {
       VarOccurence occurence = it.next();
       if (!isEndVariable(occurence.myName)) {
         continue;
@@ -300,7 +300,7 @@ public class LiveTemplateBuilder {
 
   private boolean hasVarAtOffset(int offset) {
     boolean flag = false;
-    for (VarOccurence occurence : myVariableOccurences) {
+    for (VarOccurence occurence : myVariableOccurrences) {
       if (occurence.myOffset == offset) {
         flag = true;
       }
