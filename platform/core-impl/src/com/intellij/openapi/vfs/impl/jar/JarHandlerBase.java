@@ -17,16 +17,12 @@ package com.intellij.openapi.vfs.impl.jar;
 
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
-import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.util.io.FileSystemUtil;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.TimedReference;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,10 +41,9 @@ public class JarHandlerBase {
   protected static final long DEFAULT_LENGTH = 0L;
   protected static final long DEFAULT_TIMESTAMP = -1L;
 
-  private final TimedReference<JarFile> myJarFile = new TimedReference<JarFile>(null);
+  private final Object myLock = new Object();
   private volatile Reference<Map<String, EntryInfo>> myRelPathsToEntries = new SoftReference<Map<String, EntryInfo>>(null);
   private boolean myCorruptedJar = false;
-  private final Object myLock = new Object();
 
   protected final String myBasePath;
 
@@ -76,34 +71,17 @@ public class JarHandlerBase {
     return originalFile;
   }
 
-  @Nullable
+  /** @deprecated to be removed in IDEA 15 */
+  @SuppressWarnings("deprecation")
   public JarFile getJar() {
-    JarFile jar = myJarFile.get();
-    if (jar == null) {
-      synchronized (myLock) {
-        if (myCorruptedJar) {
-          return null;
-        }
-        jar = myJarFile.get();
-        if (jar == null) {
-          try {
-            jar = createJarFile();
-            myJarFile.set(jar);
-          }
-          catch (IOException e) {
-            myCorruptedJar = true;
-            LOG.warn(e.getMessage() + ": " + myBasePath, e);
-            return null;
-          }
-        }
-      }
+    try {
+      File mirror = getMirrorFile(getOriginalFile());
+      return new MyJarFile(new ZipFile(mirror));
     }
-    return jar;
-  }
-
-  private JarFile createJarFile() throws IOException {
-    File mirrorFile = getMirrorFile(getOriginalFile());
-    return new MyJarFile(new ZipFile(mirrorFile));
+    catch (IOException e) {
+      LOG.warn(e.getMessage() + ": " + myBasePath, e);
+      return null;
+    }
   }
 
   @NotNull
@@ -146,25 +124,34 @@ public class JarHandlerBase {
         map = SoftReference.dereference(myRelPathsToEntries);
 
         if (map == null) {
-          JarFile zip = getJar();
-          if (zip != null) {
+          if (myCorruptedJar) {
+            map = Collections.emptyMap();
+          }
+          else {
             LogUtil.debug(LOG, "mapping %s", myBasePath);
-
             map = new THashMap<String, EntryInfo>();
             map.put("", new EntryInfo(null, "", true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP));
 
-            Enumeration<? extends JarFile.JarEntry> entries = zip.entries();
-            while (entries.hasMoreElements()) {
-              JarFile.JarEntry entry = entries.nextElement();
-              if (entry == null) break;  // corrupted .jar
-              getOrCreate(entry, map, zip);
+            try {
+              ZipFile zip = getZipFile();
+              try {
+                Enumeration<? extends ZipEntry> entries = zip.entries();
+                while (entries.hasMoreElements()) {
+                  getOrCreate(entries.nextElement(), map, zip);
+                }
+              }
+              finally {
+                ZipFileCache.release(zip);
+              }
             }
+            catch (IOException e) {
+              myCorruptedJar = true;
+              LOG.warn(e.getMessage() + ": " + myBasePath, e);
+              map = Collections.emptyMap();
+            }
+          }
 
-            myRelPathsToEntries = new SoftReference<Map<String, EntryInfo>>(Collections.unmodifiableMap(map));
-          }
-          else {
-            map = Collections.emptyMap();
-          }
+          myRelPathsToEntries = new SoftReference<Map<String, EntryInfo>>(Collections.unmodifiableMap(map));
         }
       }
     }
@@ -172,7 +159,13 @@ public class JarHandlerBase {
   }
 
   @NotNull
-  private static EntryInfo getOrCreate(JarFile.JarEntry entry, Map<String, EntryInfo> map, JarFile zip) {
+  private ZipFile getZipFile() throws IOException {
+    File mirror = getMirrorFile(getOriginalFile());
+    return ZipFileCache.acquire(mirror.getPath());
+  }
+
+  @NotNull
+  private static EntryInfo getOrCreate(ZipEntry entry, Map<String, EntryInfo> map, ZipFile zip) {
     boolean isDirectory = entry.isDirectory();
     String entryName = entry.getName();
     if (StringUtil.endsWithChar(entryName, '/')) {
@@ -199,11 +192,11 @@ public class JarHandlerBase {
   }
 
   @NotNull
-  private static EntryInfo getOrCreate(String entryName, Map<String, EntryInfo> map, JarFile zip) {
+  private static EntryInfo getOrCreate(String entryName, Map<String, EntryInfo> map, ZipFile zip) {
     EntryInfo info = map.get(entryName);
 
     if (info == null) {
-      JarFile.JarEntry entry = zip.getEntry(entryName + "/");
+      ZipEntry entry = zip.getEntry(entryName + "/");
       if (entry != null) {
         return getOrCreate(entry, map, zip);
       }
@@ -218,8 +211,7 @@ public class JarHandlerBase {
     }
 
     if (!info.isDirectory) {
-      //noinspection ConstantConditions
-      LOG.info(zip.getZipFile().getName() + ": " + entryName + " should be a directory");
+      LOG.info(zip.getName() + ": " + entryName + " should be a directory");
       info = new EntryInfo(info.parent, info.shortName, true, info.length, info.timestamp);
       map.put(entryName, info);
     }
@@ -246,11 +238,9 @@ public class JarHandlerBase {
   }
 
   public boolean exists(@NotNull VirtualFile file) {
-    if (file.getParent() == null) {
-      return myJarFile.get() != null || getOriginalFile().exists();
-    }
-
-    return getEntryInfo(file) != null;
+    if (file.getParent() == null) return getOriginalFile().exists();
+    EntryInfo info = getEntryInfo(file);
+    return info != null;
   }
 
   @Nullable
@@ -271,11 +261,11 @@ public class JarHandlerBase {
 
   @NotNull
   public byte[] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
-    JarFile jar = getJar();
-    if (jar != null) {
-      JarFile.JarEntry entry = jar.getEntry(getRelativePath(file));
+    ZipFile zip = getZipFile();
+    try {
+      ZipEntry entry = zip.getEntry(getRelativePath(file));
       if (entry != null) {
-        InputStream stream = jar.getInputStream(entry);
+        InputStream stream = zip.getInputStream(entry);
         if (stream != null) {
           try {
             return FileUtil.loadBytes(stream, (int)entry.getSize());
@@ -286,9 +276,13 @@ public class JarHandlerBase {
         }
       }
     }
+    finally {
+      ZipFileCache.release(zip);
+    }
     return ArrayUtil.EMPTY_BYTE_ARRAY;
   }
 
+  @SuppressWarnings("deprecation")
   private static class MyJarFile implements JarFile {
     private static class MyJarEntry implements JarFile.JarEntry {
       private final ZipEntry myEntry;
