@@ -51,7 +51,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
   private volatile int remainingChildrenOffset;
 
   public VariableView(@NotNull Variable variable, @NotNull VariableContext context) {
-    super(context.getMemberFilter().normalizeMemberName(variable));
+    super(context.createMemberFilter().normalizeMemberName(variable));
 
     this.context = context;
     this.variable = variable;
@@ -130,8 +130,8 @@ public final class VariableView extends XNamedValue implements VariableContext {
 
   @NotNull
   @Override
-  public MemberFilter getMemberFilter() {
-    return context.getMemberFilter();
+  public MemberFilter createMemberFilter() {
+    return context.getViewSupport().createMemberFilter(context);
   }
 
   @Override

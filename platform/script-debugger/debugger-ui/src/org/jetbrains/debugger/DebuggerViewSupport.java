@@ -49,6 +49,9 @@ public interface DebuggerViewSupport extends MemberFilter {
   @Nullable
   ActionCallback computeAdditionalObjectProperties(@NotNull ObjectValue value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XCompositeNode node);
 
+  @NotNull
+  MemberFilter createMemberFilter(@NotNull VariableContext context);
+
   class BasicDebuggerViewSupport implements DebuggerViewSupport {
     public static final DebuggerViewSupport INSTANCE = new BasicDebuggerViewSupport();
 
@@ -110,6 +113,12 @@ public interface DebuggerViewSupport extends MemberFilter {
     @Override
     public ActionCallback computeAdditionalObjectProperties(@NotNull ObjectValue value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XCompositeNode node) {
       return null;
+    }
+
+    @NotNull
+    @Override
+    public MemberFilter createMemberFilter(@NotNull VariableContext context) {
+      return this;
     }
 
     @Override
