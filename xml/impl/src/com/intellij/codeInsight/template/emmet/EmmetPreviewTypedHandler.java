@@ -112,7 +112,7 @@ public class EmmetPreviewTypedHandler extends TypedHandlerDelegate {
 
           if (!regularTemplateWithSamePrefixExists) {
             // exclude perfect matches with existing templates because LiveTemplateCompletionContributor handles it
-            ZenCodingTemplate.expand(templatePrefix, callback, null, generator, Collections.<ZenCodingFilter>emptyList(), false);
+            ZenCodingTemplate.expand(templatePrefix, callback, null, generator, Collections.<ZenCodingFilter>emptyList(), false, 0);
             TemplateImpl template = generatedTemplate.get();
             String templateText = template != null ? template.getTemplateText() : null;
             if (!StringUtil.isEmpty(templateText)) {
