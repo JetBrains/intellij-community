@@ -1,36 +1,22 @@
 package ru.compscicenter.edide;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ProgramRunnerUtil;
-import com.intellij.execution.RunManager;
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.openapi.diagnostic.Log;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
-import com.jetbrains.python.run.ProcessRunner;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
-import java.util.*;
-import java.util.List;
 
 /**
  * User: lia
- * Date: 26.12.13
- * Time: 14:45
  */
 
 
@@ -45,25 +31,33 @@ public class TaskToolWindowFactory implements ToolWindowFactory{
         //int curTask = TaskManager.getInstance().getCurrentTask();
         nextTask.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
+                FileDocumentManager.getInstance().saveAllDocuments();
                 TaskManager tm = TaskManager.getInstance();
                 String basePath = project.getBasePath();
+                if (basePath == null) return;
                 tm.setCurrentTask(1);
                 String testFile =  basePath +
                         "/.idea/" + tm.getTest(tm.getCurrentTask());
                 String test_runner = basePath +
                         "/.idea/" + "study_utrunner.py";
                 GeneralCommandLine cmd = new GeneralCommandLine();
-                cmd.setWorkDirectory(basePath);
+                cmd.setWorkDirectory(basePath + "/.idea");
                 cmd.setExePath("python");
                 cmd.addParameter(testFile);
                 try {
                     Process p = cmd.createProcess();
+                    InputStream is_err =  p.getErrorStream();
                     InputStream is = p.getInputStream();
                     BufferedReader bf = new BufferedReader(new InputStreamReader(is));
+                    BufferedReader bf_err = new BufferedReader(new InputStreamReader(is_err));
                     String line;
                     while ((line = bf.readLine())!=null) {
                         System.out.println(line);
                     }
+                    while ((line = bf_err.readLine())!=null) {
+                        System.out.println(line);
+                    }
+                    JOptionPane.showMessageDialog(panel, "Some message text", "Message header", JOptionPane.DEFAULT_OPTION );
 
 
                 } catch (ExecutionException e1) {

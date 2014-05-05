@@ -68,7 +68,12 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
         OutputStream os = currentFile.getOutputStream(this);
         PrintWriter printWriter = new PrintWriter(os);
         while (bf.ready()) {
-            printWriter.println(bf.readLine());
+            String line = bf.readLine();
+            if (bf.ready()) {
+                printWriter.println(line);
+            } else {
+                printWriter.print(line);
+            }
         }
         bf.close();
         printWriter.close();
