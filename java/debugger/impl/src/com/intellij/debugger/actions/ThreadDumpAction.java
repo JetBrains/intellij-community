@@ -28,7 +28,6 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.debugger.ui.DebuggerPanelsManager;
 import com.intellij.debugger.ui.DebuggerSessionTab;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -69,13 +68,9 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
             final List<ThreadState> threads = buildThreadStates(vm);
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
-                final DebuggerSessionTab sessionTab = DebuggerPanelsManager.getInstance(project).getSessionTab();
-                if (sessionTab != null) {
-                  sessionTab.addThreadDump(threads, sessionTab.getUi());
-                  XDebugSession xSession = session.getProcess().getXDebugSession();
-                  if (xSession != null) {
-                    sessionTab.addThreadDump(threads, xSession.getUI());
-                  }
+                XDebugSession xSession = session.getProcess().getXDebugSession();
+                if (xSession != null) {
+                  DebuggerSessionTab.addThreadDump(project, threads, xSession.getUI(), session);
                 }
               }
             }, ModalityState.NON_MODAL);
