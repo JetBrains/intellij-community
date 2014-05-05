@@ -147,6 +147,9 @@ public class LiveTemplateBuilder {
   }
 
   private <T> List<T> getListWithLimit(List<T> list) {
+    if (mySegmentLimit == 0) {
+      return Collections.emptyList();
+    }
     if (mySegmentLimit > 0 && list.size() > mySegmentLimit) {
       LOGGER.warn("Template with more than " + mySegmentLimit + " segments had been build (" + list.size() + "). Text: " + myText);
       return list.subList(0, Math.min(list.size(), mySegmentLimit));
