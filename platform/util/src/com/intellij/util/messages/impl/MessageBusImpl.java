@@ -339,8 +339,8 @@ public class MessageBusImpl implements MessageBus {
     for (List<MessageBusConnectionImpl> topicSubscribers : mySubscribers.values()) {
       topicSubscribers.remove(connection);
     }
-    getRootBus().clearSubscriberCache();
     if (myDisposed) return;
+    getRootBus().clearSubscriberCache();
 
     final Iterator<DeliveryJob> i = myMessageQueue.get().iterator();
     while (i.hasNext()) {
