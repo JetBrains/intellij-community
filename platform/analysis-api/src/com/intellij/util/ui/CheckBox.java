@@ -41,7 +41,7 @@ public class CheckBox extends JCheckBox {
                                             String property) {
         try {
             final Class<? extends InspectionProfileEntry> aClass = owner.getClass();
-            final Field field = aClass.getDeclaredField(property);
+            final Field field = getField(aClass, property);
             field.setAccessible(true);
             return field.getBoolean(owner);
         } catch (IllegalAccessException ignore) {
@@ -50,6 +50,19 @@ public class CheckBox extends JCheckBox {
             return false;
         }
     }
+
+  static Field getField(Class clazz, String fieldName) throws NoSuchFieldException {
+    try {
+      return clazz.getDeclaredField(fieldName);
+    } catch (NoSuchFieldException e) {
+      final Class superClass = clazz.getSuperclass();
+      if (superClass == null) {
+        throw e;
+      } else {
+        return getField(superClass, fieldName);
+      }
+    }
+  }
 
     private static class SingleCheckboxChangeListener
             implements ChangeListener {
@@ -74,7 +87,7 @@ public class CheckBox extends JCheckBox {
                                              boolean selected) {
             try {
                 final Class<? extends InspectionProfileEntry> aClass = owner.getClass();
-                final Field field = aClass.getDeclaredField(property);
+                final Field field = getField(aClass, property);
                 field.setAccessible(true);
                 field.setBoolean(owner, selected);
             } catch (IllegalAccessException ignore) {
