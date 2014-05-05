@@ -22,8 +22,8 @@ import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.LoadMoreStage;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +44,7 @@ public class EmptyTableModel extends AbstractVcsLogTableModel<GraphCommitCell> {
   @NotNull
   @Override
   public VirtualFile getRoot(int rowIndex) {
-    return FAKE_ROOT;
+    throw new AssertionError("Root shouldn't be requested for empty table model. row: " + rowIndex);
   }
 
   @NotNull
