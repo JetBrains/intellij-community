@@ -19,8 +19,17 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.EditorTextProvider;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
@@ -62,5 +71,38 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator {
         callback.evaluated(new JavaValue(descriptor, evalContext, myDebugProcess.getXdebugProcess().getNodeManager()));
       }
     });
+  }
+
+  @Nullable
+  @Override
+  public TextRange getExpressionRangeAtOffset(final Project project, final Document document, final int offset, final boolean sideEffectsAllowed) {
+    final Ref<TextRange> currentRange = Ref.create(null);
+    PsiDocumentManager.getInstance(project).commitAndRunReadAction(new Runnable() {
+      @Override
+      public void run() {
+        PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+        if (psiFile == null) {
+          return;
+        }
+        PsiElement elementAtCursor = psiFile.findElementAt(offset);
+        if (elementAtCursor == null) {
+          return;
+        }
+        Pair<PsiElement, TextRange> pair = findExpression(elementAtCursor, sideEffectsAllowed);
+        if (pair != null) {
+          currentRange.set(pair.getSecond());
+        }
+      }
+    });
+    return currentRange.get();
+  }
+
+  @Nullable
+  private static Pair<PsiElement, TextRange> findExpression(PsiElement element, boolean allowMethodCalls) {
+    final EditorTextProvider textProvider = EditorTextProvider.EP.forLanguage(element.getLanguage());
+    if (textProvider != null) {
+      return textProvider.findExpression(element, allowMethodCalls);
+    }
+    return null;
   }
 }
