@@ -253,20 +253,9 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       else if (psiType instanceof PsiClassType) {
         final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)psiType).resolveGenerics();
         final PsiClass psiClass = resolveResult.getElement();
-        final Project project = statement.getProject();
-        final PsiClass iterableClass =
-            JavaPsiFacade.getInstance(project).findClass("java.lang.Iterable", GlobalSearchScope.allScope(project));
-        if (iterableClass == null) return;
-        if (!InheritanceUtil.isInheritorOrSelf(psiClass, iterableClass, true)) {
-          findConversionOrFail(value, value, typeView.getTypePair());
-          return;
-        }
-        final PsiSubstitutor iterableParamSubstitutor =
-            TypeConversionUtil.getClassSubstitutor(iterableClass, psiClass, PsiSubstitutor.EMPTY);
-        LOG.assertTrue(iterableParamSubstitutor != null);
-        final PsiTypeParameter[] typeParameters = iterableClass.getTypeParameters();
-        LOG.assertTrue(typeParameters.length == 1);
-        psiType = resolveResult.getSubstitutor().substitute(iterableParamSubstitutor.substitute(typeParameters[0]));
+        final PsiType targetTypeParameter = getTargetTypeParameter(psiClass, value, typeView);
+        if (targetTypeParameter == null) return;
+        psiType = resolveResult.getSubstitutor().substitute(targetTypeParameter);
         if (psiType instanceof PsiWildcardType) {
           psiType = ((PsiWildcardType)psiType).getExtendsBound();
         }
@@ -283,9 +272,13 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
         } else {
           final PsiClass iterableClass = PsiUtil.resolveClassInType(typeViewType);
           LOG.assertTrue(iterableClass != null);
-          final PsiTypeParameter[] typeParameters = iterableClass.getTypeParameters();
-          LOG.assertTrue(typeParameters.length == 1);
-          final Map<PsiTypeParameter, PsiType> substMap = Collections.singletonMap(typeParameters[0], left.getType());
+
+          final PsiType targetType = getTargetTypeParameter(iterableClass, value, typeView);
+          final PsiClass typeParam = PsiUtil.resolveClassInClassTypeOnly(targetType);
+          if (!(typeParam instanceof PsiTypeParameter)) return;
+
+          final Map<PsiTypeParameter, PsiType> substMap = Collections.singletonMap(((PsiTypeParameter)typeParam), left.getType());
+
           final PsiElementFactory factory = JavaPsiFacade.getElementFactory(iterableClass.getProject());
           iterableType = factory.createType(iterableClass, factory.createSubstitutor(substMap));
         }
@@ -296,6 +289,22 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
     }
   }
 
+  private PsiType getTargetTypeParameter(PsiClass iterableClass, PsiExpression value, TypeView typeView) {
+    final Project project = iterableClass.getProject();
+    final PsiClass itClass =
+      JavaPsiFacade.getInstance(project).findClass("java.lang.Iterable", GlobalSearchScope.allScope(project));
+    if (itClass == null) return null;
+
+    if (!InheritanceUtil.isInheritorOrSelf(iterableClass, itClass, true)) {
+      findConversionOrFail(value, value, typeView.getTypePair());
+      return null;
+    }
+
+    final PsiSubstitutor aSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(itClass, iterableClass, PsiSubstitutor.EMPTY);
+
+    return aSubstitutor.substitute(itClass.getTypeParameters()[0]);
+  }
+  
   @Override
   public void visitNewExpression(final PsiNewExpression expression) {
     super.visitNewExpression(expression);
