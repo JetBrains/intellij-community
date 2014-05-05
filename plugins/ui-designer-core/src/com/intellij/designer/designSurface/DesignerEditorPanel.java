@@ -100,7 +100,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   private final CardLayout myLayout = new CardLayout();
   private final ThreeComponentsSplitter myContentSplitter = new ThreeComponentsSplitter();
   private final JPanel myPanel = new JPanel(myLayout);
-  private JPanel myDesignerCard;
+  private JComponent myDesignerCard;
 
   protected DesignerActionPanel myActionPanel;
 
@@ -182,7 +182,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
     myToolProvider = createToolProvider();
 
-    myGlassLayer = new GlassLayer(myToolProvider, mySurfaceArea);
+    myGlassLayer = createGlassLayer(myToolProvider, mySurfaceArea);
     myLayeredPane.add(myGlassLayer, LAYER_GLASS);
 
     myDecorationLayer = createDecorationLayer();
@@ -194,6 +194,28 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myInplaceEditingLayer = createInplaceEditingLayer();
     myLayeredPane.add(myInplaceEditingLayer, LAYER_INPLACE_EDITING);
 
+    myScrollPane = createScrollPane(myLayeredPane);
+
+    myQuickFixManager = new QuickFixManager(this, myGlassLayer, myScrollPane.getViewport());
+
+    myActionPanel = createActionPanel();
+    myWarnAction = new FixableMessageAction();
+
+    panel.add(myActionPanel.getToolbarComponent());
+    panel.add(myPanel);
+
+    myDesignerCard = createDesignerCardPanel();
+    myPanel.add(myDesignerCard, DESIGNER_CARD);
+
+    mySurfaceArea.addSelectionListener(new ComponentSelectionListener() {
+      @Override
+      public void selectionChanged(EditableArea area) {
+        storeSourceSelectionState();
+      }
+    });
+  }
+
+  protected JComponent createDesignerCardPanel() {
     JPanel content = new JPanel(new GridBagLayout());
 
     GridBagConstraints gbc = new GridBagConstraints();
@@ -218,29 +240,12 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     gbc.weighty = 1;
     gbc.fill = GridBagConstraints.BOTH;
 
-    myScrollPane = createScrollPane(myLayeredPane);
     content.add(myScrollPane, gbc);
 
     myHorizontalCaption.attachToScrollPane(myScrollPane);
     myVerticalCaption.attachToScrollPane(myScrollPane);
 
-    myQuickFixManager = new QuickFixManager(this, myGlassLayer, myScrollPane.getViewport());
-
-    myActionPanel = createActionPanel();
-    myWarnAction = new FixableMessageAction();
-
-    panel.add(myActionPanel.getToolbarComponent());
-    panel.add(myPanel);
-
-    myDesignerCard = content;
-    myPanel.add(myDesignerCard, DESIGNER_CARD);
-
-    mySurfaceArea.addSelectionListener(new ComponentSelectionListener() {
-      @Override
-      public void selectionChanged(EditableArea area) {
-        storeSourceSelectionState();
-      }
-    });
+    return content;
   }
 
   public final ThreeComponentsSplitter getContentSplitter() {
@@ -255,12 +260,16 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     return new DesignerToolProvider();
   }
 
+  protected GlassLayer createGlassLayer(ToolProvider provider, EditableArea area) {
+    return new GlassLayer(provider, area);
+  }
+
   protected DecorationLayer createDecorationLayer() {
     return new DecorationLayer(this, mySurfaceArea);
   }
 
   protected FeedbackLayer createFeedbackLayer() {
-    return new FeedbackLayer();
+    return new FeedbackLayer(this);
   }
 
   protected InplaceEditingLayer createInplaceEditingLayer() {
@@ -300,8 +309,14 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myErrorMessages.removeAll();
     myErrorStack.setText(null);
     myLayeredPane.revalidate();
-    myHorizontalCaption.update();
-    myVerticalCaption.update();
+
+    if (myHorizontalCaption != null) {
+      myHorizontalCaption.update();
+    }
+    if (myVerticalCaption != null) {
+      myVerticalCaption.update();
+    }
+
     myLayout.show(myPanel, DESIGNER_CARD);
   }
 
@@ -458,7 +473,8 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myProgressPanel = new JPanel(new GridBagLayout());
     myProgressPanel.add(progressBlock,
                         new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0),
-                                               0, 0));
+                                               0, 0)
+    );
     myProgressPanel.setOpaque(false);
   }
 
@@ -731,7 +747,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   @NotNull
   public DesignerEditorState createState() {
-    return new DesignerEditorState(myFile);
+    return new DesignerEditorState(myFile, getZoom());
   }
 
   public boolean isEditorValid() {
