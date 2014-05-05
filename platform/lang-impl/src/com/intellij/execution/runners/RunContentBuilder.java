@@ -24,6 +24,7 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.configurations.SearchScopeProvider;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.*;
@@ -36,6 +37,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import org.jetbrains.annotations.NonNls;
@@ -44,8 +46,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
-
-import static com.intellij.execution.configurations.SearchScopeProvider.createSearchScope;
 
 /**
  * @author dyoma
@@ -76,7 +76,7 @@ public class RunContentBuilder extends LogConsoleManagerBase {
   public RunContentBuilder(ProgramRunner runner,
                            ExecutionResult executionResult,
                            @NotNull ExecutionEnvironment environment) {
-    super(environment.getProject(), createSearchScope(environment.getProject(), environment.getRunProfile()));
+    super(environment.getProject(), SearchScopeProvider.createSearchScope(environment.getProject(), environment.getRunProfile()));
     myRunner = runner;
     myExecutor = environment.getExecutor();
     myManager = new LogFilesManager(environment.getProject(), this, this);
@@ -94,6 +94,11 @@ public class RunContentBuilder extends LogConsoleManagerBase {
     myManager = new LogFilesManager(project, this, this);
   }
 
+  @Deprecated
+  @NotNull
+  public static GlobalSearchScope createSearchScope(Project project, RunProfile runProfile) {
+    return SearchScopeProvider.createSearchScope(project, runProfile);
+  }
 
   public ExecutionResult getExecutionResult() {
     return myExecutionResult;
