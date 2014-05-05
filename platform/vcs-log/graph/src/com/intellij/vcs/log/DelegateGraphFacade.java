@@ -42,6 +42,9 @@ public class DelegateGraphFacade implements GraphFacade {
   private final GraphCellPainter myGraphCellPainter;
 
   @NotNull
+  private PermanentGraph.SortType mySortType = PermanentGraph.SortType.Normal;
+
+  @NotNull
   private VisibleGraph<Integer> myVisibleGraph;
 
   @Nullable
@@ -57,7 +60,7 @@ public class DelegateGraphFacade implements GraphFacade {
   }
 
   private void updateVisibleGraph() {
-    myVisibleGraph = myPermanentGraph.setFilter(myHeads, myVisibilityPredicate);
+    myVisibleGraph = myPermanentGraph.createVisibleGraph(mySortType, myHeads, myVisibilityPredicate);
   }
 
   @NotNull
@@ -198,6 +201,12 @@ public class DelegateGraphFacade implements GraphFacade {
   @Override
   public void setFilter(@Nullable Condition<Integer> visibilityPredicate) {
     myVisibilityPredicate = visibilityPredicate;
+    updateVisibleGraph();
+  }
+
+  @Override
+  public void setSortType(@NotNull PermanentGraph.SortType sortType) {
+    mySortType = sortType;
     updateVisibleGraph();
   }
 

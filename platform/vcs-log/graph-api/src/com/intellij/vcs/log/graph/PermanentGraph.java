@@ -32,7 +32,9 @@ import java.util.Set;
 public interface PermanentGraph<CommitId> {
 
   @NotNull
-  VisibleGraph<CommitId> setFilter(@Nullable Set<CommitId> headsOfVisibleBranches, @Nullable Condition<CommitId> filter);
+  VisibleGraph<CommitId> createVisibleGraph(@NotNull SortType sortType,
+                                            @Nullable Set<CommitId> headsOfVisibleBranches,
+                                            @Nullable Condition<CommitId> filter);
 
   @NotNull
   List<GraphCommit<CommitId>> getAllCommits();
@@ -42,4 +44,9 @@ public interface PermanentGraph<CommitId> {
 
   @NotNull
   Set<CommitId> getContainingBranches(@NotNull CommitId commit);
+
+  enum SortType{
+    Normal,
+    Bek
+  }
 }

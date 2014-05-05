@@ -90,7 +90,9 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
 
   @NotNull
   @Override
-  public VisibleGraph<CommitId> setFilter(@Nullable Set<CommitId> headsOfVisibleBranches, @Nullable Condition<CommitId> filter) {
+  public VisibleGraph<CommitId> createVisibleGraph(@NotNull SortType sortType,
+                                                   @Nullable Set<CommitId> headsOfVisibleBranches,
+                                                   @Nullable Condition<CommitId> filter) {
     if (filter == null) {
       return CollapsedVisibleGraph.newInstance(this, headsOfVisibleBranches);
     } else {
