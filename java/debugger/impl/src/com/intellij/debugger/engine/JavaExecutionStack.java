@@ -39,24 +39,17 @@ import java.util.List;
 public class JavaExecutionStack extends XExecutionStack {
   private final ThreadReferenceProxyImpl myThreadProxy;
   private final DebugProcessImpl myDebugProcess;
-  private final JavaStackFrame myTopFrame;
+  private volatile JavaStackFrame myTopFrame;
+  private boolean myTopFrameReady = false;
   private final MethodsTracker myTracker = new MethodsTracker();
 
   public JavaExecutionStack(@NotNull ThreadReferenceProxyImpl threadProxy, @NotNull DebugProcessImpl debugProcess, boolean current) {
     super(calcRepresentation(threadProxy), current ? AllIcons.Debugger.ThreadCurrent : AllIcons.Debugger.ThreadSuspended);
     myThreadProxy = threadProxy;
     myDebugProcess = debugProcess;
-    JavaStackFrame topFrame = null;
-    try {
-      StackFrameProxyImpl frame = myThreadProxy.frame(0);
-      if (frame != null) {
-        topFrame = new JavaStackFrame(frame, myDebugProcess, myTracker);
-      }
+    if (current) {
+      myTopFrame = calcTopFrame();
     }
-    catch (EvaluateException e) {
-      e.printStackTrace();
-    }
-    myTopFrame = topFrame;
   }
 
   @NotNull
@@ -64,9 +57,35 @@ public class JavaExecutionStack extends XExecutionStack {
     return myThreadProxy;
   }
 
+  private JavaStackFrame calcTopFrame() {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    try {
+      StackFrameProxyImpl frame = myThreadProxy.frame(0);
+      if (frame != null) {
+        return new JavaStackFrame(frame, myDebugProcess, myTracker);
+      }
+    }
+    catch (EvaluateException e) {
+      e.printStackTrace();
+    }
+    finally {
+      myTopFrameReady = true;
+    }
+    return null;
+  }
+
   @Nullable
   @Override
   public JavaStackFrame getTopFrame() {
+    if (!myTopFrameReady) {
+      //TODO: remove sync calculation
+      myDebugProcess.getManagerThread().invokeAndWait(new DebuggerCommandImpl() {
+        @Override
+        protected void action() throws Exception {
+          myTopFrame = calcTopFrame();
+        }
+      });
+    }
     return myTopFrame;
   }
 

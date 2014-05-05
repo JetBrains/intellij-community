@@ -254,8 +254,11 @@ public class XFramesView implements XDebugView {
       XStackFrame topFrame = executionStack.getTopFrame();
       if (topFrame != null) {
         myStackFrames.add(topFrame);
+        myNextFrameIndex = 1;
       }
-      myNextFrameIndex = 1;
+      else {
+        myNextFrameIndex = 0;
+      }
     }
 
     @Override
