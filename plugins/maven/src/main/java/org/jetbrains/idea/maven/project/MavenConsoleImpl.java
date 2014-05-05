@@ -77,8 +77,6 @@ public class MavenConsoleImpl extends MavenConsole {
 
   public static TextConsoleBuilder createConsoleBuilder(final Project project) {
     TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
-
-    builder.filters(ExceptionFilters.getFilters(GlobalSearchScope.allScope(project)));
     builder.addFilter(new RegexpFilter(project, CONSOLE_FILTER_REGEXP) {
       @Nullable
       @Override

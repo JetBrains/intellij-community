@@ -460,8 +460,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
 
   public void addThreadDump(List<ThreadState> threads) {
     final Project project = getProject();
-    final TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
-    consoleBuilder.filters(ExceptionFilters.getFilters(myDebuggerSession.getSearchScope()));
+    final TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project, myDebuggerSession.getSearchScope());
     final ConsoleView consoleView = consoleBuilder.getConsole();
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
     consoleView.allowHeavyFilters();
