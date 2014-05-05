@@ -237,11 +237,11 @@ public class ForCanBeForEach {
 
   void indexedList(List<String> l) {
     for (int i = 0, max = l.size(); i < max; i++) {
-
+      System.out.println(l.get(i));
     }
-    for (int i = (0), max = (l.size()); ((max) > (i)); ((i)++) {
-
-    }
+    for (int i = (0), max = (l.size()); ((max) > (i)); (i)++) {
+      System.out.println(l.get(i)); }
+    for (int i = 0; i < l.size(); i++) {}
   }
 
   static class Constants {
