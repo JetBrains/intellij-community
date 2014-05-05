@@ -20,9 +20,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbModeTask;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -192,13 +189,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
         });
       }
     };
-    final DumbModeTask task = new DumbModeTask() {
-      @Override
-      public void performInDumbMode(@NotNull ProgressIndicator indicator) {
-        ApplicationManager.getApplication().runReadAction(updateLanguageLevel);
-      }
-    };
-    DumbService.getInstance(project).queueTask(task);
+    ApplicationManager.getApplication().runReadAction(updateLanguageLevel);
   }
 
   private void updateSdkLanguageLevel(Project project, Sdk sdk) {
