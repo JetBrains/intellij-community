@@ -122,13 +122,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private static final Logger REFRESH_LOG = Logger.getInstance("#svn_refresh");
   public static boolean ourListenToWcDb = true;
 
-  private static final int ourLogUsualInterval = 20 * 1000;
-  private static final int ourLogRareInterval = 30 * 1000;
-
-  private static final Set<SVNErrorCode> ourLogRarely = new HashSet<SVNErrorCode>(
-    Arrays.asList(new SVNErrorCode[]{SVNErrorCode.WC_UNSUPPORTED_FORMAT, SVNErrorCode.WC_CORRUPT, SVNErrorCode.WC_CORRUPT_TEXT_BASE,
-      SVNErrorCode.WC_NOT_FILE, SVNErrorCode.WC_NOT_DIRECTORY, SVNErrorCode.WC_PATH_NOT_FOUND}));
-
   private static final Logger LOG = wrapLogger(Logger.getInstance("org.jetbrains.idea.svn.SvnVcs"));
   @NonNls public static final String VCS_NAME = "svn";
   public static final String VCS_DISPLAY_NAME = "Subversion";
@@ -176,7 +169,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   private final RootsToWorkingCopies myRootsToWorkingCopies;
   private final SvnAuthenticationNotifier myAuthNotifier;
-  private static RareLogger.LogFilter[] ourLogFilters;
   private final SvnLoadedBrachesStorage myLoadedBranchesStorage;
 
   public static final String SVNKIT_HTTP_SSL_PROTOCOLS = "svnkit.http.sslProtocols";
@@ -233,7 +225,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     if (!SVNJNAUtil.isJNAPresent()) {
       LOG.warn("JNA is not found by svnkit library");
     }
-    initLogFilters();
 
     ourSSLProtocolsExplicitlySet = System.getProperty(SVNKIT_HTTP_SSL_PROTOCOLS) != null;
   }
@@ -524,56 +515,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     myLoadedBranchesStorage.activate();
   }
 
-  private static void initLogFilters() {
-    if (ourLogFilters != null) return;
-    ourLogFilters = new RareLogger.LogFilter[]{new RareLogger.LogFilter() {
-      @Override
-      public Object getKey(@NotNull org.apache.log4j.Level level,
-                           @NonNls String message,
-                           @Nullable Throwable t,
-                           @NonNls String... details) {
-        SVNException svnExc = null;
-        if (t instanceof SVNException) {
-          svnExc = (SVNException)t;
-        }
-        else if (t instanceof VcsException && t.getCause() instanceof SVNException) {
-          svnExc = (SVNException)t.getCause();
-        }
-        if (svnExc != null) {
-          // only filter a few cases
-          if (ourLogRarely.contains(svnExc.getErrorMessage().getErrorCode())) {
-            return svnExc.getErrorMessage().getErrorCode();
-          }
-        }
-        return null;
-      }
-
-      @Override
-      @NotNull
-      public Integer getAllowedLoggingInterval(org.apache.log4j.Level level, String message, Throwable t, String[] details) {
-        SVNException svnExc = null;
-        if (t instanceof SVNException) {
-          svnExc = (SVNException)t;
-        }
-        else if (t instanceof VcsException && t.getCause() instanceof SVNException) {
-          svnExc = (SVNException)t.getCause();
-        }
-        if (svnExc != null) {
-          if (ourLogRarely.contains(svnExc.getErrorMessage().getErrorCode())) {
-            return ourLogRareInterval;
-          }
-          else {
-            return ourLogUsualInterval;
-          }
-        }
-        return 0;
-      }
-    }};
-  }
-
   public static Logger wrapLogger(final Logger logger) {
-    initLogFilters();
-    return RareLogger.wrap(logger, Boolean.getBoolean("svn.logger.fairsynch"), ourLogFilters);
+    return RareLogger.wrap(logger, Boolean.getBoolean("svn.logger.fairsynch"), new MyLogFilter());
   }
 
   public RootsToWorkingCopies getRootsToWorkingCopies() {
@@ -1335,5 +1278,45 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   @NotNull
   public ClientFactory getCommandLineFactory() {
     return cmdClientFactory;
+  }
+
+  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
+  private static class MyLogFilter implements RareLogger.LogFilter {
+
+    private static final int ourLogUsualInterval = 20 * 1000;
+    private static final int ourLogRareInterval = 30 * 1000;
+
+    private static final Set<SVNErrorCode> ourLogRarelyCodes = ContainerUtil
+      .newHashSet(SVNErrorCode.WC_UNSUPPORTED_FORMAT, SVNErrorCode.WC_CORRUPT, SVNErrorCode.WC_CORRUPT_TEXT_BASE, SVNErrorCode.WC_NOT_FILE,
+                  SVNErrorCode.WC_NOT_DIRECTORY, SVNErrorCode.WC_PATH_NOT_FOUND);
+
+    @Override
+    public Object getKey(@NotNull org.apache.log4j.Level level, @NonNls String message, @Nullable Throwable t, @NonNls String... details) {
+      SVNException e = getSvnException(t);
+      boolean shouldFilter = e != null && ourLogRarelyCodes.contains(e.getErrorMessage().getErrorCode());
+
+      return shouldFilter ? e.getErrorMessage().getErrorCode() : null;
+    }
+
+    @Override
+    @NotNull
+    public Integer getAllowedLoggingInterval(org.apache.log4j.Level level, String message, Throwable t, String[] details) {
+      SVNException e = getSvnException(t);
+      boolean shouldFilter = e != null && ourLogRarelyCodes.contains(e.getErrorMessage().getErrorCode());
+
+      return shouldFilter ? ourLogRareInterval : ourLogUsualInterval;
+    }
+
+    @Nullable
+    private static SVNException getSvnException(@Nullable Throwable t) {
+      SVNException result = null;
+      if (t instanceof SVNException) {
+        result = (SVNException)t;
+      }
+      else if (t instanceof VcsException && t.getCause() instanceof SVNException) {
+        result = (SVNException)t.getCause();
+      }
+      return result;
+    }
   }
 }
