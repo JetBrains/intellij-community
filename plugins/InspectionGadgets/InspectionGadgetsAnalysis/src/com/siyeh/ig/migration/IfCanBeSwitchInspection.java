@@ -513,12 +513,9 @@ public class IfCanBeSwitchInspection extends BaseInspection {
   @Override
   public void readSettings(@NotNull Element node) throws InvalidDataException {
     super.readSettings(node);
-    for (Element o : node.getChildren()) {
-      if (Comparing.strEqual(node.getAttributeValue("name"), ONLY_SAFE)) {
-        final String onlySafe = node.getAttributeValue("value");
-        if (onlySafe != null) {
-          onlySuggestNullSafe = Boolean.parseBoolean(onlySafe);
-        }
+    for (Element child : node.getChildren("option")) {
+      if (Comparing.strEqual(child.getAttributeValue("name"), ONLY_SAFE)) {
+        onlySuggestNullSafe = Boolean.parseBoolean(child.getAttributeValue("value"));
         break;
       }
     }

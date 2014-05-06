@@ -81,6 +81,7 @@ public class QuickChangeCodeStyleSchemeAction extends QuickSwitchSchemeAction {
         }
         CodeStyleSchemes.getInstance().setCurrentScheme(scheme);
         manager.USE_PER_PROJECT_SETTINGS = false;
+        manager.PREFERRED_PROJECT_CODE_STYLE = scheme.getName();
         EditorFactory.getInstance().refreshAllEditors();
       }
     });

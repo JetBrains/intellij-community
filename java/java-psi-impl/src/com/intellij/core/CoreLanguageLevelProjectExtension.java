@@ -39,4 +39,8 @@ public class CoreLanguageLevelProjectExtension extends LanguageLevelProjectExten
   @Override
   public void languageLevelsChanged() {
   }
+
+  @Override
+  public void reloadProjectOnLanguageLevelChange(@NotNull LanguageLevel languageLevel, boolean forceReload) {
+  }
 }

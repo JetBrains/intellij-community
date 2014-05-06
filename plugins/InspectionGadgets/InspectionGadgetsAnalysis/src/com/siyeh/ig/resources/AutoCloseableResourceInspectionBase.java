@@ -15,26 +15,31 @@
  */
 package com.siyeh.ig.resources;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Bas Leijdekkers
  */
-public class AutoCloseableResourceInspection extends BaseInspection {
+public class AutoCloseableResourceInspectionBase extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreFromMethodCall = false;
+
+  final List<String> ignoredTypes = new ArrayList(Arrays.asList("java.util.stream.Stream"));
 
   @Nls
   @NotNull
@@ -59,11 +64,28 @@ public class AutoCloseableResourceInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("auto.closeable.resource.problem.descriptor", text);
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("auto.closeable.resource.returned.option"),
-                                          this, "ignoreFromMethodCall");
+  public void readSettings(@NotNull Element node) throws InvalidDataException {
+    super.readSettings(node);
+    for (Element option : node.getChildren("option")) {
+      final String name = option.getAttributeValue("name");
+      if ("ignoredTypes".equals(name)) {
+        final String ignoredTypesString = option.getAttributeValue("value");
+        if (ignoredTypesString != null) {
+          ignoredTypes.clear();
+          parseString(ignoredTypesString, ignoredTypes);
+        }
+      }
+    }
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    super.writeSettings(node);
+    final String ignoredTypesString = formatString(ignoredTypes);
+    if (!"java.util.stream.Stream".equals(ignoredTypesString)) {
+      node.addContent(new Element("option").setAttribute("name", "ignoredTypes").setAttribute("value", ignoredTypesString));
+    }
   }
 
   @Override
@@ -96,6 +118,9 @@ public class AutoCloseableResourceInspection extends BaseInspection {
 
     private boolean isNotSafelyClosedResource(PsiExpression expression) {
       if (!PsiUtil.isLanguageLevel7OrHigher(expression) || !TypeUtils.expressionHasTypeOrSubtype(expression, "java.lang.AutoCloseable")) {
+        return false;
+      }
+      if (TypeUtils.expressionHasTypeOrSubtype(expression, ignoredTypes)) {
         return false;
       }
       final PsiVariable variable = ResourceInspection.getVariable(expression);

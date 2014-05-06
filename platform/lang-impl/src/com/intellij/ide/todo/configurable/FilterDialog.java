@@ -197,7 +197,9 @@ class FilterDialog extends DialogWrapper {
         case 0:
           TodoPattern pattern = myPatterns.get(row);
           if (((Boolean)value).booleanValue()) {
-            myFilter.addTodoPattern(pattern);
+            if (!myFilter.contains(pattern)) {
+              myFilter.addTodoPattern(pattern);
+            }
           }
           else {
             myFilter.removeTodoPattern(pattern);

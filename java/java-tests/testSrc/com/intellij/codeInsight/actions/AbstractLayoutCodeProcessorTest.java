@@ -97,8 +97,8 @@ public abstract class AbstractLayoutCodeProcessorTest extends PsiTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    super.tearDown();
     delete(myWorkingDirectory.getVirtualFile());
+    super.tearDown();
   }
 
   @NotNull
@@ -277,45 +277,6 @@ public abstract class AbstractLayoutCodeProcessorTest extends PsiTestCase {
     PsiTestUtil.addSourceRoot(module, src.getVirtualFile());
     return module;
   }
-
-  class TestFileStructure {
-      private int myLevel;
-      @NotNull private PsiDirectory myRoot;
-      @NotNull private PsiDirectory myCurrentLevelDirectory;
-      private List<List<PsiFile>> myFilesForLevel = new ArrayList<List<PsiFile>>();
-
-      TestFileStructure(@NotNull PsiDirectory root) {
-        myRoot = root;
-        myCurrentLevelDirectory = root;
-        myFilesForLevel.add(new ArrayList<PsiFile>());
-        myLevel = 0;
-      }
-
-      TestFileStructure addTestFilesToCurrentDirectory(String[] names) throws IOException {
-        getFilesAtLevel(myLevel).addAll(createTestFiles(myCurrentLevelDirectory, names));
-        return this;
-      }
-
-      TestFileStructure createDirectoryAndMakeItCurrent(String name) {
-        myLevel++;
-        myFilesForLevel.add(new ArrayList<PsiFile>());
-        myCurrentLevelDirectory = createDirectory(myCurrentLevelDirectory.getVirtualFile(), name);
-        return this;
-      }
-
-      List<PsiFile> getFilesAtLevel(int level) {
-        assert (myLevel >= level);
-        return myFilesForLevel.get(level);
-      }
-
-      List<PsiFile> getAllFiles() {
-        List<PsiFile> all = new ArrayList<PsiFile>();
-        for (List<PsiFile> files: myFilesForLevel) {
-          all.addAll(files);
-        }
-        return all;
-      }
-    }
 }
 
 

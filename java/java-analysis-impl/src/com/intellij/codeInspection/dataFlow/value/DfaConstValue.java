@@ -89,6 +89,11 @@ public class DfaConstValue extends DfaValue {
       if (TypeConversionUtil.isNumericType(type) && !TypeConversionUtil.isFloatOrDoubleType(type)) {
         value = TypeConversionUtil.computeCastTo(value, PsiType.LONG);
       }
+      if (value instanceof Double || value instanceof Float) {
+        double doubleValue = ((Number)value).doubleValue();
+        if (doubleValue == -0.0) doubleValue = +0.0;
+        value = new Double(doubleValue);
+      }
       DfaConstValue instance = myValues.get(value);
       if (instance == null) {
         instance = new DfaConstValue(value, myFactory, constant);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,8 @@ public abstract class JarFileSystem extends NewVirtualFileSystem implements JarC
   @Nullable
   public abstract VirtualFile getVirtualFileForJar(@Nullable VirtualFile entryVFile);
 
-  /** @deprecated do not use (leaks file handles), to remove in IDEA 15 */
+  /** @deprecated to be removed in IDEA 15 */
+  @SuppressWarnings({"UnusedDeclaration", "deprecation"})
   public abstract JarFile getJarFile(@NotNull VirtualFile entryVFile) throws IOException;
 
   /**

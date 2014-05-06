@@ -26,6 +26,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,14 +63,14 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     }
   }
 
-  public ReformatCodeProcessor(Project project, PsiFile[] files, Runnable postRunnable, boolean processChangedTextOnly) {
+  public ReformatCodeProcessor(Project project, PsiFile[] files, @Nullable Runnable postRunnable, boolean processChangedTextOnly) {
     this(project, files, COMMAND_NAME, postRunnable, processChangedTextOnly);
   }
 
   public ReformatCodeProcessor(Project project,
                                PsiFile[] files,
                                String commandName,
-                               Runnable postRunnable,
+                               @Nullable Runnable postRunnable,
                                boolean processChangedTextOnly)
   {
     super(project, files, PROGRESS_TEXT, commandName, postRunnable, processChangedTextOnly);
@@ -85,13 +86,8 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
       public Boolean call() throws Exception {
         FormattingProgressTask.FORMATTING_CANCELLED_FLAG.set(false);
         try {
-          if (myRanges.isEmpty() && processChangedTextOnly) {
-            myRanges.addAll(FormatChangedTextUtil.getChanges(file));
-          }
-          if (myRanges.isEmpty()) {
-            myRanges.add(file.getTextRange());
-          }
-          CodeStyleManager.getInstance(myProject).reformatText(file, myRanges);
+          Collection<TextRange> ranges = getRangesToFormat(processChangedTextOnly, file);
+          CodeStyleManager.getInstance(myProject).reformatText(file, ranges);
           return !FormattingProgressTask.FORMATTING_CANCELLED_FLAG.get();
         }
         catch (IncorrectOperationException e) {
@@ -103,5 +99,14 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
         }
       }
     });
+  }
+
+  @NotNull
+  private Collection<TextRange> getRangesToFormat(boolean processChangedTextOnly, PsiFile file) {
+    if (processChangedTextOnly) {
+      return FormatChangedTextUtil.getChangedTextRanges(myProject, file);
+    }
+
+    return !myRanges.isEmpty() ? myRanges : ContainerUtil.newArrayList(file.getTextRange());
   }
 }

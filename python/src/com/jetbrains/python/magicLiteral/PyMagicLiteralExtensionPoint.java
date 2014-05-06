@@ -1,9 +1,8 @@
 package com.jetbrains.python.magicLiteral;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.StringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Any magic literal extension point should imlement this interface and be installed as extesnion point
@@ -21,7 +20,7 @@ public interface PyMagicLiteralExtensionPoint {
    * @param element element to check
    * @return true if magic.
    */
-  boolean isMagicLiteral(@NotNull PyStringLiteralExpression element);
+  boolean isMagicLiteral(@NotNull StringLiteralExpression element);
 
 
   /**

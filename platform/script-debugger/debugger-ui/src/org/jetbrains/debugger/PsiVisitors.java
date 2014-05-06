@@ -9,14 +9,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
 import com.intellij.util.DocumentUtil;
 import com.intellij.xdebugger.XSourcePosition;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 public final class PsiVisitors {
   /**
-   * Read action will be taken automatically.
+   * Read action will be taken automatically
    */
-  @Contract("_, _, _, null -> null")
   public static <RESULT> RESULT visit(@NotNull XSourcePosition position, @NotNull Project project, @NotNull Visitor<RESULT> visitor, RESULT defaultResult) {
     Document document = FileDocumentManager.getInstance().getDocument(position.getFile());
     AccessToken token = ReadAction.start();
@@ -27,7 +25,7 @@ public final class PsiVisitors {
       }
 
       int positionOffset;
-      int column = position instanceof SourceInfo ? Math.min(((SourceInfo)position).getColumn(), 0) : 0;
+      int column = position instanceof SourceInfo ? Math.max(((SourceInfo)position).getColumn(), 0) : 0;
       try {
         positionOffset = column == 0 ? DocumentUtil.getFirstNonSpaceCharOffset(document, position.getLine()) : document.getLineStartOffset(position.getLine()) + column;
       }

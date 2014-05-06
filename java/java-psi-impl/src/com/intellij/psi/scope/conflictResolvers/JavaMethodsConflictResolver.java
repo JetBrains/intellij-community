@@ -153,6 +153,10 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         if (methodParameters.length == 0) continue;
         final PsiParameter param = i < methodParameters.length ? methodParameters[i] : methodParameters[methodParameters.length - 1];
         final PsiType paramType = param.getType();
+        // http://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.12.2.1
+        // A lambda expression or a method reference expression is potentially compatible with a type variable if the type variable is a type parameter of the candidate method.
+        final PsiClass paramClass = PsiUtil.resolveClassInType(paramType);
+        if (paramClass instanceof PsiTypeParameter && ((PsiTypeParameter)paramClass).getOwner() == method) continue;
         if (!lambdaExpression.isAcceptable(((MethodCandidateInfo)conflict).getSubstitutor(false).substitute(paramType), lambdaExpression.hasFormalParameterTypes())) {
           iterator.remove();
         }
