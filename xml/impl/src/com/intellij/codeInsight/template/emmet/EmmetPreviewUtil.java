@@ -60,7 +60,7 @@ public class EmmetPreviewUtil {
           TemplateImpl template = generatedTemplate.get();
           String templateText = template != null ? template.getTemplateText() : null;
           if (!StringUtil.isEmpty(templateText)) {
-            return reformatTemplateText(file, templateText);
+            return template.isToReformat() ? reformatTemplateText(file, templateText) : templateText;
           }
         }
       }
