@@ -3,7 +3,6 @@ package com.intellij.vcs.log.ui.tables;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -22,8 +21,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class AbstractVcsLogTableModel<CommitColumnClass> extends AbstractTableModel {
-
-  public static final VirtualFile FAKE_ROOT = NullVirtualFile.INSTANCE;
 
   public static final int ROOT_COLUMN = 0;
   public static final int COMMIT_COLUMN = 1;
