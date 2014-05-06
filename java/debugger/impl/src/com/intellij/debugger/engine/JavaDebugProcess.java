@@ -20,6 +20,7 @@ import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
+import com.intellij.debugger.impl.DebuggerContextUtil;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -47,6 +48,7 @@ import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
@@ -69,7 +71,7 @@ public class JavaDebugProcess extends XDebugProcess {
   private final XBreakpointHandler<?>[] myBreakpointHandlers;
   private final NodeManagerImpl myNodeManager;
 
-  public JavaDebugProcess(@NotNull XDebugSession session, DebuggerSession javaSession) {
+  public JavaDebugProcess(@NotNull final XDebugSession session, final DebuggerSession javaSession) {
     super(session);
     myJavaSession = javaSession;
     myEditorsProvider = new JavaDebuggerEditorsProvider();
@@ -121,6 +123,14 @@ public class JavaDebugProcess extends XDebugProcess {
             return Priority.NORMAL;
           }
         });
+      }
+
+      @Override
+      public void stackFrameChanged() {
+        XStackFrame frame = session.getCurrentStackFrame();
+        if (frame instanceof JavaStackFrame) {
+          DebuggerContextUtil.setStackFrame(javaSession.getContextManager(), ((JavaStackFrame)frame).getStackFrameProxy());
+        }
       }
     });
   }
