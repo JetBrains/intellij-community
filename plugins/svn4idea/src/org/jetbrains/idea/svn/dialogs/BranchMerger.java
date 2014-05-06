@@ -61,7 +61,7 @@ public class BranchMerger implements IMerger {
     // TODO: Rewrite this SVNKit usage
     SVNRepository repository = null;
     try {
-      repository = myVcs.createRepository(mySourceUrl);
+      repository = myVcs.getSvnKitManager().createRepository(mySourceUrl);
       mySourceLatestRevision = repository.getLatestRevision();
     }
     catch (SVNException e) {

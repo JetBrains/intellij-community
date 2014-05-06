@@ -121,9 +121,9 @@ public class DirectoryWithBranchComparer extends ElementWithBranchComparer {
     SVNRepository repository = null;
     SVNRepository repository2 = null;
     try {
-      repository = myVcs.createRepository(info1.getURL());
+      repository = myVcs.getSvnKitManager().createRepository(info1.getURL());
       long rev = repository.getLatestRevision();
-      repository2 = myVcs.createRepository(myElementUrl.toString());
+      repository2 = myVcs.getSvnKitManager().createRepository(myElementUrl.toString());
       SvnDiffEditor diffEditor = new SvnDiffEditor(myVirtualFile, repository2, rev, true);
       repository.diff(myElementUrl, rev, rev, null, true, SVNDepth.INFINITY, false, reporter17,
                       SVNCancellableEditor.newInstance(diffEditor, new SvnProgressCanceller(), null));
@@ -142,7 +142,7 @@ public class DirectoryWithBranchComparer extends ElementWithBranchComparer {
   private void report16DirDiff() throws SVNException {
     // here there's 1.6 copy so ok to use SVNWCAccess
     final SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
-    wcAccess.setOptions(myVcs.getSvnOptions());
+    wcAccess.setOptions(myVcs.getSvnKitManager().getSvnOptions());
     SVNRepository repository = null;
     SVNRepository repository2 = null;
     try {
@@ -165,9 +165,9 @@ public class DirectoryWithBranchComparer extends ElementWithBranchComparer {
       SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), false, true, SVNDepth.INFINITY,
                                              false, false, true, SVNDebugLog.getDefaultLog());
 
-      repository = myVcs.createRepository(anchorURL.toString());
+      repository = myVcs.getSvnKitManager().createRepository(anchorURL.toString());
       long rev = repository.getLatestRevision();
-      repository2 = myVcs.createRepository((target == null) ? myElementUrl.toString() : myElementUrl.removePathTail().toString());
+      repository2 = myVcs.getSvnKitManager().createRepository((target == null) ? myElementUrl.toString() : myElementUrl.removePathTail().toString());
       SvnDiffEditor diffEditor = new SvnDiffEditor((target == null) ? myVirtualFile : myVirtualFile.getParent(),
                                                    repository2, rev, true);
       repository.diff(myElementUrl, rev, rev, target, true, true, false, reporter,

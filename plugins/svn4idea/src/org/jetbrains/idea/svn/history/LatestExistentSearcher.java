@@ -60,7 +60,7 @@ public class LatestExistentSearcher {
     final Ref<Long> latest = new Ref<Long>(myStartNumber);
     SVNRepository repository = null;
     try {
-      repository = myVcs.createRepository(myUrl.toString());
+      repository = myVcs.getSvnKitManager().createRepository(myUrl.toString());
       final SVNURL repRoot = repository.getRepositoryRoot(true);
       if (repRoot != null) {
         if (myEndNumber == -1) {
@@ -116,7 +116,7 @@ public class LatestExistentSearcher {
     SVNRepository repository = null;
     long latestOk = myStartNumber;
     try {
-      repository = myVcs.createRepository(myUrl.toString());
+      repository = myVcs.getSvnKitManager().createRepository(myUrl.toString());
       final SVNURL repRoot = repository.getRepositoryRoot(true);
       if (repRoot != null) {
         if (myEndNumber == -1) {

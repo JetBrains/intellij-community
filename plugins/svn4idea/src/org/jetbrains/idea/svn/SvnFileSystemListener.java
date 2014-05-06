@@ -395,7 +395,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
   }
 
   private boolean for16move(SvnVcs vcs, final File src, final File dst, boolean undo) throws SVNException {
-    final SVNMoveClient mover = vcs.createMoveClient();
+    final SVNMoveClient mover = vcs.getSvnKitManager().createMoveClient();
     if (undo) {
       myUndoingMove = true;
       restoreFromUndoStorage(dst);

@@ -39,7 +39,7 @@ import java.util.Collection;
 public class SvnKitInfoClient extends BaseSvnClient implements InfoClient {
 
   public SVNWCClient getClient() {
-    return myVcs.createWCClient();
+    return myVcs.getSvnKitManager().createWCClient();
   }
 
   @Override

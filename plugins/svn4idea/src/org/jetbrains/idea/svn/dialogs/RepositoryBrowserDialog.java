@@ -1119,7 +1119,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     OutputStream os = null;
     try {
       os = new BufferedOutputStream(new FileOutputStream(targetFile));
-      myVCS.createDiffClient().doDiff(sourceURL, SVNRevision.HEAD, targetURL, SVNRevision.HEAD, true, false, os);
+      myVCS.getSvnKitManager().createDiffClient().doDiff(sourceURL, SVNRevision.HEAD, targetURL, SVNRevision.HEAD, true, false, os);
     } catch (IOException e1) {
       //
     } catch (SVNException e1) {
@@ -1136,7 +1136,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   }
 
   private void doGraphicalDiff(SVNURL sourceURL, SVNURL targetURL) throws SVNException {
-    SVNRepository sourceRepository = myVCS.createRepository(sourceURL.toString());
+    SVNRepository sourceRepository = myVCS.getSvnKitManager().createRepository(sourceURL.toString());
     sourceRepository.setCanceller(new SvnProgressCanceller());
     SvnDiffEditor diffEditor;
     final long rev;
@@ -1144,7 +1144,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     try {
       rev = sourceRepository.getLatestRevision();
       // generate Map of path->Change
-      targetRepository = myVCS.createRepository(targetURL.toString());
+      targetRepository = myVCS.getSvnKitManager().createRepository(targetURL.toString());
       diffEditor = new SvnDiffEditor(sourceRepository, targetRepository, -1, false);
       final ISVNEditor cancellableEditor = SVNCancellableEditor.newInstance(diffEditor, new SvnProgressCanceller(), null);
       sourceRepository.diff(targetURL, rev, rev, null, true, true, false, new ISVNReporterBaton() {

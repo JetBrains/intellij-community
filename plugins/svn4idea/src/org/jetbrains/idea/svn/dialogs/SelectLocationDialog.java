@@ -130,7 +130,7 @@ public class SelectLocationDialog extends DialogWrapper {
       public void run() {
         SVNRepository repos = null;
         try {
-          repos = SvnVcs.getInstance(project).createRepository(urlString);
+          repos = SvnVcs.getInstance(project).getSvnKitManager().createRepository(urlString);
           result.set(repos.getRepositoryRoot(true));
         } catch (SVNException e) {
           excRef.set(e);

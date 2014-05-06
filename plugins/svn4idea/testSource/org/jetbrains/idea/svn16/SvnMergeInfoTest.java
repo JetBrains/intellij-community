@@ -159,7 +159,7 @@ public class SvnMergeInfoTest extends Svn16TestCase {
     runInAndVerifyIgnoreOutput("up", myBranchVcsRoot.getAbsolutePath());
 
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    final SVNWCClient wcClient = vcs.createWCClient();
+    final SVNWCClient wcClient = vcs.getSvnKitManager().createWCClient();
     final SVNPropertyData data = wcClient.doGetProperty(myBranchVcsRoot, "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
     assert data != null && data.getValue() != null && "/trunk:3".equals(data.getValue().getString()); 
 
@@ -226,7 +226,7 @@ public class SvnMergeInfoTest extends Svn16TestCase {
     runInAndVerifyIgnoreOutput("up", myBranchVcsRoot.getAbsolutePath());
 
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    final SVNWCClient wcClient = vcs.createWCClient();
+    final SVNWCClient wcClient = vcs.getSvnKitManager().createWCClient();
     final SVNPropertyData data = wcClient.doGetProperty(myBranchVcsRoot, "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
     assert data != null && data.getValue() != null && "/trunk:3".equals(data.getValue().getString());
     final SVNPropertyData dataFolder = wcClient.doGetProperty(new File(myBranchVcsRoot, "folder"), "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
@@ -287,7 +287,7 @@ public class SvnMergeInfoTest extends Svn16TestCase {
     runInAndVerifyIgnoreOutput("up", myBranchVcsRoot.getAbsolutePath());
 
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    final SVNWCClient wcClient = vcs.createWCClient();
+    final SVNWCClient wcClient = vcs.getSvnKitManager().createWCClient();
     final SVNPropertyData data = wcClient.doGetProperty(myBranchVcsRoot, "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
     assert data != null && data.getValue() != null && "/trunk:3*".equals(data.getValue().getString());
 
@@ -355,7 +355,7 @@ public class SvnMergeInfoTest extends Svn16TestCase {
     runInAndVerifyIgnoreOutput("up", myBranchVcsRoot.getAbsolutePath());
 
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    final SVNWCClient wcClient = vcs.createWCClient();
+    final SVNWCClient wcClient = vcs.getSvnKitManager().createWCClient();
     final SVNPropertyData data = wcClient.doGetProperty(myBranchVcsRoot, "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
     assert data != null && data.getValue() != null && ("/trunk:3-4".equals(data.getValue().getString()) ||
                                                       "/trunk:3,4".equals(data.getValue().getString()));
@@ -436,7 +436,7 @@ public class SvnMergeInfoTest extends Svn16TestCase {
     runInAndVerifyIgnoreOutput("up", myBranchVcsRoot.getAbsolutePath());
 
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    final SVNWCClient wcClient = vcs.createWCClient();
+    final SVNWCClient wcClient = vcs.getSvnKitManager().createWCClient();
     final SVNPropertyData data = wcClient.doGetProperty(myBranchVcsRoot, "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
     assert data != null && data.getValue() != null && "/trunk:3".equals(data.getValue().getString());
     final SVNPropertyData dataFolder = wcClient.doGetProperty(new File(myBranchVcsRoot, "folder/folder1"), "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
@@ -561,7 +561,7 @@ public class SvnMergeInfoTest extends Svn16TestCase {
     // ! no update!
 
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    final SVNWCClient wcClient = vcs.createWCClient();
+    final SVNWCClient wcClient = vcs.getSvnKitManager().createWCClient();
     final SVNPropertyData data = wcClient.doGetProperty(myBranchVcsRoot, "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
     assert data != null && data.getValue() != null && "/trunk:3".equals(data.getValue().getString());
 

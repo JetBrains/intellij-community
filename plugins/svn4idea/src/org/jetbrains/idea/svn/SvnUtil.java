@@ -531,7 +531,7 @@ public class SvnUtil {
 
     SVNRepository repository = null;
     try {
-      repository = vcs.createRepository(url);
+      repository = vcs.getSvnKitManager().createRepository(url);
       return repository.hasCapability(SVNCapability.MERGE_INFO);
     }
     catch (SVNException e) {
@@ -607,7 +607,7 @@ public class SvnUtil {
     // TODO: Implement with command line client
     SVNRepository repository = null;
     try {
-      repository = vcs.createRepository(url);
+      repository = vcs.getSvnKitManager().createRepository(url);
       final Ref<Boolean> result = new Ref<Boolean>(true);
       repository.getDir("", -1, null, new ISVNDirEntryHandler() {
         public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {

@@ -141,7 +141,7 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
         }
         SVNRepository repository = null;
         try {
-          repository = SvnVcs.getInstance(myProject).createRepository(url);
+          repository = SvnVcs.getInstance(myProject).getSvnKitManager().createRepository(url);
           repository.testConnection();
         } catch (SVNException exc) {
           excRef.set(exc);

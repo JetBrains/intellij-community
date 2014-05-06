@@ -103,13 +103,13 @@ public class SvnKitStatusClient extends BaseSvnClient implements StatusClient {
   @NotNull
   private SVNStatusClient getStatusClient() {
     // if either provider or handler is specified - we reuse same status client for all further doStatus() calls
-    return myHandler != null || myProvider != null ? ensureStatusClient() : myVcs.createStatusClient();
+    return myHandler != null || myProvider != null ? ensureStatusClient() : myVcs.getSvnKitManager().createStatusClient();
   }
 
   @NotNull
   private SVNStatusClient ensureStatusClient() {
     if (myStatusClient == null) {
-      myStatusClient = myVcs.createStatusClient();
+      myStatusClient = myVcs.getSvnKitManager().createStatusClient();
       myStatusClient.setFilesProvider(myProvider);
       myStatusClient.setEventHandler(myHandler);
     }

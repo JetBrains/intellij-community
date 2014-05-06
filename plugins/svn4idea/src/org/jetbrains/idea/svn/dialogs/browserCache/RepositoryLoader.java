@@ -121,7 +121,7 @@ class RepositoryLoader extends Loader {
       SVNRepository repository = null;
       SvnAuthenticationProvider.forceInteractive();
       try {
-        repository = vcs.createRepository(node.getURL().toString());
+        repository = vcs.getSvnKitManager().createRepository(node.getURL().toString());
         repository.getDir("", -1, null, new ISVNDirEntryHandler() {
           public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
             entries.add(dirEntry);

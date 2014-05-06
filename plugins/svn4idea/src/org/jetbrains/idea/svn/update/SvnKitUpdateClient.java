@@ -82,7 +82,7 @@ public class SvnKitUpdateClient extends BaseSvnClient implements UpdateClient {
 
   @NotNull
   private SVNUpdateClient getClient() {
-    SVNUpdateClient client = myVcs.createUpdateClient();
+    SVNUpdateClient client = myVcs.getSvnKitManager().createUpdateClient();
 
     client.setEventHandler(myDispatcher);
     client.setIgnoreExternals(myIgnoreExternals);

@@ -152,7 +152,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
       // find acual revision to update to (a bug if just say head in switch)
       SVNRepository repository = null;
       try {
-        repository = myVcs.createRepository(url);
+        repository = myVcs.getSvnKitManager().createRepository(url);
         final long longRevision = repository.getLatestRevision();
         final SVNRevision newRevision = SVNRevision.create(longRevision);
         value.setRevision(newRevision);
