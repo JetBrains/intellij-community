@@ -32,12 +32,9 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.*;
@@ -83,9 +80,9 @@ import org.jetbrains.idea.svn.history.LoadedRevisionsCache;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
-import org.jetbrains.idea.svn.networking.SSLProtocolExceptionParser;
 import org.jetbrains.idea.svn.properties.PropertyClient;
 import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
+import org.jetbrains.idea.svn.svnkit.SvnKitDebugLogger;
 import org.jetbrains.idea.svn.svnkit.SvnKitManager;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
@@ -95,7 +92,6 @@ import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
-import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
 import org.tmatesoft.svn.core.internal.util.jna.SVNJNAUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea14;
@@ -103,17 +99,9 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNDebugLog;
-import org.tmatesoft.svn.util.SVNDebugLogAdapter;
-import org.tmatesoft.svn.util.SVNLogType;
 
-import javax.net.ssl.SSLHandshakeException;
-import javax.net.ssl.SSLProtocolException;
 import java.io.File;
-import java.io.UnsupportedEncodingException;
-import java.security.cert.CertificateException;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 
 @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
 public class SvnVcs extends AbstractVcs<CommittedChangeList> {
@@ -205,7 +193,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     if (Boolean.getBoolean(DO_NOT_LISTEN_TO_WC_DB)) {
       ourListenToWcDb = false;
     }
-    final JavaSVNDebugLogger logger = new JavaSVNDebugLogger(Boolean.getBoolean(LOG_PARAMETER_NAME), Boolean.getBoolean(TRACE_NATIVE_CALLS), LOG);
+    final SvnKitDebugLogger
+      logger = new SvnKitDebugLogger(Boolean.getBoolean(LOG_PARAMETER_NAME), Boolean.getBoolean(TRACE_NATIVE_CALLS), LOG);
     SVNDebugLog.setDefaultLog(logger);
 
     SVNJNAUtil.setJNAEnabled(true);
@@ -516,7 +505,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   public static Logger wrapLogger(final Logger logger) {
-    return RareLogger.wrap(logger, Boolean.getBoolean("svn.logger.fairsynch"), new MyLogFilter());
+    return RareLogger.wrap(logger, Boolean.getBoolean("svn.logger.fairsynch"), new SvnExceptionLogFilter());
   }
 
   public RootsToWorkingCopies getRootsToWorkingCopies() {
@@ -884,102 +873,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return isWcRoot;
   }
 
-  private static class JavaSVNDebugLogger extends SVNDebugLogAdapter {
-    private final boolean myLoggingEnabled;
-    private final boolean myLogNative;
-    private final Logger myLog;
-    private final static long ourErrorNotificationInterval = TimeUnit.MINUTES.toMillis(2);
-    private long myPreviousTime = 0;
-
-    public JavaSVNDebugLogger(boolean loggingEnabled, boolean logNative, Logger log) {
-      myLoggingEnabled = loggingEnabled;
-      myLogNative = logNative;
-      myLog = log;
-    }
-
-    private boolean shouldLog(final SVNLogType logType) {
-      return myLoggingEnabled || myLogNative && SVNLogType.NATIVE_CALL.equals(logType);
-    }
-
-    @Override
-    public void log(final SVNLogType logType, final Throwable th, final Level logLevel) {
-      handleSpecificSSLExceptions(th);
-      if (shouldLog(logType)) {
-        myLog.info(th);
-      }
-    }
-
-    private void handleSpecificSSLExceptions(Throwable th) {
-      final long time = System.currentTimeMillis();
-      if ((time - myPreviousTime) <= ourErrorNotificationInterval) {
-        return;
-      }
-      if (th instanceof SSLHandshakeException) {
-        // not trusted certificate exception is not the problem, just part of normal behaviour
-        if (th.getCause() instanceof SVNSSLUtil.CertificateNotTrustedException) {
-          LOG.info(th);
-          return;
-        }
-
-        myPreviousTime = time;
-        String info = SSLExceptionsHelper.getAddInfo();
-        info = info == null ? "" : " (" + info + ") ";
-        if (th.getCause() instanceof CertificateException) {
-          PopupUtil.showBalloonForActiveFrame("Subversion: " + info + th.getCause().getMessage(), MessageType.ERROR);
-        } else {
-          final String postMessage = "\nPlease check Subversion SSL settings (Settings | Version Control | Subversion | Network)\n" +
-                                     "Maybe you should specify SSL protocol manually - SSLv3 or TLSv1";
-          PopupUtil.showBalloonForActiveFrame("Subversion: " + info + th.getMessage() + postMessage, MessageType.ERROR);
-        }
-      } else if (th instanceof SSLProtocolException) {
-        final String message = th.getMessage();
-        if (! StringUtil.isEmptyOrSpaces(message)) {
-          myPreviousTime = time;
-          String info = SSLExceptionsHelper.getAddInfo();
-          info = info == null ? "" : " (" + info + ") ";
-          final SSLProtocolExceptionParser parser = new SSLProtocolExceptionParser(message);
-          parser.parse();
-          final String errMessage = "Subversion: " + info + parser.getParsedMessage();
-          PopupUtil.showBalloonForActiveFrame(errMessage, MessageType.ERROR);
-        }
-      }
-    }
-
-    @Override
-    public void log(final SVNLogType logType, final String message, final Level logLevel) {
-      if (SVNLogType.NATIVE_CALL.equals(logType)) {
-        logNative(message);
-      }
-      if (shouldLog(logType)) {
-        myLog.info(message);
-      }
-    }
-
-    private static void logNative(String message) {
-      if (message == null) return;
-      final NativeLogReader.CallInfo callInfo = SvnNativeLogParser.parse(message);
-      if (callInfo == null) return;
-      NativeLogReader.putInfo(callInfo);
-    }
-
-    @Override
-    public void log(final SVNLogType logType, final String message, final byte[] data) {
-      if (shouldLog(logType)) {
-        if (data != null) {
-          try {
-            myLog.info(message + "\n" + new String(data, "UTF-8"));
-          }
-          catch (UnsupportedEncodingException e) {
-            myLog.info(message + "\n" + new String(data));
-          }
-        }
-        else {
-          myLog.info(message);
-        }
-      }
-    }
-  }
-
   @Override
   public FileStatus[] getProvidedStatuses() {
     return new FileStatus[]{SvnFileStatus.EXTERNAL,
@@ -1278,45 +1171,5 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   @NotNull
   public ClientFactory getCommandLineFactory() {
     return cmdClientFactory;
-  }
-
-  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-  private static class MyLogFilter implements RareLogger.LogFilter {
-
-    private static final int ourLogUsualInterval = 20 * 1000;
-    private static final int ourLogRareInterval = 30 * 1000;
-
-    private static final Set<SVNErrorCode> ourLogRarelyCodes = ContainerUtil
-      .newHashSet(SVNErrorCode.WC_UNSUPPORTED_FORMAT, SVNErrorCode.WC_CORRUPT, SVNErrorCode.WC_CORRUPT_TEXT_BASE, SVNErrorCode.WC_NOT_FILE,
-                  SVNErrorCode.WC_NOT_DIRECTORY, SVNErrorCode.WC_PATH_NOT_FOUND);
-
-    @Override
-    public Object getKey(@NotNull org.apache.log4j.Level level, @NonNls String message, @Nullable Throwable t, @NonNls String... details) {
-      SVNException e = getSvnException(t);
-      boolean shouldFilter = e != null && ourLogRarelyCodes.contains(e.getErrorMessage().getErrorCode());
-
-      return shouldFilter ? e.getErrorMessage().getErrorCode() : null;
-    }
-
-    @Override
-    @NotNull
-    public Integer getAllowedLoggingInterval(org.apache.log4j.Level level, String message, Throwable t, String[] details) {
-      SVNException e = getSvnException(t);
-      boolean shouldFilter = e != null && ourLogRarelyCodes.contains(e.getErrorMessage().getErrorCode());
-
-      return shouldFilter ? ourLogRareInterval : ourLogUsualInterval;
-    }
-
-    @Nullable
-    private static SVNException getSvnException(@Nullable Throwable t) {
-      SVNException result = null;
-      if (t instanceof SVNException) {
-        result = (SVNException)t;
-      }
-      else if (t instanceof VcsException && t.getCause() instanceof SVNException) {
-        result = (SVNException)t.getCause();
-      }
-      return result;
-    }
   }
 }
