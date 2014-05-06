@@ -297,9 +297,18 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
               }
             }
           }
-          final LocalQuickFix[] fixes = mayBeField
-                                  ? new LocalQuickFix[] { new AddFieldQuickFix(name, name, containingClass.getName()) }
-                                  : new LocalQuickFix[] { new PyRemoveParameterQuickFix() };
+          boolean canRemove = !(PsiTreeUtil.getPrevSiblingOfType(element, PyParameter.class) instanceof PySingleStarParameter);
+
+          final LocalQuickFix[] fixes;
+          if (mayBeField) {
+            fixes = new LocalQuickFix[]{new AddFieldQuickFix(name, name, containingClass.getName())};
+          }
+          else if (canRemove) {
+            fixes = new LocalQuickFix[]{new PyRemoveParameterQuickFix()};
+          }
+          else {
+            fixes = LocalQuickFix.EMPTY_ARRAY;
+          }
           registerWarning(element, PyBundle.message("INSP.unused.locals.parameter.isnot.used", name), fixes);
         }
         else {
