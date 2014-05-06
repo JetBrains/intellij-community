@@ -25,6 +25,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.RenameDialog;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.StringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,7 +60,7 @@ public class PyMagicLiteralRenameHandler implements RenameHandler {
     if (element instanceof PyStringLiteralExpression) {
       return element;
     }
-    return PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class);
+    return PsiTreeUtil.getParentOfType(element, StringLiteralExpression.class);
   }
 
   @Override

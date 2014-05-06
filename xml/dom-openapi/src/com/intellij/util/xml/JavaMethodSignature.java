@@ -16,6 +16,8 @@
 package com.intellij.util.xml;
 
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,8 +56,8 @@ public class JavaMethodSignature {
     return method;
   }
 
-  private void collectMethods(final Class aClass, List<Method> methods) {
-    addMethodWithSupers(aClass, findMethod(aClass), methods);
+  private boolean processMethods(final Class aClass, Processor<Method> processor) {
+    return processMethodWithSupers(aClass, findMethod(aClass), processor);
   }
 
   @Nullable
@@ -64,38 +66,56 @@ public class JavaMethodSignature {
     return method == null ? ReflectionUtil.getDeclaredMethod(aClass, myMethodName, myMethodParameters) : method;
   }
 
-  private void addMethodWithSupers(final Class aClass, final Method method, List<Method> methods) {
+  private boolean processMethodWithSupers(final Class aClass, final Method method, final Processor<Method> processor) {
     if (method != null) {
-      methods.add(method);
+      if (!processor.process(method)) return false;
     }
     final Class superClass = aClass.getSuperclass();
     if (superClass != null) {
-      collectMethods(superClass, methods);
-    } else {
+      if (!processMethods(superClass, processor)) return false;
+    }
+    else {
       if (aClass.isInterface()) {
-        collectMethods(Object.class, methods);
+        if (!processMethods(Object.class, processor)) return false;
       }
     }
     for (final Class anInterface : aClass.getInterfaces()) {
-      collectMethods(anInterface, methods);
+      if (!processMethods(anInterface, processor)) return false;
     }
+    return true;
   }
 
   public final List<Method> getAllMethods(final Class startFrom) {
-    final ArrayList<Method> methods = new ArrayList<Method>();
-    collectMethods(startFrom, methods);
-    return methods;
+    final List<Method> result = new ArrayList<Method>();
+    processMethods(startFrom, new CommonProcessors.CollectProcessor<Method>(result));
+    return result;
   }
 
   @Nullable
   public final <T extends Annotation> Method findAnnotatedMethod(final Class<T> annotationClass, final Class startFrom) {
-    for (Method method : getAllMethods(startFrom)) {
-      final T annotation = method.getAnnotation(annotationClass);
-      if (annotation != null && ReflectionUtil.isAssignable(method.getDeclaringClass(), startFrom)) {
-        return method;
+    CommonProcessors.FindFirstProcessor<Method> processor = new CommonProcessors.FindFirstProcessor<Method>() {
+      @Override
+      protected boolean accept(Method method) {
+        final T annotation = method.getAnnotation(annotationClass);
+        return annotation != null && ReflectionUtil.isAssignable(method.getDeclaringClass(), startFrom);
       }
-    }
-    return null;
+    };
+    processMethods(startFrom, processor);
+    return processor.getFoundValue();
+  }
+
+  @Nullable
+  public final <T extends Annotation> T findAnnotation(final Class<T> annotationClass, final Class startFrom) {
+    CommonProcessors.FindFirstProcessor<Method> processor = new CommonProcessors.FindFirstProcessor<Method>() {
+      @Override
+      protected boolean accept(Method method) {
+        final T annotation = method.getAnnotation(annotationClass);
+        return annotation != null;
+      }
+    };
+    processMethods(startFrom, processor);
+    final Method foundMethod = processor.getFoundValue();
+    return foundMethod == null ? null : foundMethod.getAnnotation(annotationClass);
   }
 
   public String toString() {
@@ -121,5 +141,4 @@ public class JavaMethodSignature {
     result = 31 * result + Arrays.hashCode(myMethodParameters);
     return result;
   }
-
 }

@@ -1,13 +1,19 @@
 package org.jetbrains.debugger;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.ObsolescentAsyncResults;
+import com.intellij.xdebugger.XSourcePositionWrapper;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XKeywordValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XNumericValuePresentation;
@@ -476,7 +482,44 @@ public final class VariableView extends XNamedValue implements VariableContext {
           getViewSupport().getVm().getScriptManager().getScript(function).doWhenDone(new Consumer<Script>() {
             @Override
             public void consume(Script script) {
-              navigatable.setSourcePosition(script == null ? null : getViewSupport().getSourceInfo(null, script, function.getOpenParenLine(), function.getOpenParenColumn()));
+              SourceInfo position = script == null ? null : getViewSupport().getSourceInfo(null, script, function.getOpenParenLine(), function.getOpenParenColumn());
+              navigatable.setSourcePosition(position == null ? null : new XSourcePositionWrapper(position) {
+                @NotNull
+                @Override
+                public Navigatable createNavigatable(@NotNull Project project) {
+                  Navigatable result = PsiVisitors.visit(myPosition, project, new PsiVisitors.Visitor<Navigatable>() {
+                    @Override
+                    public Navigatable visit(@NotNull PsiElement element, int positionOffset, @NotNull Document document) {
+                      // element will be "open paren", but we should navigate to function name,
+                      // we cannot use specific PSI type here (like JSFunction), so, we try to find reference expression (i.e. name expression)
+                      PsiElement referenceCandidate = element;
+                      PsiElement psiReference = null;
+                      while ((referenceCandidate = referenceCandidate.getPrevSibling()) != null) {
+                        if (referenceCandidate instanceof PsiReference) {
+                          psiReference = referenceCandidate;
+                          break;
+                        }
+                      }
+
+                      if (psiReference == null) {
+                        referenceCandidate = element.getParent();
+                        if (referenceCandidate != null) {
+                          while ((referenceCandidate = referenceCandidate.getPrevSibling()) != null) {
+                            if (referenceCandidate instanceof PsiReference) {
+                              psiReference = referenceCandidate;
+                              break;
+                            }
+                          }
+                        }
+                      }
+
+                      PsiElement navigationElement = psiReference == null ? element.getNavigationElement() : psiReference.getNavigationElement();
+                      return navigationElement instanceof Navigatable ? (Navigatable)navigationElement : null;
+                    }
+                  }, null);
+                  return result == null ? super.createNavigatable(project) : result;
+                }
+              });
             }
           });
         }

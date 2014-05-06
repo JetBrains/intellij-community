@@ -140,20 +140,34 @@ public class AnActionEvent implements PlaceProvider<String> {
     return key.getData(getDataContext());
   }
 
-  @NotNull
-  public <T> T getDataChecked(@NotNull DataKey<T> key) {
-    T data = getData(key);
-    assert data != null;
-    return data;
-  }
-
   /**
-   * @deprecated
-   * @use getDataChecked
+   * Returns not null data by a data key. This method assumes that data has been checked for null in AnAction#update method.
+   *<br/><br/>
+   * Example of proper usage:
+   *
+   * <pre>
+   *
+   * public class MyAction extends AnAction {
+   *   public void update(AnActionEvent e) {
+   *     //perform action if and only if EDITOR != null
+   *     boolean enabled = e.getData(CommonDataKeys.EDITOR) != null;
+   *     e.getPresentation.setEnabled(enabled);
+   *   }
+   *
+   *   public void actionPerformed(AnActionEvent e) {
+   *     //if we're here then EDITOR != null
+   *     Document doc = e.getRequiredData(CommonDataKeys.EDITOR).getDocument();
+   *     doSomething(doc);
+   *   }
+   * }
+   *
+   * </pre>
    */
   @NotNull
   public <T> T getRequiredData(@NotNull DataKey<T> key) {
-    return getDataChecked(key);
+    T data = getData(key);
+    assert data != null;
+    return data;
   }
 
   /**

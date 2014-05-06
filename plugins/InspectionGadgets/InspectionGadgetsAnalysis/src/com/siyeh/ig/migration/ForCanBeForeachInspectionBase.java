@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -740,6 +740,7 @@ public class ForCanBeForeachInspectionBase extends BaseInspection {
     extends JavaRecursiveElementVisitor {
 
     private boolean indexVariableUsedOnlyAsIndex = true;
+    private boolean listGetCalled = false;
     private final PsiVariable indexVariable;
     private final Holder collection;
 
@@ -769,6 +770,9 @@ public class ForCanBeForeachInspectionBase extends BaseInspection {
         if (!isListIndexExpression(reference)) {
           indexVariableUsedOnlyAsIndex = false;
         }
+        else {
+          listGetCalled = true;
+        }
       }
       else if (collection == Holder.DUMMY) {
         if (isListNonGetMethodCall(reference)) {
@@ -782,7 +786,7 @@ public class ForCanBeForeachInspectionBase extends BaseInspection {
     }
 
     public boolean isIndexVariableUsedOnlyAsIndex() {
-      return indexVariableUsedOnlyAsIndex;
+      return indexVariableUsedOnlyAsIndex && listGetCalled;
     }
 
     private boolean isListNonGetMethodCall(
@@ -897,22 +901,16 @@ public class ForCanBeForeachInspectionBase extends BaseInspection {
     }
   }
 
-  private class ForCanBeForeachVisitor
-    extends BaseInspectionVisitor {
+  private class ForCanBeForeachVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitForStatement(
-      @NotNull PsiForStatement forStatement) {
+    public void visitForStatement(@NotNull PsiForStatement forStatement) {
       super.visitForStatement(forStatement);
       if (!PsiUtil.isLanguageLevel5OrHigher(forStatement)) {
         return;
       }
-      if (isArrayLoopStatement(forStatement)
-          || isCollectionLoopStatement(forStatement,
-                                       ignoreUntypedCollections)
-          || (REPORT_INDEXED_LOOP &&
-              isIndexedListLoopStatement(forStatement,
-                                         ignoreUntypedCollections))) {
+      if (isArrayLoopStatement(forStatement) || isCollectionLoopStatement(forStatement, ignoreUntypedCollections) ||
+          REPORT_INDEXED_LOOP && isIndexedListLoopStatement(forStatement, ignoreUntypedCollections)) {
         registerStatementError(forStatement);
       }
     }

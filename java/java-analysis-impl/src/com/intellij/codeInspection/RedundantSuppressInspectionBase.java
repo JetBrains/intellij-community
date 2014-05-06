@@ -31,7 +31,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -160,25 +159,27 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
 
     if (suppressedScopes.values().isEmpty()) return null;
     // have to visit all file from scratch since inspections can be written in any perversive way including checkFile() overriding
-    Collection<InspectionToolWrapper> suppressedTools = new THashSet<InspectionToolWrapper>();
+    Map<InspectionToolWrapper, String> suppressedTools = new THashMap<InspectionToolWrapper, String>();
     InspectionToolWrapper[] toolWrappers = getInspectionTools(psiElement, manager);
     for (Collection<String> ids : suppressedScopes.values()) {
       for (Iterator<String> iterator = ids.iterator(); iterator.hasNext(); ) {
         final String shortName = iterator.next().trim();
         for (InspectionToolWrapper toolWrapper : toolWrappers) {
-          if (toolWrapper instanceof LocalInspectionToolWrapper && ((LocalInspectionToolWrapper)toolWrapper).getTool().getID().equals(shortName)) {
+          if (toolWrapper instanceof LocalInspectionToolWrapper && 
+              (((LocalInspectionToolWrapper)toolWrapper).getTool().getID().equals(shortName) ||
+               shortName.equals(((LocalInspectionToolWrapper)toolWrapper).getTool().getAlternativeID()))) {
             if (((LocalInspectionToolWrapper)toolWrapper).isUnfair()) {
               iterator.remove();
               break;
             }
             else {
-              suppressedTools.add(toolWrapper);
+              suppressedTools.put(toolWrapper, shortName);
             }
           }
           else if (toolWrapper.getShortName().equals(shortName)) {
             //ignore global unused as it won't be checked anyway
             if (toolWrapper instanceof LocalInspectionToolWrapper || toolWrapper instanceof GlobalInspectionToolWrapper) {
-              suppressedTools.add(toolWrapper);
+              suppressedTools.put(toolWrapper, shortName);
             }
             else {
               iterator.remove();
@@ -199,8 +200,8 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
     final List<ProblemDescriptor> result;
     try {
       result = new ArrayList<ProblemDescriptor>();
-      for (InspectionToolWrapper toolWrapper : suppressedTools) {
-        String toolId = toolWrapper instanceof LocalInspectionToolWrapper ? ((LocalInspectionToolWrapper)toolWrapper).getTool().getID() : toolWrapper.getShortName();
+      for (InspectionToolWrapper toolWrapper : suppressedTools.keySet()) {
+        String toolId = suppressedTools.get(toolWrapper);
         toolWrapper.initialize(globalContext);
         final Collection<CommonProblemDescriptor> descriptors;
         if (toolWrapper instanceof LocalInspectionToolWrapper) {

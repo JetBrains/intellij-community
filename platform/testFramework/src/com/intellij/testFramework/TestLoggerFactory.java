@@ -15,10 +15,13 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.jetbrains.annotations.NotNull;
@@ -106,4 +109,16 @@ public class TestLoggerFactory implements Logger.Factory {
     }
   }
 
+  public static void enableDebugLogging(@NotNull Disposable parentDisposable, String... categories) {
+    for (String category : categories) {
+      final Logger logger = Logger.getInstance(category);
+      logger.setLevel(Level.DEBUG);
+      Disposer.register(parentDisposable, new Disposable() {
+        @Override
+        public void dispose() {
+          logger.setLevel(Level.INFO);
+        }
+      });
+    }
+  }
 }

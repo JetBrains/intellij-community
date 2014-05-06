@@ -20,6 +20,7 @@
  */
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectExtension;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExtension {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl");
   @Deprecated
   @NonNls private static final String ASSERT_KEYWORD_ATTR = "assert-keyword";
   @Deprecated
@@ -96,6 +98,11 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
   @Override
   public void languageLevelsChanged() {
     JavaLanguageLevelPusher.pushLanguageLevel(myProject);
+  }
+
+  @Override
+  public void reloadProjectOnLanguageLevelChange(@NotNull LanguageLevel languageLevel, boolean forceReload) {
+    LOG.warn("Calling deprecated LanguageLevelProjectExtensionImpl.reloadProjectOnLanguageLevelChange, while project reloading is not needed on language level changes");
   }
 
   public static class MyProjectExtension extends ProjectExtension {

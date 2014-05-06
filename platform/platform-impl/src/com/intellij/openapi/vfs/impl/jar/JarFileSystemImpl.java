@@ -22,6 +22,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.ZipFileCache;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.*;
@@ -39,7 +40,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -64,7 +64,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
-        List<VirtualFile> rootsToRefresh = new ArrayList<VirtualFile>();
+        List<VirtualFile> rootsToRefresh = ContainerUtil.newSmartList();
 
         for (VFileEvent event : events) {
           if (event.getFileSystem() instanceof LocalFileSystem) {
@@ -91,6 +91,14 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
         }
 
         if (!rootsToRefresh.isEmpty()) {
+          List<String> pathsToReset = ContainerUtil.newArrayListWithCapacity(rootsToRefresh.size());
+          for (VirtualFile root : rootsToRefresh) {
+            String rootPath = root.getPath();
+            String jarPath = rootPath.substring(0, rootPath.length() - 2);
+            pathsToReset.add(FileUtil.toSystemDependentName(jarPath));
+          }
+          ZipFileCache.reset(pathsToReset);
+
           boolean async = !ApplicationManager.getApplication().isUnitTestMode();
           RefreshQueue.getInstance().refresh(async, true, null, rootsToRefresh);
         }
@@ -144,7 +152,9 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     return StandardFileSystems.getVirtualFileForJar(entryVFile);
   }
 
+  @SuppressWarnings("deprecation")
   @Override
+  /** @deprecated to be removed in IDEA 15 */
   public JarFile getJarFile(@NotNull VirtualFile entryVFile) throws IOException {
     return getHandler(entryVFile).getJar();
   }

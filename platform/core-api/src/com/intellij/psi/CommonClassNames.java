@@ -58,6 +58,7 @@ public interface CommonClassNames {
   @NonNls String JAVA_UTIL_MAP = "java.util.Map";
   @NonNls String JAVA_UTIL_MAP_ENTRY = "java.util.Map.Entry";
   @NonNls String JAVA_UTIL_HASH_MAP = "java.util.HashMap";
+  @NonNls String JAVA_UTIL_CONCURRENT_HASH_MAP = "java.util.concurrent.ConcurrentHashMap";
   @NonNls String JAVA_UTIL_LIST = "java.util.List";
   @NonNls String JAVA_UTIL_ARRAY_LIST = "java.util.ArrayList";
   @NonNls String JAVA_UTIL_SET = "java.util.Set";
