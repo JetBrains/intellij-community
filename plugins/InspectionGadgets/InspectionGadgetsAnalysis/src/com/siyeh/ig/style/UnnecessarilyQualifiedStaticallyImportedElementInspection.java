@@ -94,7 +94,7 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspection extends B
       if (!(qualifier instanceof PsiJavaCodeReferenceElement)) {
         return;
       }
-      if (PsiTreeUtil.getParentOfType(reference, PsiReferenceExpression.class, PsiImportStatementBase.class) != null) {
+      if (PsiTreeUtil.getParentOfType(reference, PsiImportStatementBase.class) != null) {
         return;
       }
       if (UnnecessarilyQualifiedStaticUsageInspection.isGenericReference(reference, (PsiJavaCodeReferenceElement)qualifier)) return;

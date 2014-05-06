@@ -13,33 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.startupWizardV2;
+package com.intellij.codeInsight.actions;
 
-import com.intellij.CommonBundle;
-import org.jetbrains.annotations.NotNull;
+public class ChangedLines {
+  public final int from;
+  public final int to;
 
-public class FeaturedPluginsPage extends AbstractWizardPage{
-  @NotNull
-  @Override
-  String getID() {
-    return "Featured plugins";
+  ChangedLines(int from, int to) {
+    this.from = from;
+    this.to = to;
   }
 
-  @NotNull
   @Override
-  String getTitle() {
-    return "Download featured plugins";
+  public String toString() {
+    return "(" + from + ", " + to + ")";
   }
 
-  @NotNull
   @Override
-  String getHeader() {
-    return "We have a few plugins in our web repository that most  users like to download. Perhaps, you need them too?";
-  }
+  public boolean equals(Object obj) {
+    if (obj instanceof ChangedLines) {
+      ChangedLines line = (ChangedLines)obj;
+      return from == line.from && to == line.to;
+    }
 
-  @NotNull
-  @Override
-  String getFooter() {
-    return "New plugins can be also downloaded in " + CommonBundle.settingsTitle() +" | Plugins";
+    return false;
   }
 }

@@ -287,6 +287,7 @@ public class PythonSdkType extends SdkType {
         public void consume(@Nullable Sdk sdk) {
           if (sdk != null) {
             sdk.putUserData(SDK_CREATOR_COMPONENT_KEY, new WeakReference<Component>(parentComponent));
+            sdkCreatedCallback.consume(sdk);
           }
         }
       });
@@ -497,6 +498,11 @@ public class PythonSdkType extends SdkType {
       project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     }
     setupSdkPaths(sdk, project, ownerComponent);
+  }
+
+  @Override
+  public boolean setupSdkPaths(Sdk sdk, SdkModel sdkModel) {
+    return true;  // run setupSdkPaths only once (from PythonSdkDetailsStep). Skip this from showCustomCreateUI
   }
 
   public static void setupSdkPaths(Sdk sdk, @Nullable Project project, @Nullable Component ownerComponent) {

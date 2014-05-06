@@ -17,7 +17,9 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -25,27 +27,30 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
 import com.intellij.openapi.vcs.ex.Range;
+import com.intellij.openapi.vcs.ex.RangesBuilder;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManagerI;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * Contains utility methods for 'format only changed text' (in terms of VCS changes).
- * 
- * @author Denis Zhdanov
- * @since 12/19/11 10:55 AM
- */
 public class FormatChangedTextUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.actions.FormatChangedTextUtil");
   
   private FormatChangedTextUtil() {
   }
@@ -116,6 +121,14 @@ public class FormatChangedTextUtil {
       if (change.getType() == Change.Type.NEW || change.getType() == Change.Type.MODIFICATION) {
         return true;
       }
+    }
+    return false;
+  }
+
+  public static boolean hasChanges(@NotNull VirtualFile[] files, @NotNull Project project) {
+    for (VirtualFile file : files) {
+      if (hasChanges(file, project))
+        return true;
     }
     return false;
   }
@@ -208,5 +221,97 @@ public class FormatChangedTextUtil {
       }
     }
     return result;
+  }
+
+  @NotNull
+  public static List<PsiFile> getChangedFilesFromDirs(@NotNull Project project, @NotNull List<PsiDirectory> dirs)  {
+    ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+    Collection<Change> changes = ContainerUtil.newArrayList();
+
+    for (PsiDirectory dir : dirs) {
+      changes.addAll(changeListManager.getChangesIn(dir.getVirtualFile()));
+    }
+
+    return getChangedFiles(project, changes);
+  }
+
+  @NotNull
+  public static List<PsiFile> getChangedFiles(@NotNull Project project, @NotNull Collection<Change> changes) {
+    List<PsiFile> files = ContainerUtil.newArrayList();
+    for (Change change : changes) {
+      VirtualFile vFile = change.getVirtualFile();
+      if (vFile != null) {
+        PsiFile file = PsiManager.getInstance(project).findFile(vFile);
+        if (file != null) files.add(file);
+      }
+    }
+    return files;
+  }
+
+  @NotNull
+  public static List<TextRange> getChangedTextRanges(@NotNull Project project, @NotNull PsiFile file) {
+    Change change = ChangeListManager.getInstance(project).getChange(file.getVirtualFile());
+    if (change == null) {
+      return ContainerUtilRt.emptyList();
+    }
+    if (change.getType() == Change.Type.NEW) {
+      return ContainerUtil.newArrayList(file.getTextRange());
+    }
+
+    String contentFromVcs = getRevisionedContentFrom(change);
+    return contentFromVcs != null ? calculateChangedTextRanges(project, file, contentFromVcs)
+                                  : ContainerUtil.<TextRange>emptyList();
+  }
+
+  @Nullable
+  private static String getRevisionedContentFrom(@NotNull Change change) {
+    ContentRevision revision = change.getBeforeRevision();
+    if (revision == null) {
+      return null;
+    }
+
+    try {
+      return revision.getContent();
+    }
+    catch (VcsException e) {
+      LOG.error("Can't get content for: " + change.getVirtualFile(), e);
+      return null;
+    }
+  }
+
+  @NotNull
+  private static List<TextRange> calculateChangedTextRanges(@NotNull Project project, @NotNull PsiFile file, @NotNull String contentFromVcs) {
+    Document documentFromVcs = EditorFactory.getInstance().createDocument(contentFromVcs);
+    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+
+    if (document == null) {
+      return ContainerUtil.emptyList();
+    }
+
+    try {
+      List<Range> changedRanges = new RangesBuilder(document, documentFromVcs).getRanges();
+      return getChangedTextRanges(document, changedRanges);
+    }
+    catch (FilesTooBigForDiffException e) {
+      LOG.error("Error while calculating changed ranges for: " + file.getVirtualFile(), e);
+      return ContainerUtil.emptyList();
+    }
+  }
+
+  @NotNull
+  private static List<TextRange> getChangedTextRanges(@NotNull Document document, @NotNull List<Range> changedRanges) {
+    List<TextRange> ranges = ContainerUtil.newArrayList();
+    for (Range range : changedRanges) {
+      if (range.getType() != Range.DELETED) {
+        int changeStartLine = range.getOffset1();
+        int changeEndLine = range.getOffset2();
+
+        int lineStartOffset = document.getLineStartOffset(changeStartLine);
+        int lineEndOffset = document.getLineEndOffset(changeEndLine - 1);
+
+        ranges.add(new TextRange(lineStartOffset, lineEndOffset));
+      }
+    }
+    return ranges;
   }
 }

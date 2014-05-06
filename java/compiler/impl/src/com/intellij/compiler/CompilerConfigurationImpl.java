@@ -53,6 +53,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinder;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.apache.oro.text.regex.*;
@@ -978,7 +980,15 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     }
     return extensionsString.toString();
   }
-  
+
+  public boolean isCompilableResourceFile(final Project project, final VirtualFile file) {
+    if (!isResourceFile(file)) {
+      return false;
+    }
+    final Collection<? extends Artifact> artifacts = ArtifactBySourceFileFinder.getInstance(project).findArtifacts(file);
+    return artifacts.isEmpty();
+  }
+
   private static class CompiledPattern {
     @NotNull final Pattern fileName;
     @Nullable final Pattern dir;

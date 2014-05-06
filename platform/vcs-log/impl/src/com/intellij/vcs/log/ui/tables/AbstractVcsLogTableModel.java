@@ -23,8 +23,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class AbstractVcsLogTableModel<CommitColumnClass> extends AbstractTableModel {
 
-  public static final VirtualFile FAKE_ROOT = NullVirtualFile.INSTANCE;
-
   public static final int ROOT_COLUMN = 0;
   public static final int COMMIT_COLUMN = 1;
   public static final int AUTHOR_COLUMN = 2;

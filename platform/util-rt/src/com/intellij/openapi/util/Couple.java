@@ -13,27 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.startupWizardV2;
+package com.intellij.openapi.util;
 
-import com.intellij.CommonBundle;
-import org.jetbrains.annotations.NotNull;
-
-public class KeymapPage extends AbstractWizardPage {
-  @NotNull
-  @Override
-  String getID() {
-    return "Keymaps";
+/**
+ * @author Konstantin Bulenkov
+ */
+public class Couple<T> extends Pair<T, T> {
+  public Couple(T first, T second) {
+    super(first, second);
   }
 
-  @NotNull
-  @Override
-  String getTitle() {
-    return "Select keymap scheme";
-  }
-
-  @NotNull
-  @Override
-  String getFooter() {
-    return "Keymap scheme can be later changed in " + CommonBundle.settingsTitle() + " | Keymap";
+  public static <T> Couple<T> newOne(T first, T second) {
+    return new Couple<T>(first, second);
   }
 }

@@ -45,6 +45,15 @@ public class LazyRangeMarkerFactory {
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentAdapter() {
       @Override
       public void beforeDocumentChange(DocumentEvent e) {
+        transformRangeMarkers(e);
+      }
+
+      @Override
+      public void documentChanged(DocumentEvent e) {
+        transformRangeMarkers(e);
+      }
+
+      private void transformRangeMarkers(DocumentEvent e) {
         VirtualFile file = fileDocumentManager.getFile(e.getDocument());
         if (file == null) {
           return;
@@ -58,8 +67,7 @@ public class LazyRangeMarkerFactory {
         List<LazyMarker> markers = lazyMarkers.toStrongList();
         List<LazyMarker> markersToRemove = null;
         for (LazyMarker marker : markers) {
-          if (file.equals(marker.getFile())) {
-            marker.getOrCreateDelegate();
+          if (file.equals(marker.getFile()) && marker.documentChanged(e.getDocument()) != null) {
             if (markersToRemove == null) {
               markersToRemove = new SmartList<LazyMarker>();
             }
@@ -143,13 +151,26 @@ public class LazyRangeMarkerFactory {
       return myDelegate;
     }
 
-    @NotNull
+    @Nullable
+    protected final RangeMarker documentChanged(@NotNull Document document) {
+      if (myDelegate == null) {
+        myDelegate = createDelegate(myFile, document);
+      }
+      return myDelegate;
+    }
+
+    @Nullable
     protected abstract RangeMarker createDelegate(@NotNull VirtualFile file, @NotNull Document document);
 
     @Override
     @NotNull
     public Document getDocument() {
-      return getOrCreateDelegate().getDocument();
+      RangeMarker delegate = getOrCreateDelegate();
+      if (delegate == null) {
+        //noinspection ConstantConditions
+        return FileDocumentManager.getInstance().getDocument(myFile);
+      }
+      return delegate.getDocument();
     }
 
     @Override
@@ -222,10 +243,13 @@ public class LazyRangeMarkerFactory {
     }
 
     @Override
-    @NotNull
-    public RangeMarker createDelegate(@NotNull VirtualFile file, @NotNull final Document document) {
-      int offset = calculateOffset(myProject, file, document, myLine, myColumn);
+    @Nullable
+    public RangeMarker createDelegate(@NotNull VirtualFile file, @NotNull Document document) {
+      if (document.getTextLength() == 0 && !(myLine == 0 && myColumn == 0)) {
+        return null;
+      }
 
+      int offset = calculateOffset(myProject, file, document, myLine, myColumn);
       return document.createRangeMarker(offset, offset);
     }
 
