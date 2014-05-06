@@ -50,12 +50,12 @@ public class SvnFormatWorker extends Task.Backgroundable {
 
   private List<Throwable> myExceptions;
   private final Project myProject;
-  private final WorkingCopyFormat myNewFormat;
+  @NotNull private final WorkingCopyFormat myNewFormat;
   private final List<WCInfo> myWcInfos;
   private List<LocalChangeList> myBeforeChangeLists;
   private final SvnVcs myVcs;
 
-  public SvnFormatWorker(final Project project, final WorkingCopyFormat newFormat, final List<WCInfo> wcInfos) {
+  public SvnFormatWorker(final Project project, @NotNull final WorkingCopyFormat newFormat, final List<WCInfo> wcInfos) {
     super(project, SvnBundle.message("action.change.wcopy.format.task.title"), false, DEAF);
     myProject = project;
     myNewFormat = newFormat;
@@ -64,7 +64,7 @@ public class SvnFormatWorker extends Task.Backgroundable {
     myVcs = SvnVcs.getInstance(myProject);
   }
 
-  public SvnFormatWorker(final Project project, final WorkingCopyFormat newFormat, final WCInfo wcInfo) {
+  public SvnFormatWorker(final Project project, @NotNull final WorkingCopyFormat newFormat, final WCInfo wcInfo) {
     this(project, newFormat, Collections.singletonList(wcInfo));
   }
 
@@ -109,9 +109,8 @@ public class SvnFormatWorker extends Task.Backgroundable {
         }
         try {
           String cleanupMessage = SvnBundle.message("action.Subversion.cleanup.progress.text", path.getAbsolutePath());
-          String upgradeMessage = SvnBundle.message("action.change.wcopy.format.task.progress.text", path.getAbsolutePath(),
-                                                    SvnUtil.formatRepresentation(wcInfo.getFormat()),
-                                                    SvnUtil.formatRepresentation(myNewFormat));
+          String upgradeMessage =
+            SvnBundle.message("action.change.wcopy.format.task.progress.text", path.getAbsolutePath(), wcInfo.getFormat(), myNewFormat);
           ISVNEventHandler handler = createUpgradeHandler(indicator, cleanupMessage, upgradeMessage);
 
           getFactory(path, myNewFormat).createUpgradeClient().upgrade(path, myNewFormat, handler);
