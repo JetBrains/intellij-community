@@ -123,6 +123,11 @@ public class JavaStackFrame extends XStackFrame {
 
   @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
+    XStackFrame xFrame = getDescriptor().getXStackFrame();
+    if (xFrame != null) {
+      xFrame.computeChildren(node);
+      return;
+    }
     DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(myDebugProcess.getProject()).getContext();
     myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
       @Override
