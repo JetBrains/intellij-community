@@ -65,7 +65,7 @@ public class PyMagicLiteralRenameHandler implements RenameHandler {
 
   @Override
   public boolean isRenaming(DataContext dataContext) {
-    return true;
+    return isAvailableOnDataContext(dataContext);
   }
 
   @Override
