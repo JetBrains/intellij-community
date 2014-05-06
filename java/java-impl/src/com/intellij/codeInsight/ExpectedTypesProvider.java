@@ -1135,18 +1135,13 @@ public class ExpectedTypesProvider {
           LOG.error("Vararg parameter with non-array type. Class=" + parameter.getClass() + "; type=" + parameter.getType());
         }
       }
-      PsiType parameterType = substitutor.substitute(type);
+      PsiType parameterType = GenericsUtil.getVariableTypeByExpressionType(substitutor.substitute(type));
       if (parameterType instanceof PsiCapturedWildcardType) {
         parameterType = ((PsiCapturedWildcardType)parameterType).getWildcard();
       }
       if (parameterType instanceof PsiWildcardType) {
-        final PsiWildcardType psiWildcardType = (PsiWildcardType)parameterType;
-        if (psiWildcardType.isExtends()) {
-          final PsiType superBound = psiWildcardType.getBound();
-          if (superBound != null) {
-            parameterType = superBound;
-          }
-        }
+        final PsiType bound = ((PsiWildcardType)parameterType).getBound();
+        return bound != null ? bound : PsiType.getJavaLangObject(parameter.getManager(), GlobalSearchScope.allScope(parameter.getProject()));
       }
       return parameterType;
     }
