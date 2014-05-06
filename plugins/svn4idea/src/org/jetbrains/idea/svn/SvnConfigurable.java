@@ -40,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier;
 import org.jetbrains.idea.svn.config.SvnConfigureProxiesDialog;
+import org.jetbrains.idea.svn.svnkit.SvnKitManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -142,12 +143,12 @@ public class SvnConfigurable implements Configurable {
     bg.add(mySSLv3RadioButton);
     bg.add(myTLSv1RadioButton);
     bg.add(myAllRadioButton);
-    if (SvnVcs.isSSLProtocolExplicitlySet()) {
+    if (SvnKitManager.isSSLProtocolExplicitlySet()) {
       mySSLv3RadioButton.setEnabled(false);
       myTLSv1RadioButton.setEnabled(false);
       myAllRadioButton.setEnabled(false);
       mySSLExplicitly.setVisible(true);
-      mySSLExplicitly.setText("Set explicitly to: " + SvnVcs.getExplicitlySetSslProtocols());
+      mySSLExplicitly.setText("Set explicitly to: " + SvnKitManager.getExplicitlySetSslProtocols());
     } else {
       mySSLv3RadioButton.setEnabled(true);
       myTLSv1RadioButton.setEnabled(true);
@@ -280,7 +281,7 @@ public class SvnConfigurable implements Configurable {
                                   !StringUtil.equals(applicationSettings17.getCommandLinePath(), myCommandLineClient.getText().trim());
     configuration.setUseAcceleration(acceleration());
     configuration.setSslProtocols(getSelectedSSL());
-    SvnVcs.getInstance(myProject).refreshSSLProperty();
+    SvnVcs.getInstance(myProject).getSvnKitManager().refreshSSLProperty();
 
     applicationSettings17.setCommandLinePath(myCommandLineClient.getText().trim());
     boolean isClientValid = vcs17.checkCommandLineVersion();

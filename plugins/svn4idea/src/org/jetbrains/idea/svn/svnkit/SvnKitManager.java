@@ -15,33 +15,127 @@
  */
 package org.jetbrains.idea.svn.svnkit;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnConfiguration;
+import org.jetbrains.idea.svn.SvnFormatSelector;
+import org.jetbrains.idea.svn.SvnHttpAuthMethodsDefaultChecker;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 import org.jetbrains.idea.svn.lowLevel.PrimitivePool;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
+import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
+import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
+import org.tmatesoft.svn.core.internal.util.jna.SVNJNAUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea14;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @author Konstantin Kolosovsky.
  */
 public class SvnKitManager {
 
+  private static final Logger LOG = SvnVcs.wrapLogger(Logger.getInstance(SvnKitManager.class));
+
+  @NonNls public static final String LOG_PARAMETER_NAME = "javasvn.log";
+  @NonNls public static final String TRACE_NATIVE_CALLS = "javasvn.log.native";
+  @NonNls public static final String SVNKIT_HTTP_SSL_PROTOCOLS = "svnkit.http.sslProtocols";
+
+  @Nullable private static String ourExplicitlySetSslProtocols;
+
   @NotNull private final SvnVcs myVcs;
   @NotNull private final Project myProject;
   @NotNull private final SvnConfiguration myConfiguration;
+
+  static {
+    System.setProperty("svnkit.log.native.calls", "true");
+
+    final SvnKitDebugLogger
+      logger = new SvnKitDebugLogger(Boolean.getBoolean(LOG_PARAMETER_NAME), Boolean.getBoolean(TRACE_NATIVE_CALLS), LOG);
+    SVNDebugLog.setDefaultLog(logger);
+
+    SVNJNAUtil.setJNAEnabled(true);
+    SvnHttpAuthMethodsDefaultChecker.check();
+
+    SVNAdminAreaFactory.setSelector(new SvnFormatSelector());
+
+    DAVRepositoryFactory.setup();
+    SVNRepositoryFactoryImpl.setup();
+    FSRepositoryFactory.setup();
+
+    // non-optimized writing is fast enough on Linux/MacOS, and somewhat more reliable
+    if (SystemInfo.isWindows) {
+      SVNAdminArea14.setOptimizedWritingEnabled(true);
+    }
+
+    if (!SVNJNAUtil.isJNAPresent()) {
+      LOG.warn("JNA is not found by svnkit library");
+    }
+
+    ourExplicitlySetSslProtocols = System.getProperty(SVNKIT_HTTP_SSL_PROTOCOLS);
+  }
 
   public SvnKitManager(@NotNull SvnVcs vcs) {
     myVcs = vcs;
     myProject = myVcs.getProject();
     myConfiguration = myVcs.getSvnConfiguration();
+
+    refreshSSLProperty();
+  }
+
+  @Nullable
+  public static String getExplicitlySetSslProtocols() {
+    return ourExplicitlySetSslProtocols;
+  }
+
+  public static boolean isSSLProtocolExplicitlySet() {
+    return ourExplicitlySetSslProtocols != null;
+  }
+
+  public void refreshSSLProperty() {
+    if (isSSLProtocolExplicitlySet()) return;
+
+    if (SvnConfiguration.SSLProtocols.all.equals(myConfiguration.getSslProtocols())) {
+      System.clearProperty(SVNKIT_HTTP_SSL_PROTOCOLS);
+    }
+    else if (SvnConfiguration.SSLProtocols.sslv3.equals(myConfiguration.getSslProtocols())) {
+      System.setProperty(SVNKIT_HTTP_SSL_PROTOCOLS, "SSLv3");
+    }
+    else if (SvnConfiguration.SSLProtocols.tlsv1.equals(myConfiguration.getSslProtocols())) {
+      System.setProperty(SVNKIT_HTTP_SSL_PROTOCOLS, "TLSv1");
+    }
+  }
+
+  public void activate() {
+    if (SystemInfo.isWindows) {
+      if (!SVNJNAUtil.isJNAPresent()) {
+        Notifications.Bus.notify(new Notification(myVcs.getDisplayName(), "Subversion plugin: no JNA",
+                                                  "A problem with JNA initialization for SVNKit library. Encryption is not available.",
+                                                  NotificationType.WARNING), myProject);
+      }
+      else if (!SVNJNAUtil.isWinCryptEnabled()) {
+        Notifications.Bus.notify(new Notification(myVcs.getDisplayName(), "Subversion plugin: no encryption",
+                                                  "A problem with encryption module (Crypt32.dll) initialization for SVNKit library. " +
+                                                  "Encryption is not available.",
+                                                  NotificationType.WARNING
+        ), myProject);
+      }
+    }
   }
 
   @NotNull
