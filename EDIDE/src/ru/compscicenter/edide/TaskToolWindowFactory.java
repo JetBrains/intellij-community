@@ -28,8 +28,7 @@ public class TaskToolWindowFactory implements ToolWindowFactory{
 
     @Override
     public void createToolWindowContent(final Project project, ToolWindow toolWindow) {
-        //JLabel task =  new JLabel("write your first program in python");
-        //int curTask = TaskManager.getInstance().getCurrentTask();
+
         nextTask.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 FileDocumentManager.getInstance().saveAllDocuments();
