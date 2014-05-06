@@ -6,6 +6,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 
@@ -33,9 +34,12 @@ public class TaskToolWindowFactory implements ToolWindowFactory{
             public void actionPerformed(ActionEvent e) {
                 FileDocumentManager.getInstance().saveAllDocuments();
                 TaskManager tm = TaskManager.getInstance();
+                if (!project.isOpen()) {
+                    return;
+                }
                 String basePath = project.getBasePath();
+
                 if (basePath == null) return;
-                tm.setCurrentTask(1);
                 String testFile =  basePath +
                         "/.idea/" + tm.getTest(tm.getCurrentTask());
                 String test_runner = basePath +
@@ -64,7 +68,17 @@ public class TaskToolWindowFactory implements ToolWindowFactory{
                         }
                         System.out.println(line);
                     }
-                    JOptionPane.showMessageDialog(panel, testResult, "", JOptionPane.DEFAULT_OPTION );
+                    JOptionPane.showMessageDialog(panel, testResult, "", JOptionPane.DEFAULT_OPTION);
+                    if (testResult == "test passed") {
+                        int nextTaskNum = TaskManager.getInstance().getCurrentTask() + 1;
+                        if (nextTaskNum < TaskManager.getInstance().getTasksNum()) {
+                            TaskManager.getInstance().incrementTask();
+                            int curTask = TaskManager.getInstance().getCurrentTask();
+                            task.setText(TaskManager.getInstance().getTaskText(curTask));
+                            panel.updateUI();
+                        }
+                    }
+
 
 
                 } catch (ExecutionException e1) {
@@ -72,23 +86,10 @@ public class TaskToolWindowFactory implements ToolWindowFactory{
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
-                //System.out.println(cmd.getCommandLineString());
-
-                /*
-                Project project = ProjectManager.getInstance().getOpenProjects()[0];
-                List<RunnerAndConfigurationSettings> settings = RunManager.getInstance(project).getConfigurationSettingsList(new StudyConfigurationType());
-                ProgramRunnerUtil.executeConfiguration(project, settings.get(0), DefaultRunExecutor.getRunExecutorInstance()) ;
-                int nextTaskNum = TaskManager.getInstance().getCurrentTask() + 1;
-                if (nextTaskNum < TaskManager.getInstance().getTasksNum()) {
-                    TaskManager.getInstance().incrementTask();
-                    int curTask = TaskManager.getInstance().getCurrentTask();
-                    task.setText(TaskManager.getInstance().getTaskText(curTask));
-                    panel.updateUI();
-                }
-                */
 
             }
         });
+        /*
         int curTask = 0;
         TaskManager tm = TaskManager.getInstance();
         String taskText;
@@ -98,11 +99,20 @@ public class TaskToolWindowFactory implements ToolWindowFactory{
         } else {
             taskText = "no tasks yet";
         }
-        task =  new JLabel(taskText);
+        if (project.isOpen()) {
+            task =  new JLabel();
+        }
+        */
+        String taskText;
+        if (project.isOpen()) {
+            taskText = TaskManager.getInstance().getTaskText(TaskManager.getInstance().getCurrentTask());
+        } else {
+            taskText = "";
+        }
+        task = new JLabel(taskText);
         Font testFont = new Font("Courier", Font.BOLD, 16);
         task.setFont(testFont);
-        //panel.setBackground(Color.BLACK);
-        task.setForeground(Color.CYAN);
+        task.setForeground(new JBColor(Color.DARK_GRAY, Color.CYAN));
         panel.add(task, BorderLayout.NORTH);
         panel.add(nextTask, BorderLayout.SOUTH);
         panel.updateUI();
