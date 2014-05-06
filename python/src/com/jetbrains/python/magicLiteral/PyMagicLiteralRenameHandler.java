@@ -35,7 +35,23 @@ import org.jetbrains.annotations.Nullable;
 public class PyMagicLiteralRenameHandler implements RenameHandler {
   @Override
   public boolean isAvailableOnDataContext(DataContext dataContext) {
-    return false;
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    if (editor == null) {
+      return false;
+    }
+
+    final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
+    if (file == null) {
+      return false;
+    }
+
+    final PsiElement element = getElement(file, editor);
+
+    if (element == null || !PyMagicLiteralTools.isMagicLiteral(element)) {
+      return false;
+    }
+
+    return true;
   }
 
   @Nullable
@@ -54,6 +70,11 @@ public class PyMagicLiteralRenameHandler implements RenameHandler {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
+    PsiElement element = getElement(file, editor);
+    if (element == null) {
+      return;
+    }
+    RenameDialog.showRenameDialog(dataContext, new RenameDialog(project, element, null, editor));
   }
 
   @Override
