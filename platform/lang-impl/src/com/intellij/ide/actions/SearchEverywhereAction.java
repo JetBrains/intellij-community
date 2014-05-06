@@ -152,10 +152,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private Component myContextComponent;
   private CalcThread myCalcThread;
   private static AtomicBoolean ourShiftIsPressed = new AtomicBoolean(false);
-  private static AtomicBoolean shift1Pressed = new AtomicBoolean(false);
-  private static AtomicBoolean shift1Released = new AtomicBoolean(false);
-  private static AtomicBoolean shift2Pressed = new AtomicBoolean(false);
-  private static AtomicBoolean shift2Released = new AtomicBoolean(false);
+  private final static Couple<AtomicBoolean> ourPressed = Couple.newOne(new AtomicBoolean(false), new AtomicBoolean(false));
+  private final static Couple<AtomicBoolean> ourReleased = Couple.newOne(new AtomicBoolean(false), new AtomicBoolean(false));
   private static AtomicBoolean ourOtherKeyWasPressed = new AtomicBoolean(false);
   private static AtomicLong ourLastTimePressed = new AtomicLong(0);
   private static AtomicBoolean showAll = new AtomicBoolean(false);
@@ -185,7 +183,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               return false;
             }
             ourOtherKeyWasPressed.set(false);
-            if (shift1Pressed.get() && System.currentTimeMillis() - ourLastTimePressed.get() > 500) {
+            if (ourPressed.first.get() && System.currentTimeMillis() - ourLastTimePressed.get() > 500) {
               resetState();
             }
             handleShift((KeyEvent)event);
@@ -203,37 +201,37 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
 
       private void resetState() {
-        shift1Pressed.set(false);
-        shift1Released.set(false);
-        shift2Pressed.set(false);
-        shift2Released.set(false);
+        ourPressed.first.set(false);
+        ourPressed.second.set(false);
+        ourReleased.first.set(false);
+        ourReleased.second.set(false);
       }
 
       private void handleShift(KeyEvent event) {
-        if (shift1Pressed.get() && System.currentTimeMillis() - ourLastTimePressed.get() > 300) {
+        if (ourPressed.first.get() && System.currentTimeMillis() - ourLastTimePressed.get() > 300) {
           resetState();
           return;
         }
 
         if (event.getID() == KeyEvent.KEY_PRESSED) {
-          if (!shift1Pressed.get()) {
+          if (!ourPressed.first.get()) {
             resetState();
-            shift1Pressed.set(true);
+            ourPressed.first.set(true);
             ourLastTimePressed.set(System.currentTimeMillis());
             return;
           } else {
-            if (shift1Pressed.get() && shift1Released.get()) {
-              shift2Pressed.set(true);
+            if (ourPressed.first.get() && ourReleased.first.get()) {
+              ourPressed.second.set(true);
               ourLastTimePressed.set(System.currentTimeMillis());
               return;
             }
           }
         } else if (event.getID() == KeyEvent.KEY_RELEASED) {
-          if (shift1Pressed.get() && !shift1Released.get()) {
-            shift1Released.set(true);
+          if (ourPressed.first.get() && !ourReleased.first.get()) {
+            ourReleased.first.set(true);
             ourLastTimePressed.set(System.currentTimeMillis());
             return;
-          } else if (shift1Pressed.get() && shift1Released.get() && shift2Pressed.get()) {
+          } else if (ourPressed.first.get() && ourReleased.first.get() && ourPressed.second.get()) {
             resetState();
             run(event);
             return;
