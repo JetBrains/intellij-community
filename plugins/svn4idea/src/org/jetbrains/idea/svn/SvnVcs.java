@@ -160,7 +160,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private final SvnLoadedBrachesStorage myLoadedBranchesStorage;
 
   public static final String SVNKIT_HTTP_SSL_PROTOCOLS = "svnkit.http.sslProtocols";
-  private static boolean ourSSLProtocolsExplicitlySet = false;
+  @Nullable private static String ourExplicitlySetSslProtocols;
   private final SvnExecutableChecker myChecker;
 
   public static final Processor<Exception> ourBusyExceptionProcessor = new Processor<Exception>() {
@@ -215,11 +215,16 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       LOG.warn("JNA is not found by svnkit library");
     }
 
-    ourSSLProtocolsExplicitlySet = System.getProperty(SVNKIT_HTTP_SSL_PROTOCOLS) != null;
+    ourExplicitlySetSslProtocols = System.getProperty(SVNKIT_HTTP_SSL_PROTOCOLS);
+  }
+
+  @Nullable
+  public static String getExplicitlySetSslProtocols() {
+    return ourExplicitlySetSslProtocols;
   }
 
   public static boolean isSSLProtocolExplicitlySet() {
-    return ourSSLProtocolsExplicitlySet;
+    return ourExplicitlySetSslProtocols != null;
   }
 
   public SvnVcs(final Project project, MessageBus bus, SvnConfiguration svnConfiguration, final SvnLoadedBrachesStorage storage) {
@@ -854,7 +859,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   public void refreshSSLProperty() {
-    if (ourSSLProtocolsExplicitlySet) return;
+    if (isSSLProtocolExplicitlySet()) return;
+
     if (SvnConfiguration.SSLProtocols.all.equals(myConfiguration.getSslProtocols())) {
       System.clearProperty(SVNKIT_HTTP_SSL_PROTOCOLS);
     } else if (SvnConfiguration.SSLProtocols.sslv3.equals(myConfiguration.getSslProtocols())) {

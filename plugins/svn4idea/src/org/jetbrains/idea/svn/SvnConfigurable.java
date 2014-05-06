@@ -147,7 +147,7 @@ public class SvnConfigurable implements Configurable {
       myTLSv1RadioButton.setEnabled(false);
       myAllRadioButton.setEnabled(false);
       mySSLExplicitly.setVisible(true);
-      mySSLExplicitly.setText("Set explicitly to: " + System.getProperty(SvnVcs.SVNKIT_HTTP_SSL_PROTOCOLS));
+      mySSLExplicitly.setText("Set explicitly to: " + SvnVcs.getExplicitlySetSslProtocols());
     } else {
       mySSLv3RadioButton.setEnabled(true);
       myTLSv1RadioButton.setEnabled(true);
