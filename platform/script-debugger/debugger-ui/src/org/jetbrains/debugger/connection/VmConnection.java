@@ -70,7 +70,7 @@ public abstract class VmConnection<T extends Vm> implements Disposable, BrowserC
     started.setDone();
   }
 
-  public final void close(@Nullable String message) {
+  public final void close(@Nullable String message, @NotNull ConnectionStatus status) {
     if (!closed.compareAndSet(false, true)) {
       return;
     }
@@ -79,7 +79,7 @@ public abstract class VmConnection<T extends Vm> implements Disposable, BrowserC
     if (!started.isProcessed()) {
       started.setRejected();
     }
-    setState(ConnectionStatus.DISCONNECTED, message);
+    setState(status, message);
     Disposer.dispose(this, false);
   }
 
@@ -101,7 +101,7 @@ public abstract class VmConnection<T extends Vm> implements Disposable, BrowserC
       vm = null;
       callback = currentVm.detach();
     }
-    close(null);
+    close(null, ConnectionStatus.DISCONNECTED);
     return callback;
   }
 }
