@@ -41,12 +41,4 @@ public class ChangeListsMergerFactory implements MergerFactory {
                               String branchName) {
     return new Merger(vcs, myChangeListsList, target, handler, currentBranchUrl, branchName);
   }
-
-  public List<CommittedChangeList> getListsToMerge() {
-    return myChangeListsList;
-  }
-
-  public boolean isMergeAll() {
-    return false;
-  }
 }

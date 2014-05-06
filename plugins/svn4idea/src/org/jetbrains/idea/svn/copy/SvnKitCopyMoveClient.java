@@ -4,7 +4,7 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
-import org.jetbrains.idea.svn.commandLine.CommitEventHandler;
+import org.jetbrains.idea.svn.checkin.CommitEventHandler;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
@@ -40,6 +40,7 @@ public class SvnKitCopyMoveClient extends BaseSvnClient implements CopyMoveClien
                    @NotNull SvnTarget destination,
                    @Nullable SVNRevision revision,
                    boolean makeParents,
+                   boolean isMove,
                    @NotNull String message,
                    @Nullable CommitEventHandler handler) throws VcsException {
 
@@ -53,7 +54,8 @@ public class SvnKitCopyMoveClient extends BaseSvnClient implements CopyMoveClien
 
     SVNCommitInfo info;
     try {
-      info = client.doCopy(new SVNCopySource[]{copySource}, destination.getURL(), false, makeParents, true, message, null);
+      info = client
+        .doCopy(new SVNCopySource[]{copySource}, destination.getURL(), isMove, makeParents, true, message, null);
     }
     catch (SVNException e) {
       throw new VcsException(e);

@@ -17,9 +17,11 @@ package org.jetbrains.idea.svn.browse;
 
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.checkin.CmdCheckinClient;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
@@ -55,7 +57,7 @@ public class CmdBrowseClient extends BaseSvnClient implements BrowseClient {
     CommandUtil.put(parameters, depth);
     parameters.add("--xml");
 
-    CommandExecutor command = CommandUtil.execute(myVcs, target, SvnCommandName.list, parameters, null);
+    CommandExecutor command = execute(myVcs, target, SvnCommandName.list, parameters, null);
 
     try {
       parseOutput(target.getURL(), command, handler);
@@ -63,6 +65,24 @@ public class CmdBrowseClient extends BaseSvnClient implements BrowseClient {
     catch (SVNException e) {
       throw new SvnBindException(e);
     }
+  }
+
+  @Override
+  public long createDirectory(@NotNull SvnTarget target, @NotNull String message, boolean makeParents) throws VcsException {
+    assertUrl(target);
+
+    List<String> parameters = ContainerUtil.newArrayList();
+
+    CommandUtil.put(parameters, target);
+    CommandUtil.put(parameters, makeParents, "--parents");
+    parameters.add("--message");
+    parameters.add(message);
+
+    CmdCheckinClient.CommandListener listener = new CmdCheckinClient.CommandListener(null);
+
+    execute(myVcs, target, SvnCommandName.mkdir, parameters, listener);
+
+    return listener.getCommittedRevision();
   }
 
   private static void parseOutput(@NotNull SVNURL url, @NotNull CommandExecutor command, @Nullable ISVNDirEntryHandler handler)

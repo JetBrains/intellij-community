@@ -73,6 +73,7 @@ import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
 import org.jetbrains.idea.svn.api.ClientFactory;
 import org.jetbrains.idea.svn.api.CmdClientFactory;
 import org.jetbrains.idea.svn.api.SvnKitClientFactory;
+import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.commandLine.SvnExecutableChecker;
@@ -84,7 +85,6 @@ import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.jetbrains.idea.svn.lowLevel.PrimitivePool;
 import org.jetbrains.idea.svn.networking.SSLProtocolExceptionParser;
-import org.jetbrains.idea.svn.portable.SvnWcClientI;
 import org.jetbrains.idea.svn.properties.PropertyClient;
 import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
@@ -1384,6 +1384,11 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   @NotNull
   public ClientFactory getFactory() {
     return getFactory(getProjectRootFormat(), false);
+  }
+
+  @NotNull
+  public ClientFactory getFactory(@NotNull WorkingCopyFormat format) {
+    return getFactory(format, false);
   }
 
   public ClientFactory getSvnKitFactory() {

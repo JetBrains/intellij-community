@@ -4,6 +4,7 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.SvnClient;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 
 import java.io.File;
@@ -14,4 +15,6 @@ import java.io.File;
 public interface DeleteClient extends SvnClient {
 
   void delete(@NotNull File path, boolean force, boolean dryRun, @Nullable ISVNEventHandler handler) throws VcsException;
+
+  long delete(@NotNull SVNURL url, @NotNull String message) throws VcsException;
 }

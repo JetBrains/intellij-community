@@ -2,11 +2,8 @@ package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.checkin.IdeaSvnkitBasedAuthenticationCallback;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -168,42 +165,6 @@ public class CommandUtil {
     Unmarshaller unmarshaller = context.createUnmarshaller();
 
     return (T) unmarshaller.unmarshal(new StringReader(data.trim()));
-  }
-
-  /**
-   * Utility method for running commands.
-   * // TODO: Should be replaced with non-static analogue.
-   *
-   * @param vcs
-   * @param target
-   * @param name
-   * @param parameters
-   * @param listener
-   * @throws VcsException
-   */
-  public static CommandExecutor execute(@NotNull SvnVcs vcs,
-                                   @NotNull SvnTarget target,
-                                   @NotNull SvnCommandName name,
-                                   @NotNull List<String> parameters,
-                                   @Nullable LineCommandListener listener) throws VcsException {
-    return execute(vcs, target, null, name, parameters, listener);
-  }
-
-  public static CommandExecutor execute(@NotNull SvnVcs vcs,
-                                   @NotNull SvnTarget target,
-                                   @Nullable File workingDirectory,
-                                   @NotNull SvnCommandName name,
-                                   @NotNull List<String> parameters,
-                                   @Nullable LineCommandListener listener) throws VcsException {
-    Command command = new Command(name);
-
-    command.setTarget(target);
-    command.setWorkingDirectory(workingDirectory);
-    command.setResultBuilder(listener);
-    command.put(parameters);
-
-    CommandRuntime runtime = new CommandRuntime(vcs, new IdeaSvnkitBasedAuthenticationCallback(vcs));
-    return runtime.runWithAuthenticationAttempt(command);
   }
 
   @NotNull

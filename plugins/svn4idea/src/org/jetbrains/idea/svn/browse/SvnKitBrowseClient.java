@@ -53,6 +53,20 @@ public class SvnKitBrowseClient extends BaseSvnClient implements BrowseClient {
     }
   }
 
+  @Override
+  public long createDirectory(@NotNull SvnTarget target, @NotNull String message, boolean makeParents) throws VcsException {
+    assertUrl(target);
+
+    try {
+      SVNCommitInfo commitInfo = myVcs.createCommitClient().doMkDir(new SVNURL[]{target.getURL()}, message, null, makeParents);
+
+      return commitInfo.getNewRevision();
+    }
+    catch (SVNException e) {
+      throw new SvnBindException(e);
+    }
+  }
+
   @Nullable
   private static ISVNDirEntryHandler wrapHandler(@Nullable ISVNDirEntryHandler handler) {
     return handler == null ? null : new SkipEmptyNameDirectoriesHandler(handler);

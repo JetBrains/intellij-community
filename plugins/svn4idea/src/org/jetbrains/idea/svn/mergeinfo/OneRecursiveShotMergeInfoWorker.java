@@ -15,15 +15,13 @@
  */
 package org.jetbrains.idea.svn.mergeinfo;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AreaMap;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.PairProcessor;
-import org.jetbrains.idea.svn.SvnConfiguration;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.dialogs.WCInfo;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.dialogs.MergeContext;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -36,25 +34,25 @@ import java.io.File;
 import java.util.Map;
 
 public class OneRecursiveShotMergeInfoWorker implements MergeInfoWorker {
-  private final Project myProject;
-  private final WCInfo myWCInfo;
+
+  @NotNull private final MergeContext myMergeContext;
+
   // subpath [file] (local) to (subpathURL - merged FROM - to ranges list)
   private final AreaMap<String, Map<String, SVNMergeRangeList>> myDataMap;
   private final Object myLock;
   private final String myFromUrlRelative;
 
-  public OneRecursiveShotMergeInfoWorker(final Project project, final WCInfo WCInfo, final String fromUrl) {
-    myProject = project;
+  public OneRecursiveShotMergeInfoWorker(@NotNull MergeContext mergeContext) {
+    myMergeContext = mergeContext;
     myLock = new Object();
-    myWCInfo = WCInfo;
-    
+
     myDataMap = AreaMap.create(new PairProcessor<String, String>() {
       public boolean process(String parentUrl, String childUrl) {
         if (".".equals(parentUrl)) return true;
         return SVNPathUtil.isAncestor(ensureUrlFromSlash(parentUrl), ensureUrlFromSlash(childUrl));
       }
     });
-    final String url = SVNPathUtil.getRelativePath(myWCInfo.getRepositoryRoot(), fromUrl);
+    final String url = SVNPathUtil.getRelativePath(myMergeContext.getWcInfo().getRepositoryRoot(), myMergeContext.getSourceUrl());
     myFromUrlRelative = ensureUrlFromSlash(url);
   }
 
@@ -63,7 +61,7 @@ public class OneRecursiveShotMergeInfoWorker implements MergeInfoWorker {
   }
   
   public void prepare() throws VcsException {
-    final SVNDepth depth = SvnConfiguration.getInstance(myProject).isCheckNestedForQuickMerge() ? SVNDepth.INFINITY : SVNDepth.EMPTY;
+    final SVNDepth depth = myMergeContext.getVcs().getSvnConfiguration().isCheckNestedForQuickMerge() ? SVNDepth.INFINITY : SVNDepth.EMPTY;
     ISVNPropertyHandler handler = new ISVNPropertyHandler() {
       public void handleProperty(File path, SVNPropertyData property) throws SVNException {
         final String key = keyFromFile(path);
@@ -80,10 +78,9 @@ public class OneRecursiveShotMergeInfoWorker implements MergeInfoWorker {
       }
     };
 
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    File path = new File(myWCInfo.getPath());
+    File path = new File(myMergeContext.getWcInfo().getPath());
 
-    vcs.getFactory(path).createPropertyClient()
+    myMergeContext.getVcs().getFactory(path).createPropertyClient()
       .getProperty(SvnTarget.fromFile(path), SVNProperty.MERGE_INFO, SVNRevision.WORKING, depth, handler);
   }
 
@@ -159,8 +156,8 @@ public class OneRecursiveShotMergeInfoWorker implements MergeInfoWorker {
   }
 
   private String keyFromFile(final File file) {
-    final String path =
-      FileUtil.getRelativePath(myWCInfo.getPath(), file.getAbsolutePath(), File.separatorChar).replace(File.separatorChar, '/');
+    final String path = FileUtil.getRelativePath(myMergeContext.getWcInfo().getPath(), file.getAbsolutePath(), File.separatorChar).replace(
+      File.separatorChar, '/');
     return keyFromPath(path);
   }
 

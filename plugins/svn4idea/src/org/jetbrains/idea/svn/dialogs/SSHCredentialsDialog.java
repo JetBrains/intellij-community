@@ -75,7 +75,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
   @NonNls private static final String HELP_ID = "vcs.subversion.authentication";
   private boolean myKeyFileEmptyOrCorrect;
 
-  protected SSHCredentialsDialog(Project project,
+  public SSHCredentialsDialog(Project project,
                                  String realm,
                                  String userName,
                                  boolean allowSave,

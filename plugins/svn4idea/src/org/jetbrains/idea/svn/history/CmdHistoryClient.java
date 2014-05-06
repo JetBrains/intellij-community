@@ -44,7 +44,7 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
       prepareCommand(target, startRevision, endRevision, stopOnCopy, discoverChangedPaths, includeMergedRevisions, limit);
 
     try {
-      CommandExecutor command = CommandUtil.execute(myVcs, target, SvnCommandName.log, parameters, null);
+      CommandExecutor command = execute(myVcs, target, SvnCommandName.log, parameters, null);
       // TODO: handler should be called in parallel with command execution, but this will be in other thread
       // TODO: check if that is ok for current handler implementation
       parseOutput(command, handler);
