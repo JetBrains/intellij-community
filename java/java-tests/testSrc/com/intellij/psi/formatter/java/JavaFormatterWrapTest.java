@@ -47,8 +47,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "class Foo {\n" +
       "}",
 
-      "@AttributeOverrides({\n" +
-      "        @AttributeOverride(name = \"id\", column = @Column(name = \"recovery_id\")),\n" +
+      "@AttributeOverrides({@AttributeOverride(name = \"id\", column = @Column(name = \"recovery_id\")),\n" +
       "        @AttributeOverride(name = \"transactionReference\", column = @Column(name = \"deal_reference\")),\n" +
       "        @AttributeOverride(name = \"eventDate\", column = @Column(name = \"recovery_date\")),\n" +
       "        @AttributeOverride(name = \"amount\", column = @Column(name = \"recovery_amount\")),\n" +
@@ -391,9 +390,8 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     String literal = "\"" + StringUtil.repeatSymbol('A', 128) + "\"";
     before = "processingEnv.getMessenger().printMessage(Diagnostic.Kind.ERROR, call(" + literal + "));\n";
     after = "processingEnv.getMessenger().printMessage(\n" +
-            "        Diagnostic.Kind.ERROR, call(\n" +
-            "                " + literal + "\n" +
-            "        )\n" +
+            "        Diagnostic.Kind.ERROR,\n" +
+            "        call(" + literal + ")\n" +
             ");\n";
 
     doMethodTest(before, after);
@@ -447,5 +445,22 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "    @A\n" +
       "    public @TA String m();\n" +
       "}");
+  }
+
+  public void testIDEA123956() {
+    doMethodTest(
+      "final BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog(" +
+          "AnalysisScopeBundle.message(\"specify.analysis.scope\", InspectionsBundle.message(\"inspection.action.title\")),\n" +
+      "              AnalysisScopeBundle.message(\"analysis.scope.title\", InspectionsBundle.message(\"inspection.action.noun\")),\n" +
+      "              project, analysisScope, module != null ? module.getName() : null,\n" +
+      "              true, AnalysisUIOptions.getInstance(project), psiElement) {\n" +
+      "}",
+      "final BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog(" +
+          "AnalysisScopeBundle.message(\"specify.analysis.scope\", InspectionsBundle.message(\"inspection.action.title\")),\n" +
+      "        AnalysisScopeBundle.message(\"analysis.scope.title\", InspectionsBundle.message(\"inspection.action.noun\")),\n" +
+      "        project, analysisScope, module != null ? module.getName() : null,\n" +
+      "        true, AnalysisUIOptions.getInstance(project), psiElement) {\n" +
+      "}"
+    );
   }
 }
