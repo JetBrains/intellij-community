@@ -198,14 +198,15 @@ public class CompilerTask extends Task.Backgroundable {
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        if (myProject.isDisposed()) {
+        final Project project = myProject;
+        if (project == null || project.isDisposed()) {
           return;
         }
         synchronized (myMessageViewLock) {
           // clear messages from the previous compilation
           if (myErrorTreeView == null) {
             // if message view != null, the contents has already been cleared
-            removeAllContents(myProject, null);
+            removeAllContents(project, null);
           }
         }
       }
@@ -454,7 +455,12 @@ public class CompilerTask extends Task.Backgroundable {
       if (content == notRemove) {
         continue;
       }
-      if (CONTENT_ID_KEY.get(content) == myContentId  || SESSION_ID_KEY.get(content) != mySessionId) { // the content was added by previous compilation
+      boolean toRemove = CONTENT_ID_KEY.get(content) == myContentId;
+      if (!toRemove) {
+        final Object contentSessionId = SESSION_ID_KEY.get(content);
+        toRemove = contentSessionId != null && contentSessionId != mySessionId; // the content was added by previous compilation
+      }
+      if (toRemove) { 
         messageView.getContentManager().removeContent(content, true);
       }
     }
