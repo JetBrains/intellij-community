@@ -99,6 +99,9 @@ public class EditorHyperlinkSupport {
     );
   }
 
+  @Deprecated
+  public void clearHyperlinks() {}
+
   @Nullable
   public Runnable getLinkNavigationRunnable(final LogicalPosition logical) {
     if (EditorUtil.inVirtualSpace(myEditor, logical)) {
