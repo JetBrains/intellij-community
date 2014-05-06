@@ -17,11 +17,13 @@ package com.jetbrains.python.magicLiteral;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameDialog;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
@@ -35,7 +37,23 @@ import org.jetbrains.annotations.Nullable;
 public class PyMagicLiteralRenameHandler implements RenameHandler {
   @Override
   public boolean isAvailableOnDataContext(DataContext dataContext) {
-    return false;
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    if (editor == null) {
+      return false;
+    }
+
+    final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
+    if (file == null) {
+      return false;
+    }
+
+    final PsiElement element = getElement(file, editor);
+
+    if (element == null || !PyMagicLiteralTools.isMagicLiteral(element)) {
+      return false;
+    }
+
+    return true;
   }
 
   @Nullable
@@ -54,6 +72,23 @@ public class PyMagicLiteralRenameHandler implements RenameHandler {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
+    PsiElement element = getElement(file, editor);
+    if (element == null) {
+      return;
+    }
+    showRenameDialog(dataContext, new RenameDialog(project, element, null, editor));
+  }
+
+  private static void showRenameDialog(DataContext dataContext, RenameDialog dialog) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      final String name = PsiElementRenameHandler.DEFAULT_NAME.getData(dataContext);
+      //noinspection TestOnlyProblems
+      dialog.performRename(name);
+      dialog.close(RenameDialog.OK_EXIT_CODE);
+    }
+    else {
+      dialog.show();
+    }
   }
 
   @Override
