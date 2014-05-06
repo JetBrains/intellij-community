@@ -58,7 +58,7 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
     EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryAdapter() {
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
-        if (event.getEditor() == myParentEditor) {
+        if (event.getEditor() == myParentEditor || event.getEditor() == myEditor) {
           hide();
         }
       }
