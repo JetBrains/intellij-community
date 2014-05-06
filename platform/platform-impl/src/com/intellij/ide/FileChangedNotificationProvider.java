@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.ide;
 
+import com.intellij.openapi.diagnostic.LogUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -30,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class FileChangedNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> {
+  private static final Logger LOG = Logger.getInstance(FileChangedNotificationProvider.class);
   private static final Key<EditorNotificationPanel> KEY = Key.create("file.changed.notification.panel");
 
   private final Project myProject;
@@ -63,6 +66,7 @@ public class FileChangedNotificationProvider extends EditorNotifications.Provide
       if (fs instanceof LocalFileSystem) {
         FileAttributes attributes = ((LocalFileSystem)fs).getAttributes(file);
         if (attributes == null || file.getTimeStamp() != attributes.lastModified || file.getLength() != attributes.length) {
+          LogUtil.debug(LOG, "%s: (%s,%s) -> %s", file, file.getTimeStamp(), file.getLength(), attributes);
           return createPanel(file);
         }
       }
