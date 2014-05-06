@@ -59,7 +59,8 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
             (aClass.isInheritor(myBase, true) || JUnitUtil.isTestClass(aClass))) {
           final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(getProject());
           final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(aClass);
-          return !compilerConfiguration.isExcludedFromCompilation(virtualFile) && !compilerConfiguration.isResourceFile(virtualFile);
+          return !compilerConfiguration.isExcludedFromCompilation(virtualFile) && 
+                 (!compilerConfiguration.isResourceFile(virtualFile) || compilerConfiguration.isCompilableResourceFile(myProject, virtualFile));
         }
         return false;
       }
