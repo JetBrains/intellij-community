@@ -22,6 +22,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -40,6 +42,7 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -64,13 +67,25 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
         }
       }
     }, this);
+
+    myEditor.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      public void documentChanged(DocumentEvent event) {
+        if (!isDisposed && event.isWholeTextReplaced()) {
+          Pair<Point, Short> position = guessPosition();
+          HintManagerImpl.adjustEditorHintPosition(EmmetPreviewHint.this, myParentEditor, position.first, position.second);
+          myEditor.getScrollingModel().scrollVertically(0);
+        }
+      }
+    }, this);
   }
 
   public void showHint() {
     myParentEditor.putUserData(KEY, this);
 
     Pair<Point, Short> position = guessPosition();
-    JLayeredPane layeredPane = myParentEditor.getComponent().getRootPane().getLayeredPane();
+    JRootPane pane = myParentEditor.getComponent().getRootPane();
+    JComponent layeredPane = pane != null ? pane.getLayeredPane() : myParentEditor.getComponent();
     HintHint hintHint = new HintHint(layeredPane, position.first)
         .setAwtTooltip(true)
         .setContentActive(true)
@@ -99,12 +114,16 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
                 myEditor.getDocument().setText(newText);
               }
             });
-            Pair<Point, Short> position = guessPosition();
-            HintManagerImpl.adjustEditorHintPosition(EmmetPreviewHint.this, myParentEditor, position.first, position.second);
           }
         }
       }
     }, 100);
+  }
+  
+  @TestOnly
+  @NotNull
+  public String getContent() {
+    return myEditor.getDocument().getText();
   }
 
   @Nullable
@@ -157,6 +176,11 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
   }
 
   @Override
+  public boolean vetoesHiding() {
+    return true;
+  }
+
+  @Override
   public void hide(boolean ok) {
     super.hide(ok);
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -182,7 +206,8 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
 
   @NotNull
   private Pair<Point, Short> guessPosition() {
-    JLayeredPane layeredPane = myParentEditor.getContentComponent().getRootPane().getLayeredPane();
+    JRootPane rootPane = myParentEditor.getContentComponent().getRootPane();
+    JComponent layeredPane = rootPane != null ? rootPane.getLayeredPane() : myParentEditor.getComponent();
     LogicalPosition logicalPosition = myParentEditor.getCaretModel().getLogicalPosition();
 
     LogicalPosition pos = new LogicalPosition(logicalPosition.line, logicalPosition.column);

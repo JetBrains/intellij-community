@@ -17,6 +17,7 @@ package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.Variable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.HashMap;
@@ -147,6 +148,9 @@ public class LiveTemplateBuilder {
   }
 
   private <T> List<T> getListWithLimit(List<T> list) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return list;
+    }
     if (mySegmentLimit == 0) {
       return Collections.emptyList();
     }

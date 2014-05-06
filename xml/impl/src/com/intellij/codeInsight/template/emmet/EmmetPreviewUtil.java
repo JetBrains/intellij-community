@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -51,6 +52,7 @@ public class EmmetPreviewUtil {
     if (file instanceof XmlFile) {
       final Ref<TemplateImpl> generatedTemplate = new Ref<TemplateImpl>();
       CustomTemplateCallback callback = createCallback(editor, file, generatedTemplate);
+      PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
       PsiElement context = callback.getContext();
       ZenCodingGenerator generator = ZenCodingTemplate.findApplicableDefaultGenerator(context, false);
       if (generator != null) {
