@@ -23,13 +23,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.usageView.UsageInfo;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.editor.PythonDocCommentUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+import java.util.Map;
 
 public class PyRemoveParameterQuickFix implements LocalQuickFix {
 
@@ -49,18 +55,26 @@ public class PyRemoveParameterQuickFix implements LocalQuickFix {
     assert element instanceof PyParameter;
 
     final PyFunction pyFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class);
-    final PsiElement nextSibling = PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class);
-    final PsiElement prevSibling = PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace.class);
-    element.delete();
-    if (nextSibling != null && nextSibling.getNode().getElementType().equals(PyTokenTypes.COMMA)) {
-      nextSibling.delete();
-      return;
-    }
-    if (prevSibling != null && prevSibling.getNode().getElementType().equals(PyTokenTypes.COMMA)) {
-      prevSibling.delete();
-    }
 
     if (pyFunction != null) {
+      final List<UsageInfo> usages = PyRefactoringUtil.findUsages(pyFunction, false);
+      for (UsageInfo usage : usages) {
+        final PsiElement usageElement = usage.getElement();
+        if (usageElement != null) {
+          final PsiElement callExpression = usageElement.getParent();
+          if (callExpression instanceof PyCallExpression) {
+            final PyArgumentList argumentList = ((PyCallExpression)callExpression).getArgumentList();
+            if (argumentList != null) {
+              final CallArgumentsMapping mapping = argumentList.analyzeCall(PyResolveContext.noImplicits());
+              for (Map.Entry<PyExpression, PyNamedParameter> parameterEntry : mapping.getPlainMappedParams().entrySet()) {
+                if (parameterEntry.getValue().equals(element)) {
+                  parameterEntry.getKey().delete();
+                }
+              }
+            }
+          }
+        }
+      }
       final PyStringLiteralExpression expression = pyFunction.getDocStringExpression();
       final String paramName = ((PyParameter)element).getName();
       if (expression != null && paramName != null) {
@@ -74,5 +88,17 @@ public class PyRemoveParameterQuickFix implements LocalQuickFix {
         expression.replace(str);
       }
     }
+
+    final PsiElement nextSibling = PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class);
+    final PsiElement prevSibling = PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace.class);
+    element.delete();
+    if (nextSibling != null && nextSibling.getNode().getElementType().equals(PyTokenTypes.COMMA)) {
+      nextSibling.delete();
+      return;
+    }
+    if (prevSibling != null && prevSibling.getNode().getElementType().equals(PyTokenTypes.COMMA)) {
+      prevSibling.delete();
+    }
+
   }
 }
