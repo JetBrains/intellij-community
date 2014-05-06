@@ -32,14 +32,17 @@ import com.intellij.debugger.ui.tree.*;
 import com.intellij.debugger.ui.tree.render.ChildrenBuilder;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.util.PlatformIcons;
 import com.intellij.xdebugger.frame.*;
 import com.sun.jdi.Type;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 
 /**
@@ -87,7 +90,27 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
           public void labelChanged() {
             Type type = myValueDescriptor.getType();
             String typeName = type != null ? type.name() : null;
-            node.setPresentation(null, typeName, myValueDescriptor.getValueText(), myValueDescriptor.isExpandable());
+
+            Icon nodeIcon;
+            if (myValueDescriptor instanceof FieldDescriptorImpl && ((FieldDescriptorImpl)myValueDescriptor).isStatic()) {
+              nodeIcon = PlatformIcons.FIELD_ICON;
+            }
+            else if (myValueDescriptor.isArray()) {
+              nodeIcon = AllIcons.Debugger.Db_array;
+            }
+            else if (myValueDescriptor.isPrimitive()) {
+              nodeIcon = AllIcons.Debugger.Db_primitive;
+            }
+            else {
+              if (myValueDescriptor instanceof WatchItemDescriptor) {
+                nodeIcon = AllIcons.Debugger.Watch;
+              }
+              else {
+                nodeIcon = AllIcons.Debugger.Value;
+              }
+            }
+
+            node.setPresentation(nodeIcon, typeName, myValueDescriptor.getValueText(), myValueDescriptor.isExpandable());
           }
         });
       }
