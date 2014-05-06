@@ -35,16 +35,18 @@ public abstract class PostfixTemplate {
   }
 
   protected PostfixTemplate(@NotNull String name, @NotNull String key, @NotNull String example) {
+    String tempDescription;
     myPresentableName = name;
     myKey = key;
     myExample = example;
 
     try {
-      myDescription = new PostfixTemplateMetaData(this).getDescription().getText();
+      tempDescription = new PostfixTemplateMetaData(this).getDescription().getText();
     }
     catch (IOException e) {
-      throw new RuntimeException(e.getMessage(), e);
+      tempDescription = "Under construction";
     }
+    myDescription = tempDescription;
   }
 
   @NotNull

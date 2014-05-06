@@ -45,8 +45,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Set;
 
-import static com.intellij.codeInsight.template.postfix.templates.LanguagePostfixTemplate.LANG_EP;
-
 public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   public static final String POSTFIX_TEMPLATE_ID = "POSTFIX_TEMPLATE_ID";
   private static final Logger LOG = Logger.getInstance(PostfixLiveTemplate.class);
@@ -55,7 +53,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   public Set<String> getAllTemplateKeys(PsiFile file, int offset) {
     Set<String> keys = Sets.newHashSet();
     Language language = PsiUtilCore.getLanguageAtOffset(file, offset);
-    for (PostfixTemplateProvider provider : LANG_EP.allForLanguage(language)) {
+    for (PostfixTemplateProvider provider : LanguagePostfixTemplate.LANG_EP.allForLanguage(language)) {
       keys.addAll(getKeys(provider));
     }
     return keys;
@@ -90,7 +88,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     Editor editor = callback.getEditor();
     CharSequence charsSequence = editor.getDocument().getCharsSequence();
     int offset = editor.getCaretModel().getOffset();
-    for (PostfixTemplateProvider provider : LANG_EP.allForLanguage(getLanguage(callback))) {
+    for (PostfixTemplateProvider provider : LanguagePostfixTemplate.LANG_EP.allForLanguage(getLanguage(callback))) {
       String key = computeTemplateKeyWithoutContextChecking(provider, charsSequence, offset);
       if (key != null && isApplicableTemplate(provider, key, callback.getFile(), editor)) {
         return key;
@@ -104,7 +102,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   public String computeTemplateKeyWithoutContextChecking(@NotNull CustomTemplateCallback callback) {
     Editor editor = callback.getEditor();
     int currentOffset = editor.getCaretModel().getOffset();
-    for (PostfixTemplateProvider provider : LANG_EP.allForLanguage(getLanguage(callback))) {
+    for (PostfixTemplateProvider provider : LanguagePostfixTemplate.LANG_EP.allForLanguage(getLanguage(callback))) {
       String key = computeTemplateKeyWithoutContextChecking(provider, editor.getDocument().getCharsSequence(), currentOffset);
       if (key != null) return key;
     }
@@ -122,7 +120,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.postfix");
 
     Editor editor = callback.getEditor();
-    for (PostfixTemplateProvider provider : LANG_EP.allForLanguage(getLanguage(callback))) {
+    for (PostfixTemplateProvider provider : LanguagePostfixTemplate.LANG_EP.allForLanguage(getLanguage(callback))) {
       PostfixTemplate postfixTemplate = getTemplate(provider, key);
       if (postfixTemplate != null) {
         final PsiFile file = callback.getContext().getContainingFile();
@@ -153,7 +151,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
       return false;
     }
     Language language = PsiUtilCore.getLanguageAtOffset(file, offset);
-    for (PostfixTemplateProvider provider : LANG_EP.allForLanguage(language)) {
+    for (PostfixTemplateProvider provider : LanguagePostfixTemplate.LANG_EP.allForLanguage(language)) {
       if (StringUtil.isNotEmpty(computeTemplateKeyWithoutContextChecking(provider, file.getText(), offset + 1))) {
         return true;
       }
@@ -195,7 +193,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
                                                                                  int offset) {
     Collection<CustomLiveTemplateLookupElement> result = ContainerUtil.newHashSet();
     CustomTemplateCallback callback = new CustomTemplateCallback(editor, file, false);
-    for (PostfixTemplateProvider provider : LANG_EP.allForLanguage(getLanguage(callback))) {
+    for (PostfixTemplateProvider provider : LanguagePostfixTemplate.LANG_EP.allForLanguage(getLanguage(callback))) {
       String key = computeTemplateKeyWithoutContextChecking(callback);
       if (key != null && editor.getCaretModel().getCaretCount() == 1) {
         Condition<PostfixTemplate> isApplicationTemplateFunction = createIsApplicationTemplateFunction(provider, key, file, editor);
