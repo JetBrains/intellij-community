@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.nodes.*;
 import com.intellij.codeInsight.template.emmet.tokens.*;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -90,18 +89,15 @@ public abstract class EmmetParser {
     if (sign == '^') {
       return parseClimbUpOperation(mul);
     }
-    if (mul == null) {
-      return null;
-    }
     if (sign == '+') {
       advance();
       ZenCodingNode add2 = parseAddOrMore();
       if (add2 == null) {
-        return null;
+        return mul;
       }
-      return new AddOperationNode(mul, add2);
+      return new AddOperationNode(notNullNode(mul), add2);
     }
-    else if (sign == '>') {
+    if (sign == '>') {
       return parseMoreOperation(mul);
     }
     return null;
@@ -109,21 +105,26 @@ public abstract class EmmetParser {
 
   protected ZenCodingNode parseClimbUpOperation(@Nullable ZenCodingNode leftPart) {
     advance();
-    leftPart = leftPart != null ? leftPart : ZenEmptyNode.INSTANCE;
-    ZenCodingNode rigthPart = parseAddOrMore();
-    if (rigthPart == null) {
-      return null;
-    }
-    return new ClimbUpOperationNode(leftPart, rigthPart);
-  }
-
-  protected ZenCodingNode parseMoreOperation(@NotNull ZenCodingNode leftPart) {
-    advance();
+    leftPart = notNullNode(leftPart);
     ZenCodingNode rightPart = parseAddOrMore();
     if (rightPart == null) {
-      return null;
+      return leftPart;
+    }
+    return new ClimbUpOperationNode(leftPart, rightPart);
+  }
+
+  protected ZenCodingNode parseMoreOperation(@Nullable ZenCodingNode leftPart) {
+    advance();
+    leftPart = notNullNode(leftPart);
+    ZenCodingNode rightPart = parseAddOrMore();
+    if (rightPart == null) {
+      return leftPart;
     }
     return new MoreOperationNode(leftPart, rightPart);
+  }
+
+  private static ZenCodingNode notNullNode(ZenCodingNode node) {
+    return node != null ? node : ZenEmptyNode.INSTANCE;
   }
 
   protected int advance() {
@@ -205,11 +206,6 @@ public abstract class EmmetParser {
       return null;
     }
     return new TemplateNode(templateToken);
-  }
-
-  @Nullable
-  protected String getDefaultTemplateKey() {
-    return null;
   }
 
   protected boolean setTemplate(final TemplateToken token, TemplateImpl template) {
