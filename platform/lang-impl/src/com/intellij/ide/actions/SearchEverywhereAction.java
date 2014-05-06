@@ -424,16 +424,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       @Override
       protected void textChanged(DocumentEvent e) {
         final String pattern = editor.getText();
-        final int len = pattern.trim().length();
-        myAlarm.cancelAllRequests();
-        myAlarm.addRequest(new Runnable() {
-          @Override
-          public void run() {
-            if (editor.hasFocus()) {
-              rebuildList(pattern);
-            }
-          }
-        }, len == 1 ? 400 : len == 2 ? 300 : len == 3 ? 250 : 30);
+        if (editor.hasFocus()) {
+          rebuildList(pattern);
+        }
       }
     });
     editor.addFocusListener(new FocusAdapter() {
@@ -1019,7 +1012,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       final int width = myMainPanel.getPreferredSize().width;
       if (width > myPopupActualWidth) {
         myPopupActualWidth = width;
-        schedulePopupUpdate();
+        //schedulePopupUpdate();
       }
       return myMainPanel;
     }
