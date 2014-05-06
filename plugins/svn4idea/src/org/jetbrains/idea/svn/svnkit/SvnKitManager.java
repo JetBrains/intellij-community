@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 import org.jetbrains.idea.svn.lowLevel.PrimitivePool;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -43,107 +44,115 @@ public class SvnKitManager {
     myConfiguration = myVcs.getSvnConfiguration();
   }
 
+  @NotNull
   public ISVNOptions getSvnOptions() {
     return myConfiguration.getOptions(myProject);
   }
 
+  @NotNull
   public SVNRepository createRepository(String url) throws SVNException {
-    SVNRepository repos = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(url));
-    repos.setAuthenticationManager(myConfiguration.getAuthenticationManager(myVcs));
-    repos.setTunnelProvider(myConfiguration.getOptions(myProject));
-    return repos;
+    return createRepository(SVNURL.parseURIEncoded(url));
   }
 
-  public SVNRepository createRepository(SVNURL url) throws SVNException {
-    SVNRepository repos = SVNRepositoryFactory.create(url);
-    repos.setAuthenticationManager(myConfiguration.getAuthenticationManager(myVcs));
-    repos.setTunnelProvider(myConfiguration.getOptions(myProject));
-    return repos;
+  @NotNull
+  public SVNRepository createRepository(@NotNull SVNURL url) throws SVNException {
+    SVNRepository repository = SVNRepositoryFactory.create(url);
+    repository.setAuthenticationManager(getAuthenticationManager());
+    repository.setTunnelProvider(getSvnOptions());
+
+    return repository;
   }
 
   @NotNull
   private ISVNRepositoryPool getPool() {
-    return getPool(myConfiguration.getAuthenticationManager(myVcs));
+    return getPool(getAuthenticationManager());
   }
 
   @NotNull
-  private ISVNRepositoryPool getPool(ISVNAuthenticationManager manager) {
+  private ISVNRepositoryPool getPool(@NotNull ISVNAuthenticationManager manager) {
     if (myProject.isDisposed()) {
       throw new ProcessCanceledException();
     }
-    return new PrimitivePool(manager, myConfiguration.getOptions(myProject));
+    return new PrimitivePool(manager, getSvnOptions());
   }
 
+  @NotNull
   public SVNUpdateClient createUpdateClient() {
-    final SVNUpdateClient client = new SVNUpdateClient(getPool(), myConfiguration.getOptions(myProject));
-    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(myVcs));
-    return client;
+    return setupClient(new SVNUpdateClient(getPool(), getSvnOptions()));
   }
 
+  @NotNull
   public SVNUpdateClient createUpdateClient(@NotNull ISVNAuthenticationManager manager) {
-    final SVNUpdateClient client = new SVNUpdateClient(getPool(manager), myConfiguration.getOptions(myProject));
-    client.getOperationsFactory().setAuthenticationManager(manager);
-    return client;
+    return setupClient(new SVNUpdateClient(getPool(manager), getSvnOptions()), manager);
   }
 
+  @NotNull
   public SVNStatusClient createStatusClient() {
-    SVNStatusClient client = new SVNStatusClient(getPool(), myConfiguration.getOptions(myProject));
-    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(myVcs));
+    SVNStatusClient client = new SVNStatusClient(getPool(), getSvnOptions());
     client.setIgnoreExternals(false);
-    return client;
+
+    return setupClient(client);
   }
 
+  @NotNull
   public SVNWCClient createWCClient() {
-    final SVNWCClient client = new SVNWCClient(getPool(), myConfiguration.getOptions(myProject));
-    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(myVcs));
-    return client;
+    return setupClient(new SVNWCClient(getPool(), getSvnOptions()));
   }
 
+  @NotNull
   public SVNWCClient createWCClient(@NotNull ISVNAuthenticationManager manager) {
-    final SVNWCClient client = new SVNWCClient(getPool(manager), myConfiguration.getOptions(myProject));
-    client.getOperationsFactory().setAuthenticationManager(manager);
-    return client;
+    return setupClient(new SVNWCClient(getPool(manager), getSvnOptions()), manager);
   }
 
+  @NotNull
   public SVNCopyClient createCopyClient() {
-    final SVNCopyClient client = new SVNCopyClient(getPool(), myConfiguration.getOptions(myProject));
-    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(myVcs));
-    return client;
+    return setupClient(new SVNCopyClient(getPool(), getSvnOptions()));
   }
 
+  @NotNull
   public SVNMoveClient createMoveClient() {
-    final SVNMoveClient client = new SVNMoveClient(getPool(), myConfiguration.getOptions(myProject));
-    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(myVcs));
-    return client;
+    return setupClient(new SVNMoveClient(getPool(), getSvnOptions()));
   }
 
+  @NotNull
   public SVNLogClient createLogClient() {
-    final SVNLogClient client = new SVNLogClient(getPool(), myConfiguration.getOptions(myProject));
-    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(myVcs));
-    return client;
+    return setupClient(new SVNLogClient(getPool(), getSvnOptions()));
   }
 
+  @NotNull
   public SVNLogClient createLogClient(@NotNull ISVNAuthenticationManager manager) {
-    final SVNLogClient client = new SVNLogClient(getPool(manager), myConfiguration.getOptions(myProject));
-    client.getOperationsFactory().setAuthenticationManager(manager);
-    return client;
+    return setupClient(new SVNLogClient(getPool(manager), getSvnOptions()), manager);
   }
 
+  @NotNull
   public SVNCommitClient createCommitClient() {
-    final SVNCommitClient client = new SVNCommitClient(getPool(), myConfiguration.getOptions(myProject));
-    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(myVcs));
-    return client;
+    return setupClient(new SVNCommitClient(getPool(), getSvnOptions()));
   }
 
+  @NotNull
   public SVNDiffClient createDiffClient() {
-    final SVNDiffClient client = new SVNDiffClient(getPool(), myConfiguration.getOptions(myProject));
-    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(myVcs));
-    return client;
+    return setupClient(new SVNDiffClient(getPool(), getSvnOptions()));
   }
 
+  @NotNull
   public SVNChangelistClient createChangelistClient() {
-    final SVNChangelistClient client = new SVNChangelistClient(getPool(), myConfiguration.getOptions(myProject));
-    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(myVcs));
+    return setupClient(new SVNChangelistClient(getPool(), getSvnOptions()));
+  }
+
+  @NotNull
+  private SvnAuthenticationManager getAuthenticationManager() {
+    return myConfiguration.getAuthenticationManager(myVcs);
+  }
+
+  @NotNull
+  private <T extends SVNBasicClient> T setupClient(@NotNull T client) {
+    return setupClient(client, getAuthenticationManager());
+  }
+
+  @NotNull
+  private static <T extends SVNBasicClient> T setupClient(@NotNull T client, @NotNull ISVNAuthenticationManager manager) {
+    client.getOperationsFactory().setAuthenticationManager(manager);
+
     return client;
   }
 }
