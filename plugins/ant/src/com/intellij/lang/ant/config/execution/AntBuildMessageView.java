@@ -90,8 +90,8 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   private AntBuildFileBase myBuildFile;
   private final String[] myTargets;
   private int myPriorityThreshold = PRIORITY_BRIEF;
-  private int myErrorCount;
-  private int myWarningCount;
+  private volatile int myErrorCount;
+  private volatile int myWarningCount;
   private volatile boolean myIsOutputPaused = false;
 
   @NotNull
@@ -109,7 +109,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   private final Runnable myFlushLogRunnable = new Runnable() {
     @Override
     public void run() {
-      if (myTreeView != null && myCommandsProcessedCount < myLog.size()) {
+      if (myCommandsProcessedCount < myLog.size()) {
         if (!myIsOutputPaused) {
           new OutputFlusher().doFlush();
           myTreeView.scrollToLastMessage();
