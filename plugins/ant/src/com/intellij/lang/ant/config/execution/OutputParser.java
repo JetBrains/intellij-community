@@ -71,7 +71,7 @@ public class OutputParser{
   }
 
   public boolean isTerminateInvoked() {
-    return myProcessHandler.isProcessTerminating();
+    return myProcessHandler.isProcessTerminating() || myProcessHandler.isProcessTerminated();
   }
 
   protected Project getProject() {
