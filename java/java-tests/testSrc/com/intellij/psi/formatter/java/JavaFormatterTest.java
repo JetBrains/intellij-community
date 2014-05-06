@@ -931,12 +931,13 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
     getSettings().getRootSettings().RIGHT_MARGIN = 20;
     getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     doTextTest("class Foo {\n" + "    void foo() {\n" + "        fooFooFooFoo(1);" + "    }\n" + "}",
-               "class Foo {\n" + "    void foo() {\n" + "        fooFooFooFoo(1);\n" + "    }\n" + "}");
+               "class Foo {\n" + "    void foo() {\n" + "        fooFooFooFoo(\n" + "                1);\n" + "    }\n" + "}");
 
     getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
     doTextTest("class Foo {\n" + "    void foo() {\n" + "        fooFooFooFoo(1,2);" + "    }\n" + "}", "class Foo {\n" +
                                                                                                         "    void foo() {\n" +
-                                                                                                        "        fooFooFooFoo(1,\n" +
+                                                                                                        "        fooFooFooFoo(\n" +
+                                                                                                        "                1,\n" +
                                                                                                         "                2);\n" +
                                                                                                         "    }\n" +
                                                                                                         "}");
