@@ -380,7 +380,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                   }
                 }
               }
-              variableName = ((PsiVariable)resolve).getName() + ".";
+              variableName = qualifierExpression.getText() + ".";
             }
           } else if (qualifierExpression == null) {
             variableName = "";
