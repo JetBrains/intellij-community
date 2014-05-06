@@ -20,7 +20,7 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.engine.events.DebuggerCommandImpl;
+import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.DecompiledLocalVariable;
@@ -123,13 +123,13 @@ public class JavaStackFrame extends XStackFrame {
 
   @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
-    myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+    DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(myDebugProcess.getProject()).getContext();
+    myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
       @Override
-      protected void action() throws Exception {
+      public void threadAction() {
         XValueChildrenList children = new XValueChildrenList();
-        DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(myDebugProcess.getProject()).getContext();
         try {
-          buildVariables(debuggerContext, children);
+          buildVariables(getDebuggerContext(), children);
         }
         catch (EvaluateException e) {
           e.printStackTrace();
