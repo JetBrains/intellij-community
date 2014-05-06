@@ -2,7 +2,8 @@
 def foo(r<caret>):
     """
 
-    :param r:
+    :param r: some parameter
+    :type r: int
     :return:
     """
     def a():
