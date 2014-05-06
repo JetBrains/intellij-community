@@ -66,7 +66,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
     final ListPopupStep sdkHomesStep = new PythonSdkDetailsStep(project, moreDialog, ownerComponent, existingSdks, callback);
     final ListPopup popup = JBPopupFactory.getInstance().createListPopup(sdkHomesStep);
     Dimension size = new JLabel(VIRTUALENV, EmptyIcon.ICON_16, SwingConstants.LEFT).getMinimumSize();
-    int componentNum = moreDialog == null ? 4 : 5;
+    int componentNum = getAvailableOptions(moreDialog != null).size() + 1;
     int height = size.height * componentNum + 2*componentNum;
     popup.setSize(new Dimension(size.width, height));
     popup.setMinimumSize(new Dimension(size.width, height));
