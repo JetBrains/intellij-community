@@ -66,6 +66,13 @@
                      bundle="org.jetbrains.idea.devkit.DevKitBundle"
                      groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.IntentionDescriptionNotFoundInspection"/>
+    <localInspection language="JAVA"
+                     key="inspections.component.postfix.template.not.found.description.name"
+                     bundle="org.jetbrains.idea.devkit.DevKitBundle"
+                     groupKey="inspections.group.name"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.PostfixTemplateDescriptionNotFoundInspection"/>
     <localInspection shortName="ComponentRegistrationProblems"
                      bundle="org.jetbrains.idea.devkit.DevKitBundle" key="inspections.registration.problems.name"
                      groupKey="inspections.group.name"
