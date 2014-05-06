@@ -129,6 +129,10 @@ public class JavaDebugProcess extends XDebugProcess {
     return myJavaSession.getContextManager();
   }
 
+  public DebuggerSession getDebuggerSession() {
+    return myJavaSession;
+  }
+
   @NotNull
   @Override
   public XDebuggerEditorsProvider getEditorsProvider() {
