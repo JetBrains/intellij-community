@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 package org.jetbrains.idea.devkit.codeInsight
-
 import com.intellij.codeInsight.TargetElementUtilBase
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.documentation.DocumentationManager
@@ -38,7 +37,6 @@ import com.intellij.usageView.UsageViewNodeTextLocation
 import com.intellij.usageView.UsageViewTypeLocation
 import com.intellij.util.xml.DomTarget
 import org.jetbrains.idea.devkit.inspections.*
-
 /**
  * @author peter
  */
@@ -150,6 +148,8 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
     myFixture.copyFileToProject(getTestName(false) + "_main.xml", "META-INF/plugin.xml");
     myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + "_dependent.xml", "META-INF/dep.xml"));
+    ApplicationManager.application.runWriteAction { PsiTestUtil.addSourceContentToRoots(myModule, myTempDirFixture.getFile("")) }
+
     myFixture.checkHighlighting(false, false, false);
   }
 

@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.ConvertContext;
@@ -34,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.dom.PluginModule;
-import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -108,8 +108,9 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
 
   public static Collection<IdeaPlugin> getAllPlugins(final Project project) {
     if (DumbService.isDumb(project)) return Collections.emptyList();
-    GlobalSearchScope scope = PsiUtil.isIdeaProject(project) ?
-                              GlobalSearchScopesCore.projectProductionScope(project) : GlobalSearchScope.allScope(project);
+
+    GlobalSearchScope scope = GlobalSearchScopesCore.projectProductionScope(project).
+      union(ProjectScope.getLibrariesScope(project));
     List<DomFileElement<IdeaPlugin>> files = DomService.getInstance().getFileElements(IdeaPlugin.class, project, scope);
     return ContainerUtil.map(files, new Function<DomFileElement<IdeaPlugin>, IdeaPlugin>() {
       public IdeaPlugin fun(DomFileElement<IdeaPlugin> ideaPluginDomFileElement) {
