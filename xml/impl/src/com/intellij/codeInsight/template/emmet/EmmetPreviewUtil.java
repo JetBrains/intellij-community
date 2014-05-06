@@ -35,6 +35,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,7 +76,7 @@ public class EmmetPreviewUtil {
       public void documentChanged(@NotNull DocumentEvent e) {
         EmmetPreviewHint existingHint = EmmetPreviewHint.getExistingHint(editor);
         if (existingHint != null) {
-          existingHint.updateText(calculateTemplateText(editor, file, expandPrimitiveAbbreviations));
+          existingHint.updateText(new TemplateTextProducer(editor, file, expandPrimitiveAbbreviations));
         }
         else {
           e.getDocument().removeDocumentListener(this);
@@ -88,7 +89,7 @@ public class EmmetPreviewUtil {
       public void caretPositionChanged(@NotNull CaretEvent e) {
         EmmetPreviewHint existingHint = EmmetPreviewHint.getExistingHint(e.getEditor());
         if (existingHint != null) {
-          existingHint.updateText(calculateTemplateText(editor, file, expandPrimitiveAbbreviations));
+          existingHint.updateText(new TemplateTextProducer(editor, file, expandPrimitiveAbbreviations));
         }
         else {
           e.getEditor().getCaretModel().removeCaretListener(this);
@@ -123,5 +124,23 @@ public class EmmetPreviewUtil {
       public void deleteTemplateKey(@NotNull String key) {
       }
     };
+  }
+
+  private static class TemplateTextProducer implements Producer<String> {
+    @NotNull private final Editor myEditor;
+    @NotNull private final PsiFile myFile;
+    private final boolean myExpandPrimitiveAbbreviations;
+
+    public TemplateTextProducer(@NotNull Editor editor, @NotNull PsiFile file, boolean expandPrimitiveAbbreviations) {
+      myEditor = editor;
+      myFile = file;
+      myExpandPrimitiveAbbreviations = expandPrimitiveAbbreviations;
+    }
+
+    @Nullable
+    @Override
+    public String produce() {
+      return calculateTemplateText(myEditor, myFile, myExpandPrimitiveAbbreviations);
+    }
   }
 }

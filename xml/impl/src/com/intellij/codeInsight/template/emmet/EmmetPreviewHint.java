@@ -37,6 +37,7 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,16 +82,17 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
     HintManagerImpl.getInstanceImpl().showEditorHint(this, myParentEditor, position.first, hintFlags, 0, false, hintHint);
   }
 
-  public void updateText(@Nullable final String newText) {
-    if (StringUtil.isEmpty(newText)) {
-      hide();
-    }
-    else {
-      myAlarm.cancelAllRequests();
-      myAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          if (!isDisposed && !myEditor.getDocument().getText().equals(newText)) {
+  public void updateText(@NotNull final Producer<String> contentProducer) {
+    myAlarm.cancelAllRequests();
+    myAlarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        if (!isDisposed) {
+          final String newText = contentProducer.produce();
+          if (StringUtil.isEmpty(newText)) {
+            hide();
+          }
+          else if (!myEditor.getDocument().getText().equals(newText)) {
             DocumentUtil.writeInRunUndoTransparentAction(new Runnable() {
               @Override
               public void run() {
@@ -101,8 +103,8 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
             HintManagerImpl.adjustEditorHintPosition(EmmetPreviewHint.this, myParentEditor, position.first, position.second);
           }
         }
-      }, 100);
-    }
+      }
+    }, 100);
   }
 
   @Nullable
