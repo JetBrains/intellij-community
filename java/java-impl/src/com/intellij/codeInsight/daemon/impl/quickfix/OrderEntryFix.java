@@ -124,19 +124,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
             final VirtualFile location = PsiUtilCore.getVirtualFile(reference != null ? reference.getElement() : null);
             boolean inTests = location != null && ModuleRootManager.getInstance(currentModule).getFileIndex().isInTestSourceContent(location);
             try {
-              final String[] junit4Paths = {JavaSdkUtil.getJunit4JarPath(), 
-                                            PathUtil.getJarPathForClass(Class.forName("org.hamcrest.Matcher")), 
-                                            PathUtil.getJarPathForClass(Class.forName("org.hamcrest.Matchers"))};
-              ModuleRootModificationUtil.addModuleLibrary(currentModule,
-                                                          "JUnit4", 
-                                                          ContainerUtil.map(junit4Paths,
-                                                                            new Function<String, String>() {
-                                                                              @Override
-                                                                              public String fun(String libPath) {
-                                                                                return convertToLibraryRoot(libPath).getUrl();
-                                                                              }
-                                                                            }), 
-                                                          Collections.<String>emptyList(), inTests ? DependencyScope.TEST : DependencyScope.COMPILE);
+              addJUnit4Library(inTests, currentModule);
               final GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(currentModule);
               final PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, scope);
               if (aClass != null && editor != null && reference != null) {
@@ -274,6 +262,22 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
       }
     }
     return result;
+  }
+
+  public static void addJUnit4Library(boolean inTests, Module currentModule) throws ClassNotFoundException {
+    final String[] junit4Paths = {JavaSdkUtil.getJunit4JarPath(), 
+                                  PathUtil.getJarPathForClass(Class.forName("org.hamcrest.Matcher")), 
+                                  PathUtil.getJarPathForClass(Class.forName("org.hamcrest.Matchers"))};
+    ModuleRootModificationUtil.addModuleLibrary(currentModule,
+                                                "JUnit4",
+                                                ContainerUtil.map(junit4Paths,
+                                                                  new Function<String, String>() {
+                                                                    @Override
+                                                                    public String fun(String libPath) {
+                                                                      return convertToLibraryRoot(libPath).getUrl();
+                                                                    }
+                                                                  }),
+                                                Collections.<String>emptyList(), inTests ? DependencyScope.TEST : DependencyScope.COMPILE);
   }
 
   private static List<PsiClass> filterAllowedDependencies(PsiElement element, PsiClass[] classes) {
