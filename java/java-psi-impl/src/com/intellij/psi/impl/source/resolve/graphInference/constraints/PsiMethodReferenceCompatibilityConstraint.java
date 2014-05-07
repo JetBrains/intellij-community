@@ -192,21 +192,19 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
                            List<ConstraintFormula> constraints,
                            PsiSubstitutor substitutor,
                            PsiParameter[] targetParameters) {
-    final PsiTypeElement qualifierTypeElement = myExpression.getQualifierType();
-    final PsiExpression qualifierExpression = myExpression.getQualifierExpression();
-    PsiType qualifierType;
-    if (qualifierTypeElement != null) {
-      qualifierType = qualifierTypeElement.getType();
+    final PsiElement qualifier = myExpression.getQualifier();
+    PsiType qualifierType = null;
+    if (qualifier instanceof PsiTypeElement) {
+      qualifierType = ((PsiTypeElement)qualifier).getType();
       final PsiClass qualifierClass = PsiUtil.resolveClassInType(qualifierType);
       if (qualifierClass != null) {
         qualifierType = JavaPsiFacade.getElementFactory(myExpression.getProject()).createType(qualifierClass, PsiSubstitutor.EMPTY);
       }
     }
-    else {
-      LOG.assertTrue(qualifierExpression != null);
-      qualifierType = qualifierExpression.getType();
-      if (qualifierType == null && qualifierExpression instanceof PsiReferenceExpression) {
-        final JavaResolveResult resolveResult = ((PsiReferenceExpression)qualifierExpression).advancedResolve(false);
+    else if (qualifier instanceof PsiExpression) {
+      qualifierType = ((PsiExpression)qualifier).getType();
+      if (qualifierType == null && qualifier instanceof PsiReferenceExpression) {
+        final JavaResolveResult resolveResult = ((PsiReferenceExpression)qualifier).advancedResolve(false);
         final PsiElement res = resolveResult.getElement();
         if (res instanceof PsiClass) {
           PsiClass containingClass = (PsiClass)res;
