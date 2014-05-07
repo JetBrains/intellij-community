@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Chunk;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.*;
 import org.jetbrains.annotations.Nullable;
@@ -115,14 +116,17 @@ public final class ModuleCompilerUtil {
       }
 
       public Iterator<T> getIn(final ModuleRootModel model) {
-        final Module[] modules = model.getModuleDependencies();
         final List<T> dependencies = new ArrayList<T>();
-        for (Module module : modules) {
-          T depModel = models.get(module);
-          if (depModel != null) {
-            dependencies.add(depModel);
+        model.orderEntries().compileOnly().forEachModule(new Processor<Module>() {
+          @Override
+          public boolean process(Module module) {
+            T depModel = models.get(module);
+            if (depModel != null) {
+              dependencies.add(depModel);
+            }
+            return true;
           }
-        }
+        });
         return dependencies.iterator();
       }
     }));
