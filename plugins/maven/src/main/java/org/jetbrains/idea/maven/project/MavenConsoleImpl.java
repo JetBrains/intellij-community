@@ -15,7 +15,10 @@
  */
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.execution.filters.*;
+import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.filters.RegexpFilter;
+import com.intellij.execution.filters.TextConsoleBuilder;
+import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -30,7 +33,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.MessageView;
@@ -77,8 +79,6 @@ public class MavenConsoleImpl extends MavenConsole {
 
   public static TextConsoleBuilder createConsoleBuilder(final Project project) {
     TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
-
-    builder.filters(ExceptionFilters.getFilters(GlobalSearchScope.allScope(project)));
     builder.addFilter(new RegexpFilter(project, CONSOLE_FILTER_REGEXP) {
       @Nullable
       @Override
