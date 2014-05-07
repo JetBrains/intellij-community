@@ -186,17 +186,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     svnKitClientFactory = new SvnKitClientFactory(this);
     svnKitManager = new SvnKitManager(this);
 
-    dumpFileStatus(FileStatus.ADDED);
-    dumpFileStatus(FileStatus.DELETED);
-    dumpFileStatus(FileStatus.MERGE);
-    dumpFileStatus(FileStatus.MODIFIED);
-    dumpFileStatus(FileStatus.NOT_CHANGED);
-    dumpFileStatus(FileStatus.UNKNOWN);
-
-    dumpFileStatus(SvnFileStatus.REPLACED);
-    dumpFileStatus(SvnFileStatus.EXTERNAL);
-    dumpFileStatus(SvnFileStatus.OBSTRUCTED);
-
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     myAddConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, this);
     myDeleteConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, this);
@@ -509,12 +498,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return myChangeProvider;
   }
 
-  void dumpFileStatus(FileStatus fs) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("FileStatus:" + fs.getText() + " " + fs.getColor() + " " + " " + fs.getClass().getName());
-    }
-  }
-
   @Override
   public UpdateEnvironment getIntegrateEnvironment() {
     if (mySvnIntegrateEnvironment == null) {
@@ -533,13 +516,11 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public String getDisplayName() {
-    LOG.debug("getDisplayName");
     return VCS_DISPLAY_NAME;
   }
 
   @Override
   public Configurable getConfigurable() {
-    LOG.debug("createConfigurable");
     return new SvnConfigurable(myProject);
   }
 
