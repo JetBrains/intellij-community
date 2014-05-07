@@ -605,7 +605,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     /**
      * The author ComboBox, the combobox contains previously selected authors.
      */
-    private final JComboBox myAuthor;
+    private final ComboBox myAuthor;
 
     private Date myAuthorDate;
 
