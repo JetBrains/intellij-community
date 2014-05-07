@@ -130,6 +130,9 @@ public class SpecialAnnotationsUtil {
                                  InspectionsBundle.message("special.annotations.list.annotation.pattern"), "Remove");
     }
 
+    if (borderTitle == null) {
+      return toolbarDecorator.createPanel();
+    }
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(SeparatorFactory.createSeparator(borderTitle, null), BorderLayout.NORTH);
     panel.add(toolbarDecorator.createPanel(), BorderLayout.CENTER);

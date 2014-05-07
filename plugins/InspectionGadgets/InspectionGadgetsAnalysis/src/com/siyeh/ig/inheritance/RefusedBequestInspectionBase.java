@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,59 @@
  */
 package com.siyeh.ig.inheritance;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
-import com.intellij.xml.util.XmlStringUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.TestUtils;
+import com.siyeh.ig.ui.ExternalizableStringSet;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
-public class RefusedBequestInspection extends BaseInspection {
+public class RefusedBequestInspectionBase extends BaseInspection {
 
   @SuppressWarnings("PublicField") public boolean ignoreEmptySuperMethods = false;
+
+  @SuppressWarnings("PublicField") final ExternalizableStringSet annotations =
+    new ExternalizableStringSet("javax.annotation.OverridingMethodsMustInvokeSuper");
+
+  @SuppressWarnings("PublicField") boolean onlyReportWhenAnnotated = false;
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    super.writeSettings(node);
+    if (onlyReportWhenAnnotated) {
+      node.addContent(new Element("option").setAttribute("name", "onlyReportWhenAnnotated").
+        setAttribute("value", String.valueOf(onlyReportWhenAnnotated)));
+    }
+    if (!annotations.hasDefaultValues()) {
+      final Element element = new Element("option").setAttribute("name", "annotations");
+      final Element valueElement = new Element("value");
+      annotations.writeExternal(valueElement);
+      node.addContent(element.addContent(valueElement));
+    }
+  }
+
+  @Override
+  public void readSettings(@NotNull Element node) throws InvalidDataException {
+    super.readSettings(node);
+    for (Element option : node.getChildren("option")) {
+      if ("onlyReportWhenAnnotated".equals(option.getAttributeValue("name"))) {
+        onlyReportWhenAnnotated = Boolean.parseBoolean(option.getAttributeValue("value"));
+      }
+      else if ("annotations".equals(option.getAttributeValue("name"))) {
+        final Element value = option.getChild("value");
+        if (value != null) {
+          annotations.readExternal(value);
+        }
+      }
+    }
+  }
 
   @Override
   @NotNull
@@ -42,14 +79,6 @@ public class RefusedBequestInspection extends BaseInspection {
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("refused.bequest.problem.descriptor");
-  }
-
-  @Override
-  public JComponent createOptionsPanel() {
-    //noinspection HardCodedStringLiteral
-    return new SingleCheckboxOptionsPanel(
-      XmlStringUtil.wrapInHtml(InspectionGadgetsBundle.message("refused.bequest.ignore.empty.super.methods.option"))
-      , this, "ignoreEmptySuperMethods");
   }
 
   @Override
@@ -81,6 +110,11 @@ public class RefusedBequestInspection extends BaseInspection {
       if (ignoreEmptySuperMethods) {
         final PsiMethod superMethod = (PsiMethod)leastConcreteSuperMethod.getNavigationElement();
         if (isTrivial(superMethod)) {
+          return;
+        }
+      }
+      if (onlyReportWhenAnnotated) {
+        if (!AnnotationUtil.isAnnotated(leastConcreteSuperMethod, annotations)) {
           return;
         }
       }
