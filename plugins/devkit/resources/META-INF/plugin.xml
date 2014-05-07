@@ -17,6 +17,14 @@
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
 
+    <codeInsight.lineMarkerProvider language="JAVA" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="Groovy" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider"/>
+    <fileEditorProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorProvider"/>
+    <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataAsRelatedFileProvider"/>
+    <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestCaseAsRelatedFileProvider"/>
+    <psi.referenceContributor implementation="org.jetbrains.idea.devkit.testAssistant.TestDataReferenceContributor"/>
+    <getDataRule key="Location" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestLocationDataRule"/>
+
     <junitPatcher implementation="org.jetbrains.idea.devkit.run.JUnitDevKitPatcher"/>
     <antBuildGen implementation="org.jetbrains.idea.devkit.build.ant.ChunkBuildPluginExtension"/>
     <compiler.buildParticipantProvider implementation="org.jetbrains.idea.devkit.build.PluginBuildParticipantProvider"/>
@@ -136,6 +144,12 @@
     <stacktrace.fold substring="at com.intellij.testFramework."/>
   </extensions>
 
+  <project-components>
+    <component>
+      <implementation-class>org.jetbrains.idea.devkit.testAssistant.TestDataHighlightingPassFactory</implementation-class>
+    </component>
+  </project-components>
+  
   <module-components>
     <component>
       <implementation-class>org.jetbrains.idea.devkit.build.PluginBuildConfiguration</implementation-class>
@@ -188,8 +202,19 @@
               id="GenerateDomModel"/>
 
       <add-to-group group-id="Internal" anchor="last"/>
+      
     </group>
-
+    <action id="TestData.Navigate"
+            class="org.jetbrains.idea.devkit.testAssistant.NavigateToTestDataAction"
+            text="Navigate to testdata" use-shortcut-of="GotoRelated">
+    </action>
+    <action id="DumpCleanTestData" internal="true" class="org.jetbrains.idea.devkit.internal.DumpCleanHighlightingTestdataAction">
+      <add-to-group group-id="Internal.Dump"/>
+    </action>
+    <group>
+      <reference id="TestData.Navigate"/>
+      <add-to-group anchor="first" group-id="TestTreePopupMenu"/>
+    </group>
   </actions>
 
 </idea-plugin>

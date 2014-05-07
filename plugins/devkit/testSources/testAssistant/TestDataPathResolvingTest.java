@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.testAssistant;
+package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.PsiFileSystemItem;
@@ -53,6 +53,6 @@ public class TestDataPathResolvingTest extends TestDataPathTestCase {
 
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("IdeaTestAssistant") + "/testData/resolveTestDataPath";
+    return PluginPathManager.getPluginHomePathRelative("DevKit") + "/testData/resolveTestDataPath";
   }
 }

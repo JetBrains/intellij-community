@@ -1,4 +1,4 @@
-package com.intellij.testAssistant;
+package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.ide.util.gotoByName.GotoFileModel;

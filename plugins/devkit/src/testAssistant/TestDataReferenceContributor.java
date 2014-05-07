@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.testAssistant;
+package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 import static com.intellij.patterns.PsiJavaPatterns.literalExpression;
-import static com.intellij.testAssistant.TestDataLineMarkerProvider.*;
+import static org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider.*;
 
 /**
  * @author zolotov
