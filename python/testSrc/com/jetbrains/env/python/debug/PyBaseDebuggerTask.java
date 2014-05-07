@@ -196,9 +196,9 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     myDebugProcess.changeVariable((PyDebugValue)var, value);
   }
 
-  public void waitForOutput(String string) throws InterruptedException {
+  public void waitForOutput(String ... string) throws InterruptedException {
     int count = 0;
-    while (!output().contains(string)) {
+    while (!containsOneOf(output(), string)) {
       if (count > 10) {
         Assert.fail("'" + string + "'" + " is not present in output.\n" + output());
       }
@@ -206,6 +206,17 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
       count++;
     }
   }
+
+  protected boolean containsOneOf(String output, String[] strings) {
+    for (String s: strings) {
+      if (output.contains(s)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
 
   public void setShouldPrintOutput(boolean shouldPrintOutput) {
     this.shouldPrintOutput = shouldPrintOutput;

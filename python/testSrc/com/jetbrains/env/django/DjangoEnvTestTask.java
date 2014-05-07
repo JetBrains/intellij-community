@@ -141,4 +141,8 @@ public class DjangoEnvTestTask extends PyDebuggerTask {
   public Set<String> getTags() {
     return ImmutableSet.of("django");
   }
+
+  protected void waitForStart() throws InterruptedException {
+    waitForOutput("Development server is running", "Starting development server");
+  }
 }

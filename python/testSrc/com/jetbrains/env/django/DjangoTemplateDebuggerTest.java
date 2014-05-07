@@ -38,7 +38,7 @@ public class DjangoTemplateDebuggerTest extends PyEnvTestCase {
 
     @Override
     public void testing() throws Exception {
-      waitForOutput("Development server is running");
+      waitForStart();
 
       DjangoEnvTestTask.LoadingPage page = loadPage(myPort + "/test1");
 
@@ -78,7 +78,7 @@ public class DjangoTemplateDebuggerTest extends PyEnvTestCase {
 
       @Override
       public void testing() throws Exception {
-        waitForOutput("Development server is running");
+        waitForStart();
 
         LoadingPage page = loadPage(myPort + "/test1");
 
@@ -107,6 +107,8 @@ public class DjangoTemplateDebuggerTest extends PyEnvTestCase {
 
         page.get().contains("templatedjangodebugging");
       }
+
+      
     });
   }
 
@@ -121,7 +123,7 @@ public class DjangoTemplateDebuggerTest extends PyEnvTestCase {
 
       @Override
       public void testing() throws Exception {
-        waitForOutput("Development server is running");
+        waitForStart();
 
         LoadingPage page = loadPage(myPort + "/test2");
 
@@ -164,7 +166,7 @@ public class DjangoTemplateDebuggerTest extends PyEnvTestCase {
 
       @Override
       public void testing() throws Exception {
-        waitForOutput("Development server is running");
+        waitForStart();
 
         LoadingPage page = loadPage(myPort + "/test3");
 
@@ -193,7 +195,7 @@ public class DjangoTemplateDebuggerTest extends PyEnvTestCase {
 
       @Override
       public void testing() throws Exception {
-        waitForOutput("Development server is running");
+        waitForStart();
 
         LoadingPage page = loadPage(myPort + "/test1");
 
@@ -229,7 +231,7 @@ public class DjangoTemplateDebuggerTest extends PyEnvTestCase {
 
       @Override
       public void testing() throws Exception {
-        waitForOutput("Development server is running");
+        waitForStart();
 
         loadPage(ports[1] + "/test4");
 
@@ -268,7 +270,7 @@ public class DjangoTemplateDebuggerTest extends PyEnvTestCase {
 
       @Override
       public void testing() throws Exception {
-        waitForOutput("Development server is running");
+        waitForStart();
 
         loadPage(ports[1] + "/test1");
 
@@ -295,7 +297,7 @@ public class DjangoTemplateDebuggerTest extends PyEnvTestCase {
 
       @Override
       public void testing() throws Exception {
-        waitForOutput("Development server is running");
+        waitForStart();
 
         loadPage(ports[1] + "/test5");
 
