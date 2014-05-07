@@ -239,8 +239,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
         if (useCachedHashIds && id == myLastScannedId) {
           try {
             hashMaskSet = loadHashedIds(fileWithCaches);
-          } catch (IOException ex) {
-            LOG.info(ex);
+          } catch (IOException ignored) {
           }
         }
 
