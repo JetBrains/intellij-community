@@ -403,10 +403,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public void activate() {
-    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (!myProject.isDefault()) {
       ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
-      vcsManager.addVcsListener(myVcsListener);
+      myProject.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myVcsListener);
     }
 
     SvnApplicationSettings.getInstance().svnActivated();
@@ -448,7 +447,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       }
     });
 
-    vcsManager.addVcsListener(myRootsToWorkingCopies);
+    myProject.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myRootsToWorkingCopies);
 
     myLoadedBranchesStorage.activate();
   }
@@ -469,11 +468,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   public void deactivate() {
     FrameStateManager.getInstance().removeListener(myFrameStateListener);
 
-    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    if (myVcsListener != null) {
-      vcsManager.removeVcsListener(myVcsListener);
-    }
-
     if (myEntriesFileListener != null) {
       VirtualFileManager.getInstance().removeVirtualFileListener(myEntriesFileListener);
     }
@@ -484,7 +478,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     if (myChangeListListener != null && !myProject.isDefault()) {
       ChangeListManager.getInstance(myProject).removeChangeListListener(myChangeListListener);
     }
-    vcsManager.removeVcsListener(myRootsToWorkingCopies);
     myRootsToWorkingCopies.clear();
 
     myAuthNotifier.stop();
