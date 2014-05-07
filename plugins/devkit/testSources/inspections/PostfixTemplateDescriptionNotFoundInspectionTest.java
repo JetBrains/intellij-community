@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.devkit.codeInsight;
+package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import org.jetbrains.idea.devkit.inspections.PostfixTemplateDescriptionNotFoundInspection;
 
-public class PostfixTemplateInspectionTest extends LightCodeInsightFixtureTestCase {
+public class PostfixTemplateDescriptionNotFoundInspectionTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/codeInsight/postfixTemplates";
+    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/inspections/postfixTemplates";
   }
 
   @Override
