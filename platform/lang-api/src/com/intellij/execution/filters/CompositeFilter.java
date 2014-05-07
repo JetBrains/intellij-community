@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,55 +80,54 @@ public class CompositeFilter implements Filter, FilterMixin {
       if (finalResult == null) {
         finalResult = result;
       }
-      else if (finalResult.getResultItems() instanceof ArrayList) {
-        //memory allocation reduction
-        mergeResultItems(finalResult.getResultItems(), result.getResultItems());
-        finalResult.setNextAction(result.getNextAction());
-      }
       else {
-        finalResult = new Result(mergeResultItems(finalResult.getResultItems(), result.getResultItems()));
+        final List<ResultItem> resultItems = mergeResultItems(finalResult.getResultItems(), result.getResultItems());
+        finalResult.setResultItems(resultItems);
         finalResult.setNextAction(result.getNextAction());
       }
-
     }
     return finalResult;
   }
 
   private List<ResultItem> mergeResultItems(final List<ResultItem> finalResult, final List<ResultItem> result) {
     List<ResultItem> mergedResult;
-    if (finalResult instanceof ArrayList) {
-      //memory allocation reduction
+    if (finalResult instanceof MyArrayList) {
       mergedResult = finalResult;
     }
     else {
-      mergedResult = new ArrayList<ResultItem>(finalResult.size() + result.size());
+      mergedResult = new MyArrayList<ResultItem>(finalResult.size() + result.size());
       mergedResult.addAll(finalResult);
     }
 
     for (ResultItem item : result) {
-      if (item.hyperlinkInfo == null) {
-        mergedResult.add(item);
-      }
-      else {
-        if (!isOverlapping(mergedResult, item)) {
+      if (item.hyperlinkInfo != null) {
+        if (!intersects(mergedResult, item)) {
           mergedResult.add(item);
         }
+      }
+      else {
+        mergedResult.add(item);
       }
     }
     return mergedResult;
   }
 
-  protected boolean isOverlapping(List<ResultItem> mergedList, ResultItem addedItem) {
-    boolean overlap = false;
+  protected boolean intersects(List<ResultItem> mergedList, ResultItem addedItem) {
+    boolean intersects = false;
+    TextRange addedItemTextRange = null;
+
     for (ResultItem item : mergedList) {
       if (item.hyperlinkInfo != null) {
-        overlap = item.highlightStartOffset < addedItem.highlightEndOffset && item.highlightEndOffset > addedItem.highlightStartOffset;
-        if (overlap) {
+        if (addedItemTextRange == null) {
+          addedItemTextRange = new TextRange(addedItem.highlightStartOffset, addedItem.highlightEndOffset);
+        }
+        intersects = addedItemTextRange.intersectsStrict(item.highlightStartOffset, item.highlightEndOffset);
+        if (intersects) {
           break;
         }
       }
     }
-    return overlap;
+    return intersects;
   }
 
   @Override
@@ -186,5 +186,14 @@ public class CompositeFilter implements Filter, FilterMixin {
 
   public void setUseAllFilters(boolean useAllFilters) {
     this.useAllFilters = useAllFilters;
+  }
+
+  /**
+   * for memory allocation reduction without danger of changing clients arraylist
+   */
+  private static class MyArrayList<T> extends ArrayList<T> {
+    MyArrayList(int initialCapacity) {
+      super(initialCapacity);
+    }
   }
 }

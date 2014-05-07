@@ -59,6 +59,10 @@ public interface Filter {
       return myNextAction;
     }
 
+    public void setResultItems(List<ResultItem> resultItems) {
+      myResultItems = resultItems;
+    }
+
     public void setNextAction(NextAction nextAction) {
       myNextAction = nextAction;
     }
