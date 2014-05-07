@@ -163,6 +163,27 @@ public class JavaStackFrame extends XStackFrame {
       }
       //myChildren.add(myNodeManager.createNode(descriptor, evaluationContext));
 
+      // add last method return value if any
+      final Pair<Method, Value> methodValuePair = debuggerContext.getDebugProcess().getLastExecutedMethod();
+      if (methodValuePair != null) {
+        ValueDescriptorImpl returnValueDescriptor = myNodeManager.getMethodReturnValueDescriptor(stackDescriptor, methodValuePair.getFirst(), methodValuePair.getSecond());
+        children.add(new JavaValue(returnValueDescriptor, evaluationContext, myNodeManager));
+        //myChildren.add(1, myNodeManager.createNode(returnValueDescriptor, evaluationContext));
+      }
+      // add context exceptions
+      for (Pair<Breakpoint, Event> pair : DebuggerUtilsEx.getEventDescriptors(debuggerContext.getSuspendContext())) {
+        final Event debugEvent = pair.getSecond();
+        if (debugEvent instanceof ExceptionEvent) {
+          final ObjectReference exception = ((ExceptionEvent)debugEvent).exception();
+          if (exception != null) {
+            final ValueDescriptorImpl exceptionDescriptor = myNodeManager.getThrownExceptionObjectDescriptor(stackDescriptor, exception);
+            //final DebuggerTreeNodeImpl exceptionNode = myNodeManager.createNode(exceptionDescriptor, evaluationContext);
+            children.add(new JavaValue(exceptionDescriptor, evaluationContext, myNodeManager));
+            //myChildren.add(1, exceptionNode);
+          }
+        }
+      }
+
       final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
       if (classRenderer.SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES) {
         if (thisObjectReference != null && evaluationContext.getDebugProcess().getVirtualMachineProxy().canGetSyntheticAttribute())  {
@@ -192,27 +213,6 @@ public class JavaStackFrame extends XStackFrame {
       catch (EvaluateException e) {
         //myChildren.add(myNodeManager.createMessageNode(new MessageDescriptor(e.getMessage())));
       }
-      // add last method return value if any
-      final Pair<Method, Value> methodValuePair = debuggerContext.getDebugProcess().getLastExecutedMethod();
-      if (methodValuePair != null) {
-        ValueDescriptorImpl returnValueDescriptor = myNodeManager.getMethodReturnValueDescriptor(stackDescriptor, methodValuePair.getFirst(), methodValuePair.getSecond());
-        children.add(new JavaValue(returnValueDescriptor, evaluationContext, myNodeManager));
-        //myChildren.add(1, myNodeManager.createNode(returnValueDescriptor, evaluationContext));
-      }
-      // add context exceptions
-      for (Pair<Breakpoint, Event> pair : DebuggerUtilsEx.getEventDescriptors(debuggerContext.getSuspendContext())) {
-        final Event debugEvent = pair.getSecond();
-        if (debugEvent instanceof ExceptionEvent) {
-          final ObjectReference exception = ((ExceptionEvent)debugEvent).exception();
-          if (exception != null) {
-            final ValueDescriptorImpl exceptionDescriptor = myNodeManager.getThrownExceptionObjectDescriptor(stackDescriptor, exception);
-            //final DebuggerTreeNodeImpl exceptionNode = myNodeManager.createNode(exceptionDescriptor, evaluationContext);
-            children.add(new JavaValue(exceptionDescriptor, evaluationContext, myNodeManager));
-            //myChildren.add(1, exceptionNode);
-          }
-        }
-      }
-
     }
     catch (EvaluateException e) {
       //myChildren.clear();
