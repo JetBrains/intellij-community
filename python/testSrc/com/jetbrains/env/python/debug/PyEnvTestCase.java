@@ -18,10 +18,14 @@ import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assume;
+import org.junit.internal.AssumptionViolatedException;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author traff
@@ -44,11 +48,10 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
 
   /**
    * @param requiredTags tags that should exist on some interpreter for this test to run.
-   *                           if some of these tags do not exist on any interpreter, all test methods would be skipped using
-   *                           {@link org.junit.Assume}.
-   *                           See <a href="http://junit.sourceforge.net/javadoc/org/junit/Assume.html">Assume manual</a>.
-   *                           Check [IDEA-122939] and [TW-25043] as well.
-   *
+   *                     if some of these tags do not exist on any interpreter, all test methods would be skipped using
+   *                     {@link org.junit.Assume}.
+   *                     See <a href="http://junit.sourceforge.net/javadoc/org/junit/Assume.html">Assume manual</a>.
+   *                     Check [IDEA-122939] and [TW-25043] as well.
    */
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   protected PyEnvTestCase(@NotNull final String... requiredTags) {
@@ -57,16 +60,28 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
     PyTestCase.initPlatformPrefix();
   }
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  /**
+   * Checks that all required tags exist on interpreter. It should throw {@link org.junit.internal.AssumptionViolatedException},
+   * but fixed temporary due to [TW-25043]
+   *
+   * @return true of all required tags are met
+   */
+  protected boolean allRequiredTagsExist() {
     if (myRequiredTags != null) { // Ensure all tags exist between available interpreters
-      Assume.assumeThat(
-        "Can't find some tags between all available interpreter, test (all methods) will be skipped",
-        getAvailableTags(),
-        Matchers.hasItems(myRequiredTags)
+
+      try {
+        Assume.assumeThat(
+          "Can't find some tags between all available interpreter, test (all methods) will be skipped",
+          getAvailableTags(),
+          Matchers.hasItems(myRequiredTags)
         );
+      }
+      catch (final AssumptionViolatedException ignore) { // Because of [TW-25043]
+        return false;
+      }
     }
+
+    return true;
   }
 
   /**
@@ -104,7 +119,10 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
     return false;
   }
 
-  public void runPythonTest(PyTestTask testTask) {
+  public void runPythonTest(final PyTestTask testTask) {
+    if (!allRequiredTagsExist()) {
+      return;
+    }
     runTest(testTask, getTestName(false));
   }
 
