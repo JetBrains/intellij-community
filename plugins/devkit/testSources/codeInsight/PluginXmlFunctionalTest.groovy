@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 package org.jetbrains.idea.devkit.codeInsight
-
 import com.intellij.codeInsight.TargetElementUtilBase
 import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.codeInspection.xml.DeprecatedClassUsageInspection
-import com.intellij.lang.documentation.DocumentationProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.pom.PomTargetPsiElement
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.PsiTestUtil
@@ -32,10 +28,8 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.usageView.UsageViewNodeTextLocation
 import com.intellij.usageView.UsageViewTypeLocation
-import com.intellij.util.xml.DomTarget
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection
-
 /**
  * @author peter
  */
@@ -237,28 +231,6 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     assert element != null;
     assertEquals("Extension Point", ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE));
     assertEquals("Extension Point bar", ElementDescriptionUtil.getElementDescription(element, UsageViewNodeTextLocation.INSTANCE));
-  }
-
-  public void testExtensionPointDocumentation() {
-    myFixture.addClass("""package bar;
-                          /**
-                           * MyExtensionPoint JavaDoc.
-                           */
-                          public interface MyExtensionPoint {}
-                          """)
-    myFixture.configureByFile("extensionPointPresentation.xml")
-
-    PsiElement originalElement = myFixture.getFile().findElementAt(myFixture.getCaretOffset())
-    PomTargetPsiElement pomTargetPsiElement = assertInstanceOf(myFixture.getElementAtCaret(), PomTargetPsiElement.class)
-    DomTarget domTarget = assertInstanceOf(pomTargetPsiElement.getTarget(), DomTarget.class)
-    PsiElement epPsiElement = domTarget.getNavigationElement()
-
-    DocumentationProvider provider = DocumentationManager.getProviderFromElement(epPsiElement)
-    assertEquals("""<html><head>    <style type="text/css">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head><body><small><b>bar</b></small><PRE>public interface <b>MyExtensionPoint</b></PRE>
-                             MyExtensionPoint JavaDoc.</body></html>""", provider.generateDoc(epPsiElement, originalElement))
-    assertEquals("""[$myModule.name] foo
-<b>bar</b> [extensionPointPresentation.xml]
-bar.MyExtensionPoint""", provider.getQuickNavigateInfo(epPsiElement, originalElement))
   }
 
   public void testLoadForDefaultProject() throws Exception {
