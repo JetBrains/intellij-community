@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 package org.jetbrains.idea.devkit.codeInsight
+
 import com.intellij.codeInsight.TargetElementUtilBase
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.documentation.DocumentationManager
-import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection
 import com.intellij.codeInspection.xml.DeprecatedClassUsageInspection
 import com.intellij.lang.documentation.DocumentationProvider
 import com.intellij.openapi.application.ApplicationManager
@@ -34,18 +33,20 @@ import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.usageView.UsageViewNodeTextLocation
 import com.intellij.usageView.UsageViewTypeLocation
 import com.intellij.util.xml.DomTarget
-import org.jetbrains.idea.devkit.inspections.*
+import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection
+
 /**
  * @author peter
  */
 public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
+
   private TempDirTestFixture myTempDirFixture;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     myTempDirFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
-    myFixture.enableInspections(getInspectionClasses());
+    myFixture.enableInspections(new PluginXmlDomInspection());
   }
 
   @Override
@@ -266,17 +267,5 @@ bar.MyExtensionPoint""", provider.getQuickNavigateInfo(epPsiElement, originalEle
   public void testLoadForDefaultProject() throws Exception {
     configureByFile();
     myFixture.testHighlighting(true, true, true);
-  }
-
-  static Collection<Class<? extends LocalInspectionTool>> getInspectionClasses() {
-    return Arrays.asList(
-      //RegistrationProblemsInspection.class,
-      PluginXmlDomInspection.class,
-      ComponentNotRegisteredInspection.class,
-      InspectionDescriptionNotFoundInspection.class,
-      IntentionDescriptionNotFoundInspection.class,
-      InspectionMappingConsistencyInspection.class,
-      RequiredAttributesInspection.class
-    );
   }
 }
