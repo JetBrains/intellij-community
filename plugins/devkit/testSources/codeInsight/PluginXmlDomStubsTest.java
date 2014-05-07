@@ -29,9 +29,6 @@ public class PluginXmlDomStubsTest extends DomStubTest {
                   "    Element:depends\n" +
                   "    Element:module\n" +
                   "      Attribute:value:myModule\n" +
-                  "    Element:extensions\n" +
-                  "      Attribute:xmlns:someNS\n" +
-                  "      Attribute:defaultExtensionNs:com.intellij\n" +
                   "    Element:extensionPoints\n" +
                   "      Element:extensionPoint\n" +
                   "        Attribute:name:myEP\n" +

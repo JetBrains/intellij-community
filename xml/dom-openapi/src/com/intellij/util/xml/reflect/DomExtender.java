@@ -33,4 +33,12 @@ public abstract class DomExtender<T extends DomElement> {
    * @param registrar a place to register your own DOM children descriptions
    */
   public abstract void registerExtensions(@NotNull T t, @NotNull final DomExtensionsRegistrar registrar);
+
+  /**
+   * Makes stub building for extensions available.
+   * To be compatible with general stubs contract, extension should NOT depend on anything beyond current file's content.
+   */
+  public boolean supportsStubs() {
+    return true;
+  }
 }
