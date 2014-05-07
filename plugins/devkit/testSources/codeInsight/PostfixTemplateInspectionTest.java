@@ -18,10 +18,10 @@ package org.jetbrains.idea.devkit.codeInsight;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.idea.devkit.inspections.PostfixTemplateDescriptionNotFoundInspection;
 
-public class PostfixTemplateInspectionTest extends JavaCodeInsightFixtureTestCase {
+public class PostfixTemplateInspectionTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
