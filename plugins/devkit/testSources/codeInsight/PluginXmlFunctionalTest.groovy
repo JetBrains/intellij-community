@@ -33,6 +33,7 @@ import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.usageView.UsageViewNodeTextLocation
 import com.intellij.usageView.UsageViewTypeLocation
 import com.intellij.util.xml.DomTarget
+import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection
 
 /**
@@ -56,25 +57,25 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
   public void testExtensionsHighlighting() throws Throwable {
     final String root = "idea_core";
-    addPluginXml(root, "<idea-plugin>\n" +
-                       "    <id>com.intellij</id>\n" +
-                       "    <extensionPoints>\n" +
-                       "        <extensionPoint name=\"completion.contributor\"/>\n" +
-                       "    </extensionPoints>\n" +
-                       "</idea-plugin>");
-    addPluginXml("indirect", "<idea-plugin>\n" +
-                             "    <id>com.intellij.indirect</id>\n" +
-                             "    <extensionPoints>\n" +
-                             "        <extensionPoint name=\"indirect\"/>\n" +
-                             "    </extensionPoints>\n" +
-                             "</idea-plugin>");
-    addPluginXml("custom", "<idea-plugin>\n" +
-                           "    <id>com.intellij.custom</id>\n" +
-                           "    <depends>com.intellij.indirect</depends>\n" +
-                           "    <extensionPoints>\n" +
-                           "        <extensionPoint name=\"custom\"/>\n" +
-                           "    </extensionPoints>\n" +
-                           "</idea-plugin>");
+    addPluginXml(root, """
+        <id>com.intellij</id>
+        <extensionPoints>
+            <extensionPoint name="completion.contributor"/>
+        </extensionPoints>
+    """);
+    addPluginXml("indirect", """
+        <id>com.intellij.indirect</id>
+        <extensionPoints>
+            <extensionPoint name="indirect"/>
+        </extensionPoints>
+    """);
+    addPluginXml("custom", """
+        <id>com.intellij.custom</id>
+        <depends>com.intellij.indirect</depends>
+        <extensionPoints>
+            <extensionPoint name="custom"/>
+        </extensionPoints>
+    """);
     myFixture.addClass("package foo; public class MyRunnable implements java.lang.Runnable {}");
     myFixture.addClass("package foo; @Deprecated public abstract class MyDeprecatedEP {}");
     myFixture.addClass("package foo; public class MyDeprecatedEPImpl extends foo.MyDeprecatedEP {}");
@@ -85,31 +86,27 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
   public void testDependsHighlighting() throws Throwable {
     final String root = "idea_core";
-    addPluginXml(root, "<idea-plugin>\n" +
-                       "    <id>com.intellij</id>\n" +
-                       "    <module value=\"com.intellij.modules.vcs\"/>\n" +
-                       "</idea-plugin>");
-    addPluginXml("custom", "<idea-plugin>\n" +
-                           "    <id>com.intellij.custom</id>\n" +
-                           "</idea-plugin>");
+    addPluginXml(root, """
+        <id>com.intellij</id>
+        <module value="com.intellij.modules.vcs"/>
+    """);
+    addPluginXml("custom", "<id>com.intellij.custom</id>");
 
     configureByFile();
     myFixture.checkHighlighting(false, false, false);
   }
 
   public void testDependsCompletion() throws Throwable {
-    addPluginXml("platform", "<idea-plugin>\n" +
-                             "    <id>com.intellij</id>\n" +
-                             "    <module value=\"com.intellij.modules.vcs\"/>\n" +
-                             "</idea-plugin>");
-    addPluginXml("lang", "<idea-plugin>\n" +
-                         "    <id>com.intellij</id>\n" +
-                         "    <module value=\"com.intellij.modules.lang\"/>\n" +
-                         "    <module value=\"com.intellij.modules.lang.another\"/>\n" +
-                         "</idea-plugin>");
-    addPluginXml("custom", "<idea-plugin>\n" +
-                           "    <id>com.intellij.custom</id>\n" +
-                           "</idea-plugin>");
+    addPluginXml("platform", """
+        <id>com.intellij</id>
+        <module value="com.intellij.modules.vcs"/>
+    """);
+    addPluginXml("lang", """
+        <id>com.intellij</id>
+        <module value="com.intellij.modules.lang"/>
+        <module value="com.intellij.modules.lang.another"/>
+    """);
+    addPluginXml("custom", "<id>com.intellij.custom</id>");
     configureByFile();
 
     myFixture.completeBasic()
@@ -138,12 +135,12 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testResolveExtensionsFromDependentDescriptor() throws Throwable {
-    addPluginXml("xxx", "<idea-plugin>\n" +
-                        "    <id>com.intellij.xxx</id>\n" +
-                        "    <extensionPoints>\n" +
-                        "        <extensionPoint name=\"completion.contributor\"/>\n" +
-                        "    </extensionPoints>\n" +
-                        "</idea-plugin>");
+    addPluginXml("xxx", """
+        <id>com.intellij.xxx</id>
+        <extensionPoints>
+            <extensionPoint name="completion.contributor"/>
+        </extensionPoints>
+    """);
 
     myFixture.copyFileToProject(getTestName(false) + "_main.xml", "META-INF/plugin.xml");
     myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + "_dependent.xml", "META-INF/dep.xml"));
@@ -152,8 +149,8 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.checkHighlighting(false, false, false);
   }
 
-  private void addPluginXml(final String root, final String text) throws IOException {
-    myTempDirFixture.createFile(root + "/META-INF/plugin.xml", text);
+  private void addPluginXml(final String root, @Language("HTML") final String text) throws IOException {
+    myTempDirFixture.createFile(root + "/META-INF/plugin.xml", "<idea-plugin>$text</idea-plugin>");
     ApplicationManager.application.runWriteAction { PsiTestUtil.addSourceContentToRoots(myModule, myTempDirFixture.getFile(root)) }
   }
 
