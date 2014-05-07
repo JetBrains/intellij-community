@@ -20,9 +20,6 @@ package org.jetbrains.idea.svn;
 import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.FrameStateManager;
 import com.intellij.idea.RareLogger;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationsConfiguration;
-import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -213,22 +210,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
                                                                                  VcsDirtyScopeManager.getInstance(project));
     myWorkingCopiesContent = new WorkingCopiesContent(this);
 
-    // remove used some time before old notification group ids
-    correctNotificationIds();
     myChecker = new SvnExecutableChecker(myProject);
 
     Application app = ApplicationManager.getApplication();
     myLogExceptions = app != null && (app.isInternal() || app.isUnitTestMode());
-  }
-
-  private void correctNotificationIds() {
-    boolean notEmpty = NotificationsConfigurationImpl.getNotificationsConfigurationImpl().isRegistered("SVN_NO_JNA") ||
-                       NotificationsConfigurationImpl.getNotificationsConfigurationImpl().isRegistered("SVN_NO_CRYPT32") ||
-                       NotificationsConfigurationImpl.getNotificationsConfigurationImpl().isRegistered("SubversionId");
-    if (notEmpty) {
-      NotificationsConfigurationImpl.remove("SVN_NO_JNA", "SVN_NO_CRYPT32", "SubversionId");
-      NotificationsConfiguration.getNotificationsConfiguration().register(getDisplayName(), NotificationDisplayType.BALLOON);
-    }
   }
 
   public void postStartup() {
