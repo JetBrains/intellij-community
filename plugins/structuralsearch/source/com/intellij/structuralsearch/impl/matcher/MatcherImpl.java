@@ -113,12 +113,15 @@ public class MatcherImpl {
     }
   }
 
-  public static boolean checkIfShouldAttemptToMatch(MatchContext context, SsrFilteringNodeIterator matchedNodes) {
+  public static boolean checkIfShouldAttemptToMatch(MatchContext context, NodeIterator matchedNodes) {
     final CompiledPattern pattern = context.getPattern();
     final NodeIterator patternNodes = pattern.getNodes();
     try {
-      while (patternNodes.hasNext()) {
+      while (true) {
         final PsiElement patternNode = patternNodes.current();
+        if (patternNode == null) {
+          return true;
+        }
         final PsiElement matchedNode = matchedNodes.current();
         if (matchedNode == null) {
           return false;
@@ -130,7 +133,6 @@ public class MatcherImpl {
         matchedNodes.advance();
         patternNodes.advance();
       }
-      return true;
     } finally {
       patternNodes.reset();
       matchedNodes.reset();
@@ -140,9 +142,13 @@ public class MatcherImpl {
   public void processMatchesInElement(MatchContext context, Configuration configuration,
                                       NodeIterator matchedNodes,
                                       PairProcessor<MatchResult, Configuration> processor) {
-    configureOptions(context, configuration, matchedNodes.current(), processor);
-    context.setShouldRecursivelyMatch(false);
-    visitor.matchContext(matchedNodes);
+    try {
+      configureOptions(context, configuration, matchedNodes.current(), processor);
+      context.setShouldRecursivelyMatch(false);
+      visitor.matchContext(matchedNodes);
+    } finally {
+      matchedNodes.reset();
+    }
   }
 
   public void clearContext() {
