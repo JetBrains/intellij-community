@@ -20,10 +20,7 @@ import com.intellij.util.containers.IntStack;
 import org.jetbrains.annotations.NotNull;
 
 public class DfsUtil {
-  private final IntStack myStack;
-
   public DfsUtil() {
-    myStack = new IntStack();
   }
 
   public interface NextNode {
@@ -33,6 +30,7 @@ public class DfsUtil {
   }
 
   public void nodeDfsIterator(int startRowIndex, @NotNull NextNode nextNodeFun) {
+    IntStack myStack = new IntStack();
     myStack.push(startRowIndex);
 
     while (!myStack.empty()) {
@@ -43,5 +41,6 @@ public class DfsUtil {
         myStack.pop();
       }
     }
+    myStack.clear();
   }
 }
