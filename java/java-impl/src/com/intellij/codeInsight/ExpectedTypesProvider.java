@@ -1135,7 +1135,7 @@ public class ExpectedTypesProvider {
           LOG.error("Vararg parameter with non-array type. Class=" + parameter.getClass() + "; type=" + parameter.getType());
         }
       }
-      PsiType parameterType = GenericsUtil.getVariableTypeByExpressionType(substitutor.substitute(type));
+      PsiType parameterType = substitutor.substitute(type);
       if (parameterType instanceof PsiCapturedWildcardType) {
         parameterType = ((PsiCapturedWildcardType)parameterType).getWildcard();
       }
