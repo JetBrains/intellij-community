@@ -36,8 +36,12 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation;
+import com.intellij.xdebugger.frame.presentation.XStringValuePresentation;
+import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.sun.jdi.Type;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,12 +113,41 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
                 nodeIcon = AllIcons.Debugger.Value;
               }
             }
-
-            node.setPresentation(nodeIcon, typeName, myValueDescriptor.getValueText(), myValueDescriptor.isExpandable());
+            final String[] strings = splitValue(myValueDescriptor.getValueLabel());
+            XValuePresentation presentation = new XRegularValuePresentation(strings[1], strings[0]);
+            if (myValueDescriptor.isString()) {
+              presentation = new TypedStringValuePresentation(StringUtil.unquoteString(strings[1]), strings[0]);
+            }
+            node.setPresentation(nodeIcon, presentation, myValueDescriptor.isExpandable());
           }
         });
       }
     });
+  }
+
+  private static class TypedStringValuePresentation extends XStringValuePresentation {
+    private final String myType;
+
+    public TypedStringValuePresentation(@NotNull String value, @Nullable String type) {
+      super(value);
+      myType = type;
+    }
+
+    @Nullable
+    @Override
+    public String getType() {
+      return myType;
+    }
+  }
+
+  private static String[] splitValue(String value) {
+    if (StringUtil.startsWithChar(value, '{')) {
+      int end = value.indexOf('}');
+      if (end > 0) {
+        return new String[]{value.substring(1, end-1), value.substring(end+1)};
+      }
+    }
+    return new String[]{null, value};
   }
 
   @Override
