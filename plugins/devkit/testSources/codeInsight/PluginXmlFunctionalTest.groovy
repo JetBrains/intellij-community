@@ -18,9 +18,7 @@ import com.intellij.codeInsight.TargetElementUtilBase
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection
 import com.intellij.codeInspection.xml.DeprecatedClassUsageInspection
 import com.intellij.lang.documentation.DocumentationProvider
 import com.intellij.openapi.application.ApplicationManager
@@ -268,24 +266,6 @@ bar.MyExtensionPoint""", provider.getQuickNavigateInfo(epPsiElement, originalEle
   public void testLoadForDefaultProject() throws Exception {
     configureByFile();
     myFixture.testHighlighting(true, true, true);
-  }
-
-  public void testImplicitUsagesDomElement() {
-    myFixture.addClass("package com.intellij.util.xml; public interface DomElement {}")
-    myFixture.addClass("package com.intellij.util.xml; public interface GenericAttributeValue<T> extends DomElement {}")
-
-    myFixture.enableInspections(new UnusedSymbolLocalInspection(), new UnusedDeclarationInspection())
-    myFixture.configureByFile("ImplicitUsagesDomElement.java")
-    myFixture.testHighlighting()
-  }
-
-  public void testImplicitUsagesDomElementVisitor() {
-    myFixture.addClass("package com.intellij.util.xml; public interface DomElement {}")
-    myFixture.addClass("package com.intellij.util.xml; public interface DomElementVisitor {}")
-
-    myFixture.enableInspections(new UnusedSymbolLocalInspection(), new UnusedDeclarationInspection())
-    myFixture.configureByFile("ImplicitUsagesDomElementVisitor.java")
-    myFixture.testHighlighting()
   }
 
   static Collection<Class<? extends LocalInspectionTool>> getInspectionClasses() {
