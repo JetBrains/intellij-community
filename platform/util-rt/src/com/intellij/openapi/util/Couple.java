@@ -19,11 +19,18 @@ package com.intellij.openapi.util;
  * @author Konstantin Bulenkov
  */
 public class Couple<T> extends Pair<T, T> {
+  private static final Couple EMPTY_COUPLE = newOne(null, null);
+
   public Couple(T first, T second) {
     super(first, second);
   }
 
   public static <T> Couple<T> newOne(T first, T second) {
     return new Couple<T>(first, second);
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <T> Couple<T> getEmpty() {
+    return EMPTY_COUPLE;
   }
 }
