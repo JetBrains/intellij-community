@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +32,7 @@ public class CompositeFilter implements Filter, FilterMixin {
 
   private final List<Filter> myFilters = new ArrayList<Filter>();
   private boolean myIsAnyHeavy;
+  private boolean forceUseAllFilters = true;
   private final DumbService myDumbService;
 
   public CompositeFilter(@NotNull Project project) {
@@ -65,7 +67,7 @@ public class CompositeFilter implements Filter, FilterMixin {
         if (t0 > 1000) {
           LOG.warn(filter.getClass().getSimpleName() + ".applyFilter() took " + t0 + " ms on '''" + line + "'''");
         }
-        if (finalResult != null && finalResult.getNextAction() == NextAction.EXIT) {
+        if (!forceUseAllFilters && finalResult != null && finalResult.getNextAction() == NextAction.EXIT) {
           return finalResult;
         }
       }
@@ -79,21 +81,52 @@ public class CompositeFilter implements Filter, FilterMixin {
         finalResult = result;
       }
       else {
-        finalResult = new Result(mergeResultItems(finalResult, result));
+        finalResult.setResultItems(mergeResultItems(finalResult.getResultItems(), result.getResultItems()));
         finalResult.setNextAction(result.getNextAction());
       }
     }
     return finalResult;
   }
 
-  private List<ResultItem> mergeResultItems(Result finalResult, Result result) {
-    List<ResultItem> finalResultResultItems = finalResult.getResultItems();
-    List<ResultItem> resultItems = result.getResultItems();
+  private List<ResultItem> mergeResultItems(final List<ResultItem> finalResult, final List<ResultItem> result) {
+    List<ResultItem> mergedResult;
+    if (finalResult instanceof MyArrayList) {
+      mergedResult = finalResult;
+    }
+    else {
+      mergedResult = new MyArrayList<ResultItem>(finalResult.size() + result.size());
+      mergedResult.addAll(finalResult);
+    }
 
-    List<ResultItem> mergedList = new ArrayList<ResultItem>(finalResultResultItems.size() + resultItems.size());
-    mergedList.addAll(finalResultResultItems);
-    mergedList.addAll(resultItems);
-    return mergedList;
+    for (ResultItem item : result) {
+      if (item.hyperlinkInfo != null) {
+        if (!intersects(mergedResult, item)) {
+          mergedResult.add(item);
+        }
+      }
+      else {
+        mergedResult.add(item);
+      }
+    }
+    return mergedResult;
+  }
+
+  protected boolean intersects(List<ResultItem> mergedList, ResultItem addedItem) {
+    boolean intersects = false;
+    TextRange addedItemTextRange = null;
+
+    for (ResultItem item : mergedList) {
+      if (item.hyperlinkInfo != null) {
+        if (addedItemTextRange == null) {
+          addedItemTextRange = new TextRange(addedItem.highlightStartOffset, addedItem.highlightEndOffset);
+        }
+        intersects = addedItemTextRange.intersectsStrict(item.highlightStartOffset, item.highlightEndOffset);
+        if (intersects) {
+          break;
+        }
+      }
+    }
+    return intersects;
   }
 
   @Override
@@ -148,5 +181,18 @@ public class CompositeFilter implements Filter, FilterMixin {
   public void addFilter(final Filter filter) {
     myFilters.add(filter);
     myIsAnyHeavy |= filter instanceof FilterMixin;
+  }
+
+  public void setForceUseAllFilters(boolean forceUseAllFilters) {
+    this.forceUseAllFilters = forceUseAllFilters;
+  }
+
+  /**
+   * for memory allocation reduction without danger of changing clients arraylist
+   */
+  private static class MyArrayList<T> extends ArrayList<T> {
+    MyArrayList(int initialCapacity) {
+      super(initialCapacity);
+    }
   }
 }

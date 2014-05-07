@@ -30,6 +30,7 @@ public class CompositeFilterTest {
   @Before
   public void setUp() throws Exception {
     myCompositeFilter = new CompositeFilter(new MockDumbService(null));
+    myCompositeFilter.setForceUseAllFilters(false);
   }
 
   @Test
@@ -54,6 +55,9 @@ public class CompositeFilterTest {
 
     myCompositeFilter.addFilter(returnResultFilter());
     notNullResultOfSize(applyFilter(), 3);
+    
+    myCompositeFilter.setForceUseAllFilters(true);  
+    notNullResultOfSize(applyFilter(), 4);
 
   }
 

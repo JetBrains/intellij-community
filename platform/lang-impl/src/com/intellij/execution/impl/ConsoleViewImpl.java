@@ -247,8 +247,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private final Set<MyFlushRunnable> myCurrentRequests = new HashSet<MyFlushRunnable>();
 
-  protected final CompositeFilter myPredefinedMessageFilter;
-  protected final CompositeFilter myCustomFilter;
+  protected final CompositeFilter myMessageFilter;
 
   @Nullable private final InputFilter myInputMessageFilter;
 
@@ -285,20 +284,19 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myPsiDisposedCheck = new DisposedPsiManagerCheck(project);
     myProject = project;
 
-    myCustomFilter = new CompositeFilter(project);
-    myPredefinedMessageFilter = new CompositeFilter(project);
+    myMessageFilter = new CompositeFilter(project);
     if (usePredefinedMessageFilter) {
       for (ConsoleFilterProvider eachProvider : Extensions.getExtensions(ConsoleFilterProvider.FILTER_PROVIDERS)) {
         Filter[] filters = eachProvider instanceof ConsoleFilterProviderEx
                            ? ((ConsoleFilterProviderEx)eachProvider).getDefaultFilters(project, searchScope)
                            : eachProvider.getDefaultFilters(project);
         for (Filter filter : filters) {
-          myPredefinedMessageFilter.addFilter(filter);
+          myMessageFilter.addFilter(filter);
         }
       }
     }
     myHeavyUpdateTicket = 0;
-    myHeavyAlarm = myPredefinedMessageFilter.isAnyHeavy() ? new Alarm(Alarm.ThreadToUse.SHARED_THREAD, this) : null;
+    myHeavyAlarm = myMessageFilter.isAnyHeavy() ? new Alarm(Alarm.ThreadToUse.SHARED_THREAD, this) : null;
 
 
     ConsoleInputFilterProvider[] inputFilters = Extensions.getExtensions(ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS);
@@ -472,7 +470,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   public JComponent getComponent() {
     if (myMainPanel == null) {
       myMainPanel = new JPanel(new BorderLayout());
-      myJLayeredPane = new MyDiffContainer(myMainPanel, myPredefinedMessageFilter.getUpdateMessage());
+      myJLayeredPane = new MyDiffContainer(myMainPanel, myMessageFilter.getUpdateMessage());
       Disposer.register(this, myJLayeredPane);
       add(myJLayeredPane, BorderLayout.CENTER);
     }
@@ -835,7 +833,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   @Override
   public void addMessageFilter(final Filter filter) {
-    myCustomFilter.addFilter(filter);
+    myMessageFilter.addFilter(filter);
   }
 
   @Override
@@ -954,7 +952,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void highlightHyperlinksAndFoldings(RangeMarker lastProcessedOutput) {
-    boolean canHighlightHyperlinks = !myCustomFilter.isEmpty() || !myPredefinedMessageFilter.isEmpty();
+    boolean canHighlightHyperlinks = !myMessageFilter.isEmpty() || !myMessageFilter.isEmpty();
 
     if (!canHighlightHyperlinks && myUpdateFoldingsEnabled) {
       return;
@@ -965,10 +963,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     if (canHighlightHyperlinks) {
-      myHyperlinks.highlightHyperlinks(myCustomFilter, myPredefinedMessageFilter, line1, endLine);
+      myHyperlinks.highlightHyperlinks(myMessageFilter, null, line1, endLine);
     }
 
-    if (myAllowHeavyFilters && myPredefinedMessageFilter.isAnyHeavy() && myPredefinedMessageFilter.shouldRunHeavy()) {
+    if (myAllowHeavyFilters && myMessageFilter.isAnyHeavy() && myMessageFilter.shouldRunHeavy()) {
       runHeavyFilters(line1, endLine);
     }
     if (myUpdateFoldingsEnabled) {
@@ -991,9 +989,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myHeavyAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
-        if (! myPredefinedMessageFilter.shouldRunHeavy()) return;
+        if (!myMessageFilter.shouldRunHeavy()) return;
         try {
-          myPredefinedMessageFilter.applyHeavyFilter(documentCopy, startOffset, startLine, new Consumer<FilterMixin.AdditionalHighlight>() {
+          myMessageFilter.applyHeavyFilter(documentCopy, startOffset, startLine, new Consumer<FilterMixin.AdditionalHighlight>() {
             @Override
             public void consume(final FilterMixin.AdditionalHighlight additionalHighlight) {
               if (myFlushAlarm.isDisposed()) return;
