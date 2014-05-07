@@ -80,6 +80,10 @@
     <processor implementation="de.plushnikov.intellij.plugin.processor_pg.field.EnumIdFieldProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor_pg.field.LazyGetterFieldProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor_pg.field.FluentSetterFieldProcessor"/>
+
+    <!-- hrisey -->
+    <processor implementation="pl.mg6.hrisey.intellij.plugin.processor.clazz.ParcelableMethodsProcessor"/>
+    <processor implementation="pl.mg6.hrisey.intellij.plugin.processor.clazz.ParcelableFieldsProcessor"/>
   </extensions>
 
   <actions>

@@ -38,6 +38,7 @@ import java.util.Set;
 public class LombokAugmentProvider extends PsiAugmentProvider {
   private static final Logger log = Logger.getInstance(LombokAugmentProvider.class.getName());
   private static final String LOMBOK_PREFIX_MARKER = "lombok.";
+  private static final String HRISEY_PREFIX_MARKER = "hrisey.";
 
   private final static ThreadLocal<Set<AugmentCallData>> recursionBreaker = new ThreadLocal<Set<AugmentCallData>>() {
     @Override
@@ -134,7 +135,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
         for (PsiImportStatementBase psiImportStatementBase : psiImportList.getAllImportStatements()) {
           PsiJavaCodeReferenceElement importReference = psiImportStatementBase.getImportReference();
           String qualifiedName = StringUtil.notNullize(null == importReference ? "" : importReference.getQualifiedName());
-          if (qualifiedName.startsWith(LOMBOK_PREFIX_MARKER)) {
+          if (qualifiedName.startsWith(LOMBOK_PREFIX_MARKER) || qualifiedName.startsWith(HRISEY_PREFIX_MARKER)) {
             return true;
           }
         }
@@ -169,7 +170,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     if (null != modifierList) {
       for (PsiAnnotation psiAnnotation : modifierList.getAnnotations()) {
         String qualifiedName = StringUtil.notNullize(psiAnnotation.getQualifiedName());
-        if (qualifiedName.startsWith(LOMBOK_PREFIX_MARKER)) {
+        if (qualifiedName.startsWith(LOMBOK_PREFIX_MARKER) || qualifiedName.startsWith(HRISEY_PREFIX_MARKER)) {
           return true;
         }
       }
