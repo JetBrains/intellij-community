@@ -597,16 +597,21 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
         return true;
       }
 
-      AntBuildMessageView messageView = myContent.getUserData(KEY);
+      final AntBuildMessageView messageView = myContent.getUserData(KEY);
 
-      if (messageView.isStoppedOrTerminateRequested()) {
+      if (messageView == null || messageView.isStoppedOrTerminateRequested()) {
         return true;
       }
 
-      if (myCloseAllowed) return true;
+      if (myCloseAllowed) {
+        return true;
+      }
 
-      int result = Messages.showYesNoCancelDialog(AntBundle.message("ant.process.is.active.terminate.confirmation.text"),
-                                                  AntBundle.message("close.ant.build.messages.dialog.title"), Messages.getQuestionIcon());
+      final int result = Messages.showYesNoCancelDialog(
+        AntBundle.message("ant.process.is.active.terminate.confirmation.text"), 
+        AntBundle.message("close.ant.build.messages.dialog.title"), Messages.getQuestionIcon()
+      );
+      
       if (result == 0) { // yes
         messageView.stopProcess();
         myCloseAllowed = true;

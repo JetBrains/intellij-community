@@ -14,13 +14,13 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -44,7 +44,7 @@ public class HgBranchesCommand {
 
   @NotNull
   public static Set<String> collectNames(@NotNull HgCommandResult result) {
-    Set<String> branches = new HashSet<String>();
+    Set<String> branches = new TreeSet<String>();
     for (final String line : result.getOutputLines()) {
       Matcher matcher = BRANCH_LINE.matcher(line);
       if (matcher.matches()) {

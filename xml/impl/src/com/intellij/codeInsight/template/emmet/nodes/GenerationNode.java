@@ -134,14 +134,14 @@ public class GenerationNode extends UserDataHolderBase {
 
   @NotNull
   public TemplateImpl generate(@NotNull CustomTemplateCallback callback,
-                                @Nullable ZenCodingGenerator generator,
-                                @NotNull Collection<ZenCodingFilter> filters,
-                                boolean insertSurroundedText) {
+                               @Nullable ZenCodingGenerator generator,
+                               @NotNull Collection<ZenCodingFilter> filters,
+                               boolean insertSurroundedText, int segmentsLimit) {
     myContainsSurroundedTextMarker = !(insertSurroundedText && myInsertSurroundedTextAtTheEnd);
 
     GenerationNode generationNode = this;
     if (generationNode != this) {
-      return generationNode.generate(callback, generator, Collections.<ZenCodingFilter>emptyList(), insertSurroundedText);
+      return generationNode.generate(callback, generator, Collections.<ZenCodingFilter>emptyList(), insertSurroundedText, segmentsLimit);
     }
     
     boolean shouldNotReformatTemplate = false;
@@ -179,7 +179,7 @@ public class GenerationNode extends UserDataHolderBase {
       indentStr = StringUtil.repeatSymbol(' ', tabSize);
     }
 
-    LiveTemplateBuilder builder = new LiveTemplateBuilder();
+    LiveTemplateBuilder builder = new LiveTemplateBuilder(segmentsLimit);
     int end = -1;
     boolean hasChildren = myChildren.size() > 0;
 
@@ -204,7 +204,7 @@ public class GenerationNode extends UserDataHolderBase {
     parentTemplate.setString(s);
 
     final String txt = hasChildren || myContainsSurroundedTextMarker ? null : mySurroundedText;
-    parentTemplate = expandTemplate(parentTemplate, predefinedValues, txt);
+    parentTemplate = expandTemplate(parentTemplate, predefinedValues, txt, segmentsLimit);
 
     int offset = builder.insertTemplate(0, parentTemplate, null);
     int newOffset = gotoChild(callback.getProject(), builder.getText(), offset, 0, builder.length());
@@ -220,7 +220,7 @@ public class GenerationNode extends UserDataHolderBase {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, myChildrenSize = myChildren.size(); i < myChildrenSize; i++) {
       GenerationNode child = myChildren.get(i);
-      TemplateImpl childTemplate = child.generate(callback, generator, filters, !myContainsSurroundedTextMarker);
+      TemplateImpl childTemplate = child.generate(callback, generator, filters, !myContainsSurroundedTextMarker, segmentsLimit);
 
       boolean blockTag = child.isBlockTag();
 
@@ -305,8 +305,9 @@ public class GenerationNode extends UserDataHolderBase {
   @NotNull
   private static TemplateImpl expandTemplate(@NotNull TemplateImpl template,
                                              Map<String, String> predefinedVarValues,
-                                             String surroundedText) {
-    LiveTemplateBuilder builder = new LiveTemplateBuilder();
+                                             String surroundedText,
+                                             int segmentsLimit) {
+    LiveTemplateBuilder builder = new LiveTemplateBuilder(segmentsLimit);
     if (predefinedVarValues == null && surroundedText == null) {
       return template;
     }

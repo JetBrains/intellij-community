@@ -26,12 +26,16 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,15 +49,30 @@ import java.util.Map;
 public class EditorNotificationsImpl extends EditorNotifications {
   private static final ExtensionPointName<Provider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.editorNotificationProvider");
   private final Map<VirtualFile, ProgressIndicator> myCurrentUpdates = new ConcurrentWeakHashMap<VirtualFile, ProgressIndicator>();
+  private final MergingUpdateQueue myUpdateMerger;
 
   public EditorNotificationsImpl(Project project) {
     super(project);
-    project.getMessageBus().connect(project).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
+    myUpdateMerger = new MergingUpdateQueue("EditorNotifications update merger", 100, true, null);
+    MessageBusConnection connection = project.getMessageBus().connect(project);
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         updateNotifications(file);
       }
     });
+    connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+      @Override
+      public void enteredDumbMode() {
+        updateAllNotifications();
+      }
+
+      @Override
+      public void exitDumbMode() {
+        updateAllNotifications();
+      }
+    });
+
   }
 
   public void updateNotifications(final VirtualFile file) {
@@ -137,4 +156,14 @@ public class EditorNotificationsImpl extends EditorNotifications {
     }
   }
 
+  public void updateAllNotifications() {
+    myUpdateMerger.queue(new Update("update") {
+      @Override
+      public void run() {
+        for (VirtualFile file : FileEditorManager.getInstance(myProject).getOpenFiles()) {
+          updateNotifications(file);
+        }
+      }
+    });
+  }
 }

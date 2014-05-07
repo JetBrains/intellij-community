@@ -28,8 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
-import org.jetbrains.idea.svn.commandLine.CommitEventHandler;
-import org.jetbrains.idea.svn.commandLine.CommitEventType;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;

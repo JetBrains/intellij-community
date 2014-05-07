@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
+import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -44,7 +45,7 @@ class MoverWrapper {
     return myInfo;
   }
 
-  public final void move(Editor editor, final PsiFile file) {
+  public final void move(final Editor editor, final PsiFile file) {
     assert myInfo.toMove2 != null;
     myMover.beforeMove(editor, myInfo, myIsDown);
     final Document document = editor.getDocument();
@@ -91,19 +92,8 @@ class MoverWrapper {
     // Pointer for the fold region from method1 points to 'method2()' now and vice versa (check range markers processing on
     // document change for further information). I.e. information about fold regions statuses holds the data swapped for
     // 'method1' and 'method2'. Hence, we want to apply correct 'collapsed' status.
-    FoldRegion topRegion = null;
-    FoldRegion bottomRegion = null;
-    for (FoldRegion foldRegion : editor.getFoldingModel().getAllFoldRegions()) {
-      if (!foldRegion.isValid() || (!contains(myInfo.range1, foldRegion) && !contains(myInfo.range2, foldRegion))) {
-        continue;
-      }
-      if (contains(myInfo.range1, foldRegion) && !contains(topRegion, foldRegion)) {
-        topRegion = foldRegion;
-      }
-      else if (contains(myInfo.range2, foldRegion) && !contains(bottomRegion, foldRegion)) {
-        bottomRegion = foldRegion;
-      }
-    }
+    final FoldRegion topRegion = findTopLevelRegionInRange(editor, myInfo.range1);
+    final FoldRegion bottomRegion = findTopLevelRegionInRange(editor, myInfo.range2);
 
     document.insertString(myInfo.range1.getStartOffset(), textToInsert2);
     document.deleteString(myInfo.range1.getStartOffset()+textToInsert2.length(), myInfo.range1.getEndOffset());
@@ -120,14 +110,19 @@ class MoverWrapper {
 
     // Swap fold regions status if necessary.
     if (topRegion != null && bottomRegion != null) {
-      final FoldRegion finalTopRegion = topRegion;
-      final FoldRegion finalBottomRegion = bottomRegion;
+      CodeFoldingManager.getInstance(project).updateFoldRegions(editor);
       editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
         @Override
         public void run() {
-          boolean topExpanded = finalTopRegion.isExpanded();
-          finalTopRegion.setExpanded(finalBottomRegion.isExpanded());
-          finalBottomRegion.setExpanded(topExpanded);
+          FoldRegion newTopRegion = findTopLevelRegionInRange(editor, myInfo.range1);
+          if (newTopRegion != null) {
+            newTopRegion.setExpanded(bottomRegion.isExpanded());
+          }
+
+          FoldRegion newBottomRegion = findTopLevelRegionInRange(editor, myInfo.range2);
+          if (newBottomRegion != null) {
+            newBottomRegion.setExpanded(topRegion.isExpanded());
+          }
         }
       });
     }
@@ -146,6 +141,16 @@ class MoverWrapper {
 
     myMover.afterMove(editor, file, myInfo, myIsDown);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+  }
+
+  private static FoldRegion findTopLevelRegionInRange(Editor editor, RangeMarker range) {
+    FoldRegion result = null;
+    for (FoldRegion foldRegion : editor.getFoldingModel().getAllFoldRegions()) {
+      if (foldRegion.isValid() && contains(range, foldRegion) && !contains(result, foldRegion)) {
+        result = foldRegion;
+      }
+    }
+    return result;
   }
 
   /**

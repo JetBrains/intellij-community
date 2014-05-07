@@ -5,9 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
-import org.jetbrains.idea.svn.commandLine.CommitEventHandler;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
-import org.jetbrains.idea.svn.commandLine.SvnCommitRunner;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
@@ -41,10 +39,10 @@ public class CmdImportClient extends BaseSvnClient implements ImportClient {
     parameters.add("--message");
     parameters.add(message);
 
-    SvnCommitRunner.CommandListener listener = new SvnCommitRunner.CommandListener(handler);
+    CmdCheckinClient.CommandListener listener = new CmdCheckinClient.CommandListener(handler);
     listener.setBaseDirectory(path);
 
-    CommandUtil.execute(myVcs, SvnTarget.fromURL(url), SvnCommandName.importFolder, parameters, listener);
+    execute(myVcs, SvnTarget.fromURL(url), SvnCommandName.importFolder, parameters, listener);
 
     return listener.getCommittedRevision();
   }

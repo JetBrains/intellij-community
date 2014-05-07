@@ -153,9 +153,9 @@ public final class VariableView extends XNamedValue implements VariableContext {
       node.setFullValueEvaluator(new XFullValueEvaluator(" (invoke getter)") {
         @Override
         public void startEvaluation(@NotNull final XFullValueEvaluationCallback callback) {
-          ObjectValue host = (ObjectValue)((VariableView)context).getValue();
-          assert host != null;
-          ObsolescentAsyncResults.consume(((ObjectProperty)variable).evaluateGet(host, getEvaluateContext()), node, new PairConsumer<Value, XValueNode>() {
+          ValueModifier valueModifier = variable.getValueModifier();
+          assert valueModifier != null;
+          ObsolescentAsyncResults.consume(valueModifier.evaluateGet((ObjectProperty)variable, getEvaluateContext()), node, new PairConsumer<Value, XValueNode>() {
             @Override
             public void consume(Value value, XValueNode node) {
               callback.evaluated("");

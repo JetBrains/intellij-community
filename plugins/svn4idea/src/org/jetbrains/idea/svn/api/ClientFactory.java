@@ -1,11 +1,13 @@
 package org.jetbrains.idea.svn.api;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.add.AddClient;
 import org.jetbrains.idea.svn.annotate.AnnotateClient;
 import org.jetbrains.idea.svn.browse.BrowseClient;
 import org.jetbrains.idea.svn.change.ChangeListClient;
+import org.jetbrains.idea.svn.checkin.CheckinClient;
 import org.jetbrains.idea.svn.checkin.ImportClient;
 import org.jetbrains.idea.svn.checkout.CheckoutClient;
 import org.jetbrains.idea.svn.checkout.ExportClient;
@@ -18,13 +20,15 @@ import org.jetbrains.idea.svn.diff.DiffClient;
 import org.jetbrains.idea.svn.history.HistoryClient;
 import org.jetbrains.idea.svn.integrate.MergeClient;
 import org.jetbrains.idea.svn.lock.LockClient;
-import org.jetbrains.idea.svn.portable.SvnStatusClientI;
-import org.jetbrains.idea.svn.update.UpdateClient;
-import org.jetbrains.idea.svn.portable.SvnWcClientI;
+import org.jetbrains.idea.svn.info.InfoClient;
+import org.jetbrains.idea.svn.status.StatusClient;
 import org.jetbrains.idea.svn.properties.PropertyClient;
 import org.jetbrains.idea.svn.revert.RevertClient;
 import org.jetbrains.idea.svn.update.RelocateClient;
+import org.jetbrains.idea.svn.update.UpdateClient;
 import org.jetbrains.idea.svn.upgrade.UpgradeClient;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -40,8 +44,8 @@ public abstract class ClientFactory {
   protected HistoryClient historyClient;
   protected RevertClient revertClient;
   protected DeleteClient deleteClient;
-  protected SvnStatusClientI statusClient;
-  protected SvnWcClientI infoClient;
+  protected StatusClient statusClient;
+  protected InfoClient infoClient;
   protected CopyMoveClient copyMoveClient;
   protected ConflictClient conflictClient;
   protected PropertyClient propertyClient;
@@ -57,6 +61,7 @@ public abstract class ClientFactory {
   protected UpgradeClient myUpgradeClient;
   protected BrowseClient myBrowseClient;
   protected DiffClient myDiffClient;
+  protected CheckinClient myCheckinClient;
 
   protected ClientFactory(@NotNull SvnVcs vcs) {
     myVcs = vcs;
@@ -91,15 +96,18 @@ public abstract class ClientFactory {
   }
 
   @NotNull
-  public SvnStatusClientI createStatusClient() {
-    // TODO: Update this in same like other clients - move to corresponding package, rename clients
-    return statusClient;
+  public StatusClient createStatusClient() {
+    return prepare(statusClient);
   }
 
   @NotNull
-  public SvnWcClientI createInfoClient() {
-    // TODO: Update this in same like other clients - move to corresponding package, rename clients
-    return infoClient;
+  public StatusClient createStatusClient(@Nullable ISVNStatusFileProvider provider, @NotNull ISVNEventHandler handler) {
+    return createStatusClient();
+  }
+
+  @NotNull
+  public InfoClient createInfoClient() {
+    return prepare(infoClient);
   }
 
   // TODO: Update this in same like other clients - move to corresponding package, rename clients
@@ -185,6 +193,11 @@ public abstract class ClientFactory {
   @NotNull
   public DiffClient createDiffClient() {
     return prepare(myDiffClient);
+  }
+
+  @NotNull
+  public CheckinClient createCheckinClient() {
+    return prepare(myCheckinClient);
   }
 
   @NotNull

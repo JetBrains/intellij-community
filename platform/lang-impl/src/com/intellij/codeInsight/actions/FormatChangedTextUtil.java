@@ -125,6 +125,14 @@ public class FormatChangedTextUtil {
     return false;
   }
 
+  public static boolean hasChanges(@NotNull VirtualFile[] files, @NotNull Project project) {
+    for (VirtualFile file : files) {
+      if (hasChanges(file, project))
+        return true;
+    }
+    return false;
+  }
+
   /**
    * Allows to answer if any file that belongs to the given module has changes in comparison with VCS.
    * 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public class XmlEmmetParser extends EmmetParser {
   private boolean hasTagContext = false;
   private final Stack<String> tagLevel = new Stack<String>();
 
-  private static Map<String, String> parentChildTagMapping = new HashMap<String, String>() {{
+  private static final Map<String, String> parentChildTagMapping = new HashMap<String, String>() {{
     put("p", "span");
     put("ul", "li");
     put("ol", "li");
@@ -159,7 +159,7 @@ public class XmlEmmetParser extends EmmetParser {
   }
 
   @Override
-  protected ZenCodingNode parseMoreOperation(@NotNull ZenCodingNode leftPart) {
+  protected ZenCodingNode parseMoreOperation(@Nullable ZenCodingNode leftPart) {
     String parentTag = getParentTag(leftPart);
     boolean hasParent = false;
     if (!Strings.isNullOrEmpty(parentTag)) {
@@ -177,8 +177,7 @@ public class XmlEmmetParser extends EmmetParser {
   }
 
   @Nullable
-  @Override
-  protected String getDefaultTemplateKey() {
+  private String getDefaultTemplateKey() {
     return ZenCodingUtil.isHtml(myCallback) ? suggestTagName() : null;
   }
 

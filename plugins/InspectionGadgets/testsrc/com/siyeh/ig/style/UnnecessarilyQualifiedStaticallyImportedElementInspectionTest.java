@@ -21,7 +21,7 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspectionTest
   extends IGInspectionTestCase {
 
   public void test() throws Exception {
-    doTest("com/siyeh/igtest/style/unnecessarily_qualified_statically_imported_element",
+    doTest("com/siyeh/igtest/style/unnecessarily_qualified_statically_imported_element/simple",
            new UnnecessarilyQualifiedStaticallyImportedElementInspection());
   }
 
@@ -30,6 +30,10 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspectionTest
   }
 
   public void testMethodRef() throws Exception {
+    doTest(getTestName(true));
+  }
+
+  public void testChainedMethodCall() throws Exception {
     doTest(getTestName(true));
   }
 

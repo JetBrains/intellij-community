@@ -35,20 +35,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.checkin.CommitEventHandler;
 import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
-import org.jetbrains.idea.svn.commandLine.CommitEventHandler;
 import org.jetbrains.idea.svn.dialogs.CreateBranchOrTagDialog;
 import org.jetbrains.idea.svn.update.AutoSvnUpdater;
 import org.jetbrains.idea.svn.update.SingleRootSwitcher;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
 public class CreateBranchOrTagAction extends BasicAction {
   protected String getActionName(AbstractVcs vcs) {
@@ -89,14 +87,13 @@ public class CreateBranchOrTagAction extends BasicAction {
         dstSvnUrl = SVNURL.parseURIEncoded(dstURL);
         parentUrl = dstSvnUrl.removePathTail();
 
-        if (!dirExists(activeVcs, project, parentUrl)) {
+        if (!dirExists(activeVcs, parentUrl)) {
           int rc = Messages.showYesNoDialog(project, "The repository path '" + parentUrl + "' does not exist. Would you like to create it?",
                                             "Branch or Tag", Messages.getQuestionIcon());
           if (rc == Messages.NO) {
             return;
           }
         }
-
       }
       catch (SVNException e) {
         throw new VcsException(e);
@@ -111,11 +108,10 @@ public class CreateBranchOrTagAction extends BasicAction {
               progress.setText(SvnBundle.message("progress.text.copy.to", dstURL));
               handler = new IdeaCommitHandler(progress);
             }
-            checkCreateDir(parentUrl, activeVcs, comment);
 
             SvnTarget source = isSrcFile ? SvnTarget.fromFile(srcFile, revision) : SvnTarget.fromURL(srcUrl, revision);
             long newRevision = activeVcs.getFactory(source).createCopyMoveClient()
-              .copy(source, SvnTarget.fromURL(dstSvnUrl), revision, true, comment, handler);
+              .copy(source, SvnTarget.fromURL(dstSvnUrl), revision, true, false, comment, handler);
 
             updateStatusBar(newRevision, project);
           }
@@ -124,7 +120,8 @@ public class CreateBranchOrTagAction extends BasicAction {
           }
         }
       };
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(copyCommand, SvnBundle.message("progress.title.copy"), false, project);
+      ProgressManager.getInstance()
+        .runProcessWithProgressSynchronously(copyCommand, SvnBundle.message("progress.title.copy"), false, project);
       if (!exception.isNull()) {
         throw new VcsException(exception.get());
       }
@@ -148,25 +145,7 @@ public class CreateBranchOrTagAction extends BasicAction {
     }
   }
 
-  private static void checkCreateDir(@NotNull SVNURL url, @NotNull final SvnVcs activeVcs, @NotNull final String comment)
-    throws SVNException, VcsException {
-    final SVNURL baseUrl = url;
-    List<SVNURL> dirsToCreate = new ArrayList<SVNURL>();
-    while(!dirExists(activeVcs, activeVcs.getProject(), url)) {
-      dirsToCreate.add(0, url);
-      url = url.removePathTail();
-      if (url.getPath().length() == 0) {
-        throw new VcsException("Invalid repository root path for " + baseUrl);
-      }
-    }
-    if (! dirsToCreate.isEmpty()) {
-      // TODO: Works for 1.8 - implement this for command line
-      SVNCommitClient commitClient = activeVcs.createCommitClient();
-      commitClient.doMkDir(dirsToCreate.toArray(new SVNURL[dirsToCreate.size()]), comment);
-    }
-  }
-
-  private static boolean dirExists(@NotNull final SvnVcs vcs, @NotNull Project project, @NotNull final SVNURL url) throws SVNException {
+  private static boolean dirExists(@NotNull final SvnVcs vcs, @NotNull final SVNURL url) throws SVNException {
     final Ref<SVNException> excRef = new Ref<SVNException>();
     final Ref<Boolean> resultRef = new Ref<Boolean>(Boolean.TRUE);
 
@@ -176,7 +155,6 @@ public class CreateBranchOrTagAction extends BasicAction {
           vcs.getInfo(url, SVNRevision.HEAD);
         }
         catch (SVNException e) {
-          // TODO: Check what error code returned by cmd client and implement corresponding support
           if (e.getErrorMessage().getErrorCode().equals(SVNErrorCode.RA_ILLEGAL_URL)) {
             resultRef.set(Boolean.FALSE);
           }
@@ -189,11 +167,12 @@ public class CreateBranchOrTagAction extends BasicAction {
 
     final Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(taskImpl, "Checking target folder", true, project);
-    } else {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(taskImpl, "Checking target folder", true, vcs.getProject());
+    }
+    else {
       taskImpl.run();
     }
-    if (! excRef.isNull()) throw excRef.get();
+    if (!excRef.isNull()) throw excRef.get();
     return resultRef.get();
   }
 
@@ -204,5 +183,4 @@ public class CreateBranchOrTagAction extends BasicAction {
   protected boolean isBatchAction() {
     return false;
   }
-
 }

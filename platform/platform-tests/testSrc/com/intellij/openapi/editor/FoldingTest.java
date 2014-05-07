@@ -1,15 +1,22 @@
 package com.intellij.openapi.editor;
 
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.util.Ref;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * @author max
  */
 public class FoldingTest extends LightPlatformTestCase {
+
+  static {
+    PlatformTestCase.autodetectPlatformPrefix();
+  }
+
   public void testStressFoldingFromZeroOffset() throws Exception {
     for (int len = 2; len < 25; len++) {
       stress(len);
@@ -62,6 +69,32 @@ public class FoldingTest extends LightPlatformTestCase {
           editor.logicalToVisualPosition(log);
         }
       }
+    }
+    finally {
+      EditorFactory.getInstance().releaseEditor(editor);
+    }
+  }
+
+  public void testCleanupInvalidRegions() {
+    final DocumentImpl doc = new DocumentImpl("foo1\nfoo2\nfoo3\nfoo4");
+    Editor editor = EditorFactory.getInstance().createEditor(doc);
+    final FoldingModel model = editor.getFoldingModel();
+    try {
+      model.runBatchFoldingOperation(new Runnable() {
+        @Override
+        public void run() {
+          model.addFoldRegion(0, 4, "/*...*/");
+          model.addFoldRegion(5, 9, "/*...*/");
+        }
+      });
+      assertSize(2, model.getAllFoldRegions());
+      WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
+        @Override
+        public void run() {
+          doc.deleteString(0, 5);
+        }
+      });
+      assertSize(1, model.getAllFoldRegions());
     }
     finally {
       EditorFactory.getInstance().releaseEditor(editor);

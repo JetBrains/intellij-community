@@ -80,12 +80,15 @@ abstract class FoldRegionsTree {
   void rebuild() {
     ArrayList<FoldRegion> topLevels = new ArrayList<FoldRegion>(myRegions.size() / 2);
     ArrayList<FoldRegion> visible = new ArrayList<FoldRegion>(myRegions.size());
+    ArrayList<FoldRegion> allValid = new ArrayList<FoldRegion>(myRegions.size());
     FoldRegion[] regions = toFoldArray(myRegions);
     FoldRegion currentCollapsed = null;
     for (FoldRegion region : regions) {
       if (!region.isValid()) {
         continue;
       }
+
+      allValid.add(region);
       
       if (currentCollapsed == null || !contains(currentCollapsed, region)) {
         visible.add(region);
@@ -97,6 +100,10 @@ abstract class FoldRegionsTree {
           topLevels.add(region);
         }
       }
+    }
+
+    if (allValid.size() < myRegions.size()) {
+      myRegions = allValid;
     }
 
     myCachedTopLevelRegions = toFoldArray(topLevels);

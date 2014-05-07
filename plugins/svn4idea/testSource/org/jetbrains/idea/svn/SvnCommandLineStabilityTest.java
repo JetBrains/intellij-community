@@ -2,8 +2,8 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.VcsException;
 import junit.framework.Assert;
+import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
-import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.junit.Test;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -36,7 +36,7 @@ public class SvnCommandLineStabilityTest extends Svn17TestCase {
     SvnVcs vcs = SvnVcs.getInstance(myProject);
     File workingDirectory = new File(myWorkingCopyDir.getPath());
     CommandExecutor command =
-      CommandUtil.execute(vcs, SvnTarget.fromFile(workingDirectory), workingDirectory, SvnCommandName.info, parameters, null);
+      BaseSvnClient.execute(vcs, SvnTarget.fromFile(workingDirectory), workingDirectory, SvnCommandName.info, parameters, null);
     final String result = command.getOutput();
     System.out.println(result);
     Assert.assertNotNull(result);

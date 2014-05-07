@@ -6,7 +6,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
-import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.auth.IdeaSvnkitBasedAuthenticationCallback;
+import org.jetbrains.idea.svn.commandLine.*;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
@@ -15,6 +16,7 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -69,6 +71,42 @@ public abstract class BaseSvnClient implements SvnClient {
       throw new VcsException(
         String.format("%s format is not supported. Supported formats are: %s.", format.getName(), StringUtil.join(supported, ",")));
     }
+  }
+
+  /**
+   * Utility method for running commands.
+   * // TODO: Should be replaced with non-static analogue.
+   *
+   * @param vcs
+   * @param target
+   * @param name
+   * @param parameters
+   * @param listener
+   * @throws com.intellij.openapi.vcs.VcsException
+   */
+  public static CommandExecutor execute(@NotNull SvnVcs vcs,
+                                        @NotNull SvnTarget target,
+                                        @NotNull SvnCommandName name,
+                                        @NotNull List<String> parameters,
+                                        @Nullable LineCommandListener listener) throws SvnBindException {
+    return execute(vcs, target, null, name, parameters, listener);
+  }
+
+  public static CommandExecutor execute(@NotNull SvnVcs vcs,
+                                        @NotNull SvnTarget target,
+                                        @Nullable File workingDirectory,
+                                        @NotNull SvnCommandName name,
+                                        @NotNull List<String> parameters,
+                                        @Nullable LineCommandListener listener) throws SvnBindException {
+    Command command = new Command(name);
+
+    command.setTarget(target);
+    command.setWorkingDirectory(workingDirectory);
+    command.setResultBuilder(listener);
+    command.put(parameters);
+
+    CommandRuntime runtime = new CommandRuntime(vcs, new IdeaSvnkitBasedAuthenticationCallback(vcs));
+    return runtime.runWithAuthenticationAttempt(command);
   }
 
   protected static void callHandler(@Nullable ISVNEventHandler handler, @NotNull SVNEvent event) throws VcsException {

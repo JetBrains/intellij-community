@@ -18,7 +18,6 @@ package com.intellij.openapi.vfs.impl.jar;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
@@ -44,7 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class JarFileSystemImpl extends JarFileSystem implements ApplicationComponent {
+public class JarFileSystemImpl extends JarFileSystem {
   private static final class JarFileSystemImplLock { }
   private static final JarFileSystemImplLock LOCK = new JarFileSystemImplLock();
 
@@ -124,18 +123,6 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
 
     return null;
   }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "JarFileSystem";
-  }
-
-  @Override
-  public void initComponent() { }
-
-  @Override
-  public void disposeComponent() { }
 
   @Override
   public void setNoCopyJarForPath(String pathInJar) {

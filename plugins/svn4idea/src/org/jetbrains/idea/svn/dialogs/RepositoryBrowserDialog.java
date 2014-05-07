@@ -34,6 +34,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -66,10 +67,8 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc.SVNCommitClient;
-import org.tmatesoft.svn.core.wc.SVNCopyClient;
-import org.tmatesoft.svn.core.wc.SVNCopySource;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.swing.*;
 import javax.swing.tree.TreeNode;
@@ -87,9 +86,6 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   private final Project myProject;
   protected final SvnVcs myVCS;
   private RepositoryBrowserComponent myRepositoryBrowser;
-
-  @NonNls public static final String COPY_OF_PREFIX = "CopyOf";
-  @NonNls public static final String NEW_FOLDER_POSTFIX = "NewFolder";
 
   private final DeleteAction myDeleteAction;
   private AnAction copyUrlAction;
@@ -807,7 +803,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       }
     }
     private boolean doDelete(final SVNURL url, final String comment) {
-      final SVNException[] exception = new SVNException[1];
+      final Ref<Exception> exception = new Ref<Exception>();
       final Project project = myBrowserComponent.getProject();
       Runnable command = new Runnable() {
         public void run() {
@@ -817,19 +813,18 @@ public class RepositoryBrowserDialog extends DialogWrapper {
           }
           SvnVcs vcs = SvnVcs.getInstance(project);
           try {
-            SVNCommitClient committer = vcs.createCommitClient();
-            committer.doDelete(new SVNURL[]{url}, comment);
+            vcs.getFactoryFromSettings().createDeleteClient().delete(url, comment);
           }
-          catch (SVNException e) {
-            exception[0] = e;
+          catch (VcsException e) {
+            exception.set(e);
           }
         }
       };
       ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.title.browser.delete"), false, project);
-      if (exception[0] != null) {
-        Messages.showErrorDialog(exception[0].getMessage(), SvnBundle.message("message.text.error"));
+      if (!exception.isNull()) {
+        Messages.showErrorDialog(exception.get().getMessage(), SvnBundle.message("message.text.error"));
       }
-      return exception[0] == null;
+      return exception.isNull();
     }
   }
 
@@ -1001,7 +996,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   }
 
   protected static void doMkdir(final SVNURL url, final String comment, final Project project) {
-    final SVNException[] exception = new SVNException[1];
+    final Ref<Exception> exception = new Ref<Exception>();
     Runnable command = new Runnable() {
       public void run() {
         ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
@@ -1009,23 +1004,23 @@ public class RepositoryBrowserDialog extends DialogWrapper {
           progress.setText(SvnBundle.message("progress.text.browser.creating", url.toString()));
         }
         SvnVcs vcs = SvnVcs.getInstance(project);
+        SvnTarget target = SvnTarget.fromURL(url);
         try {
-          SVNCommitClient committer = vcs.createCommitClient();
-          committer.doMkDir(new SVNURL[] {url}, comment);
+          vcs.getFactoryFromSettings().createBrowseClient().createDirectory(target, comment, false);
         }
-        catch (SVNException e) {
-          exception[0] = e;
+        catch (VcsException e) {
+          exception.set(e);
         }
       }
     };
     ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.text.create.remote.folder"), false, project);
-    if (exception[0] != null) {
-      Messages.showErrorDialog(exception[0].getMessage(), SvnBundle.message("message.text.error"));
+    if (!exception.isNull()) {
+      Messages.showErrorDialog(exception.get().getMessage(), SvnBundle.message("message.text.error"));
     }
   }
 
   private void doCopy(final SVNURL src, final SVNURL dst, final boolean move, final String comment) {
-    final SVNException[] exception = new SVNException[1];
+    final Ref<Exception> exception = new Ref<Exception>();
     Runnable command = new Runnable() {
       public void run() {
         ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
@@ -1035,19 +1030,18 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         }
         SvnVcs vcs = SvnVcs.getInstance(myProject);
         try {
-          SVNCopyClient committer = vcs.createCopyClient();
-          final SVNCopySource[] copySource = new SVNCopySource[] {new SVNCopySource(SVNRevision.HEAD, SVNRevision.HEAD, src)};
-          committer.doCopy(copySource, dst, move, true, true, comment, null);
+          vcs.getFactoryFromSettings().createCopyMoveClient().copy(SvnTarget.fromURL(src), SvnTarget.fromURL(dst), SVNRevision.HEAD, true,
+                                                                   move, comment, null);
         }
-        catch (SVNException e) {
-          exception[0] = e;
+        catch (VcsException e) {
+          exception.set(e);
         }
       }
     };
     String progressTitle = move ? SvnBundle.message("progress.title.browser.move") : SvnBundle.message("progress.title.browser.copy");
     ProgressManager.getInstance().runProcessWithProgressSynchronously(command, progressTitle, false, myProject);
-    if (exception[0] != null) {
-      Messages.showErrorDialog(exception[0].getMessage(), SvnBundle.message("message.text.error"));
+    if (!exception.isNull()) {
+      Messages.showErrorDialog(exception.get().getMessage(), SvnBundle.message("message.text.error"));
     }
   }
 
@@ -1184,16 +1178,6 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       return;
     }
     final Collection<Change> changesList = changes.values();
-    /*final Collection<Change> changesListConverted = new ArrayList<Change>(changesList.size());
-    for (Change change : changesList) {
-      final FilePath path = ChangesUtil.getFilePath(change);
-      final Change newChange = new Change(
-          new UrlContentRevision(change.getBeforeRevision(),
-                                 FilePathImpl.createNonLocal(SVNPathUtil.append(sourceUrl.toString(), path.getName()), path.isDirectory()), revision),
-          new UrlContentRevision(change.getAfterRevision(),
-                                 FilePathImpl.createNonLocal(SVNPathUtil.append(targetUrl.toString(), path.getName()), path.isDirectory()), revision));
-      changesListConverted.add(newChange);
-    }*/
 
     final String title = SvnBundle.message("repository.browser.compare.title", sourceTitle, targetTitle);
     SwingUtilities.invokeLater(new Runnable() {
@@ -1229,10 +1213,6 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       e.getPresentation().setDescription("Close this tool window");
       e.getPresentation().setIcon(AllIcons.Actions.Cancel);
     }
-  }
-
-  public void setDefaultExpander(final NotNullFunction<RepositoryBrowserComponent, Expander> expanderFactory) {
-    myRepositoryBrowser.setLazyLoadingExpander(expanderFactory);
   }
 
   private static class UrlContentRevision implements ContentRevision {

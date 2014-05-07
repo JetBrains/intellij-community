@@ -70,7 +70,7 @@ class Generator {
   }
 
   private static boolean isDomainSkipped(Domain domain) {
-    if (domain.domain().equals("CSS")) {
+    if (domain.domain().equals("CSS") || domain.domain().equals("Inspector")) {
       return false;
     }
 

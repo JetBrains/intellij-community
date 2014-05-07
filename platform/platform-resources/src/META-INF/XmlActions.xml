@@ -92,5 +92,7 @@
 
     <action id="SurroundWithEmmet" class="com.intellij.codeInsight.template.emmet.SurroundWithEmmetAction" 
             text="Surround with Emmet" description="Surround selected code with Emmet abbreviation"/>
+    <action id="EmmetPreview" class="com.intellij.codeInsight.template.emmet.EmmetPreviewAction" 
+            text="Emmet Preview" description="Show preview for emmet abbreviation"/>
   </actions>
 </component>

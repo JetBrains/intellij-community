@@ -17,7 +17,6 @@ package com.intellij.ui;
 
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
@@ -48,12 +47,7 @@ public abstract class EditorNotifications extends AbstractProjectComponent {
 
   public abstract void updateNotifications(final VirtualFile file);
 
-  public void updateAllNotifications() {
-    VirtualFile[] files = FileEditorManager.getInstance(myProject).getOpenFiles();
-    for (VirtualFile file : files) {
-      updateNotifications(file);
-    }
-  }
+  public abstract void updateAllNotifications();
 
   public static void updateAll() {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();

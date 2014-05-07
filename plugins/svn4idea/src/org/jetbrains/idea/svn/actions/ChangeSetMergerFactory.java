@@ -26,7 +26,6 @@ import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class ChangeSetMergerFactory implements MergerFactory {
@@ -44,13 +43,5 @@ public class ChangeSetMergerFactory implements MergerFactory {
                               final SVNURL currentBranchUrl,
                               String branchName) {
     return new PointMerger(vcs, mySelectedList, target, handler, currentBranchUrl, mySelectedChanges, branchName);
-  }
-
-  public List<CommittedChangeList> getListsToMerge() {
-    return Collections.singletonList(mySelectedList);
-  }
-
-  public boolean isMergeAll() {
-    return false;
   }
 }
