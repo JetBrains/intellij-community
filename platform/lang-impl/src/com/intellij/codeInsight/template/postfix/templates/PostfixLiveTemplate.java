@@ -125,10 +125,10 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
       if (postfixTemplate != null) {
         final PsiFile file = callback.getContext().getContainingFile();
         if (isApplicableTemplate(provider, key, file, editor)) {
-          int currentOffset = editor.getCaretModel().getOffset();
-          PsiElement newContext = deleteTemplateKey(file, editor.getDocument(), currentOffset, key);
-          newContext = provider.preExpand(editor, newContext, currentOffset, key);
-          expandTemplate(postfixTemplate, editor, newContext);
+          int offset = deleteTemplateKey(file, editor, key);
+          provider.preExpand(file, editor);
+          PsiElement context = CustomTemplateCallback.getContext(file, positiveOffset(offset));
+          expandTemplate(postfixTemplate, editor, context);
         }
         // don't care about errors in multiCaret mode
         else if (editor.getCaretModel().getAllCarets().size() == 1) {
@@ -224,26 +224,25 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   }
 
 
-  @NotNull
-  private static PsiElement deleteTemplateKey(@NotNull final PsiFile file,
-                                              @NotNull final Document document,
-                                              final int currentOffset,
-                                              @NotNull final String key) {
+  private static int deleteTemplateKey(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final String key) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    final int startOffset = currentOffset - key.length();
+    final int currentOffset = editor.getCaretModel().getOffset();
+    final int newOffset = currentOffset - key.length();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
         CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
           public void run() {
-            document.deleteString(startOffset, currentOffset);
+            Document document = editor.getDocument();
+            document.deleteString(newOffset, currentOffset);
+            editor.getCaretModel().moveToOffset(newOffset);
             PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
           }
         });
       }
     });
-    return CustomTemplateCallback.getContext(file, startOffset > 0 ? startOffset - 1 : startOffset);
+    return newOffset;
   }
 
   private static Condition<PostfixTemplate> createIsApplicationTemplateFunction(@NotNull PostfixTemplateProvider provider,
@@ -263,14 +262,14 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
       return Condition.FALSE;
     }
 
-    copyFile = provider.preCheck(editor, copyFile, newOffset);
+    copyFile = provider.preCheck(copyFile, editor, newOffset);
     copyDocument = copyFile.getViewProvider().getDocument();
     if (copyDocument == null) {
       //noinspection unchecked
       return Condition.FALSE;
     }
 
-    final PsiElement context = CustomTemplateCallback.getContext(copyFile, newOffset > 0 ? newOffset - 1 : newOffset);
+    final PsiElement context = CustomTemplateCallback.getContext(copyFile, positiveOffset(newOffset));
     final Document finalCopyDocument = copyDocument;
     return new Condition<PostfixTemplate>() {
       @Override
@@ -279,7 +278,6 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
       }
     };
   }
-
 
   @NotNull
   public static PsiFile copyFile(@NotNull PsiFile file, @NotNull StringBuilder fileContentWithoutKey) {
@@ -298,7 +296,6 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
                                              @NotNull Editor editor) {
     return createIsApplicationTemplateFunction(provider, key, file, editor).value(getTemplate(provider, key));
   }
-
 
   @NotNull
   private static Set<String> getKeys(@NotNull PostfixTemplateProvider provider) {
@@ -322,5 +319,9 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
 
   private static Language getLanguage(@NotNull CustomTemplateCallback callback) {
     return callback.getContext().getLanguage();
+  }
+
+  private static int positiveOffset(int offset) {
+    return offset > 0 ? offset - 1 : offset;
   }
 }
