@@ -17,7 +17,7 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
-import com.intellij.debugger.engine.events.DebuggerCommandImpl;
+import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.EditorTextProvider;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
@@ -60,9 +60,9 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator {
   public void evaluate(@NotNull final XExpression expression,
                        @NotNull final XEvaluationCallback callback,
                        @Nullable XSourcePosition expressionPosition) {
-    myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+    myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(myDebuggerContext) {
       @Override
-      protected void action() throws Exception {
+      public void threadAction() {
         WatchItemDescriptor descriptor = new WatchItemDescriptor(myDebugProcess.getProject(), TextWithImportsImpl.fromXExpression(
           expression));
         EvaluationContextImpl evalContext = myDebuggerContext.createEvaluationContext();

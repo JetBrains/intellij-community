@@ -188,9 +188,14 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
     DebugProcessImpl debugProcess = myEvaluationContext.getDebugProcess();
     debugProcess.getManagerThread().schedule(new JumpToObjectAction.NavigateCommand(getDebuggerContext(), myValueDescriptor, debugProcess, null) {
       @Override
-      protected void doAction(@Nullable SourcePosition sourcePosition) {
+      protected void doAction(@Nullable final SourcePosition sourcePosition) {
         if (sourcePosition != null) {
-          navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(sourcePosition));
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
+            public void run() {
+              navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(sourcePosition));
+            }
+          });
         }
       }
     });
