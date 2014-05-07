@@ -49,7 +49,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Consumer;
-import com.intellij.util.Processor;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -82,8 +81,6 @@ import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
 import org.jetbrains.idea.svn.svnkit.SvnKitManager;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
-import org.tmatesoft.sqljet.core.SqlJetErrorCode;
-import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.wc.*;
@@ -144,25 +141,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   private final SvnExecutableChecker myChecker;
 
-  public static final Processor<Exception> ourBusyExceptionProcessor = new Processor<Exception>() {
-    @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-    @Override
-    public boolean process(Exception e) {
-      if (e instanceof SVNException) {
-        final SVNErrorCode errorCode = ((SVNException)e).getErrorMessage().getErrorCode();
-        if (SVNErrorCode.WC_LOCKED.equals(errorCode)) {
-          return true;
-        }
-        else if (SVNErrorCode.SQLITE_ERROR.equals(errorCode)) {
-          Throwable cause = ((SVNException)e).getErrorMessage().getCause();
-          if (cause instanceof SqlJetException) {
-            return SqlJetErrorCode.BUSY.equals(((SqlJetException)cause).getErrorCode());
-          }
-        }
-      }
-      return false;
-    }
-  };
   private SvnCheckoutProvider myCheckoutProvider;
 
   @NotNull private final ClientFactory cmdClientFactory;
