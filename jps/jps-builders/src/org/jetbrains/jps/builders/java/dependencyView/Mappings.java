@@ -2079,18 +2079,23 @@ public class Mappings {
               final TIntHashSet old = myClassToSubclasses.get(superClass);
 
               if (old == null) {
-                myClassToSubclasses.replace(superClass, added);
+                if (added != null && !added.isEmpty()) {
+                  myClassToSubclasses.replace(superClass, added);
+                }
               }
               else {
+                boolean changed = false;
                 if (removed != null) {
-                  old.removeAll(removed.toArray());
+                  changed |= old.removeAll(removed.toArray());
                 }
 
                 if (added != null) {
-                  old.addAll(added.toArray());
+                  changed |= old.addAll(added.toArray());
                 }
 
-                myClassToSubclasses.replace(superClass, old);
+                if (changed) {
+                  myClassToSubclasses.replace(superClass, old);
+                }
               }
 
               return true;
