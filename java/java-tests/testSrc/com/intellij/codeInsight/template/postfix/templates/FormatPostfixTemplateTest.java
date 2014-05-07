@@ -20,8 +20,15 @@ import org.jetbrains.annotations.NotNull;
 public class FormatPostfixTemplateTest extends PostfixTemplateTestCase {
   @NotNull
   @Override
-  protected String getSuffix() { return "format"; }
+  protected String getSuffix() {
+    return "format";
+  }
 
-  public void testString()      { doTest(); }
-  public void testNotString()   { doTest(); }
+  public void testString() {
+    doTest();
+  }
+
+  public void testNotString() {
+    doTest();
+  }
 }

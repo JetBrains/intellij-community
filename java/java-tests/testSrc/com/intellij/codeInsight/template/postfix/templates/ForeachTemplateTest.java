@@ -18,11 +18,17 @@ package com.intellij.codeInsight.template.postfix.templates;
 import org.jetbrains.annotations.NotNull;
 
 public class ForeachTemplateTest extends PostfixTemplateTestCase {
-  public void testInts() { doTest(); }
-  
-  public void testBeforeAssignment() { doTest(); }
+  public void testInts() {
+    doTest();
+  }
+
+  public void testBeforeAssignment() {
+    doTest();
+  }
 
   @NotNull
   @Override
-  protected String getSuffix() { return "for"; }
+  protected String getSuffix() {
+    return "for";
+  }
 }

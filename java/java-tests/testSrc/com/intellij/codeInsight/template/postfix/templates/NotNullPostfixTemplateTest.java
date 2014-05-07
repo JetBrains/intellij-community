@@ -20,11 +20,27 @@ import org.jetbrains.annotations.NotNull;
 public class NotNullPostfixTemplateTest extends PostfixTemplateTestCase {
   @NotNull
   @Override
-  protected String getSuffix() { return "notnull"; }
+  protected String getSuffix() {
+    return "notnull";
+  }
 
-  public void testSimple()            { doTest(); }
-  public void testPrimitive()         { doTest(); }
-  public void testNn()                { doTest(); }
-  public void testSecondStatement()   { doTest(); }
-  public void testElseStatement()     { doTest(); }
+  public void testSimple() {
+    doTest();
+  }
+
+  public void testPrimitive() {
+    doTest();
+  }
+
+  public void testNn() {
+    doTest();
+  }
+
+  public void testSecondStatement() {
+    doTest();
+  }
+
+  public void testElseStatement() {
+    doTest();
+  }
 }

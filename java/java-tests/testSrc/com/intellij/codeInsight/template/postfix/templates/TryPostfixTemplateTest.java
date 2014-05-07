@@ -24,8 +24,19 @@ public class TryPostfixTemplateTest extends PostfixTemplateTestCase {
     return "try";
   }
 
-  public void testSimple()          { doTest(); }
-  public void testStatement()       { doTest(); }
-  public void testMultiStatement()  { doTest(); }
-  public void testNotStatement()    { doTest(); }
+  public void testSimple() {
+    doTest();
+  }
+
+  public void testStatement() {
+    doTest();
+  }
+
+  public void testMultiStatement() {
+    doTest();
+  }
+
+  public void testNotStatement() {
+    doTest();
+  }
 }
