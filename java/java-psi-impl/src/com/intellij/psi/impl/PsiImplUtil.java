@@ -481,8 +481,8 @@ public class PsiImplUtil {
   }
 
   public static PsiType normalizeWildcardTypeByPosition(@NotNull PsiType type, @NotNull PsiExpression expression) {
-    LOG.assertTrue(expression.isValid());
-    LOG.assertTrue(type.isValid());
+    PsiUtilCore.ensureValid(expression);
+    PsiUtil.ensureValidType(type);
 
     PsiExpression toplevel = expression;
     while (toplevel.getParent() instanceof PsiArrayAccessExpression &&

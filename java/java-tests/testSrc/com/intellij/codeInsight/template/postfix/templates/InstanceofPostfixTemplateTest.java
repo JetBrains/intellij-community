@@ -20,13 +20,21 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import org.jetbrains.annotations.NotNull;
 
 public class InstanceofPostfixTemplateTest extends PostfixTemplateTestCase {
-  public void testSingleExpression()  { doTest(); }
-  public void testAlias()             { doTest(); }
-  public void testPrimitive()         { doTest(); }
+  public void testSingleExpression() {
+    doTest();
+  }
+
+  public void testAlias() {
+    doTest();
+  }
+
+  public void testPrimitive() {
+    doTest();
+  }
 
   public void testSingleExpressionTemplate() {
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
-    
+
     myFixture.configureByFile(getTestName(true) + ".java");
     myFixture.type('\t');
 
@@ -43,5 +51,7 @@ public class InstanceofPostfixTemplateTest extends PostfixTemplateTestCase {
 
   @NotNull
   @Override
-  protected String getSuffix() { return "instanceof"; }
+  protected String getSuffix() {
+    return "instanceof";
+  }
 }

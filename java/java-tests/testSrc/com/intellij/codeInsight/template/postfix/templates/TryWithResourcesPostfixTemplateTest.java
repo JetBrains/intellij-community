@@ -32,8 +32,19 @@ public class TryWithResourcesPostfixTemplateTest extends PostfixTemplateTestCase
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
   }
 
-  public void testSimple()                  { doTest(); }
-  public void testSimpleWithMyException()   { doTest(); }
-  public void testSimpleWithConflict()      { doTest(); }
-  public void testSimpleNotAutoCloseable()  { doTest(); }
+  public void testSimple() {
+    doTest();
+  }
+
+  public void testSimpleWithMyException() {
+    doTest();
+  }
+
+  public void testSimpleWithConflict() {
+    doTest();
+  }
+
+  public void testSimpleNotAutoCloseable() {
+    doTest();
+  }
 }

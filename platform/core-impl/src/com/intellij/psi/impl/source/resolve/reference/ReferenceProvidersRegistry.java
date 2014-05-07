@@ -20,6 +20,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,7 +60,7 @@ public abstract class ReferenceProvidersRegistry {
 
   public static PsiReference[] getReferencesFromProviders(PsiElement context, @NotNull PsiReferenceService.Hints hints) {
     ProgressIndicatorProvider.checkCanceled();
-    assert context.isValid() : "Invalid context: " + context;
+    PsiUtilCore.ensureValid(context);
 
     ReferenceProvidersRegistry registry = getInstance();
     return registry.doGetReferencesFromProviders(context, hints);

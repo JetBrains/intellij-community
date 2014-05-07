@@ -187,11 +187,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.codeInsight.template.TemplateManager</interface-class>
-      <implementation-class>com.intellij.codeInsight.template.impl.TemplateManagerImpl</implementation-class>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.util.indexing.FileBasedIndexProjectHandler</implementation-class>
     </component>
 

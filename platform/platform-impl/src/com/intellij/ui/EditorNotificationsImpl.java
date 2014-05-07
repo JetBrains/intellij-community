@@ -53,7 +53,7 @@ public class EditorNotificationsImpl extends EditorNotifications {
 
   public EditorNotificationsImpl(Project project) {
     super(project);
-    myUpdateMerger = new MergingUpdateQueue("EditorNotifications update merger", 100, true, null);
+    myUpdateMerger = new MergingUpdateQueue("EditorNotifications update merger", 100, true, null, project);
     MessageBusConnection connection = project.getMessageBus().connect(project);
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
