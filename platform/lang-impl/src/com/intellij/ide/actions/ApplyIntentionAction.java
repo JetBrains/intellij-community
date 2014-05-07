@@ -36,8 +36,8 @@ public class ApplyIntentionAction extends AnAction {
   private final Editor myEditor;
   private final PsiFile myFile;
 
-  public ApplyIntentionAction(HighlightInfo.IntentionActionDescriptor descriptor, Editor editor, PsiFile file) {
-    super(descriptor.getAction().getText());
+  public ApplyIntentionAction(final HighlightInfo.IntentionActionDescriptor descriptor, String text, Editor editor, PsiFile file) {
+    super(text);
     myDescriptor = descriptor;
     myEditor = editor;
     myFile = file;
@@ -76,7 +76,14 @@ public class ApplyIntentionAction extends AnAction {
 
     final ApplyIntentionAction[] result = new ApplyIntentionAction[actions.size()];
     for (int i = 0; i < result.length; i++) {
-      result[i] = new ApplyIntentionAction(actions.get(i), editor, file);
+      final HighlightInfo.IntentionActionDescriptor descriptor = actions.get(i);
+      final String actionText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        @Override
+        public String compute() {
+          return descriptor.getAction().getText();
+        }
+      });
+      result[i] = new ApplyIntentionAction(descriptor, actionText, editor, file);
     }
     return result;
   }
