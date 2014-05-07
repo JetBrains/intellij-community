@@ -174,8 +174,7 @@ def process_exec_queue(interpreter):
 
 
 if 'IPYTHONENABLE' in os.environ:
-    import ast
-    IPYTHON = ast.literal_eval(os.environ['IPYTHONENABLE'])
+    IPYTHON = bool(os.environ['IPYTHONENABLE'])
 else:
     IPYTHON = False
 
@@ -279,6 +278,7 @@ def start_server(host, port, interpreter):
 
 
     sys.stderr.write(interpreter.get_greeting_msg())
+    sys.stderr.flush()
 
     interpreter.server = server
     server.serve_forever()
