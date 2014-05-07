@@ -195,8 +195,7 @@ try:
                 pass
 except:
     IPYTHON = False
-    sys.stderr.write('Unable to import IPython, using PyDev console instead.')
-    pass #IPython not available, proceed as usual.
+    pass
 
 #=======================================================================================================================
 # _DoExit
