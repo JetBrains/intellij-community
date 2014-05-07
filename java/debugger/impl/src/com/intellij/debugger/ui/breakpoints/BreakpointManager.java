@@ -489,12 +489,9 @@ public class BreakpointManager {
     return addXLineBreakpoint(typeCls, doc, line);
   }
 
-  public static Breakpoint addBreakpointInt(@NotNull XBreakpoint xBreakpoint) {
-    Project project = ((XBreakpointBase)xBreakpoint).getProject();
-    BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
-    Breakpoint breakpoint = breakpointManager.createJavaBreakpoint(xBreakpoint);
+  public static void addBreakpointInt(@NotNull Breakpoint breakpoint) {
+    BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(breakpoint.getProject()).getBreakpointManager();
     breakpointManager.addBreakpoint(breakpoint);
-    return breakpoint;
   }
 
   //used in Fabrique
@@ -573,13 +570,15 @@ public class BreakpointManager {
     return myBreakpointsListForIteration;
   }
 
-  private boolean isJavaType(XBreakpoint xBreakpoint) {
+  private static boolean isJavaType(XBreakpoint xBreakpoint) {
     return xBreakpoint.getType() instanceof JavaBreakpointType;
   }
 
-  private Breakpoint createJavaBreakpoint(XBreakpoint xBreakpoint) {
+  @NotNull
+  public static Breakpoint createJavaBreakpoint(XBreakpoint xBreakpoint) {
+    Project project = ((XBreakpointBase)xBreakpoint).getProject();
     if (xBreakpoint.getType() instanceof JavaBreakpointType) {
-      return ((JavaBreakpointType)xBreakpoint.getType()).createJavaBreakpoint(myProject, xBreakpoint);
+      return ((JavaBreakpointType)xBreakpoint.getType()).createJavaBreakpoint(project, xBreakpoint);
     }
     throw new IllegalStateException("Unsupported breakpoint type:" + xBreakpoint.getType());
   }

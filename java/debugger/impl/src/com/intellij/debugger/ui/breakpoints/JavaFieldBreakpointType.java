@@ -164,6 +164,7 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
     return result.get();
   }
 
+  @NotNull
   @Override
   public Breakpoint createJavaBreakpoint(Project project, XBreakpoint breakpoint) {
     return new FieldBreakpoint(project, breakpoint);

@@ -17,6 +17,7 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
 
 /**
@@ -24,5 +25,6 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperti
  * @author egor
  */
 public interface JavaBreakpointType<P extends JavaBreakpointProperties> {
+  @NotNull
   Breakpoint createJavaBreakpoint(Project project, XBreakpoint<P> breakpoint);
 }

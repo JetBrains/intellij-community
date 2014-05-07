@@ -21,6 +21,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author egor
@@ -33,10 +34,16 @@ public class JavaBreakpointHandler extends XBreakpointHandler {
     myProcess = process;
   }
 
+  @Nullable
+  protected Breakpoint createJavaBreakpoint(XBreakpoint xBreakpoint) {
+    return BreakpointManager.createJavaBreakpoint(xBreakpoint);
+  }
+
   @Override
   public void registerBreakpoint(@NotNull XBreakpoint breakpoint) {
-    final Breakpoint javaBreakpoint = BreakpointManager.addBreakpointInt(breakpoint);
+    final Breakpoint javaBreakpoint = createJavaBreakpoint(breakpoint);
     if (javaBreakpoint != null) {
+      BreakpointManager.addBreakpointInt(javaBreakpoint);
       myProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
         @Override
         protected void action() throws Exception {
