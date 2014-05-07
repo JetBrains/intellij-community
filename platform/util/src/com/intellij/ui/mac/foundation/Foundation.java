@@ -163,8 +163,8 @@ public class Foundation {
       }
 
       byte[] utf16Bytes = s.getBytes("UTF-16LE");
-      return invoke(invoke("NSString", "alloc"), "initWithBytes:length:encoding:", utf16Bytes, utf16Bytes.length,
-                    convertCFEncodingToNS(FoundationLibrary.kCFStringEncodingUTF16LE));
+      return invoke(invoke(invoke("NSString", "alloc"), "initWithBytes:length:encoding:", utf16Bytes, utf16Bytes.length,
+                    convertCFEncodingToNS(FoundationLibrary.kCFStringEncodingUTF16LE)), "autorelease");
     }
     catch (UnsupportedEncodingException x) {
       throw new RuntimeException(x);
