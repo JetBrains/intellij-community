@@ -553,22 +553,22 @@ public class BreakpointManager {
     if (myBreakpointsListForIteration == null) {
       myBreakpointsListForIteration = new ArrayList<Breakpoint>(myBreakpoints.size());
 
-      XBreakpoint<?>[] xBreakpoints = ApplicationManager.getApplication().runReadAction(new Computable<XBreakpoint<?>[]>() {
-        public XBreakpoint<?>[] compute() {
-          return getXBreakpointManager().getAllBreakpoints();
-        }
-      });
-      for (XBreakpoint<?> xBreakpoint : xBreakpoints) {
-        if (isJavaType(xBreakpoint)) {
-          Breakpoint breakpoint = myBreakpoints.get(xBreakpoint);
-          if (breakpoint == null) {
-            breakpoint = createJavaBreakpoint(xBreakpoint);
-            myBreakpoints.put(xBreakpoint, breakpoint);
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          for (XBreakpoint<?> xBreakpoint : getXBreakpointManager().getAllBreakpoints()) {
+            if (isJavaType(xBreakpoint)) {
+              Breakpoint breakpoint = myBreakpoints.get(xBreakpoint);
+              if (breakpoint == null) {
+                breakpoint = createJavaBreakpoint(xBreakpoint);
+                myBreakpoints.put(xBreakpoint, breakpoint);
+              }
+            }
           }
         }
-      }
+      });
 
-      myBreakpointsListForIteration.addAll(myBreakpoints.values());
+    myBreakpointsListForIteration.addAll(myBreakpoints.values());
     }
     return myBreakpointsListForIteration;
   }

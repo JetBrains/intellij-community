@@ -73,7 +73,6 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
-import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.sun.jdi.*;
@@ -1976,12 +1975,15 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
+  @Nullable
   public XDebugSession getXDebugSession() {
     return XDebuggerManager.getInstance(myProject).getDebugSession(getExecutionResult().getExecutionConsole());
   }
 
+  @Nullable
   public JavaDebugProcess getXdebugProcess() {
-    return (JavaDebugProcess)getXDebugSession().getDebugProcess();
+    XDebugSession session = getXDebugSession();
+    return session != null ? (JavaDebugProcess)session.getDebugProcess() : null;
   }
 
   public boolean areBreakpointsMuted() {

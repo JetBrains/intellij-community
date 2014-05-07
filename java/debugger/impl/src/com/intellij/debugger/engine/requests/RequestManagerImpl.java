@@ -37,6 +37,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.containers.HashMap;
+import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.*;
 import com.sun.jdi.event.ClassPrepareEvent;
 import com.sun.jdi.request.*;
@@ -397,7 +398,10 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           @Override
           public void run() {
-            myDebugProcess.getXDebugSession().initBreakpoints();
+            XDebugSession session = myDebugProcess.getXDebugSession();
+            if (session != null) {
+              session.initBreakpoints();
+            }
           }
         });
         //Project project = myDebugProcess.getProject();
