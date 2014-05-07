@@ -18,8 +18,10 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
+@TestDataPath("$CONTENT_ROOT/testData/inspections/postfixTemplates")
 public class PostfixTemplateDescriptionNotFoundInspectionTest extends LightCodeInsightFixtureTestCase {
 
   @Override

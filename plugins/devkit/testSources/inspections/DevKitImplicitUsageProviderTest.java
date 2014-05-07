@@ -18,8 +18,10 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
+@TestDataPath("$CONTENT_ROOT/testData/inspections/implicitUsage")
 public class DevKitImplicitUsageProviderTest extends LightCodeInsightFixtureTestCase {
 
   @Override

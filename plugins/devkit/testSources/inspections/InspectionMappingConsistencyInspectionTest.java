@@ -17,6 +17,7 @@ package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.PathUtil;
@@ -24,6 +25,7 @@ import com.intellij.util.PathUtil;
 /**
  * @author Dmitry Avdeev
  */
+@TestDataPath("$CONTENT_ROOT/testData/inspections/inspectionMappingConsistency")
 public class InspectionMappingConsistencyInspectionTest extends JavaCodeInsightFixtureTestCase {
 
   public void testInspectionMappings() throws Throwable {
