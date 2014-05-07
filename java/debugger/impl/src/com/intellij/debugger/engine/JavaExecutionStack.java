@@ -104,12 +104,12 @@ public class JavaExecutionStack extends XExecutionStack {
             try {
               int framesToSkip = firstFrameIndex;
               for (StackFrameProxyImpl stackFrame : myThreadProxy.frames()) {
-                if (framesToSkip > 0) {
-                  framesToSkip--;
-                  continue;
-                }
                 JavaStackFrame frame = new JavaStackFrame(stackFrame, myDebugProcess, myTracker);
                 if (showLibraryStackframes || (!frame.getDescriptor().isSynthetic() && !frame.getDescriptor().isInLibraryContent())) {
+                  if (framesToSkip > 0) {
+                    framesToSkip--;
+                    continue;
+                  }
                   frames.add(frame);
                 }
               }
