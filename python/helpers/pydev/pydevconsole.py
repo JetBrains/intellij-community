@@ -176,7 +176,7 @@ def process_exec_queue(interpreter):
 if 'IPYTHONENABLE' in os.environ:
     IPYTHON = bool(os.environ['IPYTHONENABLE'])
 else:
-    IPYTHON = False
+    IPYTHON = True
 
 try:
     try:
