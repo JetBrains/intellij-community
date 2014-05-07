@@ -17,6 +17,7 @@ package com.intellij.codeInsight.template.postfix.util;
 
 import com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurrounder;
 import com.intellij.codeInsight.generation.surroundWith.JavaWithIfExpressionSurrounder;
+import com.intellij.codeInsight.template.postfix.templates.JavaPostfixTemplateProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -52,6 +53,7 @@ public abstract class PostfixTemplatesUtils {
     PsiStatement statement = factory.createStatementFromText(prefix + expr.getText() + suffix + ";", parent);
     PsiElement replace = parent.replace(statement);
     editor.getCaretModel().moveToOffset(replace.getTextRange().getEndOffset() + offset);
+    JavaPostfixTemplateProvider.doNotDeleteSemicolon(replace.getContainingFile());
   }
 
   @Contract("null -> false")

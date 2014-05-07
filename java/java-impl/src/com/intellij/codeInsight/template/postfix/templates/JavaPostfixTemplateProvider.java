@@ -32,7 +32,7 @@ import java.util.Set;
 
 
 public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
-  private static final Key<SmartPsiElementPointer<PsiElement>> ADDED_SEMICOLON = Key.create("postfix_added_semicolon");
+  public static final Key<SmartPsiElementPointer<PsiElement>> ADDED_SEMICOLON = Key.create("postfix_added_semicolon");
   private final Set<PostfixTemplate> templates;
 
 
@@ -143,6 +143,10 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
     });
   }
 
+  public static void doNotDeleteSemicolon(@NotNull PsiFile file) {
+    file.putUserData(ADDED_SEMICOLON, null);
+  }
+  
   private static boolean isSemicolonNeeded(@NotNull PsiFile file, @NotNull Editor editor) {
     return JavaCompletionContributor.semicolonNeeded(editor, file, CompletionInitializationContext.calcStartOffset(editor));
   }
