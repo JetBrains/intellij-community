@@ -60,7 +60,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   private boolean myComponentsCreated = false;
 
-  private MutablePicoContainer myPicoContainer;
+  private volatile MutablePicoContainer myPicoContainer;
   private volatile boolean myDisposed = false;
   private volatile boolean myDisposeCompleted = false;
 
