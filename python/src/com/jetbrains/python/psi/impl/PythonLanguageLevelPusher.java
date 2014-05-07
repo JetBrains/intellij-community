@@ -15,14 +15,12 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbModeTask;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -160,6 +158,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
   }
 
   public void afterRootsChanged(@NotNull final Project project) {
+    final Application application = ApplicationManager.getApplication();
     final Runnable updateLanguageLevel = new Runnable() {
       @Override
       public void run() {
@@ -181,7 +180,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
           }
         }
         final boolean finalNeedReparseOpenFiles = needReparseOpenFiles;
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        application.invokeLater(new Runnable() {
           @Override
           public void run() {
             if (finalNeedReparseOpenFiles) {
@@ -191,13 +190,12 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
         });
       }
     };
-    final DumbModeTask task = new DumbModeTask() {
+    application.executeOnPooledThread(new Runnable() {
       @Override
-      public void performInDumbMode(@NotNull ProgressIndicator indicator) {
-        ApplicationManager.getApplication().runReadAction(updateLanguageLevel);
+      public void run() {
+        application.runReadAction(updateLanguageLevel);
       }
-    };
-    DumbService.getInstance(project).queueTask(task);
+    });
   }
 
   private void updateSdkLanguageLevel(Project project, Sdk sdk) {
