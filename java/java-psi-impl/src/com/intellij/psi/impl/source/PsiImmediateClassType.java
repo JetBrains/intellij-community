@@ -169,7 +169,7 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
   private enum TextType { PRESENTABLE, CANONICAL, INT_CANONICAL }
 
   private String getText(@NotNull TextType textType, boolean annotated) {
-    assert mySubstitutor.isValid();
+    mySubstitutor.ensureValid();
     StringBuilder buffer = new StringBuilder();
     buildText(myClass, mySubstitutor, buffer, textType, annotated);
     return buffer.toString();
