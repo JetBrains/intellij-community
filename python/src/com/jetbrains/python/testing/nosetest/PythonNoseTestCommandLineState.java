@@ -72,7 +72,7 @@ public class PythonNoseTestCommandLineState extends PythonTestCommandLineStateBa
     ParamsGroup script_params = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
     assert script_params != null;
     if (myConfig.useParam() && !StringUtil.isEmptyOrSpaces(myConfig.getParams()))
-      script_params.addParameter(myConfig.getParams());
+      script_params.addParametersString(myConfig.getParams());
 
   }
 }
