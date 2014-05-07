@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
@@ -158,6 +159,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
   }
 
   public void afterRootsChanged(@NotNull final Project project) {
+    final Application application = ApplicationManager.getApplication();
     final Runnable updateLanguageLevel = new Runnable() {
       @Override
       public void run() {
@@ -179,7 +181,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
           }
         }
         final boolean finalNeedReparseOpenFiles = needReparseOpenFiles;
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        application.invokeLater(new Runnable() {
           @Override
           public void run() {
             if (finalNeedReparseOpenFiles) {
@@ -189,7 +191,12 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
         });
       }
     };
-    ApplicationManager.getApplication().runReadAction(updateLanguageLevel);
+    application.executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        application.runReadAction(updateLanguageLevel);
+      }
+    });
   }
 
   private void updateSdkLanguageLevel(Project project, Sdk sdk) {
