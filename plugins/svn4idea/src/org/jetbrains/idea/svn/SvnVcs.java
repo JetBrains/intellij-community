@@ -98,9 +98,8 @@ import java.util.*;
 @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
 public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private static final String DO_NOT_LISTEN_TO_WC_DB = "svn.do.not.listen.to.wc.db";
-  private static final String KEEP_CONNECTIONS_KEY = "svn.keep.connections";
   private static final Logger REFRESH_LOG = Logger.getInstance("#svn_refresh");
-  public static boolean ourListenToWcDb = true;
+  public static boolean ourListenToWcDb = !Boolean.getBoolean(DO_NOT_LISTEN_TO_WC_DB);
 
   private static final Logger LOG = wrapLogger(Logger.getInstance("org.jetbrains.idea.svn.SvnVcs"));
   @NonNls public static final String VCS_NAME = "svn";
@@ -118,7 +117,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private RollbackEnvironment myRollbackEnvironment;
   private UpdateEnvironment mySvnUpdateEnvironment;
   private UpdateEnvironment mySvnIntegrateEnvironment;
-  private VcsHistoryProvider mySvnHistoryProvider;
   private AnnotationProvider myAnnotationProvider;
   private DiffProvider mySvnDiffProvider;
   private final VcsShowConfirmationOption myAddConfirmation;
@@ -131,8 +129,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private MergeProvider myMergeProvider;
   private final WorkingCopiesContent myWorkingCopiesContent;
 
-  public static final String pathToEntries = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.ENTRIES_FILE_NAME;
-  public static final String pathToDirProps = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.DIR_PROPS_FILE_NAME;
   private final SvnChangelistListener myChangeListListener;
 
   private SvnCopiesRefreshManager myCopiesRefreshManager;
@@ -152,6 +148,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private final SvnExecutableChecker myChecker;
 
   public static final Processor<Exception> ourBusyExceptionProcessor = new Processor<Exception>() {
+    @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
     @Override
     public boolean process(Exception e) {
       if (e instanceof SVNException) {
@@ -176,12 +173,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   @NotNull private final SvnKitManager svnKitManager;
 
   private final boolean myLogExceptions;
-
-  static {
-    if (Boolean.getBoolean(DO_NOT_LISTEN_TO_WC_DB)) {
-      ourListenToWcDb = false;
-    }
-  }
 
   public SvnVcs(final Project project, MessageBus bus, SvnConfiguration svnConfiguration, final SvnLoadedBrachesStorage storage) {
     super(project, VCS_NAME);
@@ -687,14 +678,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return !SvnStatusUtil.isIgnoredInAnySense(clManager, file) && !clManager.isUnversioned(file);
   }
 
-  private static File getEntriesFile(File file) {
-    return file.isDirectory() ? new File(file, pathToEntries) : new File(file.getParentFile(), pathToEntries);
-  }
-
-  private static File getDirPropsFile(File file) {
-    return new File(file, pathToDirProps);
-  }
-
   @Nullable
   public SVNInfo getInfo(@NotNull SVNURL url,
                          SVNRevision pegRevision,
@@ -1052,10 +1035,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   @NotNull
   public ClientFactory getFactory(@NotNull WorkingCopyFormat format) {
     return getFactory(format, false);
-  }
-
-  public ClientFactory getSvnKitFactory() {
-    return svnKitClientFactory;
   }
 
   @NotNull

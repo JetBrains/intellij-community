@@ -73,7 +73,6 @@ public class SvnUtil {
   @NonNls public static final String SVN_ADMIN_DIR_NAME = SVNFileUtil.getAdminDirectoryName();
   @NonNls public static final String ENTRIES_FILE_NAME = "entries";
   @NonNls public static final String WC_DB_FILE_NAME = "wc.db";
-  @NonNls public static final String DIR_PROPS_FILE_NAME = "dir-props";
   @NonNls public static final String PATH_TO_LOCK_FILE = SVN_ADMIN_DIR_NAME + "/lock";
   public static final int DEFAULT_PORT_INDICATOR = -1;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnUtil");
@@ -312,10 +311,6 @@ public class SvnUtil {
         return ChangesUtil.getFilePath(o).getIOFile();
       }
     });
-  }
-
-  public static Collection<List<File>> splitFilesIntoRepositories(final SvnVcs vcs, final List<File> committables) {
-    return splitIntoRepositories(vcs, committables, Convertor.SELF);
   }
 
   public static <T> Collection<List<T>> splitIntoRepositories(final SvnVcs vcs, final List<T> committables,
@@ -589,12 +584,6 @@ public class SvnUtil {
     return false;
   }
 
-  public static SVNURL getCommittedURL(final SvnVcs vcs, final File file) {
-    final File root = getWorkingCopyRootNew(file);
-
-    return root == null ? null : getUrl(vcs, root);
-  }
-
   @Nullable
   public static SVNURL getUrl(final SvnVcs vcs, final File file) {
     // todo for moved items?
@@ -680,15 +669,6 @@ public class SvnUtil {
     }
     if (! wcDbFound) return null;
     return current;
-  }
-
-  public static boolean is17CopyPart(final File file) {
-    try {
-      return SvnWcGeneration.V17.equals(SvnOperationFactory.detectWcGeneration(file, true));
-    }
-    catch (SVNException e) {
-      return false;
-    }
   }
 
   public static String getRelativeUrl(@NotNull String parentUrl, @NotNull String childUrl) {
