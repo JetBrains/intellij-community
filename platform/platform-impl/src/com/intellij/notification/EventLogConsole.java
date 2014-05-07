@@ -151,7 +151,7 @@ class EventLogConsole {
 
     for (Pair<TextRange, HyperlinkInfo> link : pair.links) {
       final RangeHighlighter rangeHighlighter = myHyperlinkSupport.getValue()
-        .addHyperlink(link.first.getStartOffset() + msgStart, link.first.getEndOffset() + msgStart, null, link.second);
+        .createHyperlink(link.first.getStartOffset() + msgStart, link.first.getEndOffset() + msgStart, null, link.second);
       if (link.second instanceof EventLog.ShowBalloon) {
         ((EventLog.ShowBalloon)link.second).setRangeHighlighter(rangeHighlighter);
       }

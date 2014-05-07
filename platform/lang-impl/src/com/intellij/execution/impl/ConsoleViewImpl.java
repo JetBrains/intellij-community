@@ -709,7 +709,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         TokenInfo token = myTokens.get(i);
         final HyperlinkInfo info = token.getHyperlinkInfo();
         if (info != null) {
-          myHyperlinks.addHyperlink(token.startOffset, token.endOffset, null, info);
+          myHyperlinks.createHyperlink(token.startOffset, token.endOffset, null, info);
         }
       }
     }

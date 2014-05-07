@@ -184,11 +184,22 @@ public class EditorHyperlinkSupport {
     return getHyperlinkAt(myEditor.logicalPositionToOffset(new LogicalPosition(line, col)));
   }
 
+  /**
+   * @deprecated for binary compatibility with older plugins
+   * @see #createHyperlink(int, int, com.intellij.openapi.editor.markup.TextAttributes, com.intellij.execution.filters.HyperlinkInfo)
+   */
+  public void addHyperlink(final int highlightStartOffset,
+                           final int highlightEndOffset,
+                           @Nullable final TextAttributes highlightAttributes,
+                           @NotNull final HyperlinkInfo hyperlinkInfo) {
+    createHyperlink(highlightStartOffset, highlightEndOffset, highlightAttributes, hyperlinkInfo);
+  }
+
   @NotNull
-  public RangeHighlighter addHyperlink(final int highlightStartOffset,
-                                       final int highlightEndOffset,
-                                       @Nullable final TextAttributes highlightAttributes,
-                                       @NotNull final HyperlinkInfo hyperlinkInfo) {
+  public RangeHighlighter createHyperlink(final int highlightStartOffset,
+                                          final int highlightEndOffset,
+                                          @Nullable final TextAttributes highlightAttributes,
+                                          @NotNull final HyperlinkInfo hyperlinkInfo) {
     TextAttributes textAttributes = highlightAttributes != null ? highlightAttributes : getHyperlinkAttributes();
     final RangeHighlighter highlighter = myEditor.getMarkupModel().addRangeHighlighter(highlightStartOffset,
                                                                                        highlightEndOffset,
@@ -231,7 +242,7 @@ public class EditorHyperlinkSupport {
       if (result != null) {
         for (Filter.ResultItem resultItem : result.getResultItems()) {
           if (resultItem.hyperlinkInfo != null) {
-            addHyperlink(resultItem.highlightStartOffset, resultItem.highlightEndOffset, resultItem.highlightAttributes, resultItem.hyperlinkInfo);
+            createHyperlink(resultItem.highlightStartOffset, resultItem.highlightEndOffset, resultItem.highlightAttributes, resultItem.hyperlinkInfo);
           }
           else if (resultItem.highlightAttributes != null) {
             addHighlighter(resultItem.highlightStartOffset, resultItem.highlightEndOffset, resultItem.highlightAttributes);
