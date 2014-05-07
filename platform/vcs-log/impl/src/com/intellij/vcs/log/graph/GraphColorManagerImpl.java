@@ -59,7 +59,7 @@ public class GraphColorManagerImpl implements GraphColorManager {
   @Override
   public JBColor getColorOfBranch(int headCommit) {
     Collection<VcsRef> refs = myRefsModel.refsToCommit(headCommit);
-    if (!checkEmptiness(refs, headCommit)) {
+    if (isEmptyRefs(refs, headCommit)) {
       return DEFAULT_COLOR;
     }
     VcsRef firstRef = getRefManager(refs).sort(refs).get(0);
@@ -68,15 +68,15 @@ public class GraphColorManagerImpl implements GraphColorManager {
     return new JBColor(color, color);
   }
 
-  private boolean checkEmptiness(@NotNull Collection<VcsRef> refs, int head) {
+  private boolean isEmptyRefs(@NotNull Collection<VcsRef> refs, int head) {
     if (refs.isEmpty()) {
       if (!myErrorWasReported.containsKey(head)) {
         myErrorWasReported.put(head, head);
         LOG.error("No references found at head " + head + " which corresponds to hash " + myHashGetter.fun(head));
       }
-      return false;
+      return true;
     }
-    return true;
+    return false;
   }
 
   @NotNull
@@ -94,17 +94,21 @@ public class GraphColorManagerImpl implements GraphColorManager {
 
     Collection<VcsRef> refs1 = myRefsModel.refsToCommit(head1);
     Collection<VcsRef> refs2 = myRefsModel.refsToCommit(head2);
-    if (!checkEmptiness(refs1, head1)) {
+    boolean firstEmpty = isEmptyRefs(refs1, head1);
+    boolean secondEmpty = isEmptyRefs(refs2, head2);
+    if (firstEmpty && secondEmpty) {
+      return 0;
+    }
+    if (firstEmpty) {
       return -1;
     }
-    if (!checkEmptiness(refs2, head2)) {
+    if (secondEmpty) {
       return 1;
     }
 
     VcsLogRefManager refManager1 = getRefManager(refs1);
     VcsLogRefManager refManager2 = getRefManager(refs2);
     if (!refManager1.equals(refManager2)) {
-      LOG.debug("Different ref managers (and therefore different VCSs) are not comparable");
       return 0;
     }
 
