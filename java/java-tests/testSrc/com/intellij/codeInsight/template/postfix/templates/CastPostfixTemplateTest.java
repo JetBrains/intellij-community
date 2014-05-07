@@ -26,4 +26,8 @@ public class CastPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testVoidExpression()   { doTest(); }
   public void testSingleArgument()   { doTest(); }
   public void testInsideString()     { doTest(); }
+
+  public void testChainCall() {
+    doTest();
+  }
 }

@@ -47,6 +47,12 @@ public interface PostfixTemplateProvider {
   void preExpand(@NotNull PsiFile file, @NotNull Editor editor);
 
   /**
+   * Invoked after template finished (doesn't matter if it finished successfully or not).
+   * E.g. java postfix template use this method for deleting inserted semicolon.
+   */
+  void afterExpand(@NotNull PsiFile file, @NotNull Editor editor);
+
+  /**
    * Prepare file for checking availability of templates.
    * Almost the same as {@link this#preExpand(com.intellij.psi.PsiFile, com.intellij.openapi.editor.Editor)} with several differences:
    * 1. Processes copy of file. So implementations can modify it without corrupting the real file.

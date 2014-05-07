@@ -102,6 +102,27 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
     }
   }
 
+  @Override
+  public void afterExpand(@NotNull final PsiFile file, @NotNull final Editor editor) {
+    final SmartPsiElementPointer<PsiElement> pointer = file.getUserData(ADDED_SEMICOLON);
+    if (pointer != null) {
+      final PsiElement addedSemicolon = pointer.getElement();
+      file.putUserData(ADDED_SEMICOLON, null);
+      if (addedSemicolon != null && addedSemicolon.isValid()) {
+        CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+          @Override
+          public void run() {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              public void run() {
+                addedSemicolon.delete();
+              }
+            });
+          }
+        });
+      }
+    }
+  }
+
   @NotNull
   @Override
   public PsiFile preCheck(final @NotNull PsiFile copyFile, final @NotNull Editor realEditor, final int currentOffset) {

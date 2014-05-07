@@ -126,9 +126,14 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
         final PsiFile file = callback.getContext().getContainingFile();
         if (isApplicableTemplate(provider, key, file, editor)) {
           int offset = deleteTemplateKey(file, editor, key);
-          provider.preExpand(file, editor);
-          PsiElement context = CustomTemplateCallback.getContext(file, positiveOffset(offset));
-          expandTemplate(postfixTemplate, editor, context);
+          try {
+            provider.preExpand(file, editor);
+            PsiElement context = CustomTemplateCallback.getContext(file, positiveOffset(offset));
+            expandTemplate(postfixTemplate, editor, context);
+          }
+          finally {
+            provider.afterExpand(file, editor);
+          }
         }
         // don't care about errors in multiCaret mode
         else if (editor.getCaretModel().getAllCarets().size() == 1) {
