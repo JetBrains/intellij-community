@@ -108,6 +108,9 @@ public class PyRedundantParenthesesInspection extends PyInspection {
           }
         }
       }
+      else if (expression instanceof PyParenthesizedExpression) {
+        registerProblem(expression, "Remove redundant parentheses", new RedundantParenthesesQuickFix());
+      }
     }
   }
 
