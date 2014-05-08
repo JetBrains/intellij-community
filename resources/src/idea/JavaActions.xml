@@ -110,7 +110,9 @@
       <add-to-group group-id="XDebugger.Frames.TopToolbar"/>
     </action>
 
-    <action id="Debugger.AddSteppingFilter" class="com.intellij.debugger.actions.AddSteppingFilterAction" text="Add Stepping Filter..."/>
+    <action id="Debugger.AddSteppingFilter" class="com.intellij.debugger.actions.AddSteppingFilterAction" text="Add Stepping Filter...">
+      <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
+    </action>
 
     <group id="ToggleBreakpointAction">
       <action id="ToggleMethodBreakpoint" class="com.intellij.debugger.actions.ToggleMethodBreakpointAction"/>
