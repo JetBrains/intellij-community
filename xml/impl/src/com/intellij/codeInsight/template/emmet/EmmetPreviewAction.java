@@ -20,6 +20,7 @@ import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.openapi.actionSystem.PopupAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -41,7 +42,7 @@ public class EmmetPreviewAction extends BaseCodeInsightAction implements DumbAwa
           return;
         }
 
-        EmmetPreviewHint.createHint(editor, templateText, file.getFileType()).showHint();
+        EmmetPreviewHint.createHint((EditorEx)editor, templateText, file.getFileType()).showHint();
         EmmetPreviewUtil.addEmmetPreviewListeners(editor, file, true);
       }
 

@@ -27,13 +27,13 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.components.JBPanel;
@@ -59,10 +59,11 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
     myParentEditor = parentEditor;
     myEditor = editor;
 
+    final Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myParentEditor);
     EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryAdapter() {
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
-        if (event.getEditor() == myParentEditor || event.getEditor() == myEditor) {
+        if (event.getEditor() == myParentEditor || event.getEditor() == myEditor || event.getEditor() == topLevelEditor) {
           hide();
         }
       }
@@ -139,7 +140,7 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
   }
 
   @NotNull
-  public static EmmetPreviewHint createHint(@NotNull final Editor parentEditor, @NotNull String templateText, @NotNull FileType fileType) {
+  public static EmmetPreviewHint createHint(@NotNull final EditorEx parentEditor, @NotNull String templateText, @NotNull FileType fileType) {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document document = editorFactory.createDocument(templateText);
     final EditorEx previewEditor = (EditorEx)editorFactory.createEditor(document, parentEditor.getProject(), fileType, true);
@@ -163,7 +164,7 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
       @Override
       public Dimension getPreferredSize() {
         Dimension size = super.getPreferredSize();
-        Dimension parentEditorSize = ((EditorImpl)parentEditor).getScrollPane().getSize();
+        Dimension parentEditorSize = parentEditor.getScrollPane().getSize();
         int maxWidth = (int)parentEditorSize.getWidth() / 3;
         int maxHeight = (int)parentEditorSize.getHeight() / 2;
         Dimension contentSize = previewEditor.getContentSize();
