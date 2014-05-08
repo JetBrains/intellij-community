@@ -1,7 +1,8 @@
 #We must redefine it in Py3k if it's not already there
 def execfile(file, glob=None, loc=None):
     if glob is None:
-        glob = globals()
+        import sys
+        glob = sys._getframe().f_back.f_globals
     if loc is None:
         loc = glob
     stream = open(file, 'rb')
