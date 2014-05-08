@@ -64,7 +64,7 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     UrlClassLoader.Builder builder = UrlClassLoader.build()
       .urls(filterClassPath(classpath))
       .allowLock().useCache();
-    if (Boolean.valueOf(System.getProperty(PROPERTY_ALLOW_BOOTSTRAP_RESOURCES, "false"))) {
+    if (Boolean.valueOf(System.getProperty(PROPERTY_ALLOW_BOOTSTRAP_RESOURCES, "true"))) {
       builder.allowBootstrapResources();
     }
     UrlClassLoader newClassLoader = builder.get();
