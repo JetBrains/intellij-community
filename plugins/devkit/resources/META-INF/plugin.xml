@@ -138,6 +138,11 @@
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseCoupleInspection"/>
+    <localInspection language="JAVA" shortName="DontUsePairConstructor" displayName="Don't use constructor of Pair class"
+                     bundle="org.jetbrains.idea.devkit.DevKitBundle"
+                     groupKey="inspections.group.name"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.internal.DontUseNewPairInspection"/>
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
