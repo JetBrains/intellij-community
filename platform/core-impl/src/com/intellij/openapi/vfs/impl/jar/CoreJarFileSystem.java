@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl.jar;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,14 +40,19 @@ public class CoreJarFileSystem extends DeprecatedVirtualFileSystem {
 
   @Override
   public VirtualFile findFileByPath(@NotNull @NonNls String path) {
-    int separatorIndex = path.indexOf("!/");
-    if (separatorIndex < 0) {
-      throw new IllegalArgumentException("path in JarFileSystem must contain a separator");
+    Pair<String, String> pair = splitPath(path);
+    return getHandler(pair.first).findFileByPath(pair.second);
+  }
+
+  @NotNull
+  protected Pair<String, String> splitPath(@NotNull String path) {
+    int separator = path.indexOf("!/");
+    if (separator < 0) {
+      throw new IllegalArgumentException("Path in JarFileSystem must contain a separator: " + path);
     }
-    String localPath = path.substring(0, separatorIndex);
-    String pathInJar = path.substring(separatorIndex+2);
-    CoreJarHandler handler = getHandler(localPath);
-    return handler.findFileByPath(pathInJar);
+    String localPath = path.substring(0, separator);
+    String pathInJar = path.substring(separator + 2);
+    return Pair.create(localPath, pathInJar);
   }
 
   @NotNull
@@ -60,8 +66,7 @@ public class CoreJarFileSystem extends DeprecatedVirtualFileSystem {
   }
 
   @Override
-  public void refresh(boolean asynchronous) {
-  }
+  public void refresh(boolean asynchronous) { }
 
   @Override
   public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
