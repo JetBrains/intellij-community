@@ -13,13 +13,13 @@ except NameError: # version < 2.3 -- didn't have the True/False builtins
     
 try:
     import java.lang #@UnusedImport
-    import jyimportsTipper #as importsTipper #changed to be backward compatible with 1.5
-    importsTipper = jyimportsTipper
+    import _pydev_jy_imports_tipper #as _pydev_imports_tipper #changed to be backward compatible with 1.5
+    _pydev_imports_tipper = _pydev_jy_imports_tipper
 except ImportError:
     IS_JYTHON = False
-    import importsTipper
+    import _pydev_imports_tipper
 
-dir2 = importsTipper.GenerateImportsTipForModule
+dir2 = _pydev_imports_tipper.GenerateImportsTipForModule
 
 
 #=======================================================================================================================

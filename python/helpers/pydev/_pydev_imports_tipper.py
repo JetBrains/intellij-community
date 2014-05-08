@@ -2,7 +2,7 @@ import os.path
 import inspect
 import sys
 
-from _tipper_common import DoFind
+from _pydev_tipper_common import DoFind
 
 
 #completion types.
