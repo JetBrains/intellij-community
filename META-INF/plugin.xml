@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <id>org.editorconfig.editorconfigjetbrains</id>
   <name>EditorConfig</name>
-  <version>0.3.1</version>
+  <version>0.4.0</version>
   <vendor email="kevin.a.bell@gmail.com" url="http://editorconfig.org">Kevin Bell</vendor>
 
   <description><![CDATA[
