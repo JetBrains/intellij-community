@@ -33,7 +33,17 @@ try:
     else:
         import Queue as _queue
 except:
-    import queue as _queue
+    import queue as _queue #@UnresolvedImport
+
+try:
+    from pydevd_exec import Exec
+except:
+    from pydevd_exec2 import Exec
+
+try:
+    from urllib import quote
+except:
+    from urllib.parse import quote #@UnresolvedImport
 
 
 import os

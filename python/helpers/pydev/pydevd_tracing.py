@@ -68,6 +68,11 @@ def _InternalSetTrace(tracing_func):
             TracingFunctionHolder._original_tracing(tracing_func)
 
 def SetTrace(tracing_func):
+    if TracingFunctionHolder._original_tracing is None:
+        #This may happen before ReplaceSysSetTraceFunc is called.
+        sys.settrace(tracing_func)
+        return
+
     TracingFunctionHolder._lock.acquire()
     try:
         TracingFunctionHolder._warn = False
@@ -75,8 +80,8 @@ def SetTrace(tracing_func):
         TracingFunctionHolder._warn = True
     finally:
         TracingFunctionHolder._lock.release()
-        
-    
+
+
 def ReplaceSysSetTraceFunc():
     if TracingFunctionHolder._original_tracing is None:
         TracingFunctionHolder._original_tracing = sys.settrace
