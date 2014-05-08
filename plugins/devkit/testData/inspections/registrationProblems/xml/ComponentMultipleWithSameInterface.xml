@@ -1,0 +1,33 @@
+<idea-plugin>
+  <application-components>
+    <component>
+      <interface-class>ApplicationComponentInterface</interface-class>
+      <implementation-class>ApplicationComponent</implementation-class>
+    </component>
+    <component>
+      <interface-class><error descr="Multiple components with the same interface-class are not allowed">ApplicationComponentInterface</error></interface-class>
+      <implementation-class>ApplicationComponent</implementation-class>
+    </component>
+  </application-components>
+
+  <module-components>
+    <!-- within same module type -->
+    <component>
+      <interface-class>MyModuleComponentInterface</interface-class>
+      <implementation-class>MyModuleComponent</implementation-class>
+      <option name="type" value="JAVA"/>
+    </component>
+    <component>
+      <interface-class><error descr="Multiple components with the same interface-class are not allowed">MyModuleComponentInterface</error></interface-class>
+      <implementation-class>MyModuleComponent</implementation-class>
+      <option name="type" value="JAVA"/>
+    </component>
+
+    <!-- different module type -->
+    <component>
+      <interface-class>MyModuleComponentInterface</interface-class>
+      <implementation-class>MyModuleComponent</implementation-class>
+      <option name="type" value="OTHER"/>
+    </component>
+  </module-components>
+</idea-plugin>
