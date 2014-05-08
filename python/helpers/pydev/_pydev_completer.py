@@ -19,6 +19,7 @@ except ImportError:
     IS_JYTHON = False
     import _pydev_imports_tipper
 
+import pydevd_vars
 dir2 = _pydev_imports_tipper.GenerateImportsTipForModule
 
 
@@ -153,3 +154,40 @@ class Completer:
         return words
         
     
+#=======================================================================================================================
+# GenerateCompletionsAsXML
+#=======================================================================================================================
+def GenerateCompletionsAsXML(frame, act_tok):
+    if frame is None:
+        return '<xml></xml>'
+
+    #Not using frame.f_globals because of https://sourceforge.net/tracker2/?func=detail&aid=2541355&group_id=85796&atid=577329
+    #(Names not resolved in generator expression in method)
+    #See message: http://mail.python.org/pipermail/python-list/2009-January/526522.html
+    updated_globals = {}
+    updated_globals.update(frame.f_globals)
+    updated_globals.update(frame.f_locals) #locals later because it has precedence over the actual globals
+
+    completer = Completer(updated_globals, None)
+    #list(tuple(name, descr, parameters, type))
+    completions = completer.complete(act_tok)
+
+    valid_xml = pydevd_vars.makeValidXmlValue
+    quote = pydevd_vars.quote
+
+    msg = ["<xml>"]
+
+    for comp in completions:
+        msg.append('<comp p0="')
+        msg.append(valid_xml(quote(comp[0], '/>_= \t')))
+        msg.append('" p1="')
+        msg.append(valid_xml(quote(comp[1], '/>_= \t')))
+        msg.append('" p2="')
+        msg.append(valid_xml(quote(comp[2], '/>_= \t')))
+        msg.append('" p3="')
+        msg.append(valid_xml(quote(comp[3], '/>_= \t')))
+        msg.append('"/>')
+    msg.append("</xml>")
+
+    return ''.join(msg)
+

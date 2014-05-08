@@ -1,10 +1,14 @@
+import pydevd_constants #@UnusedImport -- defines False and True if not there.
+
+IS_PY3K = pydevd_constants.IS_PY3K
+
 class IORedirector:
     '''This class works to redirect the write function to many streams
     '''
-    
+
     def __init__(self, *args):
         self._redirectTo = args
-        
+
     def write(self, s):
         for r in self._redirectTo:
             try:
@@ -13,7 +17,7 @@ class IORedirector:
                 pass
 
     def isatty(self):
-        return False #not really a file
+        return False
 
     def flush(self):
         for r in self._redirectTo:
@@ -33,17 +37,22 @@ class IOBuf:
     '''
     def __init__(self):
         self.buflist = []
-    
+        import os
+        self.encoding = os.environ.get('PYTHONIOENCODING', 'utf-8')
+
     def getvalue(self):
         b = self.buflist
         self.buflist = [] #clear it
         return ''.join(b)
     
     def write(self, s):
+        if not IS_PY3K:
+            if isinstance(s, unicode):
+                s = s.encode(self.encoding)
         self.buflist.append(s)
 
     def isatty(self):
-        return False #not really a file
+        return False
 
     def flush(self):
         pass
@@ -88,4 +97,3 @@ def EndRedirect(std='stdout'):
         stack = getattr(_RedirectionsHolder, '_stack_%s' % std)
         setattr(sys, std, stack.pop())
 
-        

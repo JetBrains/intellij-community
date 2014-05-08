@@ -2,10 +2,12 @@
 '''
 @author Radim Kubacki
 '''
+import __builtin__
 import _pydev_imports_tipper
 import traceback
 import StringIO
 import sys
+import time
 import urllib
 import pycompletionserver
 
