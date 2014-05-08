@@ -53,6 +53,6 @@ public class TestDataPathResolvingTest extends TestDataPathTestCase {
 
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("DevKit") + "/testData/resolveTestDataPath";
+    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/resolveTestDataPath";
   }
 }
