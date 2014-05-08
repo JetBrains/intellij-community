@@ -5,6 +5,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
@@ -200,7 +201,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     int count = 0;
     while (!containsOneOf(output(), string)) {
       if (count > 10) {
-        Assert.fail("'" + string + "'" + " is not present in output.\n" + output());
+        Assert.fail("None of '" + StringUtil.join(string, ", ") + "'" + " is not present in output.\n" + output());
       }
       Thread.sleep(2000);
       count++;
