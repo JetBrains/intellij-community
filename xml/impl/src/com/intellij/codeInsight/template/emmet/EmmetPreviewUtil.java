@@ -54,8 +54,8 @@ public class EmmetPreviewUtil {
   public static String calculateTemplateText(@NotNull Editor editor, @NotNull PsiFile file, boolean expandPrimitiveAbbreviations) {
     if (file instanceof XmlFile) {
       final Ref<TemplateImpl> generatedTemplate = new Ref<TemplateImpl>();
-      CustomTemplateCallback callback = createCallback(editor, file, generatedTemplate);
       PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
+      CustomTemplateCallback callback = createCallback(editor, file, generatedTemplate);
       PsiElement context = callback.getContext();
       ZenCodingGenerator generator = ZenCodingTemplate.findApplicableDefaultGenerator(context, false);
       if (generator != null && generator instanceof XmlZenCodingGenerator) {
