@@ -315,6 +315,9 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
     private void performAction(@NotNull MouseEvent e, @NotNull PairFunction<Integer, Point, GraphAction> actionConstructor) {
       int row = PositionUtil.getRowIndex(e.getPoint());
+      if (row > getRowCount() - 1) {
+        return;
+      }
       Point point = calcPoint4Graph(e.getPoint());
       GraphFacade graphFacade = myDataPack.getGraphFacade();
       GraphAnswer answer = graphFacade.performAction(actionConstructor.fun(row, point));
