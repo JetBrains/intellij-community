@@ -17,4 +17,10 @@ public class MismatchedStringBuilderQueryUpdate {
     sb.append("abc");
     return sb.reverse();
   }
+
+  void indexedList(java.util.List<String> list) {
+    StringBuilder stringBuilder = new StringBuilder(); // <--- false warning here
+    list.forEach(stringBuilder::append);
+    System.out.println(stringBuilder.toString());
+  }
 }
