@@ -3,6 +3,7 @@ try:
 except:
     import io as StringIO
 import traceback
+from os.path import basename
 
 try:
     __setFalse = False

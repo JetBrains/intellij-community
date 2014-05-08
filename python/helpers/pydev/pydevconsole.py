@@ -23,10 +23,7 @@ fix_getpass.fixGetpass()
 
 import pydevd_vars
 
-try:
-    from pydevd_exec import Exec
-except:
-    from pydevd_exec2 import Exec
+from pydev_imports import Exec
 
 try:
     if USE_LIB_COPY:
@@ -316,6 +313,8 @@ def get_completions(text, token, globals, locals):
     return interpreterInterface.getCompletions(text, token)
 
 def get_frame():
+    interpreterInterface = get_interpreter()
+
     return interpreterInterface.getFrame()
 
 def exec_code(code, globals, locals):

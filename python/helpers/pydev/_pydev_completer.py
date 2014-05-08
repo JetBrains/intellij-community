@@ -1,3 +1,4 @@
+import pydevconsole
 
 try:
     import __builtin__
@@ -168,9 +169,12 @@ def GenerateCompletionsAsXML(frame, act_tok):
     updated_globals.update(frame.f_globals)
     updated_globals.update(frame.f_locals) #locals later because it has precedence over the actual globals
 
-    completer = Completer(updated_globals, None)
-    #list(tuple(name, descr, parameters, type))
-    completions = completer.complete(act_tok)
+    if pydevconsole.IPYTHON:
+        completions = pydevconsole.get_completions(act_tok, act_tok, updated_globals, frame.f_locals)
+    else:
+        completer = Completer(updated_globals, None)
+        #list(tuple(name, descr, parameters, type))
+        completions = completer.complete(act_tok)
 
     valid_xml = pydevd_vars.makeValidXmlValue
     quote = pydevd_vars.quote
