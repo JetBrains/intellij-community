@@ -24,7 +24,8 @@ public class Pair<A, B> {
 
   @NotNull
   public static <A, B> Pair<A, B> create(A first, B second) {
-    return Pair.create(first, second);
+    //noinspection DontUsePairConstructor
+    return new Pair<A, B>(first, second);
   }
 
   @NotNull
