@@ -65,7 +65,6 @@ import java.util.List;
  * @author egor
  */
 public class JavaDebugProcess extends XDebugProcess {
-  private static final JavaValueMarker MARKER = new JavaValueMarker();
   private final DebuggerSession myJavaSession;
   private final JavaDebuggerEditorsProvider myEditorsProvider;
   private final XBreakpointHandler<?>[] myBreakpointHandlers;
@@ -358,6 +357,6 @@ public class JavaDebugProcess extends XDebugProcess {
   @Nullable
   @Override
   public XValueMarkerProvider<?, ?> createValueMarkerProvider() {
-    return MARKER;
+    return new JavaValueMarker();
   }
 }
