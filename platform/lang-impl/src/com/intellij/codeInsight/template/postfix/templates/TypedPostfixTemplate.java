@@ -15,20 +15,28 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 
-abstract public class BooleanPostfixTemplate extends PostfixTemplate {
-  protected BooleanPostfixTemplate(@NotNull String name, @NotNull String example) {
+public abstract class TypedPostfixTemplate extends PostfixTemplate {
+
+  protected final PostfixTemplatePsiInfo myPsiInfo;
+  protected final Condition<PsiElement> myTypeChecker;
+
+  protected TypedPostfixTemplate(@NotNull String name,
+                                 @NotNull String example,
+                                 @NotNull PostfixTemplatePsiInfo psiInfo,
+                                 @NotNull Condition<PsiElement> typeChecker) {
     super(name, example);
+    this.myPsiInfo = psiInfo;
+    this.myTypeChecker = typeChecker;
   }
 
   @Override
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
-    PsiExpression topmostExpression = PostfixTemplatesUtils.getTopmostExpression(context);
-    return topmostExpression != null && PostfixTemplatesUtils.isBoolean(topmostExpression.getType());
+    PsiElement topmostExpression = myPsiInfo.getTopmostExpression(context);
+    return topmostExpression != null && myTypeChecker.value(topmostExpression);
   }
 }

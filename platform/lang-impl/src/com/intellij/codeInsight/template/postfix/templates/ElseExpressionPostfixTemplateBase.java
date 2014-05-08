@@ -15,25 +15,19 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
+import com.intellij.openapi.util.Condition;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_NON_VOID;
-import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
-
-public class SoutPostfixTemplate extends JavaStatementWrapPostfixTemplate {
-  public SoutPostfixTemplate() {
-    super("sout", "System.out.println(expr);", JAVA_PSI_INFO, IS_NON_VOID);
+public abstract class ElseExpressionPostfixTemplateBase extends SurroundPostfixTemplateBase
+{
+  protected ElseExpressionPostfixTemplateBase(@NotNull PostfixTemplatePsiInfo psiInfo,
+                                              @NotNull Condition<PsiElement> typeChecker) {
+    super("else", "if (!exp)", psiInfo, typeChecker);
   }
 
-  @NotNull
   @Override
-  protected String getHead() {
-    return "System.out.println(";
-  }
-
-  @NotNull
-  @Override
-  protected String getTail() {
-    return ");";
+  protected PsiElement getWrappedExpression(PsiElement expression) {
+    return myPsiInfo.getNegatedExpression(expression);
   }
 }

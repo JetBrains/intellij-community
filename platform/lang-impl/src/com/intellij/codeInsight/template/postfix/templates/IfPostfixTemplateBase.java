@@ -15,20 +15,16 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
-import com.intellij.openapi.editor.Document;
+
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 
-abstract public class NonVoidPostfixTemplate extends PostfixTemplate {
-  protected NonVoidPostfixTemplate(@NotNull String name, @NotNull String example) {
-    super(name, example);
+public abstract class IfPostfixTemplateBase extends SurroundPostfixTemplateBase {
+
+  protected IfPostfixTemplateBase(@NotNull PostfixTemplatePsiInfo psiInfo,
+                                  @NotNull Condition<PsiElement> typeChecker) {
+    super("if", "if (expr)", psiInfo, typeChecker);
   }
 
-  @Override
-  public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
-    PsiExpression expr = PostfixTemplatesUtils.getTopmostExpression(context);
-    return expr != null && PostfixTemplatesUtils.isNonVoid(expr.getType());
-  }
 }

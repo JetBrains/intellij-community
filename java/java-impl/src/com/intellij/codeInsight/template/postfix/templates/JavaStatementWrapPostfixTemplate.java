@@ -15,34 +15,30 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
+
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_NOT_PRIMITIVE;
-import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
+public abstract class JavaStatementWrapPostfixTemplate extends StatementWrapPostfixTemplate {
 
-public class SynchronizedStatementPostfixTemplate extends JavaStatementWrapPostfixTemplate {
-  public SynchronizedStatementPostfixTemplate() {
-    super("synchronized", "synchronized (expr)", JAVA_PSI_INFO, IS_NOT_PRIMITIVE);
+  protected JavaStatementWrapPostfixTemplate(@NotNull String name,
+                                             @NotNull String descr,
+                                             @NotNull PostfixTemplatePsiInfo psiInfo,
+                                             @NotNull Condition<PsiElement> typeChecker) {
+    super(name, descr, psiInfo, typeChecker);
   }
 
   @Override
-  protected void afterExpand(@NotNull PsiElement newStatement, @NotNull Editor editor) {
-    JavaPostfixTemplatesUtils.formatPsiCodeBlock(newStatement, editor);
-  }
-
-  @NotNull
-  @Override
-  protected String getHead() {
-    return "synchronized (";
+  protected void afterExpand(@NotNull PsiElement newElement, @NotNull Editor editor) {
+    super.afterExpand(newElement, editor);
+    JavaPostfixTemplateProvider.doNotDeleteSemicolon(newElement.getContainingFile());
   }
 
   @NotNull
   @Override
   protected String getTail() {
-    return ") {\nst;\n}";
+    return ";";
   }
-
 }
