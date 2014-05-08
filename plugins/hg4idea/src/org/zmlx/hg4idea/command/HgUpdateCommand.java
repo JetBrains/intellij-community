@@ -101,7 +101,8 @@ public class HgUpdateCommand {
   }
 
   private static boolean detectLocalChangeConflict(HgCommandResult result) {
-    final Pattern UNCOMMITTED_PATTERN = Pattern.compile(".*abort.*uncommitted.*changes.*", Pattern.DOTALL);
+    // error messages from mercurial after update command: "abort: outstanding uncommitted merges", "abort: uncommitted changes"
+    final Pattern UNCOMMITTED_PATTERN = Pattern.compile(".*abort.*uncommitted\\s*(changes|merges).*", Pattern.DOTALL);
     Matcher matcher = UNCOMMITTED_PATTERN.matcher(result.getRawError());
     return matcher.matches();
   }
