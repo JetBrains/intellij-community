@@ -87,7 +87,7 @@ public class DescriptorUtil {
     return getIdeaPlugin((XmlFile)file) != null;
   }
 
-  private static DomFileElement<IdeaPlugin> getIdeaPlugin(XmlFile file) {
+  public static DomFileElement<IdeaPlugin> getIdeaPlugin(XmlFile file) {
     return DomManager.getDomManager(file.getProject()).getFileElement(file, IdeaPlugin.class);
   }
 }

@@ -67,6 +67,14 @@ public class ComponentNotRegisteredInspectionTest extends LightCodeInsightFixtur
     myFixture.testHighlighting("RegisteredAction.java");
   }
 
+  public void testRegisteredActionInOptionalPluginDescriptor() {
+    setPluginXml("registeredActionInOptionalPluginDescriptor-plugin.xml");
+    myFixture.copyFileToProject("registeredActionInOptionalPluginDescriptor-optional-plugin.xml",
+                                "META-INF/optional-plugin.xml");
+
+    myFixture.testHighlighting("RegisteredAction.java");
+  }
+
   public void testUnregisteredAction() {
     setPluginXml("unregisteredAction-plugin.xml");
     myFixture.testHighlighting("UnregisteredAction.java");
