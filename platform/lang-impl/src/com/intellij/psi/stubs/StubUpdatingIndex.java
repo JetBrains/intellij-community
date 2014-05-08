@@ -227,7 +227,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
   @NotNull
   @Override
   public UpdatableIndex<Integer, SerializedStubTree, FileContent> createIndexImplementation(@NotNull final ID<Integer, SerializedStubTree> indexId, @NotNull final FileBasedIndex owner, @NotNull IndexStorage<Integer, SerializedStubTree> storage)
-    throws StorageException {
+    throws StorageException, IOException {
     if (storage instanceof MemoryIndexStorage) {
       final MemoryIndexStorage<Integer, SerializedStubTree> memStorage = (MemoryIndexStorage<Integer, SerializedStubTree>)storage;
       memStorage.addBufferingStateListener(new MemoryIndexStorage.BufferingStateListener() {
@@ -273,7 +273,8 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
   private class MyIndex extends MapReduceIndex<Integer, SerializedStubTree, FileContent> {
     private StubIndexImpl myStubIndex;
 
-    public MyIndex(final ID<Integer, SerializedStubTree> indexId, final IndexStorage<Integer, SerializedStubTree> storage, final DataIndexer<Integer, SerializedStubTree, FileContent> indexer) throws StorageException {
+    public MyIndex(final ID<Integer, SerializedStubTree> indexId, final IndexStorage<Integer, SerializedStubTree> storage, final DataIndexer<Integer, SerializedStubTree, FileContent> indexer)
+      throws StorageException, IOException {
       super(indexId, indexer, storage);
       checkNameStorage();
     }

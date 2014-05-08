@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.components.StorageId;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
@@ -92,7 +93,11 @@ class DefaultStateSerializer {
       //assert mergeInto == null;
       return (T)stateElement;
     }
-    else if (JDOMExternalizable.class.isAssignableFrom(stateClass) && mergeInto == null) {
+    else if (JDOMExternalizable.class.isAssignableFrom(stateClass)) {
+      if (mergeInto != null) {
+        String elementText = JDOMUtil.writeElement(stateElement, "\n");
+        LOG.error("State is " + stateClass.getName() + ", merge into is " + mergeInto.toString() + ", state element text is " + elementText);
+      }
       try {
         final T t = stateClass.newInstance();
         try {

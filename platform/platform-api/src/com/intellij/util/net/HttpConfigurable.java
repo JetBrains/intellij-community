@@ -62,7 +62,7 @@ import java.util.*;
   },
   storageChooser = HttpConfigurable.StorageChooser.class
 )
-public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, ApplicationComponent, JDOMExternalizable,
+public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, ApplicationComponent,
                                          ExportableApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.net.HttpConfigurable");
   public boolean PROXY_TYPE_IS_SOCKS = false;
@@ -98,6 +98,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   @Override
   public HttpConfigurable getState() {
+    CommonProxy.isInstalledAssertion();
     final HttpConfigurable state = new HttpConfigurable();
     XmlSerializerUtil.copyBean(this, state);
     if (!KEEP_PROXY_PASSWORD) {
@@ -306,15 +307,14 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
   }
 
-  //these methods are preserved for compatibility
-  @Override
+  //these methods are preserved for compatibility with com.intellij.openapi.project.impl.IdeaServerSettings
+  @Deprecated
   public void readExternal(Element element) throws InvalidDataException {
     loadState(XmlSerializer.deserialize(element, HttpConfigurable.class));
   }
 
-  @Override
+  @Deprecated
   public void writeExternal(Element element) throws WriteExternalException {
-    CommonProxy.isInstalledAssertion();
     XmlSerializer.serializeInto(getState(), element);
     if (USE_PROXY_PAC && USE_HTTP_PROXY && ! ApplicationManager.getApplication().isDisposed()) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {

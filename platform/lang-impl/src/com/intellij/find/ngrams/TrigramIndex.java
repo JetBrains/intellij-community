@@ -103,7 +103,7 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> implements Custo
 
   @Override
   public int getVersion() {
-    return ENABLED ? 2 + (IdIndex.ourSnapshotMappingsEnabled ? 0xFF:0) : 1;
+    return ENABLED ? 3 + (IdIndex.ourSnapshotMappingsEnabled ? 0xFF:0) : 1;
   }
 
   @Override
