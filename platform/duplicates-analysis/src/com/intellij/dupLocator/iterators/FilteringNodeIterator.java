@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement;
  * Iterator over important nodes
  */
 public class FilteringNodeIterator extends NodeIterator {
-  private NodeIterator delegate;
+  private final NodeIterator delegate;
   private final NodeFilter filter;
 
   private void advanceToNext() {
