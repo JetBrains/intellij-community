@@ -103,8 +103,8 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   @Override
   public void setModel(@NotNull TableModel model) {
     super.setModel(model);
-    // initialize sizes once, when the real model is set (not from the constructor).
-    if (!myColumnsSizeInitialized && !(model instanceof DefaultTableModel)) {
+    // initialize sizes once, when the real non-empty model is set
+    if (!myColumnsSizeInitialized && model.getRowCount() > 0) {
       myColumnsSizeInitialized = true;
       setColumnPreferredSize();
       setAutoCreateColumnsFromModel(false); // otherwise sizes are recalculated after each TableColumn re-initialization
