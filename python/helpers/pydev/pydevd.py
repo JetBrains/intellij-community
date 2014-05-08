@@ -122,9 +122,14 @@ PyDBUseLocks = True
 
 def isThreadAlive(t):
     try:
-        alive = t.isAlive()
+        # If thread is not started yet we treat it as alive.
+        # It is required to debug threads started by start_new_thread in Python 3.4
+        if hasattr(t, '_is_stopped'):
+            alive = not t._is_stopped
+        else:
+            alive = not t.__stopped
     except:
-        alive = False  #Workaround for Python 3.4 http://youtrack.jetbrains.com/issue/PY-12317
+        alive = t.isAlive()
     return alive
 
 #=======================================================================================================================
