@@ -29,6 +29,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.*;
+import com.intellij.debugger.ui.tree.render.ArrayRenderer;
 import com.intellij.debugger.ui.tree.render.ChildrenBuilder;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
@@ -36,6 +37,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.xdebugger.frame.*;
@@ -150,6 +152,8 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
     return new String[]{null, value};
   }
 
+  private int currentStart = 0;
+
   @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
     myEvaluationContext.getDebugProcess().getManagerThread().schedule(new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
@@ -157,6 +161,12 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
       public void contextAction() throws Exception {
         final XValueChildrenList children = new XValueChildrenList();
         final NodeRenderer renderer = myValueDescriptor.getRenderer(myEvaluationContext.getDebugProcess());
+        if (renderer instanceof ArrayRenderer) {
+          ((ArrayRenderer)renderer).START_INDEX = currentStart;
+          ((ArrayRenderer)renderer).END_INDEX = currentStart + XCompositeNode.MAX_CHILDREN_TO_SHOW - 1;
+          currentStart += XCompositeNode.MAX_CHILDREN_TO_SHOW;
+        }
+        final Ref<Integer> remainingNum = new Ref<Integer>(0);
         renderer.buildChildren(myValueDescriptor.getValue(), new ChildrenBuilder() {
           @Override
           public NodeDescriptorFactory getDescriptorManager() {
@@ -174,17 +184,45 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
           }
 
           @Override
+          public void setRemaining(int remaining) {
+            remainingNum.set(remaining);
+          }
+
+          @Override
           public void setChildren(List<DebuggerTreeNode> nodes) {
             for (DebuggerTreeNode node : nodes) {
-              NodeDescriptor descriptor = node.getDescriptor();
+              final NodeDescriptor descriptor = node.getDescriptor();
               if (descriptor instanceof ValueDescriptorImpl) {
                 children.add(new JavaValue(JavaValue.this, (ValueDescriptorImpl)descriptor, myEvaluationContext, myNodeManager));
+              }
+              else if (descriptor instanceof MessageDescriptor) {
+                children.add("", new XValue() {
+                  @Override
+                  public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
+                    node.setPresentation(null, new XValuePresentation() {
+                      @NotNull
+                      @Override
+                      public String getSeparator() {
+                        return "";
+                      }
+
+                      @Override
+                      public void renderValue(@NotNull XValueTextRenderer renderer) {
+                        renderer.renderValue(descriptor.getLabel());
+                      }
+                    }, false);
+                  }
+                });
               }
             }
           }
         }, myEvaluationContext);
         node.addChildren(children, true);
-    }});
+        if (remainingNum.get() > 0) {
+          node.tooManyChildren(remainingNum.get());
+        }
+      }
+    });
   }
 
   @Override

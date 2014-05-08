@@ -588,6 +588,9 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     }
 
     @Override
+    public void setRemaining(int remaining) {}
+
+    @Override
     public void setChildren(final List<DebuggerTreeNode> children) {
       throw new IllegalStateException("Not supported any more");
       //myChildren.addAll(children);

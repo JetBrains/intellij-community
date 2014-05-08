@@ -27,6 +27,7 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.debugger.ui.impl.ThreadsPanel;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
+import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
@@ -107,6 +108,11 @@ public class JavaDebugProcess extends XDebugProcess {
         final DebuggerTreeNodeImpl node = new DebuggerTreeNodeImpl(null, descriptor);
         ((NodeDescriptorImpl)descriptor).updateRepresentation((EvaluationContextImpl)evaluationContext, DescriptorLabelListener.DUMMY_LISTENER);
         return node;
+      }
+
+      @Override
+      public DebuggerTreeNodeImpl createMessageNode(MessageDescriptor descriptor) {
+        return new DebuggerTreeNodeImpl(null, descriptor);
       }
     };
     session.addSessionListener(new XDebugSessionAdapter() {

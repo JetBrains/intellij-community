@@ -170,12 +170,13 @@ public class ArrayRenderer extends NodeRendererImpl{
         }
       }
       else {
-        if(START_INDEX > 0) {
-          children.add(0, nodeManager.createMessageNode(new MessageDescriptor(MORE_ELEMENTS, MessageDescriptor.SPECIAL)));
-        }
+        //if(START_INDEX > 0) {
+        //  children.add(0, nodeManager.createMessageNode(new MessageDescriptor(MORE_ELEMENTS, MessageDescriptor.SPECIAL)));
+        //}
 
         if(END_INDEX < array.length() - 1) {
-          children.add(nodeManager.createMessageNode(new MessageDescriptor(MORE_ELEMENTS, MessageDescriptor.SPECIAL)));
+          //children.add(nodeManager.createMessageNode(new MessageDescriptor(MORE_ELEMENTS, MessageDescriptor.SPECIAL)));
+          builder.setRemaining(array.length()-END_INDEX);
         }
       }
     }
