@@ -381,7 +381,10 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         versionChanged = true;
         LOG.info("Version has changed for index " + name + ". The index will be rebuilt.");
       }
-      FileUtil.delete(IndexInfrastructure.getIndexRootDir(name));
+      if (extension.hasSnapshotMapping() && (isCurrentVersionCorrupted || versionChanged)) {
+        safeDelete(IndexInfrastructure.getPersistentIndexRootDir(name));
+      }
+      safeDelete(IndexInfrastructure.getIndexRootDir(name));
       IndexingStamp.rewriteVersion(versionFile, version);
     }
 
@@ -394,8 +397,14 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     throws IOException {
     MapIndexStorage<K, V> storage = null;
     final ID<K, V> name = extension.getName();
+    boolean contentHashesEnumeratorOk = false;
+
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
+        if (extension.hasSnapshotMapping()) {
+          ContentHashesSupport.initContentHashesEnumerator();
+          contentHashesEnumeratorOk = true;
+        }
         storage = new MapIndexStorage<K, V>(
           IndexInfrastructure.getStorageFile(name),
           extension.getKeyDescriptor(),
@@ -443,6 +452,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
       catch (Exception e) {
         LOG.info(e);
+        boolean instantiatedStorage = storage != null;
         try {
           if (storage != null) storage.close();
           storage = null;
@@ -450,10 +460,20 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         catch (Exception ignored) {
         }
 
-        FileUtil.delete(IndexInfrastructure.getIndexRootDir(name));
+        safeDelete(IndexInfrastructure.getIndexRootDir(name));
+
+        if (extension.hasSnapshotMapping() && (!contentHashesEnumeratorOk || instantiatedStorage)) {
+          safeDelete(IndexInfrastructure.getPersistentIndexRootDir(name)); // todo there is possibility of corruption of storage and content hashes
+        }
         IndexingStamp.rewriteVersion(versionFile, version);
       }
     }
+  }
+
+  private static boolean safeDelete(File dir) {
+    File directory = FileUtil.findSequentNonexistentFile(dir.getParentFile(), dir.getName(), "");
+    boolean success = dir.renameTo(directory);
+    return FileUtil.delete(success ? directory:dir);
   }
 
   private static void saveRegisteredIndices(@NotNull Collection<ID<?, ?>> ids) {
@@ -519,7 +539,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         extension.hasSnapshotMapping() && IdIndex.ourSnapshotMappingsEnabled
         ? createInputsIndexExternalizer(extension, indexId, extension.getKeyDescriptor())
         : null;
-      index = new MapReduceIndex<K, V, FileContent>(indexId, extension.getIndexer(), storage, externalizer);
+      index = new MapReduceIndex<K, V, FileContent>(indexId, extension.getIndexer(), storage, externalizer, extension.getValueExternalizer());
     }
     index.setInputIdToDataKeysIndex(new Factory<PersistentHashMap<Integer, Collection<K>>>() {
       @Override
@@ -1620,7 +1640,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       indicesToDrop.remove(key.toString());
     }
     for (String s : indicesToDrop) {
-      FileUtil.delete(IndexInfrastructure.getIndexRootDir(ID.create(s)));
+      safeDelete(IndexInfrastructure.getIndexRootDir(ID.create(s)));
     }
   }
 
@@ -1715,7 +1735,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             byte[] hash;
             try {
               currentBytes = content.getBytes();
-              hash = fileType.isBinary() ? null:ContentHashesSupport.calcContentHashWithFileType(currentBytes, fileType);
+              hash = fileType.isBinary() || !IdIndex.ourSnapshotMappingsEnabled ? null:ContentHashesSupport.calcContentHashWithFileType(currentBytes, fileType);
             }
             catch (IOException e) {
               currentBytes = ArrayUtil.EMPTY_BYTE_ARRAY;

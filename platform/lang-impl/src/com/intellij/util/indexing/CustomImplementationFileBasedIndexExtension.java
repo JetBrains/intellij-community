@@ -21,8 +21,10 @@ package com.intellij.util.indexing;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+
 public abstract class CustomImplementationFileBasedIndexExtension<K, V, I> extends FileBasedIndexExtension<K, V> {
   @NotNull
   public abstract UpdatableIndex<K, V, I> createIndexImplementation(@NotNull ID<K, V> indexId, @NotNull FileBasedIndex owner, @NotNull IndexStorage<K, V> storage)
-    throws StorageException;
+    throws StorageException, IOException;
 }
