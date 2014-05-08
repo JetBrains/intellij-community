@@ -1,0 +1,6 @@
+<idea-plugin>
+  <actions>
+    <action id="invalid"
+            class="<error descr="Action class must have a no-argument constructor">MyActionWithoutDefaultCtor</error>"/>
+  </actions>
+</idea-plugin>
