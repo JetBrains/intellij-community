@@ -18,14 +18,14 @@ package org.jetbrains.idea.devkit.inspections.internal;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaElementVisitor;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiNewExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.quickfix.ChangeToPairCreateQuickFix;
+
+import java.util.Arrays;
 
 /**
  * @author Konstantin Bulenkov
@@ -39,10 +39,17 @@ public class DontUseNewPairInspection extends InternalInspection {
       @Override
       public void visitNewExpression(PsiNewExpression expression) {
         final PsiType type = expression.getType();
-        if (type != null && type.getCanonicalText().startsWith(PAIR_FQN)
+        final PsiExpressionList params = expression.getArgumentList();
+        if (type != null && type.getCanonicalText().startsWith(PAIR_FQN) && params != null
+            && !(type instanceof PsiArrayType)
             && expression.getText().indexOf('(') > 0
+            && type instanceof PsiClassReferenceType
             && !PsiUtil.getLanguageLevel(expression).isAtLeast(LanguageLevel.JDK_1_7)) { //diamonds
-          holder.registerProblem(expression, "Replace to Pair.create()", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ChangeToPairCreateQuickFix());
+          final PsiType[] types = ((PsiClassReferenceType)type).getParameters();
+          if (Arrays.equals(types, params.getExpressionTypes())) {
+            holder.registerProblem(expression, "Replace to Pair.create()", ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                   new ChangeToPairCreateQuickFix());
+          }
         }
         super.visitNewExpression(expression);
       }
