@@ -26,10 +26,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.EnumeratorIntegerDescriptor;
+import com.intellij.util.io.KeyDescriptor;
 import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
@@ -56,7 +58,7 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
   }
 
   @NonNls public static final ID<Integer, TIntArrayList> NAME = ID.create("DuplicatesIndex");
-  private static final int myBaseVersion = 8;
+  private static final int myBaseVersion = 9;
 
   private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
     @Override
@@ -67,19 +69,34 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
 
   private final DataExternalizer<TIntArrayList> myValueExternalizer = new DataExternalizer<TIntArrayList>() {
     @Override
-    public void save(@NotNull DataOutput out, TIntArrayList value) throws IOException {
-      DataInputOutputUtil.writeINT(out, value.size());
-      for(int i = 0, len = value.size(); i < len; ++i) {
-        DataInputOutputUtil.writeINT(out, value.getQuick(i));
+    public void save(@NotNull DataOutput out, TIntArrayList list) throws IOException {
+      if (list.size() == 1) DataInputOutputUtil.writeINT(out, list.getQuick(0));
+      else {
+        DataInputOutputUtil.writeINT(out, -list.size());
+        int prev = 0;
+        for (int i = 0, len = list.size(); i < len; ++i) {
+          int value = list.getQuick(i);
+          DataInputOutputUtil.writeINT(out, value - prev);
+          prev = value;
+        }
       }
     }
 
     @Override
     public TIntArrayList read(@NotNull DataInput in) throws IOException {
-      int capacity = DataInputOutputUtil.readINT(in);
-      TIntArrayList list = new TIntArrayList(capacity);
-      while(capacity -- > 0) {
-        list.add(DataInputOutputUtil.readINT(in));
+      int capacityOrValue = DataInputOutputUtil.readINT(in);
+      if (capacityOrValue > 0) {
+        TIntArrayList list = new TIntArrayList(1);
+        list.add(capacityOrValue);
+        return list;
+      }
+      capacityOrValue = -capacityOrValue;
+      TIntArrayList list = new TIntArrayList(capacityOrValue);
+      int prev = 0;
+      while(capacityOrValue-- > 0) {
+        int value = DataInputOutputUtil.readINT(in) + prev;
+        list.add(value);
+        prev = value;
       }
       return list;
     }
@@ -183,8 +200,6 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
 
   static boolean isIndexedFragment(@Nullable PsiFragment frag, int cost, DuplicatesProfile profile, DuplocatorState duplocatorState) {
     if(frag == null) return false;
-    PsiFile file = frag.getFile();
-    if(file == null) return false;
     return profile.shouldPutInIndex(frag, cost, duplocatorState);
   }
 
@@ -193,5 +208,10 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
     boolean old = ourEnabled;
     ourEnabled = value;
     return old;
+  }
+
+  @Override
+  public boolean hasSnapshotMapping() {
+    return true;
   }
 }
