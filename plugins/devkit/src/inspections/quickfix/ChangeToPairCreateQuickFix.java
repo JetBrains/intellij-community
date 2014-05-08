@@ -36,6 +36,9 @@ public class ChangeToPairCreateQuickFix extends LocalQuickFixBase {
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
+    if (element == null) {
+      return;
+    }
     String text = element.getText();
     String newText = "com.intellij.openapi.util.Pair.create(" + text.substring(text.indexOf('(') + 1);
     PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
