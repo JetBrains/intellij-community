@@ -62,10 +62,10 @@ public class TestNGDataProviderTest extends LightCodeInsightFixtureTestCase {
   @DataProvider
   public Object[][] data() {
     return new Object[][]{
-       new Object[]{"private", ArrayUtil.EMPTY_STRING_ARRAY},
-       new Object[]{"privateinsuper", ArrayUtil.EMPTY_STRING_ARRAY},
-       new Object[]{"protectedinsuper", new String[]{"data"}},
-       new Object[]{"privateindataproviderclass", ArrayUtil.EMPTY_STRING_ARRAY},
+      new Object[]{"private", new String[]{"data"}},
+      new Object[]{"privateinsuper", ArrayUtil.EMPTY_STRING_ARRAY},
+      new Object[]{"protectedinsuper", new String[]{"data"}},
+      new Object[]{"privateindataproviderclass", new String[]{"data"}},
     };
   }
 
