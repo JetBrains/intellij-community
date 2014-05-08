@@ -53,4 +53,26 @@ public class BranchInfo {
     }
     return list;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    BranchInfo info = (BranchInfo)o;
+
+    if (original != info.original) return false;
+    if (name != null ? !name.equals(info.name) : info.name != null) return false;
+    if (repository != null ? !repository.equals(info.repository) : info.repository != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = name != null ? name.hashCode() : 0;
+    result = 31 * result + (repository != null ? repository.hashCode() : 0);
+    result = 31 * result + (original ? 1 : 0);
+    return result;
+  }
 }

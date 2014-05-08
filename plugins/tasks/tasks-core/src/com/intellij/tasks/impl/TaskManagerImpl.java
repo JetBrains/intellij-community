@@ -377,13 +377,52 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     }
 
     List<BranchInfo> branches = task.getBranches(false);
-    VcsTaskHandler.TaskInfo info = fromBranches(branches);
+    // we should have exactly one branch per repo
+    MultiMap<String, BranchInfo> multiMap = new MultiMap<String, BranchInfo>();
+    for (BranchInfo branch : branches) {
+      multiMap.putValue(branch.repository, branch);
+    }
+    for (String repo: multiMap.keySet()) {
+      Collection<BranchInfo> infos = multiMap.get(repo);
+      if (infos.size() > 1) {
+        // cleanup needed
+        List<BranchInfo> existing = getAllBranches(repo);
+        for (Iterator<BranchInfo> iterator = infos.iterator(); iterator.hasNext(); ) {
+          BranchInfo info = iterator.next();
+          if (!existing.contains(info)) {
+            iterator.remove();
+            if (infos.size() == 1) {
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    VcsTaskHandler.TaskInfo info = fromBranches(new ArrayList<BranchInfo>(multiMap.values()));
 
     switchBranch(info);
     return task;
   }
 
-  public void switchBranch(VcsTaskHandler.TaskInfo info) {
+  private List<BranchInfo> getAllBranches(final String repo) {
+    ArrayList<BranchInfo> infos = new ArrayList<BranchInfo>();
+    VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
+    for (VcsTaskHandler handler : handlers) {
+      VcsTaskHandler.TaskInfo[] tasks = handler.getCurrentTasks();
+      for (VcsTaskHandler.TaskInfo info : tasks) {
+        infos.addAll(ContainerUtil.filter(BranchInfo.fromTaskInfo(info, false), new Condition<BranchInfo>() {
+          @Override
+          public boolean value(BranchInfo info) {
+            return Comparing.equal(info.repository, repo);
+          }
+        }));
+      }
+    }
+    return infos;
+  }
+
+  private void switchBranch(VcsTaskHandler.TaskInfo info) {
     VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
     for (VcsTaskHandler handler : handlers) {
       handler.switchToTask(info, null);
@@ -402,7 +441,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
     for (VcsTaskHandler handler : handlers) {
       VcsTaskHandler.TaskInfo info = handler.getActiveTask();
-      if (previousActive != null) {
+      if (previousActive != null && previousActive.getBranches(false).isEmpty()) {
         addBranches(previousActive, info, false);
       }
       addBranches(task, info, true);
