@@ -19,6 +19,7 @@ import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingListener;
 import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
+import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -57,7 +58,7 @@ public class EmmetPreviewUtil {
       PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
       PsiElement context = callback.getContext();
       ZenCodingGenerator generator = ZenCodingTemplate.findApplicableDefaultGenerator(context, false);
-      if (generator != null) {
+      if (generator != null && generator instanceof XmlZenCodingGenerator) {
         final String templatePrefix = new ZenCodingTemplate().computeTemplateKeyWithoutContextChecking(callback);
         if (templatePrefix != null) {
           ZenCodingTemplate.expand(templatePrefix, callback, null, generator, Collections.<ZenCodingFilter>emptyList(), expandPrimitiveAbbreviations, 0);
