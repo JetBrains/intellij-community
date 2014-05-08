@@ -331,14 +331,14 @@ public class PathsVerifier<BinaryType extends FilePatch> {
   }
 
   private void addPatch(final FilePatch patch, final VirtualFile file) {
-    final Pair<VirtualFile, ApplyFilePatchBase> patchPair = new Pair<VirtualFile, ApplyFilePatchBase>(file, ApplyFilePatchFactory.createGeneral(patch));
+    final Pair<VirtualFile, ApplyFilePatchBase> patchPair = Pair.create(file, ApplyFilePatchFactory.createGeneral(patch));
     if (patch instanceof TextFilePatch) {
-      myTextPatches.add(new Pair<VirtualFile, ApplyTextFilePatch>(file, ApplyFilePatchFactory.create((TextFilePatch) patch)));
+      myTextPatches.add(Pair.create(file, ApplyFilePatchFactory.create((TextFilePatch)patch)));
     } else {
       final ApplyFilePatchBase<BinaryType> applyBinaryPatch = (ApplyFilePatchBase<BinaryType>) ((patch instanceof BinaryFilePatch) ? ApplyFilePatchFactory
         .create((BinaryFilePatch) patch) :
               ApplyFilePatchFactory.create((ShelveChangesManager.ShelvedBinaryFilePatch) patch));
-      myBinaryPatches.add(new Pair<VirtualFile, ApplyFilePatchBase<BinaryType>>(file, applyBinaryPatch));
+      myBinaryPatches.add(Pair.create(file, applyBinaryPatch));
     }
     myWritableFiles.add(file);
   }

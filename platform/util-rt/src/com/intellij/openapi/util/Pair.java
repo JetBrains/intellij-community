@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ public class Pair<A, B> {
 
   @NotNull
   public static <A, B> Pair<A, B> create(A first, B second) {
-    return new Pair<A, B>(first, second);
+    return Pair.create(first, second);
   }
 
   @NotNull

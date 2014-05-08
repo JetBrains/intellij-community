@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,7 +106,7 @@ public class KnownRepositoryLocations {
 
   public long getLocationId(final String key, final String path) {
     synchronized (myMap) {
-      final Long id = myLocations.get(new Pair<String, String>(key, path));
+      final Long id = myLocations.get(Pair.create(key, path));
       assert  id != null;
       return id;
     }
@@ -115,7 +115,7 @@ public class KnownRepositoryLocations {
   public void add(final String key, final String path, final long id) {
     synchronized (myMap) {
       myMap.putValue(key, path);
-      myLocations.put(new Pair<String, String>(key, path), id);
+      myLocations.put(Pair.create(key, path), id);
     }
   }
 

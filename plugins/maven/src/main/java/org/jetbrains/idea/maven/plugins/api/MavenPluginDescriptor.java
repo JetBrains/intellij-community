@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,7 +128,7 @@ public class MavenPluginDescriptor extends AbstractExtensionPointBean {
       throw new RuntimeException("Failed to parse mavenId: " + mavenId + " (mavenId should has format 'groupId:artifactId')");
     }
 
-    return new Pair<String, String>(mavenId.substring(0, idx), mavenId.substring(idx + 1));
+    return Pair.create(mavenId.substring(0, idx), mavenId.substring(idx + 1));
   }
 
   public static Map<String, Map<String, Map<String, List<MavenPluginDescriptor>>>> getDescriptorsMap() {

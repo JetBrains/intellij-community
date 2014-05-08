@@ -1649,7 +1649,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     IElementType type1 = token1.getElementType();
     IElementType type2 = token2.getElementType();
 
-    Pair<IElementType, IElementType> pair = new Pair<IElementType, IElementType>(type1, type2);
+    Pair<IElementType, IElementType> pair = Pair.create(type1, type2);
     Boolean res = myCanStickJavaTokensMatrix.get(pair);
     if (res == null) {
       if (!checkToken(token1) || !checkToken(token2)) return true;

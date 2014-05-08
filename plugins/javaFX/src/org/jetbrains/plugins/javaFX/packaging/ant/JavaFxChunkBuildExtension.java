@@ -33,7 +33,10 @@ import com.intellij.util.Base64Converter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.javaFX.packaging.*;
+import org.jetbrains.plugins.javaFX.packaging.JavaFxAntGenerator;
+import org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationArtifactType;
+import org.jetbrains.plugins.javaFX.packaging.JavaFxArtifactProperties;
+import org.jetbrains.plugins.javaFX.packaging.JavaFxArtifactPropertiesProvider;
 
 import java.io.File;
 import java.io.IOException;
@@ -78,12 +81,12 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
     }
     if (javaSdk != null) {
       final Tag taskdef = new Tag("taskdef",
-                                  new Pair<String, String>("resource", "com/sun/javafx/tools/ant/antlib.xml"),
-                                  new Pair<String, String>("uri", "javafx:com.sun.javafx.tools.ant"),
-                                  new Pair<String, String>("classpath",
-                                                           BuildProperties
-                                                             .propertyRef(BuildProperties.getJdkHomeProperty(javaSdk.getName())) +
-                                                           "/lib/ant-javafx.jar"));
+                                  Pair.create("resource", "com/sun/javafx/tools/ant/antlib.xml"),
+                                  Pair.create("uri", "javafx:com.sun.javafx.tools.ant"),
+                                  Pair.create("classpath",
+                                              BuildProperties
+                                                .propertyRef(BuildProperties.getJdkHomeProperty(javaSdk.getName())) +
+                                              "/lib/ant-javafx.jar"));
       generator.add(taskdef);
     }
   }
@@ -171,21 +174,22 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
       final Pair[] keysDescriptions = createKeysDescriptions(artifactName);
       if (selfSigning) {
         generator.add(new Tag("genkey", 
-                              ArrayUtil.prepend(new Pair<String, String>("dname", BuildProperties.propertyRef(artifactBasedProperty(ARTIFACT_VENDOR_SIGN_PROPERTY, artifactName))), 
+                              ArrayUtil.prepend(Pair.create("dname", BuildProperties
+                                .propertyRef(artifactBasedProperty(ARTIFACT_VENDOR_SIGN_PROPERTY, artifactName))),
                                                 keysDescriptions)));
       }
       
       final Tag signjar = new Tag("signjar", keysDescriptions);
-      final Tag fileset = new Tag("fileset", new Pair<String, String>("dir", tempDirPath + "/deploy"));
-      fileset.add(new Tag("include", new Pair<String, String>("name", "*.jar")));
+      final Tag fileset = new Tag("fileset", Pair.create("dir", tempDirPath + "/deploy"));
+      fileset.add(new Tag("include", Pair.create("name", "*.jar")));
       signjar.add(fileset);
       generator.add(signjar);
     }
 
     final DirectoryAntCopyInstructionCreator creator = new DirectoryAntCopyInstructionCreator(BuildProperties.propertyRef(context.getConfiguredArtifactOutputProperty(artifact)));
     generator.add(creator.createDirectoryContentCopyInstruction(tempDirPath + "/deploy"));
-    final Tag deleteTag = new Tag("delete", new Pair<String, String>("includeemptydirs", "true"));
-    deleteTag.add(new Tag("fileset", new Pair<String, String>("dir", tempDirPath)));
+    final Tag deleteTag = new Tag("delete", Pair.create("includeemptydirs", "true"));
+    deleteTag.add(new Tag("fileset", Pair.create("dir", tempDirPath)));
     generator.add(deleteTag);
   }
 
@@ -214,10 +218,10 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
 
   private static Pair[] createKeysDescriptions(String artifactName) {
     return new Pair[]{
-      new Pair<String, String>("alias", BuildProperties.propertyRef(artifactBasedProperty(ARTIFACT_ALIAS_SIGN_PROPERTY, artifactName))),
-      new Pair<String, String>("keystore", BuildProperties.propertyRef(artifactBasedProperty(ARTIFACT_KEYSTORE_SIGN_PROPERTY, artifactName))),
-      new Pair<String, String>("storepass", BuildProperties.propertyRef(artifactBasedProperty(ARTIFACT_STOREPASS_SIGN_PROPERTY, artifactName))),
-      new Pair<String, String>("keypass", BuildProperties.propertyRef(artifactBasedProperty(ARTIFACTKEYPASS_SIGN_PROPERTY, artifactName)))};
+      Pair.create("alias", BuildProperties.propertyRef(artifactBasedProperty(ARTIFACT_ALIAS_SIGN_PROPERTY, artifactName))),
+      Pair.create("keystore", BuildProperties.propertyRef(artifactBasedProperty(ARTIFACT_KEYSTORE_SIGN_PROPERTY, artifactName))),
+      Pair.create("storepass", BuildProperties.propertyRef(artifactBasedProperty(ARTIFACT_STOREPASS_SIGN_PROPERTY, artifactName))),
+      Pair.create("keypass", BuildProperties.propertyRef(artifactBasedProperty(ARTIFACTKEYPASS_SIGN_PROPERTY, artifactName)))};
   }
 
   @Nullable

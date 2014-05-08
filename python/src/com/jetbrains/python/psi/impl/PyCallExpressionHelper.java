@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,7 +86,7 @@ public class PyCallExpressionHelper {
                   PsiElement original = ((PyReferenceExpression)possible_original_ref).getReference().resolve();
                   if (original instanceof PyFunction) {
                     // pinned down the original; replace our resolved callee with it and add flags.
-                    return new Pair<String, PyFunction>(refname, (PyFunction)original);
+                    return Pair.create(refname, (PyFunction)original);
                   }
                 }
               }

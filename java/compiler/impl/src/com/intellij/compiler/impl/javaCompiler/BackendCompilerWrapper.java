@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -768,7 +768,7 @@ public class BackendCompilerWrapper {
       LOG.info(message);
       myCompileContext.addMessage(CompilerMessageCategory.WARNING, message, sourceFile.getUrl(), -1, -1);
       // do not move: looks like source file has been invalidated, need recompilation
-      return new Pair<String, String>(tempOutputDir, pathToClass);
+      return Pair.create(tempOutputDir, pathToClass);
     }
     final String realOutputDir;
     if (myCompileContext.isInTestSourceContent(sourceFile)) {
@@ -782,7 +782,7 @@ public class BackendCompilerWrapper {
 
     if (FileUtil.pathsEqual(tempOutputDir, realOutputDir)) { // no need to move
       filesToRefresh.add(new File(pathToClass));
-      return new Pair<String, String>(realOutputDir, pathToClass);
+      return Pair.create(realOutputDir, pathToClass);
     }
 
     final String realPathToClass = realOutputDir + pathToClass.substring(tempOutputDir.length());
@@ -809,7 +809,7 @@ public class BackendCompilerWrapper {
     }
     if (success) {
       filesToRefresh.add(toFile);
-      return new Pair<String, String>(realOutputDir, realPathToClass);
+      return Pair.create(realOutputDir, realPathToClass);
     }
     return null;
   }

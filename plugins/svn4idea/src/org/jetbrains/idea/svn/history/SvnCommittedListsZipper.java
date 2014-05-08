@@ -75,7 +75,7 @@ public class SvnCommittedListsZipper implements VcsCommittedListsZipper {
         groups.add(group);
       }
     }
-    return new Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>>(groups, singles);
+    return Pair.create(groups, singles);
   }
 
   public CommittedChangeList zip(final RepositoryLocationGroup group, final List<CommittedChangeList> lists) {

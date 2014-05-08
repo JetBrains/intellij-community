@@ -925,7 +925,7 @@ public class PsiClassImplUtil {
       final PsiMethod[] methodsByName = psiClass.findMethodsByName(name, false);
       final List<Pair<PsiMethod, PsiSubstitutor>> ret = new ArrayList<Pair<PsiMethod, PsiSubstitutor>>(methodsByName.length);
       for (final PsiMethod method : methodsByName) {
-        ret.add(new Pair<PsiMethod, PsiSubstitutor>(method, PsiSubstitutor.EMPTY));
+        ret.add(Pair.create(method, PsiSubstitutor.EMPTY));
       }
       return ret;
     }

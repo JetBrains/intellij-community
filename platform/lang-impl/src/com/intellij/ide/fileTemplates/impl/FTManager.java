@@ -329,7 +329,7 @@ class FTManager {
       name = fileName.substring(0, extIndex);
       ext = fileName.substring(extIndex + nameExtDelimiter.length());
     }
-    return new Pair<String,String>(name, ext);
+    return Pair.create(name, ext);
   }
 
 }

@@ -480,18 +480,18 @@ public class GenerationUtil {
   private static final Map<IElementType, Pair<String, IElementType>> binOpTypes = new HashMap<IElementType, Pair<String, IElementType>>();
 
   static {
-    binOpTypes.put(mPLUS_ASSIGN, new Pair<String, IElementType>("+", mPLUS));
-    binOpTypes.put(mMINUS_ASSIGN, new Pair<String, IElementType>("-", mMINUS));
-    binOpTypes.put(mSTAR_ASSIGN, new Pair<String, IElementType>("*", mSTAR));
-    binOpTypes.put(mDIV_ASSIGN, new Pair<String, IElementType>("/", mDIV));
-    binOpTypes.put(mMOD_ASSIGN, new Pair<String, IElementType>("%", mMOD));
+    binOpTypes.put(mPLUS_ASSIGN, Pair.create("+", mPLUS));
+    binOpTypes.put(mMINUS_ASSIGN, Pair.create("-", mMINUS));
+    binOpTypes.put(mSTAR_ASSIGN, Pair.create("*", mSTAR));
+    binOpTypes.put(mDIV_ASSIGN, Pair.create("/", mDIV));
+    binOpTypes.put(mMOD_ASSIGN, Pair.create("%", mMOD));
     binOpTypes.put(mSL_ASSIGN, new Pair<String, IElementType>("<<", COMPOSITE_LSHIFT_SIGN));
     binOpTypes.put(mSR_ASSIGN, new Pair<String, IElementType>(">>", COMPOSITE_RSHIFT_SIGN));
     binOpTypes.put(mBSR_ASSIGN, new Pair<String, IElementType>(">>>", COMPOSITE_TRIPLE_SHIFT_SIGN));
-    binOpTypes.put(mBAND_ASSIGN, new Pair<String, IElementType>("&", mBAND));
-    binOpTypes.put(mBOR_ASSIGN, new Pair<String, IElementType>("|", mBOR));
-    binOpTypes.put(mBXOR_ASSIGN, new Pair<String, IElementType>("^", mBXOR));
-    binOpTypes.put(mSTAR_STAR_ASSIGN, new Pair<String, IElementType>("**", mSTAR_STAR));
+    binOpTypes.put(mBAND_ASSIGN, Pair.create("&", mBAND));
+    binOpTypes.put(mBOR_ASSIGN, Pair.create("|", mBOR));
+    binOpTypes.put(mBXOR_ASSIGN, Pair.create("^", mBXOR));
+    binOpTypes.put(mSTAR_STAR_ASSIGN, Pair.create("**", mSTAR_STAR));
   }
 
   public static Pair<String, IElementType> getBinaryOperatorType(IElementType op_assign) {

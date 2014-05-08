@@ -828,7 +828,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
         if (!PsiTreeUtil.isAncestor(currScope, scopeWhenAdded, true)) break;
       }
     }
-    myPending.add(i, new Pair<InstructionImpl, GroovyPsiElement>(instruction, scopeWhenAdded));
+    myPending.add(i, Pair.create(instruction, scopeWhenAdded));
   }
 
   public void visitWhileStatement(GrWhileStatement whileStatement) {

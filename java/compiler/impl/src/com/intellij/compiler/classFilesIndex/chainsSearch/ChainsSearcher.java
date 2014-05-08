@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,20 @@ package com.intellij.compiler.classFilesIndex.chainsSearch;
 
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.TargetType;
+import com.intellij.compiler.classFilesIndex.impl.MethodIncompleteSignature;
 import com.intellij.compiler.classFilesIndex.impl.MethodsUsageIndexReader;
 import com.intellij.compiler.classFilesIndex.impl.UsageIndexValue;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.compiler.classFilesIndex.impl.MethodIncompleteSignature;
 
 import java.util.*;
 
@@ -93,7 +96,7 @@ public final class ChainsSearcher {
                             final WeightAware<MethodIncompleteSignature> methodIncompleteSignatureWeightAware) {
                             final MethodIncompleteSignature underlying = methodIncompleteSignatureWeightAware.getUnderlying();
                             return new WeightAware<Pair<MethodIncompleteSignature, MethodsChain>>(
-                              new Pair<MethodIncompleteSignature, MethodsChain>(
+                              Pair.create(
                                 underlying,
                                 new MethodsChain(context.resolveNotDeprecated(underlying),
                                                  methodIncompleteSignatureWeightAware.getWeight(),
@@ -173,7 +176,7 @@ public final class ChainsSearcher {
                 final MethodsChain methodsChain =
                   currentVertexUnderlying.second.addEdge(resolved, sign.getUnderlying().getOwner(), sign.getWeight());
                 q.add(new WeightAware<Pair<MethodIncompleteSignature, MethodsChain>>(
-                  new Pair<MethodIncompleteSignature, MethodsChain>(sign.getUnderlying(), methodsChain), sign.getWeight()));
+                  Pair.create(sign.getUnderlying(), methodsChain), sign.getWeight()));
                 continue;
               }
             }
@@ -184,7 +187,7 @@ public final class ChainsSearcher {
           if (parametersMatchResult.noUnmatchedAndHasMatched() && parametersMatchResult.hasTarget()) {
             updated = true;
             q.addFirst(new WeightAware<Pair<MethodIncompleteSignature, MethodsChain>>(
-              new Pair<MethodIncompleteSignature, MethodsChain>(sign.getUnderlying(), methodsChain), sign.getWeight()));
+              Pair.create(sign.getUnderlying(), methodsChain), sign.getWeight()));
           }
           isBreak = true;
         }

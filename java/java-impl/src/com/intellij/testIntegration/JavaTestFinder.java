@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public class JavaTestFinder implements TestFinder {
     for (Pair<String, Integer> eachNameWithWeight : TestFinderHelper.collectPossibleClassNamesWithWeights(klass.getName())) {
       for (PsiClass eachClass : cache.getClassesByName(eachNameWithWeight.first, scope)) {
         if (isTestSubjectClass(eachClass)) {
-          classesWithWeights.add(new Pair<PsiClass, Integer>(eachClass, eachNameWithWeight.second));
+          classesWithWeights.add(Pair.create(eachClass, eachNameWithWeight.second));
         }
       }
     }
@@ -104,7 +104,7 @@ public class JavaTestFinder implements TestFinder {
         for (PsiClass eachClass : cache.getClassesByName(eachName, scope)) {
           if (frameworks.isTestClass(eachClass) || frameworks.isPotentialTestClass(eachClass)) {
             classesWithProximities.add(
-                new Pair<PsiClass, Integer>(eachClass, TestFinderHelper.calcTestNameProximity(klassName, eachName)));
+              Pair.create(eachClass, TestFinderHelper.calcTestNameProximity(klassName, eachName)));
           }
         }
       }

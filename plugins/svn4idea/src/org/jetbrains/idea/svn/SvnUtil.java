@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -361,7 +361,7 @@ public class SvnUtil {
       if (path == null) {
         result.putValue(new Pair<SVNURL, WorkingCopyFormat>(null, null), committable);
       } else {
-        result.putValue(new Pair<SVNURL, WorkingCopyFormat>(path.getRepositoryUrlUrl(), path.getFormat()), committable);
+        result.putValue(Pair.create(path.getRepositoryUrlUrl(), path.getFormat()), committable);
       }
     }
     return result;

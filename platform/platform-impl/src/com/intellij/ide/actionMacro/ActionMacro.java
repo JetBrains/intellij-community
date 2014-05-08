@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,7 +125,7 @@ public class ActionMacro implements JDOMExternalizable {
         TypedDescriptor typedDescriptor = (TypedDescriptor)action;
         actionNode.setText(typedDescriptor.getText().replaceAll(" ", "&#x20;"));
         actionNode.setAttribute(ATTRIBUTE_KEY_CODES, unparseKeyCodes(
-          new Pair<List<Integer>, List<Integer>>(typedDescriptor.getKeyCodes(), typedDescriptor.getKeyModifiers())));
+          Pair.create(typedDescriptor.getKeyCodes(), typedDescriptor.getKeyModifiers())));
       }
       else if (action instanceof IdActionDescriptor) {
         actionNode = new Element(ELEMENT_ACTION);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,30 +50,30 @@ import static org.jetbrains.plugins.gradle.service.resolve.GradleResolverUtil.ca
  */
 public class GradleImplicitContributor implements GradleMethodContextContributor {
   private final static Map<String, String> BUILT_IN_TASKS = newHashMap(
-    new Pair<String, String>("assemble", GRADLE_API_DEFAULT_TASK),
-    new Pair<String, String>("build", GRADLE_API_DEFAULT_TASK),
-    new Pair<String, String>("buildDependents", GRADLE_API_DEFAULT_TASK),
-    new Pair<String, String>("buildNeeded", GRADLE_API_DEFAULT_TASK),
-    new Pair<String, String>("clean", GRADLE_API_TASKS_DELETE),
-    new Pair<String, String>("jar", GRADLE_API_TASKS_BUNDLING_JAR),
-    new Pair<String, String>("war", GRADLE_API_TASKS_BUNDLING_WAR),
-    new Pair<String, String>("classes", GRADLE_API_DEFAULT_TASK),
-    new Pair<String, String>("compileJava", GRADLE_API_TASKS_COMPILE_JAVA_COMPILE),
-    new Pair<String, String>("compileTestJava", GRADLE_API_DEFAULT_TASK),
-    new Pair<String, String>("processTestResources", GRADLE_API_DEFAULT_TASK),
-    new Pair<String, String>("testClasses", GRADLE_API_DEFAULT_TASK),
-    new Pair<String, String>("processResources", GRADLE_LANGUAGE_JVM_TASKS_PROCESS_RESOURCES),
-    new Pair<String, String>("setupBuild", GRADLE_BUILDSETUP_TASKS_SETUP_BUILD),
-    new Pair<String, String>("wrapper", GRADLE_API_TASKS_WRAPPER_WRAPPER),
-    new Pair<String, String>("javadoc", GRADLE_API_TASKS_JAVADOC_JAVADOC),
-    new Pair<String, String>("dependencies", GRADLE_API_TASKS_DIAGNOSTICS_DEPENDENCY_REPORT_TASK),
-    new Pair<String, String>("dependencyInsight", GRADLE_API_TASKS_DIAGNOSTICS_DEPENDENCY_INSIGHT_REPORT_TASK),
-    new Pair<String, String>("projects", GRADLE_API_TASKS_DIAGNOSTICS_PROJECT_REPORT_TASK),
-    new Pair<String, String>("properties", GRADLE_API_TASKS_DIAGNOSTICS_PROPERTY_REPORT_TASK),
-    new Pair<String, String>("tasks", GRADLE_API_TASKS_DIAGNOSTICS_TASK_REPORT_TASK),
-    new Pair<String, String>("check", GRADLE_API_DEFAULT_TASK),
-    new Pair<String, String>("test", GRADLE_API_TASKS_TESTING_TEST),
-    new Pair<String, String>("uploadArchives", GRADLE_API_TASKS_UPLOAD)
+    Pair.create("assemble", GRADLE_API_DEFAULT_TASK),
+    Pair.create("build", GRADLE_API_DEFAULT_TASK),
+    Pair.create("buildDependents", GRADLE_API_DEFAULT_TASK),
+    Pair.create("buildNeeded", GRADLE_API_DEFAULT_TASK),
+    Pair.create("clean", GRADLE_API_TASKS_DELETE),
+    Pair.create("jar", GRADLE_API_TASKS_BUNDLING_JAR),
+    Pair.create("war", GRADLE_API_TASKS_BUNDLING_WAR),
+    Pair.create("classes", GRADLE_API_DEFAULT_TASK),
+    Pair.create("compileJava", GRADLE_API_TASKS_COMPILE_JAVA_COMPILE),
+    Pair.create("compileTestJava", GRADLE_API_DEFAULT_TASK),
+    Pair.create("processTestResources", GRADLE_API_DEFAULT_TASK),
+    Pair.create("testClasses", GRADLE_API_DEFAULT_TASK),
+    Pair.create("processResources", GRADLE_LANGUAGE_JVM_TASKS_PROCESS_RESOURCES),
+    Pair.create("setupBuild", GRADLE_BUILDSETUP_TASKS_SETUP_BUILD),
+    Pair.create("wrapper", GRADLE_API_TASKS_WRAPPER_WRAPPER),
+    Pair.create("javadoc", GRADLE_API_TASKS_JAVADOC_JAVADOC),
+    Pair.create("dependencies", GRADLE_API_TASKS_DIAGNOSTICS_DEPENDENCY_REPORT_TASK),
+    Pair.create("dependencyInsight", GRADLE_API_TASKS_DIAGNOSTICS_DEPENDENCY_INSIGHT_REPORT_TASK),
+    Pair.create("projects", GRADLE_API_TASKS_DIAGNOSTICS_PROJECT_REPORT_TASK),
+    Pair.create("properties", GRADLE_API_TASKS_DIAGNOSTICS_PROPERTY_REPORT_TASK),
+    Pair.create("tasks", GRADLE_API_TASKS_DIAGNOSTICS_TASK_REPORT_TASK),
+    Pair.create("check", GRADLE_API_DEFAULT_TASK),
+    Pair.create("test", GRADLE_API_TASKS_TESTING_TEST),
+    Pair.create("uploadArchives", GRADLE_API_TASKS_UPLOAD)
   );
 
   @Override

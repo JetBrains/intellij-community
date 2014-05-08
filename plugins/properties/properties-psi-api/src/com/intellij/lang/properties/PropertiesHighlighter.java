@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,6 +96,7 @@ public class PropertiesHighlighter extends SyntaxHighlighterBase {
     DISPLAY_NAMES.put(PROPERTY_KEY_VALUE_SEPARATOR, new Pair<String, HighlightSeverity>(PropertiesBundle.message("options.properties.attribute.descriptor.key.value.separator"), null));
     DISPLAY_NAMES.put(PROPERTY_COMMENT, new Pair<String, HighlightSeverity>(PropertiesBundle.message("options.properties.attribute.descriptor.comment"), null));
     DISPLAY_NAMES.put(PROPERTIES_VALID_STRING_ESCAPE, new Pair<String, HighlightSeverity>(PropertiesBundle.message("options.properties.attribute.descriptor.valid.string.escape"), null));
-    DISPLAY_NAMES.put(PROPERTIES_INVALID_STRING_ESCAPE, new Pair<String, HighlightSeverity>(PropertiesBundle.message("options.properties.attribute.descriptor.invalid.string.escape"), HighlightSeverity.WARNING));
+    DISPLAY_NAMES.put(PROPERTIES_INVALID_STRING_ESCAPE, Pair
+      .create(PropertiesBundle.message("options.properties.attribute.descriptor.invalid.string.escape"), HighlightSeverity.WARNING));
   }
 }

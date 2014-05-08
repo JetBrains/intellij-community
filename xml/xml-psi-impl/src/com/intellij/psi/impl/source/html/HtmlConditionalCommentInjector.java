@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ public class HtmlConditionalCommentInjector implements MultiHostInjector {
       return null;
     }
     final ASTNode endOfEnd = comment.findChildByType(TokenSet.create(XmlTokenType.XML_CONDITIONAL_COMMENT_END));
-    return endOfEnd == null ? null : new Pair<ASTNode, ASTNode>(conditionalStart, conditionalEnd);
+    return endOfEnd == null ? null : Pair.create(conditionalStart, conditionalEnd);
   }
   
   public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull final PsiElement host) {

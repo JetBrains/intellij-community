@@ -761,7 +761,7 @@ public final class EditorUtil {
     if (second.line >= document.getLineCount()) {
       second = editor.offsetToLogicalPosition(document.getTextLength());
     }
-    return new Pair<LogicalPosition, LogicalPosition>(first, second);
+    return Pair.create(first, second);
   }
 
   public static void scrollToTheEnd(@NotNull Editor editor) {

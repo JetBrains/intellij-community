@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,6 @@ public class AddDeprecationAnnotationIntention extends AddAnnotationIntention {
   @NotNull
   @Override
   public Pair<String, String[]> getAnnotations(@NotNull Project project) {
-    return new Pair<String, String[]>("java.lang.annotation.Deprecated", ArrayUtil.EMPTY_STRING_ARRAY);
+    return Pair.create("java.lang.annotation.Deprecated", ArrayUtil.EMPTY_STRING_ARRAY);
   }
 }

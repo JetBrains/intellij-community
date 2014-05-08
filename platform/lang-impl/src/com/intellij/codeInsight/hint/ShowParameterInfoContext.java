@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -243,7 +243,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
                                                    short preferredPosition) {
       final TextRange textRange = list.getTextRange();
       offset = textRange.contains(offset) ? offset:textRange.getStartOffset() + 1;
-      if (previousOffset == offset) return new Pair<Point, Short>(previousBestPoint, previousBestPosition);
+      if (previousOffset == offset) return Pair.create(previousBestPoint, previousBestPosition);
 
       String listText = list.getText();
       final boolean isMultiline = listText.indexOf('\n') >= 0 || listText.indexOf('\r') >= 0;

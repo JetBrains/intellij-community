@@ -244,7 +244,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         );
       }
       DataNode<ModuleData> moduleDataNode = projectDataNode.createChild(ProjectKeys.MODULE, moduleData);
-      moduleMap.put(moduleName, new Pair<DataNode<ModuleData>, IdeaModule>(moduleDataNode, gradleModule));
+      moduleMap.put(moduleName, Pair.create(moduleDataNode, gradleModule));
     }
 
     // populate modules nodes

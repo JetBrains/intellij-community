@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -730,7 +730,7 @@ public class GitHistoryUtils {
     final List<Pair<SHAHash, Date>> rc = new ArrayList<Pair<SHAHash, Date>>();
     for (GitLogRecord record : parser.parse(output)) {
       record.setUsedHandler(h);
-      rc.add(new Pair<SHAHash, Date>(new SHAHash(record.getHash()), record.getDate()));
+      rc.add(Pair.create(new SHAHash(record.getHash()), record.getDate()));
     }
     return rc;
   }
@@ -1026,7 +1026,7 @@ public class GitHistoryUtils {
           indexCommit = parentsShortHashes[0];
         }
       }
-      return new Pair<AbstractHash, AbstractHash>(AbstractHash.create(gitLogRecord.getHash()), indexCommit == null ? null : AbstractHash.create(indexCommit));
+      return Pair.create(AbstractHash.create(gitLogRecord.getHash()), indexCommit == null ? null : AbstractHash.create(indexCommit));
     }
     return null;
   }
@@ -1050,7 +1050,7 @@ public class GitHistoryUtils {
     for (GitLogRecord gitLogRecord : gitLogRecords) {
       ProgressManager.checkCanceled();
       final GitHeavyCommit gitCommit = createCommit(project, refs, root, gitLogRecord);
-      result.add(new Pair<String, GitHeavyCommit>(gitLogRecord.getShortenedRefLog(), gitCommit));
+      result.add(Pair.create(gitLogRecord.getShortenedRefLog(), gitCommit));
     }
     return result;
   }
