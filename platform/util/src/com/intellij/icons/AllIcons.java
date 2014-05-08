@@ -721,7 +721,7 @@ public class AllIcons {
       public static final Icon JavaeeAppModule = IconLoader.getIcon("/modules/types/JavaeeAppModule.png"); // 24x24
       public static final Icon JavaModule = IconLoader.getIcon("/modules/types/javaModule.png"); // 24x24
       public static final Icon PluginModule = IconLoader.getIcon("/modules/types/pluginModule.png"); // 24x24
-      public static final Icon UserDefined = IconLoader.getIcon("/modules/types/userDefined.png"); // 24x24
+      public static final Icon UserDefined = IconLoader.getIcon("/modules/types/userDefined.png"); // 16x16
       public static final Icon WebModule = IconLoader.getIcon("/modules/types/webModule.png"); // 24x24
 
     }
@@ -1136,6 +1136,7 @@ public class AllIcons {
   
   public static class Welcome {
     public static final Icon CreateDesktopEntry = IconLoader.getIcon("/welcome/createDesktopEntry.png"); // 32x32
+    public static final Icon Register = IconLoader.getIcon("/welcome/register.png"); // 32x32
 
   }
   
