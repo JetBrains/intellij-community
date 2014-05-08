@@ -21,6 +21,8 @@ import com.intellij.codeInsight.template.TemplateEditingListener;
 import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.CaretAdapter;
@@ -100,13 +102,23 @@ public class EmmetPreviewUtil {
     });
   }
 
-  private static String reformatTemplateText(@NotNull PsiFile file, @NotNull String templateText) {
-    PsiFile copy = PsiFileFactory.getInstance(file.getProject()).createFileFromText(file.getName(), file.getFileType(), templateText);
+  private static String reformatTemplateText(@NotNull final PsiFile file, @NotNull String templateText) {
+    final PsiFile copy = PsiFileFactory.getInstance(file.getProject()).createFileFromText(file.getName(), file.getFileType(), templateText);
     VirtualFile vFile = copy.getVirtualFile();
     if (vFile != null) {
       vFile.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
     }
-    CodeStyleManager.getInstance(file.getProject()).reformat(copy);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+          @Override
+          public void run() {
+            CodeStyleManager.getInstance(file.getProject()).reformat(copy);
+          }
+        });
+      }
+    });
     return copy.getText();
   }
 
