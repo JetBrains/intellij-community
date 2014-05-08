@@ -235,8 +235,8 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   public S getState() {
     Element propertiesElement = myProperties != null ? XmlSerializer.serialize(myProperties.getState(), SERIALIZATION_FILTERS) : null;
-    myState.setCondition(myCondition != null ? new BreakpointState.Condition(myCondition) : null);
-    myState.setLogExpression(myLogExpression != null ? new BreakpointState.LogExpression(myLogExpression) : null);
+    myState.setCondition(myCondition != null && !myCondition.getExpression().isEmpty() ? new BreakpointState.Condition(myCondition) : null);
+    myState.setLogExpression(myLogExpression != null && !myLogExpression.getExpression().isEmpty() ? new BreakpointState.LogExpression(myLogExpression) : null);
     myState.setPropertiesElement(propertiesElement);
     return myState;
   }
