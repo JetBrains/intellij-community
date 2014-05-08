@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,10 @@
 package org.jetbrains.idea.devkit.codeInsight;
 
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.xml.stubs.DomStubTest;
 
+@TestDataPath("$CONTENT_ROOT/testData/pluginXmlDomStubs")
 public class PluginXmlDomStubsTest extends DomStubTest {
 
   public void testStubs() {
@@ -29,9 +31,6 @@ public class PluginXmlDomStubsTest extends DomStubTest {
                   "    Element:depends\n" +
                   "    Element:module\n" +
                   "      Attribute:value:myModule\n" +
-                  "    Element:extensions\n" +
-                  "      Attribute:xmlns:someNS\n" +
-                  "      Attribute:defaultExtensionNs:com.intellij\n" +
                   "    Element:extensionPoints\n" +
                   "      Element:extensionPoint\n" +
                   "        Attribute:name:myEP\n" +
@@ -47,6 +46,6 @@ public class PluginXmlDomStubsTest extends DomStubTest {
 
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/codeInsight";
+    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/pluginXmlDomStubs";
   }
 }

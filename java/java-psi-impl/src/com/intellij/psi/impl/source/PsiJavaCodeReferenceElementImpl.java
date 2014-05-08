@@ -376,10 +376,11 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     PsiFile containingFile = SharedImplUtil.getContainingFile(fileElement);
     boolean valid = containingFile != null && containingFile.isValid();
     if (!valid) {
+      PsiUtilCore.ensureValid(this);
       LOG.error("invalid!");
       return JavaResolveResult.EMPTY_ARRAY;
     }
-    Project project = manager.getProject();
+    Project project = getProject();
 
     return multiResolve(incompleteCode, containingFile, project);
   }

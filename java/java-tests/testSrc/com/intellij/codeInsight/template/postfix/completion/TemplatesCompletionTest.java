@@ -178,7 +178,7 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
     type("r");
     myFixture.assertPreferredCompletionItems(selectedIndex, ".par", "parents");
   }
-  
+
   public void testTabCompletionWithTemplatesInAutopopup() {
     LiveTemplateCompletionContributor.ourShowTemplatesInTests = true;
 
@@ -196,7 +196,7 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
     type(".if\t");
     checkResultByFile();
   }
-  
+
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/template/postfix/completion";

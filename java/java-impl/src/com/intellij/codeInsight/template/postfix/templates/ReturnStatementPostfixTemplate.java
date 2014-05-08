@@ -17,7 +17,7 @@ package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 public class ReturnStatementPostfixTemplate extends NonVoidPostfixTemplate {
@@ -27,11 +27,6 @@ public class ReturnStatementPostfixTemplate extends NonVoidPostfixTemplate {
 
   @Override
   public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
-    PsiExpression expr = PostfixTemplatesUtils.getTopmostExpression(context);
-    PsiElement parent = expr != null ? expr.getParent() : null;
-    if (!(parent instanceof PsiExpressionStatement)) return;
-    PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
-    PsiReturnStatement returnStatement = (PsiReturnStatement)factory.createStatementFromText("return " + expr.getText() + ";", parent);
-    parent.replace(returnStatement);
+    PostfixTemplatesUtils.createSimpleStatement(context, editor, "return");
   }
 }

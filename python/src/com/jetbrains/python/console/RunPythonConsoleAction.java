@@ -38,17 +38,24 @@ import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author oleg
  */
 public class RunPythonConsoleAction extends AnAction implements DumbAware {
+
+  public static final String WORKING_DIR_ENV = "WORKING_DIR_AND_PYTHON_PATHS";
+
+  public static final String PYTHON_ENV_COMMAND = "import sys; print('Python %s on %s' % (sys.version, sys.platform))\n" +
+                                                   "sys.path.extend([" + WORKING_DIR_ENV + "])\n";
 
   public RunPythonConsoleAction() {
     super();
@@ -96,13 +103,13 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
       pythonPath = mappingSettings.convertToRemote(pythonPath);
     }
 
-    String selfPathAppend = constructPythonPathCommand(pythonPath);
-
     String customStartScript = settingsProvider.getCustomStartScript();
 
-    if (customStartScript.trim().length() > 0) {
-      selfPathAppend += "\n" + customStartScript.trim();
+    if(customStartScript.trim().length() > 0){
+      customStartScript = "\n" + customStartScript;
     }
+
+    String selfPathAppend = constructPythonPathCommand(pythonPath, customStartScript);
 
     String workingDir = settingsProvider.getWorkingDirectory();
     if (StringUtil.isEmpty(workingDir)) {
@@ -140,8 +147,12 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
       setupFragment = new String[]{selfPathAppend};
     }
 
+    Map<String, String> envs  = Maps.newHashMap(settingsProvider.getEnvs());
+    String ipythonEnabled = PyConsoleOptions.getInstance(project).isIpythonEnabled() ? "True" : "False";
+    envs.put(PythonEnvUtil.IPYTHONENABLE, ipythonEnabled);
+
     return PydevConsoleRunner
-      .createAndRun(project, sdk, PyConsoleType.PYTHON, workingDir, Maps.newHashMap(settingsProvider.getEnvs()), setupFragment);
+      .createAndRun(project, sdk, PyConsoleType.PYTHON, workingDir, envs, setupFragment);
   }
 
   public static PathMappingSettings getMappings(Project project, Sdk sdk) {
@@ -214,7 +225,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
     return Pair.create(sdk, module);
   }
 
-  public static String constructPythonPathCommand(Collection<String> pythonPath) {
+  public static String constructPythonPathCommand(Collection<String> pythonPath, String command) {
     final String path = Joiner.on(", ").join(Collections2.transform(pythonPath, new Function<String, String>() {
       @Override
       public String apply(String input) {
@@ -222,6 +233,6 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
       }
     }));
 
-    return "sys.path.extend([" + path + "])";
+    return command.replace(WORKING_DIR_ENV, path);
   }
 }

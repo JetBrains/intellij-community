@@ -106,6 +106,6 @@ public class PluginXmlDomFileDescription extends DomFileDescription<IdeaPlugin> 
 
   @Override
   public int getStubVersion() {
-    return 2;
+    return 3;
   }
 }

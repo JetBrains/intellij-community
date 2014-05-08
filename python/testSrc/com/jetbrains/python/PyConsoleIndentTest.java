@@ -55,6 +55,42 @@ public class PyConsoleIndentTest extends UsefulTestCase {
     doTest(2);
   }
 
+  public void testIndent8() {
+    doTest();
+  }
+
+  public void testIndent9() {
+    doTest();
+  }
+
+  public void testIndent10() {
+    doTest();
+  }
+
+  public void testIndent11() {
+    doTest();
+  }
+
+  public void testIndent12() {
+    doTest();
+  }
+
+  public void testIndent13() {
+    doTest();
+  }
+
+  public void testIndent14() {
+    doTest();
+  }
+
+  public void testIndent15() {
+    doTest();
+  }
+
+  public void testIndent16() {
+    doTest();
+  }
+
   private void doTest() {
     doTest(0);
   }

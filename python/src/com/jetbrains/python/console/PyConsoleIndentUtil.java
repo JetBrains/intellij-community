@@ -16,19 +16,25 @@
 package com.jetbrains.python.console;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 /**
  * @author traff
  */
 public class PyConsoleIndentUtil {
   private static final int TAB_INDENT = 4;
+
+  private static final Map<String, String> pythonBrackets = ImmutableMap.of(
+      "(", ")",
+      "[", "]",
+      "{", "}"
+  );
 
   private PyConsoleIndentUtil() {
   }
@@ -70,66 +76,59 @@ public class PyConsoleIndentUtil {
       indentArray[i] += addIndent;
     }
 
-    shiftToParentOnUnindent(indentArray);
-
     return padOutput(lines, indentArray);
-  }
-
-  private static void shiftToParentOnUnindent(int[] indentArray) {
-    int[] stack = new int[indentArray.length];
-    int count = 0;
-    int replace = -1;
-    int replaceBy = -1;
-    for (int i = 0; i < indentArray.length; i++) {
-      if (indentArray[i] == replace) {
-        indentArray[i] = replaceBy;
-      }
-      else {
-        replace = -1;
-        if (count == 0 || indentArray[i] > stack[count - 1]) {
-          stack[count++] = indentArray[i];
-        }
-        if (count > 0 && indentArray[i] < stack[count - 1]) {
-          do {
-            count--;
-          }
-          while (count > 0 && stack[count - 1] > indentArray[i]);
-          if (count > 0) {
-            replace = indentArray[i];
-            replaceBy = stack[count - 1];
-            indentArray[i] = replaceBy;
-          }
-        }
-      }
-    }
   }
 
   private static void shiftLeftAll(int[] indentArray, List<String> lines) {
     if (indentArray.length == 0) {
       return;
     }
-    int indent = indentArray[0];
-    int lastIndent = Integer.MAX_VALUE;
-    boolean lastIndented = false;
-    for (int i = 0; i < indentArray.length; i++) {
-      if (!StringUtil.isEmpty(lines.get(i))) {
-        if (i > 0 && shouldSkipNext(lines.get(i - 1))) {
-          indentArray[i] -= indent;
-          continue;
-        }
-        if (indentArray[i] < indent || indentArray[i] > lastIndent && !lastIndented) {
-          indent = indentArray[i];
-        }
-        lastIndent = indentArray[i];
-        indentArray[i] -= indent;
-        if (shouldIndent(lines.get(i))) {
-          lastIndented = true;
-        }
-        else {
-          lastIndented = false;
-        }
+
+    int minpos = arrayMinPosition(indentArray, indentArray.length);
+    if (minpos == 0) {
+      int minIndent = indentArray[minpos];
+      shiftTailLeftOnLevel(indentArray, minIndent);
+      return;
+    }
+
+    int prevMinPosition = indentArray.length;
+    while (minpos != 0) {
+      shiftTailLeftOnLevel(indentArray, minpos, prevMinPosition, indentArray[minpos]);
+      prevMinPosition = minpos;
+      minpos = arrayMinPosition(indentArray, minpos);
+    }
+
+    int minIndent = indentArray[minpos];
+    for (int i = 0; indentArray[i] != 0; i++) {
+      indentArray[i] -= minIndent;
+    }
+  }
+
+  private static void shiftTailLeftOnLevel(int[] indentArray, int level) {
+    shiftTailLeftOnLevel(indentArray, 0, indentArray.length, level);
+  }
+
+  private static void shiftTailLeftOnLevel(int[] indentArray, int upper, int bottom, int level) {
+    for (int i = upper; i < bottom; i++) {
+      if (indentArray[i] < level) {
+        throw new IllegalStateException("Current indentation is less then subtracted level.");
+      }
+      indentArray[i] -= level;
+    }
+  }
+
+  private static int arrayMinPosition(int[] indentArray, int border) {
+    if (border < 1) {
+      return -1;
+    }
+
+    int minPosition = 0;
+    for (int i = 0; i < border; i++) {
+      if (indentArray[minPosition] > indentArray[i]) {
+        minPosition = i;
       }
     }
+    return minPosition;
   }
 
   private static String padOutput(List<String> lines, int[] indentArray) {
@@ -160,10 +159,5 @@ public class PyConsoleIndentUtil {
       line = line.trim();
     }
     return line;
-  }
-
-  public static boolean shouldSkipNext(@NotNull String line) {
-    line = stripComments(line);
-    return line.endsWith(",");
   }
 }

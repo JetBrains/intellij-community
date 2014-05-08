@@ -84,13 +84,15 @@ class PyDevFrontEnd:
             self.ipython.history_manager.save_thread.pydev_do_not_trace = True #don't trace ipython history saving thread
 
     def complete(self, string):
-        if string:
-            return self.ipython.complete(string)
-        else:
-            return self.ipython.complete(string, string, 0)
-    
-    
-        
+        try:
+            if string:
+                return self.ipython.complete(None, line=string, cursor_pos=string.__len__())
+            else:
+                return self.ipython.complete(string, string, 0)
+        except:
+            # Silence completer exceptions
+            pass
+
     def is_complete(self, string):
         #Based on IPython 0.10.1
          
@@ -153,5 +155,5 @@ class PyDevFrontEnd:
         return self.ipython.automagic
 
     def get_greeting_msg(self):
-        return 'PyDev console: using IPython %s\n' % self.version
+        return 'PyDev console: using IPython %s' % self.version
 

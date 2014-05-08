@@ -28,10 +28,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.testFramework.fixtures.*;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.idea.devkit.inspections.RegistrationProblemsInspection;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -46,10 +44,10 @@ public class CreateClassFixTest {
 
   @BeforeMethod
   public void setUp() throws Exception {
-    final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
+    final JavaTestFixtureFactory fixtureFactory = JavaTestFixtureFactory.getFixtureFactory();
     final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createFixtureBuilder();
     myFixture = fixtureFactory.createCodeInsightFixture(testFixtureBuilder.getFixture());
-    myFixture.setTestDataPath(PluginPathManager.getPluginHomePath("devkit") + "/testData");
+    myFixture.setTestDataPath(PluginPathManager.getPluginHomePath("DevKit") + "/testData");
 
     testFixtureBuilder.addModule(JavaModuleFixtureBuilder.class)
       .addContentRoot(myFixture.getTempDirPath()).addSourceRoot(getSourceRoot());
@@ -73,20 +71,25 @@ public class CreateClassFixTest {
   }
 
 
-  @Test(dataProvider = "data", enabled = false)
-  public void test(String testName, boolean createClass) throws Throwable {
-    IntentionAction resultAction = null;
-    final String createAction = QuickFixBundle.message(createClass ? "create.class.text" : "create.interface.text", testName);
-    final List<IntentionAction> actions = myFixture.getAvailableIntentions(getSourceRoot() + "/plugin" + testName + ".xml");
-    for (IntentionAction action : actions) {
-      if (Comparing.strEqual(action.getText(), createAction)) {
-        resultAction = action;
-        break;
+  @Test(dataProvider = "data", enabled = true)
+  public void test(final String testName, final boolean createClass) throws Throwable {
+    Runnable runnable = new Runnable() {
+      public void run() {
+        IntentionAction resultAction = null;
+        final String createAction = QuickFixBundle.message(createClass ? "create.class.text" : "create.interface.text", testName);
+        final List<IntentionAction> actions = myFixture.getAvailableIntentions(getSourceRoot() + "/plugin" + testName + ".xml");
+        for (IntentionAction action : actions) {
+          if (Comparing.strEqual(action.getText(), createAction)) {
+            resultAction = action;
+            break;
+          }
+        }
+        Assert.assertNotNull(resultAction);
+        myFixture.launchAction(resultAction);
+        final Project project = myFixture.getProject();
+        Assert.assertNotNull(JavaPsiFacade.getInstance(project).findClass(testName, GlobalSearchScope.allScope(project)));
       }
-    }
-    Assert.assertNotNull(resultAction);
-    myFixture.launchAction(resultAction);
-    final Project project = myFixture.getProject();
-    Assert.assertNotNull(JavaPsiFacade.getInstance(project).findClass(testName, GlobalSearchScope.allScope(project)));
+    };
+    UIUtil.invokeAndWaitIfNeeded(runnable);
   }
 }

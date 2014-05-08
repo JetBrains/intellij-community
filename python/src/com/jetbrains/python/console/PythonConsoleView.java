@@ -26,11 +26,13 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -59,6 +61,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 
 /**
  * @author traff
@@ -96,6 +100,8 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
 
     add(myLanguageConsoleView.getComponent(), BorderLayout.CENTER);
 
+    addSaveContentFocusListener(getLanguageConsole().getConsoleEditor().getContentComponent());
+
     getPythonLanguageConsole().setPrompt(PyConsoleUtil.ORDINARY_PROMPT);
     myLanguageConsoleView.setUpdateFoldingsEnabled(false);
     myProject = project;
@@ -111,6 +117,20 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
 
   public void setExecutionHandler(@NotNull PydevConsoleExecuteActionHandler consoleExecuteActionHandler) {
     myExecuteActionHandler = consoleExecuteActionHandler;
+  }
+
+  private void addSaveContentFocusListener(JComponent component){
+    component.addFocusListener(new FocusListener() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        if (GeneralSettings.getInstance().isSaveOnFrameDeactivation()) {
+          FileDocumentManager.getInstance().saveAllDocuments();
+        }
+      }
+
+      @Override
+      public void focusLost(FocusEvent e) {}
+    });
   }
 
   @Override

@@ -164,6 +164,11 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     final PsiJavaCodeReferenceElement classOrAnonymousClassReference = newExpression.getClassOrAnonymousClassReference();
     LOG.assertTrue(classOrAnonymousClassReference != null);
     final DiamondInferenceResult result = new DiamondInferenceResult(classOrAnonymousClassReference.getReferenceName() + "<>");
+
+    if (PsiUtil.isRawSubstitutor(staticFactory, inferredSubstitutor)) {
+      return result;
+    }
+
     for (PsiTypeParameter parameter : parameters) {
       for (PsiTypeParameter classParameter : classParameters) {
         if (Comparing.strEqual(classParameter.getName(), parameter.getName())) {

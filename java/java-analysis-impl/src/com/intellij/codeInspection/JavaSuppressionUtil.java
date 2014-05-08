@@ -77,7 +77,11 @@ public class JavaSuppressionUtil {
     if (modifierList == null) {
       return Collections.emptyList();
     }
-    final PsiModifierListOwner owner = (PsiModifierListOwner)modifierList.getParent();
+    final PsiElement parent = modifierList.getParent();
+    if (!(parent instanceof PsiModifierListOwner)) {
+      return Collections.emptyList();
+    }
+    final PsiModifierListOwner owner = (PsiModifierListOwner)parent;
     PsiAnnotation annotation = AnnotationUtil.findAnnotation(owner, SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
     if (annotation == null) {
       return Collections.emptyList();

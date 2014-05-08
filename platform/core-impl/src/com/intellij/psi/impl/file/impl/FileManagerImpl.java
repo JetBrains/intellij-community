@@ -36,10 +36,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDocumentManagerBase;
-import com.intellij.psi.impl.PsiFileEx;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.PsiTreeChangeEventImpl;
+import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LightVirtualFile;
@@ -197,7 +194,18 @@ public class FileManagerImpl implements FileManager {
   }
 
   @Override
-  public void setViewProvider(@NotNull final VirtualFile virtualFile, final FileViewProvider fileViewProvider) {
+  public void setViewProvider(@NotNull final VirtualFile virtualFile, @Nullable final FileViewProvider fileViewProvider) {
+    FileViewProvider prev = findCachedViewProvider(virtualFile);
+    if (prev != null) {
+      DebugUtil.startPsiModification(null);
+      try {
+        DebugUtil.onInvalidated(prev);
+      }
+      finally {
+        DebugUtil.finishPsiModification();
+      }
+    }
+
     if (!(virtualFile instanceof VirtualFileWindow)) {
       if (fileViewProvider == null) {
         myVFileToViewProviderMap.remove(virtualFile);

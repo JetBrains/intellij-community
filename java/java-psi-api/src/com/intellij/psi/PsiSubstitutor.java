@@ -112,4 +112,9 @@ public interface PsiSubstitutor {
    * @see PsiType#isValid()
    */
   boolean isValid();
+
+  /**
+   * If this substitutor is not valid, throws an exception with some diagnostics
+   */
+  void ensureValid();
 }

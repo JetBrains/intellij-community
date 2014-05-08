@@ -153,7 +153,7 @@ class InterpreterInterface(BaseInterpreterInterface):
         sys.exit(0)
 
     def get_greeting_msg(self):
-        return 'PyDev console: starting.\n'
+        return 'PyDev console: starting.'
 
 
 def process_exec_queue(interpreter):
@@ -176,26 +176,29 @@ def process_exec_queue(interpreter):
             exit()
 
 
+if 'IPYTHONENABLE' in os.environ:
+    IPYTHON = bool(os.environ['IPYTHONENABLE'])
+else:
+    IPYTHON = True
+
 try:
     try:
         exitfunc = sys.exitfunc
     except AttributeError:
         exitfunc = None
-    from pydev_ipython_console import InterpreterInterface
 
-    IPYTHON = True
-    if exitfunc is not None:
-        sys.exitfunc = exitfunc
-
-    else:
-        try:
-            delattr(sys, 'exitfunc')
-        except:
-            pass
+    if IPYTHON:
+        from pydev_ipython_console import InterpreterInterface
+        if exitfunc is not None:
+            sys.exitfunc = exitfunc
+        else:
+            try:
+                delattr(sys, 'exitfunc')
+            except:
+                pass
 except:
     IPYTHON = False
-    #sys.stderr.write('PyDev console: started.\n')
-    pass #IPython not available, proceed as usual.
+    pass
 
 #=======================================================================================================================
 # _DoExit
@@ -272,6 +275,7 @@ def start_server(host, port, interpreter):
 
 
     sys.stderr.write(interpreter.get_greeting_msg())
+    sys.stderr.flush()
 
     server.serve_forever()
 

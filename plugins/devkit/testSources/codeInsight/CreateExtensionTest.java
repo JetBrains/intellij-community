@@ -19,12 +19,14 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 /**
  * @author Dmitry Avdeev
  *         Date: 1/20/12
  */
+@TestDataPath("$CONTENT_ROOT/testData/extensions")
 public class CreateExtensionTest extends LightCodeInsightFixtureTestCase {
 
   @Override

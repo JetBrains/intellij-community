@@ -60,7 +60,7 @@ public class TextFieldWithAutoCompletion<T> extends LanguageTextField {
   public TextFieldWithAutoCompletion(final Project project,
                                      @NotNull final TextFieldWithAutoCompletionListProvider<T> provider,
                                      final boolean showAutocompletionIsAvailableHint, @Nullable final String text) {
-    super(PlainTextLanguage.INSTANCE, project, text == null ? "" : text);
+    super(project == null ? null : PlainTextLanguage.INSTANCE, project, text == null ? "" : text);
 
     myShowAutocompletionIsAvailableHint = showAutocompletionIsAvailableHint;
     myProvider = provider;

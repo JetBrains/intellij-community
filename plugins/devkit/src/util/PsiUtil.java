@@ -111,9 +111,25 @@ public class PsiUtil {
     return flag;
   }
 
+  private static boolean isIntelliJBasedDir(VirtualFile baseDir) {
+    if (baseDir == null) {
+      return false;
+    }
+
+    for (VirtualFile dir : new VirtualFile[]{baseDir, baseDir.findChild("community")}) {
+      if (dir == null || !dir.isDirectory()) {
+        continue;
+      }
+      if (dir.findChild("idea.iml") != null || dir.findChild("community-main.iml") != null) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   private static boolean checkIdeaProject(@NotNull Project project) {
-    VirtualFile baseDir = project.getBaseDir();
-    if (baseDir == null || baseDir.findChild("idea.iml") == null && baseDir.findChild("community-main.iml") == null) {
+    if (!isIntelliJBasedDir(project.getBaseDir())) {
       return false;
     }
 

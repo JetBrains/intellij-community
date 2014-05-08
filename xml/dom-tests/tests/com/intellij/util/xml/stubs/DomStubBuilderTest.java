@@ -106,5 +106,10 @@ public class DomStubBuilderTest extends DomStubTest {
     public void registerExtensions(@NotNull Bar bar, @NotNull DomExtensionsRegistrar registrar) {
       registrar.registerAttributeChildExtension(new XmlName("extend"), Custom.class);
     }
+
+    @Override
+    public boolean supportsStubs() {
+      return true;
+    }
   }
 }
