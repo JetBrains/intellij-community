@@ -124,7 +124,7 @@ public class MavenDependenciesCompletionProvider extends CompletionContributor {
       }
 
       if (e != null) {
-        new ReformatCodeProcessor(psiFile.getProject(), psiFile, e.getTextRange(), true).run();
+        new ReformatCodeProcessor(psiFile.getProject(), psiFile, e.getTextRange(), false).run();
       }
 
       if (shouldInvokeCompletion) {
