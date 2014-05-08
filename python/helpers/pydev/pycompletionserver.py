@@ -23,8 +23,8 @@ try:
     from java.lang import Thread
     IS_JYTHON = True
     SERVER_NAME = 'jycompletionserver'
-    import jyimportsTipper #as importsTipper #changed to be backward compatible with 1.5
-    importsTipper = jyimportsTipper
+    import _pydev_jy_imports_tipper #as importsTipper #changed to be backward compatible with 1.5
+    importsTipper = _pydev_jy_imports_tipper
 
 except ImportError:
     #it is python
@@ -34,7 +34,7 @@ except ImportError:
         from _pydev_threading import Thread
     else:
         from threading import Thread
-    import importsTipper
+    import _pydev_imports_tipper
 
 
 if pydevd_constants.USE_LIB_COPY:
@@ -327,7 +327,7 @@ class T(Thread):
                             if data.startswith(MSG_IMPORTS):
                                 data = data.replace(MSG_IMPORTS, '')
                                 data = unquote_plus(data)
-                                defFile, comps = importsTipper.GenerateTip(data, log)
+                                defFile, comps = _pydev_imports_tipper.GenerateTip(data, log)
                                 returnMsg = self.getCompletionsMessage(defFile, comps)
         
                             elif data.startswith(MSG_CHANGE_PYTHONPATH):
@@ -339,7 +339,7 @@ class T(Thread):
                             elif data.startswith(MSG_SEARCH):
                                 data = data.replace(MSG_SEARCH, '')
                                 data = unquote_plus(data)
-                                (f, line, col), foundAs = importsTipper.Search(data)
+                                (f, line, col), foundAs = _pydev_imports_tipper.Search(data)
                                 returnMsg = self.getCompletionsMessage(f, [(line, col, foundAs)])
                                 
                             elif data.startswith(MSG_CHANGE_DIR):

@@ -139,7 +139,7 @@ class InterpreterInterface(BaseInterpreterInterface):
 
     def getCompletions(self, text, act_tok):
         try:
-            from _completer import Completer
+            from _pydev_completer import Completer
 
             completer = Completer(self.namespace, None)
             return completer.complete(act_tok)
