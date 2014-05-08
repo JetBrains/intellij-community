@@ -23,8 +23,10 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextUtil;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerStateManager;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.DebuggerContentInfo;
+import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.impl.ThreadsPanel;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
@@ -43,6 +45,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
@@ -50,11 +53,11 @@ import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XStackFrame;
-import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
+import com.sun.jdi.event.Event;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
@@ -93,11 +96,17 @@ public class JavaDebugProcess extends XDebugProcess {
     process.addDebugProcessListener(new DebugProcessAdapter() {
       @Override
       public void paused(final SuspendContext suspendContext) {
-        //DebugProcessImpl process = (DebugProcessImpl)suspendContext.getDebugProcess();
-        //JdiSuspendContext context = new JdiSuspendContext(process, true);
-        //getSession().positionReached(new JavaSuspendContext(context, PositionManagerImpl.DEBUGGER_VIEW_SUPPORT, null));
-        ((SuspendContextImpl)suspendContext).initExecutionStacks();
-        getSession().positionReached((XSuspendContext)suspendContext);
+        SuspendContextImpl context = (SuspendContextImpl)suspendContext;
+        context.initExecutionStacks();
+
+        List<Pair<Breakpoint, Event>> descriptors = DebuggerUtilsEx.getEventDescriptors(context);
+        if (!descriptors.isEmpty()) {
+          Breakpoint breakpoint = descriptors.get(0).getFirst();
+          getSession().breakpointReached(breakpoint.getXBreakpoint(), null, context);
+        }
+        else {
+          getSession().positionReached(context);
+        }
       }
     });
 
