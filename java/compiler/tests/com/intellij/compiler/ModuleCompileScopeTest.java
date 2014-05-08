@@ -116,7 +116,7 @@ public class ModuleCompileScopeTest extends BaseCompilerTestCase {
     VirtualFile file2 = createFile("dep/src/B.java", "class B{}");
     Module dep = addModule("dep", file2.getParent());
     ModuleRootModificationUtil.addDependency(main, dep);
-    makeWithDependencies(main);
+    makeWithDependencies(false, main);
     assertOutput(main, fs().file("A.class"));
     assertOutput(dep, fs().file("B.class"));
   }
@@ -127,10 +127,22 @@ public class ModuleCompileScopeTest extends BaseCompilerTestCase {
     VirtualFile file2 = createFile("dep/src/B.java", "class B{}");
     Module dep = addModule("dep", file2.getParent());
     ModuleRootModificationUtil.addDependency(main, dep, DependencyScope.RUNTIME, false);
-    makeWithDependencies(main);
+    makeWithDependencies(false, main);
     assertOutput(main, fs().file("A.class"));
     assertNoOutput(dep);
     make(dep);
+    assertOutput(dep, fs().file("B.class"));
+    assertModulesUpToDate();
+  }
+
+  public void testIncludeRuntimeDependenciesToCompileScope() {
+    VirtualFile file1 = createFile("main/src/A.java", "class A{}");
+    Module main = addModule("main", file1.getParent());
+    VirtualFile file2 = createFile("dep/src/B.java", "class B{}");
+    Module dep = addModule("dep", file2.getParent());
+    ModuleRootModificationUtil.addDependency(main, dep, DependencyScope.RUNTIME, false);
+    makeWithDependencies(true, main);
+    assertOutput(main, fs().file("A.class"));
     assertOutput(dep, fs().file("B.class"));
     assertModulesUpToDate();
   }
