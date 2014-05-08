@@ -302,7 +302,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
 
           final List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
           if (mayBeField) {
-            fixes.add(new AddFieldQuickFix(name, name, containingClass.getName()));
+            fixes.add(new AddFieldQuickFix(name, name, containingClass.getName(), false));
           }
           if (canRemove) {
             fixes.add(new PyRemoveParameterQuickFix());

@@ -55,11 +55,13 @@ public class AddFieldQuickFix implements LocalQuickFix {
   private final String myInitializer;
   private final String myClassName;
   private String myIdentifier;
+  private boolean replaceInitializer = false;
 
-  public AddFieldQuickFix(@NotNull final String identifier, @NotNull final String initializer, final String className) {
+  public AddFieldQuickFix(@NotNull final String identifier, @NotNull final String initializer, final String className, boolean replace) {
     myIdentifier = identifier;
     myInitializer = initializer;
     myClassName = className;
+    replaceInitializer = replace;
   }
 
   @NotNull
@@ -128,8 +130,12 @@ public class AddFieldQuickFix implements LocalQuickFix {
     if (initStatement instanceof PyAssignmentStatement) {
       final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(initStatement);
       final PyExpression assignedValue = ((PyAssignmentStatement)initStatement).getAssignedValue();
-      if (assignedValue != null) {
-        builder.replaceElement(assignedValue, myInitializer);
+      final PyExpression leftExpression = ((PyAssignmentStatement)initStatement).getLeftHandSideExpression();
+      if (assignedValue != null && leftExpression != null) {
+        if (replaceInitializer)
+          builder.replaceElement(assignedValue, myInitializer);
+        else
+          builder.replaceElement(leftExpression.getLastChild(), myIdentifier);
         final VirtualFile virtualFile = file.getVirtualFile();
         if (virtualFile == null) return;
         final Editor editor = FileEditorManager.getInstance(file.getProject()).openTextEditor(
