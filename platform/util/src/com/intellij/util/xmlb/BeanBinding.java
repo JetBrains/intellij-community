@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -218,21 +219,21 @@ class BeanBinding implements Binding {
   }
 
   private static void collectPropertyAccessors(Class<?> aClass, List<Accessor> accessors) {
-    final Map<String, Pair<Method, Method>> candidates = ContainerUtil.newTreeMap();  // (name,(getter,setter))
+    final Map<String, Couple<Method>> candidates = ContainerUtil.newTreeMap();  // (name,(getter,setter))
     for (Method method : aClass.getMethods()) {
       if (!Modifier.isPublic(method.getModifiers())) continue;
       final Pair<String, Boolean> propertyData = getPropertyData(method.getName());  // (name,isSetter)
       if (propertyData == null || propertyData.first.equals(CLASS_PROPERTY)) continue;
       if (method.getParameterTypes().length != (propertyData.second ? 1 : 0)) continue;
 
-      Pair<Method, Method> candidate = candidates.get(propertyData.first);
-      if (candidate == null) candidate = Pair.empty();
+      Couple<Method> candidate = candidates.get(propertyData.first);
+      if (candidate == null) candidate = Couple.getEmpty();
       if ((propertyData.second ? candidate.second : candidate.first) != null) continue;
-      candidate = Pair.create(propertyData.second ? candidate.first : method, propertyData.second ? method : candidate.second);
+      candidate = Couple.newOne(propertyData.second ? candidate.first : method, propertyData.second ? method : candidate.second);
       candidates.put(propertyData.first, candidate);
     }
-    for (Map.Entry<String, Pair<Method, Method>> candidate: candidates.entrySet()) {
-      final Pair<Method, Method> methods = candidate.getValue();  // (getter,setter)
+    for (Map.Entry<String, Couple<Method>> candidate: candidates.entrySet()) {
+      final Couple<Method> methods = candidate.getValue();  // (getter,setter)
       if (methods.first != null && methods.second != null &&
           methods.first.getReturnType().equals(methods.second.getParameterTypes()[0]) &&
           XmlSerializerImpl.findAnnotation(methods.first.getAnnotations(), Transient.class) == null &&

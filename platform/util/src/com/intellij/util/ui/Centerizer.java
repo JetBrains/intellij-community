@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.util.ui;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,18 +47,18 @@ public class Centerizer extends JPanel {
 
     final Dimension size = getSize();
 
-    final Pair<Integer, Integer> x = getFit(compSize.width, size.width);
-    final Pair<Integer, Integer> y = getFit(compSize.height, size.height);
+    final Couple<Integer> x = getFit(compSize.width, size.width);
+    final Couple<Integer> y = getFit(compSize.height, size.height);
 
     c.setBounds(x.first.intValue(), y.first.intValue(), x.second.intValue(), y.second.intValue());
   }
 
-  private static Pair<Integer, Integer> getFit(int compSize, int containerSize) {
+  private static Couple<Integer> getFit(int compSize, int containerSize) {
     if (compSize >= containerSize) {
-      return new Pair<Integer, Integer>(0, compSize);
+      return Couple.newOne(0, compSize);
     } else {
       final int position = containerSize / 2 - compSize / 2;
-      return new Pair<Integer, Integer>(position, compSize);
+      return Couple.newOne(position, compSize);
     }
   }
 

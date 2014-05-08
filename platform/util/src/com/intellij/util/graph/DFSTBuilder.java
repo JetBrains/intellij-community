@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.util.graph;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +29,7 @@ public class DFSTBuilder<Node> {
   private final Map<Node, Integer> myNodeToNNumber;
   private Map<Node, Integer> myNodeToTNumber;
   private final Node[] myInvN;
-  private Pair<Node,Node> myBackEdge = null;
+  private Couple<Node> myBackEdge = null;
 
   private Comparator<Node> myComparator = null;
   private boolean myNBuilt = false;
@@ -99,7 +99,7 @@ public class DFSTBuilder<Node> {
           Node prev = it.next();
           Integer prevNumber = myNodeToNNumber.get(prev);
           if (prevNumber != null && prevNumber.intValue() > nNumber) {
-            myBackEdge = new Pair<Node, Node> (node, prev);
+            myBackEdge = Couple.newOne(node, prev);
             break;
           }
         }
@@ -159,7 +159,7 @@ public class DFSTBuilder<Node> {
     myTBuilt = true;
   }
 
-  public Pair<Node, Node> getCircularDependency() {
+  public Couple<Node> getCircularDependency() {
     buildDFST();
     return myBackEdge;
   }

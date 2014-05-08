@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.execution.rmi;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ConcurrentFactoryMap;
@@ -37,10 +37,10 @@ public class RemoteUtil {
   RemoteUtil() {
   }
 
-  private static final ConcurrentFactoryMap<Pair<Class<?>, Class<?>>, Map<Method, Method>> ourRemoteToLocalMap =
-    new ConcurrentFactoryMap<Pair<Class<?>, Class<?>>, Map<Method, Method>>() {
+  private static final ConcurrentFactoryMap<Couple<Class<?>>, Map<Method, Method>> ourRemoteToLocalMap =
+    new ConcurrentFactoryMap<Couple<Class<?>>, Map<Method, Method>>() {
       @Override
-      protected Map<Method, Method> create(Pair<Class<?>, Class<?>> key) {
+      protected Map<Method, Method> create(Couple<Class<?>> key) {
         final THashMap<Method, Method> map = new THashMap<Method, Method>();
         for (Method method : key.second.getMethods()) {
           Method m = null;
@@ -208,7 +208,7 @@ public class RemoteUtil {
         return method.invoke(myRemote, args);
       }
       else {
-        Method m = ourRemoteToLocalMap.get(Pair.<Class<?>, Class<?>>create(myRemote.getClass(), myClazz)).get(method);
+        Method m = ourRemoteToLocalMap.get(Couple.newOne(myRemote.getClass(), myClazz)).get(method);
         if (m == null) throw new NoSuchMethodError(method.getName() + " in " + myRemote.getClass());
         try {
           return handleRemoteResult(m.invoke(myRemote, args), method.getReturnType(), myLoader, false);

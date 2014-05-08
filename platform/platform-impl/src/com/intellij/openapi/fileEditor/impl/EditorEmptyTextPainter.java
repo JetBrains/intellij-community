@@ -23,7 +23,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
@@ -58,11 +58,11 @@ public class EditorEmptyTextPainter {
 
     advertiseActions(splitters, painter);
 
-    painter.draw(g, new PairFunction<Integer, Integer, Pair<Integer, Integer>>() {
+    painter.draw(g, new PairFunction<Integer, Integer, Couple<Integer>>() {
       @Override
-      public Pair<Integer, Integer> fun(Integer width, Integer height) {
+      public Couple<Integer> fun(Integer width, Integer height) {
         Dimension s = splitters.getSize();
-        return Pair.create((s.width - width) / 2, (s.height - height) / 2);
+        return Couple.newOne((s.width - width) / 2, (s.height - height) / 2);
       }
     });
   }

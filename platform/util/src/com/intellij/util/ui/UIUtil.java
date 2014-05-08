@@ -2463,7 +2463,7 @@ public class UIUtil {
     /**
      * _position(block width, block height) => (x, y) of the block
      */
-    public void draw(@NotNull final Graphics g, final PairFunction<Integer, Integer, Pair<Integer, Integer>> _position) {
+    public void draw(@NotNull final Graphics g, final PairFunction<Integer, Integer, Couple<Integer>> _position) {
       final int[] maxWidth = {0};
       final int[] height = {0};
       final int[] maxBulletWidth = {0};
@@ -2493,7 +2493,7 @@ public class UIUtil {
         }
       });
 
-      final Pair<Integer, Integer> position = _position.fun(maxWidth[0] + 20, height[0]);
+      final Couple<Integer> position = _position.fun(maxWidth[0] + 20, height[0]);
       assert position != null;
 
       final int[] yOffset = {position.getSecond()};
