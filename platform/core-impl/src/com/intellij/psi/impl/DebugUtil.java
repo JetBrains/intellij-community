@@ -25,10 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiInvalidElementAccessException;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.TokenType;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
@@ -559,11 +556,26 @@ public class DebugUtil {
   }
 
   public static void onInvalidated(@NotNull ASTNode treeElement) {
+    Object trace = calcInvalidationTrace(treeElement);
+    if (trace != null) {
+      PsiInvalidElementAccessException.setInvalidationTrace(treeElement, trace);
+    }
+  }
+
+  public static void onInvalidated(@NotNull FileViewProvider provider) {
+    Object trace = calcInvalidationTrace(null);
+    if (trace != null) {
+      PsiInvalidElementAccessException.setInvalidationTrace(provider, trace);
+    }
+  }
+
+  @Nullable
+  private static Object calcInvalidationTrace(@Nullable ASTNode treeElement) {
     if (!PsiInvalidElementAccessException.isTrackingInvalidation()) {
-      return;
+      return null;
     }
     if (PsiInvalidElementAccessException.findInvalidationTrace(treeElement) != null) {
-      return;
+      return null;
     }
 
     Object trace = ourPsiModificationTrace.get();
@@ -571,7 +583,7 @@ public class DebugUtil {
       trace = new Throwable();
       LOG.info("PSI invalidated outside transaction", (Throwable)trace);
     }
-    PsiInvalidElementAccessException.setInvalidationTrace(treeElement, trace);
+    return trace;
   }
 
   public static void revalidateNode(@NotNull ASTNode element) {

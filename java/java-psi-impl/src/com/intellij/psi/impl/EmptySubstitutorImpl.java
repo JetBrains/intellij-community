@@ -75,4 +75,6 @@ public final class EmptySubstitutorImpl extends EmptySubstitutor {
     return true;
   }
 
+  @Override
+  public void ensureValid() { }
 }

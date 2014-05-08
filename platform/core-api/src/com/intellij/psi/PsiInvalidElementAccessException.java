@@ -17,8 +17,10 @@
 package com.intellij.psi;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.PsiUtilCore;
@@ -60,13 +62,21 @@ public class PsiInvalidElementAccessException extends RuntimeException {
           (message == null ? "" : "; " + message);
   }
 
-  public static Object findInvalidationTrace(ASTNode element) {
+  public static Object findInvalidationTrace(@Nullable ASTNode element) {
     while (element != null) {
       Object trace = element.getUserData(INVALIDATION_TRACE);
       if (trace != null) {
         return trace;
       }
-      element = element.getTreeParent();
+      ASTNode parent = element.getTreeParent();
+      if (parent == null && element instanceof FileASTNode) {
+        PsiElement psi = element.getPsi();
+        trace = psi == null ? null : psi.getUserData(INVALIDATION_TRACE);
+        if (trace != null) {
+          return trace;
+        }
+      }
+      element = parent;
     }
     return null;
   }
@@ -112,7 +122,7 @@ public class PsiInvalidElementAccessException extends RuntimeException {
     return "psi is outdated";
   }
 
-  public static void setInvalidationTrace(ASTNode element, Object trace) {
+  public static void setInvalidationTrace(UserDataHolder element, Object trace) {
     element.putUserData(INVALIDATION_TRACE, trace);
   }
 

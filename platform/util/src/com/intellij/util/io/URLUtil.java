@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.util.io;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -88,7 +88,7 @@ public class URLUtil {
 
   @NotNull
   private static InputStream openJarStream(@NotNull URL url) throws IOException {
-    Pair<String, String> paths = splitJarUrl(url.getFile());
+    Couple<String> paths = splitJarUrl(url.getFile());
     if (paths == null) {
       throw new MalformedURLException(url.getFile());
     }
@@ -116,7 +116,7 @@ public class URLUtil {
    * E.g. "jar:file:///path/to/jar.jar!/resource.xml" is converted into ["/path/to/jar.jar", "resource.xml"].
    */
   @Nullable
-  public static Pair<String, String> splitJarUrl(@NotNull String url) {
+  public static Couple<String> splitJarUrl(@NotNull String url) {
     int pivot = url.indexOf(JAR_SEPARATOR);
     if (pivot < 0) return null;
 
@@ -137,7 +137,7 @@ public class URLUtil {
       }
     }
 
-    return Pair.create(jarPath, resourcePath);
+    return Couple.newOne(jarPath, resourcePath);
   }
 
   @NotNull
