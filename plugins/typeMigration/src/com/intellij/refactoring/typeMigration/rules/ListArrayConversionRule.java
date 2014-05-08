@@ -133,13 +133,13 @@ public class ListArrayConversionRule extends TypeConversionRule {
     if (from instanceof PsiArrayType && to instanceof PsiClassType) {
       final PsiType collectionType = evaluateCollectionsType((PsiClassType)to, context);
       if (collectionType != null) {
-        return new Pair<PsiType, PsiType>(((PsiArrayType)from).getComponentType(), collectionType);
+        return Pair.create(((PsiArrayType)from).getComponentType(), collectionType);
       }
     }
     if (to instanceof PsiArrayType && from instanceof PsiClassType) {
       final PsiType collectionType = evaluateCollectionsType((PsiClassType)from, context);
       if (collectionType != null) {
-        return new Pair<PsiType, PsiType>(collectionType, ((PsiArrayType)to).getComponentType());
+        return Pair.create(collectionType, ((PsiArrayType)to).getComponentType());
 
       }
     }
