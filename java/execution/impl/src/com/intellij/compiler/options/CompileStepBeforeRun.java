@@ -143,7 +143,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
                             runConfiguration.getClass().getName());
                 }
               }
-              scope = compilerManager.createModulesCompileScope(modules, true);
+              scope = compilerManager.createModulesCompileScope(modules, true, true);
             }
             else {
               scope = compilerManager.createProjectCompileScope(myProject);
