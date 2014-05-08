@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public class DefaultParameterTypeInferencePolicy extends ParameterTypeInferenceP
 
   @Override
   public Pair<PsiType, ConstraintType> getInferredTypeWithNoConstraint(PsiManager manager, PsiType superType) {
-    return new Pair<PsiType, ConstraintType>(superType, ConstraintType.SUBTYPE);
+    return Pair.create(superType, ConstraintType.SUBTYPE);
   }
 
   @Override

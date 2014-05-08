@@ -452,7 +452,7 @@ public class ResolveUtil {
       while (sibling != null) {
         final GrLabeledStatement labelStatement = findLabelStatementIn(sibling, last, labelName);
         if (labelStatement != null) {
-          return new Pair<GrStatement, GrLabeledStatement>(statement, labelStatement);
+          return Pair.create(statement, labelStatement);
         }
         sibling = sibling.getPrevSibling();
       }

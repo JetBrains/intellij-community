@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1069,7 +1069,7 @@ public class RefactoringUtil {
       if (!found) {
         for (PsiDocTag paramTag : paramTags) {
           final String paramName = getNameOfReferencedParameter(paramTag);
-          if (eqCondition.value(new Pair<PsiParameter, String>(parameter, paramName))) {
+          if (eqCondition.value(Pair.create(parameter, paramName))) {
             tagForParam.put(parameter, paramTag);
             found = true;
             break;

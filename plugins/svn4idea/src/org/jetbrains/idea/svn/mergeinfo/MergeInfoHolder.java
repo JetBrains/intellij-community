@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,7 +86,7 @@ public class MergeInfoHolder {
   }
 
   private static Pair<String, String> createKey(final WCPaths root, final WCInfoWithBranches.Branch branch) {
-    return new Pair<String, String>(root.getPath(), branch.getUrl());
+    return Pair.create(root.getPath(), branch.getUrl());
   }
 
   public void refresh(final boolean ignoreEnabled) {

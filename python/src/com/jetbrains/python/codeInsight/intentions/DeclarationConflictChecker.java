@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ public class DeclarationConflictChecker {
         if (ignored != null) for (PsiElement ignorable : ignored) {
           if (result == ignorable) continue REF_LOOP;
         }
-        conflicts.add(new Pair<PsiElement, PsiElement>(ref.getElement(), result));
+        conflicts.add(Pair.create(ref.getElement(), result));
       }
     }
     return conflicts;

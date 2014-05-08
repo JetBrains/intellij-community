@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,7 +141,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
         final String dollaredStringToSearch = ClassUtil.getJVMClassName(aClass);
         final String dollaredStringToReplace = dollaredStringToSearch == null ? null : RefactoringUtil.getNewInnerClassName(aClass, dollaredStringToSearch, newName);
         if (dollaredStringToReplace != null) {
-          return new Pair<String, String>(dollaredStringToSearch, dollaredStringToReplace);
+          return Pair.create(dollaredStringToSearch, dollaredStringToReplace);
         }
       }
     }

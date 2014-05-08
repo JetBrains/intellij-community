@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,9 @@ import org.jetbrains.asm4.signature.SignatureReader;
 import org.jetbrains.asm4.signature.SignatureVisitor;
 
 import java.lang.annotation.RetentionPolicy;
-import java.util.*;
+import java.util.EnumSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author: db
@@ -334,7 +336,7 @@ class ClassfileAnalyzer {
         repr.updateClassUsages(myContext, myUsages);
       }
 
-      return new Pair<ClassRepr, Set<UsageRepr.Usage>>(repr, myUsages);
+      return Pair.create(repr, myUsages);
     }
 
     @Override

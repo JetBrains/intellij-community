@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public class GroovyExtensionProvider {
   public Pair<List<String>, List<String>> collectExtensions(GlobalSearchScope resolveScope) {
     PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage("META-INF.services");
     if (aPackage == null) {
-      return new Pair<List<String>, List<String>>(Collections.<String>emptyList(), Collections.<String>emptyList());
+      return Pair.create(Collections.<String>emptyList(), Collections.<String>emptyList());
     }
 
 
@@ -68,7 +68,7 @@ public class GroovyExtensionProvider {
       }
     }
 
-    return new Pair<List<String>, List<String>>(instanceClasses, staticClasses);
+    return Pair.create(instanceClasses, staticClasses);
   }
 
   private static void collectClasses(IProperty pr, List<String> classes) {

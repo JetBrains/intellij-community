@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,14 +148,14 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     for (Map.Entry<String, SvnMergeInfoRootPanelManual> entry : myMergePanels.entrySet()) {
       final String localPath = entry.getKey();
       final WCInfoWithBranches wcInfo = entry.getValue().getWcInfo();
-      states.put(new Pair<String, String>(localPath, wcInfo.getUrl().toString()), entry.getValue().getInfo());
+      states.put(Pair.create(localPath, wcInfo.getUrl().toString()), entry.getValue().getInfo());
     }
     createPanels(myLocation, new Runnable() {
       public void run() {
         for (Map.Entry<String, SvnMergeInfoRootPanelManual> entry : myMergePanels.entrySet()) {
           final String localPath = entry.getKey();
           final WCInfoWithBranches wcInfo = entry.getValue().getWcInfo();
-          final Pair<String, String> key = new Pair<String, String>(localPath, wcInfo.getUrl().toString());
+          final Pair<String, String> key = Pair.create(localPath, wcInfo.getUrl().toString());
           final SvnMergeInfoRootPanelManual.InfoHolder infoHolder = states.get(key);
           if (infoHolder !=  null) {
             entry.getValue().initSelection(infoHolder);

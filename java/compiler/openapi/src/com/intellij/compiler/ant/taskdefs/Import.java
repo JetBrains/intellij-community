@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,11 +27,11 @@ import org.jetbrains.annotations.NonNls;
 public class Import extends Tag{
   public Import(@NonNls String file, boolean optional) {
     //noinspection HardCodedStringLiteral
-    super("import", new Pair[] {new Pair<String, String>("file", file), new Pair<String, String>("optional", optional? "true" : "false")});
+    super("import", new Pair[] {Pair.create("file", file), Pair.create("optional", optional ? "true" : "false")});
   }
 
   public Import(@NonNls String file) {
     //noinspection HardCodedStringLiteral
-    super("import", new Pair[] {new Pair<String, String>("file", file)});
+    super("import", new Pair[] {Pair.create("file", file)});
   }
 }

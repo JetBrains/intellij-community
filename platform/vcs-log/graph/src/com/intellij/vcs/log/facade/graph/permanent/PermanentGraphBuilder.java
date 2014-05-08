@@ -19,12 +19,15 @@ package com.intellij.vcs.log.facade.graph.permanent;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
 import com.intellij.vcs.log.GraphCommit;
+import com.intellij.vcs.log.facade.utils.Flags;
 import com.intellij.vcs.log.facade.utils.impl.BitSetFlags;
 import com.intellij.vcs.log.newgraph.SomeGraph;
-import com.intellij.vcs.log.facade.utils.Flags;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.intellij.vcs.log.facade.graph.permanent.DuplicateParentFixer.fixDuplicateParentCommits;
 
@@ -54,7 +57,7 @@ public class PermanentGraphBuilder {
 
     PermanentGraphBuilder builder = new PermanentGraphBuilder(commits, simpleNodes, longEdgesCount, nodeToHashIndex);
     PermanentGraphImpl permanentGraph = builder.build();
-    return new Pair<PermanentGraphImpl, Map<Integer, GraphCommit>>(permanentGraph, builder.commitsWithNotLoadParentMap);
+    return Pair.create(permanentGraph, builder.commitsWithNotLoadParentMap);
   }
 
   private static int nextCommitHashIndex(List<? extends GraphCommit> commits, int nodeIndex) {

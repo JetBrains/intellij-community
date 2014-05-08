@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -104,7 +105,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
     File nameFile = new File(dir, ".name");
     if (nameFile.isFile()) {
       try {
-        return FileUtilRt.loadFile(nameFile).trim();
+        return PathUtilRt.suggestFileName(FileUtilRt.loadFile(nameFile).trim());
       }
       catch (IOException ignored) {
       }

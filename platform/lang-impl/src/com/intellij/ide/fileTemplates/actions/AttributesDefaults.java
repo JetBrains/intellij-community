@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ public class AttributesDefaults {
   public void add(@NonNls @NotNull final String attributeKey,
                   @NonNls @NotNull final String value,
                   @Nullable final TextRange selectionRange) {
-    myNamesToValueAndRangeMap.put(attributeKey, new Pair<String, TextRange>(value, selectionRange));
+    myNamesToValueAndRangeMap.put(attributeKey, Pair.create(value, selectionRange));
   }
 
   public void add(@NonNls @NotNull final String attributeKey,

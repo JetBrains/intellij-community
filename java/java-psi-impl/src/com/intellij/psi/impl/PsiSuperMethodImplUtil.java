@@ -184,7 +184,7 @@ public class PsiSuperMethodImplUtil {
             // methods must be inherited from unrelated classes, so flatten hierarchy here
             // class C implements SAM1, SAM2 { void methodimpl() {} }
             //hms.getSuperSignatures().remove(aSuper);
-            flattened.add(new Pair<MethodSignature, HierarchicalMethodSignature>(signature, aSuper));
+            flattened.add(Pair.create(signature, aSuper));
           }
         }
         putInMap(aClass, result, map, hms, signature);

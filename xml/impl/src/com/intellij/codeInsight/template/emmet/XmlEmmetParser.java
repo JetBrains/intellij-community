@@ -263,10 +263,10 @@ public class XmlEmmetParser extends EmmetParser {
       final List<Pair<String, String>> attrList = parseSelector();
       if (attrList == null) {
         if (classAttrPosition != -1) {
-          result.set(classAttrPosition, new Pair<String, String>(CLASS, classAttrBuilder.toString()));
+          result.set(classAttrPosition, Pair.create(CLASS, classAttrBuilder.toString()));
         }
         if (idAttrPosition != -1) {
-          result.set(idAttrPosition, new Pair<String, String>(ID, idAttrBuilder.toString()));
+          result.set(idAttrPosition, Pair.create(ID, idAttrBuilder.toString()));
         }
         return result;
       }
@@ -320,7 +320,7 @@ public class XmlEmmetParser extends EmmetParser {
       if (!value.isEmpty()) {
         advance();
       }
-      return Collections.singletonList(new Pair<String, String>(name, value));
+      return Collections.singletonList(Pair.create(name, value));
     }
 
     return null;
@@ -369,7 +369,7 @@ public class XmlEmmetParser extends EmmetParser {
     advance();
     token = getToken();
     if (token != ZenCodingTokens.EQ) {
-      return new Pair<String, String>(name, "");
+      return Pair.create(name, "");
     }
 
     advance();
@@ -386,6 +386,6 @@ public class XmlEmmetParser extends EmmetParser {
     }
     while (token != null && token != ZenCodingTokens.CLOSING_SQ_BRACKET
            && token != ZenCodingTokens.SPACE && token != ZenCodingTokens.COMMA);
-    return new Pair<String, String>(name, attrValueBuilder.toString());
+    return Pair.create(name, attrValueBuilder.toString());
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -355,7 +355,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     }
 
     private void markRename(@NotNull final File beforeFile, @NotNull final File afterFile) {
-      myToBeDeleted.add(new Pair<File, File>(beforeFile, afterFile));
+      myToBeDeleted.add(Pair.create(beforeFile, afterFile));
     }
 
     public ThroughRenameInfo findToFile(@NotNull final FilePath file, @Nullable final File firstTo) {

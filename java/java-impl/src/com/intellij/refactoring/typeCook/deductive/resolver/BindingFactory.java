@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1022,7 +1022,7 @@ public class BindingFactory {
               return;
             }
 
-            list.addFirst(new Pair<PsiType, Binding>(risen.apply(x), risen));
+            list.addFirst(Pair.create(risen.apply(x), risen));
           }
           else {
             final PsiClass[] descendants = getGreatestLowerClasses(xClass, yClass);
@@ -1097,11 +1097,11 @@ public class BindingFactory {
             if (risen == null) {
               final PsiElementFactory factory = JavaPsiFacade.getInstance(xClass.getProject()).getElementFactory();
 
-              list.addFirst(new Pair<PsiType, Binding>(Util.banalize(factory.createType(xClass, factory.createRawSubstitutor(xClass))),
-                                                       create()));
+              list.addFirst(Pair.create(Util.banalize(factory.createType(xClass, factory.createRawSubstitutor(xClass))),
+                                        create()));
             }
             else {
-              list.addFirst(new Pair<PsiType, Binding>(risen.apply(x), risen));
+              list.addFirst(Pair.create(risen.apply(x), risen));
             }
           }
           else {

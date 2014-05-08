@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ public class Param extends Tag {
   public Param(@NonNls final String name, final String value) {
     //noinspection HardCodedStringLiteral
     super("param", new Pair[] {
-      new Pair<String, String>("name", name),
-      new Pair<String, String>("value", value)
+      Pair.create("name", name),
+      Pair.create("value", value)
     });
   }
 

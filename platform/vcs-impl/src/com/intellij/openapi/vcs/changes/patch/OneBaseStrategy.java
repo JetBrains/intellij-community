@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -108,13 +107,13 @@ class OneBaseStrategy extends AutoMatchStrategy {
           }
         }
         if (sameStrip) {
-          privilegedSurvivor = new Pair<VirtualFile, Collection<FilePatchInProgress>>(file, patches);
+          privilegedSurvivor = Pair.create(file, patches);
           break;
         }
       }
       if (privilegedSurvivor == null) {
         final VirtualFile first = myVariants.keySet().iterator().next();
-        privilegedSurvivor = new Pair<VirtualFile, Collection<FilePatchInProgress>>(first, myVariants.get(first));
+        privilegedSurvivor = Pair.create(first, myVariants.get(first));
       }
       myVariants.clear();
       myVariants.put(privilegedSurvivor.getFirst(), privilegedSurvivor.getSecond());

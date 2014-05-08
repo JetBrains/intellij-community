@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.openapi.vcs.checkin;
 import com.intellij.ide.todo.TodoFilter;
 import com.intellij.ide.todo.TodoIndexPatternProvider;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.fragments.LineFragment;
@@ -26,6 +25,7 @@ import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.processing.DiffCorrection;
 import com.intellij.openapi.diff.impl.processing.DiffFragmentsProcessor;
 import com.intellij.openapi.diff.impl.processing.DiffPolicy;
+import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -119,7 +119,7 @@ public class TodoCheckinHandlerWorker {
         myPsiFile = myPsiManager.findFile(afterFile);
       }
       if (myPsiFile == null) {
-        mySkipped.add(new Pair<FilePath, String>(change.getAfterRevision().getFile(), ourInvalidFile));
+        mySkipped.add(Pair.create(change.getAfterRevision().getFile(), ourInvalidFile));
         continue;
       }
 
@@ -182,11 +182,11 @@ public class TodoCheckinHandlerWorker {
         myBeforeContent = change.getBeforeRevision().getContent();
         myAfterContent = change.getAfterRevision().getContent();
         if (myAfterContent == null) {
-          myAcceptor.skipped(new Pair<FilePath, String>(myAfterFile, ourCannotLoadCurrentRevision));
+          myAcceptor.skipped(Pair.create(myAfterFile, ourCannotLoadCurrentRevision));
           return;
         }
         if (myBeforeContent == null) {
-          myAcceptor.skipped(new Pair<FilePath, String>(myAfterFile, ourCannotLoadPreviousRevision));
+          myAcceptor.skipped(Pair.create(myAfterFile, ourCannotLoadPreviousRevision));
           return;
         }
         ArrayList<LineFragment> lineFragments = getLineFragments(myAfterFile.getPath(), myBeforeContent, myAfterContent);
@@ -229,7 +229,7 @@ public class TodoCheckinHandlerWorker {
         });
       } catch (VcsException e) {
         LOG.info(e);
-        myAcceptor.skipped(new Pair<FilePath, String>(myAfterFile, ourCannotLoadPreviousRevision));
+        myAcceptor.skipped(Pair.create(myAfterFile, ourCannotLoadPreviousRevision));
       }
     }
 

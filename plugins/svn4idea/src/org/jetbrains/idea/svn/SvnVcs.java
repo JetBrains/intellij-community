@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -879,7 +879,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       myPropertyCache.put(keyForVf(file), cachedMap);
     }
 
-    cachedMap.put(propName, new Pair<SVNPropertyValue, Trinity<Long, Long, Long>>(propValue, tsTrinity));
+    cachedMap.put(propName, Pair.create(propValue, tsTrinity));
 
     return propValue;
   }

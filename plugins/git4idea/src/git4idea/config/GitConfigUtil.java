@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,7 +96,7 @@ public class GitConfigUtil {
     while ((pos = output.indexOf('\u0000', start)) != -1) {
       String value = output.substring(start, pos);
       start = pos + 1;
-      result.add(new Pair<String, String>(key, value));
+      result.add(Pair.create(key, value));
     }
     return result;
   }

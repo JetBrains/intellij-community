@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,7 +115,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       final Collection<Change> changes = changeList.getChanges();
       for (Change change : changes) {
         if (change.isMoved() || change.isRenamed()) {
-          moves.putValue(change.getBeforeRevision().getFile(), new Pair<Change, String>(change, changeList.getName()));
+          moves.putValue(change.getBeforeRevision().getFile(), Pair.create(change, changeList.getName()));
         }
       }
     }
@@ -564,7 +564,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       final String beforeKey = beforePath == null ? null : beforePath.getIOFile().getAbsolutePath();
       final FilePath afterPath = ChangesUtil.getAfterPath(change);
       final String afterKey = afterPath == null ? null : afterPath.getIOFile().getAbsolutePath();
-      return new Pair<String, String>(beforeKey, afterKey);
+      return Pair.create(beforeKey, afterKey);
     }
 
     private void preparation() {

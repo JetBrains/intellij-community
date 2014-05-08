@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,14 +82,14 @@ public class ContentRevisionCache {
 
   public void putCustom(FilePath path, VcsRevisionNumber number, final Object o) {
     synchronized (myLock) {
-      myCustom.put(new Pair<FilePath, VcsRevisionNumber>(path, number), o);
+      myCustom.put(Pair.create(path, number), o);
     }
   }
 
   @Nullable
   public Object getCustom(FilePath path, VcsRevisionNumber number) {
     synchronized (myLock) {
-      return myCustom.get(new Pair<FilePath, VcsRevisionNumber>(path, number));
+      return myCustom.get(Pair.create(path, number));
     }
   }
 
@@ -261,7 +261,7 @@ public class ContentRevisionCache {
       currentRevision = putIntoCurrentCache(cache, path, vcsKey, loader);
       final byte[] cachedCurrent = cache.getBytes(path, currentRevision, vcsKey, UniqueType.REPOSITORY_CONTENT);
       if (cachedCurrent != null) {
-        return new Pair<VcsRevisionNumber, byte[]>(currentRevision, cachedCurrent);
+        return Pair.create(currentRevision, cachedCurrent);
       }
       checkLocalFileSize(path);
       loaded = loader.get();
@@ -275,7 +275,7 @@ public class ContentRevisionCache {
   public static Pair<VcsRevisionNumber, String> getOrLoadCurrentAsString(final Project project, FilePath path, @NotNull VcsKey vcsKey,
       final CurrentRevisionProvider loader) throws VcsException, IOException {
     Pair<VcsRevisionNumber, byte[]> pair = getOrLoadCurrentAsBytes(project, path, vcsKey, loader);
-    return new Pair<VcsRevisionNumber, String>(pair.getFirst(), bytesToString(path, pair.getSecond()));
+    return Pair.create(pair.getFirst(), bytesToString(path, pair.getSecond()));
   }
 
   private static class CurrentKey {

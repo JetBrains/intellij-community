@@ -19,7 +19,7 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
-import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
+import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -37,15 +37,15 @@ public abstract class ForIndexedPostfixTemplate extends PostfixTemplate {
 
   @Override
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
-    PsiExpression expr = PostfixTemplatesUtils.getTopmostExpression(context);
-    return expr != null && (PostfixTemplatesUtils.isNumber(expr.getType()) ||
-                            PostfixTemplatesUtils.isArray(expr.getType()) ||
-                            PostfixTemplatesUtils.isIterable(expr.getType()));
+    PsiExpression expr = JavaPostfixTemplatesUtils.getTopmostExpression(context);
+    return expr != null && (JavaPostfixTemplatesUtils.isNumber(expr.getType()) ||
+                            JavaPostfixTemplatesUtils.isArray(expr.getType()) ||
+                            JavaPostfixTemplatesUtils.isIterable(expr.getType()));
   }
 
   @Override
   public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
-    PsiExpression expr = PostfixTemplatesUtils.getTopmostExpression(context);
+    PsiExpression expr = JavaPostfixTemplatesUtils.getTopmostExpression(context);
     if (expr == null) {
       PostfixTemplatesUtils.showErrorHint(context.getProject(), editor);
       return;
@@ -94,13 +94,13 @@ public abstract class ForIndexedPostfixTemplate extends PostfixTemplate {
   @Nullable
   protected static String getExpressionBound(@NotNull PsiExpression expr) {
     PsiType type = expr.getType();
-    if (PostfixTemplatesUtils.isNumber(type)) {
+    if (JavaPostfixTemplatesUtils.isNumber(type)) {
       return expr.getText();
     }
-    else if (PostfixTemplatesUtils.isArray(type)) {
+    else if (JavaPostfixTemplatesUtils.isArray(type)) {
       return expr.getText() + ".length";
     }
-    else if (PostfixTemplatesUtils.isIterable(type)) {
+    else if (JavaPostfixTemplatesUtils.isIterable(type)) {
       return expr.getText() + ".size()";
     }
     return null;
@@ -109,7 +109,7 @@ public abstract class ForIndexedPostfixTemplate extends PostfixTemplate {
   @NotNull
   private static String suggestIndexType(@NotNull PsiExpression expr) {
     PsiType type = expr.getType();
-    if (PostfixTemplatesUtils.isNumber(type)) {
+    if (JavaPostfixTemplatesUtils.isNumber(type)) {
       return type.getCanonicalText();
     }
     return "int";

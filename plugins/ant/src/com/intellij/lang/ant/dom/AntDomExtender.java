@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -259,7 +259,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
         
         registerAttribute(registrar, attribName, type, converterClass);
         if (types == null) { // augment the map if this was a newly added attribute
-          registeredAttribs.put(_attribName, new Pair<Type, Class>(type, converterClass));
+          registeredAttribs.put(_attribName, Pair.create(type, converterClass));
         }
       }
     }

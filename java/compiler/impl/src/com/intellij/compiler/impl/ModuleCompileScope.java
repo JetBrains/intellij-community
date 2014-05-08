@@ -25,10 +25,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.FileIndex;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,10 +33,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.CommonProcessors;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class ModuleCompileScope extends FileIndexCompileScope {
   private final Project myProject;
@@ -47,18 +41,18 @@ public class ModuleCompileScope extends FileIndexCompileScope {
   private final Module[] myModules;
 
   public ModuleCompileScope(final Module module, boolean includeDependentModules) {
-    myProject = module.getProject();
-    myScopeModules = new HashSet<Module>();
-    if (includeDependentModules) {
-      buildScopeModulesSet(module);
-    }
-    else {
-      myScopeModules.add(module);
-    }
-    myModules = ModuleManager.getInstance(myProject).getModules();
+    this(module.getProject(), Collections.singleton(module), includeDependentModules, false);
   }
 
   public ModuleCompileScope(Project project, final Module[] modules, boolean includeDependentModules) {
+    this(project, modules, includeDependentModules, false);
+  }
+
+  public ModuleCompileScope(Project project, final Module[] modules, boolean includeDependentModules, boolean includeRuntimeDependencies) {
+    this(project, Arrays.asList(modules), includeDependentModules, includeRuntimeDependencies);
+  }
+
+  private ModuleCompileScope(Project project, final Collection<Module> modules, boolean includeDependentModules, boolean includeRuntimeDeps) {
     myProject = project;
     myScopeModules = new HashSet<Module>();
     for (Module module : modules) {
@@ -66,17 +60,17 @@ public class ModuleCompileScope extends FileIndexCompileScope {
         continue; // prevent NPE
       }
       if (includeDependentModules) {
-        buildScopeModulesSet(module);
+        OrderEnumerator enumerator = ModuleRootManager.getInstance(module).orderEntries().recursively();
+        if (!includeRuntimeDeps) {
+          enumerator = enumerator.compileOnly();
+        }
+        enumerator.forEachModule(new CommonProcessors.CollectProcessor<Module>(myScopeModules));
       }
       else {
         myScopeModules.add(module);
       }
     }
     myModules = ModuleManager.getInstance(myProject).getModules();
-  }
-
-  private void buildScopeModulesSet(Module module) {
-    ModuleRootManager.getInstance(module).orderEntries().recursively().compileOnly().forEachModule(new CommonProcessors.CollectProcessor<Module>(myScopeModules));
   }
 
   @NotNull

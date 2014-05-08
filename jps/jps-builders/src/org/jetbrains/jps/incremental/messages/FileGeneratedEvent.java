@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public class FileGeneratedEvent extends BuildMessage {
 
   public void add(String root, String relativePath) {
     if (root != null && relativePath != null) {
-      myPaths.add(new Pair<String, String>(FileUtil.toSystemIndependentName(root), FileUtil.toSystemIndependentName(relativePath)));
+      myPaths.add(Pair.create(FileUtil.toSystemIndependentName(root), FileUtil.toSystemIndependentName(relativePath)));
     }
     else {
       LOG.info("Invalid file generation event: root=" + root + "; relativePath=" + relativePath);

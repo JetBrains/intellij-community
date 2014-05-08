@@ -1,0 +1,167 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.jetbrains.idea.devkit.inspections;
+
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.TestDataFile;
+import com.intellij.testFramework.TestDataPath;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.build.PluginBuildConfiguration;
+import org.jetbrains.idea.devkit.dom.Anchor;
+import org.jetbrains.idea.devkit.inspections.quickfix.RegisterActionFix;
+import org.jetbrains.idea.devkit.module.PluginModuleType;
+import org.jetbrains.idea.devkit.util.ActionData;
+
+@TestDataPath("$CONTENT_ROOT/testData/inspections/componentNotRegistered")
+public class ComponentNotRegisteredInspectionTest extends LightCodeInsightFixtureTestCase {
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return new DefaultLightProjectDescriptor() {
+      @Override
+      public ModuleType getModuleType() {
+        return PluginModuleType.getInstance();
+      }
+    };
+  }
+
+  @Override
+  protected String getBasePath() {
+    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/inspections/componentNotRegistered";
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    myFixture.addClass("package com.intellij.openapi.actionSystem; public class AnAction {}");
+    myFixture.addClass("package com.intellij.openapi.components; public interface ApplicationComponent {}");
+
+    myFixture.enableInspections(new ComponentNotRegisteredInspection());
+  }
+
+  public void testRegisteredAction() {
+    setPluginXml("registeredAction-plugin.xml");
+    myFixture.testHighlighting("RegisteredAction.java");
+  }
+
+  public void testUnregisteredAction() {
+    setPluginXml("unregisteredAction-plugin.xml");
+    myFixture.testHighlighting("UnregisteredAction.java");
+
+    RegisterActionFix.ourTestActionData = new MyActionData("UnregisteredAction");
+    final IntentionAction registerAction = myFixture.findSingleIntention("Register Action");
+    myFixture.launchAction(registerAction);
+
+    myFixture.checkResultByFile("META-INF/plugin.xml", "unregisteredAction-plugin_after.xml", true);
+  }
+
+  public void testRegisteredApplicationComponent() {
+    setPluginXml("registeredApplicationComponent-plugin.xml");
+    myFixture.testHighlighting("RegisteredApplicationComponent.java");
+  }
+
+  public void testUnregisteredAbstractApplicationComponent() {
+    myFixture.testHighlighting("UnregisteredAbstractApplicationComponent.java");
+  }
+
+  public void testUnregisteredApplicationComponentWithoutPluginXml() {
+    myFixture.testHighlighting("UnregisteredApplicationComponent.java",
+                               "UnregisteredApplicationComponentInterface.java");
+  }
+
+  public void testUnregisteredApplicationComponentWithRegisterFix() {
+    setPluginXml("unregisteredApplicationComponent-plugin.xml");
+
+    myFixture.testHighlighting("UnregisteredApplicationComponent.java",
+                               "UnregisteredApplicationComponentInterface.java");
+    final IntentionAction registerAction = myFixture.findSingleIntention("Register Application Component");
+    myFixture.launchAction(registerAction);
+
+    myFixture.checkResultByFile("META-INF/plugin.xml", "unregisteredApplicationComponent-plugin_after.xml", true);
+  }
+
+  private void setPluginXml(@TestDataFile String pluginXml) {
+    final VirtualFile file = myFixture.copyFileToProject(pluginXml, "META-INF/plugin.xml");
+    final PluginBuildConfiguration pluginBuildConfiguration = PluginBuildConfiguration.getInstance(myModule);
+    assertNotNull(pluginBuildConfiguration);
+    pluginBuildConfiguration.setPluginXmlFromVirtualFile(file);
+  }
+
+
+  private static class MyActionData implements ActionData {
+    private final String myActionClassFqn;
+
+    public MyActionData(String actionClassFqn) {
+      myActionClassFqn = actionClassFqn;
+    }
+
+    @NotNull
+    @Override
+    public String getActionId() {
+      return StringUtil.getShortName(myActionClassFqn);
+    }
+
+    @NotNull
+    @Override
+    public String getActionText() {
+      return "Action Text " + myActionClassFqn;
+    }
+
+    @Override
+    public String getActionDescription() {
+      return "Description " + myActionClassFqn;
+    }
+
+    @Nullable
+    @Override
+    public String getSelectedGroupId() {
+      return getActionId() + "Group";
+    }
+
+    @Nullable
+    @Override
+    public String getSelectedActionId() {
+      return getActionId() + "SelectedAction";
+    }
+
+    @Override
+    public String getSelectedAnchor() {
+      return Anchor.before.name();
+    }
+
+    @Nullable
+    @Override
+    public String getFirstKeyStroke() {
+      return "1st Key " + getActionId();
+    }
+
+    @Nullable
+    @Override
+    public String getSecondKeyStroke() {
+      return "2nd Key " + getActionId();
+    }
+  }
+}

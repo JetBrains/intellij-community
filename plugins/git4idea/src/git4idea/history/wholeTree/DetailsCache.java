@@ -1,9 +1,12 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -68,7 +71,7 @@ public class DetailsCache {
 
   public GitHeavyCommit convert(final VirtualFile root, final AbstractHash hash) {
     synchronized (myLock) {
-      return myCache.get(new Pair<VirtualFile, AbstractHash>(root, hash));
+      return myCache.get(Pair.create(root, hash));
     }
   }
 
@@ -80,7 +83,7 @@ public class DetailsCache {
   public void acceptAnswer(final Collection<GitHeavyCommit> commits, final VirtualFile root) {
     synchronized (myLock) {
       for (GitHeavyCommit commit : commits) {
-        myCache.put(new Pair<VirtualFile, AbstractHash>(root, commit.getShortHash()), commit);
+        myCache.put(Pair.create(root, commit.getShortHash()), commit);
       }
     }
     SwingUtilities.invokeLater(new Runnable() {
@@ -97,14 +100,14 @@ public class DetailsCache {
 
   public void putBranches(final VirtualFile root, final AbstractHash hash, final List<String> s) {
     synchronized (myLock) {
-      myBranches.put(new Pair<VirtualFile, AbstractHash>(root, hash), s);
+      myBranches.put(Pair.create(root, hash), s);
     }
   }
 
   @Nullable
   public List<String> getBranches(final VirtualFile root, final AbstractHash hash) {
     synchronized (myLock) {
-      return myBranches.get(new Pair<VirtualFile, AbstractHash>(root, hash));
+      return myBranches.get(Pair.create(root, hash));
     }
   }
 
@@ -120,7 +123,7 @@ public class DetailsCache {
         final GitHeavyCommit value = entry.getValue();
         if (! value.getLocalBranches().isEmpty() || ! value.getRemoteBranches().isEmpty() ||
             ! value.getTags().isEmpty()) {
-          forDeletion.add(new Pair<VirtualFile, AbstractHash>(entry.getKey().getFirst(), entry.getKey().getSecond()));
+          forDeletion.add(Pair.create(entry.getKey().getFirst(), entry.getKey().getSecond()));
         }
       }
       for (Pair<VirtualFile, AbstractHash> pair : forDeletion) {
@@ -200,7 +203,7 @@ public class DetailsCache {
         if (! root.equals(entry.getKey().getFirst())) continue;
         AbstractHash hash = value.getShortHash();
         if (hash.equals(headHash) || hashes.contains(value.getHash().getValue())) {
-          forDeletion.add(new Pair<VirtualFile, AbstractHash>(entry.getKey().getFirst(), entry.getKey().getSecond()));
+          forDeletion.add(Pair.create(entry.getKey().getFirst(), entry.getKey().getSecond()));
         }
       }
       for (Pair<VirtualFile, AbstractHash> pair : forDeletion) {

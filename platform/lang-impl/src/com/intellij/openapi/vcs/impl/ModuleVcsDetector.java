@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -210,7 +210,7 @@ public class ModuleVcsDetector implements ProjectComponent {
     for(final VirtualFile file: files) {
       for(final VcsDirectoryMapping mapping: myVcsManager.getDirectoryMappings()) {
         if (FileUtil.toSystemIndependentName(mapping.getDirectory()).equals(file.getPath())) {
-          result.add(new Pair<String, VcsDirectoryMapping>(moduleName, mapping));
+          result.add(Pair.create(moduleName, mapping));
           break;
         }
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -314,10 +314,10 @@ public class CopyrightManager extends AbstractProjectComponent implements Persis
           assert profileName != null;
 
           final String name = generator.generateUniqueName(FileUtil.sanitizeFileName(profileName)) + ".xml";
-          result.add(new Pair<Element, String>(element, name));
+          result.add(Pair.create(element, name));
         }
       }
-      result.add(new Pair<Element, String>(e, generator.generateUniqueName("profiles_settings") + ".xml"));
+      result.add(Pair.create(e, generator.generateUniqueName("profiles_settings") + ".xml"));
       return result;
     }
 

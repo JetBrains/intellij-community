@@ -410,7 +410,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         if (myProject.isDisposed() || myProject.isDefault()) return;
         final ContentManager contentManager = getContentManager();
         if (contentManager == null) {
-          myPendingOutput.add(new Pair<String, TextAttributes>(message, attributes));
+          myPendingOutput.add(Pair.create(message, attributes));
         }
         else {
           getOrCreateConsoleContent(contentManager);

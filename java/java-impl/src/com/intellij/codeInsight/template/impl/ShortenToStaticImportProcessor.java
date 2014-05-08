@@ -67,7 +67,7 @@ public class ShortenToStaticImportProcessor implements TemplateOptionalProcessor
     {
       for (StaticImporter importer : IMPORTERS) {
         if (importer.canPerform(element)) {
-          staticImportTargets.add(new Pair<PsiElement, StaticImporter>(element, importer));
+          staticImportTargets.add(Pair.create(element, importer));
           break;
         }
       }

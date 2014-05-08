@@ -248,7 +248,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
     boolean shouldSchedule;
     synchronized (myOrders) {
       shouldSchedule = myOrders.isEmpty();
-      myOrders.add(new Pair<Object, SyncAction>(on, action));
+      myOrders.add(Pair.create(on, action));
     }
     if (shouldSchedule) {
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
