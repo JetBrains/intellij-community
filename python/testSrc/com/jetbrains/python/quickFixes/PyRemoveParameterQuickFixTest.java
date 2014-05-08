@@ -42,6 +42,10 @@ public class PyRemoveParameterQuickFixTest extends PyQuickFixTestCase {
     doQuickFixTest(PyUnusedLocalInspection.class, PyBundle.message("QFIX.NAME.remove.parameter"));
   }
 
+  public void testSingleStarTwoParam() {
+    doQuickFixTest(PyUnusedLocalInspection.class, PyBundle.message("QFIX.NAME.remove.parameter"), LanguageLevel.PYTHON33);
+  }
+
   public void testSingleStar() {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON33);
     try {

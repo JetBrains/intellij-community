@@ -297,7 +297,8 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
               }
             }
           }
-          boolean canRemove = !(PsiTreeUtil.getPrevSiblingOfType(element, PyParameter.class) instanceof PySingleStarParameter);
+          boolean canRemove = !(PsiTreeUtil.getPrevSiblingOfType(element, PyParameter.class) instanceof PySingleStarParameter) ||
+            PsiTreeUtil.getNextSiblingOfType(element, PyParameter.class) != null;
 
           final LocalQuickFix[] fixes;
           if (mayBeField) {
