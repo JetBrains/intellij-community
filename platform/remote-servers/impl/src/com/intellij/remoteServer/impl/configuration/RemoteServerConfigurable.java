@@ -1,5 +1,6 @@
 package com.intellij.remoteServer.impl.configuration;
 
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
@@ -66,7 +67,7 @@ public class RemoteServerConfigurable extends NamedConfigurable<RemoteServer<?>>
 
     myConfigurable = server.getType().createConfigurable(innerConfiguration);
 
-    myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+    myAlarm = new Alarm().setActivationComponent(myMainPanel);
     queueChangesCheck();
   }
 
@@ -78,16 +79,10 @@ public class RemoteServerConfigurable extends NamedConfigurable<RemoteServer<?>>
 
       @Override
       public void run() {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-
-          @Override
-          public void run() {
-            checkChanges();
-            queueChangesCheck();
-          }
-        });
+        checkChanges();
+        queueChangesCheck();
       }
-    }, CHANGES_CHECK_TIME);
+    }, CHANGES_CHECK_TIME, ModalityState.any());
   }
 
   private void checkChanges() {
