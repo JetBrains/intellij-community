@@ -17,35 +17,16 @@ package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.build.PluginBuildConfiguration;
 import org.jetbrains.idea.devkit.dom.Anchor;
 import org.jetbrains.idea.devkit.inspections.quickfix.RegisterActionFix;
-import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.ActionData;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/componentNotRegistered")
-public class ComponentNotRegisteredInspectionTest extends LightCodeInsightFixtureTestCase {
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return new DefaultLightProjectDescriptor() {
-      @Override
-      public ModuleType getModuleType() {
-        return PluginModuleType.getInstance();
-      }
-    };
-  }
+public class ComponentNotRegisteredInspectionTest extends PluginModuleTestCase {
 
   @Override
   protected String getBasePath() {
@@ -109,13 +90,6 @@ public class ComponentNotRegisteredInspectionTest extends LightCodeInsightFixtur
     myFixture.launchAction(registerAction);
 
     myFixture.checkResultByFile("META-INF/plugin.xml", "unregisteredApplicationComponent-plugin_after.xml", true);
-  }
-
-  private void setPluginXml(@TestDataFile String pluginXml) {
-    final VirtualFile file = myFixture.copyFileToProject(pluginXml, "META-INF/plugin.xml");
-    final PluginBuildConfiguration pluginBuildConfiguration = PluginBuildConfiguration.getInstance(myModule);
-    assertNotNull(pluginBuildConfiguration);
-    pluginBuildConfiguration.setPluginXmlFromVirtualFile(file);
   }
 
 
