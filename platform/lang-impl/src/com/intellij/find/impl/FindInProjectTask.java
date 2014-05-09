@@ -409,8 +409,14 @@ class FindInProjectTask {
       });
 
       if (!keys.isEmpty()) {
-        List<VirtualFile> hits = new ArrayList<VirtualFile>();
-        FileBasedIndex.getInstance().getFilesWithKey(TrigramIndex.INDEX_ID, keys, new CommonProcessors.CollectProcessor<VirtualFile>(hits), scope);
+        final List<VirtualFile> hits = new ArrayList<VirtualFile>();
+        final GlobalSearchScope finalScope = scope;
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            FileBasedIndex.getInstance().getFilesWithKey(TrigramIndex.INDEX_ID, keys, new CommonProcessors.CollectProcessor<VirtualFile>(hits),
+                                                         finalScope);
+          }
+        });
 
         for (VirtualFile hit : hits) {
           if (myFileMask.value(hit)) {
