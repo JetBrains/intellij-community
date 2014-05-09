@@ -1,0 +1,8 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="myExtension" interface="ExtensionPoint"/>
+  </extensionPoints>
+    <extensions defaultExtensionNs="com.intellij">
+        <myExtension implementation="MyExtensionPoint"/>
+    </extensions>
+</idea-plugin>

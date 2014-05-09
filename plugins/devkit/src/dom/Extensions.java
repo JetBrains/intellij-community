@@ -42,7 +42,7 @@ public interface Extensions extends DomElement {
 
   Extension addExtension();
 
-  Extension addExtension(String name);
+  Extension addExtension(String qualifiedEPName);
 
   @NotNull
   String getEpPrefix();

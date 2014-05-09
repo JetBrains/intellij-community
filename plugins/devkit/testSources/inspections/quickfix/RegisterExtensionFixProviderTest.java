@@ -32,23 +32,85 @@ public class RegisterExtensionFixProviderTest extends LightCodeInsightFixtureTes
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myFixture.addClass("package com.intellij.codeInspection; public class LocalInspectionTool {} ");
-    myFixture.addClass("package com.intellij.codeInspection; public class GlobalInspectionTool {} ");
     myFixture.enableInspections(new UnusedDeclarationInspection(), new UnusedSymbolLocalInspection());
   }
 
-  public void testCreateLocalInspectionMapping() throws Exception {
+  public void testCreateLocalInspectionMapping() {
+    myFixture.addClass("package com.intellij.codeInspection; public class LocalInspectionTool {} ");
+
     myFixture.testHighlighting("LocalInspection.java", "plugin.xml");
     IntentionAction intention = myFixture.findSingleIntention("Register inspection");
     myFixture.launchAction(intention);
     myFixture.checkResultByFile("plugin.xml", "localInspection.xml", true);
   }
 
-  public void testCreateGlobalInspectionMapping() throws Exception {
-    myFixture.testHighlighting("GlobalInspection.java", "localInspection.xml");
+  public void testCreateGlobalInspectionMapping() {
+    myFixture.addClass("package com.intellij.codeInspection; public class GlobalInspectionTool {} ");
+
+    myFixture.testHighlighting("GlobalInspection.java", "plugin.xml");
     IntentionAction intention = myFixture.findSingleIntention("Register inspection");
     myFixture.launchAction(intention);
-    myFixture.checkResultByFile("localInspection.xml", "globalInspection.xml", true);
+    myFixture.checkResultByFile("plugin.xml", "globalInspection.xml", true);
+  }
+
+  public void testCreateExtensionPointMapping() {
+    myFixture.testHighlighting("MyExtensionPoint.java",
+                               "extensionPoint.xml",
+                               "ExtensionPoint.java");
+    IntentionAction intention = myFixture.findSingleIntention("Register extension");
+    myFixture.launchAction(intention);
+    myFixture.checkResultByFile("extensionPoint.xml", "extensionPoint_after.xml", true);
+  }
+
+  public void testCreateExtensionPointMappingWithKnownRequiredAttribute() {
+    myFixture.addClass("package com.intellij.lang; public class LanguageExtensionPoint {}");
+
+    myFixture.testHighlighting("MyLanguageExtensionPoint.java",
+                               "MyLanguageExtensionPointInterface.java",
+                               "extensionPointWithKnownRequiredAttribute.xml");
+    IntentionAction intention = myFixture.findSingleIntention("Register extension");
+    myFixture.launchAction(intention);
+    myFixture.checkResultByFile("extensionPointWithKnownRequiredAttribute.xml",
+                                "extensionPointWithKnownRequiredAttribute_after.xml", true);
+  }
+
+  public void testCreateExtensionPointMappingWithKnownRequiredAttributeAndTag() {
+    myFixture.addClass("package com.intellij.lang; public class LanguageExtensionPoint {}");
+
+    myFixture.testHighlighting("MyLanguageExtensionPoint.java",
+                               "MyLanguageExtensionPointInterface.java",
+                               "extensionPointWithKnownRequiredAttributeAndTag.xml");
+    IntentionAction intention = myFixture.findSingleIntention("Register extension");
+    myFixture.launchAction(intention);
+    myFixture.checkResultByFile("extensionPointWithKnownRequiredAttributeAndTag.xml",
+                                "extensionPointWithKnownRequiredAttributeAndTag_after.xml", true);
+  }
+
+  public void testCreateExtensionPointMappingNoExtensionsTag() {
+    myFixture.testHighlighting("MyExtensionPoint.java",
+                               "extensionPointNoExtensionsTag.xml",
+                               "ExtensionPoint.java");
+    IntentionAction intention = myFixture.findSingleIntention("Register extension");
+    myFixture.launchAction(intention);
+    myFixture.checkResultByFile("extensionPointNoExtensionsTag.xml", "extensionPointNoExtensionsTag_after.xml", true);
+  }
+
+  public void testCreateExtensionPointMappingNoPluginId() {
+    myFixture.testHighlighting("MyExtensionPoint.java",
+                               "extensionPointNoPluginId.xml",
+                               "ExtensionPoint.java");
+    IntentionAction intention = myFixture.findSingleIntention("Register extension");
+    myFixture.launchAction(intention);
+    myFixture.checkResultByFile("extensionPointNoPluginId.xml", "extensionPointNoPluginId_after.xml", true);
+  }
+
+  public void testCreateExtensionPointQualifiedNameMapping() {
+    myFixture.testHighlighting("MyExtensionPoint.java",
+                               "extensionPointQualifiedName.xml",
+                               "ExtensionPoint.java");
+    IntentionAction intention = myFixture.findSingleIntention("Register extension");
+    myFixture.launchAction(intention);
+    myFixture.checkResultByFile("extensionPointQualifiedName.xml", "extensionPointQualifiedName_after.xml", true);
   }
 
   @Override
