@@ -23,10 +23,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoProcessor;
 import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.icons.AllIcons;
@@ -66,14 +63,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
 
-public class CodeCleanupAction extends BaseAnalysisAction {
+public class CodeCleanupAction extends CodeInspectionAction {
   public CodeCleanupAction() {
     super("Code Cleanup", "Code Cleanup");
   }
 
   @Override
   protected void analyze(@NotNull final Project project, @NotNull final AnalysisScope scope) {
-    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+    final InspectionProfile profile = myExternalProfile != null ? myExternalProfile : InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
     final List<LocalInspectionToolWrapper> lTools = new ArrayList<LocalInspectionToolWrapper>();
     final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
     final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
@@ -134,6 +131,17 @@ public class CodeCleanupAction extends BaseAnalysisAction {
         }, getTemplatePresentation().getText(), null);
       }
     });
+  }
+
+  @Override
+  protected IDEInspectionToolsConfigurable createConfigurable(InspectionProjectProfileManager projectProfileManager,
+                                                              InspectionProfileManager profileManager) {
+    return new IDEInspectionToolsConfigurable(projectProfileManager, profileManager) {
+      @Override
+      protected boolean acceptTool(InspectionProfileEntry entry) {
+        return super.acceptTool(entry) && entry instanceof CleanupLocalInspectionTool;
+      }
+    };
   }
 }
 
