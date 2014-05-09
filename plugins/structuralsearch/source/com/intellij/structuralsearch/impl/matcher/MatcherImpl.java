@@ -294,20 +294,11 @@ public class MatcherImpl {
     if (!ourOptimizedScope) searchScope = options.getScope();
 
     if (searchScope instanceof GlobalSearchScope) {
-      GlobalSearchScope scope = (GlobalSearchScope)searchScope;
-      if (scope.isSearchInLibraries()) {
-        scope = new DelegatingGlobalSearchScope(scope) {
-          final ProjectFileIndex myProjectFileIndex = ProjectFileIndex.SERVICE.getInstance(project);
-          @Override
-          public boolean contains(@NotNull VirtualFile file) {
-            return super.contains(file) || myProjectFileIndex.isInLibrarySource(file);
-          }
-        };
-      }
-      final GlobalSearchScope finalScope = scope;
+      final GlobalSearchScope scope = (GlobalSearchScope)searchScope;
+
       final ContentIterator ci = new ContentIterator() {
         public boolean processFile(final VirtualFile fileOrDir) {
-          if (!fileOrDir.isDirectory() && finalScope.contains(fileOrDir) && fileOrDir.getFileType() != FileTypes.UNKNOWN) {
+          if (!fileOrDir.isDirectory() && scope.contains(fileOrDir) && fileOrDir.getFileType() != FileTypes.UNKNOWN) {
             ++totalFilesToScan;
             scheduler.addOneTask(new MatchOneVirtualFile(fileOrDir, profile, ourPatternLanguage, ourPatternLanguage2));
           }
