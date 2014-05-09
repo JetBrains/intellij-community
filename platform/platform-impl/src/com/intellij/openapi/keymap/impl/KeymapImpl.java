@@ -528,10 +528,6 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
   public Shortcut[] getShortcuts(String actionId) {
     LinkedHashSet<Shortcut> shortcuts = myActionId2ListOfShortcuts.get(actionId);
 
-    // Shortcuts of bounded action has more priority than keystrokes of given action,
-    // and likely this behaviour can't be changed completely because of IDEA-58896.
-    // But. If shortcuts for actionId has been explicitly defined in current keymap
-    // then shortcuts of bounded action won't be used.
     if (shortcuts == null) {
       Shortcut[] boundShortcuts = getBoundShortcuts(actionId);
       if (boundShortcuts!= null) return boundShortcuts;
@@ -549,11 +545,18 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
   }
 
   @Nullable
+  private Shortcut[] getOwnShortcuts(String actionId) {
+    LinkedHashSet<Shortcut> own = myActionId2ListOfShortcuts.get(actionId);
+    if (own == null) return null;
+    return own.isEmpty() ? ourEmptyShortcutsArray : own.toArray(new Shortcut[own.size()]);
+  }
+
+  @Nullable
   private Shortcut[] getBoundShortcuts(String actionId) {
     KeymapManagerEx keymapManager = getKeymapManager();
     boolean hasBoundedAction = keymapManager.getBoundActions().contains(actionId);
     if (hasBoundedAction) {
-      return getShortcuts(keymapManager.getActionBinding(actionId));
+      return getOwnShortcuts(keymapManager.getActionBinding(actionId));
     }
     return null;
   }
