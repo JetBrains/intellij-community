@@ -8,4 +8,6 @@
                 <warning descr="Not used anymore">max="deprecated"</warning>
                 />
 
+  <extensions <warning descr="Use defaultExtensionNs instead">xmlns="<error descr="URI is not registered (Settings | Project Settings | Schemas and DTDs)">com.intellij</error>"</warning>/>
+
 </idea-plugin>
