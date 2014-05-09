@@ -188,7 +188,12 @@ public class FindInProjectUtil {
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return 0;
     if (virtualFile.getFileType().isBinary()) return 0; // do not decompile .class files
-    final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    final Document document = ApplicationManager.getApplication().runReadAction(new Computable<Document>() {
+      @Override
+      public Document compute() {
+        return virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null;
+      }
+    });
     if (document == null) return 0;
     final int[] offset = {0};
     int count = 0;
