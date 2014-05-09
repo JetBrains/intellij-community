@@ -20,7 +20,7 @@ import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/registrationProblems/xml")
-public class XmlRegistrationProblemsInspectionTest extends LightCodeInsightFixtureTestCase {
+public class RegistrationProblemsInspectionXmlTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
