@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.data;
+package com.intellij.vcs.log.graph;
 
-import com.intellij.vcs.log.graph.GraphCommit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class GraphCommitInt implements GraphCommit<Integer> {
+public class GraphCommitImpl<CommitId> implements GraphCommit<CommitId> {
 
-  private final int myId;
-  @NotNull private final List<Integer> myParents;
+  @NotNull private final CommitId myId;
+  @NotNull private final List<CommitId> myParents;
   private final long myTimestamp;
 
-  public GraphCommitInt(int id, @NotNull List<Integer> parents, long timestamp) {
+  public GraphCommitImpl(@NotNull CommitId id, @NotNull List<CommitId> parents, long timestamp) {
     myId = id;
     myParents = parents;
     myTimestamp = timestamp;
@@ -34,18 +33,31 @@ public class GraphCommitInt implements GraphCommit<Integer> {
 
   @NotNull
   @Override
-  public Integer getId() {
+  public CommitId getId() {
     return myId;
   }
 
   @NotNull
   @Override
-  public List<Integer> getParents() {
+  public List<CommitId> getParents() {
     return myParents;
   }
 
   @Override
   public long getTimestamp() {
     return myTimestamp;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || !(o instanceof GraphCommit)) return false;
+    GraphCommit commit = (GraphCommit)o;
+    return myId.equals(commit.getId());
+  }
+
+  @Override
+  public int hashCode() {
+    return myId.hashCode();
   }
 }

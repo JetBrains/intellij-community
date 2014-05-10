@@ -29,6 +29,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.graph.GraphCommit;
+import com.intellij.vcs.log.graph.GraphCommitImpl;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.RequirementsImpl;
 import com.intellij.vcs.log.util.StopWatch;
@@ -188,8 +189,8 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
       @NotNull
       @Override
       public GraphCommit<Integer> fun(@NotNull TimedVcsCommit commit) {
-        return new GraphCommitInt(hashMap.getCommitIndex(commit.getId()), ContainerUtil.map(commit.getParents(), hashMap.asIndexGetter()),
-                                  commit.getTimestamp());
+        return new GraphCommitImpl<Integer>(hashMap.getCommitIndex(commit.getId()),
+                                            ContainerUtil.map(commit.getParents(), hashMap.asIndexGetter()), commit.getTimestamp());
       }
     });
     hashMap.flush();
