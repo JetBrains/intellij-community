@@ -47,10 +47,11 @@ public class IntTimestampGetter implements TimestampGetter {
       saveTimestamps[i] = delegateGetter.getTimestamp(blockSize * i);
 
     Map<Integer, Long> brokenDeltas = new HashMap<Integer, Long>();
-    int[] deltas = new int[delegateGetter.size() - 1];
+    int[] deltas = new int[delegateGetter.size()];
 
-    for (int i = 0; i < delegateGetter.size() - 1; i++) {
-      long delta = delegateGetter.getTimestamp(i + 1) - delegateGetter.getTimestamp(i);
+    for (int i = 0; i < delegateGetter.size(); i++) {
+      int blockIndex = i - (i % blockSize);
+      long delta = delegateGetter.getTimestamp(i) - delegateGetter.getTimestamp(blockIndex);
       int intDelta = deltaToInt(delta);
       deltas[i] = intDelta;
       if (intDelta == BROKEN_DELTA)
@@ -81,8 +82,8 @@ public class IntTimestampGetter implements TimestampGetter {
   // saved 0, blockSize, 2 * blockSize, etc.
   private final long[] mySaveTimestamps;
 
-  public IntTimestampGetter(int[] deltas, int blockSize, long[] saveTimestamps, @NotNull Map<Integer, Long> brokenDeltas) {
-    myDeltas = CompressedIntList.newInstance(deltas);
+  public IntTimestampGetter(final int[] deltas, int blockSize, long[] saveTimestamps, @NotNull Map<Integer, Long> brokenDeltas) {
+    myDeltas = SmartDeltaCompressor.newInstance(new FullIntList(deltas));
     myBlockSize = blockSize;
     mySaveTimestamps = saveTimestamps;
     myBrokenDeltas = brokenDeltas;
@@ -90,7 +91,7 @@ public class IntTimestampGetter implements TimestampGetter {
 
   @Override
   public int size() {
-    return myDeltas.size() + 1;
+    return myDeltas.size();
   }
 
   @Override
@@ -98,11 +99,7 @@ public class IntTimestampGetter implements TimestampGetter {
     checkRange(index);
     int relativeSaveIndex = index / myBlockSize;
     long timestamp = mySaveTimestamps[relativeSaveIndex];
-    for (int i = myBlockSize * relativeSaveIndex; i < index; i++) {
-      timestamp += getDelta(i);
-    }
-
-    return timestamp;
+    return timestamp + getDelta(index);
   }
 
   private long getDelta(int index) {
