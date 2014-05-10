@@ -24,7 +24,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import java.util.*;
 
 /**
- * TODO: Merge PythonDataflowUtil, {@link com.jetbrains.python.psi.impl.PyConstantExpressionEvaluator}  and {@link com.jetbrains.python.psi.impl.PyEvaluator} and all its inheritors and improve Abstract Interpretation
+ * TODO: Merge {@link com.jetbrains.python.psi.impl.PyExpressionEvaluator}, PythonDataflowUtil, {@link com.jetbrains.python.psi.impl.PyConstantExpressionEvaluator}  and {@link com.jetbrains.python.psi.impl.PyEvaluator} and all its inheritors and improve Abstract Interpretation
  * @author yole
  */
 public class PyEvaluator {
@@ -46,7 +46,7 @@ public class PyEvaluator {
     }
     myVisited.add(expr);
     if (expr instanceof PyParenthesizedExpression) {
-      return evaluate(((PyParenthesizedExpression) expr).getContainedExpression());
+      return evaluate(((PyParenthesizedExpression)expr).getContainedExpression());
     }
     if (expr instanceof PySequenceExpression) {
       PyExpression[] elements = ((PySequenceExpression)expr).getElements();
@@ -94,12 +94,12 @@ public class PyEvaluator {
 
   public static Object concatenate(Object lhs, Object rhs) {
     if (lhs instanceof String && rhs instanceof String) {
-      return (String) lhs + (String) rhs;
+      return (String)lhs + (String)rhs;
     }
     if (lhs instanceof List && rhs instanceof List) {
       List<Object> result = new ArrayList<Object>();
-      result.addAll((List) lhs);
-      result.addAll((List) rhs);
+      result.addAll((List)lhs);
+      result.addAll((List)rhs);
       return result;
     }
     return null;
@@ -132,7 +132,7 @@ public class PyEvaluator {
         Object arg1 = evaluate(args[0]);
         Object arg2 = evaluate(args[1]);
         if (arg1 instanceof String && arg2 instanceof String) {
-          return ((String) result).replace((String) arg1, (String) arg2);
+          return ((String)result).replace((String)arg1, (String)arg2);
         }
       }
     }

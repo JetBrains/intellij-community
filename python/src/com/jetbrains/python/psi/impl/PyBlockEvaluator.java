@@ -25,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
+ *
+ * @see {@link com.jetbrains.python.psi.impl.PyExpressionEvaluator} (TODO: merge both classes?)
  * @author yole
  */
 public class PyBlockEvaluator {
