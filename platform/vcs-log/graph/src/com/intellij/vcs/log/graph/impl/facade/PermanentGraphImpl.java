@@ -18,10 +18,8 @@ package com.intellij.vcs.log.graph.impl.facade;
 
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.vcs.log.graph.GraphColorManager;
-import com.intellij.vcs.log.graph.GraphCommit;
-import com.intellij.vcs.log.graph.PermanentGraph;
-import com.intellij.vcs.log.graph.VisibleGraph;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.impl.permanent.*;
@@ -103,22 +101,18 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   @NotNull
   @Override
   public List<GraphCommit<CommitId>> getAllCommits() {
-    return new AbstractList<GraphCommit<CommitId>>() {
-      @Override
-      public GraphCommit<CommitId> get(int index) {
-        CommitId commitId = myPermanentCommitsInfo.getCommitId(index);
-        GraphCommit<CommitId> graphCommit = myCommitsWithNotLoadParent.get(commitId);
-        if (graphCommit != null)
-          return graphCommit;
+    List<GraphCommit<CommitId>> result = ContainerUtil.newArrayList();
+    for (int index = 0; index < myPermanentLinearGraph.nodesCount(); index++) {
+      CommitId commitId = myPermanentCommitsInfo.getCommitId(index);
+      GraphCommit<CommitId> graphCommit = myCommitsWithNotLoadParent.get(commitId);
+      if (graphCommit == null) {
         List<CommitId> parentsCommitIds = myPermanentCommitsInfo.convertToCommitIdList(myPermanentLinearGraph.getDownNodes(index));
-        return new SimpleGraphCommit<CommitId>(commitId, parentsCommitIds, myPermanentCommitsInfo.getTimestamp(index));
+        graphCommit = new GraphCommitImpl<CommitId>(commitId, parentsCommitIds, myPermanentCommitsInfo.getTimestamp(index));
       }
+      result.add(graphCommit);
+    }
 
-      @Override
-      public int size() {
-        return myPermanentLinearGraph.nodesCount();
-      }
-    };
+    return result;
   }
 
   @NotNull
@@ -180,34 +174,4 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
     return myCommitsWithNotLoadParent;
   }
 
-  private static class SimpleGraphCommit<CommitId> implements GraphCommit<CommitId> {
-    @NotNull
-    private final CommitId myId;
-    @NotNull
-    private final List<CommitId> myParents;
-    private final long myTimestamp;
-
-    private SimpleGraphCommit(@NotNull CommitId id, @NotNull List<CommitId> parents, long timestamp) {
-      myId = id;
-      myParents = parents;
-      myTimestamp = timestamp;
-    }
-
-    @NotNull
-    @Override
-    public CommitId getId() {
-      return myId;
-    }
-
-    @NotNull
-    @Override
-    public List<CommitId> getParents() {
-      return myParents;
-    }
-
-    @Override
-    public long getTimestamp() {
-      return myTimestamp;
-    }
-  }
 }
