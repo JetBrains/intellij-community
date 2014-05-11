@@ -130,7 +130,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
       return new PersistentHashMap<Integer, Integer>(fileIdToHashIdFile, EnumeratorIntegerDescriptor.INSTANCE,
                                                      EnumeratorIntegerDescriptor.INSTANCE, 4096) {
         @Override
-        protected boolean wantCompactIntegralValues() {
+        protected boolean wantNonnegativeIntegralValues() {
           return true;
         }
       };
