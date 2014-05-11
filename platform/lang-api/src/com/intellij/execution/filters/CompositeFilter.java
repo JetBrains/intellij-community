@@ -61,7 +61,7 @@ public class CompositeFilter implements Filter, FilterMixin {
           result = filter.applyFilter(line, entireLength);
         }
         catch (Throwable t) {
-          throw new RuntimeException("Error while applying " + filter + " to '"+line+"'", t);
+          throw new RuntimeException("Error while applying " + filter + " to '" + line + "'", t);
         }
         finalResult = merge(finalResult, result);
         t0 = System.currentTimeMillis() - t0;
@@ -147,12 +147,12 @@ public class CompositeFilter implements Filter, FilterMixin {
     final boolean dumb = myDumbService.isDumb();
     List<Filter> filters = myFilters;
     int count = filters.size();
-    
+
     for (int i = 0; i < count; i++) {
       Filter filter = filters.get(i);
-      if (! (filter instanceof FilterMixin) || !((FilterMixin)filter).shouldRunHeavy()) continue;
+      if (!(filter instanceof FilterMixin) || !((FilterMixin)filter).shouldRunHeavy()) continue;
       if (!dumb || DumbService.isDumbAware(filter)) {
-        ((FilterMixin) filter).applyHeavyFilter(copiedFragment, startOffset, startLineNumber, consumer);
+        ((FilterMixin)filter).applyHeavyFilter(copiedFragment, startOffset, startLineNumber, consumer);
       }
     }
   }
@@ -163,7 +163,7 @@ public class CompositeFilter implements Filter, FilterMixin {
     List<Filter> filters = myFilters;
     final List<String> updateMessage = new ArrayList<String>();
     int count = filters.size();
-    
+
     for (int i = 0; i < count; i++) {
       Filter filter = filters.get(i);
 
@@ -194,7 +194,7 @@ public class CompositeFilter implements Filter, FilterMixin {
 
   /**
    * for cases with more filters, only this one is constructed once for all results, to reduce memory allocation
-      */
+   */
   private static class MyArrayList<T> extends ArrayList<T> {
     MyArrayList(int initialCapacity) {
       super(initialCapacity);
