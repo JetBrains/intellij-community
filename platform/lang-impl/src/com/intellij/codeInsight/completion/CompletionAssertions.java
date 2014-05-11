@@ -18,18 +18,20 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.diagnostic.LogEventException;
-import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -54,6 +56,8 @@ class CompletionAssertions {
       return;
     }
 
+    FileViewProvider viewProvider = psiFile.getViewProvider();
+
     String message = "unsuccessful commit:";
     message += "\nmatching=" + (psiFile == manager.getPsiFile(document));
     message += "\ninjectedEditor=" + (editor instanceof EditorWindow);
@@ -62,6 +66,8 @@ class CompletionAssertions {
     message += "\nfile=" + psiFile.getName();
     message += "\nfile class=" + psiFile.getClass();
     message += "\nfile.valid=" + psiFile.isValid();
+    message += "\nfile.physical=" + psiFile.isPhysical();
+    message += "\nfile.eventSystemEnabled=" + viewProvider.isEventSystemEnabled();
     message += "\nlanguage=" + psiFile.getLanguage();
     message += "\ndoc.length=" + docLength;
     message += "\npsiFile.length=" + psiLength;
@@ -77,10 +83,13 @@ class CompletionAssertions {
         message += "\nnode.text.length=" + nodeText.length();
       }
     }
+    VirtualFile virtualFile = viewProvider.getVirtualFile();
+    message += "\nvirtualFile=" + virtualFile;
+    message += "\nvirtualFile.class=" + virtualFile.getClass();
     message += "\n" + DebugUtil.currentStackTrace();
 
     throw new LogEventException("Commit unsuccessful", message,
-                                       new Attachment(psiFile.getViewProvider().getVirtualFile().getPath() + "_file.txt", fileText),
+                                       new Attachment(virtualFile.getPath() + "_file.txt", fileText),
                                        createAstAttachment(psiFile, psiFile),
                                        new Attachment("docText.txt", document.getText()));
   }
