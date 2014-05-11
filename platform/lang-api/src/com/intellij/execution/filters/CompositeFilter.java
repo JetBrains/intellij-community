@@ -193,7 +193,7 @@ public class CompositeFilter implements Filter, FilterMixin {
   }
 
   /**
-   * for cases with more filters, only this one is constructed once for all results, to reduce memory allocation
+   * for cases with more filters, only this list is constructed for merging of all results, to reduce memory allocation
    */
   private static class MyArrayList<T> extends ArrayList<T> {
     MyArrayList(int initialCapacity) {
