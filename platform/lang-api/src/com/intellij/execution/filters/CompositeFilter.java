@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("ForLoopReplaceableByForEach")
 public class CompositeFilter implements Filter, FilterMixin {
   private static final Logger LOG = Logger.getInstance(CompositeFilter.class);
 
@@ -75,6 +76,7 @@ public class CompositeFilter implements Filter, FilterMixin {
     return finalResult;
   }
 
+  @Nullable
   protected Result merge(@Nullable Result finalResult, @Nullable Result result) {
     if (result != null) {
       if (finalResult == null) {
@@ -99,7 +101,8 @@ public class CompositeFilter implements Filter, FilterMixin {
       mergedResult.addAll(finalResult);
     }
 
-    for (ResultItem item : result) {
+    for (int i = 0; i < result.size(); i++) {
+      ResultItem item = result.get(i);
       if (item.hyperlinkInfo != null) {
         if (!intersects(mergedResult, item)) {
           mergedResult.add(item);
@@ -116,7 +119,8 @@ public class CompositeFilter implements Filter, FilterMixin {
     boolean intersects = false;
     TextRange addedItemTextRange = null;
 
-    for (ResultItem item : mergedList) {
+    for (int i = 0; i < mergedList.size(); i++) {
+      ResultItem item = mergedList.get(i);
       if (item.hyperlinkInfo != null) {
         if (addedItemTextRange == null) {
           addedItemTextRange = new TextRange(addedItem.highlightStartOffset, addedItem.highlightEndOffset);
@@ -143,7 +147,7 @@ public class CompositeFilter implements Filter, FilterMixin {
     final boolean dumb = myDumbService.isDumb();
     List<Filter> filters = myFilters;
     int count = filters.size();
-    //noinspection ForLoopReplaceableByForEach
+    
     for (int i = 0; i < count; i++) {
       Filter filter = filters.get(i);
       if (! (filter instanceof FilterMixin) || !((FilterMixin)filter).shouldRunHeavy()) continue;
@@ -159,7 +163,7 @@ public class CompositeFilter implements Filter, FilterMixin {
     List<Filter> filters = myFilters;
     final List<String> updateMessage = new ArrayList<String>();
     int count = filters.size();
-    //noinspection ForLoopReplaceableByForEach
+    
     for (int i = 0; i < count; i++) {
       Filter filter = filters.get(i);
 
@@ -189,8 +193,8 @@ public class CompositeFilter implements Filter, FilterMixin {
   }
 
   /**
-   * for memory allocation reduction without danger of changing clients arraylist
-   */
+   * for cases with more filters, only this one is constructed once for all results, to reduce memory allocation
+      */
   private static class MyArrayList<T> extends ArrayList<T> {
     MyArrayList(int initialCapacity) {
       super(initialCapacity);
