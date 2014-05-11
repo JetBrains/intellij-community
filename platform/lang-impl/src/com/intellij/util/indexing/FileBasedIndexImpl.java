@@ -1611,8 +1611,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     for (ID<?, ?> indexId : myIndices.keySet()) {
       final MapReduceIndex index = (MapReduceIndex)getIndex(indexId);
       assert index != null;
-      final IndexStorage indexStorage = index.getStorage();
-      ((MemoryIndexStorage)indexStorage).setBufferingEnabled(enabled);
+      MemoryIndexStorage storage = (MemoryIndexStorage)index.getStorage();
+      if (storage.isBufferingEnabled() == enabled) {
+        break; // already set it
+      }
+      storage.setBufferingEnabled(enabled);
     }
     return holder;
   }
@@ -2661,6 +2664,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   @SuppressWarnings({"WhileLoopSpinsOnField", "SynchronizeOnThis"})
   private static class StorageGuard {
     private int myHolds = 0;
+    private int myWaiters = 0;
 
     public interface Holder {
       void leave();
@@ -2683,31 +2687,34 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     public synchronized Holder enter(boolean mode) {
       if (mode) {
         while (myHolds < 0) {
-          try {
-            wait();
-          }
-          catch (InterruptedException ignored) {
-          }
+          doWait();
         }
         myHolds++;
         return myTrueHolder;
       }
       else {
         while (myHolds > 0) {
-          try {
-            wait();
-          }
-          catch (InterruptedException ignored) {
-          }
+          doWait();
         }
         myHolds--;
         return myFalseHolder;
       }
     }
 
+    private void doWait() {
+      try {
+        ++myWaiters;
+        wait();
+      }
+      catch (InterruptedException ignored) {
+      } finally {
+        --myWaiters;
+      }
+    }
+
     private synchronized void leave(boolean mode) {
       myHolds += mode ? -1 : 1;
-      if (myHolds == 0) {
+      if (myHolds == 0 && myWaiters > 0) {
         notifyAll();
       }
     }
