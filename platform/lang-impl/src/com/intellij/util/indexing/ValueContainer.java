@@ -16,8 +16,11 @@
 
 package com.intellij.util.indexing;
 
+import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
@@ -78,4 +81,6 @@ public abstract class ValueContainer<Value> {
   void setNeedsCompacting(boolean value) {
     myNeedsCompacting = value;
   }
+
+  public abstract void saveTo(DataOutput out, DataExternalizer<Value> externalizer) throws IOException;
 }
