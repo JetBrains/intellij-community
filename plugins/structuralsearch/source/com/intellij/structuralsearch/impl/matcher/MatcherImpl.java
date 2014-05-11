@@ -159,6 +159,7 @@ public class MatcherImpl {
                                 final Configuration configuration,
                                 PsiElement psiFile,
                                 final PairProcessor<MatchResult, Configuration> processor) {
+    if (psiFile == null) return;
     LocalSearchScope scope = new LocalSearchScope(psiFile);
 
     matchContext.clear();
