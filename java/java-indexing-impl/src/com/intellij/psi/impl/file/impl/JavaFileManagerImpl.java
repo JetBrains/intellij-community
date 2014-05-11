@@ -19,6 +19,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,8 +33,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -43,24 +42,18 @@ import java.util.*;
 /**
  * Author: dmitrylomov
  */
-public abstract class JavaFileManagerBase implements JavaFileManager, Disposable {
+public class JavaFileManagerImpl implements JavaFileManager, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.JavaFileManagerImpl");
   private final ConcurrentHashMap<GlobalSearchScope, PsiClass> myCachedObjectClassMap = new ConcurrentHashMap<GlobalSearchScope, PsiClass>();
   private final PsiManagerEx myManager;
-  private final ProjectRootManager myProjectRootManager;
   private volatile Set<String> myNontrivialPackagePrefixes = null;
   private boolean myDisposed = false;
   private final PackageIndex myPackageIndex;
-  protected final MessageBusConnection myConnection;
 
-  public JavaFileManagerBase(
-    final PsiManagerEx manager, final ProjectRootManager projectRootManager,
-    final MessageBus bus) {
-    myManager = manager;
-    myProjectRootManager = projectRootManager;
+  public JavaFileManagerImpl(Project project) {
+    myManager = (PsiManagerEx)PsiManager.getInstance(project);
     myPackageIndex = PackageIndex.getInstance(myManager.getProject());
-    myConnection = bus.connect();
-    myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+    project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       @Override
       public void rootsChanged(final ModuleRootEvent event) {
         myNontrivialPackagePrefixes = null;
@@ -201,9 +194,10 @@ public abstract class JavaFileManagerBase implements JavaFileManager, Disposable
 
   @Override
   public Collection<String> getNonTrivialPackagePrefixes() {
-    if (myNontrivialPackagePrefixes == null) {
-      Set<String> names = new HashSet<String>();
-      final ProjectRootManager rootManager = myProjectRootManager;
+    Set<String> names = myNontrivialPackagePrefixes;
+    if (names == null) {
+      names = new HashSet<String>();
+      final ProjectRootManager rootManager = ProjectRootManager.getInstance(myManager.getProject());
       final List<VirtualFile> sourceRoots = rootManager.getModuleSourceRoots(JavaModuleSourceRootTypes.SOURCES);
       final ProjectFileIndex fileIndex = rootManager.getFileIndex();
       for (final VirtualFile sourceRoot : sourceRoots) {
@@ -214,7 +208,7 @@ public abstract class JavaFileManagerBase implements JavaFileManager, Disposable
       }
       myNontrivialPackagePrefixes = names;
     }
-    return myNontrivialPackagePrefixes;
+    return names;
   }
 
 }
