@@ -17,6 +17,7 @@ package org.jetbrains.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.util.SystemProperties;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.BootstrapUtil;
 import io.netty.bootstrap.ServerBootstrap;
@@ -36,7 +37,6 @@ import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Random;
-import java.util.UUID;
 
 public final class NettyUtil {
   public static final int DEFAULT_CONNECT_ATTEMPT_COUNT = 20;
@@ -44,9 +44,10 @@ public final class NettyUtil {
 
   static {
     // IDEA-120811
-    String id = UUID.randomUUID().toString();
-    System.setProperty("io.netty.machineId", id.substring(id.length() - 8));
-    System.setProperty("io.netty.processId", Integer.toString(new Random().nextInt(65535)));
+    if (SystemProperties.getBooleanProperty("io.netty.random.id", true)) {
+      System.setProperty("io.netty.machineId", "9e43d860");
+      System.setProperty("io.netty.processId", Integer.toString(new Random().nextInt(65535)));
+    }
   }
   
   public static void log(Throwable throwable, Logger log) {
@@ -79,7 +80,7 @@ public final class NettyUtil {
             Thread.sleep(attemptCount * MIN_START_TIME);
           }
           else {
-            asyncResult.reject("Cannot connect");
+            asyncResult.reject("Cannot connect: " + e.getMessage());
             return null;
           }
         }
