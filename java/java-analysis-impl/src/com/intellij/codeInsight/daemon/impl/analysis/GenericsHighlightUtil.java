@@ -540,6 +540,11 @@ public class GenericsHighlightUtil {
       return null;
     }
 
+    if (superMethod.hasModifierProperty(PsiModifier.STATIC) && superContainingClass != null &&
+        superContainingClass.isInterface() && PsiUtil.isLanguageLevel8OrHigher(superContainingClass)) {
+      return null;
+    }
+
     final PsiType retErasure1 = TypeConversionUtil.erasure(checkMethod.getReturnType());
     final PsiType retErasure2 = TypeConversionUtil.erasure(superMethod.getReturnType());
 
