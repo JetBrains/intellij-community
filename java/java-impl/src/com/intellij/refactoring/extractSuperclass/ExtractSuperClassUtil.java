@@ -70,8 +70,8 @@ public class ExtractSuperClassUtil {
     project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
       .refactoringStarted(REFACTORING_EXTRACT_SUPER_ID, createBeforeData(subclass, selectedMemberInfos));
 
+    final PsiClass superclass = JavaDirectoryService.getInstance().createClass(targetDirectory, superclassName);
     try {
-      PsiClass superclass = JavaDirectoryService.getInstance().createClass(targetDirectory, superclassName);
       final PsiModifierList superClassModifierList = superclass.getModifierList();
       assert superClassModifierList != null;
       superClassModifierList.setModifierProperty(PsiModifier.FINAL, false);
@@ -115,7 +115,7 @@ public class ExtractSuperClassUtil {
       return superclass;
     }
     finally {
-      project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(REFACTORING_EXTRACT_SUPER_ID, createAfterData(subclass));
+      project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(REFACTORING_EXTRACT_SUPER_ID, createAfterData(superclass));
     }
   }
 
