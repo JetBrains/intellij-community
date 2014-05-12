@@ -342,7 +342,7 @@ public class EditorHyperlinkSupport {
     return document.getCharsSequence().subSequence(document.getLineStartOffset(lineNumber), endOffset).toString();
   }
 
-  public static class HyperlinkInfoTextAttributes extends TextAttributes {
+  private static class HyperlinkInfoTextAttributes extends TextAttributes {
     private HyperlinkInfo myHyperlinkInfo;
 
     public HyperlinkInfoTextAttributes(@NotNull HyperlinkInfo hyperlinkInfo) {

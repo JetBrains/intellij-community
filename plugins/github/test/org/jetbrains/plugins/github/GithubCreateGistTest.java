@@ -119,34 +119,4 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
 
     checkNotification(NotificationType.WARNING, "Can't create Gist", "Can't create empty gist");
   }
-
-  public void testWrongLogin() throws Throwable {
-    registerCancelingLoginDialogHandler();
-
-    List<FileContent> expected = createContent();
-
-    GithubAuthData auth = myGitHubSettings.getAuthData();
-    GithubAuthData myAuth = GithubAuthData.createBasicAuth(auth.getHost(), myLogin1 + "some_suffix", myPassword);
-    String url =
-      GithubCreateGistAction.createGist(myProject, new GithubAuthDataHolder(myAuth), myIndicator, expected, true, GIST_DESCRIPTION, null);
-    assertNull("Gist was created", url);
-
-    checkNotification(NotificationType.ERROR, "Can't create Gist", null);
-  }
-
-  public void testWrongPassword() throws Throwable {
-    registerCancelingLoginDialogHandler();
-
-    List<FileContent> expected = createContent();
-
-    GithubAuthData auth = myGitHubSettings.getAuthData();
-    GithubAuthData myAuth = GithubAuthData.createBasicAuth(auth.getHost(), myLogin1, myPassword + "some_suffix");
-    String url =
-      GithubCreateGistAction.createGist(myProject, new GithubAuthDataHolder(myAuth), myIndicator, expected, true, GIST_DESCRIPTION, null);
-    assertNull("Gist was created", url);
-
-    checkNotification(NotificationType.ERROR, "Can't create Gist", null);
-  }
-
-
 }

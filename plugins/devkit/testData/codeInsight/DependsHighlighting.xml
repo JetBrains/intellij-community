@@ -6,4 +6,7 @@
   <depends>com.intellij.custom</depends>
   <depends><error descr="Cannot resolve plugin com.intellij.xxx">com.intellij.xxx</error></depends>
 
+
+  <depends config-file="optional.xml">com.intellij</depends>
+  <depends config-file="<error descr="Cannot resolve file 'INVALID_VALUE'">INVALID_VALUE</error>">com.intellij</depends>
 </idea-plugin>

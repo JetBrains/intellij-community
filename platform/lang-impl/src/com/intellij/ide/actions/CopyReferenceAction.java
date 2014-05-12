@@ -213,12 +213,14 @@ public class CopyReferenceAction extends DumbAwareAction {
       }
     }
 
-    String fqn = null;
     if (element instanceof PsiFile) {
-      final PsiFile file = (PsiFile)element;
-      fqn = FileUtil.toSystemIndependentName(getFileFqn(file));
+      return FileUtil.toSystemIndependentName(getFileFqn((PsiFile)element));
     }
-    return fqn;
+    if (element instanceof PsiDirectory) {
+      return FileUtil.toSystemIndependentName(getVirtualFileFqn(((PsiDirectory)element).getVirtualFile(), element.getProject()));
+    }
+
+    return null;
   }
 
   @Nullable
@@ -234,10 +236,10 @@ public class CopyReferenceAction extends DumbAwareAction {
   @NotNull
   private static String getFileFqn(final PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile == null) {
-      return file.getName();
-    }
-    final Project project = file.getProject();
+    return virtualFile == null ? file.getName() : getVirtualFileFqn(virtualFile, file.getProject());
+  }
+
+  private static String getVirtualFileFqn(@NotNull VirtualFile virtualFile, @NotNull Project project) {
     final LogicalRoot logicalRoot = LogicalRootsManager.getLogicalRootsManager(project).findLogicalRoot(virtualFile);
     if (logicalRoot != null && logicalRoot.getVirtualFile() != null) {
       String logical = FileUtil.toSystemIndependentName(VfsUtilCore.virtualToIoFile(logicalRoot.getVirtualFile()).getPath());
@@ -248,7 +250,7 @@ public class CopyReferenceAction extends DumbAwareAction {
     final VirtualFile contentRoot = ProjectRootManager.getInstance(project).getFileIndex().getContentRootForFile(virtualFile);
     if (contentRoot != null) {
       return ObjectUtils.assertNotNull(FileUtil.getRelativePath(VfsUtilCore.virtualToIoFile(contentRoot), VfsUtilCore.virtualToIoFile(virtualFile)));
-    }  
+    }
     return virtualFile.getPath();
   }
 }

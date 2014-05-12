@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package org.jetbrains.idea.devkit.codeInsight
+
 import com.intellij.codeInsight.TargetElementUtilBase
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInspection.xml.DeprecatedClassUsageInspection
@@ -89,8 +90,19 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     """);
     addPluginXml("custom", "<id>com.intellij.custom</id>");
 
+    myFixture.copyFileToProject("deprecatedAttributes.xml", "META-INF/optional.xml")
     configureByFile();
     myFixture.checkHighlighting(false, false, false);
+  }
+
+  public void testDependsConfigFileCompletion() {
+    myFixture.copyFileToProject("deprecatedAttributes.xml", "META-INF/used.xml")
+    myFixture.copyFileToProject("deprecatedAttributes.xml", "META-INF/optional.xml")
+    myFixture.copyFileToProject("deprecatedAttributes.xml", "META-INF/optional2.xml")
+    configureByFile()
+
+    myFixture.completeBasic()
+    assertSameElements(myFixture.getLookupElementStrings(), "optional.xml", "optional2.xml")
   }
 
   public void testDependsCompletion() throws Throwable {

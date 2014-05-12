@@ -160,9 +160,6 @@ public class GithubCreateGistAction extends DumbAwareAction {
                                }
           );
       }
-      catch (GithubOperationCanceledException e) {
-        return null;
-      }
       catch (IOException e) {
         GithubNotifications.showError(project, "Can't create gist", e);
         return null;
