@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch.impl.matcher;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchResultSink;
 import com.intellij.structuralsearch.MatchingProcess;
 import com.intellij.structuralsearch.MatchResult;
@@ -20,7 +21,7 @@ class MatchConstraintsSink implements MatchResultSink {
   private final boolean caseSensitive;
   private int matchCount;
   private final int maxMatches;
-  private final HashMap matches = new HashMap();
+  private final HashMap<Object, MatchResult> matches = new HashMap();
 
   MatchConstraintsSink(MatchResultSink _delegate, int _maxMatches,boolean distinct, boolean _caseSensitive) {
     delegate = _delegate;
@@ -40,6 +41,13 @@ class MatchConstraintsSink implements MatchResultSink {
       }
 
       matches.put(matchImage,result);
+    }
+    else {
+      final PsiElement match = result.getMatch();
+      if (matches.containsKey(match)) {
+        return;
+      }
+      matches.put(match, result);
     }
 
     delegate.newMatch(result);

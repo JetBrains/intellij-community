@@ -1811,7 +1811,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals(
       "implements navigation match in definition 2 with nested conditions",
       findMatchesCount(s109,s110_3),
-      3
+      1
     );
 
     try {
