@@ -1,5 +1,5 @@
 <idea-plugin url="http://www.jetbrains.com/idea">
-  <extensions xmlns="com.intellij">
+  <extensions defaultExtensionNs="com.intellij">
     <javaCoverageEngineExtension implementation="com.intellij.coverage.DefaultJ2EEContainerExtension"/>
   </extensions>
 </idea-plugin>
