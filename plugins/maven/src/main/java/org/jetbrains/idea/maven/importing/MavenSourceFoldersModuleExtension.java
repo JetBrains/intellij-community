@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -59,6 +60,10 @@ public class MavenSourceFoldersModuleExtension extends ModuleExtension<MavenSour
     myDummyJpsModule = JpsElementFactory.getInstance()
       .createModule(module.getName(), JpsJavaModuleType.INSTANCE, JpsElementFactory.getInstance().createDummyElement());
     myDummyJpsRootModel = new JpsRootModel(module, myDummyJpsModule);
+
+    for (JpsSourceFolder folder : myJpsSourceFolders) {
+      Disposer.dispose(folder);
+    }
     myJpsSourceFolders.clear();
 
     for (ContentEntry eachEntry : modifiableRootModel.getContentEntries()) {
@@ -94,6 +99,7 @@ public class MavenSourceFoldersModuleExtension extends ModuleExtension<MavenSour
             found = true;
             eachFolder.setPackagePrefix(jpsSourceFolder.getPackagePrefix());
             myJpsSourceFolders.remove(jpsSourceFolder);
+            Disposer.dispose(jpsSourceFolder);
             break;
           }
         }
@@ -125,6 +131,9 @@ public class MavenSourceFoldersModuleExtension extends ModuleExtension<MavenSour
 
   @Override
   public void dispose() {
+    for (JpsSourceFolder folder : myJpsSourceFolders) {
+      Disposer.dispose(folder);
+    }
     myJpsSourceFolders.clear();
   }
 
@@ -137,6 +146,9 @@ public class MavenSourceFoldersModuleExtension extends ModuleExtension<MavenSour
   }
 
   public void clearSourceFolders() {
+    for (JpsSourceFolder folder : myJpsSourceFolders) {
+      Disposer.dispose(folder);
+    }
     myJpsSourceFolders.clear();
     isJpsSourceFoldersChanged = true;
   }
@@ -145,10 +157,11 @@ public class MavenSourceFoldersModuleExtension extends ModuleExtension<MavenSour
                                                      final @NotNull JpsModuleSourceRootType<P> rootType,
                                                      final @NotNull P properties) {
     for (Iterator<JpsSourceFolder> iterator = myJpsSourceFolders.iterator(); iterator.hasNext(); ) {
-      SourceFolder eachFolder = iterator.next();
+      JpsSourceFolder eachFolder = iterator.next();
       if (VfsUtilCore.isEqualOrAncestor(url.getUrl(), eachFolder.getUrl()) ||
           VfsUtilCore.isEqualOrAncestor(eachFolder.getUrl(), url.getUrl())) {
         iterator.remove();
+        Disposer.dispose(eachFolder);
       }
     }
 
@@ -191,6 +204,7 @@ public class MavenSourceFoldersModuleExtension extends ModuleExtension<MavenSour
       String child = under ? eachFolder.getUrl() : url.getUrl();
       if (VfsUtilCore.isEqualOrAncestor(ancestor, child)) {
         iterator.remove();
+        Disposer.dispose(eachFolder);
       }
     }
   }
