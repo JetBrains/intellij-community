@@ -352,7 +352,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
   }
 
-  private boolean checkHierarchy(PsiElement element, PsiElement patternElement) {
+  private boolean checkHierarchy(PsiMember element, PsiMember patternElement) {
     final MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler(patternElement);
     if (handler instanceof SubstitutionHandler) {
       final SubstitutionHandler handler2 = (SubstitutionHandler)handler;
@@ -360,7 +360,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       if (!handler2.isSubtype()) {
         if (handler2.isStrictSubtype()) {
           // check if element is declared not in current class  (in ancestors)
-          return element.getParent() != myClazz;
+          return element.getContainingClass() != myClazz;
         }
       }
       else {
@@ -369,12 +369,12 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
 
     // check if element is declared in current class (not in ancestors)
-    return element.getParent() == myClazz;
+    return element.getContainingClass() == myClazz;
   }
 
   @Override
   public void visitField(PsiField psiField) {
-    if (!checkHierarchy(myMatchingVisitor.getElement(), psiField)) {
+    if (!checkHierarchy((PsiField)myMatchingVisitor.getElement(), psiField)) {
       myMatchingVisitor.setResult(false);
       return;
     }
