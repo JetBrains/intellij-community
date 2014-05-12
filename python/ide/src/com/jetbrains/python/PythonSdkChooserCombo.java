@@ -30,6 +30,7 @@ import com.intellij.util.NullableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.sdk.PyDetectedSdk;
+import com.jetbrains.python.sdk.PySdkService;
 import com.jetbrains.python.sdk.PythonSdkDetailsStep;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.Nullable;
@@ -82,24 +83,26 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
     final PyConfigurableInterpreterList interpreterList = PyConfigurableInterpreterList.getInstance(project);
     final Sdk[] sdks = interpreterList.getModel().getSdks();
     PythonSdkDetailsStep.show(project, sdks, null, this, getButton().getLocationOnScreen(), new NullableConsumer<Sdk>() {
-        @Override
-        public void consume(@Nullable Sdk sdk) {
-          if(sdk == null) return;
-          final ProjectSdksModel projectSdksModel = interpreterList.getModel();
-          if (projectSdksModel.findSdk(sdk) == null) {
-            projectSdksModel.addSdk(sdk);
-            try {
-              projectSdksModel.apply();
-            }
-            catch (ConfigurationException e) {
-              LOG.error("Error adding new python interpreter " + e.getMessage());
-            }
+      @Override
+      public void consume(@Nullable Sdk sdk) {
+        if (sdk == null) return;
+        final PySdkService sdkService = PySdkService.getInstance();
+        sdkService.restoreSdk(sdk);
+
+        final ProjectSdksModel projectSdksModel = interpreterList.getModel();
+        if (projectSdksModel.findSdk(sdk) == null) {
+          projectSdksModel.addSdk(sdk);
+          try {
+            projectSdksModel.apply();
           }
-          //noinspection unchecked
-          getComboBox().setModel(new CollectionComboBoxModel(interpreterList.getAllPythonSdks(), sdk));
+          catch (ConfigurationException e) {
+            LOG.error("Error adding new python interpreter " + e.getMessage());
+          }
         }
+        //noinspection unchecked
+        getComboBox().setModel(new CollectionComboBoxModel(interpreterList.getAllPythonSdks(), sdk));
       }
-    );
+    }, true);
   }
 
   private void notifyChanged(ActionEvent e) {
