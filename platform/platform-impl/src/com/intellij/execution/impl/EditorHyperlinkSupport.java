@@ -42,6 +42,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Consumer;
 import com.intellij.util.FilteringProcessor;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +53,7 @@ import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author peter
@@ -103,6 +105,18 @@ public class EditorHyperlinkSupport {
     for (RangeHighlighter highlighter : getHyperlinks(0, myEditor.getDocument().getTextLength(), myEditor)) {
       removeHyperlink(highlighter);
     }
+  }
+
+  @Deprecated
+  public Map<RangeHighlighter, HyperlinkInfo> getHyperlinks() {
+    LinkedHashMap<RangeHighlighter, HyperlinkInfo> result = new LinkedHashMap<RangeHighlighter, HyperlinkInfo>();
+    for (RangeHighlighter highlighter : getHyperlinks(0, myEditor.getDocument().getTextLength(), myEditor)) {
+      HyperlinkInfo info = getHyperlinkInfo(highlighter);
+      if (info != null) {
+        result.put(highlighter, info);
+      }
+    }
+    return result;
   }
 
   @Nullable
