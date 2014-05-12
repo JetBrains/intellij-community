@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
-import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -225,7 +225,7 @@ public class StubGenerator implements ClassItemGenerator {
   public void writeMethod(StringBuilder text, PsiMethod method) {
     if (method == null) return;
     String name = method.getName();
-    if (!JavaPsiFacade.getInstance(method.getProject()).getNameHelper().isIdentifier(name)) {
+    if (!PsiNameHelper.getInstance(method.getProject()).isIdentifier(name)) {
       return; //does not have a java image
     }
 
@@ -333,7 +333,7 @@ public class StubGenerator implements ClassItemGenerator {
                       !typeDefinition.isEnum() &&
                       !(typeDefinition instanceof GroovyScriptClass);
     if (isClass) {
-      final Collection<MethodSignature> toOverride = OverrideImplementUtil.getMethodSignaturesToOverride(typeDefinition);
+      final Collection<MethodSignature> toOverride = OverrideImplementExploreUtil.getMethodSignaturesToOverride(typeDefinition);
       for (MethodSignature signature : toOverride) {
         if (!(signature instanceof MethodSignatureBackedByPsiMethod)) continue;
 
@@ -348,7 +348,7 @@ public class StubGenerator implements ClassItemGenerator {
         }
       }
 
-      final Collection<MethodSignature> toImplement = OverrideImplementUtil.getMethodSignaturesToImplement(typeDefinition);
+      final Collection<MethodSignature> toImplement = OverrideImplementExploreUtil.getMethodSignaturesToImplement(typeDefinition);
       for (MethodSignature signature : toImplement) {
         if (!(signature instanceof MethodSignatureBackedByPsiMethod)) continue;
         final PsiMethod resolved = ((MethodSignatureBackedByPsiMethod)signature).getMethod();
@@ -395,7 +395,7 @@ public class StubGenerator implements ClassItemGenerator {
     GrTypeElement typeElement = variableDeclaration.getTypeElementGroovy();
 
     final GrModifierList modifierList = variableDeclaration.getModifierList();
-    final PsiNameHelper nameHelper = JavaPsiFacade.getInstance(variableDeclaration.getProject()).getNameHelper();
+    final PsiNameHelper nameHelper = PsiNameHelper.getInstance(variableDeclaration.getProject());
     for (final GrVariable variable : variableDeclaration.getVariables()) {
       String name = variable.getName();
       if (!nameHelper.isIdentifier(name)) {
