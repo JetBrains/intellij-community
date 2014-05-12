@@ -30,4 +30,8 @@ public class AddCallSuperQuickFixTest extends PyQuickFixTestCase {
   public void testNewStyle() {
     doQuickFixTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"));
   }
+
+  public void testKwargs() {
+    doQuickFixTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"));
+  }
 }
