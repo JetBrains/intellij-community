@@ -20,43 +20,17 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
+import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * User: Andrey.Vokin
  * Date: 11/26/13
  */
-public abstract class ActionTestCase extends UsefulTestCase {
+public abstract class ActionTestCase extends LightPlatformCodeInsightFixtureTestCase {
   public static final String CARET_TAG_REPLACE_REGEX = EditorTestUtil.CARET_TAG_PREFIX + "(\\+\\d+)?>";
-  protected CodeInsightTestFixture myFixture;
 
   protected abstract FileType getFileType();
-
-  protected abstract String getTestDataPath();
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    final IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-    final TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(null);
-    final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
-    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, new LightTempDirTestFixtureImpl(true));
-    myFixture.setUp();
-    myFixture.setTestDataPath(getTestDataPath());
-  }
-
-
-  @Override
-  protected void tearDown() throws Exception {
-    myFixture.tearDown();
-    myFixture = null;
-    super.tearDown();
-  }
 
   protected void doAction(@NotNull final String before, @NotNull String expected, @NotNull final Runnable action) {
     int[] caretAndSelectionPositionInSourceFile = EditorTestUtil.getCaretAndSelectionPosition(before);

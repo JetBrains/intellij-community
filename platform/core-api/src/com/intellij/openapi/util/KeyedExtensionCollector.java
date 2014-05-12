@@ -108,12 +108,14 @@ public class KeyedExtensionCollector<T, KeyT> {
   @NotNull
   public List<T> forKey(@NotNull KeyT key) {
     final String stringKey = keyToString(key);
-    List<T> cache = myCache.get(stringKey);
-    if (cache != null) return cache;
 
-    cache = buildExtensions(stringKey, key);
-    cache = ConcurrencyUtil.cacheOrGet(myCache, stringKey, cache);
-    return cache;
+    boolean rebuild = myPoint == null && Extensions.getRootArea().hasExtensionPoint(myEpName);
+    List<T> cached = rebuild ? null : myCache.get(stringKey);
+    if (cached != null) return cached;
+
+    cached = buildExtensions(stringKey, key);
+    cached = ConcurrencyUtil.cacheOrGet(myCache, stringKey, cached);
+    return cached;
   }
 
   public T findSingle(@NotNull KeyT key) {
