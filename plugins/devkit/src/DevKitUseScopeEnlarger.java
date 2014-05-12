@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit;
 
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
@@ -37,7 +38,8 @@ public class DevKitUseScopeEnlarger extends UseScopeEnlarger {
       if (target instanceof DomTarget) {
         DomElement domElement = ((DomTarget)target).getDomElement();
         if (domElement instanceof ExtensionPoint) {
-          return GlobalSearchScope.allScope(element.getProject());
+          return GlobalSearchScope.getScopeRestrictedByFileTypes(GlobalSearchScope.allScope(element.getProject()),
+                                                                 XmlFileType.INSTANCE);
         }
       }
     }
