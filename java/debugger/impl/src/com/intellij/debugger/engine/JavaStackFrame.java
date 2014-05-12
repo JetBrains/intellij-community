@@ -141,7 +141,7 @@ public class JavaStackFrame extends XStackFrame {
       getStackFrameProxy().threadProxy(),
       getStackFrameProxy());
     debuggerContext.setPositionCache(mySourcePosition);
-    if (!debuggerContext.isInitialised()) {
+    if (!debuggerContext.isInitialised() && mySourcePosition != null) {
       debuggerContext.initCaches();
     }
     myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
