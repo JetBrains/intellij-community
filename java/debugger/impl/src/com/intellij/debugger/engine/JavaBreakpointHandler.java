@@ -36,7 +36,7 @@ public class JavaBreakpointHandler extends XBreakpointHandler {
 
   @Nullable
   protected Breakpoint createJavaBreakpoint(XBreakpoint xBreakpoint) {
-    return BreakpointManager.createJavaBreakpoint(xBreakpoint);
+    return BreakpointManager.getJavaBreakpoint(xBreakpoint);
   }
 
   @Override

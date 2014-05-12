@@ -290,13 +290,6 @@ public class BreakpointManager {
     return null;
   }
 
-  @Nullable
-  public static Breakpoint findBreakpoint(@NotNull XBreakpoint xBreakpoint) {
-    Project project = ((XBreakpointBase)xBreakpoint).getProject();
-    BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
-    return breakpointManager.myBreakpoints.get(xBreakpoint);
-  }
-
   private HashMap<String, Element> myOriginalBreakpointsNodes = new HashMap<String, Element>();
 
   public void readExternal(@NotNull final Element parentNode) {
@@ -364,7 +357,7 @@ public class BreakpointManager {
                 XBreakpointManager manager = XDebuggerManager.getInstance(myProject).getBreakpointManager();
                 JavaExceptionBreakpointType type = (JavaExceptionBreakpointType)XDebuggerUtil.getInstance().findBreakpointType(JavaExceptionBreakpointType.class);
                 XBreakpoint<JavaExceptionBreakpointProperties> xBreakpoint = manager.getDefaultBreakpoint(type);
-                Breakpoint breakpoint = createJavaBreakpoint(xBreakpoint);
+                Breakpoint breakpoint = getJavaBreakpoint(xBreakpoint);
                 breakpoint.readExternal(breakpointElement);
                 addBreakpoint(breakpoint);
               }
@@ -557,7 +550,7 @@ public class BreakpointManager {
             if (isJavaType(xBreakpoint)) {
               Breakpoint breakpoint = myBreakpoints.get(xBreakpoint);
               if (breakpoint == null) {
-                breakpoint = createJavaBreakpoint(xBreakpoint);
+                breakpoint = getJavaBreakpoint(xBreakpoint);
                 myBreakpoints.put(xBreakpoint, breakpoint);
               }
             }
@@ -575,12 +568,23 @@ public class BreakpointManager {
   }
 
   @NotNull
-  public static Breakpoint createJavaBreakpoint(XBreakpoint xBreakpoint) {
+  public static Breakpoint getJavaBreakpoint(XBreakpoint xBreakpoint) {
+    Breakpoint breakpoint = findBreakpoint(xBreakpoint);
+    if (breakpoint != null) {
+      return breakpoint;
+    }
     Project project = ((XBreakpointBase)xBreakpoint).getProject();
     if (xBreakpoint.getType() instanceof JavaBreakpointType) {
       return ((JavaBreakpointType)xBreakpoint.getType()).createJavaBreakpoint(project, xBreakpoint);
     }
     throw new IllegalStateException("Unsupported breakpoint type:" + xBreakpoint.getType());
+  }
+
+  @Nullable
+  public static Breakpoint findBreakpoint(@NotNull XBreakpoint xBreakpoint) {
+    Project project = ((XBreakpointBase)xBreakpoint).getProject();
+    BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
+    return breakpointManager.myBreakpoints.get(xBreakpoint);
   }
 
   //interaction with RequestManagerImpl
