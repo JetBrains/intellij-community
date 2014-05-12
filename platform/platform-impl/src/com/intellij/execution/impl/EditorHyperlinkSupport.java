@@ -99,10 +99,11 @@ public class EditorHyperlinkSupport {
     );
   }
 
-  /**
-   * @deprecated hyperlinks are gc'ed automatically as the text is cleared
-   */
-  public void clearHyperlinks() {}
+  public void clearHyperlinks() {
+    for (RangeHighlighter highlighter : getHyperlinks(0, myEditor.getDocument().getTextLength(), myEditor)) {
+      removeHyperlink(highlighter);
+    }
+  }
 
   @Nullable
   public Runnable getLinkNavigationRunnable(final LogicalPosition logical) {
