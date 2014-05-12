@@ -173,11 +173,13 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
 
     createPredefinedScopeDescriptors(model);
 
-    model.addElement(new ScopeSeparator("VCS Scopes"));
     final List<NamedScope> changeLists = ChangeListsScopesProvider.getInstance(myProject).getCustomScopes();
-    for (NamedScope changeListScope : changeLists) {
-      final GlobalSearchScope scope = GlobalSearchScopesCore.filterScope(myProject, changeListScope);
-      model.addElement(new ScopeDescriptor(scope));
+    if (!changeLists.isEmpty()) {
+      model.addElement(new ScopeSeparator("VCS Scopes"));
+      for (NamedScope changeListScope : changeLists) {
+        final GlobalSearchScope scope = GlobalSearchScopesCore.filterScope(myProject, changeListScope);
+        model.addElement(new ScopeDescriptor(scope));
+      }
     }
 
     final List<ScopeDescriptor> customScopes = new ArrayList<ScopeDescriptor>();
