@@ -37,7 +37,6 @@ import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Random;
-import java.util.UUID;
 
 public final class NettyUtil {
   public static final int DEFAULT_CONNECT_ATTEMPT_COUNT = 20;
@@ -46,8 +45,7 @@ public final class NettyUtil {
   static {
     // IDEA-120811
     if (SystemProperties.getBooleanProperty("io.netty.random.id", true)) {
-      String id = UUID.randomUUID().toString();
-      System.setProperty("io.netty.machineId", id.substring(id.length() - 8));
+      System.setProperty("io.netty.machineId", "9e43d860");
       System.setProperty("io.netty.processId", Integer.toString(new Random().nextInt(65535)));
     }
   }
