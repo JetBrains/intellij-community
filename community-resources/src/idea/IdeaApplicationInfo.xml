@@ -4,7 +4,7 @@
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <install-over minbuild="129.1" maxbuild="135.9999" version="13.1"/>
   <logo url="/idea_community_logo.png" textcolor="aaaaaa" progressColor="B0C6B0" progressY="230" progressTailIcon="/community_progress_tail.png"/>
-  <about url="/idea_community_about.png" foreground="444444" linkColor="000099" logoX="300" logoY="265" logoW="75" logoH="30"/>
+  <about url="/idea_community_about.png" foreground="444444" copyrightForeground="7A858F" linkColor="000099" logoX="300" logoY="265" logoW="75" logoH="30"/>
   <icon size32="/icon_CE.png" size16="/icon_CEsmall.png" size32opaque="/icon_CEwhite.png" size12="/toolwindows/toolWindowProject.png" size128="/icon_CE_128.png" ico="idea_CE.ico"/>
   <package code="__PACKAGE_CODE__"/>
   <names product="IDEA" fullname="IntelliJ IDEA" script="idea"/>
