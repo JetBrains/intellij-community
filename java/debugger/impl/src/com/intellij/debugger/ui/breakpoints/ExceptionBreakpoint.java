@@ -26,6 +26,7 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -121,7 +122,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
       return;
     }
 
-    SourcePosition classPosition = PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(new Computable<SourcePosition>() {
+    SourcePosition classPosition = ApplicationManager.getApplication().runReadAction(new Computable<SourcePosition>() {
       public SourcePosition compute() {
         PsiClass psiClass = DebuggerUtils.findClass(getQualifiedName(), myProject, debugProcess.getSearchScope());
 

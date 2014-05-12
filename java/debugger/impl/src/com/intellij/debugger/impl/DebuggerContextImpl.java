@@ -180,7 +180,7 @@ public final class DebuggerContextImpl implements DebuggerContext {
   }
 
   public void setPositionCache(SourcePosition position) {
-    LOG.assertTrue(!myInitialized, "Debugger context is initialized. Cannot change caches");
+    //LOG.assertTrue(!myInitialized, "Debugger context is initialized. Cannot change caches");
     mySourcePosition = position;
   }
 
