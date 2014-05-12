@@ -363,21 +363,23 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       return true;
     }
 
-    boolean doNotExecuteBecauseAppIsInactive =
-      !myApp.isActive() && !canExecuteOnInactiveApplication(cmd) && Registry.is("actionSystem.suspendFocusTransferIfApplicationInactive");
+    if (!Registry.is("focus.fix.lost.cursor")) {
+      boolean doNotExecuteBecauseAppIsInactive =
+        !myApp.isActive() && !canExecuteOnInactiveApplication(cmd) && Registry.is("actionSystem.suspendFocusTransferIfApplicationInactive");
 
-    if (doNotExecuteBecauseAppIsInactive) {
-      if (myCallbackOnActivation != null) {
-        myCallbackOnActivation.setRejected();
-        if (myFocusCommandOnAppActivation != null) {
-          resetCommand(myFocusCommandOnAppActivation, true);
+      if (doNotExecuteBecauseAppIsInactive) {
+        if (myCallbackOnActivation != null) {
+          myCallbackOnActivation.setRejected();
+          if (myFocusCommandOnAppActivation != null) {
+            resetCommand(myFocusCommandOnAppActivation, true);
+          }
         }
+
+        myFocusCommandOnAppActivation = cmd;
+        myCallbackOnActivation = result;
+
+        return true;
       }
-
-      myFocusCommandOnAppActivation = cmd;
-      myCallbackOnActivation = result;
-
-      return true;
     }
 
     return false;
@@ -1152,6 +1154,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   @Override
   public boolean isFocusTransferEnabled() {
+    if (Registry.is("focus.fix.lost.cursor")) return true;
     return myApp.isActive() || !Registry.is("actionSystem.suspendFocusTransferIfApplicationInactive");
   }
 
