@@ -29,7 +29,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlChildRole;
@@ -53,7 +53,7 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
 
   @NotNull
   public String toString(@NotNull XmlTag tag,
-                         @NotNull List<Pair<String, String>> attribute2Value,
+                         @NotNull List<Couple<String>> attribute2Value,
                          boolean hasChildren,
                          @NotNull PsiElement context) {
     FileType fileType = context.getContainingFile().getFileType();
@@ -64,13 +64,13 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
   }
 
   @NotNull
-  public String buildAttributesString(@NotNull List<Pair<String, String>> attribute2value,
+  public String buildAttributesString(@NotNull List<Couple<String>> attribute2value,
                                       boolean hasChildren,
                                       int numberInIteration,
                                       int totalIterations, @Nullable String surroundedText) {
     StringBuilder result = new StringBuilder();
-    for (Iterator<Pair<String, String>> it = attribute2value.iterator(); it.hasNext();) {
-      Pair<String, String> pair = it.next();
+    for (Iterator<Couple<String>> it = attribute2value.iterator(); it.hasNext();) {
+      Couple<String> pair = it.next();
       String name = pair.first;
       String value = ZenCodingUtil.getValue(pair.second, numberInIteration, totalIterations, surroundedText);
       result.append(getAttributeString(name, value));

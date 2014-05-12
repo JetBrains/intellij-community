@@ -21,7 +21,7 @@ import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGeneratorI
 import com.intellij.codeInsight.template.emmet.nodes.GenerationNode;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
@@ -45,7 +45,7 @@ public class XslZenCodingFilter extends ZenCodingFilter {
       if (document != null) {
         final XmlTag tag = document.getRootTag();
         if (tag != null) {
-          for (Pair<String, String> pair : token.getAttribute2Value()) {
+          for (Couple<String> pair : token.getAttribute2Value()) {
             if (SELECT_ATTR_NAME.equals(pair.first)) {
               return node;
             }

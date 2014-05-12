@@ -42,7 +42,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -290,8 +290,8 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     if (node instanceof TemplateNode) {
       final TemplateToken token = ((TemplateNode)node).getTemplateToken();
       if (token != null) {
-        final List<Pair<String,String>> attributes = token.getAttribute2Value();
-        final Pair<String, String> singleAttribute = ContainerUtil.getFirstItem(attributes);
+        final List<Couple<String>> attributes = token.getAttribute2Value();
+        final Couple<String> singleAttribute = ContainerUtil.getFirstItem(attributes);
         if (singleAttribute == null || "class".equalsIgnoreCase(singleAttribute.first) && StringUtil.isEmpty(singleAttribute.second)) {
           return true;
         }
