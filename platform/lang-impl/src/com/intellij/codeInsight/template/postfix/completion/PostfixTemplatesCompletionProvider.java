@@ -44,7 +44,7 @@ class PostfixTemplatesCompletionProvider extends CompletionProvider<CompletionPa
     if (postfixLiveTemplate != null) {
       postfixLiveTemplate.addCompletions(parameters, result.withPrefixMatcher(new MyPrefixMatcher(result.getPrefixMatcher().getPrefix())));
       String possibleKey = postfixLiveTemplate.computeTemplateKeyWithoutContextChecking(
-        new CustomTemplateCallback(parameters.getEditor(), parameters.getOriginalFile(), false));
+        new CustomTemplateCallback(parameters.getEditor(), parameters.getOriginalFile()));
       if (possibleKey != null) {
         result = result.withPrefixMatcher(possibleKey);
         result.restartCompletionOnPrefixChange(

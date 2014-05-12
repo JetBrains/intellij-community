@@ -156,7 +156,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
                                                                                                 @NotNull PsiFile file,
                                                                                                 int offset) {
     final MultiMap<String, CustomLiveTemplateLookupElement> result = MultiMap.create();
-    CustomTemplateCallback customTemplateCallback = new CustomTemplateCallback(editor, file, false);
+    CustomTemplateCallback customTemplateCallback = new CustomTemplateCallback(editor, file);
     for (CustomLiveTemplate customLiveTemplate : TemplateManagerImpl.listApplicableCustomTemplates(editor, file, false)) {
       if (customLiveTemplate instanceof CustomLiveTemplateBase) {
         String customTemplatePrefix = ((CustomLiveTemplateBase)customLiveTemplate).computeTemplateKeyWithoutContextChecking(customTemplateCallback);

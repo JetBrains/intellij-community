@@ -475,7 +475,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     ZenCodingGenerator generator = findApplicableDefaultGenerator(CustomTemplateCallback.getContext(file, offset), false);
     if (generator != null && generator.hasCompletionItem()) {
       final Ref<TemplateImpl> generatedTemplate = new Ref<TemplateImpl>();
-      final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file, false) {
+      final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file) {
         @Override
         public void deleteTemplateKey(@NotNull String key) {
         }
