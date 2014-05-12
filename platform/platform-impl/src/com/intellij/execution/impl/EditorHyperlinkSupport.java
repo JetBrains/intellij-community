@@ -99,7 +99,9 @@ public class EditorHyperlinkSupport {
     );
   }
 
-  @Deprecated
+  /**
+   * @deprecated hyperlinks are gc'ed automatically as the text is cleared
+   */
   public void clearHyperlinks() {}
 
   @Nullable
