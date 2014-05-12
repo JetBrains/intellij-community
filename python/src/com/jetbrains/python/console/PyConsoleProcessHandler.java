@@ -45,7 +45,7 @@ public class PyConsoleProcessHandler extends PythonProcessHandler {
 
     myConsoleView.print(string, attributes);
 
-    super.coloredTextAvailable(text, attributes);
+    notifyColoredListeners(text, attributes);
   }
 
   @Override

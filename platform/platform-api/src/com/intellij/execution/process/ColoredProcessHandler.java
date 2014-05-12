@@ -64,6 +64,10 @@ public class ColoredProcessHandler extends OSProcessHandler implements AnsiEscap
   @Override
   public void coloredTextAvailable(String text, Key attributes) {
     textAvailable(text, attributes);
+    notifyColoredListeners(text, attributes);
+  }
+
+  protected void notifyColoredListeners(String text, Key attributes) { //TODO: call super.coloredTextAvailable after textAvailable removed
     for (AnsiEscapeDecoder.ColoredTextAcceptor listener: myColoredTextListeners) {
       listener.coloredTextAvailable(text, attributes);
     }
