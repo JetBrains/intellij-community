@@ -47,7 +47,7 @@ microba.jar
 miglayout-swing.jar
 nanoxml-2.2.3.jar
 nekohtml-1.9.14.jar
-netty-all-5.0.0.Alpha2.jar
+netty-all-4.1.0.Alpha1.jar
 oromatcher.jar
 picocontainer.jar
 protobuf-2.5.0.jar

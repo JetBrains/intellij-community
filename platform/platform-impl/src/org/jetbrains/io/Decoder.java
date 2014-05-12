@@ -18,10 +18,9 @@ package org.jetbrains.io;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class Decoder extends SimpleChannelInboundHandler<ByteBuf> {
+public abstract class Decoder extends SimpleChannelInboundHandlerAdapter<ByteBuf> {
   protected ByteBuf cumulation;
 
   protected Decoder() {

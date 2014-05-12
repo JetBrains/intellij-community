@@ -85,7 +85,7 @@ public final class NettyUtil {
         }
       }
 
-      OioSocketChannel channel = new OioSocketChannel(bootstrap.group().next(), socket);
+      OioSocketChannel channel = new OioSocketChannel(socket);
       BootstrapUtil.initAndRegister(channel, bootstrap).awaitUninterruptibly();
       return channel;
     }

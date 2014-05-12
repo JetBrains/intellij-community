@@ -199,7 +199,7 @@ public class JavacServer {
   @ChannelHandler.Sharable
   private class CompilationRequestsHandler extends SimpleChannelInboundHandler<JavacRemoteProto.Message> {
     @Override
-    public void messageReceived(final ChannelHandlerContext context, JavacRemoteProto.Message message) throws Exception {
+    public void channelRead0(final ChannelHandlerContext context, JavacRemoteProto.Message message) throws Exception {
       final UUID sessionId = JavacProtoUtil.fromProtoUUID(message.getSessionId());
       final JavacRemoteProto.Message.Type messageType = message.getMessageType();
 
@@ -276,7 +276,7 @@ public class JavacServer {
   }
 
   @ChannelHandler.Sharable
-  private static final class ChannelRegistrar extends ChannelHandlerAdapter {
+  private static final class ChannelRegistrar extends ChannelInboundHandlerAdapter {
     private final ChannelGroup openChannels = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE);
 
     public boolean isEmpty() {

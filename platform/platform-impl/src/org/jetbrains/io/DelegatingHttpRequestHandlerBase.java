@@ -16,12 +16,11 @@
 package org.jetbrains.io;
 
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.QueryStringDecoder;
 
-abstract class DelegatingHttpRequestHandlerBase extends SimpleChannelInboundHandler<FullHttpRequest> {
+abstract class DelegatingHttpRequestHandlerBase extends SimpleChannelInboundHandlerAdapter<FullHttpRequest> {
   @Override
   protected void messageReceived(ChannelHandlerContext context, FullHttpRequest message) throws Exception {
     if (BuiltInServer.LOG.isDebugEnabled()) {
