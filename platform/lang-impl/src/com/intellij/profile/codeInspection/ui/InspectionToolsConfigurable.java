@@ -28,9 +28,7 @@ import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ModifiableModel;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionToolRegistrar;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
@@ -401,8 +399,8 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     }
   }
 
-  protected boolean acceptTool(InspectionProfileEntry entry) {
-    return entry.getDefaultLevel() != HighlightDisplayLevel.NON_SWITCHABLE_ERROR;
+  protected boolean acceptTool(InspectionToolWrapper entry) {
+    return true;
   }
   
   @Override
@@ -447,8 +445,8 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
   private SingleInspectionProfilePanel createPanel(InspectionProfileImpl profile, String profileName, boolean model) {
     return new SingleInspectionProfilePanel(myProjectProfileManager, profileName, model ? profile : profile.getModifiableModel()) {
       @Override
-      protected boolean accept(InspectionProfileEntry entry) {
-        return InspectionToolsConfigurable.this.acceptTool(entry);
+      protected boolean accept(InspectionToolWrapper entry) {
+        return super.accept(entry) && InspectionToolsConfigurable.this.acceptTool(entry);
       }
     };
   }

@@ -247,7 +247,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     List<ScopeToolState> tools = profile.getDefaultStates(myProjectProfileManager.getProject());
     for (ScopeToolState state : tools) {
       final ArrayList<Descriptor> descriptors = new ArrayList<Descriptor>();
-      if (!accept(state.getTool().getTool())) continue;
+      if (!accept(state.getTool())) continue;
       Project project = myProjectProfileManager.getProject();
       myDescriptors.put(new Descriptor(state, profile, project), descriptors);
       InspectionToolWrapper toolWrapper = state.getTool();
@@ -258,8 +258,8 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
   }
 
-  protected boolean accept(InspectionProfileEntry entry) {
-    return true;
+  protected boolean accept(InspectionToolWrapper entry) {
+    return entry.getDefaultLevel() != HighlightDisplayLevel.NON_SWITCHABLE_ERROR;
   }
 
   private void postProcessModification() {

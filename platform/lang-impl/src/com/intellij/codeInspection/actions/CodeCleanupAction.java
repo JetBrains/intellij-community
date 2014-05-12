@@ -17,24 +17,14 @@
 package com.intellij.codeInspection.actions;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.analysis.BaseAnalysisAction;
-import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoProcessor;
 import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
-import com.intellij.execution.filters.HyperlinkInfo;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -42,25 +32,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.profile.Profile;
-import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.profile.codeInspection.ui.IDEInspectionToolsConfigurable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.ComboboxWithBrowseButton;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.*;
 
 public class CodeCleanupAction extends CodeInspectionAction {
@@ -138,8 +119,8 @@ public class CodeCleanupAction extends CodeInspectionAction {
                                                               InspectionProfileManager profileManager) {
     return new IDEInspectionToolsConfigurable(projectProfileManager, profileManager) {
       @Override
-      protected boolean acceptTool(InspectionProfileEntry entry) {
-        return super.acceptTool(entry) && entry instanceof CleanupLocalInspectionTool;
+      protected boolean acceptTool(InspectionToolWrapper entry) {
+        return super.acceptTool(entry) && entry.isCleanupTool();
       }
     };
   }

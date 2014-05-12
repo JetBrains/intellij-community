@@ -109,6 +109,9 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
   @Attribute("applyToDialects")
   public boolean applyToDialects = true;
 
+  @Attribute("cleanupTool")
+  public boolean cleanupTool = false;
+
   /**
    * Highlighting level for this inspection tool that is used in default settings.
    */
