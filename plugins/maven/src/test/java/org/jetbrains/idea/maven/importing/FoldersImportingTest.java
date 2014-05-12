@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
@@ -173,8 +172,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "  <sourceDirectory>src1</sourceDirectory>" +
                   "</build>");
 
-    assertSources("project", "src1", "src2");
-
+    assertSources("project", "src2", "src1");
   }
 
   public void testCustomSourceFolders() throws Exception {
