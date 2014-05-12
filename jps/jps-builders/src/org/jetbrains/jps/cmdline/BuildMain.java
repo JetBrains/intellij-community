@@ -112,7 +112,7 @@ public class BuildMain {
     }
 
     @Override
-    public void messageReceived(final ChannelHandlerContext context, CmdlineRemoteProto.Message message) throws Exception {
+    public void channelRead0(final ChannelHandlerContext context, CmdlineRemoteProto.Message message) throws Exception {
       final CmdlineRemoteProto.Message.Type type = message.getType();
       final Channel channel = context.channel();
 
