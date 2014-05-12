@@ -158,14 +158,20 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       }
     };
 
-    final GenericDebuggerRunner runner = new GenericDebuggerRunner();
-
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
       public void run() {
         try {
+          GenericDebuggerRunner runner = new GenericDebuggerRunner();
           myDebuggerSession = DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(DefaultDebugExecutor.getDebugExecutorInstance(),
             runner, new MockConfiguration(), javaCommandLineState, debugParameters, false);
+          XDebuggerManager.getInstance(myProject).startSession(runner, javaCommandLineState.getEnvironment(), null, new XDebugProcessStarter() {
+            @Override
+            @NotNull
+            public XDebugProcess start(@NotNull XDebugSession session) {
+              return new JavaDebugProcess(session, myDebuggerSession);
+            }
+          });
         }
         catch (ExecutionException e) {
           LOG.error(e);
