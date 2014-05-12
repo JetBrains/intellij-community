@@ -15,18 +15,20 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-public class AssertStatementPostfixTemplate extends BooleanPostfixTemplate {
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_BOOLEAN;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
+
+public class AssertStatementPostfixTemplate extends JavaStatementWrapPostfixTemplate {
+
   public AssertStatementPostfixTemplate() {
-    super("assert", "assert expr;");
+    super("assert", "assert expr;", JAVA_PSI_INFO, IS_BOOLEAN);
   }
 
+  @NotNull
   @Override
-  public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
-    PostfixTemplatesUtils.createSimpleStatement(context, editor, "assert");
+  protected String getHead() {
+    return "assert ";
   }
 }

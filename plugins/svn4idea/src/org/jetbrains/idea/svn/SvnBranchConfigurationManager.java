@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -222,7 +222,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
         if (stored != null && ! stored.isEmpty()) {
           newConfig.addBranches(branchUrl, new InfoStorage<List<SvnBranchItem>>(stored, InfoReliability.setByUser));
         } else {
-          whatToInit.add(new Pair<VirtualFile, SvnBranchConfigurationNew>(root, newConfig));
+          whatToInit.add(Pair.create(root, newConfig));
           newConfig.addBranches(branchUrl, new InfoStorage<List<SvnBranchItem>>(new ArrayList<SvnBranchItem>(), InfoReliability.empty));
         }
       }

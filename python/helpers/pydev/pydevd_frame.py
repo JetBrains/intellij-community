@@ -210,6 +210,7 @@ class PyDBFrame:
                     return self.trace_dispatch
 
             except:
+                traceback.print_exc()
                 raise
 
             #step handling. We stop when we hit the right frame

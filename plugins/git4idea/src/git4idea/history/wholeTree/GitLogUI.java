@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -390,7 +390,7 @@ public class GitLogUI implements Disposable {
       for (int row : mySelectedRows) {
         final CommitI commitI = myModel.getCommitAt(row);
         if (commitI != null) {
-          myData.add(new Pair<Integer, AbstractHash>(commitI.selectRepository(SelectorList.getInstance()), commitI.getHash()));
+          myData.add(Pair.create(commitI.selectRepository(SelectorList.getInstance()), commitI.getHash()));
         }
       }
     }
@@ -402,7 +402,7 @@ public class GitLogUI implements Disposable {
         final CommitI commitI = myModel.getCommitAt(row);
         if (commitI != null) {
           final Pair<Integer, AbstractHash> pair =
-            new Pair<Integer, AbstractHash>(commitI.selectRepository(SelectorList.getInstance()), commitI.getHash());
+            Pair.create(commitI.selectRepository(SelectorList.getInstance()), commitI.getHash());
           if (myData.remove(pair)) {
             selectionModel.addSelectionInterval(row, row);
             if (myData.isEmpty()) return;
@@ -414,7 +414,7 @@ public class GitLogUI implements Disposable {
         final CommitI commitI = myModel.getCommitAt(i);
         if (commitI == null) continue;
         final Pair<Integer, AbstractHash> pair =
-          new Pair<Integer, AbstractHash>(commitI.selectRepository(SelectorList.getInstance()), commitI.getHash());
+          Pair.create(commitI.selectRepository(SelectorList.getInstance()), commitI.getHash());
         if (myData.remove(pair)) {
           selectionModel.addSelectionInterval(i, i);
           if (myData.isEmpty()) break;

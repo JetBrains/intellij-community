@@ -18,6 +18,7 @@ package org.zmlx.hg4idea.action;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -70,6 +71,7 @@ public class HgCommonBranchActions extends ActionGroup {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
+      FileDocumentManager.getInstance().saveAllDocuments();
       final UpdatedFiles updatedFiles = UpdatedFiles.create();
       final HgMergeCommand hgMergeCommand = new HgMergeCommand(myProject, mySelectedRepository.getRoot());
       hgMergeCommand.setRevision(myBranchName);//there is no difference between branch or revision or bookmark as parameter to merge,
@@ -111,6 +113,7 @@ public class HgCommonBranchActions extends ActionGroup {
     @Override
     public void actionPerformed(AnActionEvent e) {
       final VirtualFile repository = mySelectedRepository.getRoot();
+      FileDocumentManager.getInstance().saveAllDocuments();
       final HgUpdateCommand hgUpdateCommand = new HgUpdateCommand(myProject, repository);
       hgUpdateCommand.setBranch(myBranchName);
       new Task.Backgroundable(myProject, HgVcsMessages.message("action.hg4idea.updateTo.description", myBranchName)) {

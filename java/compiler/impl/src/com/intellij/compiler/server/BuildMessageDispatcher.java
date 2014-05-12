@@ -20,9 +20,9 @@ import com.intellij.util.containers.ConcurrentHashSet;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.util.AttributeKey;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.io.SimpleChannelInboundHandlerAdapter;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 
@@ -36,7 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
 *         Date: 4/25/12
 */
 @ChannelHandler.Sharable
-class BuildMessageDispatcher extends SimpleChannelInboundHandler<CmdlineRemoteProto.Message> {
+class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineRemoteProto.Message> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.server.BuildMessageDispatcher");
 
   private static final AttributeKey<SessionData> SESSION_DATA = AttributeKey.valueOf("BuildMessageDispatcher.sessionData");

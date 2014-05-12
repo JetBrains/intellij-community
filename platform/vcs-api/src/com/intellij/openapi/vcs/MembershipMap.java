@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.PairProcessor;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.ListIterator;
 
 /**
  * @author irengrig
@@ -82,7 +84,7 @@ public class MembershipMap<Key, Val> extends AreaMap<Key, Val> {
     getSimiliar(key, new PairProcessor<Key, Val>() {
       @Override
       public boolean process(final Key key, final Val val) {
-        result.set(new Pair<Key,Val>(key, val));
+        result.set(Pair.create(key, val));
         return true;
       }
     });

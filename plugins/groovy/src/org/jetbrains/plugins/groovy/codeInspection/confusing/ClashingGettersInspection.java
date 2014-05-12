@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,10 +102,10 @@ public class ClashingGettersInspection extends BaseInspection {
       final String info = PsiFormatUtil
         .formatMethod(getter, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
                       PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_NAME);
-      return new Pair<PsiElement, String>(((GrMethod)getter).getNameIdentifierGroovy(), "method " + info);
+      return Pair.create(((GrMethod)getter).getNameIdentifierGroovy(), "method " + info);
     }
     else if (getter instanceof GrMethod) {
-      return new Pair<PsiElement, String>(((GrMethod)getter).getNameIdentifierGroovy(), "getter '" + name + "'");
+      return Pair.create(((GrMethod)getter).getNameIdentifierGroovy(), "getter '" + name + "'");
     }
     else {
       final String info = PsiFormatUtil

@@ -58,12 +58,12 @@ public class XmlRpcServerImpl implements XmlRpcServer {
 
   static final class XmlRpcRequestHandler extends HttpRequestHandler {
     @Override
-    public boolean isSupported(FullHttpRequest request) {
+    public boolean isSupported(@NotNull FullHttpRequest request) {
       return request.getMethod() == HttpMethod.POST || request.getMethod() == HttpMethod.OPTIONS;
     }
 
     @Override
-    public boolean process(QueryStringDecoder urlDecoder, FullHttpRequest request, ChannelHandlerContext context) throws IOException {
+    public boolean process(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException {
       return SERVICE.getInstance().process(urlDecoder.path(), request, context, null);
     }
   }

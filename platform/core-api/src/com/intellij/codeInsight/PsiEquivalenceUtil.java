@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,7 +118,7 @@ public class PsiEquivalenceUtil {
     findChildRangeDuplicates(first, last, scope, new PairConsumer<PsiElement, PsiElement>() {
       @Override
       public void consume(final PsiElement start, final PsiElement end) {
-        result.add(new Pair<PsiElement, PsiElement>(start, end));
+        result.add(Pair.create(start, end));
       }
     });
   }

@@ -1142,6 +1142,7 @@ public class HighlightMethodUtil {
     }
 
     if (isMethodStatic) {
+      if (superClass.isInterface()) return null;
       int accessLevel = PsiUtil.getAccessLevel(modifierList);
       String accessModifier = PsiUtil.getAccessModifier(accessLevel);
       HighlightInfo info = isWeaker(method, modifierList, accessModifier, accessLevel, superMethod, true);

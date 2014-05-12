@@ -474,13 +474,9 @@ public class TemplateState implements Disposable {
       return "no template";
     }
 
-    String message = template.getKey();
-    if (message == null || message.isEmpty()) {
-      message = template.getString();
-      if (message == null) {
-        message = template.getTemplateText();
-      }
-    }
+    String message = StringUtil.notNullize(template.getKey());
+    message += "\n\nTemplate#string: " + StringUtil.notNullize(template.getString());
+    message += "\n\nTemplate#text: " + StringUtil.notNullize(template.getTemplateText());
     return message;
   }
 

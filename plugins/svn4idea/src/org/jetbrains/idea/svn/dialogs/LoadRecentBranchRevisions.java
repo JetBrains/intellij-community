@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@ public class LoadRecentBranchRevisions extends TaskDescriptor {
                                                                      new PairConsumer<SvnChangeList, TreeStructureNode<SVNLogEntry>>() {
                                                                        public void consume(SvnChangeList svnList, TreeStructureNode<SVNLogEntry> tree) {
                                                                          indicator.setText2(SvnBundle.message("progress.text2.processing.revision", svnList.getNumber()));
-                                                                         list.add(new Pair<SvnChangeList, TreeStructureNode<SVNLogEntry>>(svnList, tree));
+                                                                         list.add(Pair.create(svnList, tree));
                                                                        }
                                                                      });
     } catch (VcsException e) {

@@ -89,22 +89,21 @@ else:
     from socket import SHUT_RD, SHUT_WR
 
 try:
-    from urllib import quote
+    from urllib import quote, quote_plus, unquote, unquote_plus
 except:
-    from urllib.parse import quote #@Reimport @UnresolvedImport
-
+    from urllib.parse import quote, quote_plus, unquote, unquote_plus  #@Reimport @UnresolvedImport
+import pydevconsole
 import pydevd_vars
 import pydevd_tracing
 import pydevd_vm_type
 import pydevd_file_utils
 import traceback
-from pydevd_utils import *
-from pydevd_utils import quote_smart as quote
+from pydevd_utils import quote_smart as quote, compare_object_attrs, cmp_to_key, to_string
 import pydev_log
-
+import _pydev_completer
 
 from pydevd_tracing import GetExceptionTracebackStr
-import pydevconsole
+
 
 
 CMD_RUN = 101
@@ -182,6 +181,8 @@ MAX_IO_MSG_SIZE = 1000  #if the io is too big, we'll not send all (could make th
 
 VERSION_STRING = "@@BUILD_NUMBER@@"
 
+from _pydev_filesystem_encoding import getfilesystemencoding
+file_system_encoding = getfilesystemencoding()
 
 #--------------------------------------------------------------------------------------------------- UTILITIES
 
@@ -290,7 +291,11 @@ class ReaderThread(PyDBDaemonThread):
                     if not self.killReceived:
                         self.handleExcept()
                     return #Finished communication.
-                if IS_PY3K:
+
+                #Note: the java backend is always expected to pass utf-8 encoded strings. We now work with unicode
+                #internally and thus, we may need to convert to the actual encoding where needed (i.e.: filenames
+                #on python 2 may need to be converted to the filesystem encoding).
+                if hasattr(r, 'decode'):
                     r = r.decode('utf-8')
 
                 buffer += r
@@ -375,10 +380,10 @@ class WriterThread(PyDBDaemonThread):
                 out = cmd.getOutgoing()
 
                 if DebugInfoHolder.DEBUG_TRACE_LEVEL >= 1:
-                    out_message = 'Sending cmd: '
-                    out_message += ID_TO_MEANING.get(out[:3], 'UNKNOWN')
+                    out_message = 'sending cmd --> '
+                    out_message += "%20s" % ID_TO_MEANING.get(out[:3], 'UNKNOWN')
                     out_message += ' '
-                    out_message += out
+                    out_message += unquote(unquote(out)).replace('\n', ' ')
                     try:
                         sys.stderr.write('%s\n' % (out_message,))
                     except:
@@ -501,6 +506,13 @@ class NetCommandFactory:
         cmdText = "<xml>" + self.threadToXML(thread) + "</xml>"
         return NetCommand(CMD_THREAD_CREATE, 0, cmdText)
 
+
+    def makeCustomFrameCreatedMessage(self, frameId, frameDescription):
+        frameDescription = pydevd_vars.makeValidXmlValue(frameDescription)
+        cmdText = '<xml><thread name="%s" id="%s"/></xml>' % (frameDescription, frameId)
+        return NetCommand(CMD_THREAD_CREATE, 0, cmdText)
+
+
     def makeListThreadsMessage(self, seq):
         """ returns thread listing as XML """
         try:
@@ -588,6 +600,10 @@ class NetCommandFactory:
                     filename, base = pydevd_file_utils.GetFilenameAndBase(curFrame)
 
                     myFile = pydevd_file_utils.NormFileToClient(filename)
+                    if file_system_encoding.lower() != "utf-8" and hasattr(myFile, "decode"):
+                        # myFile is a byte string encoded using the file system encoding
+                        # convert it to utf8
+                        myFile = myFile.decode(file_system_encoding).encode("utf-8")
 
                     #print "file is ", myFile
                     #myFile = inspect.getsourcefile(curFrame) or inspect.getfile(frame)
@@ -686,6 +702,54 @@ class InternalThreadCommand:
 
     def doIt(self, dbg):
         raise NotImplementedError("you have to override doIt")
+
+
+class ReloadCodeCommand(InternalThreadCommand):
+
+
+    def __init__(self, module_name, thread_id):
+        self.thread_id = thread_id
+        self.module_name = module_name
+        self.executed = False
+        self.lock = threading.Lock()
+
+
+    def canBeExecutedBy(self, thread_id):
+        if self.thread_id == '*':
+            return True  #Any thread can execute it!
+
+        return InternalThreadCommand.canBeExecutedBy(self, thread_id)
+
+
+    def doIt(self, dbg):
+        self.lock.acquire()
+        try:
+            if self.executed:
+                return
+            self.executed = True
+        finally:
+            self.lock.release()
+
+        module_name = self.module_name
+        if not DictContains(sys.modules, module_name):
+            if '.' in module_name:
+                new_module_name = module_name.split('.')[-1]
+                if DictContains(sys.modules, new_module_name):
+                    module_name = new_module_name
+
+        if not DictContains(sys.modules, module_name):
+            sys.stderr.write('pydev debugger: Unable to find module to reload: "' + module_name + '".\n')
+            # Too much info...
+            # sys.stderr.write('pydev debugger: This usually means you are trying to reload the __main__ module (which cannot be reloaded).\n')
+
+        else:
+            sys.stderr.write('pydev debugger: Start reloading module: "' + module_name + '" ... \n')
+            import pydevd_reload
+            if pydevd_reload.xreload(sys.modules[module_name]):
+                sys.stderr.write('pydev debugger: reload finished\n')
+            else:
+                sys.stderr.write('pydev debugger: reload finished without applying any change\n')
+
 
 #=======================================================================================================================
 # InternalTerminateThread
@@ -876,6 +940,49 @@ class InternalEvaluateExpression(InternalThreadCommand):
             dbg.writer.addCommand(cmd)
 
 #=======================================================================================================================
+# InternalGetCompletions
+#=======================================================================================================================
+class InternalGetCompletions(InternalThreadCommand):
+    """ Gets the completions in a given scope """
+
+    def __init__(self, seq, thread_id, frame_id, act_tok):
+        self.sequence = seq
+        self.thread_id = thread_id
+        self.frame_id = frame_id
+        self.act_tok = act_tok
+
+
+    def doIt(self, dbg):
+        """ Converts request into completions """
+        try:
+            remove_path = None
+            try:
+
+                frame = pydevd_vars.findFrame(self.thread_id, self.frame_id)
+                if frame is not None:
+
+
+                    msg = _pydev_completer.GenerateCompletionsAsXML(frame, self.act_tok)
+
+                    cmd = dbg.cmdFactory.makeGetCompletionsMessage(self.sequence, msg)
+                    dbg.writer.addCommand(cmd)
+                else:
+                    cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "InternalGetCompletions: Frame not found: %s from thread: %s" % (self.frame_id, self.thread_id))
+                    dbg.writer.addCommand(cmd)
+
+
+            finally:
+                if remove_path is not None:
+                    sys.path.remove(remove_path)
+
+        except:
+            exc = GetExceptionTracebackStr()
+            sys.stderr.write('%s\n' % (exc,))
+            cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error evaluating expression " + exc)
+            dbg.writer.addCommand(cmd)
+
+
+#=======================================================================================================================
 # InternalConsoleExec
 #=======================================================================================================================
 class InternalConsoleExec(InternalThreadCommand):
@@ -914,87 +1021,6 @@ class InternalConsoleExec(InternalThreadCommand):
             sys.stderr.flush()
             sys.stdout.flush()
 
-#=======================================================================================================================
-# InternalGetCompletions
-#=======================================================================================================================
-class InternalGetCompletions(InternalThreadCommand):
-    """ Gets the completions in a given scope """
-
-    def __init__(self, seq, thread_id, frame_id, act_tok):
-        self.sequence = seq
-        self.thread_id = thread_id
-        self.frame_id = frame_id
-        self.act_tok = act_tok
-
-
-    def doIt(self, dbg):
-        """ Converts request into completions """
-        try:
-            remove_path = None
-            try:
-                import _completer
-            except:
-                try:
-                    path = os.environ['PYDEV_COMPLETER_PYTHONPATH']
-                except :
-                    path = os.path.dirname(__file__)
-                sys.path.append(path)
-                remove_path = path
-                try:
-                    import _completer
-                except :
-                    pass
-
-            try:
-
-                frame = pydevd_vars.findFrame(self.thread_id, self.frame_id)
-                if frame is not None:
-
-                    #Not using frame.f_globals because of https://sourceforge.net/tracker2/?func=detail&aid=2541355&group_id=85796&atid=577329
-                    #(Names not resolved in generator expression in method)
-                    #See message: http://mail.python.org/pipermail/python-list/2009-January/526522.html
-                    updated_globals = {}
-                    updated_globals.update(frame.f_globals)
-                    updated_globals.update(frame.f_locals) #locals later because it has precedence over the actual globals
-                    locals = frame.f_locals
-                else:
-                    updated_globals = {}
-                    locals = {}
-
-
-                if pydevconsole.IPYTHON:
-                    completions = pydevconsole.get_completions(self.act_tok, self.act_tok, updated_globals, locals)
-                else:
-                    try:
-                        completer = _completer.Completer(updated_globals, None)
-                        #list(tuple(name, descr, parameters, type))
-                        completions = completer.complete(self.act_tok)
-                    except :
-                        completions = []
-
-
-                def makeValid(s):
-                    return pydevd_vars.makeValidXmlValue(pydevd_vars.quote(s, '/>_= \t'))
-
-                msg = "<xml>"
-
-                for comp in completions:
-                    msg += '<comp p0="%s" p1="%s" p2="%s" p3="%s"/>' % (makeValid(comp[0]), makeValid(comp[1]), makeValid(comp[2]), makeValid(comp[3]),)
-                msg += "</xml>"
-
-                cmd = dbg.cmdFactory.makeGetCompletionsMessage(self.sequence, msg)
-                dbg.writer.addCommand(cmd)
-
-            finally:
-                if remove_path is not None:
-                    sys.path.remove(remove_path)
-
-        except:
-            exc = GetExceptionTracebackStr()
-            sys.stderr.write('%s\n' % (exc,))
-            cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error getting completion " + exc)
-            dbg.writer.addCommand(cmd)
-
 
 #=======================================================================================================================
 # PydevdFindThreadById
@@ -1004,7 +1030,8 @@ def PydevdFindThreadById(thread_id):
         # there was a deadlock here when I did not remove the tracing function when thread was dead
         threads = threading.enumerate()
         for i in threads:
-            if thread_id == GetThreadId(i):
+            tid = GetThreadId(i)
+            if thread_id == tid or thread_id.endswith('|' + tid):
                 return i
 
         sys.stderr.write("Could not find thread %s\n" % thread_id)

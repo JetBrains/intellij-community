@@ -2,10 +2,12 @@
 '''
 @author Radim Kubacki
 '''
-import importsTipper
+import __builtin__
+import _pydev_imports_tipper
 import traceback
 import StringIO
 import sys
+import time
 import urllib
 import pycompletionserver
 
@@ -17,7 +19,7 @@ def GetImports(module_name):
     try:
         processor = pycompletionserver.Processor()
         data = urllib.unquote_plus(module_name)
-        def_file, completions = importsTipper.GenerateTip(data)
+        def_file, completions = _pydev_imports_tipper.GenerateTip(data)
         return processor.formatCompletionMessage(def_file, completions)
     except:
         s = StringIO.StringIO()

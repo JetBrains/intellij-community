@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationProvider;
+import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -48,7 +48,7 @@ class RepositoryLoader extends Loader {
   public void load(final RepositoryTreeNode node, final Expander afterRefreshExpander) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    final Pair<RepositoryTreeNode, Expander> data = new Pair<RepositoryTreeNode, Expander>(node, afterRefreshExpander);
+    final Pair<RepositoryTreeNode, Expander> data = Pair.create(node, afterRefreshExpander);
     if (! myQueueProcessorActive) {
       startLoadTask(data);
       myQueueProcessorActive = true;

@@ -224,7 +224,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testPluginWithXInclude() throws Throwable {
-    myFixture.testHighlighting("pluginWithXInclude.xml", "extensionPoints.xml");
+    myFixture.testHighlighting("pluginWithXInclude.xml", "pluginWithXInclude-extensionPoints.xml");
   }
 
   public void testExtensionPointPresentation() {

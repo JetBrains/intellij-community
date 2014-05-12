@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,7 +154,7 @@ public class GenericsUtil {
                                                         PsiManager manager,
                                                         PsiClass nestedLayer, 
                                                         PsiTypeParameter parameter) {
-    Pair<PsiType, PsiType> types = new Pair<PsiType, PsiType>(type1, type2);
+    Pair<PsiType, PsiType> types = Pair.create(type1, type2);
     if (compared.contains(types)) {
       if (nestedLayer != null) {
         PsiSubstitutor subst = PsiSubstitutor.EMPTY;

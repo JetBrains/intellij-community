@@ -131,8 +131,8 @@ public class MergeCalculatorTask extends BaseMergeTask implements
                                                                          indicator.checkCanceled();
                                                                          if (sourceLatest >= svnList.getNumber()) return;
                                                                          list.add(
-                                                                           new Pair<SvnChangeList, TreeStructureNode<SVNLogEntry>>(svnList,
-                                                                                                                                   tree)
+                                                                           Pair.create(svnList,
+                                                                                       tree)
                                                                          );
                                                                        }
                                                                      }

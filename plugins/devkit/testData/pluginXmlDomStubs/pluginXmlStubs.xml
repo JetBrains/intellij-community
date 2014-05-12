@@ -5,10 +5,6 @@
   <depends>anotherPlugin</depends>
   <module value="myModule"/>
 
-  <extensions xmlns="someNS" defaultExtensionNs="com.intellij">
-    <actionPromoter implementation="someImpl"/>
-  </extensions>
-
   <extensionPoints>
     <extensionPoint name="myEP" interface="SomeInterface">
     <with attribute="attributeName" implements="SomeImplements"/>

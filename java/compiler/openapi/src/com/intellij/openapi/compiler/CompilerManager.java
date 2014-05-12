@@ -285,11 +285,13 @@ public abstract class CompilerManager {
   @NotNull
   public abstract CompileScope createFilesCompileScope(@NotNull VirtualFile[] files);
   @NotNull
-  public abstract CompileScope createModuleCompileScope(@NotNull Module module, final boolean includeDependentModules);
+  public abstract CompileScope createModuleCompileScope(@NotNull Module module, boolean includeDependentModules);
   @NotNull
-  public abstract CompileScope createModulesCompileScope(@NotNull Module[] modules, final boolean includeDependentModules);
+  public abstract CompileScope createModulesCompileScope(@NotNull Module[] modules, boolean includeDependentModules);
   @NotNull
-  public abstract CompileScope createModuleGroupCompileScope(@NotNull Project project, @NotNull Module[] modules, final boolean includeDependentModules);
+  public abstract CompileScope createModulesCompileScope(@NotNull Module[] modules, boolean includeDependentModules, boolean includeRuntimeDependencies);
+  @NotNull
+  public abstract CompileScope createModuleGroupCompileScope(@NotNull Project project, @NotNull Module[] modules, boolean includeDependentModules);
   @NotNull
   public abstract CompileScope createProjectCompileScope(@NotNull Project project);
 

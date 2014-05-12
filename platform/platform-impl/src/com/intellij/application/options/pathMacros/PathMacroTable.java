@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ public class PathMacroTable extends Table {
     macroEditor.show();
     if (macroEditor.isOK()) {
       final String name = macroEditor.getName();
-      myMacros.add(new Pair<String, String>(name, macroEditor.getValue()));
+      myMacros.add(Pair.create(name, macroEditor.getValue()));
       Collections.sort(myMacros, MACRO_COMPARATOR);
       final int index = indexOfMacroWithName(name);
       LOG.assertTrue(index >= 0);
@@ -176,7 +176,7 @@ public class PathMacroTable extends Table {
 
     if (myUndefinedMacroNames != null) {
       for (String undefinedMacroName : myUndefinedMacroNames) {
-        macros.add(new Pair<String, String>(undefinedMacroName, ""));
+        macros.add(Pair.create(undefinedMacroName, ""));
       }
     }
     Collections.sort(macros, MACRO_COMPARATOR);

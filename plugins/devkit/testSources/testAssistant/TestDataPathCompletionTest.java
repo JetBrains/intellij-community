@@ -48,6 +48,6 @@ public class TestDataPathCompletionTest extends TestDataPathTestCase {
 
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("DevKit") + "/testData/completeTestDataPath";
+    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/completeTestDataPath";
   }
 }

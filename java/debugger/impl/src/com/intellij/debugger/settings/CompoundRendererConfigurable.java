@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -497,7 +497,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
     public List<Pair<String, TextWithImports>> getExpressions() {
       final ArrayList<Pair<String, TextWithImports>> pairs = new ArrayList<Pair<String, TextWithImports>>(myData.size());
       for (final Row row : myData) {
-        pairs.add(new Pair<String, TextWithImports>(row.name, row.value));
+        pairs.add(Pair.create(row.name, row.value));
       }
       return pairs;
     }

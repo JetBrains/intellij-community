@@ -443,9 +443,9 @@ public class PersistentMapTest extends TestCase {
       if (checkMap.size() == 0) {
         checkMap.put(r.nextInt(), 0);
         checkMap.put(r.nextInt(), 0);
-        checkMap.put(0, r.nextInt());
+        checkMap.put(0, Math.abs(r.nextInt()));
       } else {
-        checkMap.put(r.nextInt(), r.nextInt());
+        checkMap.put(r.nextInt(), Math.abs(r.nextInt()));
       }
     }
 
@@ -455,7 +455,7 @@ public class PersistentMapTest extends TestCase {
     try {
       map = new PersistentHashMap<Integer, Integer>(file, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE) {
         @Override
-        protected boolean wantCompactIntegralValues() {
+        protected boolean wantNonnegativeIntegralValues() {
           return true;
         }
       };
@@ -480,7 +480,7 @@ public class PersistentMapTest extends TestCase {
       started = System.currentTimeMillis();
       map = new PersistentHashMap<Integer, Integer>(file, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE) {
         @Override
-        protected boolean wantCompactIntegralValues() {
+        protected boolean wantNonnegativeIntegralValues() {
           return true;
         }
       };

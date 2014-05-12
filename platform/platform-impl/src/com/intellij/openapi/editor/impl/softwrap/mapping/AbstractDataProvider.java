@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
-import com.intellij.openapi.editor.impl.softwrap.mapping.DataProvider;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +36,7 @@ public abstract class AbstractDataProvider<K extends Comparable<? super K>, V> i
   @Override
   public Pair<K, V> getData() {
     V data = doGetData();
-    return data == null ? null : new Pair<K, V>(myKey, data);
+    return data == null ? null : Pair.create(myKey, data);
   }
 
   /**

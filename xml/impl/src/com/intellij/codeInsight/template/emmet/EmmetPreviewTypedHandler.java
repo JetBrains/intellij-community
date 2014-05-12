@@ -18,6 +18,7 @@ package com.intellij.codeInsight.template.emmet;
 import com.intellij.application.options.emmet.EmmetOptions;
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
@@ -31,7 +32,7 @@ public class EmmetPreviewTypedHandler extends TypedHandlerDelegate {
       if (existingBalloon == null) {
         String templateText = EmmetPreviewUtil.calculateTemplateText(editor, file, false);
         if (StringUtil.isNotEmpty(templateText)) {
-          EmmetPreviewHint.createHint(editor, templateText, file.getFileType()).showHint();
+          EmmetPreviewHint.createHint((EditorEx)editor, templateText, file.getFileType()).showHint();
           EmmetPreviewUtil.addEmmetPreviewListeners(editor, file, false);
         }
       }

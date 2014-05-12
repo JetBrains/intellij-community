@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public class CachingSearcher {
   }
 
   public Collection<PsiReference> findReferences(PsiElement element, final boolean ignoreAccessScope) {
-    final Pair<PsiElement, Boolean> key = new Pair<PsiElement, Boolean>(element, ignoreAccessScope? Boolean.TRUE : Boolean.FALSE);
+    final Pair<PsiElement, Boolean> key = Pair.create(element, ignoreAccessScope ? Boolean.TRUE : Boolean.FALSE);
     Collection<PsiReference> psiReferences = myElementToReferencersMap.get(key);
     if (psiReferences == null) {
       GlobalSearchScope searchScope = GlobalSearchScope.projectScope(myProject);

@@ -23,10 +23,7 @@ fix_getpass.fixGetpass()
 
 import pydevd_vars
 
-try:
-    from pydevd_exec import Exec
-except:
-    from pydevd_exec2 import Exec
+from pydev_imports import Exec
 
 try:
     if USE_LIB_COPY:
@@ -139,7 +136,7 @@ class InterpreterInterface(BaseInterpreterInterface):
 
     def getCompletions(self, text, act_tok):
         try:
-            from _completer import Completer
+            from _pydev_completer import Completer
 
             completer = Completer(self.namespace, None)
             return completer.complete(act_tok)
@@ -177,7 +174,7 @@ def process_exec_queue(interpreter):
 
 
 if 'IPYTHONENABLE' in os.environ:
-    IPYTHON = bool(os.environ['IPYTHONENABLE'])
+    IPYTHON = os.environ['IPYTHONENABLE'] == 'True'
 else:
     IPYTHON = True
 
@@ -316,6 +313,8 @@ def get_completions(text, token, globals, locals):
     return interpreterInterface.getCompletions(text, token)
 
 def get_frame():
+    interpreterInterface = get_interpreter()
+
     return interpreterInterface.getFrame()
 
 def exec_code(code, globals, locals):

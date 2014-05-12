@@ -135,7 +135,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
           final Set<Pair<String, String>> set = new HashSet<Pair<String, String>>();
           for (FilePatchInProgress.PatchChange change : includedChanges) {
             final TextFilePatch patch = change.getPatchInProgress().getPatch();
-            final Pair<String, String> pair = new Pair<String, String>(patch.getBeforeName(), patch.getAfterName());
+            final Pair<String, String> pair = Pair.create(patch.getBeforeName(), patch.getAfterName());
             if (set.contains(pair)) continue;
             set.add(pair);
             acceptChange(includedTrinity, change);
@@ -811,8 +811,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         final String basePath = patchChange.getPatchInProgress().getBase().getPath();
         final String basePathCorrected = basePath.trim().replace('/', File.separatorChar);
         if (parentPath.startsWith(basePathCorrected)) {
-          return Arrays.asList(new Pair<String, Stress>(basePathCorrected, Stress.BOLD),
-                               new Pair<String, Stress>(StringUtil.tail(parentPath, basePathCorrected.length()), Stress.PLAIN));
+          return Arrays.asList(Pair.create(basePathCorrected, Stress.BOLD),
+                               Pair.create(StringUtil.tail(parentPath, basePathCorrected.length()), Stress.PLAIN));
         }
       }
       return null;

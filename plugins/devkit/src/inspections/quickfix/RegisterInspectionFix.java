@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +25,14 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
@@ -54,9 +55,8 @@ import java.util.Collections;
 import java.util.List;
 
 /**
-* @author Dmitry Avdeev
-*         Date: 1/20/12
-*/
+ * @author Dmitry Avdeev
+ */
 class RegisterInspectionFix implements IntentionAction {
 
   private final PsiClass myPsiClass;
@@ -96,7 +96,7 @@ class RegisterInspectionFix implements IntentionAction {
 
   public static void choosePluginDescriptor(final Project project, Editor editor, final PsiFile file,
                                             final Consumer<DomFileElement<IdeaPlugin>> consumer) {
-    Module module = ModuleUtil.findModuleForPsiElement(file);
+    Module module = ModuleUtilCore.findModuleForPsiElement(file);
     assert module != null;
     List<DomFileElement<IdeaPlugin>> elements =
       DomService.getInstance().getFileElements(IdeaPlugin.class, project, module.getModuleContentWithDependenciesScope());
@@ -163,8 +163,9 @@ class RegisterInspectionFix implements IntentionAction {
     .put("java-impl", "IdeaPlugin.xml")
     .build();
 
-  private static List<DomFileElement<IdeaPlugin>> findAppropriateIntelliJModule(String name, List<DomFileElement<IdeaPlugin>> elements) {
-    String extensionsFile = INTELLIJ_MODULES.get(name);
+  private static List<DomFileElement<IdeaPlugin>> findAppropriateIntelliJModule(String moduleName,
+                                                                                List<DomFileElement<IdeaPlugin>> elements) {
+    String extensionsFile = INTELLIJ_MODULES.get(moduleName);
     if (extensionsFile != null) {
       for (DomFileElement<IdeaPlugin> element : elements) {
         if (element.getFile().getName().equals(extensionsFile)) {
@@ -180,7 +181,7 @@ class RegisterInspectionFix implements IntentionAction {
     Extension extension = new WriteCommandAction<Extension>(project, file) {
 
       @Override
-      protected void run(Result<Extension> result) throws Throwable {
+      protected void run(@NotNull Result<Extension> result) throws Throwable {
         final Extensions extensions = getExtension(plugin, myEp.getName());
         Extension extension = extensions.addExtension(myEp.getName());
         XmlTag tag = extension.getXmlTag();
@@ -193,21 +194,19 @@ class RegisterInspectionFix implements IntentionAction {
 
   public static Extensions getExtension(IdeaPlugin plugin, String epName) {
     final List<Extensions> extensionsList = plugin.getExtensions();
-    Extensions extensions = null;
-    for (Extensions e : extensionsList) {
-      if (e.getXmlTag() instanceof IncludedXmlTag) {
+    for (Extensions extensions : extensionsList) {
+      if (extensions.getXmlTag() instanceof IncludedXmlTag) {
         continue;
       }
-      String s = e.getDefaultExtensionNs().getStringValue();
+      String s = extensions.getDefaultExtensionNs().getStringValue();
       if (s != null && epName.startsWith(s)) {
-        extensions = e;
-        break;
+        return extensions;
       }
     }
-    if (extensions == null) {
-      extensions = plugin.addExtensions();
-      extensions.getDefaultExtensionNs().setStringValue("com.intellij");
-    }
+
+    Extensions extensions = plugin.addExtensions();
+    final String epPrefix = StringUtil.getPackageName(epName);
+    extensions.getDefaultExtensionNs().setStringValue(epPrefix);
     return extensions;
   }
 

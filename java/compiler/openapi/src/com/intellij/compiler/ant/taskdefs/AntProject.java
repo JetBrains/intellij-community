@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,6 @@ import org.jetbrains.annotations.NonNls;
 public class AntProject extends Tag {
   public AntProject(@NonNls String name, @NonNls String defaultTarget) {
     //noinspection HardCodedStringLiteral
-    super("project", new Pair[]{new Pair<String, String>("name", name), new Pair<String, String>("default", defaultTarget)});
+    super("project", new Pair[]{Pair.create("name", name), Pair.create("default", defaultTarget)});
   }
 }

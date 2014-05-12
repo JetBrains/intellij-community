@@ -15,9 +15,7 @@
  */
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.newvfs.persistent.ContentHashesUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.util.io.IOUtil;
@@ -33,28 +31,27 @@ import java.security.MessageDigest;
  * @since 4/10/2014.
  */
 class ContentHashesSupport {
-  private static final ContentHashesUtil.HashEnumerator ourHashesWithFileType;
+  private static volatile ContentHashesUtil.HashEnumerator ourHashesWithFileType;
 
-  static {
-    ContentHashesUtil.HashEnumerator hashEnumerator = null;
-    try {
-      final File hashEnumeratorFile = new File(PathManager.getIndexRoot(), "hashesWithFileType");
-      hashEnumerator = IOUtil.openCleanOrResetBroken(new ThrowableComputable<ContentHashesUtil.HashEnumerator, IOException>() {
-        @Override
-        public ContentHashesUtil.HashEnumerator compute() throws IOException {
-          return new ContentHashesUtil.HashEnumerator(hashEnumeratorFile, null);
-        }
-      }, hashEnumeratorFile);
-      FlushingDaemon.everyFiveSeconds(new Runnable() {
-        @Override
-        public void run() {
-          if (ourHashesWithFileType.isDirty()) ourHashesWithFileType.force();
-        }
-      });
-    } catch (IOException ex) {
-      throw new RuntimeException(ex);
-    } finally {
-      ourHashesWithFileType = hashEnumerator;
+  static void initContentHashesEnumerator() throws IOException {
+    if (ourHashesWithFileType != null) return;
+    synchronized (ContentHashesSupport.class) {
+      if (ourHashesWithFileType != null) return;
+      ContentHashesUtil.HashEnumerator hashEnumerator = null;
+      final File hashEnumeratorFile = new File(IndexInfrastructure.getPersistentIndexRoot(), "hashesWithFileType");
+      try {
+        hashEnumerator = new ContentHashesUtil.HashEnumerator(hashEnumeratorFile, null);
+        FlushingDaemon.everyFiveSeconds(new Runnable() {
+          @Override
+          public void run() {
+            if (ourHashesWithFileType.isDirty()) ourHashesWithFileType.force();
+          }
+        });
+        ourHashesWithFileType = hashEnumerator;
+      } catch (IOException ex) {
+        IOUtil.deleteAllFilesStartingWith(hashEnumeratorFile);
+        throw ex;
+      }
     }
   }
 

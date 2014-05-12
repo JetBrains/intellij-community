@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -220,7 +220,7 @@ public class ProcessedModulesTable extends JPanel {
     List<Pair<Module, String>> elements = new ArrayList<Pair<Module, String>>();
     for (int idx = 0; idx < count; idx++) {
       final Module module = myTableModel.getModuleAt(idx);
-      elements.add(new Pair<Module, String>(module, myTableModel.getGenDirName(module)));
+      elements.add(Pair.create(module, myTableModel.getGenDirName(module)));
     }
     return elements;
   }

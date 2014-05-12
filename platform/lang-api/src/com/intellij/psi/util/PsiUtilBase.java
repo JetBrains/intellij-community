@@ -118,6 +118,8 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file == null) return null;
 
+    PsiUtilCore.ensureValid(file);
+
     final Language language = getLanguageInEditor(editor, project);
     if (language == null) return file;
 

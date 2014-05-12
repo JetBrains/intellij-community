@@ -67,7 +67,7 @@ public class VcsInitialization {
         ApplicationManager.getApplication().invokeLater(runnable);
         return;
       }
-      myList.add(new Pair<VcsInitObject, Runnable>(vcsInitObject, runnable));
+      myList.add(Pair.create(vcsInitObject, runnable));
     }
   }
 

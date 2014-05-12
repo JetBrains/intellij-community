@@ -22,9 +22,9 @@ import com.intellij.lang.Commenter;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.ExternalizableFileType;
+import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.util.*;
 import com.intellij.util.text.StringTokenizer;
 import org.jdom.Element;
@@ -328,7 +328,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
       String pattern = mapping.getAttributeValue(ATTRIBUTE_PATTERN);
 
       FileNameMatcher matcher = ext != null ? new ExtensionFileNameMatcher(ext) : FileTypeManager.parseFromString(pattern);
-      result.add(new Pair<FileNameMatcher, String>(matcher, mapping.getAttributeValue(ATTRIBUTE_TYPE)));
+      result.add(Pair.create(matcher, mapping.getAttributeValue(ATTRIBUTE_TYPE)));
     }
 
     return result;

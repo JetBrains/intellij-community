@@ -345,7 +345,12 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
 
     final PyExpression[] arguments = getArguments();
     if (arguments.length > parameter.getPosition()) {
-      return arguments[parameter.getPosition()];
+      final PyExpression result = arguments[parameter.getPosition()];
+      if (result instanceof PyKeywordArgument) {
+        ((PyKeywordArgument)result).getValueExpression();
+      } else {
+        return result;
+      }
     }
 
     return null;

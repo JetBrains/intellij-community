@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
@@ -158,44 +157,26 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
   }
 
   public void afterRootsChanged(@NotNull final Project project) {
-    final Application application = ApplicationManager.getApplication();
-    final Runnable updateLanguageLevel = new Runnable() {
-      @Override
-      public void run() {
-        final Set<Sdk> updatedSdks = new HashSet<Sdk>();
-        final Module[] modules = ModuleManager.getInstance(project).getModules();
-        boolean needReparseOpenFiles = false;
-        for (Module module : modules) {
-          Sdk newSdk = PythonSdkType.findPythonSdk(module);
-          if (myModuleSdks.containsKey(module)) {
-            Sdk oldSdk = myModuleSdks.get(module);
-            if ((newSdk != null || oldSdk != null) && newSdk != oldSdk) {
-              needReparseOpenFiles = true;
-            }
-          }
-          myModuleSdks.put(module, newSdk);
-          if (newSdk != null && !updatedSdks.contains(newSdk)) {
-            updatedSdks.add(newSdk);
-            updateSdkLanguageLevel(project, newSdk);
-          }
+    Set<Sdk> updatedSdks = new HashSet<Sdk>();
+    final Module[] modules = ModuleManager.getInstance(project).getModules();
+    boolean needReparseOpenFiles = false;
+    for (Module module : modules) {
+      Sdk newSdk = PythonSdkType.findPythonSdk(module);
+      if (myModuleSdks.containsKey(module)) {
+        Sdk oldSdk = myModuleSdks.get(module);
+        if ((newSdk != null || oldSdk != null) && newSdk != oldSdk) {
+          needReparseOpenFiles = true;
         }
-        final boolean finalNeedReparseOpenFiles = needReparseOpenFiles;
-        application.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (finalNeedReparseOpenFiles) {
-              FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
-            }
-          }
-        });
       }
-    };
-    application.executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        application.runReadAction(updateLanguageLevel);
+      myModuleSdks.put(module, newSdk);
+      if (newSdk != null && !updatedSdks.contains(newSdk)) {
+        updatedSdks.add(newSdk);
+        updateSdkLanguageLevel(project, newSdk);
       }
-    });
+    }
+    if (needReparseOpenFiles) {
+      FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
+    }
   }
 
   private void updateSdkLanguageLevel(Project project, Sdk sdk) {

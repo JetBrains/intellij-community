@@ -74,6 +74,6 @@ public class TestDataReferenceCollectorTest extends LightCodeInsightFixtureTestC
 
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("DevKit") + "/testData/";
+    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/";
   }
 }

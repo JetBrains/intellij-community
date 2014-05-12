@@ -840,11 +840,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           myChangedProjectFiles.put(project, changedProjectFiles);
         }
 
-        changedProjectFiles.add(new Pair<VirtualFile, StateStorage>(cause, storage));
+        changedProjectFiles.add(Pair.create(cause, storage));
       }
     }
     else {
-      myChangedApplicationFiles.add(new Pair<VirtualFile, StateStorage>(cause, storage));
+      myChangedApplicationFiles.add(Pair.create(cause, storage));
     }
 
     myChangedFilesAlarm.cancelAllRequests();

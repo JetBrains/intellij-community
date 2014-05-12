@@ -32,7 +32,7 @@ import java.util.Arrays;
 */
 class IntToIntBtree {
   public static int version() {
-    return 3 + (IOUtil.ourByteBuffersUseNativeByteOrder ? 0xFF : 0);
+    return 4 + (IOUtil.ourByteBuffersUseNativeByteOrder ? 0xFF : 0);
   }
 
   private static final int HAS_ZERO_KEY_MASK = 0xFF000000;

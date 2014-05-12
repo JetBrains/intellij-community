@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,7 +123,7 @@ public class JavaDocInfoGenerator {
           elements = rawElements;
         }
 
-        return new Pair<PsiElement[], InheritDocProvider<PsiElement[]>>(elements, mapProvider(pair.second, dropFirst));
+        return Pair.create(elements, mapProvider(pair.second, dropFirst));
       }
 
       @Override
@@ -1481,7 +1481,7 @@ public class JavaDocInfoGenerator {
             String tagName = value.getText();
 
             if (tagName != null && areWeakEqual(tagName, paramName)) {
-              parmTag = new Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>(localTag, ourEmptyProvider);
+              parmTag = Pair.create(localTag, ourEmptyProvider);
               break;
             }
           }
@@ -1498,7 +1498,7 @@ public class JavaDocInfoGenerator {
           try {
             final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
             final PsiDocTag tag = elementFactory.createDocTagFromText("@exception " + paramName);
-            collectedTags.addLast(new Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>(tag, ourEmptyProvider));
+            collectedTags.addLast(Pair.create(tag, ourEmptyProvider));
           }
           catch (IncorrectOperationException e) {
             LOG.error(e);

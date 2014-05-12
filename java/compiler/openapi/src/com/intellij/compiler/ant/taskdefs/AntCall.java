@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,6 @@ import com.intellij.openapi.util.Pair;
 public class AntCall extends Tag{
 
   public AntCall(final String target) {
-    super("antcall", new Pair[] {new Pair<String, String>("target", target)});
+    super("antcall", new Pair[] {Pair.create("target", target)});
   }
 }

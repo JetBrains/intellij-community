@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -316,6 +316,6 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
       if (seeker != null && seeker instanceof PsiWhiteSpace) sb.append(seeker.getText());
       else break;
     }
-    return new Pair<String, PsiElement>(sb.toString(), seeker);
+    return Pair.create(sb.toString(), seeker);
   }
 }

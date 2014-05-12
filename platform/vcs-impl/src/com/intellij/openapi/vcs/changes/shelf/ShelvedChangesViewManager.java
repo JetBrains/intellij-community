@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -258,7 +258,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   private void putMovedMessage(final String beforeName, final String afterName) {
     final String movedMessage = RelativePathCalculator.getMovedString(beforeName, afterName);
     if (movedMessage != null) {
-      myMoveRenameInfo.put(new Pair<String, String>(beforeName, afterName), movedMessage);
+      myMoveRenameInfo.put(Pair.create(beforeName, afterName), movedMessage);
     }
   }
 
@@ -450,7 +450,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       }
       else if (nodeValue instanceof ShelvedChange) {
         ShelvedChange change = (ShelvedChange) nodeValue;
-        final String movedMessage = myMoveRenameInfo.get(new Pair<String, String>(change.getBeforePath(), change.getAfterPath()));
+        final String movedMessage = myMoveRenameInfo.get(Pair.create(change.getBeforePath(), change.getAfterPath()));
         renderFileName(change.getBeforePath(), change.getFileStatus(), movedMessage);
       }
       else if (nodeValue instanceof ShelvedBinaryFile) {
@@ -459,7 +459,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         if (path == null) {
           path = binaryFile.AFTER_PATH;
         }
-        final String movedMessage = myMoveRenameInfo.get(new Pair<String, String>(binaryFile.BEFORE_PATH, binaryFile.AFTER_PATH));
+        final String movedMessage = myMoveRenameInfo.get(Pair.create(binaryFile.BEFORE_PATH, binaryFile.AFTER_PATH));
         renderFileName(path, binaryFile.getFileStatus(), movedMessage);
       }
     }

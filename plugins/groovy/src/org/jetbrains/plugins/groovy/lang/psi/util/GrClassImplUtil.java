@@ -581,7 +581,7 @@ public class GrClassImplUtil {
     if (!checkBases) {
       final PsiMethod[] methods = grType.findMethodsByName( name, false);
       for (PsiMethod method : methods) {
-        result.add(new Pair<PsiMethod, PsiSubstitutor>(method, PsiSubstitutor.EMPTY));
+        result.add(Pair.create(method, PsiSubstitutor.EMPTY));
       }
     }
     else {
@@ -590,7 +590,7 @@ public class GrClassImplUtil {
       if (candidateInfos != null) {
         for (CandidateInfo info : candidateInfos) {
           final PsiElement element = info.getElement();
-          result.add(new Pair<PsiMethod, PsiSubstitutor>((PsiMethod)element, info.getSubstitutor()));
+          result.add(Pair.create((PsiMethod)element, info.getSubstitutor()));
         }
       }
     }
@@ -604,7 +604,7 @@ public class GrClassImplUtil {
     List<Pair<PsiMethod, PsiSubstitutor>> result = new ArrayList<Pair<PsiMethod, PsiSubstitutor>>();
     for (List<CandidateInfo> infos : allMethodsMap.values()) {
       for (CandidateInfo info : infos) {
-        result.add(new Pair<PsiMethod, PsiSubstitutor>((PsiMethod)info.getElement(), info.getSubstitutor()));
+        result.add(Pair.create((PsiMethod)info.getElement(), info.getSubstitutor()));
       }
     }
 

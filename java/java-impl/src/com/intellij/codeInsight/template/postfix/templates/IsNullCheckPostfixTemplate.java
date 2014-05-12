@@ -15,16 +15,27 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
+import com.intellij.codeInsight.generation.surroundWith.JavaWithIfExpressionSurrounder;
+import com.intellij.lang.surroundWith.Surrounder;
 import org.jetbrains.annotations.NotNull;
 
-public class IsNullCheckPostfixTemplate extends NullCheckPostfixTemplate {
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_NOT_PRIMITIVE;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
+
+public class IsNullCheckPostfixTemplate extends SurroundPostfixTemplateBase {
   public IsNullCheckPostfixTemplate() {
-    super("null",  "if (expr == null)");
+    super("null", "if (expr == null)", JAVA_PSI_INFO, IS_NOT_PRIMITIVE);
   }
 
   @NotNull
   @Override
   protected String getTail() {
     return "== null";
+  }
+
+  @NotNull
+  @Override
+  protected Surrounder getSurrounder() {
+    return new JavaWithIfExpressionSurrounder();
   }
 }

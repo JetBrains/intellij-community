@@ -39,6 +39,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginDescriptorConstants;
 
@@ -108,6 +109,11 @@ public class PluginBuildConfiguration implements ModuleComponent, JDOMExternaliz
   @Nullable
   public ConfigFile getPluginXML() {
     return myPluginXmlContainer.getConfigFile(PluginDescriptorConstants.META_DATA);
+  }
+
+  @TestOnly
+  public void setPluginXmlFromVirtualFile(VirtualFile virtualFile) {
+    myPluginXmlContainer.getConfiguration().replaceConfigFile(PluginDescriptorConstants.META_DATA, virtualFile.getUrl());
   }
 
   private void createDescriptor(final String url) {

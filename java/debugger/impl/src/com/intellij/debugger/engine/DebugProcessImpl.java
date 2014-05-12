@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -189,7 +189,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     if (method == null) {
       return null;
     }
-    return new Pair<Method, Value>(method, watcher.getLastMethodReturnValue());
+    return Pair.create(method, watcher.getLastMethodReturnValue());
   }
 
   public void setWatchMethodReturnValuesEnabled(boolean enabled) {

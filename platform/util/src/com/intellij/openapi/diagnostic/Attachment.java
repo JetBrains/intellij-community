@@ -7,6 +7,7 @@ import com.intellij.util.PathUtilRt;
 import java.io.UnsupportedEncodingException;
 
 public class Attachment {
+  public static final Attachment[] EMPTY_ARRAY = new Attachment[0];
   private final String myPath;
   private final byte[] myBytes;
   private boolean myIncluded = true;

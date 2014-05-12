@@ -635,8 +635,13 @@ public class CodeCompletionHandlerBase {
       });
       context = contexts.get(contexts.size() - 1);
       if (context.shouldAddCompletionChar() && context.getCompletionChar() != Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
-        DataContext dataContext = DataManager.getInstance().getDataContext(editor.getContentComponent());
-        EditorActionManager.getInstance().getTypedAction().getHandler().execute(editor, completionChar, dataContext);
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            DataContext dataContext = DataManager.getInstance().getDataContext(editor.getContentComponent());
+            EditorActionManager.getInstance().getTypedAction().getHandler().execute(editor, completionChar, dataContext);
+          }
+        });
       }
       for (CompletionAssertions.WatchingInsertionContext insertionContext : contexts) {
         insertionContext.stopWatching();

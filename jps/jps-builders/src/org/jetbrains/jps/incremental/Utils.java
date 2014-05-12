@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PathUtilRt;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.model.module.JpsModule;
@@ -86,7 +87,7 @@ public class Utils {
       if (directoryBased == null) {
         return null;
       }
-      name = JpsProjectLoader.getDirectoryBaseProjectName(directoryBased);
+      name = PathUtilRt.suggestFileName(JpsProjectLoader.getDirectoryBaseProjectName(directoryBased));
       locationHash = directoryBased.getPath().hashCode();
     }
 

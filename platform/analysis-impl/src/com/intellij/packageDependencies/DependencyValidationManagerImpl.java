@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -321,11 +321,11 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
           String scopeName = element.getAttributeValue("name");
           assert scopeName != null;
           final String name = generator.generateUniqueName(FileUtil.sanitizeFileName(scopeName)) + ".xml";
-          result.add(new Pair<Element, String>(element, name));
+          result.add(Pair.create(element, name));
         }
       }
        if (!e.getChildren().isEmpty()) {
-         result.add(new Pair<Element, String>(e, generator.generateUniqueName("scope_settings") + ".xml"));
+         result.add(Pair.create(e, generator.generateUniqueName("scope_settings") + ".xml"));
        }
        return result;
     }

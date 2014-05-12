@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public class InstanceOfInstruction extends InstructionImpl implements MixinTypeI
       GrExpression operand = ((GrInstanceOfExpression)element).getOperand();
       final GrTypeElement typeElement = ((GrInstanceOfExpression)element).getTypeElement();
       if (operand instanceof GrReferenceExpression && ((GrReferenceExpression)operand).getQualifier() == null && typeElement != null) {
-        return new Pair<GrExpression, PsiType>(((GrInstanceOfExpression)element).getOperand(), typeElement.getType());
+        return Pair.create(((GrInstanceOfExpression)element).getOperand(), typeElement.getType());
       }
     }
     else if (element instanceof GrBinaryExpression && ControlFlowBuilderUtil.isInstanceOfBinary((GrBinaryExpression)element)) {

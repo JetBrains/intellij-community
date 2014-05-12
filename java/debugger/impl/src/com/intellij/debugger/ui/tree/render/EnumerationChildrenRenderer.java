@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ public final class EnumerationChildrenRenderer extends com.intellij.debugger.ui.
       String name = item.getAttributeValue(CHILD_NAME);
       TextWithImports text = DebuggerUtils.getInstance().readTextWithImports((Element) item.getChildren().get(0));
 
-      myChildren.add(new Pair<String, TextWithImports>(name, text));
+      myChildren.add(Pair.create(name, text));
     }
   }
 

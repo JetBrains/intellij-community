@@ -1,0 +1,6 @@
+<idea-plugin>
+  <actions>
+    <action id="invalid"
+            class="<error descr="Action class must extend 'com.intellij.openapi.actionSystem.AnAction'">java.lang.String</error>"/>
+  </actions>
+</idea-plugin>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,10 @@ import org.jetbrains.annotations.NonNls;
 public class Copy extends Tag {
   public Copy(@NonNls String toDir) {
     //noinspection HardCodedStringLiteral
-    super("copy", new Pair[] {new Pair<String, String>("todir", toDir)});
+    super("copy", new Pair[] {Pair.create("todir", toDir)});
   }
   public Copy(@NonNls String file, @NonNls String toFile) {
     //noinspection HardCodedStringLiteral
-    super("copy", new Pair[] {new Pair<String, String>("file", file), new Pair<String, String>("tofile", toFile)});
+    super("copy", new Pair[] {Pair.create("file", file), Pair.create("tofile", toFile)});
   }
 }

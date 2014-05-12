@@ -142,8 +142,8 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
                                    DocCommentPolicy javaDocPolicy) throws IncorrectOperationException {
     aClass.getProject().getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
       .refactoringStarted(ExtractSuperClassUtil.REFACTORING_EXTRACT_SUPER_ID, ExtractSuperClassUtil.createBeforeData(aClass, selectedMembers));
+    final PsiClass anInterface = JavaDirectoryService.getInstance().createInterface(targetDir, interfaceName);
     try {
-      PsiClass anInterface = JavaDirectoryService.getInstance().createInterface(targetDir, interfaceName);
       PsiJavaCodeReferenceElement ref = ExtractSuperClassUtil.createExtendingReference(anInterface, aClass, selectedMembers);
       final PsiReferenceList referenceList = aClass.isInterface() ? aClass.getExtendsList() : aClass.getImplementsList();
       assert referenceList != null;
@@ -154,7 +154,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
     }
     finally {
       aClass.getProject().getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
-        .refactoringDone(ExtractSuperClassUtil.REFACTORING_EXTRACT_SUPER_ID, ExtractSuperClassUtil.createAfterData(aClass));
+        .refactoringDone(ExtractSuperClassUtil.REFACTORING_EXTRACT_SUPER_ID, ExtractSuperClassUtil.createAfterData(anInterface));
     }
   }
 
