@@ -111,8 +111,6 @@ public class GithubSettingsPanel {
             GithubNotifications.showInfoDialog(myPane, "Success", "Connection successful");
           }
         }
-        catch (GithubOperationCanceledException ignore) {
-        }
         catch (GithubAuthenticationException ex) {
           GithubNotifications.showErrorDialog(myPane, "Login Failure", "Can't login using given credentials: " + ex.getMessage());
         }
@@ -145,10 +143,7 @@ public class GithubSettingsPanel {
             })
           );
         }
-        catch (GithubOperationCanceledException ignore) {
-        }
         catch (IOException ex) {
-          LOG.info(ex);
           GithubNotifications.showErrorDialog(myPane, "Can't create API token", ex);
         }
       }

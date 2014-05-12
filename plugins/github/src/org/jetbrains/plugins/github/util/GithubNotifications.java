@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsNotifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
 
 import java.awt.*;
 
@@ -52,6 +53,7 @@ public class GithubNotifications {
 
   public static void showError(@NotNull Project project, @NotNull String title, @NotNull Exception e) {
     LOG.warn(title + "; ", e);
+    if (e instanceof GithubOperationCanceledException) return;
     VcsNotifier.getInstance(project).notifyError(title, getErrorTextFromException(e));
   }
 
@@ -110,6 +112,7 @@ public class GithubNotifications {
 
   public static void showErrorDialog(@Nullable Project project, @NotNull String title, @NotNull Exception e) {
     LOG.warn(title, e);
+    if (e instanceof GithubOperationCanceledException) return;
     Messages.showErrorDialog(project, getErrorTextFromException(e), title);
   }
 
@@ -120,6 +123,7 @@ public class GithubNotifications {
 
   public static void showErrorDialog(@NotNull Component component, @NotNull String title, @NotNull Exception e) {
     LOG.info(title, e);
+    if (e instanceof GithubOperationCanceledException) return;
     Messages.showErrorDialog(component, getErrorTextFromException(e), title);
   }
 
