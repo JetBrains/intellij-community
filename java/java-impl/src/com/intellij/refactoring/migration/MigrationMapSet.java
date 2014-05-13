@@ -30,6 +30,7 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -102,7 +103,7 @@ public class MigrationMapSet {
 
       for (int i = 0; i < DEFAULT_MAPS.length; i++) {
         String defaultTemplate = DEFAULT_MAPS[i];
-        java.net.URL url = MigrationMapSet.class.getResource(defaultTemplate);
+        URL url = MigrationMapSet.class.getResource(defaultTemplate);
         LOG.assertTrue(url != null);
         String fileName = defaultTemplate.substring(defaultTemplate.lastIndexOf("/") + 1);
         File targetFile = new File(dir, fileName);

@@ -82,7 +82,7 @@ public class ImportHelper{
     List<Pair<String, Boolean>> resultList = sortItemsAccordingToSettings(names, mySettings);
 
     final Set<String> classesOrPackagesToImportOnDemand = new THashSet<String>();
-    collectOnDemandImports(resultList, classesOrPackagesToImportOnDemand, ImportHelper.this.mySettings);
+    collectOnDemandImports(resultList, classesOrPackagesToImportOnDemand, this.mySettings);
 
     Set<String> classesToUseSingle = findSingleImports(file, resultList, classesOrPackagesToImportOnDemand);
     Set<String> toReimport = new THashSet<String>();

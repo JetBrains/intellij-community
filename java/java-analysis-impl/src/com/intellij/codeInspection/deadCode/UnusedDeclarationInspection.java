@@ -413,7 +413,7 @@ public class UnusedDeclarationInspection extends GlobalInspectionTool {
 
             private void findExternalClassReferences(final RefClass refElement) {
               PsiClass psiClass = refElement.getElement();
-              String qualifiedName = psiClass.getQualifiedName();
+              String qualifiedName = refElement != null ? psiClass.getQualifiedName() : null;
               if (qualifiedName != null) {
                 helper.processUsagesInNonJavaFiles(qualifiedName,
                                                    new PsiNonJavaFileReferenceProcessor() {

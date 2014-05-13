@@ -54,7 +54,7 @@ public class TreeModelBuilder {
   protected final JavaPsiFacade myJavaPsiFacade;
   private static final Key<Integer> FILE_COUNT = Key.create("packages.FILE_COUNT");
 
-  private static enum ScopeType {
+  private enum ScopeType {
     TEST, SOURCE, LIB
   }
 

@@ -23,6 +23,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -108,8 +109,13 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
         PsiParameter lastParameter = parameters[args.length - 1];
         PsiType lastParamType = lastParameter.getType();
         LOG.assertTrue(lastParamType instanceof PsiEllipsisType);
-        if (!(lastArg instanceof PsiNewExpression) ||
-            !substitutor.substitute(((PsiEllipsisType)lastParamType).toArrayType()).equals(lastArg.getType())) {
+        if (!(lastArg instanceof PsiNewExpression)) {
+          return;
+        }
+        final PsiType substitutedLastParamType = substitutor.substitute(((PsiEllipsisType)lastParamType).toArrayType());
+        final PsiType lastArgType = lastArg.getType();
+        if (lastArgType == null || !lastArgType.equals(substitutedLastParamType) && 
+                                   !lastArgType.equals(TypeConversionUtil.erasure(substitutedLastParamType))) {
           return;
         }
         PsiExpression[] initializers = getInitializers((PsiNewExpression)lastArg);

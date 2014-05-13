@@ -991,7 +991,7 @@ public class TypeConversionUtil {
           return isAssignable(leftBound, typeRight, effectiveAllowUncheckedConversion && !containsWildcards(leftBound));
         }
         else { // isSuper
-          return isAssignable(typeRight, leftBound, effectiveAllowUncheckedConversion && !containsWildcards(leftBound));
+          return isAssignable(typeRight, leftBound, false);
         }
       }
     }

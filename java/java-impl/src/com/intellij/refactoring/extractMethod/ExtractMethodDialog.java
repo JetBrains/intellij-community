@@ -19,6 +19,7 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -129,7 +130,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
   }
 
   protected EditorTextField createNameField(String initialMethodName) {
-    EditorTextField field = new EditorTextField(initialMethodName);
+    EditorTextField field = new EditorTextField(initialMethodName, myProject, StdFileTypes.JAVA);
     field.selectAll();
     return field;
   }

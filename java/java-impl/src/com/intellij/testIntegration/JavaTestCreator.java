@@ -32,14 +32,14 @@ public class JavaTestCreator implements TestCreator {
     CreateTestAction action = new CreateTestAction();
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
 
-    return action.isAvailableForElement(element);
+    return CreateTestAction.isAvailableForElement(element);
   }
 
   public void createTest(Project project, Editor editor, PsiFile file) {
     try {
       CreateTestAction action = new CreateTestAction();
       PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-      if (action.isAvailableForElement(element)) {
+      if (CreateTestAction.isAvailableForElement(element)) {
         action.invoke(project, editor, file.getContainingFile());
       }
     }
