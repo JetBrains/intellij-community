@@ -60,7 +60,7 @@ public abstract class JavaBreakpointTypeBase<T extends JavaBreakpointProperties>
   @Nullable
   @Override
   public XSourcePosition getSourcePosition(@NotNull XBreakpoint<T> breakpoint) {
-    Breakpoint javaBreakpoint = BreakpointManager.findBreakpoint(breakpoint);
+    Breakpoint javaBreakpoint = BreakpointManager.getJavaBreakpoint(breakpoint);
     if (javaBreakpoint != null) {
       PsiClass aClass = javaBreakpoint.getPsiClass();
       if (aClass != null && aClass.getContainingFile() != null) {
