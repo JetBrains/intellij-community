@@ -333,7 +333,7 @@
     <localInspection language="JAVA" suppressId="StaticMethodReferencedViaSubclass" shortName="StaticCallOnSubclass"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="static.method.via.subclass.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.bugs.StaticCallOnSubclassInspection"/>
+                     implementationClass="com.siyeh.ig.bugs.StaticCallOnSubclassInspection" cleanupTool="true"/>
     <localInspection language="JAVA" shortName="StringConcatenationInFormatCall" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="string.concatenation.in.format.call.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
