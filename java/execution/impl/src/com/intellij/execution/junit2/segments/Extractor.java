@@ -28,17 +28,24 @@ import javax.swing.*;
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * @author dyoma
  */
 public class Extractor {
+  private static final int MAX_TASKS_TO_PROCESS_AT_ONCE = 100;
+  
   private DeferredActionsQueue myFulfilledWorkGate = null;
   private final SegmentedInputStream myStream;
   private OutputPacketProcessor myEventsDispatcher;
   private static final Logger LOG = Logger.getInstance("#" + Extractor.class.getName());
-  private final Executor myQueue2 = new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE);
+  private final Executor myExecutor = new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE);
+  private final BlockingQueue<Runnable> myTaskQueue = new LinkedBlockingQueue<Runnable>();
 
   public Extractor(@NotNull InputStream stream, @NotNull Charset charset) {
     myStream = new SegmentedInputStream(stream, charset);
@@ -86,19 +93,30 @@ public class Extractor {
   }
 
   private void scheduleTask(final DeferredActionsQueue queue, final Runnable task) {
-    myQueue2.execute(new Runnable() {
+    myTaskQueue.add(task);
+    myExecutor.execute(new Runnable() {
       public void run() {
-        // for some reason there is a requirement that this activity must be done from the swing thread
-        // will be blocking one of pooled threads here, which is ok
-        try {
-          SwingUtilities.invokeAndWait(new Runnable() {
-            public void run() {
-              queue.addLast(task);
-            }
-          });
-        }
-        catch (Throwable e) {
-          LOG.info("Task rejected: " + task, e);
+        final List<Runnable> currentTasks = new ArrayList<Runnable>(MAX_TASKS_TO_PROCESS_AT_ONCE);
+        if (myTaskQueue.drainTo(currentTasks, MAX_TASKS_TO_PROCESS_AT_ONCE) > 0) {
+          // there is a requirement that these activities must be run from the swing thread
+          // will be blocking one of pooled threads here, which is ok
+          try {
+            SwingUtilities.invokeAndWait(new Runnable() {
+              public void run() {
+                for (Runnable task : currentTasks) {
+                  try {
+                    queue.addLast(task);
+                  }
+                  catch (Throwable e) {
+                    LOG.info(e);
+                  }
+                }
+              }
+            });
+          }
+          catch (Throwable e) {
+            LOG.info("Task rejected: " + currentTasks, e);
+          }
         }
       }
     });
