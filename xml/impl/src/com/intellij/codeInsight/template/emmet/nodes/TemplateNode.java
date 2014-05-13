@@ -21,7 +21,7 @@ import com.intellij.codeInsight.template.emmet.ZenCodingUtil;
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,7 +79,7 @@ public class TemplateNode extends ZenCodingNode {
   @Override
   public String toString() {
     String result = myTemplateToken.getKey();
-    List<Pair<String, String>> attributes = myTemplateToken.getAttribute2Value();
+    List<Couple<String>> attributes = myTemplateToken.getAttribute2Value();
     if (!attributes.isEmpty()) {
       result += "[" + JOINER.join(myTemplateToken.getAttribute2Value()) + "]";
     }

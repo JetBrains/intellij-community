@@ -36,7 +36,12 @@ public class ExecutionStackImpl extends XExecutionStack {
 
   @Override
   public void computeStackFrames(final int firstFrameIndex, final XStackFrameContainer container) {
-    SuspendContext suspendContext = debugProcess.getVm().getSuspendContextManager().getContextOrFail();
+    SuspendContext suspendContext = debugProcess.getVm().getSuspendContextManager().getContext();
+    // WipSuspendContextManager set context to null on resume _before_ vm.getDebugListener().resumed() call() (in any case, XFramesView can queue event to EDT), so, IDE state could be outdated compare to VM (our) state
+    if (suspendContext == null) {
+      return;
+    }
+
     suspendContext.getCallFrames().doWhenDone(new ContextDependentAsyncResultConsumer<CallFrame[]>(suspendContext) {
       @Override
       protected void consume(CallFrame[] frames, @NotNull Vm vm) {

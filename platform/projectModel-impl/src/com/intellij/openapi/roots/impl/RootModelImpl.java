@@ -350,17 +350,17 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
       getSourceModel().setOrderEntriesFrom(this);
     }
 
+    for (ModuleExtension extension : myExtensions) {
+      if (extension.isChanged()) {
+        extension.commit();
+      }
+    }
+
     if (areContentEntriesChanged()) {
       getSourceModel().removeAllContentEntries();
       for (ContentEntry contentEntry : myContent) {
         ContentEntry cloned = ((ClonableContentEntry)contentEntry).cloneEntry(getSourceModel());
         getSourceModel().myContent.add(cloned);
-      }
-    }
-
-    for (ModuleExtension extension : myExtensions) {
-      if (extension.isChanged()) {
-        extension.commit();
       }
     }
   }

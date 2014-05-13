@@ -31,6 +31,7 @@ import com.intellij.psi.Weigher;
 import com.intellij.psi.WeighingService;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,14 +69,15 @@ public class CompletionServiceImpl extends CompletionService{
   @Override
   public String getAdvertisementText() {
     final CompletionProgressIndicator completion = getCompletionService().getCurrentCompletion();
-    return completion == null ? null : completion.getLookup().getAdvertisementText();
+    return completion == null ? null : ContainerUtil.getFirstItem(completion.getLookup().getAdvertisements());
   }
 
   @Override
   public void setAdvertisementText(@Nullable final String text) {
+    if (text == null) return;
     final CompletionProgressIndicator completion = getCompletionService().getCurrentCompletion();
     if (completion != null) {
-      completion.getLookup().setAdvertisementText(text);
+      completion.addAdvertisement(text, null);
     }
   }
 

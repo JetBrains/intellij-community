@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.paths.PathReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -27,6 +28,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -90,16 +93,18 @@ public abstract class DevKitInspectionBase extends BaseJavaLocalInspectionTool {
       processPluginXml(pluginXml, finder, includeActions);
 
       // <depends> plugin.xml files
-      final VirtualFile pluginXmlDirectory = pluginXml.getVirtualFile().getParent();
       final DomFileElement<IdeaPlugin> fileElement = DescriptorUtil.getIdeaPlugin(pluginXml);
       for (Dependency dependency : fileElement.getRootElement().getDependencies()) {
-        final String configFile = dependency.getConfigFile().getValue();
+        final GenericAttributeValue<PathReference> configFileAttribute = dependency.getConfigFile();
+        if (!DomUtil.hasXml(configFileAttribute)) continue;
+
+        final PathReference configFile = configFileAttribute.getValue();
         if (configFile != null) {
-          final VirtualFile depVirtualFile = pluginXmlDirectory.findChild(configFile);
-          if (depVirtualFile == null) continue;
-          final PsiFile depPluginXml = PsiManager.getInstance(module.getProject()).findFile(depVirtualFile);
+          final PsiElement resolve = configFile.resolve();
+          if (!(resolve instanceof XmlFile)) continue;
+          final XmlFile depPluginXml = (XmlFile)resolve;
           if (DescriptorUtil.isPluginXml(depPluginXml)) {
-            processPluginXml((XmlFile)depPluginXml, finder, includeActions);
+            processPluginXml(depPluginXml, finder, includeActions);
           }
         }
       }

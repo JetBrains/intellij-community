@@ -30,5 +30,6 @@ public class BaseCodeFoldingOptionsProvider extends BeanConfigurable<CodeFolding
     checkBox("COLLAPSE_IMPORTS", ApplicationBundle.message("checkbox.collapse.title.imports"));
     checkBox("COLLAPSE_DOC_COMMENTS", ApplicationBundle.message("checkbox.collapse.javadoc.comments"));
     checkBox("COLLAPSE_METHODS", ApplicationBundle.message("checkbox.collapse.method.bodies"));
+    checkBox("COLLAPSE_CUSTOM_FOLDING_REGIONS", ApplicationBundle.message("checkbox.collapse.custom.folding.regions"));
   }
 }

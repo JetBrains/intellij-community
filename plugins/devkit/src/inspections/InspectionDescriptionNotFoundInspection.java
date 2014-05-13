@@ -18,7 +18,7 @@ package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -34,14 +34,13 @@ import org.jetbrains.idea.devkit.util.PsiUtil;
  * @author Konstantin Bulenkov
  */
 public class InspectionDescriptionNotFoundInspection extends DevKitInspectionBase{
-  @NonNls static final String INSPECTION_PROFILE_ENTRY = InspectionProfileEntry.class.getName();
-  @NonNls private static final String INSPECTION_DESCRIPTIONS = "inspectionDescriptions";
+  @NonNls static final String INSPECTION_PROFILE_ENTRY = DescriptionType.INSPECTION.getClassName();
 
   @Override
   public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final Project project = aClass.getProject();
     final PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
-    final Module module = ModuleUtil.findModuleForPsiElement(aClass);
+    final Module module = ModuleUtilCore.findModuleForPsiElement(aClass);
 
     if (nameIdentifier == null || module == null || !PsiUtil.isInstantiable(aClass)) return null;
 
@@ -57,7 +56,7 @@ public class InspectionDescriptionNotFoundInspection extends DevKitInspectionBas
     if (filename == null) return null;
 
 
-    for (PsiDirectory description : getInspectionDescriptionsDirs(module)) {
+    for (PsiDirectory description : DescriptionCheckerUtil.getDescriptionsDirs(module, DescriptionType.INSPECTION)) {
       final PsiFile file = description.findFile(filename + ".html");
       if (file == null) continue;
       final VirtualFile vf = file.getVirtualFile();
@@ -71,7 +70,8 @@ public class InspectionDescriptionNotFoundInspection extends DevKitInspectionBas
     final PsiElement problem = getProblemElement(aClass, method);
     final ProblemDescriptor problemDescriptor = manager
       .createProblemDescriptor(problem == null ? nameIdentifier : problem,
-                               "Inspection does not have a description", isOnTheFly, new LocalQuickFix[]{new CreateHtmlDescriptionFix(filename, module, false)},
+                               "Inspection does not have a description", isOnTheFly,
+                               new LocalQuickFix[]{new CreateHtmlDescriptionFix(filename, module, DescriptionType.INSPECTION)},
                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
     return new ProblemDescriptor[]{problemDescriptor};
   }
@@ -102,15 +102,6 @@ public class InspectionDescriptionNotFoundInspection extends DevKitInspectionBas
       }
     }
     return isLastMethodDefinitionIn(methodName, classFQN, cls.getSuperClass());
-  }
-
-  public static PsiDirectory[] getInspectionDescriptionsDirs(Module module) {
-    final PsiPackage aPackage = JavaPsiFacade.getInstance(module.getProject()).findPackage(INSPECTION_DESCRIPTIONS);
-    if (aPackage != null) {
-      return aPackage.getDirectories(GlobalSearchScope.moduleWithDependenciesScope(module));
-    } else {
-      return PsiDirectory.EMPTY_ARRAY;
-    }
   }
 
   @Nullable

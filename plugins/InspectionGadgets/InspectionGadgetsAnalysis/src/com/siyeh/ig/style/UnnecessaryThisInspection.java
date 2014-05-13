@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
@@ -34,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class UnnecessaryThisInspection extends BaseInspection {
+public class UnnecessaryThisInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreAssignments = false;

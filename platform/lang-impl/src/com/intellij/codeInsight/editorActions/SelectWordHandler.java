@@ -149,6 +149,10 @@ public class SelectWordHandler extends EditorActionHandler {
       }
     }
 
+    if (element != null && element.getTextRange().getEndOffset() > editor.getDocument().getTextLength()) {
+      throw new AssertionError("Wrong element range " + element + "; committed=" + PsiDocumentManager.getInstance(project).isCommitted(document));
+    }
+
     final TextRange selectionRange = new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
 
     final Ref<TextRange> minimumRange = new Ref<TextRange>(new TextRange(0, editor.getDocument().getTextLength()));

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.imports;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.psi.*;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
@@ -26,7 +27,7 @@ import com.intellij.psi.util.FileTypeUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaLangImportInspection extends BaseInspection {
+public class JavaLangImportInspection extends BaseInspection implements CleanupLocalInspectionTool{
 
   @Override
   @NotNull

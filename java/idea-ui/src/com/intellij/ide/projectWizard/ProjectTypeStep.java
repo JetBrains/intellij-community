@@ -452,13 +452,6 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     if (moduleBuilder != null && !(moduleBuilder instanceof TemplateModuleBuilder)) {
       list.add(0, new BuilderBasedTemplate(moduleBuilder));
     }
-    if (group.getParentGroup() == null) {
-      for (TemplatesGroup templatesGroup : myTemplatesMap.keySet()) {
-        if (group.getName().equals(templatesGroup.getParentGroup())) {
-          list.addAll(myTemplatesMap.get(templatesGroup));
-        }
-      }
-    }
     myTemplatesList.setTemplates(list, preserveSelection);
   }
 

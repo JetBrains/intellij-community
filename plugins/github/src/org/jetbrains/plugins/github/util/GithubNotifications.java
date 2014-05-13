@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsNotifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
 
 import java.awt.*;
 
@@ -52,6 +53,7 @@ public class GithubNotifications {
 
   public static void showError(@NotNull Project project, @NotNull String title, @NotNull Exception e) {
     LOG.warn(title + "; ", e);
+    if (e instanceof GithubOperationCanceledException) return;
     VcsNotifier.getInstance(project).notifyError(title, getErrorTextFromException(e));
   }
 
@@ -83,48 +85,50 @@ public class GithubNotifications {
                                                  NotificationListener.URL_OPENING_LISTENER);
   }
 
-  public static void showInfoDialog(final @Nullable Project project, final @NotNull String title, final @NotNull String message) {
+  public static void showInfoDialog(@Nullable Project project, @NotNull String title, @NotNull String message) {
     LOG.info(title + "; " + message);
     Messages.showInfoMessage(project, message, title);
   }
 
-  public static void showInfoDialog(final @NotNull Component component, final @NotNull String title, final @NotNull String message) {
+  public static void showInfoDialog(@NotNull Component component, @NotNull String title, @NotNull String message) {
     LOG.info(title + "; " + message);
     Messages.showInfoMessage(component, message, title);
   }
 
-  public static void showWarningDialog(final @Nullable Project project, final @NotNull String title, final @NotNull String message) {
+  public static void showWarningDialog(@Nullable Project project, @NotNull String title, @NotNull String message) {
     LOG.info(title + "; " + message);
     Messages.showWarningDialog(project, message, title);
   }
 
-  public static void showWarningDialog(final @NotNull Component component, final @NotNull String title, final @NotNull String message) {
+  public static void showWarningDialog(@NotNull Component component, @NotNull String title, @NotNull String message) {
     LOG.info(title + "; " + message);
     Messages.showWarningDialog(component, message, title);
   }
 
-  public static void showErrorDialog(final @Nullable Project project, final @NotNull String title, final @NotNull String message) {
+  public static void showErrorDialog(@Nullable Project project, @NotNull String title, @NotNull String message) {
     LOG.info(title + "; " + message);
     Messages.showErrorDialog(project, message, title);
   }
 
-  public static void showErrorDialog(final @Nullable Project project, final @NotNull String title, final @NotNull Exception e) {
+  public static void showErrorDialog(@Nullable Project project, @NotNull String title, @NotNull Exception e) {
     LOG.warn(title, e);
+    if (e instanceof GithubOperationCanceledException) return;
     Messages.showErrorDialog(project, getErrorTextFromException(e), title);
   }
 
-  public static void showErrorDialog(final @NotNull Component component, final @NotNull String title, final @NotNull String message) {
+  public static void showErrorDialog(@NotNull Component component, @NotNull String title, @NotNull String message) {
     LOG.info(title + "; " + message);
     Messages.showErrorDialog(component, message, title);
   }
 
-  public static void showErrorDialog(final @NotNull Component component, final @NotNull String title, final @NotNull Exception e) {
+  public static void showErrorDialog(@NotNull Component component, @NotNull String title, @NotNull Exception e) {
     LOG.info(title, e);
-    Messages.showInfoMessage(component, getErrorTextFromException(e), title);
+    if (e instanceof GithubOperationCanceledException) return;
+    Messages.showErrorDialog(component, getErrorTextFromException(e), title);
   }
 
   @Messages.YesNoResult
-  public static int showYesNoDialog(final @Nullable Project project, final @NotNull String title, final @NotNull String message) {
+  public static int showYesNoDialog(@Nullable Project project, @NotNull String title, @NotNull String message) {
     return Messages.showYesNoDialog(project, message, title, Messages.getQuestionIcon());
   }
 }

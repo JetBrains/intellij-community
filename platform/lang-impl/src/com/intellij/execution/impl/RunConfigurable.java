@@ -1054,7 +1054,7 @@ class RunConfigurable extends BaseConfigurable {
       SingleConfigurationConfigurable.editSettings(settings, null);
     installUpdateListeners(configurationConfigurable);
     DefaultMutableTreeNode nodeToAdd = new DefaultMutableTreeNode(configurationConfigurable);
-    myTreeModel.insertNodeInto(nodeToAdd, node, node.getIndex(selectedNode) + 1);
+    myTreeModel.insertNodeInto(nodeToAdd, node, selectedNode != null ? node.getIndex(selectedNode) + 1 :node.getChildCount());
     TreeUtil.selectNode(myTree, nodeToAdd);
     return configurationConfigurable;
   }

@@ -1718,9 +1718,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     private GotoActionModel createActionModel() {
       return new GotoActionModel(project, myFocusComponent, myEditor, myFile) {
         @Override
-        protected boolean actionMatches(String pattern, @NotNull AnAction anAction) {
+        protected MatchMode actionMatches(String pattern, @NotNull AnAction anAction) {
           return NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE)
-            .matches(anAction.getTemplatePresentation().getText());
+            .matches(anAction.getTemplatePresentation().getText()) ? MatchMode.NAME : MatchMode.NONE;
         }
       };
     }

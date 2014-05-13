@@ -89,16 +89,10 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
         }
       });
       panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-      panel.add(radioButton, BorderLayout.NORTH);
-      final JLabel label = new JLabel(myColumnMode ? IconUtil.scale(icon, .2) : icon) {
-        @Override
-        public Dimension getPreferredSize() {
-          Dimension size = super.getPreferredSize();
-          if (myColumnMode) size.width *=2;
-          return size;
-        }
-      };
+      panel.add(radioButton, myColumnMode ? BorderLayout.WEST : BorderLayout.NORTH);
+      final JLabel label = new JLabel(myColumnMode ? IconUtil.scale(icon, .33) : icon);
       label.setVerticalAlignment(SwingConstants.TOP);
+      label.setHorizontalAlignment(SwingConstants.RIGHT);
       panel.add(label, BorderLayout.CENTER);
 
       group.add(radioButton);
@@ -106,11 +100,13 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
     }
     add(buttonsPanel, BorderLayout.CENTER);
     myPreviewLabel = new JLabel();
-    myPreviewLabel.setHorizontalAlignment(SwingConstants.CENTER);
+    myPreviewLabel.setHorizontalAlignment(myColumnMode ? SwingConstants.LEFT : SwingConstants.CENTER);
     myPreviewLabel.setVerticalAlignment(SwingConstants.CENTER);
     if (myColumnMode) {
       add(buttonsPanel, BorderLayout.WEST);
-      add(myPreviewLabel, BorderLayout.CENTER);
+      JPanel wrapperPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+      wrapperPanel.add(myPreviewLabel);
+      add(wrapperPanel, BorderLayout.CENTER);
     }
     applyLaf(myDefaultLafName, this);
     myInitial = false;
@@ -161,7 +157,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
       }
       if (myColumnMode) {
         myPreviewLabel.setIcon(myLafNames.get(lafName));
-        myPreviewLabel.setBorder(BorderFactory.createLineBorder(UIManager.getColor("Label.foreground")));
+        myPreviewLabel.setBorder(BorderFactory.createLineBorder(UIManager.getColor("Label.disabledForeground")));
       }
     }
     catch (ClassNotFoundException e) {

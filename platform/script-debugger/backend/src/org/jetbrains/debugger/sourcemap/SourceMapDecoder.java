@@ -67,10 +67,10 @@ public final class SourceMapDecoder {
 
   @Nullable
   private static SourceMap parseMap(JsonReaderEx reader,
-                             int line,
-                             int column,
-                             List<MappingEntry> mappings,
-                             @NotNull Function<List<String>, SourceResolver> sourceResolverFactory) throws IOException {
+                                    int line,
+                                    int column,
+                                    List<MappingEntry> mappings,
+                                    @NotNull Function<List<String>, SourceResolver> sourceResolverFactory) throws IOException {
     reader.beginObject();
     String sourceRoot = null;
     JsonReaderEx sourcesReader = null;
@@ -120,17 +120,18 @@ public final class SourceMapDecoder {
     }
     reader.close();
 
+    // check it before other checks, probably it is not sourcemap file
+    if (StringUtil.isEmpty(encodedMappings)) {
+      // empty map
+      return null;
+    }
+
     if (version != 3) {
       throw new IOException("Unsupported sourcemap version: " + version);
     }
 
     if (sourcesReader == null) {
       throw new IOException("sources is not specified");
-    }
-
-    if (StringUtil.isEmpty(encodedMappings)) {
-      // empty map
-      return null;
     }
 
     List<String> sources = readSources(sourcesReader, sourceRoot);

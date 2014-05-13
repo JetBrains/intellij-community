@@ -61,6 +61,7 @@ class TableToolbarDecorator extends ToolbarDecorator {
     return myTable;
   }
 
+  @Override
   protected void updateButtons() {
     final CommonActionsPanel p = getActionsPanel();
     if (p != null) {
@@ -196,6 +197,7 @@ class TableToolbarDecorator extends ToolbarDecorator {
     RowsDnDSupport.install(myTable, (EditableModel)myTable.getModel());
   }
 
+  @Override
   protected boolean isModelEditable() {
     return myTable.getModel() instanceof EditableModel;
   }

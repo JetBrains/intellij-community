@@ -42,6 +42,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Consumer;
 import com.intellij.util.FilteringProcessor;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +53,7 @@ import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author peter
@@ -99,8 +101,23 @@ public class EditorHyperlinkSupport {
     );
   }
 
+  public void clearHyperlinks() {
+    for (RangeHighlighter highlighter : getHyperlinks(0, myEditor.getDocument().getTextLength(), myEditor)) {
+      removeHyperlink(highlighter);
+    }
+  }
+
   @Deprecated
-  public void clearHyperlinks() {}
+  public Map<RangeHighlighter, HyperlinkInfo> getHyperlinks() {
+    LinkedHashMap<RangeHighlighter, HyperlinkInfo> result = new LinkedHashMap<RangeHighlighter, HyperlinkInfo>();
+    for (RangeHighlighter highlighter : getHyperlinks(0, myEditor.getDocument().getTextLength(), myEditor)) {
+      HyperlinkInfo info = getHyperlinkInfo(highlighter);
+      if (info != null) {
+        result.put(highlighter, info);
+      }
+    }
+    return result;
+  }
 
   @Nullable
   public Runnable getLinkNavigationRunnable(final LogicalPosition logical) {
@@ -325,7 +342,7 @@ public class EditorHyperlinkSupport {
     return document.getCharsSequence().subSequence(document.getLineStartOffset(lineNumber), endOffset).toString();
   }
 
-  public static class HyperlinkInfoTextAttributes extends TextAttributes {
+  private static class HyperlinkInfoTextAttributes extends TextAttributes {
     private HyperlinkInfo myHyperlinkInfo;
 
     public HyperlinkInfoTextAttributes(@NotNull HyperlinkInfo hyperlinkInfo) {

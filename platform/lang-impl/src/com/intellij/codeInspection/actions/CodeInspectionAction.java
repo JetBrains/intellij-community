@@ -47,10 +47,14 @@ import java.util.TreeSet;
 
 public class CodeInspectionAction extends BaseAnalysisAction {
   private GlobalInspectionContextImpl myGlobalInspectionContext = null;
-  private InspectionProfile myExternalProfile = null;
+  protected InspectionProfile myExternalProfile = null;
 
   public CodeInspectionAction() {
     super(InspectionsBundle.message("inspection.action.title"), InspectionsBundle.message("inspection.action.noun"));
+  }
+
+  public CodeInspectionAction(String title, String analysisNoon) {
+    super(title, analysisNoon);
   }
 
   @Override
@@ -110,7 +114,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     panel.myBrowseProfilesCombo.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final IDEInspectionToolsConfigurable errorConfigurable = new IDEInspectionToolsConfigurable(projectProfileManager, profileManager);
+        final IDEInspectionToolsConfigurable errorConfigurable = createConfigurable(projectProfileManager, profileManager);
         final MySingleConfigurableEditor editor = new MySingleConfigurableEditor(project, errorConfigurable, manager);
         errorConfigurable.selectProfile(((Profile)profiles.getSelectedItem()).getName());
         editor.show();
@@ -139,6 +143,11 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     final InspectionProfile profile = (InspectionProfile)profiles.getSelectedItem();
     dialog.setOKActionEnabled(profile != null && profile.isExecutable(project));
     return panel.myAdditionalPanel;
+  }
+
+  protected IDEInspectionToolsConfigurable createConfigurable(InspectionProjectProfileManager projectProfileManager,
+                                                              InspectionProfileManager profileManager) {
+    return new IDEInspectionToolsConfigurable(projectProfileManager, profileManager);
   }
 
   private void reloadProfiles(JComboBox profiles,

@@ -73,9 +73,6 @@ public class GithubCheckoutProvider implements CheckoutProvider {
           }
         });
     }
-    catch (GithubOperationCanceledException e) {
-      return;
-    }
     catch (IOException e) {
       GithubNotifications.showError(project, "Couldn't get the list of GitHub repositories", e);
       return;

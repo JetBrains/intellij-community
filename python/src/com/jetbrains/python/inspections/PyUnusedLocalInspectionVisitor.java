@@ -300,17 +300,14 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           boolean canRemove = !(PsiTreeUtil.getPrevSiblingOfType(element, PyParameter.class) instanceof PySingleStarParameter) ||
             PsiTreeUtil.getNextSiblingOfType(element, PyParameter.class) != null;
 
-          final LocalQuickFix[] fixes;
+          final List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
           if (mayBeField) {
-            fixes = new LocalQuickFix[]{new AddFieldQuickFix(name, name, containingClass.getName())};
+            fixes.add(new AddFieldQuickFix(name, name, containingClass.getName(), false));
           }
-          else if (canRemove) {
-            fixes = new LocalQuickFix[]{new PyRemoveParameterQuickFix()};
+          if (canRemove) {
+            fixes.add(new PyRemoveParameterQuickFix());
           }
-          else {
-            fixes = LocalQuickFix.EMPTY_ARRAY;
-          }
-          registerWarning(element, PyBundle.message("INSP.unused.locals.parameter.isnot.used", name), fixes);
+          registerWarning(element, PyBundle.message("INSP.unused.locals.parameter.isnot.used", name), fixes.toArray(new LocalQuickFix[fixes.size()]));
         }
         else {
           if (myIgnoreTupleUnpacking && isTupleUnpacking(element)) {

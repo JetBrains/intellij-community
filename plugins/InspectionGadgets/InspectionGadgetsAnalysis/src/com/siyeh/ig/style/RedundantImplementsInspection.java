@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class RedundantImplementsInspection extends BaseInspection {
+public class RedundantImplementsInspection extends BaseInspection implements CleanupLocalInspectionTool{
 
   @SuppressWarnings({"PublicField"})
   public boolean ignoreSerializable = false;

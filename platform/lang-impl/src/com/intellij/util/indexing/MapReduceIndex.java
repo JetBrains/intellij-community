@@ -279,7 +279,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     return null;
   }
 
-  private static final boolean doReadSavedPersistentData = SystemProperties.getBooleanProperty("idea.read.saved.persistent.index", false);
+  private static final boolean doReadSavedPersistentData = SystemProperties.getBooleanProperty("idea.read.saved.persistent.index", true);
   @NotNull
   @Override
   public final Computable<Boolean> update(final int inputId, @Nullable Input content) {
@@ -311,7 +311,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
     if (data == null) data = content != null ? myIndexer.map(content) : Collections.<Key, Value>emptyMap();
 
-    if (hashId != null && !havePersistentData && data.size() > 0) {
+    if (hashId != null && !havePersistentData) {
       savePersistentData(data, hashId);
     }
     ProgressManager.checkCanceled();

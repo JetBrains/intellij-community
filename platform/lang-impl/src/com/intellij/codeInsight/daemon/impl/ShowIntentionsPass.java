@@ -28,6 +28,7 @@ import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.codeInspection.actions.CleanupAllIntention;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -230,6 +231,19 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       });
   }
 
+  private static boolean appendCleanupCode(final List<HighlightInfo.IntentionActionDescriptor> actionDescriptors, PsiFile file) {
+    for (HighlightInfo.IntentionActionDescriptor descriptor : actionDescriptors) {
+      if (descriptor.canCleanup(file)) {
+        final ArrayList<IntentionAction> options = new ArrayList<IntentionAction>();
+        options.add(EditCleanupProfileIntentionAction.INSTANCE);
+        options.add(CleanupOnScopeIntention.INSTANCE);
+        actionDescriptors.add(new HighlightInfo.IntentionActionDescriptor(CleanupAllIntention.INSTANCE, options, "Code Cleanup Options"));
+        return true;
+      }
+    }
+    return false;
+  }
+
   private void updateActions(@NotNull DaemonCodeAnalyzerImpl codeAnalyzer) {
     IntentionHintComponent hintComponent = codeAnalyzer.getLastIntentionHint();
     if (!myShowBulb || hintComponent == null) {
@@ -326,6 +340,11 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
         return true;
       }
     });
+
+    boolean cleanup = appendCleanupCode(intentions.inspectionFixesToShow, hostFile);
+    if (!cleanup) {
+      appendCleanupCode(intentions.errorFixesToShow, hostFile);
+    }
   }
 }
 

@@ -23,7 +23,9 @@ import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
 import com.intellij.codeInsight.template.postfix.templates.PostfixLiveTemplate;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.patterns.StandardPatterns;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,23 +34,24 @@ import static com.intellij.codeInsight.template.postfix.completion.PostfixTempla
 class PostfixTemplatesCompletionProvider extends CompletionProvider<CompletionParameters> {
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters, ProcessingContext context, @NotNull CompletionResultSet result) {
+    Editor editor = parameters.getEditor();
     if (!isCompletionEnabled(parameters) || LiveTemplateCompletionContributor.shouldShowAllTemplates() ||
-        parameters.getEditor().getCaretModel().getCaretCount() != 1) {
+        editor.getCaretModel().getCaretCount() != 1) {
       /**
        * disabled or covered with {@link com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor}
        */
       return;
     }
 
-    PostfixLiveTemplate postfixLiveTemplate = getPostfixLiveTemplate(parameters.getOriginalFile(), parameters.getEditor());
+    PsiFile originalFile = parameters.getOriginalFile();
+    PostfixLiveTemplate postfixLiveTemplate = getPostfixLiveTemplate(originalFile, editor);
     if (postfixLiveTemplate != null) {
       postfixLiveTemplate.addCompletions(parameters, result.withPrefixMatcher(new MyPrefixMatcher(result.getPrefixMatcher().getPrefix())));
-      String possibleKey = postfixLiveTemplate.computeTemplateKeyWithoutContextChecking(
-        new CustomTemplateCallback(parameters.getEditor(), parameters.getOriginalFile(), false));
+      String possibleKey = postfixLiveTemplate.computeTemplateKeyWithoutContextChecking(new CustomTemplateCallback(editor, originalFile));
       if (possibleKey != null) {
         result = result.withPrefixMatcher(possibleKey);
         result.restartCompletionOnPrefixChange(
-          StandardPatterns.string().oneOf(postfixLiveTemplate.getAllTemplateKeys(parameters.getOriginalFile(), parameters.getOffset())));
+          StandardPatterns.string().oneOf(postfixLiveTemplate.getAllTemplateKeys(originalFile, parameters.getOffset())));
       }
     }
   }

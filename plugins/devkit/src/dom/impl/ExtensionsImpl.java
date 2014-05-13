@@ -32,7 +32,7 @@ public abstract class ExtensionsImpl implements Extensions {
   public Extension addExtension(String qualifiedEPName) {
     Extension extension = addExtension();
     XmlTag tag = extension.getXmlTag();
-    tag.setName(qualifiedEPName.substring(StringUtil.commonPrefixLength(qualifiedEPName, getEpPrefix())));
+    tag.setName(StringUtil.trimStart(qualifiedEPName, getEpPrefix()));
     return extension;
   }
 
