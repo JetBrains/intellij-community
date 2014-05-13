@@ -501,7 +501,7 @@ public class PyStatementMover extends LineMover {
       }
     }
     else {
-      if (startElement != endElement) {
+      if (startElement != endElement && nextSibling != null) {
         scope.addRangeAfter(nextSibling, endElement, anchor);
       }
       addedElement = scope.addAfter(startElement, anchor);
