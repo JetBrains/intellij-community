@@ -160,8 +160,8 @@ public class TypeDefinition implements GroovyElementTypes {
   }
 
   private static IElementType parseEnumBody(@NotNull PsiBuilder builder,
-                                                 @NotNull String enumName,
-                                                 @NotNull GroovyParser parser) {
+                                            @NotNull String enumName,
+                                            @NotNull GroovyParser parser) {
     PsiBuilder.Marker ebMarker = builder.mark();
 
     if (!getToken(builder, mLCURLY)) {
@@ -171,7 +171,9 @@ public class TypeDefinition implements GroovyElementTypes {
 
     getToken(builder, mNLS);
 
-    EnumConstant.parseConstantList(builder, parser);
+    if (EnumConstant.parseConstantList(builder, parser)) {
+      getToken(builder, mNLS, GroovyBundle.message("separator.or.comma.expected"));
+    }
 
     parseMembers(builder, enumName, parser, false);
 
