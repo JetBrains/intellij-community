@@ -99,6 +99,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
         super.setItem(createDocument(((XExpression)anObject)));
       }
     };
+    myEditor.getEditorComponent().setFontInheritedFromLAF(false);
     myComboBox.setEditor(myEditor);
     //myEditor.setItem(myExpression);
     myComboBox.setRenderer(new EditorComboBoxRenderer(myEditor));
