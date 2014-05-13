@@ -309,7 +309,7 @@ public class CompleteReferenceExpression {
           return;
         }
       }
-      getVariantsFromQualifierType(PsiType.getJavaLangObject(myRefExpr.getManager(), qualifier.getResolveScope()), project);
+      getVariantsFromQualifierType(TypesUtil.getJavaLangObject(qualifier), project);
     }
     else if (qualifierType instanceof PsiIntersectionType) {
       for (PsiType conjunct : ((PsiIntersectionType)qualifierType).getConjuncts()) {

@@ -741,7 +741,7 @@ public class PsiImplUtil {
           return wildcardType.getBound();
         }
         else {
-          return PsiType.getJavaLangObject(expression.getManager(), expression.getResolveScope());
+          return TypesUtil.getJavaLangObject(expression);
         }
       }
     }

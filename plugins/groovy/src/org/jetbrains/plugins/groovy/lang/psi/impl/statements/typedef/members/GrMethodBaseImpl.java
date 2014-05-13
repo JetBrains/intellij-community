@@ -69,6 +69,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrReflectedMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrMethodStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -234,7 +235,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
         return nominal;
       }
 
-      return PsiType.getJavaLangObject(method.getManager(), method.getResolveScope());
+      return TypesUtil.getJavaLangObject(method);
     }
   };
 
@@ -249,7 +250,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
       return type;
     }
 
-    return PsiType.getJavaLangObject(getManager(), getResolveScope());
+    return TypesUtil.getJavaLangObject(this);
   }
 
   @Nullable
