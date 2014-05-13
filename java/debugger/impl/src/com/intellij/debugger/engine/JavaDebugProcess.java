@@ -44,6 +44,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.content.Content;
@@ -316,7 +317,7 @@ public class JavaDebugProcess extends XDebugProcess {
     }
   }
 
-  private class WatchLastMethodReturnValueAction extends ToggleAction {
+  private static class WatchLastMethodReturnValueAction extends ToggleAction {
     private volatile boolean myWatchesReturnValues;
     private final String myTextEnable;
     private final String myTextUnavailable;
@@ -335,15 +336,15 @@ public class JavaDebugProcess extends XDebugProcess {
       super.update(e);
       final Presentation presentation = e.getPresentation();
       final boolean watchValues = (Boolean)presentation.getClientProperty(SELECTED_PROPERTY);
-      final DebugProcessImpl process = myJavaSession.getProcess();
+      DebugProcessImpl process = getCurrentDebugProcess(e.getProject());
       final String actionText = watchValues ? myMyTextDisable : myTextEnable;
-      if (process != null && process.canGetMethodReturnValue()) {
+      if (process == null || process.canGetMethodReturnValue()) {
         presentation.setEnabled(true);
         presentation.setText(actionText);
       }
       else {
         presentation.setEnabled(false);
-        presentation.setText(process == null ? actionText : myTextUnavailable);
+        presentation.setText(myTextUnavailable);
       }
     }
 
@@ -356,11 +357,25 @@ public class JavaDebugProcess extends XDebugProcess {
     public void setSelected(AnActionEvent e, boolean watch) {
       myWatchesReturnValues = watch;
       DebuggerSettings.getInstance().WATCH_RETURN_VALUES = watch;
-      final DebugProcessImpl process = myJavaSession.getProcess();
+      DebugProcessImpl process = getCurrentDebugProcess(e.getProject());
       if (process != null) {
         process.setWatchMethodReturnValuesEnabled(watch);
       }
     }
+  }
+
+  @Nullable
+  private static DebugProcessImpl getCurrentDebugProcess(@Nullable Project project) {
+    if (project != null) {
+      XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
+      if (session != null) {
+        XDebugProcess process = session.getDebugProcess();
+        if (process instanceof JavaDebugProcess) {
+          return ((JavaDebugProcess)process).getDebuggerSession().getProcess();
+        }
+      }
+    }
+    return null;
   }
 
   private static void addActionToGroup(final DefaultActionGroup group, final String actionId) {
