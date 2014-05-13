@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -59,7 +60,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
 
     List<PsiMember> result = new ArrayList<PsiMember>();
     for (PsiMethod method : cache.getMethodsByName(name, scope)) {
-      if (!method.isConstructor() && isOpenable(method) && !hasSuperMethod(method)) {
+      if (!method.isConstructor() && isOpenable(method) && !hasSuperMethod(method, scope)) {
         result.add(method);
       }
     }
@@ -82,12 +83,14 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     return member.getContainingFile().getVirtualFile() != null;
   }
 
-  private static boolean hasSuperMethod(PsiMethod method) {
+  private static boolean hasSuperMethod(PsiMethod method, GlobalSearchScope scope) {
     PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return false;
 
     for (PsiMethod candidate : containingClass.findMethodsByName(method.getName(), true)) {
-      if (candidate.getContainingClass() != containingClass && PsiSuperMethodImplUtil.isSuperMethodSmart(method, candidate)) {
+      if (candidate.getContainingClass() != containingClass &&
+          PsiSearchScopeUtil.isInScope(scope, candidate) &&
+          PsiSuperMethodImplUtil.isSuperMethodSmart(method, candidate)) {
         return true;
       }
     }
@@ -139,7 +142,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
       Iterator<PsiMethod> iterator = collectedMethods.iterator();
       while(iterator.hasNext()) {
         PsiMethod method = iterator.next();
-        if (!hasSuperMethod(method) && !processor.process(method)) return;
+        if (!hasSuperMethod(method, scope) && !processor.process(method)) return;
         ProgressManager.checkCanceled();
         iterator.remove();
       }

@@ -45,15 +45,15 @@ class ChooseByNameTest extends LightCodeInsightFixtureTestCase {
     myFixture.addClass("class Anno2 {}")
 
     def popup = createPopup(new GotoClassModel2(project))
-    assert getPopupElements(popup, "") == []
+    assert calcPopupElements(popup, "") == []
     popup.close(false)
 
     popup = createPopup(new GotoClassModel2(project))
-    assert getPopupElements(popup, "@") == []
+    assert calcPopupElements(popup, "@") == []
     popup.close(false)
 
     popup = createPopup(new GotoFileModel(project))
-    assert getPopupElements(popup, "foo/") == []
+    assert calcPopupElements(popup, "foo/") == []
     popup.close(false)
   }
 
@@ -126,11 +126,11 @@ class Intf {
     def barContext = myFixture.addFileToProject("bar/context.html", "")
 
     def popup = createPopup(new GotoFileModel(project), fooContext)
-    assert getPopupElements(popup, "index") == [fooIndex, barIndex]
+    assert calcPopupElements(popup, "index") == [fooIndex, barIndex]
     popup.close(false)
 
     popup = createPopup(new GotoFileModel(project), barContext)
-    assert getPopupElements(popup, "index") == [barIndex, fooIndex]
+    assert calcPopupElements(popup, "index") == [barIndex, fooIndex]
 
   }
 
@@ -139,21 +139,21 @@ class Intf {
     def barIndex = myFixture.addFileToProject("bar.txt/bar.txt", "foo")
 
     def popup = createPopup(new GotoFileModel(project), fooIndex)
-    assert getPopupElements(popup, "foo/") == [fooIndex.containingDirectory]
-    assert getPopupElements(popup, "foo\\") == [fooIndex.containingDirectory]
-    assert getPopupElements(popup, "/foo") == [fooIndex.containingDirectory]
-    assert getPopupElements(popup, "\\foo") == [fooIndex.containingDirectory]
-    assert getPopupElements(popup, "foo") == []
-    assert getPopupElements(popup, "/index.html") == [fooIndex]
-    assert getPopupElements(popup, "\\index.html") == [fooIndex]
-    assert getPopupElements(popup, "index.html/") == [fooIndex]
-    assert getPopupElements(popup, "index.html\\") == [fooIndex]
+    assert calcPopupElements(popup, "foo/") == [fooIndex.containingDirectory]
+    assert calcPopupElements(popup, "foo\\") == [fooIndex.containingDirectory]
+    assert calcPopupElements(popup, "/foo") == [fooIndex.containingDirectory]
+    assert calcPopupElements(popup, "\\foo") == [fooIndex.containingDirectory]
+    assert calcPopupElements(popup, "foo") == []
+    assert calcPopupElements(popup, "/index.html") == [fooIndex]
+    assert calcPopupElements(popup, "\\index.html") == [fooIndex]
+    assert calcPopupElements(popup, "index.html/") == [fooIndex]
+    assert calcPopupElements(popup, "index.html\\") == [fooIndex]
 
-    assert getPopupElements(popup, "bar.txt/") == [barIndex.containingDirectory]
-    assert getPopupElements(popup, "bar.txt\\") == [barIndex.containingDirectory]
-    assert getPopupElements(popup, "/bar.txt") == [barIndex.containingDirectory]
-    assert getPopupElements(popup, "\\bar.txt") == [barIndex.containingDirectory]
-    assert getPopupElements(popup, "bar.txt") == [barIndex]
+    assert calcPopupElements(popup, "bar.txt/") == [barIndex.containingDirectory]
+    assert calcPopupElements(popup, "bar.txt\\") == [barIndex.containingDirectory]
+    assert calcPopupElements(popup, "/bar.txt") == [barIndex.containingDirectory]
+    assert calcPopupElements(popup, "\\bar.txt") == [barIndex.containingDirectory]
+    assert calcPopupElements(popup, "bar.txt") == [barIndex]
     popup.close(false)
   }
 
@@ -176,15 +176,22 @@ class Intf {
     assert getPopupElements(new GotoClassModel2(project), 'Bar:[2,3]') == [c]
   }
 
-  private List<Object> getPopupElements(ChooseByNameModel model, String text) {
-    return getPopupElements(createPopup(model), text)
+  public void "test super method in jdk"() {
+    def ourRun = myFixture.addClass("package foo.bar; class Goo implements Runnable { public void run() {} }").methods[0]
+    def sdkRun = ourRun.containingClass.interfaces[0].methods[0]
+    assert getPopupElements(new GotoSymbolModel2(project), 'run ', true) == [sdkRun]
+    assert getPopupElements(new GotoSymbolModel2(project), 'run ', false) == [ourRun]
   }
 
-  private static ArrayList<String> getPopupElements(ChooseByNamePopup popup, String text) {
+  private List<Object> getPopupElements(ChooseByNameModel model, String text, boolean checkboxState = false) {
+    return calcPopupElements(createPopup(model), text, checkboxState)
+  }
+
+  private static ArrayList<String> calcPopupElements(ChooseByNamePopup popup, String text, boolean checkboxState = false) {
     List<Object> elements = ['empty']
     def semaphore = new Semaphore()
     semaphore.down()
-    popup.scheduleCalcElements(text, false, ModalityState.NON_MODAL, { set ->
+    popup.scheduleCalcElements(text, checkboxState, ModalityState.NON_MODAL, { set ->
       elements = set as List
       semaphore.up()
     } as Consumer<Set<?>>)
