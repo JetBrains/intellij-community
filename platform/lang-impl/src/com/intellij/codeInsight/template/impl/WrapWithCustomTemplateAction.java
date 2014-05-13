@@ -64,7 +64,7 @@ public class WrapWithCustomTemplateAction extends AnAction {
     if (selection != null) {
       selection = selection.trim();
       PsiDocumentManager.getInstance(myFile.getProject()).commitAllDocuments();
-      myTemplate.wrap(selection, new CustomTemplateCallback(myEditor, myFile, true));
+      myTemplate.wrap(selection, new CustomTemplateCallback(myEditor, myFile));
     }
   }
 }

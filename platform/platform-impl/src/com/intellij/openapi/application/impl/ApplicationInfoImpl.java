@@ -23,6 +23,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.util.PlatformUtils;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -50,7 +51,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myCompanyName = "JetBrains s.r.o.";
   private String myCompanyUrl = "http://www.jetbrains.com/";
   private Color myProgressColor = null;
-  private Color myAboutForeground = Color.black;
+  private Color myCopyrightForeground = JBColor.BLACK;
+  private Color myAboutForeground = JBColor.BLACK;
   private Color myAboutLinkColor = null;
   private String myProgressTailIconName = null;
   private Icon myProgressTailIcon = null;
@@ -115,6 +117,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ATTRIBUTE_TEXT_COLOR = "textcolor";
   @NonNls private static final String ATTRIBUTE_PROGRESS_COLOR = "progressColor";
   @NonNls private static final String ATTRIBUTE_ABOUT_FOREGROUND_COLOR = "foreground";
+  @NonNls private static final String ATTRIBUTE_ABOUT_COPYRIGHT_FOREGROUND_COLOR = "copyrightForeground";
   @NonNls private static final String ATTRIBUTE_ABOUT_LINK_COLOR = "linkColor";
   @NonNls private static final String ATTRIBUTE_PROGRESS_Y = "progressY";
   @NonNls private static final String ATTRIBUTE_PROGRESS_TAIL_ICON = "progressTailIcon";
@@ -253,6 +256,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   public Color getProgressColor() {
     return myProgressColor;
+  }
+
+  public Color getCopyrightForeground() {
+    return myCopyrightForeground;
   }
 
   public int getProgressY() {
@@ -531,6 +538,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       if (v != null) {
         myAboutForeground = parseColor(v);
       }
+      v = aboutLogoElement.getAttributeValue(ATTRIBUTE_ABOUT_COPYRIGHT_FOREGROUND_COLOR);
+      if (v != null) {
+        myCopyrightForeground = parseColor(v);
+      }
+
       String c = aboutLogoElement.getAttributeValue(ATTRIBUTE_ABOUT_LINK_COLOR);
       if (c != null) {
         myAboutLinkColor = parseColor(c);

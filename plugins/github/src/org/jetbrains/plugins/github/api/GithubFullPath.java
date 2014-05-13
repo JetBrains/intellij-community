@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.github.api;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,8 +53,8 @@ public class GithubFullPath {
 
     GithubFullPath that = (GithubFullPath)o;
 
-    if (!myRepositoryName.equals(that.myRepositoryName)) return false;
-    if (!myUserName.equals(that.myUserName)) return false;
+    if (!StringUtil.endsWithIgnoreCase(myRepositoryName, that.myRepositoryName)) return false;
+    if (!StringUtil.endsWithIgnoreCase(myUserName, that.myUserName)) return false;
 
     return true;
   }

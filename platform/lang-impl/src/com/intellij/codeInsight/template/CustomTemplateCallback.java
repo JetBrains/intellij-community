@@ -46,11 +46,11 @@ public class CustomTemplateCallback {
   private final boolean myInInjectedFragment;
   private Set<TemplateContextType> myApplicableContextTypes;
 
-  public CustomTemplateCallback(@NotNull Editor editor, @NotNull PsiFile file, boolean wrapping) {
+  public CustomTemplateCallback(@NotNull Editor editor, @NotNull PsiFile file) {
     myProject = file.getProject();
     myTemplateManager = TemplateManager.getInstance(myProject);
 
-    myOffset = getOffset(wrapping, editor);
+    myOffset = getOffset(editor);
     PsiElement element = InjectedLanguageUtil.findInjectedElementNoCommit(file, myOffset);
     myFile = element != null ? element.getContainingFile() : file;
 
@@ -76,14 +76,8 @@ public class CustomTemplateCallback {
     return myOffset;
   }
 
-  private static int getOffset(boolean wrapping, @NotNull Editor editor) {
-    if (wrapping) {
-      return editor.getSelectionModel().getSelectionStart();
-    }
-    else {
-      int caretOffset = editor.getCaretModel().getOffset();
-      return caretOffset > 0 ? caretOffset - 1 : 0;
-    }
+  public static int getOffset(@NotNull Editor editor) {
+    return Math.max(editor.getSelectionModel().getSelectionStart() - 1, 0);
   }
 
   @Nullable

@@ -17,10 +17,7 @@ package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PsiClassReferenceType;
-import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.quickfix.ChangeToPairCreateQuickFix;
@@ -40,12 +37,13 @@ public class DontUseNewPairInspection extends InternalInspection {
       public void visitNewExpression(PsiNewExpression expression) {
         final PsiType type = expression.getType();
         final PsiExpressionList params = expression.getArgumentList();
-        if (type != null && type.getCanonicalText().startsWith(PAIR_FQN) && params != null
-            && !(type instanceof PsiArrayType)
-            && expression.getText().indexOf('(') > 0
-            && type instanceof PsiClassReferenceType
-            && !PsiUtil.getLanguageLevel(expression).isAtLeast(LanguageLevel.JDK_1_7)) { //diamonds
-          final PsiType[] types = ((PsiClassReferenceType)type).getParameters();
+        if (type instanceof PsiClassType
+            && ((PsiClassType)type).rawType().equalsToText(PAIR_FQN)
+            && params != null
+            && expression.getArgumentList() != null
+            //&& !PsiUtil.getLanguageLevel(expression).isAtLeast(LanguageLevel.JDK_1_7) //diamonds
+        ) {
+          final PsiType[] types = ((PsiClassType)type).getParameters();
           if (Arrays.equals(types, params.getExpressionTypes())) {
             holder.registerProblem(expression, "Replace to Pair.create()", ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                    new ChangeToPairCreateQuickFix());

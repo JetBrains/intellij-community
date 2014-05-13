@@ -271,7 +271,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
         }
         if (isApplicable(customLiveTemplate, editor, file)) {
           PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-          final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file, false);
+          final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file);
           final String key = customLiveTemplate.computeTemplateKey(callback);
           if (key != null) {
             int caretOffset = editor.getCaretModel().getOffset();
@@ -297,7 +297,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   }
 
   public static boolean isApplicable(@NotNull CustomLiveTemplate customLiveTemplate, @NotNull Editor editor, @NotNull PsiFile file) {
-    return customLiveTemplate.isApplicable(file, Math.max(0, editor.getSelectionModel().getSelectionStart() - 1), false);
+    return customLiveTemplate.isApplicable(file, CustomTemplateCallback.getOffset(editor), false);
   }
 
   private static int getArgumentOffset(int caretOffset, String argument, CharSequence text) {

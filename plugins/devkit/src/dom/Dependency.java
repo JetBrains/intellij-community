@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 
 package org.jetbrains.idea.devkit.dom;
 
+import com.intellij.openapi.paths.PathReference;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.GenericDomValue;
@@ -29,9 +30,11 @@ import org.jetbrains.idea.devkit.dom.impl.IdeaPluginConverter;
 @Stubbed
 @Convert(IdeaPluginConverter.class)
 public interface Dependency extends GenericDomValue<IdeaPlugin> {
+
   @NotNull
   GenericAttributeValue<Boolean> getOptional();
 
   @NotNull
-  GenericAttributeValue<String> getConfigFile();
+  @Convert(DependencyConfigFileConverter.class)
+  GenericAttributeValue<PathReference> getConfigFile();
 }

@@ -193,11 +193,8 @@ public final class Urls {
   }
 
   public static boolean equals(@Nullable Url url1, @Nullable Url url2, boolean caseSensitive, boolean ignoreParameters) {
-    if (url1 == null) {
-      return url2 == null;
-    }
-    if (url2 == null) {
-      return url1 == null;
+    if (url1 == null || url2 == null){
+      return url1 == url2;
     }
 
     Url o1 = ignoreParameters ? url1.trimParameters() : url1;

@@ -197,7 +197,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
                                                                                  @NotNull Editor editor,
                                                                                  int offset) {
     Collection<CustomLiveTemplateLookupElement> result = ContainerUtil.newHashSet();
-    CustomTemplateCallback callback = new CustomTemplateCallback(editor, file, false);
+    CustomTemplateCallback callback = new CustomTemplateCallback(editor, file);
     for (PostfixTemplateProvider provider : LanguagePostfixTemplate.LANG_EP.allForLanguage(getLanguage(callback))) {
       String key = computeTemplateKeyWithoutContextChecking(callback);
       if (key != null && editor.getCaretModel().getCaretCount() == 1) {

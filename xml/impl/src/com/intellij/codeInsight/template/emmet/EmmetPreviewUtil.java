@@ -127,7 +127,7 @@ public class EmmetPreviewUtil {
   private static CustomTemplateCallback createCallback(@NotNull Editor editor,
                                                        @NotNull PsiFile file,
                                                        @NotNull final Ref<TemplateImpl> generatedTemplate) {
-    return new CustomTemplateCallback(editor, file, false) {
+    return new CustomTemplateCallback(editor, file) {
       @Override
       public void startTemplate(@NotNull Template template, Map<String, String> predefinedValues, TemplateEditingListener listener) {
         if (template instanceof TemplateImpl && !((TemplateImpl)template).isDeactivated()) {
