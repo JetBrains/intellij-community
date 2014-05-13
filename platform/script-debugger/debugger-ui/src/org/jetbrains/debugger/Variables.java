@@ -114,8 +114,9 @@ public final class Variables {
     }
 
     List<Variable> result = new ArrayList<Variable>(variables.size());
+    MemberFilter memberFilter = context.createMemberFilter();
     for (Variable variable : variables) {
-      if (context.createMemberFilter().isMemberVisible(variable, filterFunctions)) {
+      if (memberFilter.isMemberVisible(variable, filterFunctions)) {
         result.add(variable);
       }
     }
