@@ -138,11 +138,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
       return (XExpression)myComboBox.getPopup().getList().getSelectedValue();
     }
     else {
-      XExpression expression = getEditorsProvider().createExpression(getProject(), (Document)myEditor.getItem(), myExpression.getLanguage());
-      if (expression == null) {
-        expression = new XExpressionImpl(((Document)myEditor.getItem()).getText(), myExpression.getLanguage(), null);
-      }
-      return expression;
+      return getEditorsProvider().createExpression(getProject(), (Document)myEditor.getItem(), myExpression.getLanguage());
     }
   }
 

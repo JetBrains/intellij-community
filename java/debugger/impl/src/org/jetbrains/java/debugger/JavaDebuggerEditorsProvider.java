@@ -39,11 +39,11 @@ public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase {
     return JavaCodeFragmentFactory.getInstance(project).createExpressionCodeFragment(text, context, null, isPhysical);
   }
 
+  @NotNull
   @Override
-  public Collection<Language> getAvailableLanguages(@NotNull Project project, @Nullable XSourcePosition sourcePosition) {
-    PsiElement context = null;
+  public Collection<Language> getSupportedLanguages(@NotNull Project project, @Nullable XSourcePosition sourcePosition) {
     if (sourcePosition != null) {
-      context = getContextElement(sourcePosition.getFile(), sourcePosition.getOffset(), project);
+      PsiElement context = getContextElement(sourcePosition.getFile(), sourcePosition.getOffset(), project);
       Collection<Language> res = new ArrayList<Language>();
       for (CodeFragmentFactory factory : DebuggerUtilsEx.getCodeFragmentFactories(context)) {
         res.add(factory.getFileType().getLanguage());
@@ -53,14 +53,15 @@ public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase {
     return Collections.emptyList();
   }
 
+  @NotNull
   @Override
-  public XExpression createExpression(@NotNull Project project, @NotNull Document document, Language language) {
+  public XExpression createExpression(@NotNull Project project, @NotNull Document document, @Nullable Language language) {
     PsiDocumentManager.getInstance(project).commitDocument(document);
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (psiFile != null) {
       return new XExpressionImpl(psiFile.getText(), language, ((JavaCodeFragment)psiFile).importsToString());
     }
-    return null;
+    return super.createExpression(project, document, language);
   }
 
   @Override

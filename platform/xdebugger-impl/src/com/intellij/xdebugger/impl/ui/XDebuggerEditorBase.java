@@ -96,7 +96,7 @@ public abstract class XDebuggerEditorBase {
 
   private ListPopup createLanguagePopup() {
     DefaultActionGroup actions = new DefaultActionGroup();
-    for (final Language language : getEditorsProvider().getAvailableLanguages(myProject, mySourcePosition)) {
+    for (final Language language : getEditorsProvider().getSupportedLanguages(myProject, mySourcePosition)) {
       actions.add(new AnAction(language.getDisplayName(), null, language.getAssociatedFileType().getIcon()) {
         @Override
         public void actionPerformed(AnActionEvent e) {
@@ -148,7 +148,7 @@ public abstract class XDebuggerEditorBase {
     }
     text = new XExpressionImpl(text.getExpression(), language, text.getCustomInfo());
 
-    Collection<Language> languages = getEditorsProvider().getAvailableLanguages(myProject, mySourcePosition);
+    Collection<Language> languages = getEditorsProvider().getSupportedLanguages(myProject, mySourcePosition);
     boolean many = languages.size() > 1;
 
     if (language != null) {
@@ -166,7 +166,8 @@ public abstract class XDebuggerEditorBase {
     doSetText(text);
   }
 
-  public static Language getFileTypeLanguage(FileType fileType) {
+  @Nullable
+  public static Language getFileTypeLanguage(@Nullable FileType fileType) {
     if (fileType instanceof LanguageFileType) {
       return ((LanguageFileType)fileType).getLanguage();
     }

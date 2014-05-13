@@ -18,7 +18,9 @@ package com.intellij.xdebugger.evaluation;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
@@ -45,12 +47,17 @@ public abstract class XDebuggerEditorsProvider {
     return createDocument(project, expression.getExpression(), sourcePosition, mode);
   }
 
-  public Collection<Language> getAvailableLanguages(@NotNull Project project, @Nullable XSourcePosition sourcePosition) {
+  @NotNull
+  public Collection<Language> getSupportedLanguages(@NotNull Project project, @Nullable XSourcePosition sourcePosition) {
+    FileType type = getFileType();
+    if (type instanceof LanguageFileType) {
+      return Collections.singleton(((LanguageFileType)type).getLanguage());
+    }
     return Collections.emptyList();
   }
 
-  @Nullable
-  public XExpression createExpression(@NotNull Project project, @NotNull Document document, Language language) {
-    return null;
+  @NotNull
+  public XExpression createExpression(@NotNull Project project, @NotNull Document document, @Nullable Language language) {
+    return XDebuggerUtil.getInstance().createExpression(document.getText(), language, null);
   }
 }

@@ -16,6 +16,7 @@
 
 package com.intellij.xdebugger;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
@@ -117,4 +118,7 @@ public abstract class XDebuggerUtil {
 
   @Nullable
   public abstract PsiElement findContextElement(@NotNull VirtualFile virtualFile, int offset, @NotNull Project project, boolean checkXml);
+
+  @NotNull
+  public abstract XExpression createExpression(@NotNull String text, Language language, String custom);
 }

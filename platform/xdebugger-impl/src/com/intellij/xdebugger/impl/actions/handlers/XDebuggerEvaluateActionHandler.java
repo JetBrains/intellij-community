@@ -20,12 +20,12 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XExpression;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.ExpressionInfo;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
@@ -33,6 +33,7 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog;
+import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,9 +71,17 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
     }
 
     Language language = null;
-    VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-    if (file != null && file.getFileType() instanceof LanguageFileType) {
-      language = ((LanguageFileType)file.getFileType()).getLanguage();
+    if (stackFrame != null) {
+      XSourcePosition position = stackFrame.getSourcePosition();
+      if (position != null) {
+        language = XDebuggerEditorBase.getFileTypeLanguage(position.getFile().getFileType());
+      }
+    }
+    if (language == null) {
+      VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
+      if (file != null) {
+        language = XDebuggerEditorBase.getFileTypeLanguage(file.getFileType());
+      }
     }
     XExpression expression = new XExpressionImpl(StringUtil.notNullize(text), language, null);
     new XDebuggerEvaluationDialog(session, editorsProvider, evaluator, expression, stackFrame == null ? null : stackFrame.getSourcePosition()).show();
