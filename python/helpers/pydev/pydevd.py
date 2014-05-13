@@ -1141,7 +1141,7 @@ class PyDB:
 
 
         PyDBCommandThread(self).start()
-        PyDBCheckAliveThread(debugger).start()
+        PyDBCheckAliveThread(self).start()
 
     def patch_threads(self):
         try:

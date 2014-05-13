@@ -238,10 +238,14 @@ def start_server(host, port, interpreter):
     if port == 0:
         host = ''
 
-    from pydev_imports import SimpleXMLRPCServer
+    try:
+        from _pydev_xmlrpc_hook import InputHookedXMLRPCServer as XMLRPCServer  #@UnusedImport
+    except:
+        #I.e.: supporting the internal Jython version in PyDev to create a Jython interactive console inside Eclipse.
+        from pydev_imports import SimpleXMLRPCServer as XMLRPCServer  #@Reimport
 
     try:
-        server = SimpleXMLRPCServer((host, port), logRequests=False, allow_none=True)
+        server = XMLRPCServer((host, port), logRequests=False, allow_none=True)
 
     except:
         sys.stderr.write('Error starting server with host: %s, port: %s, client_port: %s\n' % (host, port, client_port))
@@ -257,6 +261,7 @@ def start_server(host, port, interpreter):
     server.register_function(interpreter.close)
     server.register_function(interpreter.interrupt)
     server.register_function(handshake)
+    server.register_function(interpreter.connectToDebugger)
 
     if IPYTHON:
         try:
@@ -274,6 +279,7 @@ def start_server(host, port, interpreter):
     sys.stderr.write(interpreter.get_greeting_msg())
     sys.stderr.flush()
 
+    interpreter.server = server
     server.serve_forever()
 
     return server

@@ -388,7 +388,7 @@ if __name__ == "__main__":
 
     if "-z" in opts:
         if len(args) != 1:
-            report("Expected 1 arg with -S, got %d args", len(args))
+            report("Expected 1 arg with -z, got %d args", len(args))
             sys.exit(1)
         zip_sources(args[0])
         sys.exit(0)

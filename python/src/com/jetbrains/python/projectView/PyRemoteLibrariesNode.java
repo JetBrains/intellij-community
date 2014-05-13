@@ -29,25 +29,25 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author vlan
+ * @author traff
  */
-public class PySkeletonsNode extends PsiDirectoryNode {
-  private PySkeletonsNode(Project project, PsiDirectory value, ViewSettings viewSettings) {
+public class PyRemoteLibrariesNode extends PsiDirectoryNode {
+  private PyRemoteLibrariesNode(Project project, PsiDirectory value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 
   @Override
   protected void updateImpl(PresentationData data) {
-    data.setPresentableText("Binary Skeletons");
+    data.setPresentableText("Remote Libraries");
     data.setIcon(PlatformIcons.LIBRARY_ICON);
   }
 
   @Nullable
-  public static PySkeletonsNode create(@NotNull Project project, @NotNull Sdk sdk, ViewSettings settings) {
-    final VirtualFile skeletonsVirtualFile = PySdkUtil.findSkeletonsDir(sdk);
-    if (skeletonsVirtualFile != null) {
-      final PsiDirectory skeletonsDirectory = PsiManager.getInstance(project).findDirectory(skeletonsVirtualFile);
-      return new PySkeletonsNode(project, skeletonsDirectory, settings);
+  public static PyRemoteLibrariesNode create(@NotNull Project project, @NotNull Sdk sdk, ViewSettings settings) {
+    final VirtualFile remoteLibraries = PySdkUtil.findRemoteLibrariesDir(sdk);
+    if (remoteLibraries != null) {
+      final PsiDirectory remoteLibrariesDirectory = PsiManager.getInstance(project).findDirectory(remoteLibraries);
+      return new PyRemoteLibrariesNode(project, remoteLibrariesDirectory, settings);
     }
     return null;
   }
