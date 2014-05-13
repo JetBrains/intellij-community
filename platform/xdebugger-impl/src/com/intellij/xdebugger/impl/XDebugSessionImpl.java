@@ -458,7 +458,10 @@ public class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void forceStepInto() {
-    stepInto();
+    if (!myDebugProcess.checkCanPerformCommands()) return;
+
+    doResume();
+    myDebugProcess.startForceStepInto();
   }
 
   @Override
