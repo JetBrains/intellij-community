@@ -591,7 +591,7 @@ public class TemplateState implements Disposable {
       lookup.setStartCompletionWhenNothingMatches(true);
     }
 
-    lookup.setAdvertisementText(advertisingText);
+    lookup.addAdvertisement(advertisingText, null);
     lookup.refreshUi(true, true);
     ourLookupShown = true;
     lookup.addLookupListener(new LookupAdapter() {
