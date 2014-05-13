@@ -138,14 +138,12 @@ public class JarFileSystemTest extends PlatformLangTestCase {
 
   private static String getRtJarPath() {
     String home = System.getProperty("java.home");
-    return home + (SystemInfo.isAppleJvm ? "/../Classes/classes.jar" : "/lib/rt.jar");
+    return SystemInfo.isAppleJvm ? FileUtil.toCanonicalPath(home + "/../Classes/classes.jar") : home + "/lib/rt.jar";
   }
 
   private static VirtualFile findByPath(String path) {
     VirtualFile file = JarFileSystem.getInstance().findFileByPath(path);
     assertNotNull(file);
-    int p = path.indexOf(JarFileSystem.JAR_SEPARATOR);
-    path = FileUtil.toCanonicalPath(path.substring(0, p)) + path.substring(p);
     assertPathsEqual(path, file.getPath());
     return file;
   }
