@@ -1456,4 +1456,6 @@ class Bar {
     doTest()
   }
 
+  public void testNoJavaLangPackagesInImport() { doAntiTest() }
+
 }

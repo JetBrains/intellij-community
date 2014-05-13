@@ -220,8 +220,14 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
       return true;
     }
 
-    if (element instanceof PsiPackage && myScope instanceof PsiClass && !isQualifiedContext()) {
-      return true;
+    if (element instanceof PsiPackage && !isQualifiedContext()) {
+      if (myScope instanceof PsiClass) {
+        return true;
+      }
+      if (((PsiPackage)element).getQualifiedName().contains(".") &&
+          PsiTreeUtil.getParentOfType(myElement, PsiImportStatementBase.class) != null) {
+        return true;
+      }
     }
 
     if (element instanceof PsiMethod) {
