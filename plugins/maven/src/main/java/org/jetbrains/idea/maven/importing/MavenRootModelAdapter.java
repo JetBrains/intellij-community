@@ -128,6 +128,11 @@ public class MavenRootModelAdapter {
     return myRootModel;
   }
 
+  @NotNull
+  public String[] getSourceRootUrls(boolean includingTests) {
+    return myRootModelModuleExtension.getSourceRootUrls(includingTests);
+  }
+
   public Module getModule() {
     return myRootModel.getModule();
   }
