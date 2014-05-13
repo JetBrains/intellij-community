@@ -622,7 +622,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
           @Override
           public void visitFile(PsiFile file) {
             final VirtualFile virtualFile = file.getVirtualFile();
-            if (virtualFile == null) return;
+            if (virtualFile == null || virtualFile.getFileType().isBinary()) return;
             for (final Tools tools : profile.getAllEnabledInspectionTools(project)) {
               if (tools.getTool().getTool() instanceof CleanupLocalInspectionTool) {
                 final InspectionToolWrapper tool = tools.getEnabledTool(file);
