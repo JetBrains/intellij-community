@@ -25,6 +25,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,8 +74,20 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
           if (((PyNamedParameter)parameter).isKeywordContainer()) {
             List <PySubscriptionExpression> subscriptions = fillSubscriptions(function);
             List <PyCallExpression> callElements = fillCallExpressions(function);
-            if ((subscriptions.size() + callElements.size()) != 0)
-              return true;
+            if ((subscriptions.size() + callElements.size()) != 0) {
+              for (PyCallExpression element : callElements) {
+                final PyExpression[] arguments = element.getArguments();
+                if (arguments.length < 1) return false;
+                if (!PyNames.isIdentifierString(PythonStringUtil.getStringValue(arguments[0])))
+                  return false;
+              }
+              for (PySubscriptionExpression subscription : subscriptions) {
+                final PyExpression expression = subscription.getIndexExpression();
+                if (!PyNames.isIdentifierString(PythonStringUtil.getStringValue(expression)))
+                  return false;
+              }
+            }
+            return true;
           }
         }
       }
@@ -112,7 +126,7 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
     PyStatementList statementList = function.getStatementList();
     Stack<PsiElement> stack = new Stack<PsiElement>();
     PyParameter keywordContainer = getKeywordContainer(function);
-    if (keywordContainer != null && statementList != null) {
+    if (keywordContainer != null) {
       String keywordContainerName = keywordContainer.getName();
       for (PyStatement st : statementList.getStatements()) {
         stack.push(st);
@@ -146,7 +160,7 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
     PyStatementList statementList = function.getStatementList();
     Stack<PsiElement> stack = new Stack<PsiElement>();
     PyParameter keywordContainer = getKeywordContainer(function);
-    if (keywordContainer != null && statementList != null) {
+    if (keywordContainer != null) {
       String keywordContainerName = keywordContainer.getName();
       for (PyStatement st : statementList.getStatements()) {
         stack.push(st);
