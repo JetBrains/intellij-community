@@ -69,9 +69,9 @@ public abstract class PostfixTemplate {
     return myExample;
   }
 
-  public boolean isEnabled() {
+  public boolean isEnabled(PostfixTemplateProvider provider) {
     final PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
-    return settings != null && settings.isPostfixTemplatesEnabled() && settings.isTemplateEnabled(this);
+    return settings != null && settings.isPostfixTemplatesEnabled() && settings.isTemplateEnabled(this, provider);
   }
 
   public abstract boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset);

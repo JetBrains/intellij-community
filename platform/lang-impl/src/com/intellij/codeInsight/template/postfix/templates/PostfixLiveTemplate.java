@@ -204,7 +204,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
         Condition<PostfixTemplate> isApplicationTemplateFunction = createIsApplicationTemplateFunction(provider, key, file, editor);
         for (PostfixTemplate postfixTemplate : provider.getTemplates()) {
           if (isApplicationTemplateFunction.value(postfixTemplate)) {
-            result.add(new PostfixTemplateLookupElement(this, postfixTemplate, postfixTemplate.getKey(), false));
+            result.add(new PostfixTemplateLookupElement(this, postfixTemplate, postfixTemplate.getKey(), provider, false));
           }
         }
       }
@@ -250,7 +250,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     return newOffset;
   }
 
-  private static Condition<PostfixTemplate> createIsApplicationTemplateFunction(@NotNull PostfixTemplateProvider provider,
+  private static Condition<PostfixTemplate> createIsApplicationTemplateFunction(@NotNull final PostfixTemplateProvider provider,
                                                                                 @NotNull String key,
                                                                                 @NotNull PsiFile file,
                                                                                 @NotNull Editor editor) {
@@ -279,7 +279,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     return new Condition<PostfixTemplate>() {
       @Override
       public boolean value(PostfixTemplate template) {
-        return template != null && template.isEnabled() && template.isApplicable(context, finalCopyDocument, newOffset);
+        return template != null && template.isEnabled(provider) && template.isApplicable(context, finalCopyDocument, newOffset);
       }
     };
   }
