@@ -1718,6 +1718,10 @@
     <localInspection language="JAVA" shortName="BigDecimalEquals" bundle="com.siyeh.InspectionGadgetsBundle" key="big.decimal.equals.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.numeric.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.numeric.BigDecimalEqualsInspection"/>
+    <localInspection language="JAVA" shortName="BigDecimalMethodWithoutRoundingCalled" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="big.decimal.method.without.rounding.called.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.numeric.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.numeric.BigDecimalMethodWithoutRoundingCalledInspection"/>
     <localInspection language="JAVA" shortName="CachedNumberConstructorCall" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="cached.number.constructor.call.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.numeric.issues" enabledByDefault="false" level="WARNING"
