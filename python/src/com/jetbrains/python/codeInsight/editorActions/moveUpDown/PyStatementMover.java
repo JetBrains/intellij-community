@@ -47,11 +47,13 @@ public class PyStatementMover extends LineMover {
     final Document document = editor.getDocument();
     final int lineNumber = document.getLineNumber(offset);
     int start = getLineStartSafeOffset(document, lineNumber);
-    int end = document.getLineEndOffset(lineNumber) - 1;
+    final int lineEndOffset = document.getLineEndOffset(lineNumber);
+    int end = lineEndOffset == 0 ? 0 : lineEndOffset - 1;
 
     if (selectionModel.hasSelection()) {
       start = selectionModel.getSelectionStart();
-      end = selectionModel.getSelectionEnd() - 1;
+      final int selectionEnd = selectionModel.getSelectionEnd();
+      end = selectionEnd == 0 ? 0 : selectionEnd - 1;
     }
     PsiElement elementToMove1 = PyUtil.findNonWhitespaceAtOffset(file, start);
     PsiElement elementToMove2 = PyUtil.findNonWhitespaceAtOffset(file, end);
