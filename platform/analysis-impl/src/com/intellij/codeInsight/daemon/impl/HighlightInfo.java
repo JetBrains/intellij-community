@@ -727,6 +727,7 @@ public class HighlightInfo implements Segment {
     private final ProblemGroup myProblemGroup;
     private final String myDisplayName;
     private final Icon myIcon;
+    private Boolean myCanCleanup;
 
     public IntentionActionDescriptor(@NotNull IntentionAction action, final List<IntentionAction> options, final String displayName) {
       this(action, options, displayName, null);
@@ -762,6 +763,20 @@ public class HighlightInfo implements Segment {
       return myAction;
     }
 
+    public boolean canCleanup(PsiElement element) {
+      if (myCanCleanup == null) {
+        InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile();
+        final HighlightDisplayKey key = myKey;
+        if (key == null) {
+          myCanCleanup = false;
+        } else {
+          InspectionToolWrapper toolWrapper = profile.getInspectionTool(key.toString(), element);
+          myCanCleanup = toolWrapper != null && toolWrapper.isCleanupTool();
+        }
+      }
+      return myCanCleanup;
+    }
+
     @Nullable
     public List<IntentionAction> getOptions(@NotNull PsiElement element, @Nullable Editor editor) {
       if (editor != null && Boolean.FALSE.equals(editor.getUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY))) {
@@ -789,6 +804,9 @@ public class HighlightInfo implements Segment {
         }
       }
       if (toolWrapper != null) {
+
+        myCanCleanup = toolWrapper.isCleanupTool();
+
         InspectionProfileEntry wrappedTool;
         if (toolWrapper instanceof LocalInspectionToolWrapper) {
           wrappedTool = ((LocalInspectionToolWrapper)toolWrapper).getTool();

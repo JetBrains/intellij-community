@@ -402,7 +402,12 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     }
   }
 
-  public void close(boolean noSuspisiousCodeFound) {
+  public void codeCleanup(final Project project,
+                          final AnalysisScope scope,
+                          final InspectionProfile profile,
+                          final String commandName) {}
+
+   public void close(boolean noSuspisiousCodeFound) {
     cleanup();
   }
 
