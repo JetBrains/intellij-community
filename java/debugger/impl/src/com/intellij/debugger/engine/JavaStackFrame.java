@@ -69,6 +69,7 @@ public class JavaStackFrame extends XStackFrame {
   private final NodeManagerImpl myNodeManager;
   private final StackFrameDescriptorImpl myDescriptor;
   private final JavaFramesListRenderer myRenderer = new JavaFramesListRenderer();
+  private JavaDebuggerEvaluator myEvaluator = null;
 
   public JavaStackFrame(@NotNull StackFrameProxyImpl stackFrameProxy, @NotNull DebugProcessImpl debugProcess, MethodsTracker tracker) {
     myDebugProcess = debugProcess;
@@ -112,8 +113,10 @@ public class JavaStackFrame extends XStackFrame {
   @Nullable
   @Override
   public XDebuggerEvaluator getEvaluator() {
-    DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(myDebugProcess.getProject()).getContext();
-    return new JavaDebuggerEvaluator(myDebugProcess, context);
+    if (myEvaluator == null) {
+      myEvaluator = new JavaDebuggerEvaluator(myDebugProcess, this);
+    }
+    return myEvaluator;
   }
 
   @Nullable
@@ -138,19 +141,26 @@ public class JavaStackFrame extends XStackFrame {
     myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(currentContext) {
       @Override
       public void threadAction() {
-        DebuggerContextImpl debuggerContext = DebuggerContextImpl.createDebuggerContext(
-          myDebugProcess.mySession,
-          getDebuggerContext().getSuspendContext(),
-          getStackFrameProxy().threadProxy(),
-          getStackFrameProxy());
-        debuggerContext.setPositionCache(mySourcePosition);
-        debuggerContext.initCaches();
-
         XValueChildrenList children = new XValueChildrenList();
-        buildVariablesThreadAction(debuggerContext, children, node);
+        buildVariablesThreadAction(getFrameDebuggerContext(), children, node);
         node.addChildren(children, true);
       }
     });
+  }
+
+  DebuggerContextImpl getFrameDebuggerContext() {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(myDebugProcess.getProject()).getContext();
+    if (context.getFrameProxy() != getStackFrameProxy()) {
+      context = DebuggerContextImpl.createDebuggerContext(
+        myDebugProcess.mySession,
+        context.getSuspendContext(),
+        getStackFrameProxy().threadProxy(),
+        getStackFrameProxy());
+      context.setPositionCache(mySourcePosition);
+      context.initCaches();
+    }
+    return context;
   }
 
   // copied from DebuggerTree

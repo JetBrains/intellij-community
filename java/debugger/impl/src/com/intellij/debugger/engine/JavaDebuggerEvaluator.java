@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.engine;
 
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
@@ -42,11 +43,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public class JavaDebuggerEvaluator extends XDebuggerEvaluator {
   private final DebugProcessImpl myDebugProcess;
-  private final DebuggerContextImpl myDebuggerContext;
+  private final JavaStackFrame myStackFrame;
 
-  public JavaDebuggerEvaluator(DebugProcessImpl debugProcess, DebuggerContextImpl context) {
+  public JavaDebuggerEvaluator(DebugProcessImpl debugProcess, JavaStackFrame stackFrame) {
     myDebugProcess = debugProcess;
-    myDebuggerContext = context;
+    myStackFrame = stackFrame;
   }
 
   @Override
@@ -60,12 +61,13 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator {
   public void evaluate(@NotNull final XExpression expression,
                        @NotNull final XEvaluationCallback callback,
                        @Nullable XSourcePosition expressionPosition) {
-    myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(myDebuggerContext) {
+    DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(myDebugProcess.getProject()).getContext();
+    myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(context) {
       @Override
       public void threadAction() {
         WatchItemDescriptor descriptor = new WatchItemDescriptor(myDebugProcess.getProject(), TextWithImportsImpl.fromXExpression(
           expression));
-        EvaluationContextImpl evalContext = myDebuggerContext.createEvaluationContext();
+        EvaluationContextImpl evalContext = myStackFrame.getFrameDebuggerContext().createEvaluationContext();
         if (evalContext == null) {
           callback.errorOccurred("Context is not available");
           return;
