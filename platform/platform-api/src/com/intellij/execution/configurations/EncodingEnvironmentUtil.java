@@ -52,32 +52,54 @@ public class EncodingEnvironmentUtil {
    * LC_CTYPE value is taken from "Settings | File Encodings".
    *
    * @param commandLine GeneralCommandLine instance
-   * @param project     Project instance if any
    */
-  public static void fixDefaultEncodingIfMac(@NotNull GeneralCommandLine commandLine, @Nullable Project project) {
+  public static void setLocaleEnvironmentIfMac(@NotNull GeneralCommandLine commandLine) {
     if (SystemInfo.isMac) {
       if (!isLocaleDefined(commandLine)) {
-        fixLocale(commandLine.getEnvironment(), project);
+        setLocaleEnvironment(commandLine.getEnvironment(), commandLine.getCharset());
       }
     }
   }
 
-  private static void fixLocale(@NotNull Map<String, String> env, @Nullable Project project) {
-    Charset charset = getCharset(project);
+  /**
+   * @deprecated Use {@link #setLocaleEnvironmentIfMac(GeneralCommandLine)} instead. To be removed in IDEA 15.
+   */
+  @Deprecated
+  public static void fixDefaultEncodingIfMac(@NotNull GeneralCommandLine commandLine, @Nullable Project project) {
+    if (SystemInfo.isMac) {
+      if (!isLocaleDefined(commandLine)) {
+        setLocaleEnvironment(commandLine.getEnvironment(), getCharset(project));
+      }
+    }
+  }
+
+  private static void setLocaleEnvironment(@NotNull Map<String, String> env, @NotNull Charset charset) {
     env.put(LC_CTYPE, charset.name());
     if (LOG.isDebugEnabled()) {
       LOG.debug("Fixed mac locale: " + charset.name());
     }
   }
 
+  /**
+   * Sets default encoding on Mac if it's undefined. <br/>
+   * @deprecated Use {@link #setLocalEnvironmentIfMac(java.util.Map, java.nio.charset.Charset)} instead. To be removed in IDEA 15.
+   */
+  @Deprecated
+  public static void fixDefaultEncodingIfMac(@NotNull Map<String, String> env, @Nullable Project project) {
+    if (SystemInfo.isMac) {
+      if (!isLocaleDefined(env)) {
+        setLocaleEnvironment(env, getCharset(project));
+      }
+    }
+  }
 
   /**
    * Sets default encoding on Mac if it's undefined. <br/>
    */
-  public static void fixDefaultEncodingIfMac(@NotNull Map<String, String> env, @Nullable Project project) {
+  public static void setLocalEnvironmentIfMac(@NotNull Map<String, String> env, @NotNull Charset charset) {
     if (SystemInfo.isMac) {
       if (!isLocaleDefined(env)) {
-        fixLocale(env, project);
+        setLocaleEnvironment(env, charset);
       }
     }
   }
