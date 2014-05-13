@@ -35,7 +35,7 @@ public final class Variables {
   public static void processScopeVariables(@NotNull Scope scope,
                                            @NotNull XCompositeNode node,
                                            @NotNull final VariableContext context,
-                                           final @Nullable ActionCallback compoundActionCallback) {
+                                           @Nullable final ActionCallback compoundActionCallback) {
     final boolean isLast = compoundActionCallback == null;
     AsyncResult<?> result = ObsolescentAsyncResults.consume(scope.getVariables(), node, new PairConsumer<List<Variable>, XCompositeNode>() {
       @Override
