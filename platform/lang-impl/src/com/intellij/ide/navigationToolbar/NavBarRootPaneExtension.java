@@ -134,7 +134,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
       AnAction toolbarRunGroup = CustomActionsSchema.getInstance().getCorrectedAction("NavBarToolBar");
       if (toolbarRunGroup instanceof ActionGroup) {
         final boolean needGap = isNeedGap(toolbarRunGroup);
-        final ActionToolbar actionToolbar = manager.createActionToolbar(ActionPlaces.NAVIGATION_BAR, (ActionGroup)toolbarRunGroup, true);
+        final ActionToolbar actionToolbar = manager.createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, (ActionGroup)toolbarRunGroup, true);
         final JComponent component = actionToolbar.getComponent();
         component.setOpaque(false);
         myRunPanel = new JPanel(new BorderLayout()) {

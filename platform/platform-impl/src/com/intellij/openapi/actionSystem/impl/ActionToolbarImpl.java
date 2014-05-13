@@ -217,7 +217,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   private boolean isInsideNavBar() {
-    return ActionPlaces.NAVIGATION_BAR.equals(myPlace);
+    return ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(myPlace);
   }
 
   @Override
@@ -311,7 +311,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       add(mySecondaryActionsButton);
     }
 
-    if ((ActionPlaces.MAIN_TOOLBAR.equals(myPlace) || ActionPlaces.NAVIGATION_BAR.equals(myPlace))) {
+    if ((ActionPlaces.MAIN_TOOLBAR.equals(myPlace) || ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(myPlace))) {
       final AnAction searchEverywhereAction = ActionManager.getInstance().getAction("SearchEverywhere");
       if (searchEverywhereAction != null) {
         try {
