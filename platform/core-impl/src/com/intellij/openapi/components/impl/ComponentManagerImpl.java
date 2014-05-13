@@ -267,11 +267,12 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @Override
   @NotNull
   public MutablePicoContainer getPicoContainer() {
-    if (myDisposeCompleted) {
+    MutablePicoContainer container = myPicoContainer;
+    if (container == null || myDisposeCompleted) {
       ProgressManager.checkCanceled();
       throw new AssertionError("Already disposed");
     }
-    return myPicoContainer;
+    return container;
   }
 
   protected MutablePicoContainer createPicoContainer() {
