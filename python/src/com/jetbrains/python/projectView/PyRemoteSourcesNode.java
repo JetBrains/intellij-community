@@ -24,15 +24,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.PlatformIcons;
-import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author vlan
  */
-public class PySkeletonsNode extends PsiDirectoryNode {
-  private PySkeletonsNode(Project project, PsiDirectory value, ViewSettings viewSettings) {
+public class PyRemoteSourcesNode extends PsiDirectoryNode {
+  private PyRemoteSourcesNode(Project project, PsiDirectory value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 
@@ -43,11 +43,11 @@ public class PySkeletonsNode extends PsiDirectoryNode {
   }
 
   @Nullable
-  public static PySkeletonsNode create(@NotNull Project project, @NotNull Sdk sdk, ViewSettings settings) {
-    final VirtualFile skeletonsVirtualFile = PySdkUtil.findSkeletonsDir(sdk);
+  public static PyRemoteSourcesNode create(@NotNull Project project, @NotNull Sdk sdk, ViewSettings settings) {
+    final VirtualFile skeletonsVirtualFile = PythonSdkType.findSkeletonsDir(sdk);
     if (skeletonsVirtualFile != null) {
       final PsiDirectory skeletonsDirectory = PsiManager.getInstance(project).findDirectory(skeletonsVirtualFile);
-      return new PySkeletonsNode(project, skeletonsDirectory, settings);
+      return new PyRemoteSourcesNode(project, skeletonsDirectory, settings);
     }
     return null;
   }

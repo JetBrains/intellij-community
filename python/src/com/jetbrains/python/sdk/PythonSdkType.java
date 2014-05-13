@@ -452,22 +452,15 @@ public class PythonSdkType extends SdkType {
   public static String findSkeletonsPath(Sdk sdk) {
     final String[] urls = sdk.getRootProvider().getUrls(BUILTIN_ROOT_TYPE);
     for (String url : urls) {
-      if (url.contains(SKELETON_DIR_NAME)) {
+      if (isSkeletonsPath(url)) {
         return VfsUtilCore.urlToPath(url);
       }
     }
     return null;
   }
 
-  @Nullable
-  public static VirtualFile findSkeletonsDir(@NotNull final Sdk sdk) {
-    final VirtualFile[] virtualFiles = sdk.getRootProvider().getFiles(BUILTIN_ROOT_TYPE);
-    for (VirtualFile virtualFile : virtualFiles) {
-      if (virtualFile.isValid() && virtualFile.getPath().contains(SKELETON_DIR_NAME)) {
-        return virtualFile;
-      }
-    }
-    return null;
+  public static boolean isSkeletonsPath(String path) {
+    return path.contains(SKELETON_DIR_NAME);
   }
 
   @NonNls
@@ -583,8 +576,8 @@ public class PythonSdkType extends SdkType {
     Application application = ApplicationManager.getApplication();
     boolean not_in_unit_test_mode = (application != null && !application.isUnitTestMode());
 
-    String bin_path = sdkModificator.getHomePath();
-    assert bin_path != null;
+    String sdkHome = sdkModificator.getHomePath();
+    assert sdkHome != null;
     final String sep = File.separator;
     // we have a number of lib dirs, those listed in python's sys.path
     if (indicator != null) {
@@ -592,7 +585,7 @@ public class PythonSdkType extends SdkType {
     }
     // Add folders from sys.path
     if (!PySdkUtil.isRemote(sdk)) { //no sense to add roots of remote sdk
-      final List<String> paths = getSysPath(bin_path);
+      final List<String> paths = getSysPath(sdkHome);
       if (paths.size() > 0) {
         // add every path as root.
         for (String path : paths) {
@@ -603,13 +596,15 @@ public class PythonSdkType extends SdkType {
           addSdkRoot(sdkModificator, path);
         }
       }
+    } else {
+      addRemoteLibrariesRoot(sdkModificator, sdkHome);
     }
 
     PyUserSkeletonsUtil.addUserSkeletonsRoot(sdkModificator);
-    addSkeletonsRoot(sdkModificator, bin_path);
+    addSkeletonsRoot(sdkModificator, sdkHome);
 
     if (not_in_unit_test_mode) {
-      File venv_root = getVirtualEnvRoot(bin_path);
+      File venv_root = getVirtualEnvRoot(sdkHome);
       if (venv_root != null && venv_root.isDirectory()) {
         File lib_root = new File(venv_root, "lib");
         if (lib_root.isDirectory()) {
@@ -645,12 +640,20 @@ public class PythonSdkType extends SdkType {
     }
   }
 
-  private static void addSkeletonsRoot(@NotNull SdkModificator sdkModificator, String bin_path) {
-    @NonNls final String skeletonsPath = getSkeletonsPath(PathManager.getSystemPath(), bin_path);
+  private static void addSkeletonsRoot(@NotNull SdkModificator sdkModificator, String sdkHome) {
+    @NonNls final String skeletonsPath = getSkeletonsPath(PathManager.getSystemPath(), sdkHome);
     new File(skeletonsPath).mkdirs();
     final VirtualFile builtins_root = LocalFileSystem.getInstance().refreshAndFindFileByPath(skeletonsPath);
     assert builtins_root != null : "Cannot find skeletons path " + skeletonsPath + " in VFS";
     sdkModificator.addRoot(builtins_root, BUILTIN_ROOT_TYPE);
+  }
+
+  private static void addRemoteLibrariesRoot(@NotNull SdkModificator sdkModificator, String sdkHome) {
+    @NonNls final String librariesRoot = PySdkUtil.getRemoteSourcesLocalPath(sdkHome);
+    new File(librariesRoot).mkdirs();
+    final VirtualFile remoteLibraries = LocalFileSystem.getInstance().refreshAndFindFileByPath(librariesRoot);
+    assert remoteLibraries != null : "Cannot find remote libraries path " + librariesRoot + " in VFS";
+    sdkModificator.addRoot(remoteLibraries, OrderRootType.CLASSES);
   }
 
   protected static void addHardcodedPaths(SdkModificator sdkModificator) {
@@ -827,7 +830,7 @@ public class PythonSdkType extends SdkType {
       if (venvLibDir != null && VfsUtilCore.isAncestor(venvLibDir, vFile, false)) {
         return isNotSitePackages(vFile, venvLibDir);
       }
-      final VirtualFile skeletonsDir = findSkeletonsDir(pythonSdk);
+      final VirtualFile skeletonsDir = PySdkUtil.findSkeletonsDir(pythonSdk);
       if (skeletonsDir != null &&
           Comparing.equal(vFile.getParent(), skeletonsDir)) {   // note: this will pick up some of the binary libraries not in packages
         return true;
