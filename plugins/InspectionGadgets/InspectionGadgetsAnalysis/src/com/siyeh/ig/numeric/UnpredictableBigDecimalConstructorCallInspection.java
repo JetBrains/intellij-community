@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2009 Bas Leijdekkers
+ * Copyright 2007-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -33,8 +32,8 @@ import javax.swing.*;
 public class UnpredictableBigDecimalConstructorCallInspection
   extends BaseInspection {
 
-  public boolean ignoreReferences = true;
-  public boolean ignoreComplexLiterals = false;
+  @SuppressWarnings("PublicField") public boolean ignoreReferences = true;
+  @SuppressWarnings("PublicField") public boolean ignoreComplexLiterals = false;
 
   @Override
   @NotNull
@@ -75,14 +74,16 @@ public class UnpredictableBigDecimalConstructorCallInspection
       return null;
     }
     final PsiExpression firstArgument = arguments[0];
-    if (!(firstArgument instanceof PsiLiteralExpression)) {
-      return null;
+    if (firstArgument instanceof PsiLiteralExpression) {
+      return new ReplaceDoubleArgumentWithStringFix("new BigDecimal(\"" + firstArgument.getText() + "\")");
     }
-    return new ReplaceDoubleArgumentWithStringFix(firstArgument.getText());
+    if (arguments.length == 1) {
+      return new ReplaceDoubleArgumentWithStringFix("BigDecimal.valueOf(" + firstArgument.getText() + ')');
+    }
+    return null;
   }
 
-  private class ReplaceDoubleArgumentWithStringFix
-    extends InspectionGadgetsFix {
+  private static class ReplaceDoubleArgumentWithStringFix extends InspectionGadgetsFix {
 
     private final String argumentText;
 
@@ -101,27 +102,25 @@ public class UnpredictableBigDecimalConstructorCallInspection
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with 'new BigDecimal'";
+      return "Replace with 'BigDecimal.valueOf()'";
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      final PsiNewExpression newExpression =
-        (PsiNewExpression)element.getParent();
-      final PsiExpressionList argumentList =
-        newExpression.getArgumentList();
+      final PsiNewExpression newExpression = (PsiNewExpression)element.getParent();
+      final PsiExpressionList argumentList = newExpression.getArgumentList();
       if (argumentList == null) {
         return;
       }
       final PsiExpression[] arguments = argumentList.getExpressions();
-      if (arguments.length == 0) {
-        return;
-      }
       final PsiExpression firstArgument = arguments[0];
-      PsiReplacementUtil.replaceExpression(firstArgument,
-                                           '"' + firstArgument.getText() + '"');
+      if (firstArgument instanceof PsiLiteralExpression) {
+        PsiReplacementUtil.replaceExpression(firstArgument, '"' + firstArgument.getText() + '"');
+      }
+      else if (arguments.length == 1) {
+        PsiReplacementUtil.replaceExpression(newExpression, "java.math.BigDecimal.valueOf(" + firstArgument.getText() + ')');
+      }
     }
   }
 
@@ -149,8 +148,11 @@ public class UnpredictableBigDecimalConstructorCallInspection
       if (constructor == null) {
         return;
       }
-      final PsiParameterList parameterList =
-        constructor.getParameterList();
+      final PsiClass containingClass = constructor.getContainingClass();
+      if (containingClass == null || !"java.math.BigDecimal".equals(containingClass.getQualifiedName())) {
+        return;
+      }
+      final PsiParameterList parameterList = constructor.getParameterList();
       final int length = parameterList.getParametersCount();
       if (length != 1 && length != 2) {
         return;
@@ -170,34 +172,30 @@ public class UnpredictableBigDecimalConstructorCallInspection
         return;
       }
       final PsiExpression firstArgument = arguments[0];
-      if (!checkArguments(firstArgument)) {
+      if (!checkExpression(firstArgument)) {
         return;
       }
       registerNewExpressionError(expression, expression);
     }
 
-    private boolean checkArguments(@Nullable PsiExpression firstArgument) {
-      if (firstArgument == null) {
+    private boolean checkExpression(@Nullable PsiExpression expression) {
+      if (expression == null) {
         return false;
       }
-      if (firstArgument instanceof PsiReferenceExpression) {
+      if (expression instanceof PsiReferenceExpression) {
         if (ignoreReferences) {
           return false;
         }
       }
-      else if (firstArgument instanceof PsiBinaryExpression) {
+      else if (expression instanceof PsiPolyadicExpression) {
         if (ignoreComplexLiterals) {
           return false;
         }
-        final PsiBinaryExpression binaryExpression =
-          (PsiBinaryExpression)firstArgument;
-        final PsiExpression lhs = binaryExpression.getLOperand();
-        if (!checkArguments(lhs)) {
-          return false;
-        }
-        final PsiExpression rhs = binaryExpression.getROperand();
-        if (!checkArguments(rhs)) {
-          return false;
+        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+        for (PsiExpression operand : polyadicExpression.getOperands()) {
+          if (!checkExpression(operand)) {
+            return false;
+          }
         }
       }
       return true;
