@@ -55,6 +55,6 @@ public class NetBeansCustomFoldingProvider extends CustomFoldingProvider {
 
   @Override
   public boolean isCollapsedByDefault(String text) {
-    return text.matches(".*defaultstate\\s*=\\s*\"collapsed\".*");
+    return super.isCollapsedByDefault(text) || text.matches(".*defaultstate\\s*=\\s*\"collapsed\".*");
   }
 }

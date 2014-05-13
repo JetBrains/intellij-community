@@ -112,7 +112,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private FocusDegree myFocusDegree = FocusDegree.FOCUSED;
   private volatile boolean myCalculating;
   private final Advertiser myAdComponent;
-  private volatile String myAdText;
   volatile int myLookupTextWidth = 50;
   private boolean myChangeGuard;
   private volatile LookupArranger myArranger;
@@ -293,18 +292,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       });
     }
   }
-
-  public void setAdvertisementText(@Nullable String text) {
-    myAdText = text;
-    if (StringUtil.isNotEmpty(text)) {
-      addAdvertisement(text, null);
-    }
-  }
-
-  public String getAdvertisementText() {
-    return myAdText;
-  }
-
 
   public String getAdditionalPrefix() {
     return myOffsets.getAdditionalPrefix();
@@ -712,6 +699,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return true;
   }
 
+  public Advertiser getAdvertiser() {
+    return myAdComponent;
+  }
+
   public boolean mayBeNoticed() {
     return myStampShown > 0 && System.currentTimeMillis() - myStampShown > 300;
   }
@@ -1109,7 +1100,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public void markReused() {
-    myAdComponent.clearAdvertisements();
     synchronized (myList) {
       myArranger = myArranger.createEmptyCopy();
     }
@@ -1121,24 +1111,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       return;
     }
 
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        if (!myDisposed) {
-          myAdComponent.addAdvertisement(text, bgColor);
-          if (myShown) {
-            requestResize();
-            refreshUi(false, false);
-          }
-        }
-      }
-    };
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      ApplicationManager.getApplication().invokeLater(runnable);
-    }
+    myAdComponent.addAdvertisement(text, bgColor);
+    requestResize();
   }
 
   public boolean isLookupDisposed() {

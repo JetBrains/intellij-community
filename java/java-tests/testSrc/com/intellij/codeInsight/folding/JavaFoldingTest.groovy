@@ -425,6 +425,30 @@ public class Test {
     }  
     assert count == 2 : "Not all custom regions are found";
   }
+  
+  public void "test custom folding collapsed by default"() {
+    def text = """\
+class Test {
+  void test() {
+    //<editor-fold desc="Custom region">
+    System.out.println(1);
+    System.out.println(2);
+    //</editor-fold>
+    System.out.println(3);
+  };
+}
+"""
+    boolean oldValue = CodeFoldingSettings.instance.COLLAPSE_CUSTOM_FOLDING_REGIONS;
+    try {
+      CodeFoldingSettings.instance.COLLAPSE_CUSTOM_FOLDING_REGIONS = true;
+      configure text
+      def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
+      assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("//<editor-fold"))
+    }
+    finally {
+      CodeFoldingSettings.instance.COLLAPSE_CUSTOM_FOLDING_REGIONS = oldValue;
+    }
+  }
 
   public void "test move methods"() {
     def initialText = '''\
