@@ -16,12 +16,7 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiPackage;
-import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.quickfix.CreateHtmlDescriptionFix;
 
@@ -29,16 +24,13 @@ import org.jetbrains.idea.devkit.inspections.quickfix.CreateHtmlDescriptionFix;
  * @author Konstantin Bulenkov
  */
 public class IntentionDescriptionNotFoundInspection extends DescriptionNotFoundInspectionBase {
-  @NonNls private static final String INTENTION = "com.intellij.codeInsight.intention.IntentionAction";
-  @NonNls private static final String INSPECTION_DESCRIPTIONS = "intentionDescriptions";
 
-  protected CreateHtmlDescriptionFix getFix(Module module, String descriptionDir) {
-    return new CreateHtmlDescriptionFix(descriptionDir, module, true);
+  public IntentionDescriptionNotFoundInspection() {
+    super(DescriptionType.INTENTION);
   }
 
-  @NotNull
-  protected String getClassName() {
-    return INTENTION;
+  protected CreateHtmlDescriptionFix getFix(Module module, String descriptionDir) {
+    return new CreateHtmlDescriptionFix(descriptionDir, module, DescriptionType.INTENTION);
   }
 
   @NotNull
@@ -49,21 +41,6 @@ public class IntentionDescriptionNotFoundInspection extends DescriptionNotFoundI
   @NotNull
   protected String getHasNotBeforeAfterError() {
     return "Intention must have 'before.*.template' and 'after.*.template' beside 'description.html'";
-  }
-
-  public static PsiDirectory[] getIntentionDescriptionsDirs(Module module) {
-    final PsiPackage aPackage = JavaPsiFacade.getInstance(module.getProject()).findPackage(INSPECTION_DESCRIPTIONS);
-    if (aPackage != null) {
-      return aPackage.getDirectories(GlobalSearchScope.moduleWithDependenciesScope(module));
-    }
-    else {
-      return PsiDirectory.EMPTY_ARRAY;
-    }
-  }
-
-  @NotNull
-  protected PsiDirectory[] getDescriptionsDirs(@NotNull Module module) {
-    return getIntentionDescriptionsDirs(module);
   }
 
   @Nls

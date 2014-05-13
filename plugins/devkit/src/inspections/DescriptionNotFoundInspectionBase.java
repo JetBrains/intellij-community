@@ -28,11 +28,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.inspections.quickfix.CreateHtmlDescriptionFix;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
 abstract class DescriptionNotFoundInspectionBase extends DevKitInspectionBase {
+
+  private final DescriptionType myDescriptionType;
+
+  protected DescriptionNotFoundInspectionBase(DescriptionType descriptionType) {
+    myDescriptionType = descriptionType;
+  }
 
   @Override
   public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
@@ -43,10 +48,9 @@ abstract class DescriptionNotFoundInspectionBase extends DevKitInspectionBase {
     if (nameIdentifier == null || module == null || !PsiUtil.isInstantiable(aClass)) return null;
 
     final PsiClass base = JavaPsiFacade.getInstance(project).findClass(getClassName(), GlobalSearchScope.allScope(project));
-
     if (base == null || !aClass.isInheritor(base, true)) return null;
 
-    String descriptionDir = getDescriptionDirName(aClass);
+    String descriptionDir = DescriptionCheckerUtil.getDescriptionDirName(aClass);
     if (StringUtil.isEmptyOrSpaces(descriptionDir)) {
       return null;
     }
@@ -79,22 +83,7 @@ abstract class DescriptionNotFoundInspectionBase extends DevKitInspectionBase {
   }
 
   protected CreateHtmlDescriptionFix getFix(Module module, String descriptionDir) {
-    return new CreateHtmlDescriptionFix(descriptionDir, module, true);
-  }
-
-  @Nullable
-  private static String getDescriptionDirName(PsiClass aClass) {
-    String descriptionDir = "";
-    PsiClass each = aClass;
-    while (each != null) {
-      String name = each.getName();
-      if (StringUtil.isEmptyOrSpaces(name)) {
-        return null;
-      }
-      descriptionDir = name + descriptionDir;
-      each = each.getContainingClass();
-    }
-    return descriptionDir;
+    return new CreateHtmlDescriptionFix(descriptionDir, module, myDescriptionType);
   }
 
   private static boolean hasBeforeAndAfterTemplate(@NotNull VirtualFile dir) {
@@ -122,14 +111,18 @@ abstract class DescriptionNotFoundInspectionBase extends DevKitInspectionBase {
   }
 
   @NotNull
-  protected abstract String getClassName();
+  protected String getClassName() {
+    return myDescriptionType.getClassName();
+  }
+
+  @NotNull
+  protected PsiDirectory[] getDescriptionsDirs(@NotNull Module module) {
+    return DescriptionCheckerUtil.getDescriptionsDirs(module, myDescriptionType);
+  }
 
   @NotNull
   protected abstract String getHasNotDescriptionError();
 
   @NotNull
   protected abstract String getHasNotBeforeAfterError();
-
-  @NotNull
-  protected abstract PsiDirectory[] getDescriptionsDirs(@NotNull Module module);
 }
