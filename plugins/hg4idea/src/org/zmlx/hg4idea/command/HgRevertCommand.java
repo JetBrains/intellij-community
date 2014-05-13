@@ -14,12 +14,13 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsFileUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.util.Collection;
 import java.util.LinkedList;
@@ -33,7 +34,9 @@ public class HgRevertCommand {
     this.project = project;
   }
 
-  public void execute(VirtualFile repo, Collection<FilePath> files, HgRevisionNumber vcsRevisionNumber, boolean backupFile) {
+  //all files should be already chunked
+  @Nullable
+  public HgCommandResult execute(@NotNull VirtualFile repo, @NotNull Collection<String> files, @Nullable HgRevisionNumber vcsRevisionNumber, boolean backupFile) {
     final List<String> options = new LinkedList<String>();
     if (vcsRevisionNumber != null && !HgRevisionNumber.NULL_REVISION_NUMBER.equals(vcsRevisionNumber)) {
       options.add("--rev");
@@ -47,13 +50,9 @@ public class HgRevertCommand {
     if (!backupFile) {
       options.add("--no-backup");
     }
-
-    for (List<String> chunk : VcsFileUtil.chunkPaths(repo, files)) {
-      List<String> args = new LinkedList<String>();
-      args.addAll(options);
-      args.addAll(chunk);
-      new HgCommandExecutor(project).executeInCurrentThread(repo, "revert", args);
-    }
+    options.addAll(files);
+    HgCommandResult result = new HgCommandExecutor(project).executeInCurrentThread(repo, "revert", options);
     project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
+    return result;
   }
 }
