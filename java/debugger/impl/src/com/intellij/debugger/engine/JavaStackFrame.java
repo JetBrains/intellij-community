@@ -135,20 +135,19 @@ public class JavaStackFrame extends XStackFrame {
       return;
     }
     DebuggerContextImpl currentContext = DebuggerManagerEx.getInstanceEx(myDebugProcess.getProject()).getContext();
-    DebuggerContextImpl debuggerContext = DebuggerContextImpl.createDebuggerContext(
-      myDebugProcess.mySession,
-      currentContext.getSuspendContext(),
-      getStackFrameProxy().threadProxy(),
-      getStackFrameProxy());
-    debuggerContext.setPositionCache(mySourcePosition);
-    if (!debuggerContext.isInitialised() && mySourcePosition != null) {
-      debuggerContext.initCaches();
-    }
-    myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
+    myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(currentContext) {
       @Override
       public void threadAction() {
+        DebuggerContextImpl debuggerContext = DebuggerContextImpl.createDebuggerContext(
+          myDebugProcess.mySession,
+          getDebuggerContext().getSuspendContext(),
+          getStackFrameProxy().threadProxy(),
+          getStackFrameProxy());
+        debuggerContext.setPositionCache(mySourcePosition);
+        debuggerContext.initCaches();
+
         XValueChildrenList children = new XValueChildrenList();
-        buildVariablesThreadAction(getDebuggerContext(), children, node);
+        buildVariablesThreadAction(debuggerContext, children, node);
         node.addChildren(children, true);
       }
     });
