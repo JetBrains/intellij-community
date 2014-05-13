@@ -380,7 +380,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       LOG.error("invalid!");
       return JavaResolveResult.EMPTY_ARRAY;
     }
-    Project project = getProject();
+    Project project = manager.getProject();
 
     return multiResolve(incompleteCode, containingFile, project);
   }
