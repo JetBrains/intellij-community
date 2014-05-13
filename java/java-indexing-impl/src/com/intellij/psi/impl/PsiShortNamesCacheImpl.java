@@ -69,7 +69,7 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
     if (classes.isEmpty()) return PsiClass.EMPTY_ARRAY;
     ArrayList<PsiClass> list = new ArrayList<PsiClass>(classes.size());
     Map<String, List<PsiClass>> uniqueQName2Classes = new THashMap<String, List<PsiClass>>(classes.size());
-    List<PsiClass> hiddenClasses = null;
+    Set<PsiClass> hiddenClassesToRemove = null;
 
     OuterLoop:
     for (PsiClass aClass : classes) {
@@ -83,16 +83,17 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
 
         if (previousQNamedClasses != null) {
           qNamedClasses = new SmartList<PsiClass>();
+
           for(PsiClass previousClass:previousQNamedClasses) {
             VirtualFile previousClassVFile = previousClass.getContainingFile().getVirtualFile();
             int res = scope.compare(previousClassVFile, vFile);
             if (res > 0) {
-              continue OuterLoop; // previousClass hides aClass
+              continue OuterLoop; // previousClass hides aClass in classpath, so skip adding aClass
             }
             else if (res < 0) {
-              // aClass hides previousClass
-              if (hiddenClasses == null) hiddenClasses = new SmartList<PsiClass>();
-              hiddenClasses.add(previousClass);
+              // aClass hides previousClass in classpath, so remove it from list later
+              if (hiddenClassesToRemove == null) hiddenClassesToRemove = new THashSet<PsiClass>();
+              hiddenClassesToRemove.add(previousClass);
               qNamedClasses.add(aClass);
             } else {
               qNamedClasses.add(aClass);
@@ -106,7 +107,7 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
       list.add(aClass);
     }
 
-    if (hiddenClasses != null) list.removeAll(hiddenClasses);
+    if (hiddenClassesToRemove != null) list.removeAll(hiddenClassesToRemove);
 
     return list.toArray(new PsiClass[list.size()]);
   }
