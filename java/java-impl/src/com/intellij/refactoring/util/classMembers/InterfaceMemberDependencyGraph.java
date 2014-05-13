@@ -35,7 +35,7 @@ public class InterfaceMemberDependencyGraph<T extends PsiMember, M extends Membe
   public InterfaceMemberDependencyGraph(PsiClass aClass) {
     myClass = aClass;
     myImplementedInterfaces = new HashSet<PsiClass>();
-    myMethodsFromInterfaces = new com.intellij.util.containers.HashMap<PsiClass, HashSet<T>>();
+    myMethodsFromInterfaces = new HashMap<PsiClass, HashSet<T>>();
   }
 
   @Override
@@ -57,7 +57,7 @@ public class InterfaceMemberDependencyGraph<T extends PsiMember, M extends Membe
   public Set<? extends T> getDependent() {
     if(myInterfaceDependencies == null) {
       myInterfaceDependencies = new HashSet<T>();
-      myMembersToInterfacesMap = new com.intellij.util.containers.HashMap<T, HashSet<T>>();
+      myMembersToInterfacesMap = new HashMap<T, HashSet<T>>();
       for (final PsiClass implementedInterface : myImplementedInterfaces) {
         addInterfaceDeps(implementedInterface);
       }

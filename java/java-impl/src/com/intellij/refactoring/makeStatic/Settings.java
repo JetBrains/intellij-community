@@ -63,7 +63,7 @@ public final class Settings {
     myMakeFieldParameters = variableDatum != null;
     myFieldToNameList = new ArrayList<FieldParameter>();
     if(myMakeFieldParameters) {
-      myFieldToNameMapping = new com.intellij.util.containers.HashMap<PsiField, String>();
+      myFieldToNameMapping = new HashMap<PsiField, String>();
       for (VariableData data : variableDatum) {
         if (data.passAsParameter) {
           myFieldToNameMapping.put((PsiField)data.variable, data.name);

@@ -18,6 +18,7 @@ package com.siyeh.ipp.trivialif;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -42,7 +43,7 @@ public class MergeIfAndIntention extends Intention {
     }
     final PsiStatement parentThenBranch = parentStatement.getThenBranch();
     final PsiIfStatement childStatement =
-      (PsiIfStatement)com.siyeh.ig.psiutils.ControlFlowUtils.stripBraces(parentThenBranch);
+      (PsiIfStatement)ControlFlowUtils.stripBraces(parentThenBranch);
     final PsiExpression childCondition = childStatement.getCondition();
     if (childCondition == null) {
       return;

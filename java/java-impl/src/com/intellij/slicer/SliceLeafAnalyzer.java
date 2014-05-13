@@ -192,7 +192,7 @@ public class SliceLeafAnalyzer {
 
       @Override
       protected Collection<PsiElement> create(SliceNode key) {
-        return new ConcurrentHashSet<PsiElement>(SliceLeafAnalyzer.LEAF_ELEMENT_EQUALITY);
+        return new ConcurrentHashSet<PsiElement>(LEAF_ELEMENT_EQUALITY);
       }
     };
   }

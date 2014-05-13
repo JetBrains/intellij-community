@@ -56,7 +56,7 @@ public class PackagePrefixElementFinder extends PsiElementFinder implements Dumb
   @Override
   public PsiPackage findPackage(@NotNull String qualifiedName) {
     if (packagePrefixExists(qualifiedName)) {
-      return new PsiPackageImpl((PsiManagerEx)PsiManager.getInstance(myProject), qualifiedName);
+      return new PsiPackageImpl(PsiManager.getInstance(myProject), qualifiedName);
     }
     return null;
   }
@@ -72,7 +72,7 @@ public class PackagePrefixElementFinder extends PsiElementFinder implements Dumb
         final int i = prefix.indexOf('.', qualifiedName.length() + 1);
         String childName = i >= 0 ? prefix.substring(0, i) : prefix;
         if (!packagesMap.containsKey(childName)) {
-          packagesMap.put(childName, new PsiPackageImpl((PsiManagerEx)psiPackage.getManager(), childName));
+          packagesMap.put(childName, new PsiPackageImpl(psiPackage.getManager(), childName));
         }
       }
     }
