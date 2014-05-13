@@ -14,7 +14,7 @@ import org.jetbrains.debugger.values.Value;
 import javax.swing.*;
 import java.util.List;
 
-public class BasicDebuggerViewSupport implements DebuggerViewSupport {
+public class BasicDebuggerViewSupport implements DebuggerViewSupport, MemberFilter {
   public static final DebuggerViewSupport INSTANCE = new BasicDebuggerViewSupport();
 
   @Nullable
