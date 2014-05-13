@@ -26,6 +26,7 @@ import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.impl.rules.*;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleProvider;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -38,18 +39,33 @@ import java.util.List;
  * @author max
  */
 public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider {
+
+  protected boolean supportsNonCodeRule() {
+    return true;
+  }
+
+  protected boolean supportsModuleRule() {
+    return true;
+  }
+
+  protected boolean supportsScopesRule() {
+    return true;
+  }
+
   @Override
   @NotNull
   public UsageGroupingRule[] getActiveRules(Project project) {
     List<UsageGroupingRule> rules = new ArrayList<UsageGroupingRule>();
-    rules.add(new NonCodeUsageGroupingRule(project));
-    if (UsageViewSettings.getInstance().GROUP_BY_SCOPE) {
+    if (supportsNonCodeRule()) {
+      rules.add(new NonCodeUsageGroupingRule(project));
+    }
+    if (supportsScopesRule() && UsageViewSettings.getInstance().GROUP_BY_SCOPE) {
       rules.add(new UsageScopeGroupingRule());
     }
     if (UsageViewSettings.getInstance().GROUP_BY_USAGE_TYPE) {
       rules.add(new UsageTypeGroupingRule());
     }
-    if (UsageViewSettings.getInstance().GROUP_BY_MODULE) {
+    if (supportsModuleRule() && UsageViewSettings.getInstance().GROUP_BY_MODULE) {
       rules.add(new ModuleGroupingRule());
     }
     if (UsageViewSettings.getInstance().GROUP_BY_PACKAGE) {
@@ -58,10 +74,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     if (UsageViewSettings.getInstance().GROUP_BY_FILE_STRUCTURE) {
       FileStructureGroupRuleProvider[] providers = Extensions.getExtensions(FileStructureGroupRuleProvider.EP_NAME);
       for (FileStructureGroupRuleProvider ruleProvider : providers) {
-        final UsageGroupingRule rule = ruleProvider.getUsageGroupingRule(project);
-        if(rule != null) {
-          rules.add(rule);
-        }
+        ContainerUtil.addIfNotNull(rules, ruleProvider.getUsageGroupingRule(project));
       }
     }
     else {
@@ -74,38 +87,40 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
   @Override
   @NotNull
   public AnAction[] createGroupingActions(UsageView view) {
-    final UsageViewImpl impl = (UsageViewImpl)view;
-    final JComponent component = impl.getComponent();
+    UsageViewImpl impl = (UsageViewImpl)view;
+    JComponent component = impl.getComponent();
 
-    final GroupByModuleTypeAction groupByModuleTypeAction = new GroupByModuleTypeAction(impl);
-    groupByModuleTypeAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_DOWN_MASK)), component, impl);
+    GroupByModuleTypeAction groupByModuleTypeAction = supportsModuleRule() ? new GroupByModuleTypeAction(impl) : null;
+    if (groupByModuleTypeAction != null) {
+      groupByModuleTypeAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_DOWN_MASK)), component, impl);
+    }
 
-    final GroupByFileStructureAction groupByFileStructureAction = createGroupByFileStructureAction(impl);
+    GroupByFileStructureAction groupByFileStructureAction = createGroupByFileStructureAction(impl);
 
-    final GroupByScopeAction groupByScopeAction = new GroupByScopeAction(impl);
+    GroupByScopeAction groupByScopeAction = supportsScopesRule() ? new GroupByScopeAction(impl) : null;
 
-    final GroupByPackageAction groupByPackageAction = new GroupByPackageAction(impl);
+    GroupByPackageAction groupByPackageAction = new GroupByPackageAction(impl);
     groupByPackageAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_DOWN_MASK)), component, impl);
 
-    if(view.getPresentation().isCodeUsages()) {
-      final GroupByUsageTypeAction groupByUsageTypeAction = new GroupByUsageTypeAction(impl);
+    ArrayList<AnAction> result = ContainerUtil.newArrayList();
+
+    if (view.getPresentation().isCodeUsages()) {
+      GroupByUsageTypeAction groupByUsageTypeAction = new GroupByUsageTypeAction(impl);
       groupByUsageTypeAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK)), component, impl);
-      return new AnAction[] {
-        groupByUsageTypeAction,
-        groupByScopeAction,
-        groupByModuleTypeAction,
-        groupByPackageAction,
-        groupByFileStructureAction,
-      };
+      
+      ContainerUtil.addIfNotNull(result, groupByUsageTypeAction);
+      ContainerUtil.addIfNotNull(result, groupByScopeAction);
+      ContainerUtil.addIfNotNull(result, groupByModuleTypeAction);
+      ContainerUtil.addIfNotNull(result, groupByPackageAction);
+      ContainerUtil.addIfNotNull(result, groupByFileStructureAction);
     }
     else {
-      return new AnAction[] {
-        groupByScopeAction,
-        groupByModuleTypeAction,
-        groupByPackageAction,
-        groupByFileStructureAction,
-      };
+      ContainerUtil.addIfNotNull(result, groupByScopeAction);
+      ContainerUtil.addIfNotNull(result, groupByModuleTypeAction);
+      ContainerUtil.addIfNotNull(result, groupByPackageAction);
+      ContainerUtil.addIfNotNull(result, groupByFileStructureAction);
     }
+    return result.toArray(new AnAction[result.size()]);
   }
 
   public static GroupByFileStructureAction createGroupByFileStructureAction(UsageViewImpl impl) {

@@ -25,6 +25,8 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.project.model.impl.module.JpsRootModel;
 import com.intellij.project.model.impl.module.content.JpsContentEntry;
 import com.intellij.project.model.impl.module.content.JpsSourceFolder;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,15 +34,14 @@ import org.jetbrains.idea.maven.utils.Url;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.ex.JpsElementBase;
+import org.jetbrains.jps.model.java.JavaSourceRootProperties;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaModuleType;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * @author Vladislav.Soroka
@@ -97,7 +98,18 @@ public class MavenSourceFoldersModuleExtension extends ModuleExtension<MavenSour
           if (StringUtil.equals(jpsSourceFolder.getUrl(), eachFolder.getUrl())
               && eachFolder.getRootType().equals(jpsSourceFolder.getRootType())) {
             found = true;
-            eachFolder.setPackagePrefix(jpsSourceFolder.getPackagePrefix());
+            if (eachFolder.getRootType() instanceof JavaSourceRootType) {
+              final JavaSourceRootProperties jpsJavaSourceRootProperties =
+                jpsSourceFolder.getJpsElement().getProperties((JavaSourceRootType)eachFolder.getRootType());
+
+              final JavaSourceRootProperties javaSourceRootProperties =
+                eachFolder.getJpsElement().getProperties((JavaSourceRootType)eachFolder.getRootType());
+
+              if (javaSourceRootProperties != null && jpsJavaSourceRootProperties != null) {
+                javaSourceRootProperties.applyChanges(jpsJavaSourceRootProperties);
+              }
+            }
+
             myJpsSourceFolders.remove(jpsSourceFolder);
             Disposer.dispose(jpsSourceFolder);
             break;
@@ -168,7 +180,11 @@ public class MavenSourceFoldersModuleExtension extends ModuleExtension<MavenSour
     final JpsModuleSourceRoot jpsModuleSourceRoot =
       JpsElementFactory.getInstance().createModuleSourceRoot(url.getUrl(), rootType, properties);
     final JpsContentEntry dummyJpsContentEntry = new JpsContentEntry(myDummyJpsModule, myDummyJpsRootModel, url.getUrl());
-    myJpsSourceFolders.add(new JpsSourceFolder(jpsModuleSourceRoot, dummyJpsContentEntry));
+
+    final JpsSourceFolder jpsSourceFolder = new JpsSourceFolder(jpsModuleSourceRoot, dummyJpsContentEntry);
+    myJpsSourceFolders.add(jpsSourceFolder);
+    // since dummyJpsContentEntry created for each source folder, we will dispose it on that source folder disposal
+    Disposer.register(jpsSourceFolder, dummyJpsContentEntry);
 
     isJpsSourceFoldersChanged = true;
   }
@@ -188,6 +204,16 @@ public class MavenSourceFoldersModuleExtension extends ModuleExtension<MavenSour
     return null;
   }
 
+  @NotNull
+  public String[] getSourceRootUrls(boolean includingTests) {
+    List<String> result = new SmartList<String>();
+    for (JpsSourceFolder eachFolder : myJpsSourceFolders) {
+      if (includingTests || !eachFolder.isTestSource()) {
+        result.add(eachFolder.getUrl());
+      }
+    }
+    return ArrayUtil.toStringArray(result);
+  }
 
   @Nullable
   private ContentEntry getContentRootFor(@NotNull Url url) {

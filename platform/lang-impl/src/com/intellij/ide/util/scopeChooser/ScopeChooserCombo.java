@@ -27,9 +27,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.module.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -54,6 +52,7 @@ import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.TreeItem;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -237,13 +236,13 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
                                                       boolean prevSearchFiles,
                                                       boolean currentSelection,
                                                       boolean usageView) {
-    ArrayList<SearchScope> result = new ArrayList<SearchScope>();
+    Collection<SearchScope> result = ContainerUtil.newLinkedHashSet();
     result.add(GlobalSearchScope.projectScope(project));
     if (suggestSearchInLibs) {
       result.add(GlobalSearchScope.allScope(project));
     }
 
-    if (!PlatformUtils.isCidr() && ModuleUtil.isSupportedRootType(project, JavaSourceRootType.TEST_SOURCE)) { // TODO: fix these scopes in AppCode
+    if (ModuleUtil.isSupportedRootType(project, JavaSourceRootType.TEST_SOURCE)) {
       result.add(GlobalSearchScopesCore.projectProductionScope(project));
       result.add(GlobalSearchScopesCore.projectTestScope(project));
     }
@@ -261,7 +260,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
           if (module == null) {
             module = LangDataKeys.MODULE.getData(dataContext);
           }
-          if (module != null) {
+          if (module != null && !(ModuleType.get(module) instanceof InternalModuleType)) {
             result.add(module.getModuleScope());
           }
         }
@@ -421,7 +420,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
       }
     }
 
-    return result;
+    return ContainerUtil.newArrayList(result);
   }
 
   @Nullable

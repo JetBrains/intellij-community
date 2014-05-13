@@ -18,51 +18,41 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction;
 import com.intellij.codeInsight.hint.actions.ShowImplementationsAction;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Random;
 
 /**
  * @author peter
  */
 public class DefaultCompletionContributor extends CompletionContributor {
 
-  @Nullable
-  public static String getDefaultAdvertisementText(@NotNull final CompletionParameters parameters) {
-    final Random random = new Random();
-    if (random.nextInt(5) < 2 && CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC)) {
-      return LangBundle.message("completion.dot.etc.ad");
+  static void addDefaultAdvertisements(@NotNull final CompletionParameters parameters, LookupImpl lookup) {
+    if (CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC)) {
+      lookup.addAdvertisement(LangBundle.message("completion.dot.etc.ad"), null);
     }
-    if (random.nextInt(5) < 2 && CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_SMART_ENTER)) {
+    if (CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_SMART_ENTER)) {
       final String shortcut = getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_COMPLETE_STATEMENT);
       if (shortcut != null) {
-        return LangBundle.message("completion.smart.enter.ad", shortcut);
+        lookup.addAdvertisement(LangBundle.message("completion.smart.enter.ad", shortcut), null);
       }
     }
 
-    if (random.nextInt(5) < 2 &&
-        CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC)) {
-      return LangBundle.message("completion.dot.etc.ad");
-    }
-    if (random.nextInt(5) < 2 &&
-        CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_SMART_ENTER)) {
+    if (CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_SMART_ENTER)) {
       final String shortcut = getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_COMPLETE_STATEMENT);
       if (shortcut != null) {
-        return LangBundle.message("completion.smart.enter.ad", shortcut);
+        lookup.addAdvertisement(LangBundle.message("completion.smart.enter.ad", shortcut), null);
       }
     }
 
-    if (random.nextInt(5) < 2 &&
-        (CompletionUtil.shouldShowFeature(parameters, ShowQuickDocInfoAction.CODEASSISTS_QUICKJAVADOC_FEATURE) ||
+    if ((CompletionUtil.shouldShowFeature(parameters, ShowQuickDocInfoAction.CODEASSISTS_QUICKJAVADOC_FEATURE) ||
          CompletionUtil.shouldShowFeature(parameters, ShowQuickDocInfoAction.CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE))) {
       final String shortcut = getActionShortcut(IdeActions.ACTION_QUICK_JAVADOC);
       if (shortcut != null) {
-        return LangBundle.message("completion.quick.javadoc.ad", shortcut);
+        lookup.addAdvertisement(LangBundle.message("completion.quick.javadoc.ad", shortcut), null);
       }
     }
 
@@ -70,11 +60,9 @@ public class DefaultCompletionContributor extends CompletionContributor {
         CompletionUtil.shouldShowFeature(parameters, ShowImplementationsAction.CODEASSISTS_QUICKDEFINITION_LOOKUP_FEATURE)) {
       final String shortcut = getActionShortcut(IdeActions.ACTION_QUICK_IMPLEMENTATIONS);
       if (shortcut != null) {
-        return LangBundle.message("completion.quick.implementations.ad", shortcut);
+        lookup.addAdvertisement(LangBundle.message("completion.quick.implementations.ad", shortcut), null);
       }
     }
-
-    return null;
   }
 
   @Override

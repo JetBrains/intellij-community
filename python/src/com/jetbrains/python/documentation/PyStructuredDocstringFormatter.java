@@ -56,7 +56,7 @@ public class PyStructuredDocstringFormatter {
       if (modules.length == 0) return Lists.newArrayList();
       module = modules[0];
     }
-
+    if (module == null) return Lists.newArrayList();
     final PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(module);
     final List<String> result = new ArrayList<String>();
 

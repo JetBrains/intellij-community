@@ -218,8 +218,12 @@ public class SelectWordUtil {
         availableSelectioners.add(selectioner);
       }
     }
+    long stamp = editor.getDocument().getModificationStamp();
     for (ExtendWordSelectionHandler selectioner : availableSelectioners) {
       List<TextRange> ranges = selectioner.select(element, text, cursorOffset, editor);
+      if (stamp != editor.getDocument().getModificationStamp()) {
+        throw new AssertionError("Selectioner " + selectioner + " has changed the document");
+      }
       if (ranges == null) continue;
 
       for (TextRange range : ranges) {
