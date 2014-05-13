@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.Function;
@@ -43,6 +44,7 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class TableModelEditor<T> implements ElementProducer<T> {
@@ -52,6 +54,10 @@ public class TableModelEditor<T> implements ElementProducer<T> {
   private final ItemEditor<T> itemEditor;
 
   private final MyListTableModel<T> model;
+
+  public TableModelEditor(@NotNull ColumnInfo[] columns, @NotNull ItemEditor<T> itemEditor, @NotNull String emptyText) {
+    this(Collections.<T>emptyList(), columns, itemEditor, emptyText);
+  }
 
   /**
    * source will be copied, passed list will not be used directly
@@ -70,41 +76,83 @@ public class TableModelEditor<T> implements ElementProducer<T> {
       TableUtil.setupCheckboxColumn(table.getColumnModel().getColumn(0));
     }
 
+   boolean needTableHeader = false;
+    for (ColumnInfo column : columns) {
+      if (!StringUtil.isEmpty(column.getName())) {
+        needTableHeader = true;
+        break;
+      }
+    }
+
+    if (!needTableHeader) {
+      table.setTableHeader(null);
+    }
+
     table.getEmptyText().setText(emptyText);
     MyRemoveAction removeAction = new MyRemoveAction();
     toolbarDecorator = ToolbarDecorator.createDecorator(table, this).setRemoveAction(removeAction).setRemoveActionUpdater(removeAction);
 
     if (itemEditor instanceof DialogItemEditor) {
-      toolbarDecorator.setEditAction(new AnActionButtonRunnable() {
+      addDialogActions();
+    }
+  }
+
+  private void addDialogActions() {
+    toolbarDecorator.setEditAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        T item = table.getSelectedObject();
+        if (item != null) {
+          Function<T, T> mutator;
+          if (model.isMutable(item)) {
+            mutator = FunctionUtil.id();
+          }
+          else {
+            final int selectedRow = table.getSelectedRow();
+            mutator = new Function<T, T>() {
+              @Override
+              public T fun(T item) {
+                return model.getMutable(selectedRow, item);
+              }
+            };
+          }
+          ((DialogItemEditor<T>)itemEditor).edit(item, mutator, false);
+          table.requestFocus();
+        }
+      }
+    }).setEditActionUpdater(new AnActionButtonUpdater() {
+      @Override
+      public boolean isEnabled(AnActionEvent e) {
+        T item = table.getSelectedObject();
+        return item != null && ((DialogItemEditor<T>)itemEditor).isEditable(item);
+      }
+    });
+
+    if (((DialogItemEditor)itemEditor).isUseDialogToAdd()) {
+      toolbarDecorator.setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          T item = table.getSelectedObject();
-          if (item != null) {
-            Function<T, T> mutator;
-            if (model.isMutable(item)) {
-              mutator = FunctionUtil.id();
+          T item = createElement();
+          ((DialogItemEditor<T>)itemEditor).edit(item, new Function<T, T>() {
+            @Override
+            public T fun(T item) {
+              model.addRow(item);
+              return item;
             }
-            else {
-              final int selectedRow = table.getSelectedRow();
-              mutator = new Function<T, T>() {
-                @Override
-                public T fun(T item) {
-                  return model.getMutable(selectedRow, item);
-                }
-              };
-            }
-            ((DialogItemEditor<T>)TableModelEditor.this.itemEditor).edit(item, mutator);
-            table.requestFocus();
-          }
-        }
-      }).setEditActionUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(AnActionEvent e) {
-          T item = table.getSelectedObject();
-          return item != null && ((DialogItemEditor<T>)TableModelEditor.this.itemEditor).isEditable(item);
+          }, true);
         }
       });
     }
+  }
+
+  public TableModelEditor<T> disableUpDownActions() {
+    toolbarDecorator.disableUpDownActions();
+    return this;
+  }
+
+  public TableModelEditor<T> enabled(boolean value) {
+    table.setEnabled(value);
+    return this;
   }
 
   public static abstract class DataChangedListener<T> implements TableModelListener {
@@ -146,12 +194,16 @@ public class TableModelEditor<T> implements ElementProducer<T> {
   }
 
   public static abstract class DialogItemEditor<T> extends ItemEditor<T> {
-    public abstract void edit(@NotNull T item, @NotNull Function<T, T> mutator);
+    public abstract void edit(@NotNull T item, @NotNull Function<T, T> mutator, boolean isAdd);
 
     public abstract void applyEdited(@NotNull T oldItem, @NotNull T newItem);
 
     public boolean isEditable(@NotNull T item) {
       return true;
+    }
+
+    public boolean isUseDialogToAdd() {
+      return false;
     }
   }
 
@@ -322,7 +374,7 @@ public class TableModelEditor<T> implements ElementProducer<T> {
       try {
         constructor.setAccessible(true);
       }
-      catch (SecurityException e) {
+      catch (SecurityException ignored) {
         return itemEditor.getItemClass().newInstance();
       }
       return constructor.newInstance();
