@@ -126,19 +126,7 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
   @Nullable
   @Override
   public FileAttributes getAttributes(@NotNull VirtualFile file) {
-    if (file.getParent() == null) {
-      VirtualFile local = getLocalByEntry(file);
-      if (local != null) {
-        FileAttributes attributes = ((NewVirtualFileSystem)local.getFileSystem()).getAttributes(local);
-        if (attributes != null) {
-          return new FileAttributes(true, false, false, false, attributes.length, attributes.lastModified, false);
-        }
-      }
-      return null;
-    }
-    else {
-      return getHandler(file).getAttributes(getRelativePath(file));
-    }
+    return getHandler(file).getAttributes(getRelativePath(file));
   }
 
   @NotNull

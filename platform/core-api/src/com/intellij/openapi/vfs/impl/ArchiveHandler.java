@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -67,8 +68,14 @@ public abstract class ArchiveHandler {
 
   @Nullable
   public FileAttributes getAttributes(@NotNull String relativePath) {
-    EntryInfo entry = getEntryInfo(relativePath);
-    return entry != null ? new FileAttributes(entry.isDirectory, false, false, false, entry.length, entry.timestamp, false) : null;
+    if (relativePath.isEmpty()) {
+      FileAttributes attributes = FileSystemUtil.getAttributes(myPath);
+      return attributes != null ? new FileAttributes(true, false, false, false, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, false) : null;
+    }
+    else {
+      EntryInfo entry = getEntryInfo(relativePath);
+      return entry != null ? new FileAttributes(entry.isDirectory, false, false, false, entry.length, entry.timestamp, false) : null;
+    }
   }
 
   @NotNull
