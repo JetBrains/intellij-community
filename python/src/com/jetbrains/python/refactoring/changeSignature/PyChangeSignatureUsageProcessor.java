@@ -110,8 +110,12 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
         final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(element.getProject());
         StringBuilder builder = buildSignature((PyChangeInfo)changeInfo, call);
 
-        final PyExpression newCall =
-          elementGenerator.createExpressionFromText(LanguageLevel.forElement(element), builder.toString());
+        final PyExpression newCall;
+        if (call instanceof PyDecorator) {
+          newCall = elementGenerator.createDecoratorList("@" + builder.toString()).getDecorators()[0];
+        }
+        else
+          newCall = elementGenerator.createExpressionFromText(LanguageLevel.forElement(element), builder.toString());
         call.replace(newCall);
 
         return true;
