@@ -69,7 +69,6 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
     myActionWithUseShortcutOfExistentRedefined = new MyAction("text", "description");
     myActionWithUseShortcutOfExistentRedefinedInParent = new MyAction("text", "description");
     myActionWithUseShortcutOfNonExistent = new MyAction("text", "description");
-    myActionWithUseShortcutOfNonExistent = new MyAction("text", "description");
       
     ActionManager actionManager = ActionManager.getInstance();
     actionManager.registerAction(ACTION_WITHOUT_TEXT_AND_DESCRIPTION, myActionWithoutTextAndDescription);
@@ -85,9 +84,9 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
     KeymapManagerEx.getInstanceEx().bindShortcuts(EXISTENT_ACTION, ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED);
     KeymapManagerEx.getInstanceEx().bindShortcuts(EXISTENT_ACTION, ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT);
     KeymapManagerEx.getInstanceEx().bindShortcuts(NON_EXISTENT_ACTION, ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION);
-      
-    assertEquals(KeymapManagerEx.getInstanceEx().getActionBinding(ACTION_EDITOR_DELETE_WITH_SHORTCUT), "$Delete");
-    assertEquals(KeymapManagerEx.getInstanceEx().getActionBinding(ACTION_EDITOR_CUT_WITHOUT_SHORTCUT), "$Cut");
+
+    assertEquals("$Delete", KeymapManagerEx.getInstanceEx().getActionBinding(ACTION_EDITOR_DELETE_WITH_SHORTCUT));
+    assertEquals("$Cut", KeymapManagerEx.getInstanceEx().getActionBinding(ACTION_EDITOR_CUT_WITHOUT_SHORTCUT));
     assertNotNull(actionManager.getAction(ACTION_EDITOR_DELETE_WITH_SHORTCUT));
     assertNotNull(actionManager.getAction(ACTION_EDITOR_CUT_WITHOUT_SHORTCUT));
 

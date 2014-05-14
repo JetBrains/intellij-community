@@ -480,7 +480,7 @@ public class KeymapTest extends PlatformTestCase {
     myParent.clearOwnActionsIds();
     myChild.clearOwnActionsIds();
     KeymapImpl myGrandChild = myChild.deriveKeymap();
-    myChild.setName("GrandChild");
+    myGrandChild.setName("GrandChild");
     assertSame(myChild, myGrandChild.getParent());
 
     String BASE = "BASE_ACTION";
@@ -581,7 +581,7 @@ public class KeymapTest extends PlatformTestCase {
       assertFalse(myGrandChild.hasOwnActionId(BASE));
       assertTrue(myGrandChild.hasOwnActionId(DEPENDENT));
 
-      // Now let's try the other way round - redefine base shortcut in children and check that DEPENDENT action uses the cottect one   
+      // Now let's try the other way round - redefine base shortcut in children and check that DEPENDENT action uses the correct one   
       myChild.clearOwnActionsIds();
       myGrandChild.clearOwnActionsIds();
 
