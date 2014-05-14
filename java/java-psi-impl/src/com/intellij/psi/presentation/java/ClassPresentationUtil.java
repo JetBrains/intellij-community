@@ -63,13 +63,14 @@ public class ClassPresentationUtil {
   }
 
   public static String getContextName(@NotNull PsiElement element, boolean qualified) {
-    PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiMember.class, PsiFile.class);
+    PsiElement parent = PsiTreeUtil.getStubOrPsiParentOfType(element, PsiMember.class);
+    if (parent == null) parent = element.getContainingFile();
     while(true){
       if (parent == null) return null;
       String name = getNameForElement(parent, qualified);
       if (name != null) return name;
       if (parent instanceof PsiFile) return null;
-      parent = parent.getParent();
+      parent = PsiTreeUtil.getStubOrPsiParent(parent);
     }
   }
 
