@@ -292,8 +292,8 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   @Override
   public final Computable<Boolean> update(final int inputId, @Nullable Input content) {
     final boolean weProcessPhysicalContent = content == null ||
-                                             (content instanceof FileContent &&
-                                              ((FileContent)content).getUserData(FileBasedIndexImpl.ourPhysicalContentKey) != null);
+                                             (content instanceof UserDataHolder &&
+                                              FileBasedIndexImpl.ourPhysicalContentKey.get((UserDataHolder)content, Boolean.FALSE));
 
     Map<Key, Value> data = null;
     boolean havePersistentData = false;
