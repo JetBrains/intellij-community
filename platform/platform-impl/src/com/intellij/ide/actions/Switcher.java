@@ -250,7 +250,7 @@ public class Switcher extends AnAction implements DumbAware {
       Collections.sort(windows, new Comparator<ToolWindow>() {
         @Override
         public int compare(ToolWindow o1, ToolWindow o2) {
-          return map.get(o1).compareTo(map.get(o2));
+          return StringUtil.compare(map.get(o1), map.get(o2), false);
         }
       });
       for (ToolWindow window : windows) {
