@@ -183,7 +183,7 @@ public class CompileDriver {
           final VirtualFile productionOutput = lookupVFile(lfs, CompilerPaths.getGenerationOutputPath(compiler, module, false));
           final VirtualFile testOutput = lookupVFile(lfs, CompilerPaths.getGenerationOutputPath(compiler, module, true));
           final Pair<IntermediateOutputCompiler, Module> pair = Pair.create(compiler, module);
-          final Pair<VirtualFile, VirtualFile> outputs = Pair.create(productionOutput, testOutput);
+          final Couple<VirtualFile> outputs = Couple.newOne(productionOutput, testOutput);
           myGenerationCompilerModuleToOutputDirMap.put(pair, outputs);
         }
         if (config.getAnnotationProcessingConfiguration(module).isEnabled()) {

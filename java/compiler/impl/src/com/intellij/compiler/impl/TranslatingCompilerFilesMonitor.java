@@ -91,7 +91,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   private final TIntHashSet mySuspendedProjects = new TIntHashSet(); // projectId for all projects that should not be monitored
 
   private final TIntObjectHashMap<TIntHashSet> mySourcesToRecompile = new TIntObjectHashMap<TIntHashSet>(); // ProjectId->set of source file paths
-  private PersistentHashMap<Integer, TIntObjectHashMap<Pair<Integer, Integer>>> myOutputRootsStorage; // ProjectId->map[moduleId->Pair(outputDirId, testOutputDirId)]
+  private PersistentHashMap<Integer, TIntObjectHashMap<Couple<Integer>>> myOutputRootsStorage; // ProjectId->map[moduleId->Pair(outputDirId, testOutputDirId)]
   
   // Map: projectId -> Map{output path -> [sourceUrl; className]}
   private final SLRUCache<Integer, Outputs> myOutputsToDelete = new SLRUCache<Integer, Outputs>(3, 3) {
@@ -149,8 +149,8 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       return CompilerPaths.getGeneratedDataDirectory(project);
     }
   };
-  private final SLRUCache<Integer, TIntObjectHashMap<Pair<Integer, Integer>>> myProjectOutputRoots = new SLRUCache<Integer, TIntObjectHashMap<Pair<Integer, Integer>>>(2, 2) {
-    protected void onDropFromCache(Integer key, TIntObjectHashMap<Pair<Integer, Integer>> value) {
+  private final SLRUCache<Integer, TIntObjectHashMap<Couple<Integer>>> myProjectOutputRoots = new SLRUCache<Integer, TIntObjectHashMap<Couple<Integer>>>(2, 2) {
+    protected void onDropFromCache(Integer key, TIntObjectHashMap<Couple<Integer>> value) {
       try {
         myOutputRootsStorage.put(key, value);
       }
@@ -160,8 +160,8 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
 
     @NotNull
-    public TIntObjectHashMap<Pair<Integer, Integer>> createValue(Integer key) {
-      TIntObjectHashMap<Pair<Integer, Integer>> map = null;
+    public TIntObjectHashMap<Couple<Integer>> createValue(Integer key) {
+      TIntObjectHashMap<Couple<Integer>> map = null;
       try {
         ensureOutputStorageInitialized();
         map = myOutputRootsStorage.get(key);
@@ -169,7 +169,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       catch (IOException e) {
         LOG.info(e);
       }
-      return map != null? map : new TIntObjectHashMap<Pair<Integer, Integer>>();
+      return map != null? map : new TIntObjectHashMap<Couple<Integer>>();
     }
   };
   private final ProjectManager myProjectManager;
@@ -495,7 +495,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   }
 
   public void updateOutputRootsLayout(Project project) {
-    final TIntObjectHashMap<Pair<Integer, Integer>> map = buildOutputRootsLayout(new ProjectRef(project));
+    final TIntObjectHashMap<Couple<Integer>> map = buildOutputRootsLayout(new ProjectRef(project));
     final int projectId = getProjectId(project);
     synchronized (myProjectOutputRoots) {
       myProjectOutputRoots.put(projectId, map);
@@ -574,8 +574,8 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   }
 
-  private TIntObjectHashMap<Pair<Integer, Integer>> buildOutputRootsLayout(ProjectRef projRef) {
-    final TIntObjectHashMap<Pair<Integer, Integer>> map = new TIntObjectHashMap<Pair<Integer, Integer>>();
+  private TIntObjectHashMap<Couple<Integer>> buildOutputRootsLayout(ProjectRef projRef) {
+    final TIntObjectHashMap<Couple<Integer>> map = new TIntObjectHashMap<Couple<Integer>>();
     for (Module module : ModuleManager.getInstance(projRef.get()).getModules()) {
       final CompilerModuleExtension manager = CompilerModuleExtension.getInstance(module);
       if (manager != null) {
@@ -583,32 +583,32 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         final int first = output != null? Math.abs(getFileId(output)) : -1;
         final VirtualFile testsOutput = manager.getCompilerOutputPathForTests();
         final int second = testsOutput != null? Math.abs(getFileId(testsOutput)) : -1;
-        map.put(getModuleId(module), new Pair<Integer, Integer>(first, second));
+        map.put(getModuleId(module), Couple.newOne(first, second));
       }
     }
     return map;
   }
 
   private void initOutputRootsFile(File rootsFile) throws IOException {
-    myOutputRootsStorage = new PersistentHashMap<Integer, TIntObjectHashMap<Pair<Integer, Integer>>>(rootsFile, EnumeratorIntegerDescriptor.INSTANCE, new DataExternalizer<TIntObjectHashMap<Pair<Integer, Integer>>>() {
-      public void save(@NotNull DataOutput out, TIntObjectHashMap<Pair<Integer, Integer>> value) throws IOException {
-        for (final TIntObjectIterator<Pair<Integer, Integer>> it = value.iterator(); it.hasNext();) {
+    myOutputRootsStorage = new PersistentHashMap<Integer, TIntObjectHashMap<Couple<Integer>>>(rootsFile, EnumeratorIntegerDescriptor.INSTANCE, new DataExternalizer<TIntObjectHashMap<Couple<Integer>>>() {
+      public void save(@NotNull DataOutput out, TIntObjectHashMap<Couple<Integer>> value) throws IOException {
+        for (final TIntObjectIterator<Couple<Integer>> it = value.iterator(); it.hasNext();) {
           it.advance();
           DataInputOutputUtil.writeINT(out, it.key());
-          final Pair<Integer, Integer> pair = it.value();
+          final Couple<Integer> pair = it.value();
           DataInputOutputUtil.writeINT(out, pair.first);
           DataInputOutputUtil.writeINT(out, pair.second);
         }
       }
 
-      public TIntObjectHashMap<Pair<Integer, Integer>> read(@NotNull DataInput in) throws IOException {
+      public TIntObjectHashMap<Couple<Integer>> read(@NotNull DataInput in) throws IOException {
         final DataInputStream _in = (DataInputStream)in;
-        final TIntObjectHashMap<Pair<Integer, Integer>> map = new TIntObjectHashMap<Pair<Integer, Integer>>();
+        final TIntObjectHashMap<Couple<Integer>> map = new TIntObjectHashMap<Couple<Integer>>();
         while (_in.available() > 0) {
           final int key = DataInputOutputUtil.readINT(_in);
           final int first = DataInputOutputUtil.readINT(_in);
           final int second = DataInputOutputUtil.readINT(_in);
-          map.put(key, new Pair<Integer, Integer>(first, second));
+          map.put(key, Couple.newOne(first, second));
         }
         return map;
       }
@@ -628,7 +628,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
     
     try {
-      final PersistentHashMap<Integer, TIntObjectHashMap<Pair<Integer, Integer>>> storage = myOutputRootsStorage;
+      final PersistentHashMap<Integer, TIntObjectHashMap<Couple<Integer>>> storage = myOutputRootsStorage;
       if (storage != null) {
         storage.close();
       }
@@ -1162,16 +1162,16 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   }
 
-  private void markOldOutputRoots(final ProjectRef projRef, final TIntObjectHashMap<Pair<Integer, Integer>> currentLayout) {
+  private void markOldOutputRoots(final ProjectRef projRef, final TIntObjectHashMap<Couple<Integer>> currentLayout) {
     final int projectId = getProjectId(projRef.get());
 
     final TIntHashSet rootsToMark = new TIntHashSet();
     synchronized (myProjectOutputRoots) {
-      final TIntObjectHashMap<Pair<Integer, Integer>> oldLayout = myProjectOutputRoots.get(projectId);
-      for (final TIntObjectIterator<Pair<Integer, Integer>> it = oldLayout.iterator(); it.hasNext();) {
+      final TIntObjectHashMap<Couple<Integer>> oldLayout = myProjectOutputRoots.get(projectId);
+      for (final TIntObjectIterator<Couple<Integer>> it = oldLayout.iterator(); it.hasNext();) {
         it.advance();
-        final Pair<Integer, Integer> currentRoots = currentLayout.get(it.key());
-        final Pair<Integer, Integer> oldRoots = it.value();
+        final Couple<Integer> currentRoots = currentLayout.get(it.key());
+        final Couple<Integer> oldRoots = it.value();
         if (shouldMark(oldRoots.first, currentRoots != null? currentRoots.first : -1)) {
           rootsToMark.add(oldRoots.first);
         }

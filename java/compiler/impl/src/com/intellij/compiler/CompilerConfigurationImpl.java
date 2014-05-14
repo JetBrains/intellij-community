@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -724,7 +724,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     final StringBuilder processorPath = new StringBuilder();
     final Set<String> optionPairs = new HashSet<String>();
     final Set<String> processors = new HashSet<String>();
-    final List<Pair<String, String>> modulesToProcess = new ArrayList<Pair<String, String>>();
+    final List<Couple<String>> modulesToProcess = new ArrayList<Couple<String>>();
 
     for (Object child : processing.getChildren("processorPath")) {
       final Element pathElement = (Element)child;
@@ -757,7 +757,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
         continue;
       }
       final String dir = moduleElement.getAttributeValue("generatedDirName", (String)null);
-      modulesToProcess.add(Pair.create(name, dir));
+      modulesToProcess.add(Couple.newOne(name, dir));
     }
 
     myDefaultProcessorsProfile.setEnabled(false);
@@ -778,7 +778,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     }
 
     final Map<String, Set<String>> dirNameToModulesMap = new HashMap<String, Set<String>>();
-    for (Pair<String, String> moduleDirPair : modulesToProcess) {
+    for (Couple<String> moduleDirPair : modulesToProcess) {
       final String dir = moduleDirPair.getSecond();
       Set<String> set = dirNameToModulesMap.get(dir);
       if (set == null) {
