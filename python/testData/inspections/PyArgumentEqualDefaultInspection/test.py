@@ -73,3 +73,9 @@ def a(foo=1*1024):
 
 a( 1024*1024)
 
+
+def f1(value=-1):
+    print(value)
+
+def f2():
+    f1(value =-2)
