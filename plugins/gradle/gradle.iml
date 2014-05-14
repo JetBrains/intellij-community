@@ -29,29 +29,29 @@
     <orderEntry type="module-library" exported="">
       <library name="Gradle">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/gradle-tooling-api-1.12-rc-1.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-core-1.12-rc-1.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-messaging-1.12-rc-1.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-wrapper-1.12-rc-1.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-base-services-1.12-rc-1.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-native-1.12-rc-1.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-tooling-api-1.12.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-core-1.12.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-messaging-1.12.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-wrapper-1.12.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-base-services-1.12.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-native-1.12.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-rc-1-src.zip!/gradle-1.12-rc-1/subprojects/core/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-rc-1-src.zip!/gradle-1.12-rc-1/subprojects/core/src/test/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-rc-1-src.zip!/gradle-1.12-rc-1/subprojects/native/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-rc-1-src.zip!/gradle-1.12-rc-1/subprojects/wrapper/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-rc-1-src.zip!/gradle-1.12-rc-1/subprojects/wrapper/src/test/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-rc-1-src.zip!/gradle-1.12-rc-1/subprojects/messaging/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-rc-1-src.zip!/gradle-1.12-rc-1/subprojects/messaging/src/test/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-rc-1-src.zip!/gradle-1.12-rc-1/subprojects/tooling-api/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-rc-1-src.zip!/gradle-1.12-rc-1/subprojects/tooling-api/src/integTest/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-rc-1-src.zip!/gradle-1.12-rc-1/subprojects/tooling-api/src/testFixtures/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-rc-1-src.zip!/gradle-1.12-rc-1/subprojects/base-services/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-rc-1-src.zip!/gradle-1.12-rc-1/subprojects/base-services/src/test/groovy" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-rc-1-src.zip!/gradle-1.12-rc-1/subprojects/ide/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-rc-1-src.zip!/gradle-1.12-rc-1/subprojects/ide/src/test/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-src.zip!/gradle-1.12/subprojects/core/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-src.zip!/gradle-1.12/subprojects/core/src/test/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-src.zip!/gradle-1.12/subprojects/native/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-src.zip!/gradle-1.12/subprojects/wrapper/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-src.zip!/gradle-1.12/subprojects/wrapper/src/test/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-src.zip!/gradle-1.12/subprojects/messaging/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-src.zip!/gradle-1.12/subprojects/messaging/src/test/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-src.zip!/gradle-1.12/subprojects/tooling-api/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-src.zip!/gradle-1.12/subprojects/tooling-api/src/integTest/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-src.zip!/gradle-1.12/subprojects/tooling-api/src/testFixtures/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-src.zip!/gradle-1.12/subprojects/base-services/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-src.zip!/gradle-1.12/subprojects/base-services/src/test/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-src.zip!/gradle-1.12/subprojects/ide/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.12-src.zip!/gradle-1.12/subprojects/ide/src/test/groovy" />
         </SOURCES>
       </library>
     </orderEntry>
