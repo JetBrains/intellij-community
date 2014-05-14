@@ -47,12 +47,12 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
   private CommittedChangesBrowserUseCase myUseCase;
 
   public RepositoryChangesBrowser(final Project project, final List<CommittedChangeList> changeLists) {
-    super(project, changeLists, Collections.<Change>emptyList(), null, false, false, null, MyUseCase.COMMITTED_CHANGES, null);
+    this(project, changeLists, Collections.<Change>emptyList(), null);
   }
 
   public RepositoryChangesBrowser(final Project project, final List<? extends ChangeList> changeLists, final List<Change> changes,
                                   final ChangeList initialListSelection) {
-    super(project, changeLists, changes, initialListSelection, false, false, null, MyUseCase.COMMITTED_CHANGES, null);
+    this(project, changeLists, changes, initialListSelection, null);
   }
 
   public RepositoryChangesBrowser(final Project project, final List<? extends ChangeList> changeLists, final List<Change> changes,
