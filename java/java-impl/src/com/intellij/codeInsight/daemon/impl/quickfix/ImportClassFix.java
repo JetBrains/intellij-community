@@ -91,7 +91,7 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
       if (importStaticStatement.resolve() != null) continue;
       if (importStaticStatement.isOnDemand()) return true;
       String qualifiedName = importStaticStatement.getReferenceName();
-      // rough heuristic, since there is no API to get class name refrence from static import
+      // rough heuristic, since there is no API to get class name reference from static import
       if (qualifiedName != null && StringUtil.split(qualifiedName, ".").contains(name)) return true;
     }
     return false;
