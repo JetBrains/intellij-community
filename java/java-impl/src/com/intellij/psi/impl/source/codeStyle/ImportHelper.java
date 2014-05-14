@@ -437,8 +437,12 @@ public class ImportHelper{
         for (PsiJavaCodeReferenceElement ref : importRefs) {
           LOG.assertTrue(ref.getParent() instanceof PsiImportStatement);
           if (!ref.isValid()) continue; // todo[dsl] Q?
-          classesToReimport.add((PsiClass)ref.resolve());
           PsiImportStatement importStatement = (PsiImportStatement) ref.getParent();
+          if (importStatement.isForeignFileImport()) {
+            // we should not optimize imports from include files
+            continue;
+          }
+          classesToReimport.add((PsiClass)ref.resolve());
           importStatement.delete();
         }
       }
