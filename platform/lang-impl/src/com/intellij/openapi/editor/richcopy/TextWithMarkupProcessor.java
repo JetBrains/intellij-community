@@ -177,7 +177,7 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
                                  int indentSymbolsToStrip,
                                  int firstLineStartOffset)
   {
-    if (!Registry.is("editor.richcopy.debug")) {
+    if (!LOG.isDebugEnabled()) {
       return;
     }
 
@@ -195,17 +195,16 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
     if (buffer.length() > 0) {
       buffer.setLength(buffer.length() - 1);
     }
-    LOG.info(String.format(
+    LOG.debug(String.format(
       "Preparing syntax-aware text. Given: %s selection, indent symbols to strip=%d, first line start offset=%d, selected text:%n%s",
       startOffsets.length > 1 ? "block" : "regular", indentSymbolsToStrip, firstLineStartOffset, buffer
     ));
   }
 
   private static void logSyntaxInfo(@NotNull SyntaxInfo info) {
-    if (!Registry.is("editor.richcopy.debug")) {
-      return;
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Constructed syntax info: " + info);
     }
-    LOG.info("Constructed syntax info: " + info);
   }
 
   private static Pair<Integer/* start offset to use */, Integer /* indent symbols to strip */> calcIndentSymbolsToStrip(
@@ -522,7 +521,6 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
         }
         myCurrentEnd = Math.min(myCurrentEnd, nearestBound);
       }
-      myCurrentEnd = getRangeEnd();
       for (overlappingRangesCount = 1; overlappingRangesCount < myIterators.length; overlappingRangesCount++) {
         IteratorWrapper wrapper = myIterators[overlappingRangesCount];
         if (wrapper == null || wrapper.iterator.getRangeStart() > myCurrentStart) {
