@@ -57,7 +57,7 @@ public abstract class XDebuggerEditorsProvider {
   }
 
   @NotNull
-  public XExpression createExpression(@NotNull Project project, @NotNull Document document, @Nullable Language language) {
-    return XDebuggerUtil.getInstance().createExpression(document.getText(), language, null);
+  public XExpression createExpression(@NotNull Project project, @NotNull Document document, @Nullable Language language, @NotNull EvaluationMode mode) {
+    return XDebuggerUtil.getInstance().createExpression(document.getText(), language, null, mode);
   }
 }

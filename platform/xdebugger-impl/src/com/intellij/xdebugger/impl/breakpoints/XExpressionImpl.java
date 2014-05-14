@@ -17,6 +17,7 @@ package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.lang.Language;
 import com.intellij.xdebugger.XExpression;
+import com.intellij.xdebugger.evaluation.EvaluationMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,16 +25,23 @@ import org.jetbrains.annotations.Nullable;
 * @author egor
 */
 public class XExpressionImpl implements XExpression {
-  public static final XExpression EMPTY = fromText("");
+  public static final XExpression EMPTY_EXPRESSION = fromText("", EvaluationMode.EXPRESSION);
+  public static final XExpression EMPTY_CODE_FRAGMENT = fromText("", EvaluationMode.CODE_FRAGMENT);
 
-  @NotNull public final String myExpression;
-  public final Language myLanguage;
-  public final String myCustomInfo;
+  @NotNull private final String myExpression;
+  private final Language myLanguage;
+  private final String myCustomInfo;
+  private final EvaluationMode myMode;
 
   public XExpressionImpl(@NotNull String expression, Language language, String customInfo) {
+    this(expression, language, customInfo, EvaluationMode.EXPRESSION);
+  }
+
+  public XExpressionImpl(@NotNull String expression, Language language, String customInfo, EvaluationMode mode) {
     myExpression = expression;
     myLanguage = language;
     myCustomInfo = customInfo;
+    myMode = mode;
   }
 
   @NotNull
@@ -52,9 +60,23 @@ public class XExpressionImpl implements XExpression {
     return myCustomInfo;
   }
 
+  @Override
+  public EvaluationMode getMode() {
+    return myMode;
+  }
+
   @Nullable
   public static XExpressionImpl fromText(@Nullable String text) {
-    return text != null ? new XExpressionImpl(text, null, null) : null;
+    return text != null ? new XExpressionImpl(text, null, null, EvaluationMode.EXPRESSION) : null;
+  }
+
+  @Nullable
+  public static XExpressionImpl fromText(@Nullable String text, EvaluationMode mode) {
+    return text != null ? new XExpressionImpl(text, null, null, mode) : null;
+  }
+
+  public static XExpressionImpl changeMode(XExpression expression, EvaluationMode mode) {
+    return new XExpressionImpl(expression.getExpression(), expression.getLanguage(), expression.getCustomInfo(), mode);
   }
 
   @Override
@@ -72,6 +94,7 @@ public class XExpressionImpl implements XExpression {
     if (myCustomInfo != null ? !myCustomInfo.equals(that.myCustomInfo) : that.myCustomInfo != null) return false;
     if (!myExpression.equals(that.myExpression)) return false;
     if (myLanguage != null ? !myLanguage.equals(that.myLanguage) : that.myLanguage != null) return false;
+    if (myMode != that.myMode) return false;
 
     return true;
   }
@@ -81,6 +104,7 @@ public class XExpressionImpl implements XExpression {
     int result = myExpression.hashCode();
     result = 31 * result + (myLanguage != null ? myLanguage.hashCode() : 0);
     result = 31 * result + (myCustomInfo != null ? myCustomInfo.hashCode() : 0);
+    result = 31 * result + (myMode != null ? myMode.hashCode() : 0);
     return result;
   }
 }

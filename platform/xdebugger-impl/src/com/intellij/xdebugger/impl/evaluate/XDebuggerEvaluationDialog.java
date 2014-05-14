@@ -174,6 +174,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
   private EvaluationInputComponent createInputComponent(EvaluationMode mode, XExpression text) {
     final Project project = mySession.getProject();
+    text = XExpressionImpl.changeMode(text, mode);
     if (mode == EvaluationMode.EXPRESSION) {
       return new ExpressionInputComponent(project, myEditorsProvider, mySourcePosition, text);
     }
@@ -232,7 +233,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
         switchToMode(EvaluationMode.CODE_FRAGMENT, text);
       }
       else {
-        if (text.getExpression().indexOf('\n') != -1) text = XExpressionImpl.EMPTY;
+        if (text.getExpression().indexOf('\n') != -1) text = XExpressionImpl.EMPTY_EXPRESSION;
         switchToMode(EvaluationMode.EXPRESSION, text);
       }
     }

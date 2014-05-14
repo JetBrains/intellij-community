@@ -36,6 +36,7 @@ import com.intellij.util.Processor;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
+import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
@@ -362,7 +363,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   @NotNull
   @Override
-  public XExpression createExpression(@NotNull String text, Language language, String custom) {
-    return new XExpressionImpl(text, language, custom);
+  public XExpression createExpression(@NotNull String text, Language language, String custom, EvaluationMode mode) {
+    return new XExpressionImpl(text, language, custom, mode);
   }
 }

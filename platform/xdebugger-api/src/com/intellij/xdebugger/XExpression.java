@@ -16,6 +16,7 @@
 package com.intellij.xdebugger;
 
 import com.intellij.lang.Language;
+import com.intellij.xdebugger.evaluation.EvaluationMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,4 +27,5 @@ public interface XExpression {
   @NotNull String getExpression();
   @Nullable Language getLanguage();
   @Nullable String getCustomInfo();
+  EvaluationMode getMode();
 }

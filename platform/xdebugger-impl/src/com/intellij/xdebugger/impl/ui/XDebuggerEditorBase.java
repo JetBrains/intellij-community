@@ -134,7 +134,7 @@ public abstract class XDebuggerEditorBase {
 
   public void setExpression(@Nullable XExpression text) {
     if (text == null) {
-      text = XExpressionImpl.EMPTY;
+      text = getMode() == EvaluationMode.EXPRESSION ? XExpressionImpl.EMPTY_EXPRESSION : XExpressionImpl.EMPTY_CODE_FRAGMENT;
     }
     saveTextInHistory(text);
     Language language = text.getLanguage();
@@ -146,7 +146,7 @@ public abstract class XDebuggerEditorBase {
         language = getFileTypeLanguage(getEditorsProvider().getFileType());
       }
     }
-    text = new XExpressionImpl(text.getExpression(), language, text.getCustomInfo());
+    text = new XExpressionImpl(text.getExpression(), language, text.getCustomInfo(), getMode());
 
     Collection<Language> languages = getEditorsProvider().getSupportedLanguages(myProject, mySourcePosition);
     boolean many = languages.size() > 1;

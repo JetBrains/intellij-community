@@ -42,7 +42,7 @@ public class XDebuggerMultilineEditor extends XDebuggerEditorBase {
                                    @Nullable @NonNls String historyId,
                                    @Nullable XSourcePosition sourcePosition, @NotNull XExpression text) {
     super(project, debuggerEditorsProvider, EvaluationMode.CODE_FRAGMENT, historyId, sourcePosition);
-    myExpression = text;
+    myExpression = XExpressionImpl.changeMode(text, getMode());
     myEditorTextField = new EditorTextField(createDocument(myExpression), project, debuggerEditorsProvider.getFileType()) {
       @Override
       protected EditorEx createEditor() {
@@ -70,7 +70,7 @@ public class XDebuggerMultilineEditor extends XDebuggerEditorBase {
 
   @Override
   public XExpression getExpression() {
-    return XExpressionImpl.fromText(myEditorTextField.getText());
+    return XExpressionImpl.fromText(myEditorTextField.getText(), EvaluationMode.CODE_FRAGMENT);
   }
 
   @Override

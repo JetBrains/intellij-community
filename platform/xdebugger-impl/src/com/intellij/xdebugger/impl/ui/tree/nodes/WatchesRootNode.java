@@ -179,7 +179,7 @@ public class WatchesRootNode extends XDebuggerTreeNode {
   }
 
   public void editWatch(@Nullable WatchNode node) {
-    WatchNode messageNode = WatchMessageNode.createMessageNode(myTree, this, XExpressionImpl.EMPTY);
+    WatchNode messageNode = WatchMessageNode.createMessageNode(myTree, this, XExpressionImpl.EMPTY_EXPRESSION);
     int index = node != null ? myChildren.indexOf(node) : -1;
     if (index == -1) {
       myChildren.add(messageNode);
