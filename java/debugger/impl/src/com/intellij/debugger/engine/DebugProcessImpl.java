@@ -1537,7 +1537,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     public ResumeCommand(SuspendContextImpl suspendContext) {
       super(suspendContext);
-      final ThreadReferenceProxyImpl contextThread = mySession.getContextManager().getContext().getThreadProxy();
+      final ThreadReferenceProxyImpl contextThread = getDebuggerContext().getThreadProxy();
       myContextThread = contextThread != null ? contextThread : (suspendContext != null? suspendContext.getThread() : null);
     }
 
@@ -1973,6 +1973,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     else {
       myBreakpointsMuted.set(muted);
     }
+  }
+
+  public DebuggerContextImpl getDebuggerContext() {
+    return mySession.getContextManager().getContext();
   }
 
   @Nullable

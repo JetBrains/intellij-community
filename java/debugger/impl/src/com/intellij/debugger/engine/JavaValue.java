@@ -15,7 +15,6 @@
  */
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.actions.JavaValueModifier;
 import com.intellij.debugger.actions.JumpToObjectAction;
@@ -87,6 +86,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
 
   @Override
   public void computePresentation(@NotNull final XValueNode node, @NotNull XValuePlace place) {
+    if (myEvaluationContext.getSuspendContext().isResumed()) return;
     myEvaluationContext.getDebugProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(getDebuggerContext()) {
       @Override
       public void threadAction() {
@@ -156,6 +156,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
 
   @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
+    if (myEvaluationContext.getSuspendContext().isResumed()) return;
     myEvaluationContext.getDebugProcess().getManagerThread().schedule(new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
       @Override
       public void contextAction() throws Exception {
@@ -242,7 +243,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
   }
 
   private DebuggerContextImpl getDebuggerContext() {
-    return DebuggerManagerEx.getInstanceEx(getProject()).getContext();
+    return myEvaluationContext.getDebugProcess().getDebuggerContext();
   }
 
   public Project getProject() {
@@ -256,6 +257,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
 
   @Override
   public void computeTypeSourcePosition(@NotNull final XNavigatable navigatable) {
+    if (myEvaluationContext.getSuspendContext().isResumed()) return;
     DebugProcessImpl debugProcess = myEvaluationContext.getDebugProcess();
     debugProcess.getManagerThread().schedule(new JumpToObjectAction.NavigateCommand(getDebuggerContext(), myValueDescriptor, debugProcess, null) {
       @Override

@@ -592,9 +592,12 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
     @Override
     public void setChildren(final List<DebuggerTreeNode> children) {
-      throw new IllegalStateException("Not supported any more");
-      //myChildren.addAll(children);
-      //updateUI(false);
+      for (DebuggerTreeNode child : children) {
+        if (child instanceof DebuggerTreeNodeImpl) {
+          myChildren.add(((DebuggerTreeNodeImpl)child));
+        }
+      }
+      updateUI(false);
     }
   }
 

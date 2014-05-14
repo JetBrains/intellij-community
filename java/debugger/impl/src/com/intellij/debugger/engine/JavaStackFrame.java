@@ -16,7 +16,6 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -137,8 +136,7 @@ public class JavaStackFrame extends XStackFrame {
       xFrame.computeChildren(node);
       return;
     }
-    DebuggerContextImpl currentContext = DebuggerManagerEx.getInstanceEx(myDebugProcess.getProject()).getContext();
-    myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(currentContext) {
+    myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(myDebugProcess.getDebuggerContext()) {
       @Override
       public void threadAction() {
         XValueChildrenList children = new XValueChildrenList();
@@ -150,7 +148,7 @@ public class JavaStackFrame extends XStackFrame {
 
   DebuggerContextImpl getFrameDebuggerContext() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(myDebugProcess.getProject()).getContext();
+    DebuggerContextImpl context = myDebugProcess.getDebuggerContext();
     if (context.getFrameProxy() != getStackFrameProxy()) {
       context = DebuggerContextImpl.createDebuggerContext(
         myDebugProcess.mySession,

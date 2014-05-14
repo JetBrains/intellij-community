@@ -15,11 +15,9 @@
  */
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
-import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.EditorTextProvider;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
@@ -61,8 +59,7 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator {
   public void evaluate(@NotNull final XExpression expression,
                        @NotNull final XEvaluationCallback callback,
                        @Nullable XSourcePosition expressionPosition) {
-    DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(myDebugProcess.getProject()).getContext();
-    myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(context) {
+    myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(myDebugProcess.getDebuggerContext()) {
       @Override
       public void threadAction() {
         WatchItemDescriptor descriptor = new WatchItemDescriptor(myDebugProcess.getProject(), TextWithImportsImpl.fromXExpression(
