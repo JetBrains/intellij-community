@@ -70,8 +70,9 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     myBranchesPanel.setVisible(settings.isShowBranchesPanel());
     myDetailsPanel = new DetailsPanel(logDataHolder, myGraphTable, vcsLogUI.getColorManager(), initialDataPack);
 
-    final ChangesBrowser changesBrowser = new RepositoryChangesBrowser(project, null, Collections.<Change>emptyList(), null);
+    final RepositoryChangesBrowser changesBrowser = new RepositoryChangesBrowser(project, null, Collections.<Change>emptyList(), null);
     changesBrowser.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), getGraphTable());
+    changesBrowser.getEditSourceAction().registerCustomShortcutSet(CommonShortcuts.getEditSource(), getGraphTable());
     setDefaultEmptyText(changesBrowser);
     myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), project);
     myChangesLoadingPane.add(changesBrowser);
@@ -230,10 +231,10 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     else if (VcsLogDataKeys.VCS_LOG_DATA_PROVIDER == key) {
       sink.put(key, myLogDataHolder);
     }
-    else if (VcsDataKeys.CHANGES.equals(key)) {
+    else if (VcsDataKeys.CHANGES == key || VcsDataKeys.SELECTED_CHANGES == key) {
       List<Change> selectedChanges = getSelectedChanges();
       if (selectedChanges != null) {
-        sink.put(VcsDataKeys.CHANGES, ArrayUtil.toObjectArray(selectedChanges, Change.class));
+        sink.put(key, ArrayUtil.toObjectArray(selectedChanges, Change.class));
       }
     }
   }
