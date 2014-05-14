@@ -44,6 +44,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
@@ -546,6 +547,17 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
           }
           child = child.getTreeNext();
         }
+      }
+    }
+
+    @Override
+    public void visitPyGeneratorExpression(PyGeneratorExpression node) {
+      final PsiElement firstChild = node.getFirstChild();
+      if (firstChild != null && firstChild.getNode().getElementType() != PyTokenTypes.LPAR) {
+        myResult.append("(").append(node.getText()).append(")");
+      }
+      else {
+        super.visitPyGeneratorExpression(node);
       }
     }
 
