@@ -17,12 +17,13 @@ package org.jetbrains.plugins.groovy.codeStyle;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyCodeStyleSettingsFacade;
 
 public class GroovyCodeStyleSettingsFacadeImpl extends GroovyCodeStyleSettingsFacade {
   private final Project myProject;
 
-  public GroovyCodeStyleSettingsFacadeImpl(Project project, CodeStyleSettingsManager codeStyleSettingsManager) {
+  public GroovyCodeStyleSettingsFacadeImpl(Project project, ProjectCodeStyleSettingsManager codeStyleSettingsManager) {
     myProject = project;
   }
 
