@@ -1232,6 +1232,10 @@
                      key="collections.field.access.replaceable.by.method.call.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.migration.CollectionsFieldAccessReplaceableByMethodCallInspection"/>
+    <localInspection language="JAVA" shortName="BigDecimalLegacyMethod" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="bigdecimal.legacy.method.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.migration.BigDecimalLegacyMethodInspection"/>
     <localInspection language="JAVA" shortName="EnumerationCanBeIteration" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="enumeration.can.be.iteration.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="false" level="WARNING"
