@@ -326,7 +326,7 @@ public class BlockSupportImpl extends BlockSupport {
   }
 
   public static void sendAfterChildrenChangedEvent(@NotNull PsiManagerImpl manager,
-                                                   @NotNull PsiFileImpl scope,
+                                                   @NotNull PsiFile scope,
                                                    int oldLength,
                                                    boolean isGenericChange) {
     if(!scope.isPhysical()) {
