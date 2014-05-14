@@ -28,6 +28,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -93,6 +94,10 @@ public class PluginDownloader {
   }
 
   public boolean prepareToInstall(ProgressIndicator pi) throws IOException {
+    return prepareToInstall(pi, null);
+  }
+
+  public boolean prepareToInstall(@Nullable ProgressIndicator pi, @Nullable BuildNumber forBuildNumber) throws IOException {
     IdeaPluginDescriptor descriptor = null;
     if (!Boolean.getBoolean(StartupActionScriptManager.STARTUP_WIZARD_MODE) && PluginManager.isPluginInstalled(PluginId.getId(myPluginId))) {
       //store old plugins file
@@ -140,7 +145,7 @@ public class PluginDownloader {
         return false; //was not updated
       }
 
-      if (PluginManagerCore.isIncompatible(actualDescriptor)) {
+      if (PluginManagerCore.isIncompatible(actualDescriptor, forBuildNumber)) {
         LOG.info("Plugin " + myPluginId + " is incompatible with current installation (since: " + actualDescriptor.getSinceBuild() + ", until: " + actualDescriptor.getUntilBuild()+ ")");
         return false; //shouldn't happen
       }
@@ -218,14 +223,16 @@ public class PluginDownloader {
     }
   }
 
-  private File downloadPlugin(final ProgressIndicator pi) throws IOException {
+  private File downloadPlugin(@Nullable final ProgressIndicator pi) throws IOException {
     final File pluginsTemp = new File(PathManager.getPluginTempPath());
     if (!pluginsTemp.exists() && !pluginsTemp.mkdirs()) {
       throw new IOException(IdeBundle.message("error.cannot.create.temp.dir", pluginsTemp));
     }
     final File file = FileUtil.createTempFile(pluginsTemp, "plugin_", "_download", true, false);
 
-    pi.setText(IdeBundle.message("progress.connecting"));
+    if (pi != null) {
+      pi.setText(IdeBundle.message("progress.connecting"));
+    }
 
     URLConnection connection = null;
     try {
@@ -238,11 +245,13 @@ public class PluginDownloader {
         throw new IOException("Failed to open connection");
       }
 
-      if (ApplicationManager.getApplication() != null) {
+      if (ApplicationManager.getApplication() != null && pi != null) {
         pi.setText(IdeBundle.message("progress.downloading.plugin", getPluginName()));
       }
       final int contentLength = connection.getContentLength();
-      pi.setIndeterminate(contentLength == -1);
+      if (pi != null) {
+        pi.setIndeterminate(contentLength == -1);
+      }
 
       try {
         final OutputStream fos = new BufferedOutputStream(new FileOutputStream(file, false));
