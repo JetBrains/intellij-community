@@ -33,6 +33,9 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNReporter;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc17.SVNReporter17;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
+import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.io.ISVNReporter;
+import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
@@ -82,12 +85,46 @@ public class SvnKitDiffClient extends BaseSvnClient implements DiffClient {
     }
 
     public void run() throws SVNException {
-      assertDirectory(myTarget1);
       assertUrl(myTarget2);
 
-      WorkingCopyFormat format = myVcs.getWorkingCopyFormat(myTarget1.getFile());
+      if (myTarget1.isFile()) {
+        assertDirectory(myTarget1);
 
-      myChanges.addAll(WorkingCopyFormat.ONE_DOT_SIX.equals(format) ? run16Diff() : run17Diff());
+        WorkingCopyFormat format = myVcs.getWorkingCopyFormat(myTarget1.getFile());
+        myChanges.addAll(WorkingCopyFormat.ONE_DOT_SIX.equals(format) ? run16Diff() : run17Diff());
+      }
+      else {
+        myChanges.addAll(runUrlDiff());
+      }
+    }
+
+    private Collection<Change> runUrlDiff() throws SVNException {
+      SVNRepository sourceRepository = myVcs.getSvnKitManager().createRepository(myTarget1.getURL());
+      sourceRepository.setCanceller(new SvnProgressCanceller());
+      SvnDiffEditor diffEditor;
+      final long rev;
+      SVNRepository targetRepository = null;
+      try {
+        rev = sourceRepository.getLatestRevision();
+        // generate Map of path->Change
+        targetRepository = myVcs.getSvnKitManager().createRepository(myTarget2.getURL());
+        diffEditor = new SvnDiffEditor(sourceRepository, targetRepository, -1, false);
+        final ISVNEditor cancellableEditor = SVNCancellableEditor.newInstance(diffEditor, new SvnProgressCanceller(), null);
+        sourceRepository.diff(myTarget2.getURL(), rev, rev, null, true, true, false, new ISVNReporterBaton() {
+          public void report(ISVNReporter reporter) throws SVNException {
+            reporter.setPath("", null, rev, false);
+            reporter.finishReport();
+          }
+        }, cancellableEditor);
+
+        return diffEditor.getChangesMap().values();
+      }
+      finally {
+        sourceRepository.closeSession();
+        if (targetRepository != null) {
+          targetRepository.closeSession();
+        }
+      }
     }
 
     private Collection<Change> run17Diff() throws SVNException {

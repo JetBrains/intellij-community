@@ -37,9 +37,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.PopupHandler;
@@ -49,22 +47,20 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.SvnApplicationSettings;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.BrowseRepositoryAction;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.browser.*;
 import org.jetbrains.idea.svn.dialogs.browserCache.Expander;
 import org.jetbrains.idea.svn.dialogs.browserCache.KeepingExpandedExpander;
 import org.jetbrains.idea.svn.dialogs.browserCache.SyntheticWorker;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
-import org.jetbrains.idea.svn.status.SvnDiffEditor;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
-import org.tmatesoft.svn.core.io.ISVNEditor;
-import org.tmatesoft.svn.core.io.ISVNReporter;
-import org.tmatesoft.svn.core.io.ISVNReporterBaton;
-import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -77,7 +73,7 @@ import java.awt.event.KeyEvent;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
+import java.util.List;
 
 public class RepositoryBrowserDialog extends DialogWrapper {
 
@@ -594,15 +590,17 @@ public class RepositoryBrowserDialog extends DialogWrapper {
               try {
                 doGraphicalDiff(sURL, tURL);
               }
-              catch(SVNCancelException ex) {
-                // ignore
-              }
-              catch (final SVNException e1) {
-                WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-                  public void run() {
-                    Messages.showErrorDialog(myProject, e1.getErrorMessage().getFullMessage(), "Error");
-                  }
-                }, null, myProject);
+              catch (final VcsException ex) {
+                //noinspection InstanceofCatchParameter
+                boolean isCancelled = ex instanceof SvnBindException && ((SvnBindException)ex).contains(SVNErrorCode.CANCELLED);
+
+                if (!isCancelled) {
+                  WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
+                    public void run() {
+                      Messages.showErrorDialog(myProject, ex.getMessage(), "Error");
+                    }
+                  }, null, myProject);
+                }
               }
             }
           };
@@ -1133,44 +1131,18 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  private void doGraphicalDiff(SVNURL sourceURL, SVNURL targetURL) throws SVNException {
-    SVNRepository sourceRepository = myVCS.getSvnKitManager().createRepository(sourceURL.toString());
-    sourceRepository.setCanceller(new SvnProgressCanceller());
-    SvnDiffEditor diffEditor;
-    final long rev;
-    SVNRepository targetRepository = null;
-    try {
-      rev = sourceRepository.getLatestRevision();
-      // generate Map of path->Change
-      targetRepository = myVCS.getSvnKitManager().createRepository(targetURL.toString());
-      diffEditor = new SvnDiffEditor(sourceRepository, targetRepository, -1, false);
-      final ISVNEditor cancellableEditor = SVNCancellableEditor.newInstance(diffEditor, new SvnProgressCanceller(), null);
-      sourceRepository.diff(targetURL, rev, rev, null, true, true, false, new ISVNReporterBaton() {
-        public void report(ISVNReporter reporter) throws SVNException {
-          reporter.setPath("", null, rev, false);
-          reporter.finishReport();
-        }
-      }, cancellableEditor);
-    }
-    finally {
-      sourceRepository.closeSession();
-      if (targetRepository != null) {
-        targetRepository.closeSession();
-      }
-    }
-    final String sourceTitle = SVNPathUtil.tail(sourceURL.toString());
-    final String targetTitle = SVNPathUtil.tail(targetURL.toString());
-    showDiffEditorResults(diffEditor.getChangesMap(), sourceTitle, targetTitle, sourceURL, targetURL, rev);
+  private void doGraphicalDiff(SVNURL sourceURL, SVNURL targetURL) throws VcsException {
+    // TODO: Implement "url + url" diff for CmdDiffClient and use getFactoryFromSettings() here
+    List<Change> changes = myVCS.getSvnKitFactory().createDiffClient().compare(SvnTarget.fromURL(sourceURL), SvnTarget.fromURL(targetURL));
+
+    showDiffEditorResults(changes, SVNPathUtil.tail(sourceURL.toString()), SVNPathUtil.tail(targetURL.toString()));
   }
 
-  private void showDiffEditorResults(final Map<String, Change> changes, String sourceTitle, String targetTitle,
-                                     final SVNURL sourceUrl, final SVNURL targetUrl, final long revision) {
-    final Collection<Change> changesList = changes.values();
-
+  private void showDiffEditorResults(final Collection<Change> changes, String sourceTitle, String targetTitle) {
     final String title = SvnBundle.message("repository.browser.compare.title", sourceTitle, targetTitle);
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        final ChangeListViewerDialog dlg = new ChangeListViewerDialog(myRepositoryBrowser, myProject, changesList, true);
+        final ChangeListViewerDialog dlg = new ChangeListViewerDialog(myRepositoryBrowser, myProject, changes, true);
         dlg.setTitle(title);
         dlg.show();
       }
