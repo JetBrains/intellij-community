@@ -785,6 +785,31 @@ public class SvnUtil {
            SVNErrorCode.ILLEGAL_TARGET.equals(code);
   }
 
+  // TODO: Create custom Target class and implement append there
+  @NotNull
+  public static SvnTarget append(@NotNull SvnTarget target, @NotNull String path) throws SVNException {
+    SvnTarget result;
+
+    if (target.isFile()) {
+      result = SvnTarget.fromFile(FileUtil.isAbsolute(path) ? new File(path) : new File(target.getFile(), path));
+    } else {
+      result = SvnTarget.fromURL(target.getURL().appendPath(path, false));
+    }
+
+    return result;
+  }
+
+  @NotNull
+  public static File resolvePath(@NotNull File base, @NotNull String path) {
+    File result = new File(path);
+
+    if (!result.isAbsolute()) {
+      result = ".".equals(path) ? base : new File(base, path);
+    }
+
+    return result;
+  }
+
   private static class WorkingCopyFormatOperation implements FileUtilRt.RepeatableIOOperation<WorkingCopyFormat, RuntimeException> {
     @NotNull private final File myDbFile;
 

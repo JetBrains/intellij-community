@@ -27,6 +27,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnStatusConvertor;
+import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.commandLine.*;
 import org.jetbrains.idea.svn.history.SvnRepositoryContentRevision;
@@ -106,7 +107,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
     // TODO: to branch files by content - possibly add separate processing of all switched files
     // TODO: 3) Properties change is currently not added as part of result change like in SvnChangeProviderContext.patchWithPropertyChange
 
-    File oldTarget = CommandUtil.resolvePath(target1.getFile(), diffPath.path);
+    File oldTarget = SvnUtil.resolvePath(target1.getFile(), diffPath.path);
     String relativePath = FileUtil.getRelativePath(target1.getFile(), oldTarget);
 
     if (relativePath == null) {
