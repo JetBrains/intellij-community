@@ -20,6 +20,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -124,7 +125,7 @@ public class DirectoryWithBranchComparer extends ElementWithBranchComparer {
       repository = myVcs.getSvnKitManager().createRepository(info1.getURL());
       long rev = repository.getLatestRevision();
       repository2 = myVcs.getSvnKitManager().createRepository(myElementUrl.toString());
-      SvnDiffEditor diffEditor = new SvnDiffEditor(myVirtualFile, repository2, rev, true);
+      SvnDiffEditor diffEditor = new SvnDiffEditor(VfsUtilCore.virtualToIoFile(myVirtualFile), repository2, rev, true);
       repository.diff(myElementUrl, rev, rev, null, true, SVNDepth.INFINITY, false, reporter17,
                       SVNCancellableEditor.newInstance(diffEditor, new SvnProgressCanceller(), null));
       changes.addAll(diffEditor.getChangesMap().values());
@@ -168,8 +169,8 @@ public class DirectoryWithBranchComparer extends ElementWithBranchComparer {
       repository = myVcs.getSvnKitManager().createRepository(anchorURL.toString());
       long rev = repository.getLatestRevision();
       repository2 = myVcs.getSvnKitManager().createRepository((target == null) ? myElementUrl.toString() : myElementUrl.removePathTail().toString());
-      SvnDiffEditor diffEditor = new SvnDiffEditor((target == null) ? myVirtualFile : myVirtualFile.getParent(),
-                                                   repository2, rev, true);
+      SvnDiffEditor diffEditor =
+        new SvnDiffEditor(VfsUtilCore.virtualToIoFile(target == null ? myVirtualFile : myVirtualFile.getParent()), repository2, rev, true);
       repository.diff(myElementUrl, rev, rev, target, true, true, false, reporter,
                       SVNCancellableEditor.newInstance(diffEditor, new SvnProgressCanceller(), null));
       changes.addAll(diffEditor.getChangesMap().values());
