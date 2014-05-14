@@ -68,7 +68,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   private final ComponentManagerConfigurator myConfigurator = new ComponentManagerConfigurator(this);
   private final ComponentManager myParentComponentManager;
-  private Boolean myHeadless;
   private ComponentsRegistry myComponentsRegistry = new ComponentsRegistry();
   private final Condition myDisposedCondition = new Condition() {
     @Override
@@ -121,7 +120,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
   }
 
-  protected synchronized Object createComponent(Class componentInterface) {
+  protected synchronized Object createComponent(@NotNull Class componentInterface) {
     final Object component = getPicoContainer().getComponentInstance(componentInterface.getName());
     LOG.assertTrue(component != null, "Can't instantiate component for: " + componentInterface);
     return component;
@@ -150,7 +149,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @SuppressWarnings({"unchecked"})
   @Nullable
-  protected <T> T getComponentFromContainer(Class<T> interfaceClass) {
+  protected <T> T getComponentFromContainer(@NotNull Class<T> interfaceClass) {
     final T initializedComponent = (T)myInitializedComponents.get(interfaceClass);
     if (initializedComponent != null) return initializedComponent;
 
@@ -212,7 +211,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @Override
-  public void initializeComponent(Object component, boolean service) {
+  public void initializeComponent(@NotNull Object component, boolean service) {
   }
 
   protected void handleInitComponentError(Throwable ex, String componentClassName, ComponentConfig config) {
@@ -221,20 +220,20 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @Override
   @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext"})
-  public synchronized void registerComponent(final ComponentConfig config, final PluginDescriptor pluginDescriptor) {
+  public synchronized void registerComponent(@NotNull final ComponentConfig config, final PluginDescriptor pluginDescriptor) {
     if (!config.prepareClasses(isHeadless())) return;
 
     config.pluginDescriptor =  pluginDescriptor;
     myComponentsRegistry.registerComponent(config);
   }
 
-  public synchronized void registerComponentImplementation(Class componentKey, Class componentImplementation) {
+  public synchronized void registerComponentImplementation(@NotNull Class componentKey, @NotNull Class componentImplementation) {
     getPicoContainer().registerComponentImplementation(componentKey.getName(), componentImplementation);
     myInitializedComponents.remove(componentKey);
   }
 
   @TestOnly
-  public synchronized <T> T registerComponentInstance(Class<T> componentKey, T componentImplementation) {
+  public synchronized <T> T registerComponentInstance(@NotNull Class<T> componentKey, @NotNull T componentImplementation) {
     getPicoContainer().unregisterComponent(componentKey.getName());
     getPicoContainer().registerComponentInstance(componentKey.getName(), componentImplementation);
     @SuppressWarnings("unchecked") T t = (T)myInitializedComponents.remove(componentKey);
@@ -246,9 +245,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myComponentsRegistry != null && myComponentsRegistry.containsInterface(interfaceClass);
   }
 
+  @NotNull
   protected synchronized Object[] getComponents() {
     Class[] componentClasses = myComponentsRegistry.getComponentInterfaces();
-    ArrayList<Object> components = new ArrayList<Object>(componentClasses.length);
+    List<Object> components = new ArrayList<Object>(componentClasses.length);
     for (Class<?> interfaceClass : componentClasses) {
       ProgressIndicatorProvider.checkCanceled();
       Object component = getComponent(interfaceClass);
@@ -275,6 +275,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return container;
   }
 
+  @NotNull
   protected MutablePicoContainer createPicoContainer() {
     MutablePicoContainer result;
 
@@ -297,7 +298,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return !isTrue(options, "internal") || ApplicationManager.getApplication().isInternal();
   }
 
-  private static boolean isTrue(Map<String, String> options, @NonNls final String option) {
+  private static boolean isTrue(Map<String, String> options, @NonNls @NotNull String option) {
     return options != null && options.containsKey(option) && Boolean.valueOf(options.get(option)).booleanValue();
   }
 
@@ -327,7 +328,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     temporarilyDisposed = disposed;
   }
 
-  protected void loadComponentsConfiguration(ComponentConfig[] components, @Nullable PluginDescriptor descriptor, boolean defaultProject) {
+  protected void loadComponentsConfiguration(@NotNull ComponentConfig[] components, @Nullable PluginDescriptor descriptor, boolean defaultProject) {
     myConfigurator.loadComponentsConfiguration(components, descriptor, defaultProject);
   }
 
@@ -344,17 +345,15 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myParentComponentManager;
   }
 
+  private static class HeadlessHolder {
+    private static final boolean myHeadless = ApplicationManager.getApplication().isHeadlessEnvironment();
+  }
   private boolean isHeadless() {
-    if (myHeadless == null) {
-      myHeadless = ApplicationManager.getApplication().isHeadlessEnvironment();
-    }
-
-    return myHeadless.booleanValue();
+    return HeadlessHolder.myHeadless;
   }
 
-
   @Override
-  public void registerComponent(final ComponentConfig config) {
+  public void registerComponent(@NotNull final ComponentConfig config) {
     registerComponent(config, null);
   }
 
@@ -475,6 +474,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       }
     }
 
+    @NotNull
     public List<Object> getRegisteredImplementations() {
       return myImplementations;
     }
