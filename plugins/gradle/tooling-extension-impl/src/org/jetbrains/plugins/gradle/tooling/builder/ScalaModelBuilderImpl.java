@@ -22,8 +22,10 @@ import org.gradle.api.tasks.scala.ScalaCompile;
 import org.gradle.api.tasks.scala.ScalaCompileOptions;
 import org.gradle.api.tasks.scala.ScalaForkOptions;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.scala.ScalaModel;
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderError;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 import org.jetbrains.plugins.gradle.tooling.internal.scala.ScalaCompileOptionsImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.scala.ScalaForkOptionsImpl;
@@ -62,6 +64,17 @@ public class ScalaModelBuilderImpl implements ModelBuilderService {
     }
 
     return scalaModel;
+  }
+
+  @NotNull
+  @Override
+  public ModelBuilderError getModelBuildError(@NotNull Project project, @NotNull Exception e) {
+    return new ModelBuilderError(
+      "Scala import errors",
+      String.format(
+        "%s\nUnable to build Scala gradle configuration for %s",
+        e.getMessage(), project)
+    );
   }
 
   @Nullable

@@ -24,9 +24,11 @@ import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.IdeaModel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.ExtIdeaContentRoot;
 import org.jetbrains.plugins.gradle.model.ModuleExtendedModel;
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderError;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 import org.jetbrains.plugins.gradle.tooling.internal.IdeaContentRootImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.IdeaSourceDirectoryImpl;
@@ -164,6 +166,17 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
 
     moduleVersionModel.setContentRoots(Collections.<ExtIdeaContentRoot>singleton(contentRoot));
     return moduleVersionModel;
+  }
+
+  @NotNull
+  @Override
+  public ModelBuilderError getModelBuildError(@NotNull Project project, @NotNull Exception e) {
+    return new ModelBuilderError(
+      "Other",
+      String.format(
+        "%s\nUnable to resolve all content root directories for %s",
+        e.getMessage(), project)
+    );
   }
 
   private static boolean isTestDir(SourceSet sourceSet, List<File> testClassesDirs) {

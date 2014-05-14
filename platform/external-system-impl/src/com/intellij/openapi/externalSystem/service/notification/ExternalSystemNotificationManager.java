@@ -240,7 +240,7 @@ public class ExternalSystemNotificationManager {
                           @NotNull final ProjectSystemId externalSystemId,
                           @NotNull final NotificationData notificationData) {
     final VirtualFile virtualFile =
-      notificationData.getFilePath() != null ? waitForTheFile(notificationData.getFilePath()) : null;
+      notificationData.getFilePath() != null ? ExternalSystemUtil.waitForTheFile(notificationData.getFilePath()) : null;
     final String groupName = virtualFile != null ? virtualFile.getPresentableUrl() : notificationData.getTitle();
 
     myMessageCounter
@@ -361,26 +361,5 @@ public class ExternalSystemNotificationManager {
         throw new AssertionError("unsupported notification source found: " + notificationSource);
     }
     return contentDisplayName;
-  }
-
-  private static VirtualFile waitForTheFile(final String path) {
-    final VirtualFile[] file = new VirtualFile[1];
-    final Application app = ApplicationManager.getApplication();
-    Runnable action = new Runnable() {
-      public void run() {
-        app.runWriteAction(new Runnable() {
-          public void run() {
-            file[0] = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-          }
-        });
-      }
-    };
-    if (app.isDispatchThread()) {
-      action.run();
-    }
-    else {
-      app.invokeAndWait(action, ModalityState.defaultModalityState());
-    }
-    return file[0];
   }
 }
