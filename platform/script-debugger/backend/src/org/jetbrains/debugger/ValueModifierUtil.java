@@ -40,16 +40,16 @@ public final class ValueModifierUtil {
   }
 
   @NotNull
-  public static AsyncResult<Value> evaluateGet(@NotNull final Variable property,
+  public static AsyncResult<Value> evaluateGet(@NotNull final Variable variable,
                                                @NotNull EvaluateContextAdditionalParameter host,
                                                @NotNull EvaluateContext evaluateContext,
                                                @NotNull String selfName) {
     StringBuilder builder = new StringBuilder(selfName);
-    appendName(builder, property.getName(), false);
+    appendName(builder, variable.getName(), false);
     return evaluateContext.evaluate(builder.toString(), Collections.singletonMap(selfName, host)).doWhenDone(new Consumer<Value>() {
       @Override
       public void consume(Value value) {
-        property.setValue(value);
+        variable.setValue(value);
       }
     });
   }

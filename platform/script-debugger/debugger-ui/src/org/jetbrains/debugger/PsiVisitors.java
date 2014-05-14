@@ -7,6 +7,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.util.DocumentUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
@@ -48,9 +49,21 @@ public final class PsiVisitors {
   public static abstract class FilteringPsiRecursiveElementWalkingVisitor extends PsiRecursiveElementWalkingVisitor {
     @Override
     public void visitElement(PsiElement element) {
-      if (!(element instanceof PsiWhiteSpace || element instanceof PsiComment || element instanceof ForeignLeafPsiElement) && element.isPhysical()) {
+      if (!(element instanceof ForeignLeafPsiElement) && element.isPhysical()) {
         super.visitElement(element);
       }
+    }
+
+    @Override
+    public void visitWhiteSpace(PsiWhiteSpace space) {
+    }
+
+    @Override
+    public void visitComment(PsiComment comment) {
+    }
+
+    @Override
+    public void visitOuterLanguageElement(OuterLanguageElement element) {
     }
   }
 }

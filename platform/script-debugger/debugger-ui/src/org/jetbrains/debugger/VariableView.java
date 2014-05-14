@@ -143,44 +143,44 @@ public final class VariableView extends XNamedValue implements VariableContext {
   @Override
   public void computePresentation(@NotNull final XValueNode node, @NotNull XValuePlace place) {
     value = variable.getValue();
-    if (value == null) {
-      if (!(variable instanceof ObjectProperty) || ((ObjectProperty)variable).getGetter() == null) {
-        // it is "used" expression (WEB-6779 Debugger/Variables: Automatically show used variables)
-        evaluateGet(node, null);
-        return;
-      }
-
-      node.setPresentation(null, new XValuePresentation() {
-        @Override
-        public void renderValue(@NotNull XValueTextRenderer renderer) {
-          renderer.renderValue("\u2026");
-        }
-      }, false);
-      node.setFullValueEvaluator(new XFullValueEvaluator(" (invoke getter)") {
-        @Override
-        public void startEvaluation(@NotNull final XFullValueEvaluationCallback callback) {
-          evaluateGet(node, callback);
-        }
-      }.setShowValuePopup(false));
-    }
-    else {
+    if (value != null) {
       computePresentation(value, node);
+      return;
     }
-  }
 
-  private void evaluateGet(@NotNull XValueNode node, @Nullable final XFullValueEvaluator.XFullValueEvaluationCallback callback) {
-    ValueModifier valueModifier = variable.getValueModifier();
-    assert valueModifier != null;
-    ObsolescentAsyncResults.consume(valueModifier.evaluateGet(variable, getEvaluateContext()), node, new PairConsumer<Value, XValueNode>() {
-      @Override
-      public void consume(Value value, XValueNode node) {
-        if (callback != null) {
-          callback.evaluated("");
+    if (!(variable instanceof ObjectProperty) || ((ObjectProperty)variable).getGetter() == null) {
+      // it is "used" expression (WEB-6779 Debugger/Variables: Automatically show used variables)
+      ObsolescentAsyncResults.consume(getEvaluateContext().evaluate(variable.getName()), node, new PairConsumer<Value, XValueNode>() {
+        @Override
+        public void consume(Value value, XValueNode node) {
+          VariableView.this.value = value;
+          computePresentation(value, node);
         }
-        VariableView.this.value = value;
-        computePresentation(value, node);
+      });
+      return;
+    }
+
+    node.setPresentation(null, new XValuePresentation() {
+      @Override
+      public void renderValue(@NotNull XValueTextRenderer renderer) {
+        renderer.renderValue("\u2026");
       }
-    });
+    }, false);
+    node.setFullValueEvaluator(new XFullValueEvaluator(" (invoke getter)") {
+      @Override
+      public void startEvaluation(@NotNull final XFullValueEvaluationCallback callback) {
+        ValueModifier valueModifier = variable.getValueModifier();
+        assert valueModifier != null;
+        ObsolescentAsyncResults.consume(valueModifier.evaluateGet(variable, getEvaluateContext()), node, new PairConsumer<Value, XValueNode>() {
+          @Override
+          public void consume(Value value, XValueNode node) {
+            callback.evaluated("");
+            VariableView.this.value = value;
+            computePresentation(value, node);
+          }
+        });
+      }
+    }.setShowValuePopup(false));
   }
 
   @NotNull
