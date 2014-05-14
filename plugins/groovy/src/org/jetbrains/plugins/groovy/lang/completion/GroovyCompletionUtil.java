@@ -36,6 +36,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.filters.FilterPositionUtil;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
@@ -58,11 +60,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -678,5 +682,49 @@ public class GroovyCompletionUtil {
     else if (referenceElement instanceof GrReferenceExpressionImpl) {
       CompleteReferenceExpression.processVariants(matcher, consumer, (GrReferenceExpressionImpl)referenceElement, parameters);
     }
+  }
+
+  public static boolean isInPossibleClosureParameter(PsiElement position) { //Closure cl={String x, <caret>...
+    if (position == null) return false;
+
+    if (position instanceof PsiWhiteSpace || position.getNode().getElementType() == mNLS) {
+      position = FilterPositionUtil.searchNonSpaceNonCommentBack(position);
+    }
+
+    boolean hasCommas = false;
+    while (position != null) {
+      PsiElement parent = position.getParent();
+      if (parent instanceof GrVariable) {
+        PsiElement prev = FilterPositionUtil.searchNonSpaceNonCommentBack(parent);
+        hasCommas = prev != null && prev.getNode().getElementType() == mCOMMA;
+      }
+
+      if (parent instanceof GrClosableBlock) {
+        PsiElement sibling = position.getPrevSibling();
+        while (sibling != null) {
+          if (sibling instanceof GrParameterList) {
+            return hasCommas;
+          }
+
+          boolean isComma = sibling instanceof LeafPsiElement && mCOMMA == ((LeafPsiElement)sibling).getElementType();
+          hasCommas |= isComma;
+
+          if (isComma ||
+              sibling instanceof PsiWhiteSpace ||
+              sibling instanceof PsiErrorElement ||
+              sibling instanceof GrVariableDeclaration ||
+              sibling instanceof GrReferenceExpression && !((GrReferenceExpression)sibling).isQualified()
+            ) {
+            sibling = sibling.getPrevSibling();
+          }
+          else {
+            return false;
+          }
+        }
+        return false;
+      }
+      position = parent;
+    }
+    return false;
   }
 }
