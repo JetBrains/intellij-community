@@ -37,8 +37,6 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import static io.netty.handler.codec.http.HttpHeaders.Names.*;
-
 public final class Responses {
   static final ThreadLocal<DateFormat> DATE_FORMAT = new ThreadLocal<DateFormat>() {
     @Override
@@ -60,28 +58,28 @@ public final class Responses {
     HttpResponse response =
       new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, content == null ? Unpooled.EMPTY_BUFFER : content);
     if (contentType != null) {
-      response.headers().add(CONTENT_TYPE, contentType);
+      response.headers().add(HttpHeaders.Names.CONTENT_TYPE, contentType);
     }
     return response;
   }
 
   public static void addAllowAnyOrigin(HttpResponse response) {
-    response.headers().add(ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+    response.headers().add(HttpHeaders.Names.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
   }
 
   public static void addDate(HttpResponse response) {
-    if (!response.headers().contains(DATE)) {
+    if (!response.headers().contains(HttpHeaders.Names.DATE)) {
       addDate(response, Calendar.getInstance().getTime());
     }
   }
 
   public static void addDate(HttpResponse response, Date date) {
-    response.headers().set(DATE, DATE_FORMAT.get().format(date));
+    response.headers().set(HttpHeaders.Names.DATE, DATE_FORMAT.get().format(date));
   }
 
   public static void addNoCache(HttpResponse response) {
-    response.headers().add(CACHE_CONTROL, "no-cache, no-store, must-revalidate, max-age=0");
-    response.headers().add(PRAGMA, "no-cache");
+    response.headers().add(HttpHeaders.Names.CACHE_CONTROL, "no-cache, no-store, must-revalidate, max-age=0");
+    response.headers().add(HttpHeaders.Names.PRAGMA, "no-cache");
   }
 
   @Nullable
@@ -97,7 +95,7 @@ public final class Responses {
 
   public static void addServer(HttpResponse response) {
     if (getServerHeaderValue() != null) {
-      response.headers().add(SERVER, getServerHeaderValue());
+      response.headers().add(HttpHeaders.Names.SERVER, getServerHeaderValue());
     }
   }
 
@@ -174,14 +172,14 @@ public final class Responses {
     builder.append("<hr/><p style=\"text-align: center\">").append(StringUtil.notNullize(getServerHeaderValue(), "")).append("</p>");
 
     DefaultFullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, responseStatus, Unpooled.copiedBuffer(builder, CharsetUtil.UTF_8));
-    response.headers().set(CONTENT_TYPE, "text/html");
+    response.headers().set(HttpHeaders.Names.CONTENT_TYPE, "text/html");
     return response;
   }
 
   public static void sendOptionsResponse(String allowHeaders, HttpRequest request, ChannelHandlerContext context) {
     HttpResponse response = response(HttpResponseStatus.OK);
-    response.headers().set(ACCESS_CONTROL_ALLOW_METHODS, allowHeaders);
-    response.headers().set(ALLOW, allowHeaders);
+    response.headers().set(HttpHeaders.Names.ACCESS_CONTROL_ALLOW_METHODS, allowHeaders);
+    response.headers().set(HttpHeaders.Names.ALLOW, allowHeaders);
     send(response, context.channel(), request);
   }
 }
