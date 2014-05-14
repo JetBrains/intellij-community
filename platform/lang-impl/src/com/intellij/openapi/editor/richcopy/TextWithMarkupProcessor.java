@@ -722,6 +722,8 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
   }
 
   private static class HighlighterRangeIterator implements RangeIterator {
+    private static final TextAttributes EMPTY_ATTRIBUTES = new TextAttributes();
+
     private final HighlighterIterator myIterator;
     private final int myStartOffset;
     private final int myEndOffset;
@@ -734,7 +736,6 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
       myStartOffset = startOffset;
       myEndOffset = endOffset;
       myIterator = highlighter.createIterator(startOffset);
-      skipBadCharacters();
     }
 
     @Override
@@ -750,19 +751,12 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
       return Math.min(myIterator.getEnd(), myEndOffset);
     }
 
-    private void skipBadCharacters() {
-      while (!myIterator.atEnd() && myIterator.getTokenType() == TokenType.BAD_CHARACTER) {
-        myIterator.advance();
-      }
-    }
-
     @Override
     public void advance() {
       myCurrentStart = getCurrentStart();
       myCurrentEnd = getCurrentEnd();
-      myCurrentAttributes = myIterator.getTextAttributes();
+      myCurrentAttributes = myIterator.getTokenType() == TokenType.BAD_CHARACTER ? EMPTY_ATTRIBUTES : myIterator.getTextAttributes();
       myIterator.advance();
-      skipBadCharacters();
     }
 
     @Override
