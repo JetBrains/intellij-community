@@ -15,7 +15,13 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
+import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+import java.util.Set;
 
 public class LanguagePostfixTemplate extends LanguageExtension<PostfixTemplateProvider> {
   public static final LanguagePostfixTemplate LANG_EP = new LanguagePostfixTemplate();
@@ -23,5 +29,25 @@ public class LanguagePostfixTemplate extends LanguageExtension<PostfixTemplatePr
 
   private LanguagePostfixTemplate() {
     super(EP_NAME);
+  }
+
+
+  @NotNull
+  @Override
+  protected List<PostfixTemplateProvider> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
+    List<PostfixTemplateProvider> providers = super.buildExtensions(stringKey, key);
+    validateTemplatesForLanguage(key, providers);
+    return providers;
+  }
+
+  private static void validateTemplatesForLanguage(Language key, List<PostfixTemplateProvider> providers) {
+    Set<String> templateKeys = ContainerUtil.newHashSet();
+    for (PostfixTemplateProvider provider : providers) {
+      for (PostfixTemplate template : provider.getTemplates()) {
+        if (!templateKeys.add(template.getKey())) {
+          throw new IllegalStateException("Duplicated key " + template.getKey() + " for language " + key.getID());
+        }
+      }
+    }
   }
 }

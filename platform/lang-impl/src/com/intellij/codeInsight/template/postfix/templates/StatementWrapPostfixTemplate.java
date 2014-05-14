@@ -24,6 +24,13 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class StatementWrapPostfixTemplate extends TypedPostfixTemplate {
 
+  @SuppressWarnings("unchecked")
+  protected StatementWrapPostfixTemplate(@NotNull String name,
+                                         @NotNull String descr,
+                                         @NotNull PostfixTemplatePsiInfo psiInfo) {
+    super(name, descr, psiInfo, Condition.TRUE);
+  }
+
   protected StatementWrapPostfixTemplate(@NotNull String name,
                                          @NotNull String descr,
                                          @NotNull PostfixTemplatePsiInfo psiInfo,

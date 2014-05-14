@@ -199,7 +199,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   }
 
   private PsiPackageImpl createPackage(String qualifiedName) {
-    return new PsiPackageImpl((PsiManagerEx)myManager, qualifiedName);
+    return new PsiPackageImpl(myManager, qualifiedName);
   }
 
   @Override

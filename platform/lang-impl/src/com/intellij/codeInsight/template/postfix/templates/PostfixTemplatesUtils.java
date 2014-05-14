@@ -15,8 +15,11 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -45,5 +48,18 @@ public abstract class PostfixTemplatesUtils {
 
   public static void showErrorHint(@NotNull Project project, @NotNull Editor editor) {
     CommonRefactoringUtil.showErrorHint(project, editor, "Can't expand postfix template", "Can't expand postfix template", "");
+  }
+
+  @NotNull
+  public static String getLangForProvider(@NotNull PostfixTemplateProvider provider) {
+    LanguageExtensionPoint[] extensions = new ExtensionPointName<LanguageExtensionPoint>(LanguagePostfixTemplate.EP_NAME).getExtensions();
+
+    for (LanguageExtensionPoint extension : extensions) {
+      if (provider.equals(extension.getInstance())) {
+        return extension.getKey();
+      }
+    }
+
+    return Language.ANY.getID();
   }
 }

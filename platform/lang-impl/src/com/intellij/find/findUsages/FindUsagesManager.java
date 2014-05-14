@@ -169,7 +169,7 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
   @Nullable
-  public FindUsagesHandler getFindUsagesHandler(PsiElement element, final boolean forHighlightUsages) {
+  public FindUsagesHandler getFindUsagesHandler(@NotNull PsiElement element, final boolean forHighlightUsages) {
     for (FindUsagesHandlerFactory factory : Extensions.getExtensions(FindUsagesHandlerFactory.EP_NAME, myProject)) {
       if (factory.canFindUsages(element)) {
         final FindUsagesHandler handler = factory.createFindUsagesHandler(element, forHighlightUsages);

@@ -27,4 +27,8 @@ public abstract class IfPostfixTemplateBase extends SurroundPostfixTemplateBase 
     super("if", "if (expr)", psiInfo, typeChecker);
   }
 
+  @SuppressWarnings("unchecked")
+  protected IfPostfixTemplateBase(@NotNull PostfixTemplatePsiInfo psiInfo) {
+    super("if", "if (expr)", psiInfo, Condition.TRUE);
+  }
 }

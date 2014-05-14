@@ -152,19 +152,22 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
   @Override
   public void populateModuleExtraModels(@NotNull IdeaModule gradleModule, @NotNull DataNode<ModuleData> ideModule) {
-    BuildScriptClasspathModel buildScriptClasspathModel = resolverCtx.getExtraProject(gradleModule, BuildScriptClasspathModel.class);
+    final BuildScriptClasspathModel buildScriptClasspathModel = resolverCtx.getExtraProject(gradleModule, BuildScriptClasspathModel.class);
+    final List<BuildScriptClasspathData.ClasspathEntry> classpathEntries;
     if (buildScriptClasspathModel != null) {
-      List<BuildScriptClasspathData.ClasspathEntry> classpathEntries =
-        ContainerUtil.map(buildScriptClasspathModel.getClasspath(), new Function<ClasspathEntryModel, BuildScriptClasspathData.ClasspathEntry>() {
+      classpathEntries = ContainerUtil
+        .map(buildScriptClasspathModel.getClasspath(), new Function<ClasspathEntryModel, BuildScriptClasspathData.ClasspathEntry>() {
           @Override
           public BuildScriptClasspathData.ClasspathEntry fun(ClasspathEntryModel model) {
             return new BuildScriptClasspathData.ClasspathEntry(model.getClasses(), model.getSources(), model.getJavadoc());
           }
         });
-      BuildScriptClasspathData buildScriptClasspathData =
-        new BuildScriptClasspathData(GradleConstants.SYSTEM_ID, classpathEntries);
-      ideModule.createChild(BuildScriptClasspathData.KEY, buildScriptClasspathData);
     }
+    else {
+      classpathEntries = ContainerUtil.emptyList();
+    }
+    BuildScriptClasspathData buildScriptClasspathData = new BuildScriptClasspathData(GradleConstants.SYSTEM_ID, classpathEntries);
+    ideModule.createChild(BuildScriptClasspathData.KEY, buildScriptClasspathData);
   }
 
   @Override

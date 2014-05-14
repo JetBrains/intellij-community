@@ -718,6 +718,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
         }
       };
       myTreeModel.addEditorPositionListener(myFileEditorPositionListener);
+
+      if (isAutoScrollEnabled()) {
+        //otherwise on any tab switching selection will be staying at the top file node until we made a first caret move
+        scrollToSelectedElement();
+      }
     }
 
     @Override

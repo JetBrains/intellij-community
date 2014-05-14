@@ -15,42 +15,15 @@
  */
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.openapi.module.Module;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiPackage;
-import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.inspections.quickfix.CreateHtmlDescriptionFix;
-import org.jetbrains.idea.devkit.inspections.quickfix.CreatePostfixTemplateHtmlDescriptionFix;
 
 
 public class PostfixTemplateDescriptionNotFoundInspection extends DescriptionNotFoundInspectionBase {
 
-  private static final String POSTFIX_TEMPLATES = "postfixTemplates";
-
-  @NotNull
-  @Override
-  protected PsiDirectory[] getDescriptionsDirs(@NotNull Module module) {
-    return getPostfixTemplateDirectories(module);
-  }
-
-  @Override
-  protected CreateHtmlDescriptionFix getFix(Module module, String descriptionDir) {
-    return new CreatePostfixTemplateHtmlDescriptionFix(descriptionDir, module);
-  }
-
-  @NotNull
-  public static PsiDirectory[] getPostfixTemplateDirectories(Module module) {
-    final PsiPackage aPackage = JavaPsiFacade.getInstance(module.getProject()).findPackage(POSTFIX_TEMPLATES);
-    if (aPackage != null) {
-      return aPackage.getDirectories(GlobalSearchScope.moduleWithDependenciesScope(module));
-    }
-    else {
-      return PsiDirectory.EMPTY_ARRAY;
-    }
+  public PostfixTemplateDescriptionNotFoundInspection() {
+    super(DescriptionType.POSTFIX_TEMPLATES);
   }
 
   @NotNull
@@ -63,12 +36,6 @@ public class PostfixTemplateDescriptionNotFoundInspection extends DescriptionNot
   @Override
   protected String getHasNotBeforeAfterError() {
     return "Postfix template must have 'before.*.template' and 'after.*.template' beside 'description.html'";
-  }
-
-  @NotNull
-  @Override
-  protected String getClassName() {
-    return "com.intellij.codeInsight.template.postfix.templates.PostfixTemplate";
   }
 
   @Nls

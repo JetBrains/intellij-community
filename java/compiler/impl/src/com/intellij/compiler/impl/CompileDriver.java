@@ -183,7 +183,7 @@ public class CompileDriver {
           final VirtualFile productionOutput = lookupVFile(lfs, CompilerPaths.getGenerationOutputPath(compiler, module, false));
           final VirtualFile testOutput = lookupVFile(lfs, CompilerPaths.getGenerationOutputPath(compiler, module, true));
           final Pair<IntermediateOutputCompiler, Module> pair = Pair.create(compiler, module);
-          final Pair<VirtualFile, VirtualFile> outputs = Pair.create(productionOutput, testOutput);
+          final Couple<VirtualFile> outputs = Couple.newOne(productionOutput, testOutput);
           myGenerationCompilerModuleToOutputDirMap.put(pair, outputs);
         }
         if (config.getAnnotationProcessingConfiguration(module).isEnabled()) {
@@ -1381,8 +1381,7 @@ public class CompileDriver {
           int round = 0;
           boolean compiledSomethingForThisChunk = false;
           Collection<VirtualFile> dependentFiles = Collections.emptyList();
-          final Function<Pair<int[], Set<VirtualFile>>, Pair<int[], Set<VirtualFile>>> dependencyFilter = new DependentClassesCumulativeFilter();
-          
+
           do {
             for (int currentCompiler = 0, translatorsLength = translators.length; currentCompiler < translatorsLength; currentCompiler++) {
               sink.setCurrentCompilerIndex(currentCompiler);
@@ -1460,7 +1459,7 @@ public class CompileDriver {
               filesToRecompile.removeAll(sink.getCompiledSources());
               filesToRecompile.addAll(compiledWithErrors);
 
-              dependentFiles = CacheUtils.findDependentFiles(context, compiledWithErrors, dependencyFilter);
+              dependentFiles = CacheUtils.findDependentFiles(context, compiledWithErrors, new DependentClassesCumulativeFilter());
               if (!processedModules.isEmpty()) {
                 for (Iterator<VirtualFile> it = dependentFiles.iterator(); it.hasNext();) {
                   final VirtualFile next = it.next();

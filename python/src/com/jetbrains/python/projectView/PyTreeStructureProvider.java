@@ -36,6 +36,7 @@ import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.remote.PyRemoteSdkCredentials;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,6 +63,10 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
       final PyUserSkeletonsNode userSkeletonsNode = PyUserSkeletonsNode.create(project, settings);
       if (userSkeletonsNode != null) {
         newChildren.add(userSkeletonsNode);
+      }
+      final PyRemoteLibrariesNode remoteLibrariesNode = PyRemoteLibrariesNode.create(project, sdk, settings);
+      if (remoteLibrariesNode != null) {
+        newChildren.add(remoteLibrariesNode);
       }
       return newChildren;
     }

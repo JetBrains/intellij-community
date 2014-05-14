@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
   private final IElementType myType;
   private volatile int myStartOffsetInParent = -1;
 
-  public TreeElement(IElementType type) {
+  public TreeElement(@NotNull IElementType type) {
     myType = type;
   }
 
@@ -390,6 +390,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
   }
 
   @Override
+  @NotNull
   public IElementType getElementType() {
     return myType;
   }

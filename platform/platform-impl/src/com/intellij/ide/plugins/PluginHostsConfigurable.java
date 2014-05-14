@@ -189,7 +189,7 @@ public class PluginHostsConfigurable extends BaseConfigurable {
               public void run() {
                 try {
                   result[0] =
-                    UpdateChecker.checkPluginsHost(correctRepositoryRule(getTextField().getText()), new HashMap<PluginId, PluginDownloader>(), true, ProgressManager.getInstance().getProgressIndicator());
+                    UpdateChecker.checkPluginsHost(correctRepositoryRule(getTextField().getText()), new HashMap<PluginId, PluginDownloader>(), true, ProgressManager.getInstance().getProgressIndicator(), null);
                 }
                 catch (Exception e1) {
                   ex[0] = e1;

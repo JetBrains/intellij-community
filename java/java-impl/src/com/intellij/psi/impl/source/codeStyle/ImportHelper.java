@@ -82,7 +82,7 @@ public class ImportHelper{
     List<Pair<String, Boolean>> resultList = sortItemsAccordingToSettings(names, mySettings);
 
     final Set<String> classesOrPackagesToImportOnDemand = new THashSet<String>();
-    collectOnDemandImports(resultList, classesOrPackagesToImportOnDemand, ImportHelper.this.mySettings);
+    collectOnDemandImports(resultList, classesOrPackagesToImportOnDemand, this.mySettings);
 
     Set<String> classesToUseSingle = findSingleImports(file, resultList, classesOrPackagesToImportOnDemand);
     Set<String> toReimport = new THashSet<String>();
@@ -437,8 +437,12 @@ public class ImportHelper{
         for (PsiJavaCodeReferenceElement ref : importRefs) {
           LOG.assertTrue(ref.getParent() instanceof PsiImportStatement);
           if (!ref.isValid()) continue; // todo[dsl] Q?
-          classesToReimport.add((PsiClass)ref.resolve());
           PsiImportStatement importStatement = (PsiImportStatement) ref.getParent();
+          if (importStatement.isForeignFileImport()) {
+            // we should not optimize imports from include files
+            continue;
+          }
+          classesToReimport.add((PsiClass)ref.resolve());
           importStatement.delete();
         }
       }

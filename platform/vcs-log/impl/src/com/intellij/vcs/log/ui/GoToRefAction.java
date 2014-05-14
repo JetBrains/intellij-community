@@ -51,7 +51,7 @@ public class GoToRefAction extends DumbAwareAction {
       @Override
       public void onClosed(LightweightWindowEvent event) {
         if (event.isOk()) {
-          log.jumpToReference(textField.getText());
+          log.jumpToReference(textField.getText().trim());
         }
       }
     });

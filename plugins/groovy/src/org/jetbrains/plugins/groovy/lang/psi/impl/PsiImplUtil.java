@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.AstBufferUtil;
+import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
@@ -92,7 +93,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.intellij.psi.impl.source.tree.Factory.createSingleLeafElement;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.RELATIONS;
 import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.SHIFT_SIGNS;
@@ -410,10 +410,12 @@ public class PsiImplUtil {
     if (qName == null) return null;
     final List<OrderEntry> orderEntries = idx.getOrderEntriesForFile(vFile);
     PsiClass original = facade.findClass(qName, new GlobalSearchScope(facade.getProject()) {
+      @Override
       public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
         return 0;
       }
 
+      @Override
       public boolean contains(@NotNull VirtualFile file) {
         // order for file and vFile has non empty intersection.
         List<OrderEntry> entries = idx.getOrderEntriesForFile(file);
@@ -425,10 +427,12 @@ public class PsiImplUtil {
         return false;
       }
 
+      @Override
       public boolean isSearchInModuleContent(@NotNull Module aModule) {
         return false;
       }
 
+      @Override
       public boolean isSearchInLibraries() {
         return true;
       }
@@ -535,7 +539,7 @@ public class PsiImplUtil {
         }
         final String substring = text.substring(second);
         container.getNode()
-          .replaceChild(node, createSingleLeafElement(type, substring, 0, substring.length(), null, container.getManager()));
+          .replaceChild(node, Factory.createSingleLeafElement(type, substring, 0, substring.length(), null, container.getManager()));
         return;
       }
       else {

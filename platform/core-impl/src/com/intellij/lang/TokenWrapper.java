@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,17 +20,19 @@
 package com.intellij.lang;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 public class TokenWrapper extends IElementType {
   private final IElementType myDelegate;
   private final String myValue;
 
-  public TokenWrapper(IElementType delegate, CharSequence value) {
+  public TokenWrapper(@NotNull IElementType delegate, CharSequence value) {
     super("Wrapper", delegate.getLanguage(), false);
     myDelegate = delegate;
     myValue = value.toString();
   }
 
+  @NotNull
   public IElementType getDelegate() {
     return myDelegate;
   }

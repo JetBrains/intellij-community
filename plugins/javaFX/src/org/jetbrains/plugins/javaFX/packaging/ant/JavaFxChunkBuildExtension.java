@@ -21,6 +21,7 @@ import com.intellij.compiler.ant.taskdefs.Property;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.packaging.artifacts.Artifact;
@@ -226,9 +227,9 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
 
   @Nullable
   @Override
-  public Pair<String, String> getArtifactXmlNs(ArtifactType artifactType) {
+  public Couple<String> getArtifactXmlNs(ArtifactType artifactType) {
     if (artifactType instanceof JavaFxApplicationArtifactType) {
-      return Pair.create("xmlns:fx", "javafx:com.sun.javafx.tools.ant");
+      return Couple.newOne("xmlns:fx", "javafx:com.sun.javafx.tools.ant");
     }
     return null;
   }

@@ -19,10 +19,11 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupActionProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementAction;
+import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesCheckboxTree;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesConfigurable;
-import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesListPanel;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
+import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -34,7 +35,8 @@ public class PostfixTemplateLookupActionProvider implements LookupActionProvider
   @Override
   public void fillActions(LookupElement element, final Lookup lookup, Consumer<LookupElementAction> consumer) {
     if (element instanceof PostfixTemplateLookupElement) {
-      final PostfixTemplate template = ((PostfixTemplateLookupElement)element).getPostfixTemplate();
+      final PostfixTemplateLookupElement templateLookupElement = (PostfixTemplateLookupElement)element;
+      final PostfixTemplate template = templateLookupElement.getPostfixTemplate();
 
       consumer.consume(new LookupElementAction(PlatformIcons.EDIT, "Edit postfix templates settings") {
         @Override
@@ -50,9 +52,10 @@ public class PostfixTemplateLookupActionProvider implements LookupActionProvider
               ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
                 @Override
                 public void run() {
-                  PostfixTemplatesListPanel templatesListPanel = configurable.getTemplatesListPanel();
-                  if (templatesListPanel != null) {
-                    templatesListPanel.selectTemplate(template);
+                  PostfixTemplatesCheckboxTree templatesTree = configurable.getTemplatesTree();
+                  if (templatesTree != null) {
+                    templatesTree.selectTemplate(template, PostfixTemplatesUtils
+                      .getLangForProvider(templateLookupElement.getProvider()));
                   }
                 }
               });
@@ -63,14 +66,14 @@ public class PostfixTemplateLookupActionProvider implements LookupActionProvider
       });
 
       final PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
-      if (settings != null && settings.isTemplateEnabled(template)) {
+      if (settings != null && settings.isTemplateEnabled(template, templateLookupElement.getProvider())) {
         consumer.consume(new LookupElementAction(AllIcons.Actions.Delete, String.format("Disable '%s' template", template.getKey())) {
           @Override
           public Result performLookupAction() {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               @Override
               public void run() {
-                settings.disableTemplate(template);
+                settings.disableTemplate(template, templateLookupElement.getProvider());
               }
             });
             return Result.HIDE_LOOKUP;

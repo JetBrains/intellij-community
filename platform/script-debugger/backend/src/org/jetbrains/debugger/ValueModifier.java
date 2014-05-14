@@ -16,5 +16,5 @@ public interface ValueModifier {
   ActionCallback setValue(@NotNull Variable variable, Value newValue, @NotNull EvaluateContext evaluateContext);
 
   @NotNull
-  AsyncResult<Value> evaluateGet(@NotNull ObjectProperty property, @NotNull EvaluateContext evaluateContext);
+  AsyncResult<Value> evaluateGet(@NotNull Variable variable, @NotNull EvaluateContext evaluateContext);
 }

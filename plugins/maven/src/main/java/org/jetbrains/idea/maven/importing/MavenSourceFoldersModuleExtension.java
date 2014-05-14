@@ -76,8 +76,7 @@ public class MavenSourceFoldersModuleExtension extends ModuleExtension<MavenSour
             (JpsModuleSourceRootType<JpsElement>)eachFolder.getRootType(),
             eachFolder.getJpsElement().getProperties().getBulkModificationSupport().createCopy());
 
-        final JpsContentEntry dummyJpsContentEntry = new JpsContentEntry(myDummyJpsModule, myDummyJpsRootModel, eachFolder.getUrl());
-        myJpsSourceFolders.add(new JpsSourceFolder(jpsModuleSourceRoot, dummyJpsContentEntry));
+        addJspSourceFolder(jpsModuleSourceRoot, eachFolder.getUrl());
       }
     }
   }
@@ -179,12 +178,7 @@ public class MavenSourceFoldersModuleExtension extends ModuleExtension<MavenSour
 
     final JpsModuleSourceRoot jpsModuleSourceRoot =
       JpsElementFactory.getInstance().createModuleSourceRoot(url.getUrl(), rootType, properties);
-    final JpsContentEntry dummyJpsContentEntry = new JpsContentEntry(myDummyJpsModule, myDummyJpsRootModel, url.getUrl());
-
-    final JpsSourceFolder jpsSourceFolder = new JpsSourceFolder(jpsModuleSourceRoot, dummyJpsContentEntry);
-    myJpsSourceFolders.add(jpsSourceFolder);
-    // since dummyJpsContentEntry created for each source folder, we will dispose it on that source folder disposal
-    Disposer.register(jpsSourceFolder, dummyJpsContentEntry);
+    addJspSourceFolder(jpsModuleSourceRoot, url.getUrl());
 
     isJpsSourceFoldersChanged = true;
   }
@@ -233,6 +227,14 @@ public class MavenSourceFoldersModuleExtension extends ModuleExtension<MavenSour
         Disposer.dispose(eachFolder);
       }
     }
+  }
+
+  private void addJspSourceFolder(@NotNull JpsModuleSourceRoot jpsModuleSourceRoot, @NotNull String url) {
+    final JpsContentEntry dummyJpsContentEntry = new JpsContentEntry(myDummyJpsModule, myDummyJpsRootModel, url);
+    final JpsSourceFolder jpsSourceFolder = new JpsSourceFolder(jpsModuleSourceRoot, dummyJpsContentEntry);
+    myJpsSourceFolders.add(jpsSourceFolder);
+    // since dummyJpsContentEntry created for each source folder, we will dispose it on that source folder disposal
+    Disposer.register(jpsSourceFolder, dummyJpsContentEntry);
   }
 
   private static final class ContentFolderComparator implements Comparator<ContentFolder> {

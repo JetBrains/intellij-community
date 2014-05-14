@@ -2147,7 +2147,12 @@ public class UIUtil {
       UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 
       if (ourSystemFontData == null) {
-        final Font font = getLabelFont();
+        Font font = getLabelFont();
+        if (SystemInfo.isWindows) {
+          //noinspection HardCodedStringLiteral
+          Font winFont = (Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
+          if (winFont != null) font = winFont;
+        }
         ourSystemFontData = Pair.create(font.getName(), font.getSize());
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2012 the original author or authors.
+ * Copyright 2001-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,12 +74,6 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
         doExecuteAction(project, clazz, null);
     }
 
-    /**
-     * Entry for performing the action and code generation.
-     *
-     * @param project      the project, must not be <tt>null<tt>
-     * @param clazz        the class, must not be <tt>null<tt>
-     */
     private static void doExecuteAction(@NotNull final Project project, @NotNull final PsiClass clazz, final Editor editor) {
         logger.debug("+++ doExecuteAction - START +++");
 
@@ -88,14 +82,11 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
         }
 
         final PsiElementClassMember[] dialogMembers = buildMembersToShow(clazz);
-        if (dialogMembers.length == 0) {
-          HintManager.getInstance().showErrorHint(editor, "No members to include in toString() have been found");
-          return;
-        }
 
         final MemberChooserBuilder<PsiElementClassMember> builder = new MemberChooserBuilder<PsiElementClassMember>(project);
         final MemberChooserHeaderPanel header = new MemberChooserHeaderPanel(clazz);
         builder.setHeaderPanel(header);
+        builder.allowEmptySelection(true);
         builder.overrideAnnotationVisible(PsiUtil.isLanguageLevel5OrHigher(clazz));
         builder.setTitle("Generate toString()");
 
@@ -103,7 +94,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               if (project.isDisposed()) return;
-              final MemberChooser dialog = builder.createBuilder(dialogMembers);
+              final MemberChooser<PsiElementClassMember> dialog = builder.createBuilder(dialogMembers);
               dialog.setCopyJavadocVisible(false);
               dialog.selectElements(dialogMembers);
               header.setChooser(dialog);
@@ -176,7 +167,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
     }
 
     public static class MemberChooserHeaderPanel extends JPanel {
-        private MemberChooser chooser;
+        private MemberChooser<PsiElementClassMember> chooser;
         private final JComboBox comboBox;
 
         public void setChooser(MemberChooser chooser) {

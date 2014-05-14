@@ -247,13 +247,13 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
   }
 
   @Override
-  public void removeShortcut(String actionId, Shortcut shortcut) {
+  public void removeShortcut(String actionId, Shortcut toDelete) {
     LinkedHashSet<Shortcut> list = myActionId2ListOfShortcuts.get(actionId);
     if (list != null) {
       Iterator<Shortcut> it = list.iterator();
       while (it.hasNext()) {
         Shortcut each = it.next();
-        if (shortcut.equals(each)) {
+        if (toDelete.equals(each)) {
           it.remove();
           if ((myParent != null && areShortcutsEqual(getParentShortcuts(actionId), getShortcuts(actionId)))
               || (myParent == null && list.isEmpty())) {
@@ -263,18 +263,28 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
         }
       }
     }
-    else if (myParent != null) {
-      // put to the map the parent's bindings except for the removed binding
-      LinkedHashSet<Shortcut> listOfShortcuts = new LinkedHashSet<Shortcut>(0);
-      if (!isActionBound(actionId)) {
-        Shortcut[] parentShortcuts = getParentShortcuts(actionId);
-        for (Shortcut parentShortcut : parentShortcuts) {
-          if (!shortcut.equals(parentShortcut)) {
-            listOfShortcuts.add(parentShortcut);
+    else {
+      Shortcut[] inherited = getBoundShortcuts(actionId);
+      if (inherited == null && myParent != null) {
+        inherited = getParentShortcuts(actionId);
+      }
+
+      if (inherited != null) {
+        boolean affected = false;
+        LinkedHashSet<Shortcut> newShortcuts = new LinkedHashSet<Shortcut>(inherited.length);
+        for (Shortcut eachInherited : inherited) {
+          if (toDelete.equals(eachInherited)) {
+            // skip this one
+            affected = true;
+          }
+          else {
+            newShortcuts.add(eachInherited);
           }
         }
+        if (affected) {
+          myActionId2ListOfShortcuts.put(actionId, newShortcuts);
+        }
       }
-      myActionId2ListOfShortcuts.put(actionId, listOfShortcuts);
     }
     cleanShortcutsCache();
     fireShortcutChanged(actionId);

@@ -184,7 +184,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
       return;
     }
 
-    if (myDoLogCachesUpdate) LOG.info(new Throwable("refresh"));
+    if (myDoLogCachesUpdate) LOG.info("refresh");
     DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
     DumbModeTask task = FileBasedIndexProjectHandler.createChangedFilesIndexingTask(myProject);
     if (task != null) {

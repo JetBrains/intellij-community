@@ -23,6 +23,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,9 +42,7 @@ public class ArrangementSectionDetector {
   private final Document myDocument;
   private final ArrangementSettings mySettings;
   private final Consumer<ArrangementSectionEntryTemplate> mySectionEntryProducer;
-
-  private String myCurrentSection = null;
-
+  private Stack<String> myOpenedSections = ContainerUtil.newStack();
 
   public ArrangementSectionDetector(@Nullable Document document,
                                     @NotNull ArrangementSettings settings,
@@ -59,13 +59,14 @@ public class ArrangementSectionDetector {
 
     final String commentText = comment.getText().trim();
     final boolean start = isSectionStartComment(mySettings, commentText);
+    String lastOpenedSection = myOpenedSections.isEmpty() ? null : myOpenedSections.peek();
     if (start) {
       mySectionEntryProducer.consume(new ArrangementSectionEntryTemplate(comment, START_SECTION, sectionTextRange, commentText));
-      myCurrentSection = commentText;
+      myOpenedSections.push(commentText);
     }
-    else if (myCurrentSection != null && isSectionEndComment(mySettings, commentText)) {
+    else if (lastOpenedSection != null && isSectionEndComment(mySettings, commentText)) {
       mySectionEntryProducer.consume(new ArrangementSectionEntryTemplate(comment, END_SECTION, sectionTextRange, commentText));
-      myCurrentSection = null;
+      myOpenedSections.pop();
     }
   }
 

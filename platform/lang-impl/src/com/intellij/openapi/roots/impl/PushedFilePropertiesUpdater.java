@@ -45,7 +45,6 @@ import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexProjectHandler;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -61,12 +60,13 @@ public class PushedFilePropertiesUpdater {
   private final FilePropertyPusher[] myPushers;
   private final FilePropertyPusher[] myFilePushers;
   private final Queue<DumbModeTask> myTasks = new ConcurrentLinkedQueue<DumbModeTask>();
+  private final MessageBusConnection myConnection;
 
   public static PushedFilePropertiesUpdater getInstance(Project project) {
     return project.getComponent(PushedFilePropertiesUpdater.class);
   }
 
-  public PushedFilePropertiesUpdater(final Project project, final MessageBus bus) {
+  public PushedFilePropertiesUpdater(final Project project) {
     myProject = project;
     myPushers = Extensions.getExtensions(FilePropertyPusher.EP_NAME);
     myFilePushers = ContainerUtil.findAllAsArray(myPushers, new Condition<FilePropertyPusher>() {
@@ -76,11 +76,12 @@ public class PushedFilePropertiesUpdater {
       }
     });
 
+    myConnection = project.getMessageBus().connect();
+
     StartupManager.getInstance(project).registerPreStartupActivity(new Runnable() {
       @Override
       public void run() {
-        final MessageBusConnection connection = bus.connect();
-        connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+        myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
           @Override
           public void rootsChanged(final ModuleRootEvent event) {
             pushAll(myPushers);
@@ -90,7 +91,7 @@ public class PushedFilePropertiesUpdater {
           }
         });
 
-        connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileAdapter() {
+        myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileAdapter() {
           @Override
           public void fileCreated(@NotNull final VirtualFileEvent event) {
             final VirtualFile file = event.getFile();
@@ -330,5 +331,9 @@ public class PushedFilePropertiesUpdater {
         }
       });
     }
+  }
+
+  public void processPendingEvents() {
+    myConnection.deliverImmediately();
   }
 }

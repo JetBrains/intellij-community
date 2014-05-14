@@ -42,8 +42,8 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isMac = SystemInfoRt.isMac;
   public static final boolean isOS2 = SystemInfoRt.isOS2;
   public static final boolean isLinux = SystemInfoRt.isLinux;
-  public static final boolean isFreeBSD = _OS_NAME.startsWith("freebsd");
-  public static final boolean isSolaris = _OS_NAME.startsWith("sunos");
+  public static final boolean isFreeBSD = SystemInfoRt.isFreeBSD;
+  public static final boolean isSolaris = SystemInfoRt.isSolaris;
   public static final boolean isUnix = SystemInfoRt.isUnix;
 
   public static final boolean isAppleJvm = isAppleJvm();

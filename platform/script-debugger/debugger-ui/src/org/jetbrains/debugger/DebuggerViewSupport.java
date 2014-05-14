@@ -14,8 +14,7 @@ import org.jetbrains.debugger.values.Value;
 import javax.swing.*;
 import java.util.List;
 
-// todo should not extends MemberFilter
-public interface DebuggerViewSupport extends MemberFilter {
+public interface DebuggerViewSupport {
   @Nullable
   SourceInfo getSourceInfo(@Nullable Script script, @NotNull CallFrame frame);
 
@@ -51,4 +50,7 @@ public interface DebuggerViewSupport extends MemberFilter {
 
   @NotNull
   MemberFilter createMemberFilter(@NotNull VariableContext context);
+
+  @NotNull
+  String normalizeMemberName(@NotNull Variable variable);
 }

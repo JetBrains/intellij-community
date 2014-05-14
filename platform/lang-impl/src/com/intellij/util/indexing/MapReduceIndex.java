@@ -21,19 +21,19 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteSequence;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.*;
-import com.intellij.util.io.DataOutputStream;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -54,7 +54,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   private final DataExternalizer<Collection<Key>> mySnapshotIndexExternalizer;
 
   private PersistentHashMap<Integer, Collection<Key>> myInputsIndex;
-  private final PersistentHashMap<Integer, ByteSequence> myContents;
+  private PersistentHashMap<Integer, ByteSequence> myContents;
   private PersistentHashMap<Integer, Integer> myInputsSnapshotMapping;
 
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
@@ -79,17 +79,21 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
     mySnapshotIndexExternalizer = snapshotIndexExternalizer;
     myValueExternalizer = valueDataExternalizer;
+    myContents = createContentsIndex();
+  }
+
+  private PersistentHashMap<Integer, ByteSequence> createContentsIndex() throws IOException {
     final File saved = myHasSnapshotMapping && myIndexId != null ? new File(IndexInfrastructure.getPersistentIndexRootDir(myIndexId), "values") : null;
 
     if (saved != null) {
       try {
-        myContents = new PersistentHashMap<Integer, ByteSequence>(saved, EnumeratorIntegerDescriptor.INSTANCE, ByteSequenceDataExternalizer.INSTANCE);
+        return new PersistentHashMap<Integer, ByteSequence>(saved, EnumeratorIntegerDescriptor.INSTANCE, ByteSequenceDataExternalizer.INSTANCE);
       } catch (IOException ex) {
         IOUtil.deleteAllFilesStartingWith(saved);
         throw ex;
       }
     } else {
-      myContents = null;
+      return null;
     }
   }
 
@@ -110,6 +114,10 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
       if (myInputsSnapshotMapping != null) {
         cleanMapping(myInputsSnapshotMapping);
         myInputsSnapshotMapping = createInputSnapshotMapping();
+      }
+      if (myContents != null) {
+        cleanMapping(myContents);
+        myContents = createContentsIndex();
       }
     }
     catch (StorageException e) {
@@ -149,7 +157,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     catch (IOException ignored) {
     }
 
-    FileUtil.delete(baseFile);
+    IOUtil.deleteAllFilesStartingWith(baseFile);
   }
 
   @Override
@@ -279,13 +287,13 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     return null;
   }
 
-  private static final boolean doReadSavedPersistentData = SystemProperties.getBooleanProperty("idea.read.saved.persistent.index", false);
+  private static final boolean doReadSavedPersistentData = SystemProperties.getBooleanProperty("idea.read.saved.persistent.index", true);
   @NotNull
   @Override
   public final Computable<Boolean> update(final int inputId, @Nullable Input content) {
     final boolean weProcessPhysicalContent = content == null ||
-                                             (content instanceof FileContent &&
-                                              ((FileContent)content).getUserData(FileBasedIndexImpl.ourPhysicalContentKey) != null);
+                                             (content instanceof UserDataHolder &&
+                                              FileBasedIndexImpl.ourPhysicalContentKey.get((UserDataHolder)content, Boolean.FALSE));
 
     Map<Key, Value> data = null;
     boolean havePersistentData = false;
@@ -311,7 +319,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
     if (data == null) data = content != null ? myIndexer.map(content) : Collections.<Key, Value>emptyMap();
 
-    if (hashId != null && !havePersistentData && data.size() > 0) {
+    if (hashId != null && !havePersistentData) {
       savePersistentData(data, hashId);
     }
     ProgressManager.checkCanceled();

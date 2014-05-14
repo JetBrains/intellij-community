@@ -28,7 +28,9 @@ import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.*;
@@ -47,24 +49,21 @@ public class PsiVFSListener extends VirtualFileAdapter {
 
   private final FileTypeManager myFileTypeManager;
   private final ProjectRootManager myProjectRootManager;
-  private final ProjectFileIndex myProjectFileIndex;
   private final PsiManagerImpl myManager;
   private final FileManagerImpl myFileManager;
   private final MessageBusConnection myConnection;
+  private final Project myProject;
 
-  public PsiVFSListener(StartupManager startupManager,
-                        FileTypeManager fileTypeManager,
-                        PsiManager psiManager, 
-                        ProjectRootManager projectRootManager) {
-    myFileTypeManager = fileTypeManager;
-    myProjectRootManager = projectRootManager;
-    myProjectFileIndex = myProjectRootManager.getFileIndex();
-    myManager = (PsiManagerImpl) psiManager;
+  public PsiVFSListener(Project project) {
+    myProject = project;
+    myFileTypeManager = FileTypeManager.getInstance();
+    myProjectRootManager = ProjectRootManager.getInstance(project);
+    myManager = (PsiManagerImpl) PsiManager.getInstance(project);
     myFileManager = (FileManagerImpl) myManager.getFileManager();
 
-    myConnection = psiManager.getProject().getMessageBus().connect(psiManager.getProject());
+    myConnection = project.getMessageBus().connect(project);
 
-    startupManager.registerPreStartupActivity(new Runnable() {
+    StartupManager.getInstance(project).registerPreStartupActivity(new Runnable() {
       @Override
       public void run() {
         myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(PsiVFSListener.this));
@@ -444,7 +443,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
         public void run() {
           PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
 
-          boolean isExcluded = vFile.isDirectory() && myProjectFileIndex.isIgnored(vFile);
+          boolean isExcluded = vFile.isDirectory() && myProjectRootManager.getFileIndex().isIgnored(vFile);
           if (oldParentDir != null && !isExcluded) {
             if (newParentDir != null) {
               treeEvent.setOldParent(oldParentDir);
@@ -484,6 +483,9 @@ public class PsiVFSListener extends VirtualFileAdapter {
 
   @Override
   public void fileMoved(@NotNull VirtualFileMoveEvent event) {
+    // let PushedFilePropertiesUpdater process all pending vfs events and update file properties before we issue PSI events
+    PushedFilePropertiesUpdater.getInstance(myProject).processPendingEvents();
+
     final VirtualFile vFile = event.getFile();
 
     final PsiDirectory oldParentDir = myFileManager.findDirectory(event.getOldParent());

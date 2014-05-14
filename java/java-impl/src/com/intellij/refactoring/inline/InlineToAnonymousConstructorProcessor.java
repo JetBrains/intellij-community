@@ -213,7 +213,7 @@ class InlineToAnonymousConstructorProcessor {
           final List<PsiReferenceExpression> localVarRefs = new ArrayList<PsiReferenceExpression>();
           final PsiExpression initializer;
           try {
-            initializer = (PsiExpression) replaceParameterReferences((PsiExpression)rExpr.copy(), localVarRefs, false);
+            initializer = (PsiExpression) replaceParameterReferences(rExpr.copy(), localVarRefs, false);
           }
           catch (IncorrectOperationException e) {
             LOG.error(e);

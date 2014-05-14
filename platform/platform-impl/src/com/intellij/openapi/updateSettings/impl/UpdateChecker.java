@@ -33,10 +33,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
@@ -161,12 +158,20 @@ public final class UpdateChecker {
       settings.setKnownChannelIds(result.getAllChannelsIds());
     }
     else if (result.getState() == UpdateStrategy.State.CONNECTION_ERROR) {
-      showErrorMessage(manualCheck, project, IdeBundle.message("updates.error.connection.failed"));
+      showErrorMessage(manualCheck, IdeBundle.message("updates.error.connection.failed"));
       return;
     }
 
-    boolean platformUpdate = newChannelReady(result.getChannelToPropose()) || result.getUpdatedChannel() != null;
-    final Collection<PluginDownloader> updatedPlugins = platformUpdate ? null : updatePlugins(manualCheck, project, hostsConfigurable, indicator);
+    final UpdateChannel updatedChannel = result.getUpdatedChannel();
+    boolean platformUpdate = newChannelReady(result.getChannelToPropose());
+    BuildNumber buildNumber = null;
+    if (updatedChannel != null) {
+      final BuildInfo latestBuild = updatedChannel.getLatestBuild();
+      if (latestBuild != null) {
+        buildNumber = latestBuild.getNumber();
+      }
+    }
+    final Collection<PluginDownloader> updatedPlugins = platformUpdate ? null : updatePlugins(manualCheck, hostsConfigurable, indicator, buildNumber);
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
@@ -179,15 +184,15 @@ public final class UpdateChecker {
     });
   }
 
-  private static Collection<PluginDownloader> updatePlugins(boolean manualCheck,
-                                                            @Nullable Project project,
-                                                            @Nullable PluginHostsConfigurable hostsConfigurable,
-                                                            @Nullable ProgressIndicator indicator) {
+  public static Collection<PluginDownloader> updatePlugins(boolean manualCheck,
+                                                           @Nullable PluginHostsConfigurable hostsConfigurable,
+                                                           @Nullable ProgressIndicator indicator,
+                                                           @Nullable BuildNumber buildNumber) {
     final Map<PluginId, PluginDownloader> downloaded = new HashMap<PluginId, PluginDownloader>();
     final Set<String> failed = new HashSet<String>();
     for (String host : getPluginHosts(hostsConfigurable)) {
       try {
-        checkPluginsHost(host, downloaded, true, indicator);
+        checkPluginsHost(host, downloaded, true, indicator, buildNumber);
       }
       catch (ProcessCanceledException e) {
         return null;
@@ -237,11 +242,11 @@ public final class UpdateChecker {
           if (!toUpdate.containsKey(idString)) continue;
           final IdeaPluginDescriptor installedPlugin = toUpdate.get(idString);
           if (installedPlugin == null) {
-            prepareToInstall(downloaded, loadedPlugin, indicator);
+            prepareToInstall(downloaded, loadedPlugin, indicator, buildNumber);
           } else if (StringUtil.compareVersionNumbers(loadedPlugin.getVersion(), installedPlugin.getVersion()) > 0) {
             updateSettings.myOutdatedPlugins.add(idString);
             if (!disabledPlugins.contains(idString)) {
-              prepareToInstall(downloaded, loadedPlugin, indicator);
+              prepareToInstall(downloaded, loadedPlugin, indicator, buildNumber);
             }
           }
         }
@@ -250,12 +255,12 @@ public final class UpdateChecker {
         return null;
       }
       catch (Exception e) {
-        showErrorMessage(manualCheck, project, e.getMessage());
+        showErrorMessage(manualCheck, e.getMessage());
       }
     }
 
     if (!failed.isEmpty()) {
-      showErrorMessage(manualCheck, project, IdeBundle.message("updates.error.plugin.description.failed", StringUtil.join(failed, ",")));
+      LOG.warn(IdeBundle.message("updates.error.plugin.description.failed", StringUtil.join(failed, ",")));
     }
 
     return downloaded.isEmpty() ? null : downloaded.values();
@@ -263,18 +268,19 @@ public final class UpdateChecker {
 
   private static void prepareToInstall(Map<PluginId, PluginDownloader> downloaded,
                                        IdeaPluginDescriptor loadedPlugin,
-                                       ProgressIndicator indicator) throws IOException {
+                                       @Nullable ProgressIndicator indicator, 
+                                       @Nullable BuildNumber buildNumber) throws IOException {
     final PluginId pluginId = loadedPlugin.getPluginId();
     //prefer plugins from plugin hosts
     if (!downloaded.containsKey(pluginId)) {
       final PluginDownloader downloader = PluginDownloader.createDownloader(loadedPlugin);
-      if (downloader.prepareToInstall(indicator)) {
+      if (downloader.prepareToInstall(indicator, buildNumber)) {
         downloaded.put(pluginId, downloader);
       }
     }
   }
 
-  private static void showErrorMessage(boolean showDialog, Project project, final String message) {
+  private static void showErrorMessage(boolean showDialog, final String message) {
     if (showDialog) {
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         @Override
@@ -305,7 +311,7 @@ public final class UpdateChecker {
 
   public static boolean checkPluginsHost(final String host, final Map<PluginId, PluginDownloader> downloaded) throws Exception {
     try {
-      return checkPluginsHost(host, downloaded, true, null);
+      return checkPluginsHost(host, downloaded, true, null, null);
     }
     catch (ProcessCanceledException e) {
       return false;
@@ -314,7 +320,9 @@ public final class UpdateChecker {
 
   public static boolean checkPluginsHost(final String host,
                                          final Map<PluginId, PluginDownloader> downloaded,
-                                         final boolean collectToUpdate, @Nullable ProgressIndicator indicator) throws Exception {
+                                         final boolean collectToUpdate, 
+                                         @Nullable ProgressIndicator indicator, 
+                                         final BuildNumber buildNumber) throws Exception {
     InputStream inputStream = loadVersionInfo(host);
     if (inputStream == null) return false;
     final Document document;
@@ -378,7 +386,7 @@ public final class UpdateChecker {
                 progressIndicator.setText2(finalPluginUrl);
               }
               final PluginDownloader downloader = new PluginDownloader(pluginId, finalPluginUrl, pluginVersion);
-              if (downloader.prepareToInstall(progressIndicator)) {
+              if (downloader.prepareToInstall(progressIndicator, buildNumber)) {
                 downloaded.put(PluginId.getId(pluginId), downloader);
               }
             }
@@ -478,7 +486,7 @@ public final class UpdateChecker {
       Runnable runnable = new Runnable() {
         @Override
         public void run() {
-          new UpdateInfoDialog(updatedChannel, enableLink).show();
+          new UpdateInfoDialog(updatedChannel, enableLink, updatedPlugins).show();
         }
       };
 

@@ -668,13 +668,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
     final Document document = myEditor.getDocument();
     final RangeMarker lastProcessedOutput = document.createRangeMarker(document.getTextLength(), document.getTextLength());
-    final boolean isAtEndOfDocument = myEditor.getCaretModel().getOffset() == document.getTextLength();
+    final int caretOffset = myEditor.getCaretModel().getOffset();
+    final boolean isAtLastLine = document.getLineNumber(caretOffset) >= document.getLineCount() - 1;
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       @Override
       public void run() {
-        int offset = myEditor.getCaretModel().getOffset();
-        boolean preserveCurrentVisualArea = offset < document.getTextLength();
+        boolean preserveCurrentVisualArea = caretOffset < document.getTextLength();
         if (preserveCurrentVisualArea) {
           myEditor.getScrollingModel().accumulateViewportChanges();
         }
@@ -748,7 +748,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
     }
 
-    if (isAtEndOfDocument) {
+    if (isAtLastLine) {
       EditorUtil.scrollToTheEnd(myEditor);
     }
   }
