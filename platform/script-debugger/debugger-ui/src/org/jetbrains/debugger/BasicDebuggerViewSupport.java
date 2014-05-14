@@ -12,6 +12,7 @@ import org.jetbrains.debugger.values.ObjectValue;
 import org.jetbrains.debugger.values.Value;
 
 import javax.swing.*;
+import java.util.Collections;
 import java.util.List;
 
 public class BasicDebuggerViewSupport implements DebuggerViewSupport, MemberFilter {
@@ -86,6 +87,12 @@ public class BasicDebuggerViewSupport implements DebuggerViewSupport, MemberFilt
   @Override
   public boolean isMemberVisible(@NotNull Variable variable, boolean filterFunctions) {
     return true;
+  }
+
+  @NotNull
+  @Override
+  public List<Variable> getAdditionalVariables() {
+    return Collections.emptyList();
   }
 
   @NotNull

@@ -144,6 +144,12 @@ public final class VariableView extends XNamedValue implements VariableContext {
   public void computePresentation(@NotNull final XValueNode node, @NotNull XValuePlace place) {
     value = variable.getValue();
     if (value == null) {
+      if (!(variable instanceof ObjectProperty) || ((ObjectProperty)variable).getGetter() == null) {
+        // it is "used" expression (WEB-6779 Debugger/Variables: Automatically show used variables)
+        evaluateGet(node, null);
+        return;
+      }
+
       node.setPresentation(null, new XValuePresentation() {
         @Override
         public void renderValue(@NotNull XValueTextRenderer renderer) {
@@ -153,22 +159,28 @@ public final class VariableView extends XNamedValue implements VariableContext {
       node.setFullValueEvaluator(new XFullValueEvaluator(" (invoke getter)") {
         @Override
         public void startEvaluation(@NotNull final XFullValueEvaluationCallback callback) {
-          ValueModifier valueModifier = variable.getValueModifier();
-          assert valueModifier != null;
-          ObsolescentAsyncResults.consume(valueModifier.evaluateGet((ObjectProperty)variable, getEvaluateContext()), node, new PairConsumer<Value, XValueNode>() {
-            @Override
-            public void consume(Value value, XValueNode node) {
-              callback.evaluated("");
-              VariableView.this.value = value;
-              computePresentation(value, node);
-            }
-          });
+          evaluateGet(node, callback);
         }
       }.setShowValuePopup(false));
     }
     else {
       computePresentation(value, node);
     }
+  }
+
+  private void evaluateGet(@NotNull XValueNode node, @Nullable final XFullValueEvaluator.XFullValueEvaluationCallback callback) {
+    ValueModifier valueModifier = variable.getValueModifier();
+    assert valueModifier != null;
+    ObsolescentAsyncResults.consume(valueModifier.evaluateGet(variable, getEvaluateContext()), node, new PairConsumer<Value, XValueNode>() {
+      @Override
+      public void consume(Value value, XValueNode node) {
+        if (callback != null) {
+          callback.evaluated("");
+        }
+        VariableView.this.value = value;
+        computePresentation(value, node);
+      }
+    });
   }
 
   @NotNull
