@@ -175,7 +175,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
         }
 
         public MemberChooserHeaderPanel(final PsiClass clazz) {
-            super(new BorderLayout());
+            super(new GridBagLayout());
 
             final Collection<TemplateResource> templates = TemplatesManager.getInstance().getAllTemplates();
             final TemplateResource[] all = templates.toArray(new TemplateResource[templates.size()]);
@@ -226,15 +226,23 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
                 }
             });
 
-            add(settingsButton, BorderLayout.EAST);
-            add(comboBox, BorderLayout.CENTER);
             comboBox.setSelectedItem(TemplatesManager.getInstance().getDefaultTemplate());
 
             final JLabel templatesLabel = new JLabel("Template: ");
             templatesLabel.setDisplayedMnemonic('T');
             templatesLabel.setLabelFor(comboBox);
 
-            add(templatesLabel, BorderLayout.WEST);
+            final GridBagConstraints constraints = new GridBagConstraints();
+            constraints.anchor = GridBagConstraints.BASELINE;
+            constraints.gridx = 0;
+            add(templatesLabel, constraints);
+            constraints.gridx = 1;
+            constraints.weightx = 1.0;
+            constraints.fill = GridBagConstraints.HORIZONTAL;
+            add(comboBox, constraints);
+            constraints.gridx = 2;
+            constraints.weightx = 0.0;
+            add(settingsButton, constraints);
         }
 
         public TemplateResource getSelectedTemplate() {
