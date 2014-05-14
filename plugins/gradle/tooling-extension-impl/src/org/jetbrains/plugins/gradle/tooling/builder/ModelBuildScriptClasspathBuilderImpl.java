@@ -21,9 +21,11 @@ import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.Dependency;
 import org.gradle.plugins.ide.idea.model.ModuleLibrary;
 import org.gradle.plugins.ide.idea.model.Path;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.BuildScriptClasspathModel;
 import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderError;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 import org.jetbrains.plugins.gradle.tooling.internal.BuildScriptClasspathModelImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.ClasspathEntryModelImpl;
@@ -96,6 +98,17 @@ public class ModelBuildScriptClasspathBuilderImpl implements ModelBuilderService
 
     cache.put(project.getPath(), buildScriptClasspath);
     return buildScriptClasspath;
+  }
+
+  @NotNull
+  @Override
+  public ModelBuilderError getModelBuildError(@NotNull Project project, @NotNull Exception e) {
+    return new ModelBuilderError(
+      "Project build classpath resolve errors",
+      String.format(
+        "%s\nCodeInsight feature may not work for gradle build script of %s",
+        e.getMessage(), project)
+    );
   }
 
   private static Set<String> convert(Set<Path> paths) {

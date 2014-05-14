@@ -15,18 +15,28 @@
  */
 package org.jetbrains.plugins.gradle.tooling;
 
-import org.gradle.api.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/5/13
+ * @since 5/13/2014
  */
-public interface ModelBuilderService {
-  boolean canBuild(String modelName);
+public class ModelBuilderError {
+  @NotNull private final String group;
+  @NotNull private final String error;
 
-  Object buildAll(String modelName, Project project);
+  public ModelBuilderError(@NotNull String group, @NotNull String error) {
+    this.group = group;
+    this.error = error;
+  }
 
   @NotNull
-  ModelBuilderError getModelBuildError(@NotNull Project project, @NotNull Exception e);
+  public String getGroup() {
+    return group;
+  }
+
+  @NotNull
+  public String getError() {
+    return error;
+  }
 }
