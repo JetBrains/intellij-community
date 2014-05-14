@@ -37,7 +37,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -45,7 +44,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.IconUtil;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
@@ -927,7 +925,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         return;
       }
       SVNURL url = node.getURL();
-      AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myVCS.getCommittedChangesProvider(), 
+      AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myVCS.getCommittedChangesProvider(),
                                                                   new SvnRepositoryLocation(url.toString()),
                                                                   "Changes in " + url.toString(), null);
     }
@@ -1174,17 +1172,6 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       public void run() {
         final ChangeListViewerDialog dlg = new ChangeListViewerDialog(myRepositoryBrowser, myProject, changesList, true);
         dlg.setTitle(title);
-        dlg.setConvertor(new NotNullFunction<Change, Change>() {
-          @NotNull
-          public Change fun(final Change change) {
-            final FilePath path = ChangesUtil.getFilePath(change);
-
-            return new Change(new UrlContentRevision(change.getBeforeRevision(),
-                                 FilePathImpl.createNonLocal(SVNPathUtil.append(sourceUrl.toString(), path.getPath()), path.isDirectory()), revision),
-                              new UrlContentRevision(change.getAfterRevision(),
-                                 FilePathImpl.createNonLocal(SVNPathUtil.append(targetUrl.toString(), path.getPath()), path.isDirectory()), revision));
-          }
-        });
         dlg.show();
       }
     });
@@ -1202,32 +1189,6 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       e.getPresentation().setText("Close");
       e.getPresentation().setDescription("Close this tool window");
       e.getPresentation().setIcon(AllIcons.Actions.Cancel);
-    }
-  }
-
-  private static class UrlContentRevision implements ContentRevision {
-    private final ContentRevision myContentRevision;
-    private final FilePath myPath;
-    private final SvnRevisionNumber myNumber;
-
-    private UrlContentRevision(final ContentRevision contentRevision, final FilePath path, final long revision) {
-      myContentRevision = contentRevision;
-      myPath = path;
-      myNumber = new SvnRevisionNumber(SVNRevision.create(revision));
-    }
-
-    public String getContent() throws VcsException {
-      return (myContentRevision == null) ? "" : myContentRevision.getContent();
-    }
-
-    @NotNull
-    public FilePath getFile() {
-      return myPath;
-    }
-
-    @NotNull
-    public VcsRevisionNumber getRevisionNumber() {
-      return myNumber;
     }
   }
 }
