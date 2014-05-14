@@ -1026,4 +1026,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   public ClientFactory getCommandLineFactory() {
     return cmdClientFactory;
   }
+
+  @NotNull
+  public ClientFactory getSvnKitFactory() {
+    return svnKitClientFactory;
+  }
 }
