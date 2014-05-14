@@ -79,7 +79,6 @@
   <actions>
     <group id="PlatformOpenProjectGroup">
       <action id="NewDirectoryProject" class="com.jetbrains.python.newProject.PythonNewDirectoryProjectAction"/>
-      <action id="OpenDirectoryProject" class="com.intellij.platform.OpenDirectoryProjectAction"/>
       <add-to-group group-id="FileOpenGroup" anchor="first"/>
     </group>
 
