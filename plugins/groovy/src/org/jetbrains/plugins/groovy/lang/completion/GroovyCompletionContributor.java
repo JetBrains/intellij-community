@@ -49,6 +49,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
     GroovyDocCompletionProvider.register(this);
     GrStatementStartCompletionProvider.register(this);
     GrMainCompletionProvider.register(this);
+    GrAnnotationAttributeCompletionProvider.register(this);
 
     extend(CompletionType.BASIC, psiElement().withParent(GrLiteral.class), new CompletionProvider<CompletionParameters>() {
       @Override

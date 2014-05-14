@@ -53,6 +53,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -890,5 +892,13 @@ public class PsiImplUtil {
   @Contract("null->false")
   public static boolean isTrait(@Nullable PsiClass aClass) {
     return aClass instanceof GrTypeDefinition && ((GrTypeDefinition)aClass).isTrait();
+  }
+
+  @Nullable
+  public static GrAnnotation getAnnotation(@NotNull GrAnnotationNameValuePair pair) {
+    PsiElement pParent = pair.getParent().getParent();
+    if (pParent instanceof GrAnnotation) return (GrAnnotation)pParent;
+    PsiElement ppParent = pParent.getParent();
+    return ppParent instanceof GrAnnotation ? (GrAnnotation)ppParent : null;
   }
 }

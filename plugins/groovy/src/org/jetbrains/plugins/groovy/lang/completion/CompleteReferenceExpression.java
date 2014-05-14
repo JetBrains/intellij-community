@@ -134,9 +134,7 @@ public class CompleteReferenceExpression {
         parent = parent.getParent();
       }
       if (parent instanceof GrAnnotation) {
-        for (LookupElement result : GroovyCompletionUtil.getAnnotationCompletionResults((GrAnnotation)parent, myMatcher)) {
-          myConsumer.consume(result);
-        }
+        new AnnotationAttributeCompletionResultProcessor((GrAnnotation)parent).process(myConsumer, myMatcher);
       }
     }
   }

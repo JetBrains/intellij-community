@@ -55,7 +55,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -76,16 +75,17 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrAnnotationCollector;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrCodeReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.WHITE_SPACES_OR_COMMENTS;
@@ -593,45 +593,6 @@ public class GroovyCompletionUtil {
 
     final IElementType t = pprev.getNode().getElementType();
     return t == mLT || t == mCOMMA;
-  }
-
-  public static List<LookupElement> getAnnotationCompletionResults(GrAnnotation anno, PrefixMatcher matcher) {
-    if (anno != null) {
-      GrCodeReferenceElement ref = anno.getClassReference();
-      PsiElement resolved = ref.resolve();
-
-      if (resolved instanceof PsiClass) {
-        final PsiAnnotation annotationCollector = GrAnnotationCollector.findAnnotationCollector((PsiClass)resolved);
-
-        if (annotationCollector != null) {
-          final ArrayList<GrAnnotation> annotations = ContainerUtil.newArrayList();
-          GrAnnotationCollector.collectAnnotations(annotations, anno, annotationCollector);
-
-          Set<String> usedNames = ContainerUtil.newHashSet();
-          List<LookupElement> result = new ArrayList<LookupElement>();
-          for (GrAnnotation annotation : annotations) {
-            final PsiElement resolvedAliased = annotation.getClassReference().resolve();
-            if (resolvedAliased instanceof PsiClass && ((PsiClass)resolvedAliased).isAnnotationType()) {
-              for (PsiMethod method : ((PsiClass)resolvedAliased).getMethods()) {
-                if (usedNames.add(method.getName())) {
-                  result.addAll(createLookupElements(new GroovyResolveResultImpl(method, true), false, matcher, null));
-                }
-              }
-            }
-          }
-          return result;
-        }
-        else if (((PsiClass)resolved).isAnnotationType()) {
-          List<LookupElement> result = new ArrayList<LookupElement>();
-          for (PsiMethod method : ((PsiClass)resolved).getMethods()) {
-            result.addAll(createLookupElements(new GroovyResolveResultImpl(method, true), false, matcher, null));
-          }
-          return result;
-        }
-      }
-    }
-
-    return Collections.emptyList();
   }
 
   static boolean isNewStatementInScript(PsiElement context) {
