@@ -62,7 +62,9 @@ public class ModelBuildScriptClasspathBuilderImpl implements ModelBuilderService
           }
         }
       }
-      final Configuration configuration = project.getBuildscript().getConfigurations().findByName("classpath");
+      Configuration configuration = project.getBuildscript().getConfigurations().findByName("classpath");
+      if (configuration == null) return null;
+      configuration = configuration.copy();
       Collection<Configuration> plusConfigurations = Collections.singletonList(configuration);
 
       final Map<String, Map<String, Collection<Configuration>>> scopes =
