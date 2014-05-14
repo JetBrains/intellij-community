@@ -224,6 +224,10 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
     doTest();
   }
 
+  public void testGeneratorParameter() {
+    doTest();
+  }
+
   // PY-10964
   public void testMultiReference() {
     myFixture.configureByFile(getTestName(true) + ".py");
