@@ -178,6 +178,11 @@ public class JavaDebugProcess extends XDebugProcess {
   }
 
   @Override
+  public void startForceStepInto() {
+    myJavaSession.stepInto(true, null);
+  }
+
+  @Override
   public void startStepOut() {
     myJavaSession.stepOut();
   }
