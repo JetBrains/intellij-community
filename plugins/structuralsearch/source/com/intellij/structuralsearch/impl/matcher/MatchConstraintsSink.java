@@ -21,7 +21,7 @@ class MatchConstraintsSink implements MatchResultSink {
   private final boolean caseSensitive;
   private int matchCount;
   private final int maxMatches;
-  private final HashMap<Object, MatchResult> matches = new HashMap();
+  private final HashMap<Object, MatchResult> matches = new HashMap<Object, MatchResult>();
 
   MatchConstraintsSink(MatchResultSink _delegate, int _maxMatches,boolean distinct, boolean _caseSensitive) {
     delegate = _delegate;
