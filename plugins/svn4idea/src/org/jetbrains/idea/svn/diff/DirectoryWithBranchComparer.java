@@ -34,8 +34,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
-* @author Konstantin Kolosovsky.
-*/
+ * @author Konstantin Kolosovsky.
+ */
 public class DirectoryWithBranchComparer extends ElementWithBranchComparer {
 
   @NotNull private final StringBuilder titleBuilder = new StringBuilder();
@@ -75,9 +75,7 @@ public class DirectoryWithBranchComparer extends ElementWithBranchComparer {
 
   @Override
   protected void showResult() {
-    if (!changes.isEmpty()) {
-      AbstractVcsHelper.getInstance(myProject).showWhatDiffersBrowser(null, changes, titleBuilder.toString());
-    }
+    AbstractVcsHelper.getInstance(myProject).showWhatDiffersBrowser(null, changes, titleBuilder.toString());
   }
 
   @Override

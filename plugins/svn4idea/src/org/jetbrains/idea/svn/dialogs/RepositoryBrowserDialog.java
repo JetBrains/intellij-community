@@ -1167,16 +1167,6 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
   private void showDiffEditorResults(final Map<String, Change> changes, String sourceTitle, String targetTitle,
                                      final SVNURL sourceUrl, final SVNURL targetUrl, final long revision) {
-    if (changes.isEmpty()) {
-      // display no changes dialog.
-      final String text = SvnBundle.message("repository.browser.compare.no.difference.message", sourceTitle, targetTitle);
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          Messages.showInfoMessage(myProject, text, SvnBundle.message("repository.browser.compare.no.difference.title"));
-        }
-      });
-      return;
-    }
     final Collection<Change> changesList = changes.values();
 
     final String title = SvnBundle.message("repository.browser.compare.title", sourceTitle, targetTitle);
