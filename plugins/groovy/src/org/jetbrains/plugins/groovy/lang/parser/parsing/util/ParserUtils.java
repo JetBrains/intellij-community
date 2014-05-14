@@ -88,10 +88,7 @@ public abstract class ParserUtils {
    * @return
    */
   public static boolean getToken(PsiBuilder builder, TokenSet tokenSet) {
-    if (tokenSet.contains(builder.getTokenType())) {
-      return getToken(builder, builder.getTokenType());
-    }
-    return false;
+    return getToken(builder, tokenSet, null);
   }
 
   /**
@@ -103,9 +100,15 @@ public abstract class ParserUtils {
    */
   public static boolean getToken(PsiBuilder builder, TokenSet tokenSet, String msg) {
     if (tokenSet.contains(builder.getTokenType())) {
-      return getToken(builder, builder.getTokenType(), msg);
+      builder.advanceLexer();
+      return true;
     }
-    return false;
+    else {
+      if (msg != null) {
+        builder.error(msg);
+      }
+      return false;
+    }
   }
 
   /**

@@ -182,6 +182,8 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testTypedef$enums$enum1() throws Throwable { doTest(); }
   public void testTypedef$enums$enum10() throws Throwable { doTest(); }
   public void testTypedef$enums$enum11() throws Throwable { doTest(); }
+  public void testTypedef$enums$enum12() throws Throwable { doTest(); }
+  public void testTypedef$enums$enum13() throws Throwable { doTest(); }
   public void testTypedef$enums$enum2() throws Throwable { doTest(); }
   public void testTypedef$enums$enum3() throws Throwable { doTest(); }
   public void testTypedef$enums$enum4() throws Throwable { doTest(); }
