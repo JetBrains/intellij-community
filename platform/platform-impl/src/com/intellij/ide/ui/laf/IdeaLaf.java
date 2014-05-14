@@ -44,14 +44,7 @@ public final class IdeaLaf extends MetalLookAndFeel {
     LafManagerImpl.initInputMapDefaults(defaults);
     initIdeaDefaults(defaults);
 
-    Pair<String, Integer> systemFont;
-    if (SystemInfo.isWindows && ApplicationManager.getApplication() != null) {
-      UISettings ui = UISettings.getInstance();
-      systemFont = Pair.create(ui.FONT_FACE, ui.FONT_SIZE);
-    }
-    else {
-      systemFont = UIUtil.getSystemFontData();
-    }
+    Pair<String, Integer> systemFont = UIUtil.getSystemFontData();
     if (systemFont != null) {
       LafManagerImpl.initFontDefaults(defaults, systemFont.first, systemFont.second);
     }
