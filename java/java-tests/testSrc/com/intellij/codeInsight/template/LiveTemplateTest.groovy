@@ -520,13 +520,15 @@ class Foo {
 
     new ListTemplatesHandler().invoke(project, editor, myFixture.file);
     myFixture.type ' '
-    myFixture.checkResult "import java.util.Iterator;\n" +
-                          "\n" +
-                          "class A {{\n" +
-                          "    for (Iterator <selection>iterator</selection> = collection.iterator(); iterator.hasNext(); ) {\n" +
-                          "        Object next =  iterator.next();\n" +
-                          "        \n" +
-                          "    } }}"
+    myFixture.checkResult """\
+import java.util.Iterator;
+
+class A {{
+    for (Iterator <selection>iterator</selection> = collection.iterator(); iterator.hasNext(); ) {
+        Object next =  iterator.next();
+        \n\
+    }
+}}"""
   }
 
   public void testNavigationActionsDontTerminateTemplate() throws Throwable {
@@ -619,7 +621,7 @@ class Foo {
     assert myFixture.lookup
     assert myFixture.lookupElementStrings == []
     myFixture.type('\t')
-    myFixture.checkResult "class Foo {{\n    System.out.println(<caret>); }}"
+    myFixture.checkResult "class Foo {{\n    System.out.println(<caret>);\n}}"
   }
 
   public void "_test multi-dimensional toar"() {

@@ -1267,8 +1267,10 @@ class Foo extends Abcdefg <caret>'''
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
     myFixture.configureByText 'a.java', 'class Foo {{ <caret> }}'
     type 'soutv\tgetcl.'
-    myFixture.checkResult '''class Foo {{
-    System.out.println("getClass(). = " + getClass().<caret>); }}'''
+    myFixture.checkResult '''\
+class Foo {{
+    System.out.println("getClass(). = " + getClass().<caret>);
+}}'''
   }
 
   public void testReturnLParen() {

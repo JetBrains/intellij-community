@@ -1002,6 +1002,7 @@
     <stacktrace.fold substring="at sun.reflect."/>
     <stacktrace.fold substring="at java.rmi."/>
     <stacktrace.fold substring="at sun.rmi."/>
+    <stacktrace.fold substring="at com.sun.proxy.$Proxy"/>
     <stacktrace.fold substring="at com.intellij.rt.execution."/>
 
     <debuggerEditorTextProvider language="JAVA" implementationClass="com.intellij.debugger.impl.JavaEditorTextProviderImpl"/>
@@ -1160,6 +1161,7 @@
 
     <liveTemplateOptionalProcessor implementation="com.intellij.codeInsight.template.impl.ShortenToStaticImportProcessor"/>
     <liveTemplateOptionalProcessor implementation="com.intellij.codeInsight.template.impl.ShortenFQNamesProcessor"/>
+    <liveTemplateOptionalProcessor implementation="com.intellij.codeInsight.template.impl.CodeBlockReformattingProcessor"/>
     <projectService serviceInterface="com.intellij.ide.todo.nodes.TodoTreeHelper"
                     serviceImplementation="com.intellij.ide.todo.nodes.TodoJavaTreeHelper"/>
 
