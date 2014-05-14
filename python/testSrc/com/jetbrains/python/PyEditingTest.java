@@ -403,6 +403,11 @@ public class PyEditingTest extends PyTestCase {
     doTestEnter("<caret>''", "\n''");
   }
 
+  public void testEnterInUnicodeString() {
+    doTestEnter("a = u\"some <caret>text\"", "a = u\"some \" \\\n" +
+                                         "    u\"<caret>text\"");
+  }
+
   public void testBackslashInParenthesis() {  // PY-5106
     doTestEnter("(\"some <caret>string\", 1)", "(\"some \"\n" +
                                                " \"string\", 1)");

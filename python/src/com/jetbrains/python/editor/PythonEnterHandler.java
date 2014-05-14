@@ -45,7 +45,7 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
-  private boolean needPostProcess = false;
+  private int myPostprocessShift = 0;
 
   public static final Class[] IMPLICIT_WRAP_CLASSES = new Class[] {
     PySequenceExpression.class,
@@ -129,7 +129,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     final PsiElement prevElement = file.findElementAt(offset - 1);
     PyStringLiteralExpression string = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PyStringLiteralExpression.class, false);
 
-    if (string != null && PyTokenTypes.STRING_NODES.contains(prevElement.getNode().getElementType())
+    if (string != null && prevElement != null && PyTokenTypes.STRING_NODES.contains(prevElement.getNode().getElementType())
         && string.getTextOffset() < offset && !(element.getNode() instanceof PsiWhiteSpace)) {
       final String stringText = element.getText();
       final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
@@ -144,7 +144,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
       if (nextIsBackslash && !isEscapedQuote && !isEscapedBackslash) return Result.Continue;
 
       final StringBuilder replacementString = new StringBuilder();
-      needPostProcess = true;
+      myPostprocessShift = prefixLength + quote.length();
 
       if (PsiTreeUtil.getParentOfType(string, IMPLICIT_WRAP_CLASSES) != null) {
         replacementString.append(quote).append(pref).append(quote);
@@ -345,9 +345,9 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
   public Result postProcessEnter(@NotNull PsiFile file,
                                  @NotNull Editor editor,
                                  @NotNull DataContext dataContext) {
-    if (needPostProcess) {
-      needPostProcess = false;
-      editor.getCaretModel().moveCaretRelatively(1, 0, false, false, false);
+    if (myPostprocessShift > 0) {
+      editor.getCaretModel().moveCaretRelatively(myPostprocessShift, 0, false, false, false);
+      myPostprocessShift = 0;
     }
     return super.postProcessEnter(file, editor,
                                   dataContext);
