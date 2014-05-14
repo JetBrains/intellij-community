@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdesktop.swingx.graphics.GraphicsUtilities;
 import org.jdesktop.swingx.graphics.ShadowRenderer;
@@ -290,7 +291,7 @@ public class SheetController {
 
     int widestWordWidth = 250;
 
-    String [] words = message.split(" ");
+    String [] words = (message == null) ? ArrayUtil.EMPTY_STRING_ARRAY : message.split(" ");
 
     for (String word : words) {
       widestWordWidth = Math.max(fontMetrics.stringWidth(word), widestWordWidth);
