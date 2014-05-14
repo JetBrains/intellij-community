@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,9 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * Fully copied from java.util.WeakHashMap except "get" method optimization.
+ * Base class for concurrent (soft/weak) keys -> hard values map
+ * Null keys are allowed
+ * Null values are NOT allowed
  */
 abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V>, TObjectHashingStrategy<K> {
   protected final ReferenceQueue<K> myReferenceQueue = new ReferenceQueue<K>();
@@ -168,7 +170,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     if (key == null) {
       return myMap.containsKey(NULL_KEY);
     }
-    HardKey<K, V> hardKey = createHardKey((K)key);
+    HardKey<K, V> hardKey = createHardKey(key);
     boolean result = myMap.containsKey(hardKey);
     releaseHardKey(hardKey);
     return result;
@@ -181,13 +183,14 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     }
   };
 
-  private HardKey<K, V> createHardKey(K key) {
-    HardKey hardKey = HARD_KEY.get();
+  private HardKey<K, V> createHardKey(Object o) {
+    @SuppressWarnings("unchecked") K key = (K)o;
+    @SuppressWarnings("unchecked") HardKey<K,V> hardKey = HARD_KEY.get();
     hardKey.setKey(key, myHashingStrategy.computeHashCode(key));
     return hardKey;
   }
 
-  private static void releaseHardKey(HardKey key) {
+  private static void releaseHardKey(HardKey<?,?> key) {
     key.setKey(null, 0);
   }
 
@@ -198,7 +201,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     if (key == null) {
       return myMap.get(NULL_KEY);
     }
-    HardKey<K, V> hardKey = createHardKey((K)key);
+    HardKey<K, V> hardKey = createHardKey(key);
     V result = myMap.get(hardKey);
     releaseHardKey(hardKey);
     return result;
@@ -219,7 +222,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     if (key == null) {
       return myMap.remove(NULL_KEY);
     }
-    HardKey hardKey = createHardKey((K)key);
+    HardKey hardKey = createHardKey(key);
     V result = myMap.remove(hardKey);
     releaseHardKey(hardKey);
     return result;

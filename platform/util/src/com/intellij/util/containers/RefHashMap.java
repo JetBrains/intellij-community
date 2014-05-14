@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,11 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.ref.ReferenceQueue;
 import java.util.*;
 
+/**
+ * Base class for (soft/weak) keys -> hard values map
+ * Null keys are NOT allowed
+ * Null values are allowed
+ */
 abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   private final MyMap myMap;
   private final ReferenceQueue<K> myReferenceQueue = new ReferenceQueue<K>();
