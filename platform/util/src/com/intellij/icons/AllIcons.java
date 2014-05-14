@@ -163,6 +163,14 @@ public class AllIcons {
 
   }
   
+  public static class CodeStyle {
+    public static final Icon AddNewSectionRule = IconLoader.getIcon("/codeStyle/AddNewSectionRule.png"); // 16x16
+    
+    public static class Mac {
+      public static final Icon AddNewSectionRule = IconLoader.getIcon("/codeStyle/mac/AddNewSectionRule.png"); // 16x16
+    }
+  }
+  
   public static class Css {
     public static final Icon Atrule = IconLoader.getIcon("/css/atrule.png"); // 16x16
     public static final Icon Import = IconLoader.getIcon("/css/import.png"); // 16x16

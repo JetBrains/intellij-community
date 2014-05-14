@@ -35,7 +35,7 @@ public class AddArrangementSectionRuleAction extends AddArrangementRuleAction {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setIcon(SystemInfoRt.isMac ? AllIcons.ToolbarDecorator.Mac.Add : AllIcons.ToolbarDecorator.Add);
+    e.getPresentation().setIcon(SystemInfoRt.isMac ? AllIcons.CodeStyle.Mac.AddNewSectionRule : AllIcons.CodeStyle.AddNewSectionRule);
     final ArrangementMatchingRulesControl control = ArrangementMatchingRulesControl.KEY.getData(e.getDataContext());
     if (control == null) {
       return;
