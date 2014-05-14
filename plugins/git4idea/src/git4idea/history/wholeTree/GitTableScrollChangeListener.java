@@ -1,9 +1,12 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -12,7 +15,7 @@
  */
 package git4idea.history.wholeTree;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TableScrollingUtil;
 import com.intellij.ui.table.JBTable;
@@ -59,12 +62,12 @@ public class GitTableScrollChangeListener implements ChangeListener {
             myCheckSelection.run();
           }
           mySpeedometer.clear();
-          Pair<Integer,Integer> visibleRows = TableScrollingUtil.getVisibleRows(table);
+          Couple<Integer> visibleRows = TableScrollingUtil.getVisibleRows(table);
           if (visibleRows.getSecond() < 0) {
             // todo check
             // we cut the table, so leading/trailing compare number of rows, returned by model, with point and get incorrect results
             if (visibleRows.getFirst() < 0) return; // nothing to do
-            visibleRows = new Pair<Integer, Integer>(visibleRows.getFirst(), myTableModel.getRowCount() - 1);
+            visibleRows = Couple.newOne(visibleRows.getFirst(), myTableModel.getRowCount() - 1);
           }
           int difference = visibleRows.getSecond() - visibleRows.getFirst();
           int start = Math.max(0, visibleRows.getFirst() - difference);
