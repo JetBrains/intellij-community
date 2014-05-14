@@ -45,6 +45,7 @@ import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -139,6 +140,8 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   private JPanel myProgressPanel;
   private AsyncProcessIcon myProgressIcon;
   private JLabel myProgressMessage;
+
+  protected String myLastExecuteCommand;
 
   public DesignerEditorPanel(@NotNull DesignerEditor editor, @NotNull Project project, @NotNull Module module, @NotNull VirtualFile file) {
     myEditor = editor;
@@ -369,9 +372,9 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     return new Attachment[]{AttachmentFactory.createAttachment(myFile)};
   }
 
-  protected abstract void configureError(final @NotNull ErrorInfo info);
+  protected abstract void configureError(@NotNull ErrorInfo info);
 
-  protected void showErrorPage(final ErrorInfo info) {
+  protected void showErrorPage(ErrorInfo info) {
     storeState();
     hideProgress();
     myRootComponent = null;
@@ -1066,17 +1069,19 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
     @Override
     public boolean execute(final ThrowableRunnable<Exception> operation, String command, final boolean updateProperties) {
-      final boolean[] is = {true};
+      myLastExecuteCommand = command;
+      final Ref<Boolean> result = Ref.create(Boolean.TRUE);
       CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
         public void run() {
-          is[0] = DesignerEditorPanel.this.execute(operation, updateProperties);
+          result.set(DesignerEditorPanel.this.execute(operation, updateProperties));
         }
       }, command, null);
-      return is[0];
+      return result.get();
     }
 
     @Override
     public void executeWithReparse(final ThrowableRunnable<Exception> operation, String command) {
+      myLastExecuteCommand = command;
       CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
         public void run() {
           DesignerEditorPanel.this.executeWithReparse(operation);
@@ -1086,6 +1091,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
     @Override
     public void execute(final List<EditOperation> operations, String command) {
+      myLastExecuteCommand = command;
       CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
         public void run() {
           DesignerEditorPanel.this.execute(operations);
