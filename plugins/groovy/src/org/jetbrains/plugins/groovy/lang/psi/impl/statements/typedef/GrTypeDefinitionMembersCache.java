@@ -17,21 +17,29 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SimpleModificationTracker;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.AstTransformContributor;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static com.intellij.psi.util.PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil.addExpandingReflectedMethods;
@@ -152,8 +160,9 @@ public class GrTypeDefinitionMembersCache {
     return CachedValuesManager.getCachedValue(myDefinition, new CachedValueProvider<PsiMethod[]>() {
       @Override
       public Result<PsiMethod[]> compute() {
-        List<PsiMethod> result = new ArrayList<PsiMethod>();
+        List<PsiMethod> result = ContainerUtil.newArrayList();
         collectMethodsFromBody(myDefinition, result);
+        result.addAll(new TraitMethodCollector().collect(result));
 
         for (PsiMethod method : AstTransformContributor.runContributorsForMethods(myDefinition)) {
           addExpandingReflectedMethods(result, method);
@@ -170,5 +179,102 @@ public class GrTypeDefinitionMembersCache {
 
   public void dropCaches() {
     myTreeChangeTracker.incModificationCount();
+  }
+
+  private class TraitMethodCollector {
+    private class TraitProcessor {
+      private final ArrayList<CandidateInfo> result = ContainerUtil.newArrayList();
+      private final Set<PsiClass> processed = ContainerUtil.newHashSet();
+
+      public TraitProcessor(@NotNull GrTypeDefinition superClass, @NotNull PsiSubstitutor substitutor) {
+        processTraits(superClass, substitutor);
+      }
+
+      @NotNull
+      private List<CandidateInfo> getResult() {
+        return result;
+      }
+
+      private void processTraits(@NotNull GrTypeDefinition trait, @NotNull PsiSubstitutor substitutor) {
+        assert trait.isTrait();
+        if (!processed.add(trait)) return;
+
+        for (GrMethod method : trait.getCodeMethods()) {
+          if (!method.getModifierList().hasExplicitModifier(PsiModifier.ABSTRACT)) {
+            result.add(new CandidateInfo(method, substitutor));
+          }
+        }
+
+        PsiClassType[] types = trait.getSuperTypes();
+        for (PsiClassType type : types) {
+          PsiClassType.ClassResolveResult resolveResult = type.resolveGenerics();
+          PsiClass superClass = resolveResult.getElement();
+          if (PsiImplUtil.isTrait(superClass)) {
+            final PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, trait, substitutor);
+            processTraits((GrTypeDefinition)superClass, superSubstitutor);
+          }
+        }
+      }
+    }
+
+    @NotNull
+    public List<PsiMethod> collect(@NotNull List<PsiMethod> codeMethods) {
+      if (myDefinition.isInterface()) return Collections.emptyList();
+
+      GrImplementsClause clause = myDefinition.getImplementsClause();
+      if (clause == null) return Collections.emptyList();
+      PsiClassType[] types = clause.getReferencedTypes();
+
+      List<PsiClassType.ClassResolveResult> traits = getSuperTraits(types);
+      if (traits.isEmpty()) return Collections.emptyList();
+
+      Set<MethodSignature> existingSignatures = ContainerUtil.map2Set(codeMethods, new Function<PsiMethod, MethodSignature>() {
+        @Override
+        public MethodSignature fun(PsiMethod method) {
+          return method.getSignature(PsiSubstitutor.EMPTY);
+        }
+      });
+
+      List<PsiMethod> result = ContainerUtil.newArrayList();
+
+      for (PsiClassType.ClassResolveResult resolveResult : traits) {
+        GrTypeDefinition trait = (GrTypeDefinition)resolveResult.getElement();
+
+        List<CandidateInfo> concreteTraitMethods = new TraitProcessor(trait, resolveResult.getSubstitutor()).getResult();
+        for (CandidateInfo candidateInfo : concreteTraitMethods) {
+          List<GrMethod> methodsToAdd = getExpandingMethods(candidateInfo);
+          for (GrMethod impl : methodsToAdd) {
+            if (existingSignatures.add(impl.getSignature(PsiSubstitutor.EMPTY))) {
+              result.add(impl);
+            }
+          }
+        }
+      }
+      return result;
+    }
+
+    @NotNull
+    private List<GrMethod> getExpandingMethods(@NotNull CandidateInfo candidateInfo) {
+      GrMethod method = (GrMethod)candidateInfo.getElement();
+      GrLightMethodBuilder implementation = GrTraitMethod.create(method, candidateInfo.getSubstitutor()).setContainingClass(myDefinition);
+      implementation.getModifierList().removeModifier(GrModifierFlags.ABSTRACT_MASK);
+
+      GrReflectedMethod[] reflectedMethods = implementation.getReflectedMethods();
+      return reflectedMethods.length > 0 ? Arrays.<GrMethod>asList(reflectedMethods) : Collections.<GrMethod>singletonList(implementation);
+    }
+
+    @NotNull
+    private List<PsiClassType.ClassResolveResult> getSuperTraits(@NotNull PsiClassType[] types) {
+      List<PsiClassType.ClassResolveResult> traits = ContainerUtil.newArrayList();
+      for (PsiClassType type : types) {
+        PsiClassType.ClassResolveResult resolveResult = type.resolveGenerics();
+        PsiClass superClass = resolveResult.getElement();
+
+        if (PsiImplUtil.isTrait(superClass)) {
+          traits.add(resolveResult);
+        }
+      }
+      return traits;
+    }
   }
 }
