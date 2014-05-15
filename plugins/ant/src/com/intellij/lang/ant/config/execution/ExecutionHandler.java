@@ -22,10 +22,7 @@ import com.intellij.execution.configurations.CommandLineBuilder;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.junit.JUnitProcessHandler;
 import com.intellij.execution.junit2.segments.OutputPacketProcessor;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.*;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.util.ExecutionErrorDialog;
@@ -34,6 +31,7 @@ import com.intellij.ide.macro.Macro;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.AntBuildListener;
+import com.intellij.lang.ant.config.AntBuildTarget;
 import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -44,10 +42,11 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.util.concurrency.FutureResult;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,6 +62,31 @@ public final class ExecutionHandler {
   private ExecutionHandler() {
   }
 
+  @Nullable
+  public static ProcessHandler runTarget(AntRunConfiguration antRunConfiguration,
+                                         final DataContext dataContext,
+                                         List<BuildFileProperty> additionalProperties, @NotNull final AntBuildListener antBuildListener) {
+    AntBuildTarget target = antRunConfiguration.getTarget();
+    if (target == null) return null;
+    FutureResult<ProcessHandler> result = runBuildImpl((AntBuildFileBase)target.getModel().getBuildFile(),
+                                                       new String[]{target.getName()},
+                                                       null,
+                                                       dataContext,
+                                                       additionalProperties, antBuildListener);
+    if (result != null) {
+      try {
+        return result.get();
+      }
+      catch (InterruptedException e) {
+        LOG.warn(e);
+      }
+      catch (java.util.concurrent.ExecutionException e) {
+        LOG.warn(e);
+      }
+    }
+    return null;
+  }
+
   /**
    * @param antBuildListener should not be null. Use {@link com.intellij.lang.ant.config.AntBuildListener#NULL}
    */
@@ -71,6 +95,34 @@ public final class ExecutionHandler {
                               @Nullable final AntBuildMessageView buildMessageViewToReuse,
                               final DataContext dataContext,
                               List<BuildFileProperty> additionalProperties, @NotNull final AntBuildListener antBuildListener) {
+    FutureResult<ProcessHandler> futureResult =
+      runBuildImpl(buildFile, targets, buildMessageViewToReuse, dataContext, additionalProperties, antBuildListener);
+    if (futureResult != null) {
+      try {
+        ProcessHandler processHandler = futureResult.get();
+        if (processHandler != null) {
+          processHandler.waitFor();
+        }
+      }
+      catch (InterruptedException e) {
+        LOG.warn(e);
+      }
+      catch (java.util.concurrent.ExecutionException e) {
+        LOG.warn(e);
+      }
+    }
+  }
+
+  /**
+   * @param antBuildListener should not be null. Use {@link com.intellij.lang.ant.config.AntBuildListener#NULL}
+   */
+  @Nullable
+  public static FutureResult<ProcessHandler> runBuildImpl(final AntBuildFileBase buildFile,
+                                                          String[] targets,
+                                                          @Nullable final AntBuildMessageView buildMessageViewToReuse,
+                                                          final DataContext dataContext,
+                                                          List<BuildFileProperty> additionalProperties,
+                                                          @NotNull final AntBuildListener antBuildListener) {
     final AntBuildMessageView messageView;
     final GeneralCommandLine commandLine;
     final Project project = buildFile.getProject();
@@ -78,7 +130,7 @@ public final class ExecutionHandler {
       FileDocumentManager.getInstance().saveAllDocuments();
       final AntCommandLineBuilder builder = new AntCommandLineBuilder();
 
-      builder.setBuildFile(buildFile.getAllOptions(), VfsUtil.virtualToIoFile(buildFile.getVirtualFile()));
+      builder.setBuildFile(buildFile.getAllOptions(), VfsUtilCore.virtualToIoFile(buildFile.getVirtualFile()));
       builder.calculateProperties(dataContext, additionalProperties);
       builder.addTargets(targets);
 
@@ -89,25 +141,25 @@ public final class ExecutionHandler {
       messageView.setBuildCommandLine(commandLine.getCommandLineString());
     }
     catch (RunCanceledException e) {
-      e.showMessage(project, AntBundle.message("run.ant.erorr.dialog.title"));
+      e.showMessage(project, AntBundle.message("run.ant.error.dialog.title"));
       antBuildListener.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
-      return;
+      return null;
     }
     catch (CantRunException e) {
-      ExecutionErrorDialog.show(e, AntBundle.message("cant.run.ant.erorr.dialog.title"), project);
+      ExecutionErrorDialog.show(e, AntBundle.message("cant.run.ant.error.dialog.title"), project);
       antBuildListener.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
-      return;
+      return null;
     }
     catch (Macro.ExecutionCancelledException e) {
       antBuildListener.buildFinished(AntBuildListener.ABORTED, 0);
-      return;
+      return null;
     }
     catch (Throwable e) {
       antBuildListener.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
       LOG.error(e);
-      return;
+      return null;
     }
-
+    final FutureResult<ProcessHandler> future = new FutureResult<ProcessHandler>();
     new Task.Backgroundable(buildFile.getProject(), AntBundle.message("ant.build.progress.dialog.title"), true) {
 
       public boolean shouldStartInBackground() {
@@ -116,11 +168,12 @@ public final class ExecutionHandler {
 
       public void onCancel() {
         antBuildListener.buildFinished(AntBuildListener.ABORTED, 0);
+        future.set(null);
       }
 
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
-          runBuild(indicator, messageView, buildFile, antBuildListener, commandLine);
+          future.set(runBuild(indicator, messageView, buildFile, antBuildListener, commandLine));
         }
         catch (Throwable e) {
           LOG.error(e);
@@ -128,13 +181,15 @@ public final class ExecutionHandler {
         }
       }
     }.queue();
+    return future;
   }
 
-  private static void runBuild(final ProgressIndicator progress,
-                               @NotNull final AntBuildMessageView errorView,
-                               @NotNull final AntBuildFileBase buildFile,
-                               @NotNull final AntBuildListener antBuildListener,
-                               @NotNull GeneralCommandLine commandLine) {
+  @Nullable
+  private static ProcessHandler runBuild(final ProgressIndicator progress,
+                                         @NotNull final AntBuildMessageView errorView,
+                                         @NotNull final AntBuildFileBase buildFile,
+                                         @NotNull final AntBuildListener antBuildListener,
+                                         @NotNull GeneralCommandLine commandLine) {
     final Project project = buildFile.getProject();
 
     final long startTime = System.currentTimeMillis();
@@ -146,15 +201,15 @@ public final class ExecutionHandler {
     catch (final ExecutionException e) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          ExecutionErrorDialog.show(e, AntBundle.message("could.not.start.process.erorr.dialog.title"), project);
+          ExecutionErrorDialog.show(e, AntBundle.message("could.not.start.process.error.dialog.title"), project);
         }
       });
       antBuildListener.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
-      return;
+      return null;
     }
 
     processRunningAnt(progress, handler, errorView, buildFile, startTime, antBuildListener);
-    handler.waitFor();
+    return handler;
   }
 
   private static void processRunningAnt(final ProgressIndicator progress,
