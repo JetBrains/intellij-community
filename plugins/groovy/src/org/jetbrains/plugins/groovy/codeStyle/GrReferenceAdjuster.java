@@ -28,9 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -60,6 +58,18 @@ public class GrReferenceAdjuster implements ReferenceAdjuster {
       expr = ((GrReferenceExpression)expr).getQualifierExpression();
     }
     return expr == null;
+  }
+
+  public static void shortenAllReferencesIn(@Nullable GroovyPsiElement newTypeElement) {
+    if (newTypeElement != null) {
+      newTypeElement.accept(new GroovyRecursiveElementVisitor() {
+        @Override
+        public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
+          super.visitCodeReferenceElement(refElement);
+          shortenReference(refElement);
+        }
+      });
+    }
   }
 
   @Override

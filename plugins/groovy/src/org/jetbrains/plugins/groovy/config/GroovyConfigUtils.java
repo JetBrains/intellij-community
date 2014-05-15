@@ -108,8 +108,7 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
       @Override
       public Result<String> compute() {
         final String path = LibrariesUtil.getGroovyHomePath(module);
-        if (path == null) return Result.create(null, ProjectRootManager.getInstance(module.getProject()));
-        return Result.create(getSDKVersion(path), ProjectRootManager.getInstance(module.getProject()));
+        return Result.create(path == null ? null : getSDKVersion(path), ProjectRootManager.getInstance(module.getProject()));
       }
     });
   }
