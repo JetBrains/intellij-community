@@ -159,6 +159,9 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
   @Override
   public void dispose() {
     // Alarm should be disposed already
-    myFutureReference.get().cancel(true);
+    Future<List<Task>> future = myFutureReference.get();
+    if (future != null) {
+      future.cancel(true);
+    }
   }
 }
