@@ -30,7 +30,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -68,7 +67,7 @@ public class GrReassignedInClosureLocalVarInspection extends BaseInspection {
 
         if (!PsiUtil.isLValue(referenceExpression)) return;
         final PsiElement resolved = referenceExpression.resolve();
-        if (!GroovyPsiUtil.isLocalVariable(resolved)) return;
+        if (!PsiUtil.isLocalVariable(resolved)) return;
 
         final PsiType checked = GrReassignedLocalVarsChecker.getReassignedVarType(referenceExpression, false);
         if (checked == null) return;

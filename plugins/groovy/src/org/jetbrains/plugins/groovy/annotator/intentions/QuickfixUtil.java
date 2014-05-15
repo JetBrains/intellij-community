@@ -38,7 +38,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -188,7 +187,7 @@ public class QuickfixUtil {
     settings.setContainingClassName(className);
     settings.setName(referenceExpression.getReferenceName());
 
-    if (GroovyPsiUtil.isCall(referenceExpression)) {
+    if (PsiUtil.isCall(referenceExpression)) {
       List<PsiType> unboxedTypes = new ArrayList<PsiType>();
       for (PsiType type : PsiUtil.getArgumentTypes(referenceExpression, false)) {
         unboxedTypes.add(TypesUtil.unboxPrimitiveTypeWrapperAndEraseGenerics(type));

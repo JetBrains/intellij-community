@@ -64,7 +64,7 @@ public class GrReassignedLocalVarsChecker {
     }
 
     final PsiElement resolved = refExpr.resolve();
-    if (!GroovyPsiUtil.isLocalVariable(resolved)) {
+    if (!PsiUtil.isLocalVariable(resolved)) {
       return false;
     }
 
@@ -116,7 +116,7 @@ public class GrReassignedLocalVarsChecker {
     }
 
     final PsiElement resolved = refExpr.resolve();
-    if (!GroovyPsiUtil.isLocalVariable(resolved)) {
+    if (!PsiUtil.isLocalVariable(resolved)) {
       return null;
     }
 

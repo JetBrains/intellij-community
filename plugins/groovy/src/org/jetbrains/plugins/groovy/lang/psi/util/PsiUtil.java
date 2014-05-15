@@ -1372,4 +1372,27 @@ public class PsiUtil {
       }
     });
   }
+
+  public static boolean checkPsiElementsAreEqual(PsiElement l, PsiElement r) {
+    if (!l.getText().equals(r.getText())) return false;
+    if (l.getNode().getElementType() != r.getNode().getElementType()) return false;
+
+    final PsiElement[] lChildren = l.getChildren();
+    final PsiElement[] rChildren = r.getChildren();
+
+    if (lChildren.length != rChildren.length) return false;
+
+    for (int i = 0; i < rChildren.length; i++) {
+      if (!checkPsiElementsAreEqual(lChildren[i], rChildren[i])) return false;
+    }
+    return true;
+  }
+
+  public static boolean isCall(GrReferenceExpression referenceExpression) {
+    return referenceExpression.getParent() instanceof GrCall;
+  }
+
+  public static boolean isLocalVariable(@Nullable PsiElement variable) {
+    return variable instanceof GrVariable && !(variable instanceof GrField || variable instanceof GrParameter);
+  }
 }

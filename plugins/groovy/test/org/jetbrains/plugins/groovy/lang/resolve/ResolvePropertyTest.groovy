@@ -27,8 +27,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author ven
@@ -630,7 +630,7 @@ set<caret>Foo(2)
   public void testAnonymousClassFieldAndLocalVar() {
     final PsiElement resolved = resolve("A.groovy")
     assertInstanceOf resolved, PsiVariable
-    assertTrue GroovyPsiUtil.isLocalVariable(resolved)
+    assertTrue PsiUtil.isLocalVariable(resolved)
   }
 
   public void _testResolveForVarOutsideOfFor() {

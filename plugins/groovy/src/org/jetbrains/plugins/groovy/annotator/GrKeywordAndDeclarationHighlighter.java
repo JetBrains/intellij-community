@@ -40,7 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -135,7 +135,7 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
     }
 
     //don't highlight local vars and parameters here because their highlighting needs index.
-    if (GroovyPsiUtil.isLocalVariable(parent) || parent instanceof GrParameter) return null;
+    if (PsiUtil.isLocalVariable(parent) || parent instanceof GrParameter) return null;
 
     return GrHighlightUtil.getDeclarationHighlightingAttribute(parent, null);
   }

@@ -43,7 +43,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditiona
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
@@ -230,7 +229,7 @@ public class RemoveUnnecessarySemicolonsIntention implements IntentionAction {
       return after instanceof GrMethodCall && before.getText().equals(after.getText());
     }
     else {
-      return GroovyPsiUtil.checkPsiElementsAreEqual(before, after);
+      return PsiUtil.checkPsiElementsAreEqual(before, after);
     }
   }
 

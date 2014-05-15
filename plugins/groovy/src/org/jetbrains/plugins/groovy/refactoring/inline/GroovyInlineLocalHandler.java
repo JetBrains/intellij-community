@@ -41,7 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 
 import java.util.ArrayList;
@@ -61,7 +61,7 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
 
   @Override
   public boolean canInlineElement(PsiElement element) {
-    return GroovyPsiUtil.isLocalVariable(element);
+    return PsiUtil.isLocalVariable(element);
   }
 
   @Override

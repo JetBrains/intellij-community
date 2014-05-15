@@ -42,7 +42,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -377,7 +376,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
   private static String getInvokedOnLocalVar(GrExpression expression) {
     if (expression instanceof GrReferenceExpression) {
       final PsiElement resolved = ((GrReferenceExpression)expression).resolve();
-      if (GroovyPsiUtil.isLocalVariable(resolved)) {
+      if (PsiUtil.isLocalVariable(resolved)) {
         return ((GrVariable)resolved).getName();
       }
     }
@@ -394,7 +393,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
 
       if (expression instanceof GrReferenceExpression) {
         final PsiElement resolved = ((GrReferenceExpression)expression).resolve();
-        if (GroovyPsiUtil.isLocalVariable(resolved)) {
+        if (PsiUtil.isLocalVariable(resolved)) {
           expression = ((GrVariable)resolved).getInitializerGroovy();
           if (expression == null) return false;
         }
