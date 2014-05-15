@@ -170,7 +170,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
           final Color fg = defaultActionForeground(isSelected, presentation);
 
-          final JLabel actionLabel = createActionLabel(anAction, templatePresentation.getText() + "::" + actionWithParentGroup.getMode(), fg, bg, icon);
+          final JLabel actionLabel = createActionLabel(anAction, templatePresentation.getText(), fg, bg, icon);
           panel.add(actionLabel, BorderLayout.WEST);
 
           final String groupName = actionWithParentGroup.getGroupName();

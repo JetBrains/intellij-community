@@ -2,7 +2,7 @@
   <name>Ant Support</name>
   <id>AntSupport</id>
   <version>1.0</version>
-  <idea-version min="6.0"/>
+  <idea-version since-build="6.0"/>
   <description>Editing, maintaining and running ANT build scripts inside IntelliJ IDEA.</description>
   <vendor>JetBrains</vendor>
 
@@ -70,6 +70,9 @@
 
     <toolWindow anchor="right" icon="AllIcons.Toolwindows.ToolWindowAnt" id="Ant Build"
                 factoryClass="com.intellij.lang.ant.config.impl.AntToolWindowFactory"/>
+    <configurationType implementation="com.intellij.lang.ant.config.execution.AntRunConfigurationType"/>
+    <programRunner implementation="com.intellij.lang.ant.config.execution.AntRunner"/>
+
   </extensions>
 
   <application-components>

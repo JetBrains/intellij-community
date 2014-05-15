@@ -13,30 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.gradle.tooling;
+package com.intellij.codeInsight.daemon.quickFix;
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.pom.java.LanguageLevel;
 
-/**
- * @author Vladislav.Soroka
- * @since 5/13/2014
- */
-public class ModelBuilderError {
-  @NotNull private final String group;
-  @NotNull private final String error;
+public class ChangeMethodSignatureFromUsage8Test extends LightQuickFixParameterizedTestCase {
 
-  public ModelBuilderError(@NotNull String group, @NotNull String error) {
-    this.group = group;
-    this.error = error;
+  public void test() throws Exception { doAllTests(); }
+
+  @Override
+  protected String getBasePath() {
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/changeMethodSignatureFromUsage8";
   }
 
-  @NotNull
-  public String getGroup() {
-    return group;
-  }
-
-  @NotNull
-  public String getError() {
-    return error;
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_1_8;
   }
 }
