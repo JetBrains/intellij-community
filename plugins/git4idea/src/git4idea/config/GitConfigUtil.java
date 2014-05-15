@@ -16,6 +16,7 @@
 package git4idea.config;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -85,8 +86,8 @@ public class GitConfigUtil {
    * @return list of pairs ({@link Pair#first} is the key, {@link Pair#second} is the value)
    * @throws VcsException an exception
    */
-  public static List<Pair<String, String>> getAllValues(Project project, VirtualFile root, @NonNls String key) throws VcsException {
-    List<Pair<String, String>> result = new ArrayList<Pair<String, String>>();
+  public static List<Couple<String>> getAllValues(Project project, VirtualFile root, @NonNls String key) throws VcsException {
+    List<Couple<String>> result = new ArrayList<Couple<String>>();
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.CONFIG);
     h.setSilent(true);
     h.addParameters("--null", "--get-all", key);
@@ -96,7 +97,7 @@ public class GitConfigUtil {
     while ((pos = output.indexOf('\u0000', start)) != -1) {
       String value = output.substring(start, pos);
       start = pos + 1;
-      result.add(Pair.create(key, value));
+      result.add(Couple.newOne(key, value));
     }
     return result;
   }
