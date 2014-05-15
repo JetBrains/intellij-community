@@ -26,8 +26,8 @@ import com.intellij.psi.tree.IElementType;
  * @author Medvedev Max
  */
 public class LightJavaToken extends LightElement implements PsiJavaToken {
-  private PsiElement myElement;
-  private IElementType myType;
+  private final PsiElement myElement;
+  private final IElementType myType;
 
   public LightJavaToken(PsiElement element, IElementType type) {
     super(element.getManager(), element.getLanguage());

@@ -46,7 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
  * @author ilyas
  */
 public abstract class CreateClassActionBase extends Intention {
-  private CreateClassKind myType;
+  private final CreateClassKind myType;
 
   protected final GrReferenceElement myRefElement;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.annotator.intentions.CreateClassActionBase");

@@ -109,7 +109,7 @@ public class CompleteReferenceExpression {
       GroovyCompletionUtil.getCompletionVariants(candidates,
                                                  JavaClassNameCompletionContributor.AFTER_NEW.accepts(myRefExpr), myMatcher, myRefExpr);
 
-    if (myProcessor.isEmpty() && results.size() == 0) {
+    if (myProcessor.isEmpty() && results.isEmpty()) {
       results = GroovyCompletionUtil.getCompletionVariants(myProcessor.getInapplicableResults(),
                                                            JavaClassNameCompletionContributor.AFTER_NEW.accepts(myRefExpr), myMatcher,
                                                            myRefExpr);
@@ -396,7 +396,7 @@ public class CompleteReferenceExpression {
 
     private final SubstitutorComputer mySubstitutorComputer;
 
-    private Collection<String> myPreferredFieldNames; //Reference is inside classes with such fields so don't suggest properties with such names.
+    private final Collection<String> myPreferredFieldNames; //Reference is inside classes with such fields so don't suggest properties with such names.
     private final Set<String> myPropertyNames = new HashSet<String>();
     private final Set<String> myLocalVars = new HashSet<String>();
     private final Set<GrMethod> myProcessedMethodWithOptionalParams = new HashSet<GrMethod>();

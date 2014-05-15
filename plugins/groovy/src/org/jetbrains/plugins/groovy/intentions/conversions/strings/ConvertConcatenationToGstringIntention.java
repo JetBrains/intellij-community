@@ -111,7 +111,7 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     if (expressions.size() == 1) {
       invokeImpl(expressions.get(0), document);
     }
-    else if (expressions.size() > 0) {
+    else if (!expressions.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         invokeImpl(expressions.get(expressions.size() - 1), document);
         return;

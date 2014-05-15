@@ -55,7 +55,7 @@ public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBack
     if (psiClass == null) return true;
 
     final HierarchicalMethodSignature hierarchicalSignature = method.getHierarchicalMethodSignature();
-    if (hierarchicalSignature.getSuperSignatures().size() != 0) return true;
+    if (!hierarchicalSignature.getSuperSignatures().isEmpty()) return true;
 
     final Project project = method.getProject();
 
@@ -81,7 +81,7 @@ public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBack
       }
     }
 
-    if (goodSupers.size() == 0) return true;
+    if (goodSupers.isEmpty()) return true;
 
     List<PsiMethod> result = new ArrayList<PsiMethod>(goodSupers.size());
     result.add(goodSupers.get(0));

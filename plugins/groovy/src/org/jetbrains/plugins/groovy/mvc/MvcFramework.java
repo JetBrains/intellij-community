@@ -629,7 +629,7 @@ public abstract class MvcFramework {
     if (res == null) return null;
 
     res = res.trim();
-    if (res.length() == 0) return null;
+    if (res.isEmpty()) return null;
 
     return res;
   }

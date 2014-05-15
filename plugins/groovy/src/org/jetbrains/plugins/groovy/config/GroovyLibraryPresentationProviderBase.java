@@ -66,7 +66,8 @@ public abstract class GroovyLibraryPresentationProviderBase extends LibraryPrese
 
   public abstract boolean isSDKHome(@NotNull VirtualFile file);
 
-  public abstract @NotNull String getSDKVersion(String path);
+  @NotNull
+  public abstract String getSDKVersion(String path);
 
   @NotNull @Nls public abstract String getLibraryCategoryName();
 

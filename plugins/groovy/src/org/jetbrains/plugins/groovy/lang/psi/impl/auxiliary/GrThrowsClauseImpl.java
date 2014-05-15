@@ -82,7 +82,7 @@ public class GrThrowsClauseImpl extends GroovyPsiElementImpl implements GrThrows
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (cur instanceof GrCodeReferenceElement) refs.add((GrCodeReferenceElement)cur);
     }
-    if (refs.size() == 0) return PsiClassType.EMPTY_ARRAY;
+    if (refs.isEmpty()) return PsiClassType.EMPTY_ARRAY;
 
     PsiClassType[] result = new PsiClassType[refs.size()];
     for (int i = 0; i < result.length; i++) {

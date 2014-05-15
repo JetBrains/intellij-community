@@ -965,7 +965,7 @@ public class PsiUtil {
   }
 
 
-  private static String[] visibilityModifiers = new String[]{PsiModifier.PRIVATE, PsiModifier.PROTECTED, PsiModifier.PUBLIC};
+  private static final String[] visibilityModifiers = new String[]{PsiModifier.PRIVATE, PsiModifier.PROTECTED, PsiModifier.PUBLIC};
 
   public static void escalateVisibility(PsiMember owner, PsiElement place) {
     PsiModifierList modifierList = owner.getModifierList();

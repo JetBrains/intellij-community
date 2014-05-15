@@ -122,7 +122,7 @@ public class GroovyStaticImportMethodFix extends Intention {
       PsiFile file = method.getContainingFile();
       if (file instanceof PsiClassOwner
           //do not show methods from default package
-          && ((PsiClassOwner)file).getPackageName().length() != 0 && PsiUtil.isAccessible(element, method)) {
+          && !((PsiClassOwner)file).getPackageName().isEmpty() && PsiUtil.isAccessible(element, method)) {
         list.add(method);
         if (PsiUtil.isApplicable(PsiUtil.getArgumentTypes(element, true), method, PsiSubstitutor.EMPTY, element, false)) {
           applicableList.add(method);

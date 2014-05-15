@@ -186,8 +186,8 @@ public abstract class GroovyShellActionBase extends DumbAwareAction {
   protected abstract LanguageConsoleImpl createConsole(Project project, String title);
 
   private class GroovyConsoleRunner extends AbstractConsoleRunnerWithHistory<LanguageConsoleView> {
-    private GroovyShellRunner myShellRunner;
-    private Module myModule;
+    private final GroovyShellRunner myShellRunner;
+    private final Module myModule;
 
     private GroovyConsoleRunner(@NotNull String consoleTitle,
                                 @NotNull GroovyShellRunner shellRunner,

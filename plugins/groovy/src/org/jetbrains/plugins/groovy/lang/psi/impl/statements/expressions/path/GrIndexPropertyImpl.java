@@ -67,7 +67,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
     }
   };
 
-  private MyReference myReference = new MyReference();
+  private final MyReference myReference = new MyReference();
 
   private PsiType inferType(@Nullable Boolean isSetter) {
     GrExpression selected = getInvokedExpression();

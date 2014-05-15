@@ -158,7 +158,7 @@ public class ConvertStringToMultilineIntention extends Intention {
 
   private void invokeImpl(@NotNull final GrExpression element, @NotNull final Project project, @NotNull final Editor editor) {
     final List<GrLiteral> literals = collectOperands(element, ContainerUtil.<GrLiteral>newArrayList());
-    if (literals.size() == 0) return;
+    if (literals.isEmpty()) return;
 
     final StringBuilder buffer = prepareNewLiteralText(literals);
 

@@ -117,10 +117,10 @@ public class GrIntroduceValidatorEngine implements GrIntroduceHandlerBase.Valida
     for (String s : strings) {
       result = result + s.replaceAll("<b><code>", "").replaceAll("</code></b>", "") + "\n";
     }
-    if (list.size() > 0) {
+    if (!list.isEmpty()) {
       result = result.substring(0, result.length() - 1);
     }
-    if (result.length() == 0) {
+    if (result.isEmpty()) {
       result = "ok";
     }
     return result;
@@ -190,11 +190,11 @@ public class GrIntroduceValidatorEngine implements GrIntroduceHandlerBase.Valida
   @Override
   public String validateName(String name, boolean increaseNumber) {
     String result = name;
-    if (isOKImpl(name, true).size() > 0 && !increaseNumber || name.length() == 0) {
+    if (!isOKImpl(name, true).isEmpty() && !increaseNumber || name.isEmpty()) {
       return "";
     }
     int i = 1;
-    while (isOKImpl(result, true).size() > 0) {
+    while (!isOKImpl(result, true).isEmpty()) {
       result = name + i;
       i++;
     }

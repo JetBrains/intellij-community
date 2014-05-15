@@ -80,11 +80,11 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   @Override
-  public boolean processClosureDeclarations(final @NotNull PsiScopeProcessor plainProcessor,
-                                            final @NotNull PsiScopeProcessor nonCodeProcessor,
-                                            final @NotNull ResolveState state,
-                                            final @Nullable PsiElement lastParent,
-                                            final @NotNull PsiElement place) {
+  public boolean processClosureDeclarations(@NotNull final PsiScopeProcessor plainProcessor,
+                                            @NotNull final PsiScopeProcessor nonCodeProcessor,
+                                            @NotNull final ResolveState state,
+                                            @Nullable final PsiElement lastParent,
+                                            @NotNull final PsiElement place) {
     if (!processDeclarations(plainProcessor, state, lastParent, place)) return false;
     if (!processOwnerAndDelegate(plainProcessor, nonCodeProcessor, state, place)) return false;
 
@@ -92,10 +92,10 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   @Override
-  public boolean processDeclarations(final @NotNull PsiScopeProcessor processor,
-                                     final @NotNull ResolveState state,
-                                     final @Nullable PsiElement lastParent,
-                                     final @NotNull PsiElement place) {
+  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,
+                                     @NotNull final ResolveState state,
+                                     @Nullable final PsiElement lastParent,
+                                     @NotNull final PsiElement place) {
     if (lastParent == null) return true;
 
     if (!super.processDeclarations(processor, state, lastParent, place)) return false;

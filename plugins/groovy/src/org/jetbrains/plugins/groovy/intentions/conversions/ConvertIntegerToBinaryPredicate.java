@@ -38,7 +38,7 @@ public class ConvertIntegerToBinaryPredicate implements PsiElementPredicate {
       return false;
     }
     @NonNls final String text = expression.getText();
-    if (text == null || text.length() == 0) {
+    if (text == null || text.isEmpty()) {
       return false;
     }
     if (text.startsWith("0x") || text.startsWith("0X")) {

@@ -118,7 +118,7 @@ public class ExtractUtil {
     LOG.assertTrue(outputVars.length > 0);
 
     final List<VariableInfo> mustAdd = mustAddVariableDeclaration(statements, outputVars);
-    if (mustAdd.size() == 0) {
+    if (mustAdd.isEmpty()) {
       return new GrStatement[]{
         createAssignment(outputVars, callExpression, helper.getProject())
       };
@@ -180,7 +180,7 @@ public class ExtractUtil {
                                                            Project project,
                                                            @Nullable GrExpression initializer) {
     List<GrStatement> result = new ArrayList<GrStatement>();
-    if (varInfos.size() == 0) return result;
+    if (varInfos.isEmpty()) return result;
 
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
     boolean distinctDeclaration = haveDifferentTypes(varInfos);
@@ -479,7 +479,7 @@ public class ExtractUtil {
     int i = 0;
     String[] argumentNames = helper.getArgumentNames();
     for (String argName : argumentNames) {
-      if (argName.length() > 0) {
+      if (!argName.isEmpty()) {
         buffer.append(argName);
         if (i < number - 1) {
           buffer.append(",");
@@ -517,7 +517,7 @@ public class ExtractUtil {
 
   public static String getModifierString(ExtractMethodInfoHelper helper) {
     String visibility = helper.getVisibility();
-    LOG.assertTrue(visibility != null && visibility.length() > 0);
+    LOG.assertTrue(visibility != null && !visibility.isEmpty());
     final StringBuilder builder = new StringBuilder();
     builder.append(visibility);
     builder.append(" ");

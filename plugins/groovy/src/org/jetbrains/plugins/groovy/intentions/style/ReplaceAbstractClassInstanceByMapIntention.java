@@ -96,7 +96,7 @@ public class ReplaceAbstractClassInstanceByMapIntention extends Intention {
         appendClosureTextByMethod(method, buffer, block, newExpr);
         buffer.append(",\n");
       }
-      if (methods.size() > 0) {
+      if (!methods.isEmpty()) {
         buffer.delete(buffer.length() - 2, buffer.length());
         buffer.append('\n');
       }

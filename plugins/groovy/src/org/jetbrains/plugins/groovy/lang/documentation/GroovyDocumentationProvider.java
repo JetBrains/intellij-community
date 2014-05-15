@@ -224,7 +224,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   private static void generateModifiers(StringBuilder buffer, PsiElement element) {
     String modifiers = PsiFormatUtil.formatModifiers(element, PsiFormatUtilBase.JAVADOC_MODIFIERS_ONLY);
 
-    if (modifiers.length() > 0) {
+    if (!modifiers.isEmpty()) {
       buffer.append(modifiers);
       buffer.append(" ");
     }
@@ -240,7 +240,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     GroovyFile file = (GroovyFile)aClass.getContainingFile();
 
     String packageName = file.getPackageName();
-    if (packageName.length() > 0) {
+    if (!packageName.isEmpty()) {
       buffer.append(packageName).append("\n");
     }
 

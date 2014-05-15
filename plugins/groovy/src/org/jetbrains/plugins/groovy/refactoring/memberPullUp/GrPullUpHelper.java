@@ -75,13 +75,13 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
   private final PsiClass myTargetSuperClass;
   private final Set<PsiMember> myMembersToMove;
   private final PsiClass mySourceClass;
-  private Project myProject;
-  private DocCommentPolicy myDocCommentPolicy;
-  private Set<PsiMember> myMembersAfterMove;
+  private final Project myProject;
+  private final DocCommentPolicy myDocCommentPolicy;
+  private final Set<PsiMember> myMembersAfterMove;
 
   final ExplicitSuperDeleter myExplicitSuperDeleter;
   final QualifiedThisSuperAdjuster myThisSuperAdjuster;
-  private QualifiedThisSuperSearcher myQualifiedSearcher;
+  private final QualifiedThisSuperSearcher myQualifiedSearcher;
 
   public GrPullUpHelper(PullUpData data) {
     myTargetSuperClass = data.getTargetClass();

@@ -48,7 +48,7 @@ import java.util.List;
 public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSettings> extends AbstractInplaceIntroducer<GrVariable, PsiElement> {
 
   private SmartTypePointer myTypePointer;
-  private OccurrencesChooser.ReplaceChoice myReplaceChoice;
+  private final OccurrencesChooser.ReplaceChoice myReplaceChoice;
 
   private RangeMarker myVarMarker;
   private final PsiFile myFile;

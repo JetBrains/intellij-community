@@ -61,12 +61,12 @@ import java.util.List;
 public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
   private static final Logger LOG = Logger.getInstance(GroovyBlock.class);
 
-  final protected ASTNode myNode;
+  protected final ASTNode myNode;
   protected Alignment myAlignment = null;
-  final protected Indent myIndent;
-  final protected Wrap myWrap;
+  protected final Indent myIndent;
+  protected final Wrap myWrap;
 
-  final protected FormattingContext myContext;
+  protected final FormattingContext myContext;
 
   protected List<Block> mySubBlocks = null;
 

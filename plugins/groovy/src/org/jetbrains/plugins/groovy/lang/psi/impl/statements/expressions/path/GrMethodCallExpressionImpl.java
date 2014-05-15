@@ -63,7 +63,7 @@ public class GrMethodCallExpressionImpl extends GrMethodCallImpl implements GrMe
     GrArgumentList argList = getArgumentList();
     assert argList!=null;
 
-    if (argList.getText().length() == 0) {
+    if (argList.getText().isEmpty()) {
       argList = (GrArgumentList)argList.replace(GroovyPsiElementFactory.getInstance(getProject()).createArgumentList());
     }
 

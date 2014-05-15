@@ -70,7 +70,7 @@ import java.util.Map;
  * @author Maxim.Medvedev
  */
 public class ConvertMapToClassIntention extends Intention {
-  private static Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.intentions.conversions.ConvertMapToClassIntention");
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.intentions.conversions.ConvertMapToClassIntention");
 
   @Override
   protected void processIntention(@NotNull PsiElement element, final Project project, Editor editor) throws IncorrectOperationException {
@@ -225,7 +225,7 @@ public class ConvertMapToClassIntention extends Intention {
 
   public static GrTypeDefinition createClass(Project project, GrNamedArgument[] namedArguments, String packageName, String className) {
     StringBuilder classText = new StringBuilder();
-    if (packageName.length() > 0) {
+    if (!packageName.isEmpty()) {
       classText.append("package ").append(packageName).append('\n');
     }
     classText.append("class ").append(className).append(" {\n");

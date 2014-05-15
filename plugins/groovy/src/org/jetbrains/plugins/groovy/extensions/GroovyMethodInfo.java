@@ -54,7 +54,7 @@ public class GroovyMethodInfo {
   private final String myNamedArgProviderClassName;
   private GroovyNamedArgumentProvider myNamedArgProviderInstance;
 
-  private Map<String, NamedArgumentReference> myNamedArgReferenceProviders;
+  private final Map<String, NamedArgumentReference> myNamedArgReferenceProviders;
 
   private final GroovyMethodDescriptor myDescriptor;
 

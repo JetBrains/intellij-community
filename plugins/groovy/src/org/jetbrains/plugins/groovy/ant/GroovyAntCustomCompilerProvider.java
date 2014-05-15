@@ -45,7 +45,7 @@ public class GroovyAntCustomCompilerProvider extends ChunkCustomCompilerExtensio
   /**
    * The property for groovyc task SDK
    */
-  @NonNls private final static String GROOVYC_TASK_SDK_PROPERTY = "grooovyc.task.sdk";
+  @NonNls private static final String GROOVYC_TASK_SDK_PROPERTY = "grooovyc.task.sdk";
 
   /**
    * {@inheritDoc}

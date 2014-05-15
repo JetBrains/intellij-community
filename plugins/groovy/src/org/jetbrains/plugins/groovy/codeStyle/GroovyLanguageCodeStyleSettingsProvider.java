@@ -362,7 +362,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
 
 
 
-  private final static String INDENT_OPTIONS_SAMPLE =
+  private static final String INDENT_OPTIONS_SAMPLE =
     /*
     "topLevelLabel:\n" +
     "foo(42)\n" +
@@ -392,7 +392,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
     "  }\n" +
     "}\n";
   
-  private final static String SPACING_SAMPLE =
+  private static final String SPACING_SAMPLE =
     "class Foo {\n" +
     "  @Annotation(param=\"foo\")\n"+
     "  @Ann([1, 2])\n" +

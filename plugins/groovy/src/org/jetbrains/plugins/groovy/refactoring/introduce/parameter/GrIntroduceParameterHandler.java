@@ -69,7 +69,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
   private JBPopup myEnclosingMethodsPopup;
 
   @Override
-  public void invoke(final @NotNull Project project, @NotNull final Editor editor, @NotNull final PsiFile file, final @Nullable DataContext dataContext) {
+  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file, @Nullable final DataContext dataContext) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (!selectionModel.hasSelection()) {
       final int offset = editor.getCaretModel().getOffset();
@@ -115,7 +115,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
   private void chooseScopeAndRun(@NotNull final InitialInfo initialInfo, @NotNull final Editor editor) {
     final List<GrParametersOwner> scopes = findScopes(initialInfo);
 
-    if (scopes.size() == 0) {
+    if (scopes.isEmpty()) {
       throw new GrRefactoringError(GroovyRefactoringBundle.message("there.is.no.method.or.closure"));
     }
     else if (scopes.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {

@@ -85,7 +85,7 @@ public class GroovyNamesUtil {
   }
 
   public static String fromLowerLetter(String str) {
-    if (str.length() == 0) return "";
+    if (str.isEmpty()) return "";
     if (str.length() == 1) return str.toLowerCase();
     char c = Character.toLowerCase(str.charAt(0));
     if (c == str.charAt(0)) return str;

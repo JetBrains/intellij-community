@@ -328,7 +328,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
           JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
           if (kind == CLASS_OR_PACKAGE_FQ || kind == CLASS_FQ) {
             final PsiFile file = ref.getContainingFile();
-            if (qName.indexOf('.') > 0 || file instanceof GroovyFile && ((GroovyFile)file).getPackageName().length() == 0) {
+            if (qName.indexOf('.') > 0 || file instanceof GroovyFile && ((GroovyFile)file).getPackageName().isEmpty()) {
               PsiClass aClass = facade.findClass(qName, ref.getResolveScope());
               if (aClass != null) {
                 boolean isAccessible = PsiUtil.isAccessible(ref, aClass);

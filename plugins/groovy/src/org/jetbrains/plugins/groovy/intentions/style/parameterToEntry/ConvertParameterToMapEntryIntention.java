@@ -279,7 +279,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
 
             final GrNamedArgument namedArg;
             if (argInfo.isMultiArg) {
-              if (argInfo.args.size() == 0) continue;
+              if (argInfo.args.isEmpty()) continue;
               String arg = "[" + StringUtil.join(ContainerUtil.map(argInfo.args, new Function<PsiElement, String>() {
                 @Override
                 public String fun(PsiElement element) {
@@ -292,7 +292,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
               namedArg = factory.createNamedArgument(paramName, factory.createExpressionFromText(arg));
             }
             else {
-              if (argInfo.args.size() == 0) continue;
+              if (argInfo.args.isEmpty()) continue;
               final PsiElement argument = argInfo.args.iterator().next();
               assert argument instanceof GrExpression;
               namedArg = factory.createNamedArgument(paramName, (GrExpression)argument);
@@ -536,7 +536,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
   }
 
   private static boolean reportConflicts(final MultiMap<PsiElement, String> conflicts, final Project project) {
-    if (conflicts.size() == 0) return true;
+    if (conflicts.isEmpty()) return true;
     ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
     conflictsDialog.show();
     return conflictsDialog.isOK();

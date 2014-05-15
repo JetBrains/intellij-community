@@ -52,6 +52,6 @@ class CStyleCommentPredicate implements PsiElementPredicate {
   }
 
   private static boolean isWhitespace(PsiElement element) {
-    return element.getText().replace("\n", "").trim().length() == 0;
+    return element.getText().replace("\n", "").trim().isEmpty();
   }
 }

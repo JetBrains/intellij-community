@@ -111,7 +111,7 @@ public class GriffonFramework extends MvcFramework {
   }
 
   @Override
-  public void updateProjectStructure(final @NotNull Module module) {
+  public void updateProjectStructure(@NotNull final Module module) {
     if (!MvcModuleStructureUtil.isEnabledStructureUpdate()) return;
 
     final VirtualFile root = findAppRoot(module);
@@ -165,7 +165,7 @@ public class GriffonFramework extends MvcFramework {
         return pluginAndVersion.substring(0, separatorIndexes.get(0));
       }
 
-      if (separatorIndexes.size() > 0) {
+      if (!separatorIndexes.isEmpty()) {
         String json;
         try {
           json = VfsUtil.loadText(pluginJson);

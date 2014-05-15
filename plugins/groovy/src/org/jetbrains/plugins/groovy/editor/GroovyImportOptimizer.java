@@ -334,7 +334,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         tempFile.addImport(newImport);
       }
 
-      if (oldImports.size() > 0) {
+      if (!oldImports.isEmpty()) {
         final int startOffset = oldImports.get(0).getTextRange().getStartOffset();
         final int endOffset = oldImports.get(oldImports.size() - 1).getTextRange().getEndOffset();
         String oldText = oldImports.isEmpty() ? "" : myFile.getText().substring(startOffset, endOffset);

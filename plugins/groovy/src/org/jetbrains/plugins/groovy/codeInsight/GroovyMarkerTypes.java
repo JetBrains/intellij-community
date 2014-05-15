@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -337,8 +337,8 @@ public class GroovyMarkerTypes {
   }
 
   private static class OverridingMethodsUpdater extends ListBackgroundUpdaterTask {
-    private GrMethod myMethod;
-    private PsiElementListCellRenderer myRenderer;
+    private final GrMethod myMethod;
+    private final PsiElementListCellRenderer myRenderer;
 
     public OverridingMethodsUpdater(GrMethod method, PsiElementListCellRenderer renderer) {
       super(method.getProject(), MarkerType.SEARCHING_FOR_OVERRIDING_METHODS);

@@ -165,7 +165,7 @@ public class GroovyCreateClassDialog extends DialogWrapper {
     }, GroovyInspectionBundle.message("create.directory.command"), null);
 
     if (errorStringRef.get() != null) {
-      if (errorStringRef.get().length() > 0) {
+      if (!errorStringRef.get().isEmpty()) {
         Messages.showMessageDialog(myProject, errorStringRef.get(), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       }
       return;

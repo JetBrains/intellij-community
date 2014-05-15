@@ -199,7 +199,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   @Nullable
   protected String getEnteredName() {
     String text = myNameField.getText();
-    if (text != null && text.trim().length() > 0) {
+    if (text != null && !text.trim().isEmpty()) {
       return text.trim();
     }
     else {

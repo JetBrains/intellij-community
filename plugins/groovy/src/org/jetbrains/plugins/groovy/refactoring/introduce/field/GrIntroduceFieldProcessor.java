@@ -332,7 +332,7 @@ public class GrIntroduceFieldProcessor {
         return PsiTreeUtil.isAncestor(block, element, true);
       }
     });
-    if (elements.size() == 0) return null;
+    if (elements.isEmpty()) return null;
     return GrIntroduceHandlerBase.findAnchor(ContainerUtil.toArray(elements, new PsiElement[elements.size()]), block);
   }
 

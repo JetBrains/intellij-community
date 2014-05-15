@@ -52,7 +52,7 @@ public class DPropertyElement extends DItemElement {
     Boolean isStatic = isStatic();
 
     String type = getType();
-    if (type == null || type.trim().length() == 0) {
+    if (type == null || type.trim().isEmpty()) {
       type = CommonClassNames.JAVA_LANG_OBJECT;
     }
     myPsi = new GrDynamicImplicitProperty(manager, getName(), type, containingClassName);

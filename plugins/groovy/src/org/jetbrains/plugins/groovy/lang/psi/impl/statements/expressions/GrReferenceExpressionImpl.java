@@ -244,7 +244,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       classCandidates = classProcessor.getCandidates();
     }
     if (classCandidates != null && classCandidates.length > 0) return classCandidates;
-    if (accessorResults.size() > 0) return new GroovyResolveResult[]{accessorResults.get(0)};
+    if (!accessorResults.isEmpty()) return new GroovyResolveResult[]{accessorResults.get(0)};
     return GroovyResolveResult.EMPTY_ARRAY;
   }
 
@@ -357,7 +357,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       ContainerUtil.addAll(allCandidates, candidates);
     }
 
-    if (allCandidates.size() > 0) {
+    if (!allCandidates.isEmpty()) {
       return allCandidates.toArray(new GroovyResolveResult[allCandidates.size()]);
     }
     return GroovyResolveResult.EMPTY_ARRAY;

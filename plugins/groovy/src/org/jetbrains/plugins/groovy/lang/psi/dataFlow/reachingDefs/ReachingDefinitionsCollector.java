@@ -396,12 +396,10 @@ public class ReachingDefinitionsCollector {
   }
 
   private static class VariableInfoImpl implements VariableInfo {
-    private
-    @NotNull final String myName;
+    @NotNull private final String myName;
     private final PsiManager myManager;
 
-    private
-    @Nullable
+    @Nullable private
     PsiType myType;
 
     VariableInfoImpl(@NotNull String name, PsiManager manager) {

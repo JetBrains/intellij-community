@@ -120,7 +120,7 @@ public abstract class DynamicDialog extends DialogWrapper {
     String containingClassName = mySettings.getContainingClassName();
     PsiClass targetClass = JavaPsiFacade.getInstance(myProject).findClass(containingClassName, GlobalSearchScope.allScope(myProject));
     if (targetClass == null || targetClass instanceof SyntheticElement) {
-      if (containingClassName.length() > 0) {
+      if (!containingClassName.isEmpty()) {
         myClassComboBox.addItem(containingClassName);
       }
 
@@ -247,7 +247,7 @@ public abstract class DynamicDialog extends DialogWrapper {
 
             removeElement(itemElement);
 
-            if (classElement.getMethods().size() == 0 && classElement.getProperties().size() == 0) {
+            if (classElement.getMethods().isEmpty() && classElement.getProperties().isEmpty()) {
               myDynamicManager.removeClassElement(classElement);
             }
           }

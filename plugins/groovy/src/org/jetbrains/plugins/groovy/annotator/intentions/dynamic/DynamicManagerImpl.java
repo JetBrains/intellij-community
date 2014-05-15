@@ -63,7 +63,7 @@ public class DynamicManagerImpl extends DynamicManager {
     StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
       @Override
       public void run() {
-        if (myRootElement.getContainingClasses().size() > 0) {
+        if (!myRootElement.getContainingClasses().isEmpty()) {
           DynamicToolWindowWrapper.getInstance(project).getToolWindow(); //initialize myToolWindow
         }
       }

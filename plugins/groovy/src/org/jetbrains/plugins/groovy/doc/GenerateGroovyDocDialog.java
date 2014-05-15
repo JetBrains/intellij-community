@@ -63,7 +63,7 @@ public final class GenerateGroovyDocDialog extends DialogWrapper {
   }
 
   private boolean checkDir(String dirName, String dirPrefix) {
-    if (dirName == null || dirName.trim().length() == 0) {
+    if (dirName == null || dirName.trim().isEmpty()) {
       Messages.showMessageDialog(myProject, GroovyDocBundle.message("groovydoc.generate.0.directory.not.specified", dirPrefix),
                                  CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       return false;

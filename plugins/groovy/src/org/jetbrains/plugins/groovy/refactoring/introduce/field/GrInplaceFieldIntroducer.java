@@ -51,7 +51,7 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
   private final EnumSet<GrIntroduceFieldSettings.Init> myApplicablePlaces;
   private GrInplaceIntroduceFieldPanel myPanel;
   private final GrFinalListener finalListener;
-  private String[] mySuggestedNames;
+  private final String[] mySuggestedNames;
   private boolean myIsStatic;
   private final GrVariable myLocalVar;
 

@@ -172,7 +172,7 @@ public class GroovyExtractChooser {
       ReachingDefinitionsCollector.obtainVariableFlowInformation(statement0, statements[statements.length - 1], controlFlowOwner, flow);
     VariableInfo[] inputInfos = fragmentVariableInfos.getInputVariableNames();
     VariableInfo[] outputInfos = fragmentVariableInfos.getOutputVariableNames();
-    if (outputInfos.length == 1 && returnStatements.size() > 0) {
+    if (outputInfos.length == 1 && !returnStatements.isEmpty()) {
       throw new GrRefactoringError(GroovyRefactoringBundle.message("multiple.output.values"));
     }
 
@@ -184,7 +184,7 @@ public class GroovyExtractChooser {
     }
 
     // must be replaced by return statement
-    boolean hasReturns = returnStatements.size() > 0;
+    boolean hasReturns = !returnStatements.isEmpty();
     List<GrStatement> returnStatementsCopy = new ArrayList<GrStatement>(returnStatements.size());
     returnStatementsCopy.addAll(returnStatements);
     boolean isReturnStatement = isReturnStatement(statements[statements.length - 1], returnStatementsCopy);
@@ -240,7 +240,7 @@ public class GroovyExtractChooser {
     if (statement instanceof GrReturnStatement) return true;
     if (statement instanceof GrIfStatement) {
       boolean checked = GroovyInlineMethodUtil.checkTailIfStatement(((GrIfStatement)statement), returnStatements);
-      return checked & returnStatements.size() == 0;
+      return checked & returnStatements.isEmpty();
     }
     if (statement instanceof GrExpression) {
       return returnStatements.contains(statement);

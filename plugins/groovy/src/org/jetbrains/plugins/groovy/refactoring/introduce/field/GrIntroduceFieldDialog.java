@@ -81,9 +81,9 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
   private JLabel myNameLabel;
   private JLabel myTypeLabel;
   private final boolean myIsStatic;
-  private boolean isInvokedInAlwaysInvokedConstructor;
-  private boolean hasLHSUsages;
-  private String myInvokedOnLocalVar;
+  private final boolean isInvokedInAlwaysInvokedConstructor;
+  private final boolean hasLHSUsages;
+  private final String myInvokedOnLocalVar;
   private final boolean myCanBeInitializedOutsideBlock;
 
   @Override

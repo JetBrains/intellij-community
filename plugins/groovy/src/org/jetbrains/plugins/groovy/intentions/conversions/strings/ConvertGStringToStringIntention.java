@@ -92,7 +92,7 @@ public class ConvertGStringToStringIntention extends Intention {
 
     StringBuilder builder = new StringBuilder(literal.getTextLength() * 2);
 
-    if (list.size() == 0) return "''";
+    if (list.isEmpty()) return "''";
 
     builder.append(list.get(0));
     for (int i = 1; i < list.size(); i++) {
@@ -153,7 +153,7 @@ public class ConvertGStringToStringIntention extends Intention {
     if (isBeforeInjection) {
       text = text.substring(0, text.length() - 1);
     }
-    if (text.length() == 0) return null;
+    if (text.isEmpty()) return null;
 
 
     final StringBuilder buffer = new StringBuilder();

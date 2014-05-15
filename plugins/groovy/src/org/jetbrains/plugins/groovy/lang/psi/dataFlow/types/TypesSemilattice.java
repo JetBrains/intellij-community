@@ -40,7 +40,7 @@ public class TypesSemilattice implements Semilattice<TypeDfaState> {
 
   @Override
   public TypeDfaState join(ArrayList<TypeDfaState> ins) {
-    if (ins.size() == 0) return new TypeDfaState();
+    if (ins.isEmpty()) return new TypeDfaState();
 
     TypeDfaState result = new TypeDfaState(ins.get(0));
     for (int i = 1; i < ins.size(); i++) {

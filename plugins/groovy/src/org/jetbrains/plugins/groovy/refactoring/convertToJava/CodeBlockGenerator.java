@@ -73,7 +73,7 @@ public class CodeBlockGenerator extends Generator {
   private final StringBuilder builder;
   private final ExpressionContext context;
 
-  private Set<GrStatement> myExitPoints;
+  private final Set<GrStatement> myExitPoints;
 
   public CodeBlockGenerator(StringBuilder builder, ExpressionContext context) {
     this(builder, context, null);

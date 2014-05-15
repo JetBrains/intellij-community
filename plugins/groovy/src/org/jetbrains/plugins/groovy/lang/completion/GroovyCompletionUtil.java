@@ -368,7 +368,7 @@ public class GroovyCompletionUtil {
     else if (element instanceof PsiClass) {
       String tailText = getPackageText((PsiClass)element);
       final PsiClass psiClass = (PsiClass)element;
-      if ((substitutor == null || substitutor.getSubstitutionMap().size() == 0) && psiClass.getTypeParameters().length > 0) {
+      if ((substitutor == null || substitutor.getSubstitutionMap().isEmpty()) && psiClass.getTypeParameters().length > 0) {
         tailText = "<" + StringUtil.join(psiClass.getTypeParameters(), new Function<PsiTypeParameter, String>() {
           @Override
           public String fun(PsiTypeParameter psiTypeParameter) {

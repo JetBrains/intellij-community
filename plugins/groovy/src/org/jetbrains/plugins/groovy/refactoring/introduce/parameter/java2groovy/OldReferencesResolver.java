@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -344,7 +344,7 @@ public class OldReferencesResolver {
       return GroovyRefactoringUtil.generateArgFromMultiArg(mySignature.getSubstitutor(), args, myParameters[index].getType(),
                                                            myContext.getProject());
     }
-    else if (args.size() == 0) {
+    else if (args.isEmpty()) {
       final PsiParameter parameter = myParameters[index];
       LOG.assertTrue(parameter instanceof GrParameter);
       final GrExpression initializer = ((GrParameter)parameter).getInitializerGroovy();

@@ -127,7 +127,7 @@ public class GroovyMapParameterDialog extends DialogWrapper {
 
   @Nullable
   protected String getEnteredName() {
-    if (myNameComboBox.getEditor().getItem() instanceof String && ((String)myNameComboBox.getEditor().getItem()).length() > 0) {
+    if (myNameComboBox.getEditor().getItem() instanceof String && !((String)myNameComboBox.getEditor().getItem()).isEmpty()) {
       return (String)myNameComboBox.getEditor().getItem();
     } else {
       return null;

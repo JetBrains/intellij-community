@@ -165,6 +165,6 @@ public class GantUtils {
   }
 
   public static boolean isSDKConfiguredToRun(@NotNull Module module) {
-    return getSDKInstallPath(module, module.getProject()).length() > 0;
+    return !getSDKInstallPath(module, module.getProject()).isEmpty();
   }
 }

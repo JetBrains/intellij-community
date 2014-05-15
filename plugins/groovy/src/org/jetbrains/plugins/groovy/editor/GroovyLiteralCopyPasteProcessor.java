@@ -167,7 +167,7 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
   @NotNull
   @Override
   protected String escapeCharCharacters(@NotNull String s, @NotNull PsiElement token) {
-    if (s.length() == 0) return s;
+    if (s.isEmpty()) return s;
     IElementType tokenType = token.getNode().getElementType();
 
     if (tokenType == mREGEX_CONTENT || tokenType == mREGEX_LITERAL) {

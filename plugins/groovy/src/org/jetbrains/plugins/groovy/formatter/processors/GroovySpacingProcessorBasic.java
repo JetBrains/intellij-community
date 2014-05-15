@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,7 +150,7 @@ public abstract class GroovySpacingProcessorBasic {
 
     if (mGDOC_ASTERISKS == leftType && mGDOC_COMMENT_DATA == rightType) {
       String text = rightNode.getText();
-      if (text.length() > 0 && !StringUtil.startsWithChar(text, ' ')) {
+      if (!text.isEmpty() && !StringUtil.startsWithChar(text, ' ')) {
         return COMMON_SPACING;
       }
       return NO_SPACING;

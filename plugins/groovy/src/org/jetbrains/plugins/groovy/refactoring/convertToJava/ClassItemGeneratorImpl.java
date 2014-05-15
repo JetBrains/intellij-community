@@ -330,7 +330,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       builder.append(";\n");
     }
 
-    if (extended.myStatements.size()>0) {
+    if (!extended.myStatements.isEmpty()) {
       initBuilder.append("}\n");
       mainBuilder.append(initBuilder);
     }
@@ -407,7 +407,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       writeType(text, implementsType, typeDefinition, classNameProvider);
       text.append(", ");
     }
-    if (implementsTypes.size() > 0) text.delete(text.length() - 2, text.length());
+    if (!implementsTypes.isEmpty()) text.delete(text.length() - 2, text.length());
     text.append(' ');
   }
 

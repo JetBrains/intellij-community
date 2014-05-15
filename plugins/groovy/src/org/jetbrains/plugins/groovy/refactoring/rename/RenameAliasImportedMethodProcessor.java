@@ -202,8 +202,8 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
   }
 
   private static class FieldNameCollisionInfo extends UnresolvableCollisionUsageInfo {
-    private String myName;
-    private String myBaseName;
+    private final String myName;
+    private final String myBaseName;
 
     public FieldNameCollisionInfo(GrField field, PsiMethod baseMethod) {
       super(field, field);

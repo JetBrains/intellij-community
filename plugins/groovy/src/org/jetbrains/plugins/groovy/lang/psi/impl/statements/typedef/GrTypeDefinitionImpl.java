@@ -119,7 +119,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     PsiElement parent = getParent();
     if (parent instanceof GroovyFile) {
       String packageName = ((GroovyFile)parent).getPackageName();
-      return packageName.length() > 0 ? packageName + "." + getName() : getName();
+      return !packageName.isEmpty() ? packageName + "." + getName() : getName();
     }
 
     final PsiClass containingClass = getContainingClass();

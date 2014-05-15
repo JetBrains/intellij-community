@@ -92,7 +92,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
   private JPanel myTargetClassPanel;
   private JLabel myTargetClassLabel;
   @Nullable private PsiClass myTargetClass;
-  @Nullable private PsiClass myDefaultTargetClass;
+  @Nullable private final PsiClass myDefaultTargetClass;
 
   private TargetClassInfo myTargetClassInfo;
 
@@ -349,7 +349,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     }
 
     final String targetClassName = myTargetClassEditor.getText();
-    if (targetClassName.trim().length() == 0 && myDefaultTargetClass == null) {
+    if (targetClassName.trim().isEmpty() && myDefaultTargetClass == null) {
       setOKActionEnabled(false);
       return;
     }

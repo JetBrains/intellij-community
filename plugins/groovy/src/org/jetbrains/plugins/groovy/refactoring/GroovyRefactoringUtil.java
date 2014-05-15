@@ -536,7 +536,7 @@ public abstract class GroovyRefactoringUtil {
     for (PsiElement argument : arguments) {
       argText.append(argument.getText()).append(", ");
     }
-    if (arguments.size() > 0) {
+    if (!arguments.isEmpty()) {
       argText.delete(argText.length() - 2, argText.length());
     }
     argText.append("]");

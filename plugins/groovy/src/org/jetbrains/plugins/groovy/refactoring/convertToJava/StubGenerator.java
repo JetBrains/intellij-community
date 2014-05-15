@@ -75,7 +75,7 @@ public class StubGenerator implements ClassItemGenerator {
     PsiModifier.FINAL,
   };
 
-  private ClassNameProvider classNameProvider;
+  private final ClassNameProvider classNameProvider;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.StubGenerator");
 
   public StubGenerator(ClassNameProvider classNameProvider) {
@@ -447,7 +447,7 @@ public class StubGenerator implements ClassItemGenerator {
       writeType(text, implementsType, typeDefinition, classNameProvider);
       text.append(", ");
     }
-    if (implementsTypes.size() > 0) text.delete(text.length() - 2, text.length());
+    if (!implementsTypes.isEmpty()) text.delete(text.length() - 2, text.length());
     text.append(' ');
   }
 

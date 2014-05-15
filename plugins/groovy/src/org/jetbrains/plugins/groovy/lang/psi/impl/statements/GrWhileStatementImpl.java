@@ -72,7 +72,7 @@ public class GrWhileStatementImpl extends GroovyPsiElementImpl implements GrWhil
       if (cur instanceof GrStatement) statements.add((GrStatement)cur);
     }
 
-    if (getCondition() == null && statements.size() > 0) return statements.get(0);
+    if (getCondition() == null && !statements.isEmpty()) return statements.get(0);
     if (statements.size() > 1) return statements.get(1);
     return null;
   }

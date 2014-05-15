@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ import java.util.List;
 * @author Maxim.Medvedev
 */
 public class PropertyForRename extends LightElement {
-  private List<? extends PsiElement> myToRename;
-  private String myPropertyName;
+  private final List<? extends PsiElement> myToRename;
+  private final String myPropertyName;
 
   PropertyForRename(List<? extends PsiElement> toRename, String propertyName, PsiManager manager) {
     super(manager, GroovyFileType.GROOVY_LANGUAGE);

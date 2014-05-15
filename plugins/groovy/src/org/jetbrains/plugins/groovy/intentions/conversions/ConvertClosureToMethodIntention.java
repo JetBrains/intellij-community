@@ -132,7 +132,7 @@ public class ConvertClosureToMethodIntention extends Intention {
                                                                   GroovyPresentationUtil.getSignaturePresentation(s)));
       }
     }
-    if (conflicts.size() > 0) {
+    if (!conflicts.isEmpty()) {
       final ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts, new Runnable() {
         @Override
         public void run() {

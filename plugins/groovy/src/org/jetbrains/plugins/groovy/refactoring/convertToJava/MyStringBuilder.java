@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ public class MyStringBuilder implements CharSequence {
   }
 
   public MyStringBuilder removeFromTheEnd(int count) {
-    if (positions.size() == 0) {
+    if (positions.isEmpty()) {
       innerLen -= count;
       realLength -= count;
       return this;
@@ -126,7 +126,7 @@ public class MyStringBuilder implements CharSequence {
 
   @Override
   public String toString() {
-    if (positions.size() == 0) {
+    if (positions.isEmpty()) {
       return new String(arr);
     }
 

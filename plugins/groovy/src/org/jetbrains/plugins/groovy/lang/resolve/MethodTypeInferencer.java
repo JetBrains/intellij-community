@@ -42,7 +42,7 @@ public class MethodTypeInferencer implements Computable<PsiType> {
   @Nullable
   public PsiType compute() {
     List<GrStatement> returns = ControlFlowUtils.collectReturns(myBlock);
-    if (returns.size() == 0) return PsiType.VOID;
+    if (returns.isEmpty()) return PsiType.VOID;
 
     PsiType result = null;
     PsiManager manager = myBlock.getManager();

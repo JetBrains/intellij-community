@@ -505,7 +505,7 @@ public class GroovyExpectedTypesProvider {
           }
         }
       }
-      if (result.size()==0) {
+      if (result.isEmpty()) {
       myResult = TypeConstraint.EMPTY_ARRAY;
       }
       else {

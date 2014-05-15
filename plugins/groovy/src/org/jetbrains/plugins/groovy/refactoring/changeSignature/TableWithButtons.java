@@ -92,7 +92,7 @@ public abstract class TableWithButtons {
     });
   }
 
-  private RowEditableTableModel myModel;
+  private final RowEditableTableModel myModel;
 
   private JPanel myPanel;
   private JButton myAddButton;

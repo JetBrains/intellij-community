@@ -118,7 +118,7 @@ public class GroovyScriptClass extends LightElement implements PsiClass, Synthet
     if (name == null) return null;
 
     final String packName = myFile.getPackageName();
-    if (packName.length() == 0) {
+    if (packName.isEmpty()) {
       return name;
     }
     else {

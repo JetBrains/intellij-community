@@ -65,7 +65,7 @@ public class GrInplaceParameterIntroducer extends GrAbstractInplaceIntroducer<Gr
 
   private JBCheckBox myDelegateCB;
 
-  private LinkedHashSet<String> mySuggestedNames;
+  private final LinkedHashSet<String> mySuggestedNames;
 
   public GrInplaceParameterIntroducer(IntroduceParameterInfo info, GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice) {
     super(GrIntroduceParameterHandler.REFACTORING_NAME, choice, context);

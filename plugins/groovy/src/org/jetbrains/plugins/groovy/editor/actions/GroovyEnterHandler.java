@@ -252,7 +252,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
                                                    Project project,
                                                    EditorActionHandler originalHandler) {
     String text = editor.getDocument().getText();
-    if (text == null || text.length() == 0) return false;
+    if (text == null || text.isEmpty()) return false;
     final EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
     if (caret < 1 || caret > text.length() - 1) {
       return false;

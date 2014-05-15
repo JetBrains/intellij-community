@@ -124,7 +124,7 @@ public class GroovyPositionManager implements PositionManager {
       @Override
       public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
         final CompoundPositionManager positionManager = ((DebugProcessImpl)debuggerProcess).getPositionManager();
-        if (positionManager.locationsOfLine(referenceType, position).size() > 0) {
+        if (!positionManager.locationsOfLine(referenceType, position).isEmpty()) {
           requestor.processClassPrepare(debuggerProcess, referenceType);
         }
       }
@@ -315,7 +315,7 @@ public class GroovyPositionManager implements PositionManager {
   private static String getScriptFQName(GroovyFile groovyFile) {
     String packageName = groovyFile.getPackageName();
     String fileName = getRuntimeScriptName(groovyFile);
-    return packageName.length() > 0 ? packageName + "." + fileName : fileName;
+    return !packageName.isEmpty() ? packageName + "." + fileName : fileName;
   }
 
   private static String getRuntimeScriptName(GroovyFile groovyFile) {
@@ -348,7 +348,7 @@ public class GroovyPositionManager implements PositionManager {
 
       try {
         final int lineNumber = classPosition.getLine() + 1;
-        if (fromClass.locationsOfLine(lineNumber).size() > 0) {
+        if (!fromClass.locationsOfLine(lineNumber).isEmpty()) {
           return fromClass;
         }
         //noinspection LoopStatementThatDoesntLoop

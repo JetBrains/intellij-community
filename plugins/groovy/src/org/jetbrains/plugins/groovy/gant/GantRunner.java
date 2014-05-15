@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,14 +57,14 @@ public class GantRunner extends GroovyScriptRunner {
 
   @Override
   public boolean ensureRunnerConfigured(@Nullable Module module, RunProfile profile, Executor executor, final Project project) {
-    if (!(GantUtils.getSDKInstallPath(module, project).length() > 0)) {
+    if (GantUtils.getSDKInstallPath(module, project).isEmpty()) {
       int result = Messages
         .showOkCancelDialog("Gant is not configured. Do you want to configure it?", "Configure Gant SDK",
                             JetgroovyIcons.Groovy.Gant_16x16);
       if (result == Messages.OK) {
         ShowSettingsUtil.getInstance().editConfigurable(project, new GantConfigurable(project));
       }
-      if (!(GantUtils.getSDKInstallPath(module, project).length() > 0)) {
+      if (GantUtils.getSDKInstallPath(module, project).isEmpty()) {
         return false;
       }
     }

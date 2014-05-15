@@ -152,7 +152,7 @@ public class GroovyGenerateEqualsHelper {
 
 
   private void addDoubleFieldComparison(final StringBuffer buffer, final PsiField field) {
-    final @NonNls String type = PsiType.DOUBLE.equals(field.getType()) ? "Double" : "Float";
+    @NonNls final String type = PsiType.DOUBLE.equals(field.getType()) ? "Double" : "Float";
     final Object[] parameters = new Object[]{type, myClassInstanceName, field.getName()};
     DOUBLE_FIELD_COMPARER_MF.format(parameters, buffer, null);
   }

@@ -51,7 +51,7 @@ import java.util.BitSet;
  * @author Max Medvedev
  */
 public class GroovyInlineLocalHandler extends InlineActionHandler {
-  private static Logger LOG = Logger.getInstance(GroovyInlineLocalHandler.class);
+  private static final Logger LOG = Logger.getInstance(GroovyInlineLocalHandler.class);
   public static final String INLINE_VARIABLE = RefactoringBundle.message("inline.variable.title");
 
   @Override

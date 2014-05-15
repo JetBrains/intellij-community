@@ -157,7 +157,7 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
       }
     }
 
-    if (modifiersText != null && modifiersText.length() > 0) {
+    if (modifiersText != null && !modifiersText.isEmpty()) {
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(file.getProject());
       final GrPackageDefinition newPackageDefinition = (GrPackageDefinition)factory.createTopElementFromText(modifiersText + " package " + newPackageName);
       newFile.setPackage(newPackageDefinition);

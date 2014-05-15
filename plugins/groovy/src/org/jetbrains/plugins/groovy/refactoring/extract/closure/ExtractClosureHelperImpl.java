@@ -46,7 +46,7 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
   private final boolean myReplaceAllOccurrences;
 
   private PsiType myType = null;
-  private boolean myForceDef;
+  private final boolean myForceDef;
 
   public ExtractClosureHelperImpl(IntroduceParameterInfo info,
                                   String name,

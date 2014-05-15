@@ -138,7 +138,7 @@ public class MvcConsole implements Disposable {
   private static class MyProcessInConsole implements ConsoleProcessDescriptor {
     final Module module;
     final GeneralCommandLine commandLine;
-    final @Nullable Runnable onDone;
+    @Nullable final Runnable onDone;
     final boolean closeOnDone;
     final boolean showConsole;
     final String[] input;
@@ -198,7 +198,7 @@ public class MvcConsole implements Disposable {
 
   public static ConsoleProcessDescriptor executeProcess(final Module module,
                                                         final GeneralCommandLine commandLine,
-                                                        final @Nullable Runnable onDone,
+                                                        @Nullable final Runnable onDone,
                                                         final boolean closeOnDone,
                                                         final String... input) {
     return getInstance(module.getProject()).executeProcess(module, commandLine, onDone, true, closeOnDone, input);
@@ -206,7 +206,7 @@ public class MvcConsole implements Disposable {
 
   public ConsoleProcessDescriptor executeProcess(final Module module,
                                                  final GeneralCommandLine commandLine,
-                                                 final @Nullable Runnable onDone,
+                                                 @Nullable final Runnable onDone,
                                                  boolean showConsole,
                                                  final boolean closeOnDone,
                                                  final String... input) {

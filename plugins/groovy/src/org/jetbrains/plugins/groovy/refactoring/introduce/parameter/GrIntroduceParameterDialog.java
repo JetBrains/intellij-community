@@ -86,14 +86,14 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
   private JBRadioButton myReplaceFieldsInaccessibleInRadioButton;
   private JBRadioButton myReplaceAllFieldsRadioButton;
   private JPanel myGetterPanel;
-  private IntroduceParameterInfo myInfo;
-  private TObjectIntHashMap<JCheckBox> toRemoveCBs;
+  private final IntroduceParameterInfo myInfo;
+  private final TObjectIntHashMap<JCheckBox> toRemoveCBs;
 
   private GrMethodSignatureComponent mySignature;
   private ParameterTablePanel myTable;
   private JPanel mySignaturePanel;
   private JCheckBox myForceReturnCheckBox;
-  private Project myProject;
+  private final Project myProject;
 
   private final boolean myCanIntroduceSimpleParameter;
 

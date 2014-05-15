@@ -241,7 +241,7 @@ public class GroovyWrappingProcessor {
                                             : Wrap.createWrap(mySettings.METHOD_CALL_CHAIN_WRAP, false);
   }
 
-  private TokenSet ANNOTATION_CONTAINERS = TokenSet.create(
+  private final TokenSet ANNOTATION_CONTAINERS = TokenSet.create(
     CLASS_DEFINITION, INTERFACE_DEFINITION, ENUM_DEFINITION, ANNOTATION_DEFINITION,
     METHOD_DEFINITION, CONSTRUCTOR_DEFINITION,
     VARIABLE_DEFINITION,

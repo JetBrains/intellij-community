@@ -61,7 +61,7 @@ public class GroovyNameSuggestionUtil {
     }
 
     possibleNames.remove("");
-    if (possibleNames.size() == 0) {
+    if (possibleNames.isEmpty()) {
       possibleNames.add(validator.validateName("var", true));
     }
     return ArrayUtil.toStringArray(possibleNames);
@@ -244,7 +244,7 @@ public class GroovyNameSuggestionUtil {
   private static void generateCamelNames(Set<String> possibleNames, NameValidator validator, String typeName) {
     ArrayList<String> camelTokens = GroovyNamesUtil.camelizeString(typeName);
     Collections.reverse(camelTokens);
-    if (camelTokens.size() > 0) {
+    if (!camelTokens.isEmpty()) {
       String possibleName = "";
       for (String camelToken : camelTokens) {
         possibleName = camelToken + fromUpperLetter(possibleName);
@@ -265,7 +265,7 @@ public class GroovyNameSuggestionUtil {
   }
 
   private static String fromUpperLetter(String str) {
-    if (str.length() == 0) return "";
+    if (str.isEmpty()) return "";
     if (str.length() == 1) return str.toUpperCase();
     return str.substring(0, 1).toUpperCase() + str.substring(1);
   }

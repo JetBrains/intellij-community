@@ -517,7 +517,7 @@ public class ControlFlowUtils {
         applicable.add(instruction);
       }
     }
-    if (applicable.size() == 0) return null;
+    if (applicable.isEmpty()) return null;
 
     Collections.sort(applicable, new Comparator<Instruction>() {
       @Override

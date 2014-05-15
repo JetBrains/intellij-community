@@ -343,9 +343,9 @@ public class DynamicMemberUtils {
 
   private static class GrDynamicMethodWithCache extends GrDynamicMethodImpl implements DynamicElement, OriginInfoAwareElement {
 
-    private PsiTypeParameter[] myTypeParameters;
-    private GrParameterList myParameterList;
-    private Map<String, NamedArgumentDescriptor> namedParameters;
+    private final PsiTypeParameter[] myTypeParameters;
+    private final GrParameterList myParameterList;
+    private final Map<String, NamedArgumentDescriptor> namedParameters;
     private String myOriginalInfo;
     public final String mySource;
 

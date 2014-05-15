@@ -49,7 +49,7 @@ public class GroovyFrameworkSupportProvider extends FrameworkSupportInModuleProv
 
   @Override
   @NotNull
-  public FrameworkSupportInModuleConfigurable createConfigurable(final @NotNull FrameworkSupportModel model) {
+  public FrameworkSupportInModuleConfigurable createConfigurable(@NotNull final FrameworkSupportModel model) {
     return new GroovySupportConfigurable();
   }
 

@@ -55,7 +55,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
   private static final TokenSet MAP_LITERAL_TOKEN_SET = TokenSet.create(GroovyElementTypes.NAMED_ARGUMENT, GroovyTokenTypes.mCOLON);
   private static final Function<GrListOrMapImpl, PsiType> TYPES_CALCULATOR = new MyTypesCalculator();
 
-  private PsiReference myLiteralReference = new LiteralConstructorReference(this);
+  private final PsiReference myLiteralReference = new LiteralConstructorReference(this);
 
   public GrListOrMapImpl(@NotNull ASTNode node) {
     super(node);

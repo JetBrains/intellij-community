@@ -204,7 +204,7 @@ public class GroovyInlineMethodUtil {
   private static boolean hasBadReturns(GrMethod method) {
     Collection<GrStatement> returnStatements = ControlFlowUtils.collectReturns(method.getBlock());
     GrOpenBlock block = method.getBlock();
-    if (block == null || returnStatements.size() == 0) return false;
+    if (block == null || returnStatements.isEmpty()) return false;
     boolean checked = checkTailOpenBlock(block, returnStatements);
     return !(checked && returnStatements.isEmpty());
   }

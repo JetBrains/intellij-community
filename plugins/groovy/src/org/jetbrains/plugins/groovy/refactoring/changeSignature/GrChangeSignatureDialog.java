@@ -238,7 +238,7 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
 
       String defaultValue = item.defaultValueCodeFragment.getText();
       final String initializer = item.initializerCodeFragment.getText();
-      if (item.parameter.getOldIndex() < 0 && defaultValue.trim().length() == 0 && initializer.trim().length() == 0) {
+      if (item.parameter.getOldIndex() < 0 && defaultValue.trim().isEmpty() && initializer.trim().isEmpty()) {
         return message("specify.default.value", name);
       }
 
@@ -279,7 +279,7 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
   private static String generateParameterText(GrParameterInfo info) {
     StringBuilder builder = new StringBuilder();
     String typeText = info.getTypeText();
-    if (typeText.length() == 0) typeText = GrModifier.DEF;
+    if (typeText.isEmpty()) typeText = GrModifier.DEF;
     builder.append(typeText).append(' ');
     builder.append(info.getName());
 
@@ -305,7 +305,7 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
     builder.append('(');
 
     final List<GrParameterInfo> infos = getParameters();
-    if (infos.size() > 0) {
+    if (!infos.isEmpty()) {
       final List<String> paramsText = ContainerUtil.map(infos, new Function<GrParameterInfo, String>() {
         @Override
         public String fun(GrParameterInfo info) {

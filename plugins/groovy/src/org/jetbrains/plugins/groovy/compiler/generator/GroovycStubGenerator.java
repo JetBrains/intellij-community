@@ -67,7 +67,7 @@ import java.util.*;
  * @author peter
  */
 public class GroovycStubGenerator extends GroovyCompilerBase {
-  private static Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.compiler.generator.GroovycStubGenerator");
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.compiler.generator.GroovycStubGenerator");
 
   public static final String GROOVY_STUBS = "groovyStubs";
 

@@ -131,7 +131,7 @@ public class GrParameterInfo implements JavaParameterInfo {
   }
 
   public boolean isOptional() {
-    return getDefaultInitializer().length() > 0;
+    return !getDefaultInitializer().isEmpty();
   }
 
   @NotNull
@@ -140,7 +140,7 @@ public class GrParameterInfo implements JavaParameterInfo {
   }
 
   public boolean hasNoType() {
-    return getTypeText().length() == 0;
+    return getTypeText().isEmpty();
   }
 
   public boolean forceOptional() {

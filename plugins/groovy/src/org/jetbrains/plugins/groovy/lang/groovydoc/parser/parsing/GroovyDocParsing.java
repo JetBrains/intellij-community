@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public class GroovyDocParsing implements GroovyDocElementTypes {
   @NonNls
   private static final String VALUE_TAG = "@value";
 
-  private final static TokenSet REFERENCE_BEGIN = TokenSet.create(mGDOC_TAG_VALUE_TOKEN, mGDOC_TAG_VALUE_SHARP_TOKEN);
+  private static final TokenSet REFERENCE_BEGIN = TokenSet.create(mGDOC_TAG_VALUE_TOKEN, mGDOC_TAG_VALUE_SHARP_TOKEN);
 
   private boolean isInInlinedTag = false;
   private int myBraceCounter = 0;

@@ -60,7 +60,7 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterProcessor");
 
   private final GrIntroduceParameterSettings mySettings;
-  private IntroduceParameterData.ExpressionWrapper myParameterInitializer;
+  private final IntroduceParameterData.ExpressionWrapper myParameterInitializer;
 
   public GrIntroduceParameterProcessor(GrIntroduceParameterSettings settings) {
     this(settings, createExpressionWrapper(settings));

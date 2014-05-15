@@ -81,7 +81,7 @@ public class PropertyRenameHandler implements RenameHandler, TitledHandler {
   private static void invokeInner(Project project, Editor editor, PsiElement element) {
     final Pair<List<? extends PsiElement>, String> pair = askToRenameProperty((PsiMember)element);
     final List<? extends PsiElement> result = pair.getFirst();
-    if (result.size() == 0) return;
+    if (result.isEmpty()) return;
 
     PsiElement propertyToRename = getPropertyToRename(element, result, pair.getSecond());
 

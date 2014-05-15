@@ -34,8 +34,8 @@ import static com.intellij.psi.util.PsiModificationTracker.OUT_OF_CODE_BLOCK_MOD
  * @author ven
  */
 public class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
-  private static Key<CachedValue<GrGdkMethodImpl>> CACHED_STATIC = Key.create("Cached static gdk method");
-  private static Key<CachedValue<GrGdkMethodImpl>> CACHED_NON_STATIC = Key.create("Cached instance gdk method");
+  private static final Key<CachedValue<GrGdkMethodImpl>> CACHED_STATIC = Key.create("Cached static gdk method");
+  private static final Key<CachedValue<GrGdkMethodImpl>> CACHED_NON_STATIC = Key.create("Cached instance gdk method");
   private final PsiMethod myMethod;
 
   private GrGdkMethodImpl(PsiMethod method, boolean isStatic, @Nullable String originInfo) {

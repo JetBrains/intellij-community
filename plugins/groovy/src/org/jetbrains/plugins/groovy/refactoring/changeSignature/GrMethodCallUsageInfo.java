@@ -40,7 +40,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 public class GrMethodCallUsageInfo extends UsageInfo implements PossiblyIncorrectUsage {
   private final boolean myToChangeArguments;
   private final boolean myToCatchExceptions;
-  private GrClosureSignatureUtil.ArgInfo<PsiElement>[] myMapToArguments;
+  private final GrClosureSignatureUtil.ArgInfo<PsiElement>[] myMapToArguments;
   private PsiSubstitutor mySubstitutor;
 
   public boolean isToCatchExceptions() {

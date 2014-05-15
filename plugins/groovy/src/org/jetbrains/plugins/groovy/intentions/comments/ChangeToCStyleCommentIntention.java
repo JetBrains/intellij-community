@@ -85,7 +85,7 @@ public class ChangeToCStyleCommentIntention extends Intention {
       if (sibling == null) {
         return null;
       }
-      if (sibling.getText().trim().replace("\n", "").length() == 0) {
+      if (sibling.getText().trim().replace("\n", "").isEmpty()) {
         elementToCheck = sibling;
       } else {
         return sibling;
@@ -101,7 +101,7 @@ public class ChangeToCStyleCommentIntention extends Intention {
       if (sibling == null) {
         return null;
       }
-      if (sibling.getText().trim().replace("\n", "").length() == 0) {
+      if (sibling.getText().trim().replace("\n", "").isEmpty()) {
         elementToCheck = sibling;
       } else {
         return sibling;

@@ -43,7 +43,7 @@ import java.util.ArrayList;
 public class GrInplaceConstantIntroducer extends GrAbstractInplaceIntroducer<GrIntroduceConstantSettings> {
   private final GrInplaceIntroduceConstantPanel myPanel;
   private final GrIntroduceContext myContext;
-  private String[] mySuggestedNames;
+  private final String[] mySuggestedNames;
 
   public GrInplaceConstantIntroducer(GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice) {
     super(IntroduceConstantHandler.REFACTORING_NAME, choice, context);

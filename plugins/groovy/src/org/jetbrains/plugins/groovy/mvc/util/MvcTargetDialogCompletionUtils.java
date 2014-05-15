@@ -130,7 +130,7 @@ public class MvcTargetDialogCompletionUtils {
     PsiPackage[] subPackages = aPackage.getSubPackages(scope);
 
     String qualifiedName = aPackage.getQualifiedName();
-    if (qualifiedName.length() > 0) {
+    if (!qualifiedName.isEmpty()) {
       if (subPackages.length == 0 || aPackage.getClasses(scope).length > 0) {
         res.add(TailTypeDecorator.withTail(LookupElementBuilder.create(qualifiedName), TailType.DOT));
       }

@@ -48,19 +48,19 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
   private boolean myIsNameChanged = false;
   private boolean myIsVisibilityChanged = false;
   private boolean myIsReturnTypeChanged = false;
-  private boolean myIsRetainVarargs;
-  private boolean myIsArrayToVarargs;
-  private boolean myIsObtainVarargs;
-  private boolean myWasVarargs;
-  private String myOldName;
+  private final boolean myIsRetainVarargs;
+  private final boolean myIsArrayToVarargs;
+  private final boolean myIsObtainVarargs;
+  private final boolean myWasVarargs;
+  private final String myOldName;
   private PsiIdentifier myNewNameIdentifier;
-  private PsiExpression[] defaultValues;
-  private boolean myDelegate;
-  private ThrownExceptionInfo[] myThrownExceptions;
+  private final PsiExpression[] defaultValues;
+  private final boolean myDelegate;
+  private final ThrownExceptionInfo[] myThrownExceptions;
   private boolean myExceptionSetChanged;
   private boolean myExceptionSetOrOrderChanged;
-  private String[] myOldParameterNames;
-  private String[] myOldParameterTypes;
+  private final String[] myOldParameterNames;
+  private final String[] myOldParameterTypes;
 
   public GrChangeInfoImpl(GrMethod method,
                           @Nullable String visibilityModifier,
@@ -135,7 +135,7 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
     }
 
     myWasVarargs = method.isVarArgs();
-    if (parameters.size() == 0) {
+    if (parameters.isEmpty()) {
       myIsObtainVarargs = false;
       myIsRetainVarargs = false;
       myIsArrayToVarargs = false;
