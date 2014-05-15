@@ -121,9 +121,11 @@ public class ReplacerImpl {
       result = result.substring(0,result.length() - endOffset);
 
       return result;
-    } catch(Exception ex) {
-      throw new IncorrectOperationException("Unexpected failure:", ex);
-    } finally {
+    }
+    catch (Exception e) {
+      throw new IncorrectOperationException(e);
+    }
+    finally {
       options.getMatchOptions().setScope(null);
     }
   }
