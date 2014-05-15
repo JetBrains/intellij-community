@@ -718,7 +718,7 @@ public class BackendCompilerWrapper {
       
       if (pathsEquals) {
         final String outputPath = cc.pathToClass.replace(File.separatorChar, '/');
-        final Pair<String, String> realLocation = moveToRealLocation(outputDir, outputPath, srcFile, filesToRefresh);
+        final Couple<String> realLocation = moveToRealLocation(outputDir, outputPath, srcFile, filesToRefresh);
         if (realLocation != null) {
           Collection<TranslatingCompiler.OutputItem> outputs = results.get(realLocation.getFirst());
           if (outputs == null) {
@@ -760,7 +760,10 @@ public class BackendCompilerWrapper {
   }
 
   @Nullable
-  private Pair<String, String> moveToRealLocation(String tempOutputDir, String pathToClass, VirtualFile sourceFile, final List<File> filesToRefresh) {
+  private Couple<String> moveToRealLocation(String tempOutputDir,
+                                            String pathToClass,
+                                            VirtualFile sourceFile,
+                                            final List<File> filesToRefresh) {
     final Module module = myCompileContext.getModuleByFile(sourceFile);
     if (module == null) {
       final String message =
@@ -768,7 +771,7 @@ public class BackendCompilerWrapper {
       LOG.info(message);
       myCompileContext.addMessage(CompilerMessageCategory.WARNING, message, sourceFile.getUrl(), -1, -1);
       // do not move: looks like source file has been invalidated, need recompilation
-      return Pair.create(tempOutputDir, pathToClass);
+      return Couple.newOne(tempOutputDir, pathToClass);
     }
     final String realOutputDir;
     if (myCompileContext.isInTestSourceContent(sourceFile)) {
@@ -782,7 +785,7 @@ public class BackendCompilerWrapper {
 
     if (FileUtil.pathsEqual(tempOutputDir, realOutputDir)) { // no need to move
       filesToRefresh.add(new File(pathToClass));
-      return Pair.create(realOutputDir, pathToClass);
+      return Couple.newOne(realOutputDir, pathToClass);
     }
 
     final String realPathToClass = realOutputDir + pathToClass.substring(tempOutputDir.length());
@@ -809,7 +812,7 @@ public class BackendCompilerWrapper {
     }
     if (success) {
       filesToRefresh.add(toFile);
-      return Pair.create(realOutputDir, realPathToClass);
+      return Couple.newOne(realOutputDir, realPathToClass);
     }
     return null;
   }

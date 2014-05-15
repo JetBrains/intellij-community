@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -128,7 +129,7 @@ public class JarsBuilder {
   private JarInfo[] sortJars() {
     final DFSTBuilder<JarInfo> builder = new DFSTBuilder<JarInfo>(GraphGenerator.create(CachingSemiGraph.create(new JarsGraph())));
     if (!builder.isAcyclic()) {
-      final Pair<JarInfo, JarInfo> dependency = builder.getCircularDependency();
+      final Couple<JarInfo> dependency = builder.getCircularDependency();
       String message = CompilerBundle.message("packaging.compiler.error.cannot.build.circular.dependency.found.between.0.and.1",
                                               dependency.getFirst().getPresentableDestination(),
                                               dependency.getSecond().getPresentableDestination());
