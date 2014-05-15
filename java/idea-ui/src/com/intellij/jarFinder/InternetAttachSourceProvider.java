@@ -218,6 +218,7 @@ public class InternetAttachSourceProvider implements AttachSourcesProvider {
   private static boolean isRootInExistingFile(VirtualFile root) {
     if (root.getFileSystem() instanceof JarFileSystem) {
       VirtualFile jar = JarFileSystem.getInstance().getVirtualFileForJar(root);
+      // we might be invoked outside EDT, so sync VFS refresh is impossible, so we check java.io.File existence
       if (jar == null || !VfsUtilCore.virtualToIoFile(jar).exists()) return false;
     }
 
