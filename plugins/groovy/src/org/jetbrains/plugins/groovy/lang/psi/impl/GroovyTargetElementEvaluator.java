@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.codeInsight;
+package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.codeInsight.TargetElementEvaluator;
 import com.intellij.openapi.util.Key;
@@ -30,7 +30,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrRenameableLightElement;
 
 /**
