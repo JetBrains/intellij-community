@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
@@ -297,10 +297,10 @@ public class RedundantThrows extends GlobalJavaBatchInspectionTool {
           removeException(refDerived, exceptionType, refsToDelete, (PsiMethod)refDerived.getElement());
         }
       } else {
-        final Query<Pair<PsiMethod,PsiMethod>> query = AllOverridingMethodsSearch.search(psiMethod.getContainingClass());
-        query.forEach(new Processor<Pair<PsiMethod, PsiMethod>>(){
+        final Query<Couple<PsiMethod>> query = AllOverridingMethodsSearch.search(psiMethod.getContainingClass());
+        query.forEach(new Processor<Couple<PsiMethod>>(){
           @Override
-          public boolean process(final Pair<PsiMethod, PsiMethod> pair) {
+          public boolean process(final Couple<PsiMethod> pair) {
             if (pair.first == psiMethod) {
               removeException(null, exceptionType, refsToDelete, pair.second);
             }
