@@ -412,7 +412,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       return ((GrNewExpression)initializer).getReferenceElement();
     }
     catch (RuntimeException e) {
-      throw new IncorrectOperationException("reference text=" + qName, e);
+      throw new IncorrectOperationException("reference text=" + qName, (Throwable)e);
     }
   }
 
