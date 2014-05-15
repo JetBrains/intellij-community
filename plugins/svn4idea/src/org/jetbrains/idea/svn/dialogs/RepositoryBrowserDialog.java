@@ -1132,8 +1132,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   }
 
   private void doGraphicalDiff(SVNURL sourceURL, SVNURL targetURL) throws VcsException {
-    // TODO: Implement "url + url" diff for CmdDiffClient and use getFactoryFromSettings() here
-    List<Change> changes = myVCS.getSvnKitFactory().createDiffClient().compare(SvnTarget.fromURL(sourceURL), SvnTarget.fromURL(targetURL));
+    List<Change> changes =
+      myVCS.getFactoryFromSettings().createDiffClient().compare(SvnTarget.fromURL(sourceURL), SvnTarget.fromURL(targetURL));
 
     showDiffEditorResults(changes, SVNPathUtil.tail(sourceURL.toString()), SVNPathUtil.tail(targetURL.toString()));
   }
