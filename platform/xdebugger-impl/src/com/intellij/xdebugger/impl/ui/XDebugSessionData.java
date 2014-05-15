@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.ui;
 
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,6 +23,8 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class XDebugSessionData {
+  public static final DataKey<XDebugSessionData> DATA_KEY = DataKey.create("XDebugSessionData");
+
   private String[] myWatchExpressions;
   private boolean myBreakpointsMuted = false;
 
