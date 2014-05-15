@@ -42,8 +42,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.*;
 
-import static org.jetbrains.plugins.groovy.editor.GroovyImportHelper.isImplicitlyImported;
-import static org.jetbrains.plugins.groovy.editor.GroovyImportHelper.processImports;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.GroovyImportHelper.isImplicitlyImported;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.GroovyImportHelper.processImports;
 
 /**
  * @author ven

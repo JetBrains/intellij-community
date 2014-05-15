@@ -35,7 +35,6 @@ import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.editor.GroovyImportHelper;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -61,7 +60,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import javax.swing.*;
 import java.util.concurrent.ConcurrentMap;
 
-import static org.jetbrains.plugins.groovy.editor.GroovyImportHelper.processImplicitImports;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.*;
 
 /**
@@ -176,7 +174,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     if (!processImports(processor, state, lastParent, place, importStatements, false)) return false;
     if (!processDeclarationsInPackage(processor, state, lastParent, place)) return false;
     if (!processImports(processor, state, lastParent, place, importStatements, true)) return false;
-    if  (!processImplicitImports(processor, state, lastParent, place, this)) return false;
+    if  (!GroovyImportHelper.processImplicitImports(processor, state, lastParent, place, this)) return false;
 
     if (shouldProcessPackages(classHint)) {
 
