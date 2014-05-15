@@ -31,13 +31,15 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
@@ -191,7 +193,7 @@ public class BrowserLauncherAppless extends BrowserLauncher {
         url = url.substring(0, sharpPos);
       }
 
-      Pair<String, String> pair = URLUtil.splitJarUrl(url);
+      Couple<String> pair = URLUtil.splitJarUrl(url);
       if (pair == null) return null;
 
       File jarFile = new File(FileUtil.toSystemDependentName(pair.first));
