@@ -19,7 +19,7 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
@@ -50,30 +50,30 @@ import static org.jetbrains.plugins.gradle.service.resolve.GradleResolverUtil.ca
  */
 public class GradleImplicitContributor implements GradleMethodContextContributor {
   private final static Map<String, String> BUILT_IN_TASKS = newHashMap(
-    Pair.create("assemble", GRADLE_API_DEFAULT_TASK),
-    Pair.create("build", GRADLE_API_DEFAULT_TASK),
-    Pair.create("buildDependents", GRADLE_API_DEFAULT_TASK),
-    Pair.create("buildNeeded", GRADLE_API_DEFAULT_TASK),
-    Pair.create("clean", GRADLE_API_TASKS_DELETE),
-    Pair.create("jar", GRADLE_API_TASKS_BUNDLING_JAR),
-    Pair.create("war", GRADLE_API_TASKS_BUNDLING_WAR),
-    Pair.create("classes", GRADLE_API_DEFAULT_TASK),
-    Pair.create("compileJava", GRADLE_API_TASKS_COMPILE_JAVA_COMPILE),
-    Pair.create("compileTestJava", GRADLE_API_DEFAULT_TASK),
-    Pair.create("processTestResources", GRADLE_API_DEFAULT_TASK),
-    Pair.create("testClasses", GRADLE_API_DEFAULT_TASK),
-    Pair.create("processResources", GRADLE_LANGUAGE_JVM_TASKS_PROCESS_RESOURCES),
-    Pair.create("setupBuild", GRADLE_BUILDSETUP_TASKS_SETUP_BUILD),
-    Pair.create("wrapper", GRADLE_API_TASKS_WRAPPER_WRAPPER),
-    Pair.create("javadoc", GRADLE_API_TASKS_JAVADOC_JAVADOC),
-    Pair.create("dependencies", GRADLE_API_TASKS_DIAGNOSTICS_DEPENDENCY_REPORT_TASK),
-    Pair.create("dependencyInsight", GRADLE_API_TASKS_DIAGNOSTICS_DEPENDENCY_INSIGHT_REPORT_TASK),
-    Pair.create("projects", GRADLE_API_TASKS_DIAGNOSTICS_PROJECT_REPORT_TASK),
-    Pair.create("properties", GRADLE_API_TASKS_DIAGNOSTICS_PROPERTY_REPORT_TASK),
-    Pair.create("tasks", GRADLE_API_TASKS_DIAGNOSTICS_TASK_REPORT_TASK),
-    Pair.create("check", GRADLE_API_DEFAULT_TASK),
-    Pair.create("test", GRADLE_API_TASKS_TESTING_TEST),
-    Pair.create("uploadArchives", GRADLE_API_TASKS_UPLOAD)
+    Couple.newOne("assemble", GRADLE_API_DEFAULT_TASK),
+    Couple.newOne("build", GRADLE_API_DEFAULT_TASK),
+    Couple.newOne("buildDependents", GRADLE_API_DEFAULT_TASK),
+    Couple.newOne("buildNeeded", GRADLE_API_DEFAULT_TASK),
+    Couple.newOne("clean", GRADLE_API_TASKS_DELETE),
+    Couple.newOne("jar", GRADLE_API_TASKS_BUNDLING_JAR),
+    Couple.newOne("war", GRADLE_API_TASKS_BUNDLING_WAR),
+    Couple.newOne("classes", GRADLE_API_DEFAULT_TASK),
+    Couple.newOne("compileJava", GRADLE_API_TASKS_COMPILE_JAVA_COMPILE),
+    Couple.newOne("compileTestJava", GRADLE_API_DEFAULT_TASK),
+    Couple.newOne("processTestResources", GRADLE_API_DEFAULT_TASK),
+    Couple.newOne("testClasses", GRADLE_API_DEFAULT_TASK),
+    Couple.newOne("processResources", GRADLE_LANGUAGE_JVM_TASKS_PROCESS_RESOURCES),
+    Couple.newOne("setupBuild", GRADLE_BUILDSETUP_TASKS_SETUP_BUILD),
+    Couple.newOne("wrapper", GRADLE_API_TASKS_WRAPPER_WRAPPER),
+    Couple.newOne("javadoc", GRADLE_API_TASKS_JAVADOC_JAVADOC),
+    Couple.newOne("dependencies", GRADLE_API_TASKS_DIAGNOSTICS_DEPENDENCY_REPORT_TASK),
+    Couple.newOne("dependencyInsight", GRADLE_API_TASKS_DIAGNOSTICS_DEPENDENCY_INSIGHT_REPORT_TASK),
+    Couple.newOne("projects", GRADLE_API_TASKS_DIAGNOSTICS_PROJECT_REPORT_TASK),
+    Couple.newOne("properties", GRADLE_API_TASKS_DIAGNOSTICS_PROPERTY_REPORT_TASK),
+    Couple.newOne("tasks", GRADLE_API_TASKS_DIAGNOSTICS_TASK_REPORT_TASK),
+    Couple.newOne("check", GRADLE_API_DEFAULT_TASK),
+    Couple.newOne("test", GRADLE_API_TASKS_TESTING_TEST),
+    Couple.newOne("uploadArchives", GRADLE_API_TASKS_UPLOAD)
   );
 
   @Override
