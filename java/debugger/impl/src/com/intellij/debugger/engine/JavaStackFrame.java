@@ -183,7 +183,9 @@ public class JavaStackFrame extends XStackFrame {
       }
       else {
         StaticDescriptorImpl staticDecriptor = myNodeManager.getStaticDescriptor(stackDescriptor, location.method().declaringType());
-        children.addTopGroup(new JavaStaticGroup(staticDecriptor, evaluationContext, myNodeManager));
+        if (staticDecriptor.isExpandable()) {
+          children.addTopGroup(new JavaStaticGroup(staticDecriptor, evaluationContext, myNodeManager));
+        }
       }
 
       // add last method return value if any
