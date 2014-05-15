@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,10 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> imple
   
   @Override
   public ReferenceTransferableData collectTransferableData(PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets) {
+    if (CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE == CodeInsightSettings.NO) {
+      return null;
+    }
+
     if (file instanceof PsiCompiledFile) {
       file = ((PsiCompiledFile) file).getDecompiledPsiFile();
     }

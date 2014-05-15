@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -29,7 +28,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 
 import java.awt.datatransfer.Transferable;
 import java.util.ArrayList;
@@ -53,10 +53,7 @@ public class CopyHandler extends EditorActionHandler {
       return;
     }
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-
-    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
-
-    if (file == null || settings.ADD_IMPORTS_ON_PASTE == CodeInsightSettings.NO) {
+    if (file == null) {
       if (myOriginalAction != null) {
         myOriginalAction.execute(editor, dataContext);
       }
