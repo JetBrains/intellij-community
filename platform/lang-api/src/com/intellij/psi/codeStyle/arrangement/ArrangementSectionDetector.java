@@ -42,7 +42,7 @@ public class ArrangementSectionDetector {
   private final Document myDocument;
   private final ArrangementSettings mySettings;
   private final Consumer<ArrangementSectionEntryTemplate> mySectionEntryProducer;
-  private Stack<String> myOpenedSections = ContainerUtil.newStack();
+  private final Stack<ArrangementSectionRule> myOpenedSections = ContainerUtil.newStack();
 
   public ArrangementSectionDetector(@Nullable Document document,
                                     @NotNull ArrangementSettings settings,
@@ -62,38 +62,32 @@ public class ArrangementSectionDetector {
     final TextRange sectionTextRange = new TextRange(expandedRange.getStartOffset(), expandedRange.getEndOffset());
 
     final String commentText = comment.getText().trim();
-    final boolean start = isSectionStartComment(mySettings, commentText);
-    String lastOpenedSection = myOpenedSections.isEmpty() ? null : myOpenedSections.peek();
-    if (start) {
+    final ArrangementSectionRule openSectionRule = isSectionStartComment(mySettings, commentText);
+    if (openSectionRule != null) {
       mySectionEntryProducer.consume(new ArrangementSectionEntryTemplate(comment, START_SECTION, sectionTextRange, commentText));
-      myOpenedSections.push(commentText);
+      myOpenedSections.push(openSectionRule);
       return true;
     }
 
-    if (lastOpenedSection != null && isSectionEndComment(mySettings, commentText)) {
-      mySectionEntryProducer.consume(new ArrangementSectionEntryTemplate(comment, END_SECTION, sectionTextRange, commentText));
-      myOpenedSections.pop();
-      return true;
+    if (!myOpenedSections.isEmpty()) {
+      final ArrangementSectionRule lastSection = myOpenedSections.peek();
+      if (lastSection.getEndComment() != null && StringUtil.equals(commentText, lastSection.getEndComment())) {
+        mySectionEntryProducer.consume(new ArrangementSectionEntryTemplate(comment, END_SECTION, sectionTextRange, commentText));
+        myOpenedSections.pop();
+        return true;
+      }
     }
     return false;
   }
 
-  public static boolean isSectionStartComment(@NotNull ArrangementSettings settings, @NotNull String comment) {
+  @Nullable
+  public static ArrangementSectionRule isSectionStartComment(@NotNull ArrangementSettings settings, @NotNull String comment) {
     for (ArrangementSectionRule rule : settings.getSections()) {
       if (rule.getStartComment() != null && StringUtil.equals(comment, rule.getStartComment())) {
-        return true;
+        return rule;
       }
     }
-    return false;
-  }
-
-  public static boolean isSectionEndComment(@NotNull ArrangementSettings settings, @NotNull String comment) {
-    for (ArrangementSectionRule rule : settings.getSections()) {
-      if (rule.getEndComment() != null && StringUtil.equals(comment, rule.getEndComment())) {
-        return true;
-      }
-    }
-    return false;
+    return null;
   }
 
   public static class ArrangementSectionEntryTemplate {
