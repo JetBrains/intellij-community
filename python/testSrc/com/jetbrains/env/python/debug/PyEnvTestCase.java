@@ -18,7 +18,6 @@ import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assume;
-import org.junit.internal.AssumptionViolatedException;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,28 +59,16 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
     PyTestCase.initPlatformPrefix();
   }
 
-  /**
-   * Checks that all required tags exist on interpreter. It should throw {@link org.junit.internal.AssumptionViolatedException},
-   * but fixed temporary due to [TW-25043]
-   *
-   * @return true of all required tags are met
-   */
-  protected boolean allRequiredTagsExist() {
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
     if (myRequiredTags != null) { // Ensure all tags exist between available interpreters
-
-      try {
-        Assume.assumeThat(
-          "Can't find some tags between all available interpreter, test (all methods) will be skipped",
-          getAvailableTags(),
-          Matchers.hasItems(myRequiredTags)
-        );
-      }
-      catch (final AssumptionViolatedException ignore) { // Because of [TW-25043]
-        return false;
-      }
+      Assume.assumeThat(
+        "Can't find some tags between all available interpreter, test (all methods) will be skipped",
+        getAvailableTags(),
+        Matchers.hasItems(myRequiredTags)
+      );
     }
-
-    return true;
   }
 
   /**
@@ -120,9 +107,6 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
   }
 
   public void runPythonTest(final PyTestTask testTask) {
-    if (!allRequiredTagsExist()) {
-      return;
-    }
     runTest(testTask, getTestName(false));
   }
 

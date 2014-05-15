@@ -91,9 +91,6 @@ public class PyIronPythonTest extends PyEnvTestCase {
       "import_system.py",
       null
     );
-    if (! allRequiredTagsExist()) { // Due to [TW-25043]
-      return;
-    }
     runPythonTest(task);
     final PyFile skeleton = task.getGeneratedSkeleton();
     Assert.assertNotNull("System.Web does not contain class AspNetHostingPermissionLevel. Error generating stub? It has classes  " +
