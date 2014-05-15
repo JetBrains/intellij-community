@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
-import org.jetbrains.plugins.groovy.intentions.utils.BoolUtils;
+import org.jetbrains.plugins.groovy.lang.psi.impl.utils.BoolUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
