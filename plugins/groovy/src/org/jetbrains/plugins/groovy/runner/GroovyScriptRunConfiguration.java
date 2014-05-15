@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,7 @@ import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyRunnerPsiUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -218,7 +219,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
       return null;
     }
 
-    final PsiClass classToRun = GroovyRunnerUtil.getRunningClass(element);
+    final PsiClass classToRun = GroovyRunnerPsiUtil.getRunningClass(element);
 
     if (element instanceof GroovyFile) {
       return new RefactoringElementAdapter() {
@@ -288,7 +289,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     final VirtualFile scriptFile = getScriptFile();
     if (scriptFile == null) return null;
     final PsiFile file = PsiManager.getInstance(getProject()).findFile(scriptFile);
-    return GroovyRunnerUtil.getRunningClass(file);
+    return GroovyRunnerPsiUtil.getRunningClass(file);
   }
 
   @NotNull
@@ -304,7 +305,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
       throw new RuntimeConfigurationWarning(GroovyBundle.message("class.does.not.exist"));
     }
     if (toRun instanceof GrTypeDefinition) {
-      if (!GroovyRunnerUtil.canBeRunByGroovy(toRun)) {
+      if (!GroovyRunnerPsiUtil.canBeRunByGroovy(toRun)) {
         throw new RuntimeConfigurationWarning(GroovyBundle.message("class.can't be executed"));
       }
     }

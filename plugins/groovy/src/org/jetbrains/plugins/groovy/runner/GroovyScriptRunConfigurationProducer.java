@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyRunnerPsiUtil;
 
 import java.util.List;
 
@@ -59,8 +60,8 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
     }
 
     GroovyFile groovyFile = (GroovyFile)file;
-    final PsiClass aClass = GroovyRunnerUtil.getRunningClass(location.getPsiElement());
-    if (aClass instanceof GroovyScriptClass || GroovyRunnerUtil.isRunnable(aClass)) {
+    final PsiClass aClass = GroovyRunnerPsiUtil.getRunningClass(location.getPsiElement());
+    if (aClass instanceof GroovyScriptClass || GroovyRunnerPsiUtil.isRunnable(aClass)) {
       final RunnerAndConfigurationSettings settings = createConfiguration(aClass);
       if (settings != null) {
         mySourceElement = element;

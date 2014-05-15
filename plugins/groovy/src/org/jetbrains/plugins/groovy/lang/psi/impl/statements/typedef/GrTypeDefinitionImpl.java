@@ -69,7 +69,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.runner.GroovyRunnerUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyRunnerPsiUtil;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -639,7 +639,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   //hack to get runnable icon for all classes that can be run by Groovy
   private int getFlagsInner() {
-    return !DumbService.isDumb(getProject()) && GroovyRunnerUtil.isRunnable(this) ? ElementPresentationUtil.FLAGS_RUNNABLE : 0;
+    return !DumbService.isDumb(getProject()) && GroovyRunnerPsiUtil.isRunnable(this) ? ElementPresentationUtil.FLAGS_RUNNABLE : 0;
   }
 
   private Icon getIconInner() {
