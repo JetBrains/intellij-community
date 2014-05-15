@@ -100,7 +100,6 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
       highlighter.setText(text);
       MarkupModel markupModel = DocumentMarkupModel.forDocument(editor.getDocument(), file.getProject(), false);
       Context context = new Context(text, schemeToUse, indentSymbolsToStrip);
-      int shift = 0;
       int endOffset = 0;
       Caret prevCaret = null;
 
@@ -108,6 +107,7 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
         int caretSelectionStart = caret.getSelectionStart();
         int caretSelectionEnd = caret.getSelectionEnd();
         int startOffsetToUse;
+        int additionalShift = 0;
         if (caret == firstCaret) {
           startOffsetToUse = firstLineStartOffset;
         }
@@ -115,16 +115,13 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
           startOffsetToUse = caretSelectionStart;
           assert prevCaret != null;
           String prevCaretSelectedText = prevCaret.getSelectedText();
-          // Block selection fills short lines by white spaces.
+          // Block selection fills short lines by white spaces
           int fillStringLength = prevCaretSelectedText == null ? 0 : prevCaretSelectedText.length() - (prevCaret.getSelectionEnd() - prevCaret.getSelectionStart());
-          int endLineOffset = endOffset + shift + fillStringLength;
-          context.builder.addText(endLineOffset, endLineOffset + 1);
-          shift++; // Block selection ends '\n' at line end
-          shift += fillStringLength;
+          context.addCharacter(endOffset + fillStringLength);
+          additionalShift = fillStringLength + 1;
         }
-        shift += endOffset - caretSelectionStart;
+        context.reset(endOffset - caretSelectionStart + additionalShift);
         endOffset = caretSelectionEnd;
-        context.reset(shift);
         prevCaret = caret;
         if (endOffset <= startOffsetToUse) {
           continue;
@@ -260,7 +257,7 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
 
     private int myFontStyle   = -1;
     private int myStartOffset = -1;
-    private int myOffsetShift = -1;
+    private int myOffsetShift = 0;
 
     private int myIndentSymbolsToStripAtCurrentLine;
 
@@ -272,9 +269,9 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
       myIndentSymbolsToStrip = indentSymbolsToStrip;
     }
 
-    public void reset(int offsetShift) {
+    public void reset(int offsetShiftDelta) {
       myStartOffset = -1;
-      myOffsetShift = offsetShift;
+      myOffsetShift += offsetShiftDelta;
       myIndentSymbolsToStripAtCurrentLine = 0;
     }
 
@@ -379,6 +376,10 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
         builder.addText(myStartOffset + myOffsetShift, endOffset + myOffsetShift);
         myStartOffset = endOffset;
       }
+    }
+
+    private void addCharacter(int position) {
+      builder.addText(position + myOffsetShift, position + myOffsetShift + 1);
     }
 
     @NotNull
