@@ -22,6 +22,7 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
@@ -32,9 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFieldNameIndex;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Set;
-
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.ENUM_CONSTANT;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.FIELD;
 
 /**
  * @author ilyas
@@ -59,7 +57,8 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
       namedParameters = psi.getNamedParameters().keySet();
     }
 
-    return new GrFieldStub(parentStub, StringRef.fromString(psi.getName()), annNames, namedParameters.toArray(new String[namedParameters.size()]), FIELD, GrFieldStub.buildFlags(psi),
+    return new GrFieldStub(parentStub, StringRef.fromString(psi.getName()), annNames, namedParameters.toArray(new String[namedParameters.size()]),
+                           GroovyElementTypes.FIELD, GrFieldStub.buildFlags(psi),
                            GrStubUtils.getTypeText(psi.getTypeElementGroovy()));
   }
 
@@ -97,7 +96,8 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
     final String[] namedParameters = GrStubUtils.readStringArray(dataStream);
     byte flags = dataStream.readByte();
     final String typeText = GrStubUtils.readNullableString(dataStream);
-    return new GrFieldStub(parentStub, ref, annNames, namedParameters, GrFieldStub.isEnumConstant(flags) ? ENUM_CONSTANT : FIELD,
+    return new GrFieldStub(parentStub, ref, annNames, namedParameters, GrFieldStub.isEnumConstant(flags) ? GroovyElementTypes.ENUM_CONSTANT
+                                                                                                         : GroovyElementTypes.FIELD,
                                flags, typeText);
   }
 

@@ -37,9 +37,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import java.util.Collection;
 import java.util.Collections;
 
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.writeType;
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.writeTypeForNew;
-
 /**
  * @author Maxim.Medvedev
  */
@@ -58,7 +55,7 @@ public class ClosureGenerator {
 
   public void generate(@NotNull GrClosableBlock closure) {
     builder.append("new ");
-    writeTypeForNew(builder, closure.getType(), closure);
+    TypeWriter.writeTypeForNew(builder, closure.getType(), closure);
     builder.append('(');
 
     final CharSequence owner = getOwner(closure);
@@ -88,7 +85,7 @@ public class ClosureGenerator {
   private void generateClosureMainMethod(@NotNull GrClosableBlock block) {
     builder.append("public ");
     final PsiType returnType = context.typeProvider.getReturnType(block);
-    writeType(builder, returnType, block);
+    TypeWriter.writeType(builder, returnType, block);
     builder.append(" doCall");
     final GrParameter[] parameters = block.getAllParameters();
     GenerationUtil.writeParameterList(builder, parameters, new GeneratorClassNameProvider(), context);

@@ -22,13 +22,12 @@ import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
-
-import static com.intellij.psi.util.PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT;
 
 /**
  * @author ven
@@ -111,7 +110,8 @@ public class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
       cachedValue = CachedValuesManager.getManager(original.getProject()).createCachedValue(new CachedValueProvider<GrGdkMethodImpl>() {
         @Override
         public Result<GrGdkMethodImpl> compute() {
-          return Result.create(new GrGdkMethodImpl(original, isStatic, originInfo), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+          return Result.create(new GrGdkMethodImpl(original, isStatic, originInfo),
+                               PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
         }
       });
       original.putUserData(cachedValueKey, cachedValue);

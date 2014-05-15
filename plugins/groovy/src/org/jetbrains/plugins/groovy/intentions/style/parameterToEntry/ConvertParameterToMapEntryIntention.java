@@ -72,8 +72,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-import static org.jetbrains.plugins.groovy.intentions.style.parameterToEntry.ConvertParameterToMapEntryIntention.FIRST_PARAMETER_KIND.*;
-
 /**
  * @author ilyas
  */
@@ -388,11 +386,11 @@ public class ConvertParameterToMapEntryIntention extends Intention {
     }
     if (thereAreNamedArguments) {
       if (firstOwnerParameterMustBeMap(owner)) {
-        return MUST_BE_MAP;
+        return FIRST_PARAMETER_KIND.MUST_BE_MAP;
       }
-      return ERROR;
+      return FIRST_PARAMETER_KIND.ERROR;
     }
-    return IS_NOT_MAP;
+    return FIRST_PARAMETER_KIND.IS_NOT_MAP;
   }
 
   private static boolean firstOwnerParameterMustBeMap(final GrParametersOwner owner) {

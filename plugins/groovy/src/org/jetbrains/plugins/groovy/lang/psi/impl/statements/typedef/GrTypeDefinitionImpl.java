@@ -76,7 +76,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil.isClassEquivalentTo;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSEMI;
 
 /**
  * @author ilyas
@@ -241,7 +241,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   @Override
   public boolean isEquivalentTo(PsiElement another) {
-    return isClassEquivalentTo(this, another);
+    return GrClassImplUtil.isClassEquivalentTo(this, another);
   }
 
   @Override

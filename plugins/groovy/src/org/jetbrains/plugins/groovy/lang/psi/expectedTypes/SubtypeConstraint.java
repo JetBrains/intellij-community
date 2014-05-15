@@ -21,8 +21,6 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType;
-
 /**
  * @author ven
  */
@@ -50,7 +48,7 @@ public  class SubtypeConstraint extends TypeConstraint {
   }
 
   public static SubtypeConstraint create(String fqName, PsiElement context) {
-    PsiClassType type = createType(fqName, context);
+    PsiClassType type = TypesUtil.createType(fqName, context);
     return new SubtypeConstraint(type, type);
   }
 }

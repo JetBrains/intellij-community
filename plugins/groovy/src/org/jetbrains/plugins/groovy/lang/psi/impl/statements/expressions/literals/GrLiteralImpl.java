@@ -24,6 +24,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -37,6 +38,8 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kFALSE;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kTRUE;
 
 /**
  * @author ilyas
@@ -74,10 +77,10 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
     if (TokenSets.NUMBERS.contains(elemType)) {
       text = text.replaceAll("_", "");
       try {
-        if (elemType == mNUM_INT) {
+        if (elemType == GroovyTokenTypes.mNUM_INT) {
           return Integer.parseInt(text);
         }
-        else if (elemType == mNUM_LONG) {
+        else if (elemType == GroovyTokenTypes.mNUM_LONG) {
           return Long.parseLong(text);
         }
         else if (elemType == mNUM_FLOAT) {
@@ -86,10 +89,10 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
         else if (elemType == mNUM_DOUBLE) {
           return Double.parseDouble(text);
         }
-        else if (elemType == mNUM_BIG_INT) {
+        else if (elemType == GroovyTokenTypes.mNUM_BIG_INT) {
           return new BigInteger(text);
         }
-        else if (elemType == mNUM_BIG_DECIMAL) {
+        else if (elemType == GroovyTokenTypes.mNUM_BIG_DECIMAL) {
 
           return new BigDecimal(text);
         }

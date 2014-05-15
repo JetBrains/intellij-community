@@ -27,6 +27,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
@@ -63,7 +64,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mPLUS;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mREGEX_FIND;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mREGEX_MATCH;
 
 /**
  * @author ven
@@ -392,11 +395,11 @@ public class GroovyExpectedTypesProvider {
 
       final GroovyResolveResult[] callVariants = expression.multiResolve(true);
       if (myExpression == left || callVariants.length == 0) {
-        if (type == mPLUS && otherType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+        if (type == GroovyTokenTypes.mPLUS && otherType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
           final PsiClassType obj = TypesUtil.getJavaLangObject(expression);
           myResult = createSimpleSubTypeResult(obj);
         }
-        else if (type == mREGEX_FIND || type == mREGEX_MATCH) {
+        else if (type == GroovyTokenTypes.mREGEX_FIND || type == GroovyTokenTypes.mREGEX_MATCH) {
           final PsiClassType string = TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, expression);
           myResult = createSimpleSubTypeResult(string);
         }

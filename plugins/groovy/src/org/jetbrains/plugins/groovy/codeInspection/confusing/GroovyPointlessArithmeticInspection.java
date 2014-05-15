@@ -27,11 +27,14 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR;
 
 public class GroovyPointlessArithmeticInspection extends BaseInspection {
 
@@ -68,7 +71,7 @@ public class GroovyPointlessArithmeticInspection extends BaseInspection {
     final GrExpression lhs = exp.getLeftOperand();
     final GrExpression rhs = exp.getRightOperand();
     assert rhs != null;
-    if (mPLUS == sign) {
+    if (GroovyTokenTypes.mPLUS == sign) {
       if (isZero(lhs)) {
         return rhs.getText();
       }
@@ -93,7 +96,7 @@ public class GroovyPointlessArithmeticInspection extends BaseInspection {
       }
     }
 
-    if (mDIV == sign) {
+    if (GroovyTokenTypes.mDIV == sign) {
       return lhs.getText();
     }
 
@@ -122,7 +125,8 @@ public class GroovyPointlessArithmeticInspection extends BaseInspection {
 
   private static class PointlessArithmeticVisitor extends BaseInspectionVisitor {
 
-    private final TokenSet arithmeticTokens = TokenSet.create(mPLUS, mMINUS, mSTAR, mDIV);
+    private final TokenSet arithmeticTokens = TokenSet.create(mPLUS, mMINUS, mSTAR,
+                                                              mDIV);
 
     @Override
     public void visitBinaryExpression(@NotNull GrBinaryExpression expression) {

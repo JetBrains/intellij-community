@@ -18,8 +18,6 @@ package org.jetbrains.plugins.groovy.refactoring.rename;
 import com.intellij.ide.TitledHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -38,8 +36,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 
 import java.util.List;
-
-import static org.jetbrains.plugins.groovy.refactoring.rename.RenamePropertyUtil.askToRenameProperty;
 
 /**
  * @author ven
@@ -79,7 +75,7 @@ public class PropertyRenameHandler implements RenameHandler, TitledHandler {
   }
 
   private static void invokeInner(Project project, Editor editor, PsiElement element) {
-    final Pair<List<? extends PsiElement>, String> pair = askToRenameProperty((PsiMember)element);
+    final Pair<List<? extends PsiElement>, String> pair = RenamePropertyUtil.askToRenameProperty((PsiMember)element);
     final List<? extends PsiElement> result = pair.getFirst();
     if (result.isEmpty()) return;
 

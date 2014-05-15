@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
@@ -64,7 +65,7 @@ public class GrAnnotationArrayInitializerImpl extends GroovyPsiElementImpl imple
       return super.addInternal(first, last, getNode().getFirstChildNode(), false);
     }
     final ASTNode lastChild = getNode().getLastChildNode();
-    getNode().addLeaf(mCOMMA, ",", lastChild);
+    getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", lastChild);
     return super.addInternal(first, last, lastChild.getTreePrev(), false);
   }
 }

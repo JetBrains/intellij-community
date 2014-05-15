@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -32,6 +33,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -62,15 +64,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.intellij.patterns.PlatformPatterns.psiElement;
-import static com.intellij.util.containers.ContainerUtil.*;
-
 /**
 * Created by Max Medvedev on 14/05/14
 */
 public class GrMainCompletionProvider extends CompletionProvider<CompletionParameters> {
-  public static final ElementPattern<PsiElement> AFTER_AT = psiElement().afterLeaf("@");
-  public static final ElementPattern<PsiElement> IN_CATCH_TYPE = psiElement().afterLeaf(psiElement().withText("(").withParent(GrCatchClause.class));
+  public static final ElementPattern<PsiElement> AFTER_AT = PlatformPatterns.psiElement().afterLeaf("@");
+  public static final ElementPattern<PsiElement> IN_CATCH_TYPE = PlatformPatterns
+    .psiElement().afterLeaf(PlatformPatterns.psiElement().withText("(").withParent(GrCatchClause.class));
 
   private static void addUnfinishedMethodTypeParameters(@NotNull PsiElement position, @NotNull CompletionResultSet result) {
     final GrTypeParameterList candidate = findTypeParameterListCandidate(position);
@@ -201,7 +201,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
                                     final PrefixMatcher matcher,
                                     final Consumer<LookupElement> _consumer) {
     final Consumer<LookupElement> consumer = new Consumer<LookupElement>() {
-      final Set<LookupElement> added = newHashSet();
+      final Set<LookupElement> added = ContainerUtil.newHashSet();
       @Override
       public void consume(LookupElement element) {
         if (added.add(element)) {
@@ -210,7 +210,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
       }
     };
 
-    final Map<PsiModifierListOwner, LookupElement> staticMembers = newHashMap();
+    final Map<PsiModifierListOwner, LookupElement> staticMembers = ContainerUtil.newHashMap();
     final PsiElement qualifier = reference.getQualifier();
     final PsiType qualifierType = qualifier instanceof GrExpression ? ((GrExpression)qualifier).getType() : null;
 
@@ -227,7 +227,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
       }
     }
 
-    final List<LookupElement> zeroPriority = newArrayList();
+    final List<LookupElement> zeroPriority = ContainerUtil.newArrayList();
 
     GroovyCompletionUtil.processVariants(reference, matcher, parameters, new Consumer<LookupElement>() {
       @Override
@@ -446,7 +446,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
   }
 
   public static void register(CompletionContributor contributor) {
-    contributor.extend(CompletionType.BASIC, psiElement(PsiElement.class), new GrMainCompletionProvider());
+    contributor.extend(CompletionType.BASIC, PlatformPatterns.psiElement(PsiElement.class), new GrMainCompletionProvider());
   }
 
   @Override
@@ -456,7 +456,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
     GroovyCompletionData.addGroovyDocKeywords(parameters, result);
 
     PsiElement position = parameters.getPosition();
-    if (psiElement().inside(false, psiElement(PsiComment.class)).accepts(position)) {
+    if (PlatformPatterns.psiElement().inside(false, PlatformPatterns.psiElement(PsiComment.class)).accepts(position)) {
       return;
     }
 

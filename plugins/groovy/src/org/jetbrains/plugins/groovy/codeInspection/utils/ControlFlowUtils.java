@@ -59,7 +59,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
 
-import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDEC;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mINC;
 
 @SuppressWarnings({"OverlyComplexClass"})
 public class ControlFlowUtils {
@@ -633,7 +634,7 @@ public class ControlFlowUtils {
         visitAllExitPoints(block, new ExitPointVisitor() {
           @Override
           public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
-            addIfNotNull(result, returnValue);
+            ContainerUtil.addIfNotNull(result, returnValue);
             return true;
           }
         });

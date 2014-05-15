@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.List;
@@ -46,21 +47,18 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
-import static com.intellij.psi.CommonClassNames.*;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.*;
-
 /**
  * @author ven
  */
 public class GroovyPsiManager {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager");
-  private static final Set<String> ourPopularClasses = ContainerUtil.newHashSet(GROOVY_LANG_CLOSURE,
-                                                                                DEFAULT_BASE_CLASS_NAME,
-                                                                                GROOVY_OBJECT_SUPPORT,
-                                                                                GROOVY_LANG_SCRIPT,
-                                                                                JAVA_UTIL_LIST,
-                                                                                JAVA_UTIL_COLLECTION,
-                                                                                JAVA_LANG_STRING);
+  private static final Set<String> ourPopularClasses = ContainerUtil.newHashSet(GroovyCommonClassNames.GROOVY_LANG_CLOSURE,
+                                                                                GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME,
+                                                                                GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT,
+                                                                                GroovyCommonClassNames.GROOVY_LANG_SCRIPT,
+                                                                                CommonClassNames.JAVA_UTIL_LIST,
+                                                                                CommonClassNames.JAVA_UTIL_COLLECTION,
+                                                                                CommonClassNames.JAVA_LANG_STRING);
   private final Project myProject;
 
   private final Map<String, GrTypeDefinition> myArrayClass = new HashMap<String, GrTypeDefinition>();
@@ -141,9 +139,9 @@ public class GroovyPsiManager {
   private boolean isCompileStaticInner(@NotNull PsiMember member) {
     PsiModifierList list = member.getModifierList();
     if (list != null) {
-      PsiAnnotation compileStatic = list.findAnnotation(GROOVY_TRANSFORM_COMPILE_STATIC);
+      PsiAnnotation compileStatic = list.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_COMPILE_STATIC);
       if (compileStatic != null) return checkForPass(compileStatic);
-      PsiAnnotation typeChecked = list.findAnnotation(GROOVY_TRANSFORM_TYPE_CHECKED);
+      PsiAnnotation typeChecked = list.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_TYPE_CHECKED);
       if (typeChecked != null) return checkForPass(typeChecked);
     }
     PsiClass aClass = member.getContainingClass();
@@ -155,7 +153,7 @@ public class GroovyPsiManager {
     PsiAnnotationMemberValue value = annotation.findAttributeValue("value");
     return value == null ||
            value instanceof PsiReference &&
-           ResolveUtil.isEnumConstant((PsiReference)value, "PASS", GROOVY_TRANSFORM_TYPE_CHECKING_MODE);
+           ResolveUtil.isEnumConstant((PsiReference)value, "PASS", GroovyCommonClassNames.GROOVY_TRANSFORM_TYPE_CHECKING_MODE);
   }
 
   @Nullable

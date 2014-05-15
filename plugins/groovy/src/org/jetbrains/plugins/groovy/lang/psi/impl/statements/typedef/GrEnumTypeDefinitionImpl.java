@@ -28,6 +28,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -38,11 +39,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEn
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
-
-import static com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTION;
-import static org.jetbrains.plugins.groovy.GroovyFileType.GROOVY_LANGUAGE;
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.shouldProcessMethods;
 
 /**
  * @author Dmitry.Krasilschikov
@@ -121,7 +119,7 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
                                      @NotNull ResolveState state,
                                      @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    if (shouldProcessMethods(processor.getHint(ClassHint.KEY))) {
+    if (ResolveUtil.shouldProcessMethods(processor.getHint(ClassHint.KEY))) {
       final NameHint nameHint = processor.getHint(NameHint.KEY);
       final String name = nameHint == null ? null : nameHint.getName(state);
       for (PsiMethod method : getDefEnumMethods()) {
@@ -141,23 +139,23 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
         PsiMethod[] defMethods = new PsiMethod[4];
         final PsiManagerEx manager = getManager();
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
-        defMethods[0] = new LightMethodBuilder(manager, GROOVY_LANGUAGE, "values")
-          .setMethodReturnType(factory.createTypeFromText(JAVA_UTIL_COLLECTION + "<" + getName() + ">", GrEnumTypeDefinitionImpl.this))
+        defMethods[0] = new LightMethodBuilder(manager, GroovyFileType.GROOVY_LANGUAGE, "values")
+          .setMethodReturnType(factory.createTypeFromText(CommonClassNames.JAVA_UTIL_COLLECTION + "<" + getName() + ">", GrEnumTypeDefinitionImpl.this))
           .setContainingClass(GrEnumTypeDefinitionImpl.this)
           .addModifier(PsiModifier.PUBLIC)
           .addModifier(PsiModifier.STATIC);
 
-        defMethods[1] = new LightMethodBuilder(manager, GROOVY_LANGUAGE, "next")
+        defMethods[1] = new LightMethodBuilder(manager, GroovyFileType.GROOVY_LANGUAGE, "next")
           .setMethodReturnType(factory.createType(GrEnumTypeDefinitionImpl.this))
           .setContainingClass(GrEnumTypeDefinitionImpl.this)
           .addModifier(PsiModifier.PUBLIC);
 
-        defMethods[2] = new LightMethodBuilder(manager, GROOVY_LANGUAGE, "previous")
+        defMethods[2] = new LightMethodBuilder(manager, GroovyFileType.GROOVY_LANGUAGE, "previous")
           .setMethodReturnType(factory.createType(GrEnumTypeDefinitionImpl.this))
           .setContainingClass(GrEnumTypeDefinitionImpl.this)
           .addModifier(PsiModifier.PUBLIC);
 
-        defMethods[3] = new LightMethodBuilder(manager, GROOVY_LANGUAGE, "valueOf")
+        defMethods[3] = new LightMethodBuilder(manager, GroovyFileType.GROOVY_LANGUAGE, "valueOf")
           .setMethodReturnType(factory.createType(GrEnumTypeDefinitionImpl.this))
           .setContainingClass(GrEnumTypeDefinitionImpl.this)
           .addParameter("name", CommonClassNames.JAVA_LANG_STRING)

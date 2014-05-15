@@ -23,6 +23,8 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
+import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocInlinedTag;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocParameterReference;
@@ -33,16 +35,19 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_COMMENT_DATA;
+import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_NAME;
 import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN;
 import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes.*;
+import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes.GDOC_FIELD_REF;
 
 /**
  * @author ilyas
  */
 public class GrDocInlinedTagImpl extends GroovyDocPsiElementImpl implements GrDocInlinedTag {
   private static final TokenSet VALUE_BIT_SET = TokenSet
-    .create(mGDOC_TAG_VALUE_TOKEN, GDOC_METHOD_REF, GDOC_FIELD_REF, GDOC_PARAM_REF, GDOC_REFERENCE_ELEMENT, mGDOC_COMMENT_DATA,
-            GDOC_INLINED_TAG);
+    .create(mGDOC_TAG_VALUE_TOKEN, GroovyDocElementTypes.GDOC_METHOD_REF, GDOC_FIELD_REF,
+            GroovyDocElementTypes.GDOC_PARAM_REF, GroovyDocElementTypes.GDOC_REFERENCE_ELEMENT, mGDOC_COMMENT_DATA,
+            GroovyDocElementTypes.GDOC_INLINED_TAG);
 
   public GrDocInlinedTagImpl(@NotNull ASTNode node) {
     super(node);

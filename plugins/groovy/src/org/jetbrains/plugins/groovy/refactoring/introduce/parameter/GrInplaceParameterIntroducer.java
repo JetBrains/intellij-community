@@ -54,8 +54,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GroovyIntroduceParameterUtil.findParametersToRemove;
-
 /**
  * Created by Max Medvedev on 9/1/13
  */
@@ -74,7 +72,7 @@ public class GrInplaceParameterIntroducer extends GrAbstractInplaceIntroducer<Gr
     GrVariable localVar = GrIntroduceHandlerBase.resolveLocalVar(context);
     mySuggestedNames = GroovyIntroduceParameterUtil.suggestNames(localVar, context.getExpression(), context.getStringPart(), info.getToReplaceIn(), context.getProject());
 
-    myParametersToRemove = new TIntArrayList(findParametersToRemove(info).getValues());
+    myParametersToRemove = new TIntArrayList(GroovyIntroduceParameterUtil.findParametersToRemove(info).getValues());
   }
 
   @Override

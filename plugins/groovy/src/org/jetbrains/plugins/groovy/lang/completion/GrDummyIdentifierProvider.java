@@ -24,12 +24,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.WHITE_SPACES_OR_COMMENTS;
 
 /**
  * Created by Max Medvedev on 14/05/14
@@ -78,15 +79,15 @@ public class GrDummyIdentifierProvider {
     HighlighterIterator iterator = ((EditorEx)myContext.getEditor()).getHighlighter().createIterator(myContext.getStartOffset());
     if (iterator.atEnd()) return false;
 
-    if (iterator.getTokenType() == mIDENT) {
+    if (iterator.getTokenType() == GroovyTokenTypes.mIDENT) {
       iterator.advance();
     }
 
-    while (!iterator.atEnd() && WHITE_SPACES_OR_COMMENTS.contains(iterator.getTokenType())) {
+    while (!iterator.atEnd() && TokenSets.WHITE_SPACES_OR_COMMENTS.contains(iterator.getTokenType())) {
       iterator.advance();
     }
 
-    return !iterator.atEnd() && iterator.getTokenType() == mASSIGN;
+    return !iterator.atEnd() && iterator.getTokenType() == GroovyTokenTypes.mASSIGN;
   }
 
   @NotNull
@@ -108,10 +109,10 @@ public class GrDummyIdentifierProvider {
       iterator.advance();
     }
 
-    while (!iterator.atEnd() && WHITE_SPACES_OR_COMMENTS.contains(iterator.getTokenType())) {
+    while (!iterator.atEnd() && TokenSets.WHITE_SPACES_OR_COMMENTS.contains(iterator.getTokenType())) {
       iterator.advance();
     }
 
-    return !iterator.atEnd() && iterator.getTokenType() == mLPAREN;
+    return !iterator.atEnd() && iterator.getTokenType() == GroovyTokenTypes.mLPAREN;
   }
 }

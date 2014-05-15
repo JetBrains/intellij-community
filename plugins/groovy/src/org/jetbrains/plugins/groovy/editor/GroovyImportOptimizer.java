@@ -36,14 +36,12 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyImportHelper;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.*;
-
-import static org.jetbrains.plugins.groovy.lang.psi.impl.GroovyImportHelper.isImplicitlyImported;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.GroovyImportHelper.processImports;
 
 /**
  * @author ven
@@ -112,7 +110,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
             if (usedImports != null && isImportUsed(refElement, resolved)) {
               usedImports.add(importStatement);
             }
-            if (isImplicitlyImported(resolved, refName, (GroovyFile)file)) {
+            if (GroovyImportHelper.isImplicitlyImported(resolved, refName, (GroovyFile)file)) {
               addImplicitClass(resolved);
             }
 
@@ -194,10 +192,11 @@ public class GroovyImportOptimizer implements ImportOptimizer {
        * checks if import for implicitly imported class is needed
        */
       private boolean isImportUsed(GrReferenceElement refElement, PsiElement resolved) {
-        if (isImplicitlyImported(resolved, refElement.getReferenceName(), (GroovyFile)file)) {
+        if (GroovyImportHelper.isImplicitlyImported(resolved, refElement.getReferenceName(), (GroovyFile)file)) {
           final ClassResolverProcessor processor =
             new ClassResolverProcessor(refElement.getReferenceName(), refElement, ResolverProcessor.RESOLVE_KINDS_CLASS);
-          processImports(ResolveState.initial(), null, refElement, processor, ((GroovyFile)file).getImportStatements(), true);
+          GroovyImportHelper
+            .processImports(ResolveState.initial(), null, refElement, processor, ((GroovyFile)file).getImportStatements(), true);
           if (!processor.hasCandidates()) {
             return false;
           }

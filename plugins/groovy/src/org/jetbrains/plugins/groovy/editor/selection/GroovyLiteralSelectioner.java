@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
@@ -28,7 +29,9 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mGSTRING_CONTENT;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mREGEX_CONTENT;
 
 /**
  * @author ilyas
@@ -57,7 +60,8 @@ public class GroovyLiteralSelectioner extends ExtendWordSelectionHandlerBase {
     final String text = e.getText();
     final int stringOffset = e.getTextOffset();
     final IElementType elementType = e.getNode().getElementType();
-    if (elementType == mGSTRING_CONTENT || elementType == mREGEX_CONTENT || elementType == mDOLLAR_SLASH_REGEX_CONTENT) {
+    if (elementType == GroovyTokenTypes.mGSTRING_CONTENT || elementType == GroovyTokenTypes.mREGEX_CONTENT || elementType ==
+                                                                                                              GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT) {
       int cur;
       int index = -1;
       while (true) {

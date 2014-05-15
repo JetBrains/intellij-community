@@ -58,6 +58,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrRefer
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -66,7 +67,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.SubstitutorComputer;
 
 import java.util.*;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mMEMBER_POINTER;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSPREAD_DOT;
 
 /**
  * @author ven
@@ -242,12 +244,12 @@ public class CompleteReferenceExpression {
                                                                  @Nullable PrefixMatcher matcher) {
     String propName;
     PsiType propType;
-    final boolean getter = isSimplePropertyGetter(accessor, null);
+    final boolean getter = GroovyPropertyUtils.isSimplePropertyGetter(accessor, null);
     if (getter) {
-      propName = getPropertyNameByGetter(accessor);
+      propName = GroovyPropertyUtils.getPropertyNameByGetter(accessor);
     }
-    else if (isSimplePropertySetter(accessor, null)) {
-      propName = getPropertyNameBySetter(accessor);
+    else if (GroovyPropertyUtils.isSimplePropertySetter(accessor, null)) {
+      propName = GroovyPropertyUtils.getPropertyNameBySetter(accessor);
     }
     else {
       return null;

@@ -22,6 +22,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
+import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.utils.EquivalenceChecker;
 import org.jetbrains.plugins.groovy.codeInspection.utils.SideEffectChecker;
@@ -34,7 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import static org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDOT;
 
 public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspection {
 
@@ -72,7 +73,7 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
       final GrConditionalExpression expression = (GrConditionalExpression) descriptor.getPsiElement();
       final GrBinaryExpression binaryCondition = (GrBinaryExpression)PsiUtil.skipParentheses(expression.getCondition(), false);
       final GrMethodCallExpression call;
-      if (isInequality(binaryCondition)) {
+      if (GrInspectionUtil.isInequality(binaryCondition)) {
         call = (GrMethodCallExpression) expression.getThenBranch();
       } else {
         call = (GrMethodCallExpression) expression.getElseBranch();
@@ -114,16 +115,16 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
       final GrBinaryExpression binaryCondition = (GrBinaryExpression) condition;
       final GrExpression lhs = binaryCondition.getLeftOperand();
       final GrExpression rhs = binaryCondition.getRightOperand();
-      if (isInequality(binaryCondition) && isNull(elseBranch)) {
-        if (isNull(lhs) && isCallTargeting(thenBranch, rhs) ||
-            isNull(rhs) && isCallTargeting(thenBranch, lhs)) {
+      if (GrInspectionUtil.isInequality(binaryCondition) && GrInspectionUtil.isNull(elseBranch)) {
+        if (GrInspectionUtil.isNull(lhs) && isCallTargeting(thenBranch, rhs) ||
+            GrInspectionUtil.isNull(rhs) && isCallTargeting(thenBranch, lhs)) {
           registerError(expression);
         }
       }
 
-      if (isEquality(binaryCondition) && isNull(thenBranch)) {
-        if (isNull(lhs) && isCallTargeting(elseBranch, rhs) ||
-            isNull(rhs) && isCallTargeting(elseBranch, lhs)) {
+      if (GrInspectionUtil.isEquality(binaryCondition) && GrInspectionUtil.isNull(thenBranch)) {
+        if (GrInspectionUtil.isNull(lhs) && isCallTargeting(elseBranch, rhs) ||
+            GrInspectionUtil.isNull(rhs) && isCallTargeting(elseBranch, lhs)) {
           registerError(expression);
         }
       }

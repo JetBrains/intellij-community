@@ -25,6 +25,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -62,21 +64,23 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.patterns.PlatformPatterns.psiElement;
-import static com.intellij.patterns.StandardPatterns.or;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kNEW;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mASSIGN;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mASSIGN;
 
 /**
  * @author Maxim.Medvedev
  */
 public class GroovySmartCompletionContributor extends CompletionContributor {
-  private static final ElementPattern<PsiElement> INSIDE_EXPRESSION = psiElement().withParent(GrExpression.class);
+  private static final ElementPattern<PsiElement> INSIDE_EXPRESSION = PlatformPatterns.psiElement().withParent(GrExpression.class);
   private static final ElementPattern<PsiElement> IN_CAST_PARENTHESES =
-    psiElement().withSuperParent(3, psiElement(GrTypeCastExpression.class).withParent(
-      or(psiElement(GrAssignmentExpression.class), psiElement(GrVariable.class))));
+    PlatformPatterns.psiElement().withSuperParent(3, PlatformPatterns.psiElement(GrTypeCastExpression.class).withParent(
+      StandardPatterns.or(PlatformPatterns.psiElement(GrAssignmentExpression.class), PlatformPatterns.psiElement(GrVariable.class))));
 
-  static final ElementPattern<PsiElement> AFTER_NEW = psiElement().afterLeaf(psiElement(GroovyTokenTypes.kNEW));
+  static final ElementPattern<PsiElement> AFTER_NEW = PlatformPatterns.psiElement().afterLeaf(PlatformPatterns.psiElement(GroovyTokenTypes.kNEW));
 
-  private static final ElementPattern<PsiElement> IN_ANNOTATION = psiElement().withParent(psiElement(GrReferenceExpression.class).withParent(GrAnnotationNameValuePair.class));
+  private static final ElementPattern<PsiElement> IN_ANNOTATION = PlatformPatterns
+    .psiElement().withParent(PlatformPatterns.psiElement(GrReferenceExpression.class).withParent(GrAnnotationNameValuePair.class));
 
   private static final TObjectHashingStrategy<TypeConstraint> EXPECTED_TYPE_INFO_STRATEGY =
     new TObjectHashingStrategy<TypeConstraint>() {
@@ -155,8 +159,8 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
           return;
         }
 
-        final boolean overwrite = psiElement()
-          .afterLeaf(psiElement().withText("(").withParent(GrTypeCastExpression.class))
+        final boolean overwrite = PlatformPatterns.psiElement()
+          .afterLeaf(PlatformPatterns.psiElement().withText("(").withParent(GrTypeCastExpression.class))
           .accepts(parameters.getOriginalPosition());
         final Set<TypeConstraint> typeConstraints = getExpectedTypeInfos(parameters);
         for (TypeConstraint typeConstraint : typeConstraints) {
@@ -367,7 +371,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
         GrExpression lvalue = assignment.getLValue();
         GrExpression rvalue = assignment.getRValue();
 
-        if (pparent == rvalue && optoken == GroovyTokenTypes.mASSIGN) {
+        if (pparent == rvalue && optoken == mASSIGN) {
           return lvalue.getNominalType();
         }
       }

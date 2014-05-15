@@ -45,8 +45,6 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase
 
 import java.util.ArrayList;
 
-import static org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase.deleteLocalVar;
-
 /**
  * @author Max Medvedev
  */
@@ -75,7 +73,7 @@ public class GrIntroduceConstantProcessor {
     GrVariable localVar = GrIntroduceHandlerBase.resolveLocalVar(context);
     if (localVar != null) {
       assert localVar.getInitializerGroovy() != null : "initializer should exist: " + localVar.getText();
-      deleteLocalVar(localVar);
+      GrIntroduceHandlerBase.deleteLocalVar(localVar);
 
       if (settings.replaceAllOccurrences()) {
         processOccurrences(field);

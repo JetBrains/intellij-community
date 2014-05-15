@@ -28,6 +28,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -40,7 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 
 import java.util.HashMap;
 
-import static com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTION;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kAS;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kAS;
 
 /**
@@ -77,7 +78,7 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
    */
   private static boolean isCastToRawCollectionFromArray(PsiType opType, PsiType castType) {
     return castType instanceof PsiClassType &&
-           InheritanceUtil.isInheritor(castType, JAVA_UTIL_COLLECTION) &&
+           InheritanceUtil.isInheritor(castType, CommonClassNames.JAVA_UTIL_COLLECTION) &&
            PsiUtil.extractIterableTypeParameter(castType, false) == null &&
            ((PsiClassType)castType).resolve().getTypeParameters().length == 1 &&
            TypesUtil.getItemType(opType) != null;
@@ -97,7 +98,7 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
       final GrTypeElement typeElement = cast.getCastTypeElement();
       final PsiType toCast = typeElement == null ? null : typeElement.getType();
       final PsiType classType = TypesUtil.createJavaLangClassType(toCast, cast.getProject(), cast.getResolveScope());
-      return TypesUtil.getOverloadedOperatorCandidates(type, kAS, operand, new PsiType[]{classType});
+      return TypesUtil.getOverloadedOperatorCandidates(type, GroovyTokenTypes.kAS, operand, new PsiType[]{classType});
     }
   }
 

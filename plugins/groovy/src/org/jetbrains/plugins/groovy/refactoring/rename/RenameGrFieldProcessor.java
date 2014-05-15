@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,9 +50,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.findGetterForField;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.findSetterForField;
 
 /**
  * @author ilyas
@@ -294,7 +291,7 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
     final PsiClass containingClass = field.getContainingClass();
     if (containingClass == null) return;
 
-    final PsiMethod getter = findGetterForField(field);
+    final PsiMethod getter = GroovyPropertyUtils.findGetterForField(field);
     if (getter instanceof GrAccessorMethod) {
       final PsiMethod newGetter =
         PropertyUtil.findPropertyGetter(containingClass, newName, field.hasModifierProperty(PsiModifier.STATIC), true);
@@ -303,7 +300,7 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
           .message("implicit.getter.will.by.overriden.by.method", field.getName(), newGetter.getName()));
       }
     }
-    final PsiMethod setter = findSetterForField(field);
+    final PsiMethod setter = GroovyPropertyUtils.findSetterForField(field);
     if (setter instanceof GrAccessorMethod) {
       final PsiMethod newSetter =
         PropertyUtil.findPropertySetter(containingClass, newName, field.hasModifierProperty(PsiModifier.STATIC), true);

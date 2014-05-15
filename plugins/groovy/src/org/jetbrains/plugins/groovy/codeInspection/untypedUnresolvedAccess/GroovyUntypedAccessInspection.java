@@ -22,14 +22,13 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.annotator.GrHighlightUtil;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-
-import static org.jetbrains.plugins.groovy.annotator.GrHighlightUtil.isDeclarationAssignment;
 
 /**
  * @author Maxim.Medvedev
@@ -50,11 +49,11 @@ public class GroovyUntypedAccessInspection extends BaseInspection {
 
         PsiElement resolved = resolveResult.getElement();
         if (resolved != null) {
-          if (isDeclarationAssignment(refExpr) || resolved instanceof PsiPackage) return;
+          if (GrHighlightUtil.isDeclarationAssignment(refExpr) || resolved instanceof PsiPackage) return;
         }
         else {
           GrExpression qualifier = refExpr.getQualifierExpression();
-          if (qualifier == null && isDeclarationAssignment(refExpr)) return;
+          if (qualifier == null && GrHighlightUtil.isDeclarationAssignment(refExpr)) return;
         }
 
         final PsiType refExprType = refExpr.getType();

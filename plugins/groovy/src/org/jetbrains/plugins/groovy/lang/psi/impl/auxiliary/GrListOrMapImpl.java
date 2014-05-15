@@ -46,6 +46,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMMA;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMMA;
 
 /**
@@ -76,7 +78,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
       return super.addInternal(first, last, getNode().getFirstChildNode(), false);
     }
     final ASTNode lastChild = getNode().getLastChildNode();
-    getNode().addLeaf(mCOMMA, ",", lastChild);
+    getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", lastChild);
     return super.addInternal(first, last, lastChild.getTreePrev(), false);
   }
 

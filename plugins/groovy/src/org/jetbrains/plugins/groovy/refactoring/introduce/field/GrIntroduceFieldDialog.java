@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.ui.components.JBRadioButton;
@@ -59,10 +60,6 @@ import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-
-import static com.intellij.openapi.ui.Messages.getWarningIcon;
-import static com.intellij.openapi.ui.Messages.showYesNoDialog;
-import static com.intellij.refactoring.introduceField.IntroduceFieldHandler.REFACTORING_NAME;
 
 public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduceDialog<GrIntroduceFieldSettings>, GrIntroduceFieldSettings {
   private JPanel myContentPane;
@@ -196,7 +193,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
                                           isAlwaysInvokedConstructor((PsiMethod)container, clazz);
     hasLHSUsages = hasLhsUsages(myContext);
 
-    setTitle(REFACTORING_NAME);
+    setTitle(IntroduceFieldHandler.REFACTORING_NAME);
     init();
     checkErrors();
   }
@@ -463,7 +460,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     final String name = getName();
     String message = RefactoringBundle.message("field.exists", name, clazz.getQualifiedName());
     if (clazz.findFieldByName(name, true) != null &&
-        showYesNoDialog(myContext.getProject(), message, REFACTORING_NAME, getWarningIcon()) != Messages.YES) {
+        Messages.showYesNoDialog(myContext.getProject(), message, IntroduceFieldHandler.REFACTORING_NAME, Messages.getWarningIcon()) != Messages.YES) {
       return;
     }
     super.doOKAction();

@@ -21,7 +21,6 @@ import com.intellij.codeInsight.generation.ui.GenerateEqualsWizard;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiAnonymousClass;

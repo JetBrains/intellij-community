@@ -76,8 +76,6 @@ import org.jetbrains.plugins.groovy.refactoring.NameValidator;
 
 import java.util.*;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses;
-
 /**
  * Created by Max Medvedev on 10/29/13
  */
@@ -95,7 +93,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     PsiType ltype = findLValueType(initializer);
     PsiType rtype = initializer.getType();
 
-    GrExpression rawExpr = (GrExpression)skipParentheses(initializer, false);
+    GrExpression rawExpr = (GrExpression)PsiUtil.skipParentheses(initializer, false);
 
     if (ltype == null || TypesUtil.isAssignableWithoutConversions(ltype, rtype, initializer) || !TypesUtil.isAssignable(ltype, rtype, initializer)) {
       return rawExpr;
@@ -522,7 +520,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
   @NotNull
   protected PsiElement[] findOccurrences(@NotNull GrExpression expression, @NotNull PsiElement scope) {
-    final PsiElement[] occurrences = GroovyRefactoringUtil.getExpressionOccurrences(skipParentheses(expression, false), scope);
+    final PsiElement[] occurrences = GroovyRefactoringUtil.getExpressionOccurrences(PsiUtil.skipParentheses(expression, false), scope);
     if (occurrences == null || occurrences.length == 0) {
       throw new GrRefactoringError(GroovyRefactoringBundle.message("no.occurrences.found"));
     }

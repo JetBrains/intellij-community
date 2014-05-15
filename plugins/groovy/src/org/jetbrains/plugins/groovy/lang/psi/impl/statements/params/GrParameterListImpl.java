@@ -24,13 +24,14 @@ import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.stubs.EmptyStub;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMMA;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -141,7 +142,7 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub> implements
     ASTNode result = super.addInternal(first, last, anchor, before);
     if (first == last && first.getPsi() instanceof GrParameter && params.length > 0) {
       if (before.booleanValue() && anchor != null) {
-        getNode().addLeaf(mCOMMA, ",", anchor);
+        getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", anchor);
       }
       else if (before.booleanValue() && anchor == null) {
         getNode().addLeaf(mCOMMA, ",", result);

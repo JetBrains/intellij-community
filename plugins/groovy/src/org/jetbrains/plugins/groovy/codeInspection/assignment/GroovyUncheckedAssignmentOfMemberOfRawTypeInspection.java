@@ -39,8 +39,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
-import static org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil.isSpreadAssignment;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mASSIGN;
 
 /**
  * @author Maxim.Medvedev
@@ -156,7 +157,7 @@ public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseIn
       PsiType rType = rValue.getType();
 
       // For assignments with spread dot
-      if (isSpreadAssignment(lValue) && lType != null && lType instanceof PsiClassType) {
+      if (GroovyRefactoringUtil.isSpreadAssignment(lValue) && lType != null && lType instanceof PsiClassType) {
         final PsiClassType pct = (PsiClassType)lType;
         final PsiClass clazz = pct.resolve();
         if (clazz != null && CommonClassNames.JAVA_UTIL_LIST.equals(clazz.getQualifiedName())) {

@@ -23,8 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
-
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.*;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 /**
  * @author Maxim.Medvedev
@@ -59,17 +58,17 @@ public class AccessorResolverProcessor extends MethodResolverProcessor {
     String importedName = resolveContext instanceof GrImportStatement ? ((GrImportStatement)resolveContext).getImportedName() : null;
     if (mySearchForGetter) {
       if (element instanceof PsiMethod &&
-          (importedName != null && isSimplePropertyGetter((PsiMethod)element, null) &&
+          (importedName != null && GroovyPropertyUtils.isSimplePropertyGetter((PsiMethod)element, null) &&
            (isAppropriatePropertyNameForGetter((PsiMethod)element, importedName, myPropertyName) || myPropertyName.equals(importedName)) ||
-           importedName == null && isSimplePropertyGetter((PsiMethod)element, myPropertyName))) {
+           importedName == null && GroovyPropertyUtils.isSimplePropertyGetter((PsiMethod)element, myPropertyName))) {
         return addAccessor((PsiMethod)element, state);
       }
     }
     else {
       if (element instanceof PsiMethod &&
-          (importedName != null && isSimplePropertySetter((PsiMethod)element, null) &&
+          (importedName != null && GroovyPropertyUtils.isSimplePropertySetter((PsiMethod)element, null) &&
            (isAppropriatePropertyNameForSetter(importedName, myPropertyName) || myPropertyName.equals(importedName)) ||
-           importedName == null && isSimplePropertySetter((PsiMethod)element, myPropertyName))) {
+           importedName == null && GroovyPropertyUtils.isSimplePropertySetter((PsiMethod)element, myPropertyName))) {
         return addAccessor((PsiMethod)element, state);
       }
     }
@@ -80,21 +79,21 @@ public class AccessorResolverProcessor extends MethodResolverProcessor {
    * use only for imported properties
    */
   private static boolean isAppropriatePropertyNameForSetter(@NotNull String importedName, @NotNull String propertyName) {
-    propertyName = decapitalize(propertyName);
-    return propertyName.equals(getPropertyNameBySetterName(importedName));
+    propertyName = GroovyPropertyUtils.decapitalize(propertyName);
+    return propertyName.equals(GroovyPropertyUtils.getPropertyNameBySetterName(importedName));
   }
 
   /**
    * use only for imported properties
    */
   private static boolean isAppropriatePropertyNameForGetter(@NotNull PsiMethod getter, @NotNull String importedNameForGetter, @NotNull String propertyName) {
-    propertyName = decapitalize(propertyName);
+    propertyName = GroovyPropertyUtils.decapitalize(propertyName);
     return propertyName.equals(getPropertyNameByGetter(getter, importedNameForGetter));
   }
 
   @Nullable
   private static String getPropertyNameByGetter(PsiMethod element, String importedName) {
-    return getPropertyNameByGetterName(importedName, isBoolean(element));
+    return GroovyPropertyUtils.getPropertyNameByGetterName(importedName, isBoolean(element));
   }
 
   private static boolean isBoolean(PsiMethod method) {

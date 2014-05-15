@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,8 +39,6 @@ import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.File;
 import java.util.List;
-
-import static com.intellij.util.containers.ContainerUtil.ar;
 
 /**
  * @author ilyas
@@ -147,7 +146,7 @@ public class GantRunner extends GroovyScriptRunner {
 
     List<VirtualFile> classpath = params.getClassPath().getRootDirs();
 
-    String[] characteristicClasses = ar(
+    String[] characteristicClasses = ContainerUtil.ar(
       LibrariesUtil.SOME_GROOVY_CLASS, "org.apache.tools.ant.BuildException", "org.apache.tools.ant.launch.AntMain",
       "org.apache.commons.cli.ParseException");
     for (String someClass : characteristicClasses) {

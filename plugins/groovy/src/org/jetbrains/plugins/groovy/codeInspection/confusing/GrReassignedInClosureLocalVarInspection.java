@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReassignedLocalVarsChecker;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
@@ -32,8 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-
-import static org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle.message;
 
 /**
  * @author Max Medvedev
@@ -78,7 +77,8 @@ public class GrReassignedInClosureLocalVarInspection extends BaseInspection {
         final GrControlFlowOwner refFlorOwner = ControlFlowUtils.findControlFlowOwner(referenceExpression);
         if (isOtherScopeAndType(referenceExpression, checked, varFlowOwner, refFlorOwner)) {
           String flowDescription = getFlowDescription(refFlorOwner);
-          final String message = message("local.var.0.is.reassigned", ((GrNamedElement)resolved).getName(), flowDescription);
+          final String message = GroovyInspectionBundle
+            .message("local.var.0.is.reassigned", ((GrNamedElement)resolved).getName(), flowDescription);
           registerError(referenceExpression, message, LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         }
       }
@@ -95,13 +95,13 @@ public class GrReassignedInClosureLocalVarInspection extends BaseInspection {
   private static String getFlowDescription(GrControlFlowOwner refFlorOwner) {
     String flowDescription;
     if (refFlorOwner instanceof GrClosableBlock) {
-      flowDescription = message("closure");
+      flowDescription = GroovyInspectionBundle.message("closure");
     }
     else if (refFlorOwner instanceof GrAnonymousClassDefinition) {
-      flowDescription = message("anonymous.class");
+      flowDescription = GroovyInspectionBundle.message("anonymous.class");
     }
     else {
-      flowDescription = message("other.scope");
+      flowDescription = GroovyInspectionBundle.message("other.scope");
     }
     return flowDescription;
   }

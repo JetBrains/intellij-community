@@ -46,14 +46,13 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.ui.GroovyComboboxVisibilityPanel;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-
-import static org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle.message;
 
 /**
  * @author Max Medvedev
@@ -210,7 +209,7 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
   @Override
   protected String validateAndCommitData() {
     if (myReturnTypeCodeFragment != null && !checkType((PsiTypeCodeFragment)myReturnTypeCodeFragment, true)) {
-      return message("return.type.is.wrong");
+      return GroovyRefactoringBundle.message("return.type.is.wrong");
     }
 
     List<GrParameterTableModelItem> parameterInfos = myParametersTableModel.getItems();
@@ -220,11 +219,11 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
 
       String name = item.parameter.getName();
       if (!StringUtil.isJavaIdentifier(name)) {
-        return message("name.is.wrong", name);
+        return GroovyRefactoringBundle.message("name.is.wrong", name);
       }
 
       if (!checkType((PsiTypeCodeFragment)item.typeCodeFragment, i == newParameterCount - 1)) {
-        return message("type.for.parameter.is.incorrect", name);
+        return GroovyRefactoringBundle.message("type.for.parameter.is.incorrect", name);
       }
       try {
         item.parameter.setType(((PsiTypeCodeFragment)item.typeCodeFragment).getType());
@@ -239,7 +238,7 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
       String defaultValue = item.defaultValueCodeFragment.getText();
       final String initializer = item.initializerCodeFragment.getText();
       if (item.parameter.getOldIndex() < 0 && defaultValue.trim().isEmpty() && initializer.trim().isEmpty()) {
-        return message("specify.default.value", name);
+        return GroovyRefactoringBundle.message("specify.default.value", name);
       }
 
       item.parameter.setInitializer(initializer);
@@ -254,21 +253,21 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
       try {
         PsiType type = typeCodeFragment.getType();
         if (!(type instanceof PsiClassType)) {
-          return message("changeSignature.wrong.type.for.exception", typeCodeFragment.getText());
+          return GroovyRefactoringBundle.message("changeSignature.wrong.type.for.exception", typeCodeFragment.getText());
         }
 
         PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
         PsiClassType throwable = factory.createTypeByFQClassName("java.lang.Throwable", myMethod.getMethod().getResolveScope());
         if (!throwable.isAssignableFrom(type)) {
-          return message("changeSignature.not.throwable.type", typeCodeFragment.getText());
+          return GroovyRefactoringBundle.message("changeSignature.not.throwable.type", typeCodeFragment.getText());
         }
         exceptionInfo.setType((PsiClassType)type);
       }
       catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-        return message("changeSignature.wrong.type.for.exception", typeCodeFragment.getText());
+        return GroovyRefactoringBundle.message("changeSignature.wrong.type.for.exception", typeCodeFragment.getText());
       }
       catch (PsiTypeCodeFragment.NoTypeException e) {
-        return message("changeSignature.no.type.for.exception");
+        return GroovyRefactoringBundle.message("changeSignature.no.type.for.exception");
       }
     }
 

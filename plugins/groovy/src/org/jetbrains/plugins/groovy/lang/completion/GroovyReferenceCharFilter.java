@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.completion;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
@@ -26,8 +27,6 @@ import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-
-import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
 /**
  * @author ilyas
@@ -56,10 +55,10 @@ public class GroovyReferenceCharFilter extends CharFilter {
       PsiFile file = lookup.getPsiFile();
       PsiDocumentManager.getInstance(file.getProject()).commitDocument(lookup.getEditor().getDocument());
       PsiElement element = file.findElementAt(Math.max(caret - 1, 0));
-      if (psiElement().withParent(
-        psiElement(GrReferenceExpression.class).withParent(
-          StandardPatterns.or(psiElement(GrCaseLabel.class),
-                              psiElement(GrConditionalExpression.class)))).accepts(element)) {
+      if (PsiJavaPatterns.psiElement().withParent(
+        PsiJavaPatterns.psiElement(GrReferenceExpression.class).withParent(
+          StandardPatterns.or(PsiJavaPatterns.psiElement(GrCaseLabel.class),
+                              PsiJavaPatterns.psiElement(GrConditionalExpression.class)))).accepts(element)) {
         return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
       }
       if (item.getObject() instanceof NamedArgumentDescriptor &&

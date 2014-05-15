@@ -50,6 +50,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -87,8 +89,6 @@ import java.util.List;
 import java.util.Set;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.WHITE_SPACES_OR_COMMENTS;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.*;
 
 /**
  * @author ilyas
@@ -121,7 +121,7 @@ public class GroovyCompletionUtil {
     while (elem != null &&
            (elem instanceof PsiWhiteSpace ||
             elem instanceof PsiComment ||
-            mNLS.equals(elem.getNode().getElementType()))) {
+            GroovyTokenTypes.mNLS.equals(elem.getNode().getElementType()))) {
       elem = elem.getPrevSibling();
     }
     return elem;
@@ -295,8 +295,10 @@ public class GroovyCompletionUtil {
               return generateLookupForImportedElement(candidate, importedName);
             }
             else {
-              if (resolved instanceof PsiField && element instanceof PsiMethod && isAccessorFor((PsiMethod)element, (PsiField)resolved)) {
-                return generateLookupForImportedElement(candidate, getAccessorPrefix((PsiMethod)element) + capitalize(importedName));
+              if (resolved instanceof PsiField && element instanceof PsiMethod && GroovyPropertyUtils
+                .isAccessorFor((PsiMethod)element, (PsiField)resolved)) {
+                return generateLookupForImportedElement(candidate, GroovyPropertyUtils.getAccessorPrefix((PsiMethod)element) + GroovyPropertyUtils
+                  .capitalize(importedName));
               }
             }
           }
@@ -319,13 +321,13 @@ public class GroovyCompletionUtil {
   }
 
   private static boolean setterMatches(PrefixMatcher matcher, PsiMethod element, String importedName) {
-    return isSimplePropertySetter(element) && matcher.prefixMatches(getSetterName(importedName));
+    return GroovyPropertyUtils.isSimplePropertySetter(element) && matcher.prefixMatches(GroovyPropertyUtils.getSetterName(importedName));
   }
 
   private static boolean getterMatches(PrefixMatcher matcher, PsiMethod element, String importedName) {
-    return isSimplePropertyGetter(element) &&
-           (matcher.prefixMatches(getGetterNameNonBoolean(importedName)) ||
-            element.getReturnType() == PsiType.BOOLEAN && matcher.prefixMatches(getGetterNameBoolean(importedName)));
+    return GroovyPropertyUtils.isSimplePropertyGetter(element) &&
+           (matcher.prefixMatches(GroovyPropertyUtils.getGetterNameNonBoolean(importedName)) ||
+            element.getReturnType() == PsiType.BOOLEAN && matcher.prefixMatches(GroovyPropertyUtils.getGetterNameBoolean(importedName)));
   }
 
   public static LookupElement createClassLookupItem(PsiClass psiClass) {
@@ -427,7 +429,7 @@ public class GroovyCompletionUtil {
     boolean hasSetters = ContainerUtil.find(clazz.getAllMethods(), new Condition<PsiMethod>() {
       @Override
       public boolean value(PsiMethod method) {
-        return isSimplePropertySetter(method);
+        return GroovyPropertyUtils.isSimplePropertySetter(method);
       }
     }) != null;
 
@@ -537,7 +539,7 @@ public class GroovyCompletionUtil {
     final HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(oldTail);
     while (!iterator.atEnd()) {
       final IElementType tokenType = iterator.getTokenType();
-      if (WHITE_SPACES_OR_COMMENTS.contains(tokenType)) {
+      if (TokenSets.WHITE_SPACES_OR_COMMENTS.contains(tokenType)) {
         iterator.advance();
         continue;
       }

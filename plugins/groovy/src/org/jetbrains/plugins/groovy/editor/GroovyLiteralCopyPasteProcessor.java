@@ -32,11 +32,14 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDOLLAR;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL;
 
 /**
  * @author peter
@@ -67,7 +70,8 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
       return null;
     }
     IElementType elementType = elementAtSelectionStart.getNode().getElementType();
-    if ((elementType == mREGEX_END || elementType == mDOLLAR_SLASH_REGEX_END || elementType == mGSTRING_END) &&
+    if ((elementType == mREGEX_END || elementType == mDOLLAR_SLASH_REGEX_END || elementType ==
+                                                                                                                  mGSTRING_END) &&
         elementAtSelectionStart.getTextOffset() == selectionStart) {
       elementAtSelectionStart = elementAtSelectionStart.getPrevSibling();
       if (elementAtSelectionStart == null) return null;
@@ -124,10 +128,10 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
     }
 
     final IElementType type = token.getNode().getElementType();
-    if (type == mGSTRING_LITERAL || type == mGSTRING_CONTENT) {
+    if (type == GroovyTokenTypes.mGSTRING_LITERAL || type == mGSTRING_CONTENT) {
       return super.getLineBreaker(token);
     }
-    if (type == mSTRING_LITERAL) {
+    if (type == GroovyTokenTypes.mSTRING_LITERAL) {
       return super.getLineBreaker(token).replace('"', '\'');
     }
 

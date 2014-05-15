@@ -42,14 +42,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.DelegatedMethod;
 
 import java.util.*;
-
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT;
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.writeType;
 
 /**
  * @author Maxim.Medvedev
@@ -112,7 +109,7 @@ public class StubGenerator implements ClassItemGenerator {
       if (j > 0) text.append(", ");
       text.append('(');
       final PsiType type = superParams[j].getType();
-      writeType(text, substitutor.substitute(type), invocation, classNameProvider);
+      TypeWriter.writeType(text, substitutor.substitute(type), invocation, classNameProvider);
       text.append(')').append(GroovyToJavaGenerator.getDefaultValueText(type.getCanonicalText()));
     }
   }
@@ -210,7 +207,7 @@ public class StubGenerator implements ClassItemGenerator {
     final Set<String> result = ContainerUtil.newTroveSet(ArrayUtil.EMPTY_STRING_ARRAY);
     for (PsiClassType type : chainedConstructor.getThrowsList().getReferencedTypes()) {
       StringBuilder builder = new StringBuilder();
-      writeType(builder, substitutor.substitute(type), constructor, classNameProvider);
+      TypeWriter.writeType(builder, substitutor.substitute(type), constructor, classNameProvider);
       result.add(builder.toString());
     }
 
@@ -257,7 +254,7 @@ public class StubGenerator implements ClassItemGenerator {
       }
     }
 
-    writeType(text, retType, method, classNameProvider);
+    TypeWriter.writeType(text, retType, method, classNameProvider);
     text.append(' ');
 
     text.append(name);
@@ -341,7 +338,7 @@ public class StubGenerator implements ClassItemGenerator {
         final PsiClass baseClass = method.getContainingClass();
         if (baseClass == null) continue;
         final String qname = baseClass.getQualifiedName();
-        if (DEFAULT_BASE_CLASS_NAME.equals(qname) || GROOVY_OBJECT_SUPPORT.equals(qname) ||
+        if (GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME.equals(qname) || GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT.equals(qname) ||
             method.hasModifierProperty(PsiModifier.ABSTRACT) && typeDefinition.isInheritor(baseClass, true)) {
           if (method.isConstructor()) continue;
           methods.add(mirrorMethod(typeDefinition, method, baseClass, signature.getSubstitutor()));
@@ -354,7 +351,7 @@ public class StubGenerator implements ClassItemGenerator {
         final PsiMethod resolved = ((MethodSignatureBackedByPsiMethod)signature).getMethod();
         final PsiClass baseClass = resolved.getContainingClass();
         if (baseClass == null) continue;
-        if (!DEFAULT_BASE_CLASS_NAME.equals(baseClass.getQualifiedName())) continue;
+        if (!GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME.equals(baseClass.getQualifiedName())) continue;
 
         methods.add(mirrorMethod(typeDefinition, resolved, baseClass, signature.getSubstitutor()));
       }
@@ -408,7 +405,7 @@ public class StubGenerator implements ClassItemGenerator {
       PsiType declaredType =
         typeElement == null ? PsiType.getJavaLangObject(variable.getManager(), variable.getResolveScope()) : typeElement.getType();
 
-      writeType(text, declaredType, variableDeclaration, classNameProvider);
+      TypeWriter.writeType(text, declaredType, variableDeclaration, classNameProvider);
       text.append(' ').append(name).append(" = ").append(getVariableInitializer(variable, declaredType));
       text.append(";\n");
     }
@@ -444,7 +441,7 @@ public class StubGenerator implements ClassItemGenerator {
 
     text.append(typeDefinition.isInterface() ? "extends " : "implements ");
     for (PsiClassType implementsType : implementsTypes) {
-      writeType(text, implementsType, typeDefinition, classNameProvider);
+      TypeWriter.writeType(text, implementsType, typeDefinition, classNameProvider);
       text.append(", ");
     }
     if (!implementsTypes.isEmpty()) text.delete(text.length() - 2, text.length());
@@ -458,7 +455,7 @@ public class StubGenerator implements ClassItemGenerator {
     if (extendsClassesTypes.length > 0) {
 
       text.append("extends ");
-      writeType(text, extendsClassesTypes[0], typeDefinition, classNameProvider);
+      TypeWriter.writeType(text, extendsClassesTypes[0], typeDefinition, classNameProvider);
       text.append(' ');
     }
   }

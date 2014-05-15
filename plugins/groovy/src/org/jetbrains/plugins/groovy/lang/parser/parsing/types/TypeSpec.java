@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,30 +20,28 @@ import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
-import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult;
-import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.FAIL;
-import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.REF_WITH_TYPE_PARAMS;
-import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.parseReferenceElement;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * @autor: Dmitry.Krasilschikov
  * @date: 16.03.2007
  */
 public class TypeSpec implements GroovyElementTypes {
-  public static ReferenceElementResult parse(PsiBuilder builder) {
+  public static ReferenceElement.ReferenceElementResult parse(PsiBuilder builder) {
     return parse(builder, false, true); //allow lower and upper case first letter
   }
 
-  public static ReferenceElementResult parse(PsiBuilder builder, boolean isUpper, final boolean expressionPossible) {
+  public static ReferenceElement.ReferenceElementResult parse(PsiBuilder builder, boolean isUpper, final boolean expressionPossible) {
     if (TokenSets.BUILT_IN_TYPES.contains(builder.getTokenType())) {
       return parseBuiltInType(builder);
     }
     if (builder.getTokenType() == mIDENT) {
       return parseClassType(builder, isUpper, expressionPossible);
     }
-    return FAIL;
+    return ReferenceElement.ReferenceElementResult.FAIL;
   }
 
   /**
@@ -52,7 +50,7 @@ public class TypeSpec implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  public static ReferenceElementResult parseBuiltInType(PsiBuilder builder) {
+  public static ReferenceElement.ReferenceElementResult parseBuiltInType(PsiBuilder builder) {
     PsiBuilder.Marker arrMarker = builder.mark();
     ParserUtils.eatElement(builder, BUILT_IN_TYPE);
     if (mLBRACK.equals(builder.getTokenType())) {
@@ -60,7 +58,7 @@ public class TypeSpec implements GroovyElementTypes {
     } else {
       arrMarker.drop();
     }
-    return REF_WITH_TYPE_PARAMS;
+    return ReferenceElement.ReferenceElementResult.REF_WITH_TYPE_PARAMS;
   }
 
 
@@ -82,22 +80,22 @@ public class TypeSpec implements GroovyElementTypes {
     }
   }
 
-  private static ReferenceElementResult parseClassType(PsiBuilder builder, boolean isUpper, final boolean expressionPossible) {
+  private static ReferenceElement.ReferenceElementResult parseClassType(PsiBuilder builder, boolean isUpper, final boolean expressionPossible) {
     PsiBuilder.Marker arrMarker = builder.mark();
     PsiBuilder.Marker typeElementMarker = builder.mark();
 
-    final ReferenceElementResult result = parseReferenceElement(builder, isUpper, expressionPossible);
-    if (result == FAIL) {
+    final ReferenceElement.ReferenceElementResult result = ReferenceElement.parseReferenceElement(builder, isUpper, expressionPossible);
+    if (result == ReferenceElement.ReferenceElementResult.FAIL) {
       typeElementMarker.drop();
       arrMarker.rollbackTo();
-      return FAIL;
+      return ReferenceElement.ReferenceElementResult.FAIL;
     }
 
     typeElementMarker.done(CLASS_TYPE_ELEMENT);
 
     if (ParserUtils.lookAhead(builder, mLBRACK, mRBRACK)) {
       declarationBracketsParse(builder, arrMarker);
-      return REF_WITH_TYPE_PARAMS;
+      return ReferenceElement.ReferenceElementResult.REF_WITH_TYPE_PARAMS;
     } else {
       arrMarker.drop();
       return result;
@@ -116,14 +114,14 @@ public class TypeSpec implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  public static ReferenceElementResult parseStrict(PsiBuilder builder, boolean expressionPossible) {
+  public static ReferenceElement.ReferenceElementResult parseStrict(PsiBuilder builder, boolean expressionPossible) {
     if (TokenSets.BUILT_IN_TYPES.contains(builder.getTokenType())) {
       return parseBuiltInTypeStrict(builder);
     }
     else if (builder.getTokenType() == mIDENT) {
       return parseClassOrInterfaceTypeStrict(builder, expressionPossible);
     }
-    return FAIL;
+    return ReferenceElement.ReferenceElementResult.FAIL;
   }
 
 
@@ -133,14 +131,15 @@ public class TypeSpec implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  private static ReferenceElementResult parseBuiltInTypeStrict(PsiBuilder builder) {
+  private static ReferenceElement.ReferenceElementResult parseBuiltInTypeStrict(PsiBuilder builder) {
     PsiBuilder.Marker arrMarker = builder.mark();
     ParserUtils.eatElement(builder, BUILT_IN_TYPE);
     if (mLBRACK.equals(builder.getTokenType())) {
-      return declarationBracketsParseStrict(builder, arrMarker) ? REF_WITH_TYPE_PARAMS : FAIL;
+      return declarationBracketsParseStrict(builder, arrMarker) ? ReferenceElement.ReferenceElementResult.REF_WITH_TYPE_PARAMS
+                                                                : ReferenceElement.ReferenceElementResult.FAIL;
     } else {
       arrMarker.drop();
-      return REF_WITH_TYPE_PARAMS;
+      return ReferenceElement.ReferenceElementResult.REF_WITH_TYPE_PARAMS;
     }
   }
 
@@ -174,12 +173,12 @@ public class TypeSpec implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  private static ReferenceElementResult parseClassOrInterfaceTypeStrict(PsiBuilder builder, boolean expressionPossible) {
+  private static ReferenceElement.ReferenceElementResult parseClassOrInterfaceTypeStrict(PsiBuilder builder, boolean expressionPossible) {
     PsiBuilder.Marker arrMarker = builder.mark();
     PsiBuilder.Marker typeElementMarker = builder.mark();
 
-    final ReferenceElementResult result = parseReferenceElement(builder, false, expressionPossible);
-    if (result == FAIL) {
+    final ReferenceElement.ReferenceElementResult result = ReferenceElement.parseReferenceElement(builder, false, expressionPossible);
+    if (result == ReferenceElement.ReferenceElementResult.FAIL) {
       typeElementMarker.drop();
       arrMarker.rollbackTo();
       return result;
@@ -188,7 +187,8 @@ public class TypeSpec implements GroovyElementTypes {
     typeElementMarker.done(CLASS_TYPE_ELEMENT);
 
     if (mLBRACK.equals(builder.getTokenType())) {
-      return declarationBracketsParseStrict(builder, arrMarker) ? REF_WITH_TYPE_PARAMS : FAIL;
+      return declarationBracketsParseStrict(builder, arrMarker) ? ReferenceElement.ReferenceElementResult.REF_WITH_TYPE_PARAMS
+                                                                : ReferenceElement.ReferenceElementResult.FAIL;
     }
     else {
       arrMarker.drop();

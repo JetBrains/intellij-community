@@ -32,7 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * @author: Dmitry.Krasilschikov, ilyas
@@ -49,7 +49,7 @@ public class ParameterDeclaration implements GroovyElementTypes {
 
     final ReferenceElement.ReferenceElementResult result = TypeSpec.parseStrict(builder, true);
 
-    if (result == FAIL && !hasModifiers) {
+    if (result == ReferenceElement.ReferenceElementResult.FAIL && !hasModifiers) {
       rb.drop();
       pdMarker.rollbackTo();
       return false;
@@ -92,7 +92,8 @@ public class ParameterDeclaration implements GroovyElementTypes {
     if (mIDENT.equals(builder.getTokenType()) || (mTRIPLE_DOT.equals(builder.getTokenType()))) {
       rb.drop();
     }
-    else if (result == REF_WITH_TYPE_PARAMS || result == PATH_REF) {
+    else if (result == ReferenceElement.ReferenceElementResult.REF_WITH_TYPE_PARAMS || result ==
+                                                                                       ReferenceElement.ReferenceElementResult.PATH_REF) {
       rb.drop();
       pdMarker.drop();
       builder.error(GroovyBundle.message("identifier.expected"));
@@ -138,7 +139,7 @@ public class ParameterDeclaration implements GroovyElementTypes {
       rb.drop();
       rb = builder.mark();
       final ReferenceElement.ReferenceElementResult result = TypeSpec.parseStrict(builder, false);
-      if (result == FAIL && ParserUtils.lookAhead(builder, mBOR)) {
+      if (result == ReferenceElement.ReferenceElementResult.FAIL && ParserUtils.lookAhead(builder, mBOR)) {
         builder.error(GroovyBundle.message("type.expected"));
       }
       else {

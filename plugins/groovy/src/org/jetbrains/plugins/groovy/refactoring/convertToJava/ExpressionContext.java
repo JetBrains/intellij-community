@@ -26,8 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 import java.util.*;
 
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.suggestMethodName;
-
 class ExpressionContext implements Cloneable {
   List<String> myStatements = new ArrayList<String>();
   Set<String> myUsedVarNames;
@@ -114,7 +112,7 @@ class ExpressionContext implements Cloneable {
 
   public String getRefSetterName(GroovyPsiElement context) {
     if (myRefSetterName.isNull()) {
-      myRefSetterName.set(suggestMethodName(context, "setGroovyRef", this));
+      myRefSetterName.set(GenerationUtil.suggestMethodName(context, "setGroovyRef", this));
     }
     return myRefSetterName.get();
   }

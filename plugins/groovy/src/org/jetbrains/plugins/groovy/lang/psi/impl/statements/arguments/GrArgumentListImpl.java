@@ -40,6 +40,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMMA;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMMA;
 
 /**
@@ -198,7 +200,7 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
       if (insertComma) {
         final ASTNode astNode = getNode();
         if (anchor == getLeftParen()) {
-          astNode.addLeaf(mCOMMA, ",", result.getNextSibling().getNode());
+          astNode.addLeaf(GroovyTokenTypes.mCOMMA, ",", result.getNextSibling().getNode());
         }
         else {
           astNode.addLeaf(mCOMMA, ",", result.getNode());

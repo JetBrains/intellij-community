@@ -51,7 +51,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.deleteStatementTail;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNLS;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNLS;
 
 /**
  * @author ilyas
@@ -175,7 +176,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
       getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", anchor.getNode());
     }
     else {
-      getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", result.getNode());
+      getNode().addLeaf(mNLS, "\n", result.getNode());
     }
     return (GrStatement)result;
   }
@@ -242,7 +243,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   @Override
   public void deleteChildRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
     if (last instanceof GrTopStatement) {
-      deleteStatementTail(this, last);
+      PsiImplUtil.deleteStatementTail(this, last);
     }
     super.deleteChildRange(first, last);
   }

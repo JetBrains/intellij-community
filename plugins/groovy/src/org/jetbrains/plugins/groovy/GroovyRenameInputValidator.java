@@ -16,18 +16,17 @@
 package org.jetbrains.plugins.groovy;
 
 import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameInputValidator;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
-import static com.intellij.patterns.PlatformPatterns.psiElement;
-
 public class GroovyRenameInputValidator implements RenameInputValidator {
   @Override
   public ElementPattern<? extends PsiElement> getPattern() {
-    return psiElement(GrNamedElement.class);
+    return PlatformPatterns.psiElement(GrNamedElement.class);
   }
 
   @Override

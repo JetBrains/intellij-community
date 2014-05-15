@@ -39,11 +39,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 
 import java.util.*;
-
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.*;
 
 /**
  * @author Maxim.Medvedev
@@ -75,8 +74,8 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
                             String newName,
                             UsageInfo[] usages,
                             @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
-    boolean isGetter = isSimplePropertyGetter((PsiMethod)psiElement);
-    boolean isSetter = isSimplePropertySetter((PsiMethod)psiElement);
+    boolean isGetter = GroovyPropertyUtils.isSimplePropertyGetter((PsiMethod)psiElement);
+    boolean isSetter = GroovyPropertyUtils.isSimplePropertySetter((PsiMethod)psiElement);
 
     List<UsageInfo> methodAccess = new ArrayList<UsageInfo>(usages.length);
     List<UsageInfo> propertyAccess = new ArrayList<UsageInfo>(usages.length);
@@ -95,10 +94,10 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
 
     final String propertyName;
     if (isGetter) {
-      propertyName = getPropertyNameByGetterName(newName, true);
+      propertyName = GroovyPropertyUtils.getPropertyNameByGetterName(newName, true);
     }
     else if (isSetter) {
-      propertyName = getPropertyNameBySetterName(newName);
+      propertyName = GroovyPropertyUtils.getPropertyNameBySetterName(newName);
     }
     else {
       propertyName = null;

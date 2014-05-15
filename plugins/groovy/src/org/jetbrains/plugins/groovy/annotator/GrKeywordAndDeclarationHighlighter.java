@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -29,6 +30,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
@@ -45,9 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.codeInsight.daemon.impl.HighlightInfoType.INFORMATION;
-import static org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter.ANNOTATION;
-import static org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter.KEYWORD;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * @author Max Medvedev
@@ -71,7 +71,7 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
         IElementType tokenType = element.getNode().getElementType();
         if (TokenSets.KEYWORDS.contains(tokenType)) {
           if (highlightKeyword(element, tokenType)) {
-            addInfo(element, KEYWORD);
+            addInfo(element, DefaultHighlighter.KEYWORD);
           }
         }
         else if (!(element instanceof GroovyPsiElement || element instanceof PsiErrorElement)) {
@@ -86,7 +86,7 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
       }
 
       private void addInfo(@NotNull PsiElement element, @NotNull TextAttributesKey attribute) {
-        HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(INFORMATION).range(element);
+        HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(element);
         HighlightInfo info = builder.needsUpdateOnTyping(false).textAttributes(attribute).create();
         if (info != null) {
           result.add(info);
@@ -101,14 +101,14 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
     if (parent instanceof GrArgumentLabel) return false; //don't highlight: print (void:'foo')
 
     if (PsiTreeUtil.getParentOfType(element, GrCodeReferenceElement.class) != null) {
-      if (token == GroovyTokenTypes.kDEF || token == GroovyTokenTypes.kIN || token == GroovyTokenTypes.kAS) {
+      if (token == GroovyTokenTypes.kDEF || token == kIN || token == GroovyTokenTypes.kAS) {
         return false; //It is allowed to name packages 'as', 'in' or 'def'
       }
     }
-    else if (token == GroovyTokenTypes.kDEF && element.getParent() instanceof GrAnnotationNameValuePair) return false;
+    else if (token == kDEF && element.getParent() instanceof GrAnnotationNameValuePair) return false;
     else if (parent instanceof GrReferenceExpression && element == ((GrReferenceExpression)parent).getReferenceNameElement()) {
-      if (token == GroovyTokenTypes.kSUPER && ((GrReferenceExpression)parent).getQualifier() == null) return true;
-      if (token == GroovyTokenTypes.kTHIS && ((GrReferenceExpression)parent).getQualifier() == null) return true;
+      if (token == kSUPER && ((GrReferenceExpression)parent).getQualifier() == null) return true;
+      if (token == kTHIS && ((GrReferenceExpression)parent).getQualifier() == null) return true;
       return false; //don't highlight foo.def
     }
 
@@ -126,7 +126,7 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
   @Nullable
   private static TextAttributesKey getDeclarationAttribute(PsiElement element) {
     if (element.getParent() instanceof GrAnnotation && element.getNode().getElementType() == GroovyTokenTypes.mAT) {
-      return ANNOTATION;
+      return DefaultHighlighter.ANNOTATION;
     }
 
     PsiElement parent = element.getParent();

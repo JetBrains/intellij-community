@@ -37,8 +37,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.lang.psi.impl.types.GrCodeReferenceElementImpl.ReferenceKind.*;
-
 /**
  * Created by Max Medvedev on 25/04/14
  */
@@ -115,14 +113,14 @@ public class CompleteCodeReferenceElement {
         final PsiPackage parentPackage = JavaPsiFacade.getInstance(myRef.getProject()).findPackage(parentPackageFQName);
         if (parentPackage != null) {
           final GlobalSearchScope scope = myRef.getResolveScope();
-          if (myRef.getKind(true) == PACKAGE_FQ) {
+          if (myRef.getKind(true) == GrCodeReferenceElementImpl.ReferenceKind.PACKAGE_FQ) {
             for (PsiPackage aPackage : parentPackage.getSubPackages(scope)) {
               feedLookupElements(aPackage, afterNew);
             }
             return;
           }
 
-          if (myRef.getKind(true) == CLASS_FQ) {
+          if (myRef.getKind(true) == GrCodeReferenceElementImpl.ReferenceKind.CLASS_FQ) {
             for (PsiClass aClass : parentPackage.getClasses(scope)) {
               feedLookupElements(aClass, afterNew);
             }
@@ -150,7 +148,7 @@ public class CompleteCodeReferenceElement {
             for (PsiClass aClass : aPackage.getClasses(myRef.getResolveScope())) {
               feedLookupElements(aClass, afterNew);
             }
-            if (myRef.getKind(true) == CLASS) return;
+            if (myRef.getKind(true) == GrCodeReferenceElementImpl.ReferenceKind.CLASS) return;
 
             for (PsiPackage subpackage : aPackage.getSubPackages(myRef.getResolveScope())) {
               feedLookupElements(subpackage, afterNew);

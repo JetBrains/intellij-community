@@ -32,13 +32,16 @@ import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrStubFileElementType;
 
-import static com.intellij.lang.ParserDefinition.SpaceRequirements.*;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
+import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_COMMENT_START;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kIMPORT;
 
 /**
  * @author ilyas
@@ -97,27 +100,27 @@ public class GroovyParserDefinition implements ParserDefinition {
     final IElementType rType = right.getElementType();
 
     if (rType == kIMPORT && lType != TokenType.WHITE_SPACE) {
-      return MUST_LINE_BREAK;
+      return SpaceRequirements.MUST_LINE_BREAK;
     }
-    else if (lType == MODIFIERS && rType == MODIFIERS) {
-      return MUST;
+    else if (lType == GroovyElementTypes.MODIFIERS && rType == GroovyElementTypes.MODIFIERS) {
+      return SpaceRequirements.MUST;
     }
-    if (lType == mSEMI || lType == mSL_COMMENT) {
-      return MUST_LINE_BREAK;
+    if (lType == mSEMI || lType == GroovyTokenTypes.mSL_COMMENT) {
+      return SpaceRequirements.MUST_LINE_BREAK;
     }    
-    if (lType == mNLS || lType == mGDOC_COMMENT_START) {
-      return MAY;
+    if (lType == GroovyTokenTypes.mNLS || lType == mGDOC_COMMENT_START) {
+      return SpaceRequirements.MAY;
     }
-    if (lType == mGT) return MUST;
-    if (rType == mLT) return MUST;
+    if (lType == mGT) return SpaceRequirements.MUST;
+    if (rType == mLT) return SpaceRequirements.MUST;
 
     final IElementType parentType = left.getTreeParent().getElementType();
-    if (parentType == GSTRING ||
-        parentType == REGEX ||
-        parentType == GSTRING_INJECTION ||
-        parentType == mREGEX_LITERAL ||
-        parentType == mDOLLAR_SLASH_REGEX_LITERAL) {
-      return MUST_NOT;
+    if (parentType == GroovyElementTypes.GSTRING ||
+        parentType == GroovyElementTypes.REGEX ||
+        parentType == GroovyElementTypes.GSTRING_INJECTION ||
+        parentType == GroovyTokenTypes.mREGEX_LITERAL ||
+        parentType == GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL) {
+      return SpaceRequirements.MUST_NOT;
     }
 
     return LanguageUtil.canStickTokensTogetherByLexer(left, right, new GroovyLexer());

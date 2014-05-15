@@ -20,6 +20,8 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.openapi.util.Pair;
+import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -28,9 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.util.FieldInitializerTailTypes;
 
-import static com.intellij.patterns.PlatformPatterns.psiElement;
-import static com.intellij.patterns.PsiJavaPatterns.psiClass;
-import static com.intellij.patterns.PsiJavaPatterns.psiField;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mIDENT;
 
 /**
  * @author Sergey Evdokimov
@@ -38,8 +38,8 @@ import static com.intellij.patterns.PsiJavaPatterns.psiField;
 public class GebPageFieldNameCompletionContributor extends CompletionContributor {
 
   public GebPageFieldNameCompletionContributor() {
-    extend(CompletionType.BASIC, psiElement(GroovyTokenTypes.mIDENT).withParent(
-      psiField().withModifiers(PsiModifier.STATIC).inClass(psiClass().inheritorOf(true, "geb.Page"))), new GebCompletionProvider());
+    extend(CompletionType.BASIC, PlatformPatterns.psiElement(GroovyTokenTypes.mIDENT).withParent(
+      PsiJavaPatterns.psiField().withModifiers(PsiModifier.STATIC).inClass(PsiJavaPatterns.psiClass().inheritorOf(true, "geb.Page"))), new GebCompletionProvider());
   }
 
   private static class GebCompletionProvider extends CompletionProvider<CompletionParameters> {

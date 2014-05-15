@@ -35,8 +35,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-import static org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.createSignature;
-
 /**
  * @author Max Medvedev
  */
@@ -62,7 +60,7 @@ public class ArgumentInstruction extends InstructionImpl implements MixinTypeIns
 
     PsiType result = null;
     for (GroovyResolveResult variant : variants) {
-      GrClosureSignature signature = createSignature(variant);
+      GrClosureSignature signature = GrClosureSignatureUtil.createSignature(variant);
       if (signature == null) continue;
 
       if (GrClosureSignatureUtil.mapParametersToArguments(signature, call) != null && !haveNullParameters(call)) {

@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.util.dynamicMembers;
 
-import com.intellij.psi.OriginInfoAwareElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;

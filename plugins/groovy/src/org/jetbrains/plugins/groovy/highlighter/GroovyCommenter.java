@@ -20,7 +20,12 @@ import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nullable;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+
+import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes.GROOVY_DOC_COMMENT;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mML_COMMENT;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSL_COMMENT;
 
 /**
  * @author ilyas
@@ -55,19 +60,19 @@ public class GroovyCommenter implements CodeDocumentationAwareCommenter {
   @Override
   @Nullable
   public IElementType getLineCommentTokenType() {
-    return mSL_COMMENT;
+    return GroovyTokenTypes.mSL_COMMENT;
   }
 
   @Override
   @Nullable
   public IElementType getBlockCommentTokenType() {
-    return mML_COMMENT;
+    return GroovyTokenTypes.mML_COMMENT;
   }
 
   @Override
   @Nullable
   public IElementType getDocumentationCommentTokenType() {
-    return GROOVY_DOC_COMMENT;
+    return GroovyDocElementTypes.GROOVY_DOC_COMMENT;
   }
 
   @Override

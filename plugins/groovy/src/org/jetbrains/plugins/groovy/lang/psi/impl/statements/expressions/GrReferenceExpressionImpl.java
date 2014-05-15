@@ -37,8 +37,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrReassignedLocalVarsChecker;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyTargetElementEvaluator;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -72,8 +70,7 @@ import org.jetbrains.plugins.groovy.util.ResolveProfiler;
 
 import java.util.*;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mAT;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mMEMBER_POINTER;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * @author ilyas
@@ -161,13 +158,13 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     if (name == null || nameElement == null) return GroovyResolveResult.EMPTY_ARRAY;
 
     IElementType nameType = nameElement.getNode().getElementType();
-    if (nameType == GroovyTokenTypes.kTHIS) {
+    if (nameType == kTHIS) {
       ArrayList<GroovyResolveResult> results = new ArrayList<GroovyResolveResult>();
       if (GrReferenceResolveUtil.resolveThisExpression(this, results)) {
         return results.toArray(new GroovyResolveResult[results.size()]);
       }
     }
-    else if (nameType == GroovyTokenTypes.kSUPER) {
+    else if (nameType == kSUPER) {
       ArrayList<GroovyResolveResult> results = new ArrayList<GroovyResolveResult>();
       if (GrReferenceResolveUtil.resolveSuperExpression(this, results)) {
         return results.toArray(new GroovyResolveResult[results.size()]);
@@ -578,7 +575,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     }
 
     IElementType dotType = getDotTokenType();
-    if (dotType == mMEMBER_POINTER) {
+    if (dotType == GroovyTokenTypes.mMEMBER_POINTER) {
       return GrClosureType.create(multiResolve(false), this);
     }
 

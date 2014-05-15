@@ -20,20 +20,15 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.*;
-
-import static com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.JAVA_UTIL_LINKED_HASH_MAP;
 
 /**
  * @author peter
@@ -64,7 +59,9 @@ public abstract class GrMapType extends GrLiteralClassType {
                       LanguageLevel languageLevel) {
     super(languageLevel, scope, facade);
 
-    myJavaClassName = facade.findClass(JAVA_UTIL_LINKED_HASH_MAP, scope) != null ? JAVA_UTIL_LINKED_HASH_MAP : JAVA_UTIL_MAP;
+    myJavaClassName = facade.findClass(
+      GroovyCommonClassNames.JAVA_UTIL_LINKED_HASH_MAP, scope) != null ? GroovyCommonClassNames.JAVA_UTIL_LINKED_HASH_MAP
+                                                                       : CommonClassNames.JAVA_UTIL_MAP;
   }
 
   @NotNull

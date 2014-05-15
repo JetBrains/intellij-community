@@ -45,8 +45,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import static com.intellij.psi.util.PsiUtil.substituteTypeParameter;
-
 /**
  * @author ilyas
  */
@@ -146,7 +144,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
   @Nullable
   private static PsiType extractMapValueType(PsiType thisType, PsiType[] argTypes, PsiManager manager, GlobalSearchScope resolveScope) {
     if (argTypes.length != 1 || !InheritanceUtil.isInheritor(thisType, CommonClassNames.JAVA_UTIL_MAP)) return null;
-    final PsiType substituted = substituteTypeParameter(thisType, CommonClassNames.JAVA_UTIL_MAP, 1, true);
+    final PsiType substituted = com.intellij.psi.util.PsiUtil.substituteTypeParameter(thisType, CommonClassNames.JAVA_UTIL_MAP, 1, true);
     return TypesUtil.boxPrimitiveType(substituted, manager, resolveScope);
   }
 

@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.elements.GroovyDocTagValueTokenType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.*;
 
-import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.elements.GroovyDocTagValueTokenType.TagValueTokenType.REFERENCE_ELEMENT;
+import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes.*;
 
 /**
  * @author ilyas
@@ -37,7 +37,7 @@ public class GroovyDocPsiCreator implements GroovyDocElementTypes {
     if (type instanceof GroovyDocTagValueTokenType) {
       GroovyDocTagValueTokenType value = (GroovyDocTagValueTokenType) type;
       GroovyDocTagValueTokenType.TagValueTokenType valueType = GroovyDocTagValueTokenType.getValueType(node);
-      if (valueType == REFERENCE_ELEMENT) return new GrDocReferenceElementImpl(node);
+      if (valueType == GroovyDocTagValueTokenType.TagValueTokenType.REFERENCE_ELEMENT) return new GrDocReferenceElementImpl(node);
 
       return new GrDocTagValueTokenImpl(node);
     }

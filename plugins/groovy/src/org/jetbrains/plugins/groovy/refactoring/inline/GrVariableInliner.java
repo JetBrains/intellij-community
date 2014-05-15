@@ -39,11 +39,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
-
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.LOG;
 
 /**
  * @author Max Medvedev
@@ -58,7 +57,7 @@ public class GrVariableInliner implements InlineHandler.Inliner {
     }
     else {
       initializer = variable.getInitializerGroovy();
-      LOG.assertTrue(initializer != null);
+      PsiUtil.LOG.assertTrue(initializer != null);
     }
 
     myTempExpr = GrIntroduceHandlerBase.insertExplicitCastIfNeeded(variable, initializer);

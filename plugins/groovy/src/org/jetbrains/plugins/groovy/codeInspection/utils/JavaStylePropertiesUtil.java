@@ -29,10 +29,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
-
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.*;
 
 /**
  * @author Max Medvedev
@@ -61,7 +60,7 @@ public class JavaStylePropertiesUtil {
 
   @Nullable
   private static GrAssignmentExpression genRefForSetter(GrMethodCall call, String accessorName) {
-    String name = getPropertyNameBySetterName(accessorName);
+    String name = GroovyPropertyUtils.getPropertyNameBySetterName(accessorName);
     if(name == null) return null;
     GrExpression value = call.getExpressionArguments()[0];
     GrReferenceExpression refExpr = (GrReferenceExpression)call.getInvokedExpression();
@@ -78,7 +77,7 @@ public class JavaStylePropertiesUtil {
   }
 
   private static GrExpression genRefForGetter(GrMethodCall call, String accessorName) {
-    String name = getPropertyNameByGetterName(accessorName, true);
+    String name = GroovyPropertyUtils.getPropertyNameByGetterName(accessorName, true);
     GrReferenceExpression refExpr = (GrReferenceExpression)call.getInvokedExpression();
     String oldNameStr = refExpr.getReferenceNameElement().getText();
     String newRefExpr = StringUtil.trimEnd(refExpr.getText(), oldNameStr) + name;
@@ -101,16 +100,16 @@ public class JavaStylePropertiesUtil {
     PsiMethod method;
     if (call instanceof GrApplicationStatement) {
       PsiElement element = refExpr.resolve();
-      if (!(element instanceof PsiMethod) || !isSimplePropertySetter(((PsiMethod)element))) return false;
+      if (!(element instanceof PsiMethod) || !GroovyPropertyUtils.isSimplePropertySetter(((PsiMethod)element))) return false;
       method = (PsiMethod)element;
     }
     else {
       method = call.resolveMethod();
-      if (!isSimplePropertySetter(method)) return false;
+      if (!GroovyPropertyUtils.isSimplePropertySetter(method)) return false;
       LOG.assertTrue(method != null);
     }
 
-    if (!GroovyNamesUtil.isValidReference(getPropertyNameBySetterName(method.getName()),
+    if (!GroovyNamesUtil.isValidReference(GroovyPropertyUtils.getPropertyNameBySetterName(method.getName()),
                                           ((GrReferenceExpression)expr).getQualifier() != null,
                                           call.getProject())) {
       return false;
@@ -138,9 +137,9 @@ public class JavaStylePropertiesUtil {
     if (!(expr instanceof GrReferenceExpression)) return false;
 
     PsiMethod method = call.resolveMethod();
-    if (!isSimplePropertyGetter(method)) return false;
+    if (!GroovyPropertyUtils.isSimplePropertyGetter(method)) return false;
     LOG.assertTrue(method != null);
-    if (!GroovyNamesUtil.isValidReference(getPropertyNameByGetterName(method.getName(), true),
+    if (!GroovyNamesUtil.isValidReference(GroovyPropertyUtils.getPropertyNameByGetterName(method.getName(), true),
                                           ((GrReferenceExpression)expr).getQualifier() != null,
                                           call.getProject())) {
       return false;
