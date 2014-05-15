@@ -10,7 +10,7 @@ import com.intellij.dupLocator.equivalence.MultiChildDescriptor;
 import com.intellij.dupLocator.equivalence.SingleChildDescriptor;
 import com.intellij.dupLocator.util.DuplocatorUtil;
 import com.intellij.dupLocator.util.PsiFragment;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.LeafElement;
@@ -181,13 +181,13 @@ class TreeHasherBase extends AbstractTreeHasher {
     int cost = hasher.getNodeCost(element);
 
     for (SingleChildDescriptor childDescriptor : descriptor.getSingleChildDescriptors()) {
-      final Pair<Integer, Integer> childHashResult = computeHash(childDescriptor, fragment, hasher);
+      final Couple<Integer> childHashResult = computeHash(childDescriptor, fragment, hasher);
       hash = hash * 31 + childHashResult.first;
       cost += childHashResult.second;
     }
 
     for (MultiChildDescriptor childDescriptor : descriptor.getMultiChildDescriptors()) {
-      final Pair<Integer, Integer> childHashResult = computeHash(childDescriptor, fragment, hasher);
+      final Couple<Integer> childHashResult = computeHash(childDescriptor, fragment, hasher);
       hash = hash * 31 + childHashResult.first;
       cost += childHashResult.second;
     }
@@ -221,15 +221,15 @@ class TreeHasherBase extends AbstractTreeHasher {
   }
 
   @NotNull
-  private Pair<Integer, Integer> computeHash(SingleChildDescriptor childDescriptor,
-                                             PsiFragment parentFragment,
-                                             NodeSpecificHasher nodeSpecificHasher) {
+  private Couple<Integer> computeHash(SingleChildDescriptor childDescriptor,
+                                      PsiFragment parentFragment,
+                                      NodeSpecificHasher nodeSpecificHasher) {
 
     final PsiElement element = childDescriptor.getElement();
     if (element == null) {
-      return new Pair<Integer, Integer>(0, 0);
+      return Couple.newOne(0, 0);
     }
-    final Pair<Integer, Integer> result = doComputeHash(childDescriptor, parentFragment, nodeSpecificHasher);
+    final Couple<Integer> result = doComputeHash(childDescriptor, parentFragment, nodeSpecificHasher);
 
     final DuplicatesProfileBase duplicatesProfile = ((NodeSpecificHasherBase)nodeSpecificHasher).getDuplicatesProfile();
     final PsiElementRole role = duplicatesProfile.getRole(element);
@@ -237,7 +237,7 @@ class TreeHasherBase extends AbstractTreeHasher {
       final ExternalizableDuplocatorState state =
         duplicatesProfile.getDuplocatorState(duplicatesProfile.getLanguage(element));
       if (!state.distinguishRole(role)) {
-        return new Pair<Integer, Integer>(0, result.second);
+        return Couple.newOne(0, result.second);
       }
     }
     return result;
@@ -255,16 +255,16 @@ class TreeHasherBase extends AbstractTreeHasher {
   }
 
   @NotNull
-  private Pair<Integer, Integer> doComputeHash(SingleChildDescriptor childDescriptor,
-                                               PsiFragment parentFragment,
-                                               NodeSpecificHasher nodeSpecificHasher) {
+  private Couple<Integer> doComputeHash(SingleChildDescriptor childDescriptor,
+                                        PsiFragment parentFragment,
+                                        NodeSpecificHasher nodeSpecificHasher) {
     final PsiElement element = childDescriptor.getElement();
 
     switch (childDescriptor.getType()) {
       case OPTIONALLY_IN_PATTERN:
       case DEFAULT:
         final TreeHashResult result = hash(element, parentFragment, nodeSpecificHasher);
-        return new Pair<Integer, Integer>(result.getHash(), result.getCost());
+        return Couple.newOne(result.getHash(), result.getCost());
 
       case CHILDREN_OPTIONALLY_IN_PATTERN:
       case CHILDREN:
@@ -275,7 +275,7 @@ class TreeHasherBase extends AbstractTreeHasher {
         int hash = AbstractTreeHasher.vector(hashes, 31);
         int cost = AbstractTreeHasher.vector(costs);
 
-        return new Pair<Integer, Integer>(hash, cost);
+        return Couple.newOne(hash, cost);
 
       case CHILDREN_IN_ANY_ORDER:
         childResults = computeHashesForChildren(element, parentFragment, nodeSpecificHasher);
@@ -285,21 +285,21 @@ class TreeHasherBase extends AbstractTreeHasher {
         hash = AbstractTreeHasher.vector(hashes);
         cost = AbstractTreeHasher.vector(costs);
 
-        return new Pair<Integer, Integer>(hash, cost);
+        return Couple.newOne(hash, cost);
 
       default:
-        return new Pair<Integer, Integer>(0, 0);
+        return Couple.newOne(0, 0);
     }
   }
 
   @NotNull
-  private Pair<Integer, Integer> computeHash(MultiChildDescriptor childDescriptor,
-                                             PsiFragment parentFragment,
-                                             NodeSpecificHasher nodeSpecificHasher) {
+  private Couple<Integer> computeHash(MultiChildDescriptor childDescriptor,
+                                      PsiFragment parentFragment,
+                                      NodeSpecificHasher nodeSpecificHasher) {
     final PsiElement[] elements = childDescriptor.getElements();
 
     if (elements == null) {
-      return new Pair<Integer, Integer>(0, 0);
+      return Couple.newOne(0, 0);
     }
 
     switch (childDescriptor.getType()) {
@@ -313,7 +313,7 @@ class TreeHasherBase extends AbstractTreeHasher {
         int hash = AbstractTreeHasher.vector(hashes, 31);
         int cost = AbstractTreeHasher.vector(costs);
 
-        return new Pair<Integer, Integer>(hash, cost);
+        return Couple.newOne(hash, cost);
 
       case IN_ANY_ORDER:
         childResults = computeHashes(elements, parentFragment, nodeSpecificHasher);
@@ -323,10 +323,10 @@ class TreeHasherBase extends AbstractTreeHasher {
         hash = AbstractTreeHasher.vector(hashes);
         cost = AbstractTreeHasher.vector(costs);
 
-        return new Pair<Integer, Integer>(hash, cost);
+        return Couple.newOne(hash, cost);
 
       default:
-        return new Pair<Integer, Integer>(0, 0);
+        return Couple.newOne(0, 0);
     }
   }
 
