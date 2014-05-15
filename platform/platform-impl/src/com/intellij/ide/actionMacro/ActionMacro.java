@@ -22,9 +22,9 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.ui.playback.commands.KeyCodeTypeCommand;
 import com.intellij.openapi.ui.playback.commands.TypeCommand;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -86,7 +86,7 @@ public class ActionMacro implements JDOMExternalizable {
     for (final Object o : actions) {
       Element action = (Element)o;
       if (ELEMENT_TYPING.equals(action.getName())) {
-        Pair<List<Integer>, List<Integer>> codes = parseKeyCodes(action.getAttributeValue(ATTRIBUTE_KEY_CODES));
+        Couple<List<Integer>> codes = parseKeyCodes(action.getAttributeValue(ATTRIBUTE_KEY_CODES));
 
         String text = action.getText();
         if (text == null || text.length() == 0) {
@@ -107,11 +107,11 @@ public class ActionMacro implements JDOMExternalizable {
     }
   }
 
-  private static Pair<List<Integer>, List<Integer>> parseKeyCodes(String keyCodesText) {
+  private static Couple<List<Integer>> parseKeyCodes(String keyCodesText) {
     return KeyCodeTypeCommand.parseKeyCodes(keyCodesText);
   }
 
-  public static String unparseKeyCodes(Pair<List<Integer>, List<Integer>> keyCodes) {
+  public static String unparseKeyCodes(Couple<List<Integer>> keyCodes) {
     return KeyCodeTypeCommand.unparseKeyCodes(keyCodes);
   }
 
@@ -125,7 +125,7 @@ public class ActionMacro implements JDOMExternalizable {
         TypedDescriptor typedDescriptor = (TypedDescriptor)action;
         actionNode.setText(typedDescriptor.getText().replaceAll(" ", "&#x20;"));
         actionNode.setAttribute(ATTRIBUTE_KEY_CODES, unparseKeyCodes(
-          Pair.create(typedDescriptor.getKeyCodes(), typedDescriptor.getKeyModifiers())));
+          Couple.newOne(typedDescriptor.getKeyCodes(), typedDescriptor.getKeyModifiers())));
       }
       else if (action instanceof IdActionDescriptor) {
         actionNode = new Element(ELEMENT_ACTION);
