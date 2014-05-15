@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -476,9 +476,9 @@ public class InferenceSession {
   private static boolean hasWildcardParameterization(InferenceVariable inferenceVariable, PsiClassType targetType) {
     if (!FunctionalInterfaceParameterizationUtil.isWildcardParameterized(targetType)) {
       final List<PsiType> bounds = inferenceVariable.getBounds(InferenceBound.LOWER);
-      final Processor<Pair<PsiType, PsiType>> differentParameterizationProcessor = new Processor<Pair<PsiType, PsiType>>() {
+      final Processor<Couple<PsiType>> differentParameterizationProcessor = new Processor<Couple<PsiType>>() {
         @Override
-        public boolean process(Pair<PsiType, PsiType> pair) {
+        public boolean process(Couple<PsiType> pair) {
           return pair.first == null || pair.second == null || pair.first.equals(pair.second);
         }
       };
@@ -723,9 +723,9 @@ public class InferenceSession {
   }
 
   private PsiType getLowerBound(InferenceVariable var, PsiSubstitutor substitutor) {
-    return composeBound(var, InferenceBound.LOWER, new Function<Pair<PsiType, PsiType>, PsiType>() {
+    return composeBound(var, InferenceBound.LOWER, new Function<Couple<PsiType>, PsiType>() {
       @Override
-      public PsiType fun(Pair<PsiType, PsiType> pair) {
+      public PsiType fun(Couple<PsiType> pair) {
         return GenericsUtil.getLeastUpperBound(pair.first, pair.second, myManager);
       }
     }, substitutor);
@@ -755,18 +755,18 @@ public class InferenceSession {
   }
 
   private PsiType getUpperBound(InferenceVariable var, PsiSubstitutor substitutor) {
-    return composeBound(var, InferenceBound.UPPER, new Function<Pair<PsiType, PsiType>, PsiType>() {
+    return composeBound(var, InferenceBound.UPPER, new Function<Couple<PsiType>, PsiType>() {
       @Override
-      public PsiType fun(Pair<PsiType, PsiType> pair) {
+      public PsiType fun(Couple<PsiType> pair) {
         return GenericsUtil.getGreatestLowerBound(pair.first, pair.second);
       }
     }, substitutor);
   }
 
   public PsiType getEqualsBound(InferenceVariable var, PsiSubstitutor substitutor) {
-    return composeBound(var, InferenceBound.EQ, new Function<Pair<PsiType, PsiType>, PsiType>() {
+    return composeBound(var, InferenceBound.EQ, new Function<Couple<PsiType>, PsiType>() {
       @Override
-      public PsiType fun(Pair<PsiType, PsiType> pair) {
+      public PsiType fun(Couple<PsiType> pair) {
         return pair.first; //todo check if equals
       }
     }, substitutor);
@@ -774,7 +774,7 @@ public class InferenceSession {
 
   private PsiType composeBound(InferenceVariable variable,
                                InferenceBound boundType,
-                               Function<Pair<PsiType, PsiType>, PsiType> fun,
+                               Function<Couple<PsiType>, PsiType> fun,
                                PsiSubstitutor substitutor) {
     final List<PsiType> lowerBounds = variable.getBounds(boundType);
     PsiType lub = PsiType.NULL;
@@ -789,7 +789,7 @@ public class InferenceSession {
           lub = lowerBound;
         }
         else {
-          lub = fun.fun(Pair.create(lub, lowerBound));
+          lub = fun.fun(Couple.newOne(lub, lowerBound));
         }
       }
     }
