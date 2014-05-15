@@ -161,13 +161,26 @@ NSString *getJavaKey(){
 
 NSArray *allVms() {
     NSMutableArray *jvmBundlePaths = [NSMutableArray array];
-
     NSString *explicit = [[[NSProcessInfo processInfo] environment] objectForKey:@"IDEA_JDK"];
-
+    BOOL IDEA_JDK_verified = false;
     if (explicit != nil) {
-        appendBundle(explicit, jvmBundlePaths);
+      NSLog(@"value of IDEA_JDK: %@", explicit);
+      NSBundle *jdkBundle = [NSBundle bundleWithPath:explicit];
+      NSString *required = requiredJvmVersion();
+      if (jdkBundle != nil && required != NULL) {
+        NSLog(@"there is requirements");
+        if (satisfies(jvmVersion(jdkBundle), required)) {
+            appendBundle(explicit, jvmBundlePaths);
+            debugLog(@"User VM:");
+            debugLog([jdkBundle bundlePath]);
+            IDEA_JDK_verified = true;
+        }
+      } else {
+          NSLog(@"required == NULL");
+      }
     }
-    else {
+    if (jvmBundlePaths == nil) {
+        NSLog(@"no IDEA_JDK");
         NSBundle *bundle = [NSBundle mainBundle];
         NSString *appDir = [bundle.bundlePath stringByAppendingPathComponent:@"Contents"];
         NSLog(@"Running allVms. appDir define as: %@", appDir);
@@ -192,6 +205,9 @@ NSString *requiredJvmVersion() {
 }
 
 BOOL satisfies(NSString *vmVersion, NSString *requiredVersion) {
+    NSLog(@"satisfies. vmVersion : %@", vmVersion);
+    NSLog(@"satisfies. requiredVersion : %@", requiredVersion);
+
     if ([requiredVersion hasSuffix:@"+"]) {
         requiredVersion = [requiredVersion substringToIndex:[requiredVersion length] - 1];
         return [requiredVersion compare:vmVersion options:NSNumericSearch] <= 0;
@@ -399,9 +415,9 @@ NSDictionary *parseProperties() {
 }
 
 BOOL setMuxState(io_connect_t connect, muxState state, uint64_t arg){
-    kern_return_t kernResult;
+    //kern_return_t kernResult;
     uint64_t scalarI_64[3] = { 1 /* always? */, (uint64_t) state, arg };
-    kernResult = IOConnectCallScalarMethod(connect,      // an io_connect_t returned from IOServiceOpen().
+    kern_return_t kernResult = IOConnectCallScalarMethod(connect,      // an io_connect_t returned from IOServiceOpen().
                                            kSetMuxState, // selector of the function to be called via the user client.
                                            scalarI_64,   // array of scalar (64-bit) input values.
                                            3,            // the number of scalar input values.
@@ -516,7 +532,6 @@ NSArray *getGPUNames (){
 
 
 NSString *integratedGPUNames() {
-
  NSString *_cachedIntegratedGPUName = nil;
  NSArray *gpus = getGPUNames();
  if (gpus != nil && gpus != NULL){
@@ -545,48 +560,49 @@ NSString *integratedGPUNames() {
         NSString *intCard = integratedGPUNames();
         if (intCard != nil) {
           NSLog(@"Integrated GPU name: %@", intCard);
-        } else{
-          NSLog(@"There is no Integrated GPU present.");
-        }
-        if (isUsingIntegratedGPU()){
-          NSLog(@"Integrated GPU is used.");
-          uint64_t output;
-          getMuxState(_switcherConnect, muxGpuSelect, &output);
-          if ( output != 0 ) {
-            NSLog(@"Dynamic mode is using.");
-            setMuxState(_switcherConnect, muxGpuSelect, 0);
-            setMuxState(_switcherConnect, muxDisableFeature, 0);
-            NSLog(@"Dynamic mode switch of.");
+          if (isUsingIntegratedGPU()){
+            NSLog(@"Integrated GPU is used.");
+            uint64_t output;
             getMuxState(_switcherConnect, muxGpuSelect, &output);
             if ( output != 0 ) {
               NSLog(@"Dynamic mode is using.");
               setMuxState(_switcherConnect, muxGpuSelect, 0);
               setMuxState(_switcherConnect, muxDisableFeature, 0);
-            } else{
-              NSLog(@"Integrated mode is using.");
+              NSLog(@"Dynamic mode switch of.");
+              getMuxState(_switcherConnect, muxGpuSelect, &output);
+              if ( output != 0 ) {
+                NSLog(@"Dynamic mode is using.");
+                setMuxState(_switcherConnect, muxGpuSelect, 0);
+                setMuxState(_switcherConnect, muxDisableFeature, 0);
+              } else{
+                NSLog(@"Integrated mode is using.");
+              }
+              getMuxState(_switcherConnect, muxSwitchPolicy, &output);
+              if ( output != 0 ) {
+                NSLog(@"OldStyleSwitchPolicy is Using");
+                setMuxState(_switcherConnect, muxSwitchPolicy, 2);
+              } else{
+                NSLog(@"NewStyleSwitchPolicy is Using");
+                setMuxState(_switcherConnect, muxSwitchPolicy, 0);
+              }
             }
-            getMuxState(_switcherConnect, muxSwitchPolicy, &output);
-            if ( output != 0 ) {
-              NSLog(@"OldStyleSwitchPolicy is Using");
-              setMuxState(_switcherConnect, muxSwitchPolicy, 2);
-            } else{
-              NSLog(@"NewStyleSwitchPolicy is Using");
-              setMuxState(_switcherConnect, muxSwitchPolicy, 0);
-            }
+          } else{
+            NSLog(@"Discrete GPU is used.");
+            setMuxState(_switcherConnect, muxForceSwitch, 0);
+            NSLog(@"Try to switch to integrate card.");
           }
-        } else{
-          NSLog(@"Discrete GPU is used.");
-          setMuxState(_switcherConnect, muxForceSwitch, 0);
-          NSLog(@"Try to switch to integrate card.");
+        } else {
+          NSLog(@"There is no Integrated GPU present.");
         }
 
     debugLog([vm bundlePath]);
+    NSLog(@"vm == %@", vm);
     if (vm == nil) {
-        NSString *old_launcher = [self expandMacros:@"$APP_PACKAGE/Contents/MacOS/idea_appLauncher"];
-        execv([old_launcher fileSystemRepresentation], self->argv);
-
-        NSLog(@"Cannot find matching VM, aborting");
-        exit(-1);
+      NSLog(@"vm == nil.");
+      NSString *old_launcher = [self expandMacros:@"$APP_PACKAGE/Contents/MacOS/idea_appLauncher"];
+      execv([old_launcher fileSystemRepresentation], self->argv);
+      NSLog(@"Cannot find matching VM, aborting");
+      exit(-1);
     }
 
     NSError *error = nil;
