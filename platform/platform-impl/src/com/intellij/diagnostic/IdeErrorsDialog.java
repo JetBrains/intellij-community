@@ -1004,7 +1004,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
     IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
     if (plugin == null || PluginManagerMain.isJetBrainsPlugin(plugin)) {
-      return getCorePluginSubmitter(reporters);
+      if (pluginId == null || !"com.intellij.appcode-designer".equals(pluginId.getIdString())) { // Do not use core plugin submitter for AppCode Designer in release
+        return getCorePluginSubmitter(reporters);
+      }
     }
     for (ErrorReportSubmitter reporter : reporters) {
       final PluginDescriptor descriptor = reporter.getPluginDescriptor();
