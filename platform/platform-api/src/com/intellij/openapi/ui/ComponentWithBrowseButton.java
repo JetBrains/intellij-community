@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -47,6 +48,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel implements Disposable {
+  private static final Logger LOG = Logger.getInstance(ComponentWithBrowseButton.class);
+
   private final Comp myComponent;
   private final FixedSizeButton myBrowseButton;
   private boolean myButtonEnabled = true;
@@ -153,8 +156,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   }
 
   @Override
-  public void dispose() {
-  }
+  public void dispose() { }
 
   public FixedSizeButton getButton() {
     return myBrowseButton;
@@ -193,7 +195,22 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     private Project myProject;
     protected final FileChooserDescriptor myFileChooserDescriptor;
 
-    public BrowseFolderActionListener(@Nullable String title, @Nullable String description, ComponentWithBrowseButton<T> textField, @Nullable Project project, FileChooserDescriptor fileChooserDescriptor, TextComponentAccessor<T> accessor) {
+    public BrowseFolderActionListener(@Nullable String title,
+                                      @Nullable String description,
+                                      ComponentWithBrowseButton<T> textField,
+                                      @Nullable Project project,
+                                      FileChooserDescriptor fileChooserDescriptor,
+                                      TextComponentAccessor<T> accessor) {
+      if (fileChooserDescriptor != null && fileChooserDescriptor.isChooseMultiple()) {
+        LOG.error("multiple selection not supported");
+        fileChooserDescriptor = new FileChooserDescriptor(fileChooserDescriptor) {
+          @Override
+          public boolean isChooseMultiple() {
+            return false;
+          }
+        };
+      }
+
       myTitle = title;
       myDescription = description;
       myTextComponent = textField;
@@ -227,7 +244,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
       FileChooser.chooseFile(fileChooserDescriptor, getProject(), getInitialFile(), new Consumer<VirtualFile>() {
         @Override
         public void consume(VirtualFile file) {
-          onFileChoosen(file);
+          onFileChosen(file);
         }
       });
     }
@@ -264,8 +281,15 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
       return chosenFile.getPresentableUrl();
     }
 
+    /** @deprecated use/override {@link #onFileChosen(VirtualFile)} (to be removed in IDEA 15) */
+    @SuppressWarnings("SpellCheckingInspection")
     protected void onFileChoosen(@NotNull VirtualFile chosenFile) {
       myAccessor.setText(myTextComponent.getChildComponent(), chosenFileToResultingText(chosenFile));
+    }
+
+    @SuppressWarnings("deprecation")
+    protected void onFileChosen(@NotNull VirtualFile chosenFile) {
+      onFileChoosen(chosenFile);
     }
   }
 
@@ -274,6 +298,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     myComponent.requestFocus();
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public final void setNextFocusableComponent(Component aComponent) {
     super.setNextFocusableComponent(aComponent);
@@ -281,9 +306,10 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   }
 
   private KeyEvent myCurrentEvent = null;
+
   @Override
   protected final boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
-    if (condition == WHEN_FOCUSED && myCurrentEvent != e)
+    if (condition == WHEN_FOCUSED && myCurrentEvent != e) {
       try {
         myCurrentEvent = e;
         myComponent.dispatchEvent(e);
@@ -291,8 +317,8 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
       finally {
         myCurrentEvent = null;
       }
+    }
     if (e.isConsumed()) return true;
     return super.processKeyBinding(ks, e, condition, pressed);
   }
-
 }
