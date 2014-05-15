@@ -28,5 +28,5 @@ public interface ModelBuilderService {
   Object buildAll(String modelName, Project project);
 
   @NotNull
-  ModelBuilderError getModelBuildError(@NotNull Project project, @NotNull Exception e);
+  ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e);
 }
