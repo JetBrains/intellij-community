@@ -40,6 +40,7 @@ public final class WeakHashMap<K, V> extends RefHashMap<K, V> {
     super(t);
   }
 
+  @NotNull
   @Override
   protected <T> Key<T> createKey(@NotNull T k, @NotNull ReferenceQueue<? super T> q) {
     return new WeakKey<T>(k, q);

@@ -118,10 +118,11 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     }
   }
 
-  protected interface Key<T> {
+  interface Key<T> {
     T get();
   }
 
+  @NotNull
   protected abstract <T> Key<T> createKey(@NotNull T k, @NotNull ReferenceQueue<? super T> q);
 
   private static class HardKey<T> implements Key<T> {

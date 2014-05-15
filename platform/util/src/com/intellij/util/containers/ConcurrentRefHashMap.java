@@ -42,7 +42,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   @NotNull
   private final TObjectHashingStrategy<K> myHashingStrategy;
 
-  public interface Key<K, V> {
+  interface Key<K, V> {
     K get();
 
     V getValue();
@@ -54,7 +54,6 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   }
 
   protected abstract Key<K, V> createKey(@NotNull K key, V value, @NotNull TObjectHashingStrategy<K> hashingStrategy);
-
 
   private static class HardKey<K, V> implements Key<K, V> {
     private K myKey;
