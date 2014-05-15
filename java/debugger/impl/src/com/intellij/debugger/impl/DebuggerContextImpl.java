@@ -127,6 +127,7 @@ public final class DebuggerContextImpl implements DebuggerContext {
     return new EvaluationContextImpl(getSuspendContext(), getFrameProxy(), thisObject);
   }
 
+  @Nullable
   public EvaluationContextImpl createEvaluationContext() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     StackFrameProxyImpl frameProxy = getFrameProxy();
@@ -138,7 +139,8 @@ public final class DebuggerContextImpl implements DebuggerContext {
       LOG.info(e);
       objectReference = null;
     }
-    return new EvaluationContextImpl(getSuspendContext(), frameProxy, objectReference);
+    SuspendContextImpl context = getSuspendContext();
+    return context != null ? new EvaluationContextImpl(context, frameProxy, objectReference) : null;
   }
 
   public static DebuggerContextImpl createDebuggerContext(@Nullable DebuggerSession session,
@@ -178,7 +180,7 @@ public final class DebuggerContextImpl implements DebuggerContext {
   }
 
   public void setPositionCache(SourcePosition position) {
-    LOG.assertTrue(!myInitialized, "Debugger context is initialized. Cannot change caches");
+    //LOG.assertTrue(!myInitialized, "Debugger context is initialized. Cannot change caches");
     mySourcePosition = position;
   }
 

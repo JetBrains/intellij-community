@@ -13,30 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.gradle.tooling;
+package com.intellij.xdebugger;
 
+import com.intellij.lang.Language;
+import com.intellij.xdebugger.evaluation.EvaluationMode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Vladislav.Soroka
- * @since 5/13/2014
- */
-public class ModelBuilderError {
-  @NotNull private final String group;
-  @NotNull private final String error;
-
-  public ModelBuilderError(@NotNull String group, @NotNull String error) {
-    this.group = group;
-    this.error = error;
-  }
-
-  @NotNull
-  public String getGroup() {
-    return group;
-  }
-
-  @NotNull
-  public String getError() {
-    return error;
-  }
+* @author egor
+*/
+public interface XExpression {
+  @NotNull String getExpression();
+  @Nullable Language getLanguage();
+  @Nullable String getCustomInfo();
+  EvaluationMode getMode();
 }

@@ -26,13 +26,14 @@ import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.CaptionPanel;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.border.CustomLineBorder;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
@@ -122,7 +123,7 @@ public class XWatchesViewImpl implements DnDNativeTarget, XWatchesView, XDebugVi
   }
 
   @Override
-  public void addWatchExpression(@NotNull String expression, int index, final boolean navigateToWatchNode) {
+  public void addWatchExpression(@NotNull XExpression expression, int index, final boolean navigateToWatchNode) {
     myRootNode.addWatchExpression(mySession.getDebugProcess().getEvaluator(), expression, index, navigateToWatchNode);
     updateSessionData();
   }
@@ -195,14 +196,14 @@ public class XWatchesViewImpl implements DnDNativeTarget, XWatchesView, XDebugVi
   }
 
   private void updateSessionData() {
-    List<String> watchExpressions = new ArrayList<String>();
+    List<XExpression> watchExpressions = new ArrayList<XExpression>();
     final List<? extends WatchNode> children = myRootNode.getAllChildren();
     if (children != null) {
       for (WatchNode child : children) {
         watchExpressions.add(child.getExpression());
       }
     }
-    mySessionData.setWatchExpressions(ArrayUtil.toStringArray(watchExpressions));
+    mySessionData.setWatchExpressions(watchExpressions.toArray(new XExpression[watchExpressions.size()]));
   }
 
   @Override
@@ -229,14 +230,14 @@ public class XWatchesViewImpl implements DnDNativeTarget, XWatchesView, XDebugVi
       for (XValueNodeImpl node : nodes) {
         String expression = node.getValueContainer().getEvaluationExpression();
         if (expression != null) {
-          addWatchExpression(expression, -1, false);
+          addWatchExpression(XExpressionImpl.fromText(expression), -1, false);
         }
       }
     }
     else if (object instanceof EventInfo) {
       String text = ((EventInfo)object).getTextForFlavor(DataFlavor.stringFlavor);
       if (text != null) {
-        addWatchExpression(text, -1, false);
+        addWatchExpression(XExpressionImpl.fromText(text), -1, false);
       }
     }
   }

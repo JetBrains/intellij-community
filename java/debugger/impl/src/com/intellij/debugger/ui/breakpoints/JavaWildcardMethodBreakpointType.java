@@ -100,6 +100,7 @@ public class JavaWildcardMethodBreakpointType extends JavaBreakpointTypeBase<Jav
     });
   }
 
+  @NotNull
   @Override
   public Breakpoint createJavaBreakpoint(Project project, XBreakpoint breakpoint) {
     return new WildcardMethodBreakpoint(project, breakpoint);

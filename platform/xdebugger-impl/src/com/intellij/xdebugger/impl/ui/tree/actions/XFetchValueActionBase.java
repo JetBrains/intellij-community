@@ -81,7 +81,7 @@ public abstract class XFetchValueActionBase extends AnAction {
         }
       }
       else if (node instanceof WatchMessageNode) {
-        valueCollector.add(((WatchMessageNode)node).getExpression());
+        valueCollector.add(((WatchMessageNode)node).getExpression().getExpression());
       }
     }
     valueCollector.processed = true;

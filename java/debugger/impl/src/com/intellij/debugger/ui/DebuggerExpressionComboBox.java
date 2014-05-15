@@ -30,6 +30,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.EditorTextField;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -180,10 +181,10 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
     final String recentsId = getRecentsId();
     if (recentsId != null) {
       final List<TextWithImports> result = new ArrayList<TextWithImports>();
-      List<String> recents = XDebuggerHistoryManager.getInstance(getProject()).getRecentExpressions(getRecentsId());
-      for (String evaluationText : recents) {
-        if (evaluationText.indexOf('\n') == -1) {
-          result.add(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, evaluationText));
+      List<XExpression> recents = XDebuggerHistoryManager.getInstance(getProject()).getRecentExpressions(getRecentsId());
+      for (XExpression expression : recents) {
+        if (expression.getExpression().indexOf('\n') == -1) {
+          result.add(TextWithImportsImpl.fromXExpression(expression));
         }
       }
 

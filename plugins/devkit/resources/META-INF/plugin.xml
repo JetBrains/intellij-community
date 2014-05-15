@@ -136,7 +136,7 @@
     <localInspection language="JAVA" shortName="UseCouple" displayName="Use Couple instead of Pair"
                      bundle="org.jetbrains.idea.devkit.DevKitBundle"
                      groupKey="inspections.group.name"
-                     enabledByDefault="true" level="WARNING"
+                     enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseCoupleInspection"/>
     <localInspection language="JAVA" shortName="DontUsePairConstructor" displayName="Don't use constructor of Pair class"
                      bundle="org.jetbrains.idea.devkit.DevKitBundle"

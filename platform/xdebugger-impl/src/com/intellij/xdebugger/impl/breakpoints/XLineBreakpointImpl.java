@@ -279,4 +279,9 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     }
     setIcon(isTemporary() ? myType.getTemporaryIcon() : myType.getEnabledIcon());
   }
+
+  @Override
+  public String toString() {
+    return "XLineBreakpointImpl(" + myType.getId() + " at " + getShortFilePath() + ":" + getLine() + ")";
+  }
 }

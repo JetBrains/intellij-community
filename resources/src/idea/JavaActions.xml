@@ -102,9 +102,17 @@
 
     <action id="Debugger.PopFrame" class="com.intellij.debugger.actions.PopFrameAction" icon="AllIcons.Actions.PopFrame">
       <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="ForceRunToCursor"/>
+      <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="first"/>
+      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" anchor="before" relative-to-action="RunToCursor"/>
     </action>
 
-    <action id="Debugger.AddSteppingFilter" class="com.intellij.debugger.actions.AddSteppingFilterAction" text="Add Stepping Filter..."/>
+    <action id="Debugger.ShowLibraryFrames" class="com.intellij.debugger.actions.ShowLibraryFramesAction">
+      <add-to-group group-id="XDebugger.Frames.TopToolbar"/>
+    </action>
+
+    <action id="Debugger.AddSteppingFilter" class="com.intellij.debugger.actions.AddSteppingFilterAction" text="Add Stepping Filter...">
+      <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
+    </action>
 
     <group id="ToggleBreakpointAction">
       <action id="ToggleMethodBreakpoint" class="com.intellij.debugger.actions.ToggleMethodBreakpointAction"/>
@@ -115,6 +123,7 @@
 
     <action id="ExportThreads" class="com.intellij.debugger.actions.ExportThreadsAction" icon="AllIcons.Actions.Export">
       <add-to-group group-id="RunMenu" anchor="last"/>
+      <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
     </action>
     <action id="DumpThreads" class="com.intellij.debugger.actions.ThreadDumpAction" text="Get thread dump" icon="AllIcons.Actions.Dump">
       <add-to-group group-id="RunMenu" anchor="last"/>
@@ -146,11 +155,18 @@
     <group id="JavaDebuggerActions">
       <action id="Debugger.AdjustArrayRange" class="com.intellij.debugger.actions.AdjustArrayRangeAction"/>
       <action id="Debugger.Inspect" class="com.intellij.debugger.actions.InspectAction"/>
-      <action id="Debugger.ViewText" class="com.intellij.debugger.actions.ViewTextAction"/>
+      <action id="Debugger.ViewText" class="com.intellij.debugger.actions.ViewTextAction">
+        <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="before" relative-to-action="Debugger.ViewAsGroup"/>
+      </action>
       <action id="Debugger.CopyValue" class="com.intellij.debugger.actions.CopyValueAction"/>
       <action id="Debugger.CompareValueWithClipboard" class="com.intellij.debugger.actions.CompareValueWithClipboardAction"/>
-      <action id="Debugger.CustomizeContextView" class="com.intellij.debugger.actions.CustomizeContextViewAction"/>
-      <action id="Debugger.CustomizeThreadsView" class="com.intellij.debugger.actions.CustomizeThreadsViewAction"/>
+      <action id="Debugger.CustomizeContextView" class="com.intellij.debugger.actions.CustomizeContextViewAction">
+        <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="last"/>
+        <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="last"/>
+      </action>
+      <action id="Debugger.CustomizeThreadsView" class="com.intellij.debugger.actions.CustomizeThreadsViewAction">
+        <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="last"/>
+      </action>
       <action id="Debugger.NewWatch" class="com.intellij.debugger.actions.NewWatchAction" icon="AllIcons.Debugger.NewWatch"/>
       <action id="Debugger.EditWatch" class="com.intellij.debugger.actions.EditWatchAction"/>
       <action id="Debugger.EditFrameSource" class="com.intellij.debugger.actions.EditFrameSourceAction"/>
@@ -159,8 +175,10 @@
       <reference ref="Debugger.PopFrame"/>
       <action id="Debugger.RemoveAllWatches" class="com.intellij.debugger.actions.RemoveAllWatchesAction"/>
       <action id="Debugger.RemoveWatch" class="com.intellij.debugger.actions.RemoveWatchAction" icon="AllIcons.Actions.Delete"/>
-      <action id="Debugger.ViewAsGroup" class="com.intellij.debugger.actions.ViewAsGroup"/>
-      <action id="Debugger.SetValue" class="com.intellij.debugger.actions.SetValueAction"/>
+      <action id="Debugger.ViewAsGroup" class="com.intellij.debugger.actions.ViewAsGroup">
+        <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="before" relative-to-action="Debugger.CustomizeContextView"/>
+      </action>
+      <!--<action id="Debugger.SetValue" class="com.intellij.debugger.actions.SetValueAction"/>-->
       <!--<action id="Debugger.ShowAsHex" class="com.intellij.debugger.actions.ShowAsHexAction" text="Show as Hex"/>-->
       <action id="Debugger.ShowFrame" class="com.intellij.debugger.actions.ShowFrameAction"/>
       <action id="Debugger.ResumeThread" class="com.intellij.debugger.actions.ResumeThreadAction"/>
@@ -218,7 +236,7 @@
       <reference ref="Debugger.AdjustArrayRange"/>
       <reference ref="Debugger.Inspect"/>
       <reference ref="Debugger.MarkObject"/>
-      <reference ref="Debugger.SetValue"/>
+      <!--<reference ref="Debugger.SetValue"/>-->
       <reference ref="Debugger.EditNodeSource"/>
       <reference ref="Debugger.EditTypeSource"/>
       <separator/>
@@ -238,7 +256,7 @@
       <reference ref="Debugger.AdjustArrayRange"/>
       <reference ref="Debugger.Inspect"/>
       <reference ref="Debugger.MarkObject"/>
-      <reference ref="Debugger.SetValue"/>
+      <!--<reference ref="Debugger.SetValue"/>-->
       <reference ref="Debugger.EditNodeSource"/>
       <reference ref="Debugger.EditTypeSource"/>
       <separator/>
@@ -259,7 +277,7 @@
       <reference ref="Debugger.AdjustArrayRange"/>
       <reference ref="Debugger.Inspect"/>
       <reference ref="Debugger.MarkObject"/>
-      <reference ref="Debugger.SetValue"/>
+      <!--<reference ref="Debugger.SetValue"/>-->
       <reference ref="Debugger.EditNodeSource"/>
       <reference ref="Debugger.EditTypeSource"/>
       <separator/>
@@ -301,7 +319,7 @@
       <reference ref="Debugger.AdjustArrayRange"/>
       <reference ref="Debugger.Inspect"/>
       <reference ref="Debugger.MarkObject"/>
-      <reference ref="Debugger.SetValue"/>
+      <!--<reference ref="Debugger.SetValue"/>-->
       <reference ref="Debugger.EditNodeSource"/>
       <reference ref="Debugger.EditTypeSource"/>
       <separator/>

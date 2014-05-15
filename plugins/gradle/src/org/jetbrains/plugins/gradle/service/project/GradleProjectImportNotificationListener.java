@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
-import static org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder.*;
+import static org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder.*;
 
 /**
  * @author Vladislav.Soroka

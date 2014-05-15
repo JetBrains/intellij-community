@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -382,8 +382,9 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     try {
       methodText = "void foo () {\n" + template.getText(properties) + "\n}";
       methodText = FileTemplateUtil.indent(methodText, result.getProject(), fileType);
-    } catch (Exception e) {
-      throw new IncorrectOperationException("Failed to parse file template",e);
+    }
+    catch (Exception e) {
+      throw new IncorrectOperationException("Failed to parse file template", (Throwable)e);
     }
     if (methodText != null) {
       PsiMethod m;

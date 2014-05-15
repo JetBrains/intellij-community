@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
+import com.intellij.xdebugger.XExpression;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.TreeNode;
@@ -24,5 +25,5 @@ import javax.swing.tree.TreeNode;
  */
 public interface WatchNode extends TreeNode {
   @NotNull
-  String getExpression();
+  XExpression getExpression();
 }

@@ -63,7 +63,7 @@ class RenameSuggestionsTest extends LightCodeInsightTestCase {
     return IdeaTestUtil.getMockJdk18()
   }
 
-  public void "test by Optional.of initializer"() {
+  public void "test by Optional_of initializer"() {
     def suggestions = getNameSuggestions("""
 import java.util.*;
 class Foo {{
@@ -74,7 +74,7 @@ class Foo {{
     assert suggestions == ["typeValue1", "value", "foo", "fooOptional", "optional", "o"]
   }
 
-  public void "test by Optional.ofNullable initializer"() {
+  public void "test by Optional_ofNullable initializer"() {
     def suggestions = getNameSuggestions("""
 import java.util.*;
 class Foo {{
@@ -85,7 +85,7 @@ class Foo {{
     assert suggestions == ["typeValue1", "value", "foo", "fooOptional", "optional", "o"]
   }
 
-  public void "test by Optional.of initializer with constructor"() {
+  public void "test by Optional_of initializer with constructor"() {
     def suggestions = getNameSuggestions("""
 import java.util.*;
 class Foo {{
@@ -95,7 +95,7 @@ class Foo {{
     assert suggestions == ["foo", "fooOptional", "optional", "o"]
   }
   
-  public void "test by Optional.flatMap"() {
+  public void "test by Optional_flatMap"() {
     def suggestions = getNameSuggestions("""
 import java.util.*;
 class Foo {{

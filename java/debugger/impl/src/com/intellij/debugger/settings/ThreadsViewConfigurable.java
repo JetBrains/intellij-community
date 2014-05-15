@@ -21,6 +21,7 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 
 import javax.swing.*;
 import java.util.Iterator;
@@ -66,6 +67,7 @@ public class ThreadsViewConfigurable extends BaseConfigurable {
       for (Iterator iterator = (DebuggerManagerEx.getInstanceEx(project)).getSessions().iterator(); iterator.hasNext();) {
         ((DebuggerSession)iterator.next()).refresh(false);
       }
+      XDebuggerUtilImpl.rebuildAllSessionsViews(project);
     }
   }
 

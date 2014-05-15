@@ -26,6 +26,10 @@ import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionCodeFragment;
 import com.intellij.psi.PsiFile;
+import com.intellij.xdebugger.XExpression;
+import com.intellij.xdebugger.evaluation.EvaluationMode;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -129,5 +133,46 @@ public final class TextWithImportsImpl implements TextWithImports{
   @Override
   public FileType getFileType() {
     return myFileType;
+  }
+
+  @Nullable
+  public static XExpression toXExpression(TextWithImports text) {
+    if (!text.getText().isEmpty()) {
+      return new XExpressionImpl(text.getText(),
+                                 XDebuggerEditorBase.getFileTypeLanguage(text.getFileType()),
+                                 StringUtil.nullize(text.getImports()),
+                                 getMode(text.getKind()));
+    }
+    return null;
+  }
+
+  private static EvaluationMode getMode(CodeFragmentKind kind) {
+    switch (kind) {
+      case EXPRESSION: return EvaluationMode.EXPRESSION;
+      case CODE_BLOCK: return EvaluationMode.CODE_FRAGMENT;
+    }
+    throw new IllegalStateException("Unknown kind " + kind);
+  }
+
+  private static CodeFragmentKind getKind(EvaluationMode mode) {
+    switch (mode) {
+      case EXPRESSION: return CodeFragmentKind.EXPRESSION;
+      case CODE_FRAGMENT: return CodeFragmentKind.CODE_BLOCK;
+    }
+    throw new IllegalStateException("Unknown mode " + mode);
+  }
+
+  public static TextWithImports fromXExpression(@Nullable XExpression expression) {
+    if (expression == null) return null;
+
+    if (expression.getCustomInfo() == null && expression.getLanguage() == null) {
+      return new TextWithImportsImpl(getKind(expression.getMode()), expression.getExpression());
+    }
+    else {
+      return new TextWithImportsImpl(getKind(expression.getMode()),
+                                     expression.getExpression(),
+                                     StringUtil.notNullize(expression.getCustomInfo()),
+                                     expression.getLanguage() != null ? expression.getLanguage().getAssociatedFileType() : null);
+    }
   }
 }

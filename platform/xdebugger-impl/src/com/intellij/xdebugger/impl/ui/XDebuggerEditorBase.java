@@ -15,17 +15,38 @@
  */
 package com.intellij.xdebugger.impl.ui;
 
+import com.intellij.ide.DataManager;
+import com.intellij.lang.Language;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.reference.SoftReference;
+import com.intellij.ui.ClickListener;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.lang.ref.WeakReference;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -40,6 +61,9 @@ public abstract class XDebuggerEditorBase {
   private final XSourcePosition mySourcePosition;
   private int myHistoryIndex;
 
+  private final JLabel myChooseFactory = new JLabel();
+  private WeakReference<ListPopup> myPopup;
+
   protected XDebuggerEditorBase(final Project project,
                                 @NotNull XDebuggerEditorsProvider debuggerEditorsProvider,
                                 @NotNull EvaluationMode mode,
@@ -50,6 +74,53 @@ public abstract class XDebuggerEditorBase {
     myMode = mode;
     myHistoryId = historyId;
     mySourcePosition = sourcePosition;
+
+    myChooseFactory.setToolTipText("Click to change the language");
+    myChooseFactory.setBorder(new EmptyBorder(0, 3, 0, 3));
+    new ClickListener() {
+      @Override
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
+        ListPopup oldPopup = SoftReference.dereference(myPopup);
+        if (oldPopup != null && !oldPopup.isDisposed()) {
+          oldPopup.cancel();
+          myPopup = null;
+          return true;
+        }
+        ListPopup popup = createLanguagePopup();
+        popup.showUnderneathOf(myChooseFactory);
+        myPopup = new WeakReference<ListPopup>(popup);
+        return true;
+      }
+    }.installOn(myChooseFactory);
+  }
+
+  private ListPopup createLanguagePopup() {
+    DefaultActionGroup actions = new DefaultActionGroup();
+    for (final Language language : getEditorsProvider().getSupportedLanguages(myProject, mySourcePosition)) {
+      actions.add(new AnAction(language.getDisplayName(), null, language.getAssociatedFileType().getIcon()) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          XExpression currentExpression = getExpression();
+          setExpression(new XExpressionImpl(currentExpression.getExpression(), language, currentExpression.getCustomInfo()));
+          IdeFocusManager.getInstance(getProject()).requestFocus(getComponent(), true);
+        }
+      });
+    }
+
+    DataContext dataContext = DataManager.getInstance().getDataContext(getComponent());
+    return JBPopupFactory.getInstance().createActionGroupPopup("Choose language", actions, dataContext,
+                                                               JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+                                                               false);
+  }
+
+  protected JPanel addChooseFactoryLabel(JComponent component, boolean top) {
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(component, BorderLayout.CENTER);
+
+    JPanel factoryPanel = new JPanel(new BorderLayout());
+    factoryPanel.add(myChooseFactory, top ? BorderLayout.NORTH : BorderLayout.CENTER);
+    panel.add(factoryPanel, BorderLayout.WEST);
+    return panel;
   }
 
   @NotNull
@@ -59,14 +130,51 @@ public abstract class XDebuggerEditorBase {
 
   public abstract JComponent getComponent();
 
-  protected abstract void doSetText(String text);
+  protected abstract void doSetText(XExpression text);
 
-  public void setText(String text) {
+  public void setExpression(@Nullable XExpression text) {
+    if (text == null) {
+      text = getMode() == EvaluationMode.EXPRESSION ? XExpressionImpl.EMPTY_EXPRESSION : XExpressionImpl.EMPTY_CODE_FRAGMENT;
+    }
     saveTextInHistory(text);
+    Language language = text.getLanguage();
+    if (language == null) {
+      if (mySourcePosition != null) {
+        language = getFileTypeLanguage(mySourcePosition.getFile().getFileType());
+      }
+      if (language == null) {
+        language = getFileTypeLanguage(getEditorsProvider().getFileType());
+      }
+    }
+    text = new XExpressionImpl(text.getExpression(), language, text.getCustomInfo(), getMode());
+
+    Collection<Language> languages = getEditorsProvider().getSupportedLanguages(myProject, mySourcePosition);
+    boolean many = languages.size() > 1;
+
+    if (language != null) {
+      myChooseFactory.setVisible(many);
+    }
+    myChooseFactory.setVisible(myChooseFactory.isVisible() || many);
+    //myChooseFactory.setEnabled(many && languages.contains(language));
+
+    if (language != null && language.getAssociatedFileType() != null) {
+      Icon icon = language.getAssociatedFileType().getIcon();
+      myChooseFactory.setIcon(icon);
+      myChooseFactory.setDisabledIcon(IconLoader.getDisabledIcon(icon));
+    }
+
     doSetText(text);
   }
 
-  public abstract String getText();
+  @Nullable
+  public static Language getFileTypeLanguage(@Nullable FileType fileType) {
+    if (fileType instanceof LanguageFileType) {
+      return ((LanguageFileType)fileType).getLanguage();
+    }
+    return null;
+  }
+
+  public abstract XExpression getExpression();
 
   @Nullable
   public abstract JComponent getPreferredFocusedComponent();
@@ -76,7 +184,7 @@ public abstract class XDebuggerEditorBase {
   protected void onHistoryChanged() {
   }
 
-  protected List<String> getRecentExpressions() {
+  protected List<XExpression> getRecentExpressions() {
     if (myHistoryId != null) {
       return XDebuggerHistoryManager.getInstance(myProject).getRecentExpressions(myHistoryId);
     }
@@ -84,14 +192,16 @@ public abstract class XDebuggerEditorBase {
   }
 
   public void saveTextInHistory() {
-    saveTextInHistory(getText());
+    saveTextInHistory(getExpression());
   }
 
-  private void saveTextInHistory(final String text) {
+  private void saveTextInHistory(final XExpression text) {
     if (myHistoryId != null) {
-      XDebuggerHistoryManager.getInstance(myProject).addRecentExpression(myHistoryId, text);
+      boolean update = XDebuggerHistoryManager.getInstance(myProject).addRecentExpression(myHistoryId, text);
       myHistoryIndex = 0;
-      onHistoryChanged();
+      if (update) {
+        onHistoryChanged();
+      }
     }
   }
 
@@ -103,7 +213,7 @@ public abstract class XDebuggerEditorBase {
     return myProject;
   }
 
-  protected Document createDocument(final String text) {
+  protected Document createDocument(final XExpression text) {
     return getEditorsProvider().createDocument(getProject(), text, mySourcePosition, myMode);
   }
 
@@ -116,7 +226,7 @@ public abstract class XDebuggerEditorBase {
   }
 
   public void goBackward() {
-    final List<String> expressions = getRecentExpressions();
+    final List<XExpression> expressions = getRecentExpressions();
     if (myHistoryIndex < expressions.size() - 1) {
       myHistoryIndex++;
       doSetText(expressions.get(myHistoryIndex));
@@ -124,7 +234,7 @@ public abstract class XDebuggerEditorBase {
   }
 
   public void goForward() {
-    final List<String> expressions = getRecentExpressions();
+    final List<XExpression> expressions = getRecentExpressions();
     if (myHistoryIndex > 0) {
       myHistoryIndex--;
       doSetText(expressions.get(myHistoryIndex));

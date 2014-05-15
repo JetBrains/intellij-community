@@ -157,7 +157,7 @@ public class CreateFromUsageUtils {
       throw e;
     }
     catch (Exception e) {
-      throw new IncorrectOperationException("Failed to parse file template",e);
+      throw new IncorrectOperationException("Failed to parse file template", (Throwable)e);
     }
 
     if (methodText != null) {

@@ -23,7 +23,6 @@ import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 
 import javax.swing.*;
@@ -105,14 +104,7 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implement
     myCustomPanels = new ArrayList<XBreakpointCustomPropertiesPanel<B>>();
     if (debuggerEditorsProvider != null) {
       final XBreakpointCustomPropertiesPanel<B> conditionPanel;
-      if (debuggerEditorsProvider instanceof XDebuggerComboBoxProvider) {
-        conditionPanel = ((XDebuggerComboBoxProvider<B>)debuggerEditorsProvider).createConditionComboBoxPanel(
-            project, debuggerEditorsProvider, DefaultConditionComboBoxPanel.HISTORY_KEY, myBreakpoint.getSourcePosition());
-      }
-      else {
-        conditionPanel =
-          new DefaultConditionComboBoxPanel<B>(project, debuggerEditorsProvider, myBreakpoint.getSourcePosition());
-      }
+      conditionPanel = new DefaultConditionComboBoxPanel<B>(project, debuggerEditorsProvider, myBreakpoint.getSourcePosition());
       myConditionExpressionPanel.add(conditionPanel.getComponent(), BorderLayout.CENTER);
       myCustomPanels.add(conditionPanel);
       myMainPanel.addFocusListener(new FocusAdapter() {

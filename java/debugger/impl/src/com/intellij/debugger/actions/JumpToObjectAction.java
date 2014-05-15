@@ -30,6 +30,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiClass;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -133,7 +134,7 @@ public class JumpToObjectAction extends DebuggerAction{
     return null;
   }
 
-  private static class NavigateCommand extends SourcePositionCommand {
+  public static class NavigateCommand extends SourcePositionCommand {
     public NavigateCommand(final DebuggerContextImpl debuggerContext, final ValueDescriptor descriptor, final DebugProcessImpl debugProcess, final AnActionEvent e) {
       super(debuggerContext, descriptor, debugProcess, e);
     }
@@ -195,7 +196,7 @@ public class JumpToObjectAction extends DebuggerAction{
 
     protected abstract SourcePositionCommand createRetryCommand();
 
-    protected abstract void doAction(SourcePosition sourcePosition);
+    protected abstract void doAction(@Nullable SourcePosition sourcePosition);
 
     private ReferenceType loadClass(final String className) {
       final EvaluationContextImpl eContext = myDebuggerContext.createEvaluationContext();

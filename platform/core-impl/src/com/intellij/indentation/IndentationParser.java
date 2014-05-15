@@ -23,6 +23,9 @@ import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author oleg
  */
@@ -35,6 +38,21 @@ public abstract class IndentationParser implements PsiParser {
   private final IElementType myBlockElementType;
   @NotNull
   private final IElementType myDocumentType;
+  private final List<IElementType> myContainerTypes;
+
+  public IndentationParser(
+    @NotNull IElementType documentType,
+    @NotNull final IElementType blockElementType,
+    @NotNull final IElementType eolTokenType,
+    @NotNull final IElementType indentTokenType,
+    final List<IElementType> containerTypes)
+  {
+    myDocumentType = documentType;
+    myBlockElementType = blockElementType;
+    myEolTokenType = eolTokenType;
+    myIndentTokenType = indentTokenType;
+    myContainerTypes = containerTypes;
+  }
 
   public IndentationParser(
     @NotNull IElementType documentType,
@@ -42,18 +60,21 @@ public abstract class IndentationParser implements PsiParser {
     @NotNull final IElementType eolTokenType,
     @NotNull final IElementType indentTokenType)
   {
-    myDocumentType = documentType;
-    myBlockElementType = blockElementType;
-    myEolTokenType = eolTokenType;
-    myIndentTokenType = indentTokenType;
+    this(documentType, blockElementType, eolTokenType, indentTokenType, null);
   }
 
   @Override
   @NotNull
   public final ASTNode parse(final IElementType root, final PsiBuilder builder) {
     final PsiBuilder.Marker fileMarker = builder.mark();
+    final ArrayList<PsiBuilder.Marker> containerMarkers = new ArrayList<PsiBuilder.Marker>();
+    if (myContainerTypes != null) {
+      for (IElementType ignored : myContainerTypes) {
+        final PsiBuilder.Marker containerMarker = builder.mark();
+        containerMarkers.add(containerMarker);
+      }
+    }
     final PsiBuilder.Marker documentMarker = builder.mark();
-
     while (builder.getTokenType() == myEolTokenType) {
       advanceLexer(builder);
     }
@@ -125,6 +146,14 @@ public abstract class IndentationParser implements PsiParser {
     }
 
     documentMarker.done(myDocumentType);
+
+    if (myContainerTypes != null) {
+      for (int i = containerMarkers.size() - 1; i >= 0; i--) {
+        final PsiBuilder.Marker marker = containerMarkers.get(i);
+        marker.done(myContainerTypes.get(i));
+      }
+    }
+
     fileMarker.done(root);
     return builder.getTreeBuilt();
   }

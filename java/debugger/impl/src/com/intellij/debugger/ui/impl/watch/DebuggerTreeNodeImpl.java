@@ -40,16 +40,17 @@ import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.MutableTreeNode;
 import java.util.Map;
 
-public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTreeNode{
+public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTreeNode, NodeDescriptorProvider, MutableTreeNode {
   private Icon myIcon;
   private SimpleColoredText myText;
   private String myMarkupTooltipText;
   private final DebuggerTree myTree;
   private final Map myProperties = new HashMap();
 
-  private DebuggerTreeNodeImpl(DebuggerTree tree, NodeDescriptor descriptor) {
+  public DebuggerTreeNodeImpl(DebuggerTree tree, NodeDescriptor descriptor) {
     super(descriptor);
     myTree = tree;
   }

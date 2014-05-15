@@ -19,6 +19,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.ContextUtil;
+import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.*;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
@@ -30,21 +31,18 @@ import com.intellij.debugger.ui.DebuggerExpressionComboBox;
 import com.intellij.debugger.ui.EditorEvaluationCommand;
 import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
 import com.intellij.debugger.ui.impl.watch.*;
-import com.intellij.debugger.ui.tree.render.HexRenderer;
-import com.intellij.debugger.ui.tree.render.NodeRenderer;
-import com.intellij.debugger.ui.tree.render.ValueLabelRenderer;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter;
 import com.intellij.openapi.progress.util.ProgressWindowWithNotification;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.xdebugger.frame.XValueModifier;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -52,20 +50,26 @@ import javax.swing.*;
  * Class SetValueAction
  * @author Jeka
  */
-public class SetValueAction extends DebuggerAction {
-  public void update(AnActionEvent e) {
-    boolean enable = false;
-    DebuggerTreeNodeImpl node = getSelectedNode(e.getDataContext());
-    if (node != null) {
-      NodeDescriptorImpl descriptor = node.getDescriptor();
-      if(descriptor instanceof ValueDescriptorImpl){
-        ValueDescriptorImpl valueDescriptor = ((ValueDescriptorImpl)descriptor);
-        enable = valueDescriptor.canSetValue();
-      }
-    }
-    e.getPresentation().setVisible(enable);
+public class JavaValueModifier extends XValueModifier {
+  private final JavaValue myJavaValue;
+
+  public JavaValueModifier(JavaValue javaValue) {
+    myJavaValue = javaValue;
   }
 
+  //public void update(AnActionEvent e) {
+  //  boolean enable = false;
+  //  DebuggerTreeNodeImpl node = getSelectedNode(e.getDataContext());
+  //  if (node != null) {
+  //    NodeDescriptorImpl descriptor = node.getDescriptor();
+  //    if(descriptor instanceof ValueDescriptorImpl){
+  //      ValueDescriptorImpl valueDescriptor = ((ValueDescriptorImpl)descriptor);
+  //      enable = valueDescriptor.canSetValue();
+  //    }
+  //  }
+  //  e.getPresentation().setVisible(enable);
+  //}
+  //
   private void update(final DebuggerContextImpl context) {
     DebuggerInvocationUtil.swingInvokeLater(context.getProject(), new Runnable() {
       public void run() {
@@ -78,12 +82,9 @@ public class SetValueAction extends DebuggerAction {
     //node.setState(context);
   }
 
-  public void actionPerformed(final AnActionEvent event) {
-    final DebuggerTreeNodeImpl node = getSelectedNode(event.getDataContext());
-    if (node == null) {
-      return;
-    }
-    final NodeDescriptorImpl descriptor = node.getDescriptor();
+  @Override
+  public void setValue(@NotNull String expression, @NotNull XModificationCallback callback) {
+    final NodeDescriptorImpl descriptor = myJavaValue.getDescriptor();
     if (!(descriptor instanceof ValueDescriptorImpl)) {
       return;
     }
@@ -91,9 +92,10 @@ public class SetValueAction extends DebuggerAction {
       return;
     }
 
-    final DebuggerTree tree = getTree(event.getDataContext());
-    final DebuggerContextImpl debuggerContext = getDebuggerContext(event.getDataContext());
-    tree.saveState(node);
+    //final DebuggerTree tree = getTree(event.getDataContext());
+    //final DebuggerContextImpl debuggerContext = getDebuggerContext(event.getDataContext());
+    final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(myJavaValue.getProject()).getContext();
+    //tree.saveState(node);
 
     if (descriptor instanceof FieldDescriptorImpl) {
       FieldDescriptorImpl fieldDescriptor = (FieldDescriptorImpl)descriptor;
@@ -101,17 +103,19 @@ public class SetValueAction extends DebuggerAction {
       if (!field.isStatic()) {
         final ObjectReference object = fieldDescriptor.getObject();
         if (object != null) {
-          askAndSet(node, debuggerContext, new SetValueRunnable() {
-            public void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException, InvalidTypeException, EvaluateException {
+          set(expression, callback, debuggerContext, new SetValueRunnable() {
+            public void setValue(EvaluationContextImpl evaluationContext, Value newValue)
+              throws ClassNotLoadedException, InvalidTypeException, EvaluateException {
               object.setValue(field, preprocessValue(evaluationContext, newValue, field.type()));
               update(debuggerContext);
             }
 
-            public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws InvocationException,
-                                                                                                         ClassNotLoadedException,
-                                                                                                         IncompatibleThreadStateException,
-                                                                                                         InvalidTypeException,
-                                                                                                         EvaluateException {
+            public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws
+                                                                                                      InvocationException,
+                                                                                                      ClassNotLoadedException,
+                                                                                                      IncompatibleThreadStateException,
+                                                                                                      InvalidTypeException,
+                                                                                                      EvaluateException {
               return evaluationContext.getDebugProcess().loadClass(evaluationContext, className, field.declaringType().classLoader());
             }
           });
@@ -122,17 +126,19 @@ public class SetValueAction extends DebuggerAction {
         ReferenceType refType = field.declaringType();
         if (refType instanceof ClassType) {
           final ClassType classType = (ClassType)refType;
-          askAndSet(node, debuggerContext, new SetValueRunnable() {
-            public void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException, InvalidTypeException, EvaluateException {
+          set(expression, callback, debuggerContext, new SetValueRunnable() {
+            public void setValue(EvaluationContextImpl evaluationContext, Value newValue)
+              throws ClassNotLoadedException, InvalidTypeException, EvaluateException {
               classType.setValue(field, preprocessValue(evaluationContext, newValue, field.type()));
               update(debuggerContext);
             }
 
-            public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws InvocationException,
-                                                                                                         ClassNotLoadedException,
-                                                                                                         IncompatibleThreadStateException,
-                                                                                                         InvalidTypeException,
-                                                                                                         EvaluateException {
+            public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws
+                                                                                                      InvocationException,
+                                                                                                      ClassNotLoadedException,
+                                                                                                      IncompatibleThreadStateException,
+                                                                                                      InvalidTypeException,
+                                                                                                      EvaluateException {
               return evaluationContext.getDebugProcess().loadClass(evaluationContext, className,
                                                                    field.declaringType().classLoader());
             }
@@ -144,19 +150,19 @@ public class SetValueAction extends DebuggerAction {
       LocalVariableDescriptorImpl localDescriptor = (LocalVariableDescriptorImpl)descriptor;
       final LocalVariableProxyImpl local = localDescriptor.getLocalVariable();
       if (local != null) {
-        askAndSet(node, debuggerContext, new SetValueRunnable() {
+        set(expression, callback, debuggerContext, new SetValueRunnable() {
           public void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException,
-                                                                                           InvalidTypeException,
-                                                                                           EvaluateException {
+                                                                                               InvalidTypeException,
+                                                                                               EvaluateException {
             debuggerContext.getFrameProxy().setValue(local, preprocessValue(evaluationContext, newValue, local.getType()));
             update(debuggerContext);
           }
 
           public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws InvocationException,
-                                                                                                       ClassNotLoadedException,
-                                                                                                       IncompatibleThreadStateException,
-                                                                                                       InvalidTypeException,
-                                                                                                       EvaluateException {
+                                                                                                           ClassNotLoadedException,
+                                                                                                           IncompatibleThreadStateException,
+                                                                                                           InvalidTypeException,
+                                                                                                           EvaluateException {
             return evaluationContext.getDebugProcess().loadClass(evaluationContext, className,
                                                                  evaluationContext.getClassLoader());
           }
@@ -169,22 +175,23 @@ public class SetValueAction extends DebuggerAction {
       if (array != null) {
         if (VirtualMachineProxyImpl.isCollected(array)) {
           // will only be the case if debugger does not use ObjectReference.disableCollection() because of Patches.IBM_JDK_DISABLE_COLLECTION_BUG
-          Messages.showWarningDialog(tree, DebuggerBundle.message("evaluation.error.array.collected") + "\n"+ DebuggerBundle.message("warning.recalculate"), DebuggerBundle.message("title.set.value"));
-          node.getParent().calcValue();
+          Messages.showWarningDialog(myJavaValue.getProject(), DebuggerBundle.message("evaluation.error.array.collected") + "\n"+ DebuggerBundle.message("warning.recalculate"), DebuggerBundle.message("title.set.value"));
+          //node.getParent().calcValue();
           return;
         }
         final ArrayType arrType = (ArrayType)array.referenceType();
-        askAndSet(node, debuggerContext, new SetValueRunnable() {
-          public void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException, InvalidTypeException, EvaluateException {
+        set(expression, callback, debuggerContext, new SetValueRunnable() {
+          public void setValue(EvaluationContextImpl evaluationContext, Value newValue)
+            throws ClassNotLoadedException, InvalidTypeException, EvaluateException {
             array.setValue(elementDescriptor.getIndex(), preprocessValue(evaluationContext, newValue, arrType.componentType()));
             update(debuggerContext);
           }
 
           public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws InvocationException,
-                                                                                                       ClassNotLoadedException,
-                                                                                                       IncompatibleThreadStateException,
-                                                                                                       InvalidTypeException,
-                                                                                                       EvaluateException {
+                                                                                                           ClassNotLoadedException,
+                                                                                                           IncompatibleThreadStateException,
+                                                                                                           InvalidTypeException,
+                                                                                                           EvaluateException {
             return evaluationContext.getDebugProcess().loadClass(evaluationContext, className, arrType.classLoader());
           }
         });
@@ -193,18 +200,19 @@ public class SetValueAction extends DebuggerAction {
     else if (descriptor instanceof EvaluationDescriptor) {
       final EvaluationDescriptor evaluationDescriptor = (EvaluationDescriptor)descriptor;
       if (evaluationDescriptor.canSetValue()) {
-        askAndSet(node, debuggerContext, new SetValueRunnable() {
-          public void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException, InvalidTypeException, EvaluateException {
+        set(expression, callback, debuggerContext, new SetValueRunnable() {
+          public void setValue(EvaluationContextImpl evaluationContext, Value newValue)
+            throws ClassNotLoadedException, InvalidTypeException, EvaluateException {
             final Modifier modifier = evaluationDescriptor.getModifier();
             modifier.setValue(preprocessValue(evaluationContext, newValue, modifier.getExpectedType()));
             update(debuggerContext);
           }
 
           public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws InvocationException,
-                                                                                                       ClassNotLoadedException,
-                                                                                                       IncompatibleThreadStateException,
-                                                                                                       InvalidTypeException,
-                                                                                                       EvaluateException {
+                                                                                                           ClassNotLoadedException,
+                                                                                                           IncompatibleThreadStateException,
+                                                                                                           InvalidTypeException,
+                                                                                                           EvaluateException {
             return evaluationContext.getDebugProcess().loadClass(evaluationContext, className,
                                                                  evaluationContext.getClassLoader());
           }
@@ -300,8 +308,9 @@ public class SetValueAction extends DebuggerAction {
     }
   }
 
-  private void askAndSet(final DebuggerTreeNodeImpl node, final DebuggerContextImpl debuggerContext, final SetValueRunnable setValueRunnable) {
-    ProgressWindowWithNotification progressWindow = new ProgressWindowWithNotification(true, debuggerContext.getProject());
+  private void set(@NotNull final String expression, final XModificationCallback callback, final DebuggerContextImpl debuggerContext, final SetValueRunnable setValueRunnable) {
+    final ProgressWindowWithNotification progressWindow = new ProgressWindowWithNotification(true, debuggerContext.getProject());
+    final EvaluationContextImpl evaluationContext = myJavaValue.getEvaluationContext();
 
     SuspendContextCommandImpl askSetAction = new DebuggerContextCommandImpl(debuggerContext) {
       public Priority getPriority() {
@@ -309,27 +318,62 @@ public class SetValueAction extends DebuggerAction {
       }
 
       public void threadAction() {
-        final NodeDescriptorImpl descriptor = node.getDescriptor();
-        String initialString = "";
-        if (descriptor instanceof ValueDescriptorImpl) {
-          Value currentValue = ((ValueDescriptorImpl) descriptor).getValue();
-          if (currentValue instanceof StringReference) {
-            initialString = DebuggerUtilsEx.getValueOrErrorAsString(debuggerContext.createEvaluationContext(), currentValue);
-            initialString = initialString == null ? "" : "\"" + DebuggerUtilsEx.translateStringValue(initialString) + "\"";
-          }
-          else if (currentValue instanceof PrimitiveValue) {
-            ValueLabelRenderer renderer = ((ValueDescriptorImpl) descriptor).getRenderer(debuggerContext.getDebugProcess());
-            initialString = getDisplayableString((PrimitiveValue) currentValue, renderer instanceof NodeRenderer && HexRenderer.UNIQUE_ID.equals(renderer.getUniqueId()));
-          }
+        ExpressionEvaluator evaluator = null;
+        try {
+          evaluator = DebuggerInvocationUtil
+            .commitAndRunReadAction(evaluationContext.getProject(), new com.intellij.debugger.EvaluatingComputable<ExpressionEvaluator>() {
+              public ExpressionEvaluator compute() throws EvaluateException {
+                return EvaluatorBuilderImpl
+                  .build(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expression), ContextUtil.getContextElement(evaluationContext),
+                         ContextUtil.getSourcePosition(evaluationContext));
+              }
+            });
 
-          final String initialString1 = initialString;
-          final Project project = debuggerContext.getProject();
-          DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
-            public void run() {
-              showEditor(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, initialString1), node, debuggerContext, setValueRunnable);
+
+          setValue(expression, evaluator, evaluationContext, new SetValueRunnable() {
+            public void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException,
+                                                                                                 InvalidTypeException,
+                                                                                                 EvaluateException,
+                                                                                                 IncompatibleThreadStateException {
+              if (!progressWindow.isCanceled()) {
+                setValueRunnable.setValue(evaluationContext, newValue);
+                //node.calcValue();
+              }
+            }
+
+            public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws
+                                                                                                      InvocationException,
+                                                                                                      ClassNotLoadedException,
+                                                                                                      EvaluateException,
+                                                                                                      IncompatibleThreadStateException,
+                                                                                                      InvalidTypeException {
+              return setValueRunnable.loadClass(evaluationContext, className);
             }
           });
+          callback.valueModified();
+        } catch (EvaluateException e) {
+          callback.errorOccurred(e.getMessage());
         }
+        //String initialString = "";
+        //if (descriptor instanceof ValueDescriptorImpl) {
+        //  Value currentValue = ((ValueDescriptorImpl) descriptor).getValue();
+        //  if (currentValue instanceof StringReference) {
+        //    initialString = DebuggerUtilsEx.getValueOrErrorAsString(debuggerContext.createEvaluationContext(), currentValue);
+        //    initialString = initialString == null ? "" : "\"" + DebuggerUtilsEx.translateStringValue(initialString) + "\"";
+        //  }
+        //  else if (currentValue instanceof PrimitiveValue) {
+        //    ValueLabelRenderer renderer = ((ValueDescriptorImpl) descriptor).getRenderer(debuggerContext.getDebugProcess());
+        //    initialString = getDisplayableString((PrimitiveValue) currentValue, renderer instanceof NodeRenderer && HexRenderer.UNIQUE_ID.equals(renderer.getUniqueId()));
+        //  }
+        //
+        //  final String initialString1 = initialString;
+        //  final Project project = debuggerContext.getProject();
+        //  DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
+        //    public void run() {
+        //      showEditor(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, initialString1), node, debuggerContext, setValueRunnable);
+        //    }
+        //  });
+        //}
       }
     };
 
@@ -418,22 +462,23 @@ public class SetValueAction extends DebuggerAction {
               }
             });
 
-            SetValueAction.setValue(text.getText(), evaluator, evaluationContext, new SetValueRunnable() {
+            setValue(text.getText(), evaluator, evaluationContext, new SetValueRunnable() {
               public void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException,
-                                                                                               InvalidTypeException,
-                                                                                               EvaluateException,
-                                                                                               IncompatibleThreadStateException {
-                if(!progressWindow.isCanceled()) {
+                                                                                                   InvalidTypeException,
+                                                                                                   EvaluateException,
+                                                                                                   IncompatibleThreadStateException {
+                if (!progressWindow.isCanceled()) {
                   setValueRunnable.setValue(evaluationContext, newValue);
                   node.calcValue();
                 }
               }
 
-              public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws InvocationException,
-                                                                                                           ClassNotLoadedException,
-                                                                                                           EvaluateException,
-                                                                                                           IncompatibleThreadStateException,
-                                                                                                           InvalidTypeException {
+              public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws
+                                                                                                        InvocationException,
+                                                                                                        ClassNotLoadedException,
+                                                                                                        EvaluateException,
+                                                                                                        IncompatibleThreadStateException,
+                                                                                                        InvalidTypeException {
                 return setValueRunnable.loadClass(evaluationContext, className);
               }
             });

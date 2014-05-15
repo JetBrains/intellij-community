@@ -150,6 +150,9 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
         if (LangDataKeys.CONSOLE_VIEW.is(dataId)) {
           return session.getConsoleView();
         }
+        if (XDebugSessionData.DATA_KEY.is(dataId)) {
+          return sessionData;
+        }
         return null;
       }
     });

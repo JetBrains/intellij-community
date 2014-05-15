@@ -90,7 +90,7 @@ public class XQuickEvaluateHandler extends QuickEvaluateHandler {
         && selectionStart <= offset && offset <= selectionEnd) {
       return new ExpressionInfo(new TextRange(selectionStart, selectionEnd));
     }
-    return evaluator.getExpressionInfoAtOffset(project, editor.getDocument(), offset, false);
+    return evaluator.getExpressionInfoAtOffset(project, editor.getDocument(), offset, type == ValueHintType.MOUSE_CLICK_HINT || type == ValueHintType.MOUSE_ALT_OVER_HINT);
   }
 
   @Override

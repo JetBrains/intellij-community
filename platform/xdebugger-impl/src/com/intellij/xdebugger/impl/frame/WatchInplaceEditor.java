@@ -15,10 +15,10 @@
  */
 package com.intellij.xdebugger.impl.frame;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionAdapter;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
@@ -45,7 +45,7 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
     myRootNode = rootNode;
     myWatchesView = watchesView;
     myOldNode = oldNode;
-    myExpressionEditor.setText(oldNode != null ? oldNode.getExpression() : "");
+    myExpressionEditor.setExpression(oldNode != null ? oldNode.getExpression() : null);
     new WatchEditorSessionListener(session).install();
   }
 
@@ -66,11 +66,11 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
 
   @Override
   public void doOKAction() {
-    String expression = myExpressionEditor.getText();
+    XExpression expression = myExpressionEditor.getExpression();
     myExpressionEditor.saveTextInHistory();
     super.doOKAction();
     int index = myRootNode.removeChildNode(getNode());
-    if (!StringUtil.isEmpty(expression) && index != -1) {
+    if (!expression.getExpression().isEmpty() && index != -1) {
       myWatchesView.addWatchExpression(expression, index, false);
     }
   }

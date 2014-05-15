@@ -15,27 +15,30 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.impl.light.LightTypeParameter;
 
 import java.util.*;
 
 /**
  * User: anna
  */
-public class InferenceVariable {
+public class InferenceVariable extends LightTypeParameter {
   public PsiTypeParameter getParameter() {
-    return myParameter;
+    return getDelegate();
   }
 
   private boolean myThrownBound = false;
   private final Map<InferenceBound, List<PsiType>> myBounds = new HashMap<InferenceBound, List<PsiType>>();
-  private final PsiTypeParameter myParameter;
 
   private PsiType myInstantiation = PsiType.NULL;
-  public InferenceVariable(PsiTypeParameter parameter) {
-    myParameter = parameter;
+
+  InferenceVariable(PsiTypeParameter parameter) {
+    super(parameter);
   }
+
   public PsiType getInstantiation() {
     return myInstantiation;
   }
@@ -117,12 +120,13 @@ public class InferenceVariable {
     myThrownBound = true;
   }
 
-  public void replaceBounds(InferenceBound boundType, LinkedHashSet<PsiType> bounds) {
-    
+  @Override
+  public boolean isEquivalentTo(PsiElement another) {
+    return this == another || getDelegate() == another;
   }
 
   @Override
   public String toString() {
-    return myParameter.toString();
+    return getDelegate().toString();
   }
 }
