@@ -42,9 +42,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.Collection;
 import java.util.Set;
@@ -65,7 +65,7 @@ public class GrReassignedLocalVarsChecker {
     }
 
     final PsiElement resolved = refExpr.resolve();
-    if (!GroovyRefactoringUtil.isLocalVariable(resolved)) {
+    if (!GroovyPsiUtil.isLocalVariable(resolved)) {
       return false;
     }
 
@@ -117,7 +117,7 @@ public class GrReassignedLocalVarsChecker {
     }
 
     final PsiElement resolved = refExpr.resolve();
-    if (!GroovyRefactoringUtil.isLocalVariable(resolved)) {
+    if (!GroovyPsiUtil.isLocalVariable(resolved)) {
       return null;
     }
 

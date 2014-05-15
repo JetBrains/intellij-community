@@ -75,12 +75,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrCodeReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -404,7 +404,7 @@ public class GroovyCompletionUtil {
                                                   @Nullable PsiElement position) {
     PsiType type = null;
     if (element instanceof GrVariable) {
-      if (position != null && GroovyRefactoringUtil.isLocalVariable(element)) {
+      if (position != null && GroovyPsiUtil.isLocalVariable(element)) {
         type = TypeInferenceHelper.getInferredType(position, ((GrVariable)element).getName());
       }
       else {

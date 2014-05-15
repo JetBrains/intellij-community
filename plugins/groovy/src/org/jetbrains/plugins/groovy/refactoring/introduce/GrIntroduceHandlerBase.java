@@ -66,6 +66,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrDeclarationHolder;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -773,7 +774,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       final GrReferenceExpression ref = (GrReferenceExpression)expression;
 
       final PsiElement resolved = ref.resolve();
-      if (GroovyRefactoringUtil.isLocalVariable(resolved)) {
+      if (GroovyPsiUtil.isLocalVariable(resolved)) {
         return (GrVariable)resolved;
       }
       return null;

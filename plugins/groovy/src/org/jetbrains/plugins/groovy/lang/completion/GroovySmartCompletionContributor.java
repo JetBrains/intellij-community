@@ -55,8 +55,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 
 import java.util.Arrays;
@@ -466,7 +466,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
       return PsiUtil.getSmartReturnType((PsiMethod)element);
     }
     if (element instanceof GrVariable) {
-      if (GroovyRefactoringUtil.isLocalVariable(element)) {
+      if (GroovyPsiUtil.isLocalVariable(element)) {
         return TypeInferenceHelper.getInferredType(context, ((GrVariable)element).getName());
       }
       else {

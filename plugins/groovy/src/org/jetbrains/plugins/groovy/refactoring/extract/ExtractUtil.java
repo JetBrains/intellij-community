@@ -46,13 +46,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
 import org.jetbrains.plugins.groovy.lang.psi.impl.ApplicationStatementUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.extract.method.ExtractMethodInfoHelper;
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
@@ -285,7 +285,7 @@ public class ExtractUtil {
       @Override
       public void visitReferenceExpression(GrReferenceExpression ref) {
         final PsiElement resolved = ref.resolve();
-        if ((resolved instanceof GrParameter || GroovyRefactoringUtil.isLocalVariable(resolved)) && resolved.isPhysical()) {
+        if ((resolved instanceof GrParameter || GroovyPsiUtil.isLocalVariable(resolved)) && resolved.isPhysical()) {
           final int offset = resolved.getTextRange().getStartOffset();
           //var is declared outside of selected code
           if (offset < start || end <= offset) {

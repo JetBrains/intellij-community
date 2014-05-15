@@ -196,10 +196,6 @@ public abstract class GroovyRefactoringUtil {
     });
   }
 
-  public static boolean isLocalVariable(@Nullable PsiElement variable) {
-    return variable instanceof GrVariable && !(variable instanceof GrField || variable instanceof GrParameter);
-  }
-
 
   public static void highlightOccurrences(Project project, @Nullable Editor editor, PsiElement[] elements) {
     if (editor == null) return;

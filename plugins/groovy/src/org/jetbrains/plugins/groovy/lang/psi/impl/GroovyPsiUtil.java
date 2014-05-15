@@ -16,8 +16,12 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
 public class GroovyPsiUtil {
   public static boolean checkPsiElementsAreEqual(PsiElement l, PsiElement r) {
@@ -37,5 +41,9 @@ public class GroovyPsiUtil {
 
   public static boolean isCall(GrReferenceExpression referenceExpression) {
     return referenceExpression.getParent() instanceof GrCall;
+  }
+
+  public static boolean isLocalVariable(@Nullable PsiElement variable) {
+    return variable instanceof GrVariable && !(variable instanceof GrField || variable instanceof GrParameter);
   }
 }

@@ -78,6 +78,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -195,7 +196,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
                parent instanceof GrAssignmentExpression &&
                ((GrAssignmentExpression)parent).getLValue() == highlight) {
         final PsiElement resolved = ((GrReferenceExpression)highlight).resolve();
-        if (resolved instanceof GrVariable && GroovyRefactoringUtil.isLocalVariable(resolved)) {
+        if (resolved instanceof GrVariable && GroovyPsiUtil.isLocalVariable(resolved)) {
           return ((GrVariable)resolved).getName();
         }
       }

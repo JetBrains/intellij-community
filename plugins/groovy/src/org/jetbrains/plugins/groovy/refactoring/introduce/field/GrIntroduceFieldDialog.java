@@ -42,12 +42,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
@@ -377,7 +377,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
   private static String getInvokedOnLocalVar(GrExpression expression) {
     if (expression instanceof GrReferenceExpression) {
       final PsiElement resolved = ((GrReferenceExpression)expression).resolve();
-      if (GroovyRefactoringUtil.isLocalVariable(resolved)) {
+      if (GroovyPsiUtil.isLocalVariable(resolved)) {
         return ((GrVariable)resolved).getName();
       }
     }
@@ -394,7 +394,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
 
       if (expression instanceof GrReferenceExpression) {
         final PsiElement resolved = ((GrReferenceExpression)expression).resolve();
-        if (GroovyRefactoringUtil.isLocalVariable(resolved)) {
+        if (GroovyPsiUtil.isLocalVariable(resolved)) {
           expression = ((GrVariable)resolved).getInitializerGroovy();
           if (expression == null) return false;
         }

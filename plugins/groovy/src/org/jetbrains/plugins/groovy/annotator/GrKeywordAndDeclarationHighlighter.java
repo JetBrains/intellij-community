@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -135,7 +135,7 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
     }
 
     //don't highlight local vars and parameters here because their highlighting needs index.
-    if (GroovyRefactoringUtil.isLocalVariable(parent) || parent instanceof GrParameter) return null;
+    if (GroovyPsiUtil.isLocalVariable(parent) || parent instanceof GrParameter) return null;
 
     return GrHighlightUtil.getDeclarationHighlightingAttribute(parent, null);
   }

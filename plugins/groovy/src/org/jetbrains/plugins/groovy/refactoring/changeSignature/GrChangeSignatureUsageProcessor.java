@@ -70,6 +70,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -636,7 +637,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
         protected boolean check(PsiVariable var, ResolveState state) {
           if (var instanceof PsiField && !resolveHelper.isAccessible((PsiField)var, list, null)) return false;
           if (var instanceof GrVariable &&
-              GroovyRefactoringUtil.isLocalVariable(var) &&
+              GroovyPsiUtil.isLocalVariable(var) &&
               list.getTextRange().getStartOffset() <= var.getTextRange().getStartOffset()) {
             return false;
           }
