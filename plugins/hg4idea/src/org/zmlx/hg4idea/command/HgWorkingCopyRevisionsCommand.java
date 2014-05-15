@@ -14,7 +14,7 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ObjectsConvertor;
@@ -61,7 +61,7 @@ public class HgWorkingCopyRevisionsCommand {
    * @see #parents(com.intellij.openapi.vfs.VirtualFile, com.intellij.openapi.vfs.VirtualFile, org.zmlx.hg4idea.HgRevisionNumber)
    */
   @NotNull
-  public Pair<HgRevisionNumber, HgRevisionNumber> parents(@NotNull VirtualFile repo, @Nullable VirtualFile file) {
+  public Couple<HgRevisionNumber> parents(@NotNull VirtualFile repo, @Nullable VirtualFile file) {
     return parents(repo, file, null);
   }
 
@@ -75,7 +75,7 @@ public class HgWorkingCopyRevisionsCommand {
    *         So one should check pair elements for null.
    */
   @NotNull
-  public Pair<HgRevisionNumber, HgRevisionNumber> parents(@NotNull VirtualFile repo, @Nullable VirtualFile file, @Nullable HgRevisionNumber revision) {
+  public Couple<HgRevisionNumber> parents(@NotNull VirtualFile repo, @Nullable VirtualFile file, @Nullable HgRevisionNumber revision) {
     return parents(repo, ObjectsConvertor.VIRTUAL_FILEPATH.convert(file), revision);
   }
 
@@ -83,7 +83,7 @@ public class HgWorkingCopyRevisionsCommand {
    * @see #parents(VirtualFile, FilePath, HgRevisionNumber)
    */
   @NotNull
-  public Pair<HgRevisionNumber, HgRevisionNumber> parents(@NotNull VirtualFile repo, @Nullable FilePath file) {
+  public Couple<HgRevisionNumber> parents(@NotNull VirtualFile repo, @Nullable FilePath file) {
     return parents(repo, file, null);
   }
 
@@ -97,12 +97,12 @@ public class HgWorkingCopyRevisionsCommand {
    *         So one should check pair elements for null.
    */
   @NotNull
-  public Pair<HgRevisionNumber, HgRevisionNumber> parents(@NotNull VirtualFile repo, @Nullable FilePath file, @Nullable HgRevisionNumber revision) {
+  public Couple<HgRevisionNumber> parents(@NotNull VirtualFile repo, @Nullable FilePath file, @Nullable HgRevisionNumber revision) {
     final List<HgRevisionNumber> revisions = getRevisions(repo, "parents", file, revision, true);
     switch (revisions.size()) {
-      case 1: return Pair.create(revisions.get(0), null);
-      case 2: return Pair.create(revisions.get(0), revisions.get(1));
-      default: return Pair.create(null, null);
+      case 1: return Couple.newOne(revisions.get(0), null);
+      case 2: return Couple.newOne(revisions.get(0), revisions.get(1));
+      default: return Couple.newOne(null, null);
     }
   }
 
@@ -135,12 +135,12 @@ public class HgWorkingCopyRevisionsCommand {
    * @return one or two revision numbers. Two revisions is the case of unresolved merge. In other cases there are only one revision.
    */
   @NotNull
-  public Pair<HgRevisionNumber, HgRevisionNumber> identify(@NotNull VirtualFile repo) {
+  public Couple<HgRevisionNumber> identify(@NotNull VirtualFile repo) {
     HgCommandExecutor commandExecutor = new HgCommandExecutor(myProject);
     commandExecutor.setSilent(true);
     HgCommandResult result = commandExecutor.executeInCurrentThread(repo, "identify", Arrays.asList("--num", "--id"));
     if (result == null) {
-      return Pair.create(HgRevisionNumber.NULL_REVISION_NUMBER, null);
+      return Couple.newOne(HgRevisionNumber.NULL_REVISION_NUMBER, null);
     }
 
     final List<String> lines = result.getOutputLines();
@@ -154,14 +154,14 @@ public class HgWorkingCopyRevisionsCommand {
           // 9f2e6c02913c+b311eb4eb004+ 186+183+
           List<String> chsets = StringUtil.split(changesets, "+");
           List<String> revs = StringUtil.split(revisions, "+");
-          return Pair.create(HgRevisionNumber.getInstance(revs.get(0) + "+", chsets.get(0) + "+"),
-                             HgRevisionNumber.getInstance(revs.get(1) + "+", chsets.get(1) + "+"));
+          return Couple.newOne(HgRevisionNumber.getInstance(revs.get(0) + "+", chsets.get(0) + "+"),
+                               HgRevisionNumber.getInstance(revs.get(1) + "+", chsets.get(1) + "+"));
         } else {
-          return Pair.create(HgRevisionNumber.getInstance(revisions, changesets), null);
+          return Couple.newOne(HgRevisionNumber.getInstance(revisions, changesets), null);
         }
       }
     }
-    return Pair.create(HgRevisionNumber.NULL_REVISION_NUMBER, null);
+    return Couple.newOne(HgRevisionNumber.NULL_REVISION_NUMBER, null);
   }
 
   /**
