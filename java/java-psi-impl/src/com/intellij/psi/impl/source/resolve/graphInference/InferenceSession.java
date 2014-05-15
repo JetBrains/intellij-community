@@ -74,7 +74,7 @@ public class InferenceSession {
     for (int i = 0; i < leftTypes.length; i++) {
       final PsiType rightType = mySiteSubstitutor.substitute(rightTypes[i]);
       if (rightType != null) {
-        myConstraints.add(new TypeCompatibilityConstraint(leftTypes[i], rightType));
+        addConstraint(new TypeCompatibilityConstraint(leftTypes[i], rightType));
       }
     }
   }
@@ -115,7 +115,7 @@ public class InferenceSession {
       for (int i = 0; i < args.length; i++) {
         if (args[i] != null && isPertinentToApplicability(args[i], method)) {
           PsiType parameterType = getParameterType(parameters, i, mySiteSubstitutor, varargs);
-          myConstraints.add(new ExpressionCompatibilityConstraint(args[i], parameterType));
+          addConstraint(new ExpressionCompatibilityConstraint(args[i], parameterType));
         }
       }
     }
@@ -399,7 +399,7 @@ public class InferenceSession {
       final PsiSubstitutor substitutor = resolveSubset(Collections.singletonList(inferenceVariable), mySiteSubstitutor);
       final PsiType substitutedReturnType = substitutor.substitute(inferenceVariable.getParameter());
       if (substitutedReturnType != null) {
-        myConstraints.add(new TypeCompatibilityConstraint(targetType, PsiUtil.captureToplevelWildcards(substitutedReturnType, myContext)));
+        addConstraint(new TypeCompatibilityConstraint(targetType, PsiUtil.captureToplevelWildcards(substitutedReturnType, myContext)));
       }
     } 
     else {
@@ -420,10 +420,10 @@ public class InferenceSession {
           }
           final PsiType substitutedCapture = PsiUtil.captureToplevelWildcards(subst.substitute(returnType), myContext);
           myIncorporationPhase.addCapture(copy, (PsiClassType)returnType);
-          myConstraints.add(new TypeCompatibilityConstraint(targetType, substitutedCapture));
+          addConstraint(new TypeCompatibilityConstraint(targetType, substitutedCapture));
         }
       } else {
-        myConstraints.add(new TypeCompatibilityConstraint(targetType, myErased ? TypeConversionUtil.erasure(returnType) : returnType));
+        addConstraint(new TypeCompatibilityConstraint(targetType, myErased ? TypeConversionUtil.erasure(returnType) : returnType));
       }
     }
   }
