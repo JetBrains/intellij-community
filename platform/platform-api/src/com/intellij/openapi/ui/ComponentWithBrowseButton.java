@@ -244,7 +244,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
       FileChooser.chooseFile(fileChooserDescriptor, getProject(), getInitialFile(), new Consumer<VirtualFile>() {
         @Override
         public void consume(VirtualFile file) {
-          onFileChoosen(file);
+          onFileChosen(file);
         }
       });
     }
@@ -281,8 +281,15 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
       return chosenFile.getPresentableUrl();
     }
 
+    /** @deprecated use/override {@link #onFileChosen(VirtualFile)} (to be removed in IDEA 15) */
+    @SuppressWarnings("SpellCheckingInspection")
     protected void onFileChoosen(@NotNull VirtualFile chosenFile) {
       myAccessor.setText(myTextComponent.getChildComponent(), chosenFileToResultingText(chosenFile));
+    }
+
+    @SuppressWarnings("deprecation")
+    protected void onFileChosen(@NotNull VirtualFile chosenFile) {
+      onFileChoosen(chosenFile);
     }
   }
 
