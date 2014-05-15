@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -242,9 +242,9 @@ public class GroovyLineMarkerProvider implements LineMarkerProvider, DumbAware {
 
     for (final PsiClass aClass : classes) {
       try {
-        AllOverridingMethodsSearch.search(aClass).forEach(new Processor<Pair<PsiMethod, PsiMethod>>() {
+        AllOverridingMethodsSearch.search(aClass).forEach(new Processor<Couple<PsiMethod>>() {
           @Override
-          public boolean process(final Pair<PsiMethod, PsiMethod> pair) {
+          public boolean process(final Couple<PsiMethod> pair) {
             ProgressManager.checkCanceled();
 
             final PsiMethod superMethod = pair.getFirst();

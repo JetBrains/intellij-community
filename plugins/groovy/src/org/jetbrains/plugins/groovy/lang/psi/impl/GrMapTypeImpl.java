@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
@@ -34,12 +34,12 @@ import java.util.Set;
  */
 public class GrMapTypeImpl extends GrMapType {
   private final Map<String, PsiType> myStringEntries;
-  private final List<Pair<PsiType, PsiType>> myOtherEntries;
+  private final List<Couple<PsiType>> myOtherEntries;
 
   GrMapTypeImpl(JavaPsiFacade facade,
                 GlobalSearchScope scope,
                 Map<String, PsiType> stringEntries,
-                List<Pair<PsiType, PsiType>> otherEntries,
+                List<Couple<PsiType>> otherEntries,
                 LanguageLevel languageLevel) {
     super(facade, scope, languageLevel);
     myStringEntries = stringEntries;
@@ -62,7 +62,7 @@ public class GrMapTypeImpl extends GrMapType {
     if (!myStringEntries.isEmpty()) {
       result.add(GroovyPsiManager.getInstance(myFacade.getProject()).createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, getResolveScope()));
     }
-    for (Pair<PsiType, PsiType> entry : myOtherEntries) {
+    for (Couple<PsiType> entry : myOtherEntries) {
       result.add(entry.first);
     }
     result.remove(null);
@@ -73,7 +73,7 @@ public class GrMapTypeImpl extends GrMapType {
   protected PsiType[] getAllValueTypes() {
     Set<PsiType> result = new HashSet<PsiType>();
     result.addAll(myStringEntries.values());
-    for (Pair<PsiType, PsiType> entry : myOtherEntries) {
+    for (Couple<PsiType> entry : myOtherEntries) {
       result.add(entry.second);
     }
     result.remove(null);
@@ -82,7 +82,7 @@ public class GrMapTypeImpl extends GrMapType {
 
   @NotNull
   @Override
-  protected List<Pair<PsiType, PsiType>> getOtherEntries() {
+  protected List<Couple<PsiType>> getOtherEntries() {
     return myOtherEntries;
   }
 
@@ -99,7 +99,7 @@ public class GrMapTypeImpl extends GrMapType {
         return false;
       }
     }
-    for (Pair<PsiType, PsiType> entry : myOtherEntries) {
+    for (Couple<PsiType> entry : myOtherEntries) {
       if (entry.first != null && !entry.first.isValid()) {
         return false;
       }

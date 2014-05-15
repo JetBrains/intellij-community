@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -94,7 +94,7 @@ public abstract class GrMapType extends GrLiteralClassType {
   protected abstract PsiType[] getAllValueTypes();
 
   @NotNull
-  protected abstract List<Pair<PsiType, PsiType>> getOtherEntries();
+  protected abstract List<Couple<PsiType>> getOtherEntries();
 
   @NotNull
   protected abstract Map<String, PsiType> getStringEntries();
@@ -109,7 +109,7 @@ public abstract class GrMapType extends GrLiteralClassType {
   @NotNull
   public String getInternalCanonicalText() {
     Set<String> stringKeys = getStringKeys();
-    List<Pair<PsiType, PsiType>> otherEntries = getOtherEntries();
+    List<Couple<PsiType>> otherEntries = getOtherEntries();
 
     if (stringKeys.isEmpty()) {
       if (otherEntries.isEmpty()) return "[:]";
@@ -122,7 +122,7 @@ public abstract class GrMapType extends GrLiteralClassType {
     for (String s : stringKeys) {
       components.add("'" + s + "':" + getInternalCanonicalText(getTypeByStringKey(s)));
     }
-    for (Pair<PsiType, PsiType> entry : otherEntries) {
+    for (Couple<PsiType> entry : otherEntries) {
       components.add(getInternalCanonicalText(entry.first) + ":" + getInternalCanonicalText(entry.second));
     }
     boolean tooMany = components.size() > 2;
@@ -156,7 +156,7 @@ public abstract class GrMapType extends GrLiteralClassType {
     strings.putAll(l.getStringEntries());
     strings.putAll(r.getStringEntries());
 
-    List<Pair<PsiType, PsiType>> other = new ArrayList<Pair<PsiType, PsiType>>();
+    List<Couple<PsiType>> other = new ArrayList<Couple<PsiType>>();
     other.addAll(l.getOtherEntries());
     other.addAll(r.getOtherEntries());
 
@@ -166,13 +166,13 @@ public abstract class GrMapType extends GrLiteralClassType {
   public static GrMapType create(JavaPsiFacade facade,
                                  GlobalSearchScope scope,
                                  Map<String, PsiType> stringEntries,
-                                 List<Pair<PsiType, PsiType>> otherEntries) {
+                                 List<Couple<PsiType>> otherEntries) {
     return new GrMapTypeImpl(facade, scope, stringEntries, otherEntries, LanguageLevel.JDK_1_5);
   }
 
   public static GrMapType create(GlobalSearchScope scope) {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(scope.getProject());
-    List<Pair<PsiType, PsiType>> otherEntries = Collections.emptyList();
+    List<Couple<PsiType>> otherEntries = Collections.emptyList();
     Map<String, PsiType> stringEntries = Collections.emptyMap();
     return new GrMapTypeImpl(facade, scope, stringEntries, otherEntries, LanguageLevel.JDK_1_5);
   }
