@@ -52,7 +52,11 @@ public class ArrangementSectionDetector {
     mySectionEntryProducer = producer;
   }
 
-  public void processComment(@NotNull PsiComment comment) {
+  /**
+   * Check if comment can be recognized as section start/end
+   * @return true for section comment, false otherwise
+   */
+  public boolean processComment(@NotNull PsiComment comment) {
     final TextRange range = comment.getTextRange();
     final TextRange expandedRange = myDocument == null ? range : ArrangementUtil.expandToLineIfPossible(range, myDocument);
     final TextRange sectionTextRange = new TextRange(expandedRange.getStartOffset(), expandedRange.getEndOffset());
@@ -63,11 +67,15 @@ public class ArrangementSectionDetector {
     if (start) {
       mySectionEntryProducer.consume(new ArrangementSectionEntryTemplate(comment, START_SECTION, sectionTextRange, commentText));
       myOpenedSections.push(commentText);
+      return true;
     }
-    else if (lastOpenedSection != null && isSectionEndComment(mySettings, commentText)) {
+
+    if (lastOpenedSection != null && isSectionEndComment(mySettings, commentText)) {
       mySectionEntryProducer.consume(new ArrangementSectionEntryTemplate(comment, END_SECTION, sectionTextRange, commentText));
       myOpenedSections.pop();
+      return true;
     }
+    return false;
   }
 
   public static boolean isSectionStartComment(@NotNull ArrangementSettings settings, @NotNull String comment) {
