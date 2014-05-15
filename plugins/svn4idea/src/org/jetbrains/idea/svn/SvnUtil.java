@@ -62,6 +62,7 @@ import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
+import java.net.URI;
 import java.nio.channels.NonWritableChannelException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -787,13 +788,25 @@ public class SvnUtil {
 
   // TODO: Create custom Target class and implement append there
   @NotNull
-  public static SvnTarget append(@NotNull SvnTarget target, @NotNull String path) throws SVNException {
+  public static SvnTarget append(@NotNull SvnTarget target, @NotNull String path) throws SvnBindException {
+    return append(target, path, false);
+  }
+
+  @NotNull
+  public static SvnTarget append(@NotNull SvnTarget target, @NotNull String path, boolean checkAbsolute) throws SvnBindException {
     SvnTarget result;
 
     if (target.isFile()) {
-      result = SvnTarget.fromFile(FileUtil.isAbsolute(path) ? new File(path) : new File(target.getFile(), path));
-    } else {
-      result = SvnTarget.fromURL(target.getURL().appendPath(path, false));
+      result = SvnTarget.fromFile(resolvePath(target.getFile(), path));
+    }
+    else {
+      try {
+        result = SvnTarget
+          .fromURL(checkAbsolute && URI.create(path).isAbsolute() ? SVNURL.parseURIEncoded(path) : target.getURL().appendPath(path, false));
+      }
+      catch (SVNException e) {
+        throw new SvnBindException(e);
+      }
     }
 
     return result;
@@ -808,6 +821,17 @@ public class SvnUtil {
     }
 
     return result;
+  }
+
+  /**
+   * {@code SvnTarget.getPathOrUrlDecodedString} does not correctly work for URL targets - {@code SVNURL.toString} instead of
+   * {@code SVNURL.toDecodedString} is used.
+   * <p/>
+   * Current utility method fixes this case.
+   */
+  @NotNull
+  public static String toDecodedString(@NotNull SvnTarget target) {
+    return target.isFile() ? target.getFile().getPath() : target.getURL().toDecodedString();
   }
 
   private static class WorkingCopyFormatOperation implements FileUtilRt.RepeatableIOOperation<WorkingCopyFormat, RuntimeException> {
