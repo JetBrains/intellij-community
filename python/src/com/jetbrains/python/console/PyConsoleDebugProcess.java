@@ -15,15 +15,13 @@
  */
 package com.jetbrains.python.console;
 
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.remote.RemoteProcessHandlerBase;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.net.ServerSocket;
 
@@ -32,13 +30,15 @@ import java.net.ServerSocket;
  */
 public class PyConsoleDebugProcess extends PyDebugProcess {
   private final int myLocalPort;
+  private final PyConsoleDebugProcessHandler myConsoleDebugProcessHandler;
 
   public PyConsoleDebugProcess(@NotNull XDebugSession session,
                                @NotNull final ServerSocket serverSocket,
                                @NotNull final ExecutionConsole executionConsole,
-                               @Nullable final ProcessHandler processHandler) {
-    super(session, serverSocket, executionConsole, processHandler, false);
+                               @NotNull final PyConsoleDebugProcessHandler consoleDebugProcessHandler) {
+    super(session, serverSocket, executionConsole, consoleDebugProcessHandler, false);
     myLocalPort = serverSocket.getLocalPort();
+    myConsoleDebugProcessHandler = consoleDebugProcessHandler;
   }
 
   @Override
@@ -77,7 +77,14 @@ public class PyConsoleDebugProcess extends PyDebugProcess {
   }
 
   public void connect(PydevConsoleCommunication consoleCommunication) throws Exception {
-    consoleCommunication.connectToDebugger(myLocalPort);
+    int portToConnect;
+    if (myConsoleDebugProcessHandler.getConsoleProcessHandler() instanceof RemoteProcessHandlerBase) {
+      portToConnect = getRemoteTunneledPort(myLocalPort,
+                                            ((RemoteProcessHandlerBase)myConsoleDebugProcessHandler.getConsoleProcessHandler()));
+    } else {
+      portToConnect = myLocalPort;
+    }
+    consoleCommunication.connectToDebugger(portToConnect);
   }
 
   public void waitForNextConnection() {

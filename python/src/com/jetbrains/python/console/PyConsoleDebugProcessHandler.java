@@ -17,17 +17,22 @@ package com.jetbrains.python.console;
 
 import com.intellij.execution.process.*;
 import com.intellij.openapi.util.Key;
+import com.jetbrains.python.debugger.PositionConverterProvider;
+import com.jetbrains.python.debugger.PyDebugProcess;
+import com.jetbrains.python.debugger.PyLocalPositionConverter;
+import com.jetbrains.python.debugger.PyPositionConverter;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.OutputStream;
 
 /**
  * @author traff
  */
-public class PyConsoleDebugProcessHandler extends ProcessHandler {
-  private PydevConsoleCommunication myConsoleCommunication;
+public class PyConsoleDebugProcessHandler extends ProcessHandler implements PositionConverterProvider {
+  private final PyConsoleProcessHandler myConsoleProcessHandler;
 
-  public PyConsoleDebugProcessHandler(final PyConsoleProcessHandler processHandler, PydevConsoleCommunication communication) {
-    myConsoleCommunication = communication;
+  public PyConsoleDebugProcessHandler(final PyConsoleProcessHandler processHandler) {
+    myConsoleProcessHandler = processHandler;
     processHandler.addProcessListener(new ProcessListener() {
       @Override
       public void startNotified(ProcessEvent event) {
@@ -76,5 +81,20 @@ public class PyConsoleDebugProcessHandler extends ProcessHandler {
   @Override
   public OutputStream getProcessInput() {
     return null;
+  }
+
+  public PyConsoleProcessHandler getConsoleProcessHandler() {
+    return myConsoleProcessHandler;
+  }
+
+  @Nullable
+  @Override
+  public PyPositionConverter createPositionConverter(PyDebugProcess debugProcess) {
+    if (myConsoleProcessHandler instanceof PositionConverterProvider) {
+      return ((PositionConverterProvider)myConsoleProcessHandler).createPositionConverter(debugProcess);
+    }
+    else {
+      return new PyLocalPositionConverter();
+    }
   }
 }
