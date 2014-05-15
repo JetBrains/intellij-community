@@ -228,16 +228,21 @@ public class PySkeletonRefresher {
   }
 
   private static String calculateExtraSysPath(@NotNull final Sdk sdk, @Nullable final String skeletonsPath) {
-    final Ref<File> canonicalSkeleton = Ref.create();
-    final Ref<File> canonicalUserSkeletonsDir = Ref.create();
+    final Ref<File> skeletons = Ref.create();
+    final Ref<File> userSkeletons = Ref.create();
+    final Ref<File> remoteSources = Ref.create();
 
     try {
       if (skeletonsPath != null) {
-        canonicalSkeleton.set(new File(skeletonsPath).getCanonicalFile());
+        skeletons.set(new File(skeletonsPath).getCanonicalFile());
       }
       final VirtualFile userSkeletonsDir = PyUserSkeletonsUtil.getUserSkeletonsDirectory();
       if (userSkeletonsDir != null) {
-        canonicalUserSkeletonsDir.set(new File(userSkeletonsDir.getPath()));
+        userSkeletons.set(new File(userSkeletonsDir.getPath()));
+      }
+      final VirtualFile remoteSourcesDir = PySdkUtil.findRemoteLibrariesDir(sdk);
+      if (remoteSourcesDir != null) {
+        remoteSources.set(new File(remoteSourcesDir.getPath()));
       }
     }
     catch (final IOException e) {
@@ -254,8 +259,10 @@ public class PySkeletonRefresher {
         if (file.isInLocalFileSystem()) {
           // We compare canonical files, not strings because "c:/some/folder" equals "c:\\some\\bin\\..\\folder\\"
           final File canonicalFile = new File(file.getPath());
-          if (canonicalFile.exists() && !FileUtil.filesEqual(canonicalFile, canonicalSkeleton.get()) &&
-              !FileUtil.filesEqual(canonicalFile, canonicalUserSkeletonsDir.get())) {
+          if (canonicalFile.exists() &&
+              !FileUtil.filesEqual(canonicalFile, skeletons.get()) &&
+              !FileUtil.filesEqual(canonicalFile, userSkeletons.get()) &&
+              !FileUtil.filesEqual(canonicalFile, remoteSources.get())) {
             return file.getPath();
           }
         }
