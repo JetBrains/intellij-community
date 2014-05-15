@@ -723,7 +723,14 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         myTooMuchOfOutput = true;
         final EditorNotificationPanel comp =
           new EditorNotificationPanel().text("Too much output to process").icon(AllIcons.General.ExclMark);
-        add(comp, BorderLayout.NORTH);
+        final Alarm tooMuchOutputAlarm = new Alarm();
+        //show the notification with a delay to avoid blinking when "too much output" ceases quickly
+        tooMuchOutputAlarm.addRequest(new Runnable() {
+          @Override
+          public void run() {
+            add(comp, BorderLayout.NORTH);
+          }
+        }, 300);
         performWhenNoDeferredOutput(new Runnable() {
           @Override
           public void run() {
@@ -734,6 +741,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
               finally {
                 myTooMuchOfOutput = false;
                 remove(comp);
+                tooMuchOutputAlarm.cancelAllRequests();
               }
             }
             else {
