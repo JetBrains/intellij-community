@@ -20,8 +20,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.DebugUtil;
@@ -229,8 +229,8 @@ public class TreeUtil {
     return null;
   }
 
-  public static Pair<ASTNode, ASTNode> findTopmostSiblingParents(ASTNode one, ASTNode two) {
-    if (one == two) return Pair.create(null, null);
+  public static Couple<ASTNode> findTopmostSiblingParents(ASTNode one, ASTNode two) {
+    if (one == two) return Couple.newOne(null, null);
 
     LinkedList<ASTNode> oneParents = new LinkedList<ASTNode>();
     LinkedList<ASTNode> twoParents = new LinkedList<ASTNode>();
@@ -249,7 +249,7 @@ public class TreeUtil {
     }
     while (one == two && one != null);
 
-    return Pair.create(one, two);
+    return Couple.newOne(one, two);
   }
 
   public static void clearCaches(@NotNull final TreeElement tree) {
