@@ -16,10 +16,14 @@
 package git4idea.repo;
 
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.openapi.util.Condition;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitLocalBranch;
+import git4idea.GitRemoteBranch;
 import git4idea.test.GitSingleRepoTest;
 
 import java.io.File;
+import java.util.Collection;
 
 import static git4idea.test.GitExecutor.git;
 import static git4idea.test.GitScenarios.commit;
@@ -44,6 +48,26 @@ public class GitRepositoryReaderNewTest extends GitSingleRepoTest {
     Repository.State state = reader.readState();
     assertNull("Current branch can't be identified for this case", branch);
     assertEquals("State value is incorrect", Repository.State.REBASING, state);
+  }
+
+  // inspired by IDEA-124052
+  public void test_remote_reference_without_remote() {
+    final String INVALID_REMOTE = "invalid-remote";
+    final String INVALID_REMOTE_BRANCH = "master";
+    git("update-ref refs/remotes/" + INVALID_REMOTE + "/" + INVALID_REMOTE_BRANCH + " HEAD");
+
+    File gitDir = new File(myRepo.getRoot().getPath(), ".git");
+    GitRepositoryReader reader = new GitRepositoryReader(gitDir);
+    GitConfig config = GitConfig.read(myPlatformFacade, new File(gitDir, "config"));
+    Collection<GitRemote> remotes = config.parseRemotes();
+
+    Collection<GitRemoteBranch> remoteBranches = reader.readBranches(remotes).getRemoteBranches();
+    assertTrue("Remote branch not found", ContainerUtil.exists(remoteBranches, new Condition<GitRemoteBranch>() {
+      @Override
+      public boolean value(GitRemoteBranch branch) {
+        return branch.getNameForLocalOperations().equals(INVALID_REMOTE + "/" + INVALID_REMOTE_BRANCH);
+      }
+    }));
   }
 
 }

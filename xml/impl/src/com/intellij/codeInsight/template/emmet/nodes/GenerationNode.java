@@ -33,7 +33,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -134,14 +134,14 @@ public class GenerationNode extends UserDataHolderBase {
 
   @NotNull
   public TemplateImpl generate(@NotNull CustomTemplateCallback callback,
-                                @Nullable ZenCodingGenerator generator,
-                                @NotNull Collection<ZenCodingFilter> filters,
-                                boolean insertSurroundedText) {
+                               @Nullable ZenCodingGenerator generator,
+                               @NotNull Collection<ZenCodingFilter> filters,
+                               boolean insertSurroundedText, int segmentsLimit) {
     myContainsSurroundedTextMarker = !(insertSurroundedText && myInsertSurroundedTextAtTheEnd);
 
     GenerationNode generationNode = this;
     if (generationNode != this) {
-      return generationNode.generate(callback, generator, Collections.<ZenCodingFilter>emptyList(), insertSurroundedText);
+      return generationNode.generate(callback, generator, Collections.<ZenCodingFilter>emptyList(), insertSurroundedText, segmentsLimit);
     }
     
     boolean shouldNotReformatTemplate = false;
@@ -179,7 +179,7 @@ public class GenerationNode extends UserDataHolderBase {
       indentStr = StringUtil.repeatSymbol(' ', tabSize);
     }
 
-    LiveTemplateBuilder builder = new LiveTemplateBuilder();
+    LiveTemplateBuilder builder = new LiveTemplateBuilder(segmentsLimit);
     int end = -1;
     boolean hasChildren = myChildren.size() > 0;
 
@@ -187,7 +187,7 @@ public class GenerationNode extends UserDataHolderBase {
     Map<String, String> predefinedValues;
     if (myTemplateToken instanceof TemplateToken && generator instanceof XmlZenCodingGenerator) {
       TemplateToken xmlTemplateToken = myTemplateToken;
-      List<Pair<String, String>> attr2value = new ArrayList<Pair<String, String>>(xmlTemplateToken.getAttribute2Value());
+      List<Couple<String>> attr2value = new ArrayList<Couple<String>>(xmlTemplateToken.getAttribute2Value());
       parentTemplate = invokeXmlTemplate(xmlTemplateToken, callback, generator, hasChildren, attr2value);
       predefinedValues = buildPredefinedValues(attr2value, (XmlZenCodingGenerator)generator, hasChildren);
     }
@@ -204,7 +204,7 @@ public class GenerationNode extends UserDataHolderBase {
     parentTemplate.setString(s);
 
     final String txt = hasChildren || myContainsSurroundedTextMarker ? null : mySurroundedText;
-    parentTemplate = expandTemplate(parentTemplate, predefinedValues, txt);
+    parentTemplate = expandTemplate(parentTemplate, predefinedValues, txt, segmentsLimit);
 
     int offset = builder.insertTemplate(0, parentTemplate, null);
     int newOffset = gotoChild(callback.getProject(), builder.getText(), offset, 0, builder.length());
@@ -220,7 +220,7 @@ public class GenerationNode extends UserDataHolderBase {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, myChildrenSize = myChildren.size(); i < myChildrenSize; i++) {
       GenerationNode child = myChildren.get(i);
-      TemplateImpl childTemplate = child.generate(callback, generator, filters, !myContainsSurroundedTextMarker);
+      TemplateImpl childTemplate = child.generate(callback, generator, filters, !myContainsSurroundedTextMarker, segmentsLimit);
 
       boolean blockTag = child.isBlockTag();
 
@@ -265,7 +265,7 @@ public class GenerationNode extends UserDataHolderBase {
                                                 CustomTemplateCallback callback,
                                                 @Nullable ZenCodingGenerator generator,
                                                 final boolean hasChildren,
-                                                final List<Pair<String, String>> attr2value) {
+                                                final List<Couple<String>> attr2value) {
     /*assert generator == null || generator instanceof XmlZenCodingGenerator :
       "The generator cannot process TemplateToken because it doesn't inherit XmlZenCodingGenerator";*/
 
@@ -277,7 +277,7 @@ public class GenerationNode extends UserDataHolderBase {
     XmlFile dummyFile = (XmlFile)fileFactory.createFileFromText("dummy.xml", StdFileTypes.XML, xmlFile.getText());
     final XmlTag tag = dummyFile.getRootTag();
     if (tag != null) {
-      for (Pair<String, String> pair : attr2value) {
+      for (Couple<String> pair : attr2value) {
         if (Strings.isNullOrEmpty(pair.second)) {
           template.addVariable(prepareVariableName(pair.first), "", "", true);
         }
@@ -305,8 +305,9 @@ public class GenerationNode extends UserDataHolderBase {
   @NotNull
   private static TemplateImpl expandTemplate(@NotNull TemplateImpl template,
                                              Map<String, String> predefinedVarValues,
-                                             String surroundedText) {
-    LiveTemplateBuilder builder = new LiveTemplateBuilder();
+                                             String surroundedText,
+                                             int segmentsLimit) {
+    LiveTemplateBuilder builder = new LiveTemplateBuilder(segmentsLimit);
     if (predefinedVarValues == null && surroundedText == null) {
       return template;
     }
@@ -380,14 +381,14 @@ public class GenerationNode extends UserDataHolderBase {
   }
 
   @Nullable
-  private Map<String, String> buildPredefinedValues(List<Pair<String, String>> attribute2value,
+  private Map<String, String> buildPredefinedValues(List<Couple<String>> attribute2value,
                                                     @Nullable XmlZenCodingGenerator generator,
                                                     boolean hasChildren) {
     if (generator == null) {
       return Collections.emptyMap();
     }
 
-    for (Pair<String, String> pair : attribute2value) {
+    for (Couple<String> pair : attribute2value) {
       if (ZenCodingUtil.containsSurroundedTextMarker(pair.second)) {
         myContainsSurroundedTextMarker = true;
         break;
@@ -404,9 +405,9 @@ public class GenerationNode extends UserDataHolderBase {
     return predefinedValues;
   }
 
-  private void setAttributeValues(XmlTag tag, List<Pair<String, String>> attr2value) {
-    for (Iterator<Pair<String, String>> iterator = attr2value.iterator(); iterator.hasNext();) {
-      Pair<String, String> pair = iterator.next();
+  private void setAttributeValues(XmlTag tag, List<Couple<String>> attr2value) {
+    for (Iterator<Couple<String>> iterator = attr2value.iterator(); iterator.hasNext();) {
+      Couple<String> pair = iterator.next();
       if (tag.getAttribute(pair.first) != null) {
         if (ZenCodingUtil.containsSurroundedTextMarker(pair.second)) {
           myContainsSurroundedTextMarker = true;

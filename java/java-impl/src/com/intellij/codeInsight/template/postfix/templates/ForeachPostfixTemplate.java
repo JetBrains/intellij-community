@@ -22,7 +22,7 @@ import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.codeInsight.template.impl.VariableNode;
 import com.intellij.codeInsight.template.macro.IterableComponentTypeMacro;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
-import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
+import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -32,18 +32,18 @@ import org.jetbrains.annotations.NotNull;
 
 public class ForeachPostfixTemplate extends PostfixTemplate {
   public ForeachPostfixTemplate() {
-    super("for", "Iterates over enumerable collection", "for (T item : collection)");
+    super("for", "for (T item : collection)");
   }
 
   @Override
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
-    PsiExpression expr = PostfixTemplatesUtils.getTopmostExpression(context);
-    return expr != null && (PostfixTemplatesUtils.isArray(expr.getType()) || PostfixTemplatesUtils.isIterable(expr.getType()));
+    PsiExpression expr = JavaPostfixTemplatesUtils.getTopmostExpression(context);
+    return expr != null && (JavaPostfixTemplatesUtils.isArray(expr.getType()) || JavaPostfixTemplatesUtils.isIterable(expr.getType()));
   }
 
   @Override
   public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
-    PsiExpression expr = PostfixTemplatesUtils.getTopmostExpression(context);
+    PsiExpression expr = JavaPostfixTemplatesUtils.getTopmostExpression(context);
     if (expr == null) return;
     Project project = context.getProject();
 

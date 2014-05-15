@@ -22,8 +22,13 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.scope.PsiConflictResolver;
+import com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver;
+import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -33,9 +38,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author anna
@@ -139,10 +142,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     final PsiSubstitutor inferredSubstitutor = ourDiamondGuard.doPreventingRecursion(context, false, new Computable<PsiSubstitutor>() {
       @Override
       public PsiSubstitutor compute() {
-        final PsiMethod constructor = findConstructor(psiClass, newExpression);
-        PsiTypeParameter[] params = getAllTypeParams(constructor, psiClass);
-
-        final PsiMethod staticFactory = generateStaticFactory(constructor, psiClass, params, newExpression.getClassReference());
+        final PsiMethod staticFactory = findConstructorStaticFactory(psiClass, newExpression);
         if (staticFactory == null) {
           return null;
         }
@@ -164,6 +164,11 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     final PsiJavaCodeReferenceElement classOrAnonymousClassReference = newExpression.getClassOrAnonymousClassReference();
     LOG.assertTrue(classOrAnonymousClassReference != null);
     final DiamondInferenceResult result = new DiamondInferenceResult(classOrAnonymousClassReference.getReferenceName() + "<>");
+
+    if (PsiUtil.isRawSubstitutor(staticFactory, inferredSubstitutor)) {
+      return result;
+    }
+
     for (PsiTypeParameter parameter : parameters) {
       for (PsiTypeParameter classParameter : classParameters) {
         if (Comparing.strEqual(classParameter.getName(), parameter.getName())) {
@@ -177,14 +182,42 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
 
 
   @Nullable
-  private static PsiMethod findConstructor(PsiClass containingClass, PsiNewExpression newExpression) {
+  private static PsiMethod findConstructorStaticFactory(final PsiClass containingClass, PsiNewExpression newExpression) {
     final PsiExpressionList argumentList = newExpression.getArgumentList();
-    final Project project = newExpression.getProject();
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-    final PsiResolveHelper resolveHelper = facade.getResolveHelper();
-    final JavaResolveResult result =
-      resolveHelper.resolveConstructor(facade.getElementFactory().createType(containingClass, PsiSubstitutor.EMPTY), argumentList, argumentList);
-    return (PsiMethod)result.getElement();
+    if (argumentList == null) return null;
+
+    final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(newExpression);
+    final List<CandidateInfo> conflicts = new ArrayList<CandidateInfo>();
+    PsiMethod[] constructors = containingClass.getConstructors();
+    if (constructors.length == 0) {
+      //default constructor
+      constructors = new PsiMethod[] {null};
+    }
+
+    final PsiConflictResolver[] conflictResolvers = {new JavaMethodsConflictResolver(argumentList, languageLevel)};
+    final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(argumentList, argumentList.getContainingFile(), conflictResolvers, conflicts) {
+      @Override
+      protected boolean isAccepted(PsiMethod candidate) {
+        return true;
+      }
+
+      @Override
+      protected PsiClass getContainingClass(PsiMethod method) {
+        return containingClass;
+      }
+    };
+    processor.setArgumentList(argumentList);
+
+    for (PsiMethod constructor : constructors) {
+      final PsiTypeParameter[] params = getAllTypeParams(constructor, containingClass);
+      final PsiMethod staticFactory = generateStaticFactory(constructor, containingClass, params, newExpression.getClassReference());
+      if (staticFactory != null) {
+        processor.add(staticFactory, PsiSubstitutor.EMPTY);
+      }
+    }
+
+    final JavaResolveResult[] result = processor.getResult();
+    return result.length == 1 ? (PsiMethod)result[0].getElement() : null;
   }
 
   @Nullable
@@ -220,7 +253,11 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
                                                  PsiTypeParameter[] params,
                                                  PsiJavaCodeReferenceElement reference) {
     final StringBuilder buf = new StringBuilder();
-    buf.append("public static ");
+    buf.append(constructor != null ? constructor.getModifierList().getText() : containingClass.getModifierList().getText());
+    if (buf.length() > 0) {
+      buf.append(" ");
+    }
+    buf.append("static ");
     buf.append("<");
     buf.append(StringUtil.join(params, new Function<PsiTypeParameter, String>() {
       @Override

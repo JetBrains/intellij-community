@@ -22,6 +22,7 @@ import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.progress.*;
@@ -95,6 +96,11 @@ public class DumbServiceImpl extends DumbService {
       @Override
       public void canceled() {
 
+      }
+
+      @Override
+      public String toString() {
+        return task.toString();
       }
     };
     queueCacheUpdateInDumbMode(Arrays.asList(wrapper));
@@ -255,11 +261,13 @@ public class DumbServiceImpl extends DumbService {
 
   private void updateFinished() {
     myDumb = false;
+    if (myProject.isDisposed()) return;
+
+    if (ApplicationManager.getApplication().isInternal()) LOG.info("updateFinished");
+
     try {
-      if (!myProject.isDisposed()) {
-        myPublisher.exitDumbMode();
-        FileEditorManagerEx.getInstanceEx(myProject).refreshIcons();
-      }
+      myPublisher.exitDumbMode();
+      FileEditorManagerEx.getInstanceEx(myProject).refreshIcons();
     }
     finally {
       // It may happen that one of the pending runWhenSmart actions triggers new dumb mode;
@@ -339,6 +347,24 @@ public class DumbServiceImpl extends DumbService {
     return wrapper;
   }
 
+  public void smartInvokeLater(@NotNull final Runnable runnable) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        runWhenSmart(runnable);
+      }
+    }, myProject.getDisposed());
+  }
+
+  public void smartInvokeLater(@NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        runWhenSmart(runnable);
+      }
+    }, modalityState, myProject.getDisposed());
+  }
+
   private class IndexUpdateRunnable implements Runnable {
     private final CacheUpdateRunner myAction;
 
@@ -406,6 +432,7 @@ public class DumbServiceImpl extends DumbService {
         private void runAction(ProgressIndicator indicator, CacheUpdateRunner updateRunner) {
           while (updateRunner != null) {
             try {
+              if (ApplicationManager.getApplication().isInternal()) LOG.info("Running dumb mode task: " + updateRunner);
               indicator.checkCanceled();
               indicator.setIndeterminate(true);
               indicator.setText(IdeBundle.message("progress.indexing.scanning"));

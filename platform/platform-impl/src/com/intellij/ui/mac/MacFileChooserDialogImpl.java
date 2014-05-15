@@ -225,8 +225,11 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
         invoke(chooser, "_setIncludeNewFolderButton:", true);
       }
 
-      final Boolean showHidden = chooserDescriptor.getUserData(PathChooserDialog.NATIVE_MAC_CHOOSER_SHOW_HIDDEN_FILES);
-      if (Boolean.TRUE.equals(showHidden) || Registry.is("ide.mac.file.chooser.show.hidden.files")) {
+      @SuppressWarnings("deprecation") boolean showHidden =
+        chooserDescriptor.isShowHiddenFiles() ||
+        chooserDescriptor.getUserData(PathChooserDialog.NATIVE_MAC_CHOOSER_SHOW_HIDDEN_FILES) == Boolean.TRUE ||
+        Registry.is("ide.mac.file.chooser.show.hidden.files");
+      if (showHidden) {
         if (Foundation.isClassRespondsToSelector(nsOpenPanel, Foundation.createSelector("setShowsHiddenFiles:"))) {
           invoke(chooser, "setShowsHiddenFiles:", true);
         }
@@ -336,9 +339,8 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
       bar.disableUpdates();
     }
 
-    final ID delegate = invoke(Foundation.getObjcClass("NSOpenPanelDelegate_"), "new");
     // Release in OPEN_PANEL_DID_END panel
-    Foundation.cfRetain(delegate);
+    final ID delegate = invoke(Foundation.getObjcClass("NSOpenPanelDelegate_"), "new");
     ourImplMap.put(delegate, impl);
 
     final ID select = toSelect == null ? null : Foundation.nsString(toSelect);

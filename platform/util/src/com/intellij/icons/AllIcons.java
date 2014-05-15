@@ -150,6 +150,7 @@ public class AllIcons {
     public static final Icon Submit1 = IconLoader.getIcon("/actions/submit1.png"); // 11x11
     public static final Icon Suspend = IconLoader.getIcon("/actions/suspend.png"); // 16x16
     public static final Icon SwapPanels = IconLoader.getIcon("/actions/swapPanels.png"); // 16x16
+    public static final Icon SynchronizeScrolling = IconLoader.getIcon("/actions/synchronizeScrolling.png"); // 16x16
     public static final Icon SyncPanels = IconLoader.getIcon("/actions/syncPanels.png"); // 16x16
     public static final Icon ToggleSoftWrap = IconLoader.getIcon("/actions/toggleSoftWrap.png"); // 16x16
     public static final Icon TraceInto = IconLoader.getIcon("/actions/traceInto.png"); // 16x16
@@ -160,6 +161,14 @@ public class AllIcons {
     public static final Icon Unshare = IconLoader.getIcon("/actions/unshare.png"); // 14x14
     public static final Icon UP = IconLoader.getIcon("/actions/up.png"); // 16x16
 
+  }
+  
+  public static class CodeStyle {
+    public static final Icon AddNewSectionRule = IconLoader.getIcon("/codeStyle/AddNewSectionRule.png"); // 16x16
+    
+    public static class Mac {
+      public static final Icon AddNewSectionRule = IconLoader.getIcon("/codeStyle/mac/AddNewSectionRule.png"); // 16x16
+    }
   }
   
   public static class Css {
@@ -721,7 +730,7 @@ public class AllIcons {
       public static final Icon JavaeeAppModule = IconLoader.getIcon("/modules/types/JavaeeAppModule.png"); // 24x24
       public static final Icon JavaModule = IconLoader.getIcon("/modules/types/javaModule.png"); // 24x24
       public static final Icon PluginModule = IconLoader.getIcon("/modules/types/pluginModule.png"); // 24x24
-      public static final Icon UserDefined = IconLoader.getIcon("/modules/types/userDefined.png"); // 24x24
+      public static final Icon UserDefined = IconLoader.getIcon("/modules/types/userDefined.png"); // 16x16
       public static final Icon WebModule = IconLoader.getIcon("/modules/types/webModule.png"); // 24x24
 
     }
@@ -1136,6 +1145,7 @@ public class AllIcons {
   
   public static class Welcome {
     public static final Icon CreateDesktopEntry = IconLoader.getIcon("/welcome/createDesktopEntry.png"); // 32x32
+    public static final Icon Register = IconLoader.getIcon("/welcome/register.png"); // 32x32
 
   }
   

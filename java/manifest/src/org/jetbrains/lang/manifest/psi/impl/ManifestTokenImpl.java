@@ -25,6 +25,7 @@
 package org.jetbrains.lang.manifest.psi.impl;
 
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.lang.manifest.psi.ManifestToken;
 import org.jetbrains.lang.manifest.psi.ManifestTokenType;
 
@@ -32,7 +33,7 @@ import org.jetbrains.lang.manifest.psi.ManifestTokenType;
  * @author Robert F. Beeger (robert@beeger.net)
  */
 public class ManifestTokenImpl extends LeafPsiElement implements ManifestToken {
-  public ManifestTokenImpl(ManifestTokenType type, CharSequence text) {
+  public ManifestTokenImpl(@NotNull ManifestTokenType type, CharSequence text) {
     super(type, text);
   }
 

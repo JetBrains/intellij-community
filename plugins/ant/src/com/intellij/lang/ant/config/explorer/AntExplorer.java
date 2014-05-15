@@ -15,8 +15,9 @@
  */
 package com.intellij.lang.ant.config.explorer;
 
-import com.intellij.execution.RunManagerAdapter;
-import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.*;
+import com.intellij.execution.impl.RunDialog;
+import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
@@ -27,6 +28,8 @@ import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.actions.AntBuildFilePropertiesAction;
 import com.intellij.lang.ant.config.actions.RemoveBuildFileAction;
+import com.intellij.lang.ant.config.execution.AntRunConfiguration;
+import com.intellij.lang.ant.config.execution.AntRunConfigurationType;
 import com.intellij.lang.ant.config.execution.ExecutionHandler;
 import com.intellij.lang.ant.config.impl.*;
 import com.intellij.lang.ant.config.impl.configuration.BuildFilePropertiesPanel;
@@ -57,6 +60,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xml.DomEventListener;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.events.DomEvent;
+import icons.AntIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -398,6 +402,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(new RunAction());
     group.add(new CreateMetaTargetAction());
+    group.add(new MakeAntRunConfigurationAction());
     group.add(new RemoveMetaTargetsOrBuildFileAction());
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
     if (userObject instanceof AntBuildFileNodeDescriptor) {
@@ -582,6 +587,59 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       presentation.setEnabled(canRunSelection());
     }
   }
+  private final class MakeAntRunConfigurationAction extends AnAction {
+    public MakeAntRunConfigurationAction() {
+      super(AntBundle.message("make.ant.runconfiguration.name"), null, AntIcons.Build);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      super.update(e);
+
+      final Presentation presentation = e.getPresentation();
+      presentation.setEnabled(myTree.getSelectionCount() == 1 && canRunSelection());
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      final AntBuildFile buildFile = getCurrentBuildFile();
+      if (buildFile == null || !buildFile.exists()) {
+        return;
+      }
+
+      TreePath selectionPath = myTree.getSelectionPath();
+      if (selectionPath == null) return;
+      final DefaultMutableTreeNode node = (DefaultMutableTreeNode) selectionPath.getLastPathComponent();
+      final Object userObject = node.getUserObject();
+      AntBuildTarget target = null;
+      if (userObject instanceof AntTargetNodeDescriptor) {
+        AntTargetNodeDescriptor targetNodeDescriptor = (AntTargetNodeDescriptor)userObject;
+        target = targetNodeDescriptor.getTarget();
+      }
+      else if (userObject instanceof AntBuildFileNodeDescriptor){
+        AntBuildModel model = ((AntBuildFileNodeDescriptor)userObject).getBuildFile().getModel();
+        target = model.findTarget(model.getDefaultTargetName());
+      }
+      String name = target != null ? target.getDisplayName() : null;
+      if (target == null || name == null) {
+        return;
+      }
+
+      RunManagerImpl runManager = (RunManagerImpl)RunManager.getInstance(e.getProject());
+      RunnerAndConfigurationSettings settings =
+        runManager.createRunConfiguration(name, AntRunConfigurationType.getInstance().getFactory());
+      AntRunConfiguration configuration  = (AntRunConfiguration)settings.getConfiguration();
+      configuration.acceptSettings(target);
+      if (RunDialog.editConfiguration(e.getProject(), settings, ExecutionBundle
+        .message("create.run.configuration.for.item.dialog.title", configuration.getName()))) {
+        runManager.addConfiguration(settings,
+                                    runManager.isConfigurationShared(settings),
+                                    runManager.getBeforeRunTasks(settings.getConfiguration()), false);
+        runManager.setSelectedConfiguration(settings);
+      }
+    }
+  }
+
 
   private final class ShowAllTargetsAction extends ToggleAction {
     public ShowAllTargetsAction() {

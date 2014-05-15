@@ -20,7 +20,7 @@ import com.intellij.debugger.ui.tree.render.NodeRenderer;
 
 import javax.swing.tree.MutableTreeNode;
 
-public interface DebuggerTreeNode extends MutableTreeNode{
+public interface DebuggerTreeNode {
   DebuggerTreeNode getParent();
 
   NodeDescriptor getDescriptor();

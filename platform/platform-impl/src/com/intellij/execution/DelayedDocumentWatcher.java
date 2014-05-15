@@ -193,6 +193,9 @@ public class DelayedDocumentWatcher {
 
   // This method is called in a background thread with a read lock acquired
   private boolean hasErrors(@NotNull VirtualFile file) {
+    if (!file.isValid()) {
+      return false;
+    }
     // don't use 'WolfTheProblemSolver.hasSyntaxErrors(file)' if possible
     Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document != null) {

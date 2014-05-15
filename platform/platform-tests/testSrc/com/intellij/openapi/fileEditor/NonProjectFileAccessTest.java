@@ -45,6 +45,7 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.ui.EditorNotifications;
+import com.intellij.ui.EditorNotificationsImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -55,7 +56,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
   public void setUp() throws Exception {
     PlatformTestCase.initPlatformLangPrefix();
     super.setUp();
-    EditorNotifications notifications = new EditorNotifications(getProject(), myManager);
+    EditorNotifications notifications = new EditorNotificationsImpl(getProject());
     ((ComponentManagerImpl)getProject()).registerComponentInstance(EditorNotifications.class, notifications);
     NonProjectFileWritingAccessProvider.enableChecksInTests(getProject(), true);
   }
@@ -113,7 +114,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
         ModifiableModuleModel moduleModel = ModuleManager.getInstance(getProject()).getModifiableModel();
         try {
           VirtualFile moduleDir = getProject().getBaseDir().createChildDirectory(this, "moduleWithoutContentRoot");
-          moduleName = moduleModel.newModule(moduleDir + "/moduleWithoutContentRoot.iml", EmptyModuleType.EMPTY_MODULE).getName();
+          moduleName = moduleModel.newModule(moduleDir.getPath() + "/moduleWithoutContentRoot.iml", EmptyModuleType.EMPTY_MODULE).getName();
           moduleModel.commit();
         }
         catch (Throwable t) {

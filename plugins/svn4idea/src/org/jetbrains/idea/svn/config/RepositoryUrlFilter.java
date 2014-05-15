@@ -16,7 +16,7 @@
 package org.jetbrains.idea.svn.config;
 
 import org.jetbrains.idea.svn.SvnApplicationSettings;
-import org.jetbrains.idea.svn.SvnAuthenticationManager;
+import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 
 import java.util.ArrayList;
 import java.util.Collection;

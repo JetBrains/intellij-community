@@ -295,7 +295,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
         message = messageCommonStart + " is in the <b>detached HEAD</b> state. <br/>" +
                   "You can look around, make experimental changes and commit them, but be sure to checkout a branch not to lose your work. <br/>" +
                   "Otherwise you risk losing your changes. <br/>" +
-                  readMore("http://sitaramc.github.com/concepts/detached-head.html", "Read more about detached HEAD");
+                  readMore("http://gitolite.com/detached-head.html", "Read more about detached HEAD");
       }
 
       final int choice = Messages.showOkCancelDialog(myPanel.getComponent(), XmlStringUtil.wrapInHtml(message), title,

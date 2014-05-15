@@ -63,7 +63,7 @@ public class UsageInfoToUsageConverter {
 
     @NotNull
     private static PsiElement[] convertToPsiElements(@NotNull List<SmartPsiElementPointer<PsiElement>> primary) {
-      return ContainerUtil.map2Array(primary, PsiElement.class, SMARTPOINTER_TO_ELEMENT_MAPPER);
+      return ContainerUtil.toArray(ContainerUtil.mapNotNull(primary, SMARTPOINTER_TO_ELEMENT_MAPPER), PsiElement.ARRAY_FACTORY);
     }
 
     @NotNull

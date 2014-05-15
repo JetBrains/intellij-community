@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -213,7 +213,7 @@ class InlineToAnonymousConstructorProcessor {
           final List<PsiReferenceExpression> localVarRefs = new ArrayList<PsiReferenceExpression>();
           final PsiExpression initializer;
           try {
-            initializer = (PsiExpression) replaceParameterReferences((PsiExpression)rExpr.copy(), localVarRefs, false);
+            initializer = (PsiExpression) replaceParameterReferences(rExpr.copy(), localVarRefs, false);
           }
           catch (IncorrectOperationException e) {
             LOG.error(e);
@@ -365,7 +365,7 @@ class InlineToAnonymousConstructorProcessor {
         super.visitReferenceExpression(expression);
         final PsiElement psiElement = expression.resolve();
         if (psiElement instanceof PsiParameter) {
-          parameterReferences.add(new Pair<PsiReferenceExpression, PsiParameter>(expression, (PsiParameter) psiElement));
+          parameterReferences.add(Pair.create(expression, (PsiParameter)psiElement));
         }
         else if ((psiElement instanceof PsiField || psiElement instanceof PsiMethod) &&
                  ((PsiMember) psiElement).getContainingClass() == myClass.getSuperClass()) {

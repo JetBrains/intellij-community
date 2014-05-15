@@ -294,19 +294,29 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
           if (comment.indexOf("Method") != -1) {
             breakpoint = breakpointManager.addMethodBreakpoint(document, commentLine + 1);
-            println("MethodBreakpoint created at " + file.getVirtualFile().getName() + ":" + (commentLine + 2), ProcessOutputTypes.SYSTEM);
+            if (breakpoint != null) {
+              println("MethodBreakpoint created at " + file.getVirtualFile().getName() + ":" + (commentLine + 2),
+                      ProcessOutputTypes.SYSTEM);
+            }
           }
           else if (comment.indexOf("Field") != -1) {
             breakpoint = breakpointManager.addFieldBreakpoint(document, commentLine + 1, readValue(comment, "Field"));
-            println("FieldBreakpoint created at " + file.getVirtualFile().getName() + ":" + (commentLine + 2), ProcessOutputTypes.SYSTEM);
+            if (breakpoint != null) {
+              println("FieldBreakpoint created at " + file.getVirtualFile().getName() + ":" + (commentLine + 2), ProcessOutputTypes.SYSTEM);
+            }
           }
           else if (comment.indexOf("Exception") != -1) {
             breakpoint = breakpointManager.addExceptionBreakpoint(readValue(comment, "Exception"), "");
-            println("ExceptionBreakpoint created at " + file.getVirtualFile().getName() + ":" + (commentLine + 2), ProcessOutputTypes.SYSTEM);
+            if (breakpoint != null) {
+              println("ExceptionBreakpoint created at " + file.getVirtualFile().getName() + ":" + (commentLine + 2),
+                      ProcessOutputTypes.SYSTEM);
+            }
           }
           else {
             breakpoint = breakpointManager.addLineBreakpoint(document, commentLine + 1);
-            println("LineBreakpoint created at " + file.getVirtualFile().getName() + ":" + (commentLine + 2), ProcessOutputTypes.SYSTEM);
+            if (breakpoint != null) {
+              println("LineBreakpoint created at " + file.getVirtualFile().getName() + ":" + (commentLine + 2), ProcessOutputTypes.SYSTEM);
+            }
           }
 
           String suspendPolicy = readValue(comment, "suspendPolicy");

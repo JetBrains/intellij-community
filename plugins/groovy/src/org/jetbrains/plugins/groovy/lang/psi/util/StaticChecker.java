@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
-import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.JavaCodeInsightSettingsFacade;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -91,7 +91,7 @@ public class StaticChecker {
     }
   }
 
-  private static boolean checkQualified(PsiModifierListOwner member,
+  private static boolean checkQualified(@NotNull PsiModifierListOwner member,
                                         PsiElement place,
                                         boolean filterStaticAfterInstanceQualifier,
                                         GrExpression qualifier, PsiClass containingClass) {
@@ -119,7 +119,7 @@ public class StaticChecker {
           return checkJavaLangClassMember(place, containingClass, member) || member.hasModifierProperty(PsiModifier.STATIC);
         }
 
-        return !isStatic || !filterStaticAfterInstanceQualifier || CodeInsightSettings.getInstance().SHOW_STATIC_AFTER_INSTANCE;
+        return !isStatic || !filterStaticAfterInstanceQualifier || JavaCodeInsightSettingsFacade.getInstance(member.getProject()).isShowStaticAfterInstance();
       }
 
       PsiElement qualifierResolved = ((GrReferenceExpression)qualifier).resolve();
@@ -133,13 +133,7 @@ public class StaticChecker {
         }
 
         //non-physical method, e.g. gdk
-        if (containingClass == null) {
-          return isStatic;
-        }
-        if (checkJavaLangClassMember(place, containingClass, member)) return true;
-
-
-        return false;
+        return containingClass != null && checkJavaLangClassMember(place, containingClass, member);
       }
     }
 
@@ -147,7 +141,7 @@ public class StaticChecker {
     if (member instanceof PsiClass) {
       return false;
     }
-    return !isStatic || !filterStaticAfterInstanceQualifier || CodeInsightSettings.getInstance().SHOW_STATIC_AFTER_INSTANCE;
+    return !isStatic || !filterStaticAfterInstanceQualifier || JavaCodeInsightSettingsFacade.getInstance(member.getProject()).isShowStaticAfterInstance();
   }
 
   private static boolean checkJavaLangClassMember(PsiElement place, PsiClass containingClass, PsiModifierListOwner member) {

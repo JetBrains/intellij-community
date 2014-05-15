@@ -15,13 +15,14 @@
  */
 package com.intellij.refactoring
 import com.intellij.codeInsight.TargetElementUtilBase
-import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEx
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightCodeInsightTestCase
 /**
  * User: anna
@@ -57,7 +58,64 @@ class RenameSuggestionsTest extends LightCodeInsightTestCase {
     doTestSuggestionAvailable(text, "foo")
   }
 
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk18()
+  }
+
+  public void "test by Optional_of initializer"() {
+    def suggestions = getNameSuggestions("""
+import java.util.*;
+class Foo {{
+  Foo typeValue = null;
+  Optional<Foo> <caret>o = Optional.of(typeValue);
+}}
+""")
+    assert suggestions == ["typeValue1", "value", "foo", "fooOptional", "optional", "o"]
+  }
+
+  public void "test by Optional_ofNullable initializer"() {
+    def suggestions = getNameSuggestions("""
+import java.util.*;
+class Foo {{
+  Foo typeValue = this;
+  Optional<Foo> <caret>o = Optional.ofNullable(typeValue);
+}}
+""")
+    assert suggestions == ["typeValue1", "value", "foo", "fooOptional", "optional", "o"]
+  }
+
+  public void "test by Optional_of initializer with constructor"() {
+    def suggestions = getNameSuggestions("""
+import java.util.*;
+class Foo {{
+  Optional<Foo> <caret>o = Optional.ofNullable(new Foo());
+}}
+""")
+    assert suggestions == ["foo", "fooOptional", "optional", "o"]
+  }
+  
+  public void "test by Optional_flatMap"() {
+    def suggestions = getNameSuggestions("""
+import java.util.*;
+class Foo {{
+  Optional<Car> <caret>o = Optional.of(new Person()).flatMap(Person::getCar);
+}}
+class Person {
+    Optional<Car> getCar() {}
+}
+class Car {}
+""")
+    assert suggestions == ["car", "carOptional", "optional", "o"]
+  }
+
   private doTestSuggestionAvailable(String text, String suggestion) {
+    def suggestions = getNameSuggestions(text)
+    assert suggestion in suggestions
+    
+  }
+  
+  private List<String> getNameSuggestions(String text) {
     configure text
     def oldPreselectSetting = myEditor.settings.preselectRename
     try {
@@ -73,20 +131,7 @@ class RenameSuggestionsTest extends LightCodeInsightTestCase {
       
       LookupEx lookup = LookupManager.getActiveLookup(editor)
       assertNotNull(lookup)
-      boolean found = false;
-      for (LookupElement item : lookup.items) {
-        if (item.getLookupString().equals(suggestion)) {
-          found = true
-          break
-        }
-      }
-
-      if (!found) {
-        fail(suggestion + " not suggested")
-      }
-    }
-    catch (Exception e) {
-      e.printStackTrace()
+      return lookup.items.collect { it.lookupString }
     }
     finally {
       myEditor.settings.preselectRename = oldPreselectSetting

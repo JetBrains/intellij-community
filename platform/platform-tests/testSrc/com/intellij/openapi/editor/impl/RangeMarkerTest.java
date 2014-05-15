@@ -15,9 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -25,11 +23,14 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -37,7 +38,10 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.Timings;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,29 +61,20 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       return;
     }
     boolean oldVerify = RedBlackTree.VERIFY;
-    RedBlackTree.VERIFY = true;
+    RedBlackTree.VERIFY = !isPerformanceTest();
     final Throwable[] ex = {null};
     try {
       if (getTestName(false).contains("NoCommand")) {
         super.runTest();
         return;
       }
-      CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-          @Override
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                try {
-                  RangeMarkerTest.super.runTest();
-                }
-                catch (Throwable throwable) {
-                  ex[0] = throwable;
-                }
-              }
-            });
-          }
-        }, "", null);
+      WriteCommandAction.runWriteCommandAction(getProject(), new ThrowableComputable<Void, Throwable>() {
+        @Override
+        public Void compute() throws Throwable {
+          RangeMarkerTest.super.runTest();
+          return null;
+        }
+      });
     }
     finally {
       RedBlackTree.VERIFY = oldVerify;
@@ -1070,5 +1065,29 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     assertEmpty(markupModel.getAllHighlighters());
     m.dispose();
     assertFalse(m.isValid());
+  }
+
+  public void testRangeHighlighterLinesInRangeForLongLinePerformance() throws Exception {
+    final int N = 50000;
+    Document document = EditorFactory.getInstance().createDocument(StringUtil.repeatSymbol('x', 2*N));
+
+    final MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, ourProject, true);
+    for (int i=0; i<N-1;i++) {
+      markupModel.addRangeHighlighter(2*i, 2*i+1, 0, null, HighlighterTargetArea.EXACT_RANGE);
+    }
+    markupModel.addRangeHighlighter(N/2, N/2+1, 0, null, HighlighterTargetArea.LINES_IN_RANGE);
+
+    PlatformTestUtil.startPerformanceTest("slow highlighters lookup", (int)(N*Math.log(N)/1000), new ThrowableRunnable() {
+      @Override
+      public void run() {
+        List<RangeHighlighterEx> list = new ArrayList<RangeHighlighterEx>();
+        CommonProcessors.CollectProcessor<RangeHighlighterEx> coll = new CommonProcessors.CollectProcessor<RangeHighlighterEx>(list);
+        for (int i=0; i<N-1;i++) {
+          list.clear();
+          markupModel.processRangeHighlightersOverlappingWith(2*i, 2*i+1, coll);
+          assertEquals(2, list.size());  // 1 line plus one exact range marker
+        }
+      }
+    }).assertTiming();
   }
 }

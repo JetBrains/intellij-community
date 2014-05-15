@@ -22,13 +22,13 @@
  */
 package com.intellij.profile.codeInspection.ui;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ModifiableModel;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionToolRegistrar;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
@@ -266,7 +266,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
 
   private void addProfile(InspectionProfileImpl model) {
     final String modelName = model.getName();
-    final SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(myProjectProfileManager, modelName, model);
+    final SingleInspectionProfilePanel panel = createPanel(model, modelName, true);
     myPanel.add(modelName, panel);
     if (!myPanels.containsKey(getProfilePrefix(model) + modelName)) {
       //noinspection unchecked
@@ -399,6 +399,10 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     }
   }
 
+  protected boolean acceptTool(InspectionToolWrapper entry) {
+    return true;
+  }
+  
   @Override
   public void reset() {
     myDeletedProfiles.clear();
@@ -408,7 +412,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     for (Profile profile : getProfiles()) {
       model.addElement(profile);
       final String profileName = profile.getName();
-      final SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(myProjectProfileManager, profileName, ((InspectionProfileImpl)profile).getModifiableModel());
+      final SingleInspectionProfilePanel panel = createPanel((InspectionProfileImpl)profile, profileName, false);
       putProfile(profile, panel);
       myPanel.add(profileName, panel);
     }
@@ -436,6 +440,15 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
 
       myShareProfileCheckBox.setSelected(panel.isProfileShared());
     }
+  }
+
+  private SingleInspectionProfilePanel createPanel(InspectionProfileImpl profile, String profileName, boolean model) {
+    return new SingleInspectionProfilePanel(myProjectProfileManager, profileName, model ? profile : profile.getModifiableModel()) {
+      @Override
+      protected boolean accept(InspectionToolWrapper entry) {
+        return super.accept(entry) && InspectionToolsConfigurable.this.acceptTool(entry);
+      }
+    };
   }
 
   private boolean isDeleteEnabled(@NotNull InspectionProfileImpl inspectionProfile) {

@@ -253,41 +253,38 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
         final ColorRegistry colorRegistry = syntaxInfo.getColorRegistry();
         assertEquals(JBColor.BLACK, colorRegistry.dataById(syntaxInfo.getDefaultForeground()));
         assertEquals(JBColor.WHITE, colorRegistry.dataById(syntaxInfo.getDefaultBackground()));
-        assertEquals(getFontSize(), syntaxInfo.getSingleFontSize());
-        SyntaxInfo.MarkupIterator it = syntaxInfo.new MarkupIterator();
-        try {
-          while (it.hasNext()) {
-            it.processNext(new MarkupHandler() {
-              @Override
-              public void handleText(int startOffset, int endOffset) throws Exception {
-                builder.append("text=").append(text.substring(startOffset, endOffset)).append('\n');
-              }
-
-              @Override
-              public void handleForeground(int foregroundId) throws Exception {
-                builder.append("foreground=").append(colorRegistry.dataById(foregroundId)).append(',');
-              }
-
-              @Override
-              public void handleBackground(int backgroundId) throws Exception {
-                builder.append("background=").append(colorRegistry.dataById(backgroundId)).append(',');
-              }
-
-              @Override
-              public void handleFont(int fontNameId) throws Exception {
-                assertEquals(1, fontNameId);
-              }
-
-              @Override
-              public void handleStyle(int style) throws Exception {
-                builder.append("fontStyle=").append(style).append(',');
-              }
-            });
+        assertEquals(getFontSize(), syntaxInfo.getFontSize());
+        syntaxInfo.processOutputInfo(new MarkupHandler() {
+          @Override
+          public void handleText(int startOffset, int endOffset) throws Exception {
+            builder.append("text=").append(text.substring(startOffset, endOffset)).append('\n');
           }
-        }
-        finally {
-          it.dispose();
-        }
+
+          @Override
+          public void handleForeground(int foregroundId) throws Exception {
+            builder.append("foreground=").append(colorRegistry.dataById(foregroundId)).append(',');
+          }
+
+          @Override
+          public void handleBackground(int backgroundId) throws Exception {
+            builder.append("background=").append(colorRegistry.dataById(backgroundId)).append(',');
+          }
+
+          @Override
+          public void handleFont(int fontNameId) throws Exception {
+            assertEquals(1, fontNameId);
+          }
+
+          @Override
+          public void handleStyle(int style) throws Exception {
+            builder.append("fontStyle=").append(style).append(',');
+          }
+
+          @Override
+          public boolean canHandleMore() {
+            return true;
+          }
+        });
       }
      });
     SelectionModel selectionModel = editor.getSelectionModel();

@@ -327,7 +327,7 @@ public class GroovyScriptClass extends LightElement implements PsiClass, Synthet
       addModifiers(PsiModifier.PUBLIC, PsiModifier.STATIC);
     myRunMethod = new LightMethodBuilder(getManager(), GroovyFileType.GROOVY_LANGUAGE, "run").
       setContainingClass(this).
-      setMethodReturnType(PsiType.getJavaLangObject(getManager(), getResolveScope())).
+      setMethodReturnType(TypesUtil.getJavaLangObject(this)).
       addModifier(PsiModifier.PUBLIC);
 
     myInitialized = true;

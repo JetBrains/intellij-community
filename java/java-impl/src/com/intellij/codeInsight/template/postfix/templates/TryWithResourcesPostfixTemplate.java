@@ -22,7 +22,7 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
-import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
+import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -38,14 +38,14 @@ import java.util.Collections;
 
 public class TryWithResourcesPostfixTemplate extends PostfixTemplate {
   protected TryWithResourcesPostfixTemplate() {
-    super("twr", "Description", "Example");
+    super("twr", "try(Type f = new Type()) {} catch (Ex e) {}");
   }
 
   @Override
   public boolean isApplicable(@NotNull PsiElement element, @NotNull Document copyDocument, int newOffset) {
     if (!PsiUtil.isLanguageLevel7OrHigher(element)) return false;
 
-    PsiExpression initializer = PostfixTemplatesUtils.getTopmostExpression(element);
+    PsiExpression initializer = JavaPostfixTemplatesUtils.getTopmostExpression(element);
 
     if (initializer == null) return false;
 
@@ -62,7 +62,7 @@ public class TryWithResourcesPostfixTemplate extends PostfixTemplate {
 
   @Override
   public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
-    PsiExpression expression = PostfixTemplatesUtils.getTopmostExpression(context);
+    PsiExpression expression = JavaPostfixTemplatesUtils.getTopmostExpression(context);
     assert expression != null;
 
     Project project = context.getProject();
@@ -100,7 +100,7 @@ public class TryWithResourcesPostfixTemplate extends PostfixTemplate {
   @NotNull
   private static Collection<PsiClassType> getUnhandled(@NotNull PsiExpression expression) {
     assert expression.getType() != null;
-    PsiMethod methodCloser = PsiUtil.getResourceCloserMethodForType((PsiClassType)expression.getType(), expression.getProject());
+    PsiMethod methodCloser = PsiUtil.getResourceCloserMethodForType((PsiClassType)expression.getType());
     PsiSubstitutor substitutor = PsiUtil.resolveGenericsClassInType(expression.getType()).getSubstitutor();
 
     return methodCloser != null

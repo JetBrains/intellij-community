@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.PlatformIcons;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PySdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +44,7 @@ public class PySkeletonsNode extends PsiDirectoryNode {
 
   @Nullable
   public static PySkeletonsNode create(@NotNull Project project, @NotNull Sdk sdk, ViewSettings settings) {
-    final VirtualFile skeletonsVirtualFile = PythonSdkType.findSkeletonsDir(sdk);
+    final VirtualFile skeletonsVirtualFile = PySdkUtil.findSkeletonsDir(sdk);
     if (skeletonsVirtualFile != null) {
       final PsiDirectory skeletonsDirectory = PsiManager.getInstance(project).findDirectory(skeletonsVirtualFile);
       return new PySkeletonsNode(project, skeletonsDirectory, settings);

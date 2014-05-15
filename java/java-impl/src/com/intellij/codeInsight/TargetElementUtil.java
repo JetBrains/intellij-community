@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
   @Nullable
   @Override
-  public PsiElement findTargetElement(final Editor editor, final int flags, final int offset) {
+  public PsiElement findTargetElement(@NotNull final Editor editor, final int flags, final int offset) {
     final PsiElement element = super.findTargetElement(editor, flags, offset);
     if (element instanceof PsiKeyword) {
       if (element.getParent() instanceof PsiThisExpression) {
@@ -165,10 +165,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
         return parent;
       }
     }
-    if (element == null) {
-      return null;
-    }
-    return getTargetElementByExtensions(element);
+    return null;
   }
 
   @Nullable

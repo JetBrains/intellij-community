@@ -129,12 +129,18 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
         }
         optionalParams--;
       }
-      parameterList.addParameter(new GrLightParameter(parameter.getName(), parameter.getDeclaredType(), this));
+      parameterList.addParameter(createLightParameter(parameter));
     }
 
     LOG.assertTrue(optionalParams == 0);
 
     mySkippedParameters = skipped.toArray(new GrParameter[skipped.size()]);
+  }
+
+  private GrLightParameter createLightParameter(GrParameter parameter) {
+    GrLightParameter lightParameter = new GrLightParameter(parameter.getName(), parameter.getDeclaredType(), this);
+    lightParameter.setModifierList(parameter.getModifierList());
+    return lightParameter;
   }
 
   @NotNull

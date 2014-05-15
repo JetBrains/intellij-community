@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.UI;
 import com.intellij.ui.awt.RelativePoint;
@@ -240,6 +241,19 @@ public class AboutPopup {
       if (aboutLogoRect != null) {
         myLinks.add(new Link(aboutLogoRect, appInfo.getCompanyURL()));
       }
+
+      if (appInfo instanceof ApplicationInfoImpl) {
+        g2.setColor(((ApplicationInfoImpl)appInfo).getCopyrightForeground());
+        if (SystemInfo.isMac) {
+          g2.setFont(UIUtil.getLabelFont(UIUtil.FontSize.MINI));
+        }
+        else {
+          g2.setFont(new Font("Tahoma", Font.PLAIN, 10));
+        }
+      } else {
+        g2.setColor(JBColor.BLACK);
+      }
+      g2.drawString("\u00A9 2000\u2013" + Calendar.getInstance().get(Calendar.YEAR) + " JetBrains s.r.o. All rights reserved.", 30, 284);
     }
 
     public String getText() {

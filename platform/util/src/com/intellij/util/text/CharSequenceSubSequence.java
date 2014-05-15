@@ -18,7 +18,7 @@ package com.intellij.util.text;
 
 import org.jetbrains.annotations.NotNull;
 
-public class CharSequenceSubSequence implements CharSequence {
+public class CharSequenceSubSequence implements CharSequence, CharArrayExternalizable {
   private final CharSequence myChars;
   private final int myStart;
   private final int myEnd;
@@ -62,5 +62,11 @@ public class CharSequenceSubSequence implements CharSequence {
 
   public CharSequence getBaseSequence() {
     return myChars;
+  }
+
+  @Override
+  public void getChars(int start, int end, @NotNull char[] dest, int destPos) {
+    assert end - start <= myEnd - myStart;
+    CharArrayUtil.getChars(myChars, dest, start + myStart, destPos, end - start);
   }
 }

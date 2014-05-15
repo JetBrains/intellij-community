@@ -15,16 +15,22 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.xml.DOMConfigurator;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @SuppressWarnings({"CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
 public class TestLoggerFactory implements Logger.Factory {
@@ -87,5 +93,32 @@ public class TestLoggerFactory implements Logger.Factory {
 
   public static String getTestLogDir() {
     return PathManager.getSystemPath() + "/" + LOG_DIR;
+  }
+
+  public static void dumpLogToStdout(@NotNull String testStartMarker) throws IOException {
+    File ideaLog = new File(getTestLogDir(), "idea.log");
+    if (ideaLog.exists()) {
+      String logText = FileUtil.loadFile(ideaLog);
+      Pattern logStart = Pattern.compile("[0-9\\-, :\\[\\]]+(DEBUG|INFO|ERROR) - ");
+      System.out.println("\n\nIdea Log:");
+      for (String line : StringUtil.splitByLines(logText.substring(Math.max(0, logText.lastIndexOf(testStartMarker))))) {
+        Matcher matcher = logStart.matcher(line);
+        int lineStart = matcher.lookingAt() ? matcher.end() : 0;
+        System.out.println(line.substring(lineStart));
+      }
+    }
+  }
+
+  public static void enableDebugLogging(@NotNull Disposable parentDisposable, String... categories) {
+    for (String category : categories) {
+      final Logger logger = Logger.getInstance(category);
+      logger.setLevel(Level.DEBUG);
+      Disposer.register(parentDisposable, new Disposable() {
+        @Override
+        public void dispose() {
+          logger.setLevel(Level.INFO);
+        }
+      });
+    }
   }
 }

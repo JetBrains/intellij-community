@@ -31,7 +31,7 @@ import java.util.List;
 /**
  * User : ktisha
  */
-@TestDataPath("$CONTENT_ROOT/../testData/refactoring/changeSignature/")
+@TestDataPath("$CONTENT_ROOT/../testData/")
 public class PyChangeSignatureTest extends PyTestCase {
 
   public void testChooseSuperMethod() {
@@ -174,6 +174,10 @@ public class PyChangeSignatureTest extends PyTestCase {
   public void testEmptyParameterName() {
     doValidationTest(null, Arrays.asList(new PyParameterInfo(-1, "", "2", true)),
                      PyBundle.message("refactoring.change.signature.dialog.validation.parameter.name"));
+  }
+
+  public void testDecorator() {
+    doChangeSignatureTest("decorator", Arrays.asList(new PyParameterInfo(0, "arg1", null, false)));
   }
 
   public void testNonDefaultAfterDefault() {

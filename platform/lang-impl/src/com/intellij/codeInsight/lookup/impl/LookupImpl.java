@@ -17,10 +17,7 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.completion.CodeCompletionFeatures;
-import com.intellij.codeInsight.completion.CompletionLookupArranger;
-import com.intellij.codeInsight.completion.PrefixMatcher;
-import com.intellij.codeInsight.completion.ShowHideIntentionIconLookupAction;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
@@ -115,7 +112,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private FocusDegree myFocusDegree = FocusDegree.FOCUSED;
   private volatile boolean myCalculating;
   private final Advertiser myAdComponent;
-  private volatile String myAdText;
   volatile int myLookupTextWidth = 50;
   private boolean myChangeGuard;
   private volatile LookupArranger myArranger;
@@ -226,23 +222,37 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     refreshUi(true, true);
   }
 
-  public void addItem(LookupElement item, PrefixMatcher matcher) {
+  public boolean addItem(LookupElement item, PrefixMatcher matcher) {
+    LookupElementPresentation presentation = renderItemApproximately(item);
+    if (containsDummyIdentifier(presentation.getItemText()) || 
+        containsDummyIdentifier(presentation.getTailText()) || 
+        containsDummyIdentifier(presentation.getTypeText())) {
+      return false;
+    }
+    
     myMatchers.put(item, matcher);
-    LookupElementPresentation presentation = updateLookupWidth(item);
+    updateLookupWidth(item, presentation);
     synchronized (myList) {
       myArranger.addElement(this, item, presentation);
     }
+    return true;
   }
 
-  public LookupElementPresentation updateLookupWidth(LookupElement item) {
-    final LookupElementPresentation presentation = renderItemApproximately(item);
+  private static boolean containsDummyIdentifier(@Nullable final String s) {
+    return s != null && s.contains(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
+  }
+
+  public void updateLookupWidth(LookupElement item) {
+    updateLookupWidth(item, renderItemApproximately(item));
+  }
+
+  private void updateLookupWidth(LookupElement item, LookupElementPresentation presentation) {
     final Font customFont = myCellRenderer.getFontAbleToDisplay(presentation);
     if (customFont != null) {
       myCustomFonts.put(item, customFont);
     }
     int maxWidth = myCellRenderer.updateMaximumWidth(presentation, item);
     myLookupTextWidth = Math.max(maxWidth, myLookupTextWidth);
-    return presentation;
   }
 
   @Nullable
@@ -282,18 +292,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       });
     }
   }
-
-  public void setAdvertisementText(@Nullable String text) {
-    myAdText = text;
-    if (StringUtil.isNotEmpty(text)) {
-      addAdvertisement(text, null);
-    }
-  }
-
-  public String getAdvertisementText() {
-    return myAdText;
-  }
-
 
   public String getAdditionalPrefix() {
     return myOffsets.getAdditionalPrefix();
@@ -701,6 +699,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return true;
   }
 
+  public Advertiser getAdvertiser() {
+    return myAdComponent;
+  }
+
   public boolean mayBeNoticed() {
     return myStampShown > 0 && System.currentTimeMillis() - myStampShown > 300;
   }
@@ -1098,7 +1100,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public void markReused() {
-    myAdComponent.clearAdvertisements();
     synchronized (myList) {
       myArranger = myArranger.createEmptyCopy();
     }
@@ -1106,23 +1107,12 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public void addAdvertisement(@NotNull final String text, final @Nullable Color bgColor) {
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        if (!myDisposed) {
-          myAdComponent.addAdvertisement(text, bgColor);
-          if (myShown) {
-            requestResize();
-            refreshUi(false, false);
-          }
-        }
-      }
-    };
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      runnable.run();
-    } else {
-      ApplicationManager.getApplication().invokeLater(runnable);
+    if (containsDummyIdentifier(text)) {
+      return;
     }
+
+    myAdComponent.addAdvertisement(text, bgColor);
+    requestResize();
   }
 
   public boolean isLookupDisposed() {

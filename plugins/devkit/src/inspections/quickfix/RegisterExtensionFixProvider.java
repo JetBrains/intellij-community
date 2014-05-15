@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,11 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -102,6 +106,7 @@ public class RegisterExtensionFixProvider implements UnusedDeclarationFixProvide
     }
     else if ("with".equals(tag.getName())) {
       XmlTag extensionPointTag = tag.getParentTag();
+      if (extensionPointTag == null) return;
       if (!"extensionPoint".equals(extensionPointTag.getName())) return;
       String attrName = tag.getAttributeValue("attribute");
       String tagName = tag.getAttributeValue("tag");
@@ -112,15 +117,10 @@ public class RegisterExtensionFixProvider implements UnusedDeclarationFixProvide
     }
   }
 
+  @Nullable
   private static String getEPName(XmlTag tag) {
-    String qName = tag.getAttributeValue("qualifiedName");
-    if (qName != null) {
-      return qName;
-    }
-    String name = tag.getAttributeValue("name");
-    if (name != null) {
-      return "com.intellij." + name;
-    }
-    return null;
+    final DomElement domElement = DomUtil.getDomElement(tag);
+    if (!(domElement instanceof ExtensionPoint)) return null;
+    return ((ExtensionPoint)domElement).getEffectiveQualifiedName();
   }
 }

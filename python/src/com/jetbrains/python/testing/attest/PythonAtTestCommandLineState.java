@@ -16,6 +16,7 @@
 package com.jetbrains.python.testing.attest;
 
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.openapi.util.io.FileUtil;
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
 
 import java.util.ArrayList;
@@ -41,24 +42,27 @@ public class PythonAtTestCommandLineState extends PythonTestCommandLineStateBase
   protected List<String> getTestSpecs() {
     List<String> specs = new ArrayList<String>();
 
+    final String scriptName = FileUtil.toSystemDependentName(myConfig.getScriptName());
     switch (myConfig.getTestType()) {
       case TEST_SCRIPT:
-        specs.add(myConfig.getScriptName());
+        specs.add(scriptName);
         break;
       case TEST_CLASS:
-        specs.add(myConfig.getScriptName() + "::" + myConfig.getClassName());
+        specs.add(scriptName + "::" + myConfig.getClassName());
         break;
       case TEST_METHOD:
-        specs.add(myConfig.getScriptName() + "::" + myConfig.getClassName() + "::" + myConfig.getMethodName());
+        specs.add(scriptName + "::" + myConfig.getClassName() + "::" + myConfig.getMethodName());
         break;
       case TEST_FOLDER:
-	if (!myConfig.getPattern().isEmpty())
-          specs.add(myConfig.getFolderName() + "/" + ";" + myConfig.getPattern());
+        final String folderName = FileUtil.toSystemDependentName(myConfig.getFolderName() + "/");
+	if (!myConfig.getPattern().isEmpty()) {
+          specs.add(folderName + ";" + myConfig.getPattern());
+        }
         else
-	      specs.add(myConfig.getFolderName() + "/");
+	  specs.add(folderName);
         break;
       case TEST_FUNCTION:
-        specs.add(myConfig.getScriptName() + "::::" + myConfig.getMethodName());
+        specs.add(scriptName + "::::" + myConfig.getMethodName());
         break;
       default:
         throw new IllegalArgumentException("Unknown test type: " + myConfig.getTestType());

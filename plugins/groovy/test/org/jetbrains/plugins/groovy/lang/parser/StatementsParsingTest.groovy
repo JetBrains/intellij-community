@@ -180,12 +180,18 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testTypedef$constructors$constructor8() throws Throwable { doTest(); }
   public void testTypedef$constructors$constructor9() throws Throwable { doTest(); }
   public void testTypedef$enums$enum1() throws Throwable { doTest(); }
+  public void testTypedef$enums$enum10() throws Throwable { doTest(); }
+  public void testTypedef$enums$enum11() throws Throwable { doTest(); }
+  public void testTypedef$enums$enum12() throws Throwable { doTest(); }
+  public void testTypedef$enums$enum13() throws Throwable { doTest(); }
   public void testTypedef$enums$enum2() throws Throwable { doTest(); }
   public void testTypedef$enums$enum3() throws Throwable { doTest(); }
   public void testTypedef$enums$enum4() throws Throwable { doTest(); }
   public void testTypedef$enums$enum5() throws Throwable { doTest(); }
   public void testTypedef$enums$enum6() throws Throwable { doTest(); }
   public void testTypedef$enums$enum7() throws Throwable { doTest(); }
+  public void testTypedef$enums$enum8() throws Throwable { doTest(); }
+  public void testTypedef$enums$enum9() throws Throwable { doTest(); }
   public void testTypedef$interfaces$errors$interfaceerr1() throws Throwable { doTest(); }
   public void testTypedef$interfaces$errors$interfaceerr2() throws Throwable { doTest(); }
   public void testTypedef$interfaces$errors$interfaceerr3() throws Throwable { doTest(); }

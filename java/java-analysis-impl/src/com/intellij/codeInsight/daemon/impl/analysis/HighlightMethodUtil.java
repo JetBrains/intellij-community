@@ -1142,6 +1142,7 @@ public class HighlightMethodUtil {
     }
 
     if (isMethodStatic) {
+      if (superClass.isInterface()) return null;
       int accessLevel = PsiUtil.getAccessLevel(modifierList);
       String accessModifier = PsiUtil.getAccessModifier(accessLevel);
       HighlightInfo info = isWeaker(method, modifierList, accessModifier, accessLevel, superMethod, true);
@@ -1444,13 +1445,13 @@ public class HighlightMethodUtil {
       .registerQuickFixAction(info, constructorCall.getTextRange(), QUICK_FIX_FACTORY.createCreateConstructorFromCallFix(constructorCall));
     if (classReference != null) {
       ConstructorParametersFixer.registerFixActions(classReference, constructorCall, info, getFixRange(infoElement));
-      registerChangeMethodSignatureFromUsageIntentions(results, list, info, null);
       ChangeTypeArgumentsFix.registerIntentions(results, list, info, aClass);
       ConvertDoubleToFloatFix.registerIntentions(results, list, info, null);
-      PermuteArgumentsFix.registerFix(info, constructorCall, toMethodCandidates(results), getFixRange(list));
-      registerChangeParameterClassFix(constructorCall, list, info);
-      QuickFixAction.registerQuickFixAction(info, getFixRange(list), QUICK_FIX_FACTORY.createSurroundWithArrayFix(constructorCall,null));
     }
+    registerChangeMethodSignatureFromUsageIntentions(results, list, info, null);
+    PermuteArgumentsFix.registerFix(info, constructorCall, toMethodCandidates(results), getFixRange(list));
+    registerChangeParameterClassFix(constructorCall, list, info);
+    QuickFixAction.registerQuickFixAction(info, getFixRange(list), QUICK_FIX_FACTORY.createSurroundWithArrayFix(constructorCall,null));
     ChangeStringLiteralToCharInMethodCallFix.registerFixes(constructors, constructorCall, info);
   }
 

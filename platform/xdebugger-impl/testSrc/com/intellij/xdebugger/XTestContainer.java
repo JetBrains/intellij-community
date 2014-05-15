@@ -40,9 +40,7 @@ public class XTestContainer<T> {
     myFinished.release();
   }
 
-
-  public void setMessage(@NotNull String message,
-                         final Icon icon, @NotNull final SimpleTextAttributes attributes, @Nullable XDebuggerTreeNodeHyperlink link) {
+  public void setMessage(@NotNull String message, Icon icon, @NotNull final SimpleTextAttributes attributes, @Nullable XDebuggerTreeNodeHyperlink link) {
   }
 
   public void setErrorMessage(@NotNull String message, @Nullable XDebuggerTreeNodeHyperlink link) {
@@ -59,8 +57,10 @@ public class XTestContainer<T> {
   }
 
   public Pair<List<T>, String> waitFor(long timeout) throws InterruptedException {
-    if (!XDebuggerTestUtil.waitFor(myFinished, timeout)) throw new AssertionError("Waiting timed out");
-    
-    return new Pair<List<T>, String>(myChildren, myErrorMessage);
+    if (!XDebuggerTestUtil.waitFor(myFinished, timeout)) {
+      throw new AssertionError("Waiting timed out");
+    }
+
+    return Pair.create(myChildren, myErrorMessage);
   }
 }

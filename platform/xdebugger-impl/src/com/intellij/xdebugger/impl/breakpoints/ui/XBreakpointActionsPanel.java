@@ -54,16 +54,7 @@ public class XBreakpointActionsPanel<B extends XBreakpoint<?>> extends XBreakpoi
           onCheckboxChanged();
         }
       };
-
-      if (debuggerEditorsProvider instanceof XDebuggerComboBoxProvider) {
-        logExpressionPanel = ((XDebuggerComboBoxProvider<B>)debuggerEditorsProvider).createLogExpressionComboBoxPanel(
-          project, debuggerEditorsProvider, DefaultLogExpressionComboBoxPanel.HISTORY_KEY, myBreakpoint.getSourcePosition());
-      }
-      else {
-        logExpressionPanel =
-          new DefaultLogExpressionComboBoxPanel<B>(project, debuggerEditorsProvider, myBreakpoint.getSourcePosition());
-      }
-
+      logExpressionPanel = new DefaultLogExpressionComboBoxPanel<B>(project, debuggerEditorsProvider, myBreakpoint.getSourcePosition());
       JComponent logExpressionComponent = logExpressionPanel.getComponent();
       myLogExpressionPanel.add(logExpressionComponent, BorderLayout.CENTER);
       logExpressionComponent.setEnabled(false);

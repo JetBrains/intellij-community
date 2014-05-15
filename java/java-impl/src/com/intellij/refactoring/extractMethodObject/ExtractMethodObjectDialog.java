@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.extractMethodObject;
 
+import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
@@ -264,7 +265,7 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
     myCbMakeVarargsAnonymous.setSelected(myWasStatic);
     myCbMakeVarargsAnonymous.addActionListener(updateSugnatureListener);
 
-    final com.intellij.openapi.editor.event.DocumentAdapter nameListener = new com.intellij.openapi.editor.event.DocumentAdapter() {
+    final DocumentAdapter nameListener = new DocumentAdapter() {
       @Override
       public void documentChanged(final DocumentEvent e) {
         update();

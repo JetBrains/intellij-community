@@ -19,10 +19,13 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
+import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -34,15 +37,26 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
   private static final String EXISTENT_ACTION = "DummyExistent";
   private static final String NON_EXISTENT_ACTION = "DummyNonExistent";
   private static final String ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION = "DummyWithUseShortcutOfExistentAction";
+  private static final String ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED = "DummyWithUseShortcutOfExistentActionRedefined";
+  private static final String ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT = "DummyWithUseShortcutOfExistentActionRedefinedInParent";
   private static final String ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION = "DummyWithUseShortcutOfNonExistentAction";
+  
+  private static final String ACTION_EDITOR_DELETE_WITH_SHORTCUT = "EditorDelete";
+  private static final String ACTION_EDITOR_CUT_WITHOUT_SHORTCUT = "EditorCut";
 
   private AnAction myActionWithoutTextAndDescription;
   private AnAction myActionWithTextOnly;
   private AnAction myActionWithTextAndDescription;
   private AnAction myActionExistent;
   private AnAction myActionWithUseShortcutOfExistent;
+  private AnAction myActionWithUseShortcutOfExistentRedefined;
+  private AnAction myActionWithUseShortcutOfExistentRedefinedInParent;
   private AnAction myActionWithUseShortcutOfNonExistent;
+  
   private ActionsTree myActionsTree;
+  static {
+    PlatformTestCase.initPlatformLangPrefix();
+  }
 
   public void setUp() throws Exception {
     super.setUp();
@@ -52,24 +66,53 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
     myActionWithTextAndDescription = new MyAction("text", "description");
     myActionExistent = new MyAction("text", "description");
     myActionWithUseShortcutOfExistent = new MyAction("text", "description");
+    myActionWithUseShortcutOfExistentRedefined = new MyAction("text", "description");
+    myActionWithUseShortcutOfExistentRedefinedInParent = new MyAction("text", "description");
     myActionWithUseShortcutOfNonExistent = new MyAction("text", "description");
+      
     ActionManager actionManager = ActionManager.getInstance();
     actionManager.registerAction(ACTION_WITHOUT_TEXT_AND_DESCRIPTION, myActionWithoutTextAndDescription);
     actionManager.registerAction(ACTION_WITH_TEXT_ONLY, myActionWithTextOnly);
     actionManager.registerAction(ACTION_WITH_TEXT_AND_DESCRIPTION, myActionWithTextAndDescription);
     actionManager.registerAction(EXISTENT_ACTION, myActionExistent);
     actionManager.registerAction(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION, myActionWithUseShortcutOfExistent);
+    actionManager.registerAction(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED, myActionWithUseShortcutOfExistentRedefined);
+    actionManager.registerAction(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT, myActionWithUseShortcutOfExistentRedefinedInParent);
     actionManager.registerAction(ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION, myActionWithUseShortcutOfNonExistent);
 
     KeymapManagerEx.getInstanceEx().bindShortcuts(EXISTENT_ACTION, ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION);
+    KeymapManagerEx.getInstanceEx().bindShortcuts(EXISTENT_ACTION, ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED);
+    KeymapManagerEx.getInstanceEx().bindShortcuts(EXISTENT_ACTION, ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT);
     KeymapManagerEx.getInstanceEx().bindShortcuts(NON_EXISTENT_ACTION, ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION);
-      
+
+    assertEquals("$Delete", KeymapManagerEx.getInstanceEx().getActionBinding(ACTION_EDITOR_DELETE_WITH_SHORTCUT));
+    assertEquals("$Cut", KeymapManagerEx.getInstanceEx().getActionBinding(ACTION_EDITOR_CUT_WITHOUT_SHORTCUT));
+    assertNotNull(actionManager.getAction(ACTION_EDITOR_DELETE_WITH_SHORTCUT));
+    assertNotNull(actionManager.getAction(ACTION_EDITOR_CUT_WITHOUT_SHORTCUT));
+
     DefaultActionGroup group = (DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_EDITOR);
-    group.addAll(myActionWithoutTextAndDescription, myActionWithTextOnly, myActionWithTextAndDescription,
-                 myActionExistent, myActionWithUseShortcutOfExistent, myActionWithUseShortcutOfNonExistent);
+    group.addAll(myActionWithoutTextAndDescription, 
+                 myActionWithTextOnly, 
+                 myActionWithTextAndDescription,
+                 myActionExistent, 
+                 myActionWithUseShortcutOfExistent, 
+                 myActionWithUseShortcutOfExistentRedefined, 
+                 myActionWithUseShortcutOfExistentRedefinedInParent, 
+                 myActionWithUseShortcutOfNonExistent);
     // populate action tree
     myActionsTree = new ActionsTree();
-    myActionsTree.reset(KeymapManager.getInstance().getActiveKeymap(), new QuickList[0]);
+
+    KeyboardShortcut shortcut1 = new KeyboardShortcut(KeyStroke.getKeyStroke('1'), null);
+    KeyboardShortcut shortcut2 = new KeyboardShortcut(KeyStroke.getKeyStroke('2'), null);
+    KeymapImpl parent = new KeymapImpl();
+    parent.addShortcut(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT, shortcut1);
+    parent.setName("parent");
+    parent.setCanModify(false);
+    KeymapImpl child = parent.deriveKeymap();
+    child.setName("child");
+    child.addShortcut(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED, shortcut2);
+    child.addShortcut(ACTION_EDITOR_DELETE_WITH_SHORTCUT, shortcut2);
+    myActionsTree.reset(child, new QuickList[0]);
   }
 
   @Override
@@ -82,15 +125,21 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
       group.remove(myActionWithTextAndDescription);
       group.remove(myActionExistent);
       group.remove(myActionWithUseShortcutOfExistent);
+      group.remove(myActionWithUseShortcutOfExistentRedefined);
+      group.remove(myActionWithUseShortcutOfExistentRedefinedInParent);
       group.remove(myActionWithUseShortcutOfNonExistent);
       actionManager.unregisterAction(ACTION_WITHOUT_TEXT_AND_DESCRIPTION);
       actionManager.unregisterAction(ACTION_WITH_TEXT_ONLY);
       actionManager.unregisterAction(ACTION_WITH_TEXT_AND_DESCRIPTION);
       actionManager.unregisterAction(EXISTENT_ACTION);
       actionManager.unregisterAction(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION);
+      actionManager.unregisterAction(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED);
+      actionManager.unregisterAction(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT);
       actionManager.unregisterAction(ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION);
 
       ((KeymapManagerImpl)KeymapManager.getInstance()).unbindShortcuts(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION);
+      ((KeymapManagerImpl)KeymapManager.getInstance()).unbindShortcuts(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED);
+      ((KeymapManagerImpl)KeymapManager.getInstance()).unbindShortcuts(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT);
       ((KeymapManagerImpl)KeymapManager.getInstance()).unbindShortcuts(ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION);
     }
     finally {
@@ -105,10 +154,14 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
              ACTION_WITH_TEXT_ONLY,
              ACTION_WITH_TEXT_AND_DESCRIPTION,
              EXISTENT_ACTION,
-             ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION),
+             ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED,
+             ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT,
+             ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION,
+             ACTION_EDITOR_DELETE_WITH_SHORTCUT), // this action is shown, since the keymap redefines the shortcut of $Delete
            Arrays.asList(
              NON_EXISTENT_ACTION,
-             ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION
+             ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION,  
+             ACTION_EDITOR_CUT_WITHOUT_SHORTCUT // this one is not shown since bound to $cut  
            )
     );
   }
@@ -121,10 +174,14 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
              ACTION_WITH_TEXT_ONLY,
              ACTION_WITH_TEXT_AND_DESCRIPTION,
              EXISTENT_ACTION,
+             ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED,
+             ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT,
              ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION),
            Arrays.asList(
              NON_EXISTENT_ACTION,
-             ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION
+             ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION,
+             ACTION_EDITOR_DELETE_WITH_SHORTCUT,
+             ACTION_EDITOR_CUT_WITHOUT_SHORTCUT
            )
     );
   }

@@ -73,6 +73,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   private final PsiElement myScope;
   private final ElementFilter myFilter;
   private boolean myMembersFlag = false;
+  private boolean myQualified = false;
   private PsiType myQualifierType = null;
   private PsiClass myQualifierClass = null;
   private final Condition<String> myMatcher;
@@ -108,6 +109,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
         }
       }
       else if (qualifier != null) {
+        myQualified = true;
         setQualifierType(qualifier.getType());
         if (myQualifierType == null && qualifier instanceof PsiJavaCodeReferenceElement) {
           final PsiElement target = ((PsiJavaCodeReferenceElement)qualifier).resolve();
@@ -218,8 +220,14 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
       return true;
     }
 
-    if (element instanceof PsiPackage && myScope instanceof PsiClass && !isQualifiedContext()) {
-      return true;
+    if (element instanceof PsiPackage && !isQualifiedContext()) {
+      if (myScope instanceof PsiClass) {
+        return true;
+      }
+      if (((PsiPackage)element).getQualifiedName().contains(".") &&
+          PsiTreeUtil.getParentOfType(myElement, PsiImportStatementBase.class) != null) {
+        return true;
+      }
     }
 
     if (element instanceof PsiMethod) {
@@ -304,7 +312,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     if (!(element instanceof PsiMember)) return true;
 
     PsiMember member = (PsiMember)element;
-    PsiClass accessObjectClass = member instanceof PsiClass ? null : myQualifierClass;
+    PsiClass accessObjectClass = myQualified ? myQualifierClass : null;
     return JavaPsiFacade.getInstance(element.getProject()).getResolveHelper().isAccessible(member, member.getModifierList(), myElement,
                                                                                            accessObjectClass, myDeclarationHolder);
   }

@@ -65,6 +65,11 @@ public final class ToolWindowsGroup extends ActionGroup implements DumbAware {
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     Project project = getEventProject(e);
     if (project == null) return EMPTY_ARRAY;
+    List<ActivateToolWindowAction> result = getToolWindowActions(project);
+    return result.toArray(new AnAction[result.size()]);
+  }
+
+  public static List<ActivateToolWindowAction> getToolWindowActions(@NotNull Project project) {
     ActionManager actionManager = ActionManager.getInstance();
     ToolWindowManager manager = ToolWindowManager.getInstance(project);
     List<ActivateToolWindowAction> result = ContainerUtil.newArrayList();
@@ -76,6 +81,6 @@ public final class ToolWindowsGroup extends ActionGroup implements DumbAware {
       }
     }
     Collections.sort(result, COMPARATOR);
-    return result.toArray(new AnAction[result.size()]);
+    return result;
   }
 }

@@ -157,33 +157,32 @@ class RunConfigurable extends BaseConfigurable {
           final DefaultMutableTreeNode parent = (DefaultMutableTreeNode)node.getParent();
           final Object userObject = node.getUserObject();
           Boolean shared = null;
+          final String name = RunConfigurable.getName(userObject);
           if (userObject instanceof ConfigurationType) {
             final ConfigurationType configurationType = (ConfigurationType)userObject;
-            append(configurationType.getDisplayName(), parent.isRoot() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            append(name, parent.isRoot() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
             setIcon(configurationType.getIcon());
           }
           else if (userObject == DEFAULTS) {
-            append("Defaults", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+            append(name, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
             setIcon(AllIcons.General.Settings);
           }
           else if (userObject instanceof String) {//Folders
-            append((String)userObject, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            append(name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
             setIcon(AllIcons.Nodes.Folder);
           }
           else if (userObject instanceof ConfigurationFactory) {
-            append(((ConfigurationFactory)userObject).getName());
+            append(name);
             setIcon(((ConfigurationFactory)userObject).getIcon());
           }
           else {
             final RunManagerImpl runManager = getRunManager();
             RunnerAndConfigurationSettings configuration = null;
-            String name = null;
             if (userObject instanceof SingleConfigurationConfigurable) {
               final SingleConfigurationConfigurable<?> settings = (SingleConfigurationConfigurable)userObject;
               RunnerAndConfigurationSettings configurationSettings;
               configurationSettings = settings.getSettings();
               configuration = configurationSettings;
-              name = settings.getNameText();
               shared = settings.isStoreProjectConfiguration();
               setIcon(ProgramRunnerUtil.getConfigurationIcon(configurationSettings, !settings.isValid()));
             }
@@ -192,7 +191,6 @@ class RunConfigurable extends BaseConfigurable {
               shared = runManager.isConfigurationShared(settings);
               setIcon(RunManagerEx.getInstanceEx(myProject).getConfigurationIcon(settings));
               configuration = settings;
-              name = configuration.getName();
             }
             if (configuration != null) {
               append(name, configuration.isTemporary()
@@ -510,6 +508,25 @@ class RunConfigurable extends BaseConfigurable {
     myRightPanel.repaint();
   }
 
+  private static String getName(Object userObject) {
+    if (userObject instanceof ConfigurationType) {
+      return ((ConfigurationType)userObject).getDisplayName();
+    }
+    if (userObject == DEFAULTS) {
+      return "Defaults";
+    }
+    if (userObject instanceof ConfigurationFactory) {
+      return ((ConfigurationFactory)userObject).getName();
+    }
+    if (userObject instanceof SingleConfigurationConfigurable) {
+      return ((SingleConfigurationConfigurable)userObject).getNameText();
+    }
+    if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
+      return ((RunnerAndConfigurationSettingsImpl)userObject).getName();
+    }
+    return String.valueOf(userObject);//Folder objects are strings
+  }
+
   private JPanel createLeftPanel() {
     initTree();
     MyRemoveAction removeAction = new MyRemoveAction();
@@ -519,12 +536,15 @@ class RunConfigurable extends BaseConfigurable {
       .setAddAction(myAddAction).setAddActionName(ExecutionBundle.message("add.new.run.configuration.acrtion.name"))
       .setRemoveAction(removeAction).setRemoveActionUpdater(removeAction)
       .setRemoveActionName(ExecutionBundle.message("remove.run.configuration.action.name"))
-      .setMoveUpAction(moveUpAction).setMoveUpActionName(ExecutionBundle.message("move.up.action.name")).setMoveUpActionUpdater(moveUpAction)
-      .setMoveDownAction(moveDownAction).setMoveDownActionName(ExecutionBundle.message("move.down.action.name")).setMoveDownActionUpdater(moveDownAction)
+      .setMoveUpAction(moveUpAction).setMoveUpActionName(ExecutionBundle.message("move.up.action.name")).setMoveUpActionUpdater(
+        moveUpAction)
+      .setMoveDownAction(moveDownAction).setMoveDownActionName(ExecutionBundle.message("move.down.action.name")).setMoveDownActionUpdater(
+        moveDownAction)
       .addExtraAction(AnActionButton.fromAction(new MyCopyAction()))
       .addExtraAction(AnActionButton.fromAction(new MySaveAction()))
       .addExtraAction(AnActionButton.fromAction(new MyEditDefaultsAction()))
       .addExtraAction(AnActionButton.fromAction(new MyCreateFolderAction()))
+      .addExtraAction(AnActionButton.fromAction(new MySortFolderAction()))
       .setButtonComparator(ExecutionBundle.message("add.new.run.configuration.acrtion.name"),
                            ExecutionBundle.message("remove.run.configuration.action.name"),
                            ExecutionBundle.message("copy.configuration.action.name"),
@@ -1027,12 +1047,14 @@ class RunConfigurable extends BaseConfigurable {
     return RunManager.suggestUniqueName(str, currentNames);
   }
 
-  private SingleConfigurationConfigurable<RunConfiguration> createNewConfiguration(final RunnerAndConfigurationSettings settings, final DefaultMutableTreeNode node) {
+  private SingleConfigurationConfigurable<RunConfiguration> createNewConfiguration(final RunnerAndConfigurationSettings settings,
+                                                                                   final DefaultMutableTreeNode node,
+                                                                                   DefaultMutableTreeNode selectedNode) {
     final SingleConfigurationConfigurable<RunConfiguration> configurationConfigurable =
       SingleConfigurationConfigurable.editSettings(settings, null);
     installUpdateListeners(configurationConfigurable);
     DefaultMutableTreeNode nodeToAdd = new DefaultMutableTreeNode(configurationConfigurable);
-    myTreeModel.insertNodeInto(nodeToAdd, node, node.getChildCount());
+    myTreeModel.insertNodeInto(nodeToAdd, node, selectedNode != null ? node.getIndex(selectedNode) + 1 :node.getChildCount());
     TreeUtil.selectNode(myTree, nodeToAdd);
     return configurationConfigurable;
   }
@@ -1062,7 +1084,7 @@ class RunConfigurable extends BaseConfigurable {
     if (factory instanceof ConfigurationFactoryEx) {
       ((ConfigurationFactoryEx)factory).onNewConfigurationCreated(settings.getConfiguration());
     }
-    createNewConfiguration(settings, node);
+    createNewConfiguration(settings, node, selectedNode);
   }
 
   private class MyToolbarAddAction extends AnAction implements AnActionButtonRunnable {
@@ -1372,7 +1394,7 @@ class RunConfigurable extends BaseConfigurable {
         if (factory instanceof ConfigurationFactoryEx) {
           ((ConfigurationFactoryEx)factory).onConfigurationCopied(settings.getConfiguration());
         }
-        final SingleConfigurationConfigurable<RunConfiguration> configurable = createNewConfiguration(settings, typeNode);
+        final SingleConfigurationConfigurable<RunConfiguration> configurable = createNewConfiguration(settings, typeNode, getSelectedNode());
         IdeFocusManager.getInstance(myProject).requestFocus(configurable.getNameTextField(), true);
         configurable.getNameTextField().setSelectionStart(0);
         configurable.getNameTextField().setSelectionEnd(copyName.length());
@@ -1608,6 +1630,71 @@ class RunConfigurable extends BaseConfigurable {
     }
   }
 
+  private class MySortFolderAction extends AnAction implements Comparator<DefaultMutableTreeNode>{
+    private MySortFolderAction() {
+      super(ExecutionBundle.message("run.configuration.sort.folder.text"),
+            ExecutionBundle.message("run.configuration.sort.folder.description"), AllIcons.Icons.Inspector.SortByName);
+    }
+
+    @Override
+    public int compare(DefaultMutableTreeNode node1, DefaultMutableTreeNode node2) {
+      NodeKind kind1 = getKind(node1);
+      NodeKind kind2 = getKind(node2);
+      if (kind1 == FOLDER) {
+        return  (kind2 == FOLDER) ? node1.getParent().getIndex(node1) - node2.getParent().getIndex(node2) : -1;
+      }
+      if (kind2 == FOLDER) {
+        return 1;
+      }
+      String name1 = getName(node1.getUserObject());
+      String name2 = getName(node2.getUserObject());
+      if (kind1 == TEMPORARY_CONFIGURATION) {
+        return (kind2 == TEMPORARY_CONFIGURATION) ? name1.compareTo(name2) : 1;
+      }
+      if (kind2 == TEMPORARY_CONFIGURATION) {
+        return -1;
+      }
+      return name1.compareTo(name2);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      final DefaultMutableTreeNode[] selectedNodes = getSelectedNodes();
+      List<DefaultMutableTreeNode> foldersToSort = new ArrayList<DefaultMutableTreeNode>();
+      for (DefaultMutableTreeNode node : selectedNodes) {
+        NodeKind kind = getKind(node);
+        if (kind == CONFIGURATION_TYPE || kind == FOLDER) {
+          foldersToSort.add(node);
+        }
+      }
+      for (DefaultMutableTreeNode folderNode : foldersToSort) {
+        List<DefaultMutableTreeNode> children = new ArrayList<DefaultMutableTreeNode>();
+        for (int i = 0; i < folderNode.getChildCount(); i++) {
+          DefaultMutableTreeNode child = (DefaultMutableTreeNode)folderNode.getChildAt(i);
+          children.add(child);
+        }
+        Collections.sort(children, this);
+        for (DefaultMutableTreeNode child : children) {
+          folderNode.add(child);
+        }
+        myTreeModel.nodeStructureChanged(folderNode);
+      }
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      final DefaultMutableTreeNode[] selectedNodes = getSelectedNodes();
+      for (DefaultMutableTreeNode node : selectedNodes) {
+        NodeKind kind = getKind(node);
+        if (kind == CONFIGURATION_TYPE || kind == FOLDER) {
+          e.getPresentation().setEnabled(true);
+          return;
+        }
+      }
+      e.getPresentation().setEnabled(false);
+    }
+  }
+
   @Nullable
   private static ConfigurationType getType(DefaultMutableTreeNode node) {
     while (node != null) {
@@ -1627,7 +1714,7 @@ class RunConfigurable extends BaseConfigurable {
   @Nullable
   private DefaultMutableTreeNode getSelectedNode() {
     DefaultMutableTreeNode[] nodes = myTree.getSelectedNodes(DefaultMutableTreeNode.class, null);
-    return nodes.length > 1 ? nodes[0] : null;
+    return nodes.length >= 1 ? nodes[0] : null;
   }
 
   @Nullable

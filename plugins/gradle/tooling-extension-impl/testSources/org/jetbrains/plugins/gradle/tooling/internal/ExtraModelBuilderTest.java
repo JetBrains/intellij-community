@@ -17,6 +17,8 @@ package org.jetbrains.plugins.gradle.tooling.internal;
 
 import org.gradle.api.Project;
 import org.gradle.util.GradleVersion;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.junit.Test;
@@ -75,6 +77,12 @@ public class ExtraModelBuilderTest {
     public Object buildAll(String modelName, Project project) {
       return null;
     }
+
+    @NotNull
+    @Override
+    public ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
+      return ErrorMessageBuilder.create(project, e, "");
+    }
   }
 
   @TargetVersions("1.8+")
@@ -87,6 +95,12 @@ public class ExtraModelBuilderTest {
     @Override
     public Object buildAll(String modelName, Project project) {
       return null;
+    }
+
+    @NotNull
+    @Override
+    public ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
+      return ErrorMessageBuilder.create(project, e, "");
     }
   }
 
@@ -101,6 +115,12 @@ public class ExtraModelBuilderTest {
     public Object buildAll(String modelName, Project project) {
       return null;
     }
+
+    @NotNull
+    @Override
+    public ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
+      return ErrorMessageBuilder.create(project, e, "");
+    }
   }
 
   @TargetVersions(value = "1.8 <=> 1.9", checkBaseVersions = false)
@@ -113,6 +133,12 @@ public class ExtraModelBuilderTest {
     @Override
     public Object buildAll(String modelName, Project project) {
       return null;
+    }
+
+    @NotNull
+    @Override
+    public ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
+      return ErrorMessageBuilder.create(project, e, "");
     }
   }
 

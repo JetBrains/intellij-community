@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -146,7 +146,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       final PsiType migrationType = myTypeEvaluator.evaluateType(consideredExpression);
       final PsiType fixedType = typeElement.getType();
       if (migrationType != null && !TypeConversionUtil.isAssignable(migrationType, fixedType)) {
-        myLabeler.markFailedConversion(new Pair<PsiType, PsiType>(fixedType, migrationType), consideredExpression);
+        myLabeler.markFailedConversion(Pair.create(fixedType, migrationType), consideredExpression);
       }
     }
   }
@@ -159,7 +159,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       final PsiType fixedType = typeElement.getType();
       final PsiType migrationType = myTypeEvaluator.evaluateType(expression.getOperand());
       if (migrationType != null && !TypeConversionUtil.areTypesConvertible(migrationType, fixedType)) {
-        myLabeler.markFailedConversion(new Pair<PsiType, PsiType>(fixedType, migrationType), expression);
+        myLabeler.markFailedConversion(Pair.create(fixedType, migrationType), expression);
       }
     }
   }
@@ -189,7 +189,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       if (returnType != null && valueType != null) {
         if (!myLabeler.addMigrationRoot(method, valueType, myStatement, TypeConversionUtil.isAssignable(returnType, valueType), true)
             && TypeMigrationLabeler.typeContainsTypeParameters(returnType)) {
-          myLabeler.markFailedConversion(new Pair<PsiType, PsiType>(returnType, valueType), value);
+          myLabeler.markFailedConversion(Pair.create(returnType, valueType), value);
         }
       }
     }
@@ -253,20 +253,9 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       else if (psiType instanceof PsiClassType) {
         final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)psiType).resolveGenerics();
         final PsiClass psiClass = resolveResult.getElement();
-        final Project project = statement.getProject();
-        final PsiClass iterableClass =
-            JavaPsiFacade.getInstance(project).findClass("java.lang.Iterable", GlobalSearchScope.allScope(project));
-        if (iterableClass == null) return;
-        if (!InheritanceUtil.isInheritorOrSelf(psiClass, iterableClass, true)) {
-          findConversionOrFail(value, value, typeView.getTypePair());
-          return;
-        }
-        final PsiSubstitutor iterableParamSubstitutor =
-            TypeConversionUtil.getClassSubstitutor(iterableClass, psiClass, PsiSubstitutor.EMPTY);
-        LOG.assertTrue(iterableParamSubstitutor != null);
-        final PsiTypeParameter[] typeParameters = iterableClass.getTypeParameters();
-        LOG.assertTrue(typeParameters.length == 1);
-        psiType = resolveResult.getSubstitutor().substitute(iterableParamSubstitutor.substitute(typeParameters[0]));
+        final PsiType targetTypeParameter = getTargetTypeParameter(psiClass, value, typeView);
+        if (targetTypeParameter == null) return;
+        psiType = resolveResult.getSubstitutor().substitute(targetTypeParameter);
         if (psiType instanceof PsiWildcardType) {
           psiType = ((PsiWildcardType)psiType).getExtendsBound();
         }
@@ -283,9 +272,13 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
         } else {
           final PsiClass iterableClass = PsiUtil.resolveClassInType(typeViewType);
           LOG.assertTrue(iterableClass != null);
-          final PsiTypeParameter[] typeParameters = iterableClass.getTypeParameters();
-          LOG.assertTrue(typeParameters.length == 1);
-          final Map<PsiTypeParameter, PsiType> substMap = Collections.singletonMap(typeParameters[0], left.getType());
+
+          final PsiType targetType = getTargetTypeParameter(iterableClass, value, typeView);
+          final PsiClass typeParam = PsiUtil.resolveClassInClassTypeOnly(targetType);
+          if (!(typeParam instanceof PsiTypeParameter)) return;
+
+          final Map<PsiTypeParameter, PsiType> substMap = Collections.singletonMap(((PsiTypeParameter)typeParam), left.getType());
+
           final PsiElementFactory factory = JavaPsiFacade.getElementFactory(iterableClass.getProject());
           iterableType = factory.createType(iterableClass, factory.createSubstitutor(substMap));
         }
@@ -296,6 +289,22 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
     }
   }
 
+  private PsiType getTargetTypeParameter(PsiClass iterableClass, PsiExpression value, TypeView typeView) {
+    final Project project = iterableClass.getProject();
+    final PsiClass itClass =
+      JavaPsiFacade.getInstance(project).findClass("java.lang.Iterable", GlobalSearchScope.allScope(project));
+    if (itClass == null) return null;
+
+    if (!InheritanceUtil.isInheritorOrSelf(iterableClass, itClass, true)) {
+      findConversionOrFail(value, value, typeView.getTypePair());
+      return null;
+    }
+
+    final PsiSubstitutor aSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(itClass, iterableClass, PsiSubstitutor.EMPTY);
+
+    return aSubstitutor.substitute(itClass.getTypeParameters()[0]);
+  }
+  
   @Override
   public void visitNewExpression(final PsiNewExpression expression) {
     super.visitNewExpression(expression);
@@ -384,7 +393,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
         final PsiType type = typeView.getType();
         if (migrationType == null || !TypeConversionUtil.isAssignable(migrationType, type)) {
           if (migrationType != null && !TypeConversionUtil.isAssignable(type, migrationType)) {
-            myLabeler.markFailedConversion(new Pair<PsiType, PsiType>(parentExpression.getType(), type), parentExpression);
+            myLabeler.markFailedConversion(Pair.create(parentExpression.getType(), type), parentExpression);
             return;
           }
           migrationType = type;
@@ -401,7 +410,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   private void checkIndexExpression(final PsiExpression indexExpression) {
     final PsiType indexType = myTypeEvaluator.evaluateType(indexExpression);
     if (indexType != null && !TypeConversionUtil.isAssignable(PsiType.INT, indexType)) {
-      myLabeler.markFailedConversion(new Pair<PsiType, PsiType>(indexExpression.getType(), indexType), indexExpression);
+      myLabeler.markFailedConversion(Pair.create(indexExpression.getType(), indexType), indexExpression);
     }
   }
 
@@ -526,7 +535,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
     }
 
     public Pair<PsiType, PsiType> getTypePair() {
-      return new Pair<PsiType, PsiType>(myOriginType, myType);
+      return Pair.create(myOriginType, myType);
     }
   }
 

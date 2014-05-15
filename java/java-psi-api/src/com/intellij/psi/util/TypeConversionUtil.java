@@ -991,7 +991,7 @@ public class TypeConversionUtil {
           return isAssignable(leftBound, typeRight, effectiveAllowUncheckedConversion && !containsWildcards(leftBound));
         }
         else { // isSuper
-          return isAssignable(typeRight, leftBound, effectiveAllowUncheckedConversion && !containsWildcards(leftBound));
+          return isAssignable(typeRight, leftBound, false);
         }
       }
     }
@@ -1065,29 +1065,42 @@ public class TypeConversionUtil {
     }
     if (substitutor == null) {
       if (ourReportedSuperClassSubstitutorExceptions.add(derivedClass.getQualifiedName() + "/" + superClass.getQualifiedName())) {
-        final StringBuilder msg = new StringBuilder("Super: " + classInfo(superClass));
-        msg.append("visited:\n");
-        for (PsiClass aClass : visited) {
-          msg.append("  each: " + classInfo(aClass));
-        }
-        msg.append("isInheritor: " + InheritanceUtil.isInheritorOrSelf(derivedClass, superClass, true) + " " + derivedClass.isInheritor(superClass, true));
-        msg.append("hierarchy:\n");
-        InheritanceUtil.processSupers(derivedClass, true, new Processor<PsiClass>() {
-          @Override
-          public boolean process(PsiClass psiClass) {
-            msg.append("each: " + classInfo(psiClass));
-            return true;
-          }
-        });
-        LOG.error(msg.toString());
+        reportHierarchyInconsistency(superClass, derivedClass, visited);
       }
       return PsiSubstitutor.EMPTY;
     }
     return substitutor;
   }
 
+  private static void reportHierarchyInconsistency(PsiClass superClass, PsiClass derivedClass, Set<PsiClass> visited) {
+    final StringBuilder msg = new StringBuilder("Super: " + classInfo(superClass));
+    msg.append("visited:\n");
+    for (PsiClass aClass : visited) {
+      msg.append("  each: " + classInfo(aClass));
+    }
+    msg.append("isInheritor: " + InheritanceUtil.isInheritorOrSelf(derivedClass, superClass, true) + " " + derivedClass.isInheritor(superClass, true));
+    msg.append("\nhierarchy:\n");
+    InheritanceUtil.processSupers(derivedClass, true, new Processor<PsiClass>() {
+      @Override
+      public boolean process(PsiClass psiClass) {
+        msg.append("each: " + classInfo(psiClass));
+        return true;
+      }
+    });
+    LOG.error(msg.toString());
+  }
+
   private static String classInfo(PsiClass aClass) {
-    return aClass.getQualifiedName() + "(" + aClass.getClass().getName() + "; " + PsiUtilCore.getVirtualFile(aClass) + ");\n";
+    String s = aClass.getQualifiedName() + "(" + aClass.getClass().getName() + "; " + PsiUtilCore.getVirtualFile(aClass) + ");\n";
+    s += "extends: ";
+    for (PsiClassType type : aClass.getExtendsListTypes()) {
+      s += type + " (" + type.getClass().getName() + "; " + type.resolve() + ") ";
+    }
+    s += "\nimplements: ";
+    for (PsiClassType type : aClass.getImplementsListTypes()) {
+      s += type + " (" + type.getClass().getName() + "; " + type.resolve() + ") ";
+    }
+    return s + "\n";
   }
 
   @NotNull

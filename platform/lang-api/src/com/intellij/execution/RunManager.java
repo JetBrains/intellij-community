@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -217,7 +217,8 @@ public abstract class RunManager {
    */
   public abstract void refreshUsagesList(RunProfile profile);
 
-  public static String suggestUniqueName(String str, ArrayList<String> currentNames) {
+  @NotNull
+  public static String suggestUniqueName(@NotNull String str, @NotNull Collection<String> currentNames) {
     if (!currentNames.contains(str)) return str;
 
     final Matcher matcher = Pattern.compile("(.*?)\\s*\\(\\d+\\)").matcher(str);

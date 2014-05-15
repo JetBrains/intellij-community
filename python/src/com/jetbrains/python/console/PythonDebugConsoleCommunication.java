@@ -102,4 +102,8 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
   public void interrupt() {
     throw new UnsupportedOperationException();
   }
+
+  public boolean isSuspended() {
+    return myDebugProcess.getSession().isSuspended();
+  }
 }

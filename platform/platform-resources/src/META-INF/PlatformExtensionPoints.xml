@@ -220,5 +220,11 @@
     <extensionPoint qualifiedName="com.intellij.remote.pathMappingProvider" interface="com.intellij.remote.PathMappingProvider"/>
 
     <extensionPoint name="colorAndFontOptionsImportHandler" interface="com.intellij.application.options.colors.ImportHandler"/>
+
+    <extensionPoint name="codeInsight.template.postfixTemplateProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider"/>
+    </extensionPoint>
+
   </extensionPoints>
 </idea-plugin>

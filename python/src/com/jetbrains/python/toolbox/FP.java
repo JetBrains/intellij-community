@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -238,9 +238,9 @@ public class FP {
           }
 
           public Pair<R1, R2> next() {
-            if (one_iter.hasNext() && two_iter.hasNext()) return new Pair<R1, R2>(one_iter.next(), two_iter.next());
-            if (fill1 && two_iter.hasNext()) return new Pair<R1, R2>(filler1, two_iter.next());
-            if (fill2 && one_iter.hasNext()) return new Pair<R1, R2>(one_iter.next(), filler2);
+            if (one_iter.hasNext() && two_iter.hasNext()) return Pair.create(one_iter.next(), two_iter.next());
+            if (fill1 && two_iter.hasNext()) return Pair.create(filler1, two_iter.next());
+            if (fill2 && one_iter.hasNext()) return Pair.create(one_iter.next(), filler2);
             throw new NoSuchElementException();
           }
         }; 

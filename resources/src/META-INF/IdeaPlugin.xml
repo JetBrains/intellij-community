@@ -14,7 +14,6 @@
   <xi:include href="/META-INF/ManifestSupport.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/PostfixTemplates.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <application-components>
     <component>
@@ -90,6 +89,9 @@
                     interface="com.intellij.debugger.engine.JVMDebugProvider"/>
     <extensionPoint name="debugger.javaDebugAware"
                     interface="com.intellij.debugger.engine.JavaDebugAware"/>
+
+    <extensionPoint name="debugger.javaBreakpointHandlerFactory"
+                    interface="com.intellij.debugger.engine.JavaBreakpointHandlerFactory"/>
 
     <extensionPoint name="debugger.positionManagerFactory"
                     interface="com.intellij.debugger.PositionManagerFactory"
@@ -378,6 +380,8 @@
                     serviceImplementation="com.intellij.psi.impl.JavaPsiImplementationHelperImpl"/>
     <projectService serviceInterface="com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade"
                     serviceImplementation="com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacadeImpl"/>
+    <projectService serviceInterface="com.intellij.codeInsight.JavaCodeInsightSettingsFacade"
+                    serviceImplementation="com.intellij.codeInsight.JavaCodeInsightSettingsFacadeImpl"/>
     <projectService serviceInterface="com.intellij.psi.impl.migration.PsiMigrationManager"
                     serviceImplementation="com.intellij.psi.impl.migration.PsiMigrationManager"/>
     <projectService serviceInterface="com.intellij.psi.PsiResolveHelper"
@@ -519,14 +523,14 @@
     <localInspection language="JAVA" shortName="NumericOverflow" displayName="Numeric overflow" groupName="Numeric issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.intellij.codeInspection.NumericOverflowInspection"/>
     <localInspection language="JAVA" shortName="RedundantCast" displayName="Redundant type cast" groupName="Verbose or redundant code constructs"
-                     enabledByDefault="true" level="WARNING"
+                     enabledByDefault="true" level="WARNING" cleanupTool="true"
                      implementationClass="com.intellij.codeInspection.redundantCast.RedundantCastInspection"/>
     <localInspection language="JAVA" shortName="RedundantTypeArguments" bundle="messages.InspectionsBundle" key="inspection.redundant.type.display.name"
-                     groupName="Verbose or redundant code constructs" enabledByDefault="true" level="WARNING"
+                     groupName="Verbose or redundant code constructs" enabledByDefault="true" level="WARNING"  cleanupTool="true"
                      implementationClass="com.intellij.codeInspection.miscGenerics.RedundantTypeArgsInspection"/>
     <localInspection language="JAVA" shortName="RedundantArrayCreation" bundle="messages.InspectionsBundle"
                      key="inspection.redundant.array.creation.display.name" groupName="Verbose or redundant code constructs"
-                     enabledByDefault="true" level="WARNING"
+                     enabledByDefault="true" level="WARNING" cleanupTool="true"
                      implementationClass="com.intellij.codeInspection.miscGenerics.RedundantArrayForVarargsCallInspection"/>
     <localInspection language="JAVA" shortName="SuspiciousMethodCalls" bundle="messages.InspectionsBundle"
                      key="inspection.suspicious.collections.method.calls.display.name" groupName="Probable bugs" enabledByDefault="true"
@@ -573,10 +577,10 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection" />
     <localInspection language="JAVA" shortName="RedundantThrowsDeclaration" bundle="messages.InspectionsBundle" key="redundant.throws.declaration"
-                     groupName="Declaration redundancy" enabledByDefault="false" level="WARNING"
+                     groupName="Declaration redundancy" enabledByDefault="false" level="WARNING" cleanupTool="true"
                      implementationClass="com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclaration" />
     <localInspection language="JAVA" shortName="AccessStaticViaInstance" bundle="messages.InspectionsBundle" key="access.static.via.instance" groupName=""
-                     enabledByDefault="true" level="WARNING"
+                     enabledByDefault="true" level="WARNING" cleanupTool="true"
                      implementationClass="com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance" />
     <localInspection shortName="DefaultFileTemplate" bundle="messages.InspectionsBundle" key="default.file.template.display.name"
                      groupName="General" enabledByDefault="true" level="WARNING"
@@ -602,7 +606,7 @@
                      key="suspicious.name.combination.display.name" groupName="Probable bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.suspiciousNameCombination.SuspiciousNameCombinationInspection" />
     <localInspection language="JAVA" shortName="DuplicateThrows" bundle="messages.InspectionsBundle" key="inspection.duplicate.throws.display.name"
-                     groupName="Declaration redundancy" enabledByDefault="true" level="WARNING"
+                     groupName="Declaration redundancy" enabledByDefault="true" level="WARNING" cleanupTool="true"
                      implementationClass="com.intellij.codeInspection.duplicateThrows.DuplicateThrowsInspection" />
     <localInspection language="JAVA" shortName="FieldAccessNotGuarded" displayName="Unguarded field access" groupName="Concurrency annotation issues"
                      enabledByDefault="false" level="WARNING"
@@ -1003,6 +1007,7 @@
     <stacktrace.fold substring="at sun.reflect."/>
     <stacktrace.fold substring="at java.rmi."/>
     <stacktrace.fold substring="at sun.rmi."/>
+    <stacktrace.fold substring="at com.sun.proxy.$Proxy"/>
     <stacktrace.fold substring="at com.intellij.rt.execution."/>
 
     <debuggerEditorTextProvider language="JAVA" implementationClass="com.intellij.debugger.impl.JavaEditorTextProviderImpl"/>
@@ -1161,6 +1166,7 @@
 
     <liveTemplateOptionalProcessor implementation="com.intellij.codeInsight.template.impl.ShortenToStaticImportProcessor"/>
     <liveTemplateOptionalProcessor implementation="com.intellij.codeInsight.template.impl.ShortenFQNamesProcessor"/>
+    <liveTemplateOptionalProcessor implementation="com.intellij.codeInsight.template.impl.CodeBlockReformattingProcessor"/>
     <projectService serviceInterface="com.intellij.ide.todo.nodes.TodoTreeHelper"
                     serviceImplementation="com.intellij.ide.todo.nodes.TodoJavaTreeHelper"/>
 
@@ -1480,6 +1486,9 @@
     <projectService serviceInterface="com.intellij.platform.ProjectBaseDirectory"
                     serviceImplementation="com.intellij.platform.ProjectBaseDirectory"/>
     <spellchecker.support language="JAVA" implementationClass="com.intellij.spellchecker.JavaSpellcheckingStrategy"/>
+
+    <codeInsight.template.postfixTemplateProvider language="JAVA"
+                                                  implementationClass="com.intellij.codeInsight.template.postfix.templates.JavaPostfixTemplateProvider"/>
   </extensions>
 
   <actions>

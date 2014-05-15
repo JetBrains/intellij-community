@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,9 @@ import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -121,7 +123,7 @@ public class JavaDocInfoGenerator {
           elements = rawElements;
         }
 
-        return new Pair<PsiElement[], InheritDocProvider<PsiElement[]>>(elements, mapProvider(pair.second, dropFirst));
+        return Pair.create(elements, mapProvider(pair.second, dropFirst));
       }
 
       @Override
@@ -260,7 +262,12 @@ public class JavaDocInfoGenerator {
         buffer.append("<html><body></body></html>");
       }
       String errorSection = "<p id=\"error\">Following external urls were checked:<br>&nbsp;&nbsp;&nbsp;<i>" +
-                   StringUtil.join(docURLs, "</i><br>&nbsp;&nbsp;&nbsp;<i>") +
+                   StringUtil.join(docURLs, new Function<String, String>() {
+                     @Override
+                     public String fun(String url) {
+                       return XmlStringUtil.escapeString(url);
+                     }
+                   }, "</i><br>&nbsp;&nbsp;&nbsp;<i>") +
                    "</i><br>The documentation for this element is not found. Please add all the needed paths to API docs in " +
                    "<a href=\"open://Project Settings\">Project Settings.</a></p>";
       buffer.insert(buffer.indexOf("<body>"), errorSection);
@@ -1474,7 +1481,7 @@ public class JavaDocInfoGenerator {
             String tagName = value.getText();
 
             if (tagName != null && areWeakEqual(tagName, paramName)) {
-              parmTag = new Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>(localTag, ourEmptyProvider);
+              parmTag = Pair.create(localTag, ourEmptyProvider);
               break;
             }
           }
@@ -1491,7 +1498,7 @@ public class JavaDocInfoGenerator {
           try {
             final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
             final PsiDocTag tag = elementFactory.createDocTagFromText("@exception " + paramName);
-            collectedTags.addLast(new Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>(tag, ourEmptyProvider));
+            collectedTags.addLast(Pair.create(tag, ourEmptyProvider));
           }
           catch (IncorrectOperationException e) {
             LOG.error(e);

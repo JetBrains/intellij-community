@@ -19,10 +19,10 @@ public interface VariableContext {
   boolean watchableAsEvaluationExpression();
 
   @NotNull
-  DebuggerViewSupport getDebugProcess();
+  DebuggerViewSupport getViewSupport();
 
   @NotNull
-  MemberFilter getMemberFilter();
+  MemberFilter createMemberFilter();
 
   @Nullable
   Scope getScope();

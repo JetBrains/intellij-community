@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiDocTokenImpl extends LeafPsiElement implements PsiDocToken{
-  public PsiDocTokenImpl(IElementType type, CharSequence text) {
+  public PsiDocTokenImpl(@NotNull IElementType type, CharSequence text) {
     super(type, text);
   }
 

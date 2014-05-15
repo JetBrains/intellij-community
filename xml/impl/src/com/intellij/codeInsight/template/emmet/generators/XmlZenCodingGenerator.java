@@ -15,12 +15,9 @@
  */
 package com.intellij.codeInsight.template.emmet.generators;
 
-import com.intellij.application.options.emmet.EmmetOptions;
-import com.intellij.codeInsight.template.CustomLiveTemplateBase;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
-import com.intellij.codeInsight.template.impl.CustomLiveTemplateLookupElement;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
@@ -68,27 +65,15 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
   }
 
   public abstract String toString(@NotNull XmlTag tag,
-                                  @NotNull List<Pair<String, String>> attribute2Value,
+                                  @NotNull List<Couple<String>> attribute2Value,
                                   boolean hasChildren,
                                   @NotNull PsiElement context);
 
   @NotNull
-  public abstract String buildAttributesString(@NotNull List<Pair<String, String>> attribute2value,
+  public abstract String buildAttributesString(@NotNull List<Couple<String>> attribute2value,
                                                boolean hasChildren,
                                                int numberInIteration,
                                                int totalIterations, @Nullable String surroundedText);
 
   public abstract boolean isMyContext(@NotNull PsiElement context, boolean wrapping);
-
-  @Override
-  public CustomLiveTemplateLookupElement createLookupElement(@NotNull CustomLiveTemplateBase customLiveTemplate,
-                                                             @NotNull final TemplateImpl template) {
-    return new CustomLiveTemplateLookupElement(customLiveTemplate, template.getKey(), template.getDescription(), "", false, true);
-  }
-
-  @Override
-  public boolean hasCompletionItem() {
-    EmmetOptions emmetOptions = EmmetOptions.getInstance();
-    return emmetOptions.isEmmetEnabled() && emmetOptions.isPreviewEnabled();
-  }
 }

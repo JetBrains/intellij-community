@@ -18,8 +18,8 @@ public abstract class VariableContextBase implements VariableContext {
 
   @NotNull
   @Override
-  public MemberFilter getMemberFilter() {
-    return getDebugProcess();
+  public MemberFilter createMemberFilter() {
+    return getViewSupport().createMemberFilter(this);
   }
 
   @Nullable

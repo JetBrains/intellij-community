@@ -169,6 +169,10 @@ public class DfaPsiUtil {
   }
 
   private static MultiMap<PsiField, PsiExpression> getAllConstructorFieldInitializers(final PsiClass psiClass) {
+    if (psiClass instanceof PsiCompiledElement) {
+      return MultiMap.EMPTY;
+    }
+
     return CachedValuesManager.getCachedValue(psiClass, new CachedValueProvider<MultiMap<PsiField, PsiExpression>>() {
       @Nullable
       @Override

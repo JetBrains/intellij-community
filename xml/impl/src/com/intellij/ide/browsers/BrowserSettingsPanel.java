@@ -46,7 +46,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.Collections;
 import java.util.UUID;
 
 import static com.intellij.ide.browsers.WebBrowserManager.DefaultBrowser;
@@ -139,16 +138,14 @@ final class BrowserSettingsPanel {
   @SuppressWarnings("UnusedDeclaration")
   private JComponent browsersTable;
 
-  private ComboBox  defaultBrowserComboBox;
+  private ComboBox defaultBrowserComboBox;
 
   private TableModelEditor<ConfigurableWebBrowser> browsersEditor;
 
   private String customPathValue;
 
   public BrowserSettingsPanel() {
-    alternativeBrowserPathField.addBrowseFolderListener(IdeBundle.message("title.select.path.to.browser"), null, null,
-                                                        APP_FILE_CHOOSER_DESCRIPTOR);
-
+    alternativeBrowserPathField.addBrowseFolderListener(IdeBundle.message("title.select.path.to.browser"), null, null, APP_FILE_CHOOSER_DESCRIPTOR);
     defaultBrowserPanel.setBorder(TitledSeparator.EMPTY_BORDER);
 
     //noinspection unchecked
@@ -236,7 +233,7 @@ final class BrowserSettingsPanel {
       }
 
       @Override
-      public void edit(@NotNull ConfigurableWebBrowser browser, @NotNull Function<ConfigurableWebBrowser, ConfigurableWebBrowser> mutator) {
+      public void edit(@NotNull ConfigurableWebBrowser browser, @NotNull Function<ConfigurableWebBrowser, ConfigurableWebBrowser> mutator, boolean isAdd) {
         BrowserSpecificSettings settings = cloneSettings(browser);
         if (settings != null && ShowSettingsUtil.getInstance().editConfigurable(browsersTable, settings.createConfigurable())) {
           mutator.fun(browser).setSpecificSettings(settings);
@@ -271,27 +268,26 @@ final class BrowserSettingsPanel {
         return !WebBrowserManager.getInstance().isPredefinedBrowser(item);
       }
     };
-    browsersEditor = new TableModelEditor<ConfigurableWebBrowser>(Collections.<ConfigurableWebBrowser>emptyList(), COLUMNS,
-                                                                  itemEditor, "No web browsers configured"
-    ).modelListener(new TableModelEditor.DataChangedListener<ConfigurableWebBrowser>() {
-      @Override
-      public void tableChanged(TableModelEvent event) {
-        update(event.getFirstRow());
-      }
-
-      @Override
-      public void dataChanged(@NotNull ColumnInfo<ConfigurableWebBrowser, ?> columnInfo, int rowIndex) {
-        if (columnInfo == PATH_COLUMN_INFO) {
-          update(rowIndex);
+    browsersEditor = new TableModelEditor<ConfigurableWebBrowser>(COLUMNS, itemEditor, "No web browsers configured")
+      .modelListener(new TableModelEditor.DataChangedListener<ConfigurableWebBrowser>() {
+        @Override
+        public void tableChanged(TableModelEvent event) {
+          update(event.getFirstRow());
         }
-      }
 
-      private void update(int rowIndex) {
-        if (rowIndex == 0 && getDefaultBrowser() == DefaultBrowser.FIRST) {
-          setCustomPathToFirstListed();
+        @Override
+        public void dataChanged(@NotNull ColumnInfo<ConfigurableWebBrowser, ?> columnInfo, int rowIndex) {
+          if (columnInfo == PATH_COLUMN_INFO) {
+            update(rowIndex);
+          }
         }
-      }
-    });
+
+        private void update(int rowIndex) {
+          if (rowIndex == 0 && getDefaultBrowser() == DefaultBrowser.FIRST) {
+            setCustomPathToFirstListed();
+          }
+        }
+      });
     browsersTable = browsersEditor.createComponent();
   }
 

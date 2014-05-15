@@ -23,6 +23,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -33,19 +34,41 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 
 public class MessageBusImpl implements MessageBus {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.messages.impl.MessageBusImpl");
+  private static final Comparator<MessageBusImpl> MESSAGE_BUS_COMPARATOR = new Comparator<MessageBusImpl>() {
+    @Override
+    public int compare(MessageBusImpl bus1, MessageBusImpl bus2) {
+      return ContainerUtil.compareLexicographically(bus1.myOrder, bus2.myOrder);
+    }
+  };
   private final ThreadLocal<Queue<DeliveryJob>> myMessageQueue = createThreadLocalQueue();
+
+  /**
+   * Root's order is empty
+   * Child bus's order is its parent order plus one more element, an int that's bigger than that of all sibling buses that come before
+   * Sorting by these vectors lexicographically gives DFS order
+   */
+  private final List<Integer> myOrder;
+
   private final ConcurrentMap<Topic, Object> mySyncPublishers = new ConcurrentHashMap<Topic, Object>();
   private final ConcurrentMap<Topic, Object> myAsyncPublishers = new ConcurrentHashMap<Topic, Object>();
+
+  /**
+   * This bus's subscribers
+   */
   private final ConcurrentMap<Topic, List<MessageBusConnectionImpl>> mySubscribers =
+    new ConcurrentHashMap<Topic, List<MessageBusConnectionImpl>>();
+
+  /**
+   * Caches subscribers for this bus and its children or parent, depending on the topic's broadcast policy
+   */
+  private final ConcurrentMap<Topic, List<MessageBusConnectionImpl>> mySubscriberCache =
     new ConcurrentHashMap<Topic, List<MessageBusConnectionImpl>>();
   private final List<MessageBusImpl> myChildBuses = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -57,18 +80,16 @@ public class MessageBusImpl implements MessageBus {
   private final Object myOwner;
   private boolean myDisposed;
 
-  @SuppressWarnings("UnusedDeclaration")
-  public MessageBusImpl() {
-    this("?", null);
-  }
-
-  public MessageBusImpl(@NotNull Object owner, MessageBus parentBus) {
+  public MessageBusImpl(@NotNull Object owner, @NotNull MessageBus parentBus) {
     myOwner = owner.toString();
     myParentBus = (MessageBusImpl)parentBus;
-    if (myParentBus != null) {
-      myParentBus.notifyChildBusCreated(this);
-      LOG.assertTrue(myParentBus.myChildBuses.contains(this));
-    }
+    myOrder = myParentBus.notifyChildBusCreated(this);
+    LOG.assertTrue(myParentBus.myChildBuses.contains(this));
+  }
+
+  private MessageBusImpl(Object owner) {
+    myOwner = owner.toString();
+    myOrder = Collections.emptyList();
   }
 
   @Override
@@ -76,13 +97,37 @@ public class MessageBusImpl implements MessageBus {
     return myParentBus;
   }
 
-  private void notifyChildBusCreated(final MessageBusImpl childBus) {
-    myChildBuses.add(childBus);
+  @NotNull
+  private RootBus getRootBus() {
+    return myParentBus != null ? myParentBus.getRootBus() : asRoot();
+  }
+
+  private RootBus asRoot() {
+    return (RootBus)this;
+  }
+
+  private List<Integer> notifyChildBusCreated(final MessageBusImpl childBus) {
     LOG.assertTrue(childBus.myParentBus == this);
+
+    MessageBusImpl lastChild = myChildBuses.isEmpty() ? null : myChildBuses.get(myChildBuses.size() - 1);
+    myChildBuses.add(childBus);
+    getRootBus().clearSubscriberCache();
+
+    int lastChildIndex = lastChild == null ? 0 : lastChild.myOrder.get(lastChild.myOrder.size() - 1);
+    if (lastChildIndex == Integer.MAX_VALUE) {
+      LOG.error("Too many child buses");
+    }
+    List<Integer> childOrder = new ArrayList<Integer>(myOrder.size() + 1);
+    childOrder.addAll(myOrder);
+    childOrder.add(lastChildIndex + 1);
+    return childOrder;
   }
 
   private void notifyChildBusDisposed(final MessageBusImpl childBus) {
     boolean removed = myChildBuses.remove(childBus);
+    Map<MessageBusImpl, Integer> map = getRootBus().myWaitingBuses.get();
+    if (map != null) map.remove(childBus);
+    getRootBus().clearSubscriberCache();
     LOG.assertTrue(removed);
   }
 
@@ -170,6 +215,8 @@ public class MessageBusImpl implements MessageBus {
     if (myParentBus != null) {
       myParentBus.notifyChildBusDisposed(this);
       myParentBus = null;
+    } else {
+      asRoot().myWaitingBuses.remove();
     }
     myDisposed = true;
   }
@@ -178,28 +225,58 @@ public class MessageBusImpl implements MessageBus {
     LOG.assertTrue(!myDisposed, "Already disposed");
   }
 
-  private void postMessage(Message message) {
-    checkNotDisposed();
-    final Topic topic = message.getTopic();
+  private void calcSubscribers(Topic topic, List<MessageBusConnectionImpl> result) {
     final List<MessageBusConnectionImpl> topicSubscribers = mySubscribers.get(topic);
     if (topicSubscribers != null) {
-      Queue<DeliveryJob> queue = myMessageQueue.get();
-      for (MessageBusConnectionImpl subscriber : topicSubscribers) {
-        queue.offer(new DeliveryJob(subscriber, message));
-        subscriber.scheduleMessageDelivery(message);
-      }
+      result.addAll(topicSubscribers);
     }
 
     Topic.BroadcastDirection direction = topic.getBroadcastDirection();
 
     if (direction == Topic.BroadcastDirection.TO_CHILDREN) {
       for (MessageBusImpl childBus : myChildBuses) {
-        childBus.postMessage(message);
+        childBus.calcSubscribers(topic, result);
       }
     }
 
     if (direction == Topic.BroadcastDirection.TO_PARENT && myParentBus != null) {
-      myParentBus.postMessage(message);
+      myParentBus.calcSubscribers(topic, result);
+    }
+  }
+
+  private void postMessage(Message message) {
+    checkNotDisposed();
+    final Topic topic = message.getTopic();
+    List<MessageBusConnectionImpl> topicSubscribers = mySubscriberCache.get(topic);
+    if (topicSubscribers == null) {
+      topicSubscribers = new SmartList<MessageBusConnectionImpl>();
+      calcSubscribers(topic, topicSubscribers);
+      mySubscriberCache.put(topic, topicSubscribers);
+    }
+    if (!topicSubscribers.isEmpty()) {
+      for (MessageBusConnectionImpl subscriber : topicSubscribers) {
+        subscriber.getBus().myMessageQueue.get().offer(new DeliveryJob(subscriber, message));
+        subscriber.getBus().notifyPendingJobChange(1);
+        subscriber.scheduleMessageDelivery(message);
+      }
+    }
+  }
+
+  private void notifyPendingJobChange(int delta) {
+    ThreadLocal<SortedMap<MessageBusImpl, Integer>> ref = getRootBus().myWaitingBuses;
+    SortedMap<MessageBusImpl, Integer> map = ref.get();
+    if (map == null) {
+      ref.set(map = new TreeMap<MessageBusImpl, Integer>(MESSAGE_BUS_COMPARATOR));
+    }
+    Integer countObject = map.get(this);
+    int count = countObject == null ? 0 : countObject;
+    int newCount = count + delta;
+    if (newCount > 0) {
+      map.put(this, newCount);
+    } else if (newCount == 0) {
+      map.remove(this);
+    } else {
+      LOG.error("Negative job count: " + this);
     }
   }
 
@@ -216,7 +293,15 @@ public class MessageBusImpl implements MessageBus {
       myParentBus.pumpMessages();
     }
     else {
-      doPumpMessages();
+      Map<MessageBusImpl, Integer> map = asRoot().myWaitingBuses.get();
+      if (map != null) {
+        Set<MessageBusImpl> buses = map.keySet();
+        if (!buses.isEmpty()) {
+          for (MessageBusImpl bus : new ArrayList<MessageBusImpl>(buses)) {
+            bus.doPumpMessages();
+          }
+        }
+      }
     }
   }
 
@@ -225,14 +310,10 @@ public class MessageBusImpl implements MessageBus {
     do {
       DeliveryJob job = queue.poll();
       if (job == null) break;
+      notifyPendingJobChange(-1);
       job.connection.deliverMessage(job.message);
     }
     while (true);
-
-    for (MessageBusImpl childBus : myChildBuses) {
-      LOG.assertTrue(childBus.myParentBus == this);
-      childBus.doPumpMessages();
-    }
   }
 
   void notifyOnSubscription(final MessageBusConnectionImpl connection, final Topic topic) {
@@ -244,6 +325,14 @@ public class MessageBusImpl implements MessageBus {
     }
 
     topicSubscribers.add(connection);
+    getRootBus().clearSubscriberCache();
+  }
+
+  void clearSubscriberCache() {
+    mySubscriberCache.clear();
+    for (MessageBusImpl bus : myChildBuses) {
+      bus.clearSubscriberCache();
+    }
   }
 
   void notifyConnectionTerminated(final MessageBusConnectionImpl connection) {
@@ -251,12 +340,14 @@ public class MessageBusImpl implements MessageBus {
       topicSubscribers.remove(connection);
     }
     if (myDisposed) return;
+    getRootBus().clearSubscriberCache();
 
     final Iterator<DeliveryJob> i = myMessageQueue.get().iterator();
     while (i.hasNext()) {
       final DeliveryJob job = i.next();
       if (job.connection == connection) {
         i.remove();
+        notifyPendingJobChange(-1);
       }
     }
   }
@@ -265,6 +356,7 @@ public class MessageBusImpl implements MessageBus {
     checkNotDisposed();
     final DeliveryJob job = myMessageQueue.get().poll();
     if (job == null) return;
+    notifyPendingJobChange(-1);
     job.connection.deliverMessage(job.message);
   }
 
@@ -276,5 +368,20 @@ public class MessageBusImpl implements MessageBus {
         return new ConcurrentLinkedQueue<T>();
       }
     };
+  }
+
+  public static class RootBus extends MessageBusImpl {
+    /**
+     * Holds the counts of pending messages for all message buses in the hierarchy
+     * This field is null for non-root buses
+     * The map's keys are sorted by {@link #myOrder}
+     *
+     * Used to avoid traversing the whole hierarchy when there are no messages to be sent in most of it
+     */
+    private final ThreadLocal<SortedMap<MessageBusImpl, Integer>> myWaitingBuses = new ThreadLocal<SortedMap<MessageBusImpl, Integer>>();
+
+    public RootBus(@NotNull Object owner) {
+      super(owner);
+    }
   }
 }

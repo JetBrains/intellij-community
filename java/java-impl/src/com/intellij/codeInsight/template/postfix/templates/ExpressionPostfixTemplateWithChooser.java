@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
+import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -38,15 +38,14 @@ import java.util.List;
  * @author ignatov
  */
 public abstract class ExpressionPostfixTemplateWithChooser extends PostfixTemplate {
-  protected ExpressionPostfixTemplateWithChooser(@NotNull String name, @NotNull String description, @NotNull String example) {
-    super(name, description, example);
+  protected ExpressionPostfixTemplateWithChooser(@NotNull String name, @NotNull String example) {
+    super(name, example);
   }
 
   protected ExpressionPostfixTemplateWithChooser(@NotNull String name,
                                                  @NotNull String key,
-                                                 @NotNull String description,
                                                  @NotNull String example) {
-    super(name, key, description, example);
+    super(name, key, example);
   }
 
   @Override
@@ -109,7 +108,7 @@ public abstract class ExpressionPostfixTemplateWithChooser extends PostfixTempla
 
   @NotNull
   private static List<PsiExpression> maybeTopmostExpression(@NotNull PsiElement context) {
-    PsiExpression expression = PostfixTemplatesUtils.getTopmostExpression(context);
+    PsiExpression expression = JavaPostfixTemplatesUtils.getTopmostExpression(context);
     PsiType type = expression != null ? expression.getType() : null;
     if (type == null || PsiType.VOID.equals(type)) return ContainerUtil.emptyList();
     return ContainerUtil.createMaybeSingletonList(expression);

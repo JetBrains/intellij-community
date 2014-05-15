@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.generation.surroundWith.JavaWithTryCatchSurrounder;
-import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -29,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 public class TryStatementPostfixTemplate extends PostfixTemplate {
 
   protected TryStatementPostfixTemplate() {
-    super("try", "Insert statement in try-catch block", "try { exp } catch (Exception e) { e.printStackTrace(); }");
+    super("try", "try { exp } catch(Ex e) { e.printStackTrace(); }");
   }
 
   @Override

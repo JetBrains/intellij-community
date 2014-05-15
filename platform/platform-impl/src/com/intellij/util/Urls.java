@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,14 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.URLUtil;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -165,8 +166,12 @@ public final class Urls {
   }
 
   public static boolean equalsIgnoreParameters(@NotNull Url url, @NotNull Collection<Url> urls) {
+    return equalsIgnoreParameters(url, urls, true);
+  }
+
+  public static boolean equalsIgnoreParameters(@NotNull Url url, @NotNull Collection<Url> urls, boolean caseSensitive) {
     for (Url otherUrl : urls) {
-      if (url.equalsIgnoreParameters(otherUrl)) {
+      if (equals(url, otherUrl, caseSensitive, true)) {
         return true;
       }
     }
@@ -175,7 +180,9 @@ public final class Urls {
 
   public static boolean equalsIgnoreParameters(@NotNull Url url, @NotNull VirtualFile file) {
     if (file.isInLocalFileSystem()) {
-      return url.isInLocalFileSystem() && url.getPath().equals(file.getPath());
+      return url.isInLocalFileSystem() && (SystemInfoRt.isFileSystemCaseSensitive
+                                           ? url.getPath().equals(file.getPath()) :
+                                           url.getPath().equalsIgnoreCase(file.getPath()));
     }
     else if (url.isInLocalFileSystem()) {
       return false;
@@ -185,18 +192,46 @@ public final class Urls {
     return fileUrl != null && fileUrl.equalsIgnoreParameters(url);
   }
 
+  public static boolean equals(@Nullable Url url1, @Nullable Url url2, boolean caseSensitive, boolean ignoreParameters) {
+    if (url1 == null || url2 == null){
+      return url1 == url2;
+    }
+
+    Url o1 = ignoreParameters ? url1.trimParameters() : url1;
+    Url o2 = ignoreParameters ? url2.trimParameters() : url2;
+    return caseSensitive ? o1.equals(o2) : o1.equalsIgnoreCase(o2);
+  }
+
   @NotNull
   public static URI toUriWithoutParameters(@NotNull Url url) {
     try {
       String externalPath = url.getPath();
       boolean inLocalFileSystem = url.isInLocalFileSystem();
-      if (inLocalFileSystem && SystemInfo.isWindows && externalPath.charAt(0) != '/') {
+      if (inLocalFileSystem && SystemInfoRt.isWindows && externalPath.charAt(0) != '/') {
         externalPath = '/' + externalPath;
       }
       return new URI(inLocalFileSystem ? "file" : url.getScheme(), inLocalFileSystem ? "" : url.getAuthority(), externalPath, null, null);
     }
     catch (URISyntaxException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  public static TObjectHashingStrategy<Url> getCaseInsensitiveUrlHashingStrategy() {
+    return CaseInsensitiveUrlHashingStrategy.INSTANCE;
+  }
+
+  private static final class CaseInsensitiveUrlHashingStrategy implements TObjectHashingStrategy<Url> {
+    private static final TObjectHashingStrategy<Url> INSTANCE = new CaseInsensitiveUrlHashingStrategy();
+
+    @Override
+    public int computeHashCode(Url url) {
+      return url == null ? 0 : url.hashCodeCaseInsensitive();
+    }
+
+    @Override
+    public boolean equals(Url url1, Url url2) {
+      return Urls.equals(url1, url2, false, false);
     }
   }
 }

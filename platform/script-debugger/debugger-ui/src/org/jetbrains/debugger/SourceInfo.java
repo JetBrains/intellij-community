@@ -1,5 +1,6 @@
 package org.jetbrains.debugger;
 
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.xdebugger.XSourcePosition;
@@ -35,6 +36,6 @@ public class SourceInfo extends XSourcePositionWrapper {
   @NotNull
   @Override
   public Navigatable createNavigatable(@NotNull Project project) {
-    return myPosition.createNavigatable(project);
+    return new OpenFileDescriptor(project, myPosition.getFile(), myPosition.getLine(), column);
   }
 }

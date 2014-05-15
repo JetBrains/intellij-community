@@ -15,21 +15,32 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
+import com.intellij.codeInsight.generation.surroundWith.JavaWithIfExpressionSurrounder;
+import com.intellij.lang.surroundWith.Surrounder;
 import org.jetbrains.annotations.NotNull;
 
-public class NotNullCheckPostfixTemplate extends NullCheckPostfixTemplate {
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_NOT_PRIMITIVE;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
+
+public class NotNullCheckPostfixTemplate extends SurroundPostfixTemplateBase {
 
   public NotNullCheckPostfixTemplate() {
     this("notnull");
   }
 
   public NotNullCheckPostfixTemplate(String alias) {
-    super(alias, "Checks expression to be not-null", "if (expr != null)");
+    super(alias, "if (expr != null)", JAVA_PSI_INFO, IS_NOT_PRIMITIVE);
   }
 
   @NotNull
   @Override
   protected String getTail() {
     return "!= null";
+  }
+
+  @NotNull
+  @Override
+  protected Surrounder getSurrounder() {
+    return new JavaWithIfExpressionSurrounder();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,14 +62,12 @@ public abstract class CreateElementActionBase extends AnAction {
 
   @Override
   public final void actionPerformed(final AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-
-    final IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
+    final IdeView view = e.getData(LangDataKeys.IDE_VIEW);
     if (view == null) {
       return;
     }
 
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    final Project project = e.getProject();
 
     final PsiDirectory dir = view.getOrChooseDirectory();
     if (dir == null) return;

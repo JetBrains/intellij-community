@@ -64,8 +64,8 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
     PsiCodeBlock blockFromText = psiElementFactory.createCodeBlockFromText(blockText, lambdaExpression);
     ChangeContextUtil.encodeContextInfo(blockFromText, true);
     PsiNewExpression newExpression = (PsiNewExpression)psiElementFactory.createExpressionFromText("new " + functionalInterfaceType.getCanonicalText() + "(){}", lambdaExpression);
-    final PsiClass thisClass = PsiTreeUtil.getParentOfType(lambdaExpression, PsiClass.class, true);
-    final String thisClassName = thisClass.getName();
+    final PsiClass thisClass = RefactoringChangeUtil.getThisClass(lambdaExpression);
+    final String thisClassName = thisClass != null ? thisClass.getName() : null;
     if (thisClassName != null) {
       final PsiThisExpression thisAccessExpr = thisClass instanceof PsiAnonymousClass ? null : RefactoringChangeUtil
         .createThisExpression(lambdaExpression.getManager(), thisClass);
@@ -86,8 +86,11 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
         @Override
         public void visitMethodCallExpression(PsiMethodCallExpression expression) {
           super.visitMethodCallExpression(expression);
-          if (thisAccessExpr != null && expression.getMethodExpression().getQualifierExpression() == null) {
-            replacements.put(expression, psiElementFactory.createExpressionFromText(thisAccessExpr.getText() + "." + expression.getText(), expression));
+          if (thisAccessExpr != null) {
+            final PsiMethod psiMethod = expression.resolveMethod();
+            if (psiMethod != null && !psiMethod.hasModifierProperty(PsiModifier.STATIC) && expression.getMethodExpression().getQualifierExpression() == null) {
+              replacements.put(expression, psiElementFactory.createExpressionFromText(thisAccessExpr.getText() + "." + expression.getText(), expression));
+            }
           }
         }
       });

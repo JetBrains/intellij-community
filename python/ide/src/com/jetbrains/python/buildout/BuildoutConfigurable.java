@@ -87,7 +87,7 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
   @Nls
   @Override
   public String getDisplayName() {
-    return "Buildout Support";
+    return "Buildout";
   }
 
   @Override

@@ -189,6 +189,7 @@ public class DeprecationInspection extends BaseJavaBatchLocalInspectionTool {
 
     @Override
     public void visitClass(PsiClass aClass) {
+      if (aClass instanceof PsiTypeParameter) return;
       final PsiMethod[] currentConstructors = aClass.getConstructors();
       if (currentConstructors.length == 0) {
         final PsiClass superClass = aClass.getSuperClass();

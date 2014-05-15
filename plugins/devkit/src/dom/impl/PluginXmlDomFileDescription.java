@@ -49,6 +49,19 @@ public class PluginXmlDomFileDescription extends DomFileDescription<IdeaPlugin> 
       else if (element instanceof IdeaVersion) {
         annotateIdeaVersion((IdeaVersion)element, holder);
       }
+      else if (element instanceof Extensions) {
+        annotateExtensions((Extensions)element, holder);
+      }
+    }
+
+    private void annotateExtensions(Extensions extensions, DomElementAnnotationHolder holder) {
+      final GenericAttributeValue<IdeaPlugin> xmlnsAttribute = extensions.getXmlns();
+      if (!DomUtil.hasXml(xmlnsAttribute)) return;
+
+      final Annotation annotation = holder.createAnnotation(xmlnsAttribute,
+                                                            HighlightSeverity.WARNING,
+                                                            "Use defaultExtensionNs instead");
+      annotation.setHighlightType(ProblemHighlightType.LIKE_DEPRECATED);
     }
 
     private void annotateIdeaVersion(IdeaVersion ideaVersion, DomElementAnnotationHolder holder) {
@@ -106,6 +119,6 @@ public class PluginXmlDomFileDescription extends DomFileDescription<IdeaPlugin> 
 
   @Override
   public int getStubVersion() {
-    return 2;
+    return 3;
   }
 }

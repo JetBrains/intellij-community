@@ -17,6 +17,7 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import org.jetbrains.annotations.NotNull;
@@ -27,9 +28,9 @@ import javax.swing.*;
  * @author nik
  */
 public class WatchMessageNode extends MessageTreeNode implements WatchNode {
-  private final String myExpression;
+  private final XExpression myExpression;
 
-  private WatchMessageNode(XDebuggerTree tree, XDebuggerTreeNode parent, @NotNull String expression, final Icon icon) {
+  private WatchMessageNode(XDebuggerTree tree, XDebuggerTreeNode parent, @NotNull XExpression expression, final Icon icon) {
     super(tree, parent, true);
     myExpression = expression;
     setIcon(icon);
@@ -37,23 +38,23 @@ public class WatchMessageNode extends MessageTreeNode implements WatchNode {
 
   @Override
   @NotNull
-  public String getExpression() {
+  public XExpression getExpression() {
     return myExpression;
   }
 
-  public static WatchMessageNode createMessageNode(XDebuggerTree tree, XDebuggerTreeNode parent, String expression) {
+  public static WatchMessageNode createMessageNode(XDebuggerTree tree, XDebuggerTreeNode parent, XExpression expression) {
     final WatchMessageNode node = new WatchMessageNode(tree, parent, expression, AllIcons.Debugger.Watch);
-    node.myText.append(expression, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    node.myText.append(expression.getExpression(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     return node;
   }
 
-  public static WatchMessageNode createEvaluatingNode(XDebuggerTree tree, XDebuggerTreeNode parent, String expression) {
+  public static WatchMessageNode createEvaluatingNode(XDebuggerTree tree, XDebuggerTreeNode parent, XExpression expression) {
     final WatchMessageNode node = new WatchMessageNode(tree, parent, expression, AllIcons.Debugger.Watch);
     node.myText.append(expression + " = ...", XDebuggerUIConstants.EVALUATING_EXPRESSION_HIGHLIGHT_ATTRIBUTES);
     return node;
   }
 
-  public static WatchMessageNode createErrorNode(XDebuggerTree tree, XDebuggerTreeNode parent, @NotNull String expression, @NotNull String errorMessage) {
+  public static WatchMessageNode createErrorNode(XDebuggerTree tree, XDebuggerTreeNode parent, @NotNull XExpression expression, @NotNull String errorMessage) {
     final WatchMessageNode node = new WatchMessageNode(tree, parent, expression, XDebuggerUIConstants.ERROR_MESSAGE_ICON);
     node.myText.append(expression + " = ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
     node.myText.append(errorMessage, SimpleTextAttributes.ERROR_ATTRIBUTES);
@@ -62,6 +63,6 @@ public class WatchMessageNode extends MessageTreeNode implements WatchNode {
 
   @Override
   public String toString() {
-    return myExpression;
+    return myExpression.getExpression();
   }
 }

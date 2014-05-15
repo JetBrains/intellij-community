@@ -95,6 +95,16 @@ public abstract class XDebugProcess {
   public abstract void startStepOver();
 
   /**
+   * Steps into suppressed call
+   *
+   * Resume execution and call {@link XDebugSession#positionReached}
+   * when next line is reached.
+   * Do not call this method directly. Use {@link XDebugSession#forceStepInto} instead
+   */
+  public void startForceStepInto(){
+    startStepInto();
+  }
+  /**
    * Resume execution and call {@link XDebugSession#positionReached}
    * when next line is reached.
    * Do not call this method directly. Use {@link XDebugSession#stepInto} instead

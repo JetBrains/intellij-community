@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public interface MarkupModelEx extends MarkupModel {
 
   boolean containsHighlighter(@NotNull RangeHighlighter highlighter);
 
-  void addRangeHighlighter(RangeHighlighterEx marker,
+  void addRangeHighlighter(@NotNull RangeHighlighterEx marker,
                            int start,
                            int end,
                            boolean greedyToLeft,
@@ -61,6 +61,7 @@ public interface MarkupModelEx extends MarkupModel {
   DisposableIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset);
 
   // optimization: creates highlighter and fires only one event: highlighterCreated
+  @NotNull
   RangeHighlighterEx addRangeHighlighterAndChangeAttributes(int startOffset,
                                                             int endOffset,
                                                             int layer,

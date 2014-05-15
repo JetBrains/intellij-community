@@ -21,7 +21,10 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.StringTokenizer;
 
 /**
  * @author Eugene Zhuravlev
@@ -44,11 +47,10 @@ public class Launcher {
     final URLClassLoader jpsLoader = new URLClassLoader(urls.toArray(new URL[urls.size()]), Launcher.class.getClassLoader());
     
     // IDEA-120811; speeding up DefaultChannelIDd calculation for netty
-    if (Boolean.parseBoolean(System.getProperty("io.netty.random.id"))) {
-      final String id = UUID.randomUUID().toString();
-      System.setProperty("io.netty.machineId", id.substring(id.length() - 8));
+    //if (Boolean.parseBoolean(System.getProperty("io.netty.random.id"))) {
+      System.setProperty("io.netty.machineId", "9e43d860");
       System.setProperty("io.netty.processId", Integer.toString(new Random().nextInt(65535)));
-    }
+    //}
 
     final Class<?> mainClass = jpsLoader.loadClass(mainClassName);
     final Method mainMethod = mainClass.getMethod("main", String[].class);

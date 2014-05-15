@@ -15,29 +15,34 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
-import com.intellij.openapi.editor.Document;
+import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 
-public class SynchronizedStatementPostfixTemplate extends StatementPostfixTemplateBase {
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_NOT_PRIMITIVE;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
+
+public class SynchronizedStatementPostfixTemplate extends JavaStatementWrapPostfixTemplate {
   public SynchronizedStatementPostfixTemplate() {
-    super("synchronized", "Produces synchronization statement", "synchronized (expr)");
+    super("synchronized", "synchronized (expr)", JAVA_PSI_INFO, IS_NOT_PRIMITIVE);
   }
 
   @Override
-  public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
-    PsiExpression expression = PostfixTemplatesUtils.getTopmostExpression(context);
-    PsiType type = expression != null ? expression.getType() : null;
-    return type != null && !(type instanceof PsiPrimitiveType);
+  protected void afterExpand(@NotNull PsiElement newStatement, @NotNull Editor editor) {
+    JavaPostfixTemplatesUtils.formatPsiCodeBlock(newStatement, editor);
   }
 
+  @NotNull
   @Override
-  public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
-    surroundWith(context, editor, "synchronized");
+  protected String getHead() {
+    return "synchronized (";
   }
+
+  @NotNull
+  @Override
+  protected String getTail() {
+    return ") {\nst;\n}";
+  }
+
 }

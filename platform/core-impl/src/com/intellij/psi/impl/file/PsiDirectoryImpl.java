@@ -411,7 +411,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
       return copyPsi;
     }
     catch (IOException e) {
-      throw new IncorrectOperationException(e.toString(), e);
+      throw new IncorrectOperationException(e);
     }
   }
 
@@ -489,7 +489,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
         return newFile;
       }
       catch (IOException e) {
-        throw new IncorrectOperationException(e.toString(), e);
+        throw new IncorrectOperationException(e);
       }
     }
     else {
@@ -550,7 +550,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
       myFile.delete(myManager);
     }
     catch (IOException e) {
-      throw new IncorrectOperationException(e.toString(), e);
+      throw new IncorrectOperationException(e);
     }
 
     /*

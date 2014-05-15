@@ -47,11 +47,13 @@ public class PyStatementMover extends LineMover {
     final Document document = editor.getDocument();
     final int lineNumber = document.getLineNumber(offset);
     int start = getLineStartSafeOffset(document, lineNumber);
-    int end = document.getLineEndOffset(lineNumber) - 1;
+    final int lineEndOffset = document.getLineEndOffset(lineNumber);
+    int end = lineEndOffset == 0 ? 0 : lineEndOffset - 1;
 
     if (selectionModel.hasSelection()) {
       start = selectionModel.getSelectionStart();
-      end = selectionModel.getSelectionEnd() - 1;
+      final int selectionEnd = selectionModel.getSelectionEnd();
+      end = selectionEnd == 0 ? 0 : selectionEnd - 1;
     }
     PsiElement elementToMove1 = PyUtil.findNonWhitespaceAtOffset(file, start);
     PsiElement elementToMove2 = PyUtil.findNonWhitespaceAtOffset(file, end);
@@ -137,7 +139,7 @@ public class PyStatementMover extends LineMover {
 
     final PyElement scope = statementList == null ? (PyElement)elementToMove.getContainingFile() : statementList;
     if ((elementToMove instanceof PyClass) || (elementToMove instanceof PyFunction))
-      return new ScopeRange(scope, null, !down, true);
+      return new ScopeRange(scope, scope.getFirstChild(), !down, true);
     return new LineRange(startLine, endLine + 1);
   }
 
@@ -189,7 +191,7 @@ public class PyStatementMover extends LineMover {
     else {
       PsiElement scope = getScopeForComment(elementToMove, editor, parent, !down);
       PsiElement anchor = PsiTreeUtil.getParentOfType(statementList, PyStatement.class);
-      return scope == null ? null : new ScopeRange(scope, anchor, addBefore);
+      return scope == null || anchor == null ? null : new ScopeRange(scope, anchor, addBefore);
     }
   }
 
@@ -241,7 +243,7 @@ public class PyStatementMover extends LineMover {
     }
 
     if (statementList2 != null && scopeForComment != statementList2 &&
-        (statementList2.getLastChild() == element || statementList2.getLastChild() == elementToMove)) {
+        (statementList2.getLastChild() == element || statementList2.getLastChild() == elementToMove) && element != null) {
       return new ScopeRange(statementList2, element, false);
     }
     return null;
@@ -501,7 +503,7 @@ public class PyStatementMover extends LineMover {
       }
     }
     else {
-      if (startElement != endElement) {
+      if (startElement != endElement && nextSibling != null) {
         scope.addRangeAfter(nextSibling, endElement, anchor);
       }
       addedElement = scope.addAfter(startElement, anchor);
@@ -629,18 +631,18 @@ public class PyStatementMover extends LineMover {
   // Use when element scope changed
   static class ScopeRange extends LineRange {
     private PsiElement myScope;
-    private PsiElement myAnchor;
+    @NotNull private PsiElement myAnchor;
     private boolean addBefore;
     private boolean theSameLevel;
 
-    public ScopeRange(@NotNull PsiElement scope, @Nullable PsiElement anchor, boolean before) {
+    public ScopeRange(@NotNull PsiElement scope, @NotNull PsiElement anchor, boolean before) {
       super(scope);
       myScope = scope;
       myAnchor = anchor;
       addBefore = before;
     }
 
-    public ScopeRange(PyElement scope, PsiElement anchor, boolean before, boolean b) {
+    public ScopeRange(PyElement scope, @NotNull PsiElement anchor, boolean before, boolean b) {
       super(scope);
       myScope = scope;
       myAnchor = anchor;
@@ -648,6 +650,7 @@ public class PyStatementMover extends LineMover {
       theSameLevel = b;
     }
 
+    @NotNull
     public PsiElement getAnchor() {
       return myAnchor;
     }

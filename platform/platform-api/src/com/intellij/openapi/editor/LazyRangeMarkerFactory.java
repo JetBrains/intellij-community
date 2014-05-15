@@ -22,17 +22,16 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
@@ -46,20 +45,38 @@ public class LazyRangeMarkerFactory {
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentAdapter() {
       @Override
       public void beforeDocumentChange(DocumentEvent e) {
-        VirtualFile docFile = fileDocumentManager.getFile(e.getDocument());
-        if (docFile == null) return;
-        WeakList<LazyMarker> lazyMarkers = myMarkers.get(docFile);
-        if (lazyMarkers == null) return;
+        transformRangeMarkers(e);
+      }
+
+      @Override
+      public void documentChanged(DocumentEvent e) {
+        transformRangeMarkers(e);
+      }
+
+      private void transformRangeMarkers(DocumentEvent e) {
+        VirtualFile file = fileDocumentManager.getFile(e.getDocument());
+        if (file == null) {
+          return;
+        }
+
+        WeakList<LazyMarker> lazyMarkers = myMarkers.get(file);
+        if (lazyMarkers == null) {
+          return;
+        }
 
         List<LazyMarker> markers = lazyMarkers.toStrongList();
-        List<LazyMarker> markersToRemove = new ArrayList<LazyMarker>();
-        for (final LazyMarker marker : markers) {
-          if (Comparing.equal(marker.getFile(), docFile)) {
-            marker.getOrCreateDelegate();
+        List<LazyMarker> markersToRemove = null;
+        for (LazyMarker marker : markers) {
+          if (file.equals(marker.getFile()) && marker.documentChanged(e.getDocument()) != null) {
+            if (markersToRemove == null) {
+              markersToRemove = new SmartList<LazyMarker>();
+            }
             markersToRemove.add(marker);
           }
         }
-        lazyMarkers.removeAll(markersToRemove);
+        if (markersToRemove != null) {
+          lazyMarkers.removeAll(markersToRemove);
+        }
       }
     }, project);
   }
@@ -134,13 +151,26 @@ public class LazyRangeMarkerFactory {
       return myDelegate;
     }
 
-    @NotNull
+    @Nullable
+    protected final RangeMarker documentChanged(@NotNull Document document) {
+      if (myDelegate == null) {
+        myDelegate = createDelegate(myFile, document);
+      }
+      return myDelegate;
+    }
+
+    @Nullable
     protected abstract RangeMarker createDelegate(@NotNull VirtualFile file, @NotNull Document document);
 
     @Override
     @NotNull
     public Document getDocument() {
-      return getOrCreateDelegate().getDocument();
+      RangeMarker delegate = getOrCreateDelegate();
+      if (delegate == null) {
+        //noinspection ConstantConditions
+        return FileDocumentManager.getInstance().getDocument(myFile);
+      }
+      return delegate.getDocument();
     }
 
     @Override
@@ -213,10 +243,13 @@ public class LazyRangeMarkerFactory {
     }
 
     @Override
-    @NotNull
-    public RangeMarker createDelegate(@NotNull VirtualFile file, @NotNull final Document document) {
-      int offset = calculateOffset(myProject, file, document, myLine, myColumn);
+    @Nullable
+    public RangeMarker createDelegate(@NotNull VirtualFile file, @NotNull Document document) {
+      if (document.getTextLength() == 0 && !(myLine == 0 && myColumn == 0)) {
+        return null;
+      }
 
+      int offset = calculateOffset(myProject, file, document, myLine, myColumn);
       return document.createRangeMarker(offset, offset);
     }
 

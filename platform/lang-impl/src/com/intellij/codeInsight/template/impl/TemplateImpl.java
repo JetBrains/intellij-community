@@ -206,6 +206,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     }
   }
 
+  @Override
   public boolean isToReformat() {
     return isToReformat;
   }

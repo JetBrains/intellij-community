@@ -85,7 +85,8 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
 
       final List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
       for (RefParameter refParameter : unusedParameters) {
-        final PsiIdentifier psiIdentifier = refParameter.getElement().getNameIdentifier();
+        final PsiParameter parameter = refParameter.getElement();
+        final PsiIdentifier psiIdentifier = parameter != null ? parameter.getNameIdentifier() : null;
         if (psiIdentifier != null) {
           result.add(manager.createProblemDescriptor(psiIdentifier,
                                                      refMethod.isAbstract()

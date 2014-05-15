@@ -18,10 +18,7 @@ package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.completion.AllClassesGetter;
-import com.intellij.codeInsight.completion.JavaClassNameCompletionContributor;
-import com.intellij.codeInsight.completion.JavaCompletionUtil;
-import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.originInfo.OriginInfoProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -39,9 +36,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.filters.FilterPositionUtil;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -55,16 +55,17 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -74,14 +75,17 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrAnnotationCollector;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrCodeReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.WHITE_SPACES_OR_COMMENTS;
@@ -289,11 +293,11 @@ public class GroovyCompletionUtil {
           for (GroovyResolveResult r : importReference.multiResolve(false)) {
             final PsiElement resolved = r.getElement();
             if (context.getManager().areElementsEquivalent(resolved, element) && (alias || !(element instanceof PsiClass))) {
-              return generateLookupForImportedElement(candidate, importedName, alias);
+              return generateLookupForImportedElement(candidate, importedName);
             }
             else {
               if (resolved instanceof PsiField && element instanceof PsiMethod && isAccessorFor((PsiMethod)element, (PsiField)resolved)) {
-                return generateLookupForImportedElement(candidate, getAccessorPrefix((PsiMethod)element) + capitalize(importedName), alias);
+                return generateLookupForImportedElement(candidate, getAccessorPrefix((PsiMethod)element) + capitalize(importedName));
               }
             }
           }
@@ -330,9 +334,7 @@ public class GroovyCompletionUtil {
     return AllClassesGetter.createLookupItem(psiClass, new GroovyClassNameInsertHandler());
   }
 
-  private static List<? extends LookupElement> generateLookupForImportedElement(GroovyResolveResult resolveResult,
-                                                                                String importedName,
-                                                                                boolean alias) {
+  private static List<? extends LookupElement> generateLookupForImportedElement(GroovyResolveResult resolveResult, String importedName) {
     final PsiElement element = resolveResult.getElement();
     assert element != null;
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
@@ -593,45 +595,6 @@ public class GroovyCompletionUtil {
     return t == mLT || t == mCOMMA;
   }
 
-  public static List<LookupElement> getAnnotationCompletionResults(GrAnnotation anno, PrefixMatcher matcher) {
-    if (anno != null) {
-      GrCodeReferenceElement ref = anno.getClassReference();
-      PsiElement resolved = ref.resolve();
-
-      if (resolved instanceof PsiClass) {
-        final PsiAnnotation annotationCollector = GrAnnotationCollector.findAnnotationCollector((PsiClass)resolved);
-
-        if (annotationCollector != null) {
-          final ArrayList<GrAnnotation> annotations = ContainerUtil.newArrayList();
-          GrAnnotationCollector.collectAnnotations(annotations, anno, annotationCollector);
-
-          Set<String> usedNames = ContainerUtil.newHashSet();
-          List<LookupElement> result = new ArrayList<LookupElement>();
-          for (GrAnnotation annotation : annotations) {
-            final PsiElement resolvedAliased = annotation.getClassReference().resolve();
-            if (resolvedAliased instanceof PsiClass && ((PsiClass)resolvedAliased).isAnnotationType()) {
-              for (PsiMethod method : ((PsiClass)resolvedAliased).getMethods()) {
-                if (usedNames.add(method.getName())) {
-                  result.addAll(createLookupElements(new GroovyResolveResultImpl(method, true), false, matcher, null));
-                }
-              }
-            }
-          }
-          return result;
-        }
-        else if (((PsiClass)resolved).isAnnotationType()) {
-          List<LookupElement> result = new ArrayList<LookupElement>();
-          for (PsiMethod method : ((PsiClass)resolved).getMethods()) {
-            result.addAll(createLookupElements(new GroovyResolveResultImpl(method, true), false, matcher, null));
-          }
-          return result;
-        }
-      }
-    }
-
-    return Collections.emptyList();
-  }
-
   static boolean isNewStatementInScript(PsiElement context) {
     final PsiElement leaf = getLeafByOffset(context.getTextRange().getStartOffset() - 1, context);
     if (leaf != null && isNewStatement(context, false)) {
@@ -671,5 +634,58 @@ public class GroovyCompletionUtil {
            ((GrVariable)parent).getTypeElementGroovy() == null &&
            pparent instanceof GrVariableDeclaration &&
            ((GrVariableDeclaration)pparent).isTuple();
+  }
+
+  public static void processVariants(GrReferenceElement referenceElement, PrefixMatcher matcher, CompletionParameters parameters, Consumer<LookupElement> consumer) {
+    if (referenceElement instanceof GrCodeReferenceElementImpl) {
+      CompleteCodeReferenceElement.processVariants((GrCodeReferenceElementImpl)referenceElement, consumer, matcher);
+    }
+    else if (referenceElement instanceof GrReferenceExpressionImpl) {
+      CompleteReferenceExpression.processVariants(matcher, consumer, (GrReferenceExpressionImpl)referenceElement, parameters);
+    }
+  }
+
+  public static boolean isInPossibleClosureParameter(PsiElement position) { //Closure cl={String x, <caret>...
+    if (position == null) return false;
+
+    if (position instanceof PsiWhiteSpace || position.getNode().getElementType() == mNLS) {
+      position = FilterPositionUtil.searchNonSpaceNonCommentBack(position);
+    }
+
+    boolean hasCommas = false;
+    while (position != null) {
+      PsiElement parent = position.getParent();
+      if (parent instanceof GrVariable) {
+        PsiElement prev = FilterPositionUtil.searchNonSpaceNonCommentBack(parent);
+        hasCommas = prev != null && prev.getNode().getElementType() == mCOMMA;
+      }
+
+      if (parent instanceof GrClosableBlock) {
+        PsiElement sibling = position.getPrevSibling();
+        while (sibling != null) {
+          if (sibling instanceof GrParameterList) {
+            return hasCommas;
+          }
+
+          boolean isComma = sibling instanceof LeafPsiElement && mCOMMA == ((LeafPsiElement)sibling).getElementType();
+          hasCommas |= isComma;
+
+          if (isComma ||
+              sibling instanceof PsiWhiteSpace ||
+              sibling instanceof PsiErrorElement ||
+              sibling instanceof GrVariableDeclaration ||
+              sibling instanceof GrReferenceExpression && !((GrReferenceExpression)sibling).isQualified()
+            ) {
+            sibling = sibling.getPrevSibling();
+          }
+          else {
+            return false;
+          }
+        }
+        return false;
+      }
+      position = parent;
+    }
+    return false;
   }
 }

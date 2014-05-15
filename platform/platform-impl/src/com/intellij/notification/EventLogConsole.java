@@ -22,10 +22,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
@@ -150,8 +147,11 @@ class EventLogConsole {
     editor.getMarkupModel().addRangeHighlighter(msgStart, document.getTextLength(), layer, attributes, HighlighterTargetArea.EXACT_RANGE);
 
     for (Pair<TextRange, HyperlinkInfo> link : pair.links) {
-      myHyperlinkSupport.getValue().addHyperlink(link.first.getStartOffset() + msgStart, link.first.getEndOffset() + msgStart, null,
-                                                 link.second);
+      final RangeHighlighter rangeHighlighter = myHyperlinkSupport.getValue()
+        .createHyperlink(link.first.getStartOffset() + msgStart, link.first.getEndOffset() + msgStart, null, link.second);
+      if (link.second instanceof EventLog.ShowBalloon) {
+        ((EventLog.ShowBalloon)link.second).setRangeHighlighter(rangeHighlighter);
+      }
     }
 
     append(document, "\n");
@@ -180,26 +180,28 @@ class EventLogConsole {
       lineHighlighter.setErrorStripeMarkColor(color);
       lineHighlighter.setErrorStripeTooltip(message);
       lineColors.add(lineHighlighter);
+
     }
+
+    final Document document = myLogEditor.getValue().getDocument();
 
     final Runnable removeHandler = new Runnable() {
       @Override
       public void run() {
-        for (RangeHighlighter color : lineColors) {
-          markupModel.removeHighlighter(color);
-        }
-
-        TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(ConsoleViewContentType.LOG_EXPIRED_ENTRY);
-        for (int line = line1; line < line2; line++) {
-          markupModel.addLineHighlighter(line, HighlighterLayer.CARET_ROW + 1, attributes);
-        }
-
+        TextAttributes expired = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(ConsoleViewContentType.LOG_EXPIRED_ENTRY);
         TextAttributes italic = new TextAttributes(null, null, null, null, Font.ITALIC);
-        for (int line = line1; line < line2; line++) {
-          for (RangeHighlighter highlighter : myHyperlinkSupport.getValue().findAllHyperlinksOnLine(line)) {
-            markupModel.addRangeHighlighter(highlighter.getStartOffset(), highlighter.getEndOffset(), HighlighterLayer.CARET_ROW + 2, italic, HighlighterTargetArea.EXACT_RANGE);
-            myHyperlinkSupport.getValue().removeHyperlink(highlighter);
+        for (RangeHighlighter colorHighlighter : lineColors) {
+          if (colorHighlighter.isValid()) {
+            int line = document.getLineNumber(colorHighlighter.getStartOffset());
+            
+            markupModel.addLineHighlighter(line, HighlighterLayer.CARET_ROW + 1, expired);
+
+            for (RangeHighlighter highlighter : myHyperlinkSupport.getValue().findAllHyperlinksOnLine(line)) {
+              markupModel.addRangeHighlighter(highlighter.getStartOffset(), highlighter.getEndOffset(), HighlighterLayer.CARET_ROW + 2, italic, HighlighterTargetArea.EXACT_RANGE);
+              myHyperlinkSupport.getValue().removeHyperlink(highlighter);
+            }
           }
+          markupModel.removeHighlighter(colorHighlighter);
         }
       }
     };
@@ -216,10 +218,9 @@ class EventLogConsole {
   }
 
   @Nullable
-  public RelativePoint getHyperlinkLocation(HyperlinkInfo info) {
+  public RelativePoint getRangeHighlighterLocation(RangeHighlighter range) {
     Editor editor = myLogEditor.getValue();
     Project project = editor.getProject();
-    RangeHighlighter range = myHyperlinkSupport.getValue().findHyperlinkRange(info);
     Window window = NotificationsManagerImpl.findWindowForBalloon(project);
     if (range != null && window != null) {
       Point point = editor.visualPositionToXY(editor.offsetToVisualPosition(range.getStartOffset()));

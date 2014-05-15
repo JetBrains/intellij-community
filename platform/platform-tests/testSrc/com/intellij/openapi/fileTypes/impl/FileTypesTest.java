@@ -136,6 +136,18 @@ public class FileTypesTest extends PlatformTestCase {
     assertEquals("b;a;", manager.getIgnoredFilesList());
   }
 
+  public void testIgnoredFiles() throws IOException {
+    File file = createTempFile(".svn", "");
+    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    assertTrue(FileTypeManager.getInstance().isFileIgnored(vFile));
+    vFile.delete(this);
+
+    file = createTempFile("a.txt", "");
+    vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    assertFalse(FileTypeManager.getInstance().isFileIgnored(vFile));
+  }
+
+
   @SuppressWarnings("deprecation")
   private static void checkNotAssociated(FileType fileType, String extension, FileTypeAssocTable<FileType> associations) {
     assertFalse(Arrays.asList(associations.getAssociatedExtensions(fileType)).contains(extension));

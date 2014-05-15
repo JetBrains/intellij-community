@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,6 +71,22 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
     myVcsManager = vcsManager;
     myStorage = storage;
     myBranchesLoader = new ProgressManagerQueue(myProject, "Subversion Branches Preloader");
+    // TODO: Seems that ProgressManagerQueue is not suitable here at least for some branches loading tasks. For instance,
+    // TODO: for DefaultConfigLoader it would be better to run modal cancellable task - so branches structure could be detected and
+    // TODO: shown in dialog. Currently when "Configure Branches" is invoked for the first time - no branches are shown.
+    // TODO: If "Cancel" is pressed and "Configure Branches" invoked once again - already detected (in background) branches are shown.
+    ((ProjectLevelVcsManagerImpl) vcsManager).addInitializationRequest(VcsInitObject.BRANCHES, new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            if (myProject.isDisposed()) return;
+            myBranchesLoader.start();
+          }
+        });
+      }
+    });
     myBunch = new NewRootBunch(project, myBranchesLoader);
   }
 
@@ -206,7 +222,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
         if (stored != null && ! stored.isEmpty()) {
           newConfig.addBranches(branchUrl, new InfoStorage<List<SvnBranchItem>>(stored, InfoReliability.setByUser));
         } else {
-          whatToInit.add(new Pair<VirtualFile, SvnBranchConfigurationNew>(root, newConfig));
+          whatToInit.add(Pair.create(root, newConfig));
           newConfig.addBranches(branchUrl, new InfoStorage<List<SvnBranchItem>>(new ArrayList<SvnBranchItem>(), InfoReliability.empty));
         }
       }

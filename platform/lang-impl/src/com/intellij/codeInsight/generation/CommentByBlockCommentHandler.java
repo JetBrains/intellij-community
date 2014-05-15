@@ -32,7 +32,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -625,7 +625,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     return new TextRange(delOffset1, delOffset2);
   }
 
-  private Pair<TextRange, TextRange> findCommentBlock(TextRange range, String commentPrefix, String commentSuffix) {
+  private Couple<TextRange> findCommentBlock(TextRange range, String commentPrefix, String commentSuffix) {
     CharSequence chars = myDocument.getCharsSequence();
     int startOffset = range.getStartOffset();
     boolean endsProperly = CharArrayUtil.regionMatches(chars, range.getEndOffset() - commentSuffix.length(), commentSuffix);
@@ -639,7 +639,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       end = new TextRange(range.getEndOffset(), range.getEndOffset());
     }
 
-    return new Pair<TextRange, TextRange>(start, end);
+    return Couple.newOne(start, end);
   }
 
   public void uncommentRange(TextRange range, String commentPrefix, String commentSuffix, Commenter commenter) {
@@ -657,7 +657,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     String text = myDocument.getCharsSequence().subSequence(range.getStartOffset(), range.getEndOffset()).toString();
     int startOffset = range.getStartOffset();
     //boolean endsProperly = CharArrayUtil.regionMatches(chars, range.getEndOffset() - commentSuffix.length(), commentSuffix);
-    List<Pair<TextRange, TextRange>> ranges = new ArrayList<Pair<TextRange, TextRange>>();
+    List<Couple<TextRange>> ranges = new ArrayList<Couple<TextRange>>();
 
     int position = 0;
     while (true) {
@@ -668,13 +668,13 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       position = start;
       int end = getNearest(text, commentSuffix, position + commentPrefix.length()) + commentSuffix.length();
       position = end;
-      Pair<TextRange, TextRange> pair =
+      Couple<TextRange> pair =
         findCommentBlock(new TextRange(start + startOffset, end + startOffset), commentPrefix, commentSuffix);
       ranges.add(pair);
     }
 
     for (int i = ranges.size() - 1; i >= 0; i--) {
-      Pair<TextRange, TextRange> toDelete = ranges.get(i);
+      Couple<TextRange> toDelete = ranges.get(i);
       myDocument.deleteString(toDelete.first.getStartOffset(), toDelete.first.getEndOffset());
       int shift = toDelete.first.getEndOffset() - toDelete.first.getStartOffset();
       myDocument.deleteString(toDelete.second.getStartOffset() - shift, toDelete.second.getEndOffset() - shift);

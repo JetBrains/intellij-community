@@ -47,7 +47,7 @@ public class OutputParser{
   private final WeakReference<ProgressIndicator> myProgress;
   private final String myBuildName;
   private final OSProcessHandler myProcessHandler;
-  private boolean isStopped;
+  private volatile boolean isStopped;
   private List<String> myJavacMessages;
   private boolean myFirstLineProcessed;
   private boolean myStartedSuccessfully;
@@ -71,7 +71,7 @@ public class OutputParser{
   }
 
   public boolean isTerminateInvoked() {
-    return myProcessHandler.isProcessTerminating();
+    return myProcessHandler.isProcessTerminating() || myProcessHandler.isProcessTerminated();
   }
 
   protected Project getProject() {

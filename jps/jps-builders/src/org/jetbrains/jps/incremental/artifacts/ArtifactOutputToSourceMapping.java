@@ -83,12 +83,10 @@ public class ArtifactOutputToSourceMapping extends AbstractStateStorage<String, 
   }
 
   private static class SourcePathListExternalizer implements DataExternalizer<List<SourcePathAndRootIndex>> {
-    private final byte[] myBuffer = IOUtil.allocReadWriteUTFBuffer();
-
     @Override
     public void save(@NotNull DataOutput out, List<SourcePathAndRootIndex> value) throws IOException {
       for (SourcePathAndRootIndex pair : value) {
-        IOUtil.writeUTFFast(myBuffer, out, pair.myPath);
+        IOUtil.writeUTF(out, pair.myPath);
         out.writeInt(pair.getRootIndex());
       }
     }
@@ -98,7 +96,7 @@ public class ArtifactOutputToSourceMapping extends AbstractStateStorage<String, 
       List<SourcePathAndRootIndex> result = new SmartList<SourcePathAndRootIndex>();
       final DataInputStream stream = (DataInputStream)in;
       while (stream.available() > 0) {
-        final String path = IOUtil.readUTFFast(myBuffer, stream);
+        final String path = IOUtil.readUTF(stream);
         final int index = stream.readInt();
         result.add(new SourcePathAndRootIndex(path, index));
       }

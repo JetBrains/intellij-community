@@ -1,6 +1,7 @@
 package com.intellij.tasks.integration;
 
 import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskManagerTestCase;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskUtil;
@@ -54,6 +55,21 @@ public class RedmineIntegrationTest extends TaskManagerTestCase {
     myRepository.setShouldFormatCommitMessage(true);
     LocalTaskImpl localTask = new LocalTaskImpl(myRepository.findTask(String.valueOf(7)));
     assertEquals("prj-1 7 7 Summary contains 'baz'", TaskUtil.getChangeListComment(localTask));
+  }
+
+  /**
+   * Redmine doesn't send 401 or 403 errors, when issues are downloaded with wrong credentials, so current user information is
+   * fetched instead.
+   */
+  public void testCredentialsCheck() throws Exception {
+    myRepository.setPassword("wrong-password");
+    try {
+      myRepository.testConnection();
+      fail("testConnection() should fails, when wrong credentials specified");
+    }
+    catch (Exception e) {
+      assertEquals(TaskBundle.message("failure.login"), e.getMessage());
+    }
   }
 
   @Override

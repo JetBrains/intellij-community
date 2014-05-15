@@ -42,10 +42,12 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ThreeState;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.DefaultLogExpressionComboBoxPanel;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
@@ -59,6 +61,8 @@ import javax.swing.*;
 import java.util.List;
 
 public abstract class Breakpoint<P extends JavaBreakpointProperties> implements FilteredRequestor, ClassPrepareRequestor {
+  public static Key<Breakpoint> DATA_KEY = Key.create("JavaBreakpoint");
+
   final XBreakpoint<P> myXBreakpoint;
   protected final Project myProject;
 
@@ -441,10 +445,10 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     try {
       String logMessage = JDOMExternalizerUtil.readField(parentNode, LOG_MESSAGE_OPTION_NAME);
       if (logMessage != null && !logMessage.isEmpty()) {
-        TextWithImportsImpl text = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, logMessage);
-        XDebuggerHistoryManager.getInstance(myProject).addRecentExpression(DefaultLogExpressionComboBoxPanel.HISTORY_KEY, text.getText());
+        XExpressionImpl expression = XExpressionImpl.fromText(logMessage);
+        XDebuggerHistoryManager.getInstance(myProject).addRecentExpression(DefaultLogExpressionComboBoxPanel.HISTORY_KEY, expression);
         if (Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "LOG_EXPRESSION_ENABLED"))) {
-          setLogMessage(text);
+          myXBreakpoint.setLogExpressionObject(expression);
         }
       }
     }
@@ -461,11 +465,11 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   public abstract PsiElement getEvaluationElement();
 
   protected TextWithImports getLogMessage() {
-    return new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, myXBreakpoint.getLogExpression());
+    return TextWithImportsImpl.fromXExpression(myXBreakpoint.getLogExpressionObject());
   }
 
   protected TextWithImports getCondition() {
-    return new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, myXBreakpoint.getCondition());
+    return TextWithImportsImpl.fromXExpression(myXBreakpoint.getConditionExpression());
   }
 
   public boolean isEnabled() {
@@ -485,8 +489,8 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   protected boolean isLogExpressionEnabled() {
-    String expression = myXBreakpoint.getLogExpression();
-    if (expression == null || expression.isEmpty()) {
+    XExpression expression = myXBreakpoint.getLogExpressionObject();
+    if (expression == null || expression.getExpression().isEmpty()) {
       return false;
     }
     return !getLogMessage().isEmpty();
@@ -602,30 +606,16 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     myXBreakpoint.setSuspendPolicy(transformSuspendPolicy(policy));
   }
 
-  protected void setLogMessage(@Nullable TextWithImports logMessage) {
-    if (logMessage != null && !logMessage.getText().isEmpty()) {
-      myXBreakpoint.setLogExpression(logMessage.toExternalForm());
-    }
-    else {
-      myXBreakpoint.setLogExpression(null);
-    }
-  }
-
   protected boolean isConditionEnabled() {
-    String condition = myXBreakpoint.getCondition();
-    if (condition == null || condition.isEmpty()) {
+    XExpression condition = myXBreakpoint.getConditionExpression();
+    if (condition == null || condition.getExpression().isEmpty()) {
       return false;
     }
     return !getCondition().isEmpty();
   }
 
   public void setCondition(@Nullable TextWithImports condition) {
-    if (condition != null && !condition.getText().isEmpty()) {
-      myXBreakpoint.setCondition(condition.toExternalForm());
-    }
-    else {
-      myXBreakpoint.setCondition(null);
-    }
+    myXBreakpoint.setConditionExpression(TextWithImportsImpl.toXExpression(condition));
   }
 
   protected void addInstanceFilter(long l) {

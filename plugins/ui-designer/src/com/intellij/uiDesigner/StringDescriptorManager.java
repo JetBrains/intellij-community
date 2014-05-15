@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ public class StringDescriptorManager {
 
   public IProperty resolveToProperty(@NotNull StringDescriptor descriptor, @Nullable Locale locale) {
     String propFileName = descriptor.getDottedBundleName();
-    Pair<Locale, String> cacheKey = new Pair<Locale, String>(locale, propFileName);
+    Pair<Locale, String> cacheKey = Pair.create(locale, propFileName);
     PropertiesFile propertiesFile;
     synchronized (myPropertiesFileCache) {
       propertiesFile = myPropertiesFileCache.get(cacheKey);

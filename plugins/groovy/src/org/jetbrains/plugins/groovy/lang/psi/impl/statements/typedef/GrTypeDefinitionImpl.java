@@ -23,8 +23,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -65,6 +63,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyCodeStyleSettingsFacade;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
@@ -764,16 +763,39 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     return null;
   }
 
+    // TODO remove as soon as an arrangement sub-system is provided for groovy.
+  public static int getMemberOrderWeight(PsiElement member, GroovyCodeStyleSettingsFacade settings) {
+    if (member instanceof PsiField) {
+      if (member instanceof PsiEnumConstant) {
+        return 1;
+      }
+      return ((PsiField)member).hasModifierProperty(PsiModifier.STATIC) ? settings.staticFieldsOrderWeight() + 1
+                                                                        : settings.fieldsOrderWeight() + 1;
+    }
+    if (member instanceof PsiMethod) {
+      if (((PsiMethod)member).isConstructor()) {
+        return settings.constructorsOrderWeight() + 1;
+      }
+      return ((PsiMethod)member).hasModifierProperty(PsiModifier.STATIC) ? settings.staticMethodsOrderWeight() + 1
+                                                                         : settings.methodsOrderWeight() + 1;
+    }
+    if (member instanceof PsiClass) {
+      return ((PsiClass)member).hasModifierProperty(PsiModifier.STATIC) ? settings.staticInnerClassesOrderWeight() + 1
+                                                                        : settings.innerClassesOrderWeight() + 1;
+    }
+    return -1;
+  }
+
   @Nullable
   private PsiElement getDefaultAnchor(GrTypeDefinitionBody body, PsiMember member) {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    GroovyCodeStyleSettingsFacade settings = GroovyCodeStyleSettingsFacade.getInstance(getProject());
 
-    int order = JavaPsiImplementationHelperImpl.getMemberOrderWeight(member, settings);
+    int order = getMemberOrderWeight(member, settings);
     if (order < 0) return null;
 
     PsiElement lastMember = null;
     for (PsiElement child = body.getFirstChild(); child != null; child = child.getNextSibling()) {
-      int order1 = JavaPsiImplementationHelperImpl.getMemberOrderWeight(getAnyMember(child), settings);
+      int order1 = getMemberOrderWeight(getAnyMember(child), settings);
       if (order1 < 0) continue;
       if (order1 > order) {
         final PsiElement lBrace = body.getLBrace();

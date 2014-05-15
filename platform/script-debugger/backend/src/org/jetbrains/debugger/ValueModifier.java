@@ -1,6 +1,7 @@
 package org.jetbrains.debugger;
 
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.AsyncResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.debugger.values.Value;
 
@@ -13,4 +14,7 @@ public interface ValueModifier {
   ActionCallback setValue(@NotNull Variable variable, String newValue, @NotNull EvaluateContext evaluateContext);
 
   ActionCallback setValue(@NotNull Variable variable, Value newValue, @NotNull EvaluateContext evaluateContext);
+
+  @NotNull
+  AsyncResult<Value> evaluateGet(@NotNull Variable variable, @NotNull EvaluateContext evaluateContext);
 }

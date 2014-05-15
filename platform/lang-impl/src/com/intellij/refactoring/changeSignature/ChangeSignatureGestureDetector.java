@@ -63,21 +63,18 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
   private final PsiManager myPsiManager;
   private final FileEditorManager myFileEditorManager;
   private final Project myProject;
-  private final TemplateManager myTemplateManager;
   private final PsiDocumentManager myPsiDocumentManager;
 
   public ChangeSignatureGestureDetector(final PsiDocumentManager psiDocumentManager,
                                         final FileDocumentManager documentManager,
                                         final PsiManager psiManager,
                                         final FileEditorManager fileEditorManager,
-                                        final TemplateManager templateManager,
                                         final Project project) {
     myDocumentManager = documentManager;
     myPsiDocumentManager = psiDocumentManager;
     myPsiManager = psiManager;
     myFileEditorManager = fileEditorManager;
     myProject = project;
-    myTemplateManager = templateManager;
     myPsiManager.addPsiTreeChangeListener(this, this);
     EditorFactory.getInstance().addEditorFactoryListener(this, this);
     Disposer.register(this, new Disposable() {
@@ -184,7 +181,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
       final MyDocumentChangeAdapter changeBean = myListenerMap.get(file.getVirtualFile());
       if (changeBean != null && changeBean.getInitialText() != null) {
         final Editor editor = myFileEditorManager.getSelectedTextEditor();
-        if (editor != null && myTemplateManager.getActiveTemplate(editor) != null) return;
+        if (editor != null && TemplateManager.getInstance(myProject).getActiveTemplate(editor) != null) return;
         final LanguageChangeSignatureDetector detector = LanguageChangeSignatureDetectors.INSTANCE.forLanguage(child.getLanguage());
         if (detector == null) return;
         if (detector.ignoreChanges(child)) return;

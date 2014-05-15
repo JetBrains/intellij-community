@@ -74,6 +74,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testEnum() { doTest(LanguageLevel.JDK_1_5, JavaSdkVersion.JDK_1_5, false); }
   public void testEnum56239() { doTest(LanguageLevel.JDK_1_6, JavaSdkVersion.JDK_1_6, false); }
   public void testSameErasure() { doTest5(false); }
+  public void testPairsWithSameErasure() { doTest5(false); }
   public void testMethods() { doTest5(false); }
   public void testFields() { doTest5(false); }
   public void testStaticImports() { doTest5(true); }
@@ -346,6 +347,12 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA123518() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
   public void testIDEA64103() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
   public void testIDEA123338() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
+  public void testIDEA124271() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
+  public void testIDEA124352() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
+  public void testIDEA124019() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
+  public void testIDEA123509() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
+  public void testIDEA125031() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
+  public void testIDEA24479() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
 
   public void testJavaUtilCollections_NoVerify() throws Exception {
     PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));

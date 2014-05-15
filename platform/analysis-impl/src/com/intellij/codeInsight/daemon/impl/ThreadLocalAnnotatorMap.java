@@ -18,10 +18,10 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.PicoContainer;
-import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
 import java.util.ArrayList;
 import java.util.Collection;

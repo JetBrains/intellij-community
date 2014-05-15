@@ -17,6 +17,7 @@ package com.intellij.ide.ui.laf;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ColoredSideBorder;
@@ -43,8 +44,7 @@ public final class IdeaLaf extends MetalLookAndFeel {
     LafManagerImpl.initInputMapDefaults(defaults);
     initIdeaDefaults(defaults);
 
-    final UISettings ui = UISettings.getInstance();
-    Pair<String, Integer> systemFont = SystemInfo.isWindows ? Pair.create(ui.FONT_FACE, ui.FONT_SIZE) : UIUtil.getSystemFontData();
+    Pair<String, Integer> systemFont = UIUtil.getSystemFontData();
     if (systemFont != null) {
       LafManagerImpl.initFontDefaults(defaults, systemFont.first, systemFont.second);
     }

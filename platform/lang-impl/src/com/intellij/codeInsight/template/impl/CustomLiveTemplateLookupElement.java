@@ -64,6 +64,6 @@ public class CustomLiveTemplateLookupElement extends LiveTemplateLookupElement {
   }
 
   public void expandTemplate(@NotNull Editor editor, @NotNull PsiFile file) {
-    myCustomLiveTemplate.expand(myTemplateKey, new CustomTemplateCallback(editor, file, false));
+    myCustomLiveTemplate.expand(myTemplateKey, new CustomTemplateCallback(editor, file));
   }
 }

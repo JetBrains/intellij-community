@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -235,29 +235,6 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     return null;
   }
 
-  // TODO remove as soon as an arrangement sub-system is provided for groovy.
-  public static int getMemberOrderWeight(PsiElement member, CodeStyleSettings settings) {
-    if (member instanceof PsiField) {
-      if (member instanceof PsiEnumConstant) {
-        return 1;
-      }
-      return ((PsiField)member).hasModifierProperty(PsiModifier.STATIC) ? settings.STATIC_FIELDS_ORDER_WEIGHT + 1
-                                                                        : settings.FIELDS_ORDER_WEIGHT + 1;
-    }
-    if (member instanceof PsiMethod) {
-      if (((PsiMethod)member).isConstructor()) {
-        return settings.CONSTRUCTORS_ORDER_WEIGHT + 1;
-      }
-      return ((PsiMethod)member).hasModifierProperty(PsiModifier.STATIC) ? settings.STATIC_METHODS_ORDER_WEIGHT + 1
-                                                                         : settings.METHODS_ORDER_WEIGHT + 1;
-    }
-    if (member instanceof PsiClass) {
-      return ((PsiClass)member).hasModifierProperty(PsiModifier.STATIC) ? settings.STATIC_INNER_CLASSES_ORDER_WEIGHT + 1
-                                                                        : settings.INNER_CLASSES_ORDER_WEIGHT + 1;
-    }
-    return -1;
-  }
-
   @Override
   public void setupCatchBlock(@NotNull String exceptionName, @NotNull PsiType exceptionType, PsiElement context, @NotNull PsiCatchSection catchSection) {
     final FileTemplate catchBodyTemplate = FileTemplateManager.getInstance().getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
@@ -281,7 +258,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
       throw ce;
     }
     catch (Exception e) {
-      throw new IncorrectOperationException("Incorrect file template", e);
+      throw new IncorrectOperationException("Incorrect file template", (Throwable)e);
     }
     catchSection.getCatchBlock().replace(codeBlockFromText);
   }

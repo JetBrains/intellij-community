@@ -135,7 +135,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
         LOG.info("Version has changed for stub index " + extension.getKey() + ". The index will be rebuilt.");
       }
       FileUtil.delete(indexRootDir);
-      IndexingStamp.rewriteVersion(versionFile, version);
+      IndexingStamp.rewriteVersion(versionFile, version); // todo snapshots indices
     }
 
     for (int attempt = 0; attempt < 2; attempt++) {
@@ -157,7 +157,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
         LOG.info(e);
         needRebuild = true;
         FileUtil.delete(indexRootDir);
-        IndexingStamp.rewriteVersion(versionFile, version);
+        IndexingStamp.rewriteVersion(versionFile, version); // todo snapshots indices
       }
     }
     return needRebuild;
@@ -445,7 +445,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   }
 
   private static class MyIndex<K> extends MapReduceIndex<K, StubIdList, Void> {
-    public MyIndex(final IndexStorage<K, StubIdList> storage) {
+    public MyIndex(final IndexStorage<K, StubIdList> storage) throws IOException {
       super(null, null, storage);
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -61,13 +61,13 @@ public class GroovyAntCustomCompilerProvider extends ChunkCustomCompilerExtensio
                                     PatternSetRef compilerExcludes,
                                     Tag srcTag,
                                     String outputPathRef) {
-    Tag groovyc = new Tag("groovyc", Pair.create("destdir", outputPathRef), Pair.create("fork", "yes"));
+    Tag groovyc = new Tag("groovyc", Couple.newOne("destdir", outputPathRef), Couple.newOne("fork", "yes"));
     // note that boot classpath tag is ignored
     groovyc.add(srcTag);
     groovyc.add(classpathTag);
     groovyc.add(compilerExcludes);
     final Tag javac =
-      new Tag("javac", Pair.create("debug", BuildProperties.propertyRef(BuildProperties.PROPERTY_COMPILER_GENERATE_DEBUG_INFO)));
+      new Tag("javac", Couple.newOne("debug", BuildProperties.propertyRef(BuildProperties.PROPERTY_COMPILER_GENERATE_DEBUG_INFO)));
     javac.add(compilerArgs);
     groovyc.add(javac);
     generator.add(groovyc);
@@ -97,8 +97,8 @@ public class GroovyAntCustomCompilerProvider extends ChunkCustomCompilerExtensio
     String groovySdkPathRef = BuildProperties.getLibraryPathId(sdkLib.getName());
     generator.add(new Property(GROOVYC_TASK_SDK_PROPERTY, groovySdkPathRef));
     //noinspection HardCodedStringLiteral
-    Tag taskdef = new Tag("taskdef", Pair.create("name", "groovyc"), Pair.create("classname", "org.codehaus.groovy.ant.Groovyc"),
-                          Pair.create("classpathref", "${" + GROOVYC_TASK_SDK_PROPERTY + "}"));
+    Tag taskdef = new Tag("taskdef", Couple.newOne("name", "groovyc"), Couple.newOne("classname", "org.codehaus.groovy.ant.Groovyc"),
+                          Couple.newOne("classpathref", "${" + GROOVYC_TASK_SDK_PROPERTY + "}"));
     generator.add(taskdef);
   }
 

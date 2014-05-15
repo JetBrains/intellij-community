@@ -60,11 +60,11 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -169,7 +169,7 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
   @Nullable
-  public FindUsagesHandler getFindUsagesHandler(PsiElement element, final boolean forHighlightUsages) {
+  public FindUsagesHandler getFindUsagesHandler(@NotNull PsiElement element, final boolean forHighlightUsages) {
     for (FindUsagesHandlerFactory factory : Extensions.getExtensions(FindUsagesHandlerFactory.EP_NAME, myProject)) {
       if (factory.canFindUsages(element)) {
         final FindUsagesHandler handler = factory.createFindUsagesHandler(element, forHighlightUsages);

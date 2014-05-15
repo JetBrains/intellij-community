@@ -2,6 +2,7 @@ package org.jetbrains.jsonProtocol;
 
 import com.google.gson.stream.JsonToken;
 import com.intellij.util.ArrayUtilRt;
+import gnu.trove.TDoubleArrayList;
 import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TLongArrayList;
@@ -232,6 +233,23 @@ public final class JsonReaders {
     return list;
   }
 
+  public static List<String> readListOfPrimitive(JsonReaderEx reader) {
+    reader.beginArray();
+    if (!reader.hasNext()) {
+      reader.endArray();
+      return Collections.emptyList();
+    }
+
+    List<String> list = new ArrayList<String>();
+    do {
+      //noinspection unchecked
+      list.add(reader.nextString(true));
+    }
+    while (reader.hasNext());
+    reader.endArray();
+    return list;
+  }
+
   public static long[] readLongArray(JsonReaderEx reader) {
     checkIsNull(reader, null);
     reader.beginArray();
@@ -243,6 +261,23 @@ public final class JsonReaders {
     TLongArrayList result = new TLongArrayList();
     do {
       result.add(reader.nextLong());
+    }
+    while (reader.hasNext());
+    reader.endArray();
+    return result.toNativeArray();
+  }
+
+  public static double[] readDoubleArray(JsonReaderEx reader) {
+    checkIsNull(reader, null);
+    reader.beginArray();
+    if (!reader.hasNext()) {
+      reader.endArray();
+      return new double[]{0};
+    }
+
+    TDoubleArrayList result = new TDoubleArrayList();
+    do {
+      result.add(reader.nextDouble());
     }
     while (reader.hasNext());
     reader.endArray();

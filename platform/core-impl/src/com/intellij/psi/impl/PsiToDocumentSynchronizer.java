@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -509,7 +509,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       }
 
       MutableTextRange newRange = new MutableTextRange(start, end);
-      final Pair<MutableTextRange, StringBuffer> pair = new Pair<MutableTextRange, StringBuffer>(newRange, fragmentBuffer);
+      final Pair<MutableTextRange, StringBuffer> pair = Pair.create(newRange, fragmentBuffer);
       for (Pair<MutableTextRange, StringBuffer> affectedFragment : myAffectedFragments) {
         MutableTextRange range = affectedFragment.getFirst();
         assert end <= range.getStartOffset() || range.getEndOffset() <= start : "Range :"+range+"; Added: "+newRange;

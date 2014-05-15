@@ -2,7 +2,6 @@ com.intellij.properties
 com.intellij.javaee
 GenerateToString
 StrutsAssistant
-com.intellij.testAssistant
 WebServicesPlugin
 Geronimo
 Coverage

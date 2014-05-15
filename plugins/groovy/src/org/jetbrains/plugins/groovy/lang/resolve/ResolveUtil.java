@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
@@ -142,6 +143,7 @@ public class ResolveUtil {
     return PsiTreeUtil.treeWalkUp(place, maxScope, new PairProcessor<PsiElement, PsiElement>() {
       @Override
       public boolean process(PsiElement scope, PsiElement lastParent) {
+        ProgressManager.checkCanceled();
         if (!doProcessDeclarations(originalPlace, lastParent, scope, substituteProcessor(processor, scope), nonCodeProcessor, state)) {
           return false;
         }
@@ -450,7 +452,7 @@ public class ResolveUtil {
       while (sibling != null) {
         final GrLabeledStatement labelStatement = findLabelStatementIn(sibling, last, labelName);
         if (labelStatement != null) {
-          return new Pair<GrStatement, GrLabeledStatement>(statement, labelStatement);
+          return Pair.create(statement, labelStatement);
         }
         sibling = sibling.getPrevSibling();
       }
@@ -494,6 +496,7 @@ public class ResolveUtil {
     PsiElement lastParent = null;
 
     while (run != null) {
+      ProgressManager.checkCanceled();
       if (run instanceof GrMember) {
         inCodeBlock = false;
       }
@@ -599,6 +602,8 @@ public class ResolveUtil {
       PsiType t2 = substitutor2.substitute(p2.getType());
 
       if (!t1.equals(t2)) {
+        if (t1 instanceof PsiClassType) t1 = TypeConversionUtil.erasure(t1);
+        if (t2 instanceof PsiClassType) t2 = TypeConversionUtil.erasure(t2);
         //method1 is more general than method2
         return t1.isAssignableFrom(t2);
       }

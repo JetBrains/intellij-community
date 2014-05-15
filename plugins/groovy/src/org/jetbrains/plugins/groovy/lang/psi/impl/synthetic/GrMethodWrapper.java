@@ -15,11 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
-import com.intellij.codeInsight.completion.originInfo.OriginInfoAwareElement;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrPsiTypeStub;
 
 /**
@@ -36,7 +34,7 @@ public class GrMethodWrapper extends GrLightMethodBuilder {
   private final PsiMethod myWrappedMethod;
   private volatile boolean myNavigationElementInit;
 
-  private GrMethodWrapper(PsiMethod method) {
+  protected GrMethodWrapper(PsiMethod method, PsiSubstitutor substitutor) {
     super(method.getManager(), method.getName());
 
     myWrappedMethod = method;
@@ -45,7 +43,7 @@ public class GrMethodWrapper extends GrLightMethodBuilder {
 
     getModifierList().copyModifiers(method);
 
-    getParameterList().copyParameters(method);
+    getParameterList().copyParameters(method, substitutor);
 
     if (method instanceof OriginInfoAwareElement) {
       setOriginInfo(((OriginInfoAwareElement)method).getOriginInfo());
@@ -90,6 +88,10 @@ public class GrMethodWrapper extends GrLightMethodBuilder {
   }
 
   public static GrMethodWrapper wrap(@NotNull PsiMethod method) {
-    return new GrMethodWrapper(method);
+    return new GrMethodWrapper(method, PsiSubstitutor.EMPTY);
+  }
+
+  public static GrLightMethodBuilder wrap(GrMethod method, PsiSubstitutor substitutor) {
+    return new GrMethodWrapper(method, substitutor);
   }
 }

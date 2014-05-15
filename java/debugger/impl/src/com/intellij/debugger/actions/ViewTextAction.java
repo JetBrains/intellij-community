@@ -15,14 +15,11 @@
  */
 package com.intellij.debugger.actions;
 
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
-import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
-import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.EditorTextField;
 import com.intellij.xdebugger.impl.ui.TextViewer;
+import com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueActionBase;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,16 +28,24 @@ import java.awt.*;
 /*
  * @author Jeka
  */
-public class ViewTextAction extends BaseValueAction {
+public class ViewTextAction extends XFetchValueActionBase {
   @Override
-  protected void processText(final Project project, final String text, DebuggerTreeNodeImpl node, DebuggerContextImpl debuggerContext) {
-    final NodeDescriptorImpl descriptor = node.getDescriptor();
-    final String labelText = descriptor instanceof ValueDescriptorImpl? ((ValueDescriptorImpl)descriptor).getValueLabel() : null;
+  protected void handle(Project project, String value) {
     final MyDialog dialog = new MyDialog(project);
-    dialog.setTitle(labelText != null? "View Text for: " + labelText : "View Text");
-    dialog.setText(text);
+    dialog.setTitle("View Text");
+    dialog.setText(value);
     dialog.show();
   }
+
+  //@Override
+  //protected void processText(final Project project, final String text, DebuggerTreeNodeImpl node, DebuggerContextImpl debuggerContext) {
+  //  final NodeDescriptorImpl descriptor = node.getDescriptor();
+  //  final String labelText = descriptor instanceof ValueDescriptorImpl? ((ValueDescriptorImpl)descriptor).getValueLabel() : null;
+  //  final MyDialog dialog = new MyDialog(project);
+  //  dialog.setTitle(labelText != null? "View Text for: " + labelText : "View Text");
+  //  dialog.setText(text);
+  //  dialog.show();
+  //}
 
   private static class MyDialog extends DialogWrapper {
     private final EditorTextField myTextViewer;

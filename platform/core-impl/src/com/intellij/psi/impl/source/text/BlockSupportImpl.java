@@ -104,10 +104,10 @@ public class BlockSupportImpl extends BlockSupport {
         final TextRange textRange = node.getTextRange();
         final IReparseableElementType reparseable = (IReparseableElementType)elementType;
 
-        if (baseLanguage.isKindOf(reparseable.getLanguage())) {
+        if (baseLanguage.isKindOf(reparseable.getLanguage()) && textRange.getLength() + lengthShift > 0) {
           final int start = textRange.getStartOffset();
           final int end = start + textRange.getLength() + lengthShift;
-          if (!assertFileLength(file, newFileText, node, elementType, start, end)) {
+          if (!assertFileLength2(file, newFileText, node, start, end)) {
             break;
           }
 
@@ -137,9 +137,9 @@ public class BlockSupportImpl extends BlockSupport {
     return makeFullParse(node, newFileText, textLength, fileImpl, indicator);
   }
 
-  private static boolean assertFileLength(PsiFile file, CharSequence newFileText, ASTNode node, IElementType elementType, int start, int end) {
+  private static boolean assertFileLength2(PsiFile file, CharSequence newFileText, ASTNode node, int start, int end) {
     if (end > newFileText.length() || start > end) {
-      String message = "IOOBE: type=" + elementType +
+      String message = "Index out of bounds: type=" + node.getElementType() +
                        "; file=" + file +
                        "; file.class=" + file.getClass() +
                        "; start=" + start +
@@ -151,10 +151,9 @@ public class BlockSupportImpl extends BlockSupport {
         message += "; oldTextBefore==newTextBefore";
       }
       LOG.error(message,
-                new Attachment(file.getName() + "_oldText.txt", node.getText()),
-                new Attachment(file.getName() + "_newText.txt", node.getText()),
-                new Attachment(file.getName() + "_oldTextBefore.txt", oldTextBefore),
-                new Attachment(file.getName() + "_newTextBefore.txt", newTextBefore)
+                new Attachment(file.getName() + "_oldNodeText.txt", node.getText()),
+                new Attachment(file.getName() + "_oldFileText.txt", file.getText()),
+                new Attachment(file.getName() + "_newFileText.txt", newFileText.toString())
       );
       return false;
     }
@@ -327,7 +326,7 @@ public class BlockSupportImpl extends BlockSupport {
   }
 
   public static void sendAfterChildrenChangedEvent(@NotNull PsiManagerImpl manager,
-                                                   @NotNull PsiFileImpl scope,
+                                                   @NotNull PsiFile scope,
                                                    int oldLength,
                                                    boolean isGenericChange) {
     if(!scope.isPhysical()) {

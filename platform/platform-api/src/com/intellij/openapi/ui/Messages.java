@@ -1027,7 +1027,7 @@ public class Messages {
     else {
       InputDialogWithCheckbox dialog = new InputDialogWithCheckbox(message, title, checkboxText, checked, checkboxEnabled, icon, initialValue, validator);
       dialog.show();
-      return new Pair<String, Boolean>(dialog.getInputString(), dialog.isChecked());
+      return Pair.create(dialog.getInputString(), dialog.isChecked());
     }
   }
 

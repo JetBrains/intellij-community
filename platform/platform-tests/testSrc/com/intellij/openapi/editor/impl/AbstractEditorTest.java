@@ -36,6 +36,8 @@ import java.util.Scanner;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 
+import static org.junit.Assert.assertArrayEquals;
+
 /**
  * Base super class for tests that check various IJ editor functionality on managed document modification.
  * <p/>
@@ -157,7 +159,7 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
     Pattern generalPattern =
       Pattern.compile("visual line: (\\d+), offsets: (\\d+)-(\\d+), logical lines: (\\d+)-(\\d+), logical columns: (\\d+)-(\\d+), "
                       + "end visual column: (\\d+), fold regions: \\[([^\\]]*)\\], tab data: \\[([^\\]]*)\\]");
-    Pattern foldPattern = Pattern.compile("width in columns: (-?\\d+), start X: (-?\\d+), fold region: FoldRegion [-+]\\((\\d+):(\\d+)");
+    Pattern foldPattern = Pattern.compile("width in columns: (-?\\d+), fold region: FoldRegion [-+]\\((\\d+):(\\d+)");
     Pattern tabPattern = Pattern.compile("\\[(\\d+), width: (\\d+)");
     final SoftWrapModelImpl softWrapModel = (SoftWrapModelImpl)myEditor.getSoftWrapModel();
     final CachingSoftWrapDataMapper mapper = softWrapModel.getDataMapper();
@@ -174,14 +176,13 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
       int endLogicalColumn = Integer.parseInt(generalMatch.group(7));
       int endVisualColumn = Integer.parseInt(generalMatch.group(8));
       
-      List<Trinity<Integer, Integer, FoldRegion>> foldRegions = new ArrayList<Trinity<Integer, Integer, FoldRegion>>();
+      List<Pair<Integer, FoldRegion>> foldRegions = new ArrayList<Pair<Integer, FoldRegion>>();
       Scanner foldScanner = new Scanner(generalMatch.group(9));
       while (foldScanner.findInLine(foldPattern) != null) {
         final MatchResult foldMatch = foldScanner.match();
         int widthInColumns = Integer.parseInt(foldMatch.group(1));
-        int startX = Integer.parseInt(foldMatch.group(2));
-        int foldStartOffset = Integer.parseInt(foldMatch.group(3));
-        int foldEndOffset = Integer.parseInt(foldMatch.group(4));
+        int foldStartOffset = Integer.parseInt(foldMatch.group(2));
+        int foldEndOffset = Integer.parseInt(foldMatch.group(3));
         FoldRegion region = null;
         for (FoldRegion candidate : foldingModel.getAllFoldRegions()) {
           if (candidate.getStartOffset() == foldStartOffset && candidate.getEndOffset() == foldEndOffset) {
@@ -189,7 +190,7 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
             break;
           }
         }
-        foldRegions.add(new Trinity<Integer, Integer, FoldRegion>(widthInColumns, startX, region));
+        foldRegions.add(new Pair<Integer, FoldRegion>(widthInColumns, region));
       }
       
       List<Pair<Integer, Integer>> tabData = new ArrayList<Pair<Integer, Integer>>();
@@ -241,5 +242,13 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
       assertEquals("Unexpected selection start for caret " + (i + 1), new VisualPosition(coordinates[i * 4], coordinates[i * 4 + 2]), caret.getSelectionStartPosition());
       assertEquals("Unexpected selection end for caret " + (i + 1), new VisualPosition(coordinates[i * 4], coordinates[i * 4 + 3]), caret.getSelectionEndPosition());
     }
+  }
+
+  public static void verifySoftWrapPositions(Integer... positions) {
+    List<Integer> softWrapPositions = new ArrayList<Integer>();
+    for (SoftWrap softWrap : myEditor.getSoftWrapModel().getSoftWrapsForRange(0, myEditor.getDocument().getTextLength())) {
+      softWrapPositions.add(softWrap.getStart());
+    }
+    assertArrayEquals(positions, softWrapPositions.toArray());
   }
 }

@@ -82,8 +82,9 @@ public class HgPullDialog extends DialogWrapper {
     rememberedInputs.addUrl(HgUtil.removePasswordIfNeeded(getSource()));
   }
 
-  public VirtualFile getRepository() {
-    return hgRepositorySelector.getRepository().getRoot();
+  @NotNull
+  public HgRepository getRepository() {
+    return hgRepositorySelector.getRepository();
   }
 
   public String getSource() {

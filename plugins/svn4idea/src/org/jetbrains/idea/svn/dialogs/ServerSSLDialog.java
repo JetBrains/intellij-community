@@ -39,7 +39,7 @@ public class ServerSSLDialog extends DialogWrapper {
   private int myResult;
   @NonNls public static final String ALGORITHM_SHA1 = "SHA1";
 
-  protected ServerSSLDialog(final Project project, X509Certificate cert, boolean store) {
+  public ServerSSLDialog(final Project project, X509Certificate cert, boolean store) {
     super(project, true);
     myCertificate = cert;
     myResult = ISVNAuthenticationProvider.REJECTED;

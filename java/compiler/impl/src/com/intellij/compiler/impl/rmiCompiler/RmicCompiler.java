@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,7 +155,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
       final Map<Pair<Module, File>, List<RmicProcessingItem>> sortedByModuleAndOutputPath = new HashMap<Pair<Module,File>, List<RmicProcessingItem>>();
       for (ProcessingItem item1 : items) {
         final RmicProcessingItem item = (RmicProcessingItem)item1;
-        final Pair<Module, File> moduleOutputPair = new Pair<Module, File>(item.getModule(), item.getOutputDir());
+        final Pair<Module, File> moduleOutputPair = Pair.create(item.getModule(), item.getOutputDir());
         List<RmicProcessingItem> dirItems = sortedByModuleAndOutputPath.get(moduleOutputPair);
         if (dirItems == null) {
           dirItems = new ArrayList<RmicProcessingItem>();

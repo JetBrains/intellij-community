@@ -16,18 +16,23 @@
 
 package com.intellij.execution.process;
 
+import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
+import java.util.List;
 
 /**
  * @author Roman Chernyatchik
+ * @author traff
  */
 public class ColoredProcessHandler extends OSProcessHandler implements AnsiEscapeDecoder.ColoredTextAcceptor {
   private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
+
+  private final List<AnsiEscapeDecoder.ColoredTextAcceptor> myColoredTextListeners = Lists.newArrayList();
 
   public ColoredProcessHandler(final GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine.createProcess(), commandLine.getCommandLineString(), commandLine.getCharset());
@@ -48,9 +53,32 @@ public class ColoredProcessHandler extends OSProcessHandler implements AnsiEscap
     myAnsiEscapeDecoder.escapeText(text, outputType, this);
   }
 
+  /**
+   * Override this method to handle colored text lines.
+   * Overrides should call super.coloredTextAvailable() if they want to pass lines to registered listeners
+   * To receive chunks of data instead of fragments inherit your class from ColoredChunksAcceptor interface and
+   * override coloredChunksAvailable method.
+   * @param text
+   * @param attributes
+   */
   @Override
   public void coloredTextAvailable(String text, Key attributes) {
     textAvailable(text, attributes);
+    notifyColoredListeners(text, attributes);
+  }
+
+  protected void notifyColoredListeners(String text, Key attributes) { //TODO: call super.coloredTextAvailable after textAvailable removed
+    for (AnsiEscapeDecoder.ColoredTextAcceptor listener: myColoredTextListeners) {
+      listener.coloredTextAvailable(text, attributes);
+    }
+  }
+
+  public void addColoredTextListener(AnsiEscapeDecoder.ColoredTextAcceptor listener) {
+    myColoredTextListeners.add(listener);
+  }
+
+  public void removeColoredTextListener(AnsiEscapeDecoder.ColoredTextAcceptor listener) {
+    myColoredTextListeners.remove(listener);
   }
 
   /**

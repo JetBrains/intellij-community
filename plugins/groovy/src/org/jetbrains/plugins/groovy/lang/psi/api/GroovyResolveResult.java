@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,14 +45,17 @@ public interface GroovyResolveResult extends ResolveResult {
   SpreadState getSpreadState();
 
   GroovyResolveResult EMPTY_RESULT = new GroovyResolveResult() {
+    @Override
     public boolean isAccessible() {
       return false;
     }
 
+    @Override
     public PsiElement getCurrentFileResolveContext() {
       return null;
     }
 
+    @Override
     public boolean isStaticsOK() {
       return true;
     }
@@ -62,16 +65,19 @@ public interface GroovyResolveResult extends ResolveResult {
       return false;
     }
 
+    @Override
     @NotNull
     public PsiSubstitutor getSubstitutor() {
       return PsiSubstitutor.EMPTY;
     }
 
+    @Override
     @Nullable
     public PsiElement getElement() {
       return null;
     }
 
+    @Override
     public boolean isValidResult() {
       return false;
     }

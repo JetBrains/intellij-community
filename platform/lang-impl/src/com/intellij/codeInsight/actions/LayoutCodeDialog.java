@@ -187,8 +187,7 @@ public class LayoutCodeDialog extends DialogWrapper implements LayoutCodeOptions
     myCbArrangeEntries.setEnabled(true);
     myCbArrangeEntries.setSelected(myRearrangeEntriesSelected);
 
-    //TODO enable it when getting changed ranges will be fixed
-    myCbOnlyVcsChangedRegions.setEnabled(false);
+    myCbOnlyVcsChangedRegions.setEnabled(myDirectory != null && FormatChangedTextUtil.hasChanges(myDirectory));
     myCbOnlyVcsChangedRegions.setSelected(false);
 
     myDoNotAskMeCheckBox.setEnabled(false);

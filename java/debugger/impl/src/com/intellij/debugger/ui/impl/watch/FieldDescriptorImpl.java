@@ -41,6 +41,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -70,6 +71,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
+  @Nullable
   public SourcePosition getSourcePosition(final Project project, final DebuggerContextImpl context) {
     if (context.getFrameProxy() == null) {
       return null;

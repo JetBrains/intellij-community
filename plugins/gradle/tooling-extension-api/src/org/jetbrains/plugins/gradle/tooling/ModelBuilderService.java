@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.gradle.tooling;
 
 import org.gradle.api.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
@@ -25,4 +26,7 @@ public interface ModelBuilderService {
   boolean canBuild(String modelName);
 
   Object buildAll(String modelName, Project project);
+
+  @NotNull
+  ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e);
 }

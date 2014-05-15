@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,6 @@ import org.jetbrains.annotations.NonNls;
 public class Mkdir extends Tag {
   public Mkdir(@NonNls String directory) {
     //noinspection HardCodedStringLiteral
-    super("mkdir", new Pair[] {new Pair<String, String>("dir", directory)});
+    super("mkdir", new Pair[] {Pair.create("dir", directory)});
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -157,7 +157,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
     }
 
     if (rawInference != null) return rawInference;
-    if (lowerBound != PsiType.NULL) return new Pair<PsiType, ConstraintType>(lowerBound, ConstraintType.EQUALS);
+    if (lowerBound != PsiType.NULL) return Pair.create(lowerBound, ConstraintType.EQUALS);
 
     if (parent != null) {
       final Pair<PsiType, ConstraintType> constraint =
@@ -168,14 +168,14 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
         }
 
         if (upperBound != PsiType.NULL) {
-          return new Pair<PsiType, ConstraintType>(upperBound, ConstraintType.SUBTYPE);
+          return Pair.create(upperBound, ConstraintType.SUBTYPE);
         }
 
         return constraint;
       }
     }
 
-    if (upperBound != PsiType.NULL) return new Pair<PsiType, ConstraintType>(upperBound, ConstraintType.SUBTYPE);
+    if (upperBound != PsiType.NULL) return Pair.create(upperBound, ConstraintType.SUBTYPE);
     return null;
   }
 
@@ -403,7 +403,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
                                                               final boolean captureWildcard) {
     if (arg instanceof PsiWildcardType && !captureWildcard) return FAILED_INFERENCE;
     if (arg != PsiType.NULL) {
-      return new Pair<PsiType, ConstraintType>(arg, constraintType);
+      return Pair.create(arg, constraintType);
     }
     return null;
   }
@@ -460,7 +460,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
           arg instanceof PsiIntersectionType ||
           (psiClass != null && (isContraVariantPosition || !CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName()) || (arg instanceof PsiArrayType)))) {
         PsiType bound = intersectAllExtends(typeParam, arg);
-        return new Pair<PsiType, ConstraintType>(bound, ConstraintType.SUPERTYPE);
+        return Pair.create(bound, ConstraintType.SUPERTYPE);
       }
       if (psiClass == null && arg instanceof PsiClassType) {
         return Pair.create(arg, ConstraintType.EQUALS);
@@ -512,14 +512,14 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
                                                                                     PsiType patternType,
                                                                                     final ConstraintType constraintType,
                                                                                     final int depth) {
+    if (patternType.equals(param)) {
+      return processArgType(arg, constraintType, depth < 2);
+    }
+
     if (arg instanceof PsiCapturedWildcardType && (depth < 2 || 
                                                    constraintType != ConstraintType.EQUALS || 
                                                    param instanceof PsiWildcardType)) {
       arg = ((PsiCapturedWildcardType)arg).getWildcard(); //reopen
-    }
-
-    if (patternType.equals(param)) {
-      return processArgType(arg, constraintType, depth < 2);
     }
 
     if (param instanceof PsiWildcardType) {
@@ -651,8 +651,8 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
         }
       }
 
-      if (lowerBound != PsiType.NULL) return new Pair<PsiType, ConstraintType>(lowerBound, ConstraintType.SUPERTYPE);
-      if (upperBound != PsiType.NULL) return new Pair<PsiType, ConstraintType>(upperBound, ConstraintType.SUBTYPE);
+      if (lowerBound != PsiType.NULL) return Pair.create(lowerBound, ConstraintType.SUPERTYPE);
+      if (upperBound != PsiType.NULL) return Pair.create(upperBound, ConstraintType.SUBTYPE);
 
       return wildcardCaptured;
     }
@@ -787,6 +787,6 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
       }
     }
 
-    return new Pair<PsiType, ConstraintType>(guess, constraint.getSecond());
+    return Pair.create(guess, constraint.getSecond());
   }
 }

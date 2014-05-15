@@ -44,13 +44,17 @@ public class ActionGroupUtil {
                                                    @NotNull Map<AnAction, Presentation> action2presentation) {
     AnAction[] actions = actionGroup.getChildren(e);
     for (AnAction action : actions) {
-      if (action instanceof ActionGroup) {
-        if (!isGroupEmpty((ActionGroup)action, e, action2presentation)) {
+      if (action instanceof Separator) continue;
+      if (isActionEnabledAndVisible(e, action2presentation, action)) {
+        if (action instanceof ActionGroup) {
+          if (!isGroupEmpty((ActionGroup)action, e, action2presentation)) {
+            return false;
+          }
+          // else continue for-loop
+        }
+        else {
           return false;
         }
-      }
-      else if (!(action instanceof Separator) && isActionEnabledAndVisible(e, action2presentation, action)) {
-        return false;
       }
     }
     return true;

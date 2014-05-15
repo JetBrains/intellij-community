@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,7 +130,7 @@ public class TargetResolver extends PropertyProviderFinder {
           final String declaredRef = it.next();
           final AntDomTarget result = getTargetByName(declaredRef);
           if (result != null) {
-            myResult.add(declaredRef, new Pair<AntDomTarget, String>(result, declaredRef)); // treat declared name as effective name
+            myResult.add(declaredRef, Pair.create(result, declaredRef)); // treat declared name as effective name
             it.remove();
           }
         }

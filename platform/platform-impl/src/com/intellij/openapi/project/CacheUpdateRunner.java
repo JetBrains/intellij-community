@@ -34,6 +34,7 @@ import com.intellij.util.Consumer;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.Future;
@@ -50,6 +51,11 @@ public class CacheUpdateRunner {
   CacheUpdateRunner(@NotNull Project project, @NotNull Collection<CacheUpdater> updaters) {
     myProject = project;
     myUpdaters = updaters;
+  }
+
+  @Override
+  public String toString() {
+    return new ArrayList<CacheUpdater>(myUpdaters).toString();
   }
 
   public int queryNeededFiles(@NotNull ProgressIndicator indicator) {
@@ -88,9 +94,9 @@ public class CacheUpdateRunner {
   }
 
   public static void processFiles(final ProgressIndicator indicator,
-                           boolean processInReadAction,
-                           Collection<VirtualFile> files,
-                           Project project, Consumer<FileContent> processor) {
+                                  boolean processInReadAction,
+                                  Collection<VirtualFile> files,
+                                  Project project, Consumer<FileContent> processor) {
     indicator.checkCanceled();
     final FileContentQueue queue = new FileContentQueue();
     final double total = files.size();
@@ -139,10 +145,10 @@ public class CacheUpdateRunner {
   }
 
   private static boolean processSomeFilesWhileUserIsInactive(@NotNull FileContentQueue queue,
-                                                      @NotNull Consumer<VirtualFile> progressUpdater,
-                                                      final boolean processInReadAction,
-                                                      @NotNull Project project,
-                                                      @NotNull Consumer<FileContent> fileProcessor) {
+                                                             @NotNull Consumer<VirtualFile> progressUpdater,
+                                                             final boolean processInReadAction,
+                                                             @NotNull Project project,
+                                                             @NotNull Consumer<FileContent> fileProcessor) {
     final ProgressIndicatorBase innerIndicator = new ProgressIndicatorBase() {
       @Override
       protected boolean isCancelable() {
@@ -202,6 +208,8 @@ public class CacheUpdateRunner {
       }
       return allFinished;
 
+    }
+    catch (InterruptedException ignored) {
     }
     catch (Throwable throwable) {
       LOG.error(throwable);

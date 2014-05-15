@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   private static final String GET_FRAME = "getFrame";
   private static final String GET_VARIABLE = "getVariable";
   private static final String CHANGE_VARIABLE = "changeVariable";
+  private static final String CONNECT_TO_DEBUGGER = "connectToDebugger";
   private static final String HANDSHAKE = "handshake";
   private static final String CLOSE = "close";
 
@@ -98,6 +99,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   private volatile boolean firstCommWorked = false;
 
   private boolean myExecuting;
+  private PythonDebugConsoleCommunication myDebugCommunication;
 
   /**
    * Initializes the xml-rpc communication.
@@ -303,6 +305,10 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
    */
   @NotNull
   public List<PydevCompletionVariant> getCompletions(String text, String actTok) throws Exception {
+    if (myDebugCommunication != null && myDebugCommunication.isSuspended()) {
+      return myDebugCommunication.getCompletions(text, actTok);
+    }
+
     if (waitingForInput) {
       return Collections.emptyList();
     }
@@ -315,6 +321,9 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
    * @return the description of the given attribute in the shell
    */
   public String getDescription(String text) throws Exception {
+    if (myDebugCommunication != null && myDebugCommunication.isSuspended()) {
+      return myDebugCommunication.getDescription(text);
+    }
     if (waitingForInput) {
       return "Unable to get description: waiting for input.";
     }
@@ -327,6 +336,10 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
    * @param command the command to be executed in the client
    */
   public void execInterpreter(final ConsoleCodeFragment command, final Function<InterpreterResponse, Object> onResponseReceived) {
+    if (myDebugCommunication != null && myDebugCommunication.isSuspended()) {
+      myDebugCommunication.execInterpreter(command, onResponseReceived);
+      return; //TODO: handle text input and other cases
+    }
     nextResponse = null;
     if (waitingForInput) {
       inputReceived = command.getText();
@@ -372,7 +385,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
                   if (commAttempts < MAX_ATTEMPTS) {
                     commAttempts += 1;
                     Thread.sleep(250);
-                    executed = new Pair<String, Boolean>("", executed.second);
+                    executed = Pair.create("", executed.second);
                   }
                   else {
                     break;
@@ -515,9 +528,47 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     }
   }
 
+
+  /**
+   * Request that pydevconsole connect (with pydevd) to the specified port
+   *
+   * @param localPort port for pydevd to connect to.
+   * @throws Exception if connection fails
+   */
+  public void connectToDebugger(int localPort) throws Exception {
+    if (waitingForInput) {
+      throw new Exception("Can't connect debugger now, waiting for input");
+    }
+    Object result = myClient.execute(CONNECT_TO_DEBUGGER, new Object[]{localPort});
+    Exception exception = null;
+    if (result instanceof Vector) {
+      Vector resultarray = (Vector)result;
+      if (resultarray.size() == 1) {
+        if ("connect complete".equals(resultarray.get(0))) {
+          return;
+        }
+        if (resultarray.get(0) instanceof String) {
+          exception = new Exception((String)resultarray.get(0));
+        }
+        if (resultarray.get(0) instanceof Exception) {
+          exception = (Exception)resultarray.get(0);
+        }
+      }
+    }
+    throw new PyDebuggerException("pydevconsole failed to execute connectToDebugger", exception);
+  }
+
   private static void checkError(Object ret) throws PyDebuggerException {
     if (ret instanceof Object[] && ((Object[])ret).length == 1) {
       throw new PyDebuggerException(((Object[])ret)[0].toString());
     }
+  }
+
+  public void setDebugCommunication(PythonDebugConsoleCommunication debugCommunication) {
+    myDebugCommunication = debugCommunication;
+  }
+
+  public PythonDebugConsoleCommunication getDebugCommunication() {
+    return myDebugCommunication;
   }
 }

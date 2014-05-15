@@ -78,7 +78,7 @@ public abstract class BreakpointBase<L> extends Breakpoint {
       return this;
     }
     enabled = value;
-    dirty  = true;
+    dirty = true;
     return this;
   }
 

@@ -43,11 +43,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -259,10 +257,8 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   public void rebuild() {
     if (myProject.isDisposed()) return;
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-
-    boolean hadFocus = ToolWindowId.STRUCTURE_VIEW.equals(ToolWindowManager.getInstance(myProject).getActiveToolWindowId());
-
     Dimension referenceSize = null;
+
     if (myStructureView != null) {
       if (myStructureView instanceof StructureView.Scrollable) {
         referenceSize = ((StructureView.Scrollable)myStructureView).getCurrentSize();
@@ -294,14 +290,12 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     }
 
     String[] names = {""};
-    JComponent focusedComponent = null;
     if (file != null && file.isValid()) {
       if (file.isDirectory()) {
         if (ProjectRootsUtil.isModuleContentRoot(file, myProject)) {
           Module module = ModuleUtilCore.findModuleForFile(file, myProject);
           if (module != null && !(ModuleUtil.getModuleType(module) instanceof InternalModuleType)) {
             myModuleStructureComponent = new ModuleStructureComponent(module);
-            focusedComponent = hadFocus ? IdeFocusTraversalPolicy.getPreferredFocusedComponent(myModuleStructureComponent) : null;
             createSinglePanel(myModuleStructureComponent.getComponent());
             Disposer.register(this, myModuleStructureComponent);
           }
@@ -339,7 +333,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
             else {
               createSinglePanel(myStructureView.getComponent());
             }
-            focusedComponent = hadFocus ? IdeFocusTraversalPolicy.getPreferredFocusedComponent(myStructureView.getComponent()) : null;
+
             myStructureView.restoreState();
             myStructureView.centerSelectedRow();
           }
@@ -361,15 +355,13 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
         Disposer.register(content, myStructureView);
       }
     }
-    if (hadFocus && focusedComponent != null) {
-      IdeFocusManager.getInstance(myProject).requestFocus(focusedComponent, true);
-    }
 
     if (myPendingSelection != null) {
       Runnable selection = myPendingSelection;
       myPendingSelection = null;
       selection.run();
     }
+
   }
 
   private void updateHeaderActions(StructureView structureView) {

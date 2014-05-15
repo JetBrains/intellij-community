@@ -19,7 +19,6 @@
  */
 package com.intellij.find.ngrams;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.ThreadLocalCachedIntArray;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,8 +30,6 @@ import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import gnu.trove.THashMap;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -44,10 +41,7 @@ import java.util.Collection;
 import java.util.Map;
 
 public class TrigramIndex extends ScalarIndexExtension<Integer> implements CustomInputsIndexFileBasedIndexExtension<Integer> {
-  public static final boolean ENABLED = SystemProperties.getBooleanProperty("idea.internal.trigramindex.enabled",
-                                                                            ApplicationManager.getApplication().isInternal() &&
-                                                                            !ApplicationManager.getApplication().isUnitTestMode()
-  );
+  public static final boolean ENABLED = SystemProperties.getBooleanProperty("idea.internal.trigramindex.enabled", true);
 
   public static final ID<Integer,Void> INDEX_ID = ID.create("Trigram.Index");
 
@@ -77,16 +71,10 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> implements Custo
       @Override
       @NotNull
       public Map<Integer, Void> map(@NotNull FileContent inputData) {
-        final Map<Integer, Void> result = new THashMap<Integer, Void>();
-        TIntHashSet built = TrigramBuilder.buildTrigram(inputData.getContentAsText());
-        built.forEach(new TIntProcedure() {
-          @Override
-          public boolean execute(int value) {
-            result.put(value, null);
-            return true;
-          }
-        });
-        return result;
+        MyTrigramProcessor trigramProcessor = new MyTrigramProcessor();
+        TrigramBuilder.processTrigrams(inputData.getContentAsText(), trigramProcessor);
+
+        return trigramProcessor.map;
       }
     };
   }
@@ -115,7 +103,7 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> implements Custo
 
   @Override
   public int getVersion() {
-    return ENABLED ? 2 + (IdIndex.ourSnapshotMappingsEnabled ? 0xFF:0) : 1;
+    return ENABLED ? 3 + (IdIndex.ourSnapshotMappingsEnabled ? 0xFF:0) : 1;
   }
 
   @Override
@@ -161,5 +149,20 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> implements Custo
         return result;
       }
     };
+  }
+
+  private static class MyTrigramProcessor extends TrigramBuilder.TrigramProcessor {
+    Map<Integer, Void> map;
+    @Override
+    public boolean consumeTrigramsCount(int count) {
+      map = new THashMap<Integer, Void>(count);
+      return true;
+    }
+
+    @Override
+    public boolean execute(int value) {
+      map.put(value, null);
+      return true;
+    }
   }
 }

@@ -80,6 +80,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   private JCheckBox            myCbAssertNotNull;
   private JBLabel              myPatternLegendLabel;
   private JCheckBox            myCbAutoShowFirstError;
+  private JCheckBox            myCbDisplayNotificationPopup;
   private JCheckBox            myCbEnableAutomake;
   private JCheckBox            myCbParallelCompilation;
   private JTextField           myHeapSizeField;
@@ -136,6 +137,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     controls.put(Setting.CLEAR_OUTPUT_DIR_ON_REBUILD, Collections.<JComponent>singleton(myCbClearOutputDirectory));
     controls.put(Setting.ADD_NOT_NULL_ASSERTIONS, Collections.<JComponent>singleton(myCbAssertNotNull));
     controls.put(Setting.AUTO_SHOW_FIRST_ERROR_IN_EDITOR, Collections.<JComponent>singleton(myCbAutoShowFirstError));
+    controls.put(Setting.DISPLAY_NOTIFICATION_POPUP, Collections.<JComponent>singleton(myCbDisplayNotificationPopup));
     controls.put(Setting.AUTO_MAKE, ContainerUtilRt.<JComponent>newArrayList(myCbEnableAutomake, myEnableAutomakeLegendLabel));
     controls.put(Setting.PARALLEL_COMPILATION,
                  ContainerUtilRt.<JComponent>newArrayList(myCbParallelCompilation, myParallelCompilationLegendLabel));
@@ -158,6 +160,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     final CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
     final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
     myCbAutoShowFirstError.setSelected(workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR);
+    myCbDisplayNotificationPopup.setSelected(workspaceConfiguration.DISPLAY_NOTIFICATION_POPUP);
     myCbClearOutputDirectory.setSelected(workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY);
     myCbAssertNotNull.setSelected(configuration.isAddNotNullAssertions());
     myCbEnableAutomake.setSelected(workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
@@ -198,6 +201,9 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
     if (!myDisabledSettings.contains(Setting.AUTO_SHOW_FIRST_ERROR_IN_EDITOR)) {
       workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR = myCbAutoShowFirstError.isSelected();
+    }
+    if (!myDisabledSettings.contains(Setting.DISPLAY_NOTIFICATION_POPUP)) {
+      workspaceConfiguration.DISPLAY_NOTIFICATION_POPUP = myCbDisplayNotificationPopup.isSelected();
     }
     if (!myDisabledSettings.contains(Setting.CLEAR_OUTPUT_DIR_ON_REBUILD)) {
       workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY = myCbClearOutputDirectory.isSelected();
@@ -272,6 +278,8 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
     boolean isModified = !myDisabledSettings.contains(Setting.AUTO_SHOW_FIRST_ERROR_IN_EDITOR)
                          && ComparingUtils.isModified(myCbAutoShowFirstError, workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR);
+    isModified |= !myDisabledSettings.contains(Setting.DISPLAY_NOTIFICATION_POPUP)
+                  && ComparingUtils.isModified(myCbDisplayNotificationPopup, workspaceConfiguration.DISPLAY_NOTIFICATION_POPUP);
     isModified |= !myDisabledSettings.contains(Setting.AUTO_MAKE)
                   && ComparingUtils.isModified(myCbEnableAutomake, workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
     isModified |= !myDisabledSettings.contains(Setting.PARALLEL_COMPILATION)

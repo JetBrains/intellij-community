@@ -8,5 +8,8 @@
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
     <patterns.patternClass className="com.intellij.lang.javascript.patterns.JSPatterns" alias="js"/>
+    <lang.parserDefinition language="JSRegexp" implementationClass="com.intellij.lang.javascript.inject.JSRegexpParserDefinition"/>
+    <regExpLanguageHost forClass="com.intellij.lang.javascript.psi.impl.JSLiteralExpressionImpl"
+                        implementationClass="com.intellij.lang.javascript.inject.JSRegexpHost"/>
   </extensions>
 </idea-plugin>

@@ -1,6 +1,8 @@
 package org.jetbrains.debugger;
 
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XNavigatable;
 import com.intellij.xdebugger.frame.XValueNode;
 import org.jetbrains.annotations.NotNull;
@@ -12,8 +14,7 @@ import org.jetbrains.debugger.values.Value;
 import javax.swing.*;
 import java.util.List;
 
-// todo should not extends MemberFilter
-public interface DebuggerViewSupport extends MemberFilter {
+public interface DebuggerViewSupport {
   @Nullable
   SourceInfo getSourceInfo(@Nullable Script script, @NotNull CallFrame frame);
 
@@ -43,89 +44,13 @@ public interface DebuggerViewSupport extends MemberFilter {
 
   void computeSourcePosition(@NotNull Variable variable, @NotNull VariableContext context, @NotNull XNavigatable navigatable);
 
-  class SimpleDebuggerViewSupport implements DebuggerViewSupport {
-    public static final DebuggerViewSupport INSTANCE = new SimpleDebuggerViewSupport();
+  // return null if you don't need to add additional properties
+  @Nullable
+  ActionCallback computeAdditionalObjectProperties(@NotNull ObjectValue value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XCompositeNode node);
 
-    @Nullable
-    @Override
-    public SourceInfo getSourceInfo(@Nullable Script script, @NotNull CallFrame frame) {
-      return null;
-    }
+  @NotNull
+  MemberFilter createMemberFilter(@NotNull VariableContext context);
 
-    @Nullable
-    @Override
-    public SourceInfo getSourceInfo(@Nullable String functionName, @NotNull String scriptUrl, int line, int column) {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public SourceInfo getSourceInfo(@Nullable String functionName, @NotNull Script script, int line, int column) {
-      return null;
-    }
-
-    @Override
-    public Vm getVm() {
-      return null;
-    }
-
-    @NotNull
-    @Override
-    public String propertyNamesToString(@NotNull List<String> list, boolean quotedAware) {
-      // todo
-      StringBuilder builder = new StringBuilder();
-      for (int i = list.size() - 1; i >= 0; i--) {
-        String name = list.get(i);
-        boolean quoted = quotedAware && (name.charAt(0) == '"' || name.charAt(0) == '\'');
-        boolean useKeyNotation = !quoted;
-        if (builder.length() != 0) {
-          builder.append(useKeyNotation ? '.' : '[');
-        }
-        if (useKeyNotation) {
-          builder.append(name);
-        }
-        else {
-          builder.append(name);
-          builder.append(']');
-        }
-      }
-      return builder.toString();
-    }
-
-    @Override
-    public void computeObjectPresentation(@NotNull ObjectValue value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XValueNode node, @NotNull Icon icon) {
-      VariableView.setObjectPresentation(value, icon, node);
-    }
-
-    @Override
-    public void computeArrayPresentation(@NotNull Value value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XValueNode node, @NotNull Icon icon) {
-      VariableView.setArrayPresentation(value, context, icon, node);
-    }
-
-    @NotNull
-    @Override
-    public XDebuggerEvaluator createFrameEvaluator(@NotNull CallFrameView frameView) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean canNavigateToSource(@NotNull Variable variable, @NotNull VariableContext context) {
-      return false;
-    }
-
-    @Override
-    public void computeSourcePosition(@NotNull Variable variable, @NotNull VariableContext context, @NotNull XNavigatable navigatable) {
-    }
-
-    @Override
-    public boolean isMemberVisible(@NotNull Variable variable, boolean filterFunctions) {
-      return true;
-    }
-
-    @NotNull
-    @Override
-    public String normalizeMemberName(@NotNull Variable variable) {
-      return variable.getName();
-    }
-  }
+  @NotNull
+  String normalizeMemberName(@NotNull Variable variable);
 }

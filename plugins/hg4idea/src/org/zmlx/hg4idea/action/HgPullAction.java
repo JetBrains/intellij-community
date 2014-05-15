@@ -35,23 +35,23 @@ public class HgPullAction extends HgAbstractGlobalAction {
     dialog.show();
     if (dialog.isOK()) {
       dialog.rememberSettings();
-      new Task.Backgroundable(project, "Pulling changes from " + dialog.getSource(), false) {
+      final String source = dialog.getSource();
+      final HgRepository hgRepository = dialog.getRepository();
+      new Task.Backgroundable(project, "Pulling changes from " + source, false) {
 
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          executePull(dialog, project);
-          markDirtyAndHandleErrors(project, dialog.getRepository());
+          executePull(project, hgRepository, source);
+          markDirtyAndHandleErrors(project, hgRepository.getRoot());
         }
       }.queue();
     }
   }
 
-  private static void executePull(final HgPullDialog dialog, final Project project) {
-    final HgPullCommand command = new HgPullCommand(
-      project, dialog.getRepository()
-    );
-    command.setSource(dialog.getSource());
-
+  private static void executePull(final Project project, final HgRepository hgRepository, final String source) {
+    final HgPullCommand command = new HgPullCommand(project, hgRepository.getRoot());
+    command.setSource(source);
     command.execute();
+    hgRepository.update();
   }
 }

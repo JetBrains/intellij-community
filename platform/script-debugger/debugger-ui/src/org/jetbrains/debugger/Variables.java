@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public final class Variables {
-  public static final String SPECIAL_PROPERTY_PREFIX = "__";
+  static final String SPECIAL_PROPERTY_PREFIX = "__";
 
   private static final Pattern UNNAMED_FUNCTION_PATTERN = Pattern.compile("^function[\\t ]*\\(");
 
@@ -35,48 +35,53 @@ public final class Variables {
   public static void processScopeVariables(@NotNull Scope scope,
                                            @NotNull XCompositeNode node,
                                            @NotNull final VariableContext context,
-                                           final @Nullable ActionCallback compoundActionCallback) {
+                                           @Nullable final ActionCallback compoundActionCallback) {
     final boolean isLast = compoundActionCallback == null;
-    AsyncResult<?> result =
-      ObsolescentAsyncResults.consume(scope.getVariables(), node, new PairConsumer<List<Variable>, XCompositeNode>() {
-        @Override
-        public void consume(List<Variable> variables, XCompositeNode node) {
-          List<Variable> properties = new ArrayList<Variable>(variables.size());
-          List<Variable> functions = new SmartList<Variable>();
-          for (Variable variable : variables) {
-            if (context.getMemberFilter().isMemberVisible(variable, false)) {
-              Value value = variable.getValue();
-              if (value != null &&
-                  value.getType() == ValueType.FUNCTION &&
-                  value.getValueString() != null &&
-                  !UNNAMED_FUNCTION_PATTERN.matcher(value.getValueString()).lookingAt()) {
-                functions.add(variable);
-              }
-              else {
-                properties.add(variable);
-              }
+    AsyncResult<?> result = ObsolescentAsyncResults.consume(scope.getVariables(), node, new PairConsumer<List<Variable>, XCompositeNode>() {
+      @Override
+      public void consume(List<Variable> variables, XCompositeNode node) {
+        MemberFilter memberFilter = context.createMemberFilter();
+        List<Variable> additionalVariables = memberFilter.getAdditionalVariables();
+        List<Variable> properties = new ArrayList<Variable>(variables.size() + additionalVariables.size());
+        List<Variable> functions = new SmartList<Variable>();
+        for (Variable variable : variables) {
+          if (memberFilter.isMemberVisible(variable, false)) {
+            Value value = variable.getValue();
+            if (value != null &&
+                value.getType() == ValueType.FUNCTION &&
+                value.getValueString() != null &&
+                !UNNAMED_FUNCTION_PATTERN.matcher(value.getValueString()).lookingAt()) {
+              functions.add(variable);
+            }
+            else {
+              properties.add(variable);
             }
           }
-
-          sort(properties);
-          sort(functions);
-
-          if (!properties.isEmpty()) {
-            node.addChildren(createVariablesList(properties, context), functions.isEmpty() && isLast);
-          }
-
-          if (!functions.isEmpty()) {
-            node.addChildren(XValueChildrenList.bottomGroup(new VariablesGroup("Functions", functions, context)), isLast);
-          }
-          else if (isLast && properties.isEmpty()) {
-            node.addChildren(XValueChildrenList.EMPTY, true);
-          }
-
-          if (!isLast) {
-            compoundActionCallback.setDone();
-          }
         }
-      });
+
+        sort(properties);
+        sort(functions);
+
+        for (Variable variable : additionalVariables) {
+          properties.add(variable);
+        }
+
+        if (!properties.isEmpty()) {
+          node.addChildren(createVariablesList(properties, context), functions.isEmpty() && isLast);
+        }
+
+        if (!functions.isEmpty()) {
+          node.addChildren(XValueChildrenList.bottomGroup(new VariablesGroup("Functions", functions, context)), isLast);
+        }
+        else if (isLast && properties.isEmpty()) {
+          node.addChildren(XValueChildrenList.EMPTY, true);
+        }
+
+        if (!isLast) {
+          compoundActionCallback.setDone();
+        }
+      }
+    });
     if (!isLast) {
       result.notifyWhenRejected(compoundActionCallback);
     }
@@ -113,21 +118,27 @@ public final class Variables {
       return Collections.emptyList();
     }
 
-    List<Variable> result = new ArrayList<Variable>(variables.size());
+    MemberFilter memberFilter = context.createMemberFilter();
+    List<Variable> additionalVariables = memberFilter.getAdditionalVariables();
+    List<Variable> result = new ArrayList<Variable>(variables.size() + additionalVariables.size());
     for (Variable variable : variables) {
-      if (context.getMemberFilter().isMemberVisible(variable, filterFunctions)) {
+      if (memberFilter.isMemberVisible(variable, filterFunctions)) {
         result.add(variable);
       }
     }
     sort(result);
+
+    for (Variable variable : additionalVariables) {
+      result.add(variable);
+    }
     return result;
   }
 
-  private static void sort(List<Variable> result) {
+  private static void sort(@NotNull List<Variable> result) {
     ContainerUtil.sort(result, NATURAL_NAME_COMPARATOR);
   }
 
-  // prefixed '_' must last, fixed case sensitive natural compare
+  // prefixed '_' must be last, fixed case sensitive natural compare
   private static int naturalCompare(@Nullable String string1, @Nullable String string2) {
     //noinspection StringEquality
     if (string1 == string2) {
@@ -217,9 +228,37 @@ public final class Variables {
 
   public static XValueChildrenList createVariablesList(@NotNull List<Variable> variables, int from, int to, @NotNull VariableContext variableContext) {
     XValueChildrenList list = new XValueChildrenList(to - from);
+    VariableContext getterOrSetterContext = null;
     for (int i = from; i < to; i++) {
-      list.add(new VariableView(variableContext, variables.get(i)));
+      Variable variable = variables.get(i);
+      list.add(new VariableView(variable, variableContext));
+      if (variable instanceof ObjectProperty) {
+        ObjectProperty property = (ObjectProperty)variable;
+        if (property.getGetter() != null) {
+          if (getterOrSetterContext == null) {
+            getterOrSetterContext = new NonWatchableVariableContext(variableContext);
+          }
+          list.add(new VariableView(new VariableImpl("get " + property.getName(), property.getGetter()), getterOrSetterContext));
+        }
+        if (property.getSetter() != null) {
+          if (getterOrSetterContext == null) {
+            getterOrSetterContext = new NonWatchableVariableContext(variableContext);
+          }
+          list.add(new VariableView(new VariableImpl("set " + property.getName(), property.getSetter()), getterOrSetterContext));
+        }
+      }
     }
     return list;
+  }
+
+  private static class NonWatchableVariableContext extends VariableContextWrapper {
+    public NonWatchableVariableContext(VariableContext variableContext) {
+      super(variableContext, null);
+    }
+
+    @Override
+    public boolean watchableAsEvaluationExpression() {
+      return false;
+    }
   }
 }

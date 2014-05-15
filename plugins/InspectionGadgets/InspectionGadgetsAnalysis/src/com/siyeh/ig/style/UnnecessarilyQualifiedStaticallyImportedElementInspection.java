@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
@@ -30,7 +31,7 @@ import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class UnnecessarilyQualifiedStaticallyImportedElementInspection extends BaseInspection {
+public class UnnecessarilyQualifiedStaticallyImportedElementInspection extends BaseInspection implements CleanupLocalInspectionTool{
 
   @Nls
   @NotNull
@@ -94,7 +95,7 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspection extends B
       if (!(qualifier instanceof PsiJavaCodeReferenceElement)) {
         return;
       }
-      if (PsiTreeUtil.getParentOfType(reference, PsiReferenceExpression.class, PsiImportStatementBase.class) != null) {
+      if (PsiTreeUtil.getParentOfType(reference, PsiImportStatementBase.class) != null) {
         return;
       }
       if (UnnecessarilyQualifiedStaticUsageInspection.isGenericReference(reference, (PsiJavaCodeReferenceElement)qualifier)) return;

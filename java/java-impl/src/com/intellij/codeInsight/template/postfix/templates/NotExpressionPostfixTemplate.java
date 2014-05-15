@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.CodeInsightServicesUtil;
-import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
+import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiExpression;
@@ -26,16 +26,16 @@ public class NotExpressionPostfixTemplate extends ExpressionPostfixTemplateWithC
   private static final Condition<PsiExpression> BOOLEAN_TYPE_CONDITION = new Condition<PsiExpression>() {
     @Override
     public boolean value(PsiExpression expression) {
-      return PostfixTemplatesUtils.isBoolean(expression.getType());
+      return JavaPostfixTemplatesUtils.isBoolean(expression.getType());
     }
   };
 
   public NotExpressionPostfixTemplate() {
-    super("not", "Negates boolean expression", "!expr");
+    super("not",  "!expr");
   }
 
   public NotExpressionPostfixTemplate(String alias) {
-    super(alias, alias, "Negates boolean expression", "!expr");
+    super(alias, alias, "!expr");
   }
 
   @Override

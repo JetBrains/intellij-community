@@ -19,9 +19,6 @@ package com.intellij.vcs.log.newgraph.facade;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.vcs.log.GraphCommit;
-import com.intellij.vcs.log.graph.ChangeCursorActionRequest;
-import com.intellij.vcs.log.graph.ClickGraphAction;
-import com.intellij.vcs.log.graph.MouseOverAction;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.newgraph.SomeGraph;
 import com.intellij.vcs.log.newgraph.gpaph.Edge;
@@ -159,7 +156,7 @@ public class GraphActionDispatcher {
 
     SpecialRowElement overArrow = myGraphData.getGraphRender().getCellPainter().mouseOverArrow(graphCell, point.x, point.y);
     GraphElement overElement = myGraphData.getGraphRender().getCellPainter().mouseOver(graphCell, point.x, point.y);
-    return new Pair<SpecialRowElement, GraphElement>(overArrow, overElement);
+    return Pair.create(overArrow, overElement);
   }
 
 

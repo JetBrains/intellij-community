@@ -73,7 +73,7 @@ public class TypesUtil {
 
   @NonNls
   public static final Map<String, PsiType> ourQNameToUnboxed = new HashMap<String, PsiType>();
-  public static final PsiPrimitiveType[] PRIMITIVES = new PsiPrimitiveType[]{
+  public static final PsiPrimitiveType[] PRIMITIVES = {
     PsiType.BYTE,
     PsiType.CHAR,
     PsiType.DOUBLE,
@@ -476,7 +476,7 @@ public class TypesUtil {
 
   @NotNull
   public static PsiClassType getJavaLangObject(@NotNull PsiElement context) {
-    return PsiType.getJavaLangObject(context.getManager(), context.getResolveScope());
+    return LazyFqnClassType.getLazyType(JAVA_LANG_OBJECT, context);
   }
 
   @Nullable

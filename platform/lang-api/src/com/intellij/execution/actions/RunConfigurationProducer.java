@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,15 +145,18 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
         final RunManager runManager = RunManager.getInstance(context.getProject());
         final ConfigurationType type = fromContext.getConfigurationType();
         final List<RunnerAndConfigurationSettings> configurations = runManager.getConfigurationSettingsList(type);
-        final RunnerAndConfigurationSettings configuration = findExistingConfiguration(context);
-        if (configuration != null) {
-          fromContext.setConfigurationSettings(configuration);
+        final RunnerAndConfigurationSettings settings = findExistingConfiguration(context);
+        if (settings != null) {
+          fromContext.setConfigurationSettings(settings);
         } else {
           final ArrayList<String> currentNames = new ArrayList<String>();
           for (RunnerAndConfigurationSettings configurationSettings : configurations) {
             currentNames.add(configurationSettings.getName());
           }
-          fromContext.getConfiguration().setName(RunManager.suggestUniqueName(fromContext.getConfiguration().getName(), currentNames));
+          RunConfiguration configuration = fromContext.getConfiguration();
+          String name = configuration.getName();
+          assert name != null : configuration;
+          configuration.setName(RunManager.suggestUniqueName(name, currentNames));
         }
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -134,7 +134,7 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
     NotNullFunction<String,String> escaper = StringUtil.escaper(false, "\"\'\\");
     StringBuilder stringLiteral = new StringBuilder();
     List<String> parameters = new ArrayList<String>();
-    Pair<String, String> quotes = new Pair<String, String>("\"", "\"");
+    Pair<String, String> quotes = Pair.create("\"", "\"");
     boolean quotesDetected = false;
     final TypeEvalContext context = TypeEvalContext.userInitiated(file);
     int paramCount = 0;
@@ -163,7 +163,7 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
       }
     }
     if (quotes == null)
-      quotes = new Pair<String, String>("\"", "\"");
+      quotes = Pair.create("\"", "\"");
     stringLiteral.insert(0, quotes.getFirst());
     if (isUnicode && !quotes.getFirst().toLowerCase().contains("u"))
       stringLiteral.insert(0, "u");

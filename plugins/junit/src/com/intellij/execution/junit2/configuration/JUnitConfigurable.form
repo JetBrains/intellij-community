@@ -3,7 +3,7 @@
   <grid id="ece1c" binding="myWholePanel" layout-manager="GridLayoutManager" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="28" y="28" width="722" height="509"/>
+      <xy x="28" y="28" width="722" height="528"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -123,7 +123,7 @@
         </constraints>
         <properties/>
       </component>
-      <grid id="5947e" layout-manager="GridLayoutManager" row-count="6" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="5947e" layout-manager="GridLayoutManager" row-count="7" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
@@ -133,7 +133,7 @@
         <children>
           <component id="b109" class="com.intellij.openapi.ui.LabeledComponent" binding="myMethod" custom-create="true">
             <constraints>
-              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+              <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <enabled value="true"/>
@@ -182,9 +182,18 @@
               <text resource-bundle="messages/ExecutionBundle" key="junit.configuration.class.label"/>
             </properties>
           </component>
-          <component id="ac0a6" class="com.intellij.openapi.ui.LabeledComponent" binding="myDir">
+          <component id="1e1f8" class="com.intellij.openapi.ui.LabeledComponent" binding="myCategory" custom-create="true">
             <constraints>
               <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <labelLocation value="West"/>
+              <text value="Category"/>
+            </properties>
+          </component>
+          <component id="ac0a6" class="com.intellij.openapi.ui.LabeledComponent" binding="myDir">
+            <constraints>
+              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
@@ -195,7 +204,7 @@
           <grid id="c9a5f" binding="myScopesPanel" layout-manager="GridLayoutManager" row-count="3" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+              <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none"/>

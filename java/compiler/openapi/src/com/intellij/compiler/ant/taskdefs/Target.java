@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.compiler.ant.taskdefs;
 
 import com.intellij.compiler.ant.Tag;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
@@ -41,7 +42,7 @@ public class Target extends Tag{
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static Pair[] getOptions(@NonNls String... names) {
     final List<Pair> options = new ArrayList<Pair>();
-    options.add(new Pair<String, String>("name", names[0]));
+    options.add(Couple.newOne("name", names[0]));
     appendIfNonEmpty(options, "depends", names[1]);
     appendIfNonEmpty(options, "description", names[2]);
     appendIfNonEmpty(options, "unless", names[3]);
@@ -53,7 +54,7 @@ public class Target extends Tag{
 
   private static void appendIfNonEmpty(List<Pair> options, final String paramName, String value) {
     if (!StringUtil.isEmptyOrSpaces(value)) {
-      options.add(new Pair<String, String>(paramName, value));
+      options.add(Couple.newOne(paramName, value));
     }
   }
 }

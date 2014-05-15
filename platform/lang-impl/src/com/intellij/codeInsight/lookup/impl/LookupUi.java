@@ -178,7 +178,7 @@ class LookupUi {
         rootPane.repaint();
       }
     }
-    if (!myLookup.isFocused()) {
+    if (!myLookup.isFocused() || !item.isValid()) {
       return;
     }
 

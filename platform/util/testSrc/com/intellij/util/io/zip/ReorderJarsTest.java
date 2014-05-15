@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import static org.junit.Assert.*;
 
 /**
  * @author Dmitry Avdeev
- * @since 7/12/11
+ * @since 12/07/2011
  */
 public class ReorderJarsTest {
   private File myTempDirectory;

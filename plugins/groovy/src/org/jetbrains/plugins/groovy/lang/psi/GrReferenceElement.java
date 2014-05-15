@@ -15,13 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi;
 
-import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.PrefixMatcher;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiType;
-import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,8 +43,6 @@ public interface GrReferenceElement<Q extends PsiElement> extends GroovyPsiEleme
 
   @Nullable
   GrTypeArgumentList getTypeArgumentList();
-
-  void processVariants(PrefixMatcher matcher, CompletionParameters parameters, Consumer<LookupElement> consumer);
 
   @Nullable
   String getClassNameText();

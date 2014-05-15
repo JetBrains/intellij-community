@@ -69,6 +69,7 @@ import javax.xml.parsers.SAXParserFactory;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
@@ -318,7 +319,7 @@ public abstract class PluginManagerMain implements Disposable {
           if (!acceptHost(host)) continue;
           final Map<PluginId, PluginDownloader> downloaded = new HashMap<PluginId, PluginDownloader>();
           try {
-            UpdateChecker.checkPluginsHost(host, downloaded, false, null);
+            UpdateChecker.checkPluginsHost(host, downloaded, false, null, null);
             for (PluginDownloader downloader : downloaded.values()) {
               final PluginNode pluginNode = PluginDownloader.createPluginNode(host, downloader);
               if (pluginNode != null) {
@@ -328,6 +329,9 @@ public abstract class PluginManagerMain implements Disposable {
             }
           }
           catch (ProcessCanceledException ignore) {
+          }
+          catch (FileNotFoundException e) {
+            LOG.info(e);
           }
           catch (Exception e) {
             LOG.info(e);

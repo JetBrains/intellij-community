@@ -97,7 +97,7 @@ public abstract class BaseExternalToolsGroup<T extends Tool> extends SimpleActio
       ActionPlaces.METHOD_HIERARCHY_VIEW_POPUP.equals(context) ||
       ActionPlaces.FAVORITES_VIEW_POPUP.equals(context) ||
       ActionPlaces.SCOPE_VIEW_POPUP.equals(context) ||
-      ActionPlaces.NAVIGATION_BAR.equals(context)
+      ActionPlaces.NAVIGATION_BAR_POPUP.equals(context)
       ) {
       return tool.isShownInProjectViews();
     }

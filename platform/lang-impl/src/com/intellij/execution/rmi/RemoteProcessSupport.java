@@ -21,7 +21,10 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.DefaultProgramRunner;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -33,6 +36,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -227,9 +231,12 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       @Override
       public EntryPoint compute() throws Exception {
         Registry registry = LocateRegistry.getRegistry("localhost", port.port);
-        Remote remote = registry.lookup(port.name);
+        Remote remote = ObjectUtils.assertNotNull(registry.lookup(port.name));
+
         if (Remote.class.isAssignableFrom(myValueClass)) {
-          return RemoteUtil.substituteClassLoader(narrowImpl(remote, myValueClass), myValueClass.getClassLoader());
+          EntryPoint entryPoint = narrowImpl(remote, myValueClass);
+          if (entryPoint == null) return null;
+          return RemoteUtil.substituteClassLoader(entryPoint, myValueClass.getClassLoader());
         }
         else {
           return RemoteUtil.castToLocal(remote, myValueClass);
@@ -241,7 +248,8 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     return result;
   }
 
-  private static <T> T narrowImpl(Remote remote, Class<T> to) {
+  @Nullable
+  private static <T> T narrowImpl(@Nullable Remote remote, @NotNull Class<T> to) {
     //noinspection unchecked
     return (T)(to.isInstance(remote) ? remote : PortableRemoteObject.narrow(remote, to));
   }

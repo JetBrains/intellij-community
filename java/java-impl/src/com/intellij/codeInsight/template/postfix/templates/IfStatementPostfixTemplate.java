@@ -15,26 +15,22 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithIfExpressionSurrounder;
+import com.intellij.lang.surroundWith.Surrounder;
 import org.jetbrains.annotations.NotNull;
 
-public class IfStatementPostfixTemplate extends BooleanPostfixTemplate {
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_BOOLEAN;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
+
+public class IfStatementPostfixTemplate extends IfPostfixTemplateBase {
   public IfStatementPostfixTemplate() {
-    super("if", "Checks boolean expression to be 'true'", "if (expr)");
+    super(JAVA_PSI_INFO, IS_BOOLEAN);
   }
 
+  @NotNull
   @Override
-  public void expand(@NotNull PsiElement context, @NotNull final Editor editor) {
-    PsiExpression expression = PostfixTemplatesUtils.getTopmostExpression(context);
-    assert expression != null;
-    TextRange range = PostfixTemplatesUtils.ifStatement(expression.getProject(), editor, expression);
-    if (range != null) {
-      editor.getCaretModel().moveToOffset(range.getStartOffset());
-    }
+  protected Surrounder getSurrounder() {
+    return new JavaWithIfExpressionSurrounder();
   }
 }
 

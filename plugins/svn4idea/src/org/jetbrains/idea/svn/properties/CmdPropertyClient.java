@@ -52,7 +52,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     // is critical for some parts of merge logic
     parameters.add("--xml");
 
-    CommandExecutor command = CommandUtil.execute(myVcs, target, SvnCommandName.propget, parameters, null);
+    CommandExecutor command = execute(myVcs, target, SvnCommandName.propget, parameters, null);
     return parseSingleProperty(target, command.getOutput());
   }
 
@@ -67,7 +67,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     parameters.add(property);
     fillListParameters(target, revision, depth, parameters, false);
 
-    CommandExecutor command = CommandUtil.execute(myVcs, target, SvnCommandName.propget, parameters, null);
+    CommandExecutor command = execute(myVcs, target, SvnCommandName.propget, parameters, null);
     parseOutput(target, command.getOutput(), handler);
   }
 
@@ -79,7 +79,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     List<String> parameters = new ArrayList<String>();
     fillListParameters(target, revision, depth, parameters, true);
 
-    CommandExecutor command = CommandUtil.execute(myVcs, target, SvnCommandName.proplist, parameters, null);
+    CommandExecutor command = execute(myVcs, target, SvnCommandName.proplist, parameters, null);
     parseOutput(target, command.getOutput(), handler);
   }
 
@@ -160,9 +160,8 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     // "svn propset svn:ignore *.java . --depth empty") tries to set ignore also on child files and fails with error like
     // "svn: E200009: Cannot set 'svn:ignore' on a file ('...File1.java')". So here we manually force home directory to be used.
     // NOTE: that setting other properties (not svn:ignore) does not cause such error.
-    CommandUtil
-      .execute(myVcs, target, CommandUtil.getHomeDirectory(), isDelete ? SvnCommandName.propdel : SvnCommandName.propset, parameters,
-               null);
+    execute(myVcs, target, CommandUtil.getHomeDirectory(), isDelete ? SvnCommandName.propdel : SvnCommandName.propset, parameters,
+            null);
   }
 
   private void fillListParameters(@NotNull SvnTarget target,

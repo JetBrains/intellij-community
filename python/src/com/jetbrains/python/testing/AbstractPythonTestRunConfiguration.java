@@ -246,7 +246,8 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
         }
         return getPluralTitle() + " in " + name;
       case TEST_FOLDER:
-        return getPluralTitle() + " in " + FileUtil.toSystemDependentName(myFolderName);
+        String folderName = new File(myFolderName).getName();
+        return getPluralTitle() + " in " + folderName;
       case TEST_FUNCTION:
         return getTitle() + " " + myMethodName;
       default:

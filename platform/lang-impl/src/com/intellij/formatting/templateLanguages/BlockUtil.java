@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,8 @@ class BlockUtil {
 
   public static Pair<List<DataLanguageBlockWrapper>, List<DataLanguageBlockWrapper>> splitBlocksByRightBound(@NotNull Block parent, @NotNull TextRange bounds) {
     final List<Block> subBlocks = parent.getSubBlocks();
-    if (subBlocks.size() == 0) return new Pair<List<DataLanguageBlockWrapper>, List<DataLanguageBlockWrapper>>(Collections.<DataLanguageBlockWrapper>emptyList(), Collections.<DataLanguageBlockWrapper>emptyList());
+    if (subBlocks.size() == 0) return Pair
+      .create(Collections.<DataLanguageBlockWrapper>emptyList(), Collections.<DataLanguageBlockWrapper>emptyList());
     final ArrayList<DataLanguageBlockWrapper> before = new ArrayList<DataLanguageBlockWrapper>(subBlocks.size() / 2);
     final ArrayList<DataLanguageBlockWrapper> after = new ArrayList<DataLanguageBlockWrapper>(subBlocks.size() / 2);
     splitByRightBoundAndCollectBlocks(subBlocks, before, after, bounds);

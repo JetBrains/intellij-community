@@ -186,7 +186,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
 
     myTree.doLayout();
-    setOKActionEnabled(myElements != null && myElements.length > 0);
+    setOKActionEnabled(myAllowEmptySelection || myElements != null && myElements.length > 0);
 
     if (selectedElements != null) {
       selectElements(selectedElements.toArray(new ClassMember[selectedElements.size()]));
@@ -305,7 +305,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
                              new Insets(0, 0, 0, 5), 0, 0)
     );
 
-    if (myElements == null || myElements.length == 0) {
+    if (!myAllowEmptySelection && (myElements == null || myElements.length == 0)) {
       setOKActionEnabled(false);
     }
     panel.add(

@@ -18,7 +18,7 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.vcs.FileStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.portable.PortableStatus;
+import org.jetbrains.idea.svn.status.PortableStatus;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 

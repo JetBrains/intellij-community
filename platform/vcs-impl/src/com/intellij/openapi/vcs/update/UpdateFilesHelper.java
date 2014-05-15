@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ public class UpdateFilesHelper {
 
   private static void iterateGroup(final FileGroup group, final Consumer<Pair<String, String>> callback) {
     for (FileGroup.UpdatedFile updatedFile : group.getUpdatedFiles()) {
-      callback.consume(new Pair<String, String>(updatedFile.getPath(), updatedFile.getVcsName()));
+      callback.consume(Pair.create(updatedFile.getPath(), updatedFile.getVcsName()));
     }
   }
 

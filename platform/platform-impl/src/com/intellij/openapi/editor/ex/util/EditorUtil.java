@@ -761,12 +761,17 @@ public final class EditorUtil {
     if (second.line >= document.getLineCount()) {
       second = editor.offsetToLogicalPosition(document.getTextLength());
     }
-    return new Pair<LogicalPosition, LogicalPosition>(first, second);
+    return Pair.create(first, second);
   }
 
   public static void scrollToTheEnd(@NotNull Editor editor) {
-    editor.getCaretModel().moveToOffset(editor.getDocument().getTextLength());
     editor.getSelectionModel().removeSelection();
+    int lastLine = Math.max(0, editor.getDocument().getLineCount() - 1);
+    if (editor.getCaretModel().getLogicalPosition().line == lastLine) {
+      editor.getCaretModel().moveToOffset(editor.getDocument().getTextLength());
+    } else {
+      editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(lastLine, 0));
+    }
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 

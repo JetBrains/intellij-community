@@ -18,11 +18,18 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ThreadLocalCachedIntArray;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.EmptyIterator;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -410,6 +417,133 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     } else {
       myInputIdMapping = value;
       myInputIdMappingValue = fileSet;
+    }
+  }
+
+  private static final ThreadLocalCachedIntArray ourSpareBuffer = new ThreadLocalCachedIntArray();
+
+  private static final int INT_BITS_SHIFT = 5;
+  private static int nextSetBit(int bitIndex, int[] bits, int bitsLength) {
+    int wordIndex = bitIndex >> INT_BITS_SHIFT;
+    if (wordIndex >= bitsLength) {
+      return -1;
+    }
+
+    int word = bits[wordIndex] & (-1 << bitIndex);
+
+    while (true) {
+      if (word != 0) {
+        return (wordIndex << INT_BITS_SHIFT) + Long.numberOfTrailingZeros(word);
+      }
+      if (++wordIndex == bitsLength) {
+        return -1;
+      }
+      word = bits[wordIndex];
+    }
+  }
+
+  @Override
+  public void saveTo(DataOutput out, DataExternalizer<Value> externalizer) throws IOException {
+    DataInputOutputUtil.writeINT(out, size());
+
+    for (final Iterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
+      final Value value = valueIterator.next();
+      externalizer.save(out, value);
+      Object input = getInput(value);
+
+      if (input instanceof Integer) {
+        DataInputOutputUtil.writeINT(out, (Integer)input); // most common 90% case during index building
+      } else {
+        // serialize positive file ids with delta encoding after sorting numbers via bitset
+
+        if (input instanceof TIntHashSet) {
+          TIntHashSet set = (TIntHashSet)input;
+          DataInputOutputUtil.writeINT(out, -set.size());
+          // todo it would be nice to have compressed random access serializable bitset or at least file ids sorted
+          final int[] max = {0}, min = {Integer.MAX_VALUE};
+
+          set.forEach(new TIntProcedure() {
+            @Override
+            public boolean execute(int value) {
+              max[0] = Math.max(max[0], value);
+              min[0] = Math.min(min[0], value);
+              return true;
+            }
+          });
+
+          assert min[0] > 0;
+
+          final int offset = (min[0] >> INT_BITS_SHIFT) << INT_BITS_SHIFT;
+          final int bitsLength = ((max[0] - offset) >> INT_BITS_SHIFT) + 1;
+          final int[] bits = ourSpareBuffer.getBuffer(bitsLength);
+          for(int i = 0; i < bitsLength; ++i) bits[i] = 0;
+
+          set.forEach(new TIntProcedure() {
+            @Override
+            public boolean execute(int value) {
+              final int id = value - offset;
+              bits[id >> INT_BITS_SHIFT] |= (1 << (id));
+              return true;
+            }
+          });
+
+          int pos = nextSetBit(0, bits, bitsLength);
+          int prev = 0;
+
+          while (pos != -1) {
+            DataInputOutputUtil.writeINT(out, pos + offset - prev);
+            prev = pos + offset;
+            pos = nextSetBit(pos + 1, bits, bitsLength);
+          }
+        } else if (input instanceof IdBitSet) {
+          IdBitSet idBitSet = (IdBitSet)input;
+
+          DataInputOutputUtil.writeINT(out, -idBitSet.numberOfBitsSet());
+
+          int pos = idBitSet.nextSetBit(0);
+          int prev = 0;
+
+          while (pos != -1) {
+            DataInputOutputUtil.writeINT(out, pos - prev);
+            prev = pos;
+            pos = idBitSet.nextSetBit(pos + 1);
+          }
+        } else {
+          throw new IncorrectOperationException("Unexpected else");
+        }
+      }
+    }
+  }
+
+  static void saveInvalidateCommand(DataOutput out, int inputId) throws IOException {
+    DataInputOutputUtil.writeINT(out, -inputId);
+  }
+
+  public void readFrom(DataInputStream stream, DataExternalizer<Value> externalizer) throws IOException {
+    while (stream.available() > 0) {
+      final int valueCount = DataInputOutputUtil.readINT(stream);
+      if (valueCount < 0) {
+        removeAssociatedValue(-valueCount);
+        setNeedsCompacting(true);
+      }
+      else {
+        for (int valueIdx = 0; valueIdx < valueCount; valueIdx++) {
+          final Value value = externalizer.read(stream);
+          int idCountOrSingleValue = DataInputOutputUtil.readINT(stream);
+          if (idCountOrSingleValue > 0) {
+            addValue(idCountOrSingleValue, value);
+          } else {
+            idCountOrSingleValue = -idCountOrSingleValue;
+            ensureFileSetCapacityForValue(value, idCountOrSingleValue);
+            int prev = 0;
+            for (int i = 0; i < idCountOrSingleValue; i++) {
+              final int id = DataInputOutputUtil.readINT(stream);
+              addValue(prev + id, value);
+              prev += id;
+            }
+          }
+        }
+      }
     }
   }
 

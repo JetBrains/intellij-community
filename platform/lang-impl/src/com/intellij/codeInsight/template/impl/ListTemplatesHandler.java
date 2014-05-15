@@ -27,9 +27,11 @@ import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.codeInsight.template.CustomLiveTemplateBase;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -48,6 +50,9 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 public class ListTemplatesHandler implements CodeInsightActionHandler {
+
+  private static final Logger LOG = Logger.getInstance(ListTemplatesHandler.class);
+
   @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
     if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
@@ -79,6 +84,10 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
 
   public static Map<TemplateImpl, String> filterTemplatesByPrefix(@NotNull Collection<TemplateImpl> templates, @NotNull Editor editor,
                                                                   int offset, boolean fullMatch, boolean searchInDescription) {
+    if (offset > editor.getDocument().getTextLength()) {
+      LOG.error("Cannot filter templates, index out of bounds. Offset: " + offset,
+                AttachmentFactory.createAttachment(editor.getDocument()));
+    }
     CharSequence documentText = editor.getDocument().getCharsSequence().subSequence(0, offset);
 
     String prefixWithoutDots = computeDescriptionMatchingPrefix(editor.getDocument(), offset);
@@ -147,7 +156,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
                                                                                                 @NotNull PsiFile file,
                                                                                                 int offset) {
     final MultiMap<String, CustomLiveTemplateLookupElement> result = MultiMap.create();
-    CustomTemplateCallback customTemplateCallback = new CustomTemplateCallback(editor, file, false);
+    CustomTemplateCallback customTemplateCallback = new CustomTemplateCallback(editor, file);
     for (CustomLiveTemplate customLiveTemplate : TemplateManagerImpl.listApplicableCustomTemplates(editor, file, false)) {
       if (customLiveTemplate instanceof CustomLiveTemplateBase) {
         String customTemplatePrefix = ((CustomLiveTemplateBase)customLiveTemplate).computeTemplateKeyWithoutContextChecking(customTemplateCallback);

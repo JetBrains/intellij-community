@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,17 +29,10 @@ class FileLoader extends Loader {
   private static int misses;
   private static int hits;
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   FileLoader(URL url, int index) throws IOException {
     super(url, index);
-    if (!"file".equals(url.getProtocol())) {
-      throw new IllegalArgumentException("url");
-    }
-    else {
-      final String s = FileUtil.unquote(url.getFile());
-      myRootDir = new File(s);
-      myRootDirAbsolutePath = myRootDir.getAbsolutePath();
-    }
+    myRootDir = new File(FileUtil.unquote(url.getFile()));
+    myRootDirAbsolutePath = myRootDir.getAbsolutePath();
   }
 
   private void buildPackageCache(final File dir, ClasspathCache cache) {

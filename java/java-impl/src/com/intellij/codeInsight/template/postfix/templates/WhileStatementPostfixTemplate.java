@@ -15,19 +15,21 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class WhileStatementPostfixTemplate extends BooleanPostfixTemplate {
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_BOOLEAN;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
+
+public class WhileStatementPostfixTemplate extends TypedPostfixTemplate {
   public WhileStatementPostfixTemplate() {
-    super("while", "Iterating while boolean statement is 'true'", "while (expr)");
+    super("while", "while (expr)", JAVA_PSI_INFO, IS_BOOLEAN);
   }
 
   @Override
   public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
-    PsiExpression expression = PostfixTemplatesUtils.getTopmostExpression(context);
+    PsiElement expression = myPsiInfo.getTopmostExpression(context);
     assert expression != null;
 
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());

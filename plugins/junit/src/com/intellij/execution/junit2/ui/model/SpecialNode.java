@@ -92,7 +92,9 @@ public class SpecialNode extends TestProxy {
           newName = ExecutionBundle.message("junit.runing.info.tests.in.progress.terminated.tre.node");
       }
     }
-    myTestInfo.setName(newName);
-    myBuilder.updateFromRoot();
+    if (!newName.equals(myTestInfo.getName())) {
+      myTestInfo.setName(newName);
+      myBuilder.updateFromRoot();
+    }
   }
 }

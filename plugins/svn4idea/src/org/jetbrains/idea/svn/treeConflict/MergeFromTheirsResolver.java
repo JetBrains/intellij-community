@@ -54,7 +54,6 @@ import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
 import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
@@ -286,9 +285,13 @@ public class MergeFromTheirsResolver {
     @Override
     public void run(ContinuationContext context) {
       try {
-        myVcs.createWCClient().doAdd(myOldFilePath.getIOFile(), true, true, true, SVNDepth.EMPTY, false, true);
+        // TODO: Previously SVNKit client was invoked with mkDir=true option - so corresponding directory would be created. Now mkDir=false
+        // TODO: is used. Command line also does not support automatic directory creation.
+        // TODO: Need to check additionally if there are cases when directory does not exist and add corresponding code.
+        myVcs.getFactory(myOldFilePath.getIOFile()).createAddClient()
+          .add(myOldFilePath.getIOFile(), SVNDepth.EMPTY, true, false, true, null);
       }
-      catch (SVNException e) {
+      catch (VcsException e) {
         context.handleException(e, true);
       }
     }

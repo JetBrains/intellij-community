@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,14 @@ import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author cdr
  */
 public class PropertiesASTFactory extends ASTFactory {
+  @Override
   @Nullable
   public CompositeElement createComposite(final IElementType type) {
     if (type instanceof IFileElementType) {
@@ -34,8 +36,9 @@ public class PropertiesASTFactory extends ASTFactory {
     return new CompositeElement(type);
   }
 
+  @Override
   @Nullable
-  public LeafElement createLeaf(final IElementType type, CharSequence text) {
+  public LeafElement createLeaf(@NotNull final IElementType type, CharSequence text) {
     if (type == PropertiesTokenTypes.VALUE_CHARACTERS) {
       return new PropertyValueImpl(type, text);
     }

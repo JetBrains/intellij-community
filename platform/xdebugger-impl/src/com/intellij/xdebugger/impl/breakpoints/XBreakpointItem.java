@@ -57,7 +57,7 @@ class XBreakpointItem extends BreakpointItem {
     }
     final SimpleTextAttributes attributes =
       myBreakpoint.isEnabled() ? SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES;
-    renderer.append(getDisplayText(), attributes);
+    renderer.append(StringUtil.notNullize(getDisplayText()), attributes);
     String description = getUserDescription();
     if (!StringUtil.isEmpty(description)) {
       renderer.append(" (" + description + ")", SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES);

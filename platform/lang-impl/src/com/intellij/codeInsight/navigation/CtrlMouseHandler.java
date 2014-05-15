@@ -489,7 +489,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   }
 
   @Nullable
-  private Info getInfoAt(final Editor editor, PsiFile file, int offset, BrowseMode browseMode) {
+  private Info getInfoAt(@NotNull Editor editor, PsiFile file, int offset, BrowseMode browseMode) {
     PsiElement targetElement = null;
 
     if (browseMode == BrowseMode.TypeDeclaration) {

@@ -33,7 +33,7 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.messages.impl.MessageBusConnectionImpl");
 
   private final MessageBusImpl myBus;
-  @SuppressWarnings("SSBasedInspection") 
+  @SuppressWarnings("SSBasedInspection")
   private final ThreadLocal<Queue<Message>> myPendingMessages = MessageBusImpl.createThreadLocalQueue();
 
   private MessageHandler myDefaultHandler;
@@ -63,7 +63,7 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
     }
     if (topic.getListenerClass().isInstance(myDefaultHandler)) {
       throw new IllegalStateException("Can't subscribe to the topic '" + topic +"'. Default handler has incompatible type - expected: '" +
-        topic.getListenerClass() + "', actual: '" + myDefaultHandler.getClass() + "'");
+                                      topic.getListenerClass() + "', actual: '" + myDefaultHandler.getClass() + "'");
     }
 
     subscribe(topic, (L)myDefaultHandler);
@@ -128,5 +128,9 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
 
   public String toString() {
     return mySubscriptions.toString();
+  }
+
+  MessageBusImpl getBus() {
+    return myBus;
   }
 }

@@ -71,7 +71,7 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
 
   @Override
   public String getDisplayText(XLineBreakpoint<P> breakpoint) {
-    BreakpointWithHighlighter javaBreakpoint = (BreakpointWithHighlighter)BreakpointManager.findBreakpoint(breakpoint);
+    BreakpointWithHighlighter javaBreakpoint = (BreakpointWithHighlighter)BreakpointManager.getJavaBreakpoint(breakpoint);
     if (javaBreakpoint != null) {
       return javaBreakpoint.getDescription();
     }

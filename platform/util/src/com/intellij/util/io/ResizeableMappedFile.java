@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
@@ -33,12 +34,12 @@ public class ResizeableMappedFile implements Forceable {
   private long myLogicalSize;
   private final PagedFileStorage myStorage;
 
-  public ResizeableMappedFile(final File file, int initialSize, @Nullable PagedFileStorage.StorageLockContext lockContext, int pageSize,
+  public ResizeableMappedFile(@NotNull File file, int initialSize, @Nullable PagedFileStorage.StorageLockContext lockContext, int pageSize,
                               boolean valuesAreBufferAligned) throws IOException {
     this(file, initialSize, lockContext, pageSize, valuesAreBufferAligned, false);
   }
 
-  public ResizeableMappedFile(final File file,
+  public ResizeableMappedFile(@NotNull File file,
                               int initialSize,
                               @Nullable PagedFileStorage.StorageLockContext lockContext,
                               int pageSize,
@@ -229,6 +230,7 @@ public class ResizeableMappedFile implements Forceable {
     }
   }
 
+  @NotNull
   public PagedFileStorage getPagedFileStorage() {
     return myStorage;
   }

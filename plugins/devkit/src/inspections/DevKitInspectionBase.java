@@ -20,15 +20,21 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.paths.PathReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.dom.Dependency;
+import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.ActionType;
 import org.jetbrains.idea.devkit.util.ComponentType;
@@ -62,7 +68,8 @@ public abstract class DevKitInspectionBase extends BaseJavaLocalInspectionTool {
 
     if (PluginModuleType.isOfType(module)) {
       return checkModule(module, psiClass, null, includeActions);
-    } else {
+    }
+    else {
       Set<PsiClass> types = null;
       final List<Module> modules = PluginModuleType.getCandidateModules(module);
       for (Module m : modules) {
@@ -78,26 +85,46 @@ public abstract class DevKitInspectionBase extends BaseJavaLocalInspectionTool {
     if (!DescriptorUtil.isPluginXml(pluginXml)) return types;
     assert pluginXml != null;
 
-    final XmlDocument document = pluginXml.getDocument();
-    assert document != null;
-
-    final XmlTag rootTag = document.getRootTag();
-    assert rootTag != null;
-
     final String qualifiedName = psiClass.getQualifiedName();
     if (qualifiedName != null) {
       final RegistrationTypeFinder finder = new RegistrationTypeFinder(psiClass, types);
 
-      DescriptorUtil.processComponents(rootTag, finder);
+      // "main" plugin.xml
+      processPluginXml(pluginXml, finder, includeActions);
 
-      if (includeActions) {
-        DescriptorUtil.processActions(rootTag, finder);
+      // <depends> plugin.xml files
+      final DomFileElement<IdeaPlugin> fileElement = DescriptorUtil.getIdeaPlugin(pluginXml);
+      for (Dependency dependency : fileElement.getRootElement().getDependencies()) {
+        final GenericAttributeValue<PathReference> configFileAttribute = dependency.getConfigFile();
+        if (!DomUtil.hasXml(configFileAttribute)) continue;
+
+        final PathReference configFile = configFileAttribute.getValue();
+        if (configFile != null) {
+          final PsiElement resolve = configFile.resolve();
+          if (!(resolve instanceof XmlFile)) continue;
+          final XmlFile depPluginXml = (XmlFile)resolve;
+          if (DescriptorUtil.isPluginXml(depPluginXml)) {
+            processPluginXml(depPluginXml, finder, includeActions);
+          }
+        }
       }
 
       types = finder.getTypes();
     }
 
     return types;
+  }
+
+  private static void processPluginXml(XmlFile xmlFile, RegistrationTypeFinder finder, boolean includeActions) {
+    final XmlDocument document = xmlFile.getDocument();
+    if (document == null) return;
+    final XmlTag rootTag = document.getRootTag();
+    if (rootTag == null) return;
+
+    DescriptorUtil.processComponents(rootTag, finder);
+    if (includeActions) {
+      DescriptorUtil.processActions(rootTag, finder);
+    }
   }
 
   @Nullable
@@ -132,13 +159,14 @@ public abstract class DevKitInspectionBase extends BaseJavaLocalInspectionTool {
     return false;
   }
 
-  static class RegistrationTypeFinder implements ComponentType.Processor, ActionType.Processor {
+
+  private static class RegistrationTypeFinder implements ComponentType.Processor, ActionType.Processor {
     private Set<PsiClass> myTypes;
     private final String myQualifiedName;
     private final PsiManager myManager;
     private final GlobalSearchScope myScope;
 
-    public RegistrationTypeFinder(PsiClass psiClass, Set<PsiClass> types) {
+    private RegistrationTypeFinder(PsiClass psiClass, Set<PsiClass> types) {
       myTypes = types;
       myQualifiedName = psiClass.getQualifiedName();
       myManager = psiClass.getManager();

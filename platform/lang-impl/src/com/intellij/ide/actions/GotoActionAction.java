@@ -40,14 +40,17 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 
 public class GotoActionAction extends GotoActionBase implements DumbAware {
   public static final Comparator<MatchResult> ELEMENTS_COMPARATOR = new Comparator<MatchResult>() {
     @Override
     public int compare(MatchResult o1, MatchResult o2) {
+      if (o1.elementName.equals(GotoActionModel.INTENTIONS_KEY)) return -1;
+      if (o2.elementName.equals(GotoActionModel.INTENTIONS_KEY)) return 1;
+
       if (o1.elementName.equals(GotoActionModel.SETTINGS_KEY)) return 1;
       if (o2.elementName.equals(GotoActionModel.SETTINGS_KEY)) return -1;
+
       return o1.elementName.compareToIgnoreCase(o2.elementName);
     }
   };
@@ -103,7 +106,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     }
     else {
       //element could be AnAction (SearchEverywhere)
-      final AnAction action = element instanceof AnAction ? ((AnAction)element) : (AnAction)((Map.Entry)element).getKey();
+      final AnAction action = element instanceof AnAction ? ((AnAction)element) : ((GotoActionModel.ActionWrapper)element).getAction();
       if (action != null) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override

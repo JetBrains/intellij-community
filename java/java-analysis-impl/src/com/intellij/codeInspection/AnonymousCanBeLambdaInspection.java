@@ -243,6 +243,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       body.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
         public void visitVariable(PsiVariable variable) {
+          super.visitVariable(variable);
           final String newName = names.get(variable);
           if (newName != null) {
             replacements.put(variable.getNameIdentifier(), elementFactory.createIdentifier(newName));
@@ -253,7 +254,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
         public void visitReferenceExpression(PsiReferenceExpression expression) {
           super.visitReferenceExpression(expression);
           final PsiElement resolve = expression.resolve();
-          if (resolve instanceof PsiParameter) {
+          if (resolve instanceof PsiVariable) {
             final String newName = names.get(resolve);
             if (newName != null) {
               replacements.put(expression, elementFactory.createExpressionFromText(newName, expression));

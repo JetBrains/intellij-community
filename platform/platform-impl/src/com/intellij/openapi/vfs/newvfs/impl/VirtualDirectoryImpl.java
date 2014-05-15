@@ -617,7 +617,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       }
       if (i != 0) {
         VirtualFileSystemEntry prev = array[i - 1];
-        String prevName = prev.getName();
+        CharSequence prevName = prev.getNameSequence();
         int cmp = file.compareNameTo(prevName, ignoreCase);
         if (cmp == 0) {
           error(verboseToString.fun(prev) + " equals to " + verboseToString.fun(file), array, details);

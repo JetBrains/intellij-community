@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,6 +33,8 @@ import java.util.Collection;
 import java.util.List;
 
 public class Executor {
+
+  private static final Logger LOG = Logger.getInstance(Executor.class);
 
   public static class ExecutionException extends RuntimeException {
 
@@ -258,7 +261,7 @@ public class Executor {
 
   protected static void debug(String msg) {
     if (!StringUtil.isEmptyOrSpaces(msg)) {
-      System.out.println(msg);
+      LOG.info(msg);
     }
   }
 

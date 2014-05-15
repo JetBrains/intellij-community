@@ -24,6 +24,9 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -63,6 +66,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowEP;
@@ -695,7 +699,31 @@ public class ExternalSystemUtil {
     };
     refreshProject(project, externalSystemId, projectSettings.getExternalProjectPath(), callback, isPreviewMode, progressExecutionMode);
   }
-  
+
+  @Nullable
+  public static VirtualFile waitForTheFile(@Nullable final String path) {
+    if (path == null) return null;
+
+    final VirtualFile[] file = new VirtualFile[1];
+    final Application app = ApplicationManager.getApplication();
+    Runnable action = new Runnable() {
+      public void run() {
+        app.runWriteAction(new Runnable() {
+          public void run() {
+            file[0] = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+          }
+        });
+      }
+    };
+    if (app.isDispatchThread()) {
+      action.run();
+    }
+    else {
+      app.invokeAndWait(action, ModalityState.defaultModalityState());
+    }
+    return file[0];
+  }
+
   private interface TaskUnderProgress {
     void execute(@NotNull ProgressIndicator indicator);
   }

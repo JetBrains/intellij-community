@@ -20,6 +20,7 @@ import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDManagerImpl;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -95,9 +96,8 @@ public class IdeEventQueue extends EventQueue {
   /**
    * We exit from suspend mode when focus owner changes and no more WindowEvent.WINDOW_OPENED events
    * <p/>
-   * in the queue. If WINDOW_OPENED event does exists in the queus then we restart the alarm.
+   * in the queue. If WINDOW_OPENED event does exists in the queues then we restart the alarm.
    */
-
   private Component myFocusOwner;
 
   private final Runnable myExitSuspendModeRunnable = new ExitSuspendModeRunnable();
@@ -319,10 +319,35 @@ public class IdeEventQueue extends EventQueue {
     return myCurrentEvent;
   }
 
+  private static class InertialMouseRouter {
+    private static int MOUSE_WHEEL_RESTART_THRESHOLD = 50;
+    private static Component wheelDestinationComponent = null;
+    private static long lastMouseWheel = 0;
+
+    private static AWTEvent changeSourceIfNeeded(AWTEvent awtEvent) {
+      if (SystemInfo.isMac && Registry.is("ide.inertial.mouse.fix") && awtEvent instanceof MouseWheelEvent) {
+        MouseWheelEvent mwe = (MouseWheelEvent) awtEvent;
+        if (mwe.getWhen() - lastMouseWheel > MOUSE_WHEEL_RESTART_THRESHOLD) {
+          wheelDestinationComponent = SwingUtilities.getDeepestComponentAt(mwe.getComponent(), mwe.getX(), mwe.getY());
+        }
+        lastMouseWheel = System.currentTimeMillis();
+
+        MouseWheelEvent newMouseWheelEvent = new MouseWheelEvent(
+          wheelDestinationComponent, mwe.getID(), lastMouseWheel, mwe.getModifiers(), mwe.getX(), mwe.getY(),
+          mwe.getClickCount(), mwe.isPopupTrigger(), mwe.getScrollType(), mwe.getScrollAmount(), mwe.getWheelRotation()
+        );
+        return newMouseWheelEvent;
+      }
+      return awtEvent;
+    }
+  }
+
   @Override
   public void dispatchEvent(AWTEvent e) {
 
     fixNonEnglishKeyboardLayouts(e);
+
+    e = InertialMouseRouter.changeSourceIfNeeded(e);
 
     e = mapEvent(e);
 
@@ -718,7 +743,7 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private static boolean typeAheadDispatchToFocusManager(AWTEvent e) {
-    if (e instanceof KeyEvent) {
+    if (e instanceof KeyEvent && appIsLoaded()) {
       final KeyEvent event = (KeyEvent)e;
       if (!event.isConsumed()) {
         final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(event.getComponent());
@@ -729,6 +754,14 @@ public class IdeEventQueue extends EventQueue {
     return false;
   }
 
+  private static boolean ourAppIsLoaded = false;
+
+  private static boolean appIsLoaded() {
+    if (ourAppIsLoaded) return true;
+    boolean loaded = IdeaApplication.isLoaded();
+    if (loaded) ourAppIsLoaded = true;
+    return loaded;
+  }
 
   public void flushQueue() {
     while (true) {

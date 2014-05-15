@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.EditorComboBox;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +70,8 @@ public class HgPushDialog extends DialogWrapper {
     branchCheckBox.addChangeListener(updatingListener);
     myBookmarkCheckBox.addChangeListener(updatingListener);
     revisionTxt.getDocument().addDocumentListener(updatingListener);
-
+    new ComboboxSpeedSearch(branchComboBox);
+    new ComboboxSpeedSearch(myBookmarkComboBox);
     setTitle(HgVcsMessages.message("hg4idea.push.dialog.title"));
     setOKButtonText("Push");
     init();
@@ -81,8 +83,6 @@ public class HgPushDialog extends DialogWrapper {
                         @Nullable HgRepository selectedRepo) {
     hgRepositorySelectorComponent.setRoots(repos);
     hgRepositorySelectorComponent.setSelectedRoot(selectedRepo);
-    HgRepository repo = hgRepositorySelectorComponent.getRepository();
-    updateComboBoxes(repo);
     updateRepository();
   }
 

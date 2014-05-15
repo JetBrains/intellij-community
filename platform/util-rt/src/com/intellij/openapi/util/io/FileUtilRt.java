@@ -277,21 +277,24 @@ public class FileUtilRt {
   private static File createTemp(@NotNull String prefix, @NotNull String suffix, @NotNull File directory, boolean isDirectory) throws IOException {
     // normalize and use only the file name from the prefix
     prefix = new File(prefix).getName();
+
     File f;
     int i = 0;
     do {
-      String name = prefix + (i==0?"":Integer.toString(i)) + suffix;
+      String name = prefix + i + suffix;
       f = new File(directory, name);
       if (!name.equals(f.getName())) {
-        throw new IOException("Unable to create temporary file, " + f+", "+name);
+        throw new IOException("Unable to create temporary file " + f + " for name " + name);
       }
       i++;
-    } while (f.exists());
+    }
+    while (f.exists());
 
     boolean success = isDirectory ? f.mkdir() : f.createNewFile();
     if (!success) {
       throw new IOException("Unable to create temporary file " + f);
     }
+
     return f;
   }
 

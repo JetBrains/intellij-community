@@ -101,7 +101,7 @@ public final class PsiUtil extends PsiUtilCore {
 
   @NotNull
   public static JavaResolveResult getAccessObjectClass(@NotNull PsiExpression expression) {
-    if (expression instanceof PsiSuperExpression && !isLanguageLevel8OrHigher(expression)) return JavaResolveResult.EMPTY;
+    if (expression instanceof PsiSuperExpression) return JavaResolveResult.EMPTY;
     PsiType type = expression.getType();
     if (type instanceof PsiClassType) {
       return ((PsiClassType)type).resolveGenerics();
@@ -998,14 +998,15 @@ public final class PsiUtil extends PsiUtilCore {
   public static PsiMethod getResourceCloserMethod(@NotNull final PsiResourceVariable resource) {
     final PsiType resourceType = resource.getType();
     if (!(resourceType instanceof PsiClassType)) return null;
-    return getResourceCloserMethodForType((PsiClassType)resourceType, resource.getProject());
+    return getResourceCloserMethodForType((PsiClassType)resourceType);
   }
 
   @Nullable
-  public static PsiMethod getResourceCloserMethodForType(@NotNull final PsiClassType resourceType, Project project) {
+  public static PsiMethod getResourceCloserMethodForType(@NotNull final PsiClassType resourceType) {
     final PsiClass resourceClass = resourceType.resolve();
     if (resourceClass == null) return null;
 
+    final Project project = resourceClass.getProject();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     final PsiClass autoCloseable = facade.findClass(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, ProjectScope.getLibrariesScope(project));
     if (autoCloseable == null) return null;
@@ -1057,7 +1058,7 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   @Nullable
-  public static String getMemberQualifiedName(PsiMember member) {
+  public static String getMemberQualifiedName(@NotNull PsiMember member) {
     if (member instanceof PsiClass) {
       return ((PsiClass)member).getQualifiedName();
     }

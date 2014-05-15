@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.AntSupport;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.references.PomService;
@@ -75,7 +76,7 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
             final Map<String, AntDomTarget> variants = result.getVariants();
             String newName = null;
             if (!variants.isEmpty()) {
-              List<Pair<String, String>> prefixNamePairs = null;
+              List<Couple<String>> prefixNamePairs = null;
               for (Map.Entry<String, AntDomTarget> entry : variants.entrySet()) {
                 final AntDomTarget candidateTarget = entry.getValue();
                 if (pointingToTarget.equals(candidateTarget)) {
@@ -84,14 +85,14 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
                   if (candidateName.endsWith(candidateTargetName)) {
                     final String prefix = candidateName.substring(0, candidateName.length() - candidateTargetName.length());
                     if (prefixNamePairs == null) {
-                      prefixNamePairs = new ArrayList<Pair<String, String>>(); // lazy init
+                      prefixNamePairs = new ArrayList<Couple<String>>(); // lazy init
                     }
-                    prefixNamePairs.add(new Pair<String, String>(prefix, candidateName));
+                    prefixNamePairs.add(Couple.newOne(prefix, candidateName));
                   }
                 }
               }
               final String currentRefText = getCanonicalText();
-              for (Pair<String, String> pair : prefixNamePairs) {
+              for (Couple<String> pair : prefixNamePairs) {
                 final String prefix = pair.getFirst();
                 final String effectiveName = pair.getSecond();
                 if (currentRefText.startsWith(prefix)) {

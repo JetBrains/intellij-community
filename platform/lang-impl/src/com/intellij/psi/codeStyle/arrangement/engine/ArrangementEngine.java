@@ -29,6 +29,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.arrangement.*;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
 import com.intellij.util.containers.*;
@@ -41,6 +43,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Section.END_SECTION;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Section.START_SECTION;
 
 /**
  * Encapsulates generic functionality of arranging file elements by the predefined rules.
@@ -205,9 +210,8 @@ public class ArrangementEngine {
       StackEntry stackEntry = stack.peek();
       if (stackEntry.current >= stackEntry.end) {
         List<ArrangementEntryWrapper<E>> subEntries = entries.subList(stackEntry.start, stackEntry.end);
-        if (subEntries.size() > 1) {
-          doArrange(subEntries, context);
-        }
+        // arrange entries even if subEntries.size() == 1, because we don't want to miss new section comments here
+        doArrange(subEntries, context);
         subEntries.clear();
         stack.pop();
       }
@@ -226,16 +230,17 @@ public class ArrangementEngine {
    * Arranges (re-orders) given entries according to the given rules.
    *
    * @param entries            entries to arrange
-   * @param rules              rules to use for arrangement
+   * @param sectionRules       rules to use for arrangement
    * @param rulesByPriority    rules sorted by priority ('public static' rule will have higher priority than 'public')
-   * @param <E>                arrangement entry type
+   * @param entryToSection     mapping from arrangement entry to the parent section
    * @return                   arranged list of the given rules
    */
   @SuppressWarnings("AssignmentToForLoopParameter")
   @NotNull
   public static <E extends ArrangementEntry> List<E> arrange(@NotNull Collection<E> entries,
-                                                             @NotNull List<? extends ArrangementMatchRule> rules,
-                                                             @NotNull List<? extends ArrangementMatchRule> rulesByPriority)
+                                                             @NotNull List<ArrangementSectionRule> sectionRules,
+                                                             @NotNull List<? extends ArrangementMatchRule> rulesByPriority,
+                                                             @Nullable Map<E, ArrangementSectionRule> entryToSection)
   {
     List<E> arranged = ContainerUtilRt.newArrayList();
     Set<E> unprocessed = ContainerUtilRt.newLinkedHashSet();
@@ -271,15 +276,15 @@ public class ArrangementEngine {
       unprocessed.removeAll(matched);
     }
 
-    for (ArrangementMatchRule rule : rules) {
-      if (elementsByRule.containsKey(rule)) {
-        final Collection<E> arrangedEntries = elementsByRule.get(rule);
+    for (ArrangementSectionRule sectionRule : sectionRules) {
+      for (ArrangementMatchRule rule : sectionRule.getMatchRules()) {
+        final Collection<E> arrangedEntries = arrangeByRule(arranged, elementsByRule, rule);
 
-        // Sort by name if necessary.
-        if (StdArrangementTokens.Order.BY_NAME.equals(rule.getOrderType())) {
-          sortByName((List<E>)arrangedEntries);
+        if (entryToSection != null && arrangedEntries != null) {
+          for (E entry : arrangedEntries) {
+            entryToSection.put(entry, sectionRule);
+          }
         }
-        arranged.addAll(arrangedEntries);
       }
     }
     arranged.addAll(unprocessed);
@@ -297,10 +302,34 @@ public class ArrangementEngine {
         }
       }
 
+      // add dependent entries to the same section as main entry
+      if (entryToSection != null && entryToSection.containsKey(e)) {
+        final ArrangementSectionRule rule = entryToSection.get(e);
+        for (E e1 : shouldBeAddedAfterCurrentElement) {
+          entryToSection.put(e1, rule);
+        }
+      }
       arranged.addAll(i + 1, shouldBeAddedAfterCurrentElement);
     }
 
     return arranged;
+  }
+
+  @Nullable
+  private static <E extends ArrangementEntry> Collection<E> arrangeByRule(@NotNull List<E> arranged,
+                                                                          @NotNull MultiMap<ArrangementMatchRule, E> elementsByRule,
+                                                                          @NotNull ArrangementMatchRule rule) {
+    if (elementsByRule.containsKey(rule)) {
+      final Collection<E> arrangedEntries = elementsByRule.remove(rule);
+
+      // Sort by name if necessary.
+      if (StdArrangementTokens.Order.BY_NAME.equals(rule.getOrderType())) {
+        sortByName((List<E>)arrangedEntries);
+      }
+      arranged.addAll(arrangedEntries);
+      return arrangedEntries;
+    }
+    return null;
   }
 
   private static <E extends ArrangementEntry> void sortByName(@NotNull List<E> entries) {
@@ -340,6 +369,7 @@ public class ArrangementEngine {
       return;
     }
 
+    Map<E, ArrangementSectionRule> entryToSection = ContainerUtilRt.newHashMap();
     Map<E, ArrangementEntryWrapper<E>> map = ContainerUtilRt.newHashMap();
     List<E> arranged = ContainerUtilRt.newArrayList();
     List<E> toArrange = ContainerUtilRt.newArrayList(); 
@@ -350,7 +380,7 @@ public class ArrangementEngine {
         // Split entries to arrange by 'can not be matched' rules.
         // See IDEA-104046 for a problem use-case example.
         if (toArrange.isEmpty()) {
-          arranged.addAll(arrange(toArrange, context.rules, context.rulesByPriority));
+          arranged.addAll(arrange(toArrange, context.sectionRules, context.rulesByPriority, entryToSection));
         }
         arranged.add(entry);
         toArrange.clear();
@@ -360,9 +390,10 @@ public class ArrangementEngine {
       }
     }
     if (!toArrange.isEmpty()) {
-      arranged.addAll(arrange(toArrange, context.rules, context.rulesByPriority));
+      arranged.addAll(arrange(toArrange, context.sectionRules, context.rulesByPriority, entryToSection));
     }
 
+    final NewSectionInfo<E> newSectionsInfo = NewSectionInfo.create(arranged, entryToSection);
     context.changer.prepare(wrappers, context);
     // We apply changes from the last position to the first position in order not to bother with offsets shifts.
     for (int i = arranged.size() - 1; i >= 0; i--) {
@@ -372,13 +403,96 @@ public class ArrangementEngine {
       ArrangementEntryWrapper<E> previous = i > 0 ? map.get(arranged.get(i - 1)) : null;
       ArrangementEntryWrapper<E> previousInitial = i > 0 ? wrappers.get(i - 1) : null;
 
+      final ArrangementEntryWrapper<E> parentWrapper = initialWrapper.getParent();
       if (arrangedWrapper.equals(initialWrapper)) {
         if (previous != null && previous.equals(previousInitial) || previous == null && previousInitial == null) {
+          final int beforeOffset = arrangedWrapper.getStartOffset();
+          final int afterOffset = arrangedWrapper.getEndOffset();
+          context.changer.insertSection(context, arranged.get(i), newSectionsInfo, parentWrapper, beforeOffset, afterOffset);
           continue;
         }
       }
 
-      context.changer.replace(arrangedWrapper, initialWrapper, previous, context);
+      ArrangementEntryWrapper<E> next = i < arranged.size() - 1 ? map.get(arranged.get(i + 1)) : null;
+      context.changer.replace(arrangedWrapper, initialWrapper, previous, next, context);
+      context.changer.insertSection(context, arranged.get(i), newSectionsInfo, arrangedWrapper, initialWrapper, parentWrapper);
+    }
+  }
+
+  private static class NewSectionInfo<E extends ArrangementEntry> {
+    private final Map<E, String> mySectionStarts = ContainerUtil.newHashMap();
+    private final Map<E, String> mySectionEnds = ContainerUtil.newHashMap();
+
+    private static <E extends ArrangementEntry> NewSectionInfo create(@NotNull List<E> arranged,
+                                                                      @NotNull Map<E, ArrangementSectionRule> entryToSection) {
+      final NewSectionInfo<E> info = new NewSectionInfo<E>();
+
+      boolean sectionIsOpen = false;
+      ArrangementSectionRule prevSection = null;
+      E prev = null;
+      for (E e : arranged) {
+        final ArrangementSectionRule section = entryToSection.get(e);
+        if (section != prevSection) {
+          closeSection(prevSection, prev, info, sectionIsOpen);
+          sectionIsOpen = false;
+
+          if (section != null) {
+            final String startComment = section.getStartComment();
+            if (StringUtil.isNotEmpty(startComment) && !isSectionEntry(e, startComment)) {
+              sectionIsOpen = true;
+              info.addSectionStart(e, startComment);
+            }
+          }
+          prevSection = section;
+        }
+        prev = e;
+      }
+
+      closeSection(prevSection, prev, info, sectionIsOpen);
+      return info;
+    }
+
+    public static boolean isSectionEntry(@NotNull ArrangementEntry entry, @NotNull String sectionText) {
+      if (entry instanceof TypeAwareArrangementEntry && entry instanceof TextAwareArrangementEntry) {
+        final Set<ArrangementSettingsToken> types = ((TypeAwareArrangementEntry)entry).getTypes();
+        if (types.size() == 1) {
+          final ArrangementSettingsToken type = types.iterator().next();
+          if (type.equals(START_SECTION) || type.equals(END_SECTION)) {
+            return StringUtil.equals(((TextAwareArrangementEntry)entry).getText(), sectionText);
+          }
+        }
+      }
+      return false;
+    }
+
+    private static <E extends ArrangementEntry> void closeSection(@Nullable ArrangementSectionRule section,
+                                                                  @Nullable E entry,
+                                                                  @NotNull NewSectionInfo<E> info,
+                                                                  boolean sectionIsOpen) {
+      if (sectionIsOpen) {
+        assert section != null && entry != null;
+        if (StringUtil.isNotEmpty(section.getEndComment())) {
+          info.addSectionEnd(entry, section.getEndComment());
+        }
+      }
+    }
+
+    private void addSectionStart(E entry, String comment) {
+      mySectionStarts.put(entry, comment);
+    }
+
+    private void addSectionEnd(E entry, String comment) {
+      mySectionEnds.put(entry, comment);
+    }
+
+    @Nullable
+    public String getStartComment(E entry) {
+      return mySectionStarts.get(entry);
+    }
+
+    @Nullable
+    public String getEndComment(E entry) {
+      return mySectionEnds.get(entry);
     }
   }
 
@@ -389,22 +503,22 @@ public class ArrangementEngine {
     @NotNull public final Rearranger<E>                          rearranger;
     @NotNull public final Collection<ArrangementEntryWrapper<E>> wrappers;
     @NotNull public final Document                               document;
-    @NotNull public final List<? extends ArrangementMatchRule>   rules;
     @NotNull public final List<? extends ArrangementMatchRule>   rulesByPriority;
     @NotNull public final CodeStyleSettings                      settings;
     @NotNull public final Changer                                changer;
+    @NotNull public final List<ArrangementSectionRule>           sectionRules;
 
     private Context(@NotNull Rearranger<E> rearranger,
                     @NotNull Collection<ArrangementEntryWrapper<E>> wrappers,
                     @NotNull Document document,
-                    @NotNull List<? extends ArrangementMatchRule> rules,
+                    @NotNull List<ArrangementSectionRule> sectionRules,
                     @NotNull List<? extends ArrangementMatchRule> rulesByPriority,
                     @NotNull CodeStyleSettings settings, @NotNull Changer changer)
     {
       this.rearranger = rearranger;
       this.wrappers = wrappers;
       this.document = document;
-      this.rules = rules;
+      this.sectionRules = sectionRules;
       this.rulesByPriority = rulesByPriority;
       this.settings = settings;
       this.changer = changer;
@@ -440,8 +554,9 @@ public class ArrangementEngine {
       else {
         changer = new DefaultChanger();
       }
-      final List<? extends ArrangementMatchRule> rulesByPriority = ArrangementUtil.getRulesSortedByPriority(arrangementSettings);
-      return new Context<T>(rearranger, wrappers, document, arrangementSettings.getRules(), rulesByPriority, codeStyleSettings, changer);
+      final List<? extends ArrangementMatchRule> rulesByPriority = arrangementSettings.getRulesSortedByPriority();
+      final List<ArrangementSectionRule> sectionRules = arrangementSettings.getSections();
+      return new Context<T>(rearranger, wrappers, document, sectionRules, rulesByPriority, codeStyleSettings, changer);
     }
   }
 
@@ -458,8 +573,8 @@ public class ArrangementEngine {
     }
   }
 
-  private interface Changer<E extends ArrangementEntry> {
-    void prepare(@NotNull List<ArrangementEntryWrapper<E>> toArrange, @NotNull Context<E> context);
+  private abstract static class Changer<E extends ArrangementEntry> {
+    public abstract void prepare(@NotNull List<ArrangementEntryWrapper<E>> toArrange, @NotNull Context<E> context);
 
     /**
      * Replaces given 'old entry' by the given 'new entry'.
@@ -467,16 +582,56 @@ public class ArrangementEngine {
      * @param newWrapper  wrapper for an entry which text should replace given 'old entry' range
      * @param oldWrapper  wrapper for an entry which range should be replaced by the given 'new entry'
      * @param previous    wrapper which will be previous for the entry referenced via the given 'new wrapper'
+     * @param next        wrapper which will be next for the entry referenced via the given 'new wrapper'
      * @param context     current context
      */
-    void replace(@NotNull ArrangementEntryWrapper<E> newWrapper,
-                 @NotNull ArrangementEntryWrapper<E> oldWrapper,
-                 @Nullable ArrangementEntryWrapper<E> previous,
-                 @NotNull Context<E> context);
+    public abstract void replace(@NotNull ArrangementEntryWrapper<E> newWrapper,
+                                 @NotNull ArrangementEntryWrapper<E> oldWrapper,
+                                 @Nullable ArrangementEntryWrapper<E> previous,
+                                 @Nullable ArrangementEntryWrapper<E> next,
+                                 @NotNull Context<E> context);
+
+    public abstract void insert(@NotNull Context<E> context, int startOffset, @NotNull String text);
+
+    public abstract void insertSection(@NotNull Context<E> context,
+                                       @NotNull E entry,
+                                       @NotNull NewSectionInfo<E> newSectionsInfo,
+                                       @NotNull ArrangementEntryWrapper<E> arranged,
+                                       @NotNull ArrangementEntryWrapper<E> initial,
+                                       @Nullable ArrangementEntryWrapper<E> parent);
+
+    protected abstract void insertSection(@NotNull Context<E> context,
+                                          @NotNull E entry,
+                                          @NotNull NewSectionInfo<E> newSectionsInfo,
+                                          @Nullable ArrangementEntryWrapper<E> parent, int beforeOffset, int afterOffset);
+
+    protected int getBlankLines(@NotNull Context<E> context,
+                                @Nullable ArrangementEntryWrapper<E> parentWrapper,
+                                @NotNull ArrangementEntryWrapper<E> targetWrapper,
+                                @Nullable ArrangementEntryWrapper<E> previousWrapper,
+                                @Nullable ArrangementEntryWrapper<E> nextWrapper) {
+      final E target = targetWrapper.getEntry();
+      final E previous = previousWrapper == null ? null : previousWrapper.getEntry();
+      if (isTypeOf(target, END_SECTION) || isTypeOf(previous, START_SECTION)) {
+        return 0;
+      }
+      final E next = nextWrapper == null ? null : nextWrapper.getEntry();
+      if (next != null && isTypeOf(target, START_SECTION)) {
+        return context.rearranger.getBlankLines(context.settings, parentWrapper == null ? null : parentWrapper.getEntry(), previous, next);
+      }
+      return context.rearranger.getBlankLines(context.settings, parentWrapper == null ? null : parentWrapper.getEntry(), previous, target);
+    }
+
+    private boolean isTypeOf(@Nullable E element, @NotNull ArrangementSettingsToken token) {
+      if (element instanceof TypeAwareArrangementEntry) {
+        Set<ArrangementSettingsToken> types = ((TypeAwareArrangementEntry)element).getTypes();
+        return types.size() == 1 && token.equals(types.iterator().next());
+      }
+      return false;
+    }
   }
 
-  private static class DefaultChanger<E extends ArrangementEntry> implements Changer<E> {
-
+  private static class DefaultChanger<E extends ArrangementEntry> extends Changer<E> {
     @NotNull private String myParentText;
     private          int    myParentShift;
 
@@ -498,6 +653,7 @@ public class ArrangementEngine {
     public void replace(@NotNull ArrangementEntryWrapper<E> newWrapper,
                         @NotNull ArrangementEntryWrapper<E> oldWrapper,
                         @Nullable ArrangementEntryWrapper<E> previous,
+                        @Nullable ArrangementEntryWrapper<E> next,
                         @NotNull Context<E> context)
     {
       // Calculate blank lines before the arrangement.
@@ -520,10 +676,7 @@ public class ArrangementEngine {
       }
 
       ArrangementEntryWrapper<E> parentWrapper = oldWrapper.getParent();
-      int desiredBlankLinesNumber = context.rearranger.getBlankLines(context.settings,
-                                                                     parentWrapper == null ? null : parentWrapper.getEntry(),
-                                                                     previous == null ? null : previous.getEntry(),
-                                                                     newWrapper.getEntry());
+      int desiredBlankLinesNumber = getBlankLines(context, parentWrapper, newWrapper, previous, next);
       if (desiredBlankLinesNumber == blankLinesBefore && newWrapper.equals(oldWrapper)) {
         return;
       }
@@ -572,9 +725,43 @@ public class ArrangementEngine {
         }
       }
     }
+
+    @Override
+    public void insert(@NotNull Context<E> context, int startOffset, @NotNull String text) {
+      context.document.insertString(startOffset, text);
+    }
+
+    @Override
+    public void insertSection(@NotNull Context<E> context,
+                              @NotNull E entry,
+                              @NotNull NewSectionInfo<E> newSectionsInfo,
+                              @NotNull ArrangementEntryWrapper<E> arrangedWrapper,
+                              @NotNull ArrangementEntryWrapper<E> initialWrapper,
+                              @Nullable ArrangementEntryWrapper<E> parent) {
+      final int beforeOffset = arrangedWrapper.equals(initialWrapper) ? arrangedWrapper.getStartOffset() : initialWrapper.getStartOffset();
+      final int length = arrangedWrapper.getEndOffset() - arrangedWrapper.getStartOffset();
+      int afterOffset = arrangedWrapper.equals(initialWrapper) ? arrangedWrapper.getEndOffset() : beforeOffset + length;
+
+      insertSection(context, entry, newSectionsInfo, parent, beforeOffset, afterOffset);
+    }
+
+    @Override
+    protected void insertSection(@NotNull Context<E> context,
+                                 @NotNull E entry,
+                                 @NotNull NewSectionInfo<E> newSectionsInfo,
+                                 ArrangementEntryWrapper<E> parent, int beforeOffset, int afterOffset) {
+      final String afterComment = newSectionsInfo.getEndComment(entry);
+      if (afterComment != null) {
+        insert(context, afterOffset, "\n" + afterComment);
+      }
+      final String beforeComment = newSectionsInfo.getStartComment(entry);
+      if (beforeComment != null) {
+        insert(context, beforeOffset, beforeComment + "\n");
+      }
+    }
   }
 
-  private static class RangeMarkerAwareChanger<E extends ArrangementEntry> implements Changer<E> {
+  private static class RangeMarkerAwareChanger<E extends ArrangementEntry> extends Changer<E> {
 
     @NotNull private final List<ArrangementEntryWrapper<E>> myWrappers = new ArrayList<ArrangementEntryWrapper<E>>();
     @NotNull private final DocumentEx myDocument;
@@ -597,16 +784,14 @@ public class ArrangementEngine {
     public void replace(@NotNull ArrangementEntryWrapper<E> newWrapper,
                         @NotNull ArrangementEntryWrapper<E> oldWrapper,
                         @Nullable ArrangementEntryWrapper<E> previous,
+                        @Nullable ArrangementEntryWrapper<E> next,
                         @NotNull Context<E> context)
     {
       // Calculate blank lines before the arrangement.
       int blankLinesBefore = oldWrapper.getBlankLinesBefore();
 
       ArrangementEntryWrapper<E> parentWrapper = oldWrapper.getParent();
-      int desiredBlankLinesNumber = context.rearranger.getBlankLines(context.settings,
-                                                                     parentWrapper == null ? null : parentWrapper.getEntry(),
-                                                                     previous == null ? null : previous.getEntry(),
-                                                                     newWrapper.getEntry());
+      int desiredBlankLinesNumber = getBlankLines(context, parentWrapper, newWrapper, previous, next);
       if ((desiredBlankLinesNumber < 0 || desiredBlankLinesNumber == blankLinesBefore) && newWrapper.equals(oldWrapper)) {
         return;
       }
@@ -646,8 +831,16 @@ public class ArrangementEngine {
         shiftOffsets(replacementStartOffset - insertionOffset, insertionOffset);
       }
 
+      if (desiredBlankLinesNumber < 0) {
+        return;
+      }
+
+      updateAllWrapperRanges(parentWrapper, lineFeedsDiff);
+    }
+
+    protected void updateAllWrapperRanges(@Nullable ArrangementEntryWrapper<E> parentWrapper, int lineFeedsDiff) {
       // Update wrapper ranges.
-      if (desiredBlankLinesNumber < 0 || lineFeedsDiff == 0 || parentWrapper == null) {
+      if (lineFeedsDiff == 0 || parentWrapper == null) {
         return;
       }
 
@@ -665,6 +858,52 @@ public class ArrangementEngine {
           wrapper.applyShift(lineFeedsDiff);
         }
       }
+    }
+
+    @Override
+    public void insert(@NotNull Context<E> context, int startOffset, @NotNull String text) {
+      myDocument.insertString(startOffset, text);
+      int shift = text.length();
+      for (int i = myWrappers.size() - 1; i >= 0; i--) {
+        ArrangementEntryWrapper<E> wrapper = myWrappers.get(i);
+        if (wrapper.getStartOffset() >= startOffset) {
+          wrapper.applyShift(shift);
+        }
+      }
+    }
+
+    @Override
+    public void insertSection(@NotNull Context<E> context,
+                              @NotNull E entry,
+                              @NotNull NewSectionInfo<E> newSectionsInfo,
+                              @NotNull ArrangementEntryWrapper<E> arrangedWrapper,
+                              @NotNull ArrangementEntryWrapper<E> initialWrapper,
+                              @Nullable ArrangementEntryWrapper<E> parent) {
+      final int afterOffset = arrangedWrapper.equals(initialWrapper) ? arrangedWrapper.getEndOffset() : initialWrapper.getStartOffset();
+      final int length = arrangedWrapper.getEndOffset() - arrangedWrapper.getStartOffset();
+      final int beforeOffset = arrangedWrapper.equals(initialWrapper) ? arrangedWrapper.getStartOffset() : afterOffset - length;
+      insertSection(context, entry, newSectionsInfo, parent, beforeOffset, afterOffset);
+    }
+
+    @Override
+    protected void insertSection(@NotNull Context<E> context,
+                                 @NotNull E entry,
+                                 @NotNull NewSectionInfo<E> newSectionsInfo,
+                                 @Nullable ArrangementEntryWrapper<E> parent,
+                                 int beforeOffset, int afterOffset) {
+      int diff = 0;
+      final String afterComment = newSectionsInfo.getEndComment(entry);
+      if (afterComment != null) {
+        insert(context, afterOffset, "\n" + afterComment);
+        diff += afterComment.length() + 1;
+      }
+      final String beforeComment = newSectionsInfo.getStartComment(entry);
+      if (beforeComment != null) {
+        insert(context, beforeOffset, beforeComment + "\n");
+        diff += beforeComment.length() + 1;
+      }
+
+      updateAllWrapperRanges(parent, diff);
     }
 
     /**

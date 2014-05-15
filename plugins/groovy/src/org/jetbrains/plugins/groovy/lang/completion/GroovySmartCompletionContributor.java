@@ -55,7 +55,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.CompleteReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
@@ -107,33 +106,34 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
         final PsiElement reference = position.getParent();
         if (reference == null) return;
         if (reference instanceof GrReferenceElement) {
-          ((GrReferenceElement)reference).processVariants(result.getPrefixMatcher(), params, new Consumer<LookupElement>() {
-            public void consume(LookupElement variant) {
-              PsiType type = null;
+          GroovyCompletionUtil.processVariants((GrReferenceElement)reference, result.getPrefixMatcher(), params,
+                                               new Consumer<LookupElement>() {
+                                                 public void consume(LookupElement variant) {
+                                                   PsiType type = null;
 
-              Object o = variant.getObject();
-              if (o instanceof GroovyResolveResult) {
-                if (!((GroovyResolveResult)o).isAccessible()) return;
-                o = ((GroovyResolveResult)o).getElement();
-              }
+                                                   Object o = variant.getObject();
+                                                   if (o instanceof GroovyResolveResult) {
+                                                     if (!((GroovyResolveResult)o).isAccessible()) return;
+                                                     o = ((GroovyResolveResult)o).getElement();
+                                                   }
 
-              if (o instanceof PsiElement) {
-                type = getTypeByElement((PsiElement)o, position);
-              }
-              else if (o instanceof String) {
-                if ("true".equals(o) || "false".equals(o)) {
-                  type = PsiType.BOOLEAN;
-                }
-              }
-              if (type == null) return;
-              for (TypeConstraint info : infos) {
-                if (info.satisfied(type, position)) {
-                  result.addElement(variant);
-                  break;
-                }
-              }
-            }
-          });
+                                                   if (o instanceof PsiElement) {
+                                                     type = getTypeByElement((PsiElement)o, position);
+                                                   }
+                                                   else if (o instanceof String) {
+                                                     if ("true".equals(o) || "false".equals(o)) {
+                                                       type = PsiType.BOOLEAN;
+                                                     }
+                                                   }
+                                                   if (type == null) return;
+                                                   for (TypeConstraint info : infos) {
+                                                     if (info.satisfied(type, position)) {
+                                                       result.addElement(variant);
+                                                       break;
+                                                     }
+                                                   }
+                                                 }
+                                               });
         }
 
         addExpectedClassMembers(params, result);
@@ -225,7 +225,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
               result.addElement(element);
             }
           }
-        });
+        }, params);
       }
     });
 

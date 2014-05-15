@@ -34,13 +34,13 @@ public class SyntaxInfo {
 
   private final int myDefaultForeground;
   private final int myDefaultBackground;
-  private final int mySingleFontSize;
+  private final int myFontSize;
 
   private SyntaxInfo(int outputInfoCount,
                      byte[] outputInfosSerialized,
                     int defaultForeground,
                     int defaultBackground,
-                    int singleFontSize,
+                    int fontSize,
                     @NotNull FontNameRegistry fontNameRegistry,
                     @NotNull ColorRegistry colorRegistry)
   {
@@ -48,7 +48,7 @@ public class SyntaxInfo {
     myOutputInfosSerialized = outputInfosSerialized;
     myDefaultForeground = defaultForeground;
     myDefaultBackground = defaultBackground;
-    mySingleFontSize = singleFontSize;
+    myFontSize = fontSize;
     myFontNameRegistry = fontNameRegistry;
     myColorRegistry = colorRegistry;
   }
@@ -71,12 +71,23 @@ public class SyntaxInfo {
     return myDefaultBackground;
   }
 
-  /**
-   * @return    positive value if all tokens have the same font size (returned value);
-   *            non-positive value otherwise
-   */
-  public int getSingleFontSize() {
-    return mySingleFontSize;
+  public int getFontSize() {
+    return myFontSize;
+  }
+
+  public void processOutputInfo(MarkupHandler handler) {
+    MarkupIterator it = new MarkupIterator();
+    try {
+      while(it.hasNext()) {
+        it.processNext(handler);
+        if (!handler.canHandleMore()) {
+          break;
+        }
+      }
+    }
+    finally {
+      it.dispose();
+    }
   }
 
   @Override
@@ -114,6 +125,11 @@ public class SyntaxInfo {
           @Override
           public void handleStyle(int style) throws Exception {
             b.append("style(").append(style).append(")");
+          }
+
+          @Override
+          public boolean canHandleMore() {
+            return true;
           }
         });
         first = false;

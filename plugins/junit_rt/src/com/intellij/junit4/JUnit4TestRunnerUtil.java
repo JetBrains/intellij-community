@@ -59,6 +59,9 @@ public class JUnit4TestRunnerUtil {
           try {
             final String packageName = reader.readLine();
             if (packageName == null) return null;
+
+            final String categoryName = reader.readLine();
+            final Class category = categoryName != null && categoryName.length() > 0 ? loadTestClass(categoryName) : null;
             String line;
 
             while ((line = reader.readLine()) != null) {
@@ -85,7 +88,7 @@ public class JUnit4TestRunnerUtil {
             Request allClasses;
             try {
               Class.forName("org.junit.runner.Computer");
-              allClasses = JUnit46ClassesRequestBuilder.getClassesRequest(suiteName, classes, classMethods);
+              allClasses = JUnit46ClassesRequestBuilder.getClassesRequest(suiteName, classes, classMethods, category);
             }
             catch (ClassNotFoundException e) {
               allClasses = getClassRequestsUsing44API(suiteName, classes);

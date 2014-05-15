@@ -24,6 +24,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -139,7 +140,7 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
   private static void addParametersFromSuper(@NotNull final PyFunction superInit, @NotNull final StringBuilder superCall,
                                              @NotNull final StringBuilder newFunction, boolean addComma,
                                              @NotNull final List<String> problemParams, @NotNull final List<String> functionParams,
-                                             String starName, String doubleStarName) {
+                                             @Nullable String starName, @Nullable String doubleStarName) {
     final PyParameterList paramList = superInit.getParameterList();
     PyParameter[] parameters = paramList.getParameters();
     boolean addDouble = false;
@@ -170,16 +171,20 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
     }
     for(String p : problemParams)
       newFunction.append(",").append(p);
-    if (addStar) {
+    if (starName != null) {
       newFunction.append(",").append(starName);
-      if (addComma) superCall.append(",");
-      superCall.append(starName);
-      addComma = true;
+      if (addStar) {
+        if (addComma) superCall.append(",");
+        superCall.append(starName);
+        addComma = true;
+      }
     }
-    if (addDouble) {
-      if (addComma) superCall.append(",");
-      superCall.append(doubleStarName);
+    if (doubleStarName != null) {
       newFunction.append(",").append(doubleStarName);
+      if (addDouble) {
+        if (addComma) superCall.append(",");
+        superCall.append(doubleStarName);
+      }
     }
   }
 }

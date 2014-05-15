@@ -215,7 +215,16 @@ class BaseInterpreterInterface:
 
                 try:
                     self.startExec()
+                    if hasattr(self, 'debugger'):
+                        import pydevd_tracing
+                        pydevd_tracing.SetTrace(self.debugger.trace_dispatch)
+
                     more = self.doAddExec(code_fragment)
+
+                    if hasattr(self, 'debugger'):
+                        import pydevd_tracing
+                        pydevd_tracing.SetTrace(None)
+
                     self.finishExec(more)
                 finally:
                     if help is not None:
@@ -283,9 +292,9 @@ class BaseInterpreterInterface:
                         if doc is not None:
                             return doc
 
-                        import jyimportsTipper
+                        import _pydev_jy_imports_tipper
 
-                        is_method, infos = jyimportsTipper.ismethod(obj)
+                        is_method, infos = _pydev_jy_imports_tipper.ismethod(obj)
                         ret = ''
                         if is_method:
                             for info in infos:
@@ -401,3 +410,91 @@ class BaseInterpreterInterface:
 
     def changeVariable(self, attr, value):
         Exec('%s=%s' % (attr, value), self.getNamespace(), self.getNamespace())
+
+    def _findFrame(self, thread_id, frame_id):
+        '''
+        Used to show console with variables connection.
+        Always return a frame where the locals map to our internal namespace.
+        '''
+        VIRTUAL_FRAME_ID = "1" # matches PyStackFrameConsole.java
+        VIRTUAL_CONSOLE_ID = "console_main" # matches PyThreadConsole.java
+        if thread_id == VIRTUAL_CONSOLE_ID and frame_id == VIRTUAL_FRAME_ID:
+            f = FakeFrame()
+            f.f_globals = {} #As globals=locals here, let's simply let it empty (and save a bit of network traffic).
+            f.f_locals = self.getNamespace()
+            return f
+        else:
+            return self.orig_findFrame(thread_id, frame_id)
+
+    def connectToDebugger(self, debuggerPort):
+        '''
+        Used to show console with variables connection.
+        Mainly, monkey-patches things in the debugger structure so that the debugger protocol works.
+        '''
+        try:
+            # Try to import the packages needed to attach the debugger
+            import pydevd
+            import pydevd_vars
+            import threading
+        except:
+            # This happens on Jython embedded in host eclipse
+            import traceback;traceback.print_exc()
+            return ('pydevd is not available, cannot connect',)
+
+        import pydev_localhost
+        threading.currentThread().__pydevd_id__ = "console_main"
+
+        self.orig_findFrame = pydevd_vars.findFrame
+        pydevd_vars.findFrame = self._findFrame
+
+        self.debugger = pydevd.PyDB()
+        try:
+            self.debugger.connect(pydev_localhost.get_localhost(), debuggerPort)
+            self.debugger.prepareToRun()
+            import pydevd_tracing
+            pydevd_tracing.SetTrace(None)
+        except:
+            import traceback;traceback.print_exc()
+            return ('Failed to connect to target debugger.')
+
+        # Register to process commands when idle
+        self.debugrunning = False
+        try:
+            self.server.setDebugHook(self.debugger.processInternalCommands)
+        except:
+            import traceback;traceback.print_exc()
+            return ('Version of Python does not support debuggable Interactive Console.')
+
+        return ('connect complete',)
+
+    def hello(self, input_str):
+        # Don't care what the input string is
+        return ("Hello eclipse",)
+
+    def enableGui(self, guiname):
+        ''' Enable the GUI specified in guiname (see inputhook for list).
+            As with IPython, enabling multiple GUIs isn't an error, but
+            only the last one's main loop runs and it may not work
+        '''
+        from pydev_versioncheck import versionok_for_gui
+        if versionok_for_gui():
+            try:
+                from pydev_ipython.inputhook import enable_gui
+                enable_gui(guiname)
+            except:
+                sys.stderr.write("Failed to enable GUI event loop integration for '%s'\n" % guiname)
+                import traceback;traceback.print_exc()
+        elif guiname not in ['none', '', None]:
+            # Only print a warning if the guiname was going to do something
+            sys.stderr.write("PyDev console: Python version does not support GUI event loop integration for '%s'\n" % guiname)
+        # Return value does not matter, so return back what was sent
+        return guiname
+
+#=======================================================================================================================
+# FakeFrame
+#=======================================================================================================================
+class FakeFrame:
+    '''
+    Used to show console with variables connection.
+    A class to be used as a mock of a frame.
+    '''

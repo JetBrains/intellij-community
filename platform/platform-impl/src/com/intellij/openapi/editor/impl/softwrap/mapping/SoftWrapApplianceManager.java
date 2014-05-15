@@ -984,16 +984,7 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
   public void onFoldRegionStateChange(int startOffset, int endOffset) {
     assert ApplicationManagerEx.getApplicationEx().isDispatchThread();
 
-    Document document = myEditor.getDocument();
-    int startLine = document.getLineNumber(startOffset);
-    int endLine = document.getLineNumber(endOffset);
-
-    int recalculationStartOffset = document.getLineStartOffset(startLine);
-    int recalculationEndOffset = document.getLineEndOffset(endLine);
-
-    //CachingSoftWrapDataMapper.log(String.format("xxxxxxxxxxx On fold region state change. Exact offsets: %d-%d, recalculation offsets: %d-%d",
-    //                                            region.getStartOffset(), region.getEndOffset(), startOffset, endOffset));
-    myEventsStorage.add(document, new IncrementalCacheUpdateEvent(document, recalculationStartOffset, recalculationEndOffset));
+    myEventsStorage.add(myEditor.getDocument(), new IncrementalCacheUpdateEvent(myEditor.getDocument(), startOffset, endOffset, myEditor.getFoldingModel()));
   }
 
   public void onFoldProcessingEnd() {
@@ -1003,7 +994,7 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
 
   @Override
   public void beforeDocumentChange(DocumentEvent event) {
-    myEventsStorage.add(event.getDocument(), new IncrementalCacheUpdateEvent(event));
+    myEventsStorage.add(event.getDocument(), new IncrementalCacheUpdateEvent(event, myEditor.getFoldingModel()));
   }
 
   @Override
@@ -1365,7 +1356,7 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
       int visualLineBefore = currentPosition.visualLine;
       int logicalLineBefore = currentPosition.logicalLine;
       int logicalColumnBefore = currentPosition.logicalColumn;
-      currentPosition.advance(foldRegion);
+      currentPosition.advance(foldRegion, -1);
       currentPosition.x += placeHolderWidthInPixels;
       int collapsedFoldingWidthInColumns = currentPosition.logicalColumn;
       if (currentPosition.logicalLine <= logicalLineBefore) {

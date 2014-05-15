@@ -70,13 +70,13 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
 
     for(int i = superClasses.size() - 1; i >= 0; i--){
       final PsiClass superClass = superClasses.get(i);
-      final HierarchyNodeDescriptor newDescriptor = new MethodHierarchyNodeDescriptor(project, descriptor, superClass, false, MethodHierarchyTreeStructure.this);
+      final HierarchyNodeDescriptor newDescriptor = new MethodHierarchyNodeDescriptor(project, descriptor, superClass, false, this);
       if (descriptor != null){
         descriptor.setCachedChildren(new HierarchyNodeDescriptor[] {newDescriptor});
       }
       descriptor = newDescriptor;
     }
-    final HierarchyNodeDescriptor newDescriptor = new MethodHierarchyNodeDescriptor(project, descriptor, method.getContainingClass(), true, MethodHierarchyTreeStructure.this);
+    final HierarchyNodeDescriptor newDescriptor = new MethodHierarchyNodeDescriptor(project, descriptor, method.getContainingClass(), true, this);
     if (descriptor != null) {
       descriptor.setCachedChildren(new HierarchyNodeDescriptor[] {newDescriptor});
     }
@@ -172,13 +172,16 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
       descriptors.add(d);
     }
 
-    FunctionalExpressionSearch.search(getBaseMethod()).forEach(new Processor<PsiFunctionalExpression>() {
-      @Override
-      public boolean process(PsiFunctionalExpression expression) {
-        descriptors.add(new MethodHierarchyNodeDescriptor(myProject, descriptor, expression, false, MethodHierarchyTreeStructure.this));
-        return true;
-      }
-    });
+    final PsiMethod existingMethod = ((MethodHierarchyNodeDescriptor)descriptor).getMethod(psiClass, false);
+    if (existingMethod != null) {
+      FunctionalExpressionSearch.search(existingMethod).forEach(new Processor<PsiFunctionalExpression>() {
+        @Override
+        public boolean process(PsiFunctionalExpression expression) {
+          descriptors.add(new MethodHierarchyNodeDescriptor(myProject, descriptor, expression, false, MethodHierarchyTreeStructure.this));
+          return true;
+        }
+      });
+    }
 
     return descriptors.toArray(new HierarchyNodeDescriptor[descriptors.size()]);
   }

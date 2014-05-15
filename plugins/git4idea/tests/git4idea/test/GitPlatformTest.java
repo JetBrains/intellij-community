@@ -17,12 +17,14 @@ package git4idea.test;
 
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -37,7 +39,15 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+
 public abstract class GitPlatformTest extends UsefulTestCase {
+
+  static {
+    Logger.setFactory(TestLoggerFactory.class);
+  }
+
+  private static final Logger LOG = Logger.getInstance(GitPlatformTest.class);
 
   @NotNull protected Project myProject;
   @NotNull protected VirtualFile myProjectRoot;
@@ -51,6 +61,7 @@ public abstract class GitPlatformTest extends UsefulTestCase {
   @NotNull protected TestVcsNotifier myVcsNotifier;
 
   @NotNull private IdeaProjectTestFixture myProjectFixture;
+  private String myTestStartedIndicator;
 
   @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors", "UnusedDeclaration"})
   protected GitPlatformTest() {
@@ -61,6 +72,7 @@ public abstract class GitPlatformTest extends UsefulTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    enableDebugLogging();
 
     try {
       myProjectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getTestName(true)).getFixture();
@@ -90,6 +102,17 @@ public abstract class GitPlatformTest extends UsefulTestCase {
     removeSilently();
   }
 
+  @Override
+  @NotNull
+  public String getTestName(boolean lowercaseFirstLetter) {
+    String name = super.getTestName(lowercaseFirstLetter);
+    name = name.trim().replace(' ', '_');
+    if (name.length() > 50) {
+      name = name.substring(0, 50);
+    }
+    return name;
+  }
+
   private void initChangeListManager() {
     ((ProjectComponent) ChangeListManager.getInstance(myProject)).projectOpened();
     ((ProjectComponent) VcsDirtyScopeManager.getInstance(myProject)).projectOpened();
@@ -105,6 +128,35 @@ public abstract class GitPlatformTest extends UsefulTestCase {
     finally {
       super.tearDown();
     }
+  }
+
+  private void enableDebugLogging() {
+    TestLoggerFactory.enableDebugLogging(myTestRootDisposable, "#" + Executor.class.getName());
+    myTestStartedIndicator = createTestStartedIndicator();
+    LOG.info(myTestStartedIndicator);
+  }
+
+  @Override
+  protected void defaultRunBare() throws Throwable {
+    try {
+      super.defaultRunBare();
+    }
+    catch (Throwable throwable) {
+      try {
+        if (myTestStartedIndicator != null) {
+          TestLoggerFactory.dumpLogToStdout(myTestStartedIndicator);
+        }
+        throw throwable;
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+
+  @NotNull
+  private String createTestStartedIndicator() {
+    return "Starting " + getClass().getName() + "." + getTestName(false) + Math.random();
   }
 
   @NotNull

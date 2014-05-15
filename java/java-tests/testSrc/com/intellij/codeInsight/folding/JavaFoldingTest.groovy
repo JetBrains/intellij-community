@@ -390,6 +390,65 @@ class Test {
   public void testCustomFolding() {
     myFixture.testFolding("$PathManagerEx.testDataPath/codeInsight/folding/${getTestName(false)}.java");
   }
+  
+  public void "test custom folding IDEA-122715 and IDEA-87312"() {
+    def text = """\
+public class Test {
+
+    //region Foo
+    interface Foo {void bar();}
+    //endregion
+
+    //region Bar
+    void test() {
+
+    }
+    //endregion
+    enum Bar {
+        BAR1,
+        BAR2
+    }
+}
+"""
+    configure text
+    def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
+    int count = 0;
+    for (FoldRegion region : foldingModel.allFoldRegions) {
+      if (region.startOffset == text.indexOf("//region Foo")) {
+        assert region.placeholderText == "Foo";
+        count ++;
+      }
+      else if (region.startOffset == text.indexOf("//region Bar")) {
+        assert region.placeholderText == "Bar"
+        count ++;
+      }
+    }  
+    assert count == 2 : "Not all custom regions are found";
+  }
+  
+  public void "test custom folding collapsed by default"() {
+    def text = """\
+class Test {
+  void test() {
+    //<editor-fold desc="Custom region">
+    System.out.println(1);
+    System.out.println(2);
+    //</editor-fold>
+    System.out.println(3);
+  };
+}
+"""
+    boolean oldValue = CodeFoldingSettings.instance.COLLAPSE_CUSTOM_FOLDING_REGIONS;
+    try {
+      CodeFoldingSettings.instance.COLLAPSE_CUSTOM_FOLDING_REGIONS = true;
+      configure text
+      def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
+      assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("//<editor-fold"))
+    }
+    finally {
+      CodeFoldingSettings.instance.COLLAPSE_CUSTOM_FOLDING_REGIONS = oldValue;
+    }
+  }
 
   public void "test move methods"() {
     def initialText = '''\

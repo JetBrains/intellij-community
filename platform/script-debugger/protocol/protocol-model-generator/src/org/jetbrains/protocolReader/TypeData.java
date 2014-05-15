@@ -91,7 +91,7 @@ class TypeData {
     abstract StandaloneTypeBinding resolveImpl(DomainGenerator domainGenerator);
 
     void checkResolved() {
-      if (type == null && !name.equals("int")) {
+      if (type == null && !(name.equals("int") || name.equals("any"))) {
         throw new RuntimeException();
       }
     }
@@ -118,6 +118,23 @@ class TypeData {
             }
           };
         }
+        else if (name.equals("any")) {
+          return new StandaloneTypeBinding() {
+            @Override
+            public BoxableType getJavaType() {
+              return BoxableType.STRING;
+            }
+
+            @Override
+            public void generate() {
+            }
+
+            @Override
+            public Direction getDirection() {
+              return null;
+            }
+          };
+        }
 
         throw new RuntimeException();
       }
@@ -129,6 +146,41 @@ class TypeData {
     @Override
     StandaloneTypeBinding resolveImpl(@NotNull DomainGenerator domainGenerator) {
       if (type == null) {
+        if (name.equals("int")) {
+          return new StandaloneTypeBinding() {
+            @Override
+            public BoxableType getJavaType() {
+              return BoxableType.INT;
+            }
+
+            @Override
+            public void generate() {
+            }
+
+            @Override
+            public Direction getDirection() {
+              return null;
+            }
+          };
+        }
+        else if (name.equals("any")) {
+          return new StandaloneTypeBinding() {
+            @Override
+            public BoxableType getJavaType() {
+              return BoxableType.STRING;
+            }
+
+            @Override
+            public void generate() {
+            }
+
+            @Override
+            public Direction getDirection() {
+              return null;
+            }
+          };
+        }
+
         throw new RuntimeException();
       }
       return domainGenerator.createStandaloneInputTypeBinding(type);

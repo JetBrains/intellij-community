@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,14 +25,13 @@ import com.intellij.util.PairConsumer;
 import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
 import org.jetbrains.idea.svn.history.TreeStructureNode;
 import org.jetbrains.idea.svn.mergeinfo.OneShotMergeInfoHelper;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
@@ -45,7 +44,7 @@ import java.util.List;
 * Date: 3/30/13
 * Time: 7:40 PM
 */
-class LoadRecentBranchRevisions extends TaskDescriptor {
+public class LoadRecentBranchRevisions extends TaskDescriptor {
   public static final String PROP_BUNCH_SIZE = "idea.svn.quick.merge.bunch.size";
   private final static int BUNCH_SIZE = 100;
   private int myBunchSize;
@@ -53,21 +52,17 @@ class LoadRecentBranchRevisions extends TaskDescriptor {
   private boolean myLastLoaded;
   private OneShotMergeInfoHelper myHelper;
   private List<CommittedChangeList> myCommittedChangeLists;
-  private final WCInfo myWcInfo;
-  private final SvnVcs myVcs;
-  private final String mySourceUrl;
   private final Integer myTestBunchSize;
+  @NotNull private final MergeContext myMergeContext;
 
-  LoadRecentBranchRevisions(String branchName, long first, WCInfo info, SvnVcs vcs, String url) {
-    this(branchName, first, info, vcs, url, -1);
+  public LoadRecentBranchRevisions(@NotNull MergeContext mergeContext, long first) {
+    this(mergeContext, first, -1);
   }
 
-  LoadRecentBranchRevisions(String branchName, long first, WCInfo info, SvnVcs vcs, String url, final int bunchSize) {
-    super("Loading recent " + branchName + " revisions", Where.POOLED);
+  public LoadRecentBranchRevisions(@NotNull MergeContext mergeContext, long first, int bunchSize) {
+    super("Loading recent " + mergeContext.getBranchName() + " revisions", Where.POOLED);
+    myMergeContext = mergeContext;
     myFirst = first;
-    myWcInfo = info;
-    myVcs = vcs;
-    mySourceUrl = url;
     // for test purposes!!!
     myTestBunchSize = Integer.getInteger(PROP_BUNCH_SIZE);
     if (myTestBunchSize != null) {
@@ -84,27 +79,29 @@ class LoadRecentBranchRevisions extends TaskDescriptor {
   @Override
   public void run(ContinuationContext context) {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    final SvnCommittedChangesProvider committedChangesProvider = (SvnCommittedChangesProvider)myVcs.getCommittedChangesProvider();
+    final SvnCommittedChangesProvider committedChangesProvider =
+      (SvnCommittedChangesProvider)myMergeContext.getVcs().getCommittedChangesProvider();
     final ChangeBrowserSettings settings = new ChangeBrowserSettings();
     if (myFirst > 0){
       settings.CHANGE_BEFORE = String.valueOf(myFirst);
       settings.USE_CHANGE_BEFORE_FILTER = true;
     }
 
-    String local = SVNPathUtil.getRelativePath(myWcInfo.getRepositoryRoot(), myWcInfo.getRootUrl());
+    String local = SVNPathUtil.getRelativePath(myMergeContext.getWcInfo().getRepositoryRoot(), myMergeContext.getWcInfo().getRootUrl());
     final String relativeLocal = (local.startsWith("/") ? local : "/" + local);
-    String relativeBranch = SVNPathUtil.getRelativePath(myWcInfo.getRepositoryRoot(), mySourceUrl);
+    String relativeBranch = SVNPathUtil.getRelativePath(myMergeContext.getWcInfo().getRepositoryRoot(), myMergeContext.getSourceUrl());
     relativeBranch = (relativeBranch.startsWith("/") ? relativeBranch : "/" + relativeBranch);
 
-    ProgressManager.progress2(SvnBundle.message("progress.text2.collecting.history", mySourceUrl + (myFirst > 0 ? ("@" + myFirst) : "")));
+    ProgressManager.progress2(
+      SvnBundle.message("progress.text2.collecting.history", myMergeContext.getSourceUrl() + (myFirst > 0 ? ("@" + myFirst) : "")));
     final List<Pair<SvnChangeList, TreeStructureNode<SVNLogEntry>>> list = new ArrayList<Pair<SvnChangeList, TreeStructureNode<SVNLogEntry>>>();
     try {
-      committedChangesProvider.getCommittedChangesWithMergedRevisons(settings, new SvnRepositoryLocation(mySourceUrl),
+      committedChangesProvider.getCommittedChangesWithMergedRevisons(settings, new SvnRepositoryLocation(myMergeContext.getSourceUrl()),
                                                                      myBunchSize + (myFirst > 0 ? 2 : 1),
                                                                      new PairConsumer<SvnChangeList, TreeStructureNode<SVNLogEntry>>() {
                                                                        public void consume(SvnChangeList svnList, TreeStructureNode<SVNLogEntry> tree) {
                                                                          indicator.setText2(SvnBundle.message("progress.text2.processing.revision", svnList.getNumber()));
-                                                                         list.add(new Pair<SvnChangeList, TreeStructureNode<SVNLogEntry>>(svnList, tree));
+                                                                         list.add(Pair.create(svnList, tree));
                                                                        }
                                                                      });
     } catch (VcsException e) {
@@ -123,7 +120,7 @@ class LoadRecentBranchRevisions extends TaskDescriptor {
     }
 
     try {
-      myHelper = new OneShotMergeInfoHelper(myVcs.getProject(), myWcInfo, mySourceUrl);
+      myHelper = new OneShotMergeInfoHelper(myMergeContext);
       ProgressManager.progress2("Calculating not merged revisions");
       myHelper.prepare();
     }

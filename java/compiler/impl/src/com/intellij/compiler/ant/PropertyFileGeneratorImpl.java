@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.ArrayUtil;
@@ -42,7 +42,7 @@ public class PropertyFileGeneratorImpl extends PropertyFileGenerator {
   /**
    * List of the properties
    */
-  private final List<Pair<String, String>> myProperties = new ArrayList<Pair<String, String>>();
+  private final List<Couple<String>> myProperties = new ArrayList<Couple<String>>();
 
   /**
    * A constctor that extracts all neeed properties for ant build from the project.
@@ -85,13 +85,13 @@ public class PropertyFileGeneratorImpl extends PropertyFileGenerator {
   }
 
   public void addProperty(String name, String value) {
-    myProperties.add(new Pair<String, String>(name, value));
+    myProperties.add(Couple.newOne(name, value));
   }
 
   @Override
   public void generate(PrintWriter out) throws IOException {
     boolean isFirst = true;
-    for (final Pair<String, String> pair : myProperties) {
+    for (final Couple<String> pair : myProperties) {
       if (!isFirst) {
         crlf(out);
       }

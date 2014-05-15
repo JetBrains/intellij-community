@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.ContentBasedFileSubstitutor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -52,7 +52,7 @@ import java.util.*;
 public class FoldingUpdate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.FoldingUpdate");
 
-  private static final Key<ParameterizedCachedValue<Runnable, Pair<Boolean,Boolean>>> CODE_FOLDING_KEY = Key.create("code folding");
+  private static final Key<ParameterizedCachedValue<Runnable, Couple<Boolean>>> CODE_FOLDING_KEY = Key.create("code folding");
   private static final Key<String> CODE_FOLDING_FILE_EXTENSION_KEY = Key.create("code folding file extension");
 
   private static final Comparator<PsiElement> COMPARE_BY_OFFSET = new Comparator<PsiElement>() {
@@ -80,7 +80,7 @@ public class FoldingUpdate {
       currentFileExtension = virtualFile.getExtension();
     }
 
-    ParameterizedCachedValue<Runnable, Pair<Boolean,Boolean>> value = editor.getUserData(CODE_FOLDING_KEY);
+    ParameterizedCachedValue<Runnable, Couple<Boolean>> value = editor.getUserData(CODE_FOLDING_KEY);
     if (value != null) {
       // There was a problem that old fold regions have been cached on file extension change (e.g. *.java -> *.groovy).
       // We want to drop them in such circumstances.
@@ -96,14 +96,14 @@ public class FoldingUpdate {
     if (quick) return getUpdateResult(file, document, quick, project, editor, applyDefaultState).getValue();
     
     return CachedValuesManager.getManager(project).getParameterizedCachedValue(
-      editor, CODE_FOLDING_KEY, new ParameterizedCachedValueProvider<Runnable, Pair<Boolean, Boolean>>() {
-      @Override
-      public CachedValueProvider.Result<Runnable> compute(Pair<Boolean,Boolean> param) {
-        Document document = editor.getDocument();
-        PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-        return getUpdateResult(file, document, param.first, project, editor, param.second);
-      }
-    }, false, Pair.create(quick, applyDefaultState));
+      editor, CODE_FOLDING_KEY, new ParameterizedCachedValueProvider<Runnable, Couple<Boolean>>() {
+        @Override
+        public CachedValueProvider.Result<Runnable> compute(Couple<Boolean> param) {
+          Document document = editor.getDocument();
+          PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+          return getUpdateResult(file, document, param.first, project, editor, param.second);
+        }
+      }, false, Couple.newOne(quick, applyDefaultState));
   }
 
   private static CachedValueProvider.Result<Runnable> getUpdateResult(PsiFile file,

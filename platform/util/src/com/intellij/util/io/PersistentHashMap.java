@@ -24,7 +24,6 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.LimitedPool;
 import com.intellij.util.containers.SLRUCache;
-import com.intellij.util.containers.hash.EqualityPolicy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,9 +39,23 @@ import java.util.List;
  *         Date: Dec 18, 2007
  */
 public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<Key> implements PersistentMap<Key, Value> {
+  // PersistentHashMap (PHM) works in following (generic) way:
+  // particular key is translated via myEnumerator into int, as part of enumeration process for new key additional space is reserved in
+  // myEnumerator.myStorage for offset in .values file (myValueStorage) where (serialized) value is stored. Once new value is written
+  // the offset storage is updated. When the key is removed from PHM, offset storage is set to zero. It is important to note that offset
+  // is nonnegative and can be 4 or 8 bytes, depending on size of .values file.
+  // PHM can work in appendable mode: for particular key additional calculated chunk of value can be appended to .values file with offset
+  // of previously calculated chunk.
+  // For performance reasons we try hard to minimize storage occupied by keys / offsets to .values file: this storage is allocated as (limited)
+  // direct bytebuffers so 4 bytes offset is used until it is possible. Generic record produced by enumerator used with PHM as part of new
+  // key enumeration is <enumerated_id>? [.values file offset 4 or 8 bytes], however for unique integral keys enumerate_id isn't produced.
+  // Also for certain Value types it is possible to avoid random reads at all: e.g. in case Value is nonnegative integer the value can be stored
+  // directly in storage used for offset and in case of btreeenumerator directly in btree leaf.
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PersistentHashMap");
   private static final int DEAD_KEY_NUMBER_MASK = 0xFFFFFFFF;
 
+  private final File myStorageFile;
+  private final KeyDescriptor<Key> myKeyDescriptor;
   private PersistentHashMapValueStorage myValueStorage;
   protected final DataExternalizer<Value> myValueExternalizer;
   private static final long NULL_ADDR = 0;
@@ -63,6 +76,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   @NotNull private final byte[] myRecordBuffer;
   @NotNull private final byte[] mySmallRecordBuffer;
   private final boolean myIntMapping;
+  private final boolean myDirectlyStoreLongFileOffsetMode;
   private final boolean myCanReEnumerate;
   private int myLargeIndexWatermarkId;  // starting with this id we store offset in adjacent file in long format
   private boolean myIntAddressForNewRecord;
@@ -110,13 +124,18 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   
   public PersistentHashMap(@NotNull final File file, @NotNull KeyDescriptor<Key> keyDescriptor, @NotNull DataExternalizer<Value> valueExternalizer, final int initialSize) throws IOException {
     super(checkDataFiles(file), keyDescriptor, initialSize);
+
+    myStorageFile = file;
+    myKeyDescriptor = keyDescriptor;
+
     myAppendCache = createAppendCache(keyDescriptor);
     final PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase> recordHandler = myEnumerator.getRecordHandler();
     myParentValueRefOffset = recordHandler.getRecordBuffer(myEnumerator).length;
-    myIntMapping = valueExternalizer instanceof IntInlineKeyDescriptor && wantCompactIntegralValues();
+    myIntMapping = valueExternalizer instanceof IntInlineKeyDescriptor && wantNonnegativeIntegralValues();
+    myDirectlyStoreLongFileOffsetMode = keyDescriptor instanceof InlineKeyDescriptor && myEnumerator instanceof PersistentBTreeEnumerator;
 
-    myRecordBuffer = new byte[myParentValueRefOffset + 8];
-    mySmallRecordBuffer = new byte[myParentValueRefOffset + 4];
+    myRecordBuffer = myDirectlyStoreLongFileOffsetMode ? new byte[0]:new byte[myParentValueRefOffset + 8];
+    mySmallRecordBuffer = myDirectlyStoreLongFileOffsetMode ? new byte[0]:new byte[myParentValueRefOffset + 4];
 
     myEnumerator.setRecordHandler(new PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase>() {
       @Override
@@ -183,23 +202,12 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
   }
 
-  protected boolean wantCompactIntegralValues() {
+  protected boolean wantNonnegativeIntegralValues() {
     return false;
   }
 
   private SLRUCache<Key, BufferExposingByteArrayOutputStream> createAppendCache(final KeyDescriptor<Key> keyDescriptor) {
-    final EqualityPolicy<Key> hashingStrategy = new EqualityPolicy<Key>() {
-      @Override
-      public int getHashCode(Key object) {
-        return keyDescriptor.getHashCode(object);
-      }
-
-      @Override
-      public boolean isEqual(Key val1, Key val2) {
-        return keyDescriptor.isEqual(val1, val2);
-      }
-    };
-    return new SLRUCache<Key, BufferExposingByteArrayOutputStream>(16 * 1024, 4 * 1024, hashingStrategy) {
+    return new SLRUCache<Key, BufferExposingByteArrayOutputStream>(16 * 1024, 4 * 1024, keyDescriptor) {
       @Override
       @NotNull
       public BufferExposingByteArrayOutputStream createValue(final Key key) {
@@ -210,13 +218,25 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       protected void onDropFromCache(final Key key, @NotNull final BufferExposingByteArrayOutputStream bytes) {
         myEnumerator.lockStorage();
         try {
-          final int id = enumerate(key);
-          long oldHeaderRecord = readValueId(id);
+          long previousRecord;
+          final int id;
+          if (myDirectlyStoreLongFileOffsetMode) {
+            previousRecord = ((PersistentBTreeEnumerator<Key>)myEnumerator).getNonnegativeValue(key);
+            id = -1;
+          } else {
+            id = enumerate(key);
+            previousRecord = readValueId(id);
+          }
 
-          long headerRecord = myValueStorage.appendBytes(bytes.getInternalBuffer(), 0, bytes.size(), oldHeaderRecord);
+          long headerRecord = myValueStorage.appendBytes(bytes.getInternalBuffer(), 0, bytes.size(), previousRecord);
 
-          updateValueId(id, headerRecord, oldHeaderRecord, key, 0);
-          if (oldHeaderRecord == NULL_ADDR) {
+          if (myDirectlyStoreLongFileOffsetMode) {
+            ((PersistentBTreeEnumerator<Key>)myEnumerator).putNonnegativeValue(key, headerRecord);
+          } else {
+            updateValueId(id, headerRecord, previousRecord, key, 0);
+          }
+
+          if (previousRecord == NULL_ADDR) {
             myLiveAndGarbageKeysCounter += LIVE_KEY_MASK;
           }
 
@@ -308,34 +328,47 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   protected void doPut(Key key, Value value) throws IOException {
-    myEnumerator.lockStorage();
-    try {
-      myEnumerator.markDirty(true);
-      myAppendCache.remove(key);
+    long newValueOffset = -1;
 
-      final int id = enumerate(key);
-      if (myIntMapping) {
-        myEnumerator.myStorage.putInt(id + myParentValueRefOffset, (Integer)value);
-        return;
-      }
-
+    if (!myIntMapping) {
       final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
       AppendStream appenderStream = ourFlyweightAppenderStream.getValue();
       appenderStream.setOut(bytes);
       myValueExternalizer.save(appenderStream, value);
       appenderStream.setOut(null);
+      newValueOffset = myValueStorage.appendBytes(bytes.getInternalBuffer(), 0, bytes.size(), 0);
+    }
 
-      long oldheader = readValueId(id);
-      if (oldheader != NULL_ADDR) {
+    myEnumerator.lockStorage();
+    try {
+      myEnumerator.markDirty(true);
+      myAppendCache.remove(key);
+
+      long oldValueOffset;
+      if (myDirectlyStoreLongFileOffsetMode) {
+        if (myIntMapping) {
+          ((PersistentBTreeEnumerator<Key>)myEnumerator).putNonnegativeValue(key, (Integer)value);
+          return;
+        }
+        oldValueOffset = ((PersistentBTreeEnumerator<Key>)myEnumerator).getNonnegativeValue(key);
+        ((PersistentBTreeEnumerator<Key>)myEnumerator).putNonnegativeValue(key, newValueOffset);
+      } else {
+        final int id = enumerate(key);
+        if (myIntMapping) {
+          myEnumerator.myStorage.putInt(id + myParentValueRefOffset, (Integer)value);
+          return;
+        }
+
+        oldValueOffset = readValueId(id);
+        updateValueId(id, newValueOffset, oldValueOffset, key, 0);
+      }
+
+      if (oldValueOffset != NULL_ADDR) {
         myLiveAndGarbageKeysCounter++;
       }
       else {
         myLiveAndGarbageKeysCounter += LIVE_KEY_MASK;
       }
-
-      long header = myValueStorage.appendBytes(bytes.getInternalBuffer(), 0, bytes.size(), 0);
-
-      updateValueId(id, header, oldheader, key, 0);
     }
     finally {
       myEnumerator.unlockStorage();
@@ -418,41 +451,64 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
   @Nullable
   protected Value doGet(Key key) throws IOException {
+    final long valueOffset;
+    final int id;
+
     myEnumerator.lockStorage();
     try {
       myAppendCache.remove(key);
-      final int id = tryEnumerate(key);
-      if (id == PersistentEnumerator.NULL_ID) {
-        return null;
+
+      if (myDirectlyStoreLongFileOffsetMode) {
+        valueOffset = ((PersistentBTreeEnumerator<Key>)myEnumerator).getNonnegativeValue(key);
+        if (myIntMapping) {
+          return (Value)(Integer)(int)valueOffset;
+        }
+        id = -1;
+      } else {
+        id = tryEnumerate(key);
+        if (id == PersistentEnumerator.NULL_ID) {
+          return null;
+        }
+
+        if (myIntMapping) {
+          return (Value)(Integer)myEnumerator.myStorage.getInt(id + myParentValueRefOffset);
+        }
+
+        valueOffset = readValueId(id);
       }
 
-      if (myIntMapping) {
-        return (Value)(Integer)myEnumerator.myStorage.getInt(id + myParentValueRefOffset);
-      }
-
-      final long oldHeader = readValueId(id);
-      if (oldHeader == PersistentEnumerator.NULL_ID) {
+      if (valueOffset == NULL_ADDR) {
         return null;
       }
-      PersistentHashMapValueStorage.ReadResult readResult = myValueStorage.readBytes(oldHeader);
-      if (readResult.offset != oldHeader) {
+    } finally {
+      myEnumerator.unlockStorage();
+    }
+
+    PersistentHashMapValueStorage.ReadResult readResult = myValueStorage.readBytes(valueOffset);
+
+    if (readResult.offset != valueOffset) { // compacted several chunks produced during append
+      myEnumerator.lockStorage();
+      try {
         myEnumerator.markDirty(true);
 
-        updateValueId(id, readResult.offset, oldHeader, key, 0);
+        if (myDirectlyStoreLongFileOffsetMode) {
+          ((PersistentBTreeEnumerator<Key>)myEnumerator).putNonnegativeValue(key, readResult.offset);
+        } else {
+          updateValueId(id, readResult.offset, valueOffset, key, 0);
+        }
         myLiveAndGarbageKeysCounter++;
         myReadCompactionGarbageSize += readResult.buffer.length;
-      }
-
-      final DataInputStream input = new DataInputStream(new UnsyncByteArrayInputStream(readResult.buffer));
-      try {
-        return myValueExternalizer.read(input);
-      }
-      finally {
-        input.close();
+      } finally {
+        myEnumerator.unlockStorage();
       }
     }
+
+    final DataInputStream input = new DataInputStream(new UnsyncByteArrayInputStream(readResult.buffer));
+    try {
+      return myValueExternalizer.read(input);
+    }
     finally {
-      myEnumerator.unlockStorage();
+      input.close();
     }
   }
 
@@ -466,12 +522,17 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     myEnumerator.lockStorage();
     try {
       myAppendCache.remove(key);
-      final int id = tryEnumerate(key);
-      if (id == PersistentEnumerator.NULL_ID) {
-        return false;
+      if (myDirectlyStoreLongFileOffsetMode) {
+        if (myIntMapping) return true;
+        return ((PersistentBTreeEnumerator<Key>)myEnumerator).getNonnegativeValue(key) != NULL_ADDR;
+      } else {
+        final int id = tryEnumerate(key);
+        if (id == PersistentEnumerator.NULL_ID) {
+          return false;
+        }
+        if (myIntMapping) return true;
+        return readValueId(id) != NULL_ADDR;
       }
-      if(myIntMapping) return true;
-      return readValueId(id) != NULL_ADDR;
     }
     finally {
       myEnumerator.unlockStorage();
@@ -487,21 +548,28 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   protected void doRemove(Key key) throws IOException {
     myEnumerator.lockStorage();
     try {
-      myAppendCache.remove(key);
-      final int id = tryEnumerate(key);
-      if (id == PersistentEnumerator.NULL_ID) {
-        return;
-      }
-      assert !myIntMapping; // removal isn't supported
-      myEnumerator.markDirty(true);
+      final long record;
 
-      final long record = readValueId(id);
+      myAppendCache.remove(key);
+      if (myDirectlyStoreLongFileOffsetMode) {
+        assert !myIntMapping; // removal isn't supported
+        record = ((PersistentBTreeEnumerator<Key>)myEnumerator).getNonnegativeValue(key);
+        ((PersistentBTreeEnumerator<Key>)myEnumerator).putNonnegativeValue(key, NULL_ADDR);
+      } else {
+        final int id = tryEnumerate(key);
+        if (id == PersistentEnumerator.NULL_ID) {
+          return;
+        }
+        assert !myIntMapping; // removal isn't supported
+        myEnumerator.markDirty(true);
+
+        record = readValueId(id);
+        updateValueId(id, NULL_ADDR, record, key, 0);
+      }
       if (record != NULL_ADDR) {
         myLiveAndGarbageKeysCounter++;
         myLiveAndGarbageKeysCounter -= LIVE_KEY_MASK;
       }
-
-      updateValueId(id, NULL_ADDR, record, key, 0);
     }
     finally {
       myEnumerator.unlockStorage();
@@ -680,6 +748,9 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   private long readValueId(final int keyId) {
+    if (myDirectlyStoreLongFileOffsetMode) {
+      return ((PersistentBTreeEnumerator<Key>)myEnumerator).keyIdToNonnegattiveOffset(keyId);
+    }
     long address = myEnumerator.myStorage.getInt(keyId + myParentValueRefOffset);
     if (address == 0 || address == -POSITIVE_VALUE_SHIFT) {
       return NULL_ADDR;
@@ -701,6 +772,11 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   private int requests;
 
   private int updateValueId(int keyId, long value, long oldValue, @Nullable Key key, int processingKey) throws IOException {
+    if (myDirectlyStoreLongFileOffsetMode) {
+      ((PersistentBTreeEnumerator<Key>)myEnumerator).putNonnegativeValue(((InlineKeyDescriptor<Key>)myKeyDescriptor).fromInt(processingKey),
+                                                                         value);
+      return keyId;
+    }
     final boolean newKey = oldValue == NULL_ADDR;
     if (newKey) ++requests;
     boolean defaultSizeInfo = true;
@@ -743,5 +819,9 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       }
     }
     return keyId;
+  }
+
+  public String toString() {
+    return super.toString() + ":"+myStorageFile;
   }
 }

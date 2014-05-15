@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ public class PyPropertyAccessInspection extends PyInspection {
           final PyClass cls = ((PyClassType)type).getPyClass();
           final String name = node.getName();
           if (name != null) {
-            final Pair<PyClass, String> key = new Pair<PyClass, String>(cls, name);
+            final Pair<PyClass, String> key = Pair.create(cls, name);
             final Property property;
             if (myPropertyCache.containsKey(key)) {
               property = myPropertyCache.get(key);

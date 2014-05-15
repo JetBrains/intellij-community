@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.vfs.impl.jar;
 
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.ZipHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,8 +27,7 @@ import java.util.Map;
 /**
  * @author yole
  */
-public class CoreJarHandler extends JarHandlerBase {
-
+public class CoreJarHandler extends ZipHandler {
   private final CoreJarFileSystem myFileSystem;
   private final VirtualFile myRoot;
 
@@ -47,14 +48,14 @@ public class CoreJarHandler extends JarHandlerBase {
 
   @NotNull
   private CoreJarVirtualFile getOrCreateFile(@NotNull EntryInfo info, @NotNull Map<EntryInfo, CoreJarVirtualFile> entries) {
-    CoreJarVirtualFile answer = entries.get(info);
-    if (answer == null) {
-      EntryInfo parentEntry = info.parent;
-      answer = new CoreJarVirtualFile(this, info, parentEntry != null ? getOrCreateFile(parentEntry, entries) : null);
-      entries.put(info, answer);
+    CoreJarVirtualFile file = entries.get(info);
+    if (file == null) {
+      FileAttributes attributes = new FileAttributes(info.isDirectory, false, false, false, info.length, info.timestamp, false);
+      EntryInfo parent = info.parent;
+      file = new CoreJarVirtualFile(this, info.shortName, attributes, parent != null ? getOrCreateFile(parent, entries) : null);
+      entries.put(info, file);
     }
-
-    return answer;
+    return file;
   }
 
   @Nullable

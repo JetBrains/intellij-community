@@ -15,10 +15,12 @@
  */
 package org.jetbrains.idea.devkit.dom.impl;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.Extensions;
+import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 /**
  * @author Dmitry Avdeev
@@ -27,16 +29,20 @@ import org.jetbrains.idea.devkit.dom.Extensions;
 public abstract class ExtensionsImpl implements Extensions {
 
   @Override
-  public Extension addExtension(String name) {
+  public Extension addExtension(String qualifiedEPName) {
     Extension extension = addExtension();
     XmlTag tag = extension.getXmlTag();
-    tag.setName(name.substring(getDefaultExtensionNs().getStringValue().length() + 1));
+    tag.setName(StringUtil.trimStart(qualifiedEPName, getEpPrefix()));
     return extension;
   }
 
   @NotNull
   public String getEpPrefix() {
     String prefix = getDefaultExtensionNs().getStringValue();
+    if (prefix == null) {
+      final IdeaPlugin ideaPlugin = getParentOfType(IdeaPlugin.class, true);
+      prefix = ideaPlugin == null ? null : StringUtil.notNullize(ideaPlugin.getPluginId(), "com.intellij");
+    }
     if (prefix == null) prefix = getXmlns().getStringValue();
     return prefix != null ? prefix + "." : "";
   }

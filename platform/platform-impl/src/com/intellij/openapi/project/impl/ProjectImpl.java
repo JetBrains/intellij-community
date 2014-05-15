@@ -38,6 +38,7 @@ import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.components.impl.stores.UnknownMacroNotification;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -62,7 +63,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.*;
 import org.picocontainer.defaults.CachingComponentAdapter;
-import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -193,7 +193,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   }
 
   @Override
-  public void initializeComponent(Object component, boolean service) {
+  public void initializeComponent(@NotNull Object component, boolean service) {
     if (!service) {
       ProgressIndicator indicator = getProgressIndicator();
       if (indicator != null) {
@@ -213,7 +213,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public boolean isInitialized() {
-    return isOpen() && !isDisposed() && StartupManagerEx.getInstanceEx(this).startupActivityPassed();
+    return !isDisposed() && isOpen() && StartupManagerEx.getInstanceEx(this).startupActivityPassed();
   }
 
   public void loadProjectComponents() {
@@ -454,6 +454,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     }
   }
 
+  @NotNull
   @Override
   protected MutablePicoContainer createPicoContainer() {
     return Extensions.getArea(this).getPicoContainer();

@@ -20,6 +20,7 @@ import com.intellij.idea.Main;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.ErrorLogger;
+import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -100,11 +101,7 @@ public class DialogAppender extends AppenderSkeleton {
       if (info == null) {
         return;
       }
-      Throwable throwable = info.getThrowable();
-      //noinspection ThrowableResultOfMethodCallIgnored
-      Throwable rootCause = ExceptionUtil.getRootCause(throwable);
-      ideaEvent = rootCause instanceof LogEventException ? ((LogEventException)rootCause).getLogMessage() :
-                  new IdeaLoggingEvent(message == null ? "<null> " : message.toString(), throwable);
+      ideaEvent = extractLoggingEvent(message, info.getThrowable());
     }
     for (int i = errorLoggers.length - 1; i >= 0; i--) {
       final ErrorLogger logger = errorLoggers[i];
@@ -132,6 +129,22 @@ public class DialogAppender extends AppenderSkeleton {
       }
       break;
     }
+  }
+
+  private static IdeaLoggingEvent extractLoggingEvent(Object message, Throwable throwable) {
+    //noinspection ThrowableResultOfMethodCallIgnored
+    Throwable rootCause = ExceptionUtil.getRootCause(throwable);
+    if (rootCause instanceof LogEventException) {
+      return ((LogEventException)rootCause).getLogMessage();
+    }
+
+    String strMessage = message == null ? "<null> " : message.toString();
+    ExceptionWithAttachments withAttachments = ExceptionUtil.findCause(throwable, ExceptionWithAttachments.class);
+    if (withAttachments != null) {
+      return LogMessageEx.createEvent(strMessage, ExceptionUtil.getThrowableText(throwable), withAttachments.getAttachments());
+    }
+
+    return new IdeaLoggingEvent(strMessage, throwable);
   }
 
   @TestOnly

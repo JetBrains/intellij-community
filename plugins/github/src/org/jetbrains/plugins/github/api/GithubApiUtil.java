@@ -292,7 +292,7 @@ public class GithubApiUtil {
     try {
       return new JsonParser().parse(reader);
     }
-    catch (JsonSyntaxException jse) {
+    catch (JsonParseException jse) {
       throw new GithubJsonException("Couldn't parse GitHub response", jse);
     }
     finally {

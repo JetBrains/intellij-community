@@ -25,7 +25,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -34,18 +33,23 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBundle;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
@@ -205,7 +209,14 @@ public abstract class AbstractLayoutCodeProcessor {
       return;
     }
 
-    FileTreeIterator iterator = buildFileTreeIterator();
+    FileTreeIterator iterator;
+    if (myFiles != null) {
+      iterator = new FileTreeIterator(myFiles);
+    }
+    else {
+      iterator = myProcessChangedTextOnly ? buildChangedFilesIterator()
+                                          : buildFileTreeIterator();
+    }
     runProcessFiles(iterator);
   }
 
@@ -225,6 +236,35 @@ public abstract class AbstractLayoutCodeProcessor {
 
     return new FileTreeIterator(Collections.<PsiFile>emptyList());
   }
+
+  @NotNull
+  private FileTreeIterator buildChangedFilesIterator() {
+    List<PsiFile> files = getChangedFilesFromContext();
+    return new FileTreeIterator(files);
+  }
+
+  @NotNull
+  private List<PsiFile> getChangedFilesFromContext() {
+    List<PsiDirectory> dirs = getAllSearchableDirsFromContext();
+    return FormatChangedTextUtil.getChangedFilesFromDirs(myProject, dirs);
+  }
+
+  private List<PsiDirectory> getAllSearchableDirsFromContext() {
+    List<PsiDirectory> dirs = ContainerUtil.newArrayList();
+    if (myDirectory != null) {
+      dirs.add(myDirectory);
+    }
+    else if (myModule != null) {
+      List<PsiDirectory> allModuleDirs = FileTreeIterator.collectModuleDirectories(myModule);
+      dirs.addAll(allModuleDirs);
+    }
+    else if (myProject != null) {
+      List<PsiDirectory> allProjectDirs = FileTreeIterator.collectProjectDirectories(myProject);
+      dirs.addAll(allProjectDirs);
+    }
+    return dirs;
+  }
+
 
   private void runProcessFile(@NotNull final PsiFile file) {
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
@@ -491,74 +531,6 @@ public abstract class AbstractLayoutCodeProcessor {
 
     public void setCompositeTask(@Nullable SequentialModalProgressTask compositeTask) {
       myCompositeTask = compositeTask;
-    }
-  }
-
-  private static class FileTreeIterator {
-    private Queue<PsiFile> myCurrentFiles = new LinkedList<PsiFile>();
-    private Queue<PsiDirectory> myCurrentDirectories = new LinkedList<PsiDirectory>();
-
-    public FileTreeIterator(@NotNull List<PsiFile> files) {
-      myCurrentFiles.addAll(files);
-    }
-
-    public FileTreeIterator(@NotNull Module module) {
-      addDirectoriesFrom(module);
-      expandDirectoriesUntilFilesNotEmpty();
-    }
-
-    public FileTreeIterator(@NotNull Project project) {
-      Module[] modules = ModuleManager.getInstance(project).getModules();
-      for (Module module : modules) {
-        addDirectoriesFrom(module);
-      }
-      expandDirectoriesUntilFilesNotEmpty();
-    }
-
-    public FileTreeIterator(@NotNull PsiDirectory directory) {
-      myCurrentDirectories.add(directory);
-      expandDirectoriesUntilFilesNotEmpty();
-    }
-
-    public FileTreeIterator(@NotNull FileTreeIterator fileTreeIterator) {
-      myCurrentFiles = new LinkedList<PsiFile>(fileTreeIterator.myCurrentFiles);
-      myCurrentDirectories = new LinkedList<PsiDirectory>(fileTreeIterator.myCurrentDirectories);
-    }
-
-    @NotNull
-    public PsiFile next() {
-      if (myCurrentFiles.isEmpty()) {
-        throw new NoSuchElementException();
-      }
-      PsiFile current = myCurrentFiles.poll();
-      expandDirectoriesUntilFilesNotEmpty();
-      return current;
-    }
-
-    public boolean hasNext() {
-      return !myCurrentFiles.isEmpty();
-    }
-
-    private void expandDirectoriesUntilFilesNotEmpty() {
-      while (myCurrentFiles.isEmpty() && !myCurrentDirectories.isEmpty()) {
-        PsiDirectory dir = myCurrentDirectories.poll();
-        expandDirectory(dir);
-      }
-    }
-
-    private void expandDirectory(@NotNull PsiDirectory dir) {
-      Collections.addAll(myCurrentFiles, dir.getFiles());
-      Collections.addAll(myCurrentDirectories, dir.getSubdirectories());
-    }
-
-    private void addDirectoriesFrom(Module module) {
-      VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
-      for (VirtualFile root : contentRoots) {
-        PsiDirectory dir = PsiManager.getInstance(module.getProject()).findDirectory(root);
-        if (dir != null) {
-          myCurrentDirectories.add(dir);
-        }
-      }
     }
   }
 }

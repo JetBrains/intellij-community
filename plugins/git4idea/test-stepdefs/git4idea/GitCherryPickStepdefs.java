@@ -160,10 +160,9 @@ public class GitCherryPickStepdefs {
   public void git_log_should_return(int commitNum, String messages) throws Throwable {
     List<String> expectedMessages = Arrays.asList(messages.split("-----"));
 
-
     final String RECORD_SEPARATOR = "@";
     boolean fullBody = GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(myVcs.getVersion());
-    String data= fullBody ? "%B" : "%s%b";
+    String data = fullBody ? "%B" : "%s%b";
     String output = git("log -%s --pretty=%s%s", String.valueOf(commitNum), data, RECORD_SEPARATOR);
     List<String> actualMessages = Arrays.asList(output.split(RECORD_SEPARATOR));
 
@@ -171,8 +170,8 @@ public class GitCherryPickStepdefs {
       String expectedMessage = StringUtil.convertLineSeparators(expectedMessages.get(i).trim());
       String actualMessage = StringUtil.convertLineSeparators(actualMessages.get(i).trim());
       if (!fullBody) {
-        // the subject (%s) somehow contains both "fix #1" and "cherry-picked from <hash>" in a single line
-        // which is probably Git misbehavior, so let's compare without taking line breaks and spaces into consideration
+        // the subject (%s) contains both "fix #1" and "cherry-picked from <hash>" in a single line
+        // so let's compare without taking line breaks and spaces into consideration
         expectedMessage = expectedMessage.replace("\n", "").replace(" ", "");
         actualMessage = actualMessage.replace("\n", "").replace(" ", "");
       }

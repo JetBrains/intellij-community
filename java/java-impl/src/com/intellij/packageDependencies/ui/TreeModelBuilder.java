@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public class TreeModelBuilder {
   protected final JavaPsiFacade myJavaPsiFacade;
   private static final Key<Integer> FILE_COUNT = Key.create("packages.FILE_COUNT");
 
-  private static enum ScopeType {
+  private enum ScopeType {
     TEST, SOURCE, LIB
   }
 
@@ -339,7 +339,7 @@ public class TreeModelBuilder {
       return getModuleDirNode(aPackage, null, ScopeType.LIB);
     }
 
-    Pair<OrderEntry, PsiPackage> descriptor = new Pair<OrderEntry, PsiPackage>(myShowIndividualLibs ? libraryOrJdk : null, aPackage);
+    Pair<OrderEntry, PsiPackage> descriptor = Pair.create(myShowIndividualLibs ? libraryOrJdk : null, aPackage);
     PackageNode node = getMap(myLibraryPackageNodes, ScopeType.LIB).get(descriptor);
     if (node != null) return node;
 
@@ -361,7 +361,7 @@ public class TreeModelBuilder {
       return getModuleNode(module, scopeType);
     }
 
-    Pair<Module, PsiPackage> descriptor = new Pair<Module, PsiPackage>(myShowModules ? module : null, aPackage);
+    Pair<Module, PsiPackage> descriptor = Pair.create(myShowModules ? module : null, aPackage);
     PackageNode node = getMap(myModulePackageNodes, scopeType).get(descriptor);
 
     if (node != null) return node;

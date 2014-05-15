@@ -33,6 +33,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.xml.util.XmlStringUtil;
@@ -66,7 +67,7 @@ public class IntentionDescriptionPanel {
   public void reset(IntentionActionMetaData actionMetaData, String filter)  {
     try {
       final TextDescriptor url = actionMetaData.getDescription();
-      final String description = url == null ?
+      final String description = StringUtil.isEmpty(url.getText()) ?
                                  CodeInsightBundle.message("under.construction.string") :
                                  SearchUtil.markup(url.getText(), filter);
       myDescriptionBrowser.setText(description);

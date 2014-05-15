@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,28 +128,6 @@ public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
           holder.registerProblem(variable.getNameIdentifier(),
                                  InspectionsBundle.message("inspection.unused.assignment.problem.descriptor5", "<code>#ref</code> #loc"),
                                  ProblemHighlightType.LIKE_UNUSED_SYMBOL);
-        }
-      }
-
-      @Override public void visitAssignmentExpression(PsiAssignmentExpression expression) {
-        PsiExpression lExpression = expression.getLExpression();
-        PsiExpression rExpression = expression.getRExpression();
-
-        if (lExpression instanceof PsiReferenceExpression && rExpression instanceof PsiReferenceExpression) {
-          PsiReferenceExpression lRef = (PsiReferenceExpression)lExpression;
-          PsiReferenceExpression rRef = (PsiReferenceExpression)rExpression;
-
-          if (lRef.resolve() != rRef.resolve()) return;
-          PsiExpression lQualifier = lRef.getQualifierExpression();
-          PsiExpression rQualifier = rRef.getQualifierExpression();
-
-          if ((lQualifier == null && rQualifier == null ||
-               lQualifier instanceof PsiThisExpression && rQualifier instanceof PsiThisExpression ||
-               lQualifier instanceof PsiThisExpression && rQualifier == null ||
-               lQualifier == null && rQualifier instanceof PsiThisExpression) && !isOnTheFly) {
-            holder.registerProblem(expression,
-                                   InspectionsBundle.message("inspection.unused.assignment.problem.descriptor6", "<code>#ref</code>"));
-          }
         }
       }
     });

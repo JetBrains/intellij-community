@@ -36,6 +36,7 @@ import java.util.Locale;
 public class IndexInfrastructure {
   private static final boolean ourUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
   private static final String STUB_VERSIONS = ".versions";
+  private static final String PERSISTENT_INDEX_DIRECTORY_NAME = ".persistent";
 
   private IndexInfrastructure() {
   }
@@ -60,14 +61,35 @@ public class IndexInfrastructure {
     return getIndexDirectory(indexName, false);
   }
 
+  public static File getPersistentIndexRoot() {
+    File indexDir = new File(PathManager.getIndexRoot() + File.separator + PERSISTENT_INDEX_DIRECTORY_NAME);
+    indexDir.mkdirs();
+    return indexDir;
+  }
+
+  @NotNull
+  public static File getPersistentIndexRootDir(@NotNull ID<?, ?> indexName) {
+    return getIndexDirectory(indexName, false, PERSISTENT_INDEX_DIRECTORY_NAME);
+  }
+
   @NotNull
   private static File getIndexDirectory(@NotNull ID<?, ?> indexName, boolean forVersion) {
+    return getIndexDirectory(indexName, forVersion, "");
+  }
+
+  @NotNull
+  private static File getIndexDirectory(@NotNull ID<?, ?> indexName, boolean forVersion, String relativePath) {
     final String dirName = indexName.toString().toLowerCase(Locale.US);
-    // store StubIndices under StubUpdating index' root to ensure they are deleted
-    // when StubUpdatingIndex version is changed
-    final File indexDir = indexName instanceof StubIndexKey
-               ? new File(getIndexRootDir(StubUpdatingIndex.INDEX_ID), forVersion ? STUB_VERSIONS : dirName)
-               : new File(PathManager.getIndexRoot(), dirName);
+    File indexDir;
+
+    if (indexName instanceof StubIndexKey) {
+      // store StubIndices under StubUpdating index' root to ensure they are deleted
+      // when StubUpdatingIndex version is changed
+      indexDir = new File(getIndexDirectory(StubUpdatingIndex.INDEX_ID, false, relativePath), forVersion ? STUB_VERSIONS : dirName);
+    } else {
+      if (relativePath.length() > 0) relativePath = File.separator + relativePath;
+      indexDir = new File(PathManager.getIndexRoot() + relativePath, dirName);
+    }
     indexDir.mkdirs();
     return indexDir;
   }

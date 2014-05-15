@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -29,7 +30,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
+public class UnnecessaryInterfaceModifierInspection extends BaseInspection implements CleanupLocalInspectionTool{
 
   private static final Set<String> INTERFACE_REDUNDANT_MODIFIERS =
     new HashSet<String>(Arrays.asList(PsiModifier.ABSTRACT, PsiModifier.STATIC));

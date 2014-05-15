@@ -82,7 +82,7 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
       return new TodoIndexEntry(pattern, caseSensitive);
     }
   };
-  
+
   private final DataExternalizer<Integer> myValueExternalizer = new IntInlineKeyDescriptor() {
     @Override
     protected boolean isCompactFormat() {
@@ -103,7 +103,7 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
       return Collections.emptyMap();
     }
   };
-  
+
   private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
     @Override
     public boolean acceptInput(@NotNull final VirtualFile file) {
@@ -119,7 +119,7 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
         final TokenSet commentTokens = parserDef != null ? parserDef.getCommentTokens() : null;
         return commentTokens != null;
       }
-      
+
       return PlatformIdTableBuilding.isTodoIndexerRegistered(fileType) ||
              fileType instanceof CustomSyntaxTableFileType;
     }
@@ -127,7 +127,7 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
 
   @Override
   public int getVersion() {
-    return 6;
+    return 7;
   }
 
   @Override
@@ -163,5 +163,10 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return myInputFilter;
+  }
+
+  @Override
+  public boolean hasSnapshotMapping() {
+    return true;
   }
 }

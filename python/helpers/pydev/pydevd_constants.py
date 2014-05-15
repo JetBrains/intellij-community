@@ -59,7 +59,7 @@ try:
     elif sys.version_info[0] == 2 and sys.version_info[1] == 4:
         IS_PY24 = True
 except AttributeError:
-    pass #Not all versions have sys.version_info
+    pass  #Not all versions have sys.version_info
 
 try:
     IS_64_BITS = sys.maxsize > 2 ** 32
@@ -85,10 +85,7 @@ _nextThreadIdLock = threading.Lock()
 # Jython?
 #=======================================================================================================================
 try:
-    import org.python.core.PyDictionary #@UnresolvedImport @UnusedImport -- just to check if it could be valid
-
-    def DictContains(d, key):
-        return d.has_key(key)
+    DictContains = dict.has_key
 except:
     try:
         #Py3k does not have has_key anymore, and older versions don't have __contains__
@@ -99,6 +96,19 @@ except:
         except NameError:
             def DictContains(d, key):
                 return d.has_key(key)
+#=======================================================================================================================
+# Jython?
+#=======================================================================================================================
+try:
+    DictPop = dict.pop
+except:
+    def DictPop(d, key, default=None):
+        try:
+            ret = d[key]
+            del d[key]
+            return ret
+        except:
+            return default
 
 
 try:
@@ -193,6 +203,9 @@ class Null:
         return self
 
     def __getattr__(self, mname):
+        if len(mname) > 4 and mname[:2] == '__' and mname[-2:] == '__':
+            # Don't pretend to implement special method names.
+            raise AttributeError(mname)
         return self
 
     def __setattr__(self, name, value):
@@ -221,6 +234,30 @@ class Null:
 
     def __nonzero__(self):
         return 0
+
+    def __iter__(self):
+        return iter(())
+
+
+def call_only_once(func):
+    '''
+    To be used as a decorator
+
+    @call_only_once
+    def func():
+        print 'Calling func only this time'
+
+    Actually, in PyDev it must be called as:
+
+    func = call_only_once(func) to support older versions of Python.
+    '''
+    def new_func(*args, **kwargs):
+        if not new_func._called:
+            new_func._called = True
+            return func(*args, **kwargs)
+
+    new_func._called = False
+    return new_func
 
 if __name__ == '__main__':
     if Null():

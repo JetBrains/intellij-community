@@ -93,7 +93,7 @@ class Foo {
     myFixture.checkResult "a.java:2"
   }
 
-  public void _testMethodOverloadCopy() {
+  public void testMethodOverloadCopy() {
     myFixture.configureByText 'a.java', '''
 class Koo {
   public void foo(int a) { }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,7 +93,7 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
       final DnDImage image = myImageProvider.fun(new DnDActionInfo(action, dragOrigin));
       if (image != null) {
         final Point point = image.getPoint();
-        return new Pair<Image, Point>(image.getImage(), point == null ? dragOrigin : point);
+        return Pair.create(image.getImage(), point == null ? dragOrigin : point);
       }
     }
     return null;

@@ -31,8 +31,14 @@ import java.util.Collection;
 class PluginUpdateInfoDialog extends AbstractUpdateDialog {
   private final Collection<PluginDownloader> myUploadedPlugins;
 
-  protected PluginUpdateInfoDialog(@NotNull Collection<PluginDownloader> updatePlugins, boolean enableLink) {
+  public PluginUpdateInfoDialog(Collection<PluginDownloader> uploadedPlugins, boolean enableLink) {
     super(enableLink);
+    myUploadedPlugins = uploadedPlugins;
+    init();
+  }
+
+  protected PluginUpdateInfoDialog(Component parent, @NotNull Collection<PluginDownloader> updatePlugins, boolean enableLink) {
+    super(parent, enableLink);
     myUploadedPlugins = updatePlugins;
     init();
   }
@@ -55,11 +61,15 @@ class PluginUpdateInfoDialog extends AbstractUpdateDialog {
 
   @Override
   protected void doOKAction() {
-    if (downloadPlugins() && PluginManagerConfigurable.showRestartIDEADialog() == Messages.YES) {
+    if (downloadPlugins() && toRestart()) {
       restart();
     }
 
     super.doOKAction();
+  }
+
+  protected boolean toRestart() {
+    return PluginManagerConfigurable.showRestartIDEADialog() == Messages.YES;
   }
 
   private boolean downloadPlugins() {

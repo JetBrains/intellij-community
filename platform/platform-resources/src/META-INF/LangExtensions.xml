@@ -381,6 +381,8 @@
                              key="templates.settings.page.title" bundle="messages.CodeInsightBundle"/>
     <lookup.actionProvider implementation="com.intellij.codeInsight.template.impl.LiveTemplateLookupActionProvider"/>
     <documentationProvider implementation="com.intellij.codeInsight.template.impl.LiveTemplateDocumentationProvider"/>
+    <projectService serviceInterface="com.intellij.codeInsight.template.TemplateManager"
+                    serviceImplementation="com.intellij.codeInsight.template.impl.TemplateManagerImpl"/>
 
     <!-- File Templates-->
     <applicationConfigurable instance="com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable" id="fileTemplates"
@@ -744,6 +746,7 @@
 
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReferenceHelper"/>
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JarFileReferenceHelper"/>
+    <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.HttpFileReferenceHelper"/>
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.NullFileReferenceHelper" order="last"/>
 
     <projectConfigurable instance="com.intellij.openapi.vfs.encoding.FileEncodingConfigurable"/>
@@ -888,6 +891,14 @@
      <!--the following bindings use 'first' order to make sure they capture raw text before any other processor modifies it -->
     <copyPastePreProcessor implementation="com.intellij.openapi.editor.richcopy.RtfCopyPasteProcessor$RawTextSetter" order="first" id="richcopy-rtf"/>
     <copyPastePreProcessor implementation="com.intellij.openapi.editor.richcopy.HtmlCopyPasteProcessor$RawTextSetter" order="first" id="richcopy-html"/>
+
+    <!-- Postfix templates -->
+    <applicationService id="postfixCompletionSettings" serviceImplementation="com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings"/>
+    <customLiveTemplate implementation="com.intellij.codeInsight.template.postfix.templates.PostfixLiveTemplate"/>
+    <lookup.actionProvider implementation="com.intellij.codeInsight.template.postfix.completion.PostfixTemplateLookupActionProvider"/>
+    <editorOptionsProvider id="editing.postfixCompletion" instance="com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesConfigurable"/>
+    <completion.contributor language="any" implementationClass="com.intellij.codeInsight.template.postfix.completion.PostfixTemplateCompletionContributor"/>
+
   </extensions>
 </idea-plugin>
 

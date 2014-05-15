@@ -19,7 +19,7 @@ import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.template.*;
-import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
+import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -41,18 +41,18 @@ public class InstanceofExpressionPostfixTemplate extends PostfixTemplate {
   }
 
   public InstanceofExpressionPostfixTemplate(String alias) {
-    super(alias, "Surrounds expression with instanceof", "expr instanceof SomeType ? ((SomeType) expr). : null");
+    super(alias, "expr instanceof Type ? ((Type) expr). : null");
   }
 
   @Override
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
-    return PostfixTemplatesUtils.isNotPrimitiveTypeExpression(PostfixTemplatesUtils.getTopmostExpression(context));
+    return JavaPostfixTemplatesUtils.isNotPrimitiveTypeExpression(JavaPostfixTemplatesUtils.getTopmostExpression(context));
   }
 
   @Override
   public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
-    PsiExpression expression = PostfixTemplatesUtils.getTopmostExpression(context);
-    if (!PostfixTemplatesUtils.isNotPrimitiveTypeExpression(expression)) return;
+    PsiExpression expression = JavaPostfixTemplatesUtils.getTopmostExpression(context);
+    if (!JavaPostfixTemplatesUtils.isNotPrimitiveTypeExpression(expression)) return;
     surroundExpression(context.getProject(), editor, expression);
   }
 

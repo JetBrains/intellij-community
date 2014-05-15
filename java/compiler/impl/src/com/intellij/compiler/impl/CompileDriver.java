@@ -182,8 +182,8 @@ public class CompileDriver {
         for (IntermediateOutputCompiler compiler : generatingCompilers) {
           final VirtualFile productionOutput = lookupVFile(lfs, CompilerPaths.getGenerationOutputPath(compiler, module, false));
           final VirtualFile testOutput = lookupVFile(lfs, CompilerPaths.getGenerationOutputPath(compiler, module, true));
-          final Pair<IntermediateOutputCompiler, Module> pair = new Pair<IntermediateOutputCompiler, Module>(compiler, module);
-          final Pair<VirtualFile, VirtualFile> outputs = new Pair<VirtualFile, VirtualFile>(productionOutput, testOutput);
+          final Pair<IntermediateOutputCompiler, Module> pair = Pair.create(compiler, module);
+          final Pair<VirtualFile, VirtualFile> outputs = Pair.create(productionOutput, testOutput);
           myGenerationCompilerModuleToOutputDirMap.put(pair, outputs);
         }
         if (config.getAnnotationProcessingConfiguration(module).isEnabled()) {
@@ -946,7 +946,7 @@ public class CompileDriver {
           if (!myProject.isDisposed()) {
             final String statusMessage = createStatusMessage(_status, warningCount, errorCount, duration);
             final MessageType messageType = errorCount > 0 ? MessageType.ERROR : warningCount > 0 ? MessageType.WARNING : MessageType.INFO;
-            if (duration > ONE_MINUTE_MS) {
+            if (duration > ONE_MINUTE_MS && CompilerWorkspaceConfiguration.getInstance(myProject).DISPLAY_NOTIFICATION_POPUP) {
               ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.MESSAGES_WINDOW, messageType, statusMessage);
             }
             CompilerManager.NOTIFICATION_GROUP.createNotification(statusMessage, messageType).notify(myProject);
@@ -1882,7 +1882,7 @@ public class CompileDriver {
 
   private VirtualFile getGenerationOutputDir(final IntermediateOutputCompiler compiler, final Module module, final boolean forTestSources) {
     final Pair<VirtualFile, VirtualFile> outputs =
-      myGenerationCompilerModuleToOutputDirMap.get(new Pair<IntermediateOutputCompiler, Module>(compiler, module));
+      myGenerationCompilerModuleToOutputDirMap.get(Pair.create(compiler, module));
     return forTestSources? outputs.getSecond() : outputs.getFirst();
   }
 
@@ -2730,7 +2730,7 @@ public class CompileDriver {
         list = new ArrayList<Pair<FileProcessingCompilerStateCache, FileProcessingCompiler.ProcessingItem>>();
         myData.put(file, list);
       }
-      list.add(new Pair<FileProcessingCompilerStateCache, FileProcessingCompiler.ProcessingItem>(cache, item));
+      list.add(Pair.create(cache, item));
     }
 
     public void doUpdate() throws IOException {
@@ -2896,7 +2896,7 @@ public class CompileDriver {
       final Set<VirtualFile> depFiles = new HashSet<VirtualFile>(deps.getSecond());
       depFiles.removeAll(myProcessedFiles);
       myProcessedFiles.addAll(deps.getSecond());
-      return new Pair<int[], Set<VirtualFile>>(currentDeps.toArray(), depFiles);
+      return Pair.create(currentDeps.toArray(), depFiles);
     }
   }
 }

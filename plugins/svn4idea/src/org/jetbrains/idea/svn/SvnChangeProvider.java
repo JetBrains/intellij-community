@@ -34,7 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.actions.CleanupWorker;
-import org.jetbrains.idea.svn.portable.SvnExceptionWrapper;
+import org.jetbrains.idea.svn.commandLine.SvnExceptionWrapper;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -76,7 +76,7 @@ public class SvnChangeProvider implements ChangeProvider {
     try {
       final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, progress);
 
-      final StatusWalkerPartnerImpl partner = new StatusWalkerPartnerImpl(myVcs, progress);
+      final StatusWalkerPartner partner = new StatusWalkerPartner(myVcs, progress);
       final NestedCopiesBuilder nestedCopiesBuilder = new NestedCopiesBuilder(myVcs, mySvnFileUrlMapping);
 
       final EventDispatcher<StatusReceiver> statusReceiver = EventDispatcher.create(StatusReceiver.class);
@@ -93,12 +93,6 @@ public class SvnChangeProvider implements ChangeProvider {
       for (SvnScopeZipper.MyDirNonRecursive item : nonRecursiveMap.values()) {
         walker.go(item.getDir(), SVNDepth.IMMEDIATES);
       }
-
-      // they are taken under non recursive: ENTRIES file is read anyway, so we get to know parent status also for free
-      /*for (FilePath path : zipper.getSingleFiles()) {
-        FileStatus status = getParentStatus(context, path);
-        processFile(path, context, status, false, context.getClient());
-      }*/
 
       processCopiedAndDeleted(context, dirtyScope);
       processUnsaved(dirtyScope, addGate, context);
@@ -177,7 +171,7 @@ public class SvnChangeProvider implements ChangeProvider {
 
   public void getChanges(final FilePath path, final boolean recursive, final ChangelistBuilder builder) throws SVNException {
     final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, null);
-    final StatusWalkerPartnerImpl partner = new StatusWalkerPartnerImpl(myVcs, ProgressManager.getInstance().getProgressIndicator());
+    final StatusWalkerPartner partner = new StatusWalkerPartner(myVcs, ProgressManager.getInstance().getProgressIndicator());
     final SvnRecursiveStatusWalker walker = new SvnRecursiveStatusWalker(myVcs, context, partner);
     walker.go(path, recursive ? SVNDepth.INFINITY : SVNDepth.IMMEDIATES);
     processCopiedAndDeleted(context, null);
@@ -251,9 +245,10 @@ public class SvnChangeProvider implements ChangeProvider {
       File wcPath = guessWorkingCopyPath(copiedStatus.getFile(), copiedStatus.getURL(), copyFromURL);
       SVNStatus status;
       try {
-        status = context.getClient().doStatus(wcPath, false);
+        status = myVcs.getFactory(wcPath).createStatusClient().doStatus(wcPath, false);
       }
       catch(SVNException ex) {
+        LOG.info(ex);
         status = null;
       }
       if (status != null && SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_DELETED)) {

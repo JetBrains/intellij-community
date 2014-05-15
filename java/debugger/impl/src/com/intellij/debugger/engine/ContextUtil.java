@@ -37,7 +37,7 @@ public class ContextUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.PositionUtil");
 
   @Nullable
-  public static SourcePosition getSourcePosition(final StackFrameContext context) {
+  public static SourcePosition getSourcePosition(@Nullable final StackFrameContext context) {
     if (context == null) {
       return null;
     }

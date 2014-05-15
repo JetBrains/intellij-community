@@ -376,6 +376,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     PsiFile containingFile = SharedImplUtil.getContainingFile(fileElement);
     boolean valid = containingFile != null && containingFile.isValid();
     if (!valid) {
+      PsiUtilCore.ensureValid(this);
       LOG.error("invalid!");
       return JavaResolveResult.EMPTY_ARRAY;
     }
@@ -587,8 +588,8 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       text += parameterList.getText();
     }
     PsiJavaCodeReferenceElement ref = facade.getParserFacade().createReferenceFromText(text, getParent());
-    getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
     ((PsiJavaCodeReferenceElementImpl)ref).setAnnotations(annotations);
+    getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
 
     if (!preserveQualification) {
       JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);

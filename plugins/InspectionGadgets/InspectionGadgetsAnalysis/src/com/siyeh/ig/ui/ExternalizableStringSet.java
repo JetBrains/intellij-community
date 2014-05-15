@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 2011-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ public class ExternalizableStringSet extends OrderedSet<String>
     }
     */
 
-  private boolean hasDefaultValues() {
+  public boolean hasDefaultValues() {
     if (size() != defaultValues.length) {
       return false;
     }

@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
@@ -89,6 +90,7 @@ public abstract class NonCodeMembersContributor {
     if (aClass != null) {
       for (String superClassName : TypesUtil.getSuperClassesWithCache(aClass).keySet()) {
         for (NonCodeMembersContributor enhancer : ourClassSpecifiedContributors.get(superClassName)) {
+          ProgressManager.checkCanceled();
           enhancer.processDynamicElements(qualifierType, aClass, delegatingProcessor, place, state);
           if (!delegatingProcessor.wantMore) {
             return false;
@@ -98,6 +100,7 @@ public abstract class NonCodeMembersContributor {
     }
 
     for (NonCodeMembersContributor contributor : ourAllTypeContributors) {
+      ProgressManager.checkCanceled();
       contributor.processDynamicElements(qualifierType, aClass, delegatingProcessor, place, state);
       if (!delegatingProcessor.wantMore) {
         return false;

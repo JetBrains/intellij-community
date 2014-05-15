@@ -57,6 +57,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
+import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
@@ -151,19 +152,22 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
   @Override
   public void populateModuleExtraModels(@NotNull IdeaModule gradleModule, @NotNull DataNode<ModuleData> ideModule) {
-    BuildScriptClasspathModel buildScriptClasspathModel = resolverCtx.getExtraProject(gradleModule, BuildScriptClasspathModel.class);
+    final BuildScriptClasspathModel buildScriptClasspathModel = resolverCtx.getExtraProject(gradleModule, BuildScriptClasspathModel.class);
+    final List<BuildScriptClasspathData.ClasspathEntry> classpathEntries;
     if (buildScriptClasspathModel != null) {
-      List<BuildScriptClasspathData.ClasspathEntry> classpathEntries =
-        ContainerUtil.map(buildScriptClasspathModel.getClasspath(), new Function<ClasspathEntryModel, BuildScriptClasspathData.ClasspathEntry>() {
+      classpathEntries = ContainerUtil
+        .map(buildScriptClasspathModel.getClasspath(), new Function<ClasspathEntryModel, BuildScriptClasspathData.ClasspathEntry>() {
           @Override
           public BuildScriptClasspathData.ClasspathEntry fun(ClasspathEntryModel model) {
             return new BuildScriptClasspathData.ClasspathEntry(model.getClasses(), model.getSources(), model.getJavadoc());
           }
         });
-      BuildScriptClasspathData buildScriptClasspathData =
-        new BuildScriptClasspathData(GradleConstants.SYSTEM_ID, classpathEntries);
-      ideModule.createChild(BuildScriptClasspathData.KEY, buildScriptClasspathData);
     }
+    else {
+      classpathEntries = ContainerUtil.emptyList();
+    }
+    BuildScriptClasspathData buildScriptClasspathData = new BuildScriptClasspathData(GradleConstants.SYSTEM_ID, classpathEntries);
+    ideModule.createChild(BuildScriptClasspathData.KEY, buildScriptClasspathData);
   }
 
   @Override
@@ -368,6 +372,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(ModuleType.class));
     ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(EmptyModuleType.class));
     ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(ProjectImportAction.class));
+    ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(Init.class));
     for (String entry : additionalEntries) {
       classPath.add(entry);
     }

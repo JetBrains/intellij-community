@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -472,7 +472,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
         if (shortcut instanceof KeyboardShortcut) {
           KeyboardShortcut keyShortcut = (KeyboardShortcut)shortcut;
           if (keyShortcut.getFirstKeyStroke().equals(myFirstKeyStroke)) {
-            secondKeyStrokes.add(new Pair<AnAction, KeyStroke>(action, keyShortcut.getSecondKeyStroke()));
+            secondKeyStrokes.add(Pair.create(action, keyShortcut.getSecondKeyStroke()));
           }
         }
       }
@@ -816,15 +816,17 @@ public final class IdeKeyEventDispatcher implements Disposable {
           };
 
           final KeyStroke keyStroke = pair.getSecond();
-          registerAction(actionText, keyStroke, a);
+          if (keyStroke != null) {
+            registerAction(actionText, keyStroke, a);
 
-          if (keyStroke.getModifiers() == 0) {
-            // do a little trick here, so if I will press Command+R and the second keystroke is just 'R',
-            // I want to be able to hold the Command while pressing 'R'
+            if (keyStroke.getModifiers() == 0) {
+              // do a little trick here, so if I will press Command+R and the second keystroke is just 'R',
+              // I want to be able to hold the Command while pressing 'R'
 
-            final KeyStroke additionalKeyStroke = KeyStroke.getKeyStroke(keyStroke.getKeyCode(), firstKeyStroke.getModifiers());
-            final String _existing = getActionForKeyStroke(additionalKeyStroke);
-            if (_existing == null) registerAction("__additional__" + actionText, additionalKeyStroke, a);
+              final KeyStroke additionalKeyStroke = KeyStroke.getKeyStroke(keyStroke.getKeyCode(), firstKeyStroke.getModifiers());
+              final String _existing = getActionForKeyStroke(additionalKeyStroke);
+              if (_existing == null) registerAction("__additional__" + actionText, additionalKeyStroke, a);
+            }
           }
 
           return true;

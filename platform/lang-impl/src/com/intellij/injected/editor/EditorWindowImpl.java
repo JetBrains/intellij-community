@@ -417,7 +417,12 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   @NotNull
   public Point logicalPositionToXY(@NotNull final LogicalPosition pos) {
     assert isValid();
-    return myDelegate.logicalPositionToXY(injectedToHost(fitInsideEditor(pos)));
+    LogicalPosition trimmedPos = fitInsideEditor(pos);
+    LogicalPosition hostPos = injectedToHost(trimmedPos);
+    if (!trimmedPos.equals(pos)) {
+      hostPos = new LogicalPosition(hostPos.line + (pos.line - trimmedPos.line), hostPos.column + (pos.column - trimmedPos.column));
+    }
+    return myDelegate.logicalPositionToXY(hostPos);
   }
 
   @Override

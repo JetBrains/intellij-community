@@ -44,7 +44,7 @@ public class XBreakpointGroupingByPackageRule<B> extends XBreakpointGroupingRule
   public XBreakpointPackageGroup getGroup(@NotNull B breakpoint, @NotNull Collection<XBreakpointPackageGroup> groups) {
     String packageName = null;
     if (breakpoint instanceof XBreakpoint) {
-      Breakpoint javaBreakpoint = BreakpointManager.findBreakpoint((XBreakpoint)breakpoint);
+      Breakpoint javaBreakpoint = BreakpointManager.getJavaBreakpoint((XBreakpoint)breakpoint);
       if (javaBreakpoint != null) {
         packageName = javaBreakpoint.getPackageName();
       }

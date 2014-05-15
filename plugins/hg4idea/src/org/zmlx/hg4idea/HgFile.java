@@ -16,10 +16,11 @@ import com.google.common.base.Objects;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
@@ -53,10 +54,11 @@ public class HgFile {
     return file;
   }
 
-  @NotNull
+  @Nullable
   public String getRelativePath() {
     if (relativePath == null) {
-      relativePath = buildRelativePath(VfsUtil.virtualToIoFile(vcsRoot), file);
+      //For configuration like "d:/.hg" File.getParent method has minimal prefix length, so vcsRoot will be "d:", getParent will be "d:/".
+      relativePath = FileUtil.getRelativePath(VfsUtilCore.virtualToIoFile(vcsRoot), file);
     }
     return relativePath;
   }
@@ -64,17 +66,6 @@ public class HgFile {
   @NotNull
   public FilePath toFilePath() {
     return VcsUtil.getFilePath(file);
-  }
-
-  private static String buildRelativePath(File anchestor, File descendant) {
-    if (anchestor.equals(descendant)) {
-      return ".";
-    }
-    if (anchestor.equals(descendant.getParentFile())) {
-      return descendant.getName();
-    }
-    return buildRelativePath(anchestor, descendant.getParentFile())
-      + File.separator + descendant.getName();
   }
 
   @Override

@@ -17,8 +17,12 @@
 package com.intellij.psi;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.PsiUtilCore;
@@ -32,53 +36,77 @@ import java.lang.ref.SoftReference;
 /**
  * @author mike
  */
-public class PsiInvalidElementAccessException extends RuntimeException {
+public class PsiInvalidElementAccessException extends RuntimeException implements ExceptionWithAttachments {
   private static final Key<Object> INVALIDATION_TRACE = Key.create("TRACK_INVALIDATION_KEY");
   private final SoftReference<PsiElement> myElementReference;  // to prevent leaks, since exceptions are stored in IdeaLogger
+  private final Attachment[] myDiagnostic;
+  private final String myMessage;
 
   public PsiInvalidElementAccessException(PsiElement element) {
-    this(element, (String)null);
+    this(element, null, null);
   }
 
   public PsiInvalidElementAccessException(PsiElement element, @Nullable String message) {
-    this(element, getMessageWithReason(element, message), null);
+    this(element, message, null);
   }
 
   public PsiInvalidElementAccessException(PsiElement element, @Nullable Throwable cause) {
-    this(element, getMessageWithReason(element, null), cause);
+    this(element, null, cause);
   }
 
-  public PsiInvalidElementAccessException(PsiElement element, @Nullable String message, @Nullable Throwable cause) {
-    super(message, cause);
+  public PsiInvalidElementAccessException(@Nullable PsiElement element, @Nullable String message, @Nullable Throwable cause) {
+    super(null, cause);
     myElementReference = new SoftReference<PsiElement>(element);
+
+    if (element == null) {
+      myMessage = message;
+      myDiagnostic = Attachment.EMPTY_ARRAY;
+    } else {
+      Object trace = findInvalidationTrace(element.getNode());
+      String reason = "Element: " + element.getClass() +
+                      " because: " + reason(element) +
+                      "\ninvalidated at: " +
+                      (!isTrackingInvalidation() ? "disabled" :
+                       trace != null ? "see attachment" :
+                       "no info");
+      myMessage = reason + (message == null ? "" : "; " + message);
+      if (trace == null) {
+        myDiagnostic = Attachment.EMPTY_ARRAY;
+      } else {
+        String diagnostic = trace instanceof Throwable ? ExceptionUtil.getThrowableText((Throwable)trace) : trace.toString();
+        myDiagnostic = new Attachment[]{new Attachment("diagnostic.txt", diagnostic)};
+      }
+    }
   }
 
-  private static String getMessageWithReason(@Nullable PsiElement element, @Nullable String message) {
-    return (element == null 
-            ? "Unknown psi element" 
-            : "Element: " + element.getClass() + " because: " + reason(element) + invalidationTraceText(element)) +
-          (message == null ? "" : "; " + message);
+  @Override
+  public String getMessage() {
+    return myMessage;
   }
 
-  public static Object findInvalidationTrace(ASTNode element) {
+  @NotNull
+  @Override
+  public Attachment[] getAttachments() {
+    return myDiagnostic;
+  }
+
+  public static Object findInvalidationTrace(@Nullable ASTNode element) {
     while (element != null) {
       Object trace = element.getUserData(INVALIDATION_TRACE);
       if (trace != null) {
         return trace;
       }
-      element = element.getTreeParent();
+      ASTNode parent = element.getTreeParent();
+      if (parent == null && element instanceof FileASTNode) {
+        PsiElement psi = element.getPsi();
+        trace = psi == null ? null : psi.getUserData(INVALIDATION_TRACE);
+        if (trace != null) {
+          return trace;
+        }
+      }
+      element = parent;
     }
     return null;
-  }
-
-  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-  private static String invalidationTraceText(PsiElement element) {
-    Object trace = findInvalidationTrace(element.getNode());
-    return "\ninvalidated at: " +
-           (!isTrackingInvalidation() ? "disabled" :
-            trace instanceof Throwable ? ExceptionUtil.getThrowableText((Throwable)trace) :
-            trace != null ? trace :
-            "no info");
   }
 
   @NonNls
@@ -112,7 +140,7 @@ public class PsiInvalidElementAccessException extends RuntimeException {
     return "psi is outdated";
   }
 
-  public static void setInvalidationTrace(ASTNode element, Object trace) {
+  public static void setInvalidationTrace(UserDataHolder element, Object trace) {
     element.putUserData(INVALIDATION_TRACE, trace);
   }
 

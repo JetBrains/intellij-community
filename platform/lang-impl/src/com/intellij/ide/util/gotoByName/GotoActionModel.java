@@ -48,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, Comparator<Object> {
   @NonNls public static final String SETTINGS_KEY = "$$$SETTINGS$$$";
@@ -154,11 +155,11 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
         panel.setBackground(bg);
 
 
-        if (value instanceof Map.Entry) {
+        if (value instanceof ActionWrapper) {
 
-          final Map.Entry actionWithParentGroup = (Map.Entry)value;
+          final ActionWrapper actionWithParentGroup = (ActionWrapper)value;
 
-          final AnAction anAction = (AnAction)actionWithParentGroup.getKey();
+          final AnAction anAction = actionWithParentGroup.getAction();
           final Presentation templatePresentation = anAction.getTemplatePresentation();
           final Icon icon = templatePresentation.getIcon();
 
@@ -172,7 +173,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
           final JLabel actionLabel = createActionLabel(anAction, templatePresentation.getText(), fg, bg, icon);
           panel.add(actionLabel, BorderLayout.WEST);
 
-          final String groupName = (String)actionWithParentGroup.getValue();
+          final String groupName = actionWithParentGroup.getGroupName();
           if (groupName != null) {
             final JLabel groupLabel = new JLabel(groupName);
             groupLabel.setBackground(bg);
@@ -249,11 +250,19 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
   @Override
   public int compare(Object o1, Object o2) {
-    if (o1 instanceof Map.Entry && !(o2 instanceof Map.Entry)) {
-      return -1;
-    }
-    if (o2 instanceof Map.Entry && !(o1 instanceof Map.Entry)) {
+    if (o1 instanceof OptionDescription && !(o2 instanceof OptionDescription)) {
       return 1;
+    }
+    if (o2 instanceof OptionDescription && !(o1 instanceof OptionDescription)) {
+      return 1;
+    }
+
+    if (o1 instanceof OptionDescription) {
+      return ((OptionDescription)o1).compareTo(o2);
+    }
+
+    if (o1 instanceof ActionWrapper && o2 instanceof ActionWrapper) {
+      return ((ActionWrapper)o1).compareTo((ActionWrapper)o2);
     }
 
     return StringUtil.compare(getFullName(o1), getFullName(o2), true);
@@ -301,10 +310,15 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   @Override
   @NotNull
   public Object[] getElementsByName(final String id, final boolean checkBoxState, final String pattern) {
-    final HashMap<AnAction, String> map = new HashMap<AnAction, String>();
+    List<Object> objects = new ArrayList<Object>();
     final AnAction act = myActionManager.getAction(id);
     if (act != null) {
-      map.put(act, myActionsMap.get(act));
+      final HashMap<AnAction, String> map = new HashMap<AnAction, String>();
+      final MatchMode matchMode = actionMatches(pattern, act);
+      final String groupName = myActionsMap.get(act);
+      if (map.put(act, groupName) == null) {
+        objects.add(new ActionWrapper(act, groupName, matchMode));
+      }
       if (checkBoxState) {
         final Set<String> ids = ((ActionManagerImpl)myActionManager).getActionIds();
         for (AnAction action : map.keySet()) { //do not add already included actions
@@ -313,17 +327,19 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
         if (ids.contains(id)) {
           final AnAction anAction = myActionManager.getAction(id);
           map.put(anAction, null);
+          if (anAction != null) {
+            objects.add(new ActionWrapper(anAction, null, MatchMode.NON_MENU));
+          }
         }
       }
     } else if (Comparing.strEqual(id, INTENTIONS_KEY)) {
       for (String intentionText : myIntentions.keySet()) {
         final ApplyIntentionAction intentionAction = myIntentions.get(intentionText);
-        if (actionMatches(pattern, intentionAction)) {
-          map.put(intentionAction, intentionText);
+        if (actionMatches(pattern, intentionAction) != MatchMode.NONE) {
+          objects.add(new ActionWrapper(intentionAction, intentionText, MatchMode.INTENTION));
         }
       }
     }
-    Object[] objects = map.entrySet().toArray(new Map.Entry[map.size()]);
     if (Comparing.strEqual(id, SETTINGS_KEY)) {
       final Set<String> words = myIndex.getProcessedWords(pattern);
       Set<OptionDescription> optionDescriptions = null;
@@ -359,12 +375,10 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
             iterator.remove();
           }
         }
-        final Object[] descriptions = optionDescriptions.toArray();
-        Arrays.sort(descriptions);
-        objects = ArrayUtil.mergeArrays(objects, descriptions);
+        objects.addAll(optionDescriptions);
       }
     }
-    return objects;
+    return objects.toArray(new Object[objects.size()]);
   }
 
   private void collectActions(Map<AnAction, String> result, ActionGroup group, final String containingGroupName) {
@@ -427,29 +441,31 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   @Override
   public String getElementName(final Object element) {
     if (element instanceof OptionDescription) return ((OptionDescription)element).getHit();
-    if (!(element instanceof Map.Entry)) return null;
-    return ((AnAction)((Map.Entry)element).getKey()).getTemplatePresentation().getText();
+    if (!(element instanceof ActionWrapper)) return null;
+    return ((ActionWrapper)element).getAction().getTemplatePresentation().getText();
   }
 
   @Override
   public boolean matches(@NotNull final String name, @NotNull final String pattern) {
     final AnAction anAction = myActionManager.getAction(name);
     if (anAction == null) return true;
-    return actionMatches(pattern, anAction);
+    return actionMatches(pattern, anAction) != MatchMode.NONE;
   }
 
-  protected boolean actionMatches(String pattern, @NotNull AnAction anAction) {
+  protected MatchMode actionMatches(String pattern, @NotNull AnAction anAction) {
     final Pattern compiledPattern = getPattern(pattern);
     final Presentation presentation = anAction.getTemplatePresentation();
     final String text = presentation.getText();
     final String description = presentation.getDescription();
     PatternMatcher matcher = getMatcher();
-    if (text != null && matcher.matches(text, compiledPattern) ||
-        description != null && !description.equals(text) && matcher.matches(description, compiledPattern)) {
-      return true;
+    if (text != null && matcher.matches(text, compiledPattern)) {
+      return MatchMode.NAME;
+    }
+    else if (description != null && !description.equals(text) && matcher.matches(description, compiledPattern)) {
+      return MatchMode.DESCRIPTION;
     }
     final String groupName = myActionsMap.get(anAction);
-    return groupName != null && text != null && matcher.matches(groupName + " " + text, compiledPattern);
+    return groupName != null && text != null && matcher.matches(groupName + " " + text, compiledPattern) ? MatchMode.GROUP : MatchMode.NONE;
   }
 
   @Nullable
@@ -478,6 +494,10 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     }
 
     return compiledPattern;
+  }
+
+  protected enum MatchMode {
+    NONE, INTENTION, NAME, DESCRIPTION, GROUP, NON_MENU
   }
 
   private String convertPattern(String pattern) {
@@ -586,5 +606,41 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   };
   private PatternMatcher getMatcher() {
     return myMatcher.get();
+  }
+  
+  public static class ActionWrapper implements Comparable<ActionWrapper>{
+    private AnAction myAction;
+    private MatchMode myMode;
+    private String myGroupName;
+
+    public ActionWrapper(AnAction action, String groupName, MatchMode mode) {
+      myAction = action;
+      myMode = mode;
+      myGroupName = groupName;
+    }
+
+    public AnAction getAction() {
+      return myAction;
+    }
+
+    public MatchMode getMode() {
+      return myMode;
+    }
+
+    @Override
+    public int compareTo(ActionWrapper o) {
+      final int compared = myMode.compareTo(o.getMode());
+      return compared != 0
+             ? compared
+             : StringUtil.compare(myAction.getTemplatePresentation().getText(), o.getAction().getTemplatePresentation().getText(), true);
+    }
+
+    public String getGroupName() {
+      return myGroupName;
+    }
+
+    public void setGroupName(String groupName) {
+      myGroupName = groupName;
+    }
   }
 }

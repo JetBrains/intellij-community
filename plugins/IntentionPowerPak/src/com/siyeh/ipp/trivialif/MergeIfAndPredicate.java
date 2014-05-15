@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIfStatement;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiStatement;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
@@ -39,9 +40,9 @@ class MergeIfAndPredicate implements PsiElementPredicate {
       return false;
     }
     PsiStatement thenBranch = ifStatement.getThenBranch();
-    thenBranch = com.siyeh.ig.psiutils.ControlFlowUtils.stripBraces(thenBranch);
+    thenBranch = ControlFlowUtils.stripBraces(thenBranch);
     PsiStatement elseBranch = ifStatement.getElseBranch();
-    elseBranch = com.siyeh.ig.psiutils.ControlFlowUtils.stripBraces(elseBranch);
+    elseBranch = ControlFlowUtils.stripBraces(elseBranch);
     if (thenBranch == null) {
       return false;
     }

@@ -262,6 +262,25 @@ public abstract class ResourceInspection extends BaseInspection {
   }
 
   public static boolean isResourceEscapingFromMethod(PsiVariable boundVariable, PsiExpression resourceCreationExpression) {
+    if (resourceCreationExpression instanceof PsiMethodCallExpression) {
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)resourceCreationExpression;
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+      if (qualifierExpression instanceof PsiReferenceExpression) {
+        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifierExpression;
+        final PsiElement target = referenceExpression.resolve();
+        if (target instanceof PsiField) {
+          final PsiField field = (PsiField)target;
+          final String fieldName = field.getName();
+          if ("out".equals(fieldName) || "err".equals(fieldName)) {
+            final PsiClass containingClass = field.getContainingClass();
+            if (containingClass != null && "java.lang.System".equals(containingClass.getQualifiedName())) {
+              return true;
+            }
+          }
+        }
+      }
+    }
     final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(resourceCreationExpression);
     if (parent instanceof PsiReturnStatement) {
       return true;

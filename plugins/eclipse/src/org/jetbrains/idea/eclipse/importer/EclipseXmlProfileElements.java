@@ -65,6 +65,9 @@ public interface EclipseXmlProfileElements {
 
   String OPTION_BLANK_LINES_BEFORE_FIRST_DECLARATION_IN_CLASS = "org.eclipse.jdt.core.formatter.blank_lines_before_first_class_body_declaration";
   String OPTION_EMPTY_LINES_TO_PRESERVE = "org.eclipse.jdt.core.formatter.number_of_empty_lines_to_preserve";
+  
+  String OPTION_SPACE_AFTER_CLOSING_BRACE_IN_BLOCK = "org.eclipse.jdt.core.formatter.insert_space_after_closing_brace_in_block";
+  String OPTION_SPACE_BEFORE_OPENING_BRACE_IN_BLOCK = "org.eclipse.jdt.core.formatter.insert_space_before_opening_brace_in_block";
 
   int WRAP_MASK = 0x70;
 

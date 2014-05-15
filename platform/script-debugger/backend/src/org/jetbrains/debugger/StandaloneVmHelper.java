@@ -16,7 +16,7 @@ public final class StandaloneVmHelper extends MessageWriter {
 
   private final VmEx vm;
 
-  public StandaloneVmHelper(VmEx vm) {
+  public StandaloneVmHelper(@NotNull VmEx vm) {
     this.vm = vm;
   }
 

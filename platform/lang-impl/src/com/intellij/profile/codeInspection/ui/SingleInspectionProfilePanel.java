@@ -24,6 +24,7 @@ import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.SeverityUtil;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.*;
@@ -246,9 +247,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     List<ScopeToolState> tools = profile.getDefaultStates(myProjectProfileManager.getProject());
     for (ScopeToolState state : tools) {
       final ArrayList<Descriptor> descriptors = new ArrayList<Descriptor>();
-      if (state.getLevel() == HighlightDisplayLevel.NON_SWITCHABLE_ERROR) {
-        continue;
-      }
+      if (!accept(state.getTool())) continue;
       Project project = myProjectProfileManager.getProject();
       myDescriptors.put(new Descriptor(state, profile, project), descriptors);
       InspectionToolWrapper toolWrapper = state.getTool();
@@ -257,6 +256,10 @@ public class SingleInspectionProfilePanel extends JPanel {
         descriptors.add(new Descriptor(nonDefaultToolState, profile, project));
       }
     }
+  }
+
+  protected boolean accept(InspectionToolWrapper entry) {
+    return entry.getDefaultLevel() != HighlightDisplayLevel.NON_SWITCHABLE_ERROR;
   }
 
   private void postProcessModification() {

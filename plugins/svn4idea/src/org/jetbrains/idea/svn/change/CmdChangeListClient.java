@@ -32,7 +32,7 @@ public class CmdChangeListClient extends BaseSvnClient implements ChangeListClie
 
     // for now parsing of the output is not required as command is executed only for one file
     // and will be either successful or exception will be thrown
-    CommandUtil.execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.changelist, parameters, null);
+    execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.changelist, parameters, null);
   }
 
   @Override
@@ -45,6 +45,6 @@ public class CmdChangeListClient extends BaseSvnClient implements ChangeListClie
 
     // for now parsing of the output is not required as command is executed only for one file
     // and will be either successful or exception will be thrown
-    CommandUtil.execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.changelist, parameters, null);
+    execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.changelist, parameters, null);
   }
 }

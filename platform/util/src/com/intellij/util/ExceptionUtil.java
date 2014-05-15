@@ -35,7 +35,7 @@ public class ExceptionUtil {
     }
   }
 
-  public static <T extends Throwable> T findCause(Throwable e, Class<T> klass) {
+  public static <T> T findCause(Throwable e, Class<T> klass) {
     while (e != null && !klass.isInstance(e)) {
       e = e.getCause();
     }

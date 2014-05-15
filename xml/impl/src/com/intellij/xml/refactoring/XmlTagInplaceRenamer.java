@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,7 +152,7 @@ public class XmlTagInplaceRenamer {
                              : endTagName;
     final ASTNode other = (selected == startTagName) ? endTagName : startTagName;
 
-    return new Pair<ASTNode, ASTNode>(selected, other);
+    return Pair.create(selected, other);
   }
 
   private static Template buildTemplate(@NotNull final XmlTag tag, @NotNull final Pair<ASTNode, ASTNode> pair) {

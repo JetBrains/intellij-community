@@ -474,13 +474,9 @@ public class TemplateState implements Disposable {
       return "no template";
     }
 
-    String message = template.getKey();
-    if (message == null || message.isEmpty()) {
-      message = template.getString();
-      if (message == null) {
-        message = template.getTemplateText();
-      }
-    }
+    String message = StringUtil.notNullize(template.getKey());
+    message += "\n\nTemplate#string: " + StringUtil.notNullize(template.getString());
+    message += "\n\nTemplate#text: " + StringUtil.notNullize(template.getTemplateText());
     return message;
   }
 
@@ -583,7 +579,7 @@ public class TemplateState implements Disposable {
     return myTemplate.getExpressionAt(myCurrentVariableNumber);
   }
 
-  private void runLookup(final List<TemplateExpressionLookupElement> lookupItems, String advertisingText) {
+  private void runLookup(final List<TemplateExpressionLookupElement> lookupItems, @Nullable String advertisingText) {
     if (myEditor == null) return;
 
     final LookupManager lookupManager = LookupManager.getInstance(myProject);
@@ -595,7 +591,9 @@ public class TemplateState implements Disposable {
       lookup.setStartCompletionWhenNothingMatches(true);
     }
 
-    lookup.setAdvertisementText(advertisingText);
+    if (advertisingText != null) {
+      lookup.addAdvertisement(advertisingText, null);
+    }
     lookup.refreshUi(true, true);
     ourLookupShown = true;
     lookup.addLookupListener(new LookupAdapter() {

@@ -147,13 +147,23 @@ public class ActionsTreeUtil {
         final String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
         if (id != null) {
           String binding = getActionBinding(keymap, id);
-          boolean bound = binding != null && actionManager.getAction(binding) != null;
+          boolean bound = binding != null
+                          && actionManager.getAction(binding) != null // do not hide bound action, that miss the 'bound-with'
+                          && !hasAssociatedShortcutsInHierarchy(id, keymap); // do not hide bound actions when they are redefined
           return filter == null ? !bound : !bound && filter.value(action);
         }
 
         return filter == null || filter.value(action);
       }
     };
+  }
+
+  private static boolean hasAssociatedShortcutsInHierarchy(String id, Keymap keymap) {
+    while (keymap != null) {
+      if (((KeymapImpl)keymap).hasOwnActionId(id)) return true;
+      keymap = keymap.getParent();
+    }
+    return false;
   }
 
   private static void fillGroupIgnorePopupFlag(ActionGroup actionGroup, Group group, Condition<AnAction> filtered) {
@@ -292,10 +302,6 @@ public class ActionsTreeUtil {
       else {
         String actionId = editorAction instanceof ActionStub ? ((ActionStub)editorAction).getId() : actionManager.getId(editorAction);
         if (actionId == null) continue;
-        if (actionId.startsWith(EDITOR_PREFIX)) {
-          AnAction action = actionManager.getActionOrStub('$' + actionId.substring(6));
-          if (action != null) continue;
-        }
         if (filtered == null || filtered.value(editorAction)) {
           ids.add(actionId);
         }

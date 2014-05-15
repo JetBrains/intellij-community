@@ -171,7 +171,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
           return newBound;
         }
 
-        return rebound(wildcardType, newBound);
+        return newBound == PsiType.NULL ? newBound : rebound(wildcardType, newBound);
       }
     }
 
@@ -395,7 +395,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
         final PsiType[] boundTypes = typeParameter.getExtendsListTypes();
         for (PsiType boundType : boundTypes) {
           if (TypeConversionUtil.isAssignable(erasure, boundType)) {
-            return boundType;
+            return boundType.accept(mySimpleSubstitutionVisitor);
           }
         }
       }
@@ -533,11 +533,19 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
 
   @Override
   public boolean isValid() {
-    Collection<PsiType> substitutorValues = mySubstitutionMap.values();
-    for (PsiType type : substitutorValues) {
+    for (PsiType type : mySubstitutionMap.values()) {
       if (type != null && !type.isValid()) return false;
     }
     return true;
+  }
+
+  @Override
+  public void ensureValid() {
+    for (PsiType type : mySubstitutionMap.values()) {
+      if (type != null) {
+        PsiUtil.ensureValidType(type);
+      }
+    }
   }
 
   @Override

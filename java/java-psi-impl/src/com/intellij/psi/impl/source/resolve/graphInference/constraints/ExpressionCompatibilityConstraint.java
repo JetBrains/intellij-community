@@ -52,6 +52,11 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
       }
     
       final PsiType exprType = myExpression.getType();
+
+      if (exprType instanceof PsiLambdaParameterType) {
+        return false;
+      }
+
       if (exprType != null && exprType != PsiType.NULL) {
         constraints.add(new TypeCompatibilityConstraint(myT, exprType));
       }
@@ -145,7 +150,9 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
           if (!accepted) {
             return false;
           }
-          callSession.registerConstraints(method != null && !PsiUtil.isRawSubstitutor(method, siteSubstitutor) ? siteSubstitutor.substitute(returnType) : returnType, substitutor.substitute(returnType));
+          callSession.registerReturnTypeConstraints(
+            method != null && !PsiUtil.isRawSubstitutor(method, siteSubstitutor) ? siteSubstitutor.substitute(returnType) : returnType,
+            substitutor.substitute(returnType));
           if (callSession.repeatInferencePhases(true)) {
             final Collection<InferenceVariable> inferenceVariables = callSession.getInferenceVariables();
             if (sameMethodCall) {

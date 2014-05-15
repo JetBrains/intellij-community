@@ -16,13 +16,12 @@
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.CommonActionsManager;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CaptionPanel;
+import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.panels.Wrapper;
@@ -32,6 +31,7 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
+import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -83,6 +83,16 @@ public class XFramesView implements XDebugView {
         }
       }
     });
+
+    final ActionManager actionManager = ActionManager.getInstance();
+    myFramesList.addMouseListener(new PopupHandler() {
+      @Override
+      public void invokePopup(final Component comp, final int x, final int y) {
+        ActionGroup group = (ActionGroup)actionManager.getAction(XDebuggerActions.FRAMES_TREE_POPUP_GROUP);
+        actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group).getComponent().show(comp, x, y);
+      }
+    });
+
     myMainPanel.add(ScrollPaneFactory.createScrollPane(myFramesList), BorderLayout.CENTER);
 
     myThreadComboBox = new JComboBox();
@@ -105,6 +115,8 @@ public class XFramesView implements XDebugView {
     CommonActionsManager actionsManager = CommonActionsManager.getInstance();
     framesGroup.add(actionsManager.createPrevOccurenceAction(getFramesList()));
     framesGroup.add(actionsManager.createNextOccurenceAction(getFramesList()));
+
+    framesGroup.addAll(ActionManager.getInstance().getAction(XDebuggerActions.FRAMES_TOP_TOOLBAR_GROUP));
 
     final ActionToolbarImpl toolbar =
       (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, framesGroup, true);
@@ -242,8 +254,11 @@ public class XFramesView implements XDebugView {
       XStackFrame topFrame = executionStack.getTopFrame();
       if (topFrame != null) {
         myStackFrames.add(topFrame);
+        myNextFrameIndex = 1;
       }
-      myNextFrameIndex = 1;
+      else {
+        myNextFrameIndex = 0;
+      }
     }
 
     @Override
@@ -279,7 +294,7 @@ public class XFramesView implements XDebugView {
     private void addFrameListElements(final List<?> values, final boolean last) {
       if (myExecutionStack != null && myExecutionStack == mySelectedStack) {
         DefaultListModel model = myFramesList.getModel();
-        if (model.getElementAt(model.getSize() - 1) == null) {
+        if (!model.isEmpty() && model.getElementAt(model.getSize() - 1) == null) {
           model.removeElementAt(model.getSize() - 1);
         }
         for (Object value : values) {

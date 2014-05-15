@@ -15,18 +15,25 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-public class SoutPostfixTemplate extends NonVoidPostfixTemplate {
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_NON_VOID;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
+
+public class SoutPostfixTemplate extends JavaStatementWrapPostfixTemplate {
   public SoutPostfixTemplate() {
-    super("sout", "Creates System.out.println call", "System.out.println(expr);");
+    super("sout", "System.out.println(expr);", JAVA_PSI_INFO, IS_NON_VOID);
   }
 
+  @NotNull
   @Override
-  public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
-    PostfixTemplatesUtils.createStatement(context, editor, "System.out.println(", ")");
+  protected String getHead() {
+    return "System.out.println(";
+  }
+
+  @NotNull
+  @Override
+  protected String getTail() {
+    return ");";
   }
 }

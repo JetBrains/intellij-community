@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.execution.rmi;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ConcurrentFactoryMap;
@@ -37,10 +37,10 @@ public class RemoteUtil {
   RemoteUtil() {
   }
 
-  private static final ConcurrentFactoryMap<Pair<Class<?>, Class<?>>, Map<Method, Method>> ourRemoteToLocalMap =
-    new ConcurrentFactoryMap<Pair<Class<?>, Class<?>>, Map<Method, Method>>() {
+  private static final ConcurrentFactoryMap<Couple<Class<?>>, Map<Method, Method>> ourRemoteToLocalMap =
+    new ConcurrentFactoryMap<Couple<Class<?>>, Map<Method, Method>>() {
       @Override
-      protected Map<Method, Method> create(Pair<Class<?>, Class<?>> key) {
+      protected Map<Method, Method> create(Couple<Class<?>> key) {
         final THashMap<Method, Method> map = new THashMap<Method, Method>();
         for (Method method : key.second.getMethods()) {
           Method m = null;
@@ -92,7 +92,7 @@ public class RemoteUtil {
     return returnType;
   }
 
-  public static <T> T substituteClassLoader(final T remote, final ClassLoader classLoader) throws Exception {
+  public static <T> T substituteClassLoader(@NotNull final T remote, @Nullable final ClassLoader classLoader) throws Exception {
     return executeWithClassLoader(new ThrowableComputable<T, Exception>() {
       @Override
       public T compute() {
@@ -102,16 +102,7 @@ public class RemoteUtil {
             return executeWithClassLoader(new ThrowableComputable<Object, Exception>() {
               @Override
               public Object compute() throws Exception {
-                try {
-                  return handleRemoteResult(method.invoke(remote, args), method.getReturnType(), classLoader, true);
-                }
-                catch (InvocationTargetException e) {
-                  Throwable cause = e.getCause();
-                  if (cause instanceof RuntimeException) throw (RuntimeException)cause;
-                  if (cause instanceof Error) throw (Error)cause;
-                  if (canThrow(cause, method)) throw (Exception)cause;
-                  throw new RuntimeException(cause);
-                }
+                return invokeRemote(method, method, remote, args, classLoader, true);
               }
             }, classLoader);
           }
@@ -119,6 +110,29 @@ public class RemoteUtil {
         return (T)proxy;
       }
     }, classLoader);
+  }
+
+  private static Object invokeRemote(@NotNull Method localMethod,
+                                     @NotNull Method remoteMethod,
+                                     @NotNull Object remoteObj,
+                                     @Nullable Object[] args,
+                                     @Nullable ClassLoader loader,
+                                     boolean substituteClassLoader)
+    throws Exception {
+    boolean canThrowError = false;
+    try {
+      Object result = remoteMethod.invoke(remoteObj, args);
+      canThrowError = true;
+      return handleRemoteResult(result, localMethod.getReturnType(), loader, substituteClassLoader);
+    }
+    catch (InvocationTargetException e) {
+      Throwable cause = e.getCause(); // root cause may go deeper than we need, so leave it like this
+      if (cause instanceof ServerError) cause = ObjectUtils.chooseNotNull(cause.getCause(), cause);
+      if (cause instanceof RuntimeException) throw (RuntimeException)cause;
+      else if (canThrowError && cause instanceof Error || cause instanceof LinkageError) throw (Error)cause;
+      else if (canThrow(cause, localMethod)) throw (Exception)cause;
+      throw new RuntimeException(cause);
+    }
   }
 
   public static <T> T handleRemoteResult(Object value, Class<? super T> clazz, Object requestor) throws Exception {
@@ -208,19 +222,9 @@ public class RemoteUtil {
         return method.invoke(myRemote, args);
       }
       else {
-        Method m = ourRemoteToLocalMap.get(Pair.<Class<?>, Class<?>>create(myRemote.getClass(), myClazz)).get(method);
-        if (m == null) throw new NoSuchMethodError(method.getName() + " in " + myRemote.getClass());
-        try {
-          return handleRemoteResult(m.invoke(myRemote, args), method.getReturnType(), myLoader, false);
-        }
-        catch (InvocationTargetException e) {
-          Throwable cause = e.getCause(); // root cause may go deeper than we need, so leave it like this
-          if (cause instanceof ServerError) cause = ObjectUtils.chooseNotNull(cause.getCause(), cause);
-          if (cause instanceof RuntimeException) throw cause;
-          if (cause instanceof Error) throw cause;
-          if (canThrow(cause, method)) throw cause;
-          throw new RuntimeException(cause);
-        }
+        Method remoteMethod = ourRemoteToLocalMap.get(Couple.newOne(myRemote.getClass(), myClazz)).get(method);
+        if (remoteMethod == null) throw new NoSuchMethodError(method.getName() + " in " + myRemote.getClass());
+        return invokeRemote(method, remoteMethod, myRemote, args, myLoader, false);
       }
     }
   }

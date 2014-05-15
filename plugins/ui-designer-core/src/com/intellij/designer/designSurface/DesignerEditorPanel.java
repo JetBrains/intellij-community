@@ -45,6 +45,7 @@ import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -100,7 +101,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   private final CardLayout myLayout = new CardLayout();
   private final ThreeComponentsSplitter myContentSplitter = new ThreeComponentsSplitter();
   private final JPanel myPanel = new JPanel(myLayout);
-  private JPanel myDesignerCard;
+  private JComponent myDesignerCard;
 
   protected DesignerActionPanel myActionPanel;
 
@@ -139,6 +140,8 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   private JPanel myProgressPanel;
   private AsyncProcessIcon myProgressIcon;
   private JLabel myProgressMessage;
+
+  protected String myLastExecuteCommand;
 
   public DesignerEditorPanel(@NotNull DesignerEditor editor, @NotNull Project project, @NotNull Module module, @NotNull VirtualFile file) {
     myEditor = editor;
@@ -182,7 +185,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
     myToolProvider = createToolProvider();
 
-    myGlassLayer = new GlassLayer(myToolProvider, mySurfaceArea);
+    myGlassLayer = createGlassLayer(myToolProvider, mySurfaceArea);
     myLayeredPane.add(myGlassLayer, LAYER_GLASS);
 
     myDecorationLayer = createDecorationLayer();
@@ -194,6 +197,28 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myInplaceEditingLayer = createInplaceEditingLayer();
     myLayeredPane.add(myInplaceEditingLayer, LAYER_INPLACE_EDITING);
 
+    myScrollPane = createScrollPane(myLayeredPane);
+
+    myQuickFixManager = new QuickFixManager(this, myGlassLayer, myScrollPane.getViewport());
+
+    myActionPanel = createActionPanel();
+    myWarnAction = new FixableMessageAction();
+
+    panel.add(myActionPanel.getToolbarComponent());
+    panel.add(myPanel);
+
+    myDesignerCard = createDesignerCardPanel();
+    myPanel.add(myDesignerCard, DESIGNER_CARD);
+
+    mySurfaceArea.addSelectionListener(new ComponentSelectionListener() {
+      @Override
+      public void selectionChanged(EditableArea area) {
+        storeSourceSelectionState();
+      }
+    });
+  }
+
+  protected JComponent createDesignerCardPanel() {
     JPanel content = new JPanel(new GridBagLayout());
 
     GridBagConstraints gbc = new GridBagConstraints();
@@ -218,29 +243,12 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     gbc.weighty = 1;
     gbc.fill = GridBagConstraints.BOTH;
 
-    myScrollPane = createScrollPane(myLayeredPane);
     content.add(myScrollPane, gbc);
 
     myHorizontalCaption.attachToScrollPane(myScrollPane);
     myVerticalCaption.attachToScrollPane(myScrollPane);
 
-    myQuickFixManager = new QuickFixManager(this, myGlassLayer, myScrollPane.getViewport());
-
-    myActionPanel = createActionPanel();
-    myWarnAction = new FixableMessageAction();
-
-    panel.add(myActionPanel.getToolbarComponent());
-    panel.add(myPanel);
-
-    myDesignerCard = content;
-    myPanel.add(myDesignerCard, DESIGNER_CARD);
-
-    mySurfaceArea.addSelectionListener(new ComponentSelectionListener() {
-      @Override
-      public void selectionChanged(EditableArea area) {
-        storeSourceSelectionState();
-      }
-    });
+    return content;
   }
 
   public final ThreeComponentsSplitter getContentSplitter() {
@@ -255,12 +263,16 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     return new DesignerToolProvider();
   }
 
+  protected GlassLayer createGlassLayer(ToolProvider provider, EditableArea area) {
+    return new GlassLayer(provider, area);
+  }
+
   protected DecorationLayer createDecorationLayer() {
     return new DecorationLayer(this, mySurfaceArea);
   }
 
   protected FeedbackLayer createFeedbackLayer() {
-    return new FeedbackLayer();
+    return new FeedbackLayer(this);
   }
 
   protected InplaceEditingLayer createInplaceEditingLayer() {
@@ -300,8 +312,14 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myErrorMessages.removeAll();
     myErrorStack.setText(null);
     myLayeredPane.revalidate();
-    myHorizontalCaption.update();
-    myVerticalCaption.update();
+
+    if (myHorizontalCaption != null) {
+      myHorizontalCaption.update();
+    }
+    if (myVerticalCaption != null) {
+      myVerticalCaption.update();
+    }
+
     myLayout.show(myPanel, DESIGNER_CARD);
   }
 
@@ -354,9 +372,9 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     return new Attachment[]{AttachmentFactory.createAttachment(myFile)};
   }
 
-  protected abstract void configureError(final @NotNull ErrorInfo info);
+  protected abstract void configureError(@NotNull ErrorInfo info);
 
-  protected void showErrorPage(final ErrorInfo info) {
+  protected void showErrorPage(ErrorInfo info) {
     storeState();
     hideProgress();
     myRootComponent = null;
@@ -458,7 +476,8 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myProgressPanel = new JPanel(new GridBagLayout());
     myProgressPanel.add(progressBlock,
                         new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0),
-                                               0, 0));
+                                               0, 0)
+    );
     myProgressPanel.setOpaque(false);
   }
 
@@ -731,7 +750,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   @NotNull
   public DesignerEditorState createState() {
-    return new DesignerEditorState(myFile);
+    return new DesignerEditorState(myFile, getZoom());
   }
 
   public boolean isEditorValid() {
@@ -1050,17 +1069,19 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
     @Override
     public boolean execute(final ThrowableRunnable<Exception> operation, String command, final boolean updateProperties) {
-      final boolean[] is = {true};
+      myLastExecuteCommand = command;
+      final Ref<Boolean> result = Ref.create(Boolean.TRUE);
       CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
         public void run() {
-          is[0] = DesignerEditorPanel.this.execute(operation, updateProperties);
+          result.set(DesignerEditorPanel.this.execute(operation, updateProperties));
         }
       }, command, null);
-      return is[0];
+      return result.get();
     }
 
     @Override
     public void executeWithReparse(final ThrowableRunnable<Exception> operation, String command) {
+      myLastExecuteCommand = command;
       CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
         public void run() {
           DesignerEditorPanel.this.executeWithReparse(operation);
@@ -1070,6 +1091,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
     @Override
     public void execute(final List<EditOperation> operations, String command) {
+      myLastExecuteCommand = command;
       CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
         public void run() {
           DesignerEditorPanel.this.execute(operations);

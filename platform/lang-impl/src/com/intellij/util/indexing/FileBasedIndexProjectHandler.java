@@ -22,7 +22,9 @@ package com.intellij.util.indexing;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.*;
@@ -30,6 +32,7 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ProjectRootManagerComponent;
+import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public class FileBasedIndexProjectHandler extends AbstractProjectComponent implements IndexableFileSet {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndexProjectHandler");
   private final FileBasedIndexImpl myIndex;
   private final ProjectRootManagerEx myRootManager;
   private final FileTypeManager myFileTypeManager;
@@ -52,11 +56,25 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
     myRootManager = rootManager;
     myFileTypeManager = ftManager;
 
+    if (ApplicationManager.getApplication().isInternal()) {
+      project.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+
+        public void enteredDumbMode() {
+        }
+
+        public void exitDumbMode() {
+          LOG.info("Has changed files: " + (createChangedFilesIndexingTask(project) != null) + "; project=" + project);
+        }
+      });
+    }
+
     final StartupManagerEx startupManager = (StartupManagerEx)StartupManager.getInstance(project);
     if (startupManager != null) {
       startupManager.registerPreStartupActivity(new Runnable() {
         @Override
         public void run() {
+          PushedFilePropertiesUpdater.getInstance(project).initializeProperties();
+
           // dumb mode should start before post-startup activities
           // only when queueTask is called from UI thread, we can guarantee that
           // when the method returns, the application has entered dumb mode

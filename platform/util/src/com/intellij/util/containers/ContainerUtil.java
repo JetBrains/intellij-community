@@ -450,8 +450,8 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
-  public static <K, V> Map<K,Pair<V,V>> diff(@NotNull Map<K, V> map1, @NotNull Map<K, V> map2) {
-    final Map<K, Pair<V,V>> res = newHashMap();
+  public static <K, V> Map<K,Couple<V>> diff(@NotNull Map<K, V> map1, @NotNull Map<K, V> map2) {
+    final Map<K, Couple<V>> res = newHashMap();
     final Set<K> keys = newHashSet();
     keys.addAll(map1.keySet());
     keys.addAll(map2.keySet());
@@ -459,7 +459,7 @@ public class ContainerUtil extends ContainerUtilRt {
       V v1 = map1.get(k);
       V v2 = map2.get(k);
       if (!(v1 == v2 || v1 != null && v1.equals(v2))) {
-        res.put(k, Pair.create(v1, v2));
+        res.put(k, Couple.newOne(v1, v2));
       }
     }
     return res;
@@ -2121,6 +2121,16 @@ public class ContainerUtil extends ContainerUtilRt {
   private static boolean isAtLeastJava7() {
     // IBM JDK provides correct version in java.version property, but not in java.runtime.version property
     return StringUtil.compareVersionNumbers(SystemInfo.JAVA_VERSION, "1.7") >= 0;
+  }
+
+  public static <T extends Comparable<T>> int compareLexicographically(List<T> o1, List<T> o2) {
+    for (int i = 0; i < Math.min(o1.size(), o2.size()); i++) {
+      int result = o1.get(i).compareTo(o2.get(i));
+      if (result != 0) {
+        return result;
+      }
+    }
+    return o1.size() < o2.size() ? -1 : o1.size() == o2.size() ? 0 : 1;
   }
 }
 

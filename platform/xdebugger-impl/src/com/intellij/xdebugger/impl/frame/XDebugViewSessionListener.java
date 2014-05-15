@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 * @author nik
 */
 public class XDebugViewSessionListener extends XDebugSessionAdapter {
-  private XDebugView myDebugView;
+  private final XDebugView myDebugView;
   private final Project myProject;
 
   public XDebugViewSessionListener(@NotNull XDebugView debugView, @NotNull Project project) {

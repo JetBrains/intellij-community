@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -76,7 +75,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
   @NonNls private static final String HELP_ID = "vcs.subversion.authentication";
   private boolean myKeyFileEmptyOrCorrect;
 
-  protected SSHCredentialsDialog(Project project,
+  public SSHCredentialsDialog(Project project,
                                  String realm,
                                  String userName,
                                  boolean allowSave,
@@ -378,7 +377,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
       if (port <= 0) {
           port = 22;
       }
-      return port;      
+      return port;
   }
 
   public String getPassphrase() {
@@ -430,23 +429,20 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
         file = VirtualFileManager.getInstance().findFileByUrl(path[0]);
         if (file == null || !file.exists()) {
           path[0] = "file://" + SystemProperties.getUserHome() + "/.ssh";
-          file = VirtualFileManager.getInstance().findFileByUrl(path[0]); 
+          file = VirtualFileManager.getInstance().findFileByUrl(path[0]);
         }
       }
-      FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
 
-      descriptor.setShowFileSystemRoots(true);
-      descriptor.setTitle(SvnBundle.message("dialog.title.openssh.v2.private.key"));
-      descriptor.setDescription(SvnBundle.message("dialog.description.openssh.v2.private.key"));
-      descriptor.setHideIgnored(false);
-
-      final String oldValue = PropertiesComponent.getInstance().getValue("FileChooser.showHiddens");
-      PropertiesComponent.getInstance().setValue("FileChooser.showHiddens", Boolean.TRUE.toString());
+      FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+        .withTitle(SvnBundle.message("dialog.title.openssh.v2.private.key"))
+        .withDescription(SvnBundle.message("dialog.description.openssh.v2.private.key"))
+        .withShowFileSystemRoots(true)
+        .withHideIgnored(false)
+        .withShowHiddenFiles(true);
 
       FileChooser.chooseFiles(descriptor, myProject, file, new Consumer<List<VirtualFile>>() {
         @Override
         public void consume(List<VirtualFile> files) {
-          PropertiesComponent.getInstance().setValue("FileChooser.showHiddens", oldValue);
           if (files.size() == 1) {
             path[0] = FileUtil.toSystemDependentName(files.get(0).getPath());
             myKeyFileText.setText(path[0]);

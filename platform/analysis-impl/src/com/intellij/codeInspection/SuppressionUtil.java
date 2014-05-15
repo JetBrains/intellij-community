@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -116,13 +116,13 @@ public class SuppressionUtil extends SuppressionUtilCore {
   }
 
   @Nullable
-  public static Pair<String, String> getBlockPrefixSuffixPair(PsiElement comment) {
+  public static Couple<String> getBlockPrefixSuffixPair(PsiElement comment) {
     final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(comment.getLanguage());
     if (commenter != null) {
       final String prefix = commenter.getBlockCommentPrefix();
       final String suffix = commenter.getBlockCommentSuffix();
       if (prefix != null || suffix != null) {
-        return Pair.create(StringUtil.notNullize(prefix), StringUtil.notNullize(suffix));
+        return Couple.newOne(StringUtil.notNullize(prefix), StringUtil.notNullize(suffix));
       }
     }
     return null;
@@ -140,7 +140,7 @@ public class SuppressionUtil extends SuppressionUtilCore {
     if (prefix != null) {
       return commentText.startsWith(prefix + SUPPRESS_INSPECTIONS_TAG_NAME);
     }
-    final Pair<String, String> prefixSuffixPair = getBlockPrefixSuffixPair(comment);
+    final Couple<String> prefixSuffixPair = getBlockPrefixSuffixPair(comment);
     return prefixSuffixPair != null
            && commentText.startsWith(prefixSuffixPair.first + SUPPRESS_INSPECTIONS_TAG_NAME)
            && commentText.endsWith(prefixSuffixPair.second);
@@ -150,7 +150,7 @@ public class SuppressionUtil extends SuppressionUtilCore {
                                                boolean replaceOtherSuppressionIds, @NotNull Language commentLanguage) {
     final String oldSuppressionCommentText = comment.getText();
     final String lineCommentPrefix = getLineCommentPrefix(comment);
-    Pair<String, String> blockPrefixSuffix = null;
+    Couple<String> blockPrefixSuffix = null;
     if (lineCommentPrefix == null) {
       blockPrefixSuffix = getBlockPrefixSuffixPair(comment);
     }

@@ -32,7 +32,15 @@ public class XmlAutopopupTest extends CompletionAutoPopupTestCase {
     doTestNoPopup(XHtmlFileType.INSTANCE, "<div><caret></div>", "p");
   }
 
-  public void testAfterTagOpenXhtml() throws Exception {
+  public void testAfterAmpersand() {
+    doTestPopup(HtmlFileType.INSTANCE, "<div>&<caret></div>", "t");
+  }
+
+  public void testDoNotShowPopupAfterQuotedSymbol() {
+    doTestNoPopup(HtmlFileType.INSTANCE, "<div>\"<caret></div>", "s");
+  }
+
+  public void testAfterTagOpenXhtml() {
     doTestPopup(XHtmlFileType.INSTANCE, "<div><caret></div>", "<");
   }
 

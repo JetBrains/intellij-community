@@ -19,6 +19,8 @@ package com.intellij.codeInspection.ex;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.PerformAnalysisInBackgroundOption;
+import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoProcessor;
 import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
 import com.intellij.codeInspection.*;
@@ -36,10 +38,10 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
-import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtilCore;
@@ -56,6 +58,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.content.*;
 import com.intellij.util.Processor;
+import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.TripleFunction;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
@@ -71,13 +74,11 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class GlobalInspectionContextImpl extends GlobalInspectionContextBase implements GlobalInspectionContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.GlobalInspectionContextImpl");
+  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("Inspection Results", ToolWindowId.INSPECTION, true);
   private final NotNullLazyValue<ContentManager> myContentManager;
   private InspectionResultsView myView = null;
   private Content myContent = null;
@@ -296,8 +297,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
         if (myView != null) {
           if (!myView.update() && !getUIOptions().SHOW_ONLY_DIFF) {
-            NotificationGroup.toolWindowGroup("Inspection Results", ToolWindowId.INSPECTION, true)
-              .createNotification(InspectionsBundle.message("inspection.no.problems.message"), MessageType.INFO).notify(getProject());
+            NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message"), MessageType.INFO).notify(getProject());
             close(true);
           }
           else {
@@ -605,5 +605,70 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       myPresentationMap.put(toolWrapper, presentation);
     }
     return presentation;
+  }
+
+  @Override
+  public void codeCleanup(final Project project,
+                          final AnalysisScope scope,
+                          final InspectionProfile profile, 
+                          final String commandName) {
+    final List<LocalInspectionToolWrapper> lTools = new ArrayList<LocalInspectionToolWrapper>();
+
+    final LinkedHashMap<PsiFile, List<HighlightInfo>> results = new LinkedHashMap<PsiFile, List<HighlightInfo>>();
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Inspect code...", true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        scope.accept(new PsiElementVisitor() {
+          @Override
+          public void visitFile(PsiFile file) {
+            final VirtualFile virtualFile = file.getVirtualFile();
+            if (virtualFile == null || virtualFile.getFileType().isBinary()) return;
+            for (final Tools tools : profile.getAllEnabledInspectionTools(project)) {
+              if (tools.getTool().getTool() instanceof CleanupLocalInspectionTool) {
+                final InspectionToolWrapper tool = tools.getEnabledTool(file);
+                if (tool instanceof LocalInspectionToolWrapper) {
+                  lTools.add((LocalInspectionToolWrapper)tool);
+                  tool.initialize(GlobalInspectionContextImpl.this);
+                }
+              }
+            }
+
+            if (!lTools.isEmpty()) {
+              final LocalInspectionsPass pass = new LocalInspectionsPass(file, PsiDocumentManager.getInstance(project).getDocument(file), 0,
+                                                                         file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
+                                                                         HighlightInfoProcessor.getEmpty());
+              Runnable runnable = new Runnable() {
+                public void run() {
+                  pass.doInspectInBatch(GlobalInspectionContextImpl.this, (InspectionManagerEx)InspectionManager.getInstance(project), lTools);
+                }
+              };
+              ApplicationManager.getApplication().runReadAction(runnable);
+              results.put(file, pass.getInfos());
+            }
+          }
+        });
+      }
+
+      @Override
+      public void onSuccess() {
+        if (!FileModificationService.getInstance().preparePsiElementsForWrite(results.keySet())) return;
+
+        final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, "Code Cleanup", true);
+        progressTask.setMinIterationTime(200);
+        progressTask.setTask(new SequentialCleanupTask(project, results, progressTask));
+        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+          @Override
+          public void run() {
+            CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
+              public void run() {
+                ProgressManager.getInstance().run(progressTask);
+              }
+            });
+          }
+        }, commandName, null);
+      }
+    });
   }
 }

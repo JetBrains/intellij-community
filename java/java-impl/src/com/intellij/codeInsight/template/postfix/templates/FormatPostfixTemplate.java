@@ -15,29 +15,48 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 
-public class FormatPostfixTemplate extends PostfixTemplate {
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
+
+public class FormatPostfixTemplate extends JavaStatementWrapPostfixTemplate {
+  private static final Condition<PsiElement> IS_STRING = new Condition<PsiElement>() {
+    @Override
+    public boolean value(PsiElement expr) {
+      if (!(expr instanceof PsiExpression)) {
+        return false;
+      }
+      PsiType type = ((PsiExpression)expr).getType();
+      return type != null && CommonClassNames.JAVA_LANG_STRING.equals(type.getCanonicalText());
+    }
+  };
+
+
   public FormatPostfixTemplate() {
-    super("format", "Creates String.format call", "String.format(expr);");
+    super("format", "String.format(expr);", JAVA_PSI_INFO, IS_STRING);
   }
 
   @Override
-  public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
-    PostfixTemplatesUtils.createStatement(context, editor, "String.format(", ", )", -2);
+  protected void afterExpand(@NotNull PsiElement newElement, @NotNull Editor editor) {
+    editor.getCaretModel().moveToOffset(newElement.getTextRange().getEndOffset() - 2);
+    JavaPostfixTemplateProvider.doNotDeleteSemicolon(newElement.getContainingFile());
   }
 
+  @NotNull
   @Override
-  public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
-    PsiExpression expr = PostfixTemplatesUtils.getTopmostExpression(context);
-    PsiType type = expr != null ? expr.getType() : null;
-    return expr != null && type != null && CommonClassNames.JAVA_LANG_STRING.equals(type.getCanonicalText());
+  protected String getHead() {
+    return "String.format(";
+  }
+
+  @NotNull
+  @Override
+  protected String getTail() {
+    return ", );";
   }
 }

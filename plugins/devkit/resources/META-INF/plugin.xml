@@ -17,6 +17,14 @@
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
 
+    <codeInsight.lineMarkerProvider language="JAVA" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="Groovy" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider"/>
+    <fileEditorProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorProvider"/>
+    <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataAsRelatedFileProvider"/>
+    <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestCaseAsRelatedFileProvider"/>
+    <psi.referenceContributor implementation="org.jetbrains.idea.devkit.testAssistant.TestDataReferenceContributor"/>
+    <getDataRule key="Location" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestLocationDataRule"/>
+
     <junitPatcher implementation="org.jetbrains.idea.devkit.run.JUnitDevKitPatcher"/>
     <antBuildGen implementation="org.jetbrains.idea.devkit.build.ant.ChunkBuildPluginExtension"/>
     <compiler.buildParticipantProvider implementation="org.jetbrains.idea.devkit.build.PluginBuildParticipantProvider"/>
@@ -66,6 +74,13 @@
                      bundle="org.jetbrains.idea.devkit.DevKitBundle"
                      groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.IntentionDescriptionNotFoundInspection"/>
+    <localInspection language="JAVA"
+                     key="inspections.component.postfix.template.not.found.description.name"
+                     bundle="org.jetbrains.idea.devkit.DevKitBundle"
+                     groupKey="inspections.group.name"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.PostfixTemplateDescriptionNotFoundInspection"/>
     <localInspection shortName="ComponentRegistrationProblems"
                      bundle="org.jetbrains.idea.devkit.DevKitBundle" key="inspections.registration.problems.name"
                      groupKey="inspections.group.name"
@@ -118,6 +133,16 @@
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseJBColorInspection"/>
+    <localInspection language="JAVA" shortName="UseCouple" displayName="Use Couple instead of Pair"
+                     bundle="org.jetbrains.idea.devkit.DevKitBundle"
+                     groupKey="inspections.group.name"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseCoupleInspection"/>
+    <localInspection language="JAVA" shortName="DontUsePairConstructor" displayName="Don't use constructor of Pair class"
+                     bundle="org.jetbrains.idea.devkit.DevKitBundle"
+                     groupKey="inspections.group.name"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.internal.DontUseNewPairInspection"/>
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
@@ -127,8 +152,20 @@
     <unusedDeclarationFixProvider implementation="org.jetbrains.idea.devkit.inspections.quickfix.RegisterExtensionFixProvider"/>
 
     <stacktrace.fold substring="at com.intellij.testFramework."/>
+    <stacktrace.fold substring="at com.intellij.util.messages.impl.MessageBus"/>
+    <stacktrace.fold substring="com.intellij.openapi.command.WriteCommandAction"/>
+    <stacktrace.fold substring="at com.intellij.openapi.application.impl.ApplicationImpl.runWriteAction("/>
+    <stacktrace.fold substring="at com.intellij.openapi.application.impl.ApplicationImpl.runReadAction("/>
+    <stacktrace.fold substring="at com.intellij.openapi.application.RunResult.run("/>
+    <stacktrace.fold substring="at com.intellij.openapi.command.impl.CommandProcessorImpl.executeCommand("/>
   </extensions>
 
+  <project-components>
+    <component>
+      <implementation-class>org.jetbrains.idea.devkit.testAssistant.TestDataHighlightingPassFactory</implementation-class>
+    </component>
+  </project-components>
+  
   <module-components>
     <component>
       <implementation-class>org.jetbrains.idea.devkit.build.PluginBuildConfiguration</implementation-class>
@@ -181,8 +218,19 @@
               id="GenerateDomModel"/>
 
       <add-to-group group-id="Internal" anchor="last"/>
+      
     </group>
-
+    <action id="TestData.Navigate"
+            class="org.jetbrains.idea.devkit.testAssistant.NavigateToTestDataAction"
+            text="Navigate to testdata" use-shortcut-of="GotoRelated">
+    </action>
+    <action id="DumpCleanTestData" internal="true" class="org.jetbrains.idea.devkit.internal.DumpCleanHighlightingTestdataAction">
+      <add-to-group group-id="Internal.Dump"/>
+    </action>
+    <group>
+      <reference id="TestData.Navigate"/>
+      <add-to-group anchor="first" group-id="TestTreePopupMenu"/>
+    </group>
   </actions>
 
 </idea-plugin>

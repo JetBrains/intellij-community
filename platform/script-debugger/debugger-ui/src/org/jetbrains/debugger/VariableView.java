@@ -1,12 +1,19 @@
 package org.jetbrains.debugger;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.ObsolescentAsyncResults;
+import com.intellij.xdebugger.XSourcePositionWrapper;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XKeywordValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XNumericValuePresentation;
@@ -24,6 +31,7 @@ import java.util.regex.Pattern;
 
 public final class VariableView extends XNamedValue implements VariableContext {
   private static final Pattern ARRAY_DESCRIPTION_PATTERN = Pattern.compile("^[a-zA-Z]+\\[\\d+\\]$");
+
   private static final class ArrayPresentation extends XValuePresentation {
     private final String length;
 
@@ -47,10 +55,9 @@ public final class VariableView extends XNamedValue implements VariableContext {
 
   private volatile List<Variable> remainingChildren;
   private volatile int remainingChildrenOffset;
-  private volatile int childrenModificationStamp;
 
-  public VariableView(@NotNull VariableContext context, @NotNull Variable variable) {
-    super(context.getMemberFilter().normalizeMemberName(variable));
+  public VariableView(@NotNull Variable variable, @NotNull VariableContext context) {
+    super(context.getViewSupport().normalizeMemberName(variable));
 
     this.context = context;
     this.variable = variable;
@@ -117,8 +124,8 @@ public final class VariableView extends XNamedValue implements VariableContext {
 
   @NotNull
   @Override
-  public DebuggerViewSupport getDebugProcess() {
-    return context.getDebugProcess();
+  public DebuggerViewSupport getViewSupport() {
+    return context.getViewSupport();
   }
 
   @Nullable
@@ -129,25 +136,51 @@ public final class VariableView extends XNamedValue implements VariableContext {
 
   @NotNull
   @Override
-  public MemberFilter getMemberFilter() {
-    return context.getMemberFilter();
+  public MemberFilter createMemberFilter() {
+    return context.getViewSupport().createMemberFilter(context);
   }
 
   @Override
-  public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
+  public void computePresentation(@NotNull final XValueNode node, @NotNull XValuePlace place) {
     value = variable.getValue();
-    if (value == null) {
-      ObsolescentAsyncResults.consume(((ObjectProperty)variable).evaluateGet(context.getEvaluateContext()), node, new PairConsumer<Value, XValueNode>() {
+    if (value != null) {
+      computePresentation(value, node);
+      return;
+    }
+
+    if (!(variable instanceof ObjectProperty) || ((ObjectProperty)variable).getGetter() == null) {
+      // it is "used" expression (WEB-6779 Debugger/Variables: Automatically show used variables)
+      ObsolescentAsyncResults.consume(getEvaluateContext().evaluate(variable.getName()), node, new PairConsumer<Value, XValueNode>() {
         @Override
         public void consume(Value value, XValueNode node) {
           VariableView.this.value = value;
           computePresentation(value, node);
         }
       });
+      return;
     }
-    else {
-      computePresentation(value, node);
-    }
+
+    node.setPresentation(null, new XValuePresentation() {
+      @Override
+      public void renderValue(@NotNull XValueTextRenderer renderer) {
+        renderer.renderValue("\u2026");
+      }
+    }, false);
+    node.setFullValueEvaluator(new XFullValueEvaluator(" (invoke getter)") {
+      @Override
+      public void startEvaluation(@NotNull final XFullValueEvaluationCallback callback) {
+        ValueModifier valueModifier = variable.getValueModifier();
+        assert valueModifier != null;
+        ObsolescentAsyncResults.consume(valueModifier.evaluateGet(variable, getEvaluateContext()), node, new PairConsumer<Value, XValueNode>() {
+          @Override
+          public void consume(Value value, XValueNode node) {
+            callback.evaluated("");
+            VariableView.this.value = value;
+            computePresentation(value, node);
+          }
+        });
+      }
+    }.setShowValuePopup(false));
   }
 
   @NotNull
@@ -172,7 +205,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
     switch (value.getType()) {
       case OBJECT:
       case NODE:
-        context.getDebugProcess().computeObjectPresentation(((ObjectValue)value), variable, context, node, getIcon());
+        context.getViewSupport().computeObjectPresentation(((ObjectValue)value), variable, context, node, getIcon());
         break;
 
       case FUNCTION:
@@ -180,7 +213,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
         break;
 
       case ARRAY:
-        context.getDebugProcess().computeArrayPresentation(value, variable, context, node, getIcon());
+        context.getViewSupport().computeArrayPresentation(value, variable, context, node, getIcon());
         break;
 
       case BOOLEAN:
@@ -213,44 +246,114 @@ public final class VariableView extends XNamedValue implements VariableContext {
   }
 
   @Override
-  public void computeChildren(@NotNull XCompositeNode node) {
+  public void computeChildren(@NotNull final XCompositeNode node) {
     node.setAlreadySorted(true);
 
-    if (!(value instanceof ObjectValue) || ((ObjectValue)value).hasProperties() == ThreeState.NO) {
+    if (!(value instanceof ObjectValue)) {
       node.addChildren(XValueChildrenList.EMPTY, true);
       return;
     }
 
-    ObsolescentAsyncResults.consume(((ObjectValue)value).getProperties(), node, new PairConsumer<List<Variable>, XCompositeNode>() {
+    List<Variable> list = remainingChildren;
+    if (list != null) {
+      int to = Math.min(remainingChildrenOffset + XCompositeNode.MAX_CHILDREN_TO_SHOW, list.size());
+      boolean isLast = to == list.size();
+      node.addChildren(Variables.createVariablesList(list, remainingChildrenOffset, to, this), isLast);
+      if (!isLast) {
+        node.tooManyChildren(list.size() - to);
+        remainingChildrenOffset += XCompositeNode.MAX_CHILDREN_TO_SHOW;
+      }
+      return;
+    }
+
+    final ObjectValue objectValue = (ObjectValue)value;
+
+    final boolean hasNamedProperties = objectValue.hasProperties() != ThreeState.NO;
+    boolean hasIndexedProperties = objectValue.hasIndexedProperties() != ThreeState.NO;
+    ActionCallback.Chunk chunk = new ActionCallback.Chunk();
+
+    ActionCallback additionalProperties = getViewSupport().computeAdditionalObjectProperties(objectValue, variable, this, node);
+    if (additionalProperties != null) {
+      chunk.add(additionalProperties);
+    }
+
+    // we don't support indexed properties if additional properties added - behavior is undefined if object has indexed properties and additional properties also specified
+    if (hasIndexedProperties) {
+      chunk.add(computeIndexedProperties((ArrayValue)objectValue, node, !hasNamedProperties && additionalProperties == null));
+    }
+
+    if (hasNamedProperties) {
+      // named properties should be added after additional properties
+      final ActionCallback namedPropertiesCallback;
+      if (additionalProperties == null || additionalProperties.isProcessed()) {
+        namedPropertiesCallback = computeNamedProperties(objectValue, node, !hasIndexedProperties && additionalProperties == null);
+      }
+      else {
+        namedPropertiesCallback = new ActionCallback();
+        additionalProperties.doWhenDone(new Runnable() {
+          @Override
+          public void run() {
+            computeNamedProperties(objectValue, node, true).notify(namedPropertiesCallback);
+          }
+        }).notifyWhenRejected(namedPropertiesCallback);
+      }
+      chunk.add(namedPropertiesCallback);
+    }
+
+    if (hasIndexedProperties == hasNamedProperties || additionalProperties != null) {
+      chunk.create().doWhenProcessed(new Runnable() {
+        @Override
+        public void run() {
+          if (!node.isObsolete()) {
+            node.addChildren(XValueChildrenList.EMPTY, true);
+          }
+        }
+      });
+    }
+  }
+
+  public abstract static class ObsolescentIndexedVariablesConsumer extends IndexedVariablesConsumer {
+    protected final XCompositeNode node;
+
+    protected ObsolescentIndexedVariablesConsumer(@NotNull XCompositeNode node) {
+      this.node = node;
+    }
+
+    @Override
+    public boolean isObsolete() {
+      return node.isObsolete();
+    }
+  }
+
+  @NotNull
+  private ActionCallback computeIndexedProperties(@NotNull final ArrayValue value, @NotNull final XCompositeNode node, final boolean isLastChildren) {
+    return value.getIndexedProperties(0, value.getLength(), XCompositeNode.MAX_CHILDREN_TO_SHOW, new ObsolescentIndexedVariablesConsumer(node) {
       @Override
-      public void consume(List<Variable> variables, XCompositeNode node) {
-        if (value instanceof ArrayValue) {
-          // todo arrays could have not only indexes values
-          return;
-        }
-
-        if (value.getType() == ValueType.ARRAY) {
-          computeArrayRanges(variables, node);
-          return;
-        }
-
-        int maxPropertiesToShow;
-        if (value.getType() == ValueType.FUNCTION) {
-          maxPropertiesToShow = Integer.MAX_VALUE;
+      public void consumeRanges(@Nullable int[] ranges) {
+        if (ranges == null) {
+          XValueChildrenList groupList = new XValueChildrenList();
+          LazyVariablesGroup.addGroups(value, LazyVariablesGroup.GROUP_FACTORY, groupList, 0, value.getLength(), XCompositeNode.MAX_CHILDREN_TO_SHOW, VariableView.this);
+          node.addChildren(groupList, isLastChildren);
         }
         else {
-          maxPropertiesToShow = XCompositeNode.MAX_CHILDREN_TO_SHOW;
-          List<Variable> list = remainingChildren;
-          if (list != null && childrenModificationStamp == ((ObjectValue)value).getCacheStamp()) {
-            int to = Math.min(remainingChildrenOffset + XCompositeNode.MAX_CHILDREN_TO_SHOW, list.size());
-            boolean isLast = to == list.size();
-            node.addChildren(Variables.createVariablesList(list, remainingChildrenOffset, to, VariableView.this), isLast);
-            if (!isLast) {
-              node.tooManyChildren(list.size() - to);
-              remainingChildrenOffset += XCompositeNode.MAX_CHILDREN_TO_SHOW;
-            }
-            return;
-          }
+          LazyVariablesGroup.addRanges(value, ranges, node, VariableView.this, isLastChildren);
+        }
+      }
+
+      @Override
+      public void consumeVariables(@NotNull List<Variable> variables) {
+        node.addChildren(Variables.createVariablesList(variables, VariableView.this), isLastChildren);
+      }
+    }, null);
+  }
+
+  private ActionCallback computeNamedProperties(@NotNull final ObjectValue value, @NotNull XCompositeNode node, final boolean isLastChildren) {
+    return ObsolescentAsyncResults.consume(value.getProperties(), node, new PairConsumer<List<Variable>, XCompositeNode>() {
+      @Override
+      public void consume(List<Variable> variables, XCompositeNode node) {
+        if (value.getType() == ValueType.ARRAY && !(value instanceof ArrayValue)) {
+          computeArrayRanges(variables, node);
+          return;
         }
 
         FunctionValue functionValue = value instanceof FunctionValue ? (FunctionValue)value : null;
@@ -258,44 +361,21 @@ public final class VariableView extends XNamedValue implements VariableContext {
           functionValue = null;
         }
 
-        remainingChildren = Variables.sortFilterAndAddValueList(variables, node, VariableView.this, maxPropertiesToShow, functionValue == null);
+        remainingChildren = Variables.sortFilterAndAddValueList(variables, node, VariableView.this, XCompositeNode.MAX_CHILDREN_TO_SHOW, isLastChildren && functionValue == null);
         if (remainingChildren != null) {
-          remainingChildrenOffset = maxPropertiesToShow;
-          childrenModificationStamp = ((ObjectValue)value).getCacheStamp();
+          remainingChildrenOffset = XCompositeNode.MAX_CHILDREN_TO_SHOW;
         }
 
         if (functionValue != null) {
           // we pass context as variable context instead of this variable value - we cannot watch function scopes variables, so, this variable name doesn't matter
-          node.addChildren(XValueChildrenList.bottomGroup(new FunctionScopesValueGroup(functionValue, context)), true);
+          node.addChildren(XValueChildrenList.bottomGroup(new FunctionScopesValueGroup(functionValue, context)), isLastChildren);
         }
       }
     });
-
-    if (value instanceof ArrayValue) {
-      ObsolescentAsyncResults.consume(((ArrayValue)value).getVariables(), node, new PairConsumer<List<Variable>, XCompositeNode>() {
-        @Override
-        public void consume(List<Variable> variables, XCompositeNode node) {
-          computeIndexedValuesRanges(variables, node);
-        }
-      });
-    }
-  }
-
-  private void computeIndexedValuesRanges(@NotNull List<Variable> variables, @NotNull XCompositeNode node) {
-    int totalLength = variables.size();
-    int bucketSize = XCompositeNode.MAX_CHILDREN_TO_SHOW;
-    if (totalLength <= bucketSize) {
-      node.addChildren(Variables.createVariablesList(variables, this), true);
-      return;
-    }
-
-    XValueChildrenList groupList = new XValueChildrenList();
-    addGroups(variables, groupList, 0, totalLength, bucketSize);
-    node.addChildren(groupList, true);
   }
 
   private void computeArrayRanges(@NotNull List<? extends Variable> properties, @NotNull XCompositeNode node) {
-    List<Variable> variables = Variables.filterAndSort(properties, this, false);
+    final List<Variable> variables = Variables.filterAndSort(properties, this, false);
     int count = variables.size();
     int bucketSize = XCompositeNode.MAX_CHILDREN_TO_SHOW;
     if (count <= bucketSize) {
@@ -311,7 +391,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
 
     XValueChildrenList groupList = new XValueChildrenList();
     if (count > 0) {
-      addGroups(variables, groupList, 0, count, bucketSize);
+      LazyVariablesGroup.addGroups(variables, VariablesGroup.GROUP_FACTORY, groupList, 0, count, bucketSize, this);
     }
 
     int notGroupedVariablesOffset;
@@ -323,7 +403,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
       }
 
       if (notGroupedVariablesOffset > 0) {
-        addGroups(variables, groupList, count, notGroupedVariablesOffset, bucketSize);
+        LazyVariablesGroup.addGroups(variables, VariablesGroup.GROUP_FACTORY, groupList, count, notGroupedVariablesOffset, bucketSize, this);
       }
     }
     else {
@@ -331,33 +411,10 @@ public final class VariableView extends XNamedValue implements VariableContext {
     }
 
     for (int i = notGroupedVariablesOffset; i < variables.size(); i++) {
-      groupList.add(new VariableView(this, variables.get(i)));
+      groupList.add(new VariableView(variables.get(i), this));
     }
 
     node.addChildren(groupList, true);
-  }
-
-  private void addGroups(List<Variable> variables, XValueChildrenList groupList, int from, int limit, int bucketSize) {
-    int to = Math.min(bucketSize, limit);
-    boolean done = false;
-    do {
-      int groupFrom = from;
-      int groupTo = to;
-
-      from += bucketSize;
-      to = from + Math.min(bucketSize, limit - from);
-
-      // don't create group for only one member
-      if (to - from == 1) {
-        groupTo++;
-        done = true;
-      }
-      groupList.addTopGroup(VariablesGroup.createArrayRangeGroup(groupFrom, groupTo, variables, this));
-      if (from >= limit) {
-        break;
-      }
-    }
-    while (!done);
   }
 
   @NotNull
@@ -425,7 +482,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
 
   @Override
   public boolean canNavigateToSource() {
-    return value instanceof FunctionValue || getDebugProcess().canNavigateToSource(variable, context);
+    return value instanceof FunctionValue || getViewSupport().canNavigateToSource(variable, context);
   }
 
   @Override
@@ -434,17 +491,54 @@ public final class VariableView extends XNamedValue implements VariableContext {
       ((FunctionValue)value).resolve().doWhenDone(new Consumer<FunctionValue>() {
         @Override
         public void consume(final FunctionValue function) {
-          getDebugProcess().getVm().getScriptManager().getScript(function).doWhenDone(new Consumer<Script>() {
+          getViewSupport().getVm().getScriptManager().getScript(function).doWhenDone(new Consumer<Script>() {
             @Override
             public void consume(Script script) {
-              navigatable.setSourcePosition(script == null ? null : getDebugProcess().getSourceInfo(null, script, function.getOpenParenLine(), function.getOpenParenColumn()));
+              SourceInfo position = script == null ? null : getViewSupport().getSourceInfo(null, script, function.getOpenParenLine(), function.getOpenParenColumn());
+              navigatable.setSourcePosition(position == null ? null : new XSourcePositionWrapper(position) {
+                @NotNull
+                @Override
+                public Navigatable createNavigatable(@NotNull Project project) {
+                  Navigatable result = PsiVisitors.visit(myPosition, project, new PsiVisitors.Visitor<Navigatable>() {
+                    @Override
+                    public Navigatable visit(@NotNull PsiElement element, int positionOffset, @NotNull Document document) {
+                      // element will be "open paren", but we should navigate to function name,
+                      // we cannot use specific PSI type here (like JSFunction), so, we try to find reference expression (i.e. name expression)
+                      PsiElement referenceCandidate = element;
+                      PsiElement psiReference = null;
+                      while ((referenceCandidate = referenceCandidate.getPrevSibling()) != null) {
+                        if (referenceCandidate instanceof PsiReference) {
+                          psiReference = referenceCandidate;
+                          break;
+                        }
+                      }
+
+                      if (psiReference == null) {
+                        referenceCandidate = element.getParent();
+                        if (referenceCandidate != null) {
+                          while ((referenceCandidate = referenceCandidate.getPrevSibling()) != null) {
+                            if (referenceCandidate instanceof PsiReference) {
+                              psiReference = referenceCandidate;
+                              break;
+                            }
+                          }
+                        }
+                      }
+
+                      PsiElement navigationElement = psiReference == null ? element.getNavigationElement() : psiReference.getNavigationElement();
+                      return navigationElement instanceof Navigatable ? (Navigatable)navigationElement : null;
+                    }
+                  }, null);
+                  return result == null ? super.createNavigatable(project) : result;
+                }
+              });
             }
           });
         }
       });
     }
     else {
-      getDebugProcess().computeSourcePosition(variable, context, navigatable);
+      getViewSupport().computeSourcePosition(variable, context, navigatable);
     }
   }
 
@@ -461,7 +555,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
       list.add(parent.getName());
       parent = parent.getParent();
     }
-    return context.getDebugProcess().propertyNamesToString(list, false);
+    return context.getViewSupport().propertyNamesToString(list, false);
   }
 
   private static class MyFullValueEvaluator extends XFullValueEvaluator {

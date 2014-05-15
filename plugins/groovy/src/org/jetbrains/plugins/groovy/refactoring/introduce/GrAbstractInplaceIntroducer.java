@@ -96,7 +96,7 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
     if (expression == null) {
       expression = PsiTreeUtil.getParentOfType(refVariableElement, GrExpression.class);
     }
-    while (expression instanceof GrReferenceExpression) {
+    while (expression instanceof GrReferenceExpression || expression instanceof GrCall) {
       final PsiElement parent = expression.getParent();
       if (parent instanceof GrMethodCallExpression) {
         if (parent.getText().equals(exprText)) return (GrExpression)parent;
@@ -107,8 +107,10 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
           return expression;
         }
       }
-      else {
+      else if (expression instanceof GrReferenceExpression){
         return null;
+      } else {
+        break;
       }
     }
     if (expression != null && expression.isValid() && expression.getText().equals(exprText)) {

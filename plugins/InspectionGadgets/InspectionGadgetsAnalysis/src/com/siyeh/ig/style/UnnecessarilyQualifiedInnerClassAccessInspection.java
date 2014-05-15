@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
@@ -32,8 +33,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class UnnecessarilyQualifiedInnerClassAccessInspection
-  extends BaseInspection {
+public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @SuppressWarnings({"PublicField"})
   public boolean ignoreReferencesNeedingImport = false;

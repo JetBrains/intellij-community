@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 
@@ -90,9 +90,9 @@ public class TableScrollingUtil {
     return getTrailingRow(list, visibleRect) - getLeadingRow(list, visibleRect) + 1;
   }
 
-  public static Pair<Integer, Integer> getVisibleRows(JTable list) {
+  public static Couple<Integer> getVisibleRows(JTable list) {
     Rectangle visibleRect = list.getVisibleRect();
-    return new Pair<Integer, Integer>(getLeadingRow(list, visibleRect) + 1, getTrailingRow(list, visibleRect));
+    return Couple.newOne(getLeadingRow(list, visibleRect) + 1, getTrailingRow(list, visibleRect));
   }
 
   private static int getLeadingRow(JTable table,Rectangle visibleRect) {

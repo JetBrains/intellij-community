@@ -71,16 +71,16 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class CodeCompletionHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CodeCompletionHandlerBase");
-  private final CompletionType myCompletionType;
+  @NotNull private final CompletionType myCompletionType;
   final boolean invokedExplicitly;
   final boolean synchronous;
   final boolean autopopup;
 
-  public CodeCompletionHandlerBase(final CompletionType completionType) {
+  public CodeCompletionHandlerBase(@NotNull CompletionType completionType) {
     this(completionType, true, false, true);
   }
 
-  public CodeCompletionHandlerBase(CompletionType completionType, boolean invokedExplicitly, boolean autopopup, boolean synchronous) {
+  public CodeCompletionHandlerBase(@NotNull CompletionType completionType, boolean invokedExplicitly, boolean autopopup, boolean synchronous) {
     myCompletionType = completionType;
     this.invokedExplicitly = invokedExplicitly;
     this.autopopup = autopopup;
@@ -635,8 +635,13 @@ public class CodeCompletionHandlerBase {
       });
       context = contexts.get(contexts.size() - 1);
       if (context.shouldAddCompletionChar() && context.getCompletionChar() != Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
-        DataContext dataContext = DataManager.getInstance().getDataContext(editor.getContentComponent());
-        EditorActionManager.getInstance().getTypedAction().getHandler().execute(editor, completionChar, dataContext);
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            DataContext dataContext = DataManager.getInstance().getDataContext(editor.getContentComponent());
+            EditorActionManager.getInstance().getTypedAction().getHandler().execute(editor, completionChar, dataContext);
+          }
+        });
       }
       for (CompletionAssertions.WatchingInsertionContext insertionContext : contexts) {
         insertionContext.stopWatching();

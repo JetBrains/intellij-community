@@ -49,9 +49,7 @@ public abstract class LanguageLevelConfigurable implements UnnamedConfigurable {
     myPanel.add(new JLabel(ProjectBundle.message("module.module.language.level")),
                 new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(12, 6, 12, 0), 0, 0));
     myPanel.add(myLanguageLevelCombo,
-                new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(6, 6, 12, 0), 0, 0));
-    myPanel.add(new JLabel(ProjectBundle.message("module.module.language.level.comment")),
-                new GridBagConstraints(2, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(12, 6, 12, 0), 0, 0));
+                new GridBagConstraints(1, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(6, 6, 12, 0), 0, 0));
   }
 
   @Override

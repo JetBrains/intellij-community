@@ -245,6 +245,7 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
       final PsiVariable variable = iterator.next();
       if (shouldBeIgnored(variable)) {
         iterator.remove();
+        continue;
       }
       final PsiElement parent = variable.getParent();
       if (!(parent instanceof PsiDeclarationStatement)) {

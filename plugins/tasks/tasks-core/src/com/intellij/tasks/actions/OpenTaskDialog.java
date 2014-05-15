@@ -99,17 +99,14 @@ public class OpenTaskDialog extends DialogWrapper {
       ActionListener listener = new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          updateFields();
+          updateFields(false);
         }
       };
       myCreateChangelist.addActionListener(listener);
       myCreateBranch.addActionListener(listener);
       myCreateChangelist.setSelected(manager.getState().createChangelist);
-      myCreateBranch.setSelected(manager.getState().createBranch);
 
-      // In git 'master' branch appears (in .git/refs/heads/master) only after at least one commit was made in it.
-      // Before that feature branches can't be created normally.
-      if (vcs.getType() != VcsType.distributed || !branchesExist(project)) {
+      if (vcs.getType() != VcsType.distributed) {
         myCreateBranch.setSelected(false);
         myCreateBranch.setVisible(false);
         myBranchName.setVisible(false);
@@ -122,7 +119,9 @@ public class OpenTaskDialog extends DialogWrapper {
           VcsTaskHandler.TaskInfo[] tasks = handler.getCurrentTasks();
           if (tasks.length > 0) {
             myVcsTaskHandler = handler;
+            //noinspection unchecked
             myBranchFrom.setModel(new DefaultComboBoxModel(tasks));
+            myBranchFrom.setEnabled(true);
             final String startFrom = PropertiesComponent.getInstance(project).getValue(START_FROM_BRANCH);
             VcsTaskHandler.TaskInfo info = null;
             if (startFrom != null) {
@@ -149,32 +148,32 @@ public class OpenTaskDialog extends DialogWrapper {
             break;
           }
         }
+        myCreateBranch.setSelected(manager.getState().createBranch && myBranchFrom.getItemCount() > 0);
         myBranchFrom.setRenderer(new ColoredListCellRenderer<VcsTaskHandler.TaskInfo>() {
           @Override
           protected void customizeCellRenderer(JList list, VcsTaskHandler.TaskInfo value, int index, boolean selected, boolean hasFocus) {
-            append(value.getName());
+            if (value != null) {
+              append(value.getName());
+            }
           }
         });
       }
 
       myBranchName.setText(taskManager.suggestBranchName(task));
       myChangelistName.setText(taskManager.getChangelistName(task));
-      updateFields();
+      updateFields(true);
     }
     init();
   }
 
-  private static boolean branchesExist(Project project) {
-    for (VcsTaskHandler handler : VcsTaskHandler.getAllHandlers(project)) {
-      if (handler.getCurrentTasks().length != 0) {
-        return true;
-      }
+  private void updateFields(boolean initial) {
+    if (!initial && myBranchFrom.getItemCount() == 0 && myCreateBranch.isSelected()) {
+      Messages.showWarningDialog(myPanel, "Can't create branch if no commit exists.\nCreate a commit first.", "Cannot Create Branch");
+      myCreateBranch.setSelected(false);
     }
-    return false;
-  }
-
-  private void updateFields() {
     myBranchName.setEnabled(myCreateBranch.isSelected());
+    myFromLabel.setEnabled(myCreateBranch.isSelected());
+    myBranchFrom.setEnabled(myCreateBranch.isSelected());
     myChangelistName.setEnabled(myCreateChangelist.isSelected());
   }
 

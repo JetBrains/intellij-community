@@ -106,7 +106,7 @@ public class PluginBuildParticipant extends BuildParticipant {
           final DomElement domElement = DomManager.getDomManager(xmlFile.getProject()).getDomElement(document.getRootTag());
           if (domElement instanceof IdeaPlugin) {
             for(Dependency dependency: ((IdeaPlugin)domElement).getDependencies()) {
-              final String file = dependency.getConfigFile().getValue();
+              final String file = dependency.getConfigFile().getStringValue();
               if (file != null) {
                 final VirtualFile virtualFile = configFile.getVirtualFile();
                 assert virtualFile != null;

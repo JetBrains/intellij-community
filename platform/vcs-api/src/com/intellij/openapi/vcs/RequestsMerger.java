@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -226,12 +226,12 @@ public class RequestsMerger {
     }
 
     private static void add(final MyState from, final MyState to, final MyExitAction... action) {
-      myMap.put(new Pair<MyState, MyState>(from, to), action);
+      myMap.put(Pair.create(from, to), action);
     }
 
     @Nullable
     public static MyExitAction[] getExit(final MyState from, final MyState to) {
-      return myMap.get(new Pair<MyState, MyState>(from, to));
+      return myMap.get(Pair.create(from, to));
     }
   }
 

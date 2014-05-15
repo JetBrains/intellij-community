@@ -57,8 +57,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -363,7 +361,14 @@ class FindInProjectTask {
     String text = myFindModel.getStringToFind();
     if (StringUtil.isEmptyOrSpaces(text)) return false;
 
-    if (TrigramIndex.ENABLED) return !TrigramBuilder.buildTrigram(text).isEmpty();
+    if (TrigramIndex.ENABLED) {
+      return !TrigramBuilder.processTrigrams(text, new TrigramBuilder.TrigramProcessor() {
+        @Override
+        public boolean execute(int value) {
+          return false;
+        }
+      });
+    }
 
     // $ is used to separate words when indexing plain-text files but not when indexing
     // Java identifiers, so we can't consistently break a string containing $ characters into words
@@ -394,16 +399,24 @@ class FindInProjectTask {
     final Set<PsiFile> resultFiles = new LinkedHashSet<PsiFile>();
 
     if (TrigramIndex.ENABLED) {
-      Set<Integer> keys = ContainerUtil.newTroveSet();
-      TIntHashSet trigrams = TrigramBuilder.buildTrigram(stringToFind);
-      TIntIterator it = trigrams.iterator();
-      while (it.hasNext()) {
-        keys.add(it.next());
-      }
+      final Set<Integer> keys = ContainerUtil.newTroveSet();
+      TrigramBuilder.processTrigrams(stringToFind, new TrigramBuilder.TrigramProcessor() {
+        @Override
+        public boolean execute(int value) {
+          keys.add(value);
+          return true;
+        }
+      });
 
       if (!keys.isEmpty()) {
-        List<VirtualFile> hits = new ArrayList<VirtualFile>();
-        FileBasedIndex.getInstance().getFilesWithKey(TrigramIndex.INDEX_ID, keys, new CommonProcessors.CollectProcessor<VirtualFile>(hits), scope);
+        final List<VirtualFile> hits = new ArrayList<VirtualFile>();
+        final GlobalSearchScope finalScope = scope;
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            FileBasedIndex.getInstance().getFilesWithKey(TrigramIndex.INDEX_ID, keys, new CommonProcessors.CollectProcessor<VirtualFile>(hits),
+                                                         finalScope);
+          }
+        });
 
         for (VirtualFile hit : hits) {
           if (myFileMask.value(hit)) {

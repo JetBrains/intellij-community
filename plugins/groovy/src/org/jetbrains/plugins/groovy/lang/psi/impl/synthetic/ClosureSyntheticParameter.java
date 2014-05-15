@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer;
 
 /**
@@ -50,7 +51,7 @@ public class ClosureSyntheticParameter extends GrLightParameter implements Navig
   private final GrClosableBlock myClosure;
 
   public ClosureSyntheticParameter(GrClosableBlock closure) {
-    super(GrClosableBlock.IT_PARAMETER_NAME, PsiType.getJavaLangObject(closure.getManager(), closure.getResolveScope()), closure);
+    super(GrClosableBlock.IT_PARAMETER_NAME, TypesUtil.getJavaLangObject(closure), closure);
     myClosure = closure;
     setOptional(true);
   }

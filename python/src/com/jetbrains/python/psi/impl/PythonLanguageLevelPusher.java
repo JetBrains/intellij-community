@@ -33,7 +33,6 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.containers.WeakHashMap;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.messages.MessageBus;
 import com.jetbrains.python.PythonFileType;
@@ -152,12 +151,12 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
 
     for (VirtualFile child : fileOrDir.getChildren()) {
       if (!child.isDirectory() && PythonFileType.INSTANCE.equals(child.getFileType())) {
-        FileBasedIndex.getInstance().requestReindex(child);
+        PushedFilePropertiesUpdater.filePropertiesChanged(child);
       }
     }
   }
 
-  public void afterRootsChanged(@NotNull Project project) {
+  public void afterRootsChanged(@NotNull final Project project) {
     Set<Sdk> updatedSdks = new HashSet<Sdk>();
     final Module[] modules = ModuleManager.getInstance(project).getModules();
     boolean needReparseOpenFiles = false;

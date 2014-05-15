@@ -63,6 +63,8 @@ public abstract class Template {
 
   public abstract String getDescription();
 
+  public abstract boolean isToReformat();
+
   public abstract void setToReformat(boolean toReformat);
 
   public abstract void setToIndent(boolean toIndent);

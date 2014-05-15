@@ -63,7 +63,7 @@ public class DomStructureViewBuilder extends TreeBasedStructureViewBuilder {
     return new StructureViewComponent(fileEditor, createStructureViewModel(fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null), project, true) {
       @Override
       public AsyncResult<AbstractTreeNode> expandPathToElement(final Object element) {
-        if (element instanceof XmlElement) {
+        if (element instanceof XmlElement && ((XmlElement)element).isValid()) {
           final XmlElement xmlElement = (XmlElement)element;
           XmlTag tag = PsiTreeUtil.getParentOfType(xmlElement, XmlTag.class, false);
           while (tag != null) {

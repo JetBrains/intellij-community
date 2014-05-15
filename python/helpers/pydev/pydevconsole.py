@@ -153,7 +153,7 @@ class InterpreterInterface(BaseInterpreterInterface):
         sys.exit(0)
 
     def get_greeting_msg(self):
-        return 'PyDev console: starting.'
+        return 'PyDev console: starting.\n'
 
 
 def process_exec_queue(interpreter):
@@ -176,30 +176,25 @@ def process_exec_queue(interpreter):
             exit()
 
 
-if 'IPYTHONENABLE' in os.environ:
-    import ast
-    IPYTHON = ast.literal_eval(os.environ['IPYTHONENABLE'])
-else:
-    IPYTHON = False
-
 try:
     try:
         exitfunc = sys.exitfunc
     except AttributeError:
         exitfunc = None
+    from pydev_ipython_console import InterpreterInterface
 
-    if IPYTHON:
-        from pydev_ipython_console import InterpreterInterface
-        if exitfunc is not None:
-            sys.exitfunc = exitfunc
-        else:
-            try:
-                delattr(sys, 'exitfunc')
-            except:
-                pass
+    IPYTHON = True
+    if exitfunc is not None:
+        sys.exitfunc = exitfunc
+
+    else:
+        try:
+            delattr(sys, 'exitfunc')
+        except:
+            pass
 except:
     IPYTHON = False
-    sys.stderr.write('Unable to import IPython, using PyDev console instead.')
+    #sys.stderr.write('PyDev console: started.\n')
     pass #IPython not available, proceed as usual.
 
 #=======================================================================================================================

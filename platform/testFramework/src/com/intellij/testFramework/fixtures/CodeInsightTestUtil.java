@@ -63,7 +63,7 @@ public class CodeInsightTestUtil {
   private CodeInsightTestUtil() { }
 
   @Nullable
-  public static IntentionAction findIntentionByText(List<IntentionAction> actions, @NonNls String text) {
+  public static IntentionAction findIntentionByText(@NotNull List<IntentionAction> actions, @NonNls @NotNull String text) {
     for (IntentionAction action : actions) {
       final String s = action.getText();
       if (s.equals(text)) {

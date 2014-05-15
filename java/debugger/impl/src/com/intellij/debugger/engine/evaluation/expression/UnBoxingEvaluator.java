@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,14 +38,14 @@ public class UnBoxingEvaluator implements Evaluator{
   private final Evaluator myOperand;
   private static final Map<String, Pair<String, String>> TYPES_TO_CONVERSION_METHOD_MAP = new HashMap<String, Pair<String, String>>();
   static {
-    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Boolean", new Pair<String, String>("booleanValue", "()Z"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Byte", new Pair<String, String>("byteValue", "()B"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Character", new Pair<String, String>("charValue", "()C"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Short", new Pair<String, String>("shortValue", "()S"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Integer", new Pair<String, String>("intValue", "()I"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Long", new Pair<String, String>("longValue", "()J"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Float", new Pair<String, String>("floatValue", "()F"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Double", new Pair<String, String>("doubleValue", "()D"));
+    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Boolean", Pair.create("booleanValue", "()Z"));
+    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Byte", Pair.create("byteValue", "()B"));
+    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Character", Pair.create("charValue", "()C"));
+    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Short", Pair.create("shortValue", "()S"));
+    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Integer", Pair.create("intValue", "()I"));
+    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Long", Pair.create("longValue", "()J"));
+    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Float", Pair.create("floatValue", "()F"));
+    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Double", Pair.create("doubleValue", "()D"));
   }
 
   public static boolean isTypeUnboxable(String typeName) {

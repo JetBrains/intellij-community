@@ -4154,8 +4154,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myScrollingTimer.stop();
 
       SelectionModel selectionModel = getSelectionModel();
-      int oldSelectionStart = selectionModel.getLeadSelectionOffset();
-      VisualPosition oldVisLeadSelectionStart = selectionModel.getLeadSelectionPosition();
+      Caret leadCaret = getLeadCaret();
+      int oldSelectionStart = leadCaret.getLeadSelectionOffset();
+      VisualPosition oldVisLeadSelectionStart = leadCaret.getLeadSelectionPosition();
       int oldCaretOffset = getCaretModel().getOffset();
       LogicalPosition oldLogicalCaret = getCaretModel().getLogicalPosition();
       boolean multiCaretSelection = myCaretModel.supportsMultipleCarets() && (isColumnMode() || e.isAltDown());
@@ -4226,10 +4227,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
 
           if (!myMousePressedInsideSelection) {
-            if (myCaretModel.supportsMultipleCarets() && myLastMousePressedLocation != null) {
-              oldSelectionStart = logicalPositionToOffset(myLastMousePressedLocation);
-              oldVisLeadSelectionStart = logicalToVisualPosition(myLastMousePressedLocation);
-            }
             // There is a possible case that lead selection position should be adjusted in accordance with the mouse move direction.
             // E.g. consider situation when user selects the whole line by clicking at 'line numbers' area. 'Line end' is considered
             // to be lead selection point then. However, when mouse is dragged down we want to consider 'line start' to be
@@ -4275,6 +4272,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     else {
       myScrollingTimer.start(dx, dy);
       onSubstantialDrag(e);
+    }
+  }
+
+  private Caret getLeadCaret() {
+    List<Caret> allCarets = myCaretModel.getAllCarets();
+    Caret firstCaret = allCarets.get(0);
+    if (firstCaret == myCaretModel.getPrimaryCaret()) {
+      return allCarets.get(allCarets.size() - 1);
+    }
+    else {
+      return firstCaret;
     }
   }
 
@@ -6463,6 +6471,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         List<? extends SoftWrap> softWraps = getSoftWrapModel().getRegisteredSoftWraps();
         int softWrapsIndex = -1;
 
+        CharWidthCache charWidthCache = new CharWidthCache(EditorImpl.this);
+
         for (int line = 0; line < lineCount; line++) {
           if (myLineWidths.getQuick(line) != -1) continue;
           if (line == lineCount - 1) {
@@ -6537,7 +6547,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             if (collapsed != null) {
               String placeholder = collapsed.getPlaceholderText();
               for (int i = 0; i < placeholder.length(); i++) {
-                x += EditorUtil.charWidth(placeholder.charAt(i), fontType, EditorImpl.this);
+                x += charWidthCache.charWidth(placeholder.charAt(i), fontType);
               }
               offset = collapsed.getEndOffset();
               line = myDocument.getLineNumber(offset);
@@ -6560,7 +6570,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               }
             }
             else {
-              x += EditorUtil.charWidth(c, fontType, EditorImpl.this);
+              x += charWidthCache.charWidth(c, fontType);
               offset++;
             }
           }
@@ -6623,7 +6633,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public int calcColumnNumber(@NotNull CharSequence text, int start, int offset, int tabSize) {
-    IterationState state = new IterationState(this, start, start + offset, false);
+    IterationState state = new IterationState(this, start, offset, false);
     int fontType = state.getMergedAttributes().getFontType();
     int column = 0;
     int x = 0;
@@ -6636,8 +6646,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       SoftWrap softWrap = getSoftWrapModel().getSoftWrap(i);
       if (softWrap != null) {
-        column++; // For 'after soft wrap' drawing.
-        x = getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP);
+        x = softWrap.getIndentInPixels();
       }
 
       char c = text.charAt(i);

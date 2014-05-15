@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.SuspendContextImpl;
@@ -44,6 +45,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.SmartList;
+import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.event.EventSet;
@@ -360,7 +363,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     for (final Event event : events) {
       final Requestor requestor = requestManager.findRequestor(event.request());
       if (requestor instanceof Breakpoint) {
-        eventDescriptors.add(new Pair<Breakpoint, Event>((Breakpoint)requestor, event));
+        eventDescriptors.add(Pair.create((Breakpoint)requestor, event));
       }
     }
     return eventDescriptors;
@@ -617,4 +620,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return text.replace("\t", StringUtil.repeat(" ", tabSize));
   }
 
+  @Nullable
+  public static XSourcePosition toXSourcePosition(@NotNull SourcePosition position) {
+    return XSourcePositionImpl.create(position.getFile().getVirtualFile(), position.getLine());
+  }
 }

@@ -32,7 +32,7 @@ public class CustomizeKeyboardSchemeStepPanel extends AbstractCustomizeWizardSte
   public CustomizeKeyboardSchemeStepPanel() {//&#8997; alt
     setLayout(new GridLayout(1, 2, GAP, GAP));
     final JRadioButton macRadioButton =
-      new JRadioButton("I've never used " + ApplicationNamesInfo.getInstance().getProductName() + " or am a Mac user");
+      new JRadioButton("I've never used " + ApplicationNamesInfo.getInstance().getProductName());
     macRadioButton.setOpaque(false);
     myMacPanel = createBigButtonPanel(new VerticalFlowLayout(), macRadioButton, new Runnable() {
       @Override
@@ -57,7 +57,7 @@ public class CustomizeKeyboardSchemeStepPanel extends AbstractCustomizeWizardSte
 
     add(myMacPanel);
     final JRadioButton defaultRadioButton =
-      new JRadioButton("I used " + ApplicationNamesInfo.getInstance().getProductName() + " before or am a Windows user");
+      new JRadioButton("I used " + ApplicationNamesInfo.getInstance().getProductName() + " before");
     defaultRadioButton.setOpaque(false);
     myDefaultPanel = createBigButtonPanel(new VerticalFlowLayout(),defaultRadioButton, new Runnable() {
       @Override

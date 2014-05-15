@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -115,11 +115,11 @@ public class BuildPropertiesImpl extends BuildProperties {
         javac2.add(new PathElement(propertyRelativePath(PROPERTY_JAVAC2_HOME, "jgoodies-forms.jar")));
         add(javac2);
         //noinspection HardCodedStringLiteral
-        register.add(new Tag("taskdef", Pair.create("name", "javac2"), Pair.create("classname", "com.intellij.ant.Javac2"),
-                    Pair.create("classpathref", PROPERTY_JAVAC2_CLASSPATH_ID)));
-        register.add(new Tag("taskdef", Pair.create("name", "instrumentIdeaExtensions"),
-                    Pair.create("classname", "com.intellij.ant.InstrumentIdeaExtensions"),
-                    Pair.create("classpathref", PROPERTY_JAVAC2_CLASSPATH_ID)));
+        register.add(new Tag("taskdef", Couple.newOne("name", "javac2"), Couple.newOne("classname", "com.intellij.ant.Javac2"),
+                             Couple.newOne("classpathref", PROPERTY_JAVAC2_CLASSPATH_ID)));
+        register.add(new Tag("taskdef", Couple.newOne("name", "instrumentIdeaExtensions"),
+                             Couple.newOne("classname", "com.intellij.ant.InstrumentIdeaExtensions"),
+                             Couple.newOne("classpathref", PROPERTY_JAVAC2_CLASSPATH_ID)));
       }
       if (customCompilers.length > 0) {
         for (ChunkCustomCompilerExtension ext : customCompilers) {

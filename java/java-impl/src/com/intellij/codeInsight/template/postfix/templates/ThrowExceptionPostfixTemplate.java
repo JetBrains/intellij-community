@@ -15,26 +15,17 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
+import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ThrowExceptionPostfixTemplate extends PostfixTemplate {
+public class ThrowExceptionPostfixTemplate extends JavaStatementWrapPostfixTemplate {
   public ThrowExceptionPostfixTemplate() {
-    super("throw", "Throws expression of 'Throwable' type", "throw expr;");
+    super("throw", "throw expr;", JavaPostfixTemplatesUtils.JAVA_PSI_INFO, JavaPostfixTemplatesUtils.IS_THROWABLE);
   }
 
+  @NotNull
   @Override
-  public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
-    PsiExpression expression = PostfixTemplatesUtils.getTopmostExpression(context);
-    return expression != null && PostfixTemplatesUtils.isThrowable(expression.getType());
-  }
-
-  @Override
-  public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
-    PostfixTemplatesUtils.createSimpleStatement(context, editor, "throw");
+  protected String getHead() {
+    return "throw ";
   }
 }

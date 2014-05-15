@@ -37,7 +37,7 @@ import java.beans.PropertyChangeListener;
  * @author Alexander Lobas
  */
 public abstract class DesignerEditor extends UserDataHolderBase implements FileEditor {
-  private final DesignerEditorPanel myDesignerPanel;
+  protected final DesignerEditorPanel myDesignerPanel;
 
   public DesignerEditor(Project project, VirtualFile file) {
     if (file instanceof LightVirtualFile) {

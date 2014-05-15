@@ -1139,14 +1139,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       createParenthSpace(mySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES);
     }
     else if (myRole2 == ChildRole.RPARENTH) {
-      PsiExpression[] arguments = list.getExpressions();
-      if (JavaFormatterUtil.hasMultilineArguments(arguments) && JavaFormatterUtil.isMultilineExceptArguments(arguments)) {
-        myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, 0);
-      }
-      else {
-        createParenthSpace(mySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE,
-                           myRole1 == ChildRole.COMMA || mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES);
-      }
+      createParenthSpace(mySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE,
+                         myRole1 == ChildRole.COMMA || mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES);
     }
     else if (myRole1 == ChildRole.LPARENTH) {
       createParenthSpace(mySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES);
@@ -1655,7 +1649,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     IElementType type1 = token1.getElementType();
     IElementType type2 = token2.getElementType();
 
-    Pair<IElementType, IElementType> pair = new Pair<IElementType, IElementType>(type1, type2);
+    Pair<IElementType, IElementType> pair = Pair.create(type1, type2);
     Boolean res = myCanStickJavaTokensMatrix.get(pair);
     if (res == null) {
       if (!checkToken(token1) || !checkToken(token2)) return true;

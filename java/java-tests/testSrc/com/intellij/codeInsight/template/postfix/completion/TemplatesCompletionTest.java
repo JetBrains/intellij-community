@@ -23,9 +23,12 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
 import com.intellij.codeInsight.template.postfix.templates.*;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
   private boolean shotTemplatesInTestsOldValue;
@@ -43,7 +46,7 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
 
     PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
     assertNotNull(settings);
-    settings.setTemplatesState(ContainerUtil.<String, Boolean>newHashMap());
+    settings.setLangDisabledTemplates(ContainerUtil.<String, Set<String>>newHashMap());
     settings.setPostfixTemplatesEnabled(true);
     settings.setTemplatesCompletionEnabled(true);
     super.tearDown();
@@ -153,7 +156,7 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
   public void testDoNotShowDisabledTemplate() {
     PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
     assertNotNull(settings);
-    settings.disableTemplate(new InstanceofExpressionPostfixTemplate());
+    settings.disableTemplate(new InstanceofExpressionPostfixTemplate(), JavaLanguage.INSTANCE.getID());
     doAutoPopupTest("instanceof", null);
   }
 
@@ -178,7 +181,7 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
     type("r");
     myFixture.assertPreferredCompletionItems(selectedIndex, ".par", "parents");
   }
-  
+
   public void testTabCompletionWithTemplatesInAutopopup() {
     LiveTemplateCompletionContributor.ourShowTemplatesInTests = true;
 
@@ -196,7 +199,7 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
     type(".if\t");
     checkResultByFile();
   }
-  
+
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/template/postfix/completion";

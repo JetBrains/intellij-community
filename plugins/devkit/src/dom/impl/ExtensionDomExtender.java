@@ -147,6 +147,11 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     }
   }
 
+  @Override
+  public boolean supportsStubs() {
+    return false;
+  }
+
   private static Set<IdeaPlugin> getVisiblePlugins(IdeaPlugin ideaPlugin) {
     Set<IdeaPlugin> result = ContainerUtil.newHashSet();
     MultiMap<String, IdeaPlugin> byId = getPluginMap(ideaPlugin.getManager().getProject());

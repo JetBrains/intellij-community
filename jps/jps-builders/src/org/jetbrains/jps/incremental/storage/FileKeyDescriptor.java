@@ -30,14 +30,12 @@ import java.io.IOException;
 *         Date: 9/10/12
 */
 public final class FileKeyDescriptor implements KeyDescriptor<File> {
-  private final byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
-
   public void save(@NotNull DataOutput out, File value) throws IOException {
-    IOUtil.writeUTFFast(buffer, out, value.getPath());
+    IOUtil.writeUTF(out, value.getPath());
   }
 
   public File read(@NotNull DataInput in) throws IOException {
-    return new File(IOUtil.readUTFFast(buffer, in));
+    return new File(IOUtil.readUTF(in));
   }
 
   public int getHashCode(File value) {

@@ -24,8 +24,7 @@ public interface SuspendContextManager<CALL_FRAME extends CallFrame> {
   void setOverlayMessage(@Nullable String message);
 
   /**
-   * Resumes the JavaScript VM execution using a "continue" request. This
-   * context becomes invalid until another context is supplied through the
+   * Resumes the VM execution using a "continue" request. This context becomes invalid until another context is supplied through the
    * {@link DebugEventListener#suspended(SuspendContext)} event.
    *
    * @param stepAction to perform

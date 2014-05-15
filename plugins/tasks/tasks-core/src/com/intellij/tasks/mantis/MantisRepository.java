@@ -26,10 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.math.BigInteger;
 import java.net.URL;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -154,11 +151,12 @@ public class MantisRepository extends BaseRepositoryImpl {
     return new CancellableConnection() {
       @Override
       protected void doTest() throws Exception {
+        myProjects = null;
         try {
           createSoap().mc_enum_access_levels(getUsername(), getPassword());
         }
         catch (Exception e) {
-          throw wrapException(e);
+          throw handleException(e);
         }
       }
 
@@ -207,7 +205,12 @@ public class MantisRepository extends BaseRepositoryImpl {
       project.setFilters(projectFilters);
     }
 
-    Collections.sort(commonFilters);
+    Collections.sort(commonFilters, new Comparator<MantisFilter>() {
+      @Override
+      public int compare(MantisFilter f1, MantisFilter f2) {
+          return f1.getName().compareTo(f2.getName());
+      }
+    });
     commonFilters.add(0, MantisFilter.newUndefined());
 
     MantisProject undefined = MantisProject.newUndefined();
@@ -217,7 +220,7 @@ public class MantisRepository extends BaseRepositoryImpl {
     myProjects = projects;
   }
 
-  private static boolean checkAllProjectsAvailable(MantisConnectPortType soap) throws Exception {
+  private boolean checkAllProjectsAvailable(MantisConnectPortType soap) throws Exception {
     // Check whether All Projects is available supported by server
     try {
       String version = soap.mc_version();
@@ -228,12 +231,13 @@ public class MantisRepository extends BaseRepositoryImpl {
       return available;
     }
     catch (Exception e) {
-      throw wrapException(e);
+      throw handleException(e);
     }
   }
 
-  private static Exception wrapException(@NotNull Exception e) throws Exception {
+  private Exception handleException(@NotNull Exception e) throws Exception {
     if (e instanceof AxisFault) {
+      resetConfiguration();
       throw new Exception(TaskBundle.message("failure.server.message", ((AxisFault)e).getFaultString()), e);
     }
     throw e;
@@ -266,7 +270,7 @@ public class MantisRepository extends BaseRepositoryImpl {
       return soap.mc_issue_get(getUsername(), getPassword(), BigInteger.valueOf(Integer.valueOf(id)));
     }
     catch (RemoteException e) {
-      throw wrapException(e);
+      throw handleException(e);
     }
   }
 
@@ -276,7 +280,7 @@ public class MantisRepository extends BaseRepositoryImpl {
       return soap.mc_projects_get_user_accessible(getUsername(), getPassword());
     }
     catch (RemoteException e) {
-      throw wrapException(e);
+      throw handleException(e);
     }
   }
 
@@ -286,7 +290,7 @@ public class MantisRepository extends BaseRepositoryImpl {
       return soap.mc_filter_get(getUsername(), getPassword(), BigInteger.valueOf(project.getId()));
     }
     catch (RemoteException e) {
-      throw wrapException(e);
+      throw handleException(e);
     }
   }
 
@@ -306,10 +310,29 @@ public class MantisRepository extends BaseRepositoryImpl {
       }
     }
     catch (RemoteException e) {
-      throw wrapException(e);
+      throw handleException(e);
     }
   }
 
+  private void resetConfiguration() {
+    if (myProjects != null) {
+      for (MantisProject project : myProjects) {
+        if (project.isUnspecified()) {
+          myCurrentProject = project;
+          for (MantisFilter filter : project.getFilters()) {
+            if (filter.isUnspecified()) {
+              myCurrentFilter = filter;
+              break;
+            }
+          }
+          break;
+        }
+      }
+    } else {
+      myCurrentProject = null;
+      myCurrentFilter = null;
+    }
+  }
 
   @Nullable
   public MantisProject getCurrentProject() {

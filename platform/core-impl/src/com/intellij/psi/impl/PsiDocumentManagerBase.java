@@ -57,7 +57,8 @@ import java.util.*;
 
 public abstract class PsiDocumentManagerBase extends PsiDocumentManager implements DocumentListener {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiDocumentManagerImpl");
-  private static final Key<PsiFile> HARD_REF_TO_PSI = new Key<PsiFile>("HARD_REFERENCE_TO_PSI");
+  private static final Key<Document> HARD_REF_TO_DOCUMENT = Key.create("HARD_REFERENCE_TO_DOCUMENT");
+  private static final Key<PsiFile> HARD_REF_TO_PSI = Key.create("HARD_REFERENCE_TO_PSI");
   private static final Key<List<Runnable>> ACTION_AFTER_COMMIT = Key.create("ACTION_AFTER_COMMIT");
 
   protected final Project myProject;
@@ -164,6 +165,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
       if (!viewProvider.isPhysical()) {
         cachePsi(document, file);
+        file.putUserData(HARD_REF_TO_DOCUMENT, document);
       }
     }
 
@@ -677,7 +679,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       return;
     }
 
-    final PsiFileImpl psiFile = (PsiFileImpl)getPsiFile(document);
+    final PsiFile psiFile = getPsiFile(document);
     if (psiFile == null) {
       return;
     }
@@ -690,7 +692,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
           PsiManagerImpl manager = (PsiManagerImpl)psiFile.getManager();
           BlockSupportImpl.sendBeforeChildrenChangeEvent(manager, psiFile, true);
           BlockSupportImpl.sendBeforeChildrenChangeEvent(manager, psiFile, false);
-          psiFile.onContentReload();
+          if (psiFile instanceof PsiFileImpl) {
+            ((PsiFileImpl)psiFile).onContentReload();
+          }
           BlockSupportImpl.sendAfterChildrenChangedEvent(manager, psiFile, oldLength, false);
           BlockSupportImpl.sendAfterChildrenChangedEvent(manager, psiFile, oldLength, true);
         }

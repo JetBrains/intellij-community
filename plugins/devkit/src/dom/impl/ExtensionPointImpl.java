@@ -45,4 +45,14 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
 
     return StringUtil.notNullize(plugin.getPluginId(), "com.intellij");
   }
+
+  @NotNull
+  @Override
+  public String getEffectiveQualifiedName() {
+    if (DomUtil.hasXml(getQualifiedName())) {
+      return getQualifiedName().getRawText();
+    }
+
+    return getNamePrefix() + "." + getName().getRawText();
+  }
 }

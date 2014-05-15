@@ -215,20 +215,19 @@ public class FileContentQueue {
             if (isValidFile(virtualFileToLoad)) {
               try {
                 content.getBytes();
+                return content;
+              }
+              catch (IOException e) {
+                LOG.info(virtualFileToLoad + ": " + e);
+              }
+              catch (InvalidVirtualFileAccessException e) {
+                LOG.info(virtualFileToLoad + ": " + e);
               }
               catch (Throwable t) {
-                if (t instanceof IOException || t instanceof InvalidVirtualFileAccessException) {
-                  LOG.info(t);
-                }
-                else {
-                  LOG.error(t);
-                }
-                content.setEmptyContent();
+                LOG.error(virtualFileToLoad + ": " + t);
               }
             }
-            else {
-              content.setEmptyContent();
-            }
+            content.setEmptyContent();
             return content;
           }
 

@@ -16,18 +16,10 @@
 
 package org.jetbrains.idea.maven;
 
-import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.CompilerTestUtil;
-import com.intellij.compiler.CompilerWorkspaceConfiguration;
-import com.intellij.compiler.impl.ModuleCompileScope;
-import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompileScope;
-import com.intellij.openapi.compiler.CompileStatusNotification;
-import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -46,19 +38,20 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.*;
 import org.jetbrains.idea.maven.model.MavenArtifact;
-import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.project.MavenArtifactDownloader;
+import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -87,14 +80,18 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    Messages.setTestDialog(TestDialog.DEFAULT);
-    myProjectsManager.projectClosed();
-    removeFromLocalRepository("test");
-    if (useJps()) {
-      CompilerTestUtil.disableExternalCompiler(myProject);
-      FileUtil.delete(BuildManager.getInstance().getBuildSystemDirectory());
+    try {
+      Messages.setTestDialog(TestDialog.DEFAULT);
+      myProjectsManager.projectClosed();
+      removeFromLocalRepository("test");
+      if (useJps()) {
+        CompilerTestUtil.disableExternalCompiler(myProject);
+        FileUtil.delete(BuildManager.getInstance().getBuildSystemDirectory());
+      }
     }
-    super.tearDown();
+    finally {
+      super.tearDown();
+    }
   }
 
   protected void assertModules(String... expectedNames) {
@@ -179,7 +176,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       actual.add(folderUrl);
     }
 
-    assertUnorderedPathsAreEqual(actual, Arrays.asList(expected));
+    assertOrderedElementsAreEqual(actual, Arrays.asList(expected));
   }
 
   protected void assertModuleOutput(String moduleName, String output, String testOutput) {

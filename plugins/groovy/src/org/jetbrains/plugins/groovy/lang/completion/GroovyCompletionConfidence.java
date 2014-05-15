@@ -52,7 +52,7 @@ public class GroovyCompletionConfidence extends CompletionConfidence {
              psiElement().afterLeaf(",").withParent(
                psiElement(GrVariable.class).withParent(
                  psiElement(GrVariableDeclaration.class).afterLeaf(CLOSURE_LBRACE)))).accepts(ref) ||
-           GroovyCompletionContributor.isInPossibleClosureParameter(ref);
+           GroovyCompletionUtil.isInPossibleClosureParameter(ref);
   }
 
   @NotNull

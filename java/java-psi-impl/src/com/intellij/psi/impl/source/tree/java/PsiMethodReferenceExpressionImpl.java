@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
@@ -43,6 +44,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase implements PsiMethodReferenceExpression {
@@ -136,7 +140,14 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
     if (containingClass != null) {
       PsiMethod[] methods = null;
       if (element instanceof PsiIdentifier) {
-        methods = containingClass.findMethodsByName(element.getText(), !qualifierResolveResult.isReferenceTypeQualified());
+        final String identifierName = element.getText();
+        final List<PsiMethod> result = new ArrayList<PsiMethod>();
+        for (HierarchicalMethodSignature signature : containingClass.getVisibleSignatures()) {
+          if (identifierName.equals(signature.getName())) {
+            result.add(signature.getMethod());
+          }
+        }
+        methods = result.toArray(new PsiMethod[result.size()]);
       }
       else if (isConstructor()) {
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());

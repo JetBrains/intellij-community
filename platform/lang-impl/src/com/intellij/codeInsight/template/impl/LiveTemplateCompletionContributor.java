@@ -65,9 +65,9 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
           return;
         }
 
-        int offset = parameters.getOffset();
-        final List<TemplateImpl> availableTemplates = TemplateManagerImpl.listApplicableTemplates(file, offset, false);
         Editor editor = parameters.getEditor();
+        int offset = editor.getCaretModel().getOffset();
+        final List<TemplateImpl> availableTemplates = TemplateManagerImpl.listApplicableTemplates(file, offset, false);
         final Map<TemplateImpl, String> templates = filterTemplatesByPrefix(availableTemplates, editor, offset, false, false);
         if (showAllTemplates()) {
           final AtomicBoolean templatesShown = new AtomicBoolean(false);
@@ -107,7 +107,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
   }
 
   public static boolean customTemplateAvailableAndHasCompletionItem(@Nullable Character shortcutChar, @NotNull Editor editor, @NotNull PsiFile file, int offset) {
-    CustomTemplateCallback callback = new CustomTemplateCallback(editor, file, false);
+    CustomTemplateCallback callback = new CustomTemplateCallback(editor, file);
     for (CustomLiveTemplate customLiveTemplate : TemplateManagerImpl.listApplicableCustomTemplates(editor, file, false)) {
       if (customLiveTemplate instanceof CustomLiveTemplateBase) {
         if ((shortcutChar == null || customLiveTemplate.getShortcut() == shortcutChar.charValue())

@@ -95,6 +95,18 @@ public class MostSpecificResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testSuperMethodsInExactCheck() throws Exception {
+    doTest();
+  }
+
+  public void testTargetTypeParameter() throws Exception {
+    doTest(false);
+  }
+
+  public void testJDK8042508() throws Exception {
+    doTest(false);
+  }
+
   private void doTest() {
     doTest(true);
   }

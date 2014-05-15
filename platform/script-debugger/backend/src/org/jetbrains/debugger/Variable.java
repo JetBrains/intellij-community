@@ -4,9 +4,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.values.Value;
 
-/**
- * An object that represents a variable in a call frame
- */
 public interface Variable {
   /**
    * @return whether it is possible to read this variable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public class RepositoryLocationCache {
   }
 
   public RepositoryLocation getLocation(final AbstractVcs vcs, final FilePath filePath, final boolean silent) {
-    final Pair<String, String> key = new Pair<String, String>(vcs.getName(), filePath.getIOFile().getAbsolutePath());
+    final Pair<String, String> key = Pair.create(vcs.getName(), filePath.getIOFile().getAbsolutePath());
     RepositoryLocation location = myMap.get(key);
     if (location != null) {
       return location;

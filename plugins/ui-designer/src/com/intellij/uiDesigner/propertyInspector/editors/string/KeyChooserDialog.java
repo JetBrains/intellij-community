@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -157,7 +156,7 @@ public final class KeyChooserDialog extends DialogWrapper{
       final String key = property.getUnescapedKey();
       final String value = property.getValue();
       if (key != null) {
-        myPairs.add(new Pair<String, String>(key, value != null? value : NULL));
+        myPairs.add(Pair.create(key, value != null ? value : NULL));
       }
     }
     Collections.sort(myPairs, new MyPairComparator());

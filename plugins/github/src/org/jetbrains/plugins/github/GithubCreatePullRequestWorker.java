@@ -36,7 +36,6 @@ import git4idea.util.GitCommitCompareInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.*;
-import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
 import org.jetbrains.plugins.github.ui.GithubSelectForkDialog;
 import org.jetbrains.plugins.github.util.*;
 
@@ -142,9 +141,6 @@ public class GithubCreatePullRequestWorker {
           }
         });
     }
-    catch (GithubOperationCanceledException e) {
-      return null;
-    }
     catch (IOException e) {
       GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, e);
       return null;
@@ -225,9 +221,6 @@ public class GithubCreatePullRequestWorker {
       }
 
       return new GithubTargetInfo(info.getBranches());
-    }
-    catch (GithubOperationCanceledException e) {
-      return null;
     }
     catch (IOException e) {
       GithubNotifications.showErrorDialog(myProject, CANNOT_CREATE_PULL_REQUEST, e);
@@ -505,9 +498,6 @@ public class GithubCreatePullRequestWorker {
             return new GithubInfo2(forks, forkTreeRoot);
           }
         });
-    }
-    catch (GithubOperationCanceledException e) {
-      return null;
     }
     catch (IOException e) {
       GithubNotifications.showErrorDialog(project, CANNOT_CREATE_PULL_REQUEST, e);

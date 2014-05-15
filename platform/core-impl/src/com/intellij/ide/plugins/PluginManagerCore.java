@@ -1008,9 +1008,16 @@ public class PluginManagerCore {
   }
 
   public static boolean isIncompatible(final IdeaPluginDescriptor descriptor) {
-    try {
-      BuildNumber buildNumber = getBuildNumber();
+    return isIncompatible(descriptor, getBuildNumber());
+  }
 
+  public static boolean isIncompatible(final IdeaPluginDescriptor descriptor, @Nullable BuildNumber buildNumber) {
+
+    if (buildNumber == null) {
+      buildNumber = getBuildNumber();
+    }
+
+    try {
       if (!StringUtil.isEmpty(descriptor.getSinceBuild())) {
         BuildNumber sinceBuild = BuildNumber.fromString(descriptor.getSinceBuild(), descriptor.getName());
         if (sinceBuild.compareTo(buildNumber) > 0) {

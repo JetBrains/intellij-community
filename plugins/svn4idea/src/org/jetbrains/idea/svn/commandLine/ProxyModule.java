@@ -19,8 +19,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.IdeaSVNConfigFile;
-import org.jetbrains.idea.svn.SvnAuthenticationManager;
-import org.jetbrains.idea.svn.checkin.IdeaSvnkitBasedAuthenticationCallback;
+import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
+import org.jetbrains.idea.svn.auth.IdeaSvnkitBasedAuthenticationCallback;
 import org.tmatesoft.svn.core.SVNURL;
 
 import java.net.InetSocketAddress;

@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
 
@@ -45,21 +46,22 @@ public class PythonNoseTestCommandLineState extends PythonTestCommandLineStateBa
   protected List<String> getTestSpecs() {
     List<String> specs = new ArrayList<String>();
 
+    final String scriptName = FileUtil.toSystemDependentName(myConfig.getScriptName());
     switch (myConfig.getTestType()) {
       case TEST_SCRIPT:
-        specs.add(myConfig.getScriptName());
+        specs.add(scriptName);
         break;
       case TEST_CLASS:
-        specs.add(myConfig.getScriptName() + "::" + myConfig.getClassName());
+        specs.add(scriptName + "::" + myConfig.getClassName());
         break;
       case TEST_METHOD:
-        specs.add(myConfig.getScriptName() + "::" + myConfig.getClassName() + "::" + myConfig.getMethodName());
+        specs.add(scriptName + "::" + myConfig.getClassName() + "::" + myConfig.getMethodName());
         break;
       case TEST_FOLDER:
-	      specs.add(myConfig.getFolderName() + "/");
+	specs.add(FileUtil.toSystemDependentName(myConfig.getFolderName() + "/"));
         break;
       case TEST_FUNCTION:
-        specs.add(myConfig.getScriptName() + "::::" + myConfig.getMethodName());
+        specs.add(scriptName + "::::" + myConfig.getMethodName());
         break;
       default:
         throw new IllegalArgumentException("Unknown test type: " + myConfig.getTestType());
@@ -72,7 +74,7 @@ public class PythonNoseTestCommandLineState extends PythonTestCommandLineStateBa
     ParamsGroup script_params = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
     assert script_params != null;
     if (myConfig.useParam() && !StringUtil.isEmptyOrSpaces(myConfig.getParams()))
-      script_params.addParameter(myConfig.getParams());
+      script_params.addParametersString(myConfig.getParams());
 
   }
 }

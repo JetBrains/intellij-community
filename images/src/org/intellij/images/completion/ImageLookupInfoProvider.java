@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 package org.intellij.images.completion;
 
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.file.FileLookupInfoProvider;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ImageLookupInfoProvider extends FileLookupInfoProvider {
 
-  public Pair<String, String> getLookupInfo(@NotNull VirtualFile file, Project project) {
+  public Couple<String> getLookupInfo(@NotNull VirtualFile file, Project project) {
     final String[] s = new String[] {null};
     ImageInfoIndex.processValues(file, new FileBasedIndex.ValueProcessor<ImageInfoIndex.ImageInfo>() {
       @SuppressWarnings({"HardCodedStringLiteral"})
@@ -40,7 +40,7 @@ public class ImageLookupInfoProvider extends FileLookupInfoProvider {
       }
     }, project);
 
-    return s[0] == null ? null : new Pair<String, String>(file.getName(), s[0]);
+    return s[0] == null ? null : Couple.newOne(file.getName(), s[0]);
   }
 
   @NotNull

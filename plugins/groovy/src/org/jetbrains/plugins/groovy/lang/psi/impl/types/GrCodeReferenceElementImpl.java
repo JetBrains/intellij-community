@@ -16,23 +16,16 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
-import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.JavaClassNameCompletionContributor;
-import com.intellij.codeInsight.completion.PrefixMatcher;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -41,14 +34,13 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
@@ -58,7 +50,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.CompletionProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.ArrayList;
@@ -116,7 +107,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     return findChildByType(TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS);
   }
 
-  enum ReferenceKind {
+  public enum ReferenceKind {
     CLASS,
     CLASS_OR_PACKAGE,
     PACKAGE_FQ,
@@ -132,7 +123,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     return results.length == 1 ? results[0].getElement() : null;
   }
 
-  private ReferenceKind getKind(boolean forCompletion) {
+  public ReferenceKind getKind(boolean forCompletion) {
     if (isClassReferenceForNew()) {
       return CLASS_OR_PACKAGE;
     }
@@ -271,161 +262,6 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     PsiElement parent = getParent();
     while (parent instanceof GrCodeReferenceElement) parent = parent.getParent();
     return parent instanceof GrNewExpression;
-  }
-
-  private static void feedLookupElements(PsiNamedElement psi, boolean afterNew, Consumer<LookupElement> consumer, PrefixMatcher matcher) {
-    for (LookupElement element : GroovyCompletionUtil
-      .createLookupElements(new GroovyResolveResultImpl(psi, true), afterNew, matcher, null)) {
-      consumer.consume(element);
-    }
-  }
-
-  private void processVariantsImpl(ReferenceKind kind, Consumer<LookupElement> consumer, PrefixMatcher matcher) {
-    boolean afterNew = JavaClassNameCompletionContributor.AFTER_NEW.accepts(this);
-    switch (kind) {
-      case STATIC_MEMBER_FQ: {
-        final GrCodeReferenceElement qualifier = getQualifier();
-        if (qualifier != null) {
-          final PsiElement resolve = qualifier.resolve();
-          if (resolve instanceof PsiClass) {
-            final PsiClass clazz = (PsiClass)resolve;
-
-            for (PsiField field : clazz.getFields()) {
-              if (field.hasModifierProperty(PsiModifier.STATIC)) {
-                feedLookupElements(field, afterNew, consumer, matcher);
-              }
-            }
-
-            for (PsiMethod method : clazz.getMethods()) {
-              if (method.hasModifierProperty(PsiModifier.STATIC)) {
-                feedLookupElements(method, afterNew, consumer, matcher);
-              }
-            }
-
-            for (PsiClass inner : clazz.getInnerClasses()) {
-              if (inner.hasModifierProperty(PsiModifier.STATIC)) {
-                feedLookupElements(inner, afterNew, consumer, matcher);
-              }
-            }
-            return;
-          }
-        }
-      }
-      // fall through
-
-      case PACKAGE_FQ:
-      case CLASS_FQ:
-      case CLASS_OR_PACKAGE_FQ: {
-        final String refText = PsiUtil.getQualifiedReferenceText(this);
-        LOG.assertTrue(refText != null, this.getText());
-
-        String parentPackageFQName = StringUtil.getPackageName(refText);
-        final PsiPackage parentPackage = JavaPsiFacade.getInstance(getProject()).findPackage(parentPackageFQName);
-        if (parentPackage != null) {
-          final GlobalSearchScope scope = getResolveScope();
-          if (kind == PACKAGE_FQ) {
-            for (PsiPackage aPackage : parentPackage.getSubPackages(scope)) {
-              feedLookupElements(aPackage, afterNew, consumer, matcher);
-            }
-            return;
-          }
-
-          if (kind == CLASS_FQ) {
-            for (PsiClass aClass : parentPackage.getClasses(scope)) {
-              feedLookupElements(aClass, afterNew, consumer, matcher);
-            }
-            return;
-          }
-
-          for (PsiPackage aPackage : parentPackage.getSubPackages(scope)) {
-            feedLookupElements(aPackage, afterNew, consumer, matcher);
-          }
-          for (PsiClass aClass : parentPackage.getClasses(scope)) {
-            feedLookupElements(aClass, afterNew, consumer, matcher);
-          }
-          return;
-        }
-      }
-
-      case CLASS_OR_PACKAGE:
-      case CLASS_IN_QUALIFIED_NEW:
-      case CLASS: {
-        GrCodeReferenceElement qualifier = getQualifier();
-        if (qualifier != null) {
-          PsiElement qualifierResolved = qualifier.resolve();
-          if (qualifierResolved instanceof PsiPackage) {
-            PsiPackage aPackage = (PsiPackage)qualifierResolved;
-            for (PsiClass aClass : aPackage.getClasses(getResolveScope())) {
-              feedLookupElements(aClass, afterNew, consumer, matcher);
-            }
-            if (kind == CLASS) return;
-
-            for (PsiPackage subpackage : aPackage.getSubPackages(getResolveScope())) {
-              feedLookupElements(subpackage, afterNew, consumer, matcher);
-            }
-          }
-          else if (qualifierResolved instanceof PsiClass) {
-            for (PsiClass aClass : ((PsiClass)qualifierResolved).getInnerClasses()) {
-              feedLookupElements(aClass, afterNew, consumer, matcher);
-            }
-          }
-        }
-        else {
-          ResolverProcessor classProcessor = CompletionProcessor.createClassCompletionProcessor(this);
-          processTypeParametersFromUnfinishedMethodOrField(classProcessor);
-
-          ResolveUtil.treeWalkUp(this, classProcessor, false);
-
-          for (LookupElement o : GroovyCompletionUtil.getCompletionVariants(classProcessor.getCandidates(), afterNew, matcher, this)) {
-            consumer.consume(o);
-          }
-        }
-      }
-    }
-  }
-
-  private void processTypeParametersFromUnfinishedMethodOrField(@NotNull ResolverProcessor processor) {
-    final PsiElement candidate = findTypeParameterListCandidate();
-
-    if (candidate instanceof GrTypeParameterList) {
-      for (GrTypeParameter p : ((GrTypeParameterList)candidate).getTypeParameters()) {
-        ResolveUtil.processElement(processor, p, ResolveState.initial());
-      }
-    }
-  }
-
-  @Nullable
-  private PsiElement findTypeParameterListCandidate() {
-    final GrTypeElement typeElement = getRootTypeElement();
-    if (typeElement == null) return null;
-
-    if (typeElement.getParent() instanceof GrTypeDefinitionBody) {
-      return PsiUtil.skipWhitespacesAndComments(typeElement.getPrevSibling(), false);
-    }
-
-    if (typeElement.getParent() instanceof GrVariableDeclaration) {
-      final PsiElement errorElement = PsiUtil.skipWhitespacesAndComments(typeElement.getPrevSibling(), false);
-      if (errorElement instanceof PsiErrorElement) {
-        return errorElement.getFirstChild();
-      }
-    }
-
-    return null;
-  }
-
-  @Nullable
-  private GrTypeElement getRootTypeElement() {
-    PsiElement parent = getParent();
-    while (isTypeElementChild(parent)) {
-      if (parent instanceof GrTypeElement && !isTypeElementChild(parent.getParent())) return (GrTypeElement)parent;
-      parent = parent.getParent();
-    }
-
-    return null;
-  }
-
-  private static boolean isTypeElementChild(PsiElement element) {
-    return element instanceof GrCodeReferenceElement || element instanceof GrTypeArgumentList || element instanceof GrTypeElement;
   }
 
   public boolean isSoft() {
@@ -679,11 +515,6 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     }
 
     return (GroovyResolveResult[])results;
-  }
-
-  @Override
-  public void processVariants(PrefixMatcher matcher, CompletionParameters parameters, Consumer<LookupElement> consumer) {
-    processVariantsImpl(getKind(true), consumer, matcher);
   }
 
   @NotNull

@@ -92,14 +92,14 @@ public final class CallFrameView extends StackFrameImplBase implements VariableC
 
   @NotNull
   @Override
-  public DebuggerViewSupport getDebugProcess() {
+  public DebuggerViewSupport getViewSupport() {
     return debugProcess;
   }
 
   @NotNull
   @Override
-  public MemberFilter getMemberFilter() {
-    return debugProcess;
+  public MemberFilter createMemberFilter() {
+    return debugProcess.createMemberFilter(this);
   }
 
   @Nullable

@@ -123,18 +123,31 @@ public class PyDebugRunner extends GenericProgramRunner {
                                                                   @NotNull PyDebugProcess debugProcess) {
     ExecutionConsole console = result.getExecutionConsole();
     if (console instanceof PythonDebugLanguageConsoleView) {
-      PythonConsoleView pythonConsoleView = ((PythonDebugLanguageConsoleView)console).getPydevConsoleView();
-      pythonConsoleView.setConsoleCommunication(new PythonDebugConsoleCommunication(project, debugProcess));
-
       ProcessHandler processHandler = result.getProcessHandler();
-      PydevDebugConsoleExecuteActionHandler consoleExecuteActionHandler = new PydevDebugConsoleExecuteActionHandler(pythonConsoleView,
-                                                                                                                    processHandler,
-                                                                                                                    new PythonDebugConsoleCommunication(project, debugProcess));
-      pythonConsoleView.setExecutionHandler(consoleExecuteActionHandler);
 
-      debugProcess.getSession().addSessionListener(consoleExecuteActionHandler);
-      new LanguageConsoleBuilder(pythonConsoleView).processHandler(processHandler).initActions(consoleExecuteActionHandler, "py");
+      initDebugConsoleView(project, debugProcess, (PythonDebugLanguageConsoleView)console, processHandler);
     }
+  }
+
+  public static PythonDebugConsoleCommunication initDebugConsoleView(Project project,
+                                                                     PyDebugProcess debugProcess,
+                                                                     PythonDebugLanguageConsoleView console,
+                                                                     ProcessHandler processHandler) {
+    PythonConsoleView pythonConsoleView = console.getPydevConsoleView();
+    PythonDebugConsoleCommunication debugConsoleCommunication = new PythonDebugConsoleCommunication(project, debugProcess);
+
+    pythonConsoleView.setConsoleCommunication(debugConsoleCommunication);
+
+
+    PydevDebugConsoleExecuteActionHandler consoleExecuteActionHandler = new PydevDebugConsoleExecuteActionHandler(pythonConsoleView,
+                                                                                                                  processHandler,
+                                                                                                                  debugConsoleCommunication);
+    pythonConsoleView.setExecutionHandler(consoleExecuteActionHandler);
+
+    debugProcess.getSession().addSessionListener(consoleExecuteActionHandler);
+    new LanguageConsoleBuilder(pythonConsoleView).processHandler(processHandler).initActions(consoleExecuteActionHandler, "py");
+
+    return debugConsoleCommunication;
   }
 
   @Nullable

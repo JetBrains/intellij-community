@@ -349,7 +349,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
   public void setTargetForEvent(final AntBuildFile buildFile, final String targetName, final ExecutionEvent event) {
     synchronized (myEventToTargetMap) {
-      myEventToTargetMap.put(event, new Pair<AntBuildFile, String>(buildFile, targetName));
+      myEventToTargetMap.put(event, Pair.create(buildFile, targetName));
     }
   }
 
@@ -364,7 +364,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       for (Map.Entry<ExecutionEvent, Pair<AntBuildFile, String>> entry : myEventToTargetMap.entrySet()) {
         final Pair<AntBuildFile, String> pair = entry.getValue();
         if (pair != null && Comparing.equal(pair.getSecond(), oldTargetName)) {
-          entry.setValue(new Pair<AntBuildFile, String>(pair.getFirst(), newTargetName));
+          entry.setValue(Pair.create(pair.getFirst(), newTargetName));
         }
       }
     }
@@ -691,7 +691,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       final Element element = (Element)o;
       final String url = element.getAttributeValue(URL);
       if (url != null) {
-        files.add(new Pair<Element, String>(element, url));
+        files.add(Pair.create(element, url));
       }
     }
     
@@ -738,7 +738,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
                   try {
                     final AntBuildFileBase buildFile = addBuildFileImpl(file);
                     buildFile.readProperties(element);
-                    buildFiles.add(new Pair<Element, AntBuildFileBase>(element, buildFile));
+                    buildFiles.add(Pair.create(element, buildFile));
                   }
                   catch (AntNoFileException ignored) {
                   }

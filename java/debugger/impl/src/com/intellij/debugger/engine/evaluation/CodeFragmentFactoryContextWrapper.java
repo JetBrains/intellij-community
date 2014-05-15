@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,7 @@ package com.intellij.debugger.engine.evaluation;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
-import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
-import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -31,6 +29,7 @@ import com.intellij.psi.JavaRecursiveElementVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
@@ -126,7 +125,7 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
         }
       }
       buffer.append(" ");
-      return new Pair<String, Map<String, ObjectReference>>(buffer.toString(), reverseMap);
+      return Pair.create(buffer.toString(), reverseMap);
     }
     finally {
       StringBuilderSpinAllocator.dispose(buffer);

@@ -20,14 +20,10 @@
  */
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectExtension;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.pom.java.LanguageLevel;
@@ -36,16 +32,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExtension {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl");
   @Deprecated
   @NonNls private static final String ASSERT_KEYWORD_ATTR = "assert-keyword";
   @Deprecated
   @NonNls private static final String JDK_15_ATTR = "jdk-15";
 
   private LanguageLevel myLanguageLevel = LanguageLevel.JDK_1_6;
-  private LanguageLevel myOriginalLanguageLevel = myLanguageLevel;
-
   private final Project myProject;
-  private volatile Runnable myReloadProjectRequest;
 
   public LanguageLevelProjectExtensionImpl(final Project project) {
     myProject = project;
@@ -59,7 +53,6 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
     else {
       myLanguageLevel = LanguageLevel.valueOf(level);
     }
-    myOriginalLanguageLevel = myLanguageLevel;
   }
 
   private static LanguageLevel migrateFromIdea7(Element element) {
@@ -97,47 +90,19 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
   @Override
   public void setLanguageLevel(@NotNull LanguageLevel languageLevel) {
     if (myLanguageLevel != languageLevel) {
-      reloadProjectOnLanguageLevelChange(languageLevel, false);
-    }
-    myLanguageLevel = languageLevel;
-
-    if (!willReload() && !myProject.isDefault() && DirectoryIndex.getInstance(myProject).isInitialized()) {
-      JavaLanguageLevelPusher.pushLanguageLevel(myProject);
+      myLanguageLevel = languageLevel;
+      languageLevelsChanged();
     }
   }
 
   @Override
-  public void reloadProjectOnLanguageLevelChange(@NotNull final LanguageLevel languageLevel, final boolean forceReload) {
-    if (willReload()) {
-      myReloadProjectRequest = new Runnable() {
-        @Override
-        public void run() {
-          if (myProject.isDisposed()) return;
-          if (myReloadProjectRequest != this) {
-            // obsolete, another request has already replaced this one
-            return;
-          }
-          if (!forceReload && myOriginalLanguageLevel.equals(getLanguageLevel())) {
-            // the question does not make sense now
-            return;
-          }
-          final String _message = ProjectBundle.message("project.language.level.reload.prompt", myProject.getName());
-          if (Messages.showYesNoDialog(myProject, _message, ProjectBundle.message("project.language.level.reload.title"), Messages.getQuestionIcon()) == Messages.YES) {
-            ProjectManager.getInstance().reloadProject(myProject);
-          }
-          myReloadProjectRequest = null;
-        }
-      };
-      ApplicationManager.getApplication().invokeLater(myReloadProjectRequest, ModalityState.NON_MODAL);
-    }
-    else {
-      // if the project is not open, reset the original level to the same value as mylanguageLevel has
-      myOriginalLanguageLevel = languageLevel;
-    }
+  public void languageLevelsChanged() {
+    JavaLanguageLevelPusher.pushLanguageLevel(myProject);
   }
 
-  private boolean willReload() {
-    return myProject.isOpen() && !ApplicationManager.getApplication().isUnitTestMode();
+  @Override
+  public void reloadProjectOnLanguageLevelChange(@NotNull LanguageLevel languageLevel, boolean forceReload) {
+    LOG.warn("Calling deprecated LanguageLevelProjectExtensionImpl.reloadProjectOnLanguageLevelChange, while project reloading is not needed on language level changes");
   }
 
   public static class MyProjectExtension extends ProjectExtension {
