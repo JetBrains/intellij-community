@@ -355,6 +355,17 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
       for (int i = myStartOffset; i < endOffset; i++) {
         char c = myText.charAt(i);
         switch (c) {
+          case '\r':
+            if (i + 1 < myText.length() && myText.charAt(i + 1) == '\n') {
+              myIndentSymbolsToStripAtCurrentLine = myIndentSymbolsToStrip;
+              builder.addText(myStartOffset + myOffsetShift, i + myOffsetShift + 1);
+              myStartOffset = i + 2;
+              myOffsetShift--;
+              //noinspection AssignmentToForLoopParameter
+              i++;
+              break;
+            }
+            // Intended fall-through.
           case '\n':
             myIndentSymbolsToStripAtCurrentLine = myIndentSymbolsToStrip;
             builder.addText(myStartOffset + myOffsetShift, i + myOffsetShift + 1);

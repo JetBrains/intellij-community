@@ -15,13 +15,16 @@
  */
 package com.intellij.openapi.editor.richcopy;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.richcopy.model.ColorRegistry;
 import com.intellij.openapi.editor.richcopy.model.MarkupHandler;
 import com.intellij.openapi.editor.richcopy.model.SyntaxInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.ui.JBColor;
 import junit.framework.TestCase;
@@ -235,11 +238,66 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
                      "\n");
   }
 
+  public void testSlashRSeparator() throws Exception {
+    String text = "package org;\r" +
+                  "\r" +
+                  "public class TestClass {\r" +
+                  "\r" +
+                  "    int field;\r" +
+                  "\r" +
+                  "    public int getField() {\r" +
+                  "        return field;\r" +
+                  "    }\r" +
+                  "}";
+    initWithCustomLineSeparators(text);
+    int selectionStart = text.indexOf("public int");
+    int selectionEnd = text.indexOf('}', selectionStart);
+    myFixture.getEditor().getSelectionModel().setSelection(selectionStart, selectionEnd);
+
+    verifySyntaxInfo("foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=public int \n" +
+                     "foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=getField() {\n" +
+                     "\n" +
+                     "text=    \n" +
+                     "foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=return \n" +
+                     "foreground=java.awt.Color[r=102,g=14,b=122],text=field\n" +
+                     "foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=;\n" +
+                     "\n" +
+                     "text=}\n");
+  }
+
+  public void testSlashRSlashNSeparator() throws Exception {
+    String text = "package org;\r\n" +
+                  "\r\n" +
+                  "public class TestClass {\r\n" +
+                  "\r\n" +
+                  "    int field;\r\n" +
+                  "\r\n" +
+                  "    public int getField() {\r\n" +
+                  "        return field;\r\n" +
+                  "    }\r\n" +
+                  "}";
+    initWithCustomLineSeparators(text);
+    int selectionStart = text.indexOf("public int");
+    int selectionEnd = text.indexOf('}', selectionStart);
+    myFixture.getEditor().getSelectionModel().setSelection(selectionStart, selectionEnd);
+
+    verifySyntaxInfo("foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=public int \n" +
+                     "foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=getField() {\n" +
+                     "\n" +
+                     "text=    \n" +
+                     "foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=return \n" +
+                     "foreground=java.awt.Color[r=102,g=14,b=122],text=field\n" +
+                     "foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=;\n" +
+                     "\n" +
+                     "text=}\n");
+  }
+
   private String getSyntaxInfo() {
     final StringBuilder builder = new StringBuilder();
     final Editor editor = myFixture.getEditor();
-    final String text = editor.getSelectionModel().getSelectedText(true);
-    assertNotNull(text);
+    String selectedText = editor.getSelectionModel().getSelectedText(true);
+    assertNotNull(selectedText);
+    final String text = StringUtil.convertLineSeparators(selectedText);
 
     TextWithMarkupProcessor processor = new TextWithMarkupProcessor();
     processor.addBuilder(new TextWithMarkupBuilder() {
@@ -295,6 +353,19 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
 
   private void init(String text) {
     myFixture.configureByText(getTestName(true) + ".java", text);
+    myFixture.doHighlighting();
+  }
+
+  private void initWithCustomLineSeparators(final String text) {
+    myFixture.configureByText(getTestName(true) + ".java", "");
+    final DocumentImpl document = (DocumentImpl)myFixture.getEditor().getDocument();
+    document.setAcceptSlashR(true);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        document.setText(text);
+      }
+    });
     myFixture.doHighlighting();
   }
 
