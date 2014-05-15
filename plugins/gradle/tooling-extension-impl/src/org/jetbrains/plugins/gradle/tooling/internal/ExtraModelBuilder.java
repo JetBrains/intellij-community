@@ -20,11 +20,10 @@ import org.gradle.tooling.provider.model.ToolingModelBuilder;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.plugins.gradle.tooling.ModelBuilderError;
+import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 
-import java.io.File;
 import java.util.ServiceLoader;
 
 /**
@@ -33,10 +32,6 @@ import java.util.ServiceLoader;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class ExtraModelBuilder implements ToolingModelBuilder {
-  public static final String GROUP_TAG = "<ij_msg_gr>";
-  public static final String NAV_TAG = "<ij_nav>";
-  public static final String EOL_TAG = "<eol>";
-
   private static final String RANGE_TOKEN = " <=> ";
   private static ServiceLoader<ModelBuilderService> buildersLoader =
     ServiceLoader.load(ModelBuilderService.class, ExtraModelBuilder.class.getClassLoader());
@@ -69,16 +64,8 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
           return service.buildAll(modelName, project);
         }
         catch (Exception e) {
-          ModelBuilderError builderError = service.getModelBuildError(project, e);
-          String group = builderError.getGroup().replaceAll("\r\n|\n\r|\n|\r", " ");
-          String msg = builderError.getError().replaceAll("\r\n|\n\r|\n|\r", EOL_TAG);
-          final File projectBuildFile = project.getBuildFile();
-
-          project.getLogger().error(
-            GROUP_TAG + group + GROUP_TAG +
-            (projectBuildFile != null ? (NAV_TAG + projectBuildFile.getPath() + NAV_TAG) : "") +
-            msg
-          );
+          ErrorMessageBuilder builderError = service.getErrorMessageBuilder(project, e);
+          project.getLogger().error(builderError.build());
         }
         return null;
       }

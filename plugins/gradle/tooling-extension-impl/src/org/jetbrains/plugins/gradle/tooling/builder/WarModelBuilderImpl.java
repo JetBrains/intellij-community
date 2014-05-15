@@ -27,7 +27,7 @@ import org.gradle.api.tasks.bundling.War;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.web.WebConfiguration;
-import org.jetbrains.plugins.gradle.tooling.ModelBuilderError;
+import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 import org.jetbrains.plugins.gradle.tooling.internal.web.WarModelImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.web.WebConfigurationImpl;
@@ -125,13 +125,10 @@ public class WarModelBuilderImpl implements ModelBuilderService {
 
   @NotNull
   @Override
-  public ModelBuilderError getModelBuildError(@NotNull Project project, @NotNull Exception e) {
-    return new ModelBuilderError(
-      "Web project import errors",
-      String.format(
-        "%s\nWeb Facets/Artifacts will not be configured for %s",
-        e.getMessage(), project)
-    );
+  public ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
+    return ErrorMessageBuilder.create(
+      project, e, "Web project import errors"
+    ).withDescription("Web Facets/Artifacts will not be configured");
   }
 
   private static void addPath(List<WebConfiguration.WebResource> webResources, String warRelativePath, String fileRelativePath, File file) {

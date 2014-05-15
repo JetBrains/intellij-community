@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.BuildScriptClasspathModel;
 import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
-import org.jetbrains.plugins.gradle.tooling.ModelBuilderError;
+import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 import org.jetbrains.plugins.gradle.tooling.internal.BuildScriptClasspathModelImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.ClasspathEntryModelImpl;
@@ -102,13 +102,10 @@ public class ModelBuildScriptClasspathBuilderImpl implements ModelBuilderService
 
   @NotNull
   @Override
-  public ModelBuilderError getModelBuildError(@NotNull Project project, @NotNull Exception e) {
-    return new ModelBuilderError(
-      "Project build classpath resolve errors",
-      String.format(
-        "%s\nCodeInsight feature may not work for gradle build script of %s",
-        e.getMessage(), project)
-    );
+  public ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
+    return ErrorMessageBuilder.create(
+      project, e, "Project build classpath resolve errors"
+    ).withDescription("Some codeInsight features may not work for gradle build script");
   }
 
   private static Set<String> convert(Set<Path> paths) {
