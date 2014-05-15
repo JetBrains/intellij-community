@@ -1,5 +1,6 @@
 package org.jetbrains.debugger;
 
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +29,12 @@ public interface EvaluateContext {
    */
   @NotNull
   EvaluateContext withValueManager(@NotNull String objectGroup);
+
+  /**
+   * If you evaluate "foo.bar = 4" and want to update Variables view (and all other clients), you can use use this task
+   */
+  @NotNull
+  ActionCallback refreshOnDone(@NotNull ActionCallback result);
 
   /**
    * call only if withLoader was called before

@@ -318,7 +318,7 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
         type = substitutor.substitute(originalParameter.getType());
       }
       if (type == null) {
-        type = PsiType.getJavaLangObject(superClass.getManager(), superClass.getResolveScope());
+        type = TypesUtil.getJavaLangObject(superClass);
       }
       final LightParameter lightParameter = new LightParameter(StringUtil.notNullize(originalParameter.getName(), "p" + i), type, builder, JavaLanguage.INSTANCE);
       if (keepParameterAnnotations) {

@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.signatures;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -50,6 +51,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.LazyFqnClassType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -865,7 +867,8 @@ public class GrClosureSignatureUtil {
   @Nullable
   public static PsiType getTypeByArg(ArgInfo<PsiElement> arg, PsiManager manager, GlobalSearchScope resolveScope) {
     if (arg.isMultiArg) {
-      if (arg.args.isEmpty()) return PsiType.getJavaLangObject(manager, resolveScope).createArrayType();
+      if (arg.args.isEmpty()) return LazyFqnClassType.getLazyType(CommonClassNames.JAVA_LANG_OBJECT, LanguageLevel.JDK_1_5, resolveScope,
+                                                                  JavaPsiFacade.getInstance(manager.getProject())).createArrayType();
       PsiType leastUpperBound = null;
       PsiElement first = arg.args.get(0);
       if (first instanceof GrNamedArgument) {

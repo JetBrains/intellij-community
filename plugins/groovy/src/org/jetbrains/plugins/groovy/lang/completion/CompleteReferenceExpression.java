@@ -134,9 +134,7 @@ public class CompleteReferenceExpression {
         parent = parent.getParent();
       }
       if (parent instanceof GrAnnotation) {
-        for (LookupElement result : GroovyCompletionUtil.getAnnotationCompletionResults((GrAnnotation)parent, myMatcher)) {
-          myConsumer.consume(result);
-        }
+        new AnnotationAttributeCompletionResultProcessor((GrAnnotation)parent).process(myConsumer, myMatcher);
       }
     }
   }
@@ -309,7 +307,7 @@ public class CompleteReferenceExpression {
           return;
         }
       }
-      getVariantsFromQualifierType(PsiType.getJavaLangObject(myRefExpr.getManager(), qualifier.getResolveScope()), project);
+      getVariantsFromQualifierType(TypesUtil.getJavaLangObject(qualifier), project);
     }
     else if (qualifierType instanceof PsiIntersectionType) {
       for (PsiType conjunct : ((PsiIntersectionType)qualifierType).getConjuncts()) {

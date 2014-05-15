@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefiniti
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -28,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitio
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeParameters;
 
 import static org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils.getToken;
+import static org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils.lookAhead;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -160,8 +162,8 @@ public class TypeDefinition implements GroovyElementTypes {
   }
 
   private static IElementType parseEnumBody(@NotNull PsiBuilder builder,
-                                                 @NotNull String enumName,
-                                                 @NotNull GroovyParser parser) {
+                                            @NotNull String enumName,
+                                            @NotNull GroovyParser parser) {
     PsiBuilder.Marker ebMarker = builder.mark();
 
     if (!getToken(builder, mLCURLY)) {
@@ -171,7 +173,11 @@ public class TypeDefinition implements GroovyElementTypes {
 
     getToken(builder, mNLS);
 
-    EnumConstant.parseConstantList(builder, parser);
+    if (EnumConstant.parseConstantList(builder, parser)) {
+      if (!lookAhead(builder, mRCURLY)) {
+        getToken(builder, TokenSet.create(mNLS, mSEMI), GroovyBundle.message("separator.or.rcurly.expected"));
+      }
+    }
 
     parseMembers(builder, enumName, parser, false);
 
