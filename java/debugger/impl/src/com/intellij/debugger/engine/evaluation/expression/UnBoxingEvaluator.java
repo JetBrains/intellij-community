@@ -18,7 +18,7 @@ package com.intellij.debugger.engine.evaluation.expression;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.util.containers.HashMap;
 import com.sun.jdi.ClassType;
 import com.sun.jdi.Method;
@@ -36,16 +36,16 @@ import java.util.Map;
  */
 public class UnBoxingEvaluator implements Evaluator{
   private final Evaluator myOperand;
-  private static final Map<String, Pair<String, String>> TYPES_TO_CONVERSION_METHOD_MAP = new HashMap<String, Pair<String, String>>();
+  private static final Map<String, Couple<String>> TYPES_TO_CONVERSION_METHOD_MAP = new HashMap<String, Couple<String>>();
   static {
-    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Boolean", Pair.create("booleanValue", "()Z"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Byte", Pair.create("byteValue", "()B"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Character", Pair.create("charValue", "()C"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Short", Pair.create("shortValue", "()S"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Integer", Pair.create("intValue", "()I"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Long", Pair.create("longValue", "()J"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Float", Pair.create("floatValue", "()F"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Double", Pair.create("doubleValue", "()D"));
+    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Boolean", Couple.newOne("booleanValue", "()Z"));
+    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Byte", Couple.newOne("byteValue", "()B"));
+    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Character", Couple.newOne("charValue", "()C"));
+    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Short", Couple.newOne("shortValue", "()S"));
+    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Integer", Couple.newOne("intValue", "()I"));
+    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Long", Couple.newOne("longValue", "()J"));
+    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Float", Couple.newOne("floatValue", "()F"));
+    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Double", Couple.newOne("doubleValue", "()D"));
   }
 
   public static boolean isTypeUnboxable(String typeName) {
@@ -63,7 +63,7 @@ public class UnBoxingEvaluator implements Evaluator{
     }
     if (result instanceof ObjectReference) {
       final String valueTypeName = result.type().name();
-      final Pair<String, String> pair = TYPES_TO_CONVERSION_METHOD_MAP.get(valueTypeName);
+      final Couple<String> pair = TYPES_TO_CONVERSION_METHOD_MAP.get(valueTypeName);
       if (pair != null) {
         return convertToPrimitive(context, (ObjectReference)result, pair.getFirst(), pair.getSecond());
       }
