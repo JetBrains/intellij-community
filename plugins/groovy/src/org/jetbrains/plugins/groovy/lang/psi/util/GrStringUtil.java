@@ -31,8 +31,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.GSTRING_CONTENT;
@@ -576,7 +576,7 @@ public class GrStringUtil {
     if (!(refExprCopy instanceof GrReferenceExpression)) return false;
 
     final GrReferenceExpression refExpr = (GrReferenceExpression)injected;
-    return GroovyRefactoringUtil.checkPsiElementsAreEqual(refExpr, refExprCopy);
+    return GroovyPsiUtil.checkPsiElementsAreEqual(refExpr, refExprCopy);
   }
 
   public static void removeUnnecessaryBracesInGString(GrString grString) {

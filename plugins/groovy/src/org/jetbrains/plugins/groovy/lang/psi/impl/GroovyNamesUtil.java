@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.refactoring;
+package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
@@ -80,11 +80,11 @@ public class GroovyNamesUtil {
     return res;
   }
 
-  static String deleteNonLetterFromString(String tempString) {
+  public static String deleteNonLetterFromString(String tempString) {
     return tempString.replaceAll("[^a-zA-Z]", "");
   }
 
-  static String fromLowerLetter(String str) {
+  public static String fromLowerLetter(String str) {
     if (str.length() == 0) return "";
     if (str.length() == 1) return str.toLowerCase();
     char c = Character.toLowerCase(str.charAt(0));
