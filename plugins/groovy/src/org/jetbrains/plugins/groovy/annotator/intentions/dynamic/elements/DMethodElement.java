@@ -47,10 +47,12 @@ public class DMethodElement extends DItemElement {
     return myPairs;
   }
 
+  @Override
   public void clearCache() {
     myImplicitMethod = null;
   }
 
+  @Override
   @NotNull
   public PsiMethod getPsi(PsiManager manager, final String containingClassName) {
     if (myImplicitMethod != null) return myImplicitMethod;

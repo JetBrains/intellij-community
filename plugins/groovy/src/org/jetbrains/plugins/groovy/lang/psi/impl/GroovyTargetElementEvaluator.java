@@ -39,10 +39,12 @@ public class GroovyTargetElementEvaluator implements TargetElementEvaluator {
 
   public static final Key<Object> NAVIGATION_ELEMENT_IS_NOT_TARGET = Key.create("GroovyTargetElementEvaluator.DONT_FOLLOW_NAVIGATION_ELEMENT");
 
+  @Override
   public boolean includeSelfInGotoImplementation(@NotNull PsiElement element) {
     return true;
   }
 
+  @Override
   public PsiElement getElementByReference(@NotNull PsiReference ref, int flags) {
     PsiElement sourceElement = ref.getElement();
 

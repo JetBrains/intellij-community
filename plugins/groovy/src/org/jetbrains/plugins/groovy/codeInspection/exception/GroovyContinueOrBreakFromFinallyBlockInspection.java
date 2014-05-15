@@ -27,29 +27,34 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueSta
 
 public class GroovyContinueOrBreakFromFinallyBlockInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return ERROR_HANDLING;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "'continue' or 'break' inside 'finally' block";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "'#ref' inside 'finally' block #loc";
 
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
+    @Override
     public void visitContinueStatement(GrContinueStatement continueStatement) {
 
       super.visitContinueStatement(continueStatement);
@@ -66,6 +71,7 @@ public class GroovyContinueOrBreakFromFinallyBlockInspection extends BaseInspect
       registerStatementError(continueStatement);
     }
 
+    @Override
     public void visitBreakStatement(GrBreakStatement breakStatement) {
 
       super.visitBreakStatement(breakStatement);

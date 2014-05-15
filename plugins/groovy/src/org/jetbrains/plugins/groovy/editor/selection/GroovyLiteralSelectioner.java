@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
  * @author ilyas
  */
 public class GroovyLiteralSelectioner extends ExtendWordSelectionHandlerBase {
+  @Override
   public boolean canSelect(PsiElement e) {
     PsiElement parent = e.getParent();
     return isLiteral(e) || isLiteral(parent);
@@ -45,6 +46,7 @@ public class GroovyLiteralSelectioner extends ExtendWordSelectionHandlerBase {
            element instanceof GrLiteralImpl && ((GrLiteralImpl)element).isStringLiteral();
   }
 
+  @Override
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
     List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
 

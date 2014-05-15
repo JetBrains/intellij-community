@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 class ExplicitClosureCallPredicate implements PsiElementPredicate {
 
+    @Override
     public boolean satisfiedBy(PsiElement element) {
         if (!(element instanceof GrMethodCallExpression)) {
             return false;

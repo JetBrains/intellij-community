@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ public class ArgumentInstruction extends InstructionImpl implements MixinTypeIns
     super(ref);
   }
 
+  @Override
   @Nullable
   public PsiType inferMixinType() {
     PsiElement element = getElement();
@@ -104,6 +105,7 @@ public class ArgumentInstruction extends InstructionImpl implements MixinTypeIns
     }
   }
 
+  @Override
   public String getVariableName() {
     //noinspection ConstantConditions
     return ((GrReferenceExpression)getElement()).getReferenceName();

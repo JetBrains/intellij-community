@@ -106,6 +106,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     myParameterInitializer = new GrExpressionWrapper(expression);
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(final UsageInfo[] usages) {
     return new UsageViewDescriptorAdapter() {
@@ -337,6 +338,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
 
     final GrParameter[] parameters = block.getParameters();
     settings.parametersToRemove().forEachDescending(new TIntProcedure() {
+      @Override
       public boolean execute(final int paramNum) {
         try {
           PsiParameter param = parameters[paramNum];

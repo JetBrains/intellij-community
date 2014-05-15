@@ -68,15 +68,18 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
     myPsiClass = type instanceof PsiClassType ? ((PsiClassType)type).resolve() : null;
   }
 
+  @Override
   public PsiElement getPlace() {
     return myDescriptor.getPlace();
   }
 
+  @Override
   @Nullable
   public PsiClass getClassType() {
     return getPsiClass();
   }
 
+  @Override
   public PsiType getPsiType() {
     return myDescriptor.getPsiType();
   }
@@ -92,6 +95,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
     return myDescriptor.getResolveScope();
   }
 
+  @Override
   public Project getProject() {
     return myProject;
   }
@@ -110,6 +114,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
     return myDepot;
   }
 
+  @Override
   public void addMemberHolder(CustomMembersHolder holder) {
     myDepot.addHolder(holder);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,43 +46,52 @@ import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
 public class GroovyParserDefinition implements ParserDefinition {
   public static final IStubFileElementType GROOVY_FILE = new GrStubFileElementType(GroovyFileType.GROOVY_LANGUAGE);
 
+  @Override
   @NotNull
   public Lexer createLexer(Project project) {
     return new GroovyLexer();
   }
 
+  @Override
   public PsiParser createParser(Project project) {
     return new GroovyParser();
   }
 
+  @Override
   public IFileElementType getFileNodeType() {
     return GROOVY_FILE;
   }
 
+  @Override
   @NotNull
   public TokenSet getWhitespaceTokens() {
     return TokenSets.WHITE_SPACE_TOKEN_SET;
   }
 
+  @Override
   @NotNull
   public TokenSet getCommentTokens() {
     return TokenSets.COMMENTS_TOKEN_SET;
   }
 
+  @Override
   @NotNull
   public TokenSet getStringLiteralElements() {
     return TokenSets.STRING_LITERALS;
   }
 
+  @Override
   @NotNull
   public PsiElement createElement(ASTNode node) {
     return GroovyPsiCreator.createElement(node);
   }
 
+  @Override
   public PsiFile createFile(FileViewProvider viewProvider) {
     return new GroovyFileImpl(viewProvider);
   }
 
+  @Override
   public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
     final IElementType lType = left.getElementType();
     final IElementType rType = right.getElementType();

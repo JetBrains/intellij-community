@@ -36,6 +36,7 @@ import static org.jetbrains.plugins.groovy.annotator.GrHighlightUtil.isDeclarati
  */
 public class GroovyUntypedAccessInspection extends BaseInspection {
 
+  @Override
   @NotNull
   protected BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
@@ -69,12 +70,14 @@ public class GroovyUntypedAccessInspection extends BaseInspection {
     };
   }
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return PROBABLE_BUGS;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
  */
 public abstract class GroovyManyStatementsSurrounder implements Surrounder {
 
+  @Override
   public boolean isApplicable(@NotNull PsiElement[] elements) {
     if (elements.length == 0) return false;
 
@@ -55,6 +56,7 @@ public abstract class GroovyManyStatementsSurrounder implements Surrounder {
     return ";".equals(element.getText()) || element instanceof PsiComment || StringUtil.isEmptyOrSpaces(element.getText()) || PsiUtil.isExpressionStatement(element);
   }
 
+  @Override
   @Nullable
   public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement[] elements) throws IncorrectOperationException {
     if (elements.length == 0) return null;

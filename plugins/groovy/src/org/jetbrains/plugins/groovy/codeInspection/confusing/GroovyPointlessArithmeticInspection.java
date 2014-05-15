@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,24 +35,29 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 public class GroovyPointlessArithmeticInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Pointless arithmetic expression";
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return CONFUSING_CODE_CONSTRUCTS;
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return false;
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new PointlessArithmeticVisitor();
   }
 
+  @Override
   public String buildErrorString(Object... args) {
     return GroovyInspectionBundle.message("pointless.arithmetic.error.message", calculateReplacementExpression((GrExpression) args[0]));
   }
@@ -95,16 +100,19 @@ public class GroovyPointlessArithmeticInspection extends BaseInspection {
     return "";
   }
 
+  @Override
   public GroovyFix buildFix(PsiElement location) {
     return new PointlessArithmeticFix();
   }
 
   private static class PointlessArithmeticFix extends GroovyFix {
+    @Override
     @NotNull
     public String getName() {
       return "Simplify";
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final GrExpression expression = (GrExpression) descriptor.getPsiElement();
       final String newExpression = calculateReplacementExpression(expression);
@@ -116,6 +124,7 @@ public class GroovyPointlessArithmeticInspection extends BaseInspection {
 
     private final TokenSet arithmeticTokens = TokenSet.create(mPLUS, mMINUS, mSTAR, mDIV);
 
+    @Override
     public void visitBinaryExpression(@NotNull GrBinaryExpression expression) {
       super.visitBinaryExpression(expression);
       final GrExpression rhs = expression.getRightOperand();

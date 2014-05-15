@@ -26,20 +26,24 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 public class GroovyEmptyStatementBodyInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Statement with empty body";
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return CONFUSING_CODE_CONSTRUCTS;
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   public String buildErrorString(Object... args) {
     if (args[0] instanceof GrIfStatement) {
       return "'#ref' statement has empty branch";
@@ -49,12 +53,14 @@ public class GroovyEmptyStatementBodyInspection extends BaseInspection {
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitWhileStatement(@NotNull GrWhileStatement statement) {
       super.visitWhileStatement(statement);
       final GrStatement body = statement.getBody();
@@ -67,6 +73,7 @@ public class GroovyEmptyStatementBodyInspection extends BaseInspection {
       registerStatementError(statement, statement);
     }
 
+    @Override
     public void visitForStatement(@NotNull GrForStatement statement) {
       super.visitForStatement(statement);
       final GrStatement body = statement.getBody();
@@ -80,6 +87,7 @@ public class GroovyEmptyStatementBodyInspection extends BaseInspection {
     }
 
 
+    @Override
     public void visitIfStatement(@NotNull GrIfStatement statement) {
       super.visitIfStatement(statement);
       final GrStatement thenBranch = statement.getThenBranch();

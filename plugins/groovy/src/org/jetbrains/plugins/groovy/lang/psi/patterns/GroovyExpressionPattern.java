@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ public class GroovyExpressionPattern<T extends GrExpression, Self extends Groovy
 
   public Self ofType(@NotNull final ElementPattern pattern) {
     return with(new PatternCondition<T>("ofType") {
+      @Override
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         return pattern.getCondition().accepts(t.getType(), context);
       }

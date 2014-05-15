@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 
 
 class IndexingMethodConversionPredicate implements PsiElementPredicate {
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof GrMethodCallExpression)) {
       return false;

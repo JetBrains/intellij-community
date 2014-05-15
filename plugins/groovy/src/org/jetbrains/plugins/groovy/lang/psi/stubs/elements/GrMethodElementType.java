@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ public abstract class GrMethodElementType extends GrStubElementType<GrMethodStub
     super(debugName);
   }
 
+  @Override
   public GrMethodStub createStub(@NotNull GrMethod psi, StubElement parentStub) {
 
     Set<String> namedParameters = psi.getNamedParameters().keySet();
@@ -50,6 +51,7 @@ public abstract class GrMethodElementType extends GrStubElementType<GrMethodStub
                             GrMethodStub.buildFlags(psi));
   }
 
+  @Override
   public void serialize(@NotNull GrMethodStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     GrStubUtils.writeStringArray(dataStream, stub.getAnnotations());
@@ -58,6 +60,7 @@ public abstract class GrMethodElementType extends GrStubElementType<GrMethodStub
     dataStream.writeByte(stub.getFlags());
   }
 
+  @Override
   @NotNull
   public GrMethodStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     StringRef ref = dataStream.readName();
@@ -68,6 +71,7 @@ public abstract class GrMethodElementType extends GrStubElementType<GrMethodStub
     return new GrMethodStub(parentStub, ref, annNames, namedParameters, this, typeText, flags);
   }
 
+  @Override
   public void indexStub(@NotNull GrMethodStub stub, @NotNull IndexSink sink) {
     String name = stub.getName();
     sink.occurrence(GrMethodNameIndex.KEY, name);

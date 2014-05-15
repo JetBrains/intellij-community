@@ -272,6 +272,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     return null;
   }
 
+  @Override
   public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file, final @Nullable DataContext dataContext) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (!selectionModel.hasSelection()) {
@@ -287,6 +288,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       }
       else {
         IntroduceTargetChooser.showChooser(editor, expressions, new Pass<GrExpression>() {
+          @Override
           public void pass(final GrExpression selectedValue) {
             invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(), selectedValue.getTextRange().getEndOffset());
           }

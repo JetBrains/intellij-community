@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitArgumentLabel(this);
   }
@@ -139,11 +140,13 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     }
   }
 
+  @Override
   public PsiReference getReference() {
     final PsiElement name = getNameElement();
     return name instanceof GrLiteral || name instanceof LeafPsiElement ? this : null;
   }
 
+  @Override
   @Nullable
   public String getName() {
     final PsiElement element = getNameElement();
@@ -176,14 +179,17 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     return null;
   }
 
+  @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @Override
   public TextRange getRangeInElement() {
     return new TextRange(0, getTextLength());
   }
 
+  @Override
   @Nullable
   public PsiElement resolve() {
     return advancedResolve().getElement();
@@ -218,6 +224,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     return PsiImplUtil.extractUniqueResult(multiResolve(false));
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     PsiElement resolved = resolve();
@@ -234,27 +241,33 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     return getText();
   }
 
+  @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     return getRealReference().handleElementRename(newElementName);
   }
 
+  @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     return getRealReference().bindToElement(element);
   }
 
+  @Override
   public boolean isReferenceTo(PsiElement element) {
     return getRealReference().isReferenceTo(element);
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
+  @Override
   public boolean isSoft() {
     return false;
   }
 
+  @Override
   @NotNull
   public PsiElement getNameElement() {
     final PsiElement element = getFirstChild();
@@ -269,11 +282,13 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     return null;
   }
 
+  @Override
   @Nullable
   public PsiType getExpectedArgumentType() { // TODO use GroovyNamedArgumentProvider to determinate expected argument type.
     return null;
   }
 
+  @Override
   public PsiType getLabelType() {
     PsiElement el = getNameElement();
     if (el instanceof GrParenthesizedExpression) {
@@ -292,6 +307,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     return TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, this);
   }
 
+  @Override
   public GrNamedArgument getNamedArgument() {
     final PsiElement parent = getParent();
     assert parent instanceof GrNamedArgument;

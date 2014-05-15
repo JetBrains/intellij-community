@@ -29,34 +29,40 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 
 public class GroovyDivideByZeroInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return PROBABLE_BUGS;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Divide by zero";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Division by zero #loc";
 
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitBinaryExpression(
         @NotNull GrBinaryExpression expression) {
       super.visitBinaryExpression(expression);
@@ -75,6 +81,7 @@ public class GroovyDivideByZeroInspection extends BaseInspection {
       registerError(expression);
     }
 
+    @Override
     public void visitAssignmentExpression(
         GrAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);

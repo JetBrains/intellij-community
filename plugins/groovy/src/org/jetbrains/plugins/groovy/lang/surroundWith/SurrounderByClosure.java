@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 public class SurrounderByClosure extends GroovyManyStatementsSurrounder {
   private static final Key<GroovyResolveResult> REF_RESOLVE_RESULT_KEY = Key.create("REF_RESOLVE_RESULT");
 
+  @Override
   public String getTemplateDescription() {
     return "{ -> ... }.call()";
   }
 
+  @Override
   protected GroovyPsiElement doSurroundElements(PsiElement[] elements, PsiElement context) throws IncorrectOperationException {
     for (PsiElement element : elements) {
       if (element instanceof GroovyPsiElement) {
@@ -52,6 +54,7 @@ public class SurrounderByClosure extends GroovyManyStatementsSurrounder {
     return call;
   }
 
+  @Override
   protected TextRange getSurroundSelectionRange(GroovyPsiElement element) {
     element.accept(new MyRestoringVisitor());
     assert element instanceof GrMethodCallExpression;
@@ -61,6 +64,7 @@ public class SurrounderByClosure extends GroovyManyStatementsSurrounder {
   }
 
   private static class MyMemoizingVisitor extends GroovyRecursiveElementVisitor {
+    @Override
     public void visitReferenceExpression(GrReferenceExpression ref) {
       if (ref.getQualifierExpression() == null) { //only unqualified references could change their targets
         final GroovyResolveResult resolveResult = ref.advancedResolve();
@@ -71,6 +75,7 @@ public class SurrounderByClosure extends GroovyManyStatementsSurrounder {
   }
 
   private static class MyRestoringVisitor extends GroovyRecursiveElementVisitor {
+    @Override
     public void visitReferenceExpression(GrReferenceExpression ref) {
       final GroovyResolveResult oldResult = ref.getCopyableUserData(REF_RESOLVE_RESULT_KEY);
       if (oldResult != null) {

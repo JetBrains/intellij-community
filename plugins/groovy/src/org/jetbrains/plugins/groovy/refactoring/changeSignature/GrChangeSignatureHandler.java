@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
  */
 public class GrChangeSignatureHandler implements ChangeSignatureHandler {
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     PsiElement element = findTargetMember(file, editor);
@@ -66,6 +67,7 @@ public class GrChangeSignatureHandler implements ChangeSignatureHandler {
     }
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
     if (elements.length != 1) return;
     Editor editor = dataContext == null ? null : CommonDataKeys.EDITOR.getData(dataContext);
@@ -97,6 +99,7 @@ public class GrChangeSignatureHandler implements ChangeSignatureHandler {
     dialog.show();
   }
 
+  @Override
   @Nullable
   public PsiElement findTargetMember(PsiFile file, Editor editor) {
     final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
@@ -110,6 +113,7 @@ public class GrChangeSignatureHandler implements ChangeSignatureHandler {
     return null;
   }
 
+  @Override
   @Nullable
   public PsiElement findTargetMember(PsiElement element) {
     final GrParameterList parameterList = PsiTreeUtil.getParentOfType(element, GrParameterList.class);

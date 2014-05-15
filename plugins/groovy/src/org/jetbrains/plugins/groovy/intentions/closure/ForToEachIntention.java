@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,11 +36,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 public class ForToEachIntention extends Intention {
 
 
+  @Override
   @NotNull
   public PsiElementPredicate getElementPredicate() {
     return new ForToEachPredicate();
   }
 
+  @Override
   public void processIntention(@NotNull PsiElement element, Project project, Editor editor)
       throws IncorrectOperationException {
     final GrForStatement parentStatement =

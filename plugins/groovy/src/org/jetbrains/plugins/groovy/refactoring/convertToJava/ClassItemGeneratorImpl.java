@@ -391,6 +391,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
 
 
 
+  @Override
   public void writeImplementsList(StringBuilder text, PsiClass typeDefinition) {
     final Collection<PsiClassType> implementsTypes = new LinkedHashSet<PsiClassType>();
     Collections.addAll(implementsTypes, typeDefinition.getImplementsListTypes());
@@ -419,6 +420,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
         !containsMethodsOf((GrTypeDefinition)typeDefinition, GroovyCommonClassNames.GROOVY_OBJECT);
   }
 
+  @Override
   public void writeExtendsList(StringBuilder text, PsiClass typeDefinition) {
     final PsiClassType[] extendsClassesTypes = typeDefinition.getExtendsListTypes();
 

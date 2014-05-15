@@ -34,11 +34,13 @@ public class GroovyIfStatementWithTooManyBranchesInspection extends BaseInspecti
    */
   public int m_limit = DEFAULT_BRANCH_LIMIT;  //this is public for the DefaultJDOMExternalizer thingy
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "If statement with too many branches";
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return CONTROL_FLOW;
@@ -48,10 +50,12 @@ public class GroovyIfStatementWithTooManyBranchesInspection extends BaseInspecti
     return m_limit;
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     return new SingleIntegerFieldOptionsPanel("Maximum number of branches:", this, "m_limit");
   }
 
+  @Override
   protected String buildErrorString(Object... args) {
     final GrIfStatement statement = (GrIfStatement) args[0];
     final int branches = calculateNumBranches(statement);
@@ -69,12 +73,14 @@ public class GroovyIfStatementWithTooManyBranchesInspection extends BaseInspecti
     return 1 + calculateNumBranches((GrIfStatement) branch);
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private class Visitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitIfStatement(@NotNull GrIfStatement statement) {
       super.visitIfStatement(statement);
       final PsiElement parent = statement.getParent();

@@ -26,30 +26,35 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 
 public class GroovyNegatedConditionalInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return CONFUSING_CODE_CONSTRUCTS;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Negated conditional expression";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Negated conditional expression #loc";
 
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitConditionalExpression(GrConditionalExpression grConditionalExpression) {
       super.visitConditionalExpression(grConditionalExpression);
       final GrExpression condition = grConditionalExpression.getCondition();

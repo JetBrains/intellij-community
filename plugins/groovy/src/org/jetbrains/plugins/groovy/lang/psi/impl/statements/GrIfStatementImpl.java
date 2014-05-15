@@ -41,6 +41,7 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitIfStatement(this);
   }
@@ -49,6 +50,7 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
     return "IF statement";
   }
 
+  @Override
   @Nullable
   public GrExpression getCondition() {
     PsiElement lParenth = getLParenth();
@@ -61,6 +63,7 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
     return null;
   }
 
+  @Override
   @Nullable
   public GrStatement getThenBranch() {
     List<GrStatement> statements = new ArrayList<GrStatement>();
@@ -73,6 +76,7 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
     return null;
   }
 
+  @Override
   @Nullable
   public GrStatement getElseBranch() {
     List<GrStatement> statements = new ArrayList<GrStatement>();
@@ -100,24 +104,29 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
     super.deleteChildInternal(child);
   }
 
+  @Override
   @NotNull
   public <T extends GrStatement> T replaceThenBranch(@NotNull T newBranch) throws IncorrectOperationException {
     return PsiImplUtil.replaceBody(newBranch, getThenBranch(), getNode(), getProject());
   }
 
+  @Override
   @NotNull
   public <T extends GrStatement> T replaceElseBranch(@NotNull T newBranch) throws IncorrectOperationException {
     return PsiImplUtil.replaceBody(newBranch, getElseBranch(), getNode(), getProject());
   }
 
+  @Override
   public PsiElement getElseKeyword() {
     return findChildByType(GroovyTokenTypes.kELSE);
   }
 
+  @Override
   public PsiElement getRParenth() {
     return findChildByType(GroovyTokenTypes.mRPAREN);
   }
 
+  @Override
   public PsiElement getLParenth() {
     return findChildByType(GroovyTokenTypes.mLPAREN);
   }

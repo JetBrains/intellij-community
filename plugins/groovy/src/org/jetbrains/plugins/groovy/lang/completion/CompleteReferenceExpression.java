@@ -462,6 +462,7 @@ public class CompleteReferenceExpression {
       return true;
     }
 
+    @Override
     public void consume(Object o) {
       if (!(o instanceof GroovyResolveResult)) {
         LOG.error(o);

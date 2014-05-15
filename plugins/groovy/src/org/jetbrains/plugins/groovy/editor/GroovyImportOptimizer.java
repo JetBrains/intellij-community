@@ -50,6 +50,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.GroovyImportHelper.proc
  */
 public class GroovyImportOptimizer implements ImportOptimizer {
 
+  @Override
   @NotNull
   public Runnable processFile(PsiFile file) {
     return new MyProcessor(file, false);
@@ -61,6 +62,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
     return usedImports;
   }
 
+  @Override
   public boolean supports(PsiFile file) {
     return file instanceof GroovyFile;
   }
@@ -285,6 +287,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       myRemoveUnusedOnly = removeUnusedOnly;
     }
 
+    @Override
     public void run() {
       if (!(myFile instanceof GroovyFile)) return;
 
@@ -394,6 +397,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       final List<GrImportStatement> result = new ArrayList<GrImportStatement>();
 
       packageCountMap.forEachEntry(new TObjectIntProcedure<String>() {
+        @Override
         public boolean execute(String s, int i) {
           if (i >= settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND || settings.PACKAGES_TO_USE_IMPORT_ON_DEMAND.contains(s)) {
             final GrImportStatement imp = factory.createImportStatementFromText(s, false, true, null);
@@ -414,6 +418,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       });
 
       classCountMap.forEachEntry(new TObjectIntProcedure<String>() {
+        @Override
         public boolean execute(String s, int i) {
           if (i >= settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND) {
             final GrImportStatement imp = factory.createImportStatementFromText(s, true, true, null);
@@ -507,6 +512,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
 
   public static Comparator<GrImportStatement> getComparator(final GroovyCodeStyleSettings settings) {
     return new Comparator<GrImportStatement>() {
+      @Override
       public int compare(GrImportStatement statement1, GrImportStatement statement2) {
         if (settings.LAYOUT_STATIC_IMPORTS_SEPARATELY) {
           if (statement1.isStatic() && !statement2.isStatic()) return 1;

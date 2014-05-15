@@ -33,11 +33,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 public class MergeIfAndIntention extends Intention {
 
 
+  @Override
   @NotNull
   public PsiElementPredicate getElementPredicate() {
     return new MergeIfAndPredicate();
   }
 
+  @Override
   public void processIntention(@NotNull PsiElement element, Project project, Editor editor)
       throws IncorrectOperationException {
     final GrIfStatement parentStatement =

@@ -147,6 +147,7 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
       final LinkedList<PsiElement> places = new LinkedList<PsiElement>();
       places.add(firstOperand);
       final GrInjectionUtil.AnnotatedElementVisitor visitor = new GrInjectionUtil.AnnotatedElementVisitor() {
+        @Override
         public boolean visitMethodParameter(GrExpression expression, GrCall methodCall) {
           final GrArgumentList list = methodCall.getArgumentList();
           assert list != null;
@@ -186,6 +187,7 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
           return false;
         }
 
+        @Override
         public boolean visitMethodReturnStatement(GrReturnStatement parent, PsiMethod method) {
           if (areThereInjectionsWithName(method.getName(), false)) {
             process(method, method, -1);
@@ -193,6 +195,7 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
           return false;
         }
 
+        @Override
         public boolean visitVariable(PsiVariable variable) {
           if (myConfiguration.getAdvancedConfiguration().getDfaOption() != Configuration.DfaOption.OFF && visitedVars.add(variable)) {
             ReferencesSearch.search(variable, searchScope).forEach(new Processor<PsiReference>() {
@@ -219,6 +222,7 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
           return false;
         }
 
+        @Override
         public boolean visitAnnotationParameter(GrAnnotationNameValuePair nameValuePair, PsiAnnotation psiAnnotation) {
           final String paramName = nameValuePair.getName();
           final String methodName = paramName != null ? paramName : PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME;
@@ -232,6 +236,7 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
           return false;
         }
 
+        @Override
         public boolean visitReference(GrReferenceExpression expression) {
           if (myConfiguration.getAdvancedConfiguration().getDfaOption() == Configuration.DfaOption.OFF) return true;
           final PsiElement e = expression.resolve();

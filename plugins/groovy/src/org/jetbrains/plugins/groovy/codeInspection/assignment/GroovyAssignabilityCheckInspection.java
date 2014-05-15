@@ -1152,6 +1152,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       }
     }
 
+    @Override
     protected void registerError(@NotNull PsiElement location,
                                  ProblemHighlightType highlightType,
                                  Object... args) {
@@ -1179,6 +1180,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     }
   }
 
+  @Override
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile psiFile, @NotNull InspectionManager inspectionManager, boolean isOnTheFly) {
     if (!(psiFile instanceof GroovyFileBase)) {

@@ -31,34 +31,40 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 public class GroovyResultOfObjectAllocationIgnoredInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return PROBABLE_BUGS;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Result of object allocation ignored";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Result of <code>new #ref" + (args[0].equals(new Integer(0)) ? "()" : "[]") + "</code> is ignored #loc";
 
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitNewExpression(GrNewExpression newExpression) {
       super.visitNewExpression(newExpression);
       final GrCodeReferenceElement refElement = newExpression.getReferenceElement();

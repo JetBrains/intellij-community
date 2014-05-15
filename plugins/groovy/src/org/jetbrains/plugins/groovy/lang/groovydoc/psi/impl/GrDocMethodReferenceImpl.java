@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,10 +46,12 @@ public class GrDocMethodReferenceImpl extends GrDocMemberReferenceImpl implement
     return "GrDocMethodReference";
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitDocMethodReference(this);
   }
 
+  @Override
   @NotNull
   public GrDocMethodParams getParameterList() {
     GrDocMethodParams child = findChildByClass(GrDocMethodParams.class);
@@ -97,6 +99,7 @@ public class GrDocMethodReferenceImpl extends GrDocMemberReferenceImpl implement
     return null;
   }
 
+  @Override
   protected ResolveResult[] multiResolveImpl() {
     String name = getReferenceName();
     GrDocReferenceElement holder = getReferenceHolder();
@@ -119,6 +122,7 @@ public class GrDocMethodReferenceImpl extends GrDocMemberReferenceImpl implement
     return new ResolveResult[0];
   }
 
+  @Override
   public boolean isReferenceTo(PsiElement element) {
     if (element instanceof PsiNamedElement && Comparing.equal(((PsiNamedElement) element).getName(), getReferenceName())) {
       return getManager().areElementsEquivalent(element, resolve());
@@ -126,6 +130,7 @@ public class GrDocMethodReferenceImpl extends GrDocMemberReferenceImpl implement
     return false;
   }
 
+  @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     final PsiElement resolved = resolve();
     if (resolved instanceof PsiMethod) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ public class TypesSemilattice implements Semilattice<TypeDfaState> {
     myManager = manager;
   }
 
+  @Override
   public TypeDfaState join(ArrayList<TypeDfaState> ins) {
     if (ins.size() == 0) return new TypeDfaState();
 
@@ -48,6 +49,7 @@ public class TypesSemilattice implements Semilattice<TypeDfaState> {
     return result;
   }
 
+  @Override
   public boolean eq(TypeDfaState e1, TypeDfaState e2) {
     return e1.contentsEqual(e2);
   }

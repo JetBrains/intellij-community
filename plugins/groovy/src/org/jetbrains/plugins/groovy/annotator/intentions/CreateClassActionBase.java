@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@ public abstract class CreateClassActionBase extends Intention {
     myRefElement = refElement;
   }
 
+  @Override
   @NotNull
   public String getText() {
     String referenceName = myRefElement.getReferenceName();
@@ -73,15 +74,18 @@ public abstract class CreateClassActionBase extends Intention {
     }
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return GroovyBundle.message("create.class.family.name");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myRefElement.isValid() && ModuleUtilCore.findModuleForPsiElement(myRefElement) != null;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }
@@ -116,6 +120,7 @@ public abstract class CreateClassActionBase extends Intention {
       }
       catch (final IncorrectOperationException e) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             Messages.showErrorDialog(
               GroovyBundle.message("cannot.create.class.error.text", name, e.getLocalizedMessage()),

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,7 @@ public class GrVariableInliner implements InlineHandler.Inliner {
 
   }
 
+  @Override
   @Nullable
   public MultiMap<PsiElement, String> getConflicts(@NotNull PsiReference reference, @NotNull PsiElement referenced) {
     MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
@@ -90,6 +91,7 @@ public class GrVariableInliner implements InlineHandler.Inliner {
     return conflicts;
   }
 
+  @Override
   public void inlineUsage(@NotNull final UsageInfo usage, @NotNull final PsiElement referenced) {
     inlineReference(usage, referenced, myTempExpr);
   }

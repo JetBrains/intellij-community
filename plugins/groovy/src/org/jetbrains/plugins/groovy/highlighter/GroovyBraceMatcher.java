@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,10 +50,12 @@ public class GroovyBraceMatcher implements PairedBraceMatcher {
     new BracePair(mDOLLAR_SLASH_REGEX_BEGIN, mDOLLAR_SLASH_REGEX_END, false),
   };
 
+  @Override
   public BracePair[] getPairs() {
     return PAIRS;
   }
 
+  @Override
   public boolean isPairedBracesAllowedBeforeType(@NotNull IElementType braceType, @Nullable IElementType tokenType) {
     return tokenType == null
            || tokenType == WHITE_SPACE
@@ -69,6 +71,7 @@ public class GroovyBraceMatcher implements PairedBraceMatcher {
            || tokenType.getLanguage() != GROOVY_LANGUAGE;
   }
 
+  @Override
   public int getCodeConstructStart(PsiFile file, int openingBraceOffset) {
     return openingBraceOffset;
   }

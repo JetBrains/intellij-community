@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrI
 
 
 class IndexedExpressionConversionPredicate implements PsiElementPredicate {
+    @Override
     public boolean satisfiedBy(PsiElement element) {
         if (!(element instanceof GrIndexProperty)) return false;
 

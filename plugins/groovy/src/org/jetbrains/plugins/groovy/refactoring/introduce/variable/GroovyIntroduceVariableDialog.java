@@ -90,6 +90,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     pack();
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     JPanel contentPane = new JPanel(new BorderLayout());
@@ -165,10 +166,12 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     return new NameSuggestionsField(names.toArray(new String[names.size()]), myProject, GroovyFileType.GROOVY_FILE_TYPE);
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameField;
   }
 
+  @Override
   protected void doOKAction() {
     if (!myValidator.isOK(this)) {
       return;
@@ -181,6 +184,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
   }
 
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.INTRODUCE_VARIABLE);
   }
@@ -189,6 +193,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
 
   }
 
+  @Override
   public GroovyIntroduceVariableSettings getSettings() {
     return new MyGroovyIntroduceVariableSettings(this);
   }
@@ -212,18 +217,22 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
       mySelectedType = dialog.getSelectedType();
     }
 
+    @Override
     public String getName() {
       return myEnteredName;
     }
 
+    @Override
     public boolean replaceAllOccurrences() {
       return myIsReplaceAllOccurrences;
     }
 
+    @Override
     public boolean isDeclareFinal() {
       return myIsDeclareFinal;
     }
 
+    @Override
     public PsiType getSelectedType() {
       return mySelectedType;
     }

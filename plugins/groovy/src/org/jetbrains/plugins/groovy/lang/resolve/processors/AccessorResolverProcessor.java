@@ -53,6 +53,7 @@ public class AccessorResolverProcessor extends MethodResolverProcessor {
     mySubstitutorComputer = byShape ? null : new SubstitutorComputer(thisType, PsiType.EMPTY_ARRAY, typeArguments, place, myPlace);
   }
 
+  @Override
   public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
     final PsiElement resolveContext = state.get(RESOLVE_CONTEXT);
     String importedName = resolveContext instanceof GrImportStatement ? ((GrImportStatement)resolveContext).getImportedName() : null;

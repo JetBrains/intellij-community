@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,10 +71,12 @@ public abstract class DItemElement implements DNamedElement, DTypedElement, Comp
     return result;
   }
 
+  @Override
   public String getType() {
     return myType;
   }
 
+  @Override
   public void setType(String type) {
     this.myType = type;
     clearCache();
@@ -82,10 +84,12 @@ public abstract class DItemElement implements DNamedElement, DTypedElement, Comp
 
   public abstract void clearCache();
 
+  @Override
   public String getName() {
     return myName;
   }
 
+  @Override
   public void setName(String name) {
     this.myName = name;
     clearCache();
@@ -100,6 +104,7 @@ public abstract class DItemElement implements DNamedElement, DTypedElement, Comp
     clearCache();
   }
 
+  @Override
   public int compareTo(Object o) {
     if (!(o instanceof DItemElement)) return 0;
     final DItemElement otherProperty = (DItemElement)o;

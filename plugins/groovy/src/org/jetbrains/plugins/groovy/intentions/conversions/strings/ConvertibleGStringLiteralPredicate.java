@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 
 class ConvertibleGStringLiteralPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof GrLiteral)) return false;
     if (ErrorUtil.containsError(element)) return false;

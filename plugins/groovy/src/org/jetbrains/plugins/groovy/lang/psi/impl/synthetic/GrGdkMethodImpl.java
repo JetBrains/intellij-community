@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,20 +61,24 @@ public class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
     }
   }
 
+  @Override
   @NotNull
   public PsiMethod getStaticMethod() {
     return myMethod;
   }
 
+  @Override
   public boolean hasTypeParameters() {
     return myMethod.hasTypeParameters();
   }
 
+  @Override
   @NotNull
   public PsiTypeParameter[] getTypeParameters() {
     return myMethod.getTypeParameters();
   }
 
+  @Override
   public PsiTypeParameterList getTypeParameterList() {
     return myMethod.getTypeParameterList();
   }

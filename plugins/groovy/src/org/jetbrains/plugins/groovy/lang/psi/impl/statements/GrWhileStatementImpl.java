@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ public class GrWhileStatementImpl extends GroovyPsiElementImpl implements GrWhil
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitWhileStatement(this);
   }
@@ -50,6 +51,7 @@ public class GrWhileStatementImpl extends GroovyPsiElementImpl implements GrWhil
     return "WHILE statement";
   }
 
+  @Override
   @Nullable
   public GrExpression getCondition() {
     PsiElement lParenth = getLParenth();
@@ -62,6 +64,7 @@ public class GrWhileStatementImpl extends GroovyPsiElementImpl implements GrWhil
     return null;
   }
 
+  @Override
   @Nullable
   public GrStatement getBody() {
     List<GrStatement> statements = new ArrayList<GrStatement>();
@@ -74,14 +77,17 @@ public class GrWhileStatementImpl extends GroovyPsiElementImpl implements GrWhil
     return null;
   }
 
+  @Override
   public <T extends GrCondition> T replaceBody(T newBody) throws IncorrectOperationException {
     return PsiImplUtil.replaceBody(newBody, getBody(), getNode(), getProject());
   }
 
+  @Override
   public PsiElement getRParenth() {
     return findChildByType(GroovyTokenTypes.mRPAREN);
   }
 
+  @Override
   public PsiElement getLParenth() {
     return findChildByType(GroovyTokenTypes.mLPAREN);
   }

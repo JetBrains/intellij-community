@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,6 +107,7 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitSafeCastExpression(this);
   }
@@ -115,15 +116,18 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
     return "Safe cast expression";
   }
 
+  @Override
   public PsiType getType() {
     return TypeInferenceHelper.getCurrentContext().getExpressionType(this, TYPE_CALCULATOR);
   }
 
+  @Override
   @Nullable
   public GrTypeElement getCastTypeElement() {
     return findChildByClass(GrTypeElement.class);
   }
 
+  @Override
   @NotNull
   public GrExpression getOperand() {
     return findNotNullChildByClass(GrExpression.class);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
  * @author ilyas
  */
 public class GroovyReferenceCharFilter extends CharFilter {
+  @Override
   @Nullable
   public Result acceptChar(char c, int prefixLength, Lookup lookup) {
     final PsiFile psiFile = lookup.getPsiFile();

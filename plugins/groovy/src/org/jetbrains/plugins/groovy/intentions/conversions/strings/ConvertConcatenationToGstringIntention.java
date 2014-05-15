@@ -118,6 +118,7 @@ public class ConvertConcatenationToGstringIntention extends Intention {
       }
       IntroduceTargetChooser.showChooser(editor, expressions,
                                          new Pass<GrExpression>() {
+                                           @Override
                                            public void pass(final GrExpression selectedValue) {
                                              invokeImpl(selectedValue, document);
                                            }
@@ -322,6 +323,7 @@ public class ConvertConcatenationToGstringIntention extends Intention {
   }
 
   private static class MyPredicate implements PsiElementPredicate {
+    @Override
     public boolean satisfiedBy(PsiElement element) {
       return satisfied(element);
     }

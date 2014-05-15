@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,6 +132,7 @@ public class CollectClassMembersUtil {
 
   private static CachedValue<ClassMembers> buildCache(@NotNull final PsiClass aClass, final boolean includeSynthetic) {
     return CachedValuesManager.getManager(aClass.getProject()).createCachedValue(new CachedValueProvider<ClassMembers>() {
+      @Override
       public Result<ClassMembers> compute() {
         Map<String, CandidateInfo> allFields = new HashMap<String, CandidateInfo>();
         Map<String, List<CandidateInfo>> allMethods = new HashMap<String, List<CandidateInfo>>();

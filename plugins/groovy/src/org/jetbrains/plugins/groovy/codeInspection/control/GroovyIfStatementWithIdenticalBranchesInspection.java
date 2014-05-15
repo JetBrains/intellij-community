@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,31 +33,37 @@ public class GroovyIfStatementWithIdenticalBranchesInspection extends BaseInspec
     return true;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "If statement with identical branches";
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return CONTROL_FLOW;
   }
 
+  @Override
   public String buildErrorString(Object... args) {
     return "'#ref' statement with identical branches #loc";
   }
 
+  @Override
   public GroovyFix buildFix(PsiElement location) {
     return new CollapseIfFix();
   }
 
   private static class CollapseIfFix extends GroovyFix {
 
+    @Override
     @NotNull
     public String getName() {
       return "Collapse 'if' statement'";
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement identifier = descriptor.getPsiElement();
       final GrIfStatement statement = (GrIfStatement) identifier.getParent();
@@ -67,12 +73,14 @@ public class GroovyIfStatementWithIdenticalBranchesInspection extends BaseInspec
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new IfStatementWithIdenticalBranchesVisitor();
   }
 
   private static class IfStatementWithIdenticalBranchesVisitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitIfStatement(@NotNull GrIfStatement statement) {
       super.visitIfStatement(statement);
       final GrStatement thenBranch = statement.getThenBranch();

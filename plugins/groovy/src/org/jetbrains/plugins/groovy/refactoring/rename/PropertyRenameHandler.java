@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ import static org.jetbrains.plugins.groovy.refactoring.rename.RenamePropertyUtil
  * @author ven
  */
 public class PropertyRenameHandler implements RenameHandler, TitledHandler {
+  @Override
   public boolean isAvailableOnDataContext(DataContext dataContext) {
     final PsiElement element = getElement(dataContext);
     if (element instanceof GrField && ((GrField)element).isProperty()) return true;
@@ -58,15 +59,18 @@ public class PropertyRenameHandler implements RenameHandler, TitledHandler {
     return CommonDataKeys.PSI_ELEMENT.getData(dataContext);
   }
 
+  @Override
   public boolean isRenaming(DataContext dataContext) {
     return isAvailableOnDataContext(dataContext);
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, @Nullable DataContext dataContext) {
     final PsiElement element = getElement(dataContext);
     invokeInner(project, editor, element);
   }
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, @Nullable DataContext dataContext) {
     PsiElement element = elements.length == 1 ? elements[0] : null;
     if (element == null) element = getElement(dataContext);

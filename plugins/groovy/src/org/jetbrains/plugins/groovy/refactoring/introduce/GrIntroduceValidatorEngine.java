@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ public class GrIntroduceValidatorEngine implements GrIntroduceHandlerBase.Valida
     myReporter = reporter;
   }
 
+  @Override
   public boolean isOK(GrIntroduceDialog dialog) {
     final GrIntroduceSettings settings = dialog.getSettings();
     if (settings == null) return false;
@@ -186,6 +187,7 @@ public class GrIntroduceValidatorEngine implements GrIntroduceHandlerBase.Valida
   /**
    * Validates name to be suggested in context
    */
+  @Override
   public String validateName(String name, boolean increaseNumber) {
     String result = name;
     if (isOKImpl(name, true).size() > 0 && !increaseNumber || name.length() == 0) {
@@ -199,6 +201,7 @@ public class GrIntroduceValidatorEngine implements GrIntroduceHandlerBase.Valida
     return result;
   }
 
+  @Override
   public Project getProject() {
     return myContext.getProject();
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,6 +112,7 @@ public class ConvertMethodToClosureIntention extends Intention {
 
   private static void execute(final GrMethod method, final Collection<GrReferenceExpression> usagesToConvert) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(method.getProject());
 
@@ -141,6 +142,7 @@ public class ConvertMethodToClosureIntention extends Intention {
   }
 
   private static class MyPredicate implements PsiElementPredicate {
+    @Override
     public boolean satisfiedBy(PsiElement element) {
       if (element.getLanguage() != GroovyFileType.GROOVY_LANGUAGE) return false;
 

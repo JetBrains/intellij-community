@@ -36,6 +36,7 @@ public class RemoveUnnecessaryBracesInGStringIntention extends Intention {
   @Override
   protected PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
+      @Override
       public boolean satisfiedBy(PsiElement element) {
         if (!(element instanceof GrString)) return false;
 

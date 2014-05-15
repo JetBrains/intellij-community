@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ public class GroovyGenerateGetterSetterAction extends GrBaseGenerateAction {
 
   static {
     GenerateAccessorProviderRegistrar.registerProvider(new NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>>() {
+      @Override
       @NotNull
       public Collection<EncapsulatableClassMember> fun(PsiClass s) {
         if (!(s instanceof GrTypeDefinition)) return Collections.emptyList();

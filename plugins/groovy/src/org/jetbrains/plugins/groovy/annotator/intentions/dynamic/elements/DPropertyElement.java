@@ -39,10 +39,12 @@ public class DPropertyElement extends DItemElement {
     super(isStatic, name, type);
   }
 
+  @Override
   public void clearCache() {
     myPsi = null;
   }
 
+  @Override
   @NotNull
   public PsiVariable getPsi(PsiManager manager, final String containingClassName) {
     if (myPsi != null) return myPsi;

@@ -214,11 +214,13 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
     }
   }
 
+  @Override
   @NotNull
   public String getDescription() {
     return "Groovy to java source code generator";
   }
 
+  @Override
   public boolean validateConfiguration(CompileScope scope) {
     return true;
   }

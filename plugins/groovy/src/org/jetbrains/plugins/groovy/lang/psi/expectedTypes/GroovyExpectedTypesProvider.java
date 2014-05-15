@@ -118,6 +118,7 @@ public class GroovyExpectedTypesProvider {
       myResult = TypeConstraint.EMPTY_ARRAY;
     }
 
+    @Override
     public void visitReturnStatement(GrReturnStatement returnStatement) {
       GrParametersOwner parent = PsiTreeUtil.getParentOfType(returnStatement, GrMethod.class, GrClosableBlock.class);
       if (parent instanceof GrMethod) {
@@ -129,6 +130,7 @@ public class GroovyExpectedTypesProvider {
       }
     }
 
+    @Override
     public void visitVariable(GrVariable variable) {
       if (myExpression.equals(variable.getInitializerGroovy())) {
         PsiType type = variable.getType();
@@ -170,6 +172,7 @@ public class GroovyExpectedTypesProvider {
       return false;
     }
 
+    @Override
     public void visitMethodCallExpression(GrMethodCallExpression methodCall) {
       final GrExpression invokedExpression = methodCall.getInvokedExpression();
       if (myExpression.equals(invokedExpression)) {
@@ -195,6 +198,7 @@ public class GroovyExpectedTypesProvider {
       }
     }
 
+    @Override
     public void visitIfStatement(GrIfStatement ifStatement) {
       if (myExpression.equals(ifStatement.getCondition())) {
         myResult = new TypeConstraint[]{new SubtypeConstraint(TypesUtil.getJavaLangObject(ifStatement), PsiType.BOOLEAN)};
@@ -325,18 +329,21 @@ public class GroovyExpectedTypesProvider {
       }
     }
 
+    @Override
     public void visitWhileStatement(GrWhileStatement whileStatement) {
       if (myExpression.equals(whileStatement.getCondition())) {
         myResult = new TypeConstraint[]{new SubtypeConstraint(TypesUtil.getJavaLangObject(whileStatement), PsiType.BOOLEAN)};
       }
     }
 
+    @Override
     public void visitTraditionalForClause(GrTraditionalForClause forClause) {
       if (myExpression.equals(forClause.getCondition())) {
         myResult = new TypeConstraint[]{new SubtypeConstraint(TypesUtil.getJavaLangObject(forClause), PsiType.BOOLEAN)};
       }
     }
 
+    @Override
     public void visitArgumentList(GrArgumentList list) {
       processCallVariants(list, ResolveUtil.getCallVariants(list), list.getNamedArguments(), list.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY);
     }
@@ -415,6 +422,7 @@ public class GroovyExpectedTypesProvider {
       }
     }
 
+    @Override
     public void visitAssignmentExpression(GrAssignmentExpression expression) {
       GrExpression rValue = expression.getRValue();
       GrExpression lValue = expression.getLValue();

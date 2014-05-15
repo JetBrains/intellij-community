@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ class GroovyWordsScanner implements WordsScanner
     myLexer = new GroovyLexer();
   }
 
+  @Override
   public void processWords(CharSequence fileText, Processor<WordOccurrence> processor) {
     myLexer.start(fileText);
     WordOccurrence occurrence = null; // shared occurrence

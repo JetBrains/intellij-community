@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ public class GroovyAssignmentExpressionPattern extends GroovyExpressionPattern<G
 
   public GroovyAssignmentExpressionPattern left(@NotNull final ElementPattern pattern) {
     return with(new PatternCondition<GrAssignmentExpression>("left") {
+      @Override
       public boolean accepts(@NotNull final GrAssignmentExpression psiBinaryExpression, final ProcessingContext context) {
         return pattern.getCondition().accepts(psiBinaryExpression.getLValue(), context);
       }
@@ -37,6 +38,7 @@ public class GroovyAssignmentExpressionPattern extends GroovyExpressionPattern<G
 
   public GroovyAssignmentExpressionPattern right(@NotNull final ElementPattern pattern) {
     return with(new PatternCondition<GrAssignmentExpression>("right") {
+      @Override
       public boolean accepts(@NotNull final GrAssignmentExpression psiBinaryExpression, final ProcessingContext context) {
         return pattern.getCondition().accepts(psiBinaryExpression.getRValue(), context);
       }
@@ -45,6 +47,7 @@ public class GroovyAssignmentExpressionPattern extends GroovyExpressionPattern<G
 
   public GroovyAssignmentExpressionPattern operation(final IElementType pattern) {
     return with(new PatternCondition<GrAssignmentExpression>("operation") {
+      @Override
       public boolean accepts(@NotNull final GrAssignmentExpression psiBinaryExpression, final ProcessingContext context) {
         return pattern == psiBinaryExpression.getOperationTokenType();
       }

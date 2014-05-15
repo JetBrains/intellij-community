@@ -27,29 +27,34 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 public class GroovyResultOfIncrementOrDecrementUsedInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return CONFUSING_CODE_CONSTRUCTS;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Result of increment or decrement used";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Result of increment or decrement expression used #loc";
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitUnaryExpression(GrUnaryExpression grUnaryExpression) {
       super.visitUnaryExpression(grUnaryExpression);
 

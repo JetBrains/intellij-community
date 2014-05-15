@@ -30,11 +30,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 public class FlipConditionalIntention extends Intention {
 
 
+  @Override
   @NotNull
   public PsiElementPredicate getElementPredicate() {
     return new ConditionalPredicate();
   }
 
+  @Override
   public void processIntention(@NotNull PsiElement element, Project project, Editor editor)
       throws IncorrectOperationException {
     final GrConditionalExpression exp =

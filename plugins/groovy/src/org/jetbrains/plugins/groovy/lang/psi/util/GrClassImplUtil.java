@@ -70,6 +70,7 @@ public class GrClassImplUtil {
   private static final Logger LOG = Logger.getInstance(GrClassImplUtil.class);
 
   private static final Condition<PsiClassType> IS_GROOVY_OBJECT = new Condition<PsiClassType>() {
+    @Override
     public boolean value(PsiClassType psiClassType) {
       return TypesUtil.isClassType(psiClassType, GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME);
     }
@@ -629,6 +630,7 @@ public class GrClassImplUtil {
   public static PsiField[] getAllFields(GrTypeDefinition grType) {
     Map<String, CandidateInfo> fieldsMap = CollectClassMembersUtil.getAllFields(grType);
     return ContainerUtil.map2Array(fieldsMap.values(), PsiField.class, new Function<CandidateInfo, PsiField>() {
+      @Override
       public PsiField fun(CandidateInfo entry) {
         return (PsiField)entry.getElement();
       }

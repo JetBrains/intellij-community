@@ -90,6 +90,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     return qualifiedRef;
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitCodeReferenceElement(this);
   }
@@ -98,6 +99,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     return "Reference element";
   }
 
+  @Override
   public GrCodeReferenceElement getQualifier() {
     return (GrCodeReferenceElement)findChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
   }
@@ -117,6 +119,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     CLASS_IN_QUALIFIED_NEW
   }
 
+  @Override
   @Nullable
   public PsiElement resolve() {
     ResolveResult[] results = TypeInferenceHelper.getCurrentContext().multiResolve(this, false, RESOLVER);
@@ -164,6 +167,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     return CLASS;
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     final ReferenceKind kind = getKind(false);
@@ -211,6 +215,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     }
   }
 
+  @Override
   protected boolean bindsCorrectly(PsiElement element) {
     if (super.bindsCorrectly(element)) return true;
     if (element instanceof PsiClass) {
@@ -242,6 +247,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     return qualifier != null && ((GrCodeReferenceElementImpl)qualifier).isFullyQualified();
   }
 
+  @Override
   public boolean isReferenceTo(PsiElement element) {
     final PsiManager manager = getManager();
     if (element instanceof PsiNamedElement && getParent() instanceof GrImportStatement) {
@@ -253,6 +259,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     return manager.areElementsEquivalent(element, resolve());
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
@@ -264,12 +271,14 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     return parent instanceof GrNewExpression;
   }
 
+  @Override
   public boolean isSoft() {
     return false;
   }
 
   private static class OurResolver implements ResolveCache.PolyVariantResolver<GrCodeReferenceElementImpl> {
 
+    @Override
     @NotNull
     public GroovyResolveResult[] resolve(@NotNull GrCodeReferenceElementImpl reference, boolean incompleteCode) {
       if (reference.getReferenceName() == null) return GroovyResolveResult.EMPTY_ARRAY;
@@ -502,11 +511,13 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
 
   private static final OurResolver RESOLVER = new OurResolver();
 
+  @Override
   public GroovyResolveResult advancedResolve() {
     ResolveResult[] results = TypeInferenceHelper.getCurrentContext().multiResolve(this, false, RESOLVER);
     return results.length == 1 ? (GroovyResolveResult)results[0] : GroovyResolveResult.EMPTY_RESULT;
   }
 
+  @Override
   @NotNull
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
     final ResolveResult[] results = TypeInferenceHelper.getCurrentContext().multiResolve(this, incompleteCode, RESOLVER);

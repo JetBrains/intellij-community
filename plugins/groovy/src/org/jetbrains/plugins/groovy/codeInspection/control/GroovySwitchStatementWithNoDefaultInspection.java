@@ -25,30 +25,35 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSectio
 
 public class GroovySwitchStatementWithNoDefaultInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return CONTROL_FLOW;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Switch statement with no default case";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "#ref statement with no default branch#loc";
 
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitSwitchStatement(GrSwitchStatement switchStatement) {
       super.visitSwitchStatement(switchStatement);
       final GrCaseSection[] caseSections = switchStatement.getCaseSections();

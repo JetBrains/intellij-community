@@ -48,10 +48,12 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
     super(GroovyScriptRunConfigurationType.getInstance());
   }
 
+  @Override
   public PsiElement getSourceElement() {
     return mySourceElement;
   }
 
+  @Override
   protected RunnerAndConfigurationSettings createConfigurationByElement(final Location location, final ConfigurationContext context) {
     final PsiElement element = location.getPsiElement();
     final PsiFile file = element.getContainingFile();
@@ -112,6 +114,7 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
   }
 
 
+  @Override
   public int compareTo(final Object o) {
     return PREFERED;
   }

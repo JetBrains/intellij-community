@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ public class GrAnnotationArrayInitializerImpl extends GroovyPsiElementImpl imple
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitAnnotationArrayInitializer(this);
   }
@@ -46,6 +47,7 @@ public class GrAnnotationArrayInitializerImpl extends GroovyPsiElementImpl imple
     return "Annotation array initializer";
   }
 
+  @Override
   @NotNull
   public GrAnnotationMemberValue[] getInitializers() {
     List<GrAnnotationMemberValue> result = new ArrayList<GrAnnotationMemberValue>();

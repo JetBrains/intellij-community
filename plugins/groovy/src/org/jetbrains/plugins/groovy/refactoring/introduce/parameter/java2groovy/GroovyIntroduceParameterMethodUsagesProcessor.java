@@ -72,13 +72,16 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
     return el != null && GroovyFileType.GROOVY_LANGUAGE.equals(el.getLanguage());
   }
 
+  @Override
   public boolean isMethodUsage(UsageInfo usage) {
     return GroovyRefactoringUtil.isMethodUsage(usage.getElement()) && isGroovyUsage(usage);
   }
 
+  @Override
   public void findConflicts(IntroduceParameterData data, UsageInfo[] usages, MultiMap<PsiElement, String> conflicts) {
   }
 
+  @Override
   public boolean processChangeMethodUsage(IntroduceParameterData data, UsageInfo usage, UsageInfo[] usages) throws IncorrectOperationException {
     GrCall callExpression = GroovyRefactoringUtil.getCallExpressionByMethodReference(usage.getElement());
     if (callExpression == null) return true;
@@ -165,6 +168,7 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
 
   private static void removeParametersFromCall(final GrClosureSignatureUtil.ArgInfo<PsiElement>[] actualArgs,final TIntArrayList parametersToRemove) {
     parametersToRemove.forEach(new TIntProcedure() {
+      @Override
       public boolean execute(final int paramNum) {
         try {
           final GrClosureSignatureUtil.ArgInfo<PsiElement> actualArg = actualArgs[paramNum];
@@ -203,6 +207,7 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
     }
 
     data.getParametersToRemove().forEachDescending(new TIntProcedure() {
+      @Override
       public boolean execute(int paramNum) {
         try {
           if (paramNum == 0 && hasNamedArgs) {
@@ -228,6 +233,7 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
     });
   }
 
+  @Override
   public boolean processChangeMethodSignature(IntroduceParameterData data, UsageInfo usage, UsageInfo[] usages) throws IncorrectOperationException {
     if (!(usage.getElement() instanceof GrMethod) || !isGroovyUsage(usage)) return true;
     GrMethod method = (GrMethod)usage.getElement();
@@ -237,6 +243,7 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
 
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     data.getParametersToRemove().forEachDescending(new TIntProcedure() {
+      @Override
       public boolean execute(final int paramNum) {
         try {
           PsiParameter param = parameters[paramNum];
@@ -302,6 +309,7 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
     return anchorParameter;
   }
 
+  @Override
   public boolean processAddDefaultConstructor(IntroduceParameterData data, UsageInfo usage, UsageInfo[] usages) {
     if (!(usage.getElement() instanceof PsiClass) || !isGroovyUsage(usage)) return true;
     PsiClass aClass = (PsiClass)usage.getElement();
@@ -314,6 +322,7 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
     return false;
   }
 
+  @Override
   public boolean processAddSuperCall(IntroduceParameterData data, UsageInfo usage, UsageInfo[] usages) throws IncorrectOperationException {
     if (!(usage.getElement() instanceof GrMethod) || !isGroovyUsage(usage)) return true;
     GrMethod constructor = (GrMethod)usage.getElement();

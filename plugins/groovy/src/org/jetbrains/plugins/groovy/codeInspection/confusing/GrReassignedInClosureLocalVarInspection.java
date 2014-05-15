@@ -40,12 +40,14 @@ import static org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle
  */
 public class GrReassignedInClosureLocalVarInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return CONFUSING_CODE_CONSTRUCTS;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {

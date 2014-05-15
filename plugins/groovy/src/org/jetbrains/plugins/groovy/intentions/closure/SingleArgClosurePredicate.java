@@ -22,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 
 class SingleArgClosurePredicate implements PsiElementPredicate {
 
+    @Override
     public boolean satisfiedBy(PsiElement element) {
         if (!(element instanceof GrClosableBlock)) {
             return false;

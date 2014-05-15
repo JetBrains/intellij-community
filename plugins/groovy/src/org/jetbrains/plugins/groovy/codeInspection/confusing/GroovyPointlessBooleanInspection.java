@@ -42,24 +42,29 @@ import java.util.Set;
 
 public class GroovyPointlessBooleanInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return GroovyInspectionBundle.message("pointless.boolean.display.name");
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return CONFUSING_CODE_CONSTRUCTS;
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new PointlessBooleanExpressionVisitor();
   }
 
+  @Override
   public String buildErrorString(Object... args) {
     if (args[0] instanceof GrBinaryExpression) {
       return GroovyInspectionBundle.message(
@@ -156,6 +161,7 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
     }
   }
 
+  @Override
   public GroovyFix buildFix(PsiElement location) {
     return new BooleanLiteralComparisonFix();
   }
@@ -163,11 +169,13 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
   private static class BooleanLiteralComparisonFix
       extends GroovyFix {
 
+    @Override
     @NotNull
     public String getName() {
       return GroovyInspectionBundle.message("pointless.boolean.quickfix");
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
         throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
@@ -201,6 +209,7 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
       booleanTokens.add(GroovyTokenTypes.mNOT_EQUAL);
     }
 
+    @Override
     public void visitBinaryExpression(@NotNull GrBinaryExpression expression) {
       super.visitBinaryExpression(expression);
       final GrExpression rhs = expression.getRightOperand();
@@ -235,6 +244,7 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
       registerError(expression);
     }
 
+    @Override
     public void visitUnaryExpression(@NotNull GrUnaryExpression expression) {
       super.visitUnaryExpression(expression);
       final IElementType sign = expression.getOperationTokenType();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,11 +28,13 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 public class GroovyBackspaceHandler extends BackspaceHandlerDelegate {
   private boolean myToDeleteGt;
 
+  @Override
   public void beforeCharDeleted(char c, PsiFile file, Editor editor) {
     int offset = editor.getCaretModel().getOffset() - 1;
     myToDeleteGt = c =='<' && file instanceof GroovyFile && GroovyTypedHandler.isAfterClassLikeIdentifier(offset, editor);
   }
 
+  @Override
   public boolean charDeleted(final char c, final PsiFile file, final Editor editor) {
     int offset = editor.getCaretModel().getOffset();
     final CharSequence chars = editor.getDocument().getCharsSequence();

@@ -28,22 +28,26 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 public class GroovyPublicFieldAccessedInSynchronizedContextInspection
     extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return THREADING_ISSUES;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Non-private field accessed in synchronized context";
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return "Non-private field <code>#ref</code> accessed in synchronized context  #loc";
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new PublicFieldAccessedInSynchronizedContextVisitor();
   }
@@ -51,6 +55,7 @@ public class GroovyPublicFieldAccessedInSynchronizedContextInspection
   private static class PublicFieldAccessedInSynchronizedContextVisitor
       extends BaseInspectionVisitor {
 
+    @Override
     public void visitReferenceExpression(
         @NotNull GrReferenceExpression expression) {
       final PsiElement element = expression.resolve();

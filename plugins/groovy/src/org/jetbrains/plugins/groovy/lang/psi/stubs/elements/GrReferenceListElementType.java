@@ -42,6 +42,7 @@ public abstract class GrReferenceListElementType<T extends GrReferenceList> exte
     super(debugName);
   }
 
+  @Override
   public GrReferenceListStub createStub(@NotNull T psi, StubElement parentStub) {
     List<String> refNames = new ArrayList<String>();
     for (GrCodeReferenceElement element : psi.getReferenceElementsGroovy()) {
@@ -54,15 +55,18 @@ public abstract class GrReferenceListElementType<T extends GrReferenceList> exte
 
   }
 
+  @Override
   public void serialize(@NotNull GrReferenceListStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     GrStubUtils.writeStringArray(dataStream, stub.getBaseClasses());
   }
 
+  @Override
   @NotNull
   public GrReferenceListStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return new GrReferenceListStub(parentStub, this, GrStubUtils.readStringArray(dataStream));
   }
 
+  @Override
   public void indexStub(@NotNull GrReferenceListStub stub, @NotNull IndexSink sink) {
     for (String name : stub.getBaseClasses()) {
       if (name != null) {

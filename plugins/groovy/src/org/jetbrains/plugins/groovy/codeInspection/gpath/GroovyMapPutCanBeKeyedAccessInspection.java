@@ -39,38 +39,45 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 public class GroovyMapPutCanBeKeyedAccessInspection extends BaseInspection {
   private final ReplaceWithPropertyAccessFix fix = new ReplaceWithPropertyAccessFix();
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return GPATH;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Call to Map.put can be keyed access";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Call to '#ref' can be keyed access #loc";
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
+  @Override
   public GroovyFix buildFix(PsiElement location) {
     return fix;
   }
 
   private static class ReplaceWithPropertyAccessFix extends GroovyFix {
 
+    @Override
     @NotNull
     public String getName() {
       return "Replace with keyed access";
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
         throws IncorrectOperationException {
       final PsiElement referenceName = descriptor.getPsiElement();
@@ -85,6 +92,7 @@ public class GroovyMapPutCanBeKeyedAccessInspection extends BaseInspection {
   }
 
   private static class Visitor extends BaseInspectionVisitor {
+    @Override
     public void visitMethodCallExpression(GrMethodCallExpression grMethodCallExpression) {
       super.visitMethodCallExpression(grMethodCallExpression);
       final GrArgumentList args = grMethodCallExpression.getArgumentList();

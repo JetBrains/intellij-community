@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,28 +44,34 @@ class InlineGroovyFieldDialog extends InlineOptionsDialog {
     init();
   }
 
+  @Override
   protected String getNameLabelText() {
     @SuppressWarnings("StaticFieldReferencedViaSubclass")
     String fieldText = PsiFormatUtil.formatVariable(myField, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE, PsiSubstitutor.EMPTY);
     return RefactoringBundle.message("inline.field.field.name.label", fieldText);
   }
 
+  @Override
   protected String getBorderTitle() {
     return RefactoringBundle.message("inline.field.border.title");
   }
 
+  @Override
   protected String getInlineThisText() {
     return RefactoringBundle.message("this.reference.only.and.keep.the.field");
   }
 
+  @Override
   protected String getInlineAllText() {
     return RefactoringBundle.message("all.references.and.remove.the.field");
   }
 
+  @Override
   protected boolean isInlineThis() {
     return JavaRefactoringSettings.getInstance().INLINE_FIELD_THIS;
   }
 
+  @Override
   protected void doAction() {
     if (getOKAction().isEnabled()) {
       JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
@@ -76,6 +82,7 @@ class InlineGroovyFieldDialog extends InlineOptionsDialog {
     }
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.INLINE_FIELD);
   }

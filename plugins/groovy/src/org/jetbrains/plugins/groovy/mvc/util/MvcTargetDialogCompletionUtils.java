@@ -196,6 +196,7 @@ public class MvcTargetDialogCompletionUtils {
     CachedValue<Set<String>> cachedTargets = module.getUserData(ALL_TARGET_KEY);
     if (cachedTargets == null) {
       cachedTargets = CachedValuesManager.getManager(module.getProject()).createCachedValue(new CachedValueProvider<Set<String>>() {
+          @Override
           public Result<Set<String>> compute() {
             return Result.create(getAllTargetNamesInternal(module), PsiModificationTracker.MODIFICATION_COUNT);
           }

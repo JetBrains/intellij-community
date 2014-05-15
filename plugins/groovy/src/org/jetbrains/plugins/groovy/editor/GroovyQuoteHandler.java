@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
  */
 public class GroovyQuoteHandler implements MultiCharQuoteHandler {
 
+  @Override
   public boolean isClosingQuote(HighlighterIterator iterator, int offset) {
     final IElementType tokenType = iterator.getTokenType();
 
@@ -48,6 +49,7 @@ public class GroovyQuoteHandler implements MultiCharQuoteHandler {
     return false;
   }
 
+  @Override
   public boolean isOpeningQuote(HighlighterIterator iterator, int offset) {
     final IElementType tokenType = iterator.getTokenType();
 
@@ -59,6 +61,7 @@ public class GroovyQuoteHandler implements MultiCharQuoteHandler {
     return false;
   }
 
+  @Override
   public boolean hasNonClosedLiteral(Editor editor, HighlighterIterator iterator, int offset) {
     final IElementType tokenType = iterator.getTokenType();
     if (tokenType == mSTRING_LITERAL || tokenType == mGSTRING_BEGIN || tokenType == mGSTRING_LITERAL || tokenType == mGSTRING_CONTENT) {
@@ -73,6 +76,7 @@ public class GroovyQuoteHandler implements MultiCharQuoteHandler {
     return !(tokenType == mGSTRING_CONTENT || tokenType == mGSTRING_LITERAL || tokenType == mSTRING_LITERAL || tokenType == mGSTRING_END);
   }
 
+  @Override
   public boolean isInsideLiteral(HighlighterIterator iterator) {
     final IElementType tokenType = iterator.getTokenType();
     return tokenType == mSTRING_LITERAL || tokenType == mGSTRING_LITERAL;

@@ -98,6 +98,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     return getConfigurationModule().getModule();
   }
 
+  @Override
   public Collection<Module> getValidModules() {
     Module[] modules = ModuleManager.getInstance(getProject()).getModules();
     final GroovyScriptRunner scriptRunner = findConfiguration();
@@ -133,6 +134,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     return GroovyScriptTypeDetector.getScriptType((GroovyFile)psiFile).getRunner();
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);
@@ -149,6 +151,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     JDOMExternalizer.readMap(element, envs, null, "env");
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
     writeModule(element);
@@ -161,6 +164,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
   }
 
+  @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {
     final VirtualFile script = getScriptFile();
     if (script == null) {
@@ -199,6 +203,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
         return handler;
       }
 
+      @Override
       protected JavaParameters createJavaParameters() throws ExecutionException {
         JavaParameters params = createJavaParametersWithSdk(module);
         ProgramParametersUtil.configureConfiguration(params, GroovyScriptRunConfiguration.this);
@@ -292,6 +297,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     return GroovyRunnerPsiUtil.getRunningClass(file);
   }
 
+  @Override
   @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return new GroovyRunConfigurationEditor();

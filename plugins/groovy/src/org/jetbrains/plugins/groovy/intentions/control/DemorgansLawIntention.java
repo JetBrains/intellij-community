@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 
 public class DemorgansLawIntention extends MutablyNamedIntention {
 
+  @Override
   protected String getTextForElement(PsiElement element) {
     final GrBinaryExpression binaryExpression = (GrBinaryExpression)element;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
@@ -44,11 +45,13 @@ public class DemorgansLawIntention extends MutablyNamedIntention {
     }
   }
 
+  @Override
   @NotNull
   public PsiElementPredicate getElementPredicate() {
     return new ConjunctionPredicate();
   }
 
+  @Override
   public void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
     GrBinaryExpression exp = (GrBinaryExpression)element;
     final IElementType tokenType = exp.getOperationTokenType();

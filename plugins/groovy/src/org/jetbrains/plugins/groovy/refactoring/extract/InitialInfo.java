@@ -174,6 +174,7 @@ public class InitialInfo implements ExtractInfoHelper {
     return myStatements;
   }
 
+  @Override
   public boolean hasReturnValue() {
     return myHasReturnValue;
   }
@@ -193,6 +194,7 @@ public class InitialInfo implements ExtractInfoHelper {
     return false;
   }
 
+  @Override
   @Nullable
   public StringPartInfo getStringPartInfo() {
     return myStringPartInfo;

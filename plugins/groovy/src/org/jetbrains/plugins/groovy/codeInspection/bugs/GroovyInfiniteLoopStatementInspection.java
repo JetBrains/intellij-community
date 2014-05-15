@@ -25,34 +25,40 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 
 public class GroovyInfiniteLoopStatementInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return PROBABLE_BUGS;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Infinite loop statement";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "<code>#ref</code> statement cannot complete without throwing an exception #loc";
 
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitWhileStatement(GrWhileStatement whileStatement) {
       super.visitWhileStatement(whileStatement);
       if (ControlFlowUtils.statementMayCompleteNormally(whileStatement)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ public class GrEnumConstantElementType extends GrStubElementType<GrFieldStub, Gr
     super("Enumeration constant");
   }
 
+  @Override
   public GrEnumConstant createPsi(@NotNull GrFieldStub stub) {
     return new GrEnumConstantImpl(stub);
   }
@@ -49,10 +50,12 @@ public class GrEnumConstantElementType extends GrStubElementType<GrFieldStub, Gr
     return new GrFieldStub(parentStub, StringRef.fromString(psi.getName()), annNames, ArrayUtil.EMPTY_STRING_ARRAY, GroovyElementTypes.ENUM_CONSTANT, GrFieldStub.buildFlags(psi), null);
   }
 
+  @Override
   public void serialize(@NotNull GrFieldStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     serializeFieldStub(stub, dataStream);
   }
 
+  @Override
   @NotNull
   public GrFieldStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return GrFieldElementType.deserializeFieldStub(dataStream, parentStub);
@@ -62,6 +65,7 @@ public class GrEnumConstantElementType extends GrStubElementType<GrFieldStub, Gr
     GrFieldElementType.serializeFieldStub(stub, dataStream);
   }
 
+  @Override
   public void indexStub(@NotNull GrFieldStub stub, @NotNull IndexSink sink) {
     GrFieldElementType.indexFieldStub(stub, sink);
   }

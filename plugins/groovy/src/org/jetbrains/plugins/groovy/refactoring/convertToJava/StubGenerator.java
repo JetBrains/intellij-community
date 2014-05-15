@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -435,6 +435,7 @@ public class StubGenerator implements ClassItemGenerator {
     return GroovyToJavaGenerator.getDefaultValueText(declaredType.getCanonicalText());
   }
 
+  @Override
   public void writeImplementsList(StringBuilder text, PsiClass typeDefinition) {
     final Collection<PsiClassType> implementsTypes = new LinkedHashSet<PsiClassType>();
     Collections.addAll(implementsTypes, typeDefinition.getImplementsListTypes());
@@ -450,6 +451,7 @@ public class StubGenerator implements ClassItemGenerator {
     text.append(' ');
   }
 
+  @Override
   public void writeExtendsList(StringBuilder text, PsiClass typeDefinition) {
     final PsiClassType[] extendsClassesTypes = typeDefinition.getExtendsListTypes();
 

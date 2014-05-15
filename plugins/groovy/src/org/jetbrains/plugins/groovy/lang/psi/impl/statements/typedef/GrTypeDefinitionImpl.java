@@ -195,6 +195,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     return ArrayUtil.toStringArray(extendsNames);
   }
 
+  @Override
   @NotNull
   public PsiElement getNameIdentifierGroovy() {
     PsiElement result = findChildByType(TokenSets.PROPERTY_NAMES);

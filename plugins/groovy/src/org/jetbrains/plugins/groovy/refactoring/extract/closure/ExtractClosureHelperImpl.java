@@ -70,19 +70,23 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
     myReplaceFieldsWithGetters = replaceFieldsWithGetters;
   }
 
+  @Override
   @NotNull
   public GrParametersOwner getToReplaceIn() {
     return myOwner;
   }
 
+  @Override
   public PsiElement getToSearchFor() {
     return myToSearchFor;
   }
 
+  @Override
   public String getName() {
     return myName;
   }
 
+  @Override
   public boolean declareFinal() {
     return myFinal;
   }
@@ -128,10 +132,12 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
     return myType;
   }
 
+  @Override
   public boolean generateDelegate() {
     return myGenerateDelegate;
   }
 
+  @Override
   public boolean isForceReturn() {
     return myForceReturn;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ public class GrTraditionalForClauseImpl extends GroovyPsiElementImpl implements 
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitTraditionalForClause(this);
   }
@@ -44,19 +45,23 @@ public class GrTraditionalForClauseImpl extends GroovyPsiElementImpl implements 
     return "Traditional FOR clause";
   }
 
+  @Override
   public GrParameter getDeclaredVariable() {
     return findChildByClass(GrParameter.class);
   }
 
+  @Override
   public GrCondition getInitialization() {
     return getConditionInner(0);
   }
 
+  @Override
   public GrExpression getCondition() {
     final GrCondition condition = getConditionInner(1);
     return condition instanceof GrExpression ? (GrExpression)condition : null;
   }
 
+  @Override
   public GrExpression getUpdate() {
     final GrCondition condition = getConditionInner(2);
     return condition instanceof GrExpression ? (GrExpression)condition : null;

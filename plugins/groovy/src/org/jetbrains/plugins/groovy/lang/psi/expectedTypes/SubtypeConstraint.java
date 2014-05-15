@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,12 @@ public  class SubtypeConstraint extends TypeConstraint {
     myDefaultType = defaultType;
   }
 
+  @Override
   public boolean satisfied(PsiType type, @NotNull PsiElement context){
     return TypesUtil.isAssignableByMethodCallConversion(getType(), type, context);
   }
 
+  @Override
   @NotNull
   public PsiType getDefaultType() {
     return myDefaultType;

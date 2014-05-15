@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
     return "Enumeration constant";
   }
 
+  @Override
   public boolean hasModifierProperty(@NonNls @NotNull String property) {
     if (property.equals(PsiModifier.STATIC)) return true;
     if (property.equals(PsiModifier.PUBLIC)) return true;
@@ -69,48 +70,58 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
     return false;
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitEnumConstant(this);
   }
 
+  @Override
   @Nullable
   public GrTypeElement getTypeElementGroovy() {
     return null;
   }
 
+  @Override
   @NotNull
   public PsiType getType() {
     return JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(getContainingClass(), PsiSubstitutor.EMPTY);
   }
 
+  @Override
   @Nullable
   public PsiType getTypeGroovy() {
     return getType();
   }
 
+  @Override
   public void setType(@Nullable PsiType type) {
     throw new RuntimeException("Cannot set type for enum constant");
   }
 
+  @Override
   @Nullable
   public GrExpression getInitializerGroovy() {
     return null;
   }
 
+  @Override
   public boolean isProperty() {
     return false;
   }
 
+  @Override
   public GroovyResolveResult[] multiResolveClass() {
     GroovyResolveResult result = new GroovyResolveResultImpl(getContainingClass(), this, null, PsiSubstitutor.EMPTY, true, true);
     return new GroovyResolveResult[]{result};
   }
 
+  @Override
   @Nullable
   public GrArgumentList getArgumentList() {
     return findChildByClass(GrArgumentList.class);
   }
 
+  @Override
   public GrNamedArgument addNamedArgument(final GrNamedArgument namedArgument) throws IncorrectOperationException {
     GrArgumentList list = getArgumentList();
     assert list != null;
@@ -159,6 +170,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
     return JavaResolveResult.EMPTY;
   }
 
+  @Override
   @Nullable
   public GrEnumConstantInitializer getInitializingClass() {
     return findChildByClass(GrEnumConstantInitializer.class);
@@ -215,19 +227,23 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   }
 
   private class MyReference implements PsiPolyVariantReference {
+    @Override
     @NotNull
     public ResolveResult[] multiResolve(boolean incompleteCode) {
       return GrEnumConstantImpl.this.multiResolve(false);
     }
 
+    @Override
     public PsiElement getElement() {
       return GrEnumConstantImpl.this;
     }
 
+    @Override
     public TextRange getRangeInElement() {
       return getNameIdentifierGroovy().getTextRange().shiftRight(-getTextOffset());
     }
 
+    @Override
     public PsiElement resolve() {
       return resolveMethod();
     }
@@ -237,28 +253,34 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
       return GrEnumConstantImpl.this.advancedResolve();
     }
 
+    @Override
     @NotNull
     public String getCanonicalText() {
       return getContainingClass().getName();
     }
 
+    @Override
     public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
       return getElement();
     }
 
+    @Override
     public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
       throw new IncorrectOperationException("invalid operation");
     }
 
+    @Override
     public boolean isReferenceTo(PsiElement element) {
       return element instanceof GrMethod && ((GrMethod)element).isConstructor() && getManager().areElementsEquivalent(resolve(), element);
     }
 
+    @Override
     @NotNull
     public Object[] getVariants() {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
+    @Override
     public boolean isSoft() {
       return false;
     }

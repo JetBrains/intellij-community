@@ -39,6 +39,7 @@ public class InstanceOfInstruction extends InstructionImpl implements MixinTypeI
     myCondition = cond;
   }
 
+  @Override
   protected String getElementPresentation() {
     return "instanceof: " + getElement().getText();
   }
@@ -66,6 +67,7 @@ public class InstanceOfInstruction extends InstructionImpl implements MixinTypeI
     return null;
   }
 
+  @Override
   @Nullable
   public PsiType inferMixinType() {
     Pair<GrExpression, PsiType> instanceOf = getInstanceof();

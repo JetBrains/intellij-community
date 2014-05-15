@@ -65,19 +65,23 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
     return "Enumeration definition";
   }
 
+  @Override
   public GrEnumDefinitionBody getBody() {
     return getStubOrPsiChild(GroovyElementTypes.ENUM_BODY);
   }
 
+  @Override
   public boolean isEnum() {
     return true;
   }
 
+  @Override
   @NotNull
   public PsiClassType[] getExtendsListTypes() {
     return new PsiClassType[]{createEnumType(), createGroovyObjectSupportType()};
   }
 
+  @Override
   protected String[] getExtendsNames() {
     return new String[]{ENUM_SIMPLE_NAME};
   }
@@ -102,6 +106,7 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
     return TypesUtil.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT, this);
   }
 
+  @Override
   @NotNull
   public GrField[] getFields() {
     GrField[] bodyFields = super.getFields();
@@ -164,12 +169,14 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
     });
   }
 
+  @Override
   public GrEnumConstant[] getEnumConstants() {
     GrEnumConstantList list = getEnumConstantList();
     if (list != null) return list.getEnumConstants();
     return GrEnumConstant.EMPTY_ARRAY;
   }
 
+  @Override
   public GrEnumConstantList getEnumConstantList() {
     GrEnumDefinitionBody enumDefinitionBody = getBody();
     if (enumDefinitionBody != null) return enumDefinitionBody.getEnumConstantList();

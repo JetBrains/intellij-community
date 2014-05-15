@@ -155,6 +155,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
           TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myContext.getProject())
             .createWithInnerClassesScopeChooser(RefactoringBundle.message("choose.destination.class"),
                                                 GlobalSearchScope.projectScope(myContext.getProject()), new ClassFilter() {
+                @Override
                 public boolean isAccepted(PsiClass aClass) {
                   return aClass.getParent() instanceof GroovyFile || aClass.hasModifierProperty(PsiModifier.STATIC);
                 }
@@ -190,6 +191,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     }
 
     myTargetClassEditor.getChildComponent().addDocumentListener(new DocumentAdapter() {
+      @Override
       public void documentChanged(DocumentEvent e) {
         targetClassChanged();
         updateOkStatus();
@@ -202,6 +204,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     myNameLabel.setLabelFor(myNameField);
 
     myPanel.registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myNameField.requestFocus();
       }

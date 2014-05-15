@@ -33,30 +33,36 @@ public class GroovyConditionalWithIdenticalBranchesInspection extends BaseInspec
     return true;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Conditional expression with identical branches";
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return CONTROL_FLOW;
   }
 
+  @Override
   public String buildErrorString(Object... args) {
     return "Conditional expression with identical branches #loc";
   }
 
+  @Override
   public GroovyFix buildFix(PsiElement location) {
     return new CollapseConditionalFix();
   }
 
   private static class CollapseConditionalFix extends GroovyFix {
+    @Override
     @NotNull
     public String getName() {
       return "Collapse conditional expression";
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof GrConditionalExpression)) return;
@@ -66,12 +72,14 @@ public class GroovyConditionalWithIdenticalBranchesInspection extends BaseInspec
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitConditionalExpression(GrConditionalExpression expression) {
       super.visitConditionalExpression(expression);
       final GrExpression thenBranch = expression.getThenBranch();

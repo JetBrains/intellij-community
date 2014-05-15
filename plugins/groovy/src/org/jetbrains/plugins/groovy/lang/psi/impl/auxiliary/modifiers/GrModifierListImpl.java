@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,6 +137,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     super(stub, nodeType);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitModifierList(this);
   }
@@ -145,6 +146,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     return "Modifiers";
   }
 
+  @Override
   @NotNull
   public PsiElement[] getModifiers() {
     final ArrayList<PsiElement> result = new ArrayList<PsiElement>();
@@ -157,6 +159,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     return result.toArray(new PsiElement[result.size()]);
   }
 
+  @Override
   public boolean hasExplicitVisibilityModifiers() {
     final GrModifierListStub stub = getStub();
     if (stub != null) {
@@ -250,10 +253,12 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     return pParent.isInterface() && !pParent.isTrait();
   }
 
+  @Override
   public boolean hasModifierProperty(@NotNull @NonNls String modifier) {
     return checkModifierProperty(this, modifier);
   }
 
+  @Override
   public boolean hasExplicitModifier(@NotNull @NonNls String name) {
     final GrModifierListStub stub = getStub();
     if (stub != null) {
@@ -268,6 +273,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     return (mask & flag) != 0;
   }
 
+  @Override
   public void setModifierProperty(@NotNull @NonNls String name, boolean doSet) throws IncorrectOperationException {
     if (hasModifierProperty(name) == doSet) return;
 
@@ -359,9 +365,11 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     return anchor;
   }
 
+  @Override
   public void checkSetModifierProperty(@NotNull @NonNls String name, boolean value) throws IncorrectOperationException {
   }
 
+  @Override
   @NotNull
   public GrAnnotation[] getAnnotations() {
     return CachedValuesManager.getCachedValue(this, new CachedValueProvider<GrAnnotation[]>() {
@@ -373,12 +381,14 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     });
   }
 
+  @Override
   @NotNull
   public PsiAnnotation[] getApplicableAnnotations() {
     //todo[medvedev]
     return getAnnotations();
   }
 
+  @Override
   @Nullable
   public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {
     for (GrAnnotation annotation : getAnnotations()) {
@@ -389,6 +399,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     return null;
   }
 
+  @Override
   @NotNull
   public GrAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
     final PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(qualifiedName, getResolveScope());

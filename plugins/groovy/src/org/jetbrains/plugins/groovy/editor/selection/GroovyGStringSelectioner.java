@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.GSTRIN
  * @author Maxim.Medvedev
  */
 public class GroovyGStringSelectioner extends ExtendWordSelectionHandlerBase {
+  @Override
   public boolean canSelect(PsiElement e) {
     PsiElement parent = e.getParent();
     return parent instanceof GrStringInjection || parent instanceof GrString;

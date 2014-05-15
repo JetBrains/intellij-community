@@ -45,6 +45,7 @@ public abstract class Intention implements IntentionAction {
     predicate = getElementPredicate();
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!QuickfixUtil.ensureFileWritable(project, file)) {
       return;
@@ -125,10 +126,12 @@ public abstract class Intention implements IntentionAction {
     return element instanceof PsiFile;
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return findMatchingElement(file, editor) != null;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }
@@ -151,11 +154,13 @@ public abstract class Intention implements IntentionAction {
     return buffer.toString();
   }
 
+  @Override
   @NotNull
   public String getText() {
     return GroovyIntentionsBundle.message(getPrefix() + ".name");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return GroovyIntentionsBundle.message(getPrefix() + ".family.name");

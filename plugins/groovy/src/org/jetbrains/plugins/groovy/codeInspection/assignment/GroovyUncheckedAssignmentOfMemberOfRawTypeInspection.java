@@ -46,6 +46,7 @@ import static org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil.isS
  * @author Maxim.Medvedev
  */
 public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseInspection {
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
@@ -64,11 +65,13 @@ public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseIn
     return true;
   }
 
+  @Override
   @NotNull
   protected BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
@@ -136,6 +139,7 @@ public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseIn
 
     }
 
+    @Override
     public void visitAssignmentExpression(@NotNull GrAssignmentExpression assignment) {
       super.visitAssignmentExpression(assignment);
 

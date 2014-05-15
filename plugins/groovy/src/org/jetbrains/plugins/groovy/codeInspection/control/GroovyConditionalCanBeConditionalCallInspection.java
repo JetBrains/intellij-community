@@ -38,30 +38,36 @@ import static org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil.*;
 
 public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Conditional expression can be conditional call";
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return CONTROL_FLOW;
   }
 
+  @Override
   public String buildErrorString(Object... args) {
     return "Conditional expression can be call #loc";
   }
 
+  @Override
   public GroovyFix buildFix(PsiElement location) {
     return new CollapseConditionalFix();
   }
 
   private static class CollapseConditionalFix extends GroovyFix {
+    @Override
     @NotNull
     public String getName() {
       return "Replace with conditional call";
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final GrConditionalExpression expression = (GrConditionalExpression) descriptor.getPsiElement();
       final GrBinaryExpression binaryCondition = (GrBinaryExpression)PsiUtil.skipParentheses(expression.getCondition(), false);
@@ -82,12 +88,14 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitConditionalExpression(GrConditionalExpression expression) {
       super.visitConditionalExpression(expression);
       GrExpression condition = expression.getCondition();

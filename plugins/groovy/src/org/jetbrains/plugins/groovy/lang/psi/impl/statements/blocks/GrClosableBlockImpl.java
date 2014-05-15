@@ -68,6 +68,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     super(type, buffer);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitClosure(this);
   }
@@ -78,6 +79,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     mySyntheticItParameter = null;
   }
 
+  @Override
   public boolean processClosureDeclarations(final @NotNull PsiScopeProcessor plainProcessor,
                                             final @NotNull PsiScopeProcessor nonCodeProcessor,
                                             final @NotNull ResolveState state,
@@ -89,6 +91,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return true;
   }
 
+  @Override
   public boolean processDeclarations(final @NotNull PsiScopeProcessor processor,
                                      final @NotNull ResolveState state,
                                      final @Nullable PsiElement lastParent,
@@ -218,6 +221,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return "Closable block";
   }
 
+  @Override
   public GrParameter[] getParameters() {
     if (hasParametersSection()) {
       GrParameterListImpl parameterList = getParameterList();
@@ -227,6 +231,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return GrParameter.EMPTY_ARRAY;
   }
 
+  @Override
   public GrParameter[] getAllParameters() {
     if (getParent() instanceof GrStringInjection) return GrParameter.EMPTY_ARRAY;
     if (hasParametersSection()) return getParameters();
@@ -245,6 +250,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
 
+  @Override
   @NotNull
   public GrParameterListImpl getParameterList() {
     final GrParameterListImpl childByClass = findChildByClass(GrParameterListImpl.class);
@@ -252,6 +258,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return childByClass;
   }
 
+  @Override
   public GrParameter addParameter(GrParameter parameter) {
     GrParameterList parameterList = getParameterList();
     if (getArrow() == null) {
@@ -265,14 +272,17 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return (GrParameter)parameterList.add(parameter);
   }
 
+  @Override
   public boolean hasParametersSection() {
     return getArrow() != null;
   }
 
+  @Override
   public PsiType getType() {
     return GrClosureType.create(this, true);
   }
 
+  @Override
   @Nullable
   public PsiType getNominalType() {
     return getType();
@@ -323,16 +333,19 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     });
   }
 
+  @Override
   public GrExpression replaceWithExpression(@NotNull GrExpression newExpr, boolean removeUnnecessaryParentheses) {
     return PsiImplUtil.replaceExpression(this, newExpr, removeUnnecessaryParentheses);
   }
 
   private static final Function<GrClosableBlock, PsiType> ourTypesCalculator = new NullableFunction<GrClosableBlock, PsiType>() {
+    @Override
     public PsiType fun(GrClosableBlock block) {
       return GroovyPsiManager.inferType(block, new MethodTypeInferencer(block));
     }
   };
 
+  @Override
   @Nullable
   public PsiType getReturnType() {
     return TypeInferenceHelper.getCurrentContext().getExpressionType(this, ourTypesCalculator);

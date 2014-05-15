@@ -141,6 +141,7 @@ public abstract class MvcFramework {
       if (commandLine == null) return;
 
       MvcConsole.executeProcess(module, commandLine, new Runnable() {
+        @Override
         public void run() {
           VirtualFile root = findAppRoot(module);
           if (root == null) return;

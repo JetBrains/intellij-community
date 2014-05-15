@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,10 +49,12 @@ public class GrStringImpl extends GrAbstractLiteral implements GrString {
     return "Compound Gstring";
   }
 
+  @Override
   public PsiType getType() {
     return getTypeByFQName(findChildByClass(GrStringInjection.class) != null ? GROOVY_LANG_GSTRING : JAVA_LANG_STRING);
   }
 
+  @Override
   public boolean isPlainString() {
     return !getText().startsWith("\"\"\"");
   }
@@ -86,10 +88,12 @@ public class GrStringImpl extends GrAbstractLiteral implements GrString {
     return result.toArray(new GroovyPsiElement[result.size()]);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitGStringExpression(this);
   }
 
+  @Override
   public Object getValue() {
     if (findChildByClass(GrStringInjection.class) != null) return null;
 

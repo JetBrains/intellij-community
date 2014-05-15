@@ -68,24 +68,28 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
    */
   GrStubElementType<GrTypeDefinitionStub, GrClassDefinition> CLASS_DEFINITION =
     new GrTypeDefinitionElementType<GrClassDefinition>("class definition") {
+      @Override
       public GrClassDefinition createPsi(@NotNull GrTypeDefinitionStub stub) {
         return new GrClassDefinitionImpl(stub);
       }
     };
   GrStubElementType<GrTypeDefinitionStub, GrInterfaceDefinition> INTERFACE_DEFINITION =
     new GrTypeDefinitionElementType<GrInterfaceDefinition>("interface definition") {
+      @Override
       public GrInterfaceDefinition createPsi(@NotNull GrTypeDefinitionStub stub) {
         return new GrInterfaceDefinitionImpl(stub);
       }
     };
   GrStubElementType<GrTypeDefinitionStub, GrEnumTypeDefinition> ENUM_DEFINITION =
     new GrTypeDefinitionElementType<GrEnumTypeDefinition>("enumeration definition") {
+      @Override
       public GrEnumTypeDefinition createPsi(@NotNull GrTypeDefinitionStub stub) {
         return new GrEnumTypeDefinitionImpl(stub);
       }
     };
   GrStubElementType<GrTypeDefinitionStub, GrAnnotationTypeDefinition> ANNOTATION_DEFINITION =
     new GrTypeDefinitionElementType<GrAnnotationTypeDefinition>("annotation definition") {
+      @Override
       public GrAnnotationTypeDefinition createPsi(@NotNull GrTypeDefinitionStub stub) {
         return new GrAnnotationTypeDefinitionImpl(stub);
       }
@@ -119,6 +123,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GrStubElementType<GrFieldStub, GrField> FIELD = new GrFieldElementType();
   GrMethodElementType METHOD_DEFINITION = new GrMethodElementType("method definition") {
 
+    @Override
     public GrMethod createPsi(@NotNull GrMethodStub stub) {
       return new GrMethodImpl(stub);
     }
@@ -138,11 +143,13 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   };
 
   GrReferenceListElementType<GrImplementsClause> IMPLEMENTS_CLAUSE = new GrReferenceListElementType<GrImplementsClause>("implements clause") {
+    @Override
     public GrImplementsClause createPsi(@NotNull GrReferenceListStub stub) {
       return new GrImplementsClauseImpl(stub);
     }
   };
   GrReferenceListElementType<GrExtendsClause> EXTENDS_CLAUSE = new GrReferenceListElementType<GrExtendsClause>("super class clause") {
+    @Override
     public GrExtendsClause createPsi(@NotNull GrReferenceListStub stub) {
       return new GrExtendsClauseImpl(stub);
     }

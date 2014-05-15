@@ -39,38 +39,46 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 
 public class GroovyTrivialIfInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Redundant 'if' statement";
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return CONTROL_FLOW;
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new TrivialIfVisitor();
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   public String buildErrorString(Object... args) {
     return "#ref statement can be simplified #loc";
   }
 
+  @Override
   public GroovyFix buildFix(PsiElement location) {
     return new TrivialIfFix();
   }
 
   private static class TrivialIfFix extends GroovyFix {
+    @Override
     @NotNull
     public String getName() {
       return "Simplify";
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
         throws IncorrectOperationException {
       final PsiElement ifKeywordElement = descriptor.getPsiElement();
@@ -237,6 +245,7 @@ public class GroovyTrivialIfInspection extends BaseInspection {
 
   private static class TrivialIfVisitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitIfStatement(@NotNull GrIfStatement ifStatement) {
       super.visitIfStatement(ifStatement);
       final GrCondition condition = ifStatement.getCondition();

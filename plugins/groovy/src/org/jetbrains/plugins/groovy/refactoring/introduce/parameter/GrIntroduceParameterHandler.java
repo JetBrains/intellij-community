@@ -68,6 +68,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
   static final String REFACTORING_NAME = RefactoringBundle.message("introduce.parameter.title");
   private JBPopup myEnclosingMethodsPopup;
 
+  @Override
   public void invoke(final @NotNull Project project, @NotNull final Editor editor, @NotNull final PsiFile file, final @Nullable DataContext dataContext) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (!selectionModel.hasSelection()) {
@@ -83,6 +84,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
       }
       else {
         IntroduceTargetChooser.showChooser(editor, expressions, new Pass<GrExpression>() {
+          @Override
           public void pass(final GrExpression selectedValue) {
             invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(), selectedValue.getTextRange().getEndOffset());
           }

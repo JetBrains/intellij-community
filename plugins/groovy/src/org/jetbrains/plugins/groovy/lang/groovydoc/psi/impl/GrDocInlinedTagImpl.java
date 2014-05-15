@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ public class GrDocInlinedTagImpl extends GroovyDocPsiElementImpl implements GrDo
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitDocTag(this);
   }
@@ -56,11 +57,13 @@ public class GrDocInlinedTagImpl extends GroovyDocPsiElementImpl implements GrDo
     return "GrDocInlinedTag";
   }
 
+  @Override
   @NotNull
   public String getName() {
     return getNameElement().getText().substring(1);
   }
 
+  @Override
   @NotNull
   public PsiElement getNameElement() {
     PsiElement element = findChildByType(mGDOC_TAG_NAME);
@@ -68,6 +71,7 @@ public class GrDocInlinedTagImpl extends GroovyDocPsiElementImpl implements GrDo
     return element;
   }
 
+  @Override
   public GrDocComment getContainingComment() {
     return (GrDocComment)getParent();
   }
@@ -77,15 +81,18 @@ public class GrDocInlinedTagImpl extends GroovyDocPsiElementImpl implements GrDo
     return null;
   }
 
+  @Override
   public GrDocTagValueToken getValueElement() {
     return findChildByClass(GrDocTagValueToken.class);
   }
 
+  @Override
   public PsiElement[] getDataElements() {
     final List<PsiElement> list = findChildrenByType(VALUE_BIT_SET);
     return PsiUtilCore.toPsiElementArray(list);
   }
 
+  @Override
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
     final PsiElement nameElement = getNameElement();
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());

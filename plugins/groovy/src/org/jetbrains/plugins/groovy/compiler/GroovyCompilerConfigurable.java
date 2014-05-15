@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,7 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
     final ExcludedEntriesConfiguration configuration = myConfig.getExcludeFromStubGeneration();
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, true) {
+      @Override
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
         return super.isFileVisible(file, showHiddenFiles) && !index.isIgnored(file);
       }
@@ -80,47 +81,56 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
   }
 
 
+  @Override
   @NotNull
   public String getId() {
     return "Groovy compiler";
   }
 
+  @Override
   public Runnable enableSearch(String option) {
     return null;
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return "Groovy Compiler";
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.projectsettings.compiler.groovy";
   }
 
+  @Override
   public JComponent createComponent() {
     myExcludesPanel.add(myExcludes.createComponent());
     return myMainPanel;
   }
 
+  @Override
   public boolean isModified() {
     return !Comparing.equal(myConfig.getHeapSize(), myHeapSize.getText()) ||
            myInvokeDynamicSupportCB.isSelected() != myConfig.isInvokeDynamic() ||
            myExcludes.isModified();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     myExcludes.apply();
     myConfig.setHeapSize(myHeapSize.getText());
     myConfig.setInvokeDynamic(myInvokeDynamicSupportCB.isSelected());
   }
 
+  @Override
   public void reset() {
     myHeapSize.setText(myConfig.getHeapSize());
     myInvokeDynamicSupportCB.setSelected(myConfig.isInvokeDynamic());
     myExcludes.reset();
   }
 
+  @Override
   public void disposeUIResources() {
     myExcludes.disposeUIResources();
   }

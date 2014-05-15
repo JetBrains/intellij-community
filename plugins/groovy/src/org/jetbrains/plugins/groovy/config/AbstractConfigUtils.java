@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ public abstract class AbstractConfigUtils {
   @NonNls protected String STARTER_SCRIPT_FILE_NAME;
 
   private final Condition<Library> LIB_SEARCH_CONDITION = new Condition<Library>() {
+    @Override
     public boolean value(Library library) {
       return isSDKLibrary(library);
     }
@@ -164,6 +165,7 @@ public abstract class AbstractConfigUtils {
 
   public Library[] getSDKLibrariesByModule(final Module module) {
     final Condition<Library> condition = new Condition<Library>() {
+      @Override
       public boolean value(Library library) {
         return isSDKLibrary(library);
       }

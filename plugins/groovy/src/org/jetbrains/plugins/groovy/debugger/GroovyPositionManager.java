@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,6 +68,7 @@ public class GroovyPositionManager implements PositionManager {
     return myDebugProcess;
   }
 
+  @Override
   @NotNull
   public List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) throws NoDataException {
     try {
@@ -108,6 +109,7 @@ public class GroovyPositionManager implements PositionManager {
     }
   }
 
+  @Override
   public ClassPrepareRequest createPrepareRequest(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position)
     throws NoDataException {
     String qName = getOuterClassName(position);
@@ -119,6 +121,7 @@ public class GroovyPositionManager implements PositionManager {
 
     if (qName == null) throw new NoDataException();
     ClassPrepareRequestor waitRequestor = new ClassPrepareRequestor() {
+      @Override
       public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
         final CompoundPositionManager positionManager = ((DebugProcessImpl)debuggerProcess).getPositionManager();
         if (positionManager.locationsOfLine(referenceType, position).size() > 0) {
@@ -189,6 +192,7 @@ public class GroovyPositionManager implements PositionManager {
     return null;
   }
 
+  @Override
   public SourcePosition getSourcePosition(final Location location) throws NoDataException {
     if (location == null) throw new NoDataException();
 
@@ -270,9 +274,11 @@ public class GroovyPositionManager implements PositionManager {
     return runtimeName;
   }
 
+  @Override
   @NotNull
   public List<ReferenceType> getAllClasses(@NotNull final SourcePosition position) throws NoDataException {
     List<ReferenceType> result = ApplicationManager.getApplication().runReadAction(new Computable<List<ReferenceType>>() {
+      @Override
       public List<ReferenceType> compute() {
         GroovyPsiElement sourceImage = findReferenceTypeSourceImage(position);
 

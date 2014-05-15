@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,10 +45,12 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
     super("field");
   }
 
+  @Override
   public GrField createPsi(@NotNull GrFieldStub stub) {
     return new GrFieldImpl(stub);
   }
 
+  @Override
   public GrFieldStub createStub(@NotNull GrField psi, StubElement parentStub) {
     String[] annNames = GrStubUtils.getAnnotationNames(psi);
 
@@ -61,15 +63,18 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
                            GrStubUtils.getTypeText(psi.getTypeElementGroovy()));
   }
 
+  @Override
   public void serialize(@NotNull GrFieldStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     serializeFieldStub(stub, dataStream);
   }
 
+  @Override
   @NotNull
   public GrFieldStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return deserializeFieldStub(dataStream, parentStub);
   }
 
+  @Override
   public void indexStub(@NotNull GrFieldStub stub, @NotNull IndexSink sink) {
     indexFieldStub(stub, sink);
   }

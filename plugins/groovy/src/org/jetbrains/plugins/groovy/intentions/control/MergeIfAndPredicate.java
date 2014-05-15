@@ -24,6 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 
 
 class MergeIfAndPredicate implements PsiElementPredicate {
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof GrIfStatement)) {
       return false;

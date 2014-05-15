@@ -39,18 +39,21 @@ public class GroovyEmptyCatchBlockInspection extends BaseInspection {
   public boolean myIgnore = true;
   public boolean myCountCommentsAsContent = true;
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return ERROR_HANDLING;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Empty 'catch' block";
   }
 
+  @Override
   @NotNull
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
@@ -67,6 +70,7 @@ public class GroovyEmptyCatchBlockInspection extends BaseInspection {
 
   private class Visitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitCatchClause(GrCatchClause catchClause) {
       super.visitCatchClause(catchClause);
       final GrOpenBlock body = catchClause.getBody();

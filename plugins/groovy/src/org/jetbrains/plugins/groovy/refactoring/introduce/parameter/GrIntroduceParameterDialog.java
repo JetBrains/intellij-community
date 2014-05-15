@@ -514,6 +514,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
 
   protected void invokeRefactoring(BaseRefactoringProcessor processor) {
     final Runnable prepareSuccessfulCallback = new Runnable() {
+      @Override
       public void run() {
         close(DialogWrapper.OK_EXIT_CODE);
       }

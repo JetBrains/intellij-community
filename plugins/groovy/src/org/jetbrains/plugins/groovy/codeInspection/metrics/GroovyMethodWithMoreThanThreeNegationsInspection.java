@@ -23,25 +23,30 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 
 public class GroovyMethodWithMoreThanThreeNegationsInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Method with more than three negations";
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return METHOD_METRICS;
   }
 
+  @Override
   public String buildErrorString(Object... args) {
     return "Method '#ref' has too many negations (" + args[0] + " > 3)";
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
+    @Override
     public void visitMethod(GrMethod grMethod) {
       super.visitMethod(grMethod);
       final NegationCountVisitor visitor = new NegationCountVisitor();

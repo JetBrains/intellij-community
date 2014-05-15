@@ -33,28 +33,33 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 
 public class GroovyNonShortCircuitBooleanInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return PROBABLE_BUGS;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Non short-circuit boolean";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Non short-circuit boolean expression #loc";
 
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return false;
   }
 
+  @Override
   public GroovyFix buildFix(PsiElement location) {
     return new NonShortCircuitBooleanFix();
   }
@@ -62,11 +67,13 @@ public class GroovyNonShortCircuitBooleanInspection extends BaseInspection {
   private static class NonShortCircuitBooleanFix
       extends GroovyFix {
 
+    @Override
     @NotNull
     public String getName() {
       return "Replace with short-circuit expression";
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
         throws IncorrectOperationException {
       final GrBinaryExpression expression =
@@ -89,12 +96,14 @@ public class GroovyNonShortCircuitBooleanInspection extends BaseInspection {
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitBinaryExpression(@NotNull GrBinaryExpression expression) {
       super.visitBinaryExpression(expression);
       final GrExpression rhs = expression.getRightOperand();

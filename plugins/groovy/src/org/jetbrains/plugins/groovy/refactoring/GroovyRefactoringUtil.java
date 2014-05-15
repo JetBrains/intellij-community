@@ -133,6 +133,7 @@ public abstract class GroovyRefactoringUtil {
   public static PsiElement[] getExpressionOccurrences(@NotNull PsiElement expr, @NotNull PsiElement scope) {
     ArrayList<PsiElement> occurrences = new ArrayList<PsiElement>();
     Comparator<PsiElement> comparator = new Comparator<PsiElement>() {
+      @Override
       public int compare(PsiElement element1, PsiElement element2) {
         if (element1 != null && element1.equals(element2)) return 0;
 
@@ -188,6 +189,7 @@ public abstract class GroovyRefactoringUtil {
 
   public static void sortOccurrences(PsiElement[] occurrences) {
     Arrays.sort(occurrences, new Comparator<PsiElement>() {
+      @Override
       public int compare(PsiElement elem1, PsiElement elem2) {
         final int offset1 = elem1.getTextRange().getStartOffset();
         final int offset2 = elem2.getTextRange().getStartOffset();
@@ -419,10 +421,12 @@ public abstract class GroovyRefactoringUtil {
 
     Project project = expr.getProject();
     String[] suggestedNames =GroovyNameSuggestionUtil.suggestVariableNames(expr, new NameValidator() {
+      @Override
       public String validateName(String name, boolean increaseNumber) {
         return name;
       }
 
+      @Override
       public Project getProject() {
         return context.getProject();
       }
@@ -742,14 +746,17 @@ public abstract class GroovyRefactoringUtil {
       class TypeParameterSearcher extends PsiTypeVisitor<Boolean> {
         private final Set<PsiTypeParameter> myTypeParams = new HashSet<PsiTypeParameter>();
 
+        @Override
         public Boolean visitType(final PsiType type) {
           return false;
         }
 
+        @Override
         public Boolean visitArrayType(final PsiArrayType arrayType) {
           return arrayType.getComponentType().accept(this);
         }
 
+        @Override
         public Boolean visitClassType(final PsiClassType classType) {
           final PsiClass aClass = classType.resolve();
           if (aClass instanceof PsiTypeParameter) {
@@ -763,6 +770,7 @@ public abstract class GroovyRefactoringUtil {
           return false;
         }
 
+        @Override
         public Boolean visitWildcardType(final PsiWildcardType wildcardType) {
           final PsiType bound = wildcardType.getBound();
           if (bound != null) {

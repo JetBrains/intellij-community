@@ -22,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCondit
 
 class ConditionalPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof GrConditionalExpression)) {
       return false;

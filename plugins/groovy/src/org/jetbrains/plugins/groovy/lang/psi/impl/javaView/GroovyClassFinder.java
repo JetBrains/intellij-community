@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,12 +37,14 @@ public class GroovyClassFinder extends PsiElementFinder {
     myCache = GroovyShortNamesCache.getGroovyShortNamesCache(project);
   }
 
+  @Override
   @Nullable
   public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     final List<PsiClass> classes = myCache.getScriptClassesByFQName(qualifiedName, scope, true);
     return classes.isEmpty() ? null : classes.get(0);
   }
 
+  @Override
   @NotNull
   public PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     final Collection<PsiClass> classes = myCache.getScriptClassesByFQName(qualifiedName, scope, true);

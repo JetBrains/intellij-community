@@ -45,6 +45,7 @@ public class GrForStatementImpl extends GroovyPsiElementImpl implements GrForSta
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitForStatement(this);
   }
@@ -53,16 +54,19 @@ public class GrForStatementImpl extends GroovyPsiElementImpl implements GrForSta
     return "For statement";
   }
 
+  @Override
   @Nullable
   public GrForClause getClause() {
     return findChildByClass(GrForClause.class);
   }
 
+  @Override
   @Nullable
   public GrStatement getBody() {
     return findChildByClass(GrStatement.class);
   }
 
+  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                      @NotNull ResolveState state,
                                      @Nullable PsiElement lastParent,
@@ -81,14 +85,17 @@ public class GrForStatementImpl extends GroovyPsiElementImpl implements GrForSta
     return true;
   }
 
+  @Override
   public <T extends GrCondition> T replaceBody(T newBody) throws IncorrectOperationException {
     return PsiImplUtil.replaceBody(newBody, getBody(), getNode(), getProject());
   }
 
+  @Override
   public PsiElement getRParenth() {
     return findChildByType(GroovyTokenTypes.mRPAREN);
   }
 
+  @Override
   public PsiElement getLParenth() {
     return findChildByType(GroovyTokenTypes.mLPAREN);
   }

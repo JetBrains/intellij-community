@@ -38,11 +38,13 @@ public class GroovyOverlyComplexBooleanExpressionInspection extends BaseInspecti
    */
   public int m_limit = TERM_LIMIT;
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Overly complex boolean expression";
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return CONFUSING_CODE_CONSTRUCTS;
@@ -52,31 +54,37 @@ public class GroovyOverlyComplexBooleanExpressionInspection extends BaseInspecti
     return m_limit;
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     return new SingleIntegerFieldOptionsPanel("Maximum number of terms:",
         this, "m_limit");
   }
 
+  @Override
   protected String buildErrorString(Object... args) {
     return "Overly complex boolean expression #loc";
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private class Visitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitBinaryExpression(@NotNull GrBinaryExpression expression) {
       super.visitBinaryExpression(expression);
       checkExpression(expression);
     }
 
+    @Override
     public void visitUnaryExpression(@NotNull GrUnaryExpression expression) {
       super.visitUnaryExpression(expression);
       checkExpression(expression);
     }
 
+    @Override
     public void visitParenthesizedExpression(GrParenthesizedExpression expression) {
       super.visitParenthesizedExpression(expression);
       checkExpression(expression);

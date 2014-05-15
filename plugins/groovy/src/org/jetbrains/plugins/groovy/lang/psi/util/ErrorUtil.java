@@ -34,6 +34,7 @@ public class ErrorUtil {
   private static class ErrorElementVisitor extends PsiRecursiveElementVisitor {
     private boolean containsErrorElement = false;
 
+    @Override
     public void visitErrorElement(PsiErrorElement element) {
       containsErrorElement = true;
     }

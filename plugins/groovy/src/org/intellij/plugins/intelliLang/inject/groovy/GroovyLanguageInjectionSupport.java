@@ -63,11 +63,13 @@ import java.util.List;
 public class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSupport {
   @NonNls public static final String GROOVY_SUPPORT_ID = "groovy";
 
+  @Override
   @NotNull
   public String getId() {
     return GROOVY_SUPPORT_ID;
   }
 
+  @Override
   @NotNull
   public Class[] getPatternClasses() {
     return new Class[] {GroovyPatterns.class};
@@ -78,6 +80,7 @@ public class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSup
     return host instanceof GroovyPsiElement;
   }
 
+  @Override
   public boolean useDefaultInjector(PsiLanguageInjectionHost host) {
     return true;
   }
@@ -109,6 +112,7 @@ public class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSup
     if (injectionsMap.isEmpty() && annotations.isEmpty()) return false;
     final ArrayList<BaseInjection> originalInjections = new ArrayList<BaseInjection>(injectionsMap.keySet());
     final List<BaseInjection> newInjections = ContainerUtil.mapNotNull(originalInjections, new NullableFunction<BaseInjection, BaseInjection>() {
+      @Override
       public BaseInjection fun(final BaseInjection injection) {
         final Pair<PsiMethod, Integer> pair = injectionsMap.get(injection);
         final String placeText = JavaLanguageInjectionSupport.getPatternStringForJavaPlace(pair.first, pair.second);

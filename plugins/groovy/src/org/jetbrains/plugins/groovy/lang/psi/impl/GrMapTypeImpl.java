@@ -46,16 +46,19 @@ public class GrMapTypeImpl extends GrMapType {
     myOtherEntries = otherEntries;
   }
 
+  @Override
   @Nullable
   public PsiType getTypeByStringKey(String key) {
     return myStringEntries.get(key);
   }
 
+  @Override
   @NotNull
   public Set<String> getStringKeys() {
     return myStringEntries.keySet();
   }
 
+  @Override
   @NotNull
   protected PsiType[] getAllKeyTypes() {
     Set<PsiType> result = new HashSet<PsiType>();
@@ -69,6 +72,7 @@ public class GrMapTypeImpl extends GrMapType {
     return result.toArray(createArray(result.size()));
   }
 
+  @Override
   @NotNull
   protected PsiType[] getAllValueTypes() {
     Set<PsiType> result = new HashSet<PsiType>();

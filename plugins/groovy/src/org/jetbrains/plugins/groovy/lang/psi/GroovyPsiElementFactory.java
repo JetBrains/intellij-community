@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +82,7 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
    * @return the created initializer block instance.
    * @throws IncorrectOperationException in case of an internal error.
    */
+  @Override
   @NotNull
   public abstract GrClassInitializer createClassInitializer() throws IncorrectOperationException;
 
@@ -137,6 +138,7 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
     return createExpressionFromText(exprText.toString(), null);
   }
 
+  @Override
   @NotNull
   public abstract GrExpression createExpressionFromText(@NotNull String exprText, @Nullable PsiElement context);
 
@@ -203,6 +205,7 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
 
   public abstract PsiElement createDotToken(String newDot);
 
+  @Override
   @NotNull
   public abstract GrMethod createMethodFromText(String methodText, @Nullable PsiElement context);
 
@@ -234,6 +237,7 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
 
   public abstract GrMethod createConstructorFromText(String constructorName, CharSequence constructorText, @Nullable PsiElement context);
 
+  @Override
   @NotNull
   public abstract GrDocComment createDocCommentFromText(@NotNull String text) ;
 
@@ -256,6 +260,7 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
 
   public abstract GrLiteral createLiteralFromValue(@Nullable Object value);
 
+  @Override
   @NotNull
   public abstract GrMethod createMethod(@NotNull @NonNls String name, @Nullable PsiType returnType) throws IncorrectOperationException;
 

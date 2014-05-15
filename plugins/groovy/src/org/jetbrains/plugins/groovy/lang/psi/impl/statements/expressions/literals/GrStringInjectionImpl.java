@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,12 +33,14 @@ public class GrStringInjectionImpl extends GroovyPsiElementImpl implements GrStr
     super(node);
   }
 
+  @Override
   @Nullable
   public GrExpression getExpression() {
     final GrExpression expression = findExpressionChild(this);
     return expression instanceof GrClosableBlock ? null : expression;
   }
 
+  @Override
   @Nullable
   public GrClosableBlock getClosableBlock() {
     return findChildByClass(GrClosableBlock.class);

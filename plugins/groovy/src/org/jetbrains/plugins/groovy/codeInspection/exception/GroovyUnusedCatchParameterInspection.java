@@ -33,24 +33,28 @@ public class GroovyUnusedCatchParameterInspection extends BaseInspection {
     return true;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return ERROR_HANDLING;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Unused catch parameter";
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitCatchClause(GrCatchClause catchClause) {
       super.visitCatchClause(catchClause);
       final GrOpenBlock block = catchClause.getBody();

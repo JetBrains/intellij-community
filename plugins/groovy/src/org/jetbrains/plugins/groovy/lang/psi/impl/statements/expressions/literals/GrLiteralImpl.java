@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,15 +52,18 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
     return "Literal";
   }
 
+  @Override
   public PsiType getType() {
     IElementType elemType = getLiteralType(this);
     return TypesUtil.getPsiType(this, elemType);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitLiteralExpression(this);
   }
 
+  @Override
   public Object getValue() {
     return getLiteralValue(getFirstChild());
   }
@@ -153,6 +156,7 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
     return TokenSets.STRING_LITERAL_SET.contains(elementType);
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiReferenceService.Hints.NO_HINTS);
@@ -176,6 +180,7 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
     return getValue() instanceof String;
   }
 
+  @Override
   public GrLiteralImpl updateText(@NotNull final String text) {
     final GrExpression newExpr = GroovyPsiElementFactory.getInstance(getProject()).createExpressionFromText(text);
     LOG.assertTrue(newExpr instanceof GrLiteral, text);
@@ -185,6 +190,7 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
     return this;
   }
 
+  @Override
   @NotNull
   public LiteralTextEscaper<GrLiteralContainer> createLiteralTextEscaper() {
     return new GrLiteralEscaper(this);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,10 +142,12 @@ public class GroovyTestFramework extends JavaTestFramework {
     return new FileTemplateDescriptor(GroovyTemplates.GROOVY_JUNIT_SET_UP_METHOD_GROOVY);
   }
 
+  @Override
   public FileTemplateDescriptor getTearDownMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor(GroovyTemplates.GROOVY_JUNIT_TEAR_DOWN_METHOD_GROOVY);
   }
 
+  @Override
   public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor(GroovyTemplates.GROOVY_JUNIT_TEST_METHOD_GROOVY);
   }

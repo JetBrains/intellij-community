@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,18 +51,22 @@ public class GrDynamicMethodImpl extends LightElement implements GrMethod {
     myMethod = method;
   }
 
+  @Override
   public PsiClass getContainingClass() {
     return null;
   }
 
+  @Override
   public PsiType getReturnType() {
     return myMethod.getReturnType();
   }
 
+  @Override
   public PsiTypeElement getReturnTypeElement() {
     return myMethod.getReturnTypeElement();
   }
 
+  @Override
   public GrParameter[] getParameters() {
     return myMethod.getParameters();
   }
@@ -72,56 +76,68 @@ public class GrDynamicMethodImpl extends LightElement implements GrMethod {
     return "grails dynamic method";
   }
 
+  @Override
   public PsiIdentifier getNameIdentifier() {
     return myMethod.getNameIdentifier();
   }
 
+  @Override
   @NotNull
   public PsiMethod[] findSuperMethods() {
     return PsiMethod.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiMethod[] findSuperMethods(boolean checkAccess) {
     return PsiMethod.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiMethod[] findSuperMethods(PsiClass parentClass) {
     return PsiMethod.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess) {
     return Collections.emptyList();
   }
 
+  @Override
   public PsiMethod findDeepestSuperMethod() {
     return null;
   }
 
+  @Override
   @NotNull
   public PsiMethod[] findDeepestSuperMethods() {
     return new PsiMethod[0];
   }
 
+  @Override
   public PsiElement copy() {
     return myMethod.copy();
   }
 
+  @Override
   public GrMember[] getMembers() {
     return new GrMember[0];
   }
 
+  @Override
   @NotNull
   public GrModifierList getModifierList() {
     return myMethod.getModifierList();
   }
 
+  @Override
   public boolean hasModifierProperty(@NonNls @NotNull String name) {
     return myMethod.hasModifierProperty(name);
   }
 
+  @Override
   @NotNull
   public Map<String, NamedArgumentDescriptor> getNamedParameters() {
     return myMethod.getNamedParameters();
@@ -133,90 +149,111 @@ public class GrDynamicMethodImpl extends LightElement implements GrMethod {
     return GrReflectedMethod.EMPTY_ARRAY;
   }
 
+  @Override
   public GrOpenBlock getBlock() {
     return null;
   }
 
+  @Override
   public void setBlock(GrCodeBlock newBlock) {
 
   }
 
+  @Override
   public GrTypeElement getReturnTypeElementGroovy() {
     return myMethod.getReturnTypeElementGroovy();
   }
 
+  @Override
   public PsiType getInferredReturnType() {
     return myMethod.getInferredReturnType();
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myMethod.getName();
   }
 
+  @Override
   @NotNull
   public GrParameterList getParameterList() {
     return myMethod.getParameterList();
   }
 
+  @Override
   @NotNull
   public PsiReferenceList getThrowsList() {
     return myMethod.getThrowsList();
   }
 
+  @Override
   public PsiCodeBlock getBody() {
     return null;
   }
 
+  @Override
   public boolean isConstructor() {
     return false;
   }
 
+  @Override
   public boolean isVarArgs() {
     return myMethod.isVarArgs();
   }
 
+  @Override
   @NotNull
   public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
     return myMethod.getSignature(substitutor);
   }
 
+  @Override
   @NotNull
   public PsiElement getNameIdentifierGroovy() {
     return myMethod.getNameIdentifierGroovy();
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
   }
 
+  @Override
   public void acceptChildren(GroovyElementVisitor visitor) {
   }
 
+  @Override
   public GrDocComment getDocComment() {
     return null;
   }
 
+  @Override
   public boolean isDeprecated() {
     return myMethod.isDeprecated();
   }
 
+  @Override
   public boolean hasTypeParameters() {
     return myMethod.hasTypeParameters();
   }
 
+  @Override
   public PsiTypeParameterList getTypeParameterList() {
     return myMethod.getTypeParameterList();
   }
 
+  @Override
   @NotNull
   public PsiTypeParameter[] getTypeParameters() {
     return myMethod.getTypeParameters();
   }
 
+  @Override
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
     return this;
   }
 
+  @Override
   @NotNull
   public HierarchicalMethodSignature getHierarchicalMethodSignature() {
     return myMethod.getHierarchicalMethodSignature();
@@ -227,6 +264,7 @@ public class GrDynamicMethodImpl extends LightElement implements GrMethod {
     return another instanceof GrDynamicMethodImpl && myMethod.isEquivalentTo(((GrDynamicMethodImpl)another).myMethod);
   }
 
+  @Override
   public GrTypeElement setReturnType(PsiType newReturnType) {
     throw new UnsupportedOperationException("Dynamic method can't change it's return type");
   }

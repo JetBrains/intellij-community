@@ -70,16 +70,19 @@ public abstract class CallInfoBase<T extends GrCall> implements CallInfo<T> {
     return myCall;
   }
 
+  @Override
   @NotNull
   public GrExpression[] getExpressionArguments() {
     return myCall.getExpressionArguments();
   }
 
+  @Override
   @NotNull
   public GrClosableBlock[] getClosureArguments() {
     return myCall.getClosureArguments();
   }
 
+  @Override
   @NotNull
   public GrNamedArgument[] getNamedArguments() {
     return myCall.getNamedArguments();

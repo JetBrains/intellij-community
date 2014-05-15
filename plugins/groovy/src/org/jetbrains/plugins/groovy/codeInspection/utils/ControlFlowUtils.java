@@ -548,6 +548,7 @@ public class ControlFlowUtils {
       return m_found;
     }
 
+    @Override
     public void visitReturnStatement(
         @NotNull GrReturnStatement returnStatement) {
       if (m_found) {
@@ -571,6 +572,7 @@ public class ControlFlowUtils {
       return m_found;
     }
 
+    @Override
     public void visitBreakStatement(
         @NotNull GrBreakStatement breakStatement) {
       if (m_found) {
@@ -600,6 +602,7 @@ public class ControlFlowUtils {
       return m_found;
     }
 
+    @Override
     public void visitContinueStatement(
         @NotNull GrContinueStatement continueStatement) {
       if (m_found) {

@@ -241,6 +241,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitIndexProperty(this);
   }
@@ -249,11 +250,13 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
     return "Property by index";
   }
 
+  @Override
   @NotNull
   public GrExpression getInvokedExpression() {
     return findNotNullChildByClass(GrExpression.class);
   }
 
+  @Override
   @NotNull
   public GrArgumentList getArgumentList() {
     return findNotNullChildByClass(GrArgumentList.class);
@@ -289,6 +292,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
     return TypeInferenceHelper.getCurrentContext().multiResolve(myReference, incompleteCode, RESOLVER);
   }
 
+  @Override
   public PsiType getType() {
     return TypeInferenceHelper.getCurrentContext().getExpressionType(this, TYPE_CALCULATOR);
   }

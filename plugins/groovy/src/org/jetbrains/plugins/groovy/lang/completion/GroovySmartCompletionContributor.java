@@ -80,10 +80,12 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
 
   private static final TObjectHashingStrategy<TypeConstraint> EXPECTED_TYPE_INFO_STRATEGY =
     new TObjectHashingStrategy<TypeConstraint>() {
+      @Override
       public int computeHashCode(final TypeConstraint object) {
         return object.getType().hashCode();
       }
 
+      @Override
       public boolean equals(final TypeConstraint o1, final TypeConstraint o2) {
         return o1.getClass().equals(o2.getClass()) && o1.getType().equals(o2.getType());
       }
@@ -107,6 +109,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
         if (reference instanceof GrReferenceElement) {
           GroovyCompletionUtil.processVariants((GrReferenceElement)reference, result.getPrefixMatcher(), params,
                                                new Consumer<LookupElement>() {
+                                                 @Override
                                                  public void consume(LookupElement variant) {
                                                    PsiType type = null;
 
@@ -193,6 +196,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
     });
 
     extend(CompletionType.SMART, AFTER_NEW, new CompletionProvider<CompletionParameters>() {
+      @Override
       protected void addCompletions(@NotNull final CompletionParameters parameters,
                                  final ProcessingContext matchingContext,
                                  @NotNull final CompletionResultSet result) {
@@ -293,6 +297,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
         if (item.getObject() instanceof PsiClass) {
           JavaCompletionUtil.setShowFQN(item);
           item.setInsertHandler(new InsertHandler<LookupItem>() {
+            @Override
             public void handleInsert(InsertionContext context, LookupItem item) {
               GroovyCompletionUtil.addImportForItem(context.getFile(), context.getStartOffset(), item);
             }
@@ -318,6 +323,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
     final PsiType diamond = inferDiamond(place);
 
     JavaInheritorsGetter.processInheritors(parameters, expectedClassTypes, matcher, new Consumer<PsiType>() {
+      @Override
       public void consume(final PsiType type) {
         final LookupElement element = addExpectedType(type, place, parameters, diamond);
         if (element != null) {

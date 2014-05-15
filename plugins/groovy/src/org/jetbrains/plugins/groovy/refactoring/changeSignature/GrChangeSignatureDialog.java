@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -307,6 +307,7 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
     final List<GrParameterInfo> infos = getParameters();
     if (infos.size() > 0) {
       final List<String> paramsText = ContainerUtil.map(infos, new Function<GrParameterInfo, String>() {
+        @Override
         public String fun(GrParameterInfo info) {
           return generateParameterText(info);
         }
@@ -321,6 +322,7 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
     if (exceptions.length > 0) {
       builder.append("\nthrows\n");
       final List<String> exceptionNames = ContainerUtil.map(exceptions, new Function<PsiTypeCodeFragment, String>() {
+        @Override
         public String fun(PsiTypeCodeFragment fragment) {
           return fragment.getText();
         }

@@ -50,6 +50,7 @@ public abstract class GrCreateFromUsageBaseFix extends Intention {
     myRefExpression = SmartPointerManager.getInstance(refExpression.getProject()).createSmartPsiElementPointer(refExpression);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return GroovyBundle.message("create.from.usage.family.name");
@@ -59,6 +60,7 @@ public abstract class GrCreateFromUsageBaseFix extends Intention {
     return myRefExpression.getElement();
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final GrReferenceExpression element = myRefExpression.getElement();
     if (element == null || !element.isValid()) {
@@ -69,6 +71,7 @@ public abstract class GrCreateFromUsageBaseFix extends Intention {
     return !targetClasses.isEmpty();
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

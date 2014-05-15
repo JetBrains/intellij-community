@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ public class GrTryCatchStatementImpl extends GroovyPsiElementImpl implements GrT
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitTryStatement(this);
   }
@@ -46,11 +47,13 @@ public class GrTryCatchStatementImpl extends GroovyPsiElementImpl implements GrT
     return "Try statement";
   }
 
+  @Override
   @NotNull
   public GrOpenBlock getTryBlock() {
     return findNotNullChildByClass(GrOpenBlock.class);
   }
 
+  @Override
   @NotNull
   public GrCatchClause[] getCatchClauses() {
     List<GrCatchClause> result = new ArrayList<GrCatchClause>();
@@ -60,10 +63,12 @@ public class GrTryCatchStatementImpl extends GroovyPsiElementImpl implements GrT
     return result.toArray(new GrCatchClause[result.size()]);
   }
 
+  @Override
   public GrFinallyClause getFinallyClause() {
     return findChildByClass(GrFinallyClause.class);
   }
 
+  @Override
   public GrCatchClause addCatchClause(@NotNull GrCatchClause clause, @Nullable GrCatchClause anchorBefore) {
     PsiElement anchor = anchorBefore;
     if (anchor == null) {

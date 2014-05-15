@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinary
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 public class FlipComparisonIntention extends MutablyNamedIntention {
+  @Override
   protected String getTextForElement(PsiElement element) {
     final GrBinaryExpression binaryExpression =
         (GrBinaryExpression) element;
@@ -44,11 +45,13 @@ public class FlipComparisonIntention extends MutablyNamedIntention {
     return GroovyIntentionsBundle.message("flip.comparison.intention.name", comparison, flippedComparison);
   }
 
+  @Override
   @NotNull
   public PsiElementPredicate getElementPredicate() {
     return new ComparisonPredicate();
   }
 
+  @Override
   public void processIntention(@NotNull PsiElement element, Project project, Editor editor)
       throws IncorrectOperationException {
     final GrBinaryExpression exp =

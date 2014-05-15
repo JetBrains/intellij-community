@@ -362,6 +362,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
       super(refName, processor);
     }
 
+    @Override
     protected boolean isAccessor(@NotNull PsiMethod method) {
       return GroovyPropertyUtils.isSimplePropertySetter(method, getPropertyName());
     }

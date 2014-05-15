@@ -123,11 +123,13 @@ public class GrInplaceParameterIntroducer extends GrAbstractInplaceIntroducer<Gr
 
   }
 
+  @Override
   protected void updateTitle(@Nullable GrVariable variable) {
     if (variable == null) return;
     updateTitle(variable, variable.getName());
   }
 
+  @Override
   protected void updateTitle(@Nullable GrVariable variable, String value) {
     if (getPreviewEditor() == null || variable == null) return;
     final PsiElement declarationScope = ((PsiParameter)variable).getDeclarationScope();

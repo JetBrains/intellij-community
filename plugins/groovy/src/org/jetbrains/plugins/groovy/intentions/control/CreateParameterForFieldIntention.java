@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,6 +106,7 @@ public class CreateParameterForFieldIntention extends Intention {
     new PopupChooserBuilder(list).setTitle(GroovyIntentionsBundle.message("create.parameter.for.field.intention.name")).
       setMovable(true).
       setItemChoosenCallback(new Runnable() {
+        @Override
         public void run() {
           final Object[] selectedValues = list.getSelectedValues();
           Arrays.sort(selectedValues, new Comparator<Object>() {
@@ -148,6 +149,7 @@ public class CreateParameterForFieldIntention extends Intention {
     new PopupChooserBuilder(list).setTitle(GroovyIntentionsBundle.message("create.parameter.for.field.intention.name")).
       setMovable(true).
       setItemChoosenCallback(new Runnable() {
+        @Override
         public void run() {
           final Object[] selectedValues = list.getSelectedValues();
           CommandProcessor.getInstance().executeCommand(project, new Runnable() {

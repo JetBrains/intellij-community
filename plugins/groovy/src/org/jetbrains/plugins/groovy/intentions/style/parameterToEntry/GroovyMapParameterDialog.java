@@ -78,6 +78,7 @@ public class GroovyMapParameterDialog extends DialogWrapper {
     myNameLabel.setEnabled(createNew);
 
     myCreateNew.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(final ChangeEvent e) {
         final boolean flag = myCreateNew.isSelected();
         myCbTypeSpec.setEnabled(flag);
@@ -114,10 +115,12 @@ public class GroovyMapParameterDialog extends DialogWrapper {
     super.doCancelAction();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return contentPane;
   }
 
+  @Override
   public JComponent getContentPane() {
     return contentPane;
   }
@@ -143,21 +146,25 @@ public class GroovyMapParameterDialog extends DialogWrapper {
     myListenerList.add(DataChangedListener.class, new DataChangedListener());
 
     myNameComboBox.addItemListener(new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         fireNameDataChanged();
       }
     });
 
     ((EditorTextField)myNameComboBox.getEditor().getEditorComponent()).addDocumentListener(new DocumentListener() {
+      @Override
       public void beforeDocumentChange(DocumentEvent event) {
       }
 
+      @Override
       public void documentChanged(DocumentEvent event) {
         fireNameDataChanged();
       }
     });
 
     contentPane.registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myNameComboBox.requestFocus();
       }

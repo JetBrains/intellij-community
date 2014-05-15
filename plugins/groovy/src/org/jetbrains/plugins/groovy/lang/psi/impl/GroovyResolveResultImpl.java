@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,15 +74,18 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
     myIsApplicable = isApplicable;
   }
 
+  @Override
   @NotNull
   public PsiSubstitutor getSubstitutor() {
     return mySubstitutor;
   }
 
+  @Override
   public boolean isAccessible() {
     return myIsAccessible;
   }
 
+  @Override
   public boolean isStaticsOK() {
     return myIsStaticsOK;
   }
@@ -92,11 +95,13 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
     return myIsApplicable;
   }
 
+  @Override
   @Nullable
   public PsiElement getElement() {
     return myElement;
   }
 
+  @Override
   public boolean isValidResult() {
     return isAccessible() && isApplicable() && isStaticsOK();
   }
@@ -124,11 +129,13 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
     return result;
   }
 
+  @Override
   @Nullable
   public PsiElement getCurrentFileResolveContext() {
     return myCurrentFileResolveContext;
   }
 
+  @Override
   public boolean isInvokedOnProperty() {
     return myIsInvokedOnProperty;
   }

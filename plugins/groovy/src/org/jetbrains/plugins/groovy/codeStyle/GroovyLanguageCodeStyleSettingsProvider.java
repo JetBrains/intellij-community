@@ -292,6 +292,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
       private JComboBox myLabelIndentStyle;
       private JBLabel myStyleLabel;
 
+      @Override
       protected void addComponents() {
         super.addComponents();
 
@@ -304,6 +305,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
         add(myStyleLabel, myLabelIndentStyle);
       }
 
+      @Override
       public boolean isModified(final CodeStyleSettings settings, final CommonCodeStyleSettings.IndentOptions options) {
         boolean isModified = super.isModified(settings, options);
 
@@ -324,6 +326,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
         }
       }
 
+      @Override
       public void apply(final CodeStyleSettings settings, final CommonCodeStyleSettings.IndentOptions options) {
         super.apply(settings, options);
         options.LABEL_INDENT_SIZE = getFieldValue(myLabelIndent, Integer.MIN_VALUE, options.LABEL_INDENT_SIZE);
@@ -331,6 +334,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
         settings.getCustomSettings(GroovyCodeStyleSettings.class).INDENT_LABEL_BLOCKS = RELATIVE.equals(myLabelIndentStyle.getSelectedItem());
       }
 
+      @Override
       public void reset(@NotNull final CodeStyleSettings settings, @NotNull final CommonCodeStyleSettings.IndentOptions options) {
         super.reset(settings, options);
         myLabelIndent.setText(Integer.toString(options.LABEL_INDENT_SIZE));
@@ -345,6 +349,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
         }
       }
 
+      @Override
       public void setEnabled(final boolean enabled) {
         super.setEnabled(enabled);
         myLabelIndent.setEnabled(enabled);

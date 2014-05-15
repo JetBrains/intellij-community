@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,6 +89,7 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
     setOriginInfo("synthetic accessor for '"+myProperty.getName()+"'");
   }
 
+  @Override
   @Nullable
   public PsiType getInferredReturnType() {
     if (myIsSetter) return PsiType.VOID;
@@ -101,6 +102,7 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
   }
 
 
+  @Override
   public PsiElement copy() {
     //return new GrAccessorMethodImpl(myProperty, myIsSetter, getName());
     //rename refactoring may create a copy using this method, add it to a class to check for conflicts, and then remove this copy.
@@ -115,6 +117,7 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
     return GroovyPsiElementFactory.getInstance(getProject()).createMethodFromText(modifiers+" "+getName()+params+"{}");
   }
 
+  @Override
   @NotNull
   public GrField getProperty() {
     return myProperty;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,11 +66,13 @@ class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectCl
     return inheritors;
   }
 
+  @Override
   public boolean execute(@NotNull DirectClassInheritorsSearch.SearchParameters queryParameters, @NotNull final Processor<PsiClass> consumer) {
     final PsiClass clazz = queryParameters.getClassToProcess();
     final SearchScope scope = queryParameters.getScope();
     if (scope instanceof GlobalSearchScope) {
       final List<PsiClass> candidates = ApplicationManager.getApplication().runReadAction(new Computable<List<PsiClass>>() {
+        @Override
         public List<PsiClass> compute() {
           if (!clazz.isValid()) return Collections.emptyList();
           return getDerivingClassCandidates(clazz, (GlobalSearchScope)scope);

@@ -39,15 +39,18 @@ public class JavaStylePropertiesInvocationIntention extends Intention {
     return element instanceof GrClosableBlock || super.isStopElement(element);
   }
 
+  @Override
   protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
     if (element instanceof GrMethodCall) {
       fixJavaStyleProperty(((GrMethodCall)element));
     }
   }
 
+  @Override
   @NotNull
   protected PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
+      @Override
       public boolean satisfiedBy(PsiElement element) {
         return element instanceof GrMethodCall && isPropertyAccessor((GrMethodCall)element) && !ErrorUtil.containsError(element);
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,10 +46,12 @@ public class GrMethodCallExpressionImpl extends GrMethodCallImpl implements GrMe
     return "Method call";
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitMethodCallExpression(this);
   }
 
+  @Override
   public GrExpression replaceClosureArgument(@NotNull GrClosableBlock closure, @NotNull GrExpression newExpr)
     throws IncorrectOperationException {
     if (newExpr instanceof GrClosableBlock) {
@@ -74,6 +76,7 @@ public class GrMethodCallExpressionImpl extends GrMethodCallImpl implements GrMe
     return result;
   }
 
+  @Override
   @NotNull
   public GrClosableBlock[] getClosureArguments() {
     final List<PsiElement> children = findChildrenByType(GroovyElementTypes.CLOSABLE_BLOCK);
