@@ -874,7 +874,7 @@ public class InferenceSession {
 
       try {
         for (ConstraintFormula additionalConstraint : subset) {
-          additionalConstraint.apply(substitutor);
+          additionalConstraint.apply(substitutor, true);
         }
 
         myConstraints.addAll(subset);

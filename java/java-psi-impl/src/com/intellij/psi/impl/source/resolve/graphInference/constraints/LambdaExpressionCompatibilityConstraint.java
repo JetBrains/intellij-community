@@ -74,7 +74,7 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
   }
 
   @Override
-  public void apply(PsiSubstitutor substitutor) {
+  public void apply(PsiSubstitutor substitutor, boolean cache) {
     myT = substitutor.substitute(myT);
   }
 
