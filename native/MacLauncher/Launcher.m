@@ -162,21 +162,16 @@ NSString *getJavaKey(){
 NSArray *allVms() {
     NSMutableArray *jvmBundlePaths = [NSMutableArray array];
     NSString *explicit = [[[NSProcessInfo processInfo] environment] objectForKey:@"IDEA_JDK"];
-    BOOL IDEA_JDK_verified = false;
     if (explicit != nil) {
       NSLog(@"value of IDEA_JDK: %@", explicit);
       NSBundle *jdkBundle = [NSBundle bundleWithPath:explicit];
       NSString *required = requiredJvmVersion();
       if (jdkBundle != nil && required != NULL) {
-        NSLog(@"there is requirements");
         if (satisfies(jvmVersion(jdkBundle), required)) {
             appendBundle(explicit, jvmBundlePaths);
             debugLog(@"User VM:");
             debugLog([jdkBundle bundlePath]);
-            IDEA_JDK_verified = true;
         }
-      } else {
-          NSLog(@"required == NULL");
       }
     }
     if (jvmBundlePaths == nil) {
