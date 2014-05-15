@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
@@ -180,23 +181,37 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     }
   }
 
-  private void updateSdkLanguageLevel(Project project, Sdk sdk) {
+  private void updateSdkLanguageLevel(final Project project, final Sdk sdk) {
     final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
     final VirtualFile[] files = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
-    for (VirtualFile file : files) {
-      if (file.isValid()) {
-        VirtualFile parent = file.getParent();
-        boolean suppressSizeLimit = false;
-        if (parent != null && parent.getName().equals(PythonSdkType.SKELETON_DIR_NAME)) {
-          suppressSizeLimit = true;
-        }
-        markRecursively(project, file, languageLevel, suppressSizeLimit);
+    final Application application = ApplicationManager.getApplication();
+    application.executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        application.runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            if (project != null && project.isDisposed()) {
+              return;
+            }
+            for (VirtualFile file : files) {
+              if (file.isValid()) {
+                VirtualFile parent = file.getParent();
+                boolean suppressSizeLimit = false;
+                if (parent != null && parent.getName().equals(PythonSdkType.SKELETON_DIR_NAME)) {
+                  suppressSizeLimit = true;
+                }
+                markRecursively(project, file, languageLevel, suppressSizeLimit);
+              }
+            }
+          }
+        });
       }
-    }
+    });
   }
 
   private void markRecursively(final Project project,
-                               @NotNull VirtualFile file,
+                               @NotNull final VirtualFile file,
                                final LanguageLevel languageLevel,
                                final boolean suppressSizeLimit) {
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
