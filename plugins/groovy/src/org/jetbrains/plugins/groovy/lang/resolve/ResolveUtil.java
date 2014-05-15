@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -128,7 +127,7 @@ public class ResolveUtil {
       return doTreeWalkUp(place, originalPlace, processor, nonCodeProcessor, state);
     }
     catch (StackOverflowError e) {
-      LogMessageEx.error(LOG, "StackOverflow", e, place.getContainingFile().getText());
+      LOG.error("StackOverflow", e, place.getContainingFile().getText());
       throw e;
     }
   }
