@@ -1,0 +1,18 @@
+enum A {CONST}
+-----
+Groovy script
+  Enumeration definition
+    Modifiers
+      <empty list>
+    PsiElement(enum)('enum')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('A')
+    Implements clause
+      <empty list>
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      Enumeration constants
+        Enumeration constant
+          PsiElement(identifier)('CONST')
+      PsiElement(})('}')

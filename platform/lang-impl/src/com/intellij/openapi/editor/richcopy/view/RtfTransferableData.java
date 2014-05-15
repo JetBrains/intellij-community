@@ -41,62 +41,40 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
 
   @Override
   protected void build(@NotNull final StringBuilder holder, final int maxLength) {
-    header(mySyntaxInfo, holder, new Runnable() {
-      @Override
-      public void run() {
-        rectangularBackground(mySyntaxInfo, holder, new Runnable() {
-          @Override
-          public void run() {
-            content(mySyntaxInfo, holder, myRawText, maxLength);
-          }
-        });
-      }
-    });
+    holder.append(HEADER_PREFIX);
+
+    holder.append("{\\colortbl;");
+    ColorRegistry colorRegistry = mySyntaxInfo.getColorRegistry();
+    for (int id : colorRegistry.getAllIds()) {
+      Color color = colorRegistry.dataById(id);
+      holder.append(String.format("\\red%d\\green%d\\blue%d;", color.getRed(), color.getGreen(), color.getBlue()));
+    }
+    holder.append("}\n");
+
+    holder.append("{\\fonttbl");
+    FontNameRegistry fontNameRegistry = mySyntaxInfo.getFontNameRegistry();
+    for (int id : fontNameRegistry.getAllIds()) {
+      String fontName = fontNameRegistry.dataById(id);
+      holder.append(String.format("{\\f%d %s;}", id, fontName));
+    }
+    holder.append("}\n");
+
+    holder.append("\n\\s0\\box")
+      .append("\\cbpat").append(mySyntaxInfo.getDefaultBackground())
+      .append("\\cb").append(mySyntaxInfo.getDefaultBackground());
+    addFontSize(holder, mySyntaxInfo.getFontSize());
+    holder.append('\n');
+
+    mySyntaxInfo.processOutputInfo(new MyVisitor(holder, myRawText, mySyntaxInfo, maxLength));
+
+    holder.append("\\par");
+    holder.append(HEADER_SUFFIX);
   }
 
   @NotNull
   @Override
   protected String getCharset() {
     return "US-ASCII";
-  }
-
-  private static void header(@NotNull SyntaxInfo syntaxInfo, @NotNull StringBuilder buffer, @NotNull Runnable next) {
-    buffer.append(HEADER_PREFIX);
-
-    // Color table.
-    buffer.append("{\\colortbl;");
-    ColorRegistry colorRegistry = syntaxInfo.getColorRegistry();
-    for (int id : colorRegistry.getAllIds()) {
-      Color color = colorRegistry.dataById(id);
-      buffer.append(String.format("\\red%d\\green%d\\blue%d;", color.getRed(), color.getGreen(), color.getBlue()));
-    }
-    buffer.append("}\n");
-    
-    // Font table.
-    buffer.append("{\\fonttbl");
-    FontNameRegistry fontNameRegistry = syntaxInfo.getFontNameRegistry();
-    for (int id : fontNameRegistry.getAllIds()) {
-      String fontName = fontNameRegistry.dataById(id);
-      buffer.append(String.format("{\\f%d %s;}", id, fontName));
-    }
-    buffer.append("}\n");
-
-    next.run();
-    buffer.append(HEADER_SUFFIX);
-  }
-
-  private static void rectangularBackground(@NotNull SyntaxInfo syntaxInfo, @NotNull StringBuilder buffer, @NotNull Runnable next) {
-    buffer.append("\n\\s0\\box")
-      .append("\\cbpat").append(syntaxInfo.getDefaultBackground())
-      .append("\\cb").append(syntaxInfo.getDefaultBackground());
-    addFontSize(buffer, syntaxInfo.getSingleFontSize());
-    buffer.append('\n');
-    next.run();
-    buffer.append("\\par");
-  }
-
-  private static void content(@NotNull SyntaxInfo syntaxInfo, @NotNull StringBuilder buffer, @NotNull String rawText, int maxLength) {
-    syntaxInfo.processOutputInfo(new MyVisitor(buffer, rawText, syntaxInfo, maxLength));
   }
 
   private static void addFontSize(StringBuilder buffer, int fontSize) {
@@ -121,7 +99,7 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
       myMaxLength = maxLength;
 
       myDefaultBackgroundId = syntaxInfo.getDefaultBackground();
-      myFontSize = syntaxInfo.getSingleFontSize();
+      myFontSize = syntaxInfo.getFontSize();
     }
 
     @Override

@@ -52,6 +52,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -591,11 +592,16 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   public void visitOpenBlock(GrOpenBlock block) {
     if (block.getParent() instanceof GrMethod) {
       final GrMethod method = (GrMethod)block.getParent();
-      if (method.hasModifierProperty(ABSTRACT) && !PsiImplUtil.isTrait(method.getContainingClass())) {
+      if (method.getModifierList().hasExplicitModifier(ABSTRACT) || isInterface(method.getContainingClass())) {
         final Annotation annotation = myHolder.createErrorAnnotation(block, GroovyBundle.message("abstract.methods.must.not.have.body"));
         registerMakeAbstractMethodNotAbstractFix(annotation, method, true);
       }
     }
+  }
+
+  @Contract("null -> false")
+  private static boolean isInterface(@Nullable PsiClass aClass) {
+    return aClass != null && aClass.isInterface() && !PsiImplUtil.isTrait(aClass);
   }
 
   @Override
@@ -628,13 +634,22 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       }
     }
 
-    if (!method.hasModifierProperty(ABSTRACT) && method.getBlock() == null && !method.hasModifierProperty(NATIVE)) {
+    if (method.getBlock() == null && !isAbstractOrNative(method)) {
       final Annotation annotation =
         myHolder.createErrorAnnotation(nameIdentifier, GroovyBundle.message("not.abstract.method.should.have.body"));
-      annotation.registerFix(new AddMethodBodyFix(method));
+      //annotation.registerFix(new AddMethodBodyFix(method)); //todo make intentions work
+      //registerFix(annotation, new GrModifierFix(method, ABSTRACT, false, true, GrModifierFix.MODIFIER_LIST_OWNER), method);
     }
 
     checkOverridingMethod(myHolder, method);
+  }
+
+  private static boolean isAbstractOrNative(@NotNull GrMethod method) {
+    if (method.hasModifierProperty(NATIVE)) return true;
+    if (method.getModifierList().hasExplicitModifier(ABSTRACT)) return true;
+
+    PsiClass aClass = method.getContainingClass();
+    return isInterface(aClass);
   }
 
   private static void checkGetterOfImmutable(AnnotationHolder holder, GrMethod method) {
@@ -1632,7 +1647,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     if (typeDefinition.isAnnotationType()) {
       myHolder.createErrorAnnotation(implementsClause, GroovyBundle.message("annotation.types.may.not.have.implements.clause"));
     }
-    else if (typeDefinition.isInterface() && !typeDefinition.isTrait()) {
+    else if (isInterface(typeDefinition)) {
       myHolder.createErrorAnnotation(implementsClause, GroovyBundle.message("no.implements.clause.allowed.for.interface"))
         .registerFix(new ChangeExtendsImplementsQuickFix(typeDefinition));
     }

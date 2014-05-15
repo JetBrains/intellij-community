@@ -35,6 +35,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
+import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
 import com.intellij.util.pico.IdeaPicoContainer;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -43,7 +44,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.picocontainer.*;
 import org.picocontainer.defaults.CachingComponentAdapter;
-import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;

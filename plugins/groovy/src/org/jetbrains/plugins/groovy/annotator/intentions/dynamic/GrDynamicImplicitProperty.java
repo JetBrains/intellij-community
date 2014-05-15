@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DClass
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrDynamicImplicitElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrImplicitVariableImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import javax.swing.*;
@@ -191,7 +192,7 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
   public PsiType getType() {
     PsiType type = super.getType();
     if (type instanceof PsiClassType && ((PsiClassType)type).resolve() == null) {
-      return PsiType.getJavaLangObject(myManager, getResolveScope());
+      return TypesUtil.getJavaLangObject(this);
     }
     return type;
   }

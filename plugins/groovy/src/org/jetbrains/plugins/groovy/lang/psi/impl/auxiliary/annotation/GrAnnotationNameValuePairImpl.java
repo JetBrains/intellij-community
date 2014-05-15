@@ -16,16 +16,15 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 
-import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -37,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrAnnotationCollector;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
@@ -120,14 +120,6 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
     return results.length == 1 ? results[0].getElement() : null;
   }
 
-  @Nullable
-  private GrAnnotation getAnnotation() {
-    PsiElement pParent = getParent().getParent();
-    if (pParent instanceof GrAnnotation) return (GrAnnotation)pParent;
-    PsiElement ppParent = pParent.getParent();
-    return ppParent instanceof GrAnnotation ? (GrAnnotation)ppParent : null;
-  }
-
   @NotNull
   public String getCanonicalText() {
     return getRangeInElement().substring(getText());
@@ -161,7 +153,7 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
 
   @NotNull
   public Object[] getVariants() {
-    return GroovyCompletionUtil.getAnnotationCompletionResults(getAnnotation(), PrefixMatcher.ALWAYS_TRUE).toArray();
+    return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 
   public boolean isSoft() {
@@ -171,7 +163,7 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
   @NotNull
   @Override
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-    GrAnnotation annotation = getAnnotation();
+    GrAnnotation annotation = PsiImplUtil.getAnnotation(this);
     if (annotation != null) {
       GrCodeReferenceElement ref = annotation.getClassReference();
       PsiElement resolved = ref.resolve();

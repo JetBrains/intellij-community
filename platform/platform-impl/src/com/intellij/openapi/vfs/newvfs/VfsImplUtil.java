@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
@@ -36,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -220,22 +220,27 @@ public class VfsImplUtil {
         Map<String, VirtualFile> rootsToRefresh = null;
 
         synchronized (ourLock) {
+          String[] rootPaths = ArrayUtil.toStringArray(ourHandlers.keySet());
+
           for (VFileEvent event : events) {
             if (!(event.getFileSystem() instanceof LocalFileSystem)) continue;
 
             String path = event.getPath();
-            for (Iterator<String> i = ourHandlers.keySet().iterator(); i.hasNext(); ) {
-              String rootPath = i.next();
+            for (int i = 0; i < rootPaths.length; i++) {
+              String rootPath = rootPaths[i];
+              if (rootPath == null) continue;
+
               ArchiveFileSystem vfs = ourHandlers.get(rootPath).first;
               String localPath = vfs.extractLocalPath(rootPath);
               if (FileUtil.startsWith(localPath, path)) {
-                i.remove();
+                ourHandlers.remove(rootPath);
                 NewVirtualFile root = ManagingFS.getInstance().findRoot(rootPath, vfs);
                 if (root != null) {
                   root.markDirtyRecursively();
                   if (rootsToRefresh == null) rootsToRefresh = ContainerUtil.newHashMap();
                   rootsToRefresh.put((FileUtil.toSystemDependentName(localPath)), root);
                 }
+                rootPaths[i] = null;
               }
             }
           }

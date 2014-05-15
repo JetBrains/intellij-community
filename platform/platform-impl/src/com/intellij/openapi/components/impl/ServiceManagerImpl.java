@@ -27,10 +27,10 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.pico.AssignableToComponentAdapter;
+import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.*;
-import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
 import java.util.Arrays;
 import java.util.List;
@@ -113,7 +113,7 @@ public class ServiceManagerImpl implements BaseComponent {
       myDelegate = null;
     }
 
-    public Object getComponentKey() {
+    public String getComponentKey() {
       return myDescriptor.getInterface();
     }
 

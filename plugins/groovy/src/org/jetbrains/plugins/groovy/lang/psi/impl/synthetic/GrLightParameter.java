@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierL
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 /**
  * @author ven
@@ -56,7 +57,7 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
 
   @NotNull
   private static PsiType getTypeNotNull(PsiType type, PsiElement scope) {
-    return type != null ? type : PsiType.getJavaLangObject(scope.getManager(), scope.getResolveScope());
+    return type != null ? type : TypesUtil.getJavaLangObject(scope);
   }
 
   @NotNull

@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @date: 06.04.2007
  */
 public class EnumConstant implements GroovyElementTypes {
-  public static boolean parseEnumConstant(PsiBuilder builder, GroovyParser parser) {
+  private static boolean parseEnumConstant(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker ecMarker = builder.mark();
     ParserUtils.getToken(builder, mNLS);
 
@@ -62,20 +62,23 @@ public class EnumConstant implements GroovyElementTypes {
 
   }
 
-  public static void parseConstantList(PsiBuilder builder, GroovyParser parser) {
+  public static boolean parseConstantList(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker enumConstantsMarker = builder.mark();
 
     if (!parseEnumConstant(builder, parser)) {
       enumConstantsMarker.drop();
-      return;
+      return false;
     }
 
-    while (ParserUtils.getToken(builder, mCOMMA)) {
+    while (ParserUtils.getToken(builder, mCOMMA) ||
+           ParserUtils.getToken(builder, mNLS, mCOMMA)) {
       parseEnumConstant(builder, parser);
     }
 
     ParserUtils.getToken(builder, mCOMMA);
 
     enumConstantsMarker.done(ENUM_CONSTANTS);
+
+    return true;
   }
 }

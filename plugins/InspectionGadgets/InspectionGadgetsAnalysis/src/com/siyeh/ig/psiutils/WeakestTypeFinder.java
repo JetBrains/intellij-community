@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2013 Bas Leijdekkers
+ * Copyright 2008-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -418,9 +418,9 @@ public class WeakestTypeFinder {
         if (aClass1 == null || aClass2 == null || aClass1.equals(aClass2)) {
           return 0;
         } else if (aClass1.isInheritor(aClass2, true)) {
-          return 1;
-        } else {
           return -1;
+        } else {
+          return 1;
         }
       }
     });
