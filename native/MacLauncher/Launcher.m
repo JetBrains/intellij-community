@@ -174,7 +174,7 @@ NSArray *allVms() {
         }
       }
     }
-    if (jvmBundlePaths == nil) {
+    if (! jvmBundlePaths.count > 0 ) {
         NSLog(@"no IDEA_JDK");
         NSBundle *bundle = [NSBundle mainBundle];
         NSString *appDir = [bundle.bundlePath stringByAppendingPathComponent:@"Contents"];
