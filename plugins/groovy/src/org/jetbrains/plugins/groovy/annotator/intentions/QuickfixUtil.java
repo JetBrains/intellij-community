@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,10 +35,10 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ParamInfo;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicElementSettings;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -142,10 +142,6 @@ public class QuickfixUtil {
     return result;
   }
 
-  public static boolean isCall(GrReferenceExpression referenceExpression) {
-    return referenceExpression.getParent() instanceof GrCall;
-  }
-
   public static String[] getArgumentsTypes(List<ParamInfo> listOfPairs) {
     final List<String> result = new ArrayList<String>();
 
@@ -192,7 +188,7 @@ public class QuickfixUtil {
     settings.setContainingClassName(className);
     settings.setName(referenceExpression.getReferenceName());
 
-    if (isCall(referenceExpression)) {
+    if (GroovyPsiUtil.isCall(referenceExpression)) {
       List<PsiType> unboxedTypes = new ArrayList<PsiType>();
       for (PsiType type : PsiUtil.getArgumentTypes(referenceExpression, false)) {
         unboxedTypes.add(TypesUtil.unboxPrimitiveTypeWrapperAndEraseGenerics(type));

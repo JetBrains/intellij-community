@@ -60,6 +60,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -75,7 +76,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil.isCall;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getContextClass;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getSmartReturnType;
 
@@ -662,7 +662,7 @@ public class ResolveUtil {
   }
 
   public static boolean isKeyOfMap(GrReferenceExpression ref) {
-    if (!(ref.getParent() instanceof GrIndexProperty) && isCall(ref)) return false;
+    if (!(ref.getParent() instanceof GrIndexProperty) && GroovyPsiUtil.isCall(ref)) return false;
     if (ref.multiResolve(false).length > 0) return false;
     return mayBeKeyOfMap(ref);
   }

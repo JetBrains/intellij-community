@@ -16,6 +16,8 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
 public class GroovyPsiUtil {
   public static boolean checkPsiElementsAreEqual(PsiElement l, PsiElement r) {
@@ -31,5 +33,9 @@ public class GroovyPsiUtil {
       if (!checkPsiElementsAreEqual(lChildren[i], rChildren[i])) return false;
     }
     return true;
+  }
+
+  public static boolean isCall(GrReferenceExpression referenceExpression) {
+    return referenceExpression.getParent() instanceof GrCall;
   }
 }

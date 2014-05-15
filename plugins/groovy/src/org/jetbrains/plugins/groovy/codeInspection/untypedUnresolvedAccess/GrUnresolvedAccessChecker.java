@@ -65,6 +65,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
@@ -499,7 +500,7 @@ public class GrUnresolvedAccessChecker {
       return;
     }
 
-    if (QuickfixUtil.isCall(referenceExpression)) {
+    if (GroovyPsiUtil.isCall(referenceExpression)) {
       PsiType[] argumentTypes = PsiUtil.getArgumentTypes(referenceExpression, false);
       if (argumentTypes != null) {
         QuickFixAction.registerQuickFixAction(info, referenceExpression.getTextRange(),
