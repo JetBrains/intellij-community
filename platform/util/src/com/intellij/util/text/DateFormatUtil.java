@@ -314,7 +314,7 @@ public class DateFormatUtil {
 
     boolean loaded = false;
     try {
-      if (SystemInfo.isWinVistaOrNewer) {
+      if (SystemInfo.isWin7OrNewer) {
         loaded = getWindowsFormats(formats);
       }
       else if (SystemInfo.isMac) {
