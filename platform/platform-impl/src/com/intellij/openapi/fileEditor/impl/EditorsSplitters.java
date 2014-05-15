@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapManagerListener;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
@@ -473,7 +474,11 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       VirtualFile file = getCurrentFile();
 
       File ioFile = file == null ? null : new File(file.getPresentableUrl());
-      String fileTitle = file == null ? null : FrameTitleBuilder.getInstance().getFileTitle(project, file);
+      String fileTitle = null;
+      if (file != null) {
+        fileTitle = DumbService.isDumb(project) ? file.getName()
+                                                : FrameTitleBuilder.getInstance().getFileTitle(project, file);
+      }
 
       frame.setFileTitle(fileTitle, ioFile);
     }
@@ -572,7 +577,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       for (final EditorWindow window : windows) {
         LOG.assertTrue(window.getSelectedEditor() != null);
         window.closeFile(file, false, moveFocus);
-        if (window.getTabCount() == 0 && nextFile != null) {
+        if (window.getTabCount() == 0 && nextFile != null && myManager.getProject().isOpen()) {
           EditorWithProviderComposite newComposite = myManager.newEditorComposite(nextFile);
           window.setEditor(newComposite, moveFocus); // newComposite can be null
         }

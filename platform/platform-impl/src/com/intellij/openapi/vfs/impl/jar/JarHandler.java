@@ -25,9 +25,10 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.JarFile;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsBundle;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -40,11 +41,12 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.zip.ZipFile;
 
 /**
  * @author max
  */
-public class JarHandler extends JarHandlerBase {
+public class JarHandler extends ZipHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.jar.JarHandler");
 
   private static final String JARS_FOLDER = "jars";
@@ -52,20 +54,18 @@ public class JarHandler extends JarHandlerBase {
 
   private final JarFileSystemImpl myFileSystem;
 
-  public JarHandler(@NotNull JarFileSystemImpl fileSystem, @NotNull String path) {
+  public JarHandler(@NotNull String path) {
     super(path);
-    myFileSystem = fileSystem;
+    myFileSystem = (JarFileSystemImpl)JarFileSystem.getInstance();
   }
 
-  public void refreshLocalFileForJar() {
-    NewVirtualFile localJarFile = (NewVirtualFile)LocalFileSystem.getInstance().refreshAndFindFileByPath(myBasePath);
-    if (localJarFile != null) {
-      localJarFile.markDirty();
-    }
-  }
-
+  @NotNull
   @Override
-  public File getMirrorFile(@NotNull File originalFile) {
+  protected File getFileToUse() {
+    return getMirrorFile(getFile());
+  }
+
+  private File getMirrorFile(@NotNull File originalFile) {
     if (!myFileSystem.isMakeCopyOfJar(originalFile)) return originalFile;
 
     final FileAttributes originalAttributes = FileSystemUtil.getAttributes(originalFile);
@@ -302,5 +302,18 @@ public class JarHandler extends JarHandlerBase {
 
     String message = VfsBundle.message("jar.copy.error.message", path, target.getPath(), e.getMessage());
     ERROR_COPY_NOTIFICATION.getValue().createNotification(message, NotificationType.ERROR).notify(null);
+  }
+
+  /** @deprecated to be removed in IDEA 15 */
+  @SuppressWarnings("deprecation")
+  public JarFile getJar() {
+    File original = getFile();
+    try {
+      return new JarHandlerBase.MyJarFile(new ZipFile(getMirrorFile(original)));
+    }
+    catch (IOException e) {
+      LOG.warn(e.getMessage() + ": " + original, e);
+      return null;
+    }
   }
 }

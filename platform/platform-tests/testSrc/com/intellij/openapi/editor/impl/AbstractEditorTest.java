@@ -36,6 +36,8 @@ import java.util.Scanner;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 
+import static org.junit.Assert.assertArrayEquals;
+
 /**
  * Base super class for tests that check various IJ editor functionality on managed document modification.
  * <p/>
@@ -240,5 +242,13 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
       assertEquals("Unexpected selection start for caret " + (i + 1), new VisualPosition(coordinates[i * 4], coordinates[i * 4 + 2]), caret.getSelectionStartPosition());
       assertEquals("Unexpected selection end for caret " + (i + 1), new VisualPosition(coordinates[i * 4], coordinates[i * 4 + 3]), caret.getSelectionEndPosition());
     }
+  }
+
+  public static void verifySoftWrapPositions(Integer... positions) {
+    List<Integer> softWrapPositions = new ArrayList<Integer>();
+    for (SoftWrap softWrap : myEditor.getSoftWrapModel().getSoftWrapsForRange(0, myEditor.getDocument().getTextLength())) {
+      softWrapPositions.add(softWrap.getStart());
+    }
+    assertArrayEquals(positions, softWrapPositions.toArray());
   }
 }

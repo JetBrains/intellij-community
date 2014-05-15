@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.intellij.ExtensionPoints;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.ArtifactAntGenerationContext;
@@ -54,7 +54,7 @@ public abstract class ChunkBuildExtension {
   }
 
   @Nullable
-  public Pair<String, String> getArtifactXmlNs(ArtifactType artifactType) {
+  public Couple<String> getArtifactXmlNs(ArtifactType artifactType) {
     return null;
   } 
 

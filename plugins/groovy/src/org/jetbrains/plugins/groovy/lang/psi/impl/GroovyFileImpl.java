@@ -20,9 +20,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.PackageEntry;
-import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -38,9 +35,7 @@ import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.editor.GroovyImportHelper;
-import org.jetbrains.plugins.groovy.editor.GroovyImportOptimizer;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -64,7 +59,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.PackageSkippingProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import javax.swing.*;
-import java.util.Comparator;
 import java.util.concurrent.ConcurrentMap;
 
 import static org.jetbrains.plugins.groovy.editor.GroovyImportHelper.processImplicitImports;
@@ -265,11 +259,6 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return CachedValuesManager.getCachedValue(this, BINDING_PROVIDER);
   }
 
-  @Nullable
-  private PsiElement getShellComment() {
-    final ASTNode node = getNode().findChildByType(GroovyTokenTypes.mSH_COMMENT);
-    return node == null ? null : node.getPsi();
-  }
 
   @Override
   public boolean isTopControlFlowOwner() {
@@ -349,61 +338,11 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return null;
   }
 
-  @Nullable
-  private PsiElement getAnchorToInsertImportAfter(GrImportStatement statement) {
-    final GroovyCodeStyleSettings settings = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().getCustomSettings(
-      GroovyCodeStyleSettings.class);
-    final PackageEntryTable layoutTable = settings.IMPORT_LAYOUT_TABLE;
-    final PackageEntry[] entries = layoutTable.getEntries();
-
-    GrImportStatement[] importStatements = getImportStatements();
-    if (importStatements.length == 0) {
-      final GrPackageDefinition definition = getPackageDefinition();
-      if (definition != null) {
-        return definition;
-      }
-
-      return getShellComment();
-    }
-
-    final Comparator<GrImportStatement> comparator = GroovyImportOptimizer.getComparator(settings);
-
-    final int idx = getPackageEntryIdx(entries, statement);
-
-    PsiElement anchor = null;
-
-    for (GrImportStatement importStatement : importStatements) {
-      final int i = getPackageEntryIdx(entries, importStatement);
-      if (i < idx) {
-        anchor = importStatement;
-      }
-      else if (i > idx) {
-        break;
-      }
-      else if (comparator.compare(statement, importStatement) > 0) {
-        anchor = importStatement;
-      }
-      else {
-        break;
-      }
-    }
-
-    if (anchor == null) anchor = getPackageDefinition();
-    if (anchor == null) anchor = getShellComment();
-    if (anchor == null && importStatements.length > 0) anchor = importStatements[0].getPrevSibling();
-    return anchor;
-  }
 
   @NotNull
   @Override
   public GrImportStatement addImport(@NotNull GrImportStatement statement) throws IncorrectOperationException {
-    PsiElement anchor = getAnchorToInsertImportAfter(statement);
-    final PsiElement result = addAfter(statement, anchor);
-
-    final GrImportStatement gImport = (GrImportStatement)result;
-    addLineFeedBefore(gImport);
-    addLineFeedAfter(gImport);
-    return gImport;
+    return GroovyCodeStyleManager.getInstance(getProject()).addImport(this, statement);
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public class GrFieldStub extends StubBase<GrField> implements NamedStub<GrField>
                          StringRef name,
                          final String[] annotations,
                          String[] namedParameters,
-                         final IStubElementType elemType,
+                         @NotNull IStubElementType elemType,
                          byte flags, @Nullable String typeText) {
     super(parent, elemType);
     myName = name;
@@ -54,6 +54,7 @@ public class GrFieldStub extends StubBase<GrField> implements NamedStub<GrField>
     myTypeText = typeText;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return StringRef.toString(myName);

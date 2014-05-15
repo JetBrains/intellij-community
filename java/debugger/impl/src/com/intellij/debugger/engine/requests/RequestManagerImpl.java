@@ -28,7 +28,6 @@ import com.intellij.debugger.requests.RequestManager;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
-import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.FilteredRequestor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,6 +37,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.containers.HashMap;
+import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.*;
 import com.sun.jdi.event.ClassPrepareEvent;
 import com.sun.jdi.request.*;
@@ -395,15 +395,24 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     // invoke later, so that requests are for sure created only _after_ 'processAttached()' methods of other listeners are executed
     process.getManagerThread().schedule(new DebuggerCommandImpl() {
       protected void action() throws Exception {
-        Project project = myDebugProcess.getProject();
-        final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
-        for (final Breakpoint breakpoint : breakpointManager.getBreakpoints()) {
-          try {
-            breakpoint.createRequest(myDebugProcess);
-          } catch (Exception e) {
-            LOG.error(e);
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            XDebugSession session = myDebugProcess.getXDebugSession();
+            if (session != null) {
+              session.initBreakpoints();
+            }
           }
-        }
+        });
+        //Project project = myDebugProcess.getProject();
+        //final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
+        //for (final Breakpoint breakpoint : breakpointManager.getBreakpoints()) {
+        //  try {
+        //    breakpoint.createRequest(myDebugProcess);
+        //  } catch (Exception e) {
+        //    LOG.error(e);
+        //  }
+        //}
 
         //AccessToken token = ReadAction.start();
         //try {

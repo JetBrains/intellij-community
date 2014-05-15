@@ -18,8 +18,11 @@ package com.intellij.xdebugger.impl;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.xdebugger.XExpression;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -28,33 +31,34 @@ import java.util.*;
  */
 public class XDebuggerHistoryManager {
   public static final int MAX_RECENT_EXPRESSIONS = 10;
-  private final Map<String, LinkedList<String>> myRecentExpressions = new HashMap<String, LinkedList<String>>();
+  private final Map<String, LinkedList<XExpression>> myRecentExpressions = new HashMap<String, LinkedList<XExpression>>();
 
   public static XDebuggerHistoryManager getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, XDebuggerHistoryManager.class);
   }
 
-  public void addRecentExpression(@NotNull @NonNls String id, @NotNull String expression) {
-    if (StringUtil.isEmptyOrSpaces(expression)) {
-      return;
+  public boolean addRecentExpression(@NotNull @NonNls String id, @Nullable XExpression expression) {
+    if (expression == null || StringUtil.isEmptyOrSpaces(expression.getExpression())) {
+      return false;
     }
 
-    LinkedList<String> list = myRecentExpressions.get(id);
+    LinkedList<XExpression> list = myRecentExpressions.get(id);
     if (list == null) {
-      list = new LinkedList<String>();
+      list = new LinkedList<XExpression>();
       myRecentExpressions.put(id, list);
     }
     if (list.size() == MAX_RECENT_EXPRESSIONS) {
       list.removeLast();
     }
 
-    String trimmedExpression = expression.trim();
+    XExpression trimmedExpression = new XExpressionImpl(expression.getExpression().trim(), expression.getLanguage(), expression.getCustomInfo());
     list.remove(trimmedExpression);
     list.addFirst(trimmedExpression);
+    return true;
   }
 
-  public List<String> getRecentExpressions(@NonNls String id) {
-    LinkedList<String> list = myRecentExpressions.get(id);
-    return list != null ? list : Collections.<String>emptyList();
+  public List<XExpression> getRecentExpressions(@NonNls String id) {
+    LinkedList<XExpression> list = myRecentExpressions.get(id);
+    return list != null ? list : Collections.<XExpression>emptyList();
   }
 }

@@ -58,7 +58,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     myDisplayDescriptorSearcher.clear();
   }
 
-  private <T extends NodeDescriptor> T getDescriptor(NodeDescriptor parent, DescriptorData<T> key) {
+  public <T extends NodeDescriptor> T getDescriptor(NodeDescriptor parent, DescriptorData<T> key) {
     final T descriptor = key.createDescriptor(myProject);
 
     final T oldDescriptor = findDescriptor(parent, descriptor, key);
@@ -199,23 +199,23 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
   }
   
   private static class DescriptorTreeSearcher {
-    private final MarkedDescriptorTree myDescriportTree;
+    private final MarkedDescriptorTree myDescriptorTree;
 
     private final HashMap<NodeDescriptor, NodeDescriptor> mySearchedDescriptors = new HashMap<NodeDescriptor, NodeDescriptor>();
 
-    public DescriptorTreeSearcher(MarkedDescriptorTree descriportTree) {
-      myDescriportTree = descriportTree;
+    public DescriptorTreeSearcher(MarkedDescriptorTree descriptorTree) {
+      myDescriptorTree = descriptorTree;
     }
 
     @Nullable
     public <T extends NodeDescriptor> T search(NodeDescriptor parent, T descriptor, DescriptorKey<T> key) {
       final T result;
       if(parent == null) {
-        result = myDescriportTree.getChild(null, key);
+        result = myDescriptorTree.getChild(null, key);
       }
       else {
         final NodeDescriptor parentDescriptor = getSearched(parent);
-        result = parentDescriptor != null ? myDescriportTree.getChild(parentDescriptor, key) : null;
+        result = parentDescriptor != null ? myDescriptorTree.getChild(parentDescriptor, key) : null;
       }
       if(result != null) {
         mySearchedDescriptors.put(descriptor, result);
@@ -229,13 +229,13 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
 
     public void clear() {
       mySearchedDescriptors.clear();
-      myDescriportTree.clear();
+      myDescriptorTree.clear();
     }
   }
 
   private class DisplayDescriptorTreeSearcher extends DescriptorTreeSearcher {
-    public DisplayDescriptorTreeSearcher(MarkedDescriptorTree descriportTree) {
-      super(descriportTree);
+    public DisplayDescriptorTreeSearcher(MarkedDescriptorTree descriptorTree) {
+      super(descriptorTree);
     }
 
     @Override

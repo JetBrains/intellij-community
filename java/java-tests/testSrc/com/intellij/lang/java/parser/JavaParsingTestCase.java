@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.ParsingTestCase;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -98,6 +99,7 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
     final LightVirtualFile virtualFile = new LightVirtualFile(name + '.' + myFileExt, StdFileTypes.JAVA, text, -1);
     final FileViewProvider viewProvider = new SingleRootFileViewProvider(PsiManager.getInstance(getProject()), virtualFile, true);
     return new PsiJavaFileImpl(viewProvider) {
+      @NotNull
       @Override
       protected FileElement createFileElement(final CharSequence text) {
         return new FileElement(TEST_FILE_ELEMENT_TYPE, text);

@@ -48,6 +48,10 @@ public class InspectionDescriptionNotFoundInspectionTest extends JavaCodeInsight
     myFixture.testHighlighting("MyInspection.java");
   }
 
+  public void testHighlightingForDescriptionCustomShortName() {
+    myFixture.testHighlighting("MyInspectionCustomShortName.java");
+  }
+
   public void testOverridePathMethod() {
     myFixture.testHighlighting("MyOverridePathMethodInspection.java");
   }

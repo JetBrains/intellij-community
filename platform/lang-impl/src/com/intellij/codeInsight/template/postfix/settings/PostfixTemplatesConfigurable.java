@@ -29,8 +29,11 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.GuiUtils;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,25 +41,33 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 
 public class PostfixTemplatesConfigurable implements SearchableConfigurable, EditorOptionsProvider, Configurable.NoScroll {
+
+  public static final Comparator<PostfixTemplate> TEMPLATE_COMPARATOR = new Comparator<PostfixTemplate>() {
+    @Override
+    public int compare(PostfixTemplate o1, PostfixTemplate o2) {
+      return o1.getKey().compareTo(o2.getKey());
+    }
+  };
+
   @Nullable
-  private PostfixTemplatesListPanel myTemplatesListPanel;
+  private PostfixTemplatesCheckboxTree myCheckboxTree;
+
   @NotNull
   private final PostfixTemplatesSettings myTemplatesSettings;
   @Nullable
   private PostfixDescriptionPanel myInnerPostfixDescriptionPanel;
 
+  private MultiMap<String, PostfixTemplate> templateMultiMap;
+
   private JComponent myPanel;
   private JBCheckBox myCompletionEnabledCheckbox;
   private JBCheckBox myPostfixTemplatesEnabled;
-  private JPanel myTemplatesListPanelContainer;
+  private JPanel myTemplatesTreeContainer;
   private ComboBox myShortcutComboBox;
   private JPanel myDescriptionPanel;
 
@@ -75,20 +86,16 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
 
     LanguageExtensionPoint[] extensions = new ExtensionPointName<LanguageExtensionPoint>(LanguagePostfixTemplate.EP_NAME).getExtensions();
 
-    List<PostfixTemplate> templates = ContainerUtil.newArrayList();
+
+    templateMultiMap = MultiMap.create();
     for (LanguageExtensionPoint extension : extensions) {
-      templates.addAll(((PostfixTemplateProvider)extension.getInstance()).getTemplates());
+      List<PostfixTemplate> postfixTemplates =
+        ContainerUtil.newArrayList(((PostfixTemplateProvider)extension.getInstance()).getTemplates());
+      ContainerUtil.sort(postfixTemplates, TEMPLATE_COMPARATOR);
+
+      templateMultiMap.putValues(extension.getKey(), postfixTemplates);
     }
 
-    ContainerUtil.sort(templates, new Comparator<PostfixTemplate>() {
-      @Override
-      public int compare(PostfixTemplate o1, PostfixTemplate o2) {
-        return o1.getKey().compareTo(o2.getKey());
-      }
-    });
-    myTemplatesListPanel = new PostfixTemplatesListPanel(templates);
-    myTemplatesListPanelContainer.setLayout(new BorderLayout());
-    myTemplatesListPanelContainer.add(myTemplatesListPanel.getComponent());
     myPostfixTemplatesEnabled.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {
@@ -100,20 +107,25 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
     myShortcutComboBox.addItem(ENTER);
 
     myDescriptionPanel.setLayout(new BorderLayout());
+  }
 
-
-    myTemplatesListPanel.addSelectionListener(new ListSelectionListener() {
+  private void createTree() {
+    myCheckboxTree = new PostfixTemplatesCheckboxTree() {
       @Override
-      public void valueChanged(ListSelectionEvent e) {
-
+      protected void selectionChanged() {
         resetDescriptionPanel();
       }
-    });
+    };
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(ScrollPaneFactory.createScrollPane(myCheckboxTree));
+
+    myTemplatesTreeContainer.setLayout(new BorderLayout());
+    myTemplatesTreeContainer.add(panel);
   }
 
   private void resetDescriptionPanel() {
-    if (null != myTemplatesListPanel && null != myInnerPostfixDescriptionPanel) {
-      myInnerPostfixDescriptionPanel.reset(PostfixTemplateMetaData.createMetaData(myTemplatesListPanel.getTemplate()));
+    if (null != myCheckboxTree && null != myInnerPostfixDescriptionPanel) {
+      myInnerPostfixDescriptionPanel.reset(PostfixTemplateMetaData.createMetaData(myCheckboxTree.getTemplate()));
     }
   }
 
@@ -136,16 +148,21 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
   }
 
   @Nullable
-  public PostfixTemplatesListPanel getTemplatesListPanel() {
-    return myTemplatesListPanel;
+  public PostfixTemplatesCheckboxTree getTemplatesTree() {
+    return myCheckboxTree;
   }
 
   @NotNull
   @Override
   public JComponent createComponent() {
+    GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel);
     if (null == myInnerPostfixDescriptionPanel) {
       myInnerPostfixDescriptionPanel = new PostfixDescriptionPanel();
       myDescriptionPanel.add(myInnerPostfixDescriptionPanel.getComponent());
+    }
+    if (null == myCheckboxTree) {
+      createTree();
+      myCheckboxTree.initTree(templateMultiMap);
     }
 
     return myPanel;
@@ -153,15 +170,8 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
 
   @Override
   public void apply() throws ConfigurationException {
-    if (myTemplatesListPanel != null) {
-      Map<String, Boolean> newTemplatesState = ContainerUtil.newHashMap();
-      for (Map.Entry<String, Boolean> entry : myTemplatesListPanel.getState().entrySet()) {
-        Boolean value = entry.getValue();
-        if (value != null && !value) {
-          newTemplatesState.put(entry.getKey(), entry.getValue());
-        }
-      }
-      myTemplatesSettings.setTemplatesState(newTemplatesState);
+    if (myCheckboxTree != null) {
+      myTemplatesSettings.setLangDisabledTemplates(myCheckboxTree.getState());
       myTemplatesSettings.setPostfixTemplatesEnabled(myPostfixTemplatesEnabled.isSelected());
       myTemplatesSettings.setTemplatesCompletionEnabled(myCompletionEnabledCheckbox.isSelected());
       myTemplatesSettings.setShortcut(stringToShortcut((String)myShortcutComboBox.getSelectedItem()));
@@ -170,8 +180,8 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
 
   @Override
   public void reset() {
-    if (myTemplatesListPanel != null) {
-      myTemplatesListPanel.setState(myTemplatesSettings.getTemplatesState());
+    if (myCheckboxTree != null) {
+      myCheckboxTree.setState(myTemplatesSettings.getLangDisabledTemplates());
       myPostfixTemplatesEnabled.setSelected(myTemplatesSettings.isPostfixTemplatesEnabled());
       myCompletionEnabledCheckbox.setSelected(myTemplatesSettings.isTemplatesCompletionEnabled());
       myShortcutComboBox.setSelectedItem(shortcutToString((char)myTemplatesSettings.getShortcut()));
@@ -182,13 +192,13 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
 
   @Override
   public boolean isModified() {
-    if (myTemplatesListPanel == null) {
+    if (myCheckboxTree == null) {
       return false;
     }
     return myPostfixTemplatesEnabled.isSelected() != myTemplatesSettings.isPostfixTemplatesEnabled() ||
            myCompletionEnabledCheckbox.isSelected() != myTemplatesSettings.isTemplatesCompletionEnabled() ||
-           stringToShortcut((String)myShortcutComboBox.getSelectedItem()) != myTemplatesSettings.getShortcut() ||
-           !myTemplatesListPanel.getState().equals(myTemplatesSettings.getTemplatesState());
+           stringToShortcut((String)myShortcutComboBox.getSelectedItem()) != myTemplatesSettings.getShortcut()
+           || !myCheckboxTree.getState().equals(myTemplatesSettings.getLangDisabledTemplates());
   }
 
   @Override
@@ -196,7 +206,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
     if (myInnerPostfixDescriptionPanel != null) {
       Disposer.dispose(myInnerPostfixDescriptionPanel);
     }
-    myTemplatesListPanel = null;
+    myCheckboxTree = null;
   }
 
   @Nullable
@@ -210,8 +220,8 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
     myCompletionEnabledCheckbox.setVisible(!LiveTemplateCompletionContributor.shouldShowAllTemplates());
     myCompletionEnabledCheckbox.setEnabled(pluginEnabled);
     myShortcutComboBox.setEnabled(pluginEnabled);
-    if (myTemplatesListPanel != null) {
-      myTemplatesListPanel.setEnabled(pluginEnabled);
+    if (myCheckboxTree != null) {
+      myCheckboxTree.setEnabled(pluginEnabled);
     }
   }
 

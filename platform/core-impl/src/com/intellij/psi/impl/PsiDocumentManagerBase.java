@@ -679,7 +679,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       return;
     }
 
-    final PsiFileImpl psiFile = (PsiFileImpl)getPsiFile(document);
+    final PsiFile psiFile = getPsiFile(document);
     if (psiFile == null) {
       return;
     }
@@ -692,7 +692,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
           PsiManagerImpl manager = (PsiManagerImpl)psiFile.getManager();
           BlockSupportImpl.sendBeforeChildrenChangeEvent(manager, psiFile, true);
           BlockSupportImpl.sendBeforeChildrenChangeEvent(manager, psiFile, false);
-          psiFile.onContentReload();
+          if (psiFile instanceof PsiFileImpl) {
+            ((PsiFileImpl)psiFile).onContentReload();
+          }
           BlockSupportImpl.sendAfterChildrenChangedEvent(manager, psiFile, oldLength, false);
           BlockSupportImpl.sendAfterChildrenChangedEvent(manager, psiFile, oldLength, true);
         }

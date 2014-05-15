@@ -8,6 +8,7 @@ import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.frame.XValueGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 
@@ -31,6 +32,12 @@ public class ScopeVariablesGroup extends XValueGroup {
     }
 
     this.callFrame = scope.getType() == Scope.Type.LOCAL ? callFrame : null;
+  }
+
+  @TestOnly
+  @NotNull
+  public Scope getScope() {
+    return scope;
   }
 
   public static void createAndAddScopeList(@NotNull XCompositeNode node, @NotNull List<Scope> scopes, @NotNull VariableContext context, @Nullable CallFrame callFrame) {

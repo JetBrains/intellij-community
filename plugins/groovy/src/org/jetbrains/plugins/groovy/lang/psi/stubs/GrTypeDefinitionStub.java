@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.stubs.NamedStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.StringRef;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
@@ -45,7 +46,7 @@ public class GrTypeDefinitionStub extends StubBase<GrTypeDefinition> implements 
   public GrTypeDefinitionStub(StubElement parent,
                                   final String name,
                                   final String[] supers,
-                                  final IStubElementType elementType,
+                                  @NotNull IStubElementType elementType,
                                   final String qualifiedName,
                                   String[] annotations,
                                   byte flags) {
@@ -61,6 +62,7 @@ public class GrTypeDefinitionStub extends StubBase<GrTypeDefinition> implements 
     return mySuperClasses;
   }
 
+  @Override
   public String getName() {
     return StringRef.toString(myName);
   }

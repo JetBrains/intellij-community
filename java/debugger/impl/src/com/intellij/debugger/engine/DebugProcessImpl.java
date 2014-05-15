@@ -73,6 +73,8 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.sun.jdi.*;
 import com.sun.jdi.connect.*;
 import com.sun.jdi.request.EventRequest;
@@ -171,6 +173,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
               final DebuggerSession session = mySession;
               if (session != null && session.isAttached()) {
                 session.refresh(true);
+                XDebugSession xDebugSession = getXDebugSession();
+                if (xDebugSession != null) {
+                  xDebugSession.rebuildViews();
+                }
               }
             }
           });
@@ -1531,7 +1537,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     public ResumeCommand(SuspendContextImpl suspendContext) {
       super(suspendContext);
-      final ThreadReferenceProxyImpl contextThread = mySession.getContextManager().getContext().getThreadProxy();
+      final ThreadReferenceProxyImpl contextThread = getDebuggerContext().getThreadProxy();
       myContextThread = contextThread != null ? contextThread : (suspendContext != null? suspendContext.getThread() : null);
     }
 
@@ -1969,9 +1975,23 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
+  public DebuggerContextImpl getDebuggerContext() {
+    return mySession.getContextManager().getContext();
+  }
+
+  @Nullable
+  public XDebugSession getXDebugSession() {
+    return XDebuggerManager.getInstance(myProject).getDebugSession(getExecutionResult().getExecutionConsole());
+  }
+
+  @Nullable
+  public JavaDebugProcess getXdebugProcess() {
+    XDebugSession session = getXDebugSession();
+    return session != null ? (JavaDebugProcess)session.getDebugProcess() : null;
+  }
 
   public boolean areBreakpointsMuted() {
-    return myBreakpointsMuted.get();
+    XDebugSession session = getXDebugSession();
+    return session != null && session.areBreakpointsMuted();
   }
 }
-

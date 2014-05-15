@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import gnu.trove.TObjectIntIterator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 
@@ -28,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifier
 public class GrModifierListStub extends StubBase<GrModifierList> implements StubElement<GrModifierList> {
   private final int myFlags;
 
-  public GrModifierListStub(StubElement parent, IStubElementType elementType, int flags) {
+  public GrModifierListStub(StubElement parent, @NotNull IStubElementType elementType, int flags) {
     super(parent, elementType);
     this.myFlags = flags;
   }

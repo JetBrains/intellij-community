@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public final class Variables {
-  public static final String SPECIAL_PROPERTY_PREFIX = "__";
+  static final String SPECIAL_PROPERTY_PREFIX = "__";
 
   private static final Pattern UNNAMED_FUNCTION_PATTERN = Pattern.compile("^function[\\t ]*\\(");
 
@@ -40,9 +40,10 @@ public final class Variables {
     AsyncResult<?> result = ObsolescentAsyncResults.consume(scope.getVariables(), node, new PairConsumer<List<Variable>, XCompositeNode>() {
       @Override
       public void consume(List<Variable> variables, XCompositeNode node) {
-        List<Variable> properties = new ArrayList<Variable>(variables.size());
-        List<Variable> functions = new SmartList<Variable>();
         MemberFilter memberFilter = context.createMemberFilter();
+        List<Variable> additionalVariables = memberFilter.getAdditionalVariables();
+        List<Variable> properties = new ArrayList<Variable>(variables.size() + additionalVariables.size());
+        List<Variable> functions = new SmartList<Variable>();
         for (Variable variable : variables) {
           if (memberFilter.isMemberVisible(variable, false)) {
             Value value = variable.getValue();
@@ -60,6 +61,10 @@ public final class Variables {
 
         sort(properties);
         sort(functions);
+
+        for (Variable variable : additionalVariables) {
+          properties.add(variable);
+        }
 
         if (!properties.isEmpty()) {
           node.addChildren(createVariablesList(properties, context), functions.isEmpty() && isLast);
@@ -113,21 +118,27 @@ public final class Variables {
       return Collections.emptyList();
     }
 
-    List<Variable> result = new ArrayList<Variable>(variables.size());
+    MemberFilter memberFilter = context.createMemberFilter();
+    List<Variable> additionalVariables = memberFilter.getAdditionalVariables();
+    List<Variable> result = new ArrayList<Variable>(variables.size() + additionalVariables.size());
     for (Variable variable : variables) {
-      if (context.createMemberFilter().isMemberVisible(variable, filterFunctions)) {
+      if (memberFilter.isMemberVisible(variable, filterFunctions)) {
         result.add(variable);
       }
     }
     sort(result);
+
+    for (Variable variable : additionalVariables) {
+      result.add(variable);
+    }
     return result;
   }
 
-  private static void sort(List<Variable> result) {
+  private static void sort(@NotNull List<Variable> result) {
     ContainerUtil.sort(result, NATURAL_NAME_COMPARATOR);
   }
 
-  // prefixed '_' must last, fixed case sensitive natural compare
+  // prefixed '_' must be last, fixed case sensitive natural compare
   private static int naturalCompare(@Nullable String string1, @Nullable String string2) {
     //noinspection StringEquality
     if (string1 == string2) {

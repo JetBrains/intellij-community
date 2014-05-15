@@ -24,6 +24,8 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.HashSet;
+import com.intellij.xdebugger.frame.XExecutionStack;
+import com.intellij.xdebugger.frame.XSuspendContext;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.EventSet;
@@ -31,13 +33,15 @@ import com.sun.jdi.request.EventRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * @author lex
  */
-public abstract class SuspendContextImpl implements SuspendContext {
+public abstract class SuspendContextImpl extends XSuspendContext implements SuspendContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.SuspendContextImpl");
 
   private final DebugProcessImpl myDebugProcess;
@@ -56,6 +60,8 @@ public abstract class SuspendContextImpl implements SuspendContext {
   public volatile boolean myInProgress;
   private final HashSet<ObjectReference> myKeptReferences = new HashSet<ObjectReference>();
   private EvaluationContextImpl myEvaluationContext = null;
+
+  private JavaExecutionStack[] myExecutionStacks;
 
   SuspendContextImpl(@NotNull DebugProcessImpl debugProcess, int suspendPolicy, int eventVotes, EventSet set) {
     myDebugProcess = debugProcess;
@@ -220,5 +226,31 @@ public abstract class SuspendContextImpl implements SuspendContext {
 
   public final SuspendContextCommandImpl pollPostponedCommand() {
     return myPostponedCommands.poll();
+  }
+
+  @Nullable
+  @Override
+  public XExecutionStack getActiveExecutionStack() {
+    for (JavaExecutionStack stack : myExecutionStacks) {
+      if (stack.getThreadProxy().equals(myThread)) {
+        return stack;
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public XExecutionStack[] getExecutionStacks() {
+    return myExecutionStacks;
+  }
+
+  public void initExecutionStacks() {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    Collection<JavaExecutionStack> res = new ArrayList<JavaExecutionStack>();
+    Collection<ThreadReferenceProxyImpl> threads = getDebugProcess().getVirtualMachineProxy().allThreads();
+    for (ThreadReferenceProxyImpl thread : threads) {
+      res.add(new JavaExecutionStack(thread, myDebugProcess, thread == myThread));
+    }
+    myExecutionStacks = res.toArray(new JavaExecutionStack[res.size()]);
   }
 }

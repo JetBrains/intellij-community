@@ -20,15 +20,13 @@ import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntBuildTarget;
-import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import icons.AntIcons;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -115,32 +113,8 @@ public class AntBeforeRunTaskProvider extends BeforeRunTaskProvider<AntBeforeRun
   }
 
   @Nullable
-  private AntBuildTarget findTargetToExecute(AntBeforeRunTask task) {
-    final String fileUrl = task.getAntFileUrl();
-    final String targetName = task.getTargetName();
-    if (fileUrl == null || targetName == null) {
-      return null;
-    }
-    final VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(fileUrl);
-    if (vFile == null) {
-      return null;
-    }
-    final AntConfigurationImpl antConfiguration = (AntConfigurationImpl)AntConfiguration.getInstance(myProject);
-    for (AntBuildFile buildFile : antConfiguration.getBuildFiles()) {
-      if (vFile.equals(buildFile.getVirtualFile())) {
-        final AntBuildTarget target = buildFile.getModel().findTarget(targetName);
-        if (target != null) {
-          return target;
-        }
-        for (AntBuildTarget metaTarget : antConfiguration.getMetaTargets(buildFile)) {
-          if (targetName.equals(metaTarget.getName())) {
-            return metaTarget;
-          }
-        }
-        return null;
-      }
-    }
-    return null;
+  private AntBuildTarget findTargetToExecute(@NotNull AntBeforeRunTask task) {
+    return GlobalAntConfiguration.getInstance().findTarget(myProject, task.getAntFileUrl(), task.getTargetName());
   }
 
   public void handleTargetRename(String oldName, String newName) {

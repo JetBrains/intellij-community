@@ -52,6 +52,6 @@ public class HgLogParseTest {
                  new Pair<String, String>("Vasya Pavlovich Pupkin", "asdasd@localhost"));
     assertEquals(HgUtil.parseUserNameAndEmail("Vasya Pavlovich Pupkin"), new Pair<String, String>("Vasya Pavlovich Pupkin", ""));
     assertEquals(HgUtil.parseUserNameAndEmail("vasya.pupkin@localhost.com"),
-                 new Pair<String, String>("vasya pupkin", "vasya.pupkin@localhost.com"));
+                 new Pair<String, String>("vasya.pupkin", "vasya.pupkin@localhost.com"));
   }
 }

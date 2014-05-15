@@ -194,7 +194,8 @@ public abstract class GrLiteralClassType extends PsiClassType {
     for (final PsiType other : psiTypes) {
       result = TypesUtil.getLeastUpperBoundNullable(result, other, manager);
     }
-    return result == null ? PsiType.getJavaLangObject(manager, getResolveScope()) : result;
+    return result == null ? LazyFqnClassType
+      .getLazyType(CommonClassNames.JAVA_LANG_OBJECT, getLanguageLevel(), getResolveScope(), myFacade) : result;
   }
 
   protected PsiManager getPsiManager() {

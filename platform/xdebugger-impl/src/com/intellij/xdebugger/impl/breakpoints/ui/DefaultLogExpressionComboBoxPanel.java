@@ -47,14 +47,12 @@ public class DefaultLogExpressionComboBoxPanel<B extends XBreakpoint<?>> extends
 
   @Override
   public void saveTo(@NotNull B breakpoint) {
-    String logExpression = myLogExpressionComboBox.getComponent().isEnabled() ? myLogExpressionComboBox.getText() : null;
-    breakpoint.setLogExpression(logExpression);
+    breakpoint.setLogExpressionObject(myLogExpressionComboBox.getComponent().isEnabled() ? myLogExpressionComboBox.getExpression() : null);
     myLogExpressionComboBox.saveTextInHistory();
   }
 
   @Override
   public void loadFrom(@NotNull B breakpoint) {
-    String logExpression = breakpoint.getLogExpression();
-    myLogExpressionComboBox.setText(logExpression != null ? logExpression : "");
+    myLogExpressionComboBox.setExpression(breakpoint.getLogExpressionObject());
   }
 }

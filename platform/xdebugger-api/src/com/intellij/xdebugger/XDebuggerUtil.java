@@ -16,6 +16,7 @@
 
 package com.intellij.xdebugger;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
@@ -26,6 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.Processor;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
+import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.frame.XValueContainer;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jetbrains.annotations.NotNull;
@@ -117,4 +119,7 @@ public abstract class XDebuggerUtil {
 
   @Nullable
   public abstract PsiElement findContextElement(@NotNull VirtualFile virtualFile, int offset, @NotNull Project project, boolean checkXml);
+
+  @NotNull
+  public abstract XExpression createExpression(@NotNull String text, Language language, String custom, EvaluationMode mode);
 }

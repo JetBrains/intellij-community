@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,8 @@ public class GrMethodStub extends StubBase<GrMethod> implements NamedStub<GrMeth
   public GrMethodStub(StubElement parent,
                       StringRef name,
                       final String[] annotations,
-                      final @NotNull String[] namedParameters,
-                      final GrMethodElementType elementType,
+                      @NotNull final String[] namedParameters,
+                      @NotNull GrMethodElementType elementType,
                       @Nullable String typeText,
                       byte flags) {
     super(parent, elementType);
@@ -52,6 +52,7 @@ public class GrMethodStub extends StubBase<GrMethod> implements NamedStub<GrMeth
     myFlags = flags;
   }
 
+  @Override
   @NotNull public String getName() {
     return StringRef.toString(myName);
   }

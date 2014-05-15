@@ -133,7 +133,7 @@ public class FilteredRequestorImpl implements JDOMExternalizable, FilteredReques
 
     breakpoint.setCondition(CONDITION_ENABLED ? myCondition : null);
     if (myCondition != null && !myCondition.isEmpty()) {
-      XDebuggerHistoryManager.getInstance(myProject).addRecentExpression(DefaultConditionComboBoxPanel.HISTORY_KEY, myCondition.getText());
+      XDebuggerHistoryManager.getInstance(myProject).addRecentExpression(DefaultConditionComboBoxPanel.HISTORY_KEY, TextWithImportsImpl.toXExpression(myCondition));
     }
 
     breakpoint.setClassFiltersEnabled(CLASS_FILTERS_ENABLED);

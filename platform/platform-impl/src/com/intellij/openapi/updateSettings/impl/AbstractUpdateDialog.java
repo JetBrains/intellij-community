@@ -38,8 +38,14 @@ import java.awt.*;
 public abstract class AbstractUpdateDialog extends DialogWrapper {
   private final boolean myEnableLink;
 
-  protected AbstractUpdateDialog(boolean enableLink) {
+  public AbstractUpdateDialog(boolean enableLink) {
     super(true);
+    myEnableLink = enableLink;
+    setTitle(IdeBundle.message("updates.info.dialog.title"));
+  }
+
+  protected AbstractUpdateDialog(Component parent, boolean enableLink) {
+    super(parent, true);
     myEnableLink = enableLink;
     setTitle(IdeBundle.message("updates.info.dialog.title"));
   }

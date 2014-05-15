@@ -97,7 +97,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   }
 
   @Override
-  public void initializeComponent(Object component, boolean service) {
+  public void initializeComponent(@NotNull Object component, boolean service) {
     getStateStore().initComponent(component, service);
   }
 
@@ -402,6 +402,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     }
   }
 
+  @NotNull
   @Override
   protected MutablePicoContainer createPicoContainer() {
     return Extensions.getArea(this).getPicoContainer();

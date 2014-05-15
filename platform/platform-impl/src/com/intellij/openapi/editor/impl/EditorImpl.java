@@ -6633,7 +6633,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public int calcColumnNumber(@NotNull CharSequence text, int start, int offset, int tabSize) {
-    IterationState state = new IterationState(this, start, start + offset, false);
+    IterationState state = new IterationState(this, start, offset, false);
     int fontType = state.getMergedAttributes().getFontType();
     int column = 0;
     int x = 0;
@@ -6646,8 +6646,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       SoftWrap softWrap = getSoftWrapModel().getSoftWrap(i);
       if (softWrap != null) {
-        column++; // For 'after soft wrap' drawing.
-        x = getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP);
+        x = softWrap.getIndentInPixels();
       }
 
       char c = text.charAt(i);

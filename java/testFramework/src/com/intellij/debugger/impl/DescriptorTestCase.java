@@ -24,6 +24,7 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
+import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.LocalVariableDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
@@ -176,7 +177,7 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
       public void run() {
         boolean anyCollapsed = false;
         for(int i = 0; i < tree.getRowCount(); i++) {
-          final DebuggerTreeNode treeNode = (DebuggerTreeNode)tree.getPathForRow(i).getLastPathComponent();
+          final DebuggerTreeNodeImpl treeNode = (DebuggerTreeNodeImpl)tree.getPathForRow(i).getLastPathComponent();
           if(tree.isCollapsed(i) && !treeNode.isLeaf()) {
             final NodeDescriptor nodeDescriptor = treeNode.getDescriptor();
             boolean shouldExpand = filter == null || filter.shouldExpand(treeNode);

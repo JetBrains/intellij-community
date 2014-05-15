@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,36 @@
  */
 package com.intellij.openapi.vfs.newvfs;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.ZipFileCache;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VFileProperty;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.impl.ArchiveHandler;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class VfsImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.VfsImplUtil");
 
-  @NonNls private static final String FILE_SEPARATORS = "/" + File.separator;
+  private static final String FILE_SEPARATORS = "/" + File.separator;
 
   private VfsImplUtil() { }
 
@@ -143,8 +159,99 @@ public class VfsImplUtil {
     return Pair.create(root, parts);
   }
 
+  public static void refresh(@NotNull NewVirtualFileSystem vfs, boolean asynchronous) {
+    VirtualFile[] roots = ManagingFS.getInstance().getRoots(vfs);
+    if (roots.length > 0) {
+      RefreshQueue.getInstance().refresh(asynchronous, true, null, roots);
+    }
+  }
+
   @Nullable
   public static String normalize(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
     return vfs.normalize(path);
+  }
+
+  private static final AtomicBoolean ourSubscribed = new AtomicBoolean(false);
+  private static final Object ourLock = new Object();
+  private static final Map<String, Pair<ArchiveFileSystem, ArchiveHandler>> ourHandlers = ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
+
+  @NotNull
+  public static <T extends ArchiveHandler> T getHandler(@NotNull VirtualFile entryFile,
+                                                        @NotNull ArchiveFileSystem vfs,
+                                                        @NotNull Function<String, T> producer) {
+    checkSubscription();
+
+    String rootPath = vfs.extractRootPath(entryFile.getPath());
+    ArchiveHandler handler;
+    boolean refresh = false;
+
+    synchronized (ourLock) {
+      Pair<ArchiveFileSystem, ArchiveHandler> record = ourHandlers.get(rootPath);
+      if (record == null) {
+        handler = producer.fun(rootPath);
+        record = Pair.create(vfs, handler);
+        ourHandlers.put(rootPath, record);
+        refresh = true;
+      }
+      handler = record.second;
+    }
+
+    if (refresh) {
+      final File file = handler.getFile();
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+        }
+      }, ModalityState.defaultModalityState());
+    }
+
+    @SuppressWarnings("unchecked") T t = (T)handler;
+    return t;
+  }
+
+  private static void checkSubscription() {
+    if (ourSubscribed.getAndSet(true)) return;
+
+    MessageBus bus = ApplicationManager.getApplication().getMessageBus();
+    bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
+      @Override
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        Map<String, VirtualFile> rootsToRefresh = null;
+
+        synchronized (ourLock) {
+          String[] rootPaths = ArrayUtil.toStringArray(ourHandlers.keySet());
+
+          for (VFileEvent event : events) {
+            if (!(event.getFileSystem() instanceof LocalFileSystem)) continue;
+
+            String path = event.getPath();
+            for (int i = 0; i < rootPaths.length; i++) {
+              String rootPath = rootPaths[i];
+              if (rootPath == null) continue;
+
+              ArchiveFileSystem vfs = ourHandlers.get(rootPath).first;
+              String localPath = vfs.extractLocalPath(rootPath);
+              if (FileUtil.startsWith(localPath, path)) {
+                ourHandlers.remove(rootPath);
+                NewVirtualFile root = ManagingFS.getInstance().findRoot(rootPath, vfs);
+                if (root != null) {
+                  root.markDirtyRecursively();
+                  if (rootsToRefresh == null) rootsToRefresh = ContainerUtil.newHashMap();
+                  rootsToRefresh.put(localPath, root);
+                }
+                rootPaths[i] = null;
+              }
+            }
+          }
+        }
+
+        if (rootsToRefresh != null) {
+          ZipFileCache.reset(rootsToRefresh.keySet());
+          boolean async = !ApplicationManager.getApplication().isUnitTestMode();
+          RefreshQueue.getInstance().refresh(async, true, null, rootsToRefresh.values());
+        }
+      }
+    });
   }
 }

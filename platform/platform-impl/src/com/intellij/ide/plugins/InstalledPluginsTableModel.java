@@ -159,7 +159,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     for (String host : pluginHosts) {
       try {
         final Map<PluginId, PluginDownloader> downloaded = new HashMap<PluginId, PluginDownloader>();
-        UpdateChecker.checkPluginsHost(host, downloaded, false, null);
+        UpdateChecker.checkPluginsHost(host, downloaded, false, null, null);
         for (PluginId pluginId : downloaded.keySet()) {
           myPlugin2host.put(pluginId.getIdString(), host);
         }

@@ -80,6 +80,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaBreak
     return new JavaLineBreakpointProperties();
   }
 
+  @NotNull
   @Override
   public Breakpoint createJavaBreakpoint(Project project, XBreakpoint breakpoint) {
     return new LineBreakpoint(project, breakpoint);

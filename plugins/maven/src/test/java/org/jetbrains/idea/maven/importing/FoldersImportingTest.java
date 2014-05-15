@@ -17,6 +17,8 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import junit.framework.Test;
+import junit.framework.TestSuite;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenImportingSettings;
@@ -28,6 +30,15 @@ import java.io.File;
 import java.io.IOException;
 
 public class FoldersImportingTest extends MavenImportingTestCase {
+
+  //public static Test suite() throws ClassNotFoundException {
+  //  return new TestSuite(
+  //    Class.forName("_FirstInSuiteTest"),
+  //    FoldersImportingTest.class,
+  //    Class.forName("_LastInSuiteTest")
+  //  );
+  //}
+
   public void testSimpleProjectStructure() throws Exception {
     createStdProjectFolders();
 

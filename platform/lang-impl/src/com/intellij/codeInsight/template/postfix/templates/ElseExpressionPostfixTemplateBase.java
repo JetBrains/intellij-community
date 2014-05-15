@@ -26,6 +26,12 @@ public abstract class ElseExpressionPostfixTemplateBase extends SurroundPostfixT
     super("else", "if (!exp)", psiInfo, typeChecker);
   }
 
+  @SuppressWarnings("unchecked")
+  protected ElseExpressionPostfixTemplateBase(@NotNull PostfixTemplatePsiInfo psiInfo) {
+    super("else", "if (!exp)", psiInfo, Condition.TRUE);
+  }
+
+
   @Override
   protected PsiElement getWrappedExpression(PsiElement expression) {
     return myPsiInfo.getNegatedExpression(expression);

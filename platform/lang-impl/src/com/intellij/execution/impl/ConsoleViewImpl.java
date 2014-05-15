@@ -668,13 +668,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
     final Document document = myEditor.getDocument();
     final RangeMarker lastProcessedOutput = document.createRangeMarker(document.getTextLength(), document.getTextLength());
-    final boolean isAtEndOfDocument = myEditor.getCaretModel().getOffset() == document.getTextLength();
+    final int caretOffset = myEditor.getCaretModel().getOffset();
+    final boolean isAtLastLine = document.getLineNumber(caretOffset) >= document.getLineCount() - 1;
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       @Override
       public void run() {
-        int offset = myEditor.getCaretModel().getOffset();
-        boolean preserveCurrentVisualArea = offset < document.getTextLength();
+        boolean preserveCurrentVisualArea = caretOffset < document.getTextLength();
         if (preserveCurrentVisualArea) {
           myEditor.getScrollingModel().accumulateViewportChanges();
         }
@@ -723,7 +723,14 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         myTooMuchOfOutput = true;
         final EditorNotificationPanel comp =
           new EditorNotificationPanel().text("Too much output to process").icon(AllIcons.General.ExclMark);
-        add(comp, BorderLayout.NORTH);
+        final Alarm tooMuchOutputAlarm = new Alarm();
+        //show the notification with a delay to avoid blinking when "too much output" ceases quickly
+        tooMuchOutputAlarm.addRequest(new Runnable() {
+          @Override
+          public void run() {
+            add(comp, BorderLayout.NORTH);
+          }
+        }, 300);
         performWhenNoDeferredOutput(new Runnable() {
           @Override
           public void run() {
@@ -734,6 +741,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
               finally {
                 myTooMuchOfOutput = false;
                 remove(comp);
+                tooMuchOutputAlarm.cancelAllRequests();
               }
             }
             else {
@@ -748,7 +756,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
     }
 
-    if (isAtEndOfDocument) {
+    if (isAtLastLine) {
       EditorUtil.scrollToTheEnd(myEditor);
     }
   }

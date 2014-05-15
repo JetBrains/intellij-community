@@ -20,6 +20,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.mac.MacMainFrameDecorator;
@@ -230,10 +231,10 @@ public class SheetMessage {
     });
   }
 
-  FontMetrics getFontMetrics(Font f) {
-    return myParent.getGraphics().getFontMetrics(f);
+  FontMetrics getFontMetrics(final Font f) {
+    final Component c = (myParent == null) ? WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow() : myParent;
+    return c.getGraphics().getFontMetrics(f);
   }
-
 }
 
 

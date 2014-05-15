@@ -34,13 +34,13 @@ public class SyntaxInfo {
 
   private final int myDefaultForeground;
   private final int myDefaultBackground;
-  private final int mySingleFontSize;
+  private final int myFontSize;
 
   private SyntaxInfo(int outputInfoCount,
                      byte[] outputInfosSerialized,
                     int defaultForeground,
                     int defaultBackground,
-                    int singleFontSize,
+                    int fontSize,
                     @NotNull FontNameRegistry fontNameRegistry,
                     @NotNull ColorRegistry colorRegistry)
   {
@@ -48,7 +48,7 @@ public class SyntaxInfo {
     myOutputInfosSerialized = outputInfosSerialized;
     myDefaultForeground = defaultForeground;
     myDefaultBackground = defaultBackground;
-    mySingleFontSize = singleFontSize;
+    myFontSize = fontSize;
     myFontNameRegistry = fontNameRegistry;
     myColorRegistry = colorRegistry;
   }
@@ -71,12 +71,8 @@ public class SyntaxInfo {
     return myDefaultBackground;
   }
 
-  /**
-   * @return    positive value if all tokens have the same font size (returned value);
-   *            non-positive value otherwise
-   */
-  public int getSingleFontSize() {
-    return mySingleFontSize;
+  public int getFontSize() {
+    return myFontSize;
   }
 
   public void processOutputInfo(MarkupHandler handler) {

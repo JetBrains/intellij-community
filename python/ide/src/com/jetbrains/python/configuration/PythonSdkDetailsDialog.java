@@ -33,7 +33,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
-import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
@@ -444,19 +443,6 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      DialogBuilder dialog = new DialogBuilder(myProject);
-
-      final PythonPathEditor editor =
-        new PythonPathEditor("Classes", OrderRootType.CLASSES, FileChooserDescriptorFactory.createAllButJarContentsDescriptor()) {
-          @Override
-          protected void onReloadButtonClicked() {
-            reloadSdk();
-          }
-        };
-      final JComponent component = editor.createComponent();
-      component.setPreferredSize(new Dimension(600, 400));
-      component.setBorder(IdeBorderFactory.createBorder(SideBorder.ALL));
-      dialog.setCenterPanel(component);
       Sdk sdk = getSelectedSdk();
       if (sdk instanceof PyDetectedSdk) {
         final String sdkName = sdk.getName();
@@ -468,10 +454,25 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
         });
         sdk = SdkConfigurationUtil.setupSdk(ProjectJdkTable.getInstance().getAllJdks(), sdkHome, PythonSdkType.getInstance(), true, null, null);
       }
-      editor.reload(sdk != null ? sdk.getSdkModificator(): null);
+      final PythonPathEditor pathEditor =
+        new PythonPathEditor("Classes", OrderRootType.CLASSES, FileChooserDescriptorFactory.createAllButJarContentsDescriptor()) {
+          @Override
+          protected void onReloadButtonClicked() {
+            reloadSdk();
+          }
+        };
+      final SdkModificator sdkModificator = myModificators.get(sdk);
 
-      dialog.setTitle("Interpreter Paths");
+      PythonPathDialog dialog = new PythonPathDialog(myProject, pathEditor);
+      pathEditor.reload(sdk != null ? sdkModificator : null);
       dialog.show();
+
+      if (dialog.isOK()) {
+        if (pathEditor.isModified()) {
+          pathEditor.apply(sdkModificator);
+          myModifiedModificators.add(sdkModificator);
+        }
+      }
       updateOkButton();
     }
   }

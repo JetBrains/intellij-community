@@ -258,7 +258,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
       throw ce;
     }
     catch (Exception e) {
-      throw new IncorrectOperationException("Incorrect file template", e);
+      throw new IncorrectOperationException("Incorrect file template", (Throwable)e);
     }
     catchSection.getCatchBlock().replace(codeBlockFromText);
   }

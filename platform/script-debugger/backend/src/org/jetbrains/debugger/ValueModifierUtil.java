@@ -4,7 +4,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.debugger.values.ObjectValue;
 import org.jetbrains.debugger.values.Value;
 
 import java.util.Collections;
@@ -41,21 +40,16 @@ public final class ValueModifierUtil {
   }
 
   @NotNull
-  public static AsyncResult<Value> evaluateGet(@NotNull final ObjectProperty property,
+  public static AsyncResult<Value> evaluateGet(@NotNull final Variable variable,
                                                @NotNull EvaluateContextAdditionalParameter host,
                                                @NotNull EvaluateContext evaluateContext,
                                                @NotNull String selfName) {
-    ObjectValue getterFunction = property.getGetter();
-    if (getterFunction == null) {
-      throw new RuntimeException("Getter is not a function");
-    }
-
     StringBuilder builder = new StringBuilder(selfName);
-    appendName(builder, property.getName(), false);
+    appendName(builder, variable.getName(), false);
     return evaluateContext.evaluate(builder.toString(), Collections.singletonMap(selfName, host)).doWhenDone(new Consumer<Value>() {
       @Override
       public void consume(Value value) {
-        property.setValue(value);
+        variable.setValue(value);
       }
     });
   }

@@ -353,6 +353,10 @@ public class PyIntentionTest extends PyTestCase {
     doTestTypeAssertion();
   }
 
+  public void testTypeAssertionInDictComp() {  //PY-7971
+    doNegativeTest(PyBundle.message("INTN.insert.assertion"));
+  }
+
   private void doTestTypeAssertion() {
     doTest(PyBundle.message("INTN.insert.assertion"));
   }

@@ -31,7 +31,7 @@ public class AntResourcesClassLoader extends UrlClassLoader {
   private final Set<String> myMisses = new THashSet<String>();
 
   public AntResourcesClassLoader(final List<URL> urls, final ClassLoader parentLoader, final boolean canLockJars, final boolean canUseCache) {
-    super(build().urls(urls).parent(parentLoader).allowLock(canLockJars).useCache(canUseCache).allowUnescaped().noPreload());
+    super(build().urls(urls).parent(parentLoader).allowLock(canLockJars).useCache(canUseCache).noPreload());
   }
 
   protected Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {

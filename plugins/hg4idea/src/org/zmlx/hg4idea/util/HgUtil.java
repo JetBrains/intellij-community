@@ -686,6 +686,7 @@ public abstract class HgUtil {
 
   @NotNull
   public static Pair<String, String> parseUserNameAndEmail(@NotNull String authorString) {
+    //special characters should be retained for properly filtering by username. For Mercurial "a.b" username is not equal to "a b"
     // Vasya Pupkin <vasya.pupkin@jetbrains.com> -> Vasya Pupkin , vasya.pupkin@jetbrains.com
     int startEmailIndex = authorString.indexOf('<');
     int startDomainIndex = authorString.indexOf('@');
@@ -694,23 +695,18 @@ public abstract class HgUtil {
     String email;
     if (0 < startEmailIndex && startEmailIndex < startDomainIndex && startDomainIndex < endEmailIndex) {
       email = authorString.substring(startEmailIndex + 1, endEmailIndex);
-      userName = convertUserName(authorString.substring(0, startEmailIndex));
+      userName = authorString.substring(0, startEmailIndex).trim();
     }
-
-    // vasya.pupkin@email.com --> vasya pupkin, vasya.pupkin@email.com
+    // vasya.pupkin@email.com --> vasya.pupkin, vasya.pupkin@email.com
     else if (!authorString.contains(" ") && startDomainIndex > 0) { //simple e-mail check. john@localhost
-      userName = convertUserName(authorString.substring(0, startDomainIndex));
+      userName = authorString.substring(0, startDomainIndex).trim();
       email = authorString;
     }
 
     else {
-      userName = convertUserName(authorString);
+      userName = authorString.trim();
       email = "";
     }
     return Pair.create(userName, email);
-  }
-
-  private static String convertUserName(@NotNull String userNameInfo) {
-    return userNameInfo.trim().replace('.', ' ').replace('_', ' ').replace('-', ' ');
   }
 }

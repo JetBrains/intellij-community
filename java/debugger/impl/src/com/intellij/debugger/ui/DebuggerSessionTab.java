@@ -42,6 +42,7 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsoleEx;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
@@ -455,32 +456,31 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     myUi.selectAndFocus(myUi.findContent(DebuggerContentInfo.FRAME_CONTENT), true, false);
   }
 
-  private int myThreadDumpsCount = 0;
-  private int myCurrentThreadDumpId = 1;
+  private static int myThreadDumpsCount = 0;
+  private static int myCurrentThreadDumpId = 1;
 
-  public void addThreadDump(List<ThreadState> threads) {
-    final Project project = getProject();
+  public static void addThreadDump(Project project, List<ThreadState> threads, final RunnerLayoutUi ui, DebuggerSession session) {
     final TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
-    consoleBuilder.filters(ExceptionFilters.getFilters(myDebuggerSession.getSearchScope()));
+    consoleBuilder.filters(ExceptionFilters.getFilters(session.getSearchScope()));
     final ConsoleView consoleView = consoleBuilder.getConsole();
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
     consoleView.allowHeavyFilters();
     final ThreadDumpPanel panel = new ThreadDumpPanel(project, consoleView, toolbarActions, threads);
 
     final String id = createThreadDumpContentId();
-    final Content content = myUi.createContent(id, panel, id, null, null);
+    final Content content = ui.createContent(id, panel, id, null, null);
     content.setCloseable(true);
     content.setDescription("Thread Dump");
-    myUi.addContent(content);
-    myUi.selectAndFocus(content, true, true);
+    ui.addContent(content);
+    ui.selectAndFocus(content, true, true);
     myThreadDumpsCount += 1;
     myCurrentThreadDumpId += 1;
-    Disposer.register(this, new Disposable() {
-      @Override
-      public void dispose() {
-        myUi.removeContent(content, true);
-      }
-    });
+    //Disposer.register(this, new Disposable() {
+    //  @Override
+    //  public void dispose() {
+    //    ui.removeContent(content, true);
+    //  }
+    //});
     Disposer.register(content, new Disposable() {
       @Override
       public void dispose() {
@@ -491,13 +491,13 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
       }
     });
     Disposer.register(content, consoleView);
-    myUi.selectAndFocus(content, true, false);
+    ui.selectAndFocus(content, true, false);
     if (threads.size() > 0) {
       panel.selectStackFrame(0);
     }
   }
 
-  private String createThreadDumpContentId() {
+  private static String createThreadDumpContentId() {
     return THREAD_DUMP_CONTENT_PREFIX + " #" + myCurrentThreadDumpId;
   }
 

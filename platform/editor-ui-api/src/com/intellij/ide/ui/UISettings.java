@@ -177,14 +177,6 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   }
 
   private static Pair<String, Integer> getSystemFontFaceAndSize() {
-    if (SystemInfo.isWindows) {
-      //noinspection HardCodedStringLiteral
-      final Font font = (Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
-      if (font != null) {
-        return Pair.create(font.getName(), font.getSize());
-      }
-    }
-
     final Pair<String,Integer> fontData = UIUtil.getSystemFontData();
     if (fontData != null) {
       return fontData;

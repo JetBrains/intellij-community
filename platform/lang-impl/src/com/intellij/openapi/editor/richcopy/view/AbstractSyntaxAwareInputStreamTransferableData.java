@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.richcopy.view;
 import com.intellij.codeInsight.editorActions.TextBlockTransferableData;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.richcopy.model.SyntaxInfo;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
@@ -97,7 +98,7 @@ public abstract class AbstractSyntaxAwareInputStreamTransferableData extends Inp
       return myDelegate;
     }
 
-    int maxLength = Registry.intValue("editor.richcopy.max.size.megabytes") * 1048576;
+    int maxLength = Registry.intValue("editor.richcopy.max.size.megabytes") * FileUtilRt.MEGABYTE;
     final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
     try {
       try {
@@ -107,8 +108,8 @@ public abstract class AbstractSyntaxAwareInputStreamTransferableData extends Inp
         LOG.error(e);
       }
       String s = buffer.toString();
-      if (Registry.is("editor.richcopy.debug")) {
-        LOG.info("Resulting text: \n" + s);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Resulting text: \n" + s);
       }
       try {
         myDelegate = new ByteArrayInputStream(s.getBytes(getCharset()));

@@ -68,6 +68,18 @@ public abstract class ParserUtils {
     return false;
   }
 
+  public static boolean getToken(PsiBuilder builder, IElementType elem1, IElementType elem2) {
+    Marker marker = builder.mark();
+    if (getToken(builder, elem1) && getToken(builder, elem2)) {
+      marker.drop();
+      return true;
+    }
+    else {
+      marker.rollbackTo();
+      return false;
+    }
+  }
+
   /**
    * Same as simple getToken() method but with TokenSet
    *
@@ -76,10 +88,7 @@ public abstract class ParserUtils {
    * @return
    */
   public static boolean getToken(PsiBuilder builder, TokenSet tokenSet) {
-    if (tokenSet.contains(builder.getTokenType())) {
-      return getToken(builder, builder.getTokenType(), null);
-    }
-    return false;
+    return getToken(builder, tokenSet, null);
   }
 
   /**
@@ -91,9 +100,15 @@ public abstract class ParserUtils {
    */
   public static boolean getToken(PsiBuilder builder, TokenSet tokenSet, String msg) {
     if (tokenSet.contains(builder.getTokenType())) {
-      return getToken(builder, builder.getTokenType(), msg);
+      builder.advanceLexer();
+      return true;
     }
-    return false;
+    else {
+      if (msg != null) {
+        builder.error(msg);
+      }
+      return false;
+    }
   }
 
   /**

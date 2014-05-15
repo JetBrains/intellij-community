@@ -1058,7 +1058,7 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   @Nullable
-  public static String getMemberQualifiedName(PsiMember member) {
+  public static String getMemberQualifiedName(@NotNull PsiMember member) {
     if (member instanceof PsiClass) {
       return ((PsiClass)member).getQualifiedName();
     }

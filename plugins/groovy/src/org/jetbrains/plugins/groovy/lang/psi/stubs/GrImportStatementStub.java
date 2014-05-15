@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.stubs;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 
@@ -33,7 +34,7 @@ public class GrImportStatementStub extends StubBase<GrImportStatement> implement
   private final String myAliasName;
 
   public GrImportStatementStub(StubElement parent,
-                               IStubElementType elementType,
+                               @NotNull IStubElementType elementType,
                                @Nullable String referenceText,
                                @Nullable String aliasName,
                                byte flags) {

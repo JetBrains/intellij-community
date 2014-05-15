@@ -4,12 +4,14 @@
     <exclude-output />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="xdebugger-api" />
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="script-debugger-backend" />
+    <orderEntry type="module" module-name="xdebugger-impl" scope="TEST" />
   </component>
 </module>
 

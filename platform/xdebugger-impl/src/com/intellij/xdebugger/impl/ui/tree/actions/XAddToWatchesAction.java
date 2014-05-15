@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.ui.tree.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,7 @@ class XAddToWatchesAction extends XDebuggerTreeActionBase {
     XWatchesView watchesView = e.getData(XWatchesView.DATA_KEY);
     String expression = node.getValueContainer().getEvaluationExpression();
     if (watchesView != null && expression != null) {
-      watchesView.addWatchExpression(expression, -1, true);
+      watchesView.addWatchExpression(XExpressionImpl.fromText(expression), -1, true);
     }
   }
 }

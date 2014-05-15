@@ -224,7 +224,9 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
             ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, descriptor, reuseContent);
             final ProcessHandler processHandler = descriptor.getProcessHandler();
             if (processHandler != null) {
-              processHandler.startNotify();
+              if (!processHandler.isStartNotified()) {
+                processHandler.startNotify();
+              }
               project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStarted(executor.getId(), env, processHandler);
               started = true;
               processHandler.addProcessListener(new ProcessExecutionListener(project, profile, processHandler));

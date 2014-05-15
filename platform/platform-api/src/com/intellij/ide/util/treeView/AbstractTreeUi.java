@@ -3919,14 +3919,15 @@ public class AbstractTreeUi {
 
   @NotNull
   final Set<Object> getSelectedElements() {
-    final TreePath[] paths = myTree.getSelectionPaths();
+    TreePath[] paths = myTree.getSelectionPaths();
 
-    Set<Object> result = new LinkedHashSet<Object>();
+    Set<Object> result = ContainerUtil.newLinkedHashSet();
     if (paths != null) {
       for (TreePath eachPath : paths) {
         if (eachPath.getLastPathComponent() instanceof DefaultMutableTreeNode) {
-          final DefaultMutableTreeNode eachNode = (DefaultMutableTreeNode)eachPath.getLastPathComponent();
-          final Object eachElement = getElementFor(eachNode);
+          DefaultMutableTreeNode eachNode = (DefaultMutableTreeNode)eachPath.getLastPathComponent();
+          if (eachNode == myRootNode && !myTree.isRootVisible()) continue;
+          Object eachElement = getElementFor(eachNode);
           if (eachElement != null) {
             result.add(eachElement);
           }

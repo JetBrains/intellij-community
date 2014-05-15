@@ -28,8 +28,8 @@ import org.zmlx.hg4idea.execution.HgDeleteModifyPromptHandler;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import static org.zmlx.hg4idea.util.HgErrorUtil.hasUncommittedChangesConflict;
 
 public class HgUpdateCommand {
 
@@ -76,22 +76,12 @@ public class HgUpdateCommand {
     executor.setShowOutput(true);
     HgCommandResult result =
       executor.executeInCurrentThread(repo, "update", arguments, new HgDeleteModifyPromptHandler());
-    if (detectLocalChangeConflict(result)) {
-      final AtomicInteger exitCode = new AtomicInteger();
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          exitCode.set(Messages.showOkCancelDialog(project,
-                                                   "Your uncommitted changes couldn't be merged into the requested changeset.\n" +
-                                                   "Would you like to perform Force Update and discard them?",
-                                                   "Update Conflict", "&Force Update", "&Cancel",
-                                                   Messages.getWarningIcon()));
-        }
-      });
-      if (exitCode.get() == Messages.YES) {
+    if (!clean && hasUncommittedChangesConflict(result)) {
+      final String message = "<html>Your uncommitted changes couldn't be merged into the requested changeset.<br>" +
+                             "Would you like to perform force update and discard them?";
+      if (showDiscardChangesConfirmation(project, message) == Messages.OK) {
         arguments.add("-C");
-        result =
-          executor.executeInCurrentThread(repo, "update", arguments, new HgDeleteModifyPromptHandler());
+        result = executor.executeInCurrentThread(repo, "update", arguments);
       }
     }
 
@@ -100,10 +90,15 @@ public class HgUpdateCommand {
     return result;
   }
 
-  private static boolean detectLocalChangeConflict(HgCommandResult result) {
-    // error messages from mercurial after update command: "abort: outstanding uncommitted merges", "abort: uncommitted changes"
-    final Pattern UNCOMMITTED_PATTERN = Pattern.compile(".*abort.*uncommitted\\s*(changes|merges).*", Pattern.DOTALL);
-    Matcher matcher = UNCOMMITTED_PATTERN.matcher(result.getRawError());
-    return matcher.matches();
+  public static int showDiscardChangesConfirmation(@NotNull final Project project, @NotNull final String confirmationMessage) {
+    final AtomicInteger exitCode = new AtomicInteger();
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        exitCode.set(Messages.showOkCancelDialog(project, confirmationMessage, "Uncommitted Changes Problem",
+                                                 "&Discard Changes", "&Cancel", Messages.getWarningIcon()));
+      }
+    });
+    return exitCode.get();
   }
 }

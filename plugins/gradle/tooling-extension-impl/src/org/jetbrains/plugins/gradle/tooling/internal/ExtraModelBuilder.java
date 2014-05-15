@@ -20,6 +20,7 @@ import org.gradle.tooling.provider.model.ToolingModelBuilder;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 
@@ -59,7 +60,14 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
   public Object buildAll(String modelName, Project project) {
     for (ModelBuilderService service : buildersLoader) {
       if (service.canBuild(modelName) && isVersionMatch(service)) {
-        return service.buildAll(modelName, project);
+        try {
+          return service.buildAll(modelName, project);
+        }
+        catch (Exception e) {
+          ErrorMessageBuilder builderError = service.getErrorMessageBuilder(project, e);
+          project.getLogger().error(builderError.build());
+        }
+        return null;
       }
     }
     throw new IllegalArgumentException("Unsupported model: " + modelName);

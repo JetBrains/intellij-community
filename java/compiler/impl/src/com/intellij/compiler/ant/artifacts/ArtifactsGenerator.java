@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.compiler.ant.*;
 import com.intellij.compiler.ant.taskdefs.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
@@ -141,7 +141,7 @@ public class ArtifactsGenerator {
       }
     }, myResolvingContext);
 
-    final Pair<String, String> xmlNs = getArtifactXmlNs(artifact.getArtifactType());
+    final Couple<String> xmlNs = getArtifactXmlNs(artifact.getArtifactType());
     final Target artifactTarget =
         new Target(myContext.getTargetName(artifact), depends.toString(), "Build '" + artifact.getName() + "' artifact", null, 
                    xmlNs != null ? xmlNs.first : null, xmlNs != null ? xmlNs.second : null);
@@ -185,9 +185,9 @@ public class ArtifactsGenerator {
     }
   }
 
-  private static Pair<String, String> getArtifactXmlNs(ArtifactType artifactType) {
+  private static Couple<String> getArtifactXmlNs(ArtifactType artifactType) {
     for (ChunkBuildExtension extension : ChunkBuildExtension.EP_NAME.getExtensions()) {
-      final Pair<String, String> xmlNs = extension.getArtifactXmlNs(artifactType);
+      final Couple<String> xmlNs = extension.getArtifactXmlNs(artifactType);
       if (xmlNs != null) return xmlNs;
     }
     return null;

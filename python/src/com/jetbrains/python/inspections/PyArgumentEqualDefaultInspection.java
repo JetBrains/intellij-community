@@ -127,11 +127,8 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
     }
 
     private boolean isEqual(PyExpression key, PyExpression defaultValue) {
-      if (key instanceof PyNumericLiteralExpression && defaultValue instanceof PyNumericLiteralExpression) {
-        if (key.getText().equals(defaultValue.getText()))
-          return true;
-      }
-      if (key instanceof PyBinaryExpression && defaultValue instanceof PyBinaryExpression) {
+      if (isBothInstanceOf(key, defaultValue, PyNumericLiteralExpression.class) ||
+          isBothInstanceOf(key, defaultValue, PyPrefixExpression.class) || isBothInstanceOf(key, defaultValue, PyBinaryExpression.class)) {
         if (key.getText().equals(defaultValue.getText()))
           return true;
       }
@@ -154,6 +151,12 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
         }
       }
       return false;
+    }
+
+    private static boolean isBothInstanceOf(@NotNull final PyExpression key,
+                                            @NotNull final PyExpression defaultValue,
+                                            @NotNull final Class clazz) {
+      return clazz.isInstance(key) && clazz.isInstance(defaultValue);
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,9 @@ public class BadExceptionCaughtInspectionBase extends BaseInspection {
     new ExternalizableStringSet(
       "java.lang.NullPointerException",
       "java.lang.IllegalMonitorStateException",
-      "java.lang.ArrayIndexOutOfBoundsException"
+      "java.lang.ArrayIndexOutOfBoundsException",
+      "java.lang.IndexOutOfBoundsException",
+      "java.util.ConcurrentModificationException"
     );
 
   public BadExceptionCaughtInspectionBase() {
@@ -103,7 +105,7 @@ public class BadExceptionCaughtInspectionBase extends BaseInspection {
     private void checkTypeElement(PsiTypeElement typeElement) {
       final PsiType type = typeElement.getType();
       if (exceptions.contains(type.getCanonicalText())) {
-        registerError(typeElement);
+        registerError(typeElement, typeElement);
       }
     }
   }

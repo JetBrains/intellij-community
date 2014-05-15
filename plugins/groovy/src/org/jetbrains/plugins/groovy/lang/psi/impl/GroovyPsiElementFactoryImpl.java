@@ -24,7 +24,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -413,7 +412,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       return ((GrNewExpression)initializer).getReferenceElement();
     }
     catch (RuntimeException e) {
-      throw new IncorrectOperationException("reference text=" + qName, e);
+      throw new IncorrectOperationException("reference text=" + qName, (Throwable)e);
     }
   }
 
@@ -874,7 +873,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
         psiType = factory.createTypeElement(paramType).getType();
       }
       catch (IncorrectOperationException e) {
-        psiType = PsiType.getJavaLangObject(PsiManager.getInstance(myProject), ProjectScope.getAllScope(myProject));
+        psiType = TypesUtil.getJavaLangObject(context);
       }
       res.add(psiType);
     }

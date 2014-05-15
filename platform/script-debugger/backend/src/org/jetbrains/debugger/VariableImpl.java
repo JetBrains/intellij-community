@@ -14,10 +14,6 @@ public class VariableImpl implements Variable {
     this.name = name;
     this.value = value;
     this.valueModifier = valueModifier;
-
-    if (value == null && !(this instanceof ObjectProperty)) {
-      throw new IllegalArgumentException("value could be null only if variable is ObjectProperty");
-    }
   }
 
   public VariableImpl(@NotNull String name, @NotNull Value value) {

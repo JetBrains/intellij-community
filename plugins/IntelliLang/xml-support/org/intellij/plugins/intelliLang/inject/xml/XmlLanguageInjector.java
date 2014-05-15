@@ -120,7 +120,7 @@ public final class XmlLanguageInjector implements MultiHostInjector {
             @Override
             public void visitElement(final PsiElement element) {
               if (element instanceof XmlText) {
-                if (element.getTextLength() == 0) return;
+                if (!(element instanceof PsiLanguageInjectionHost) || element.getTextLength() == 0) return;
                 final List<TextRange> list = injection.getInjectedArea(element);
                 final InjectedLanguage l =
                   InjectedLanguage.create(injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix(), false);

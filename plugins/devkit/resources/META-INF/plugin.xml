@@ -136,7 +136,7 @@
     <localInspection language="JAVA" shortName="UseCouple" displayName="Use Couple instead of Pair"
                      bundle="org.jetbrains.idea.devkit.DevKitBundle"
                      groupKey="inspections.group.name"
-                     enabledByDefault="true" level="WARNING"
+                     enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseCoupleInspection"/>
     <localInspection language="JAVA" shortName="DontUsePairConstructor" displayName="Don't use constructor of Pair class"
                      bundle="org.jetbrains.idea.devkit.DevKitBundle"
@@ -152,6 +152,12 @@
     <unusedDeclarationFixProvider implementation="org.jetbrains.idea.devkit.inspections.quickfix.RegisterExtensionFixProvider"/>
 
     <stacktrace.fold substring="at com.intellij.testFramework."/>
+    <stacktrace.fold substring="at com.intellij.util.messages.impl.MessageBus"/>
+    <stacktrace.fold substring="com.intellij.openapi.command.WriteCommandAction"/>
+    <stacktrace.fold substring="at com.intellij.openapi.application.impl.ApplicationImpl.runWriteAction("/>
+    <stacktrace.fold substring="at com.intellij.openapi.application.impl.ApplicationImpl.runReadAction("/>
+    <stacktrace.fold substring="at com.intellij.openapi.application.RunResult.run("/>
+    <stacktrace.fold substring="at com.intellij.openapi.command.impl.CommandProcessorImpl.executeCommand("/>
   </extensions>
 
   <project-components>

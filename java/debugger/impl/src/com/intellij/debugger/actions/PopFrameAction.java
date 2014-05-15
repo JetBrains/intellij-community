@@ -21,6 +21,7 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.JavaStackFrame;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
@@ -30,9 +31,11 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.frame.XStackFrame;
 import com.sun.jdi.InvalidStackFrameException;
 import com.sun.jdi.NativeMethodException;
 import com.sun.jdi.VMDisconnectedException;
@@ -78,6 +81,19 @@ public class PopFrameAction extends DebuggerAction {
         return null;
       }
     }
+
+    Project project = e.getProject();
+    if (project != null) {
+      XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
+      if (session != null) {
+        XStackFrame frame = session.getCurrentStackFrame();
+        if (frame instanceof JavaStackFrame) {
+          StackFrameProxyImpl proxy = ((JavaStackFrame)frame).getStackFrameProxy();
+          return !proxy.isBottom() ? proxy : null;
+        }
+      }
+    }
+
     DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
     StackFrameProxyImpl frameProxy = debuggerContext.getFrameProxy();
 

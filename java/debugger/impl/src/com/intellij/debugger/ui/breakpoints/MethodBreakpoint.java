@@ -32,6 +32,7 @@ import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -310,7 +311,9 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       return null;
     }
     //final int endOffset = document.getLineEndOffset(sourcePosition);
-    final MethodDescriptor descriptor = docManager.commitAndRunReadAction(new Computable<MethodDescriptor>() {
+    //final MethodDescriptor descriptor = docManager.commitAndRunReadAction(new Computable<MethodDescriptor>() {
+    // conflicts with readAction on initial breakpoints creation
+    final MethodDescriptor descriptor = ApplicationManager.getApplication().runReadAction(new Computable<MethodDescriptor>() {
       @Nullable
       public MethodDescriptor compute() {
         //PsiMethod method = DebuggerUtilsEx.findPsiMethod(psiJavaFile, endOffset);

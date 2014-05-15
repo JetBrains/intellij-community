@@ -19,9 +19,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.NotNullFunction;
-import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
+import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
+import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.Nullable;
 
 /**

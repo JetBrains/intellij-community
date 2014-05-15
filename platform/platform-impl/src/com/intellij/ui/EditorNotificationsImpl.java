@@ -30,6 +30,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -42,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * @author peter
@@ -49,6 +51,7 @@ import java.util.Map;
 public class EditorNotificationsImpl extends EditorNotifications {
   private static final ExtensionPointName<Provider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.editorNotificationProvider");
   private final Map<VirtualFile, ProgressIndicator> myCurrentUpdates = new ConcurrentWeakHashMap<VirtualFile, ProgressIndicator>();
+  private final ThreadPoolExecutor myExecutor = ConcurrencyUtil.newSingleThreadExecutor("EditorNotifications executor");
   private final MergingUpdateQueue myUpdateMerger;
 
   public EditorNotificationsImpl(Project project) {
@@ -86,11 +89,18 @@ public class EditorNotificationsImpl extends EditorNotifications {
         indicator = new ProgressIndicatorBase();
         myCurrentUpdates.put(file, indicator);
 
-        ReadTask task = createTask(indicator, file);
+        final ReadTask task = createTask(indicator, file);
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           task.computeInReadAction(indicator);
-        } else {
-          ProgressIndicatorUtils.scheduleWithWriteActionPriority(indicator, task);
+        }
+        else {
+          final ProgressIndicator indicator1 = indicator;
+          myExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+              ProgressIndicatorUtils.runWithWriteActionPriority(indicator1, task);
+            }
+          });
         }
       }
     });

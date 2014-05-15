@@ -219,10 +219,10 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
 
     final LoggingListener listener = new LoggingListener();
     final LoggingListener targetListener = new LoggingListener();
-    
+
     final VirtualFilePointer fileToMovePointer = createPointerByFile(fileToMove, listener);
     final VirtualFilePointer fileToMoveTargetPointer = createPointerByFile(new File(moveTarget, fileToMove.getName()), targetListener);
-    
+
     assertFalse(fileToMoveTargetPointer.isValid());
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
@@ -257,7 +257,7 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
     assertTrue(pointer.isValid());
     assertEquals("[]", listener.getLog().toString());
   }
-  
+
   public void testRenamingFileUnderTheExistingPointer() throws IOException {
     final File tempDir = createTempDirectory();
     final File file = new File(tempDir, "f1");
@@ -270,7 +270,7 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
     assertTrue(pointer.isValid());
     assertEquals("[before:false, after:true]", listener.getLog().toString());
   }
-  
+
   public void testTwoPointersBecomeOneAfterFileRenamedUnderTheOtherName() throws IOException {
     final File tempDir = createTempDirectory();
     final File f1 = new File(tempDir, "f1");
@@ -441,7 +441,7 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
     assertTrue(jarPointer.isValid());
 
     jar.delete();
-    refreshVFS();
+
     refreshVFS();
 
     verifyPointersInCorrectState(pointersToWatch);

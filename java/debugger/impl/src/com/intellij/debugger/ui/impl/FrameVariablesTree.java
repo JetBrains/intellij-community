@@ -162,7 +162,7 @@ public class FrameVariablesTree extends DebuggerTree {
           super.buildVariables(stackDescriptor, evaluationContext);
         }
         else {
-          final Map<String, LocalVariableProxyImpl> visibleVariables = getVisibleVariables(stackDescriptor);
+          final Map<String, LocalVariableProxyImpl> visibleVariables = getVisibleVariables(stackDescriptor.getFrameProxy());
           final EvaluationContextImpl evalContext = debuggerContext.createEvaluationContext();
           final Pair<Set<String>, Set<TextWithImports>> usedVars =
             ApplicationManager.getApplication().runReadAction(new Computable<Pair<Set<String>, Set<TextWithImports>>>() {
@@ -225,7 +225,7 @@ public class FrameVariablesTree extends DebuggerTree {
     }
   }
 
-  private static List<DecompiledLocalVariable> collectVariablesFromBytecode(final StackFrameProxy frame, int argumentCount) throws EvaluateException {
+  public static List<DecompiledLocalVariable> collectVariablesFromBytecode(final StackFrameProxy frame, int argumentCount) throws EvaluateException {
     if (!frame.getVirtualMachine().canGetBytecodes()) {
       return Collections.emptyList();
     }
@@ -276,8 +276,7 @@ public class FrameVariablesTree extends DebuggerTree {
     return Collections.emptyList();
   }
 
-  private static Map<String, LocalVariableProxyImpl> getVisibleVariables(final StackFrameDescriptorImpl stackDescriptor) throws EvaluateException {
-    final StackFrameProxyImpl frame = stackDescriptor.getFrameProxy();
+  public static Map<String, LocalVariableProxyImpl> getVisibleVariables(final StackFrameProxyImpl frame) throws EvaluateException {
     final Map<String, LocalVariableProxyImpl> vars = new HashMap<String, LocalVariableProxyImpl>();
     for (LocalVariableProxyImpl localVariableProxy : frame.visibleVariables()) {
       vars.put(localVariableProxy.name(), localVariableProxy);
@@ -318,7 +317,7 @@ public class FrameVariablesTree extends DebuggerTree {
     return true;
   }
 
-  private static Pair<Set<String>, Set<TextWithImports>> findReferencedVars(final Set<String> visibleVars,
+  public static Pair<Set<String>, Set<TextWithImports>> findReferencedVars(final Set<String> visibleVars,
                                                                             final SourcePosition position,
                                                                             EvaluationContextImpl evalContext) {
     final int line = position.getLine();

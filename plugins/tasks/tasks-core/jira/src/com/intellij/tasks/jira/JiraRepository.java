@@ -159,8 +159,11 @@ public class JiraRepository extends BaseRepositoryImpl {
     }
     catch (Exception e) {
       // probably JIRA version prior 4.2
-      // without hasBeenUsed() check getStatusCode() might throw NPE, if connection was refused
-      if (method.hasBeenUsed() && method.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+      // It's not safe to call HttpMethod.getStatusCode() directly, because it will throw NPE
+      // if response was not received (connection lost etc.) and hasBeenUsed()/isRequestSent() are
+      // not the way to check it safely.
+      StatusLine status = method.getStatusLine();
+      if (status != null && status.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
         return new JiraSoapApi(this);
       }
       else {

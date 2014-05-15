@@ -717,6 +717,12 @@
       <reference ref="XDebugger.ValueGroup"/>
     </group>
 
+    <group id="XDebugger.Frames.Tree.Popup">
+    </group>
+
+    <group id="XDebugger.Frames.TopToolbar">
+    </group>
+
     <group id="XDebugger.Variables.Tree.Popup">
       <reference ref="XDebugger.ValueGroup"/>
       <reference ref="XDebugger.JumpToSource"/>

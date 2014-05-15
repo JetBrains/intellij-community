@@ -476,7 +476,7 @@ public class TypesUtil {
 
   @NotNull
   public static PsiClassType getJavaLangObject(@NotNull PsiElement context) {
-    return PsiType.getJavaLangObject(context.getManager(), context.getResolveScope());
+    return LazyFqnClassType.getLazyType(JAVA_LANG_OBJECT, context);
   }
 
   @Nullable

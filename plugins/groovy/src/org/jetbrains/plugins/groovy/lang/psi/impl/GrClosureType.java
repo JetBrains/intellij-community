@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -128,11 +127,6 @@ public class GrClosureType extends GrLiteralClassType {
     }
 
     return super.equals(obj);
-  }
-
-  @Override
-  public boolean equalsToText(@NotNull @NonNls String text) {
-    return text.equals(GroovyCommonClassNames.GROOVY_LANG_CLOSURE);
   }
 
   @Override

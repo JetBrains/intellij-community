@@ -21,9 +21,11 @@ import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.Dependency;
 import org.gradle.plugins.ide.idea.model.ModuleLibrary;
 import org.gradle.plugins.ide.idea.model.Path;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.BuildScriptClasspathModel;
 import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
+import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 import org.jetbrains.plugins.gradle.tooling.internal.BuildScriptClasspathModelImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.ClasspathEntryModelImpl;
@@ -62,7 +64,9 @@ public class ModelBuildScriptClasspathBuilderImpl implements ModelBuilderService
           }
         }
       }
-      final Configuration configuration = project.getBuildscript().getConfigurations().findByName("classpath");
+      Configuration configuration = project.getBuildscript().getConfigurations().findByName("classpath");
+      if (configuration == null) return null;
+      configuration = configuration.copy();
       Collection<Configuration> plusConfigurations = Collections.singletonList(configuration);
 
       final Map<String, Map<String, Collection<Configuration>>> scopes =
@@ -94,6 +98,14 @@ public class ModelBuildScriptClasspathBuilderImpl implements ModelBuilderService
 
     cache.put(project.getPath(), buildScriptClasspath);
     return buildScriptClasspath;
+  }
+
+  @NotNull
+  @Override
+  public ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
+    return ErrorMessageBuilder.create(
+      project, e, "Project build classpath resolve errors"
+    ).withDescription("Some codeInsight features may not work for gradle build script");
   }
 
   private static Set<String> convert(Set<Path> paths) {

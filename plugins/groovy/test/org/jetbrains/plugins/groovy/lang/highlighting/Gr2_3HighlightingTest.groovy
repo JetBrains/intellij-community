@@ -272,4 +272,15 @@ def test() {
 }
 '''
   }
+
+  void testAbstractMethodsInTrait() {
+    testHighlighting('''
+trait T {
+  def foo() {}
+  def <error descr="Not abstract method should have body">bar</error>()
+  abstract baz()
+  abstract xyz() <error descr="Abstract methods must not have body">{}</error>
+}
+''')
+  }
 }

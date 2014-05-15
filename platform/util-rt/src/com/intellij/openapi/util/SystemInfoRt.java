@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.util;
 
+import java.util.Locale;
+
 /**
  * Stripped-down version of {@code com.intellij.openapi.util.SystemInfo}.
  * Intended to use by external (out-of-IDE-process) runners and helpers so it should not contain any library dependencies.
@@ -24,13 +26,15 @@ package com.intellij.openapi.util;
 @SuppressWarnings({"HardCodedStringLiteral", "UtilityClassWithoutPrivateConstructor"})
 public class SystemInfoRt {
   public static final String OS_NAME = System.getProperty("os.name");
-  public static final String OS_VERSION = System.getProperty("os.version").toLowerCase();
+  public static final String OS_VERSION = System.getProperty("os.version").toLowerCase(Locale.US);
 
-  protected static final String _OS_NAME = OS_NAME.toLowerCase();
+  private static final String _OS_NAME = OS_NAME.toLowerCase(Locale.US);
   public static final boolean isWindows = _OS_NAME.startsWith("windows");
   public static final boolean isOS2 = _OS_NAME.startsWith("os/2") || _OS_NAME.startsWith("os2");
   public static final boolean isMac = _OS_NAME.startsWith("mac");
   public static final boolean isLinux = _OS_NAME.startsWith("linux");
+  public static final boolean isFreeBSD = _OS_NAME.startsWith("freebsd");
+  public static final boolean isSolaris = _OS_NAME.startsWith("sunos");
   public static final boolean isUnix = !isWindows && !isOS2;
 
   public static final boolean isFileSystemCaseSensitive = isUnix && !isMac ||
