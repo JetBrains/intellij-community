@@ -44,18 +44,19 @@ public class CopyHandler extends EditorActionHandler {
   }
 
   @Override
-  public void execute(final Editor editor, final DataContext dataContext) {
+  public void doExecute(final Editor editor, Caret caret, final DataContext dataContext) {
+    assert caret == null; // invocation for a specific caret is not supported
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
     if (project == null){
       if (myOriginalAction != null){
-        myOriginalAction.execute(editor, dataContext);
+        myOriginalAction.execute(editor, null, dataContext);
       }
       return;
     }
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file == null) {
       if (myOriginalAction != null) {
-        myOriginalAction.execute(editor, dataContext);
+        myOriginalAction.execute(editor, null, dataContext);
       }
       return;
     }
