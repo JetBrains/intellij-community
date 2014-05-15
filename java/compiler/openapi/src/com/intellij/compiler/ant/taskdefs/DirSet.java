@@ -17,7 +17,7 @@
 package com.intellij.compiler.ant.taskdefs;
 
 import com.intellij.compiler.ant.Tag;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -28,6 +28,6 @@ public class DirSet extends Tag{
 
   public DirSet(@NonNls final String dir) {
     //noinspection HardCodedStringLiteral
-    super("dirset", new Pair[] {Pair.create("dir", dir)});
+    super("dirset", Couple.newOne("dir", dir));
   }
 }

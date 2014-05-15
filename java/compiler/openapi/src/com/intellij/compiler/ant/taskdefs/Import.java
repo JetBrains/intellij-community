@@ -17,7 +17,7 @@
 package com.intellij.compiler.ant.taskdefs;
 
 import com.intellij.compiler.ant.Tag;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -27,11 +27,11 @@ import org.jetbrains.annotations.NonNls;
 public class Import extends Tag{
   public Import(@NonNls String file, boolean optional) {
     //noinspection HardCodedStringLiteral
-    super("import", new Pair[] {Pair.create("file", file), Pair.create("optional", optional ? "true" : "false")});
+    super("import", Couple.newOne("file", file), Couple.newOne("optional", optional ? "true" : "false"));
   }
 
   public Import(@NonNls String file) {
     //noinspection HardCodedStringLiteral
-    super("import", new Pair[] {Pair.create("file", file)});
+    super("import", Couple.newOne("file", file));
   }
 }

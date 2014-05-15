@@ -17,7 +17,7 @@
 package com.intellij.compiler.ant.taskdefs;
 
 import com.intellij.compiler.ant.Tag;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -27,6 +27,6 @@ import org.jetbrains.annotations.NonNls;
 public class AntProject extends Tag {
   public AntProject(@NonNls String name, @NonNls String defaultTarget) {
     //noinspection HardCodedStringLiteral
-    super("project", new Pair[]{Pair.create("name", name), Pair.create("default", defaultTarget)});
+    super("project", Couple.newOne("name", name), Couple.newOne("default", defaultTarget));
   }
 }
