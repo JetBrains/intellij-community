@@ -259,10 +259,11 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   @NotNull
   @Override
   public PsiTypeElement createTypeElementFromText(@NotNull final String text, @Nullable final PsiElement context) throws IncorrectOperationException {
-    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, TYPE, level(context)), context);
+    final LanguageLevel level = level(context);
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, TYPE, level), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiTypeElement)) {
-      throw new IncorrectOperationException("Incorrect type '" + text + "'");
+      throw new IncorrectOperationException("Incorrect type '" + text + "' (" + level + ")");
     }
     return (PsiTypeElement)element;
   }
