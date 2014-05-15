@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.groovy.intentions.control;
 
 import com.intellij.psi.PsiElement;
-import org.jetbrains.plugins.groovy.intentions.base.ErrorUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.ErrorUtil;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ComparisonUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
