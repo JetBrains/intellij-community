@@ -23,9 +23,11 @@
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.CommonBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.actions.EditSourceAction;
+import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.actionSystem.*;
@@ -49,6 +51,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.ui.*;
@@ -71,16 +74,19 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
+import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.List;
 
 public class ShelvedChangesViewManager implements ProjectComponent {
   private final ChangesViewContentManager myContentManager;
   private final ShelveChangesManager myShelveChangesManager;
   private final Project myProject;
-  private final Tree myTree;
+  private final ShelfTree myTree;
   private Content myContent = null;
   private final ShelvedChangeDeleteProvider myDeleteProvider = new ShelvedChangeDeleteProvider();
   private boolean myUpdatePending = false;
@@ -188,9 +194,8 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     }
     else {
       if (myContent == null) {
-        JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
-        scrollPane.setBorder(null);
-        myContent = ContentFactory.SERVICE.getInstance().createContent(scrollPane, VcsBundle.message("shelf.tab"), false);
+        JPanel rootPanel = createRootPanel();
+        myContent = ContentFactory.SERVICE.getInstance().createContent(rootPanel, VcsBundle.message("shelf.tab"), false);
         myContent.setCloseable(false);
         myContentManager.addContent(myContent);
       }
@@ -202,6 +207,24 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       }      
     }
     myPostUpdateRunnable = null;
+  }
+
+  @NotNull
+  private JPanel createRootPanel() {
+    JScrollPane pane = ScrollPaneFactory.createScrollPane(myTree);
+    pane.setBorder(null);
+
+    DefaultActionGroup actionGroup = new DefaultActionGroup();
+    actionGroup.addAll((ActionGroup)ActionManager.getInstance().getAction("ShelvedChangesToolbar"));
+    actionGroup.add(new GearAction(myTree));
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, false);
+
+    JPanel rootPanel = new JPanel(new BorderLayout());
+    rootPanel.add(toolbar.getComponent(), BorderLayout.WEST);
+    rootPanel.add(pane, BorderLayout.CENTER);
+    DataManager.registerDataProvider(rootPanel, new TypeSafeDataProviderAdapter(myTree));
+
+    return rootPanel;
   }
 
   private TreeModel buildChangesModel() {
@@ -240,6 +263,29 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       }
     }
     return model;
+  }
+
+  private static class GearAction extends DumbAwareActionButton {
+
+    GearAction(@NotNull JComponent dataContextComponent) {
+      super("More actions", null, AllIcons.General.Gear);
+      getTemplatePresentation().setHoveredIcon(AllIcons.General.GearHover);
+      setContextComponent(dataContextComponent);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      InputEvent inputEvent = e.getInputEvent();
+      ActionGroup actionGroup = (ActionGroup)ActionManager.getInstance().getAction("ShelvedChangesToolbarGear");
+      ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ToolWindowContentUi.POPUP_PLACE, actionGroup);
+      int x = 0;
+      int y = 0;
+      if (inputEvent instanceof MouseEvent) {
+        x = ((MouseEvent)inputEvent).getX();
+        y = ((MouseEvent)inputEvent).getY();
+      }
+      popupMenu.getComponent().show(inputEvent.getComponent(), x, y);
+    }
   }
 
   private static class ChangelistComparator implements Comparator<ShelvedChangeList> {
