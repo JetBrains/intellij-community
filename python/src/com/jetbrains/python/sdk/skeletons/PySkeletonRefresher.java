@@ -15,9 +15,7 @@
  */
 package com.jetbrains.python.sdk.skeletons;
 
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.notification.Notification;
@@ -36,11 +34,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.ZipUtil;
@@ -228,31 +226,17 @@ public class PySkeletonRefresher {
   }
 
   private static String calculateExtraSysPath(@NotNull final Sdk sdk, @Nullable final String skeletonsPath) {
-    final Ref<File> skeletons = Ref.create();
-    final Ref<File> userSkeletons = Ref.create();
-    final Ref<File> remoteSources = Ref.create();
+    final File skeletons = skeletonsPath != null ? new File(skeletonsPath) : null;
 
-    try {
-      if (skeletonsPath != null) {
-        skeletons.set(new File(skeletonsPath).getCanonicalFile());
-      }
-      final VirtualFile userSkeletonsDir = PyUserSkeletonsUtil.getUserSkeletonsDirectory();
-      if (userSkeletonsDir != null) {
-        userSkeletons.set(new File(userSkeletonsDir.getPath()));
-      }
-      final VirtualFile remoteSourcesDir = PySdkUtil.findRemoteLibrariesDir(sdk);
-      if (remoteSourcesDir != null) {
-        remoteSources.set(new File(remoteSourcesDir.getPath()));
-      }
-    }
-    catch (final IOException e) {
-      LOG.error("Error getting real paths", e);
-    }
+    final VirtualFile userSkeletonsDir = PyUserSkeletonsUtil.getUserSkeletonsDirectory();
+    final File userSkeletons = userSkeletonsDir != null ? new File(userSkeletonsDir.getPath()) : null;
 
+    final VirtualFile remoteSourcesDir = PySdkUtil.findRemoteLibrariesDir(sdk);
+    final File remoteSources = remoteSourcesDir != null ? new File(remoteSourcesDir.getPath()) : null;
 
     final VirtualFile[] classDirs = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
 
-    return Joiner.on(File.pathSeparator).join(ContainerUtil.mapNotNull(classDirs, new com.intellij.util.Function<VirtualFile, Object>() {
+    return Joiner.on(File.pathSeparator).join(ContainerUtil.mapNotNull(classDirs, new Function<VirtualFile, Object>() {
 
       @Override
       public Object fun(VirtualFile file) {
@@ -260,9 +244,9 @@ public class PySkeletonRefresher {
           // We compare canonical files, not strings because "c:/some/folder" equals "c:\\some\\bin\\..\\folder\\"
           final File canonicalFile = new File(file.getPath());
           if (canonicalFile.exists() &&
-              !FileUtil.filesEqual(canonicalFile, skeletons.get()) &&
-              !FileUtil.filesEqual(canonicalFile, userSkeletons.get()) &&
-              !FileUtil.filesEqual(canonicalFile, remoteSources.get())) {
+              !FileUtil.filesEqual(canonicalFile, skeletons) &&
+              !FileUtil.filesEqual(canonicalFile, userSkeletons) &&
+              !FileUtil.filesEqual(canonicalFile, remoteSources)) {
             return file.getPath();
           }
         }
