@@ -1222,7 +1222,7 @@ public class XmlSerializerTest extends TestCase {
     bean.myValues.put("b", ContainerUtil.newHashSet("first2", "second2"));
 
     doSerializerTest(
-      "<BeanWithMapWithCollectionValue>\n" +
+      "<BeanWithMapWithSetValue>\n" +
       "  <option name=\"myValues\">\n" +
       "    <entry-tag key-attr=\"a\">\n" +
       "      <value>\n" +
@@ -1241,7 +1241,7 @@ public class XmlSerializerTest extends TestCase {
       "      </value>\n" +
       "    </entry-tag>\n" +
       "  </option>\n" +
-      "</BeanWithMapWithCollectionValue>",
+      "</BeanWithMapWithSetValue>",
       bean);
   }
 
