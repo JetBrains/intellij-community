@@ -35,7 +35,7 @@ import java.util.Map;
  * Null values are NOT allowed
  */
 public final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
-  private static class WeakKey<K, V> extends WeakReference<K> implements Key<K, V> {
+  private static class WeakKey<K, V> extends WeakReference<K> implements KeyReference<K, V> {
     private final int myHash; /* Hashcode of key, stored here since the key may be tossed by the GC */
     private final V value;
 
@@ -52,9 +52,9 @@ public final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V
 
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof Key)) return false;
+      if (!(o instanceof KeyReference)) return false;
       Object t = get();
-      Object u = ((Key)o).get();
+      Object u = ((KeyReference)o).get();
       if (t == null || u == null) return false;
       if (t == u) return true;
       return t.equals(u);
@@ -66,7 +66,7 @@ public final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V
   }
 
   @Override
-  protected Key<K, V> createKey(@NotNull K key, V value, @NotNull TObjectHashingStrategy<K> hashingStrategy) {
+  protected KeyReference<K, V> createKey(@NotNull K key, V value, @NotNull TObjectHashingStrategy<K> hashingStrategy) {
     return new WeakKey<K, V>(key, hashingStrategy.computeHashCode(key), value, myReferenceQueue);
   }
 

@@ -37,11 +37,11 @@ import java.util.concurrent.ConcurrentMap;
  */
 abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V>, TObjectHashingStrategy<K> {
   protected final ReferenceQueue<K> myReferenceQueue = new ReferenceQueue<K>();
-  private final ConcurrentMap<Key<K, V>, V> myMap; // hashing strategy must be canonical, we compute corresponding hash codes using our own myHashingStrategy
+  private final ConcurrentMap<KeyReference<K, V>, V> myMap; // hashing strategy must be canonical, we compute corresponding hash codes using our own myHashingStrategy
   @NotNull
   private final TObjectHashingStrategy<K> myHashingStrategy;
 
-  interface Key<K, V> {
+  interface KeyReference<K, V> {
     K get();
 
     V getValue();
@@ -52,9 +52,9 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     int hashCode();
   }
 
-  protected abstract Key<K, V> createKey(@NotNull K key, V value, @NotNull TObjectHashingStrategy<K> hashingStrategy);
+  protected abstract KeyReference<K, V> createKey(@NotNull K key, V value, @NotNull TObjectHashingStrategy<K> hashingStrategy);
 
-  private static class HardKey<K, V> implements Key<K, V> {
+  private static class HardKey<K, V> implements KeyReference<K, V> {
     private K myKey;
     private int myHash;
 
@@ -75,9 +75,9 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
 
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof Key)) return false;
+      if (!(o instanceof KeyReference)) return false;
       Object t = get();
-      Object u = ((Key)o).get();
+      Object u = ((KeyReference)o).get();
       if (t == null || u == null) return false;
       if (t == u) return true;
       return t.equals(u);
@@ -88,7 +88,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     }
   }
 
-  private static final Key NULL_KEY = new Key() {
+  private static final KeyReference NULL_KEY = new KeyReference() {
     @Override
     public Object get() {
       return null;
@@ -102,9 +102,9 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
 
   // returns true if some keys were processed
   boolean processQueue() {
-    Key<K, V> wk;
+    KeyReference<K, V> wk;
     boolean processed = false;
-    while ((wk = (Key)myReferenceQueue.poll()) != null) {
+    while ((wk = (KeyReference)myReferenceQueue.poll()) != null) {
       V value = wk.getValue();
       myMap.remove(wk, value);
       processed = true;
@@ -149,7 +149,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
                               int concurrencyLevel,
                               @NotNull TObjectHashingStrategy<K> hashingStrategy) {
     myHashingStrategy = hashingStrategy == THIS ? this : hashingStrategy;
-    myMap = ContainerUtil.<Key<K, V>, V>newConcurrentMap(initialCapacity, loadFactor, concurrencyLevel, CANONICAL);
+    myMap = ContainerUtil.<KeyReference<K, V>, V>newConcurrentMap(initialCapacity, loadFactor, concurrencyLevel, CANONICAL);
   }
 
   @Override
@@ -208,7 +208,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   @Override
   public V put(K key, V value) {
     processQueue();
-    Key<K, V> weakKey = key == null ? NULL_KEY : createKey(key, value, myHashingStrategy);
+    KeyReference<K, V> weakKey = key == null ? NULL_KEY : createKey(key, value, myHashingStrategy);
     return myMap.put(weakKey, value);
   }
 
@@ -276,20 +276,20 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
 
   /* Internal class for entry sets */
   private class EntrySet extends AbstractSet<Map.Entry<K, V>> {
-    Set<Map.Entry<Key<K, V>, V>> hashEntrySet = myMap.entrySet();
+    Set<Map.Entry<KeyReference<K, V>, V>> hashEntrySet = myMap.entrySet();
 
     @NotNull
     @Override
     public Iterator<Map.Entry<K, V>> iterator() {
       return new Iterator<Map.Entry<K, V>>() {
-        Iterator<Map.Entry<Key<K, V>, V>> hashIterator = hashEntrySet.iterator();
+        Iterator<Map.Entry<KeyReference<K, V>, V>> hashIterator = hashEntrySet.iterator();
         RefEntry<K, V> next = null;
 
         @Override
         public boolean hasNext() {
           while (hashIterator.hasNext()) {
-            Map.Entry<Key<K, V>, V> ent = hashIterator.next();
-            Key<K, V> wk = ent.getKey();
+            Map.Entry<KeyReference<K, V>, V> ent = hashIterator.next();
+            KeyReference<K, V> wk = ent.getKey();
             K k = null;
             if (wk != null && (k = wk.get()) == null) {
               /* Weak key has been cleared by GC */
@@ -353,7 +353,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
       int h = 0;
       for (Object aHashEntrySet : hashEntrySet) {
         Map.Entry ent = (Map.Entry)aHashEntrySet;
-        Key wk = (Key)ent.getKey();
+        KeyReference wk = (KeyReference)ent.getKey();
         if (wk == null) continue;
         Object v;
         h += wk.hashCode() ^ ((v = ent.getValue()) == null ? 0 : v.hashCode());

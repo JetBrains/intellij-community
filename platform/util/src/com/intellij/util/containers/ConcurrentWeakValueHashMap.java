@@ -46,7 +46,7 @@ public final class ConcurrentWeakValueHashMap<K,V> extends ConcurrentRefValueHas
     super(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 
-  private static class MyWeakReference<K,T> extends WeakReference<T> implements MyValueReference<K,T> {
+  private static class MyWeakReference<K,T> extends WeakReference<T> implements ValueReference<K,T> {
     private final K key;
     private MyWeakReference(@NotNull K key, @NotNull T referent, @NotNull ReferenceQueue<T> q) {
       super(referent, q);
@@ -64,7 +64,7 @@ public final class ConcurrentWeakValueHashMap<K,V> extends ConcurrentRefValueHas
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      final MyValueReference that = (MyValueReference)o;
+      final ValueReference that = (ValueReference)o;
 
       return key.equals(that.getKey()) && Comparing.equal(get(), that.get());
     }
@@ -75,7 +75,7 @@ public final class ConcurrentWeakValueHashMap<K,V> extends ConcurrentRefValueHas
   }
 
   @Override
-  protected MyValueReference<K, V> createRef(@NotNull K key, @NotNull V value) {
+  protected ValueReference<K, V> createRef(@NotNull K key, @NotNull V value) {
     return new MyWeakReference<K,V>(key, value, myQueue);
   }
 }

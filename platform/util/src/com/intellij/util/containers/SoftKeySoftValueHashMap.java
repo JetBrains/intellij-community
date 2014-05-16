@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,13 @@ import java.lang.ref.SoftReference;
 import java.util.*;
 
 public final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
-  private final SoftHashMap<K, MyValueReference<K,V>> mySoftKeyMap = new SoftHashMap<K, MyValueReference<K, V>>();
+  private final SoftHashMap<K, ValueReference<K,V>> mySoftKeyMap = new SoftHashMap<K, ValueReference<K, V>>();
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
 
-  private static class MyValueReference<K,V> extends SoftReference<V> {
+  private static class ValueReference<K,V> extends SoftReference<V> {
     private final SoftHashMap.Key<K> key;
 
-    private MyValueReference(SoftHashMap.Key<K> key, V referent, ReferenceQueue<? super V> q) {
+    private ValueReference(SoftHashMap.Key<K> key, V referent, ReferenceQueue<? super V> q) {
       super(referent, q);
       this.key = key;
     }
@@ -38,7 +38,7 @@ public final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
   boolean processQueue() {
     boolean processed = mySoftKeyMap.processQueue();
     while(true) {
-      MyValueReference<K,V> ref = (MyValueReference<K, V>)myQueue.poll();
+      ValueReference<K,V> ref = (ValueReference<K, V>)myQueue.poll();
       if (ref == null) break;
       SoftHashMap.Key<K> key = ref.key;
       mySoftKeyMap.removeKey(key);
@@ -49,7 +49,7 @@ public final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
 
   @Override
   public V get(Object key) {
-    MyValueReference<K,V> ref = mySoftKeyMap.get(key);
+    ValueReference<K,V> ref = mySoftKeyMap.get(key);
     return com.intellij.reference.SoftReference.dereference(ref);
   }
 
@@ -57,15 +57,15 @@ public final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
   public V put(K key, V value) {
     processQueue();
     SoftHashMap.Key<K> softKey = mySoftKeyMap.createKey(key);
-    MyValueReference<K, V> reference = new MyValueReference<K, V>(softKey, value, myQueue);
-    MyValueReference<K,V> oldRef = mySoftKeyMap.putKey(softKey, reference);
+    ValueReference<K, V> reference = new ValueReference<K, V>(softKey, value, myQueue);
+    ValueReference<K,V> oldRef = mySoftKeyMap.putKey(softKey, reference);
     return com.intellij.reference.SoftReference.dereference(oldRef);
   }
 
   @Override
   public V remove(Object key) {
     processQueue();
-    MyValueReference<K,V> ref = mySoftKeyMap.remove(key);
+    ValueReference<K,V> ref = mySoftKeyMap.remove(key);
     return com.intellij.reference.SoftReference.dereference(ref);
   }
 
@@ -110,8 +110,8 @@ public final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
   @Override
   public Collection<V> values() {
     List<V> result = new ArrayList<V>();
-    final Collection<MyValueReference<K, V>> refs = mySoftKeyMap.values();
-    for (MyValueReference<K, V> ref : refs) {
+    final Collection<ValueReference<K, V>> refs = mySoftKeyMap.values();
+    for (ValueReference<K, V> ref : refs) {
       final V value = ref.get();
       if (value != null) {
         result.add(value);
