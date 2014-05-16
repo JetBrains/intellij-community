@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -548,23 +549,23 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
   private abstract class ExternalVsInternalChangesIntersection {
     protected final Collection<Change> myInChanges;
-    protected final Map<Pair<String, String>, LocalChangeList> myInternalMap;
+    protected final Map<Couple<String>, LocalChangeList> myInternalMap;
     protected final LocalChangeList myDefaultCopy;
     protected final Map<String, LocalChangeList> myIncludedListsCopies;
 
     protected ExternalVsInternalChangesIntersection(final Collection<Change> inChanges) {
       myInChanges = inChanges;
-      myInternalMap = new HashMap<Pair<String, String>, LocalChangeList>();
+      myInternalMap = new HashMap<Couple<String>, LocalChangeList>();
       myDefaultCopy = myDefault.copy();
       myIncludedListsCopies = new HashMap<String, LocalChangeList>();
     }
 
-    private Pair<String, String> keyForChange(final Change change) {
+    private Couple<String> keyForChange(final Change change) {
       final FilePath beforePath = ChangesUtil.getBeforePath(change);
       final String beforeKey = beforePath == null ? null : beforePath.getIOFile().getAbsolutePath();
       final FilePath afterPath = ChangesUtil.getAfterPath(change);
       final String afterKey = afterPath == null ? null : afterPath.getIOFile().getAbsolutePath();
-      return Pair.create(beforeKey, afterKey);
+      return Couple.newOne(beforeKey, afterKey);
     }
 
     private void preparation() {
@@ -577,13 +578,13 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       }
     }
 
-    protected abstract void processInChange(final Pair<String, String> key, final Change change);
+    protected abstract void processInChange(final Couple<String> key, final Change change);
 
     public void run() {
       preparation();
 
       for (Change change : myInChanges) {
-        final Pair<String, String> key = keyForChange(change);
+        final Couple<String> key = keyForChange(change);
         processInChange(key, change);
       }
     }
@@ -601,7 +602,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       myListToChangesMap = new HashMap<String, List<Change>>();
     }
 
-    protected void processInChange(Pair<String, String> key, Change change) {
+    protected void processInChange(Couple<String> key, Change change) {
       LocalChangeList tmpList = myInternalMap.get(key);
       if (tmpList == null) {
         tmpList = myDefaultCopy;
@@ -629,7 +630,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       myValidChanges = new ArrayList<Change>();
     }
 
-    protected void processInChange(Pair<String, String> key, Change change) {
+    protected void processInChange(Couple<String> key, Change change) {
       final LocalChangeList list = myInternalMap.get(key);
       if (list != null) {
         myIncludedListsCopies.put(list.getName(), list);

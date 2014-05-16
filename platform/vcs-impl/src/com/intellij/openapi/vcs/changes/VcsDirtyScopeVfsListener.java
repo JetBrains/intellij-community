@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.ConstantZipperUpdater;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
@@ -70,16 +70,16 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
           list = new ArrayList<FileAndDirsCollector>(myQueue);
           myQueue.clear();
         }
-        Map<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>> map =
-          new HashMap<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>>();
+        Map<VcsDirtyScopeManager, Couple<HashSet<FilePath>>> map =
+          new HashMap<VcsDirtyScopeManager, Couple<HashSet<FilePath>>>();
         for (FileAndDirsCollector collector : list) {
-          Map<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>> pairMap =
+          Map<VcsDirtyScopeManager, Couple<HashSet<FilePath>>> pairMap =
             collector.map;
-          for (Map.Entry<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>> entry : pairMap
+          for (Map.Entry<VcsDirtyScopeManager, Couple<HashSet<FilePath>>> entry : pairMap
             .entrySet()) {
             final VcsDirtyScopeManager key = entry.getKey();
-            Pair<HashSet<FilePath>, HashSet<FilePath>> existing = map.get(key);
-            Pair<HashSet<FilePath>, HashSet<FilePath>> value = entry.getValue();
+            Couple<HashSet<FilePath>> existing = map.get(key);
+            Couple<HashSet<FilePath>> value = entry.getValue();
             if (existing != null) {
               existing.getFirst().addAll(value.getFirst());
               existing.getSecond().addAll(value.getSecond());
@@ -195,8 +195,8 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
    */
   private class FileAndDirsCollector {
     // dirty scope manager -> Pair(set of dirty files, set of dirty directories)
-    Map<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>> map =
-      new HashMap<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>>();
+    Map<VcsDirtyScopeManager, Couple<HashSet<FilePath>>> map =
+      new HashMap<VcsDirtyScopeManager, Couple<HashSet<FilePath>>>();
 
     /**
      * For the given VirtualFile constructs a FilePathImpl object without referring to the initial VirtualFile object
@@ -214,9 +214,9 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
 
       final Collection<VcsDirtyScopeManager> managers = getManagers(file);
       for (VcsDirtyScopeManager manager : managers) {
-        Pair<HashSet<FilePath>, HashSet<FilePath>> filesAndDirs = map.get(manager);
+        Couple<HashSet<FilePath>> filesAndDirs = map.get(manager);
         if (filesAndDirs == null) {
-          filesAndDirs = Pair.create(new HashSet<FilePath>(), new HashSet<FilePath>());
+          filesAndDirs = Couple.newOne(new HashSet<FilePath>(), new HashSet<FilePath>());
           map.put(manager, filesAndDirs);
         }
 
@@ -243,8 +243,8 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
       add(file, true, forDelete);
     }
 
-    private void markDirty(final Map<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>> outerMap) {
-      for (Map.Entry<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>> entry : outerMap.entrySet()) {
+    private void markDirty(final Map<VcsDirtyScopeManager, Couple<HashSet<FilePath>>> outerMap) {
+      for (Map.Entry<VcsDirtyScopeManager, Couple<HashSet<FilePath>>> entry : outerMap.entrySet()) {
         VcsDirtyScopeManager manager = entry.getKey();
         HashSet<FilePath> files = entry.getValue().first;
         HashSet<FilePath> dirs = entry.getValue().second;
