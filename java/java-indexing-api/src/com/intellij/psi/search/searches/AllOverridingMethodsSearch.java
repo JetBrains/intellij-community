@@ -17,7 +17,7 @@
 package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -32,7 +32,7 @@ import com.intellij.util.QueryExecutor;
  * Searches deeply for all overriding methods of all methods in a class, processing pairs
  * (method in original class, overriding method)
  */
-public class AllOverridingMethodsSearch extends ExtensibleQueryFactory<Couple<PsiMethod>, AllOverridingMethodsSearch.SearchParameters> {
+public class AllOverridingMethodsSearch extends ExtensibleQueryFactory<Pair<PsiMethod, PsiMethod>, AllOverridingMethodsSearch.SearchParameters> {
   public static ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.allOverridingMethodsSearch");
   public static final AllOverridingMethodsSearch INSTANCE = new AllOverridingMethodsSearch();
 
@@ -57,12 +57,12 @@ public class AllOverridingMethodsSearch extends ExtensibleQueryFactory<Couple<Ps
   private AllOverridingMethodsSearch() {
   }
 
-  public static Query<Couple<PsiMethod>> search(final PsiClass aClass, SearchScope scope) {
+  public static Query<Pair<PsiMethod, PsiMethod>> search(final PsiClass aClass, SearchScope scope) {
     if (aClass.hasModifierProperty(PsiModifier.FINAL)) return EmptyQuery.getEmptyQuery(); // Optimization
     return INSTANCE.createUniqueResultsQuery(new SearchParameters(aClass, scope));
   }
 
-  public static Query<Couple<PsiMethod>> search(final PsiClass aClass) {
+  public static Query<Pair<PsiMethod, PsiMethod>> search(final PsiClass aClass) {
     return search(aClass, GlobalSearchScope.allScope(aClass.getProject()));
   }
 }

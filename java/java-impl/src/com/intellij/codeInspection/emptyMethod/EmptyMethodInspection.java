@@ -319,10 +319,10 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
         final List<PsiElement> psiElements = new ArrayList<PsiElement>();
         psiElements.add(psiMethod);
         if (Boolean.valueOf(myHint).booleanValue()) {
-          final Query<Couple<PsiMethod>> query = AllOverridingMethodsSearch.search(psiMethod.getContainingClass());
-          query.forEach(new Processor<Couple<PsiMethod>>() {
+          final Query<Pair<PsiMethod, PsiMethod>> query = AllOverridingMethodsSearch.search(psiMethod.getContainingClass());
+          query.forEach(new Processor<Pair<PsiMethod, PsiMethod>>() {
             @Override
-            public boolean process(final Couple<PsiMethod> pair) {
+            public boolean process(final Pair<PsiMethod, PsiMethod> pair) {
               if (pair.first == psiMethod) {
                 psiElements.add(pair.second);
               }

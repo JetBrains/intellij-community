@@ -24,7 +24,7 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
@@ -297,10 +297,10 @@ public class RedundantThrows extends GlobalJavaBatchInspectionTool {
           removeException(refDerived, exceptionType, refsToDelete, (PsiMethod)refDerived.getElement());
         }
       } else {
-        final Query<Couple<PsiMethod>> query = AllOverridingMethodsSearch.search(psiMethod.getContainingClass());
-        query.forEach(new Processor<Couple<PsiMethod>>(){
+        final Query<Pair<PsiMethod,PsiMethod>> query = AllOverridingMethodsSearch.search(psiMethod.getContainingClass());
+        query.forEach(new Processor<Pair<PsiMethod, PsiMethod>>(){
           @Override
-          public boolean process(final Couple<PsiMethod> pair) {
+          public boolean process(final Pair<PsiMethod, PsiMethod> pair) {
             if (pair.first == psiMethod) {
               removeException(null, exceptionType, refsToDelete, pair.second);
             }

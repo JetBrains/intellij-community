@@ -31,7 +31,7 @@ import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -205,9 +205,9 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
     }
 
     for (final PsiClass aClass : classes) {
-      AllOverridingMethodsSearch.search(aClass).forEach(new Processor<Couple<PsiMethod>>() {
+      AllOverridingMethodsSearch.search(aClass).forEach(new Processor<Pair<PsiMethod, PsiMethod>>() {
         @Override
-        public boolean process(final Couple<PsiMethod> pair) {
+        public boolean process(final Pair<PsiMethod, PsiMethod> pair) {
           ProgressManager.checkCanceled();
 
           final PsiMethod superMethod = pair.getFirst();
