@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlText;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -45,6 +46,7 @@ public class XmlCopyPastePreProcessor implements CopyPastePreProcessor {
     return null;
   }
 
+  @NotNull
   public String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
     final Document document = editor.getDocument();
     PsiDocumentManager.getInstance(project).commitDocument(document);

@@ -886,9 +886,10 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<RawTextWi
       return null;
     }
 
+    @NotNull
     @Override
     public String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
-      return null;
+      return text;
     }
   }
 }
