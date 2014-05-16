@@ -155,7 +155,7 @@
       <reference ref="ChangesView.CreatePatchFromChanges"/>
     </group>
 
-    <group id="ShelvedChangesToolbarGear">
+    <group id="ShelvedChangesToolbarGear" popup="true" icon="AllIcons.General.SecondaryGroup">
       <reference ref="ShelvedChanges.Unshelve"/>
       <reference ref="ShelveChanges.UnshelveWithDialog"/>
       <reference ref="ShelvedChanges.Restore"/>

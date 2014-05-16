@@ -23,7 +23,6 @@
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.CommonBundle;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.actions.EditSourceAction;
@@ -51,7 +50,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.ui.*;
@@ -75,7 +73,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
@@ -216,7 +213,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.addAll((ActionGroup)ActionManager.getInstance().getAction("ShelvedChangesToolbar"));
-    actionGroup.add(new GearAction(myTree));
+    actionGroup.add(ActionManager.getInstance().getAction("ShelvedChangesToolbarGear"));
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, false);
 
     JPanel rootPanel = new JPanel(new BorderLayout());
@@ -263,29 +260,6 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       }
     }
     return model;
-  }
-
-  private static class GearAction extends DumbAwareActionButton {
-
-    GearAction(@NotNull JComponent dataContextComponent) {
-      super("More actions", null, AllIcons.General.Gear);
-      getTemplatePresentation().setHoveredIcon(AllIcons.General.GearHover);
-      setContextComponent(dataContextComponent);
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      InputEvent inputEvent = e.getInputEvent();
-      ActionGroup actionGroup = (ActionGroup)ActionManager.getInstance().getAction("ShelvedChangesToolbarGear");
-      ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ToolWindowContentUi.POPUP_PLACE, actionGroup);
-      int x = 0;
-      int y = 0;
-      if (inputEvent instanceof MouseEvent) {
-        x = ((MouseEvent)inputEvent).getX();
-        y = ((MouseEvent)inputEvent).getY();
-      }
-      popupMenu.getComponent().show(inputEvent.getComponent(), x, y);
-    }
   }
 
   private static class ChangelistComparator implements Comparator<ShelvedChangeList> {
