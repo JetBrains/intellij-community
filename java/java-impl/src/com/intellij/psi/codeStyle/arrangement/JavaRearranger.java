@@ -213,7 +213,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     @Nullable Document document,
     @NotNull Collection<TextRange> ranges,
     @NotNull PsiElement element,
-    @Nullable ArrangementSettings settings)
+    @NotNull ArrangementSettings settings)
   {
     Set<ArrangementSettingsToken> groupingRules = getGroupingRules(settings);
     JavaArrangementParseInfo existingEntriesInfo = new JavaArrangementParseInfo();
@@ -232,22 +232,20 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
   public List<JavaElementArrangementEntry> parse(@NotNull PsiElement root,
                                                  @Nullable Document document,
                                                  @NotNull Collection<TextRange> ranges,
-                                                 @Nullable ArrangementSettings settings)
+                                                 @NotNull ArrangementSettings settings)
   {
     // Following entries are subject to arrangement: class, interface, field, method.
     JavaArrangementParseInfo parseInfo = new JavaArrangementParseInfo();
     root.accept(new JavaArrangementVisitor(parseInfo, document, ranges, getGroupingRules(settings)));
-    if (settings != null) {
-      for (ArrangementGroupingRule rule : settings.getGroupings()) {
-        if (GETTERS_AND_SETTERS.equals(rule.getGroupingType())) {
-          setupGettersAndSetters(parseInfo);
-        }
-        else if (DEPENDENT_METHODS.equals(rule.getGroupingType())) {
-          setupUtilityMethods(parseInfo, rule.getOrderType());
-        }
-        else if (OVERRIDDEN_METHODS.equals(rule.getGroupingType())) {
-          setupOverriddenMethods(parseInfo);
-        }
+    for (ArrangementGroupingRule rule : settings.getGroupings()) {
+      if (GETTERS_AND_SETTERS.equals(rule.getGroupingType())) {
+        setupGettersAndSetters(parseInfo);
+      }
+      else if (DEPENDENT_METHODS.equals(rule.getGroupingType())) {
+        setupUtilityMethods(parseInfo, rule.getOrderType());
+      }
+      else if (OVERRIDDEN_METHODS.equals(rule.getGroupingType())) {
+        setupOverriddenMethods(parseInfo);
       }
     }
     setupFieldInitializationDependencies(parseInfo.getFieldDependencyRoots());
