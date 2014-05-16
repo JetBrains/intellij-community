@@ -16,7 +16,7 @@
 
 package com.intellij.vcs.log.newgraph.gpaph.fragments;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.util.Function;
 import com.intellij.vcs.log.newgraph.SomeGraph;
 import com.intellij.vcs.log.newgraph.gpaph.Edge;
@@ -96,19 +96,19 @@ public class FragmentGenerator {
 
   @Nullable
   public GraphFragment getDownFragment(int upperVisibleNodeIndex) {
-    Pair<Integer, Integer> fragment = getFragment(myMutableGraph.getIndexInPermanentGraph(upperVisibleNodeIndex),
-                                                  downNodesFun,
-                                                  upNodesFun,
-                                                  thisNodeCantBeInMiddle);
+    Couple<Integer> fragment = getFragment(myMutableGraph.getIndexInPermanentGraph(upperVisibleNodeIndex),
+                                           downNodesFun,
+                                           upNodesFun,
+                                           thisNodeCantBeInMiddle);
     return fragment == null ? null : new GraphFragment(myMutableGraph.toVisibleIndex(fragment.first), myMutableGraph.toVisibleIndex(fragment.second));
   }
 
   @Nullable
   public GraphFragment getUpFragment(int lowerNodeIndex) {
-    Pair<Integer, Integer> fragment = getFragment(myMutableGraph.getIndexInPermanentGraph(lowerNodeIndex),
-                                                  upNodesFun,
-                                                  downNodesFun,
-                                                  thisNodeCantBeInMiddle);
+    Couple<Integer> fragment = getFragment(myMutableGraph.getIndexInPermanentGraph(lowerNodeIndex),
+                                           upNodesFun,
+                                           downNodesFun,
+                                           thisNodeCantBeInMiddle);
     return fragment == null ? null : new GraphFragment(myMutableGraph.toVisibleIndex(fragment.second), myMutableGraph.toVisibleIndex(fragment.first));
   }
 
@@ -159,10 +159,10 @@ public class FragmentGenerator {
   }
 
   @Nullable
-  private static Pair<Integer, Integer> getFragment(int startNode,
-                                                    Function<Integer, List<Integer>> getNextNodes,
-                                                    Function<Integer, List<Integer>> getPrevNodes,
-                                                    Function<Integer, Boolean> thisNodeCantBeInMiddle) {
+  private static Couple<Integer> getFragment(int startNode,
+                                             Function<Integer, List<Integer>> getNextNodes,
+                                             Function<Integer, List<Integer>> getPrevNodes,
+                                             Function<Integer, Boolean> thisNodeCantBeInMiddle) {
     Set<Integer> blackNodes = new HashSet<Integer>();
     blackNodes.add(startNode);
 
@@ -197,7 +197,7 @@ public class FragmentGenerator {
     }
 
     if (endNode != -1)
-      return Pair.create(startNode, endNode);
+      return Couple.newOne(startNode, endNode);
     else
       return null;
   }

@@ -15,10 +15,13 @@
  */
 package com.intellij.vcs.log.newgraph.gpaph.impl;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.hash.HashMap;
+import com.intellij.vcs.log.facade.utils.Flags;
+import com.intellij.vcs.log.facade.utils.UpdatableIntToIntMap;
+import com.intellij.vcs.log.facade.utils.impl.ListIntToIntMap;
 import com.intellij.vcs.log.newgraph.GraphFlags;
 import com.intellij.vcs.log.newgraph.PermanentGraph;
 import com.intellij.vcs.log.newgraph.PermanentGraphLayout;
@@ -30,9 +33,6 @@ import com.intellij.vcs.log.newgraph.gpaph.actions.LinearBranchesExpansionIntern
 import com.intellij.vcs.log.newgraph.gpaph.fragments.FragmentGenerator;
 import com.intellij.vcs.log.newgraph.gpaph.fragments.GraphFragment;
 import com.intellij.vcs.log.newgraph.utils.DfsUtil;
-import com.intellij.vcs.log.facade.utils.Flags;
-import com.intellij.vcs.log.facade.utils.UpdatableIntToIntMap;
-import com.intellij.vcs.log.facade.utils.impl.ListIntToIntMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -157,10 +157,10 @@ public class CollapsedMutableGraph extends MutableGraphWithHiddenNodes<Collapsed
     private final DfsUtil myDfsUtil;
 
     @NotNull
-    private final Map<Integer, Pair<Integer, Integer>> upToEdge = new HashMap<Integer, Pair<Integer, Integer>>();
+    private final Map<Integer, Couple<Integer>> upToEdge = new HashMap<Integer, Couple<Integer>>();
 
     @NotNull
-    private final Map<Integer, Pair<Integer, Integer>> downToEdge = new HashMap<Integer, Pair<Integer, Integer>>();
+    private final Map<Integer, Couple<Integer>> downToEdge = new HashMap<Integer, Couple<Integer>>();
 
     public GraphWithElementsInfoImpl(@NotNull PermanentGraph permanentGraph,
                                      @NotNull Flags visibleNodesInBranches,
@@ -175,13 +175,13 @@ public class CollapsedMutableGraph extends MutableGraphWithHiddenNodes<Collapsed
 
     // nodes up and down must be loaded
     public void collapse(int upNodeIndex, final int downNodeIndex) {
-      Pair<Integer, Integer> edge = Pair.create(upNodeIndex, downNodeIndex);
+      Couple<Integer> edge = Couple.newOne(upNodeIndex, downNodeIndex);
 
       myDfsUtil.nodeDfsIterator(upNodeIndex, new DfsUtil.NextNode() {
         @Override
         public int fun(int currentNode) {
           if (upToEdge.containsKey(currentNode)) {
-            Pair<Integer, Integer> edge = upToEdge.remove(currentNode);
+            Couple<Integer> edge = upToEdge.remove(currentNode);
             downToEdge.remove(edge.second);
             if (edge.second == downNodeIndex)
               return NODE_NOT_FOUND;
@@ -260,7 +260,7 @@ public class CollapsedMutableGraph extends MutableGraphWithHiddenNodes<Collapsed
     @NotNull
     @Override
     public List<Integer> getUpNodes(int nodeIndex) {
-      Pair<Integer, Integer> edge = downToEdge.get(nodeIndex);
+      Couple<Integer> edge = downToEdge.get(nodeIndex);
       if (edge != null)
         return Collections.singletonList(edge.first);
 
@@ -275,7 +275,7 @@ public class CollapsedMutableGraph extends MutableGraphWithHiddenNodes<Collapsed
     @NotNull
     @Override
     public List<Integer> getDownNodes(int nodeIndex) {
-      Pair<Integer, Integer> edge = upToEdge.get(nodeIndex);
+      Couple<Integer> edge = upToEdge.get(nodeIndex);
       if (edge != null)
         return Collections.singletonList(edge.second);
 

@@ -15,7 +15,7 @@
  */
 package com.intellij.vcs.log.newgraph.render;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.graph.PaintInfo;
 import com.intellij.vcs.log.newgraph.gpaph.MutableGraph;
@@ -43,7 +43,7 @@ public class GraphRender {
 
   @NotNull
   public PaintInfo paint(int visibleRowIndex) {
-    Pair<Integer, Integer> imageAndBufferImageWidth = getImageAndBufferImageWidth(visibleRowIndex);
+    Couple<Integer> imageAndBufferImageWidth = getImageAndBufferImageWidth(visibleRowIndex);
     BufferedImage image = UIUtil.createImage(imageAndBufferImageWidth.getSecond(), HEIGHT_CELL, BufferedImage.TYPE_INT_ARGB);
     Graphics2D g2 = image.createGraphics();
 
@@ -76,14 +76,14 @@ public class GraphRender {
   }
 
   @NotNull
-  private Pair<Integer, Integer> getImageAndBufferImageWidth(int visibleRowIndex) {
+  private Couple<Integer> getImageAndBufferImageWidth(int visibleRowIndex) {
     int imageWidth = calcImageWidth(visibleRowIndex);
     int bufferWidth = calcMaxImageWith(visibleRowIndex);
 
     if (bufferWidth > imageWidth + 30) {
       imageWidth += (bufferWidth - imageWidth) / 4;
     }
-    return new Pair<Integer, Integer>(imageWidth, bufferWidth);
+    return Couple.newOne(imageWidth, bufferWidth);
   }
 
   private int calcImageWidth(int visibleRowIndex) {
