@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,8 +76,14 @@ public class ParameterInfoComponent extends JPanel {
 
   @TestOnly
   public static ParameterInfoUIContextEx createContext(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler, int currentParameterIndex) {
+    return createContext(objects, editor, handler, currentParameterIndex, null);
+  }
+
+  @TestOnly
+  public static ParameterInfoUIContextEx createContext(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler, int currentParameterIndex, @Nullable PsiElement parameterOwner) {
     final ParameterInfoComponent infoComponent = new ParameterInfoComponent(objects, editor, handler);
     infoComponent.setCurrentParameterIndex(currentParameterIndex);
+    infoComponent.setParameterOwner(parameterOwner);
     return infoComponent.new MyParameterContext();
   } 
   
