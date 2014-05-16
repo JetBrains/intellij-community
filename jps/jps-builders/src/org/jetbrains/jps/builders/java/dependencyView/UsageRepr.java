@@ -415,6 +415,11 @@ class UsageRepr {
         throw new BuildDataCorruptedException(e);
       }
     }
+
+    @Override
+    public void toStream(final DependencyContext context, final PrintStream stream) {
+      stream.println("ClassAsGenericBoundUsage: " + context.getValue(myClassName));
+    }
   }
 
   public static class ClassExtendsUsage extends Usage {
