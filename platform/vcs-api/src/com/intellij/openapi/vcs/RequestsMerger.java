@@ -147,7 +147,7 @@ public class RequestsMerger {
     LOG.debug("doAction: END " + action.name());
   }
 
-  private static enum MyState {
+  private enum MyState {
     empty() {
       @Override
       @NotNull
@@ -235,14 +235,14 @@ public class RequestsMerger {
     }
   }
 
-  private static enum MyExitAction {
+  private enum MyExitAction {
     empty,
     submitRequestToExecutor,
     markStart,
     markEnd
   }
 
-  private static enum MyAction {
+  private enum MyAction {
     request,
     start,
     finish
