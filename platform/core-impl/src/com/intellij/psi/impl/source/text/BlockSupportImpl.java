@@ -107,7 +107,8 @@ public class BlockSupportImpl extends BlockSupport {
         if (baseLanguage.isKindOf(reparseable.getLanguage()) && textRange.getLength() + lengthShift > 0) {
           final int start = textRange.getStartOffset();
           final int end = start + textRange.getLength() + lengthShift;
-          if (!assertFileLength2(file, newFileText, node, start, end)) {
+          if (end > newFileText.length()) {
+            reportInconsistentLength(file, newFileText, node, start, end);
             break;
           }
 
@@ -137,27 +138,23 @@ public class BlockSupportImpl extends BlockSupport {
     return makeFullParse(node, newFileText, textLength, fileImpl, indicator);
   }
 
-  private static boolean assertFileLength2(PsiFile file, CharSequence newFileText, ASTNode node, int start, int end) {
-    if (end > newFileText.length() || start > end) {
-      String message = "Index out of bounds: type=" + node.getElementType() +
-                       "; file=" + file +
-                       "; file.class=" + file.getClass() +
-                       "; start=" + start +
-                       "; end=" + end +
-                       "; length=" + node.getTextLength();
-      String newTextBefore = newFileText.subSequence(0, start).toString();
-      String oldTextBefore = file.getText().subSequence(0, start).toString();
-      if (oldTextBefore.equals(newTextBefore)) {
-        message += "; oldTextBefore==newTextBefore";
-      }
-      LOG.error(message,
-                new Attachment(file.getName() + "_oldNodeText.txt", node.getText()),
-                new Attachment(file.getName() + "_oldFileText.txt", file.getText()),
-                new Attachment(file.getName() + "_newFileText.txt", newFileText.toString())
-      );
-      return false;
+  private static void reportInconsistentLength(PsiFile file, CharSequence newFileText, ASTNode node, int start, int end) {
+    String message = "Index out of bounds: type=" + node.getElementType() +
+                     "; file=" + file +
+                     "; file.class=" + file.getClass() +
+                     "; start=" + start +
+                     "; end=" + end +
+                     "; length=" + node.getTextLength();
+    String newTextBefore = newFileText.subSequence(0, start).toString();
+    String oldTextBefore = file.getText().subSequence(0, start).toString();
+    if (oldTextBefore.equals(newTextBefore)) {
+      message += "; oldTextBefore==newTextBefore";
     }
-    return true;
+    LOG.error(message,
+              new Attachment(file.getName() + "_oldNodeText.txt", node.getText()),
+              new Attachment(file.getName() + "_oldFileText.txt", file.getText()),
+              new Attachment(file.getName() + "_newFileText.txt", newFileText.toString())
+    );
   }
 
   @NotNull
