@@ -759,6 +759,8 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   private void adjustMouseTrackingCounter(@NotNull XSourcePosition position, int increment) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
     Editor editor = XDebuggerUtilImpl.createEditor(XSourcePositionImpl.createOpenFileDescriptor(myProject, position));
     if (editor != null) {
       JComponent component = editor.getComponent();

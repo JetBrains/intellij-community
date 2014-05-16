@@ -127,6 +127,8 @@ public class ExecutionPointHighlighter {
 
   private void doShow() {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
     removeHighlighter();
 
     myEditor = myOpenFileDescriptor == null ? null : XDebuggerUtilImpl.createEditor(myOpenFileDescriptor);
