@@ -294,6 +294,7 @@ public abstract class OutMessage {
     }
   }
 
+  @NotNull
   @SuppressWarnings("UnusedDeclaration")
   public final CharSequence toJson() {
     return stringWriter.getBuffer();
