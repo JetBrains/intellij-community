@@ -31,15 +31,14 @@ public interface CopyPastePreProcessor {
   ExtensionPointName<CopyPastePreProcessor> EP_NAME = ExtensionPointName.create("com.intellij.copyPastePreProcessor");
 
   /**
-   *
-   * @param file
-   * @param startOffsets
-   * @param endOffsets
-   * @param text
-   * @return null if no preprocession is to be applied
+   * If not-null value is returned by this method, it will replace copied text. No other preprocessor will be invoked at copy time after this.
    */
   @Nullable
   String preprocessOnCopy(final PsiFile file, final int[] startOffsets, final int[] endOffsets, String text);
+
+  /**
+   * Replaces pasted text. <code>text</code> value should be returned if no processing is required.
+   */
   @NotNull
   String preprocessOnPaste(final Project project, final PsiFile file, final Editor editor, String text, final RawText rawText);
 }
