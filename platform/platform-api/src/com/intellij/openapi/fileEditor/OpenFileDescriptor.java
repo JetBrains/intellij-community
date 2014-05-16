@@ -71,10 +71,6 @@ public class OpenFileDescriptor implements Navigatable {
     this(project, file, -1, -1, -1, null, false);
   }
 
-  public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, @NotNull RangeMarker rangeMarker) {
-    this(project, file, -1, -1, -1, rangeMarker, false);
-  }
-
   private OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file,
                              int logicalLine, int logicalColumn, int offset, @Nullable RangeMarker rangeMarker, boolean persistent) {
     myProject = project;
