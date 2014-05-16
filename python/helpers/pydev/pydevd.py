@@ -1,11 +1,12 @@
 #IMPORTANT: pydevd_constants must be the 1st thing defined because it'll keep a reference to the original sys._getframe
+import traceback
+
 from django_debug import DjangoLineBreakpoint
 from pydevd_signature import SignatureFactory
 from pydevd_frame import add_exception_to_frame
 import pydev_imports
 from pydevd_breakpoints import * #@UnusedWildImport
 import fix_getpass
-
 from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          CMD_EVALUATE_EXPRESSION, \
                          CMD_EXEC_EXPRESSION, \
@@ -55,17 +56,16 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          StartClient, \
                          StartServer, \
                          InternalSetNextStatementThread, ReloadCodeCommand
-
 from pydevd_file_utils import NormFileToServer, GetFilenameAndBase
 import pydevd_file_utils
 import pydevd_vars
-import traceback
 import pydevd_vm_type
 import pydevd_tracing
 import pydevd_io
 import pydev_monkey
 from pydevd_additional_thread_info import PyDBAdditionalThreadInfo
 from pydevd_custom_frames import CustomFramesContainer, CustomFramesContainerInit
+
 
 if USE_LIB_COPY:
     import _pydev_time as time
@@ -238,37 +238,44 @@ if getattr(thread, '_original_start_new_thread', None) is None:
 #=======================================================================================================================
 class NewThreadStartup:
 
-    def __init__(self, original_func):
+    def __init__(self, original_func, args, kwargs):
         self.original_func = original_func
+        self.args = args
+        self.kwargs = kwargs
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self):
         global_debugger = GetGlobalDebugger()
-        if global_debugger is not None:
-            pydevd_tracing.SetTrace(global_debugger.trace_dispatch)
-        return self.original_func(*args, **kwargs)
+        global_debugger.SetTrace(global_debugger.trace_dispatch)
+        self.original_func(*self.args, **self.kwargs)
 
+thread.NewThreadStartup = NewThreadStartup
 
 #=======================================================================================================================
-# ClassWithPydevStartNewThread
+# pydev_start_new_thread
 #=======================================================================================================================
-class ClassWithPydevStartNewThread:
+def _pydev_start_new_thread(function, args, kwargs={}):
+    '''
+    We need to replace the original thread.start_new_thread with this function so that threads started through
+    it and not through the threading module are properly traced.
+    '''
+    if USE_LIB_COPY:
+        import _pydev_thread as thread
+    else:
+        try:
+            import thread
+        except ImportError:
+            import _thread as thread #Py3K changed it.
 
-    def pydev_start_new_thread(self, function, args, kwargs={}):
-        '''
-        We need to replace the original thread.start_new_thread with this function so that threads started through
-        it and not through the threading module are properly traced.
-        '''
-        return _original_start_new_thread(NewThreadStartup(function), args, kwargs)
+    return thread._original_start_new_thread(thread.NewThreadStartup(function, args, kwargs), ())
 
-# This is a hack for the situation where the thread.start_new_thread is declared inside a class, such as the one below
-# class F(object):
-#    start_new_thread = thread.start_new_thread
-#
-#    def start_it(self):
-#        self.start_new_thread(self.function, args, kwargs)
-# So, if it's an already bound method, calling self.start_new_thread won't really receive a different 'self' -- it
-# does work in the default case because in builtins self isn't passed either.
-pydev_start_new_thread = ClassWithPydevStartNewThread().pydev_start_new_thread
+class PydevStartNewThread(object):
+    def __get__(self, obj, type=None):
+        return self
+
+    def __call__(self, function, args, kwargs={}):
+        return _pydev_start_new_thread(function, args, kwargs)
+
+pydev_start_new_thread = PydevStartNewThread()
 
 
 #=======================================================================================================================
