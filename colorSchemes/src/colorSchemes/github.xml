@@ -3,15 +3,15 @@
   <option name="EDITOR_FONT_SIZE" value="12" />
   <option name="EDITOR_FONT_NAME" value="Menlo" />
   <colors>
-    <option name="CONSOLE_BACKGROUND_KEY" value="F8F8FF" />
-    <option name="INDENT_GUIDE" value="BFBFBF" />
-    <option name="SELECTION_BACKGROUND" value="BCD5FA" />
-    <option name="CARET_ROW_COLOR" value="e6e6ed" />
-    <option name="WHITESPACES" value="BFBFBF" />
     <option name="CARET_COLOR" value="000000" />
+    <option name="CARET_ROW_COLOR" value="e6e6ed" />
+    <option name="CONSOLE_BACKGROUND_KEY" value="F8F8FF" />
+    <option name="GUTTER_BACKGROUND" value="F8F8FF" />
+    <option name="INDENT_GUIDE" value="BFBFBF" />
     <option name="LINE_NUMBERS_COLOR" value="000000" />
     <option name="SELECTED_INDENT_GUIDE" value="BFBFBF" />
-    <option name="GUTTER_BACKGROUND" value="F8F8FF" />
+    <option name="SELECTION_BACKGROUND" value="BCD5FA" />
+    <option name="WHITESPACES" value="BFBFBF" />
   </colors>
   <attributes>
     <option name="BAD_CHARACTER">
