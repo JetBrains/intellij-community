@@ -252,7 +252,7 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
     }
     return false;
   }
-  
+
   private static boolean isSemicolon(@Nullable PsiElement e) {
     return e instanceof PsiJavaToken && ((PsiJavaToken)e).getTokenType() == JavaTokenType.SEMICOLON;
   }
@@ -376,6 +376,10 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
     for (PsiElement element : statement.getDeclaredElements()) {
       element.acceptChildren(this);
     }
+  }
+
+  @Override
+  public void visitEnumConstant(PsiEnumConstant enumConstant) {
   }
 
   private void processEntry(@Nullable JavaElementArrangementEntry entry,

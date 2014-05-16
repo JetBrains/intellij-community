@@ -388,4 +388,42 @@ class Test {
 }'''
     )
   }
+
+  void "test IDEA-124077 Enum code reformat destroys enum"() {
+    doTest(
+      initial: '''
+public enum ErrorResponse {
+
+    UNHANDLED_EXCEPTION,
+    UNHANDLED_BUSINESS,
+    ACCOUNT_NOT_VALID,
+    ACCOUNT_LATE_CREATION;
+
+    public void test() {}
+    public int t;
+
+    public long l;
+    private void q() {}
+}
+''',
+      expected: '''
+public enum ErrorResponse {
+
+    UNHANDLED_EXCEPTION,
+    UNHANDLED_BUSINESS,
+    ACCOUNT_NOT_VALID,
+    ACCOUNT_LATE_CREATION;
+
+    public void test() {}
+    private void q() {}
+    public int t;
+    public long l;
+}
+''',
+      rules: [
+        rule(METHOD),
+        rule(FIELD)
+      ]
+    )
+  }
 }
