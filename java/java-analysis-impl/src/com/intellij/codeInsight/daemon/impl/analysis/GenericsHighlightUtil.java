@@ -1258,7 +1258,9 @@ public class GenericsHighlightUtil {
           final PsiElement superClass = referenceElement.resolve();
           if (superClass instanceof PsiClass) {
             final PsiClass superContainingClass = ((PsiClass)superClass).getContainingClass();
-            if (superContainingClass != null && InheritanceUtil.isInheritorOrSelf(containingClass, superContainingClass, true)) {
+            if (superContainingClass != null && 
+                InheritanceUtil.isInheritorOrSelf(containingClass, superContainingClass, true) && 
+                !PsiTreeUtil.isAncestor(superContainingClass, containingClass, true)) {
               return true;
             }
           }
