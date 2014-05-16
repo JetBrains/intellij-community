@@ -183,8 +183,8 @@ public class GrTypeDefinitionMembersCache {
 
   private class TraitMethodCollector {
     private class TraitProcessor {
-      private final ArrayList<CandidateInfo> result = newArrayList();
-      private final Set<PsiClass> processed = newHashSet();
+      private final ArrayList<CandidateInfo> result = ContainerUtil.newArrayList();
+      private final Set<PsiClass> processed = ContainerUtil.newHashSet();
 
       public TraitProcessor(@NotNull GrTypeDefinition superClass, @NotNull PsiSubstitutor substitutor) {
         processTraits(superClass, substitutor);
@@ -228,14 +228,14 @@ public class GrTypeDefinitionMembersCache {
       List<PsiClassType.ClassResolveResult> traits = getSuperTraits(types);
       if (traits.isEmpty()) return Collections.emptyList();
 
-      Set<MethodSignature> existingSignatures = newHashSet(map(codeMethods, new Function<PsiMethod, MethodSignature>() {
+      Set<MethodSignature> existingSignatures = ContainerUtil.newHashSet(ContainerUtil.map(codeMethods, new Function<PsiMethod, MethodSignature>() {
         @Override
         public MethodSignature fun(PsiMethod method) {
           return method.getSignature(PsiSubstitutor.EMPTY);
         }
       }));
 
-      List<PsiMethod> result = newArrayList();
+      List<PsiMethod> result = ContainerUtil.newArrayList();
 
       for (PsiClassType.ClassResolveResult resolveResult : traits) {
         GrTypeDefinition trait = (GrTypeDefinition)resolveResult.getElement();
@@ -266,7 +266,7 @@ public class GrTypeDefinitionMembersCache {
 
     @NotNull
     private List<PsiClassType.ClassResolveResult> getSuperTraits(@NotNull PsiClassType[] types) {
-      List<PsiClassType.ClassResolveResult> traits = newArrayList();
+      List<PsiClassType.ClassResolveResult> traits = ContainerUtil.newArrayList();
       for (PsiClassType type : types) {
         PsiClassType.ClassResolveResult resolveResult = type.resolveGenerics();
         PsiClass superClass = resolveResult.getElement();
