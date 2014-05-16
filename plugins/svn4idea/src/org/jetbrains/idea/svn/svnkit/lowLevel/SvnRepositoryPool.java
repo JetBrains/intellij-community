@@ -13,28 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.lowLevel;
+package org.jetbrains.idea.svn.svnkit.lowLevel;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
-import org.tmatesoft.svn.core.ISVNCanceller;
-import org.tmatesoft.svn.core.SVNCancelException;
+import com.intellij.openapi.Disposable;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
  * Created with IntelliJ IDEA.
  * User: Irina.Chernushina
- * Date: 8/15/12
- * Time: 3:30 PM
+ * Date: 7/30/12
+ * Time: 3:18 PM
  */
-public class QuicklyDisposableISVNCanceller extends QuicklyDisposableProxy<ISVNCanceller> implements ISVNCanceller {
-  public QuicklyDisposableISVNCanceller(ISVNCanceller canceller) {
-    super(canceller);
-  }
-
-  public void checkCancelled() throws SVNCancelException {
-    try {
-      getRef().checkCancelled();
-    } catch (ProcessCanceledException e) {
-      throw new SVNCancelException();
-    }
-  }
+public interface SvnRepositoryPool extends Disposable {
+  SVNRepository getRepo(SVNURL url, boolean mayReuse) throws SVNException;
+  void returnRepo(SVNRepository repo);
 }

@@ -13,24 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.lowLevel;
+package org.jetbrains.idea.svn.svnkit.lowLevel;
 
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.io.svn.ISVNConnector;
-import org.tmatesoft.svn.core.io.ISVNTunnelProvider;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.ProcessCanceledException;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Created with IntelliJ IDEA.
  * User: Irina.Chernushina
  * Date: 8/15/12
- * Time: 3:16 PM
+ * Time: 3:03 PM
  */
-public class QuicklyDisposableISVNTunnelProvider extends QuicklyDisposableProxy<ISVNTunnelProvider> implements ISVNTunnelProvider {
-  public QuicklyDisposableISVNTunnelProvider(ISVNTunnelProvider provider) {
-    super(provider);
+public abstract class QuicklyDisposableProxy<T> implements Disposable {
+  private final AtomicReference<T> myRef;
+
+  protected QuicklyDisposableProxy(final T t) {
+    myRef = new AtomicReference<T>(t);
   }
 
-  public ISVNConnector createTunnelConnector(SVNURL location) {
-    return getRef().createTunnelConnector(location);
+  @Override
+  public void dispose() {
+    myRef.set(null);
+  }
+
+  protected T getRef() {
+    T t = myRef.get();
+    if (t == null) throw new ProcessCanceledException();
+    return t;
   }
 }

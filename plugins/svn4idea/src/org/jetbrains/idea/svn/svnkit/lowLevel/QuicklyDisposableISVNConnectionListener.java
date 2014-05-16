@@ -13,34 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.lowLevel;
+package org.jetbrains.idea.svn.svnkit.lowLevel;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.progress.ProcessCanceledException;
-
-import java.util.concurrent.atomic.AtomicReference;
+import org.tmatesoft.svn.core.io.ISVNConnectionListener;
+import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
  * Created with IntelliJ IDEA.
  * User: Irina.Chernushina
  * Date: 8/15/12
- * Time: 3:03 PM
+ * Time: 3:05 PM
  */
-public abstract class QuicklyDisposableProxy<T> implements Disposable {
-  private final AtomicReference<T> myRef;
-
-  protected QuicklyDisposableProxy(final T t) {
-    myRef = new AtomicReference<T>(t);
+public class QuicklyDisposableISVNConnectionListener extends QuicklyDisposableProxy<ISVNConnectionListener> implements ISVNConnectionListener {
+  public QuicklyDisposableISVNConnectionListener(ISVNConnectionListener o) {
+    super(o);
   }
 
   @Override
-  public void dispose() {
-    myRef.set(null);
+  public void connectionOpened(SVNRepository repository) {
+    getRef().connectionOpened(repository);
   }
 
-  protected T getRef() {
-    T t = myRef.get();
-    if (t == null) throw new ProcessCanceledException();
-    return t;
+  @Override
+  public void connectionClosed(SVNRepository repository) {
+    getRef().connectionClosed(repository);
   }
 }

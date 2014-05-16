@@ -30,7 +30,7 @@ import org.jetbrains.idea.svn.SvnFormatSelector;
 import org.jetbrains.idea.svn.SvnHttpAuthMethodsDefaultChecker;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
-import org.jetbrains.idea.svn.lowLevel.PrimitivePool;
+import org.jetbrains.idea.svn.svnkit.lowLevel.PrimitivePool;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
