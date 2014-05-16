@@ -1,6 +1,5 @@
 package com.intellij.structuralsearch.plugin.ui;
 
-import com.intellij.codeInsight.template.JavaCodeContextType;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -123,7 +122,7 @@ public class SelectTemplateDialog extends DialogWrapper {
       project,
       false,
       true,
-      ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.class)
+      ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), TemplateContextType.class)
     );
 
     JComponent centerComponent;
@@ -134,7 +133,7 @@ public class SelectTemplateDialog extends DialogWrapper {
         project,
         false,
         true,
-        ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.class)
+        ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), TemplateContextType.class)
       );
       centerComponent = new Splitter(true);
       ((Splitter)centerComponent).setFirstComponent(searchPatternEditor.getComponent());
