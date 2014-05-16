@@ -61,6 +61,18 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
   private Factory<PersistentHashMap<Integer, Collection<Key>>> myInputsIndexFactory;
 
+  private final LowMemoryWatcher myLowMemoryFlusher = LowMemoryWatcher.register(new Runnable() {
+    @Override
+    public void run() {
+      try {
+        flush();
+      } catch (StorageException e) {
+        LOG.info(e);
+        FileBasedIndex.getInstance().requestRebuild(myIndexId);
+      }
+    }
+  });
+
   public MapReduceIndex(@Nullable final ID<Key, Value> indexId,
                         DataIndexer<Key, Value, Input> indexer,
                         @NotNull IndexStorage<Key, Value> storage) throws IOException {
@@ -194,6 +206,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
   @Override
   public void dispose() {
+    myLowMemoryFlusher.stop();
     final Lock lock = getWriteLock();
     try {
       lock.lock();

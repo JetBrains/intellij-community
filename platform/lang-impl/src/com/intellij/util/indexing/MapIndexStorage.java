@@ -61,12 +61,6 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   private final Lock l = new ReentrantLock();
   private final DataExternalizer<Value> myDataExternalizer;
   private final boolean myHighKeySelectivity;
-  private final LowMemoryWatcher myLowMemoryFlusher = LowMemoryWatcher.register(new Runnable() {
-    @Override
-    public void run() {
-      flush();
-    }
-  });
 
   public MapIndexStorage(@NotNull File storageFile,
                          @NotNull KeyDescriptor<Key> keyDescriptor,
@@ -163,7 +157,6 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   @Override
   public void close() throws StorageException {
     try {
-      myLowMemoryFlusher.stop();
       flush();
       if (myKeyHashToVirtualFileMapping != null) myKeyHashToVirtualFileMapping.close();
       myMap.close();
