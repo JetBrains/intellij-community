@@ -1458,4 +1458,11 @@ class Bar {
 
   public void testNoJavaLangPackagesInImport() { doAntiTest() }
 
+  public void testNoStaticDuplicatesFromExpectedMemberFactories() {
+    configure()
+    myFixture.complete(CompletionType.BASIC, 2)
+    myFixture.assertPreferredCompletionItems(0, "xcreateZoo", "xcreateElephant");
+  }
+
+
 }
