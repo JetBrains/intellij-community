@@ -65,7 +65,7 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
 
   @Nullable
   @Override
-  public TextBlockTransferableData collectTransferableData(PsiFile file, Editor editor, int[] startOffsets, int[] endOffsets) {
+  public List<TextBlockTransferableData> collectTransferableData(PsiFile file, Editor editor, int[] startOffsets, int[] endOffsets) {
     if (!Registry.is("editor.richcopy.enable")) {
       return null;
     }
@@ -154,7 +154,7 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
 
   @Nullable
   @Override
-  public TextBlockTransferableData extractTransferableData(Transferable content) {
+  public List<TextBlockTransferableData> extractTransferableData(Transferable content) {
     return null;
   }
 
@@ -164,7 +164,7 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
                                       RangeMarker bounds,
                                       int caretOffset,
                                       Ref<Boolean> indented,
-                                      TextBlockTransferableData value) {
+                                      List<TextBlockTransferableData> values) {
 
   }
 

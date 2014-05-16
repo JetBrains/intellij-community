@@ -87,10 +87,10 @@ public class CopyHandler extends EditorActionHandler {
     final int[] endOffsets = selectionModel.getBlockSelectionEnds();
 
     List<TextBlockTransferableData> transferableDatas = new ArrayList<TextBlockTransferableData>();
-    for (CopyPastePostProcessor processor : Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
-      final TextBlockTransferableData e = processor.collectTransferableData(file, editor, startOffsets, endOffsets);
-      if (e != null) {
-        transferableDatas.add(e);
+    for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
+      final List<? extends TextBlockTransferableData> data = processor.collectTransferableData(file, editor, startOffsets, endOffsets);
+      if (data != null) {
+        transferableDatas.addAll(data);
       }
     }
 

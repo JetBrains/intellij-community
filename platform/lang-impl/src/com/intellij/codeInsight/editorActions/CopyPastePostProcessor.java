@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,23 +25,24 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.Transferable;
+import java.util.List;
 
 /**
  * @author yole
  */
 public interface CopyPastePostProcessor<T extends TextBlockTransferableData> {
-  ExtensionPointName<CopyPastePostProcessor> EP_NAME = ExtensionPointName.create("com.intellij.copyPastePostProcessor");
+  ExtensionPointName<CopyPastePostProcessor<? extends TextBlockTransferableData>> EP_NAME = ExtensionPointName.create("com.intellij.copyPastePostProcessor");
 
   @Nullable
-  T collectTransferableData(final PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets);
+  List<T> collectTransferableData(final PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets);
 
   @Nullable
-  T extractTransferableData(final Transferable content);
+  List<T> extractTransferableData(final Transferable content);
 
   void processTransferableData(final Project project,
                                final Editor editor,
                                final RangeMarker bounds,
                                int caretOffset,
                                Ref<Boolean> indented,
-                               final T value);
+                               final List<T> values);
 }

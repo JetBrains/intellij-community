@@ -30,6 +30,8 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.Transferable;
+import java.util.Collections;
+import java.util.List;
 
 public abstract class BaseTextWithMarkupCopyPasteProcessor<T extends RawTextHolder & TextBlockTransferableData>
   implements CopyPastePostProcessor<T>, TextWithMarkupBuilder {
@@ -41,16 +43,16 @@ public abstract class BaseTextWithMarkupCopyPasteProcessor<T extends RawTextHold
 
   @Nullable
   @Override
-  public T collectTransferableData(PsiFile file, Editor editor, int[] startOffsets, int[] endOffsets) {
+  public List<T> collectTransferableData(PsiFile file, Editor editor, int[] startOffsets, int[] endOffsets) {
     if (!Registry.is("editor.richcopy.enable")) {
       return null;
     }
-    return myData;
+    return Collections.singletonList(myData);
   }
 
   @Nullable
   @Override
-  public T extractTransferableData(Transferable content) {
+  public List<T> extractTransferableData(Transferable content) {
     return null;
   }
 
@@ -60,7 +62,7 @@ public abstract class BaseTextWithMarkupCopyPasteProcessor<T extends RawTextHold
                                       RangeMarker bounds,
                                       int caretOffset,
                                       Ref<Boolean> indented,
-                                      T value) {
+                                      List<T> values) {
 
   }
 
