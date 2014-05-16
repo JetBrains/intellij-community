@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.RawText;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -39,5 +40,6 @@ public interface CopyPastePreProcessor {
    */
   @Nullable
   String preprocessOnCopy(final PsiFile file, final int[] startOffsets, final int[] endOffsets, String text);
+  @NotNull
   String preprocessOnPaste(final Project project, final PsiFile file, final Editor editor, String text, final RawText rawText);
 }

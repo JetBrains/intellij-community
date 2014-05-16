@@ -139,6 +139,7 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
 
   }
 
+  @NotNull
   @Override
   public String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
     final Document document = editor.getDocument();
