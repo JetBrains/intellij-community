@@ -562,41 +562,14 @@
         <option name="ERROR_STRIPE_COLOR" value="99ccff" />
       </value>
     </option>
-    <option name="DJANGO_COMMENT">
+    <option name="DJANGO_TAG_NAME">
       <value>
-        <option name="FOREGROUND" value="DD1144" />
-      </value>
-    </option>
-    <option name="DJANGO_FILTER">
-      <value>
-        <option name="FOREGROUND" value="0086B3" />
-      </value>
-    </option>
-    <option name="DJANGO_ID">
-      <value>
-        <option name="FOREGROUND" value="0A8585" />
-      </value>
-    </option>
-    <option name="DJANGO_KEYWORD">
-      <value>
-        <option name="FOREGROUND" value="000000" />
+        <option name="FOREGROUND" value="333333" />
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
-    <option name="DJANGO_NUMBER">
+    <option name="DJANGO_TAG_START_END">
       <value>
-        <option name="FOREGROUND" value="009999" />
-      </value>
-    </option>
-    <option name="DJANGO_STRING_LITERAL">
-      <value>
-        <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
-      </value>
-    </option>
-    <option name="DJANGO_TAG_NAME">
-      <value>
-        <option name="FOREGROUND" value="80" />
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
@@ -957,6 +930,12 @@
     <option name="MACRONAME">
       <value>
         <option name="FOREGROUND" value="990000" />
+        <option name="FONT_TYPE" value="1" />
+      </value>
+    </option>
+    <option name="MAKO.TAG">
+      <value>
+        <option name="FOREGROUND" value="333333" />
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
