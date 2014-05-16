@@ -23,8 +23,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.committed.*;
@@ -144,18 +144,18 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   }
 
   public void reloadPanels() {
-    final Map<Pair<String, String>, SvnMergeInfoRootPanelManual.InfoHolder> states = new HashMap<Pair<String, String>, SvnMergeInfoRootPanelManual.InfoHolder>();
+    final Map<Couple<String>, SvnMergeInfoRootPanelManual.InfoHolder> states = new HashMap<Couple<String>, SvnMergeInfoRootPanelManual.InfoHolder>();
     for (Map.Entry<String, SvnMergeInfoRootPanelManual> entry : myMergePanels.entrySet()) {
       final String localPath = entry.getKey();
       final WCInfoWithBranches wcInfo = entry.getValue().getWcInfo();
-      states.put(Pair.create(localPath, wcInfo.getUrl().toString()), entry.getValue().getInfo());
+      states.put(Couple.newOne(localPath, wcInfo.getUrl().toString()), entry.getValue().getInfo());
     }
     createPanels(myLocation, new Runnable() {
       public void run() {
         for (Map.Entry<String, SvnMergeInfoRootPanelManual> entry : myMergePanels.entrySet()) {
           final String localPath = entry.getKey();
           final WCInfoWithBranches wcInfo = entry.getValue().getWcInfo();
-          final Pair<String, String> key = Pair.create(localPath, wcInfo.getUrl().toString());
+          final Couple<String> key = Couple.newOne(localPath, wcInfo.getUrl().toString());
           final SvnMergeInfoRootPanelManual.InfoHolder infoHolder = states.get(key);
           if (infoHolder !=  null) {
             entry.getValue().initSelection(infoHolder);
