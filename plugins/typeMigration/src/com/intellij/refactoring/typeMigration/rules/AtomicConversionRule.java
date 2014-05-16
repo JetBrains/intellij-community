@@ -213,7 +213,11 @@ public class AtomicConversionRule extends TypeConversionRule {
                                                                 ")");
     }
     else if (context instanceof PsiPrefixExpression) {
-      final String sign = ((PsiPrefixExpression)context).getOperationSign().getText();
+      final PsiJavaToken operationSign = ((PsiPrefixExpression)context).getOperationSign();
+      if (operationSign.getTokenType() == JavaTokenType.EXCL) {
+        return new TypeConversionDescriptor("!$qualifier$", "!$qualifier$.get()");
+      }
+      final String sign = operationSign.getText();
       return new TypeConversionDescriptor(sign + "$qualifier$", "$qualifier$.set(" +  //todo reject?
                                                                 getBoxedWrapper(from, to, "$qualifier$.get() " + sign.charAt(0) + " 1") +
                                                                 ")");
