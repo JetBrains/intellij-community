@@ -299,15 +299,9 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
     assertNotNull(selectedText);
     final String text = StringUtil.convertLineSeparators(selectedText);
 
-    TextWithMarkupProcessor processor = new TextWithMarkupProcessor();
-    processor.addBuilder(new TextWithMarkupBuilder() {
+    TextWithMarkupProcessor processor = new TextWithMarkupProcessor() {
       @Override
-      public void reset() {
-
-      }
-
-      @Override
-      public void build(SyntaxInfo syntaxInfo) {
+      void createResult(SyntaxInfo syntaxInfo) {
         final ColorRegistry colorRegistry = syntaxInfo.getColorRegistry();
         assertEquals(JBColor.BLACK, colorRegistry.dataById(syntaxInfo.getDefaultForeground()));
         assertEquals(JBColor.WHITE, colorRegistry.dataById(syntaxInfo.getDefaultBackground()));
@@ -344,7 +338,7 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
           }
         });
       }
-     });
+    };
     SelectionModel selectionModel = editor.getSelectionModel();
     processor.collectTransferableData(myFixture.getFile(), editor, selectionModel.getBlockSelectionStarts(), selectionModel.getBlockSelectionEnds());
 

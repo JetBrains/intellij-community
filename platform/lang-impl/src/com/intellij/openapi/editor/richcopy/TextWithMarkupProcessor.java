@@ -18,7 +18,7 @@ package com.intellij.openapi.editor.richcopy;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.editorActions.CopyPastePostProcessor;
-import com.intellij.codeInsight.editorActions.TextBlockTransferableData;
+import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -37,6 +37,9 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.richcopy.model.SyntaxInfo;
 import com.intellij.openapi.editor.richcopy.settings.RichCopySettings;
+import com.intellij.openapi.editor.richcopy.view.HtmlTransferableData;
+import com.intellij.openapi.editor.richcopy.view.RawTextWithMarkup;
+import com.intellij.openapi.editor.richcopy.view.RtfTransferableData;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -54,26 +57,19 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlockTransferableData> {
+public class TextWithMarkupProcessor implements CopyPastePostProcessor<RawTextWithMarkup> {
   private static final Logger LOG = Logger.getInstance("#" + TextWithMarkupProcessor.class.getName());
 
-  private final List<TextWithMarkupBuilder> myBuilders = new ArrayList<TextWithMarkupBuilder>();
-
-  public void addBuilder(TextWithMarkupBuilder builder) {
-    myBuilders.add(builder);
-  }
+  private List<RawTextWithMarkup> myResult;
 
   @Nullable
   @Override
-  public List<TextBlockTransferableData> collectTransferableData(PsiFile file, Editor editor, int[] startOffsets, int[] endOffsets) {
+  public List<RawTextWithMarkup> collectTransferableData(PsiFile file, Editor editor, int[] startOffsets, int[] endOffsets) {
     if (!Registry.is("editor.richcopy.enable")) {
       return null;
     }
 
     try {
-      for (TextWithMarkupBuilder builder : myBuilders) {
-        builder.reset();
-      }
       SelectionModel selectionModel = editor.getSelectionModel();
       if (selectionModel.hasBlockSelection()) {
         return null; // unsupported legacy mode
@@ -141,9 +137,8 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
       SyntaxInfo syntaxInfo = context.finish();
       logSyntaxInfo(syntaxInfo);
 
-      for (TextWithMarkupBuilder builder : myBuilders) {
-        builder.build(syntaxInfo);
-      }
+      createResult(syntaxInfo);
+      return myResult;
     }
     catch (Exception e) {
       // catching the exception so that the rest of copy/paste functionality can still work fine
@@ -154,7 +149,7 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
 
   @Nullable
   @Override
-  public List<TextBlockTransferableData> extractTransferableData(Transferable content) {
+  public List<RawTextWithMarkup> extractTransferableData(Transferable content) {
     return null;
   }
 
@@ -164,8 +159,24 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
                                       RangeMarker bounds,
                                       int caretOffset,
                                       Ref<Boolean> indented,
-                                      List<TextBlockTransferableData> values) {
+                                      List<RawTextWithMarkup> values) {
 
+  }
+
+  void createResult(SyntaxInfo syntaxInfo) {
+    myResult = new ArrayList<RawTextWithMarkup>(2);
+    myResult.add(new HtmlTransferableData(syntaxInfo));
+    myResult.add(new RtfTransferableData(syntaxInfo));
+  }
+
+  private void setRawText(String rawText) {
+    if (myResult == null) {
+      return;
+    }
+    for (RawTextWithMarkup data : myResult) {
+      data.setRawText(rawText);
+    }
+    myResult = null;
   }
 
   private static void logInitial(@NotNull Editor editor,
@@ -861,5 +872,23 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
     }
   }
 
+  public static class RawTextSetter implements CopyPastePreProcessor {
+    private final TextWithMarkupProcessor myProcessor;
 
+    public RawTextSetter(TextWithMarkupProcessor processor) {
+      myProcessor = processor;
+    }
+
+    @Nullable
+    @Override
+    public String preprocessOnCopy(PsiFile file, int[] startOffsets, int[] endOffsets, String text) {
+      myProcessor.setRawText(text);
+      return null;
+    }
+
+    @Override
+    public String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
+      return null;
+    }
+  }
 }
