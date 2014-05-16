@@ -27,7 +27,7 @@ import java.util.Map;
 
 public class SvnRepositoryCache {
   private final Map<String, List<SVNDirEntry>> myMap;
-  private final Map<String, SVNErrorMessage> myErrorsMap;
+  private final Map<String, String> myErrorsMap;
 
   public static SvnRepositoryCache getInstance() {
     return ServiceManager.getService(SvnRepositoryCache.class);
@@ -35,7 +35,7 @@ public class SvnRepositoryCache {
   
   private SvnRepositoryCache() {
     myMap = new SoftHashMap<String, List<SVNDirEntry>>();
-    myErrorsMap = new SoftHashMap<String, SVNErrorMessage>();
+    myErrorsMap = new SoftHashMap<String, String>();
   }
 
   @Nullable
@@ -44,11 +44,11 @@ public class SvnRepositoryCache {
   }
 
   @Nullable
-  public SVNErrorMessage getError(final String parent) {
+  public String getError(final String parent) {
     return myErrorsMap.get(parent);
   }
 
-  public void put(final String parent, final SVNErrorMessage error) {
+  public void put(final String parent, final String error) {
     myMap.remove(parent);
     myErrorsMap.put(parent, error);
   }

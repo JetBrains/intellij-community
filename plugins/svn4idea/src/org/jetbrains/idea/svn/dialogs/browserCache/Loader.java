@@ -32,7 +32,7 @@ public abstract class Loader {
   public abstract void forceRefresh(final String repositoryRootUrl);
   protected abstract NodeLoadState getNodeLoadState();
 
-  protected void refreshNodeError(final RepositoryTreeNode node, final SVNErrorMessage text) {
+  protected void refreshNodeError(final RepositoryTreeNode node, final String text) {
     if (node.isDisposed()) {
       return;
     }
