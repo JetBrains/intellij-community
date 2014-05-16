@@ -46,6 +46,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.File;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.List;
 
@@ -66,6 +67,20 @@ public class SvnKitDiffClient extends BaseSvnClient implements DiffClient {
     }
 
     return executor.getChanges();
+  }
+
+  @Override
+  public void unifiedDiff(@NotNull SvnTarget target1, @NotNull SvnTarget target2, @NotNull OutputStream output) throws VcsException {
+    assertUrl(target1);
+    assertUrl(target2);
+
+    try {
+      myVcs.getSvnKitManager().createDiffClient()
+        .doDiff(target1.getURL(), target1.getPegRevision(), target2.getURL(), target2.getPegRevision(), true, false, output);
+    }
+    catch (SVNException e) {
+      throw new SvnBindException(e);
+    }
   }
 
   private class DiffExecutor {

@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.SvnClient;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
+import java.io.OutputStream;
 import java.util.List;
 
 /**
@@ -29,4 +30,6 @@ import java.util.List;
 public interface DiffClient extends SvnClient {
 
   List<Change> compare(@NotNull SvnTarget target1, @NotNull SvnTarget target2) throws VcsException;
+
+  void unifiedDiff(@NotNull SvnTarget target1, @NotNull SvnTarget target2, @NotNull OutputStream output) throws VcsException;
 }

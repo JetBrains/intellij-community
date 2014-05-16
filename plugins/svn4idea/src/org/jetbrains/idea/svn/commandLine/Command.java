@@ -160,7 +160,7 @@ public class Command {
     return index >= 0 && index + 1 < myParameters.size() ? SVNRevision.parse(myParameters.get(index + 1)) : null;
   }
 
-  private boolean is(@NotNull SvnCommandName name) {
+  public boolean is(@NotNull SvnCommandName name) {
     return name.equals(myName);
   }
 

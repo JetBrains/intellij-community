@@ -45,6 +45,8 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlValue;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -75,6 +77,25 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
 
     CommandExecutor executor = execute(myVcs, target1, SvnCommandName.diff, parameters, null);
     return parseOutput(target1, target2, executor);
+  }
+
+  @Override
+  public void unifiedDiff(@NotNull SvnTarget target1, @NotNull SvnTarget target2, @NotNull OutputStream output) throws VcsException {
+    assertUrl(target1);
+    assertUrl(target2);
+
+    List<String> parameters = ContainerUtil.newArrayList();
+    CommandUtil.put(parameters, target1);
+    CommandUtil.put(parameters, target2);
+
+    CommandExecutor executor = execute(myVcs, target1, SvnCommandName.diff, parameters, null);
+
+    try {
+      executor.getBinaryOutput().writeTo(output);
+    }
+    catch (IOException e) {
+      throw new SvnBindException(e);
+    }
   }
 
   private List<Change> parseOutput(@NotNull SvnTarget target1, @NotNull SvnTarget target2, @NotNull CommandExecutor executor)
