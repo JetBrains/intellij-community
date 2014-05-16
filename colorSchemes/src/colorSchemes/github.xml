@@ -27,35 +27,6 @@
         <option name="BACKGROUND" value="ffc8c8" />
       </value>
     </option>
-    <option name="BUILDOUT.KEY">
-      <value>
-        <option name="FOREGROUND" value="000000" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="BUILDOUT.KEY_VALUE_SEPARATOR">
-      <value>
-        <option name="FOREGROUND" value="000000" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="BUILDOUT.LINE_COMMENT">
-      <value>
-        <option name="FOREGROUND" value="999988" />
-        <option name="FONT_TYPE" value="2" />
-      </value>
-    </option>
-    <option name="BUILDOUT.SECTION_NAME">
-      <value>
-        <option name="FOREGROUND" value="009999" />
-      </value>
-    </option>
-    <option name="BUILDOUT.VALUE">
-      <value>
-        <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
-      </value>
-    </option>
     <option name="CLASS_REFERENCE">
       <value>
         <option name="FOREGROUND" value="445588" />
@@ -671,28 +642,6 @@
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
-    <option name="GQL_ID">
-      <value>
-        <option name="FOREGROUND" value="009999" />
-      </value>
-    </option>
-    <option name="GQL_INT_LITERAL">
-      <value>
-        <option name="FOREGROUND" value="009999" />
-      </value>
-    </option>
-    <option name="GQL_KEYWORD">
-      <value>
-        <option name="FOREGROUND" value="000000" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="GQL_STRING_LITERAL">
-      <value>
-        <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
-      </value>
-    </option>
     <option name="HAML_CLASS">
       <value>
         <option name="FOREGROUND" value="121289" />
@@ -1140,53 +1089,14 @@
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
-    <option name="REST.EXPLICIT">
-      <value>
-        <option name="FOREGROUND" value="000000" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="REST.FIELD">
-      <value>
-        <option name="FOREGROUND" value="000000" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="REST.FIXED">
-      <value>
-        <option name="BACKGROUND" value="d9d9f0" />
-      </value>
-    </option>
     <option name="REST.INLINE">
       <value>
         <option name="BACKGROUND" value="edfced" />
       </value>
     </option>
-    <option name="REST.INTERPRETED">
-      <value>
-        <option name="BACKGROUND" value="cadaba" />
-      </value>
-    </option>
     <option name="REST.ITALIC">
       <value>
         <option name="FONT_TYPE" value="2" />
-      </value>
-    </option>
-    <option name="REST.LINE_COMMENT">
-      <value>
-        <option name="FOREGROUND" value="999988" />
-        <option name="FONT_TYPE" value="2" />
-      </value>
-    </option>
-    <option name="REST.REF.NAME">
-      <value>
-        <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
-      </value>
-    </option>
-    <option name="REST.SECTION.HEADER">
-      <value>
-        <option name="FOREGROUND" value="009999" />
       </value>
     </option>
     <option name="RHTML_COMMENT_ID">
@@ -1518,51 +1428,19 @@
         <option name="FOREGROUND" value="80" />
       </value>
     </option>
-    <option name="YAML_COMMENT">
-      <value>
-        <option name="FOREGROUND" value="999988" />
-        <option name="FONT_TYPE" value="2" />
-      </value>
-    </option>
-    <option name="YAML_SCALAR_DSTRING">
-      <value>
-        <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
-      </value>
-    </option>
-    <option name="YAML_SCALAR_KEY">
-      <value>
-        <option name="FOREGROUND" value="121289" />
-      </value>
-    </option>
     <option name="YAML_SCALAR_LIST">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
-      </value>
-    </option>
-    <option name="YAML_SCALAR_STRING">
-      <value>
-        <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
       </value>
     </option>
     <option name="YAML_SCALAR_VALUE">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
-      </value>
-    </option>
-    <option name="YAML_SIGN">
-      <value>
-        <option name="FOREGROUND" value="000000" />
-        <option name="FONT_TYPE" value="1" />
       </value>
     </option>
     <option name="YAML_TEXT">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
       </value>
     </option>
   </attributes>
