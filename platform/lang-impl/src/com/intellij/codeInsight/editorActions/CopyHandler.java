@@ -45,7 +45,7 @@ public class CopyHandler extends EditorActionHandler {
 
   @Override
   public void doExecute(final Editor editor, Caret caret, final DataContext dataContext) {
-    assert caret == null; // invocation for a specific caret is not supported
+    assert caret == null : "Invocation of 'copy' operation for specific caret is not supported";
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
     if (project == null){
       if (myOriginalAction != null){
