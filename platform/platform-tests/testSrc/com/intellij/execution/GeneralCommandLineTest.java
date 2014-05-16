@@ -161,6 +161,14 @@ public class GeneralCommandLineTest {
   }
 
   @Test
+  public void winShellScriptQuoting() throws Exception {
+    String param = "a&b";
+    GeneralCommandLine commandLine = new GeneralCommandLine("script.cmd", param);
+    String text = commandLine.getPreparedCommandLine(Platform.WINDOWS);
+    assertEquals("script.cmd\n\"" + param + "\"", text);
+  }
+
+  @Test
   public void hackyEnvMap () throws Exception {
     GeneralCommandLine commandLine = new GeneralCommandLine();
     //noinspection ConstantConditions
