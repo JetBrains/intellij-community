@@ -17,7 +17,7 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.SomeQueue;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
@@ -212,7 +212,7 @@ public class RequestsMerger {
   }
 
   private static class MyTransitionAction {
-    private static final Map<Pair<MyState, MyState>, MyExitAction[]> myMap = new HashMap<Pair<MyState, MyState>, MyExitAction[]>();
+    private static final Map<Couple<MyState>, MyExitAction[]> myMap = new HashMap<Couple<MyState>, MyExitAction[]>();
 
     static {
       add(MyState.empty, MyState.requestSubmitted, MyExitAction.submitRequestToExecutor);
@@ -226,12 +226,12 @@ public class RequestsMerger {
     }
 
     private static void add(final MyState from, final MyState to, final MyExitAction... action) {
-      myMap.put(Pair.create(from, to), action);
+      myMap.put(Couple.newOne(from, to), action);
     }
 
     @Nullable
     public static MyExitAction[] getExit(final MyState from, final MyState to) {
-      return myMap.get(Pair.create(from, to));
+      return myMap.get(Couple.newOne(from, to));
     }
   }
 
