@@ -711,6 +711,7 @@
       <reference ref="XDebugger.CompareValueWithClipboard"/>
       <reference ref="XDebugger.CopyName"/>
       <reference ref="Debugger.MarkObject"/>
+      <reference ref="EvaluateExpression"/>
     </group>
 
     <group id="XDebugger.Evaluation.Dialog.Tree.Popup">
