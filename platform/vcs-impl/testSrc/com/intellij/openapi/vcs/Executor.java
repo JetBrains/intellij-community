@@ -34,7 +34,7 @@ import java.util.List;
 
 public class Executor {
 
-  private static final Logger LOG = Logger.getInstance(Executor.class);
+  protected static final Logger LOG = Logger.getInstance(Executor.class);
 
   public static class ExecutionException extends RuntimeException {
 

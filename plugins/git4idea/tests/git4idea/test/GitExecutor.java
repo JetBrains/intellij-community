@@ -55,18 +55,20 @@ public class GitExecutor extends Executor {
     split.add(0, PathHolder.GIT_EXECUTABLE);
     debug("# git " + command);
     for (int attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      String stdout;
       try {
-        String stdout = run(split, ignoreNonZeroExitCode);
+        stdout = run(split, ignoreNonZeroExitCode);
         if (!isIndexLockFileError(stdout)) {
           return stdout;
         }
       }
       catch (ExecutionException e) {
-        String stdout = e.getOutput();
+        stdout = e.getOutput();
         if (!isIndexLockFileError(stdout)) {
           throw e;
         }
       }
+      LOG.info("Index lock file error, attempt #" + attempt + ": " + stdout);
     }
     throw new RuntimeException("fatal error during execution of Git command: $command");
   }
