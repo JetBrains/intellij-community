@@ -65,7 +65,8 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
   }
 
   @Override
-  public void execute(final Editor editor, final DataContext dataContext) {
+  public void doExecute(final Editor editor, Caret caret, final DataContext dataContext) {
+    assert caret == null; // invocation for a specific caret is not supported
     execute(editor, dataContext, null);
   }
 
@@ -92,7 +93,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     if (project == null || editor.isColumnMode() || editor.getSelectionModel().hasBlockSelection()
         || editor.getCaretModel().getCaretCount() > 1) {
       if (myOriginalHandler != null) {
-        myOriginalHandler.execute(editor, context);
+        myOriginalHandler.execute(editor, null, context);
       }
       return;
     }
@@ -100,7 +101,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) {
       if (myOriginalHandler != null) {
-        myOriginalHandler.execute(editor, context);
+        myOriginalHandler.execute(editor, null, context);
       }
       return;
     }
