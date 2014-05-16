@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula;
@@ -306,9 +305,9 @@ public class InferenceIncorporationPhase {
    * then for all i, 1 ≤ i ≤ n, if Si and Ti are types (not wildcards), the constraint ⟨Si = Ti⟩ is implied.
    */
   private boolean upUp(List<PsiType> upperBounds) {
-    return findParameterizationOfTheSameGenericClass(upperBounds, new Processor<Couple<PsiType>>() {
+    return findParameterizationOfTheSameGenericClass(upperBounds, new Processor<Pair<PsiType, PsiType>>() {
       @Override
-      public boolean process(Couple<PsiType> pair) {
+      public boolean process(Pair<PsiType, PsiType> pair) {
         final PsiType sType = pair.first;
         final PsiType tType = pair.second;
         if (!mySession.isProperType(sType) && !mySession.isProperType(tType)) {
@@ -321,7 +320,7 @@ public class InferenceIncorporationPhase {
     });
   }
 
-  public static boolean findParameterizationOfTheSameGenericClass(List<PsiType> upperBounds, Processor<Couple<PsiType>> processor) {
+  public static boolean findParameterizationOfTheSameGenericClass(List<PsiType> upperBounds, Processor<Pair<PsiType, PsiType>> processor) {
     for (int i = 0; i < upperBounds.size(); i++) {
       final PsiType sBound = upperBounds.get(i);
       final PsiClass sClass = PsiUtil.resolveClassInClassTypeOnly(sBound);
@@ -343,7 +342,7 @@ public class InferenceIncorporationPhase {
             for (PsiTypeParameter typeParameter : gClass.getTypeParameters()) {
               final PsiType sType = sSubstitutor.substitute(typeParameter);
               final PsiType tType = tSubstitutor.substitute(typeParameter);
-              if (!processor.process(Couple.newOne(sType, tType))) {
+              if (!processor.process(Pair.create(sType, tType))) {
                 return true;
               }
             }
