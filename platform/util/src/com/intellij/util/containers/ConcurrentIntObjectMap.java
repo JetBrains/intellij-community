@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,10 @@ package com.intellij.util.containers;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * methods adapted from java.util.concurrent.ConcurrentMap to integer keys
+ * Base interface for concurrent int key -> value:V map
+ * Null values are NOT allowed
+ *
+ * Methods are adapted from {@link java.util.concurrent.ConcurrentMap} to integer keys
  * @see java.util.concurrent.ConcurrentMap
  */
 public interface ConcurrentIntObjectMap<V> {

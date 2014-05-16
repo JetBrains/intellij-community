@@ -17,7 +17,6 @@
 package com.intellij.util.containers;
 
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import gnu.trove.TObjectHashingStrategy;
 import jsr166e.ForkJoinPool;
@@ -883,12 +882,12 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
   private static final TObjectHashingStrategy THIS = new TObjectHashingStrategy() {
     @Override
     public int computeHashCode(Object object) {
-      throw new IncorrectOperationException();
+      throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean equals(Object o1, Object o2) {
-      throw new IncorrectOperationException();
+      throw new UnsupportedOperationException();
     }
   };
   public ConcurrentHashMap(int initialCapacity,

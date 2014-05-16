@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,11 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.util.Map;
 
+/**
+ * Concurrent strong key:K -> soft value:V map
+ * Null keys are NOT allowed
+ * Null values are NOT allowed
+ */
 public final class ConcurrentSoftValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,V> {
   public ConcurrentSoftValueHashMap(@NotNull Map<K, V> map) {
     super(map);

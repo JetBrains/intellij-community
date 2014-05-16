@@ -30,11 +30,11 @@ import java.lang.ref.WeakReference;
 import java.util.Map;
 
 /**
- * Concurrent weak key:K -> strong value:V map.
+ * Concurrent map with weak keys and strong values.
  * Null keys are allowed
  * Null values are NOT allowed
  */
-public final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
+public final class ConcurrentWeakKeySoftValueHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
   private static class WeakKey<K, V> extends WeakReference<K> implements Key<K, V> {
     private final int myHash; /* Hashcode of key, stored here since the key may be tossed by the GC */
     private final V value;
@@ -70,29 +70,29 @@ public final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V
     return new WeakKey<K, V>(key, hashingStrategy.computeHashCode(key), value, myReferenceQueue);
   }
 
-  public ConcurrentWeakHashMap(int initialCapacity, float loadFactor) {
+  public ConcurrentWeakKeySoftValueHashMap(int initialCapacity, float loadFactor) {
     super(initialCapacity, loadFactor);
   }
 
-  public ConcurrentWeakHashMap(int initialCapacity) {
+  public ConcurrentWeakKeySoftValueHashMap(int initialCapacity) {
     super(initialCapacity);
   }
 
-  public ConcurrentWeakHashMap() {
+  public ConcurrentWeakKeySoftValueHashMap() {
   }
 
-  public ConcurrentWeakHashMap(int initialCapacity,
-                               float loadFactor,
-                               int concurrencyLevel,
-                               @NotNull TObjectHashingStrategy<K> hashingStrategy) {
+  public ConcurrentWeakKeySoftValueHashMap(int initialCapacity,
+                                           float loadFactor,
+                                           int concurrencyLevel,
+                                           @NotNull TObjectHashingStrategy<K> hashingStrategy) {
     super(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 
-  public ConcurrentWeakHashMap(Map<? extends K, ? extends V> t) {
+  public ConcurrentWeakKeySoftValueHashMap(Map<? extends K, ? extends V> t) {
     super(t);
   }
 
-  public ConcurrentWeakHashMap(@NotNull TObjectHashingStrategy<K> hashingStrategy) {
+  public ConcurrentWeakKeySoftValueHashMap(@NotNull TObjectHashingStrategy<K> hashingStrategy) {
     super(hashingStrategy);
   }
 }

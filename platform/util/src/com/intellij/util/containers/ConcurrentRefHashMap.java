@@ -22,7 +22,6 @@
  */
 package com.intellij.util.containers;
 
-import com.intellij.util.IncorrectOperationException;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -32,7 +31,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * Base class for concurrent (soft/weak) keys -> hard values map
+ * Base class for concurrent (soft/weak) key:K -> strong value:V map
  * Null keys are allowed
  * Null values are NOT allowed
  */
@@ -129,12 +128,12 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   private static final TObjectHashingStrategy THIS = new TObjectHashingStrategy() {
     @Override
     public int computeHashCode(Object object) {
-      throw new IncorrectOperationException();
+      throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean equals(Object o1, Object o2) {
-      throw new IncorrectOperationException();
+      throw new UnsupportedOperationException();
     }
   };
   public ConcurrentRefHashMap(int initialCapacity, float loadFactor) {

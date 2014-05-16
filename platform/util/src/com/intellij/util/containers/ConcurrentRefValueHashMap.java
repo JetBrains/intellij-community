@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,11 @@ import java.lang.ref.ReferenceQueue;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * Base class for concurrent strong key:K -> (soft/weak) value:V map
+ * Null keys are NOT allowed
+ * Null values are NOT allowed
+ */
 abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
   private final ConcurrentMap<K, MyValueReference<K, V>> myMap;
   protected final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
