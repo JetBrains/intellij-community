@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -91,10 +92,10 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   public GrTypeDefinition[] getTypeDefinitions() {
     final StubElement<?> stub = getStub();
     if (stub != null) {
-      return stub.getChildrenByType(GroovyElementTypes.TYPE_DEFINITION_TYPES, GrTypeDefinition.ARRAY_FACTORY);
+      return stub.getChildrenByType(TokenSets.TYPE_DEFINITIONS, GrTypeDefinition.ARRAY_FACTORY);
     }
 
-    return calcTreeElement().getChildrenAsPsiElements(GroovyElementTypes.TYPE_DEFINITION_TYPES, GrTypeDefinition.ARRAY_FACTORY);
+    return calcTreeElement().getChildrenAsPsiElements(TokenSets.TYPE_DEFINITIONS, GrTypeDefinition.ARRAY_FACTORY);
   }
 
   @Override

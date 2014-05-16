@@ -300,7 +300,9 @@ public abstract class TokenSets {
                                                                GroovyElementTypes.DISJUNCTION_TYPE_ELEMENT);
 
 
-  public static final TokenSet TYPE_DEFINITIONS = TokenSet.create(GroovyElementTypes.CLASS_DEFINITION, GroovyElementTypes.ENUM_DEFINITION,
+  public static final TokenSet TYPE_DEFINITIONS = TokenSet.create(GroovyElementTypes.CLASS_DEFINITION, 
+                                                                  GroovyElementTypes.ENUM_DEFINITION,
                                                                   GroovyElementTypes.INTERFACE_DEFINITION,
-                                                                  GroovyElementTypes.ANNOTATION_DEFINITION);
+                                                                  GroovyElementTypes.ANNOTATION_DEFINITION,
+                                                                  GroovyElementTypes.TRAIT_DEFINITION);
 }

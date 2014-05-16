@@ -112,7 +112,7 @@ public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptySt
 
   @Override
   public PsiClass[] getInnerClasses() {
-    return getStubOrPsiChildren(GroovyElementTypes.TYPE_DEFINITION_TYPES, PsiClass.ARRAY_FACTORY);
+    return getStubOrPsiChildren(TokenSets.TYPE_DEFINITIONS, PsiClass.ARRAY_FACTORY);
   }
 
   @Override

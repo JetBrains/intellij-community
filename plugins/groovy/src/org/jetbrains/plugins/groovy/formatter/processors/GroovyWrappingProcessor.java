@@ -253,7 +253,7 @@ public class GroovyWrappingProcessor {
   }
 
   private final TokenSet ANNOTATION_CONTAINERS = TokenSet.create(
-    GroovyElementTypes.CLASS_DEFINITION, GroovyElementTypes.INTERFACE_DEFINITION, GroovyElementTypes.ENUM_DEFINITION,
+    GroovyElementTypes.CLASS_DEFINITION, GroovyElementTypes.INTERFACE_DEFINITION, GroovyElementTypes.ENUM_DEFINITION, GroovyElementTypes.TRAIT_DEFINITION,
     GroovyElementTypes.ANNOTATION_DEFINITION,
     GroovyElementTypes.METHOD_DEFINITION, GroovyElementTypes.CONSTRUCTOR_DEFINITION,
     GroovyElementTypes.VARIABLE_DEFINITION,
@@ -264,7 +264,7 @@ public class GroovyWrappingProcessor {
 
   private int getAnnotationsWrapType(ASTNode modifierList) {
     final IElementType containerType = modifierList.getTreeParent().getElementType();
-    if (GroovyElementTypes.TYPE_DEFINITION_TYPES.contains(containerType)) {
+    if (TokenSets.TYPE_DEFINITIONS.contains(containerType)) {
       return mySettings.CLASS_ANNOTATION_WRAP;
     }
 

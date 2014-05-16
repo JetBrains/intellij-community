@@ -353,7 +353,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     else if (myType2 == GroovyElementTypes.PACKAGE_DEFINITION) {
       myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_BEFORE_PACKAGE + 1, mySettings.KEEP_LINE_BREAKS, keepBlankLines());
     }
-    else if (isLeftOrRight(GroovyElementTypes.TYPE_DEFINITION_TYPES)) {
+    else if (isLeftOrRight(TokenSets.TYPE_DEFINITIONS)) {
       if (myType1 == GROOVY_DOC_COMMENT) {
         createLF(true);
       }

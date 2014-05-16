@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.parser;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.stubs.*;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -116,8 +115,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
         return new GrEnumConstantInitializerImpl(stub);
       }
     };
-
-  TokenSet TYPE_DEFINITION_TYPES = TokenSet.create(CLASS_DEFINITION, INTERFACE_DEFINITION, ENUM_DEFINITION, ANNOTATION_DEFINITION);
 
   GrStubElementType<GrFieldStub, GrEnumConstant> ENUM_CONSTANT = new GrEnumConstantElementType();
   GrStubElementType<GrFieldStub, GrField> FIELD = new GrFieldElementType();
