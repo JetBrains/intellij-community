@@ -29,24 +29,29 @@ import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 
 public class GroovyConstantConditionalInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getGroupDisplayName() {
         return CONTROL_FLOW;
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return "Constant conditional expression";
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ConstantConditionalExpressionVisitor();
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... args) {
         return "'#ref' can be simplified #loc";
@@ -66,17 +71,20 @@ public class GroovyConstantConditionalInspection extends BaseInspection {
         }
     }
 
+    @Override
     public GroovyFix buildFix(PsiElement location) {
         return new ConstantConditionalFix();
     }
 
     private static class ConstantConditionalFix extends GroovyFix {
 
+        @Override
         @NotNull
         public String getName() {
             return "Simplify";
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final GrConditionalExpression expression =
@@ -90,6 +98,7 @@ public class GroovyConstantConditionalInspection extends BaseInspection {
     private static class ConstantConditionalExpressionVisitor
             extends BaseInspectionVisitor {
 
+        @Override
         public void visitConditionalExpression(
                 GrConditionalExpression expression) {
             super.visitConditionalExpression(expression);

@@ -25,6 +25,7 @@ class NestingDepthVisitor extends GroovyRecursiveElementVisitor {
   private int m_maximumDepth = 0;
   private int m_currentDepth = 0;
 
+  @Override
   public void visitBlockStatement(GrBlockStatement statement) {
     final PsiElement parent = statement.getParent();
     final boolean isAlreadyCounted =
@@ -41,12 +42,14 @@ class NestingDepthVisitor extends GroovyRecursiveElementVisitor {
   }
 
 
+  @Override
   public void visitForStatement(@NotNull GrForStatement statement) {
     enterScope();
     super.visitForStatement(statement);
     exitScope();
   }
 
+  @Override
   public void visitIfStatement(@NotNull GrIfStatement statement) {
     boolean isAlreadyCounted = false;
     if (statement.getParent() instanceof GrIfStatement) {
@@ -66,18 +69,21 @@ class NestingDepthVisitor extends GroovyRecursiveElementVisitor {
     }
   }
 
+  @Override
   public void visitTryStatement(@NotNull GrTryCatchStatement statement) {
     enterScope();
     super.visitTryStatement(statement);
     exitScope();
   }
 
+  @Override
   public void visitSwitchStatement(@NotNull GrSwitchStatement statement) {
     enterScope();
     super.visitSwitchStatement(statement);
     exitScope();
   }
 
+  @Override
   public void visitWhileStatement(@NotNull GrWhileStatement statement) {
     enterScope();
     super.visitWhileStatement(statement);

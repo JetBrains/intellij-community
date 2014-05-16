@@ -32,10 +32,12 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
  * Date: 11.09.2007
  */
 public class GroovyOverrideMethodsHandler implements LanguageCodeInsightActionHandler {
+  @Override
   public boolean isValidFor(Editor editor, PsiFile psiFile) {
     return psiFile != null && GroovyFileType.GROOVY_FILE_TYPE.equals(psiFile.getFileType());
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
     PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, true);
@@ -49,6 +51,7 @@ public class GroovyOverrideMethodsHandler implements LanguageCodeInsightActionHa
     OverrideImplementUtil.chooseAndOverrideMethods(project, editor, aClass);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.completion.smartEnter.GroovySmartEnterP
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSynchronizedStatement;
 
 public class GrSynchronizedFixer extends SmartEnterProcessorWithFixers.Fixer<GroovySmartEnterProcessor> {
+  @Override
   public void apply(@NotNull Editor editor, @NotNull GroovySmartEnterProcessor processor, @NotNull PsiElement psiElement) {
     GrSynchronizedStatement synchronizedStatement = PsiTreeUtil.getParentOfType(psiElement, GrSynchronizedStatement.class);
     if (synchronizedStatement == null || synchronizedStatement.getBody() != null) return;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 public class GrMethodCallUsageInfo extends UsageInfo implements PossiblyIncorrectUsage {
   private final boolean myToChangeArguments;
   private final boolean myToCatchExceptions;
-  private GrClosureSignatureUtil.ArgInfo<PsiElement>[] myMapToArguments;
+  private final GrClosureSignatureUtil.ArgInfo<PsiElement>[] myMapToArguments;
   private PsiSubstitutor mySubstitutor;
 
   public boolean isToCatchExceptions() {
@@ -126,6 +126,7 @@ public class GrMethodCallUsageInfo extends UsageInfo implements PossiblyIncorrec
     return resolveResult == null || resolveResult.getElement() == null;
   }
 
+  @Override
   public boolean isCorrect() {
     return myMapToArguments != null;
   }

@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
@@ -92,7 +93,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
   private final Map<Project, List<VcsException>> myMoveExceptions = new HashMap<Project, List<VcsException>>();
   private final List<VirtualFile> myFilesToRefresh = new ArrayList<VirtualFile>();
   @Nullable private File myStorageForUndo;
-  private final List<Pair<File, File>> myUndoStorageContents = new ArrayList<Pair<File, File>>();
+  private final List<Couple<File>> myUndoStorageContents = new ArrayList<Couple<File>>();
   private boolean myUndoingMove = false;
 
   public SvnFileSystemListener() {
@@ -424,8 +425,8 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
 
   private void restoreFromUndoStorage(final File dst) {
     String normPath = FileUtil.toSystemIndependentName(dst.getPath());
-    for (Iterator<Pair<File, File>> it = myUndoStorageContents.iterator(); it.hasNext();) {
-      Pair<File, File> e = it.next();
+    for (Iterator<Couple<File>> it = myUndoStorageContents.iterator(); it.hasNext();) {
+      Couple<File> e = it.next();
       final String p = FileUtil.toSystemIndependentName(e.first.getPath());
       if (p.startsWith(normPath)) {
         try {
@@ -582,7 +583,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
       }
     }
     final File tmpFile = FileUtil.findSequentNonexistentFile(myStorageForUndo, "tmp", "");
-    myUndoStorageContents.add(0, Pair.create(new File(file.getPath()), tmpFile));
+    myUndoStorageContents.add(0, Couple.newOne(new File(file.getPath()), tmpFile));
     new File(file.getPath()).renameTo(tmpFile);
   }
 

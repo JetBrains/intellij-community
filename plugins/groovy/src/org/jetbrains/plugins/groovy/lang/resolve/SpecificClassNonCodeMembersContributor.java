@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class SpecificClassNonCodeMembersContributor extends NonCodeMembersContributor {
 
+  @Override
   public void processDynamicElements(@NotNull PsiType qualifierType,
                                      @NotNull PsiClass aClass,
                                      @NotNull PsiScopeProcessor processor,
@@ -35,6 +36,7 @@ public abstract class SpecificClassNonCodeMembersContributor extends NonCodeMemb
     processDynamicElements(qualifierType, processor, place, state);
   }
 
+  @Override
   @NotNull
   protected abstract String getParentClassName();
 }

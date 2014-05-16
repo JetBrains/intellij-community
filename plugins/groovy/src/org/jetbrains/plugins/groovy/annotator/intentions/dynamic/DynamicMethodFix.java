@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ public class DynamicMethodFix implements IntentionAction, LowPriorityAction {
     mySignature = calcSignature(argumentTypes);
   }
 
+  @Override
   @NotNull
   public String getText() {
     return GroovyBundle.message("add.dynamic.method") + mySignature;
@@ -64,15 +65,18 @@ public class DynamicMethodFix implements IntentionAction, LowPriorityAction {
     return builder.toString();
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return GroovyBundle.message("add.dynamic.element");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     return myReferenceExpression.isValid();
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     DynamicDialog dialog = new DynamicMethodDialog(myReferenceExpression);
     dialog.show();
@@ -83,6 +87,7 @@ public class DynamicMethodFix implements IntentionAction, LowPriorityAction {
     DynamicManager.getInstance(project).addMethod(settings);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

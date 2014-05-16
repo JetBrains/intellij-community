@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ public abstract class GrCallImpl extends GroovyPsiElementImpl implements GrCall 
     super(node);
   }
 
+  @Override
   public GrArgumentList getArgumentList() {
     for (PsiElement cur = this.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (cur instanceof GrArgumentList) return (GrArgumentList)cur;
@@ -43,22 +44,25 @@ public abstract class GrCallImpl extends GroovyPsiElementImpl implements GrCall 
     return null;
   }
 
+  @Override
   @NotNull
   public GrNamedArgument[] getNamedArguments() {
     GrArgumentList argList = getArgumentList();
     return argList != null ? argList.getNamedArguments() : GrNamedArgument.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public GrExpression[] getExpressionArguments() {
     GrArgumentList argList = getArgumentList();
     return argList != null ? argList.getExpressionArguments() : GrExpression.EMPTY_ARRAY;
   }
 
+  @Override
   public GrNamedArgument addNamedArgument(final GrNamedArgument namedArgument) throws IncorrectOperationException {
     GrArgumentList list = getArgumentList();
     assert list != null;
-    if (list.getText().trim().length() == 0) {
+    if (list.getText().trim().isEmpty()) {
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
       final GrArgumentList newList = factory.createExpressionArgumentList();
       list = (GrArgumentList)list.replace(newList);

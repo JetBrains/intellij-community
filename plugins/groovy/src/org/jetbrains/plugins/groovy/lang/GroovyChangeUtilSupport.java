@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import java.util.Map;
  */
 public class GroovyChangeUtilSupport implements TreeCopyHandler {
 
+  @Override
   public TreeElement decodeInformation(TreeElement element, final Map<Object, Object> decodingState) {
     if (element instanceof CompositeElement) {
       if (element.getElementType() == GroovyElementTypes.REFERENCE_ELEMENT || element.getElementType() == GroovyElementTypes.REFERENCE_EXPRESSION) {
@@ -66,6 +67,7 @@ public class GroovyChangeUtilSupport implements TreeCopyHandler {
     return null;
   }
 
+  @Override
   public void encodeInformation(final TreeElement element, final ASTNode original, final Map<Object, Object> encodingState) {
     if (original instanceof CompositeElement) {
       if (original.getElementType() == GroovyElementTypes.REFERENCE_ELEMENT ||

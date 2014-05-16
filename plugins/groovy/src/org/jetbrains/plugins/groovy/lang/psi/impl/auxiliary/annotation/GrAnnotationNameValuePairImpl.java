@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitAnnotationNameValuePair(this);
   }
@@ -59,6 +60,7 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
     return "Annotation member value pair";
   }
 
+  @Override
   @Nullable
   public String getName() {
     final PsiElement nameId = getNameIdentifierGroovy();
@@ -70,6 +72,7 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
     return null;
   }
 
+  @Override
   @Nullable
   public PsiElement getNameIdentifierGroovy() {
     PsiElement child = getFirstChild();
@@ -81,14 +84,17 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
     return null;
   }
 
+  @Override
   public PsiIdentifier getNameIdentifier() {
     return null;
   }
 
+  @Override
   public GrAnnotationMemberValue getValue() {
     return findChildByClass(GrAnnotationMemberValue.class);
   }
 
+  @Override
   @NotNull
   public PsiAnnotationMemberValue setValue(@NotNull PsiAnnotationMemberValue newValue) {
     GrAnnotationMemberValue value = getValue();
@@ -100,31 +106,37 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
     }
   }
 
+  @Override
   public PsiReference getReference() {
     return getNameIdentifierGroovy() == null ? null : this;
   }
 
+  @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @Override
   public TextRange getRangeInElement() {
     PsiElement nameId = getNameIdentifierGroovy();
     assert nameId != null;
     return nameId.getTextRange().shiftRight(-getTextRange().getStartOffset());
   }
 
+  @Override
   @Nullable
   public PsiElement resolve() {
     final GroovyResolveResult[] results = multiResolve(false);
     return results.length == 1 ? results[0].getElement() : null;
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     return getRangeInElement().substring(getText());
   }
 
+  @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     PsiElement nameElement = getNameIdentifierGroovy();
     ASTNode newNameNode = GroovyPsiElementFactory.getInstance(getProject()).createReferenceNameFromText(newElementName).getNode();
@@ -143,19 +155,23 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
     return this;
   }
 
+  @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException("NYI");
   }
 
+  @Override
   public boolean isReferenceTo(PsiElement element) {
     return element instanceof PsiMethod && getManager().areElementsEquivalent(element, resolve());
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 
+  @Override
   public boolean isSoft() {
     return false;
   }

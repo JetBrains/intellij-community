@@ -16,9 +16,9 @@
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
-import com.intellij.openapi.util.Pair;
-import org.jetbrains.plugins.gradle.util.XmlXpathHelper;
+import com.intellij.openapi.util.Couple;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsoleManager;
+import org.jetbrains.plugins.gradle.util.XmlXpathHelper;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -70,7 +70,7 @@ public class AfterTestEvent extends AbstractTestEvent {
           testProxy.setTestComparisonFailed(exceptionMsg, stackTrace, actualText, expectedText);
         }
         else {
-          Pair<String/*expected*/, String/*actual*/> comparisonPair =
+          Couple<String> comparisonPair =
             parseComparisonMessage(exceptionMsg, "\nExpected: is \"(.*)\"\n\\s*got: \"(.*)\"\n");
           if (comparisonPair == null) {
             comparisonPair = parseComparisonMessage(exceptionMsg, "\nExpected: is \"(.*)\"\n\\s*but: was \"(.*)\"");
@@ -116,10 +116,10 @@ public class AfterTestEvent extends AbstractTestEvent {
     }
   }
 
-  private static Pair<String/*expected*/, String/*actual*/> parseComparisonMessage(String message, final String regex) {
+  private static Couple<String> parseComparisonMessage(String message, final String regex) {
     final Matcher matcher = Pattern.compile(regex, Pattern.DOTALL | Pattern.CASE_INSENSITIVE).matcher(message);
     if (matcher.matches()) {
-      return Pair.create(matcher.group(1).replaceAll("\\\\n", "\n"), matcher.group(2).replaceAll("\\\\n", "\n"));
+      return Couple.newOne(matcher.group(1).replaceAll("\\\\n", "\n"), matcher.group(2).replaceAll("\\\\n", "\n"));
     }
     return null;
   }

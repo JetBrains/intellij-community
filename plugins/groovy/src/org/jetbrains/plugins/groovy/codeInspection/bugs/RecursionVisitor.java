@@ -38,12 +38,14 @@ class RecursionVisitor extends GroovyRecursiveElementVisitor {
     methodName = method.getName();
   }
 
+  @Override
   public void visitElement(@NotNull GroovyPsiElement element) {
     if (!recursive) {
       super.visitElement(element);
     }
   }
 
+  @Override
   public void visitMethodCallExpression(
       @NotNull GrMethodCallExpression call) {
     if (recursive) {

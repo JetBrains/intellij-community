@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,11 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members.EnumConstant;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeParameters;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
-import static org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils.getToken;
-import static org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils.lookAhead;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kINTERFACE;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kTRAIT;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -96,16 +98,16 @@ public class TypeDefinition implements GroovyElementTypes {
     assert name != null;
     builder.advanceLexer();
 
-    getToken(builder, mNLS);
+    ParserUtils.getToken(builder, mNLS);
     TypeParameters.parse(builder);
 
-    getToken(builder, mNLS);
+    ParserUtils.getToken(builder, mNLS);
     ReferenceElement.parseReferenceList(builder, kEXTENDS, EXTENDS_CLAUSE, type);
 
-    getToken(builder, mNLS);
+    ParserUtils.getToken(builder, mNLS);
     ReferenceElement.parseReferenceList(builder, kIMPLEMENTS, IMPLEMENTS_CLAUSE, type);
 
-    getToken(builder, mNLS);
+    ParserUtils.getToken(builder, mNLS);
     if (builder.getTokenType() == mLCURLY) {
       if (type == ClassType.ENUM) {
         parseEnumBody(builder, name, parser);
@@ -127,7 +129,7 @@ public class TypeDefinition implements GroovyElementTypes {
     //allow errors
     PsiBuilder.Marker cbMarker = builder.mark();
 
-    if (!getToken(builder, mLCURLY)) {
+    if (!ParserUtils.getToken(builder, mLCURLY)) {
       builder.error(GroovyBundle.message("lcurly.expected"));
       cbMarker.rollbackTo();
       return WRONGWAY;
@@ -135,7 +137,7 @@ public class TypeDefinition implements GroovyElementTypes {
 
     parseMembers(builder, className, parser, isInAnnotation);
 
-    getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
+    ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
 
     cbMarker.done(CLASS_BODY);
     return CLASS_BODY;
@@ -166,22 +168,22 @@ public class TypeDefinition implements GroovyElementTypes {
                                             @NotNull GroovyParser parser) {
     PsiBuilder.Marker ebMarker = builder.mark();
 
-    if (!getToken(builder, mLCURLY)) {
+    if (!ParserUtils.getToken(builder, mLCURLY)) {
       ebMarker.rollbackTo();
       return WRONGWAY;
     }
 
-    getToken(builder, mNLS);
+    ParserUtils.getToken(builder, mNLS);
 
     if (EnumConstant.parseConstantList(builder, parser)) {
-      if (!lookAhead(builder, mRCURLY)) {
-        getToken(builder, TokenSet.create(mNLS, mSEMI), GroovyBundle.message("separator.or.rcurly.expected"));
+      if (!ParserUtils.lookAhead(builder, mRCURLY)) {
+        ParserUtils.getToken(builder, TokenSet.create(mNLS, mSEMI), GroovyBundle.message("separator.or.rcurly.expected"));
       }
     }
 
     parseMembers(builder, enumName, parser, false);
 
-    getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
+    ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
 
     ebMarker.done(ENUM_BODY);
     return ENUM_BODY;

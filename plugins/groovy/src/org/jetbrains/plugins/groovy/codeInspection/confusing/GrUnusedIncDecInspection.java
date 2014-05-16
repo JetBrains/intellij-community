@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,18 +61,21 @@ public class GrUnusedIncDecInspection extends BaseInspection {
     return true;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return GroovyInspectionBundle.message("groovy.dfa.issues");
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return GroovyInspectionBundle.message("unused.inc.dec");
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getShortName() {

@@ -53,7 +53,7 @@ public class GroovyEditorTextProvider implements EditorTextProvider {
           }
         }
       }
-      if (result.length() == 0) {
+      if (result.isEmpty()) {
         result = element.getText();
       }
     }

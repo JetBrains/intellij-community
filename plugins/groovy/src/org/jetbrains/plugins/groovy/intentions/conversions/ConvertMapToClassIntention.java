@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
 import org.jetbrains.plugins.groovy.annotator.intentions.CreateClassActionBase;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
+import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
@@ -69,7 +70,7 @@ import java.util.Map;
  * @author Maxim.Medvedev
  */
 public class ConvertMapToClassIntention extends Intention {
-  private static Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.intentions.conversions.ConvertMapToClassIntention");
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.intentions.conversions.ConvertMapToClassIntention");
 
   @Override
   protected void processIntention(@NotNull PsiElement element, final Project project, Editor editor) throws IncorrectOperationException {
@@ -121,7 +122,7 @@ public class ConvertMapToClassIntention extends Intention {
       final PsiType type = replacedNewExpression.getType();
       final GrMethod method = PsiTreeUtil.getParentOfType(replacedNewExpression, GrMethod.class, true, GrClosableBlock.class);
       LOG.assertTrue(method != null);
-      method.setReturnType(type);
+      GrReferenceAdjuster.shortenAllReferencesIn(method.setReturnType(type));
     }
 
     if (variableDeclaration) {
@@ -224,7 +225,7 @@ public class ConvertMapToClassIntention extends Intention {
 
   public static GrTypeDefinition createClass(Project project, GrNamedArgument[] namedArguments, String packageName, String className) {
     StringBuilder classText = new StringBuilder();
-    if (packageName.length() > 0) {
+    if (!packageName.isEmpty()) {
       classText.append("package ").append(packageName).append('\n');
     }
     classText.append("class ").append(className).append(" {\n");

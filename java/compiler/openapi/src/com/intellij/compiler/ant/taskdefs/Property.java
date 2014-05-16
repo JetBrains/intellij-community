@@ -17,7 +17,7 @@
 package com.intellij.compiler.ant.taskdefs;
 
 import com.intellij.compiler.ant.Tag;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -28,17 +28,12 @@ public class Property extends Tag {
 
   public Property(@NonNls final String name, final String value) {
     //noinspection HardCodedStringLiteral
-    super("property", new Pair[] {
-      Pair.create("name", name),
-      Pair.create("value", value)
-    });
+    super("property", Couple.newOne("name", name), Couple.newOne("value", value));
   }
 
   public Property(@NonNls final String filePath) {
     //noinspection HardCodedStringLiteral
-    super("property", new Pair[] {
-      Pair.create("file", filePath),
-    });
+    super("property", Couple.newOne("file", filePath));
   }
 
 }

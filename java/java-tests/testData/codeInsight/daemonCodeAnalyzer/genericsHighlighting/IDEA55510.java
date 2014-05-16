@@ -20,3 +20,17 @@ interface SomeInterface<T> {}
 class Settings extends AbstractSettings implements SomeInterface<Settings.MyState> {
     static class MyState implements State {}
 }
+
+//--------------------------------------------
+class Records {
+  interface RecordCategory {
+  }
+
+  static abstract class Record<CATEGORY_TYPE extends RecordCategory> extends Records {}
+
+  static class ResultRecord extends Record<ResultRecord.Category> {
+    public enum Category implements RecordCategory {
+      kind();
+    }
+  }
+}

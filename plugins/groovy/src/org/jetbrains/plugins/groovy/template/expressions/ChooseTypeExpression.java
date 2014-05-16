@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,6 +109,7 @@ public class ChooseTypeExpression extends Expression {
     return PsiType.getJavaLangObject(manager, scope);
   }
 
+  @Override
   public Result calculateResult(ExpressionContext context) {
     PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
     PsiType type = myTypePointer.getType();
@@ -143,10 +144,12 @@ public class ChooseTypeExpression extends Expression {
     return null;
   }
 
+  @Override
   public Result calculateQuickResult(ExpressionContext context) {
     return calculateResult(context);
   }
 
+  @Override
   public LookupElement[] calculateLookupItems(ExpressionContext context) {
     Set<LookupElement> result = ContainerUtil.newHashSet();
 

@@ -30,40 +30,48 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 
 public class GroovyConstantIfStatementInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return CONTROL_FLOW;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Constant if statement";
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... args) {
     return "#ref statement can be simplified #loc";
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ConstantIfStatementVisitor();
   }
 
+  @Override
   public GroovyFix buildFix(PsiElement location) {
     return new ConstantIfStatementFix();
   }
 
   private static class ConstantIfStatementFix extends GroovyFix {
 
+    @Override
     @NotNull
     public String getName() {
       return "Simplify";
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
         throws IncorrectOperationException {
       final PsiElement ifKeyword = descriptor.getPsiElement();
@@ -88,6 +96,7 @@ public class GroovyConstantIfStatementInspection extends BaseInspection {
   private static class ConstantIfStatementVisitor
       extends BaseInspectionVisitor {
 
+    @Override
     public void visitIfStatement(GrIfStatement statement) {
       super.visitIfStatement(statement);
       final GrExpression condition = statement.getCondition();

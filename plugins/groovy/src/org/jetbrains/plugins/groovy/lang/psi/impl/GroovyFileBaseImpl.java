@@ -51,7 +51,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.deleteStatementTail;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNLS;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNLS;
 
 /**
  * @author ilyas
@@ -75,6 +76,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     init(root, root1);
   }
 
+  @Override
   @NotNull
   public FileType getFileType() {
     return GroovyFileType.GROOVY_FILE_TYPE;
@@ -84,6 +86,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     return "Groovy script";
   }
 
+  @Override
   @NotNull
   public GrTypeDefinition[] getTypeDefinitions() {
     final StubElement<?> stub = getStub();
@@ -94,11 +97,13 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     return calcTreeElement().getChildrenAsPsiElements(GroovyElementTypes.TYPE_DEFINITION_TYPES, GrTypeDefinition.ARRAY_FACTORY);
   }
 
+  @Override
   @NotNull
   public GrTopLevelDefinition[] getTopLevelDefinitions() {
     return findChildrenByClass(GrTopLevelDefinition.class);
   }
 
+  @Override
   @NotNull
   public GrMethod[] getCodeMethods() {
     final StubElement<?> stub = getStub();
@@ -131,19 +136,23 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     return myMethods;
   }
 
+  @Override
   @NotNull
   public GrTopStatement[] getTopStatements() {
     return findChildrenByClass(GrTopStatement.class);
   }
 
+  @Override
   public boolean importClass(PsiClass aClass) {
     return addImportForClass(aClass) != null;
   }
 
+  @Override
   public void removeImport(@NotNull GrImportStatement importStatement) throws IncorrectOperationException {
     GroovyCodeStyleManager.getInstance(getProject()).removeImport(this, importStatement);
   }
 
+  @Override
   public void removeElements(PsiElement[] elements) throws IncorrectOperationException {
     for (PsiElement element : elements) {
       if (element.isValid()) {
@@ -159,6 +168,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     return findChildrenByClass(GrStatement.class);
   }
 
+  @Override
   @NotNull
   public GrStatement addStatementBefore(@NotNull GrStatement statement, @Nullable GrStatement anchor) throws IncorrectOperationException {
     final PsiElement result = addBefore(statement, anchor);
@@ -166,25 +176,29 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
       getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", anchor.getNode());
     }
     else {
-      getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", result.getNode());
+      getNode().addLeaf(mNLS, "\n", result.getNode());
     }
     return (GrStatement)result;
   }
 
+  @Override
   public void removeVariable(GrVariable variable) {
     PsiImplUtil.removeVariable(variable);
   }
 
+  @Override
   public GrVariableDeclaration addVariableDeclarationBefore(GrVariableDeclaration declaration, GrStatement anchor) throws IncorrectOperationException {
     GrStatement statement = addStatementBefore(declaration, anchor);
     assert statement instanceof GrVariableDeclaration;
     return ((GrVariableDeclaration) statement);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitFile(this);
   }
 
+  @Override
   public void acceptChildren(GroovyElementVisitor visitor) {
     PsiElement child = getFirstChild();
     while (child != null) {
@@ -196,11 +210,13 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     }
   }
 
+  @Override
   @NotNull
   public PsiClass[] getClasses() {
     return getTypeDefinitions();
   }
 
+  @Override
   public void clearCaches() {
     super.clearCaches();
     myControlFlow = null;
@@ -208,6 +224,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
 
   private volatile SoftReference<Instruction[]> myControlFlow = null;
 
+  @Override
   public Instruction[] getControlFlow() {
     assert isValid();
     Instruction[] result = SoftReference.dereference(myControlFlow);
@@ -226,7 +243,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   @Override
   public void deleteChildRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
     if (last instanceof GrTopStatement) {
-      deleteStatementTail(this, last);
+      PsiImplUtil.deleteStatementTail(this, last);
     }
     super.deleteChildRange(first, last);
   }

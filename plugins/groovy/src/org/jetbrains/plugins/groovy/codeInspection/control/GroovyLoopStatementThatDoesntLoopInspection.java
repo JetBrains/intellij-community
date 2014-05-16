@@ -27,30 +27,35 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 
 public class GroovyLoopStatementThatDoesntLoopInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return CONTROL_FLOW;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Loop statement that doesn't loop";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "<code>#ref</code> statement doesn't loop #loc";
 
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitForStatement(GrForStatement forStatement) {
       super.visitForStatement(forStatement);
       final GrStatement body = forStatement.getBody();
@@ -66,6 +71,7 @@ public class GroovyLoopStatementThatDoesntLoopInspection extends BaseInspection 
       registerStatementError(forStatement);
     }
 
+    @Override
     public void visitWhileStatement(GrWhileStatement whileStatement) {
       super.visitWhileStatement(whileStatement);
       final GrStatement body = whileStatement.getBody();

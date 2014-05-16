@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
 
 public abstract class ConventionInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
@@ -86,11 +87,13 @@ public abstract class ConventionInspection extends BaseInspection {
     return matcher.matches();
   }
 
+  @Override
   public void readSettings(@NotNull Element element) throws InvalidDataException {
     super.readSettings(element);
     m_regexPattern = Pattern.compile(m_regex);
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     return new ConventionOptionsPanel(this, "m_minLength", "m_maxLength", "m_regex", "m_regexPattern");
   }

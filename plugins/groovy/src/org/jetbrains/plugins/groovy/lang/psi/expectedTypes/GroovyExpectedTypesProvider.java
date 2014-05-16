@@ -27,6 +27,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
@@ -63,7 +64,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mPLUS;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mREGEX_FIND;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mREGEX_MATCH;
 
 /**
  * @author ven
@@ -118,6 +121,7 @@ public class GroovyExpectedTypesProvider {
       myResult = TypeConstraint.EMPTY_ARRAY;
     }
 
+    @Override
     public void visitReturnStatement(GrReturnStatement returnStatement) {
       GrParametersOwner parent = PsiTreeUtil.getParentOfType(returnStatement, GrMethod.class, GrClosableBlock.class);
       if (parent instanceof GrMethod) {
@@ -129,6 +133,7 @@ public class GroovyExpectedTypesProvider {
       }
     }
 
+    @Override
     public void visitVariable(GrVariable variable) {
       if (myExpression.equals(variable.getInitializerGroovy())) {
         PsiType type = variable.getType();
@@ -170,6 +175,7 @@ public class GroovyExpectedTypesProvider {
       return false;
     }
 
+    @Override
     public void visitMethodCallExpression(GrMethodCallExpression methodCall) {
       final GrExpression invokedExpression = methodCall.getInvokedExpression();
       if (myExpression.equals(invokedExpression)) {
@@ -195,6 +201,7 @@ public class GroovyExpectedTypesProvider {
       }
     }
 
+    @Override
     public void visitIfStatement(GrIfStatement ifStatement) {
       if (myExpression.equals(ifStatement.getCondition())) {
         myResult = new TypeConstraint[]{new SubtypeConstraint(TypesUtil.getJavaLangObject(ifStatement), PsiType.BOOLEAN)};
@@ -325,18 +332,21 @@ public class GroovyExpectedTypesProvider {
       }
     }
 
+    @Override
     public void visitWhileStatement(GrWhileStatement whileStatement) {
       if (myExpression.equals(whileStatement.getCondition())) {
         myResult = new TypeConstraint[]{new SubtypeConstraint(TypesUtil.getJavaLangObject(whileStatement), PsiType.BOOLEAN)};
       }
     }
 
+    @Override
     public void visitTraditionalForClause(GrTraditionalForClause forClause) {
       if (myExpression.equals(forClause.getCondition())) {
         myResult = new TypeConstraint[]{new SubtypeConstraint(TypesUtil.getJavaLangObject(forClause), PsiType.BOOLEAN)};
       }
     }
 
+    @Override
     public void visitArgumentList(GrArgumentList list) {
       processCallVariants(list, ResolveUtil.getCallVariants(list), list.getNamedArguments(), list.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY);
     }
@@ -385,11 +395,11 @@ public class GroovyExpectedTypesProvider {
 
       final GroovyResolveResult[] callVariants = expression.multiResolve(true);
       if (myExpression == left || callVariants.length == 0) {
-        if (type == mPLUS && otherType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+        if (type == GroovyTokenTypes.mPLUS && otherType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
           final PsiClassType obj = TypesUtil.getJavaLangObject(expression);
           myResult = createSimpleSubTypeResult(obj);
         }
-        else if (type == mREGEX_FIND || type == mREGEX_MATCH) {
+        else if (type == GroovyTokenTypes.mREGEX_FIND || type == GroovyTokenTypes.mREGEX_MATCH) {
           final PsiClassType string = TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, expression);
           myResult = createSimpleSubTypeResult(string);
         }
@@ -415,6 +425,7 @@ public class GroovyExpectedTypesProvider {
       }
     }
 
+    @Override
     public void visitAssignmentExpression(GrAssignmentExpression expression) {
       GrExpression rValue = expression.getRValue();
       GrExpression lValue = expression.getLValue();
@@ -497,7 +508,7 @@ public class GroovyExpectedTypesProvider {
           }
         }
       }
-      if (result.size()==0) {
+      if (result.isEmpty()) {
       myResult = TypeConstraint.EMPTY_ARRAY;
       }
       else {

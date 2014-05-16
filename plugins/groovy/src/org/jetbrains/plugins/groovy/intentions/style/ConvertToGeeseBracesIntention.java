@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,12 +33,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
+import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
-import static org.jetbrains.plugins.groovy.formatter.GeeseUtil.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNLS;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNLS;
 
 /**
  * @author Max Medvedev
@@ -59,7 +61,7 @@ public class ConvertToGeeseBracesIntention extends Intention {
         element = PsiTreeUtil.prevLeaf(element);
       }
 
-      if (!isClosureRBrace(element) || !isClosureContainLF(element)) return false;
+      if (!GeeseUtil.isClosureRBrace(element) || !GeeseUtil.isClosureContainLF(element)) return false;
 
       TextRange range = findRange(element);
 
@@ -69,17 +71,17 @@ public class ConvertToGeeseBracesIntention extends Intention {
 
   @Nullable
   private static PsiElement getPrev(PsiElement element) {
-    PsiElement prev = getPreviousNonWhitespaceToken(element);
+    PsiElement prev = GeeseUtil.getPreviousNonWhitespaceToken(element);
     if (prev != null && prev.getNode().getElementType() == GroovyTokenTypes.mNLS) {
-      prev = getPreviousNonWhitespaceToken(prev);
+      prev = GeeseUtil.getPreviousNonWhitespaceToken(prev);
     }
     return prev;
   }
 
   @Nullable
   private static PsiElement getNext(PsiElement element) {
-    PsiElement next = getNextNonWhitespaceToken(element);
-    if (next != null && next.getNode().getElementType() == GroovyTokenTypes.mNLS) next = getNextNonWhitespaceToken(next);
+    PsiElement next = GeeseUtil.getNextNonWhitespaceToken(element);
+    if (next != null && next.getNode().getElementType() == mNLS) next = GeeseUtil.getNextNonWhitespaceToken(next);
     return next;
   }
 
@@ -88,7 +90,7 @@ public class ConvertToGeeseBracesIntention extends Intention {
     if (PsiImplUtil.isWhiteSpaceOrNls(element)) {
       element = PsiTreeUtil.prevLeaf(element);
     }
-    LOG.assertTrue(isClosureRBrace(element) && isClosureContainLF(element));
+    LOG.assertTrue(GeeseUtil.isClosureRBrace(element) && GeeseUtil.isClosureContainLF(element));
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -112,11 +114,11 @@ public class ConvertToGeeseBracesIntention extends Intention {
   private static TextRange findRange(PsiElement element) {
     PsiElement first = null;
     PsiElement last = null;
-    for (PsiElement cur = element; isClosureRBrace(cur) && isClosureContainLF(cur); cur = getNext(cur)) {
+    for (PsiElement cur = element; GeeseUtil.isClosureRBrace(cur) && GeeseUtil.isClosureContainLF(cur); cur = getNext(cur)) {
       last = cur;
     }
 
-    for (PsiElement cur = element; isClosureRBrace(cur) && isClosureContainLF(cur); cur = getPrev(cur)) {
+    for (PsiElement cur = element; GeeseUtil.isClosureRBrace(cur) && GeeseUtil.isClosureContainLF(cur); cur = getPrev(cur)) {
       first = cur;
     }
 

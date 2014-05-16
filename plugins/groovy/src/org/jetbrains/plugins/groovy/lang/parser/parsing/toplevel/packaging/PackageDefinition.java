@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modi
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
-import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.FAIL;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kPACKAGE;
 
 /**
  * @author ilyas
@@ -42,7 +42,7 @@ public class PackageDefinition implements GroovyElementTypes {
       return false;
     }
 
-    if (ReferenceElement.parseForPackage(builder) == FAIL) {
+    if (ReferenceElement.parseForPackage(builder) == ReferenceElement.ReferenceElementResult.FAIL) {
       builder.error(GroovyBundle.message("identifier.expected"));
     }
 

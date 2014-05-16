@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ public class InstructionImpl implements Instruction {
   protected final PsiElement myPsiElement;
   private int myNumber = -1;
 
+  @Override
   @Nullable
   public PsiElement getElement() {
     return myPsiElement;
@@ -47,6 +48,7 @@ public class InstructionImpl implements Instruction {
     myPsiElement = element;
   }
 
+  @Override
   public Iterable<? extends Instruction> successors(CallEnvironment environment) {
     final Deque<CallInstruction> stack = environment.callStack(this);
     for (InstructionImpl instruction : mySuccessors) {
@@ -56,6 +58,7 @@ public class InstructionImpl implements Instruction {
     return mySuccessors;
   }
 
+  @Override
   public Iterable<? extends Instruction> predecessors(CallEnvironment environment) {
     final Deque<CallInstruction> stack = environment.callStack(this);
     for (InstructionImpl instruction : myPredecessors) {
@@ -65,10 +68,12 @@ public class InstructionImpl implements Instruction {
     return myPredecessors;
   }
 
+  @Override
   public Iterable<? extends Instruction> allSuccessors() {
     return mySuccessors;
   }
 
+  @Override
   public Iterable<? extends Instruction> allPredecessors() {
     return myPredecessors;
   }
@@ -91,6 +96,7 @@ public class InstructionImpl implements Instruction {
     return "element: " + myPsiElement;
   }
 
+  @Override
   public int num() {
     assert myNumber != -1;
     return myNumber;

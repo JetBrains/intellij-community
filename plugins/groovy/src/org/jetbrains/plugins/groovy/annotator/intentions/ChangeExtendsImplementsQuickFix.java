@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,20 +55,24 @@ public class ChangeExtendsImplementsQuickFix implements IntentionAction {
     myImplementsClause = aClass.getImplementsClause();
   }
 
+  @Override
   @NotNull
   public String getText() {
     return GroovyBundle.message("change.implements.and.extends.classes");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myClass.isValid() && myClass.getManager().isInProject(file);
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     Set<String> classes = new LinkedHashSet<String>();
     Set<String> interfaces = new LinkedHashSet<String>();
@@ -144,6 +148,7 @@ public class ChangeExtendsImplementsQuickFix implements IntentionAction {
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(addedClause);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

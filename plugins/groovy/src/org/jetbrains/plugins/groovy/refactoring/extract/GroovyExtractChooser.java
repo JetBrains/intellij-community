@@ -51,6 +51,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineMethodUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
@@ -59,8 +60,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-
-import static org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil.*;
 
 /**
  * @author Max Medvedev
@@ -121,14 +120,14 @@ public class GroovyExtractChooser {
     }
 
     for (GrStatement statement : statements) {
-      if (isSuperOrThisCall(statement, true, true)) {
+      if (GroovyRefactoringUtil.isSuperOrThisCall(statement, true, true)) {
         throw new GrRefactoringError(GroovyRefactoringBundle.message("selected.block.contains.invocation.of.another.class.constructor"));
       }
     }
 
     GrStatement statement0 = statements[0];
     PsiClass owner = PsiUtil.getContextClass(statement0);
-    GrStatementOwner declarationOwner = getDeclarationOwner(statement0);
+    GrStatementOwner declarationOwner = GroovyRefactoringUtil.getDeclarationOwner(statement0);
     if (owner == null || declarationOwner == null && !ExtractUtil.isSingleExpression(statements)) {
       throw new GrRefactoringError(GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context"));
     }
@@ -172,19 +171,20 @@ public class GroovyExtractChooser {
       ReachingDefinitionsCollector.obtainVariableFlowInformation(statement0, statements[statements.length - 1], controlFlowOwner, flow);
     VariableInfo[] inputInfos = fragmentVariableInfos.getInputVariableNames();
     VariableInfo[] outputInfos = fragmentVariableInfos.getOutputVariableNames();
-    if (outputInfos.length == 1 && returnStatements.size() > 0) {
+    if (outputInfos.length == 1 && !returnStatements.isEmpty()) {
       throw new GrRefactoringError(GroovyRefactoringBundle.message("multiple.output.values"));
     }
 
     boolean hasInterruptingStatements = false;
 
     for (GrStatement statement : statements) {
-      hasInterruptingStatements = hasWrongBreakStatements(statement) || hasWrongContinueStatements(statement);
+      hasInterruptingStatements = GroovyRefactoringUtil.hasWrongBreakStatements(statement) || GroovyRefactoringUtil
+        .hasWrongContinueStatements(statement);
       if (hasInterruptingStatements) break;
     }
 
     // must be replaced by return statement
-    boolean hasReturns = returnStatements.size() > 0;
+    boolean hasReturns = !returnStatements.isEmpty();
     List<GrStatement> returnStatementsCopy = new ArrayList<GrStatement>(returnStatements.size());
     returnStatementsCopy.addAll(returnStatements);
     boolean isReturnStatement = isReturnStatement(statements[statements.length - 1], returnStatementsCopy);
@@ -223,11 +223,11 @@ public class GroovyExtractChooser {
   }
 
   private static PsiElement[] getElementsInOffset(PsiFile file, int startOffset, int endOffset, boolean forceStatements) {
-    GrExpression expr = findElementInRange(file, startOffset, endOffset, GrExpression.class);
+    GrExpression expr = GroovyRefactoringUtil.findElementInRange(file, startOffset, endOffset, GrExpression.class);
     if (!forceStatements && expr != null) return new PsiElement[]{expr};
 
     if (expr == null) {
-      return findStatementsInRange(file, startOffset, endOffset, true);
+      return GroovyRefactoringUtil.findStatementsInRange(file, startOffset, endOffset, true);
     }
 
     if (expr.getParent() instanceof GrMethodCallExpression) {
@@ -240,7 +240,7 @@ public class GroovyExtractChooser {
     if (statement instanceof GrReturnStatement) return true;
     if (statement instanceof GrIfStatement) {
       boolean checked = GroovyInlineMethodUtil.checkTailIfStatement(((GrIfStatement)statement), returnStatements);
-      return checked & returnStatements.size() == 0;
+      return checked & returnStatements.isEmpty();
     }
     if (statement instanceof GrExpression) {
       return returnStatements.contains(statement);

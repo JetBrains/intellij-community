@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package git4idea.checkin;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBCheckBox;
@@ -47,7 +47,7 @@ class GitUserNameNotDefinedDialog extends DialogWrapper {
 
   @NotNull private final Collection<VirtualFile> myRootsWithUndefinedProps;
   @NotNull private final Collection<VirtualFile> myAllRootsAffectedByCommit;
-  @Nullable private final Pair<String,String> myProposedValues;
+  @Nullable private final Couple<String> myProposedValues;
 
   private JTextField myNameTextField;
   private JTextField myEmailTextField;
@@ -56,7 +56,7 @@ class GitUserNameNotDefinedDialog extends DialogWrapper {
   GitUserNameNotDefinedDialog(@NotNull Project project,
                                         @NotNull Collection<VirtualFile> rootsWithUndefinedProps,
                                         @NotNull Collection<VirtualFile> allRootsAffectedByCommit,
-                                        @NotNull Map<VirtualFile, Pair<String, String>> rootsWithDefinedProps) {
+                                        @NotNull Map<VirtualFile, Couple<String>> rootsWithDefinedProps) {
     super(project, false);
     myRootsWithUndefinedProps = rootsWithUndefinedProps;
     myAllRootsAffectedByCommit = allRootsAffectedByCommit;
@@ -87,12 +87,12 @@ class GitUserNameNotDefinedDialog extends DialogWrapper {
   }
 
   @Nullable
-  private static Pair<String, String> calcProposedValues(Map<VirtualFile, Pair<String, String>> rootsWithDefinedProps) {
+  private static Couple<String> calcProposedValues(Map<VirtualFile, Couple<String>> rootsWithDefinedProps) {
     if (rootsWithDefinedProps.isEmpty()) {
       return null;
     }
-    Iterator<Map.Entry<VirtualFile,Pair<String,String>>> iterator = rootsWithDefinedProps.entrySet().iterator();
-    Pair<String, String> firstValue = iterator.next().getValue();
+    Iterator<Map.Entry<VirtualFile,Couple<String>>> iterator = rootsWithDefinedProps.entrySet().iterator();
+    Couple<String> firstValue = iterator.next().getValue();
     while (iterator.hasNext()) {
       // nothing to propose if there are different values set in different repositories
       if (!firstValue.equals(iterator.next().getValue())) {

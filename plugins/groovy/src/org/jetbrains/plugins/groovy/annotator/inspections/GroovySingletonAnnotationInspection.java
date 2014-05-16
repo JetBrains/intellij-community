@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,20 +36,24 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 public class GroovySingletonAnnotationInspection extends BaseInspection {
   public static final String SINGLETON = GroovyCommonClassNames.GROOVY_LANG_SINGLETON;
 
+  @Override
   protected BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return ANNOTATIONS_ISSUES;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
@@ -57,6 +61,7 @@ public class GroovySingletonAnnotationInspection extends BaseInspection {
   }
 
   private static class Visitor extends BaseInspectionVisitor {
+    @Override
     public void visitAnnotation(GrAnnotation annotation) {
       super.visitAnnotation(annotation);
 

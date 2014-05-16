@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
-import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.FAIL;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * @author Dmitry.Krasilschikov
@@ -39,7 +39,7 @@ public class ThrowClause implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, mNLS);
 
-    if (ReferenceElement.parse(builder, false, true, true, false, false) == FAIL) {
+    if (ReferenceElement.parse(builder, false, true, true, false, false) == ReferenceElement.ReferenceElementResult.FAIL) {
       builder.error(GroovyBundle.message("identifier.expected"));
       throwClauseMarker.done(THROW_CLAUSE);
       return;
@@ -48,7 +48,7 @@ public class ThrowClause implements GroovyElementTypes {
     while (ParserUtils.getToken(builder, mCOMMA)) {
       ParserUtils.getToken(builder, mNLS);
 
-      if (ReferenceElement.parse(builder, false, true, true, false, false) == FAIL) {
+      if (ReferenceElement.parse(builder, false, true, true, false, false) == ReferenceElement.ReferenceElementResult.FAIL) {
         break;
       }
     }

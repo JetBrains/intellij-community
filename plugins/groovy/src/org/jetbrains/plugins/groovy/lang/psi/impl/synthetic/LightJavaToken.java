@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ import com.intellij.psi.tree.IElementType;
  * @author Medvedev Max
  */
 public class LightJavaToken extends LightElement implements PsiJavaToken {
-  private PsiElement myElement;
-  private IElementType myType;
+  private final PsiElement myElement;
+  private final IElementType myType;
 
   public LightJavaToken(PsiElement element, IElementType type) {
     super(element.getManager(), element.getLanguage());
@@ -45,10 +45,12 @@ public class LightJavaToken extends LightElement implements PsiJavaToken {
     return "light java token";
   }
 
+  @Override
   public TextRange getTextRange() {
     return myElement.getTextRange();
   }
 
+  @Override
   public PsiFile getContainingFile() {
     return myElement.getContainingFile();
   }

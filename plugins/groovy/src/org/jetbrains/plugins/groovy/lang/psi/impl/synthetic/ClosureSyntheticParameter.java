@@ -56,6 +56,7 @@ public class ClosureSyntheticParameter extends GrLightParameter implements Navig
     setOptional(true);
   }
 
+  @Override
   public PsiElement setName(@NotNull String newName) throws IncorrectOperationException {
     if (!newName.equals(getName())) {
       GrParameter parameter = GroovyPsiElementFactory.getInstance(getProject()).createParameter(newName, (String)null, null);
@@ -64,6 +65,7 @@ public class ClosureSyntheticParameter extends GrLightParameter implements Navig
     return this;
   }
 
+  @Override
   @Nullable
   public PsiType getTypeGroovy() {
     assert isValid();
@@ -71,15 +73,18 @@ public class ClosureSyntheticParameter extends GrLightParameter implements Navig
     return TypeInferenceHelper.getCurrentContext().getExpressionType(this, TYPES_CALCULATOR);
   }
 
+  @Override
   @Nullable
   public PsiType getDeclaredType() {
     return null;
   }
 
+  @Override
   public boolean isWritable() {
     return true;
   }
 
+  @Override
   @NotNull
   public SearchScope getUseScope() {
     return new LocalSearchScope(myClosure);

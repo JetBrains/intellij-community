@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
-import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.parsing.GroovyDocParsing.RESULT.*;
+import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_SHARP_TOKEN;
+import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes.*;
 
 /**
  * @author ilyas
@@ -50,7 +52,7 @@ public class GroovyDocParsing implements GroovyDocElementTypes {
   @NonNls
   private static final String VALUE_TAG = "@value";
 
-  private final static TokenSet REFERENCE_BEGIN = TokenSet.create(mGDOC_TAG_VALUE_TOKEN, mGDOC_TAG_VALUE_SHARP_TOKEN);
+  private static final TokenSet REFERENCE_BEGIN = TokenSet.create(mGDOC_TAG_VALUE_TOKEN, mGDOC_TAG_VALUE_SHARP_TOKEN);
 
   private boolean isInInlinedTag = false;
   private int myBraceCounter = 0;
@@ -178,10 +180,10 @@ public class GroovyDocParsing implements GroovyDocElementTypes {
     if (mGDOC_TAG_VALUE_SHARP_TOKEN == builder.getTokenType()) {
       builder.advanceLexer();
       RESULT result = parseFieldOrMethod(builder);
-      if (result == ERROR) {
+      if (result == RESULT.ERROR) {
         marker.drop();
       }
-      else if (result == METHOD) {
+      else if (result == RESULT.METHOD) {
         marker.done(GDOC_METHOD_REF);
       }
       else {
@@ -194,12 +196,12 @@ public class GroovyDocParsing implements GroovyDocElementTypes {
   }
 
   private RESULT parseFieldOrMethod(PsiBuilder builder) {
-    if (builder.getTokenType() != mGDOC_TAG_VALUE_TOKEN) return ERROR;
+    if (builder.getTokenType() != mGDOC_TAG_VALUE_TOKEN) return RESULT.ERROR;
     builder.advanceLexer();
     PsiBuilder.Marker params = builder.mark();
     if (mGDOC_TAG_VALUE_LPAREN != builder.getTokenType()) {
       params.drop();
-      return FIELD;
+      return RESULT.FIELD;
     }
     builder.advanceLexer();
     while (parseMethodParameter(builder) && !timeToEnd(builder)) {
@@ -216,7 +218,7 @@ public class GroovyDocParsing implements GroovyDocElementTypes {
       builder.advanceLexer();
     }
     params.done(GDOC_METHOD_PARAMS);
-    return METHOD;
+    return RESULT.METHOD;
   }
 
   private boolean parseMethodParameter(PsiBuilder builder) {

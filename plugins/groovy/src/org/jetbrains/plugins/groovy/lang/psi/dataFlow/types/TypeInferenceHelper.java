@@ -303,6 +303,7 @@ public class TypeInferenceHelper {
       myCache = cache;
     }
 
+    @Override
     public void fun(final TypeDfaState state, final Instruction instruction) {
       if (instruction instanceof ReadWriteVariableInstruction) {
         handleVariableWrite(state, (ReadWriteVariableInstruction)instruction);
@@ -358,11 +359,13 @@ public class TypeInferenceHelper {
       state.putType(variableName, type);
     }
 
+    @Override
     @NotNull
     public TypeDfaState initial() {
       return new TypeDfaState();
     }
 
+    @Override
     public boolean isForward() {
       return true;
     }

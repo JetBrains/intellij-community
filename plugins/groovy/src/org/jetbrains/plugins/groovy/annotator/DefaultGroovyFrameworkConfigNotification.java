@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public class DefaultGroovyFrameworkConfigNotification extends GroovyFrameworkCon
   }
 
   @Override
-  public EditorNotificationPanel createConfigureNotificationPanel(final @NotNull Module module) {
+  public EditorNotificationPanel createConfigureNotificationPanel(@NotNull final Module module) {
     final EditorNotificationPanel panel = new EditorNotificationPanel();
     panel.setText(GroovyBundle.message("groovy.library.is.not.configured.for.module", module.getName()));
     panel.createActionLabel(GroovyBundle.message("configure.groovy.library"), new Runnable() {

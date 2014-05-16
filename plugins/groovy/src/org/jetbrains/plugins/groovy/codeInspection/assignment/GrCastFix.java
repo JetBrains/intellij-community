@@ -41,7 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
  */
 public class GrCastFix extends GroovyFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance(GrCastFix.class);
-  private PsiType myExpectedType;
+  private final PsiType myExpectedType;
 
   public GrCastFix(PsiType expectedType, GrExpression expression) {
     myExpectedType = PsiImplUtil.normalizeWildcardTypeByPosition(expectedType, expression);

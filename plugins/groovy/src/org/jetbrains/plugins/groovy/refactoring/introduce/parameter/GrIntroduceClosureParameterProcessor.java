@@ -86,11 +86,11 @@ import java.util.List;
 public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(GrIntroduceClosureParameterProcessor.class);
 
-  private GrIntroduceParameterSettings mySettings;
-  private GrClosableBlock toReplaceIn;
-  private PsiElement toSearchFor;
-  private GrExpressionWrapper myParameterInitializer;
-  private GroovyPsiElementFactory myFactory = GroovyPsiElementFactory.getInstance(myProject);
+  private final GrIntroduceParameterSettings mySettings;
+  private final GrClosableBlock toReplaceIn;
+  private final PsiElement toSearchFor;
+  private final GrExpressionWrapper myParameterInitializer;
+  private final GroovyPsiElementFactory myFactory = GroovyPsiElementFactory.getInstance(myProject);
 
   public GrIntroduceClosureParameterProcessor(@NotNull GrIntroduceParameterSettings settings) {
     super(settings.getProject(), null);
@@ -106,6 +106,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     myParameterInitializer = new GrExpressionWrapper(expression);
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(final UsageInfo[] usages) {
     return new UsageViewDescriptorAdapter() {
@@ -337,6 +338,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
 
     final GrParameter[] parameters = block.getParameters();
     settings.parametersToRemove().forEachDescending(new TIntProcedure() {
+      @Override
       public boolean execute(final int paramNum) {
         try {
           PsiParameter param = parameters[paramNum];

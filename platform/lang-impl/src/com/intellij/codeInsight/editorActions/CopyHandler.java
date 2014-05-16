@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -29,7 +28,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 
 import java.awt.datatransfer.Transferable;
 import java.util.ArrayList;
@@ -44,21 +44,19 @@ public class CopyHandler extends EditorActionHandler {
   }
 
   @Override
-  public void execute(final Editor editor, final DataContext dataContext) {
+  public void doExecute(final Editor editor, Caret caret, final DataContext dataContext) {
+    assert caret == null; // invocation for a specific caret is not supported
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
     if (project == null){
       if (myOriginalAction != null){
-        myOriginalAction.execute(editor, dataContext);
+        myOriginalAction.execute(editor, null, dataContext);
       }
       return;
     }
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-
-    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
-
-    if (file == null || settings.ADD_IMPORTS_ON_PASTE == CodeInsightSettings.NO) {
+    if (file == null) {
       if (myOriginalAction != null) {
-        myOriginalAction.execute(editor, dataContext);
+        myOriginalAction.execute(editor, null, dataContext);
       }
       return;
     }
@@ -89,10 +87,10 @@ public class CopyHandler extends EditorActionHandler {
     final int[] endOffsets = selectionModel.getBlockSelectionEnds();
 
     List<TextBlockTransferableData> transferableDatas = new ArrayList<TextBlockTransferableData>();
-    for (CopyPastePostProcessor processor : Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
-      final TextBlockTransferableData e = processor.collectTransferableData(file, editor, startOffsets, endOffsets);
-      if (e != null) {
-        transferableDatas.add(e);
+    for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
+      final List<? extends TextBlockTransferableData> data = processor.collectTransferableData(file, editor, startOffsets, endOffsets);
+      if (data != null) {
+        transferableDatas.addAll(data);
       }
     }
 

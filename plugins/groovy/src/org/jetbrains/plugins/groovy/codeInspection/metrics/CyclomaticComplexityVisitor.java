@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 class CyclomaticComplexityVisitor extends GroovyRecursiveElementVisitor {
   private int complexity = 1;
 
+  @Override
   public void visitElement(GroovyPsiElement GrElement) {
     int oldComplexity = 0;
     if (GrElement instanceof GrMethod) {
@@ -38,22 +39,26 @@ class CyclomaticComplexityVisitor extends GroovyRecursiveElementVisitor {
     }
   }
 
+  @Override
   public void visitForStatement(@NotNull GrForStatement statement) {
     super.visitForStatement(statement);
     complexity++;
   }
 
 
+  @Override
   public void visitIfStatement(@NotNull GrIfStatement statement) {
     super.visitIfStatement(statement);
     complexity++;
   }
 
+  @Override
   public void visitConditionalExpression(GrConditionalExpression expression) {
     super.visitConditionalExpression(expression);
     complexity++;
   }
 
+  @Override
   public void visitSwitchStatement(@NotNull GrSwitchStatement statement) {
     super.visitSwitchStatement(statement);
     final GrCaseSection[] caseClauses = statement.getCaseSections();
@@ -65,6 +70,7 @@ class CyclomaticComplexityVisitor extends GroovyRecursiveElementVisitor {
     }
   }
 
+  @Override
   public void visitWhileStatement(@NotNull GrWhileStatement statement) {
     super.visitWhileStatement(statement);
     complexity++;

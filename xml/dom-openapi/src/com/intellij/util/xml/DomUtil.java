@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -58,9 +59,9 @@ public class DomUtil {
       return result == null ? DUMMY : result;
     }
   };
-  private static final ConcurrentFactoryMap<Pair<Type, Type>, Class> ourVariableSubstitutions = new ConcurrentFactoryMap<Pair<Type, Type>, Class>() {
+  private static final ConcurrentFactoryMap<Couple<Type>, Class> ourVariableSubstitutions = new ConcurrentFactoryMap<Couple<Type>, Class>() {
     @Nullable
-    protected Class create(final Pair<Type, Type> key) {
+    protected Class create(final Couple<Type> key) {
       return ReflectionUtil.substituteGenericType(key.first, key.second);
     }
   };
@@ -159,7 +160,7 @@ public class DomUtil {
   }
 
   public static Class<?> substituteGenericType(Type genericType, Type classType) {
-    return ourVariableSubstitutions.get(Pair.create(genericType, classType));
+    return ourVariableSubstitutions.get(Couple.newOne(genericType, classType));
   }
 
   @Nullable

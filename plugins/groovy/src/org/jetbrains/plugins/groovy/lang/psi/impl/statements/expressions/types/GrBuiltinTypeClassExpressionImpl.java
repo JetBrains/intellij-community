@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ public class GrBuiltinTypeClassExpressionImpl extends GrExpressionImpl implement
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitBuiltinTypeClassExpression(this);
   }
@@ -48,6 +49,7 @@ public class GrBuiltinTypeClassExpressionImpl extends GrExpressionImpl implement
     return "builtin type class expression";
   }
 
+  @Override
   public PsiType getType() {
     return TypeInferenceHelper.getCurrentContext().getExpressionType(this, TYPES_CALCULATOR);
   }
@@ -59,6 +61,7 @@ public class GrBuiltinTypeClassExpressionImpl extends GrExpressionImpl implement
   }
 
   private static class MyTypesCalculator implements Function<GrBuiltinTypeClassExpressionImpl, PsiType> {
+    @Override
     public PsiType fun(GrBuiltinTypeClassExpressionImpl expression) {
       JavaPsiFacade facade = JavaPsiFacade.getInstance(expression.getProject());
       PsiClass clazz = facade.findClass(CommonClassNames.JAVA_LANG_CLASS, expression.getResolveScope());

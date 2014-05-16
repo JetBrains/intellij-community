@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,9 @@ public class Comparing {
   private Comparing() { }
 
   public static <T> boolean equal(@Nullable T arg1, @Nullable T arg2){
+    if (arg1 == arg2) return true;
     if (arg1 == null || arg2 == null){
-      return arg1 == arg2;
+      return false;
     }
     if (arg1 instanceof Object[] && arg2 instanceof Object[]){
       Object[] arr1 = (Object[])arg1;

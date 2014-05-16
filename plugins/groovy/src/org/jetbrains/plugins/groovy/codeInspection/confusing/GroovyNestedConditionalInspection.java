@@ -25,30 +25,35 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCondit
 
 public class GroovyNestedConditionalInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return CONFUSING_CODE_CONSTRUCTS;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Nested conditional expression";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Nested conditional expression #loc";
 
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitConditionalExpression(GrConditionalExpression grConditionalExpression) {
       super.visitConditionalExpression(grConditionalExpression);
       final GrConditionalExpression containingConditional =

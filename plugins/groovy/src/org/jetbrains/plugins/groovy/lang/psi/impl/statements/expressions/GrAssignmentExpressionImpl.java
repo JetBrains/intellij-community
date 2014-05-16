@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,11 +58,13 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
     return "Assignment expression";
   }
 
+  @Override
   @NotNull
   public GrExpression getLValue() {
     return findExpressionChild(this);
   }
 
+  @Override
   @Nullable
   public GrExpression getRValue() {
     GrExpression[] exprs = findChildrenByClass(GrExpression.class);
@@ -72,20 +74,24 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
     return null;
   }
 
+  @Override
   @NotNull
   public IElementType getOperationTokenType() {
     return getOperationToken().getNode().getElementType();
   }
 
+  @Override
   @NotNull
   public PsiElement getOperationToken() {
     return findNotNullChildByType(TokenSets.ASSIGN_OP_SET);
   }
 
+  @Override
   public PsiType getType() {
     return TypeInferenceHelper.getCurrentContext().getExpressionType(this, TYPE_CALCULATOR);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitAssignmentExpression(this);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +41,10 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
     super(language);
   }
 
+  @Override
   public StubBuilder getBuilder() {
     return new DefaultStubBuilder() {
+      @Override
       protected StubElement createStubForFile(@NotNull final PsiFile file) {
         if (file instanceof GroovyFile) {
           return new GrFileStub((GroovyFile)file);
@@ -58,6 +60,7 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
     return super.getStubVersion() + 21;
   }
 
+  @Override
   @NotNull
   public String getExternalId() {
     return "groovy.FILE";
@@ -83,6 +86,7 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
     return new GrFileStub(name, isScript, GrStubUtils.readStringArray(dataStream));
   }
 
+  @Override
   public void indexStub(@NotNull GrFileStub stub, @NotNull IndexSink sink) {
     String name = stub.getName().toString();
     if (stub.isScript() && name != null) {

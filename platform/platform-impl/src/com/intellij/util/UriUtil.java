@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.util;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,11 +52,11 @@ public final class UriUtil {
    * The scheme can be absent, in which case empty string is written to the first item of the Pair.
    */
   @NotNull
-  public static Pair<String, String> splitScheme(@NotNull String url) {
+  public static Couple<String> splitScheme(@NotNull String url) {
     ArrayList<String> list = Lists.newArrayList(Splitter.on(URLUtil.SCHEME_SEPARATOR).limit(2).split(url));
     if (list.size() == 1) {
-      return Pair.create("", list.get(0));
+      return Couple.newOne("", list.get(0));
     }
-    return Pair.create(list.get(0), list.get(1));
+    return Couple.newOne(list.get(0), list.get(1));
   }
 }

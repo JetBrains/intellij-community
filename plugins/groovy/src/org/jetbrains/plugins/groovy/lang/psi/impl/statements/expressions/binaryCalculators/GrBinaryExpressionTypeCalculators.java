@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,12 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 import java.util.Map;
 
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * Created by Max Medvedev on 12/20/13
@@ -40,19 +42,19 @@ public class GrBinaryExpressionTypeCalculators {
 
     MAP.put(mSTAR, GrMultiplicativeExpressionTypeCalculator.INSTANCE);
     MAP.put(mSTAR_ASSIGN, GrMultiplicativeExpressionTypeCalculator.INSTANCE);
-    MAP.put(mDIV, GrDivExpressionTypeCalculator.INSTANCE);
-    MAP.put(mDIV_ASSIGN, GrDivExpressionTypeCalculator.INSTANCE);
+    MAP.put(GroovyTokenTypes.mDIV, GrDivExpressionTypeCalculator.INSTANCE);
+    MAP.put(GroovyTokenTypes.mDIV_ASSIGN, GrDivExpressionTypeCalculator.INSTANCE);
     MAP.put(mMOD, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
     MAP.put(mMOD_ASSIGN, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
 
     MAP.put(mSTAR_STAR, GrNumericBinaryExpressionTypeCalculator.INSTANCE);
     MAP.put(mSTAR_STAR_ASSIGN, GrNumericBinaryExpressionTypeCalculator.INSTANCE);
 
-    MAP.put(COMPOSITE_RSHIFT_SIGN, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
+    MAP.put(GroovyElementTypes.COMPOSITE_RSHIFT_SIGN, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
     MAP.put(mSR_ASSIGN, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
-    MAP.put(COMPOSITE_LSHIFT_SIGN, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
+    MAP.put(GroovyElementTypes.COMPOSITE_LSHIFT_SIGN, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
     MAP.put(mSL_ASSIGN, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
-    MAP.put(COMPOSITE_TRIPLE_SHIFT_SIGN, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
+    MAP.put(GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
     MAP.put(mBSR_ASSIGN, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
 
     MAP.put(mRANGE_EXCLUSIVE, GrRangeExpressionTypeCalculator.INSTANCE);
@@ -65,7 +67,7 @@ public class GrBinaryExpressionTypeCalculators {
     MAP.put(mBXOR, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
     MAP.put(mBXOR_ASSIGN, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
     MAP.put(mBAND, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
-    MAP.put(mCOMPARE_TO, GrIntegerTypeCalculator.INSTANCE);
+    MAP.put(GroovyTokenTypes.mCOMPARE_TO, GrIntegerTypeCalculator.INSTANCE);
 
     MAP.put(mLOR, GrBooleanExpressionTypeCalculator.INSTANCE);
     MAP.put(mLAND, GrBooleanExpressionTypeCalculator.INSTANCE);
@@ -80,7 +82,7 @@ public class GrBinaryExpressionTypeCalculators {
     MAP.put(mREGEX_FIND, GrMatcherTypeCalculator.INSTANCE);
     MAP.put(mREGEX_MATCH, GrBooleanExpressionTypeCalculator.INSTANCE);
 
-    MAP.put(mASSIGN, GrAssignTypeCalculator.INSTANCE);
+    MAP.put(GroovyTokenTypes.mASSIGN, GrAssignTypeCalculator.INSTANCE);
   }
 
   @NotNull

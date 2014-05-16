@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.errorreport.itn;
 
 import com.intellij.diagnostic.DiagnosticBundle;
-import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.errorreport.bean.ErrorBean;
 import com.intellij.errorreport.error.InternalEAPException;
 import com.intellij.errorreport.error.NoSuchEAPUserException;
@@ -26,8 +25,9 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.net.HttpConfigurable;
@@ -63,7 +63,7 @@ public class ITNProxy {
   public static int postNewThread (String login, String password, ErrorBean error, String compilationTimestamp)
     throws IOException, NoSuchEAPUserException, InternalEAPException, UpdateAvailableException {
 
-    @NonNls List<Pair<String, String>> params = createParametersFor(login,
+    @NonNls List<Couple<String>> params = createParametersFor(login,
                                                                     password,
                                                                     error,
                                                                     compilationTimestamp,
@@ -108,56 +108,56 @@ public class ITNProxy {
     }
   }
 
-  private static List<Pair<String, String>> createParametersFor(String login,
+  private static List<Couple<String>> createParametersFor(String login,
                                                                 String password,
                                                                 ErrorBean error,
                                                                 String compilationTimestamp, Application application, ApplicationInfoEx appInfo,
                                                                 ApplicationNamesInfo namesInfo,
                                                                 UpdateSettings updateSettings) {
-    @NonNls List<Pair<String,String>> params = new ArrayList<Pair<String, String>>();
+    @NonNls List<Couple<String>> params = new ArrayList<Couple<String>>();
 
-    params.add(Pair.create("protocol.version", "1"));
+    params.add(Couple.newOne("protocol.version", "1"));
 
-    params.add(Pair.create("user.login", login));
-    params.add(Pair.create("user.password", password));
+    params.add(Couple.newOne("user.login", login));
+    params.add(Couple.newOne("user.password", password));
 
-    params.add(Pair.create("os.name", SystemProperties.getOsName()));
+    params.add(Couple.newOne("os.name", SystemProperties.getOsName()));
 
-    params.add(Pair.create("java.version", SystemProperties.getJavaVersion()));
-    params.add(Pair.create("java.vm.vendor", SystemProperties.getJavaVmVendor()));
+    params.add(Couple.newOne("java.version", SystemProperties.getJavaVersion()));
+    params.add(Couple.newOne("java.vm.vendor", SystemProperties.getJavaVmVendor()));
 
-    params.add(Pair.create("app.name", namesInfo.getProductName()));
-    params.add(Pair.create("app.name.full", namesInfo.getFullProductName()));
-    params.add(Pair.create("app.name.version", appInfo.getVersionName()));
-    params.add(Pair.create("app.eap", Boolean.toString(appInfo.isEAP())));
-    params.add(Pair.create("app.internal", Boolean.toString(application.isInternal())));
-    params.add(Pair.create("app.build", appInfo.getBuild().asString()));
-    params.add(Pair.create("app.version.major", appInfo.getMajorVersion()));
-    params.add(Pair.create("app.version.minor", appInfo.getMinorVersion()));
-    params.add(Pair.create("app.build.date", format(appInfo.getBuildDate())));
-    params.add(Pair.create("app.build.date.release", format(appInfo.getMajorReleaseBuildDate())));
-    params.add(Pair.create("app.compilation.timestamp", compilationTimestamp));
+    params.add(Couple.newOne("app.name", namesInfo.getProductName()));
+    params.add(Couple.newOne("app.name.full", namesInfo.getFullProductName()));
+    params.add(Couple.newOne("app.name.version", appInfo.getVersionName()));
+    params.add(Couple.newOne("app.eap", Boolean.toString(appInfo.isEAP())));
+    params.add(Couple.newOne("app.internal", Boolean.toString(application.isInternal())));
+    params.add(Couple.newOne("app.build", appInfo.getBuild().asString()));
+    params.add(Couple.newOne("app.version.major", appInfo.getMajorVersion()));
+    params.add(Couple.newOne("app.version.minor", appInfo.getMinorVersion()));
+    params.add(Couple.newOne("app.build.date", format(appInfo.getBuildDate())));
+    params.add(Couple.newOne("app.build.date.release", format(appInfo.getMajorReleaseBuildDate())));
+    params.add(Couple.newOne("app.compilation.timestamp", compilationTimestamp));
 
-    params.add(Pair.create("update.channel.status", updateSettings.getSelectedChannelStatus().getCode()));
-    params.add(Pair.create("update.ignored.builds", StringUtil.join(updateSettings.getIgnoredBuildNumbers(), ",")));
+    params.add(Couple.newOne("update.channel.status", updateSettings.getSelectedChannelStatus().getCode()));
+    params.add(Couple.newOne("update.ignored.builds", StringUtil.join(updateSettings.getIgnoredBuildNumbers(), ",")));
 
-    params.add(Pair.create("plugin.name", error.getPluginName()));
-    params.add(Pair.create("plugin.version", error.getPluginVersion()));
+    params.add(Couple.newOne("plugin.name", error.getPluginName()));
+    params.add(Couple.newOne("plugin.version", error.getPluginVersion()));
 
-    params.add(Pair.create("last.action", error.getLastAction()));
-    params.add(Pair.create("previous.exception",
-                           error.getPreviousException() == null ? null : Integer.toString(error.getPreviousException())));
+    params.add(Couple.newOne("last.action", error.getLastAction()));
+    params.add(Couple.newOne("previous.exception",
+                             error.getPreviousException() == null ? null : Integer.toString(error.getPreviousException())));
 
-    params.add(Pair.create("error.message", error.getMessage()));
-    params.add(Pair.create("error.stacktrace", error.getStackTrace()));
+    params.add(Couple.newOne("error.message", error.getMessage()));
+    params.add(Couple.newOne("error.stacktrace", error.getStackTrace()));
 
-    params.add(Pair.create("error.description", error.getDescription()));
+    params.add(Couple.newOne("error.description", error.getDescription()));
 
-    params.add(Pair.create("assignee.id", error.getAssigneeId() == null ? null : Integer.toString(error.getAssigneeId())));
+    params.add(Couple.newOne("assignee.id", error.getAssigneeId() == null ? null : Integer.toString(error.getAssigneeId())));
 
     for (Attachment attachment : error.getAttachments()) {
-      params.add(Pair.create("attachment.name", attachment.getName()));
-      params.add(Pair.create("attachment.value", attachment.getEncodedBytes()));
+      params.add(Couple.newOne("attachment.name", attachment.getName()));
+      params.add(Couple.newOne("attachment.value", attachment.getEncodedBytes()));
     }
 
     return params;
@@ -200,13 +200,13 @@ public class ITNProxy {
     return connection;
   }
 
-  private static byte[] join(List<Pair<String, String>> params) throws UnsupportedEncodingException {
+  private static byte[] join(List<Couple<String>> params) throws UnsupportedEncodingException {
     StringBuilder builder = new StringBuilder();
 
-    Iterator<Pair<String, String>> it = params.iterator();
+    Iterator<Couple<String>> it = params.iterator();
 
     while (it.hasNext()) {
-      Pair<String, String> param = it.next();
+      Couple<String> param = it.next();
 
       if (StringUtil.isEmpty(param.first))
         throw new IllegalArgumentException(param.toString());

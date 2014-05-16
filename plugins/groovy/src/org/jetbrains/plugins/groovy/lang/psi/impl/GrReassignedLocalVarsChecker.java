@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.codeInsight;
+package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.RecursionManager;
@@ -44,7 +44,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.Collection;
 import java.util.Set;
@@ -65,7 +64,7 @@ public class GrReassignedLocalVarsChecker {
     }
 
     final PsiElement resolved = refExpr.resolve();
-    if (!GroovyRefactoringUtil.isLocalVariable(resolved)) {
+    if (!PsiUtil.isLocalVariable(resolved)) {
       return false;
     }
 
@@ -117,7 +116,7 @@ public class GrReassignedLocalVarsChecker {
     }
 
     final PsiElement resolved = refExpr.resolve();
-    if (!GroovyRefactoringUtil.isLocalVariable(resolved)) {
+    if (!PsiUtil.isLocalVariable(resolved)) {
       return null;
     }
 

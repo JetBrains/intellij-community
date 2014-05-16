@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,6 +109,7 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
     super.deleteChildRange(first, last);
   }
 
+  @Override
   public Instruction[] getControlFlow() {
     assert isValid();
     CachedValue<Instruction[]> controlFlow = getUserData(CONTROL_FLOW);
@@ -132,10 +133,12 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
     return ControlFlowBuilder.assertValidPsi(controlFlow.getValue());
   }
 
+  @Override
   public void removeVariable(GrVariable variable) {
     PsiImplUtil.removeVariable(variable);
   }
 
+  @Override
   public GrVariableDeclaration addVariableDeclarationBefore(GrVariableDeclaration declaration, GrStatement anchor) throws IncorrectOperationException {
     GrStatement statement = addStatementBefore(declaration, anchor);
     assert statement instanceof GrVariableDeclaration;
@@ -154,11 +157,13 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
     return true;
   }
 
+  @Override
   @NotNull
   public GrStatement[] getStatements() {
     return  PsiImplUtil.getStatements(this);
   }
 
+  @Override
   @NotNull
   public GrStatement addStatementBefore(@NotNull GrStatement element, @Nullable GrStatement anchor) throws IncorrectOperationException {
     if (anchor == null && getRBrace() == null) {
@@ -191,15 +196,18 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
     return element;
   }
 
+  @Override
   public PsiElement getLBrace() {
     return findPsiChildByType(GroovyTokenTypes.mLCURLY);
   }
 
+  @Override
   @Nullable
   public PsiElement getRBrace() {
     return findPsiChildByType(GroovyTokenTypes.mRCURLY);
   }
 
+  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     return ResolveUtil.processChildren(this, processor, state, lastParent, place);
   }

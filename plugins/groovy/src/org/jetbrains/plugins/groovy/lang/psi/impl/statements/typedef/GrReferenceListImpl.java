@@ -94,6 +94,7 @@ public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceL
     super(stub, elementType);
   }
 
+  @Override
   @NotNull
   public GrCodeReferenceElement[] getReferenceElementsGroovy() {
     final GrReferenceListStub stub = getStub();

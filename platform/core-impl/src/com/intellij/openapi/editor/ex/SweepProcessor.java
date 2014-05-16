@@ -20,5 +20,5 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 public interface SweepProcessor<T> {
-  boolean process(int offset, T interval, boolean atStart, @NotNull Collection<T> overlappingIntervals);
+  boolean process(int offset, @NotNull T interval, boolean atStart, @NotNull Collection<T> overlappingIntervals);
 }

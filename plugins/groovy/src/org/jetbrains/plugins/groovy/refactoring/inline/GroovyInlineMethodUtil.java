@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -185,6 +185,7 @@ public class GroovyInlineMethodUtil {
       }
       else {
         return new InlineHandler.Settings() {
+          @Override
           public boolean isOnlyOneReferenceToInline() {
             return dialog.isInlineThisOnly();
           }
@@ -192,6 +193,7 @@ public class GroovyInlineMethodUtil {
       }
     }
     return new InlineHandler.Settings() {
+      @Override
       public boolean isOnlyOneReferenceToInline() {
         return true;
       }
@@ -202,7 +204,7 @@ public class GroovyInlineMethodUtil {
   private static boolean hasBadReturns(GrMethod method) {
     Collection<GrStatement> returnStatements = ControlFlowUtils.collectReturns(method.getBlock());
     GrOpenBlock block = method.getBlock();
-    if (block == null || returnStatements.size() == 0) return false;
+    if (block == null || returnStatements.isEmpty()) return false;
     boolean checked = checkTailOpenBlock(block, returnStatements);
     return !(checked && returnStatements.isEmpty());
   }
@@ -414,10 +416,12 @@ public class GroovyInlineMethodUtil {
       }
     }
 
+    @Override
     protected void doHelpAction() {
       HelpManager.getInstance().invokeHelp(HelpID.INLINE_METHOD);
     }
 
+    @Override
     protected boolean canInlineThisOnly() {
       return myAllowInlineThisOnly;
     }
@@ -601,6 +605,7 @@ public class GroovyInlineMethodUtil {
           if (!isFinal) {
             final PsiReference lastRef =
               Collections.max(ReferencesSearch.search(resolved).findAll(), new Comparator<PsiReference>() {
+                @Override
                 public int compare(PsiReference o1, PsiReference o2) {
                   return o1.getElement().getTextRange().getStartOffset() - o2.getElement().getTextRange().getStartOffset();
                 }

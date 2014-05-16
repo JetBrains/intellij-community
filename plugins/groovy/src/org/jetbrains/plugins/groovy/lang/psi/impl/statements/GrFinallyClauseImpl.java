@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ public class GrFinallyClauseImpl extends GroovyPsiElementImpl implements GrFinal
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitFinallyClause(this);
   }
@@ -39,6 +40,7 @@ public class GrFinallyClauseImpl extends GroovyPsiElementImpl implements GrFinal
     return "Finally clause";
   }
 
+  @Override
   @Nullable
   public GrOpenBlock getBody() {
     return findChildByClass(GrOpenBlock.class);

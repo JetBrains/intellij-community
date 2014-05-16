@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ public class GroovyBinaryExpressionPattern extends GroovyExpressionPattern<GrBin
 
   public GroovyBinaryExpressionPattern left(@NotNull final ElementPattern pattern) {
     return with(new PatternCondition<GrBinaryExpression>("left") {
+      @Override
       public boolean accepts(@NotNull final GrBinaryExpression psiBinaryExpression, final ProcessingContext context) {
         return pattern.getCondition().accepts(psiBinaryExpression.getLeftOperand(), context);
       }
@@ -36,6 +37,7 @@ public class GroovyBinaryExpressionPattern extends GroovyExpressionPattern<GrBin
 
   public GroovyBinaryExpressionPattern right(@NotNull final ElementPattern pattern) {
     return with(new PatternCondition<GrBinaryExpression>("right") {
+      @Override
       public boolean accepts(@NotNull final GrBinaryExpression psiBinaryExpression, final ProcessingContext context) {
         return pattern.getCondition().accepts(psiBinaryExpression.getRightOperand(), context);
       }
@@ -44,6 +46,7 @@ public class GroovyBinaryExpressionPattern extends GroovyExpressionPattern<GrBin
 
   public GroovyBinaryExpressionPattern operation(final ElementPattern pattern) {
     return with(new PatternCondition<GrBinaryExpression>("operation") {
+      @Override
       public boolean accepts(@NotNull final GrBinaryExpression psiBinaryExpression, final ProcessingContext context) {
         return pattern.getCondition().accepts(psiBinaryExpression.getOperationTokenType(), context);
       }

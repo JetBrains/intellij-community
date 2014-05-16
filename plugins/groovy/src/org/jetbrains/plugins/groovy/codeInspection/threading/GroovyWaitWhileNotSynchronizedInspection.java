@@ -35,29 +35,34 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 
 public class GroovyWaitWhileNotSynchronizedInspection extends BaseInspection {
 
+    @Override
     @Nls
     @NotNull
     public String getGroupDisplayName() {
         return THREADING_ISSUES;
     }
 
+    @Override
     @Nls
     @NotNull
     public String getDisplayName() {
         return "'wait()' while not synced";
     }
 
+    @Override
     @Nullable
     protected String buildErrorString(Object... args) {
         return "Call to'#ref' outside of synchronized context #loc";
 
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new Visitor();
     }
 
     private static class Visitor extends BaseInspectionVisitor {
+        @Override
         public void visitMethodCallExpression(GrMethodCallExpression grMethodCallExpression) {
             super.visitMethodCallExpression(grMethodCallExpression);
             final GrExpression methodExpression = grMethodCallExpression.getInvokedExpression();

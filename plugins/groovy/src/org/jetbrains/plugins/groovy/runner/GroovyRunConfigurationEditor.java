@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
         "Script Path",
         "Specify path to script",
         new FileChooserDescriptor(true, false, false, false, false, false) {
+          @Override
           public boolean isFileSelectable(VirtualFile file) {
             return file.getFileType() == GroovyFileType.GROOVY_FILE_TYPE;
           }
@@ -78,6 +79,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     setAnchor(myEnvVariables.getLabel());
   }
 
+  @Override
   public void resetEditorFrom(GroovyScriptRunConfiguration configuration) {
     myVMParameters.setDialogCaption("VM Options");
     myVMParameters.setText(configuration.getVMParameters());
@@ -102,6 +104,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     myEnvVariables.setEnvs(configuration.getEnvs());
   }
 
+  @Override
   public void applyEditorTo(GroovyScriptRunConfiguration configuration) throws ConfigurationException {
     configuration.setModule((Module) myModulesBox.getSelectedItem());
     configuration.setVMParameters(myVMParameters.getText());
@@ -112,6 +115,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     configuration.setEnvs(myEnvVariables.getEnvs());
   }
 
+  @Override
   @NotNull
   public JComponent createEditor() {
     myModulesModel = new DefaultComboBoxModel();

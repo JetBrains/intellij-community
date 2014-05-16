@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,9 +37,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
  * Date: 13.11.2007
  */
 public class SecondUnsafeCallInspection extends GroovySuppressableInspectionTool {
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new GroovyPsiElementVisitor(new GroovyElementVisitor() {
+      @Override
       public void visitReferenceExpression(GrReferenceExpression refExpression) {
         checkForSecondUnsafeCall(refExpression, holder);
       }
@@ -78,6 +80,7 @@ public class SecondUnsafeCallInspection extends GroovySuppressableInspectionTool
     }
   }
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
@@ -90,18 +93,21 @@ public class SecondUnsafeCallInspection extends GroovySuppressableInspectionTool
     return new String[]{"Groovy", getGroupDisplayName()};
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return GroovyInspectionBundle.message("second.unsafe.call");
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getShortName() {
     return "SecondUnsafeCall";
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

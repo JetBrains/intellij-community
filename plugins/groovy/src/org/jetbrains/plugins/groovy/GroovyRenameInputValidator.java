@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,20 @@
 package org.jetbrains.plugins.groovy;
 
 import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameInputValidator;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
-import static com.intellij.patterns.PlatformPatterns.psiElement;
-
 public class GroovyRenameInputValidator implements RenameInputValidator {
   @Override
   public ElementPattern<? extends PsiElement> getPattern() {
-    return psiElement(GrNamedElement.class);
+    return PlatformPatterns.psiElement(GrNamedElement.class);
   }
 
+  @Override
   public boolean isInputValid(String newName, PsiElement element, ProcessingContext context) {
     return GroovyRefactoringUtil.isCorrectReferenceName(newName, element.getProject());
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
  */
 public class GroovyInlineHandler implements InlineHandler {
 
+  @Override
   @Nullable
   public Settings prepareInlineElement(@NotNull final PsiElement element, @Nullable Editor editor, boolean invokedOnReference) {
     if (element instanceof GrField) {
@@ -67,6 +68,7 @@ public class GroovyInlineHandler implements InlineHandler {
   }
 
 
+  @Override
   public void removeDefinition(PsiElement element, Settings settings) {
     final PsiElement owner = element.getParent().getParent();
     if (element instanceof GrVariable && owner instanceof GrVariableDeclarationOwner) {
@@ -77,6 +79,7 @@ public class GroovyInlineHandler implements InlineHandler {
     }
   }
 
+  @Override
   @Nullable
   public Inliner createInliner(PsiElement element, Settings settings) {
     if (element instanceof GrVariable) {

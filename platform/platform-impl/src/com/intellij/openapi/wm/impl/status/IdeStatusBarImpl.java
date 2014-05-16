@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -442,7 +443,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       @Override
       public void run() {
         if (myInfoAndProgressPanel != null) {
-          Pair<String, String> pair = myInfoAndProgressPanel.setText(s, requestor);
+          Couple<String> pair = myInfoAndProgressPanel.setText(s, requestor);
           myInfo = pair.first;
           myRequestor = pair.second;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
  * Date: 16.07.2008
  */
 public class GroovyIndexPatternBuilder implements IndexPatternBuilder {
+    @Override
     public Lexer getIndexingLexer(@NotNull PsiFile file) {
         if (file instanceof GroovyFile) {
             return new GroovyLexer();
@@ -38,14 +39,17 @@ public class GroovyIndexPatternBuilder implements IndexPatternBuilder {
         return null;
     }
 
+    @Override
     public TokenSet getCommentTokenSet(@NotNull PsiFile file) {
       return TokenSets.ALL_COMMENT_TOKENS;
     }
 
+    @Override
     public int getCommentStartDelta(IElementType tokenType) {
       return 0;
     }
 
+    @Override
     public int getCommentEndDelta(IElementType tokenType) {
       return tokenType == GroovyTokenTypes.mML_COMMENT ? 2 : 0;
     }

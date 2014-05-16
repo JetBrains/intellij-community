@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,11 @@ import com.intellij.lexer.Lexer;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Processor;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mIDENT;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTRING_LITERAL;
 
 /**
  * @author ven
@@ -36,13 +38,14 @@ class GroovyWordsScanner implements WordsScanner
     myLexer = new GroovyLexer();
   }
 
+  @Override
   public void processWords(CharSequence fileText, Processor<WordOccurrence> processor) {
     myLexer.start(fileText);
     WordOccurrence occurrence = null; // shared occurrence
 
     while (myLexer.getTokenType() != null) {
       final IElementType type = myLexer.getTokenType();
-      if (type == mIDENT || TokenSets.KEYWORDS.contains(type)) {
+      if (type == GroovyTokenTypes.mIDENT || TokenSets.KEYWORDS.contains(type)) {
         if (occurrence == null) occurrence = new WordOccurrence(fileText,myLexer.getTokenStart(),myLexer.getTokenEnd(), WordOccurrence.Kind.CODE);
         else occurrence.init(fileText,myLexer.getTokenStart(),myLexer.getTokenEnd(), WordOccurrence.Kind.CODE);
         if (!processor.process(occurrence)) return;
@@ -55,7 +58,7 @@ class GroovyWordsScanner implements WordsScanner
           return;
         }
 
-        if (type == mSTRING_LITERAL) {
+        if (type == GroovyTokenTypes.mSTRING_LITERAL) {
           if (!stripWords(processor, fileText, myLexer.getTokenStart(),myLexer.getTokenEnd(),WordOccurrence.Kind.CODE, occurrence)) return;
         }
       }

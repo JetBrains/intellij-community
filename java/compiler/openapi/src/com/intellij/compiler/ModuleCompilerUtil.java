@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.util.Chunk;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -136,7 +136,7 @@ public final class ModuleCompilerUtil {
    * @return pair of modules which become circular after adding dependency, or null if all remains OK
    */
   @Nullable
-  public static Pair<Module, Module> addingDependencyFormsCircularity(final Module currentModule, Module toDependOn) {
+  public static Couple<Module> addingDependencyFormsCircularity(final Module currentModule, Module toDependOn) {
     assert currentModule != toDependOn;
     // whatsa lotsa of @&#^%$ codes-a!
 
@@ -159,7 +159,7 @@ public final class ModuleCompilerUtil {
       for (Chunk<ModifiableRootModel> chunk : nodesAfter) {
         if (chunk.containsNode(toDependOnModel) && chunk.containsNode(currentModel)) {
           Iterator<ModifiableRootModel> nodes = chunk.getNodes().iterator();
-          return Pair.create(nodes.next().getModule(), nodes.next().getModule());
+          return Couple.newOne(nodes.next().getModule(), nodes.next().getModule());
         }
       }
     }

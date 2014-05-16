@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
@@ -41,16 +41,16 @@ import java.util.Set;
 public class GrMapTypeFromNamedArgs extends GrMapType {
 
   private final Map<String, GrExpression> myStringEntries;
-  private final List<Pair<GrExpression, GrExpression>> myOtherEntries;
+  private final List<Couple<GrExpression>> myOtherEntries;
 
-  private final VolatileNotNullLazyValue<List<Pair<PsiType, PsiType>>> myTypesOfOtherEntries = new VolatileNotNullLazyValue<List<Pair<PsiType, PsiType>>>() {
+  private final VolatileNotNullLazyValue<List<Couple<PsiType>>> myTypesOfOtherEntries = new VolatileNotNullLazyValue<List<Couple<PsiType>>>() {
     @NotNull
     @Override
-    protected List<Pair<PsiType, PsiType>> compute() {
-      return ContainerUtil.map(myOtherEntries, new Function<Pair<GrExpression, GrExpression>, Pair<PsiType, PsiType>>() {
+    protected List<Couple<PsiType>> compute() {
+      return ContainerUtil.map(myOtherEntries, new Function<Couple<GrExpression>, Couple<PsiType>>() {
         @Override
-        public Pair<PsiType, PsiType> fun(Pair<GrExpression, GrExpression> pair) {
-          return Pair.create(pair.first.getType(), pair.second.getType());
+        public Couple<PsiType> fun(Couple<GrExpression> pair) {
+          return Couple.newOne(pair.first.getType(), pair.second.getType());
         }
       });
     }
@@ -90,7 +90,7 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
         myStringEntries.put(name, expression);
       }
       else if (label.getExpression() != null) {
-        myOtherEntries.add(Pair.create(label.getExpression(), expression));
+        myOtherEntries.add(Couple.newOne(label.getExpression(), expression));
       }
     }
   }
@@ -120,7 +120,7 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
     if (!myStringEntries.isEmpty()) {
       result.add(GroovyPsiManager.getInstance(myFacade.getProject()).createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, getResolveScope()));
     }
-    for (Pair<GrExpression, GrExpression> entry : myOtherEntries) {
+    for (Couple<GrExpression> entry : myOtherEntries) {
       result.add(entry.first.getType());
     }
     result.remove(null);
@@ -134,7 +134,7 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
     for (GrExpression expression : myStringEntries.values()) {
       result.add(expression.getType());
     }
-    for (Pair<GrExpression, GrExpression> entry : myOtherEntries) {
+    for (Couple<GrExpression> entry : myOtherEntries) {
       result.add(entry.second.getType());
     }
     result.remove(null);
@@ -143,7 +143,7 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
 
   @NotNull
   @Override
-  protected List<Pair<PsiType, PsiType>> getOtherEntries() {
+  protected List<Couple<PsiType>> getOtherEntries() {
     return myTypesOfOtherEntries.getValue();
   }
 
@@ -159,7 +159,7 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
       if (!expression.isValid()) return false;
     }
 
-    for (Pair<GrExpression, GrExpression> entry : myOtherEntries) {
+    for (Couple<GrExpression> entry : myOtherEntries) {
       if (!entry.first.isValid()) return false;
       if (!entry.second.isValid()) return false;
     }

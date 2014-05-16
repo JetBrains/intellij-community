@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -113,7 +114,7 @@ public class StorageUtil {
   static VirtualFile save(@NotNull IFile file, Parent element, Object requestor) throws StateStorageException {
     try {
       VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
-      Pair<String, String> pair = loadFile(vFile);
+      Couple<String> pair = loadFile(vFile);
       String text = JDOMUtil.writeParent(element, pair.second);
 
       if (file.exists()) {
@@ -171,21 +172,21 @@ public class StorageUtil {
   /**
    * @return pair.first - file contents (null if file does not exist), pair.second - file line separators
    */
-  private static Pair<String, String> loadFile(@Nullable final VirtualFile file) throws IOException {
+  private static Couple<String> loadFile(@Nullable final VirtualFile file) throws IOException {
     if (file == null || !file.exists()) {
-      return Pair.create(null, SystemProperties.getLineSeparator());
+      return Couple.newOne(null, SystemProperties.getLineSeparator());
     }
 
     String fileText = new String(file.contentsToByteArray(), CharsetToolkit.UTF8);
     final int index = fileText.indexOf('\n');
-    return Pair.create(fileText, index == -1
-                                 ? SystemProperties.getLineSeparator()
-                                 : index - 1 >= 0 ? fileText.charAt(index - 1) == '\r' ? "\r\n" : "\n" : "\n");
+    return Couple.newOne(fileText, index == -1
+                                   ? SystemProperties.getLineSeparator()
+                                   : index - 1 >= 0 ? fileText.charAt(index - 1) == '\r' ? "\r\n" : "\n" : "\n");
   }
 
   public static boolean contentEquals(@NotNull final Document document, @NotNull final VirtualFile file) {
     try {
-      final Pair<String, String> pair = loadFile(file);
+      final Couple<String> pair = loadFile(file);
       return pair.first != null && pair.first.equals(JDOMUtil.writeDocument(document, pair.second));
     }
     catch (IOException e) {
@@ -196,7 +197,7 @@ public class StorageUtil {
 
   public static boolean contentEquals(@NotNull final Element element, @NotNull final VirtualFile file) {
     try {
-      final Pair<String, String> pair = loadFile(file);
+      final Couple<String> pair = loadFile(file);
       return pair.first != null && pair.first.equals(printElement(element, pair.second));
     }
     catch (IOException e) {

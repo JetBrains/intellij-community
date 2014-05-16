@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ public class GroovyCompilerLoader extends AbstractProjectComponent {
     super(project);
   }
 
+  @Override
   public void projectOpened() {
     CompilerManager compilerManager = CompilerManager.getInstance(myProject);
     compilerManager.addCompilableFileType(GroovyFileType.GROOVY_FILE_TYPE);
@@ -97,6 +98,7 @@ public class GroovyCompilerLoader extends AbstractProjectComponent {
     fileEditorManager.addTopComponent(editor, panel);
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "GroovyCompilerLoader";

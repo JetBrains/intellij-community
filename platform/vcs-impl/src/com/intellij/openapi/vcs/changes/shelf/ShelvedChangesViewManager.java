@@ -38,7 +38,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CommitContext;
@@ -92,7 +92,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   public static DataKey<List<ShelvedBinaryFile>> SHELVED_BINARY_FILE_KEY = DataKey.create("ShelveChangesManager.ShelvedBinaryFile");
   private static final Object ROOT_NODE_VALUE = new Object();
   private DefaultMutableTreeNode myRoot;
-  private final Map<Pair<String, String>, String> myMoveRenameInfo;
+  private final Map<Couple<String>, String> myMoveRenameInfo;
 
   public static ShelvedChangesViewManager getInstance(Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ShelvedChangesViewManager.class);
@@ -113,7 +113,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         }, ModalityState.NON_MODAL);
       }
     });
-    myMoveRenameInfo = new HashMap<Pair<String, String>, String>();
+    myMoveRenameInfo = new HashMap<Couple<String>, String>();
 
     myTree = new ShelfTree();
     myTree.setRootVisible(false);
@@ -258,7 +258,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   private void putMovedMessage(final String beforeName, final String afterName) {
     final String movedMessage = RelativePathCalculator.getMovedString(beforeName, afterName);
     if (movedMessage != null) {
-      myMoveRenameInfo.put(Pair.create(beforeName, afterName), movedMessage);
+      myMoveRenameInfo.put(Couple.newOne(beforeName, afterName), movedMessage);
     }
   }
 
@@ -423,9 +423,9 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
   private static class ShelfTreeCellRenderer extends ColoredTreeCellRenderer {
     private final IssueLinkRenderer myIssueLinkRenderer;
-    private final Map<Pair<String, String>, String> myMoveRenameInfo;
+    private final Map<Couple<String>, String> myMoveRenameInfo;
 
-    public ShelfTreeCellRenderer(Project project, final Map<Pair<String, String>, String> moveRenameInfo) {
+    public ShelfTreeCellRenderer(Project project, final Map<Couple<String>, String> moveRenameInfo) {
       myMoveRenameInfo = moveRenameInfo;
       myIssueLinkRenderer = new IssueLinkRenderer(project, this);
     }
@@ -450,7 +450,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       }
       else if (nodeValue instanceof ShelvedChange) {
         ShelvedChange change = (ShelvedChange) nodeValue;
-        final String movedMessage = myMoveRenameInfo.get(Pair.create(change.getBeforePath(), change.getAfterPath()));
+        final String movedMessage = myMoveRenameInfo.get(Couple.newOne(change.getBeforePath(), change.getAfterPath()));
         renderFileName(change.getBeforePath(), change.getFileStatus(), movedMessage);
       }
       else if (nodeValue instanceof ShelvedBinaryFile) {
@@ -459,7 +459,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         if (path == null) {
           path = binaryFile.AFTER_PATH;
         }
-        final String movedMessage = myMoveRenameInfo.get(Pair.create(binaryFile.BEFORE_PATH, binaryFile.AFTER_PATH));
+        final String movedMessage = myMoveRenameInfo.get(Couple.newOne(binaryFile.BEFORE_PATH, binaryFile.AFTER_PATH));
         renderFileName(path, binaryFile.getFileStatus(), movedMessage);
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.SingletonSet;
@@ -58,7 +58,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   private final Map<String, String> myId2Name = Collections.synchronizedMap(new THashMap<String, String>(20, 0.9f));
 
   private final Set<String> myStopWords = Collections.synchronizedSet(new HashSet<String>());
-  private final Map<Pair<String, String>, Set<String>> myHighlightOption2Synonym = Collections.synchronizedMap(new THashMap<Pair<String, String>, Set<String>>());
+  private final Map<Couple<String>, Set<String>> myHighlightOption2Synonym = Collections.synchronizedMap(new THashMap<Couple<String>, Set<String>>());
   private volatile boolean allTheseHugeFilesAreLoaded;
 
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
@@ -152,7 +152,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
               for (String word : words) {
                 putOptionWithHelpId(word, id, groupName, synonym, null);
               }
-              final Pair<String, String> key = Pair.create(option, id);
+              final Couple<String> key = Couple.newOne(option, id);
               Set<String> foundSynonyms = myHighlightOption2Synonym.get(key);
               if (foundSynonyms == null) {
                 foundSynonyms = new THashSet<String>();
@@ -370,7 +370,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   @Override
   public Set<String> getSynonym(final String option, @NotNull final SearchableConfigurable configurable) {
     loadHugeFilesIfNecessary();
-    return myHighlightOption2Synonym.get(Pair.create(option, configurable.getId()));
+    return myHighlightOption2Synonym.get(Couple.newOne(option, configurable.getId()));
   }
 
   @Override

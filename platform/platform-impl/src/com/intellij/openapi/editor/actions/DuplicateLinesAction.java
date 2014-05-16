@@ -20,7 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 
 /**
  * @author yole
@@ -42,7 +42,7 @@ public class DuplicateLinesAction extends EditorAction {
         int selEnd = editor.getSelectionModel().getSelectionEnd();
         VisualPosition rangeStart = editor.offsetToVisualPosition(Math.min(selStart, selEnd));
         VisualPosition rangeEnd = editor.offsetToVisualPosition(Math.max(selStart, selEnd));
-        final Pair<Integer,Integer> copiedRange =
+        final Couple<Integer> copiedRange =
           DuplicateAction.duplicateLinesRange(editor, editor.getDocument(), rangeStart, rangeEnd);
         if (copiedRange != null) {
           editor.getSelectionModel().setSelection(copiedRange.first, copiedRange.second);

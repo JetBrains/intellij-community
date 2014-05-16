@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,19 +69,23 @@ public interface GrMethod extends GrMembersDeclaration, GrNamedElement, PsiMetho
   /**
    * @return the static return type, which will appear in the compiled Groovy class
    */
+  @Override
   @Nullable
   PsiType getReturnType();
 
   @Nullable
   GrTypeElement setReturnType(@Nullable PsiType newReturnType);
 
+  @Override
   @NotNull
   @NonNls
   String getName();
 
+  @Override
   @NotNull
   GrParameterList getParameterList();
 
+  @Override
   @NotNull
   GrModifierList getModifierList();
 

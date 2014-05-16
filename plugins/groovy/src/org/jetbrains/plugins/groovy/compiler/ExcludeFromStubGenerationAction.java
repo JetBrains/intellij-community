@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
  * @author peter
  */
 public class ExcludeFromStubGenerationAction extends AnAction implements DumbAware {
+  @Override
   public void actionPerformed(final AnActionEvent e) {
     final PsiFile file = e.getData(DataKeys.PSI_FILE);
 
@@ -47,12 +48,14 @@ public class ExcludeFromStubGenerationAction extends AnAction implements DumbAwa
 
     final GroovyCompilerConfigurable configurable = new GroovyCompilerConfigurable(project);
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
+      @Override
       public void run() {
         configurable.getExcludes().addEntry(new ExcludeEntryDescription(virtualFile, false, true, project));
       }
     });
   }
 
+  @Override
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
 

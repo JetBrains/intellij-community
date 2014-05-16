@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,22 +81,27 @@ public class GrEnumConstantInitializerImpl extends GrAnonymousClassDefinitionImp
     return getEnumConstant().getArgumentList();
   }
 
+  @Override
   public boolean isInterface() {
     return false;
   }
 
+  @Override
   public boolean isAnnotationType() {
     return false;
   }
 
+  @Override
   public boolean isEnum() {
     return false;
   }
 
+  @Override
   public GrTypeParameterList getTypeParameterList() {
     return null;
   }
 
+  @Override
   public PsiElement getOriginalElement() {
     return this;
   }

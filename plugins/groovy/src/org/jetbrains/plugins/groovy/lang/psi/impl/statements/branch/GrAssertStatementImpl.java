@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ public class GrAssertStatementImpl extends GroovyPsiElementImpl implements GrAss
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitAssertStatement(this);
   }
@@ -40,6 +41,7 @@ public class GrAssertStatementImpl extends GroovyPsiElementImpl implements GrAss
     return "ASSERT statement";
   }
 
+  @Override
   @Nullable
   public GrExpression getAssertion() {
     return findExpressionChild(this);

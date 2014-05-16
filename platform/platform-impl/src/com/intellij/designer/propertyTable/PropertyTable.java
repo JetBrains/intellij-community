@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -1095,7 +1095,7 @@ public abstract class PropertyTable extends JBTable {
   }
 
   @NotNull
-  private static Pair<Integer, Integer> getBeforeIconAndAfterIndents(@NotNull Property property, @NotNull Icon icon) {
+  private static Couple<Integer> getBeforeIconAndAfterIndents(@NotNull Property property, @NotNull Icon icon) {
     int nodeIndent = UIUtil.getTreeLeftChildIndent() + UIUtil.getTreeRightChildIndent();
     int beforeIcon = nodeIndent * getDepth(property);
 
@@ -1104,7 +1104,7 @@ public abstract class PropertyTable extends JBTable {
 
     int afterIcon = Math.max(0, nodeIndent - leftIconOffset - icon.getIconWidth());
 
-    return Pair.create(beforeIcon, afterIcon);
+    return Couple.newOne(beforeIcon, afterIcon);
   }
 
   private class PropertyCellEditorListener implements PropertyEditorListener {
@@ -1315,7 +1315,7 @@ public abstract class PropertyTable extends JBTable {
 
         renderer.setIcon(hasChildren ? icon : null);
 
-        Pair<Integer, Integer> indents = getBeforeIconAndAfterIndents(property, icon);
+        Couple<Integer> indents = getBeforeIconAndAfterIndents(property, icon);
         int indent = indents.first;
 
         if (hasChildren) {

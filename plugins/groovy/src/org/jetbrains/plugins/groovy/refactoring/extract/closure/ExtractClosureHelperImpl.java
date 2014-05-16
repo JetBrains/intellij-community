@@ -46,7 +46,7 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
   private final boolean myReplaceAllOccurrences;
 
   private PsiType myType = null;
-  private boolean myForceDef;
+  private final boolean myForceDef;
 
   public ExtractClosureHelperImpl(IntroduceParameterInfo info,
                                   String name,
@@ -70,19 +70,23 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
     myReplaceFieldsWithGetters = replaceFieldsWithGetters;
   }
 
+  @Override
   @NotNull
   public GrParametersOwner getToReplaceIn() {
     return myOwner;
   }
 
+  @Override
   public PsiElement getToSearchFor() {
     return myToSearchFor;
   }
 
+  @Override
   public String getName() {
     return myName;
   }
 
+  @Override
   public boolean declareFinal() {
     return myFinal;
   }
@@ -128,10 +132,12 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
     return myType;
   }
 
+  @Override
   public boolean generateDelegate() {
     return myGenerateDelegate;
   }
 
+  @Override
   public boolean isForceReturn() {
     return myForceReturn;
   }

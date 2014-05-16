@@ -772,7 +772,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     String fqn = null;
     if (isActionValue(value)) {
       type = HistoryType.ACTION;
-      AnAction action = (AnAction)(value instanceof Map.Entry ? ((Map.Entry)value).getKey() : value);
+      AnAction action = (AnAction)(value instanceof GotoActionModel.ActionWrapper ? ((GotoActionModel.ActionWrapper)value).getAction() : value);
       fqn = ActionManager.getInstance().getId(action);
     } else if (value instanceof VirtualFile) {
       type = HistoryType.FILE;
@@ -1042,8 +1042,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           setIcon(IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, myProject));
         }
         else if (isActionValue(value)) {
-          final Map.Entry actionWithParentGroup = value instanceof Map.Entry ? (Map.Entry)value : null;
-          final AnAction anAction = actionWithParentGroup == null ? (AnAction)value : (AnAction)actionWithParentGroup.getKey();
+          final GotoActionModel.ActionWrapper actionWithParentGroup = value instanceof GotoActionModel.ActionWrapper ? (GotoActionModel.ActionWrapper)value : null;
+          final AnAction anAction = actionWithParentGroup == null ? (AnAction)value : actionWithParentGroup.getAction();
           final Presentation templatePresentation = anAction.getTemplatePresentation();
           Icon icon = templatePresentation.getIcon();
           if (anAction instanceof ActivateToolWindowAction) {
@@ -1056,13 +1056,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
           append(templatePresentation.getText());
           if (actionWithParentGroup != null) {
-            final Object groupName = actionWithParentGroup.getValue();
-            if (groupName instanceof String && StringUtil.isEmpty((String)groupName)) {
-              setLocationString((String)groupName);
+            final String groupName = actionWithParentGroup.getGroupName();
+            if (!StringUtil.isEmpty(groupName)) {
+              setLocationString(groupName);
             }
           }
 
-          final String groupName = actionWithParentGroup == null ? null : (String)actionWithParentGroup.getValue();
+          final String groupName = actionWithParentGroup == null ? null : actionWithParentGroup.getGroupName();
           if (!StringUtil.isEmpty(groupName)) {
             setLocationString(groupName);
           }
@@ -1150,7 +1150,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   private static boolean isActionValue(Object o) {
-    return o instanceof Map.Entry || o instanceof AnAction;
+    return o instanceof GotoActionModel.ActionWrapper || o instanceof AnAction;
   }
 
   private static boolean isSetting(Object o) {
@@ -1277,7 +1277,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         for (Object object : objects) {
           check();
           if (isToolWindowAction(object) && toolWindows.size() < MAX_TOOL_WINDOWS) {
-            toolWindows.add((AnAction)((Map.Entry)object).getKey());
+            toolWindows.add(((GotoActionModel.ActionWrapper)object).getAction());
           }
         }
       }
@@ -1968,7 +1968,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   private static boolean isToolWindowAction(Object o) {
-    return isActionValue(o) && (o instanceof Map.Entry && ((Map.Entry)o).getKey() instanceof ActivateToolWindowAction);
+    return isActionValue(o)
+           && o instanceof GotoActionModel.ActionWrapper
+           && ((GotoActionModel.ActionWrapper)o).getAction() instanceof ActivateToolWindowAction;
   }
 
   private void fillConfigurablesIds(String pathToParent, Configurable[] configurables) {

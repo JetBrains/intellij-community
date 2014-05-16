@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,6 +95,7 @@ public class GroovyMoveClassToInnerHandler implements MoveClassToInnerHandler {
     else {
       //rebind imports first
       Collections.sort(usageInfos, new Comparator<UsageInfo>() {
+        @Override
         public int compare(UsageInfo o1, UsageInfo o2) {
           return PsiUtil.BY_POSITION.compare(o1.getElement(), o2.getElement());
         }
@@ -116,6 +117,7 @@ public class GroovyMoveClassToInnerHandler implements MoveClassToInnerHandler {
     }
   }
 
+  @Override
   public void retargetClassRefsInMoved(@NotNull final Map<PsiElement, PsiElement> oldToNewElementsMapping) {
     for (final PsiElement newClass : oldToNewElementsMapping.values()) {
       if (!(newClass instanceof GrTypeDefinition)) continue;
@@ -166,6 +168,7 @@ public class GroovyMoveClassToInnerHandler implements MoveClassToInnerHandler {
     return newInnerClass;
   }
 
+  @Override
   public void retargetNonCodeUsages(@NotNull final Map<PsiElement, PsiElement> oldToNewElementMap,
                                     @NotNull final NonCodeUsageInfo[] nonCodeUsages) {
     for (PsiElement newClass : oldToNewElementMap.values()) {

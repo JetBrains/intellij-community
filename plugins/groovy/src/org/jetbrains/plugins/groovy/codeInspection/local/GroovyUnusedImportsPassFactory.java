@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,12 +39,14 @@ public class GroovyUnusedImportsPassFactory extends AbstractProjectComponent imp
                                                                                                  null, true, -1);
   }
 
+  @Override
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
     if (!(file instanceof GroovyFile)) return null;
     return new GroovyPostHighlightingPass((GroovyFile)file, editor);
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {

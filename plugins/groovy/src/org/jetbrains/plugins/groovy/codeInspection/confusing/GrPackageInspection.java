@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,12 +48,14 @@ import javax.swing.*;
 public class GrPackageInspection extends BaseInspection {
   public boolean myCheckScripts = true;
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return CONFUSING_CODE_CONSTRUCTS;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
@@ -62,6 +64,7 @@ public class GrPackageInspection extends BaseInspection {
 
 
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Package name mismatch";
@@ -140,6 +143,7 @@ public class GrPackageInspection extends BaseInspection {
       return GroovyBundle.message("fix.package.name");
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return GroovyBundle.message("fix.package.name");

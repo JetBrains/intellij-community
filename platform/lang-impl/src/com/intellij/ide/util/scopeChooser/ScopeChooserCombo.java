@@ -313,29 +313,21 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
         final List<PsiElement> results = new ArrayList<PsiElement>(usages.size());
 
         if (prevSearchFiles) {
-          final Set<VirtualFile> files = new HashSet<VirtualFile>();
-          for (Usage usage : usages) {
-            if (usage instanceof PsiElementUsage) {
-              PsiElement psiElement = ((PsiElementUsage)usage).getElement();
-              if (psiElement != null && psiElement.isValid()) {
-                PsiFile psiFile = psiElement.getContainingFile();
-                if (psiFile != null) {
-                  VirtualFile file = psiFile.getVirtualFile();
-                  if (file != null) files.add(file);
-                }
-              }
-            }
-          }
+          final Set<VirtualFile> files = collectFiles(usages, true);
           if (!files.isEmpty()) {
             GlobalSearchScope prev = new GlobalSearchScope(project) {
+              private Set<VirtualFile> myFiles = null;
               @Override
               public String getDisplayName() {
                 return IdeBundle.message("scope.files.in.previous.search.result");
               }
 
               @Override
-              public boolean contains(@NotNull VirtualFile file) {
-                return files.contains(file);
+              public synchronized boolean contains(@NotNull VirtualFile file) {
+                if (myFiles == null) {
+                  myFiles = collectFiles(usages, false);
+                }
+                return myFiles.contains(file);
               }
 
               @Override
@@ -421,6 +413,26 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     }
 
     return ContainerUtil.newArrayList(result);
+  }
+
+  protected static Set<VirtualFile> collectFiles(Set<Usage> usages, boolean findFirst) {
+    final Set<VirtualFile> files = new HashSet<VirtualFile>();
+    for (Usage usage : usages) {
+      if (usage instanceof PsiElementUsage) {
+        PsiElement psiElement = ((PsiElementUsage)usage).getElement();
+        if (psiElement != null && psiElement.isValid()) {
+          PsiFile psiFile = psiElement.getContainingFile();
+          if (psiFile != null) {
+            VirtualFile file = psiFile.getVirtualFile();
+            if (file != null) {
+              files.add(file);
+              if (findFirst) return files;
+            }
+          }
+        }
+      }
+    }
+    return files;
   }
 
   @Nullable

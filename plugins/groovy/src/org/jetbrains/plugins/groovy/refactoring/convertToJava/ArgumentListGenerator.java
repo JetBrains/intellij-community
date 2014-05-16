@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ class ArgumentListGenerator {
   }
 
   private boolean generateSingeArg(GrClosureSignatureUtil.ArgInfo<PsiElement> arg, GrClosureParameter param) {
-    boolean argExists = arg.args.size() > 0 && arg.args.get(0) != null;
+    boolean argExists = !arg.args.isEmpty() && arg.args.get(0) != null;
     if (argExists) {
       final PsiElement actual = arg.args.get(0);
       LOG.assertTrue(actual instanceof GrExpression);
@@ -133,7 +133,7 @@ class ArgumentListGenerator {
         ((GrExpression)element).accept(myExpressionGenerator);
         myBuilder.append(", ");
       }
-      if (arg.args.size() > 0) {
+      if (!arg.args.isEmpty()) {
         myBuilder.delete(myBuilder.length() - 2, myBuilder.length());
         return true;
       }
@@ -156,7 +156,7 @@ class ArgumentListGenerator {
           ((GrExpression)element).accept(myExpressionGenerator);
           myBuilder.append(", ");
         }
-        if (arg.args.size() > 0) myBuilder.delete(myBuilder.length() - 2, myBuilder.length());
+        if (!arg.args.isEmpty()) myBuilder.delete(myBuilder.length() - 2, myBuilder.length());
         //if (arg.args.size() > 0) myBuilder.removeFromTheEnd(2);
         myBuilder.append('}');
       }

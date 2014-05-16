@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.extensions;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.CachingSemiGraph;
@@ -187,7 +187,7 @@ public class LoadingOrder {
     DFSTBuilder<Orderable> builder = new DFSTBuilder<Orderable>(new GraphGenerator<Orderable>(new CachingSemiGraph<Orderable>(graph)));
 
     if (!builder.isAcyclic()) {
-      Pair<Orderable, Orderable> p = builder.getCircularDependency();
+      Couple<Orderable> p = builder.getCircularDependency();
       throw new SortingException("Could not satisfy sorting requirements", p.first.getDescribingElement(), p.second.getDescribingElement());
     }
 

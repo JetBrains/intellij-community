@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -52,8 +53,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 
-import static com.intellij.openapi.module.ModuleUtilCore.findModuleForPsiElement;
-
 /**
  * @author ilyas
  */
@@ -77,7 +76,7 @@ public abstract class CreateClassFix {
           qualifier = groovyFile instanceof GroovyFile ? groovyFile.getPackageName() : "";
           name = myRefElement.getReferenceName();
           assert name != null;
-          module = findModuleForPsiElement(file);
+          module = ModuleUtilCore.findModuleForPsiElement(file);
         }
         finally {
           accessToken.finish();
@@ -245,7 +244,7 @@ public abstract class CreateClassFix {
         final PsiManager manager = PsiManager.getInstance(project);
         final String name = myRefElement.getReferenceName();
         assert name != null;
-        final Module module = findModuleForPsiElement(file);
+        final Module module = ModuleUtilCore.findModuleForPsiElement(file);
         PsiDirectory targetDirectory = getTargetDirectory(project, pack, name, module, getText());
         if (targetDirectory == null) return;
 

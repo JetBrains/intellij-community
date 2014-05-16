@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
@@ -28,9 +29,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.a
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.PrimaryExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.*;
-import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.PathExpression.Result.METHOD_CALL;
-import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.PathExpression.Result.WRONG_WAY;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * Main classdef for any general expression parsing
@@ -44,11 +43,11 @@ public class ExpressionStatement implements GroovyElementTypes {
     if (checkForTypeCast(builder, parser)) return CAST_EXPRESSION;
     PsiBuilder.Marker marker = builder.mark();
     final PathExpression.Result result = PathExpression.parsePathExprQualifierForExprStatement(builder, parser);
-    if (result != WRONG_WAY &&
-        !SEPARATORS.contains(builder.getTokenType()) &&
-        !BINARY_OP_SET.contains(builder.getTokenType()) &&
-        !POSTFIX_UNARY_OP_SET.contains(builder.getTokenType())) {
-      if (result == METHOD_CALL) {
+    if (result != PathExpression.Result.WRONG_WAY &&
+        !TokenSets.SEPARATORS.contains(builder.getTokenType()) &&
+        !TokenSets.BINARY_OP_SET.contains(builder.getTokenType()) &&
+        !TokenSets.POSTFIX_UNARY_OP_SET.contains(builder.getTokenType())) {
+      if (result == PathExpression.Result.METHOD_CALL) {
         marker.drop();
         return PATH_METHOD_CALL;
       }
@@ -148,10 +147,10 @@ public class ExpressionStatement implements GroovyElementTypes {
   }
 
   private static GroovyElementType namePartParse(PsiBuilder builder, GroovyParser parser) {
-    if (BINARY_OP_SET.contains(builder.getTokenType())) return WRONGWAY;
-    if (KEYWORDS.contains(builder.getTokenType())) return WRONGWAY;
+    if (TokenSets.BINARY_OP_SET.contains(builder.getTokenType())) return WRONGWAY;
+    if (TokenSets.KEYWORDS.contains(builder.getTokenType())) return WRONGWAY;
     final GroovyElementType type = PathExpression.namePartParse(builder, parser);
-    if (type == WRONGWAY && NUMBERS.contains(builder.getTokenType())) {
+    if (type == WRONGWAY && TokenSets.NUMBERS.contains(builder.getTokenType())) {
       builder.advanceLexer();
       return REFERENCE_EXPRESSION;
     }

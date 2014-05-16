@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,6 +126,7 @@ class GrChageSignatureUsageSearcher {
           if (!newName.equals(parameter.getName())) {
             final GrUnresolvableLocalCollisionDetector.CollidingVariableVisitor collidingVariableVisitor =
               new GrUnresolvableLocalCollisionDetector.CollidingVariableVisitor() {
+                @Override
                 public void visitCollidingVariable(final PsiVariable collidingVariable) {
                   if (!deletedOrRenamedParameters.contains(collidingVariable)) {
                     result.add(new RenamedParameterCollidesWithLocalUsageInfo(parameter, collidingVariable, method));
@@ -141,6 +142,7 @@ class GrChageSignatureUsageSearcher {
       else {
         final GrUnresolvableLocalCollisionDetector.CollidingVariableVisitor variableVisitor =
           new GrUnresolvableLocalCollisionDetector.CollidingVariableVisitor() {
+            @Override
             public void visitCollidingVariable(PsiVariable collidingVariable) {
               if (!deletedOrRenamedParameters.contains(collidingVariable)) {
                 result.add(new NewParameterCollidesWithLocalUsageInfo(collidingVariable, collidingVariable, method));
@@ -296,6 +298,7 @@ class GrChageSignatureUsageSearcher {
       myMethod = method;
     }
 
+    @Override
     public String getDescription() {
       return RefactoringBundle.message("there.is.already.a.0.in.the.1.it.will.conflict.with.the.renamed.parameter",
                                        RefactoringUIUtil.getDescription(myCollidingElement, true),

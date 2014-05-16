@@ -39,7 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
-import org.jetbrains.plugins.groovy.intentions.base.ErrorUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -966,7 +965,7 @@ public class PsiUtil {
   }
 
 
-  private static String[] visibilityModifiers = new String[]{PsiModifier.PRIVATE, PsiModifier.PROTECTED, PsiModifier.PUBLIC};
+  private static final String[] visibilityModifiers = new String[]{PsiModifier.PRIVATE, PsiModifier.PROTECTED, PsiModifier.PUBLIC};
 
   public static void escalateVisibility(PsiMember owner, PsiElement place) {
     PsiModifierList modifierList = owner.getModifierList();
@@ -1371,5 +1370,28 @@ public class PsiUtil {
         }), PsiModificationTracker.MODIFICATION_COUNT);
       }
     });
+  }
+
+  public static boolean checkPsiElementsAreEqual(PsiElement l, PsiElement r) {
+    if (!l.getText().equals(r.getText())) return false;
+    if (l.getNode().getElementType() != r.getNode().getElementType()) return false;
+
+    final PsiElement[] lChildren = l.getChildren();
+    final PsiElement[] rChildren = r.getChildren();
+
+    if (lChildren.length != rChildren.length) return false;
+
+    for (int i = 0; i < rChildren.length; i++) {
+      if (!checkPsiElementsAreEqual(lChildren[i], rChildren[i])) return false;
+    }
+    return true;
+  }
+
+  public static boolean isCall(GrReferenceExpression referenceExpression) {
+    return referenceExpression.getParent() instanceof GrCall;
+  }
+
+  public static boolean isLocalVariable(@Nullable PsiElement variable) {
+    return variable instanceof GrVariable && !(variable instanceof GrField || variable instanceof GrParameter);
   }
 }

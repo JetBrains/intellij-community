@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ public class GrSwitchStatementImpl extends GroovyPsiElementImpl implements GrSwi
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitSwitchStatement(this);
   }
@@ -46,10 +47,12 @@ public class GrSwitchStatementImpl extends GroovyPsiElementImpl implements GrSwi
     return "Switch statement";
   }
 
+  @Override
   public GrExpression getCondition() {
     return findExpressionChild(this);
   }
 
+  @Override
   @NotNull
   public GrCaseSection[] getCaseSections() {
     List<GrCaseSection> result = new ArrayList<GrCaseSection>();

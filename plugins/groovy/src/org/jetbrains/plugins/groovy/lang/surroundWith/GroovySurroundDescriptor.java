@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@ public class GroovySurroundDescriptor implements SurroundDescriptor {
     new WithExprSurrounder(),
   };
 
+  @Override
   @NotNull
   public Surrounder[] getSurrounders() {
     return ourSurrounders;
@@ -66,6 +67,7 @@ public class GroovySurroundDescriptor implements SurroundDescriptor {
     return false;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
     return GroovyRefactoringUtil.findStatementsInRange(file, startOffset, endOffset, true);

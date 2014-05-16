@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
   public static NonCodeMembersHolder generateMembers(List<Map> methods, final PsiFile place) {
     Map<List<Map>, NonCodeMembersHolder> map = CachedValuesManager.getCachedValue(
       place, new CachedValueProvider<Map<List<Map>, NonCodeMembersHolder>>() {
+      @Override
       public Result<Map<List<Map>, NonCodeMembersHolder>> compute() {
         final Map<List<Map>, NonCodeMembersHolder> map = new ConcurrentSoftHashMap<List<Map>, NonCodeMembersHolder>();
         return Result.create(map, PsiModificationTracker.MODIFICATION_COUNT);
@@ -200,6 +201,7 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
     return JavaPsiFacade.getElementFactory(place.getProject()).createTypeFromText(type, place);
   }
 
+  @Override
   public boolean processMembers(GroovyClassDescriptor descriptor, PsiScopeProcessor processor, ResolveState state) {
     for (PsiElement method : myDeclarations) {
       if (!processor.execute(method, state)) {

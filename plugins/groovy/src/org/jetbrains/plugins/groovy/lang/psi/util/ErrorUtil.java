@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.intentions.base;
+package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementVisitor;
@@ -34,6 +34,7 @@ public class ErrorUtil {
   private static class ErrorElementVisitor extends PsiRecursiveElementVisitor {
     private boolean containsErrorElement = false;
 
+    @Override
     public void visitErrorElement(PsiErrorElement element) {
       containsErrorElement = true;
     }

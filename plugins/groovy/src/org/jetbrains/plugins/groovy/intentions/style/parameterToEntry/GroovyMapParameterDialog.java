@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.intellij.ui.StringComboboxEditor;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
-import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 
 import javax.swing.*;
@@ -78,6 +78,7 @@ public class GroovyMapParameterDialog extends DialogWrapper {
     myNameLabel.setEnabled(createNew);
 
     myCreateNew.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(final ChangeEvent e) {
         final boolean flag = myCreateNew.isSelected();
         myCbTypeSpec.setEnabled(flag);
@@ -114,17 +115,19 @@ public class GroovyMapParameterDialog extends DialogWrapper {
     super.doCancelAction();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return contentPane;
   }
 
+  @Override
   public JComponent getContentPane() {
     return contentPane;
   }
 
   @Nullable
   protected String getEnteredName() {
-    if (myNameComboBox.getEditor().getItem() instanceof String && ((String)myNameComboBox.getEditor().getItem()).length() > 0) {
+    if (myNameComboBox.getEditor().getItem() instanceof String && !((String)myNameComboBox.getEditor().getItem()).isEmpty()) {
       return (String)myNameComboBox.getEditor().getItem();
     } else {
       return null;
@@ -143,21 +146,25 @@ public class GroovyMapParameterDialog extends DialogWrapper {
     myListenerList.add(DataChangedListener.class, new DataChangedListener());
 
     myNameComboBox.addItemListener(new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         fireNameDataChanged();
       }
     });
 
     ((EditorTextField)myNameComboBox.getEditor().getEditorComponent()).addDocumentListener(new DocumentListener() {
+      @Override
       public void beforeDocumentChange(DocumentEvent event) {
       }
 
+      @Override
       public void documentChanged(DocumentEvent event) {
         fireNameDataChanged();
       }
     });
 
     contentPane.registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myNameComboBox.requestFocus();
       }

@@ -34,10 +34,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -132,10 +129,10 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         public void run() {
           final NamedTrinity includedTrinity = new NamedTrinity();
           final Collection<FilePatchInProgress.PatchChange> includedChanges = myChangesTreeList.getIncludedChanges();
-          final Set<Pair<String, String>> set = new HashSet<Pair<String, String>>();
+          final Set<Couple<String>> set = new HashSet<Couple<String>>();
           for (FilePatchInProgress.PatchChange change : includedChanges) {
             final TextFilePatch patch = change.getPatchInProgress().getPatch();
-            final Pair<String, String> pair = Pair.create(patch.getBeforeName(), patch.getAfterName());
+            final Couple<String> pair = Couple.newOne(patch.getBeforeName(), patch.getAfterName());
             if (set.contains(pair)) continue;
             set.add(pair);
             acceptChange(includedTrinity, change);

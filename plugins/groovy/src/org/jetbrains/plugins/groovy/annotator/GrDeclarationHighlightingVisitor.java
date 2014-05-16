@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.List;
 
@@ -57,7 +57,7 @@ class GrDeclarationHighlightingVisitor extends GroovyRecursiveElementVisitor {
   public void visitVariable(GrVariable variable) {
     super.visitVariable(variable);
 
-    if (GroovyRefactoringUtil.isLocalVariable(variable) || variable instanceof GrParameter) {
+    if (PsiUtil.isLocalVariable(variable) || variable instanceof GrParameter) {
       final TextAttributesKey attribute = GrHighlightUtil.getDeclarationHighlightingAttribute(variable, null);
       if (attribute != null) {
         final PsiElement nameElement = variable.getNameIdentifierGroovy();

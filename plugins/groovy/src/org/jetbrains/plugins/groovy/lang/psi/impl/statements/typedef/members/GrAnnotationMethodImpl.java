@@ -40,6 +40,7 @@ public class GrAnnotationMethodImpl extends GrMethodBaseImpl implements GrAnnota
     super(stub, GroovyElementTypes.ANNOTATION_METHOD);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitAnnotationMethod(this);
   }
@@ -48,6 +49,7 @@ public class GrAnnotationMethodImpl extends GrMethodBaseImpl implements GrAnnota
     return "Default annotation member";
   }
 
+  @Override
   @NotNull
   public Map<String, NamedArgumentDescriptor> getNamedParameters() {
     return Collections.emptyMap();

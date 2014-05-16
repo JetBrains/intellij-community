@@ -17,7 +17,7 @@
 package com.intellij.compiler.ant.taskdefs;
 
 import com.intellij.compiler.ant.Tag;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -27,6 +27,6 @@ import org.jetbrains.annotations.NonNls;
 public class PatternSetRef extends Tag{
   public PatternSetRef(@NonNls final String refid) {
     //noinspection HardCodedStringLiteral
-    super("patternset", new Pair[] {Pair.create("refid", refid)});
+    super("patternset", Couple.newOne("refid", refid));
   }
 }

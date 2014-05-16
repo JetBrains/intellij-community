@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.refactoring.memberPullUp;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -56,6 +55,7 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
   private PsiClass mySubclass;
   private Project myProject;
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     int offset = editor.getCaretModel().getOffset();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -82,6 +82,7 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
     }
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (elements.length != 1) return;
 
@@ -138,6 +139,7 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
 
     mySubclass = aClass;
     GrMemberInfoStorage memberInfoStorage = new GrMemberInfoStorage((GrTypeDefinition)mySubclass, new MemberInfoBase.Filter<GrMember>() {
+      @Override
       public boolean includeMember(GrMember element) {
         return true;
       }
@@ -157,6 +159,7 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
     dialog.show();
   }
 
+  @Override
   public boolean checkConflicts(final GrPullUpDialog dialog) {
     /*                         todo */
     List<GrMemberInfo> _infos = dialog.getSelectedMemberInfos();
@@ -165,6 +168,7 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
     if (!checkWritable(superClass, infos)) return false;
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      @Override
       public void run() {
         final PsiDirectory targetDirectory = superClass.getContainingFile().getContainingDirectory();
         final PsiPackage targetPackage = targetDirectory != null ? JavaDirectoryService.getInstance().getPackage(targetDirectory) : null;
@@ -194,6 +198,7 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
     return true;
   }
 
+  @Override
   public boolean isEnabledOnElements(PsiElement[] elements) {
     return elements.length == 1 && elements[0] instanceof PsiClass;
   }

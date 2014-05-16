@@ -24,6 +24,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -48,7 +49,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.List;
 
-import static com.intellij.psi.PsiModifier.STATIC;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSPREAD_DOT;
 
 /**
@@ -78,7 +78,7 @@ public class GrReferenceResolveUtil {
       }
     }
     else {
-      if (place.getDotTokenType() == mSPREAD_DOT) {
+      if (place.getDotTokenType() == GroovyTokenTypes.mSPREAD_DOT) {
         final PsiType qtype = qualifier.getType();
         final PsiType componentType = ClosureParameterEnhancer.findTypeForIteration(qtype, place);
         if (componentType != null) {
@@ -237,7 +237,7 @@ public class GrReferenceResolveUtil {
       }
     }
     else if (member instanceof GrMethod) {
-      if (!member.hasModifierProperty(STATIC)) {
+      if (!member.hasModifierProperty(PsiModifier.STATIC)) {
         containingClass = member.getContainingClass();
       }
     }
@@ -333,6 +333,6 @@ public class GrReferenceResolveUtil {
 
   public static boolean isInStaticContext(@NotNull PsiElement place) {
     GrMember context = PsiTreeUtil.getParentOfType(place, GrMember.class, true, GrClosableBlock.class);
-    return (context instanceof GrMethod || context instanceof GrClassInitializer) && context.hasModifierProperty(STATIC);
+    return (context instanceof GrMethod || context instanceof GrClassInitializer) && context.hasModifierProperty(PsiModifier.STATIC);
   }
 }

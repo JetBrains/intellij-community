@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,10 +38,12 @@ public class GroovyLibraryPresentationProvider extends GroovyLibraryPresentation
     super(GROOVY_KIND);
   }
 
+  @Override
   public boolean managesLibrary(final VirtualFile[] libraryFiles) {
     return LibrariesUtil.getGroovyLibraryHome(libraryFiles) != null;
   }
 
+  @Override
   @Nls
   public String getLibraryVersion(final VirtualFile[] libraryFiles) {
     final String home = LibrariesUtil.getGroovyLibraryHome(libraryFiles);
@@ -50,6 +52,7 @@ public class GroovyLibraryPresentationProvider extends GroovyLibraryPresentation
     return GroovyConfigUtils.getInstance().getSDKVersion(home);
   }
 
+  @Override
   @NotNull
   public Icon getIcon() {
     return JetgroovyIcons.Groovy.Groovy_16x16;

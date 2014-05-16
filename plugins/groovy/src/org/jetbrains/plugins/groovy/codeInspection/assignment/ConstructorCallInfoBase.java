@@ -26,6 +26,7 @@ public abstract class ConstructorCallInfoBase<T extends GrConstructorCall> exten
     super(call);
   }
 
+  @Override
   public GroovyResolveResult[] multiResolveClass() {
     return getCall().multiResolveClass();
   }

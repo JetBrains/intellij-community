@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,32 +27,40 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR;
 
 public class GroovyPointlessArithmeticInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Pointless arithmetic expression";
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return CONFUSING_CODE_CONSTRUCTS;
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return false;
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new PointlessArithmeticVisitor();
   }
 
+  @Override
   public String buildErrorString(Object... args) {
     return GroovyInspectionBundle.message("pointless.arithmetic.error.message", calculateReplacementExpression((GrExpression) args[0]));
   }
@@ -63,7 +71,7 @@ public class GroovyPointlessArithmeticInspection extends BaseInspection {
     final GrExpression lhs = exp.getLeftOperand();
     final GrExpression rhs = exp.getRightOperand();
     assert rhs != null;
-    if (mPLUS == sign) {
+    if (GroovyTokenTypes.mPLUS == sign) {
       if (isZero(lhs)) {
         return rhs.getText();
       }
@@ -88,23 +96,26 @@ public class GroovyPointlessArithmeticInspection extends BaseInspection {
       }
     }
 
-    if (mDIV == sign) {
+    if (GroovyTokenTypes.mDIV == sign) {
       return lhs.getText();
     }
 
     return "";
   }
 
+  @Override
   public GroovyFix buildFix(PsiElement location) {
     return new PointlessArithmeticFix();
   }
 
   private static class PointlessArithmeticFix extends GroovyFix {
+    @Override
     @NotNull
     public String getName() {
       return "Simplify";
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final GrExpression expression = (GrExpression) descriptor.getPsiElement();
       final String newExpression = calculateReplacementExpression(expression);
@@ -114,8 +125,10 @@ public class GroovyPointlessArithmeticInspection extends BaseInspection {
 
   private static class PointlessArithmeticVisitor extends BaseInspectionVisitor {
 
-    private final TokenSet arithmeticTokens = TokenSet.create(mPLUS, mMINUS, mSTAR, mDIV);
+    private final TokenSet arithmeticTokens = TokenSet.create(mPLUS, mMINUS, mSTAR,
+                                                              mDIV);
 
+    @Override
     public void visitBinaryExpression(@NotNull GrBinaryExpression expression) {
       super.visitBinaryExpression(expression);
       final GrExpression rhs = expression.getRightOperand();

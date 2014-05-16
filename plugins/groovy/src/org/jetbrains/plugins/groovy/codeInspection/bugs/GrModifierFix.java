@@ -98,6 +98,7 @@ public class GrModifierFix extends GroovyFix {
     return myText;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return GroovyBundle.message("change.modifier.family.name");

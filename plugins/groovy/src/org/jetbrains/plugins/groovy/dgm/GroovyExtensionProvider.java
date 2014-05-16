@@ -20,7 +20,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -48,10 +48,10 @@ public class GroovyExtensionProvider {
     return ServiceManager.getService(project, GroovyExtensionProvider.class);
   }
 
-  public Pair<List<String>, List<String>> collectExtensions(GlobalSearchScope resolveScope) {
+  public Couple<List<String>> collectExtensions(GlobalSearchScope resolveScope) {
     PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage("META-INF.services");
     if (aPackage == null) {
-      return Pair.create(Collections.<String>emptyList(), Collections.<String>emptyList());
+      return Couple.newOne(Collections.<String>emptyList(), Collections.<String>emptyList());
     }
 
 
@@ -68,7 +68,7 @@ public class GroovyExtensionProvider {
       }
     }
 
-    return Pair.create(instanceClasses, staticClasses);
+    return Couple.newOne(instanceClasses, staticClasses);
   }
 
   private static void collectClasses(IProperty pr, List<String> classes) {

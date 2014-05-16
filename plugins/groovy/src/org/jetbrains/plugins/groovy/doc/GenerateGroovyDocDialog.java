@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,12 +41,14 @@ public final class GenerateGroovyDocDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     myPanel = new GroovyDocGenerationPanel();
     myPanel.reset(myConfiguration);
     return myPanel.getPanel();
   }
 
+  @Override
   protected void doOKAction() {
     myPanel.apply(myConfiguration);
     if (checkDir(myConfiguration.OUTPUT_DIRECTORY, "output") && checkDir(myConfiguration.INPUT_DIRECTORY, "input")) {
@@ -61,7 +63,7 @@ public final class GenerateGroovyDocDialog extends DialogWrapper {
   }
 
   private boolean checkDir(String dirName, String dirPrefix) {
-    if (dirName == null || dirName.trim().length() == 0) {
+    if (dirName == null || dirName.trim().isEmpty()) {
       Messages.showMessageDialog(myProject, GroovyDocBundle.message("groovydoc.generate.0.directory.not.specified", dirPrefix),
                                  CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       return false;

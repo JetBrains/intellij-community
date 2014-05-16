@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.codeInsight;
+package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.codeInsight.TargetElementEvaluator;
 import com.intellij.openapi.util.Key;
@@ -30,7 +30,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrRenameableLightElement;
 
 /**
@@ -40,11 +39,13 @@ public class GroovyTargetElementEvaluator implements TargetElementEvaluator {
 
   public static final Key<Object> NAVIGATION_ELEMENT_IS_NOT_TARGET = Key.create("GroovyTargetElementEvaluator.DONT_FOLLOW_NAVIGATION_ELEMENT");
 
+  @Override
   public boolean includeSelfInGotoImplementation(@NotNull PsiElement element) {
     return true;
   }
 
-  public PsiElement getElementByReference(PsiReference ref, int flags) {
+  @Override
+  public PsiElement getElementByReference(@NotNull PsiReference ref, int flags) {
     PsiElement sourceElement = ref.getElement();
 
     if (sourceElement instanceof GrCodeReferenceElement) {

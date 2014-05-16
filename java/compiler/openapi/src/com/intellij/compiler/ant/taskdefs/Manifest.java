@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,12 @@ package com.intellij.compiler.ant.taskdefs;
 
 import com.intellij.compiler.ant.Tag;
 import com.intellij.openapi.compiler.make.ManifestBuilder;
-import com.intellij.openapi.util.Pair;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.jar.Attributes;
-import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -29,7 +31,7 @@ import java.util.*;
  */
 public class Manifest extends Tag{
   public Manifest() {
-    super("manifest", new Pair[] {});
+    super("manifest");
   }
 
   public void applyAttributes(final java.util.jar.Manifest manifest) {

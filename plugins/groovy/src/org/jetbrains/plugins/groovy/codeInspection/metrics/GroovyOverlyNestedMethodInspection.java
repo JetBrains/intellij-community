@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,33 +22,40 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 
 public class GroovyOverlyNestedMethodInspection extends GroovyMethodMetricInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Overly nested method";
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return METHOD_METRICS;
   }
 
+  @Override
   protected int getDefaultLimit() {
     return 5;
   }
 
+  @Override
   protected String getConfigurationLabel() {
     return "Maximum nesting depth:";
   }
 
+  @Override
   public String buildErrorString(Object... args) {
     return "Method '#ref' is overly nested ( nesting depth =" + args[0] + '>' + args[1] + ')';
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private class Visitor extends BaseInspectionVisitor {
+    @Override
     public void visitMethod(GrMethod grMethod) {
       super.visitMethod(grMethod);
       final int limit = getLimit();

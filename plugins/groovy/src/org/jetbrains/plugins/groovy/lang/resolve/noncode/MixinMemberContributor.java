@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve.noncode;
 
-import com.intellij.psi.OriginInfoAwareElement;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.scope.DelegatingScopeProcessor;

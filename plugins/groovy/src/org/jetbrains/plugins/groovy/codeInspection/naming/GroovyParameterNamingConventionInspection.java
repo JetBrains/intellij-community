@@ -28,19 +28,23 @@ public class GroovyParameterNamingConventionInspection extends ConventionInspect
   private static final int DEFAULT_MIN_LENGTH = 4;
   private static final int DEFAULT_MAX_LENGTH = 32;
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Method parameter naming convention";
   }
 
+  @Override
   protected GroovyFix buildFix(PsiElement location) {
     return new RenameFix();
   }
 
+  @Override
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
     return true;
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... args) {
     final String className = (String) args[0];
@@ -52,23 +56,28 @@ public class GroovyParameterNamingConventionInspection extends ConventionInspect
     return "Method parameter name '#ref' doesn't match regex '" + getRegex() + "' #loc";
   }
 
+  @Override
   protected String getDefaultRegex() {
     return "[a-z][A-Za-z\\d]*";
   }
 
+  @Override
   protected int getDefaultMinLength() {
     return DEFAULT_MIN_LENGTH;
   }
 
+  @Override
   protected int getDefaultMaxLength() {
     return DEFAULT_MAX_LENGTH;
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new NamingConventionsVisitor();
   }
 
   private class NamingConventionsVisitor extends BaseInspectionVisitor {
+    @Override
     public void visitParameter(GrParameter grParameter) {
       super.visitParameter(grParameter);
       final String name = grParameter.getName();

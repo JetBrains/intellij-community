@@ -33,11 +33,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 import java.util.Collections;
 import java.util.List;
-
-import static org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil.*;
 
 /**
  * @author Max Medvedev
@@ -86,8 +85,8 @@ public class StringPartInfo {
 
     myText = myLiteral.getText();
 
-    myStartQuote = getStartQuote(myText);
-    myEndQuote = getEndQuote(myText);
+    myStartQuote = GrStringUtil.getStartQuote(myText);
+    myEndQuote = GrStringUtil.getEndQuote(myText);
 
     TextRange dataRange = new TextRange(myStartQuote.length(), myText.length() - myEndQuote.length());
     myRange = range.shiftRight(-literal.getTextRange().getStartOffset()).intersection(dataRange);
@@ -112,20 +111,20 @@ public class StringPartInfo {
   }
 
   private static boolean isEscapesCut(GrLiteral literal, int startOffset, int endOffset) {
-    String rawContent = removeQuotes(literal.getText());
+    String rawContent = GrStringUtil.removeQuotes(literal.getText());
     int[] offsets = new int[rawContent.length() + 1];
 
-    if (isSingleQuoteString(literal) || isDoubleQuoteString(literal)) {
-      parseStringCharacters(rawContent, new StringBuilder(), offsets);
+    if (GrStringUtil.isSingleQuoteString(literal) || GrStringUtil.isDoubleQuoteString(literal)) {
+      GrStringUtil.parseStringCharacters(rawContent, new StringBuilder(), offsets);
     }
-    else if (isSlashyString(literal)) {
-      parseRegexCharacters(rawContent, new StringBuilder(), offsets, true);
+    else if (GrStringUtil.isSlashyString(literal)) {
+      GrStringUtil.parseRegexCharacters(rawContent, new StringBuilder(), offsets, true);
     }
-    else if (isDollarSlashyString(literal)) {
-      parseRegexCharacters(rawContent, new StringBuilder(), offsets, false);
+    else if (GrStringUtil.isDollarSlashyString(literal)) {
+      GrStringUtil.parseRegexCharacters(rawContent, new StringBuilder(), offsets, false);
     }
 
-    int contentStart = literal.getTextRange().getStartOffset() + getStartQuote(literal.getText()).length();
+    int contentStart = literal.getTextRange().getStartOffset() + GrStringUtil.getStartQuote(literal.getText()).length();
 
     int relativeStart = startOffset - contentStart;
     int relativeEnd = endOffset - contentStart;
@@ -137,8 +136,8 @@ public class StringPartInfo {
   public static boolean isWholeLiteralContentSelected(GrLiteral literal, int startOffset, int endOffset) {
     TextRange literalRange = literal.getTextRange();
     String literalText = literal.getText();
-    String startQuote = getStartQuote(literalText);
-    String endQuote = getEndQuote(literalText);
+    String startQuote = GrStringUtil.getStartQuote(literalText);
+    String endQuote = GrStringUtil.getEndQuote(literalText);
 
     return literalRange.getStartOffset()                    <= startOffset && startOffset <= literalRange.getStartOffset() + startQuote.length() &&
            literalRange.getEndOffset() - endQuote.length()  <= endOffset   && endOffset   <= literalRange.getEndOffset();
@@ -185,14 +184,14 @@ public class StringPartInfo {
     String suffix = prepareSuffix();
 
     StringBuilder buffer = new StringBuilder();
-    boolean prefixExists = !removeQuotes(prefix).isEmpty();
+    boolean prefixExists = !GrStringUtil.removeQuotes(prefix).isEmpty();
     if (prefixExists) {
       buffer.append(prefix).append('+');
     }
 
     buffer.append(varName != null ? varName : prepareSelected());
 
-    boolean suffixExists = !removeQuotes(suffix).isEmpty();
+    boolean suffixExists = !GrStringUtil.removeQuotes(suffix).isEmpty();
     if (suffixExists) {
       buffer.append('+').append(suffix);
     }
@@ -233,22 +232,22 @@ public class StringPartInfo {
 
   private String preparePrefix() {
     String prefix = myText.substring(0, myRange.getStartOffset());
-    String content = removeQuotes(prefix);
+    String content = GrStringUtil.removeQuotes(prefix);
 
     return prepareLiteral(content);
   }
 
   private String prepareLiteral(String content) {
 
-    if (isSlashyString(myLiteral)) {
+    if (GrStringUtil.isSlashyString(myLiteral)) {
       if (content.endsWith("\\")) {
-        String unescaped = unescapeSlashyString(content);
+        String unescaped = GrStringUtil.unescapeSlashyString(content);
         return prepareGString(unescaped);
       }
     }
-    else if (isDollarSlashyString(myLiteral)) {
+    else if (GrStringUtil.isDollarSlashyString(myLiteral)) {
       if (content.endsWith("$")) {
-        String unescaped = unescapeDollarSlashyString(content);
+        String unescaped = GrStringUtil.unescapeDollarSlashyString(content);
         return prepareGString(unescaped);
       }
     }
@@ -260,9 +259,9 @@ public class StringPartInfo {
   private static String prepareGString(@NotNull String content) {
     StringBuilder buffer = new StringBuilder();
     boolean multiline = content.contains("\n");
-    buffer.append(multiline ? TRIPLE_DOUBLE_QUOTES : DOUBLE_QUOTES);
-    escapeSymbolsForGString(content, multiline, false, buffer);
-    buffer.append(multiline ? TRIPLE_DOUBLE_QUOTES : DOUBLE_QUOTES);
+    buffer.append(multiline ? GrStringUtil.TRIPLE_DOUBLE_QUOTES : GrStringUtil.DOUBLE_QUOTES);
+    GrStringUtil.escapeSymbolsForGString(content, multiline, false, buffer);
+    buffer.append(multiline ? GrStringUtil.TRIPLE_DOUBLE_QUOTES : GrStringUtil.DOUBLE_QUOTES);
 
     return buffer.toString();
   }

@@ -21,8 +21,8 @@ import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.formove.PathMerger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.FileStatus;
@@ -257,8 +257,8 @@ public class FilePatchInProgress implements Strippable {
     return result;
   }
 
-  public Pair<String, String> getKey() {
-    return Pair.create(myPatch.getBeforeName(), myPatch.getAfterName());
+  public Couple<String> getKey() {
+    return Couple.newOne(myPatch.getBeforeName(), myPatch.getAfterName());
   }
 
   private void refresh() {

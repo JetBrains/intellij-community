@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import java.util.List;
  * @author Maxim.Medvedev
  */
 public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBackedByPsiMethod, SuperMethodsSearch.SearchParameters> {
+  @Override
   public boolean execute(@NotNull SuperMethodsSearch.SearchParameters queryParameters, @NotNull Processor<MethodSignatureBackedByPsiMethod> consumer) {
     final PsiMethod method = queryParameters.getMethod();
     if (!(method instanceof GrMethod)) {
@@ -54,7 +55,7 @@ public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBack
     if (psiClass == null) return true;
 
     final HierarchicalMethodSignature hierarchicalSignature = method.getHierarchicalMethodSignature();
-    if (hierarchicalSignature.getSuperSignatures().size() != 0) return true;
+    if (!hierarchicalSignature.getSuperSignatures().isEmpty()) return true;
 
     final Project project = method.getProject();
 
@@ -80,12 +81,13 @@ public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBack
       }
     }
 
-    if (goodSupers.size() == 0) return true;
+    if (goodSupers.isEmpty()) return true;
 
     List<PsiMethod> result = new ArrayList<PsiMethod>(goodSupers.size());
     result.add(goodSupers.get(0));
 
     final Comparator<PsiMethod> comparator = new Comparator<PsiMethod>() {
+      @Override
       public int compare(PsiMethod o1, PsiMethod o2) { //compare by first parameter type
         final PsiType type1 = getRealType(o1);
         final PsiType type2 = getRealType(o2);

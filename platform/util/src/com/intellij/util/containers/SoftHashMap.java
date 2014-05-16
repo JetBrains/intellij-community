@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ public final class SoftHashMap<K,V> extends RefHashMap<K,V> {
     super(hashingStrategy);
   }
 
+  @NotNull
   @Override
   protected <T> Key<T> createKey(@NotNull T k, @NotNull ReferenceQueue<? super T> q) {
     return new SoftKey<T>(k, q);

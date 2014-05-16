@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.compiler
+
+import com.intellij.debugger.DebuggerManagerEx
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.ContextUtil
 import com.intellij.debugger.engine.DebugProcessImpl
@@ -28,7 +30,6 @@ import com.intellij.debugger.impl.DebuggerContextUtil
 import com.intellij.debugger.impl.DebuggerManagerImpl
 import com.intellij.debugger.impl.DebuggerSession
 import com.intellij.debugger.impl.GenericDebuggerRunner
-import com.intellij.debugger.ui.DebuggerPanelsManager
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener
 import com.intellij.execution.configurations.RunProfile
@@ -51,6 +52,7 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.Semaphore
+
 /**
  * @author peter
  */
@@ -426,7 +428,7 @@ public static void main(String[] args) {
   }
 
   private DebuggerSession getDebugSession() {
-    return DebuggerPanelsManager.getInstance(project).sessionTab.session
+    return DebuggerManagerEx.getInstanceEx(project).getContext().debuggerSession
   }
 
   private <T> T managed(Closure cl) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 public class GroovyShortenFQNamesProcessor implements TemplateOptionalProcessor {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.template.GroovyShortenFQNamesProcessor");
 
+  @Override
   public void processText(final Project project,
                           final Template template,
                           final Document document,
@@ -56,14 +57,17 @@ public class GroovyShortenFQNamesProcessor implements TemplateOptionalProcessor 
     }
   }
 
+  @Override
   public String getOptionName() {
     return CodeInsightBundle.message("dialog.edit.template.checkbox.shorten.fq.names");
   }
 
+  @Override
   public boolean isEnabled(final Template template) {
     return template.isToShortenLongNames();
   }
 
+  @Override
   public void setEnabled(final Template template, final boolean value) {
   }
 

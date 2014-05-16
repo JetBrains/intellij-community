@@ -17,7 +17,7 @@
 package com.intellij.compiler.ant.taskdefs;
 
 import com.intellij.compiler.ant.Tag;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -28,7 +28,7 @@ public class Exclude extends Tag {
 
   public Exclude(@NonNls final String name) {
     //noinspection HardCodedStringLiteral
-    super("exclude", new Pair[] {Pair.create("name", name)});
+    super("exclude", Couple.newOne("name", name));
   }
 
 }

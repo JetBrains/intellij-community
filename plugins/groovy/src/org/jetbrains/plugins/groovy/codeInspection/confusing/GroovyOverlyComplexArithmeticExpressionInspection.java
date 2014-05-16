@@ -41,11 +41,13 @@ public class GroovyOverlyComplexArithmeticExpressionInspection extends BaseInspe
    */
   public int m_limit = TERM_LIMIT;
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Overly complex arithmetic expression";
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return CONFUSING_CODE_CONSTRUCTS;
@@ -55,15 +57,18 @@ public class GroovyOverlyComplexArithmeticExpressionInspection extends BaseInspe
     return m_limit;
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     return new SingleIntegerFieldOptionsPanel("Maximum number of terms:",
         this, "m_limit");
   }
 
+  @Override
   protected String buildErrorString(Object... args) {
     return "Overly complex arithmetic expression #loc";
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
@@ -79,16 +84,19 @@ public class GroovyOverlyComplexArithmeticExpressionInspection extends BaseInspe
       arithmeticTokens.add(GroovyTokenTypes.mMOD);
     }
 
+    @Override
     public void visitBinaryExpression(@NotNull GrBinaryExpression expression) {
       super.visitBinaryExpression(expression);
       checkExpression(expression);
     }
 
+    @Override
     public void visitUnaryExpression(@NotNull GrUnaryExpression expression) {
       super.visitUnaryExpression(expression);
       checkExpression(expression);
     }
 
+    @Override
     public void visitParenthesizedExpression(GrParenthesizedExpression expression) {
       super.visitParenthesizedExpression(expression);
       checkExpression(expression);

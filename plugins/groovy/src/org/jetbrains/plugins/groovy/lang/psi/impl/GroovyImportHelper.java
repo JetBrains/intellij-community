@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.editor;
+package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.resolve.DefaultImportContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.PackageSkippingProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -35,7 +34,7 @@ import java.util.LinkedHashSet;
  * @author Max Medvedev
  */
 public class GroovyImportHelper {
-  static boolean isImplicitlyImported(PsiElement element, String expectedName, GroovyFile file) {
+  public static boolean isImplicitlyImported(PsiElement element, String expectedName, GroovyFile file) {
     if (!(element instanceof PsiClass)) return false;
 
     final PsiClass psiClass = (PsiClass)element;

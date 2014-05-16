@@ -76,20 +76,24 @@ public class GrImmediateClosureParameterImpl implements GrClosureParameter {
     }
   }
 
+  @Override
   @Nullable
   public PsiType getType() {
     return myType;
   }
 
+  @Override
   public boolean isOptional() {
     return myOptional;
   }
 
+  @Override
   @Nullable
   public GrExpression getDefaultInitializer() {
     return myDefaultInitializer;
   }
 
+  @Override
   public boolean isValid() {
     return (myType == null || myType.isValid()) && (myDefaultInitializer == null || myDefaultInitializer.isValid());
   }

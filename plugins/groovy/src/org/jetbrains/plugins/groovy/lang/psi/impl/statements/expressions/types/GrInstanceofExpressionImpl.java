@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ public class GrInstanceofExpressionImpl extends GrExpressionImpl implements GrIn
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitInstanceofExpression(this);
   }
@@ -44,15 +45,18 @@ public class GrInstanceofExpressionImpl extends GrExpressionImpl implements GrIn
     return "Instanceof expression";
   }
 
+  @Override
   public PsiType getType() {
     return getTypeByFQName(CommonClassNames.JAVA_LANG_BOOLEAN);
   }
 
+  @Override
   @Nullable
   public GrTypeElement getTypeElement() {
     return findChildByClass(GrTypeElement.class);
   }
 
+  @Override
   @NotNull
   public GrExpression getOperand() {
     return findNotNullChildByClass(GrExpression.class);

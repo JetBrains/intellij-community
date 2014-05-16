@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public class ConvertJavaStyleArrayIntention extends Intention {
         if (!(expression instanceof GrNewExpression)) return false;
         if (((GrNewExpression)expression).getArrayCount() == 0) return false;
 
-        if (((GrMethodCallExpression)element).getArgumentList().getText().trim().length() > 0) return false;
+        if (!((GrMethodCallExpression)element).getArgumentList().getText().trim().isEmpty()) return false;
 
         final GrClosableBlock[] closureArguments = ((GrMethodCallExpression)element).getClosureArguments();
         if (closureArguments.length != 1) return false;

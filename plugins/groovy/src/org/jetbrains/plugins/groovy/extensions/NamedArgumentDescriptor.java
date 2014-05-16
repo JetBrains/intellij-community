@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,7 +155,7 @@ public class NamedArgumentDescriptor {
 
   private static class StringTypeConditionWithPriority extends StringTypeCondition {
 
-    private StringTypeConditionWithPriority[] myInstances;
+    private final StringTypeConditionWithPriority[] myInstances;
 
     public StringTypeConditionWithPriority(String typeName) {
       this(typeName, Priority.ALWAYS_ON_TOP, new StringTypeConditionWithPriority[Priority.values().length]);

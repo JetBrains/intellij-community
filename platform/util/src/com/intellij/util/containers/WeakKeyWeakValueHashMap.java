@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,9 @@ public final class WeakKeyWeakValueHashMap<K,V> implements Map<K,V>{
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
 
   private static class MyValueReference<K,V> extends WeakReference<V> {
-    private final WeakHashMap.Key<K> key;
+    @NotNull private final WeakHashMap.Key<K> key;
 
-    private MyValueReference(WeakHashMap.Key<K> key, V referent, ReferenceQueue<? super V> q) {
+    private MyValueReference(@NotNull WeakHashMap.Key<K> key, V referent, ReferenceQueue<? super V> q) {
       super(referent, q);
       this.key = key;
     }

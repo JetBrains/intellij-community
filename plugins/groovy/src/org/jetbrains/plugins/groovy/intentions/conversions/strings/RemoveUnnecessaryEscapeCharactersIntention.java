@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,9 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * @author Max Medvedev
@@ -56,26 +57,26 @@ public class RemoveUnnecessaryEscapeCharactersIntention extends Intention {
         if (!(element instanceof GrLiteral)) return false;
 
         String text = element.getText();
-        return getStartQuote(text) != null && !removeUnnecessaryEscapeSymbols((GrLiteral)element).equals(text);
+        return GrStringUtil.getStartQuote(text) != null && !removeUnnecessaryEscapeSymbols((GrLiteral)element).equals(text);
       }
     };
   }
 
   private static String removeUnnecessaryEscapeSymbols(final GrLiteral literal) {
     final String text = literal.getText();
-    final String quote = getStartQuote(text);
-    final String value = removeQuotes(text);
+    final String quote = GrStringUtil.getStartQuote(text);
+    final String value = GrStringUtil.removeQuotes(text);
 
     final StringBuilder buffer = new StringBuilder();
     buffer.append(quote);
 
     if (quote == "'") {
-      escapeAndUnescapeSymbols(value, "", "\"$", buffer);
+      GrStringUtil.escapeAndUnescapeSymbols(value, "", "\"$", buffer);
     }
     else if (quote == "'''") {
       int position = buffer.length();
-      escapeAndUnescapeSymbols(value, "", "\"'$n", buffer);
-      fixAllTripleQuotes(buffer, position);
+      GrStringUtil.escapeAndUnescapeSymbols(value, "", "\"'$n", buffer);
+      GrStringUtil.fixAllTripleQuotes(buffer, position);
     }
     else if (quote == "\"") {
       if (literal instanceof GrString) {
@@ -87,12 +88,12 @@ public class RemoveUnnecessaryEscapeCharactersIntention extends Intention {
             buffer.append(child.getText());
           }
           else {
-            escapeAndUnescapeSymbols(child.getText(), "", "'", buffer);
+            GrStringUtil.escapeAndUnescapeSymbols(child.getText(), "", "'", buffer);
           }
         }
       }
       else {
-        escapeAndUnescapeSymbols(value, "", "'", buffer);
+        GrStringUtil.escapeAndUnescapeSymbols(value, "", "'", buffer);
       }
     }
     else if (quote == "\"\"\"") {
@@ -100,21 +101,21 @@ public class RemoveUnnecessaryEscapeCharactersIntention extends Intention {
         final ASTNode node = literal.getNode();
         for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
           final IElementType type = child.getElementType();
-          if (type == GroovyTokenTypes.mGSTRING_BEGIN || type == GroovyTokenTypes.mGSTRING_END) continue;
+          if (type == mGSTRING_BEGIN || type == mGSTRING_END) continue;
           if (type == GroovyElementTypes.GSTRING_INJECTION) {
             buffer.append(child.getText());
           }
           else {
             final int position = buffer.length();
-            escapeAndUnescapeSymbols(child.getText(), "", "\"'n", buffer);
-            fixAllTripleDoubleQuotes(buffer, position);
+            GrStringUtil.escapeAndUnescapeSymbols(child.getText(), "", "\"'n", buffer);
+            GrStringUtil.fixAllTripleDoubleQuotes(buffer, position);
           }
         }
       }
       else {
         final int position = buffer.length();
-        escapeAndUnescapeSymbols(value, "", "\"'n", buffer);
-        fixAllTripleDoubleQuotes(buffer, position);
+        GrStringUtil.escapeAndUnescapeSymbols(value, "", "\"'n", buffer);
+        GrStringUtil.fixAllTripleDoubleQuotes(buffer, position);
       }
     }
     else {
