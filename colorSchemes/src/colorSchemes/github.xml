@@ -279,46 +279,21 @@
         <option name="FOREGROUND" value="ffcc00" />
       </value>
     </option>
-    <option name="CSS.COMMENT">
+    <option name="CSS.HASH">
       <value>
-        <option name="FOREGROUND" value="DD1144" />
-      </value>
-    </option>
-    <option name="CSS.FUNCTION">
-      <value>
-        <option name="FOREGROUND" value="0086B3" />
-      </value>
-    </option>
-    <option name="CSS.IDENT">
-      <value>
-        <option name="FOREGROUND" value="445588" />
+        <option name="FOREGROUND" value="990000" />
         <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="CSS.NUMBER">
-      <value>
-        <option name="FOREGROUND" value="009999" />
       </value>
     </option>
     <option name="CSS.PROPERTY_NAME">
       <value>
-        <option name="FOREGROUND" value="6666FF" />
+        <option name="FOREGROUND" value="333333" />
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
     <option name="CSS.PROPERTY_VALUE">
       <value>
         <option name="FOREGROUND" value="009999" />
-      </value>
-    </option>
-    <option name="CSS.TAG_NAME">
-      <value>
-        <option name="FOREGROUND" value="121289" />
-      </value>
-    </option>
-    <option name="CSS.URL">
-      <value>
-        <option name="FONT_TYPE" value="2" />
       </value>
     </option>
     <option name="CUSTOM_INVALID_STRING_ESCAPE_ATTRIBUTES">
@@ -932,17 +907,13 @@
     </option>
     <option name="LESS_INJECTED_CODE">
       <value>
-        <option name="BACKGROUND" value="F8F8FF" />
-      </value>
-    </option>
-    <option name="LESS_JS_CODE_DELIM">
-      <value>
-        <option name="BACKGROUND" value="F8F8FF" />
+        <option name="BACKGROUND" value="edfced" />
       </value>
     </option>
     <option name="LESS_VARIABLE">
       <value>
-        <option name="FOREGROUND" value="108888" />
+        <option name="FOREGROUND" value="333333" />
+        <option name="FONT_TYPE" value="1" />
       </value>
     </option>
     <option name="LINE_FULL_COVERAGE">
@@ -1403,88 +1374,16 @@
         <option name="BACKGROUND" value="f7e7f1" />
       </value>
     </option>
-    <option name="SASS_COMMENT">
-      <value>
-        <option name="FOREGROUND" value="DD1144" />
-      </value>
-    </option>
-    <option name="SASS_DEFAULT">
-      <value>
-        <option name="FOREGROUND" value="000000" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
     <option name="SASS_EXTEND">
       <value>
-        <option name="FOREGROUND" value="000000" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="SASS_FUNCTION">
-      <value>
-        <option name="FOREGROUND" value="000000" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="SASS_IDENTIFIER">
-      <value>
-        <option name="FOREGROUND" value="445588" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="SASS_IMPORTANT">
-      <value>
-        <option name="FOREGROUND" value="000000" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="SASS_KEYWORD">
-      <value>
-        <option name="FOREGROUND" value="000000" />
+        <option name="FOREGROUND" value="0" />
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
     <option name="SASS_MIXIN">
       <value>
-        <option name="FOREGROUND" value="0A8585" />
-      </value>
-    </option>
-    <option name="SASS_NUMBER">
-      <value>
-        <option name="FOREGROUND" value="009999" />
-      </value>
-    </option>
-    <option name="SASS_PROPERTY_NAME">
-      <value>
+        <option name="FOREGROUND" value="990000" />
         <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="SASS_PROPERTY_VALUE">
-      <value>
-        <option name="FOREGROUND" value="000000" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="SASS_STRING">
-      <value>
-        <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
-      </value>
-    </option>
-    <option name="SASS_TAG_NAME">
-      <value>
-        <option name="FOREGROUND" value="121289" />
-      </value>
-    </option>
-    <option name="SASS_URL">
-      <value>
-        <option name="FOREGROUND" value="000000" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="SASS_VARIABLE">
-      <value>
-        <option name="FONT_TYPE" value="2" />
       </value>
     </option>
     <option name="SEARCH_RESULT_ATTRIBUTES">
