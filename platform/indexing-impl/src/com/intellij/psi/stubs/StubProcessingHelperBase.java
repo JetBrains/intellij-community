@@ -55,7 +55,7 @@ public abstract class StubProcessingHelperBase {
           }
           else {
             customStubs = true;
-            assert BinaryFileStubBuilders.INSTANCE.forFileType(psiFile.getFileType()) != null;
+            assert BinaryFileStubBuilders.INSTANCE.forFileType(psiFile.getFileType()) != null : "unable to get stub builder for " + psiFile.getFileType();
           }
         }
       }
