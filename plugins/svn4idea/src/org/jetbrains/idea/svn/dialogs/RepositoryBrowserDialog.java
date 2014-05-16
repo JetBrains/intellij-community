@@ -21,6 +21,7 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -76,6 +77,8 @@ import java.util.Collection;
 import java.util.List;
 
 public class RepositoryBrowserDialog extends DialogWrapper {
+
+  private static final Logger LOG = Logger.getInstance(RepositoryBrowserDialog.class);
 
   private final Project myProject;
   protected final SvnVcs myVCS;
@@ -1115,17 +1118,21 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     OutputStream os = null;
     try {
       os = new BufferedOutputStream(new FileOutputStream(targetFile));
-      myVCS.getSvnKitManager().createDiffClient().doDiff(sourceURL, SVNRevision.HEAD, targetURL, SVNRevision.HEAD, true, false, os);
-    } catch (IOException e1) {
-      //
-    } catch (SVNException e1) {
-      //
-    } finally {
+      myVCS.getFactoryFromSettings().createDiffClient().unifiedDiff(SvnTarget.fromURL(sourceURL, SVNRevision.HEAD),
+                                                                    SvnTarget.fromURL(targetURL, SVNRevision.HEAD), os);
+    }
+    catch (IOException e) {
+      LOG.info(e);
+    }
+    catch (VcsException e) {
+      LOG.info(e);
+    }
+    finally {
       if (os != null) {
         try {
           os.close();
-        } catch (IOException e1) {
-          //
+        } catch (IOException e) {
+          LOG.info(e);
         }
       }
     }
