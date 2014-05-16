@@ -31,6 +31,13 @@ public abstract class SurroundPostfixTemplateBase extends StatementWrapPostfixTe
     super(name, descr, psiInfo, typeChecker);
   }
 
+  @SuppressWarnings("unchecked")
+  protected SurroundPostfixTemplateBase(@NotNull String name,
+                                        @NotNull String descr,
+                                        @NotNull PostfixTemplatePsiInfo psiInfo) {
+    super(name, descr, psiInfo, Condition.TRUE);
+  }
+
 
   @Override
   public void expand(@NotNull PsiElement context, @NotNull final Editor editor) {
