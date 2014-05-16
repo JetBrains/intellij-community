@@ -25,6 +25,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -40,14 +41,15 @@ public class GroovyImplementMethodsHandler implements LanguageCodeInsightActionH
   public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
     PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, true);
-    if (aClass == null) return;
+    if (aClass instanceof GrTypeDefinition) {
+      GrTypeDefinition typeDefinition = (GrTypeDefinition)aClass;
+      if (GroovyOverrideImplementExploreUtil.getMethodSignaturesToImplement(typeDefinition).isEmpty()) {
+        HintManager.getInstance().showErrorHint(editor, "No methods to implement have been found");
+        return;
+      }
 
-    if (OverrideImplementUtil.getMethodSignaturesToImplement(aClass).isEmpty()) {
-      HintManager.getInstance().showErrorHint(editor, "No methods to implement have been found");
-      return;
+      GroovyOverrideImplementUtil.chooseAndImplementMethods(project, editor, typeDefinition);
     }
-
-    OverrideImplementUtil.chooseAndImplementMethods(project, editor, aClass);
   }
 
   @Override
