@@ -33,128 +33,14 @@
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
-    <option name="COFFEESCRIPT.BAD_CHARACTER">
-      <value>
-        <option name="BACKGROUND" value="ffcccc" />
-      </value>
-    </option>
-    <option name="COFFEESCRIPT.BLOCK_COMMENT">
-      <value>
-        <option name="FOREGROUND" value="DD1144" />
-      </value>
-    </option>
-    <option name="COFFEESCRIPT.BOOLEAN">
-      <value>
-        <option name="FOREGROUND" value="000000" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="COFFEESCRIPT.CLASS_NAME">
-      <value>
-        <option name="FOREGROUND" value="990000" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="COFFEESCRIPT.COLON">
-      <value>
-        <option name="FOREGROUND" value="000000" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="COFFEESCRIPT.EXISTENTIAL">
-      <value>
-        <option name="FOREGROUND" value="000000" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="COFFEESCRIPT.FUNCTION">
-      <value>
-        <option name="FOREGROUND" value="000000" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="COFFEESCRIPT.FUNCTION_BINDING">
-      <value>
-        <option name="FOREGROUND" value="000000" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="COFFEESCRIPT.FUNCTION_NAME">
-      <value>
-        <option name="FOREGROUND" value="990000" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="COFFEESCRIPT.GLOBAL_VARIABLE">
-      <value>
-        <option name="FOREGROUND" value="108888" />
-      </value>
-    </option>
-    <option name="COFFEESCRIPT.PARAMETER">
-      <value>
-        <option name="FONT_TYPE" value="2" />
-      </value>
-    </option>
-    <option name="COFFEESCRIPT.HEREDOC_CONTENT">
-      <value>
-        <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
-      </value>
-    </option>
-    <option name="COFFEESCRIPT.HEREDOC_ID">
-      <value>
-        <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
-      </value>
-    </option>
     <option name="COFFEESCRIPT.HEREGEX_CONTENT">
       <value>
-        <option name="FOREGROUND" value="009926" />
+        <option name="FOREGROUND" value="9926" />
       </value>
     </option>
     <option name="COFFEESCRIPT.HEREGEX_ID">
       <value>
-        <option name="FOREGROUND" value="009926" />
-      </value>
-    </option>
-    <option name="COFFEESCRIPT.JAVASCRIPT_CONTENT">
-      <value>
-        <option name="BACKGROUND" value="f7e7f1" />
-      </value>
-    </option>
-    <option name="COFFEESCRIPT.JAVASCRIPT_ID">
-      <value>
-        <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
-      </value>
-    </option>
-    <option name="COFFEESCRIPT.KEYWORD">
-      <value>
-        <option name="FOREGROUND" value="000000" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="COFFEESCRIPT.LINE_COMMENT">
-      <value>
-        <option name="FOREGROUND" value="999988" />
-        <option name="FONT_TYPE" value="2" />
-      </value>
-    </option>
-    <option name="COFFEESCRIPT.NUMBER">
-      <value>
-        <option name="FOREGROUND" value="009999" />
-      </value>
-    </option>
-    <option name="COFFEESCRIPT.OPERATIONS">
-      <value>
-        <option name="FOREGROUND" value="000000" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="COFFEESCRIPT.PROTOTYPE">
-      <value>
-        <option name="FOREGROUND" value="990000" />
-        <option name="FONT_TYPE" value="1" />
+        <option name="FOREGROUND" value="9926" />
       </value>
     </option>
     <option name="COFFEESCRIPT.REGULAR_EXPRESSION_CONTENT">
@@ -170,18 +56,6 @@
     <option name="COFFEESCRIPT.REGULAR_EXPRESSION_ID">
       <value>
         <option name="FOREGROUND" value="009926" />
-      </value>
-    </option>
-    <option name="COFFEESCRIPT.STRING">
-      <value>
-        <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
-      </value>
-    </option>
-    <option name="COFFEESCRIPT.STRING_LITERAL">
-      <value>
-        <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
       </value>
     </option>
     <option name="COFFEESCRIPT.THIS">
@@ -801,24 +675,24 @@
         <option name="BACKGROUND" value="f7e9e9" />
       </value>
     </option>
+    <option name="JS.GLOBAL_FUNCTION">
+      <value>
+        <option name="FOREGROUND" value="333333" />
+      </value>
+    </option>
     <option name="JS.INSTANCE_MEMBER_FUNCTION">
       <value>
-        <option name="FOREGROUND" value="7a7a2b" />
-      </value>
-    </option>
-    <option name="JS.LOCAL_VARIABLE">
-      <value>
-        <option name="FOREGROUND" value="458383" />
-      </value>
-    </option>
-    <option name="JS.PARAMETER">
-      <value>
-        <option name="FONT_TYPE" value="2" />
+        <option name="FOREGROUND" value="333333" />
       </value>
     </option>
     <option name="JS.REGEXP">
       <value>
         <option name="FOREGROUND" value="009926" />
+      </value>
+    </option>
+    <option name="JS.STATIC_MEMBER_FUNCTION">
+      <value>
+        <option name="FOREGROUND" value="333333" />
       </value>
     </option>
     <option name="LABEL">
