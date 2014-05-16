@@ -72,6 +72,11 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     return impl;
   }
 
+  @Override
+  protected boolean isValid() {
+    return super.isValid() && (myFile == null || myFile.isValid());
+  }
+
   private void sessionFinished() {
     advanceProgress(Math.max(1, myProgressLimit - myProgressCount.get()));
   }
