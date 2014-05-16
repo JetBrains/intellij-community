@@ -451,6 +451,11 @@
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
+    <option name="DEFAULT_ENTITY">
+      <value>
+        <option name="FOREGROUND" value="800080" />
+      </value>
+    </option>
     <option name="DEFAULT_FUNCTION_DECLARATION">
       <value>
         <option name="FOREGROUND" value="990000" />
@@ -783,38 +788,9 @@
         <option name="FOREGROUND" value="121289" />
       </value>
     </option>
-    <option name="HTML_ATTRIBUTE_NAME">
-      <value>
-        <option name="FOREGROUND" value="0A8585" />
-      </value>
-    </option>
-    <option name="HTML_ATTRIBUTE_VALUE">
-      <value>
-        <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="HTML_COMMENT">
-      <value>
-        <option name="FOREGROUND" value="DD1144" />
-      </value>
-    </option>
-    <option name="HTML_ENTITY_REFERENCE">
-      <value>
-        <option name="FOREGROUND" value="ff" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="HTML_TAG">
-      <value>
-        <option name="FOREGROUND" value="121289" />
-      </value>
-    </option>
     <option name="HTML_TAG_NAME">
       <value>
-        <option name="FOREGROUND" value="80" />
-        <option name="FONT_TYPE" value="1" />
+        <option name="FOREGROUND" value="121289" />
       </value>
     </option>
     <option name="HYPERLINK_ATTRIBUTES">
@@ -1654,41 +1630,14 @@
         <option name="FOREGROUND" value="ff0000" />
       </value>
     </option>
-    <option name="XML_ATTRIBUTE_NAME">
+    <option name="XML_NS_PREFIX">
       <value>
-        <option name="FOREGROUND" value="0A8585" />
-      </value>
-    </option>
-    <option name="XML_ATTRIBUTE_VALUE">
-      <value>
-        <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
-      </value>
-    </option>
-    <option name="XML_ENTITY_REFERENCE">
-      <value>
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="XML_PROLOGUE">
-      <value>
-        <option name="FONT_TYPE" value="2" />
-      </value>
-    </option>
-    <option name="XML_TAG">
-      <value>
-        <option name="FOREGROUND" value="121289" />
-      </value>
-    </option>
-    <option name="XML_TAG_DATA">
-      <value>
-        <option name="FONT_TYPE" value="1" />
+        <option name="FOREGROUND" value="108888" />
       </value>
     </option>
     <option name="XML_TAG_NAME">
       <value>
         <option name="FOREGROUND" value="80" />
-        <option name="FONT_TYPE" value="1" />
       </value>
     </option>
     <option name="YAML_COMMENT">
