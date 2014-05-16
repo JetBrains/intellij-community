@@ -95,22 +95,7 @@ public final class ExecutionHandler {
                               @Nullable final AntBuildMessageView buildMessageViewToReuse,
                               final DataContext dataContext,
                               List<BuildFileProperty> additionalProperties, @NotNull final AntBuildListener antBuildListener) {
-    FutureResult<ProcessHandler> futureResult =
       runBuildImpl(buildFile, targets, buildMessageViewToReuse, dataContext, additionalProperties, antBuildListener);
-    if (futureResult != null) {
-      try {
-        ProcessHandler processHandler = futureResult.get();
-        if (processHandler != null) {
-          processHandler.waitFor();
-        }
-      }
-      catch (InterruptedException e) {
-        LOG.warn(e);
-      }
-      catch (java.util.concurrent.ExecutionException e) {
-        LOG.warn(e);
-      }
-    }
   }
 
   /**
