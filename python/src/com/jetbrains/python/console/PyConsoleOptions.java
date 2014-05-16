@@ -95,7 +95,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
 
   @Tag("console-settings")
   public static class PyConsoleSettings {
-    public String myCustomStartScript = RunPythonConsoleAction.PYTHON_ENV_COMMAND;
+    public String myCustomStartScript = RunPythonConsoleAction.CONSOLE_START_COMMAND;
     public String mySdkHome = null;
     public String myInterpreterOptions = "";
     public boolean myUseModuleSdk;
@@ -106,6 +106,13 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     public boolean myAddSourceRoots;
     @NotNull
     private PathMappingSettings myMappings = new PathMappingSettings();
+
+    public PyConsoleSettings(){
+    }
+
+    public PyConsoleSettings(String myCustomStartScript){
+      this.myCustomStartScript = myCustomStartScript;
+    }
 
     public void apply(AbstractPyCommonOptionsForm form) {
       mySdkHome = form.getSdkHome();
