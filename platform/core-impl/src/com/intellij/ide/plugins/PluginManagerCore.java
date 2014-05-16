@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,18 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExtensionAreas;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.io.ZipFileCache;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.PlatformUtilsCore;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.execution.ParametersListUtil;
@@ -37,7 +44,6 @@ import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
-import com.intellij.util.lang.JarMemoryLoader;
 import com.intellij.util.xmlb.XmlSerializationException;
 import gnu.trove.THashMap;
 import org.jdom.Document;
@@ -48,10 +54,13 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.*;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.net.URLDecoder;
 import java.util.*;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
+import java.util.zip.ZipFile;
 
 public class PluginManagerCore {
   @NonNls public static final String DISABLED_PLUGINS_FILENAME = "disabled_plugins.txt";
@@ -569,43 +578,26 @@ public class PluginManagerCore {
   @Nullable
   static IdeaPluginDescriptorImpl loadDescriptorFromJar(File file, @NonNls String fileName) {
     try {
-      URI fileURL = file.toURI();
-      URL jarURL = new URL(
-        "jar:" + StringUtil.replace(fileURL.toASCIIString(), "!", "%21") + "!/META-INF/" + fileName
-      );
+      String fileURL = StringUtil.replace(file.toURI().toASCIIString(), "!", "%21");
+      URL jarURL = new URL("jar:" + fileURL + "!/META-INF/" + fileName);
 
-      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(file);
-      FileInputStream in = new FileInputStream(file);
-      ZipInputStream zipStream = new ZipInputStream(in);
+      ZipFile zipFile = ZipFileCache.acquire(file.getPath());
       try {
-        ZipEntry entry = zipStream.getNextEntry();
-        if (entry.getName().equals(JarMemoryLoader.SIZE_ENTRY)) {
-          entry = zipStream.getNextEntry();
-          if (entry.getName().equals("META-INF/" + fileName)) {
-            byte[] content = FileUtil.loadBytes(zipStream, (int)entry.getSize());
-            Document document = JDOMUtil.loadDocument(new ByteArrayInputStream(content));
-            descriptor.readExternal(document, jarURL);
-            return descriptor;
-          }
+        ZipEntry entry = zipFile.getEntry("META-INF/" + fileName);
+        if (entry != null) {
+          Document document = JDOMUtil.loadDocument(zipFile.getInputStream(entry));
+          IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(file);
+          descriptor.readExternal(document, jarURL);
+          return descriptor;
         }
       }
       finally {
-        zipStream.close();
-        in.close();
+        ZipFileCache.release(zipFile);
       }
-
-      descriptor.readExternal(jarURL);
-      return descriptor;
     }
     catch (XmlSerializationException e) {
       getLogger().info("Cannot load " + file, e);
       prepareLoadingPluginsErrorMessage("Plugin file " + file.getName() + " contains invalid plugin descriptor file.");
-    }
-    catch (FileNotFoundException e) {
-      return null;
-    }
-    catch (Exception e) {
-      getLogger().info("Cannot load " + file, e);
     }
     catch (Throwable e) {
       getLogger().info("Cannot load " + file, e);
