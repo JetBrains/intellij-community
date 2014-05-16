@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.psi.*;
@@ -43,6 +44,8 @@ import java.util.*;
  * Created by Max Medvedev on 03/03/14
  */
 public class GrTypeDefinitionMembersCache {
+  private static final Logger LOG = Logger.getInstance(GrTypeDefinitionMembersCache.class);
+
   private static final Condition<PsiMethod> CONSTRUCTOR_CONDITION = new Condition<PsiMethod>() {
     @Override
     public boolean value(PsiMethod method) {
@@ -180,8 +183,8 @@ public class GrTypeDefinitionMembersCache {
 
   private class TraitMethodCollector {
     private class TraitProcessor {
-      private final ArrayList<CandidateInfo> result = ContainerUtil.newArrayList();
-      private final Set<PsiClass> processed = ContainerUtil.newHashSet();
+      private final ArrayList<CandidateInfo> result = newArrayList();
+      private final Set<PsiClass> processed = newHashSet();
 
       public TraitProcessor(@NotNull GrTypeDefinition superClass, @NotNull PsiSubstitutor substitutor) {
         processTraits(superClass, substitutor);
@@ -225,17 +228,18 @@ public class GrTypeDefinitionMembersCache {
       List<PsiClassType.ClassResolveResult> traits = getSuperTraits(types);
       if (traits.isEmpty()) return Collections.emptyList();
 
-      Set<MethodSignature> existingSignatures = ContainerUtil.map2Set(codeMethods, new Function<PsiMethod, MethodSignature>() {
+      Set<MethodSignature> existingSignatures = newHashSet(map(codeMethods, new Function<PsiMethod, MethodSignature>() {
         @Override
         public MethodSignature fun(PsiMethod method) {
           return method.getSignature(PsiSubstitutor.EMPTY);
         }
-      });
+      }));
 
-      List<PsiMethod> result = ContainerUtil.newArrayList();
+      List<PsiMethod> result = newArrayList();
 
       for (PsiClassType.ClassResolveResult resolveResult : traits) {
         GrTypeDefinition trait = (GrTypeDefinition)resolveResult.getElement();
+        LOG.assertTrue(trait != null);
 
         List<CandidateInfo> concreteTraitMethods = new TraitProcessor(trait, resolveResult.getSubstitutor()).getResult();
         for (CandidateInfo candidateInfo : concreteTraitMethods) {
@@ -262,7 +266,7 @@ public class GrTypeDefinitionMembersCache {
 
     @NotNull
     private List<PsiClassType.ClassResolveResult> getSuperTraits(@NotNull PsiClassType[] types) {
-      List<PsiClassType.ClassResolveResult> traits = ContainerUtil.newArrayList();
+      List<PsiClassType.ClassResolveResult> traits = newArrayList();
       for (PsiClassType type : types) {
         PsiClassType.ClassResolveResult resolveResult = type.resolveGenerics();
         PsiClass superClass = resolveResult.getElement();
