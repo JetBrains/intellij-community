@@ -1,7 +1,6 @@
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.lang.LanguageParserDefinitions;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -42,7 +41,7 @@ abstract class OptimizingSearchHelperBase implements OptimizingSearchHelper {
 
       if (context.getOptions().getFileType() == StdFileTypes.JAVA) {
         if (javaLexer == null) {
-          javaLexer = LanguageParserDefinitions.INSTANCE.forLanguage(JavaLanguage.INSTANCE).createLexer(context.getProject());
+          javaLexer = LanguageParserDefinitions.INSTANCE.forLanguage(StdFileTypes.JAVA.getLanguage()).createLexer(context.getProject());
         }
         javaLexer.start(refname);
         isJavaReservedWord = ElementType.KEYWORD_BIT_SET.contains(javaLexer.getTokenType()) ||
