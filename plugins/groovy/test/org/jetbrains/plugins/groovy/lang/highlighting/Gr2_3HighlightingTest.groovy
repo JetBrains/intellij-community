@@ -360,10 +360,26 @@ trait T {abstract def foo()}
 
   void 'test not implemented interface method with trait in hierarchy'() {
     testHighlighting('''
-interfae T {def foo()}
+interface T {def foo()}
 trait X implements T {}
 <error descr="Method 'foo' is not implemented">class C implements X</error> {}
 ''')
   }
 
+  void 'test trait methods cannot be protected'(){
+    testHighlighting('trait T {<error descr="Trait methods are not allowed to be protected">protected</error> foo(){}}')
+  }
+
+  void 'test trait can implement numerous traits'() {
+    testHighlighting('''
+trait A{}
+trait B{}
+
+trait D extends A {}
+trait E implements A {}
+trait F extends A implements B {}
+trait G implements A, B {}
+
+''')
+  }
 }

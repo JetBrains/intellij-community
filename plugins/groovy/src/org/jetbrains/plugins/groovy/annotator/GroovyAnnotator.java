@@ -1835,14 +1835,14 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     else if (method.getParent() != null && method.getParent().getParent() instanceof GrTypeDefinition) {
       GrTypeDefinition containingTypeDef = ((GrTypeDefinition)method.getParent().getParent());
 
+      if (containingTypeDef.isTrait()) {
+        checkModifierIsNotAllowed(modifiersList, PsiModifier.PROTECTED, GroovyBundle.message("trait.method.cannot.be.protected"), holder);
+      }
       //interface
-      if (containingTypeDef.isInterface()) {
+      else if (containingTypeDef.isInterface()) {
         checkModifierIsNotAllowed(modifiersList, PsiModifier.STATIC, GroovyBundle.message("interface.must.have.no.static.method"), holder);
-        checkModifierIsNotAllowed(modifiersList,
-                                  PsiModifier.PRIVATE, GroovyBundle.message("interface.members.are.not.allowed.to.be", PsiModifier.PRIVATE), holder);
-        checkModifierIsNotAllowed(modifiersList, PsiModifier.PROTECTED, GroovyBundle.message("interface.members.are.not.allowed.to.be",
-                                                                                             PsiModifier.PROTECTED),
-                                  holder);
+        checkModifierIsNotAllowed(modifiersList, PsiModifier.PRIVATE, GroovyBundle.message("interface.members.are.not.allowed.to.be", PsiModifier.PRIVATE), holder);
+        checkModifierIsNotAllowed(modifiersList, PsiModifier.PROTECTED, GroovyBundle.message("interface.members.are.not.allowed.to.be", PsiModifier.PROTECTED), holder);
       }
       else if (containingTypeDef.isAnonymous()) {
         if (isMethodAbstract) {
