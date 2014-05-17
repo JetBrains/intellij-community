@@ -20,7 +20,7 @@ public class CompileContext {
   private Project project;
 
   public void clear() {
-    searchHelper.clear();
+    if (searchHelper!=null) searchHelper.clear();
 
     project = null;
     pattern = null;
