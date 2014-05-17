@@ -15,9 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
@@ -27,6 +29,8 @@ import static com.intellij.psi.PsiModifier.ABSTRACT;
  * Created by Max Medvedev on 16/05/14
  */
 public class GrTraitUtil {
+  private static final Logger LOG = Logger.getInstance(GrTraitUtil.class);
+
   @Contract("null -> false")
   public static boolean isInterface(@Nullable PsiClass aClass) {
     return aClass != null && aClass.isInterface() && !PsiImplUtil.isTrait(aClass);
@@ -37,5 +41,21 @@ public class GrTraitUtil {
 
     PsiClass aClass = method.getContainingClass();
     return isInterface(aClass);
+  }
+
+  @NotNull
+  public static String getTraitFieldPrefix(@NotNull PsiClass aClass) {
+    String qname = aClass.getQualifiedName();
+    LOG.assertTrue(qname != null, aClass.getClass());
+
+    String[] idents = qname.split("\\.");
+
+    StringBuilder buffer = new StringBuilder();
+    for (String ident : idents) {
+      buffer.append(ident).append("_");
+    }
+
+    buffer.append("_");
+    return buffer.toString();
   }
 }

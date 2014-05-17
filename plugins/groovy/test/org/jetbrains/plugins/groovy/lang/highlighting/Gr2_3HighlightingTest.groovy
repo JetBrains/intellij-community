@@ -273,6 +273,65 @@ def test() {
 '''
   }
 
+  void testTrait1() {
+    testHighlighting('''
+trait X {
+  void foo() {}
+}
+''')
+  }
+
+  void testTrait2() {
+    testHighlighting('''
+interface A {}
+trait X implements A {
+  void foo() {}
+}
+''')
+  }
+
+  void testTrait3() {
+    testHighlighting('''
+class A {}
+trait X extends <error descr="Only traits are expected here">A</error> {
+  void foo() {}
+}
+''')
+  }
+
+  void testTrait4() {
+    testHighlighting('''
+trait A {}
+trait X extends A {
+  void foo() {}
+}
+''')
+  }
+
+  void testTraitExtendsList() {
+    testHighlighting('''
+trait B extends <error descr="Only traits are expected here">HashMap</error> {}''')
+  }
+
+  void testIncIsNotAllowedInTraits() {
+    testHighlighting('''
+trait C {
+  def x = 5
+  def foo() {
+    <error descr="++ expressions on trait fields/properties are not supported in traits">x++</error>
+  }
+}
+''')
+  }
+
+  void testTraitAsAnonymous() {
+    testHighlighting('''
+trait T {}
+
+new <error descr="Anonymous classes cannot be created from traits">T</error>(){}
+''')
+  }
+
   void testAbstractMethodsInTrait() {
     testHighlighting('''
 trait T {
@@ -283,4 +342,28 @@ trait T {
 }
 ''')
   }
+
+  void testTraitImplementsInterfaceMethod() {
+    testHighlighting('''
+interface A {def foo()}
+trait B implements A { def foo() {}}
+class C implements B {}
+''')
+  }
+
+  void 'test not implemented trait method'() {
+    testHighlighting('''
+trait T {abstract def foo()}
+<error descr="Method 'foo' is not implemented">class C implements T</error> {}
+''')
+  }
+
+  void 'test not implemented interface method with trait in hierarchy'() {
+    testHighlighting('''
+interfae T {def foo()}
+trait X implements T {}
+<error descr="Method 'foo' is not implemented">class C implements X</error> {}
+''')
+  }
+
 }
