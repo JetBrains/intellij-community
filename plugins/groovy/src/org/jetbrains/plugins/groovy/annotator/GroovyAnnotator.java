@@ -111,8 +111,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.ast.GrInheritConstructorContrib
 
 import java.util.*;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-
 /**
  * @author ven
  */
@@ -302,7 +300,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       final PsiElement last = PsiUtil.skipWhitespacesAndComments(list.getLastChild(), false);
       if (last != null) {
         final IElementType type = last.getNode().getElementType();
-        if (type != kDEF) {
+        if (type != GroovyTokenTypes.kDEF) {
           myHolder.createErrorAnnotation(list, GroovyBundle.message("tuple.declaration.should.end.with.def.modifier"));
         }
       }
@@ -391,7 +389,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     if (elementType == GroovyTokenTypes.mSTRING_LITERAL || elementType == GroovyTokenTypes.mGSTRING_LITERAL) {
       checkStringLiteral(nameElement);
     }
-    else if (elementType == mREGEX_LITERAL || elementType == mDOLLAR_SLASH_REGEX_LITERAL) {
+    else if (elementType == GroovyTokenTypes.mREGEX_LITERAL || elementType == GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL) {
       checkRegexLiteral(nameElement);
     }
   }
@@ -572,8 +570,8 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
   @Override
   public void visitUnaryExpression(GrUnaryExpression expression) {
-    if (expression.getOperationTokenType() == mINC ||
-        expression.getOperationTokenType() == mDEC) {
+    if (expression.getOperationTokenType() == GroovyTokenTypes.mINC ||
+        expression.getOperationTokenType() == GroovyTokenTypes.mDEC) {
       GrExpression operand = expression.getOperand();
       if (operand instanceof GrReferenceExpression && ((GrReferenceExpression)operand).getQualifier() == null) {
         GrTraitTypeDefinition trait = PsiTreeUtil.getParentOfType(operand, GrTraitTypeDefinition.class);
@@ -609,7 +607,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     checkGetterOfImmutable(myHolder, method);
 
     final PsiElement nameIdentifier = method.getNameIdentifierGroovy();
-    if (nameIdentifier.getNode().getElementType() == mSTRING_LITERAL) {
+    if (nameIdentifier.getNode().getElementType() == GroovyTokenTypes.mSTRING_LITERAL) {
       checkStringLiteral(nameIdentifier);
     }
 
@@ -768,7 +766,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     PsiElement parent = variable.getParent();
     if (parent instanceof GrForInClause) {
       PsiElement delimiter = ((GrForInClause)parent).getDelimiter();
-      if (delimiter.getNode().getElementType() == mCOLON) {
+      if (delimiter.getNode().getElementType() == GroovyTokenTypes.mCOLON) {
         GrTypeElement typeElement = variable.getTypeElementGroovy();
         GrModifierList modifierList = variable.getModifierList();
         if (typeElement == null && StringUtil.isEmptyOrSpaces(modifierList.getText())) {
@@ -818,7 +816,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     if (typeElement == null) return null;
 
     PsiElement sibling = typeElement.getNextSibling();
-    if (sibling != null && sibling.getNode().getElementType() == mTRIPLE_DOT) {
+    if (sibling != null && sibling.getNode().getElementType() == GroovyTokenTypes.mTRIPLE_DOT) {
       return new TextRange(typeElement.getTextRange().getStartOffset(), sibling.getTextRange().getEndOffset());
     }
 
@@ -891,11 +889,11 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     if (constructorReference instanceof LiteralConstructorReference &&
         ((LiteralConstructorReference)constructorReference).getConstructedClassType() != null) {
       final PsiElement startToken = listOrMap.getFirstChild();
-      if (startToken != null && startToken.getNode().getElementType() == mLBRACK) {
+      if (startToken != null && startToken.getNode().getElementType() == GroovyTokenTypes.mLBRACK) {
         myHolder.createInfoAnnotation(startToken, null).setTextAttributes(DefaultHighlighter.LITERAL_CONVERSION);
       }
       final PsiElement endToken = listOrMap.getLastChild();
-      if (endToken != null && endToken.getNode().getElementType() == mRBRACK) {
+      if (endToken != null && endToken.getNode().getElementType() == GroovyTokenTypes.mRBRACK) {
         myHolder.createInfoAnnotation(endToken, null).setTextAttributes(DefaultHighlighter.LITERAL_CONVERSION);
       }
     }
@@ -1175,7 +1173,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   private void highlightNamedArgs(GrNamedArgument[] namedArguments) {
     for (GrNamedArgument namedArgument : namedArguments) {
       final GrArgumentLabel label = namedArgument.getLabel();
-      if (label != null && label.getExpression() == null && label.getNameElement().getNode().getElementType() != mSTAR) {
+      if (label != null && label.getExpression() == null && label.getNameElement().getNode().getElementType() != GroovyTokenTypes.mSTAR) {
         myHolder.createInfoAnnotation(label, null).setTextAttributes(DefaultHighlighter.MAP_KEY);
       }
     }
@@ -1361,10 +1359,10 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   @Override
   public void visitLiteralExpression(GrLiteral literal) {
     final IElementType elementType = literal.getFirstChild().getNode().getElementType();
-    if (elementType == mSTRING_LITERAL || elementType == mGSTRING_LITERAL) {
+    if (elementType == GroovyTokenTypes.mSTRING_LITERAL || elementType == GroovyTokenTypes.mGSTRING_LITERAL) {
       checkStringLiteral(literal);
     }
-    else if (elementType == mREGEX_LITERAL || elementType == mDOLLAR_SLASH_REGEX_LITERAL) {
+    else if (elementType == GroovyTokenTypes.mREGEX_LITERAL || elementType == GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL) {
       checkRegexLiteral(literal.getFirstChild());
     }
   }
@@ -1576,7 +1574,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     }
     if (value instanceof GrUnaryExpression) {
       final IElementType tokenType = ((GrUnaryExpression)value).getOperationTokenType();
-      if (tokenType == mMINUS || tokenType == mPLUS) {
+      if (tokenType == GroovyTokenTypes.mMINUS || tokenType == GroovyTokenTypes.mPLUS) {
         return checkAnnotationAttributeValue(((GrUnaryExpression)value).getOperand(), toHighlight);
       }
     }
@@ -1697,7 +1695,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     if (nameElement == null) return;
 
     IElementType elementType = nameElement.getNode().getElementType();
-    if (!(elementType == kSUPER || elementType == kTHIS)) return;
+    if (!(elementType == GroovyTokenTypes.kSUPER || elementType == GroovyTokenTypes.kTHIS)) return;
 
     final GrExpression qualifier = ref.getQualifier();
     if (qualifier instanceof GrReferenceExpression) {
@@ -1724,7 +1722,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       }
     }
     else if (qualifier == null) {
-      if (elementType == kSUPER) {
+      if (elementType == GroovyTokenTypes.kSUPER) {
         final GrMember container = PsiTreeUtil.getParentOfType(ref, GrMethod.class, GrClassInitializer.class);
         if (container != null && container.hasModifierProperty(PsiModifier.STATIC)) {
           holder.createErrorAnnotation(ref, GroovyBundle.message("super.cannot.be.used.in.static.context"));
@@ -2016,6 +2014,13 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       PsiElement superClass = ((PsiAnonymousClass)typeDefinition).getBaseClassReference().resolve();
       if (superClass instanceof GrTypeDefinition && ((GrTypeDefinition)superClass).isTrait()) {
         holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), GroovyBundle.message("anonymous.classes.cannot.be.created.from.traits"));
+      }
+    }
+    else if (typeDefinition.isTrait()) {
+      if (!configUtils.isVersionAtLeast(typeDefinition, GroovyConfigUtils.GROOVY2_3)) {
+        ASTNode keyword = typeDefinition.getNode().findChildByType(GroovyTokenTypes.kTRAIT);
+        assert keyword != null;
+        holder.createErrorAnnotation(keyword, GroovyBundle.message("traits.are.not.supported.in.groovy.0", configUtils.getSDKVersion(typeDefinition)));
       }
     }
     else if (typeDefinition.getContainingClass() != null && !(typeDefinition instanceof GrEnumTypeDefinition)) {
