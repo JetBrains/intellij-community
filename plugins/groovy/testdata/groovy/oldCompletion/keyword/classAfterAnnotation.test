@@ -22,6 +22,7 @@ short
 static
 strictfp
 synchronized
+trait
 transient
 void
 volatile

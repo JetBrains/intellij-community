@@ -37,7 +37,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
-import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocInlinedTag;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -70,7 +69,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_NAME;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kAS;
 
 /**
  * @author ilyas
@@ -226,7 +224,7 @@ public class GroovyCompletionData {
 
   private static void addTypeDefinitionKeywords(CompletionResultSet result, PsiElement position) {
     if (suggestClassInterfaceEnum(position)) {
-      addKeywords(result, true, PsiKeyword.CLASS, PsiKeyword.INTERFACE, PsiKeyword.ENUM);
+      addKeywords(result, true, PsiKeyword.CLASS, PsiKeyword.INTERFACE, PsiKeyword.ENUM, kTRAIT.toString());
     }
   }
 
@@ -252,8 +250,8 @@ public class GroovyCompletionData {
       }
     }
 
-    ext &= elem instanceof GrInterfaceDefinition || elem instanceof GrClassDefinition;
-    impl &= elem instanceof GrEnumTypeDefinition || elem instanceof GrClassDefinition;
+    ext &= elem instanceof GrInterfaceDefinition || elem instanceof GrClassDefinition || elem instanceof GrTraitTypeDefinition;
+    impl &= elem instanceof GrEnumTypeDefinition || elem instanceof GrClassDefinition || elem instanceof GrTraitTypeDefinition;
     if (!ext && !impl) return ArrayUtil.EMPTY_STRING_ARRAY;
 
     PsiElement[] children = elem.getChildren();
@@ -454,7 +452,7 @@ public class GroovyCompletionData {
   private static boolean afterAtInType(PsiElement context) {
     PsiElement previous = PsiImplUtil.realPrevious(PsiTreeUtil.prevLeaf(context));
     if (previous != null &&
-        GroovyTokenTypes.mAT.equals(previous.getNode().getElementType()) &&
+        mAT.equals(previous.getNode().getElementType()) &&
         (context.getParent() != null && context.getParent().getParent() instanceof GroovyFile ||
          context.getParent() instanceof GrCodeReferenceElement && context.getParent().getParent() instanceof GrAnnotation)) {
       return true;
