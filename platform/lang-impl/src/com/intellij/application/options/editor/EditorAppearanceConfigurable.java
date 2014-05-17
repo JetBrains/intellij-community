@@ -60,6 +60,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
   private JCheckBox myAntialiasingInEditorCheckBox;
   private JCheckBox myCbShowIconsInGutter;
   private JCheckBox myShowVerticalIndentGuidesCheckBox;
+  private JCheckBox myShowOnlyTrailingWhitespacesCheckBox;
 
   public EditorAppearanceConfigurable() {
     myCbBlinkCaret.addActionListener(
@@ -73,9 +74,17 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     if (!OptionsApplicabilityFilter.isApplicable(OptionId.ICONS_IN_GUTTER)) {
       myCbShowIconsInGutter.setVisible(false);
     }
+    myCbShowWhitespaces.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (!myCbShowWhitespaces.isSelected()) {
+          myShowOnlyTrailingWhitespacesCheckBox.setSelected(false);
+        }
+        myShowOnlyTrailingWhitespacesCheckBox.setEnabled(myCbShowWhitespaces.isSelected());
+      }
+    }
+    );
   }
-
-
 
   @Override
   public void reset() {
@@ -89,6 +98,8 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     myCbShowLineNumbers.setSelected(editorSettings.isLineNumbersShown());
     myCbBlockCursor.setSelected(editorSettings.isBlockCursor());
     myCbShowWhitespaces.setSelected(editorSettings.isWhitespacesShown());
+    myShowOnlyTrailingWhitespacesCheckBox.setSelected(editorSettings.isOnlyTrailingWhitespacesShown());
+    myShowOnlyTrailingWhitespacesCheckBox.setEnabled(editorSettings.isWhitespacesShown());
     myShowVerticalIndentGuidesCheckBox.setSelected(editorSettings.isIndentGuidesShown());
     myAntialiasingInEditorCheckBox.setSelected(UISettings.getInstance().ANTIALIASING_IN_EDITOR);
     myCbShowIconsInGutter.setSelected(DaemonCodeAnalyzerSettings.getInstance().SHOW_SMALL_ICONS_IN_GUTTER);
@@ -110,6 +121,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     editorSettings.setRightMarginShown(myCbRightMargin.isSelected());
     editorSettings.setLineNumbersShown(myCbShowLineNumbers.isSelected());
     editorSettings.setWhitespacesShown(myCbShowWhitespaces.isSelected());
+    editorSettings.setOnlyTrailingWhitespacesShown(myShowOnlyTrailingWhitespacesCheckBox.isSelected());
     editorSettings.setIndentGuidesShown(myShowVerticalIndentGuidesCheckBox.isSelected());
 
     EditorOptionsPanel.reinitAllEditors();
@@ -142,6 +154,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
 
     isModified |= isModified(myCbShowLineNumbers, editorSettings.isLineNumbersShown());
     isModified |= isModified(myCbShowWhitespaces, editorSettings.isWhitespacesShown());
+    isModified |= isModified(myShowOnlyTrailingWhitespacesCheckBox, editorSettings.isOnlyTrailingWhitespacesShown());
     isModified |= isModified(myShowVerticalIndentGuidesCheckBox, editorSettings.isIndentGuidesShown());
     isModified |= isModified(myCbShowMethodSeparators, DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS);
     isModified |= isModified(myCbShowIconsInGutter, DaemonCodeAnalyzerSettings.getInstance().SHOW_SMALL_ICONS_IN_GUTTER);

@@ -3231,7 +3231,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       x = drawTablessString(text, start, i, g, x, y, fontType, fontColor, clip);
 
       int x1 = EditorUtil.nextTabStop(x, this);
-      drawTabPlacer(g, y, x, x1);
+      drawTabPlacer(g, text, i, y, x, x1);
       x = x1;
       start = i + 1;
     }
@@ -3349,8 +3349,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return endX;
   }
 
-  private void drawTabPlacer(Graphics g, int y, int start, int stop) {
-    if (mySettings.isWhitespacesShown()) {
+  private void drawTabPlacer(Graphics g, CharSequence data, int index, int y, int start, int stop) {
+    if (mySettings.isWhitespacesShown() && (!mySettings.isOnlyTrailingWhitespacesShown() || isTrailingWhitespace(index, data))) {
       myTabPainter.paint(g, y, start, stop);
     }
   }
@@ -3406,6 +3406,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private static final char IDEOGRAPHIC_SPACE = '\u3000'; // http://www.marathon-studios.com/unicode/U3000/Ideographic_Space
 
+  private boolean isTrailingWhitespace(int charIndex, CharSequence data) {
+    for (int i = charIndex; i < data.length(); i++) {
+      if (!Character.isWhitespace(data.charAt(i))) {
+        return false;
+      }
+
+      if (data.charAt(i) == '\n') {
+        break;
+      }
+    }
+    return true;
+  }
+
   private void drawChars(@NotNull Graphics g, CharSequence data, int start, int end, int x, int y) {
     g.drawString(data.subSequence(start, end).toString(), x, y);
 
@@ -3418,9 +3431,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         final char c = data.charAt(i);
         final int charWidth = isOracleRetina ? GraphicsUtil.charWidth(c, g.getFont()) : metrics.charWidth(c);
 
-        if (c == ' ') {
+        if (c == ' ' && (!mySettings.isOnlyTrailingWhitespacesShown() || isTrailingWhitespace(i, data))) {
           g.fillRect(x + (charWidth >> 1), y, 1, 1);
-        } else if (c == IDEOGRAPHIC_SPACE) {
+        }
+        else if (c == IDEOGRAPHIC_SPACE && (!mySettings.isOnlyTrailingWhitespacesShown() || isTrailingWhitespace(i, data))) {
           final int charHeight = getCharHeight();
           g.drawRect(x + 2, y - charHeight, charWidth - 4, charHeight);
         }

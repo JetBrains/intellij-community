@@ -69,6 +69,7 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myIsSmartHome                           = null;
   private Boolean myIsBlockCursor                         = null;
   private Boolean myIsWhitespacesShown                    = null;
+  private Boolean myIsOnlyTrailingWhitespacesShown        = null;
   private Boolean myIndentGuidesShown                     = null;
   private Boolean myIsAnimatedScrolling                   = null;
   private Boolean myIsAdditionalPageAtBottom              = null;
@@ -119,6 +120,18 @@ public class SettingsImpl implements EditorSettings {
   @Override
   public void setWhitespacesShown(boolean val) {
     myIsWhitespacesShown = Boolean.valueOf(val);
+  }
+
+  @Override
+  public boolean isOnlyTrailingWhitespacesShown() {
+    return myIsOnlyTrailingWhitespacesShown != null
+           ? myIsOnlyTrailingWhitespacesShown.booleanValue()
+           : EditorSettingsExternalizable.getInstance().isOnlyTrailingWhitespacesShown();
+  }
+
+  @Override
+  public void setOnlyTrailingWhitespacesShown(boolean val) {
+    myIsOnlyTrailingWhitespacesShown = Boolean.valueOf(val);
   }
 
   @Override
