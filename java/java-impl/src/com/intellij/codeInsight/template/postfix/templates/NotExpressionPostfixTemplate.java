@@ -19,19 +19,14 @@ import com.intellij.codeInsight.CodeInsightServicesUtil;
 import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Condition;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 
-public class NotExpressionPostfixTemplate extends ExpressionPostfixTemplateWithChooser {
-  private static final Condition<PsiExpression> BOOLEAN_TYPE_CONDITION = new Condition<PsiExpression>() {
-    @Override
-    public boolean value(PsiExpression expression) {
-      return JavaPostfixTemplatesUtils.isBoolean(expression.getType());
-    }
-  };
+public class NotExpressionPostfixTemplate extends JavaPostfixTemplateWithChooser {
 
   public NotExpressionPostfixTemplate() {
-    super("not",  "!expr");
+    super("not", "!expr");
   }
 
   public NotExpressionPostfixTemplate(String alias) {
@@ -39,13 +34,13 @@ public class NotExpressionPostfixTemplate extends ExpressionPostfixTemplateWithC
   }
 
   @Override
-  protected void doIt(@NotNull Editor editor, @NotNull PsiExpression expression) {
-    expression.replace(CodeInsightServicesUtil.invertCondition(expression));
+  protected void doIt(@NotNull Editor editor, @NotNull PsiElement expression) {
+    expression.replace(CodeInsightServicesUtil.invertCondition((PsiExpression)expression));
   }
 
   @NotNull
   @Override
-  protected Condition<PsiExpression> getTypeCondition() {
-    return BOOLEAN_TYPE_CONDITION;
+  protected Condition<PsiElement> getTypeCondition() {
+    return JavaPostfixTemplatesUtils.IS_BOOLEAN;
   }
 }

@@ -17,23 +17,30 @@ package com.intellij.codeInsight.template.postfix.util;
 
 import com.intellij.codeInsight.CodeInsightServicesUtil;
 import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatePsiInfo;
+import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatePsiInfoBase;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public abstract class JavaPostfixTemplatesUtils {
   private JavaPostfixTemplatesUtils() {
   }
 
-  public static PostfixTemplatePsiInfo JAVA_PSI_INFO = new PostfixTemplatePsiInfo() {
+  public static final PostfixTemplatePsiInfoBase JAVA_PSI_INFO = new PostfixTemplatePsiInfoBase() {
 
     @NotNull
     @Override
@@ -60,7 +67,27 @@ public abstract class JavaPostfixTemplatesUtils {
     @NotNull
     @Override
     public PsiExpression getNegatedExpression(@NotNull PsiElement element) {
+      assert element instanceof PsiExpression;
       return CodeInsightServicesUtil.invertCondition((PsiExpression)element);
+    }
+
+    @NotNull
+    @Override
+    public List<PsiElement> getExpressions(@NotNull PsiElement context, @NotNull Document document, int newOffset) {
+      return ContainerUtil.<PsiElement>newArrayList(IntroduceVariableBase.collectExpressions(context.getContainingFile(), document,
+                                                                                             Math.max(newOffset - 1, 0), false));
+    }
+
+    @NotNull
+    @Override
+    public Function<PsiElement, String> getRenderer() {
+      return new Function<PsiElement, String>() {
+        @Override
+        public String fun(PsiElement element) {
+          assert element instanceof PsiExpression;
+          return new PsiExpressionTrimRenderer.RenderFunction().fun((PsiExpression)element);
+        }
+      };
     }
   };
 

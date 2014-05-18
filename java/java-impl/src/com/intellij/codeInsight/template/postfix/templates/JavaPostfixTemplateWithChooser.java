@@ -15,18 +15,28 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.codeInsight.generation.surroundWith.JavaWithCastSurrounder;
-import com.intellij.openapi.editor.Editor;
+
+import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-public class CastExpressionPostfixTemplate extends JavaPostfixTemplateWithChooser {
-  public CastExpressionPostfixTemplate() {
-    super("cast", "((SomeType) expr)");
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
+
+public abstract class JavaPostfixTemplateWithChooser extends ExpressionPostfixTemplateWithChooser {
+
+
+  protected JavaPostfixTemplateWithChooser(@NotNull String name, @NotNull String example) {
+    super(name, example, JAVA_PSI_INFO);
   }
 
+  protected JavaPostfixTemplateWithChooser(@NotNull String name, @NotNull String key, @NotNull String example) {
+    super(name, key, example, JAVA_PSI_INFO);
+  }
+
+  @NotNull
   @Override
-  protected void doIt(@NotNull final Editor editor, @NotNull final PsiElement expression) {
-    PostfixTemplatesUtils.surround(new JavaWithCastSurrounder(), editor, expression);
+  protected Condition<PsiElement> getTypeCondition() {
+    return JavaPostfixTemplatesUtils.IS_NON_VOID;
   }
 }
