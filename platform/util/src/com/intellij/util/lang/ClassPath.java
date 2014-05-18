@@ -91,10 +91,12 @@ public class ClassPath {
         i = 0;
       }
 
+      String shortName = ClasspathCache.transformName(s);
+
       Loader loader;
       while ((loader = getLoader(i++)) != null) {
         if (myCanUseCache) {
-          if (!myCache.loaderHasName(s, loader)) continue;
+          if (!myCache.loaderHasName(s, shortName, loader)) continue;
         }
         Resource resource = loader.getResource(s, flag);
         if (resource != null) {
@@ -196,11 +198,13 @@ public class ClassPath {
     private int myIndex = 0;
     private Resource myRes = null;
     private final String myName;
+    private final String myShortName;
     private final boolean myCheck;
     private final List<Loader> myLoaders;
 
     public MyEnumeration(String name, boolean check) {
       myName = name;
+      myShortName = ClasspathCache.transformName(name);
       myCheck = check;
       List<Loader> loaders = null;
 
@@ -228,7 +232,7 @@ public class ClassPath {
         if (myLoaders != null) {
           while (myIndex < myLoaders.size()) {
             loader = myLoaders.get(myIndex++);
-            if (!myCache.loaderHasName(myName, loader)) {
+            if (!myCache.loaderHasName(myName, myShortName, loader)) {
               myRes = null;
               continue;
             }
@@ -238,7 +242,7 @@ public class ClassPath {
         }
         else {
           while ((loader = getLoader(myIndex++)) != null) {
-            if (!myCache.loaderHasName(myName, loader)) continue;
+            if (!myCache.loaderHasName(myName, myShortName, loader)) continue;
             myRes = loader.getResource(myName, myCheck);
             if (myRes != null) return true;
           }
@@ -276,7 +280,7 @@ public class ClassPath {
 
     @Override
     Resource process(Loader loader, String s, ClassPath classPath) {
-      if (!classPath.myCache.loaderHasName(s, loader)) return null;
+      if (!classPath.myCache.loaderHasName(s, ClasspathCache.transformName(s), loader)) return null;
       final Resource resource = loader.getResource(s, myFlag);
       if (resource != null) {
         printOrder(loader, s, resource);
