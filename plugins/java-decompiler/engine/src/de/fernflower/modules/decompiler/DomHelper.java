@@ -25,7 +25,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import test.util.DotExporter;
 import de.fernflower.code.cfg.BasicBlock;
 import de.fernflower.code.cfg.ControlFlowGraph;
 import de.fernflower.code.cfg.ExceptionRangeCFG;

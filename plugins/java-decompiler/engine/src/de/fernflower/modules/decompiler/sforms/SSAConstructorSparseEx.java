@@ -21,7 +21,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 
-import test.util.DotExporter;
 import de.fernflower.code.CodeConstants;
 import de.fernflower.modules.decompiler.exps.AssignmentExprent;
 import de.fernflower.modules.decompiler.exps.Exprent;
