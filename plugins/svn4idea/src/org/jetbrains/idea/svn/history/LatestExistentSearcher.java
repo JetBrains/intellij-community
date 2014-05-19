@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnFileUrlMapping;
+import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
@@ -60,7 +61,8 @@ public class LatestExistentSearcher {
     myVcs = vcs;
     myUrl = url;
     myRepositoryUrl = repositoryUrl;
-    myRelativeUrl = SVNURLUtil.getRelativeURL(myRepositoryUrl, myUrl, true);
+    // TODO: Make utility method that compare relative urls checking all possible cases when start/end slash exists or not.
+    myRelativeUrl = SvnUtil.ensureStartSlash(SVNURLUtil.getRelativeURL(myRepositoryUrl, myUrl, true));
   }
 
   public long getDeletionRevision() {
