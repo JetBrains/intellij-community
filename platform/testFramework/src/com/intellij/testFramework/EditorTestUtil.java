@@ -97,7 +97,7 @@ public class EditorTestUtil {
   public static void performPaste(Editor editor) {
     EditorActionManager actionManager = EditorActionManager.getInstance();
     EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_PASTE);
-    actionHandler.execute(editor, DataManager.getInstance().getDataContext());
+    actionHandler.execute(editor, null, DataManager.getInstance().getDataContext());
   }
 
   public static List<IElementType> getAllTokens(EditorHighlighter highlighter) {
