@@ -17,7 +17,6 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Consumer;
-import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.integrate.IMerger;
 import org.jetbrains.idea.svn.integrate.MergeClient;
@@ -36,7 +35,6 @@ public class BranchMerger implements IMerger {
   private final SvnVcs myVcs;
   private final String myTargetPath;
   private final SVNURL mySourceUrl;
-  private final SVNURL myTargetUrl;
   private final UpdateEventHandler myHandler;
   private final boolean myReintegrate;
   private final String myBranchName;
@@ -46,13 +44,12 @@ public class BranchMerger implements IMerger {
 
   public BranchMerger(final SvnVcs vcs,
                       final SVNURL sourceUrl,
-                      final SVNURL targetUrl, final String targetPath,
+                      final String targetPath,
                       final UpdateEventHandler handler,
                       final boolean isReintegrate, final String branchName, final long sourceCopyRevision) {
     myVcs = vcs;
     myTargetPath = targetPath;
     mySourceUrl = sourceUrl;
-    myTargetUrl = targetUrl;
     myHandler = handler;
     myReintegrate = isReintegrate;
     myBranchName = branchName;
