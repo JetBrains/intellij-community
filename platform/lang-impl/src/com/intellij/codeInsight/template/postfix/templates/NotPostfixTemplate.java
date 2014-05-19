@@ -15,26 +15,27 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
+public class NotPostfixTemplate extends ExpressionPostfixTemplateWithChooser {
 
-public class NotExpressionPostfixTemplate extends NotPostfixTemplate {
-
-  public NotExpressionPostfixTemplate() {
-    super(JAVA_PSI_INFO);
+  public NotPostfixTemplate(@NotNull PostfixTemplatePsiInfoBase info) {
+    super("not", "!expr", info);
   }
 
-  public NotExpressionPostfixTemplate(String alias) {
-    super(alias, alias, "!expr", JAVA_PSI_INFO);
+
+  public NotPostfixTemplate(@NotNull String name,
+                            @NotNull String key,
+                            @NotNull String example,
+                            @NotNull PostfixTemplatePsiInfoBase info) {
+    super(name, key, example, info);
   }
 
-  @NotNull
   @Override
-  protected Condition<PsiElement> getTypeCondition() {
-    return JavaPostfixTemplatesUtils.IS_BOOLEAN;
+  protected void doIt(@NotNull Editor editor, @NotNull PsiElement expression) {
+    PsiElement element = myInfo.getNegatedExpression(expression);
+    expression.replace(element);
   }
 }
