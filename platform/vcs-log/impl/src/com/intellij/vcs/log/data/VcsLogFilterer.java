@@ -35,7 +35,7 @@ public class VcsLogFilterer {
 
   private static final Logger LOG = Logger.getInstance(VcsLogFilterer.class);
 
-  private static final int LOAD_MORE_COMMITS_FIRST_STEP_LIMIT = 200;
+  private static final int LOAD_MORE_COMMITS_FIRST_STEP_LIMIT = 2000;
 
   @NotNull private final VcsLogDataHolder myLogDataHolder;
   @NotNull private final VcsLogUiImpl myUI;
