@@ -17,13 +17,12 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GrDelegatingScopeProcessorWithHints;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 /**
 * Created by Max Medvedev on 27/03/14
 */
 public class PackageSkippingProcessor extends GrDelegatingScopeProcessorWithHints {
   public PackageSkippingProcessor(PsiScopeProcessor processor) {
-    super(processor, null, ResolverProcessor.RESOLVE_KINDS_CLASS);
+    super(processor, null, RESOLVE_KINDS_CLASS);
   }
 }

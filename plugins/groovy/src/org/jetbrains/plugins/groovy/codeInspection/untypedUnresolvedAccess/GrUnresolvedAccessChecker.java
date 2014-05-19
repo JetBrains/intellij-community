@@ -72,8 +72,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GrScopeProcessorWithHints;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import java.util.ArrayList;
@@ -308,7 +308,7 @@ public class GrUnresolvedAccessChecker {
 
   private static boolean doCheckContainer(final PsiMethod patternMethod, PsiElement container, final String name) {
     final Ref<Boolean> result = new Ref<Boolean>(false);
-    PsiScopeProcessor processor = new GrScopeProcessorWithHints(name, ResolverProcessor.RESOLVE_KINDS_METHOD) {
+    PsiScopeProcessor processor = new GrScopeProcessorWithHints(name, ClassHint.RESOLVE_KINDS_METHOD) {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
         if (element instanceof PsiMethod &&

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package org.jetbrains.plugins.groovy.lang.resolve.processors;
-
-import com.intellij.openapi.util.Key;
+package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions;
 
 /**
- * @author ven
+ * Created by Max Medvedev on 10/4/13
  */
-public interface ClassHint {
-  Key<ClassHint> KEY = Key.create("ClassHint");
-  enum ResolveKind {
-    CLASS,
-    PACKAGE,
-    METHOD,
-    PROPERTY
-  }
-
-  boolean shouldProcess(ResolveKind resolveKind);
+public enum ClassType {
+  CLASS, ENUM, INTERFACE, ANNOTATION, TRAIT
 }

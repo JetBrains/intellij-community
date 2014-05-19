@@ -22,7 +22,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 /**
  * @author Sergey Evdokimov
@@ -35,7 +35,7 @@ public abstract class ClosureMemberContributor extends NonCodeMembersContributor
                                            @NotNull ResolveState state) {
     if (!(qualifierType instanceof GrClosureType)) return;
 
-    final PsiElement context = state.get(ResolverProcessor.RESOLVE_CONTEXT);
+    final PsiElement context = state.get(ClassHint.RESOLVE_CONTEXT);
     if (!(context instanceof GrClosableBlock)) return;
 
     processMembers((GrClosableBlock)context, processor, place, state);

@@ -171,8 +171,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
 
     EnumSet<ClassHint.ResolveKind> kinds = getParent() instanceof GrReferenceExpression
-                                           ? ResolverProcessor.RESOLVE_KINDS_CLASS_PACKAGE
-                                           : ResolverProcessor.RESOLVE_KINDS_CLASS;
+                                           ? ClassHint.RESOLVE_KINDS_CLASS_PACKAGE
+                                           : ClassHint.RESOLVE_KINDS_CLASS;
 
     GroovyResolveResult[] classCandidates = null;
 
@@ -265,7 +265,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     if (!isQualified() && getContext() instanceof GrMethodCall) {
       for (PsiElement e = this.getContext(); e != null; e = e.getContext()) {
         if (e instanceof GrClosableBlock) {
-          ResolveState state = ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, e);
+          ResolveState state = ResolveState.initial().put(ClassHint.RESOLVE_CONTEXT, e);
           for (ClosureMissingMethodContributor contributor : ClosureMissingMethodContributor.EP_NAME.getExtensions()) {
             if (!contributor.processMembers((GrClosableBlock)e, methodResolver, this, state)) {
               return;
@@ -311,7 +311,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       for (GroovyResolveResult result : shapeResults.second) {
         final ResolveState state = ResolveState.initial().
           put(PsiSubstitutor.KEY, result.getSubstitutor()).
-          put(ResolverProcessor.RESOLVE_CONTEXT, result.getCurrentFileResolveContext()).
+          put(ClassHint.RESOLVE_CONTEXT, result.getCurrentFileResolveContext()).
           put(SpreadState.SPREAD_STATE, result.getSpreadState());
         PsiElement element = result.getElement();
         assert element != null;

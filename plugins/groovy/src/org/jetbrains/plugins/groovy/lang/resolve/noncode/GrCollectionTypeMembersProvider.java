@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GrDelegatingScopeProcessorWithHints;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 /**
  * @author Maxim.Medvedev
@@ -53,7 +52,7 @@ public class GrCollectionTypeMembersProvider extends NonCodeMembersContributor {
     final PsiClass myCollectionClass;
 
     public FieldSearcher(PsiScopeProcessor processor, PsiClass collectionClass) {
-      super(processor, null, ResolverProcessor.RESOLVE_KINDS_PROPERTY);
+      super(processor, null, RESOLVE_KINDS_PROPERTY);
       myCollectionClass = collectionClass;
     }
 
