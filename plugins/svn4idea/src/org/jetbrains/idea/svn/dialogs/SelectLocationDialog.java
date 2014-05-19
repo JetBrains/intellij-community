@@ -26,13 +26,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.browser.UrlOpeningExpander;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.io.SVNRepository;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -130,18 +130,10 @@ public class SelectLocationDialog extends DialogWrapper {
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
-        SVNRepository repos = null;
         try {
-          repos = SvnVcs.getInstance(project).getSvnKitManager().createRepository(url);
-          result.set(repos.getRepositoryRoot(true));
-        }
-        catch (SVNException e) {
+          result.set(SvnUtil.getRepositoryRoot(SvnVcs.getInstance(project), url));
+        } catch (SVNException e) {
           excRef.set(e);
-        }
-        finally {
-          if (repos != null) {
-            repos.closeSession();
-          }
         }
       }
     }, "Detecting repository root", true, project);
