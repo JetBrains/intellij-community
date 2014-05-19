@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.CollectionUtil;
 
 /**
 * @author Max Medvedev
@@ -52,6 +52,6 @@ public final class SpreadState {
   @Nullable
   public static PsiType apply(@Nullable PsiType item, @Nullable SpreadState state, Project project) {
     if (state == null) return item;
-    return apply(TypesUtil.createSimilarCollection(state.getContainerType(), project, item), state.getInnerState(), project);
+    return apply(CollectionUtil.createSimilarCollection(state.getContainerType(), project, item), state.getInnerState(), project);
   }
 }
