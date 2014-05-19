@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.plugins.groovy.GroovyFileType
+import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
 /**
  * @author peter
@@ -53,7 +54,7 @@ public abstract class GroovyFormatterTestCase extends LightCodeInsightFixtureTes
   }
   
   protected CommonCodeStyleSettings getGroovySettings() {
-    return myTempSettings.getCommonSettings(GroovyFileType.GROOVY_LANGUAGE);
+    return myTempSettings.getCommonSettings(GroovyLanguage.INSTANCE);
   }
 
   protected GroovyCodeStyleSettings getGroovyCustomSettings() {
