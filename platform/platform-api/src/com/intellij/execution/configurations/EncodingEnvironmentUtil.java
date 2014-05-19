@@ -82,7 +82,7 @@ public class EncodingEnvironmentUtil {
 
   /**
    * Sets default encoding on Mac if it's undefined. <br/>
-   * @deprecated Use {@link #setLocalEnvironmentIfMac(java.util.Map, java.nio.charset.Charset)} instead. To be removed in IDEA 15.
+   * @deprecated Use {@link #setLocaleEnvironmentIfMac(java.util.Map, java.nio.charset.Charset)} instead. To be removed in IDEA 15.
    */
   @Deprecated
   public static void fixDefaultEncodingIfMac(@NotNull Map<String, String> env, @Nullable Project project) {
@@ -96,7 +96,7 @@ public class EncodingEnvironmentUtil {
   /**
    * Sets default encoding on Mac if it's undefined. <br/>
    */
-  public static void setLocalEnvironmentIfMac(@NotNull Map<String, String> env, @NotNull Charset charset) {
+  public static void setLocaleEnvironmentIfMac(@NotNull Map<String, String> env, @NotNull Charset charset) {
     if (SystemInfo.isMac) {
       if (!isLocaleDefined(env)) {
         setLocaleEnvironment(env, charset);
