@@ -17,18 +17,13 @@ package com.intellij.execution.application;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configuration.ConfigurationFactoryEx;
-import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
-import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.*;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.util.PsiMethodUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,9 +93,9 @@ public class ApplicationConfigurationType implements ConfigurationType {
     return "Application";
   }
 
-  @Nullable
+  @NotNull
   public static ApplicationConfigurationType getInstance() {
-    return ContainerUtil.findInstance(Extensions.getExtensions(CONFIGURATION_TYPE_EP), ApplicationConfigurationType.class);
+    return ConfigurationTypeUtil.findConfigurationType(ApplicationConfigurationType.class);
   }
 
 }
