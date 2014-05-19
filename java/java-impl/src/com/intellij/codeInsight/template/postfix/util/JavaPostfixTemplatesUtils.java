@@ -47,7 +47,8 @@ public abstract class JavaPostfixTemplatesUtils {
     public PsiElement createStatement(@NotNull PsiElement context,
                                       @NotNull String prefix,
                                       @NotNull String suffix) {
-      return JavaPostfixTemplatesUtils.createStatement(context, prefix, suffix);
+      PsiElementFactory factory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
+      return factory.createStatementFromText(prefix + context.getText() + suffix, context);
     }
 
     @NotNull
@@ -55,7 +56,8 @@ public abstract class JavaPostfixTemplatesUtils {
     public PsiElement createExpression(@NotNull PsiElement context,
                                        @NotNull String prefix,
                                        @NotNull String suffix) {
-      return JavaPostfixTemplatesUtils.createExpression(context, prefix, suffix);
+      PsiElementFactory factory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
+      return factory.createExpressionFromText(prefix + context.getText() + suffix, context);
     }
 
     @Nullable
@@ -118,26 +120,6 @@ public abstract class JavaPostfixTemplatesUtils {
       return element instanceof PsiExpression && isNotPrimitiveTypeExpression(((PsiExpression)element));
     }
   };
-
-  public static PsiElement createStatement(@NotNull PsiElement context,
-                                           @NotNull String prefix,
-                                           @NotNull String suffix) {
-    PsiExpression expr = getTopmostExpression(context);
-    PsiElement parent = expr != null ? expr.getParent() : null;
-    assert parent instanceof PsiStatement;
-    PsiElementFactory factory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
-    return factory.createStatementFromText(prefix + expr.getText() + suffix, expr);
-  }
-
-  public static PsiElement createExpression(@NotNull PsiElement context,
-                                            @NotNull String prefix,
-                                            @NotNull String suffix) {
-    PsiExpression expr = getTopmostExpression(context);
-    PsiElement parent = expr != null ? expr.getParent() : null;
-    assert parent instanceof PsiStatement;
-    PsiElementFactory factory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
-    return factory.createExpressionFromText(prefix + expr.getText() + suffix, expr);
-  }
 
   @Contract("null -> false")
   public static boolean isNotPrimitiveTypeExpression(@Nullable PsiExpression expression) {

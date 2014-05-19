@@ -26,11 +26,6 @@ public class ParenthesizedExpressionPostfixTemplate extends JavaPostfixTemplateW
 
   @Override
   protected void doIt(@NotNull Editor editor, @NotNull PsiElement expression) {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
-    PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)factory.createExpressionFromText("(expr)", expression.getParent());
-    PsiExpression operand = parenthesizedExpression.getExpression();
-    assert operand != null;
-    operand.replace(expression);
-    expression.replace(parenthesizedExpression);
+    expression.replace(myInfo.createExpression(expression, "(", ")"));
   }
 }
