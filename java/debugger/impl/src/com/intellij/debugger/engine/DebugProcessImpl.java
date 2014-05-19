@@ -74,7 +74,6 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.sun.jdi.*;
 import com.sun.jdi.connect.*;
 import com.sun.jdi.request.EventRequest;
@@ -173,7 +172,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
               final DebuggerSession session = mySession;
               if (session != null && session.isAttached()) {
                 session.refresh(true);
-                XDebugSession xDebugSession = getXDebugSession();
+                XDebugSession xDebugSession = mySession.getXDebugSession();
                 if (xDebugSession != null) {
                   xDebugSession.rebuildViews();
                 }
@@ -1980,18 +1979,17 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @Nullable
-  public XDebugSession getXDebugSession() {
-    return XDebuggerManager.getInstance(myProject).getDebugSession(getExecutionResult().getExecutionConsole());
-  }
-
-  @Nullable
   public JavaDebugProcess getXdebugProcess() {
-    XDebugSession session = getXDebugSession();
+    XDebugSession session = mySession.getXDebugSession();
     return session != null ? (JavaDebugProcess)session.getDebugProcess() : null;
   }
 
   public boolean areBreakpointsMuted() {
-    XDebugSession session = getXDebugSession();
+    XDebugSession session = mySession.getXDebugSession();
     return session != null && session.areBreakpointsMuted();
+  }
+
+  public DebuggerSession getSession() {
+    return mySession;
   }
 }

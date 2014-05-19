@@ -228,7 +228,9 @@ public class JavaDebugProcess extends XDebugProcess {
   @NotNull
   @Override
   public ExecutionConsole createConsole() {
-    return myJavaSession.getProcess().getExecutionResult().getExecutionConsole();
+    ExecutionConsole console = myJavaSession.getProcess().getExecutionResult().getExecutionConsole();
+    if (console != null) return console;
+    return super.createConsole();
   }
 
   @NotNull

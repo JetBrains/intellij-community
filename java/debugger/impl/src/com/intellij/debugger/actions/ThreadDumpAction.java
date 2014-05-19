@@ -68,7 +68,7 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
             final List<ThreadState> threads = buildThreadStates(vm);
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
-                XDebugSession xSession = session.getProcess().getXDebugSession();
+                XDebugSession xSession = session.getXDebugSession();
                 if (xSession != null) {
                   DebuggerSessionTab.addThreadDump(project, threads, xSession.getUI(), session);
                 }
