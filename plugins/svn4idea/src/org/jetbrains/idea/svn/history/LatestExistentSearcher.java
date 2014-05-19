@@ -26,7 +26,6 @@ import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
-import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -68,11 +67,9 @@ public class LatestExistentSearcher {
     if (! detectStartRevision()) return -1;
 
     final Ref<Long> latest = new Ref<Long>(myStartNumber);
-    SVNRepository repository = null;
     try {
-      repository = myVcs.getSvnKitManager().createRepository(myUrl.toString());
       if (myEndNumber == -1) {
-        myEndNumber = repository.getLatestRevision();
+        myEndNumber = getLatestRevision();
       }
 
       final SVNURL existingParent = getExistingParent(myUrl);
@@ -90,11 +87,6 @@ public class LatestExistentSearcher {
     }
     catch (VcsException e) {
       LOG.info(e);
-    }
-    finally {
-      if (repository != null) {
-        repository.closeSession();
-      }
     }
 
     return latest.get().longValue();
@@ -119,12 +111,10 @@ public class LatestExistentSearcher {
   public long getLatestExistent() {
     if (! detectStartRevision()) return myStartNumber;
 
-    SVNRepository repository = null;
     long latestOk = myStartNumber;
     try {
-      repository = myVcs.getSvnKitManager().createRepository(myUrl.toString());
       if (myEndNumber == -1) {
-        myEndNumber = repository.getLatestRevision();
+        myEndNumber = getLatestRevision();
       }
       // TODO: At least binary search could be applied here for optimization
       for (long i = myStartNumber + 1; i < myEndNumber; i++) {
@@ -135,10 +125,6 @@ public class LatestExistentSearcher {
     }
     catch (SVNException e) {
       LOG.info(e);
-    } finally {
-      if (repository != null) {
-        repository.closeSession();
-      }
     }
 
     return latestOk;
@@ -184,5 +170,15 @@ public class LatestExistentSearcher {
     }
 
     return info != null;
+  }
+
+  private long getLatestRevision() throws SVNException {
+    SVNInfo info = myVcs.getInfo(myRepositoryUrl, SVNRevision.HEAD);
+
+    if (info == null) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Could not get info for " + myRepositoryUrl));
+    }
+
+    return info.getRevision().getNumber();
   }
 }
