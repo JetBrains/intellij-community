@@ -6,10 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author Kirill Likhodedov
- */
-class VcsLogMultiRepoJoiner {
+public class VcsLogMultiRepoJoiner {
 
   @NotNull
   public List<? extends TimedVcsCommit> join(@NotNull Collection<List<? extends TimedVcsCommit>> logsFromRepos) {
@@ -50,8 +47,8 @@ class VcsLogMultiRepoJoiner {
     long maxTimeStamp = Long.MIN_VALUE;
     TimedVcsCommit lastCommit = null;
     for (TimedVcsCommit commit : commits) {
-      if (commit.getTime() >= maxTimeStamp) {
-        maxTimeStamp = commit.getTime();
+      if (commit.getTimestamp() >= maxTimeStamp) {
+        maxTimeStamp = commit.getTimestamp();
         lastCommit = commit;
       }
     }

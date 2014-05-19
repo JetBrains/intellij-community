@@ -29,6 +29,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
 import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
@@ -103,17 +104,16 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       public void actionPerformed(AnActionEvent e) {
         IdeFocusManager.getInstance(mySession.getProject()).requestFocus(myTreePanel.getTree(), true);
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.ALT_DOWN_MASK)), getRootPane(), myDisposable);
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.ALT_DOWN_MASK)), getRootPane(),
+                                myDisposable);
 
-    EvaluationMode mode = EvaluationMode.EXPRESSION;
+    EvaluationMode mode = XDebuggerSettingsManager.getInstance().getDataViewSettings().getEvaluationDialogMode();
     myIsCodeFragmentEvaluationSupported = evaluator.isCodeFragmentEvaluationSupported();
-    if (text.getExpression().indexOf('\n') != -1) {
-      if (myIsCodeFragmentEvaluationSupported) {
-        mode = EvaluationMode.CODE_FRAGMENT;
-      }
-      else {
-        text = new XExpressionImpl(StringUtil.replace(text.getExpression(), "\n", " "), text.getLanguage(), text.getCustomInfo());
-      }
+    if (mode == EvaluationMode.CODE_FRAGMENT && !myIsCodeFragmentEvaluationSupported) {
+      mode = EvaluationMode.EXPRESSION;
+    }
+    if (mode == EvaluationMode.EXPRESSION) {
+      text = new XExpressionImpl(StringUtil.replace(text.getExpression(), "\n", " "), text.getLanguage(), text.getCustomInfo());
     }
     switchToMode(mode, text);
     init();
@@ -158,6 +158,9 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
   private void switchToMode(EvaluationMode mode, XExpression text) {
     if (myMode == mode) return;
+
+    XDebuggerSettingsManager.getInstance().getDataViewSettings().setEvaluationDialogMode(mode);
+
     myMode = mode;
 
     myInputComponent = createInputComponent(mode, text);

@@ -260,6 +260,7 @@ binding.setVariable("platformApiModules", [
   "usageView",
   "vcs-api",
   "vcs-log-api",
+  "vcs-log-graph-api",
   "xdebugger-api",
   "remote-servers-api",
   "remote-servers-agent-rt",

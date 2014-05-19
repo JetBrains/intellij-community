@@ -87,7 +87,7 @@ public class ProcessBuilder {
   }
 
   private boolean isWinShell(String command) {
-    if (command.endsWith(".cmd")) {
+    if (command.endsWith(".cmd") || command.endsWith(".bat")) {
       return true;
     }
     return ("cmd".equalsIgnoreCase(command) || "cmd.exe".equalsIgnoreCase(command)) &&

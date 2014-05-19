@@ -64,7 +64,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     createTaggedBranch();
 
     Set<VcsRef> noRefs = Collections.emptySet();
-    List<? extends VcsCommitMetadata> block = myLogProvider.readFirstBlock(myProjectRoot, new RequirementsImpl(1000, true, noRefs, noRefs));
+    List<? extends VcsCommitMetadata> block = myLogProvider.readFirstBlock(myProjectRoot, new RequirementsImpl(1000, false, noRefs, noRefs));
     assertOrderedEquals(block, expectedLogWithoutTaggedBranch);
   }
 
@@ -76,7 +76,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
 
     List<VcsCommitMetadata> expectedLog = log();
     List<? extends VcsCommitMetadata> block = myLogProvider.readFirstBlock(myProjectRoot,
-                                                                           new RequirementsImpl(1000, false, prevRefs, newRefs));
+                                                                           new RequirementsImpl(1000, true, prevRefs, newRefs));
     assertSameElements(block, expectedLog);
   }
 

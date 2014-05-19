@@ -31,9 +31,11 @@ import org.jetbrains.annotations.Nullable;
 public class PsiUtil {
   private static final Key<Boolean> IDEA_PROJECT = Key.create("idea.internal.inspections.enabled");
   private static final String IDE_PROJECT_MARKER_CLASS = JBList.class.getName();
-  public static final PsiElementVisitor EMPTY_VISITOR = new PsiElementVisitor() { };
+  public static final PsiElementVisitor EMPTY_VISITOR = new PsiElementVisitor() {
+  };
 
-  private PsiUtil() { }
+  private PsiUtil() {
+  }
 
   public static boolean isInstantiable(@NotNull PsiClass cls) {
     final PsiModifierList modList = cls.getModifierList();
@@ -80,9 +82,9 @@ public class PsiUtil {
     String text = expr.getText();
     if (text == null) return false;
     text = text.replaceAll(" ", "")
-               .replaceAll("\n", "")
-               .replaceAll("\t", "")
-               .replaceAll("\r", "");
+      .replaceAll("\n", "")
+      .replaceAll("\t", "")
+      .replaceAll("\r", "");
     return "getClass().getSimpleName()".equals(text) || "this.getClass().getSimpleName()".equals(text);
   }
 
@@ -98,6 +100,18 @@ public class PsiUtil {
 
     return null;
   }
+
+  @Nullable
+  public static PsiMethod findNearestMethod(String name, @Nullable PsiClass cls) {
+    if (cls == null) return null;
+    for (PsiMethod method : cls.getMethods()) {
+      if (method.getParameterList().getParametersCount() == 0 && method.getName().equals(name)) {
+        return method.getModifierList().hasModifierProperty(PsiModifier.ABSTRACT) ? null : method;
+      }
+    }
+    return findNearestMethod(name, cls.getSuperClass());
+  }
+
 
   public static boolean isIdeaProject(@Nullable Project project) {
     if (project == null) return false;

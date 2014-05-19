@@ -74,7 +74,6 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.sun.jdi.*;
 import com.sun.jdi.connect.*;
 import com.sun.jdi.request.EventRequest;
@@ -88,7 +87,6 @@ import javax.swing.*;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class DebugProcessImpl extends UserDataHolderBase implements DebugProcess {
@@ -140,7 +138,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private static final int LOCAL_START_TIMEOUT = 30000;
 
   private final Semaphore myWaitFor = new Semaphore();
-  private final AtomicBoolean myBreakpointsMuted = new AtomicBoolean(false);
   private boolean myIsFailed = false;
   protected DebuggerSession mySession;
   @Nullable protected MethodReturnValueWatcher myReturnValueWatcher;
@@ -173,7 +170,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
               final DebuggerSession session = mySession;
               if (session != null && session.isAttached()) {
                 session.refresh(true);
-                XDebugSession xDebugSession = getXDebugSession();
+                XDebugSession xDebugSession = mySession.getXDebugSession();
                 if (xDebugSession != null) {
                   xDebugSession.rebuildViews();
                 }
@@ -777,9 +774,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           myDebugProcessDispatcher.getMulticaster().processDetached(this, closedByUser);
         }
         finally {
-          if (DebuggerSettings.getInstance().UNMUTE_ON_STOP) {
-            setBreakpointsMuted(false);
-          }
+          //if (DebuggerSettings.getInstance().UNMUTE_ON_STOP) {
+          //  XDebugSession session = mySession.getXDebugSession();
+          //  if (session != null) {
+          //    session.setBreakpointMuted(false);
+          //  }
+          //}
           if (vm != null) {
             try {
               vm.dispose(); // to be on the safe side ensure that VM mirror, if present, is disposed and invalidated
@@ -1952,46 +1952,46 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return new PopFrameCommand(contextByThread, stackFrame);
   }
 
-  public void setBreakpointsMuted(final boolean muted) {
-    if (isAttached()) {
-      getManagerThread().schedule(new DebuggerCommandImpl() {
-        @Override
-        protected void action() throws Exception {
-          // set the flag before enabling/disabling cause it affects if breakpoints will create requests
-          if (myBreakpointsMuted.getAndSet(muted) != muted) {
-            final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
-            if (muted) {
-              breakpointManager.disableBreakpoints(DebugProcessImpl.this);
-            }
-            else {
-              breakpointManager.enableBreakpoints(DebugProcessImpl.this);
-            }
-          }
-        }
-      });
-    }
-    else {
-      myBreakpointsMuted.set(muted);
-    }
-  }
+  //public void setBreakpointsMuted(final boolean muted) {
+  //  XDebugSession session = mySession.getXDebugSession();
+  //  if (isAttached()) {
+  //    getManagerThread().schedule(new DebuggerCommandImpl() {
+  //      @Override
+  //      protected void action() throws Exception {
+  //        // set the flag before enabling/disabling cause it affects if breakpoints will create requests
+  //        if (myBreakpointsMuted.getAndSet(muted) != muted) {
+  //          final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
+  //          if (muted) {
+  //            breakpointManager.disableBreakpoints(DebugProcessImpl.this);
+  //          }
+  //          else {
+  //            breakpointManager.enableBreakpoints(DebugProcessImpl.this);
+  //          }
+  //        }
+  //      }
+  //    });
+  //  }
+  //  else {
+  //    session.setBreakpointMuted(muted);
+  //  }
+  //}
 
   public DebuggerContextImpl getDebuggerContext() {
     return mySession.getContextManager().getContext();
   }
 
   @Nullable
-  public XDebugSession getXDebugSession() {
-    return XDebuggerManager.getInstance(myProject).getDebugSession(getExecutionResult().getExecutionConsole());
-  }
-
-  @Nullable
   public JavaDebugProcess getXdebugProcess() {
-    XDebugSession session = getXDebugSession();
+    XDebugSession session = mySession.getXDebugSession();
     return session != null ? (JavaDebugProcess)session.getDebugProcess() : null;
   }
 
   public boolean areBreakpointsMuted() {
-    XDebugSession session = getXDebugSession();
+    XDebugSession session = mySession.getXDebugSession();
     return session != null && session.areBreakpointsMuted();
+  }
+
+  public DebuggerSession getSession() {
+    return mySession;
   }
 }

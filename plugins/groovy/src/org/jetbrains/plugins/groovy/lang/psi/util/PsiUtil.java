@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
@@ -32,6 +33,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.TIntStack;
 import org.jetbrains.annotations.Contract;
@@ -225,6 +227,8 @@ public class PsiUtil {
 
   @Nullable
   public static GrArgumentList getArgumentsList(@Nullable PsiElement methodRef) {
+    if (methodRef == null) return null;
+
     if (methodRef instanceof GrEnumConstant) return ((GrEnumConstant)methodRef).getArgumentList();
     PsiElement parent = methodRef.getParent();
     if (parent instanceof GrCall) {
@@ -390,6 +394,7 @@ public class PsiUtil {
     if (viewProvider instanceof MultiplePsiFilesPerDocumentFileViewProvider) {
       MultiplePsiFilesPerDocumentFileViewProvider multiProvider = (MultiplePsiFilesPerDocumentFileViewProvider)viewProvider;
       file = multiProvider.getPsi(multiProvider.getBaseLanguage());
+      LOG.assertTrue(file != null, element + " " + multiProvider.getBaseLanguage());
     }
 
     try {
@@ -555,7 +560,6 @@ public class PsiUtil {
     }
     if (element instanceof PsiVariable) {
       GrExpression expression = call.getInvokedExpression();
-      assert expression != null;
       final PsiType type = expression.getType();
       if (type instanceof GrClosureType) {
         return isRawClosureCall(call, result, (GrClosureType)type);
@@ -1281,8 +1285,22 @@ public class PsiUtil {
     }
     else {
       PsiElement resolved = ref.resolve();
-      return resolved instanceof PsiClass && hasEnclosingInstanceInScope(((PsiClass)resolved), ref, superClassAccepted);
+      if (resolved instanceof PsiClass) {
+        if (hasEnclosingInstanceInScope(((PsiClass)resolved), ref, superClassAccepted)) return true;
+        if (superClassAccepted && GrTraitUtil.isTrait((PsiClass)resolved) && scopeClassImplementsTrait(((PsiClass)resolved), ref)) return true;
+      }
+      return false;
     }
+  }
+
+  public static boolean scopeClassImplementsTrait(@NotNull final PsiClass trait, @NotNull final PsiElement place) {
+    GrTypeDefinition scopeClass = PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class, true);
+    return scopeClass != null && ContainerUtil.find(scopeClass.getSuperTypes(), new Condition<PsiClassType>() {
+      @Override
+      public boolean value(PsiClassType type) {
+        return place.getManager().areElementsEquivalent(type.resolve(), trait);
+      }
+    }) != null;
   }
 
   public static boolean isThisOrSuperRef(@Nullable PsiElement qualifier) {
@@ -1349,12 +1367,18 @@ public class PsiUtil {
   }
 
   public static boolean isVoidMethod(@NotNull PsiMethod method) {
-    return PsiType.VOID.equals(method.getReturnType()) ||
+    if (PsiType.VOID.equals(method.getReturnType())) {
+      return true;
+    }
 
-           method instanceof GrMethod &&
-           ((GrMethod)method).getReturnTypeElementGroovy() == null &&
-           ((GrMethod)method).getBlock() != null &&
-           isBlockReturnVoid(((GrMethod)method).getBlock());
+    if (method instanceof GrMethod && ((GrMethod)method).getReturnTypeElementGroovy() == null) {
+      GrOpenBlock block = ((GrMethod)method).getBlock();
+      if (block != null && isBlockReturnVoid(block)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   public static boolean isBlockReturnVoid(@NotNull final GrCodeBlock block) {

@@ -41,6 +41,7 @@ import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -150,6 +151,18 @@ public class JavaDebugProcess extends XDebugProcess {
           DebuggerContextUtil.setStackFrame(javaSession.getContextManager(), ((JavaStackFrame)frame).getStackFrameProxy());
         }
       }
+
+      @Override
+      public void sessionStopped() {
+        if (DebuggerSettings.getInstance().UNMUTE_ON_STOP) {
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
+            public void run() {
+              session.setBreakpointMuted(false);
+            }
+          });
+        }
+      }
     });
   }
 
@@ -228,7 +241,9 @@ public class JavaDebugProcess extends XDebugProcess {
   @NotNull
   @Override
   public ExecutionConsole createConsole() {
-    return myJavaSession.getProcess().getExecutionResult().getExecutionConsole();
+    ExecutionConsole console = myJavaSession.getProcess().getExecutionResult().getExecutionConsole();
+    if (console != null) return console;
+    return super.createConsole();
   }
 
   @NotNull

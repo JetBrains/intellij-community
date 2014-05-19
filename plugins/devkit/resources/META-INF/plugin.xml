@@ -158,6 +158,9 @@
     <stacktrace.fold substring="at com.intellij.openapi.application.impl.ApplicationImpl.runReadAction("/>
     <stacktrace.fold substring="at com.intellij.openapi.application.RunResult.run("/>
     <stacktrace.fold substring="at com.intellij.openapi.command.impl.CommandProcessorImpl.executeCommand("/>
+
+    <codeInsight.lineMarkerProvider language="JAVA"
+                                    implementationClass="org.jetbrains.idea.devkit.navigation.DescriptionTypeRelatedItemLineMarkerProvider"/>
   </extensions>
 
   <project-components>

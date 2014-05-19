@@ -42,7 +42,7 @@ public class VcsShortCommitDetailsImpl extends TimedVcsCommitImpl implements Vcs
 
   @Override
   public String toString() {
-    return getHash().toShortString() + "(" + getSubject() + ")";
+    return getId().toShortString() + "(" + getSubject() + ")";
   }
 
 }

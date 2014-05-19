@@ -398,7 +398,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           @Override
           public void run() {
-            XDebugSession session = myDebugProcess.getXDebugSession();
+            XDebugSession session = myDebugProcess.getSession().getXDebugSession();
             if (session != null) {
               session.initBreakpoints();
             }

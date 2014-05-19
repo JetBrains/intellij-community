@@ -15,10 +15,4 @@ public interface VcsLogRefresher {
    * This refresh can be optimized, i. e. it can query VCS just for the part of the log.
    */
   void refresh(@NotNull VirtualFile root);
-
-  /**
-   * Makes the log refresh only the reference labels for the given root.
-   */
-  void refreshRefs(@NotNull VirtualFile root);
-
 }

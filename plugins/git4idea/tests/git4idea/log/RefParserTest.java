@@ -80,12 +80,6 @@ public class RefParserTest {
 
     @NotNull
     @Override
-    public VcsCommit createCommit(@NotNull Hash hash, @NotNull List<Hash> parents) {
-      throw new UnsupportedOperationException();
-    }
-
-    @NotNull
-    @Override
     public TimedVcsCommit createTimedCommit(@NotNull Hash hash, @NotNull List<Hash> parents, long timeStamp) {
       throw new UnsupportedOperationException();
     }

@@ -31,7 +31,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -101,7 +100,7 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
     if (parent instanceof GrArgumentLabel) return false; //don't highlight: print (void:'foo')
 
     if (PsiTreeUtil.getParentOfType(element, GrCodeReferenceElement.class) != null) {
-      if (token == GroovyTokenTypes.kDEF || token == kIN || token == GroovyTokenTypes.kAS) {
+      if (token == kDEF || token == kIN || token == kAS) {
         return false; //It is allowed to name packages 'as', 'in' or 'def'
       }
     }
@@ -118,14 +117,13 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
 
   @Override
   public void doApplyInformationToEditor() {
-    if (toHighlight == null) return;
-    UpdateHighlightersUtil
-      .setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), toHighlight, getColorsScheme(), getId());
+    if (toHighlight == null || myDocument == null) return;
+    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), toHighlight, getColorsScheme(), getId());
   }
 
   @Nullable
   private static TextAttributesKey getDeclarationAttribute(PsiElement element) {
-    if (element.getParent() instanceof GrAnnotation && element.getNode().getElementType() == GroovyTokenTypes.mAT) {
+    if (element.getParent() instanceof GrAnnotation && element.getNode().getElementType() == mAT) {
       return DefaultHighlighter.ANNOTATION;
     }
 

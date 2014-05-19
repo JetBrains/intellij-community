@@ -1,0 +1,1 @@
+public class My<caret>IntentionActionWithDescription implements com.intellij.codeInsight.intention.IntentionAction {}

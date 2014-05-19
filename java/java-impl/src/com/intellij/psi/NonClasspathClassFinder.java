@@ -15,17 +15,16 @@
  */
 package com.intellij.psi;
 
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.NonClasspathDirectoryScope;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,16 +42,12 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   protected final Project myProject;
   private volatile List<VirtualFile> myCache;
   private final PsiManager myManager;
-  private final boolean myCheckForSources;
+  private final String[] myFileExtensions;
 
-  public NonClasspathClassFinder(Project project) {
-    this(project, false);
-  }
-
-  protected NonClasspathClassFinder(Project project, boolean checkForSources) {
+  public NonClasspathClassFinder(Project project, String... fileExtensions) {
     myProject = project;
     myManager = PsiManager.getInstance(myProject);
-    myCheckForSources = checkForSources;
+    myFileExtensions = ArrayUtil.append(fileExtensions, ".class");
   }
 
   protected List<VirtualFile> getClassRoots(@Nullable GlobalSearchScope scope) {
@@ -92,27 +87,14 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
     final String relPath = qualifiedName.replace('.', '/');
     for (final VirtualFile classRoot : classRoots) {
       if (scope.contains(classRoot)) {
-        if (myCheckForSources) {
-          final VirtualFile classSrcFile = classRoot.findFileByRelativePath(relPath + JavaFileType.DOT_DEFAULT_EXTENSION);
-          if (classSrcFile != null && classSrcFile.isValid()) {
-            final PsiFile file = myManager.findFile(classSrcFile);
-            if (file instanceof PsiJavaFile) {
-              for (PsiClass aClass : ((PsiJavaFile)file).getClasses()) {
-                if (qualifiedName.equals(aClass.getQualifiedName())) {
-                  return aClass;
-                }
-              }
-            }
-          }
-        }
-
-        final VirtualFile classFile = classRoot.findFileByRelativePath(relPath + ".class");
-        if (classFile != null) {
-          if (!classFile.isValid()) {
-            LOG.error("Invalid child of valid parent: " + classFile.getPath() + "; " + classRoot.isValid() + " path=" + classRoot.getPath());
+        VirtualFile virtualFile = findFileByRelativePath(classRoot, relPath, myFileExtensions);
+        if (virtualFile != null) {
+          if (!virtualFile.isValid()) {
+            LOG.error(
+              "Invalid child of valid parent: " + virtualFile.getPath() + "; " + classRoot.isValid() + " path=" + classRoot.getPath());
             return null;
           }
-          final PsiFile file = myManager.findFile(classFile);
+          final PsiFile file = myManager.findFile(virtualFile);
           if (file instanceof PsiClassOwner) {
             final PsiClass[] classes = ((PsiClassOwner)file).getClasses();
             if (classes.length == 1) {
@@ -164,15 +146,14 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
       return Collections.emptySet();
     }
 
-    Set<String> result = new HashSet<String>();
+    final Set<String> result = new HashSet<String>();
     for (final VirtualFile classRoot : classRoots) {
       if (scope.contains(classRoot)) {
         final String pkgName = psiPackage.getQualifiedName();
         final VirtualFile dir = classRoot.findFileByRelativePath(pkgName.replace('.', '/'));
         if (dir != null && dir.isDirectory()) {
           for (final VirtualFile file : dir.getChildren()) {
-            if ((myCheckForSources && !file.isDirectory() && JavaFileType.DEFAULT_EXTENSION.equals(file.getExtension()))
-                || (!file.isDirectory() && "class".equals(file.getExtension()))) {
+            if (!file.isDirectory() && ArrayUtil.contains(file.getExtension(), myFileExtensions)) {
               result.add(file.getNameWithoutExtension());
             }
           }
@@ -279,5 +260,17 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
 
   public PsiManager getPsiManager() {
     return myManager;
+  }
+
+  @Nullable
+  private static VirtualFile findFileByRelativePath(@NotNull VirtualFile root,
+                                                    @NotNull String relPath,
+                                                    @NotNull String[] extensions) {
+    VirtualFile file = null;
+    for (String extension : extensions) {
+      file = root.findFileByRelativePath(relPath + '.' + extension);
+      if (file != null) break;
+    }
+    return file;
   }
 }

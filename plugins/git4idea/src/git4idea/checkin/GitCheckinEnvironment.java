@@ -711,7 +711,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         VcsFullCommitDetails commit = (VcsFullCommitDetails)data;
         String author = String.format("%s <%s>", commit.getAuthor().getName(), commit.getAuthor().getEmail());
         myAuthor.getEditor().setItem(author);
-        myAuthorDate = new Date(commit.getTime());
+        myAuthorDate = new Date(commit.getTimestamp());
       }
     }
   }
