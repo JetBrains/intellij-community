@@ -175,12 +175,6 @@ public class LatestExistentSearcher {
   }
 
   private long getLatestRevision() throws SVNException {
-    SVNInfo info = myVcs.getInfo(myRepositoryUrl, SVNRevision.HEAD);
-
-    if (info == null) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Could not get info for " + myRepositoryUrl));
-    }
-
-    return info.getRevision().getNumber();
+    return SvnUtil.getHeadRevision(myVcs, myRepositoryUrl).getNumber();
   }
 }

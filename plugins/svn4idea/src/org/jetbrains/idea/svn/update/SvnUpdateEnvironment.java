@@ -23,13 +23,9 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnConfiguration;
-import org.jetbrains.idea.svn.SvnRevisionNumber;
-import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.*;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -155,15 +151,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
   private SVNRevision correctRevision(@NotNull UpdateRootInfo value) throws SVNException {
     if (SVNRevision.HEAD.equals(value.getRevision())) {
       // find acual revision to update to (a bug if just say head in switch)
-      SVNRepository repository = null;
-      try {
-        repository = myVcs.getSvnKitManager().createRepository(value.getUrl());
-        value.setRevision(SVNRevision.create(repository.getLatestRevision()));
-      } finally {
-        if (repository != null) {
-          repository.closeSession();
-        }
-      }
+      value.setRevision(SvnUtil.getHeadRevision(myVcs, value.getUrl()));
     }
     return value.getRevision();
   }

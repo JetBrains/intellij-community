@@ -703,6 +703,20 @@ public class SvnUtil {
     return result;
   }
 
+  @NotNull
+  public static SVNRevision getHeadRevision(@NotNull SvnVcs vcs, @NotNull SVNURL url) throws SVNException {
+    SVNInfo info = vcs.getInfo(url, SVNRevision.HEAD);
+
+    if (info == null) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Could not get info for " + url));
+    }
+    if (info.getRevision() == null) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Could not get revision for " + url));
+    }
+
+    return info.getRevision();
+  }
+
   public static byte[] getFileContents(@NotNull final SvnVcs vcs,
                                        @NotNull final SvnTarget target,
                                        @Nullable final SVNRevision revision,
