@@ -593,25 +593,19 @@ public class SvnUtil {
     return info == null ? null : info.getURL();
   }
 
-  public static boolean remoteFolderIsEmpty(final SvnVcs vcs, final String url) throws SVNException {
-    // TODO: Implement with command line client
-    SVNRepository repository = null;
-    try {
-      repository = vcs.getSvnKitManager().createRepository(url);
-      final Ref<Boolean> result = new Ref<Boolean>(true);
-      repository.getDir("", -1, null, new ISVNDirEntryHandler() {
-        public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
-          if (dirEntry != null) {
-            result.set(false);
-          }
+  public static boolean remoteFolderIsEmpty(final SvnVcs vcs, final String url) throws VcsException {
+    SvnTarget target = SvnTarget.fromURL(createUrl(url));
+    final Ref<Boolean> result = new Ref<Boolean>(true);
+    ISVNDirEntryHandler handler = new ISVNDirEntryHandler() {
+      public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
+        if (dirEntry != null) {
+          result.set(false);
         }
-      });
-      return result.get();
-    } finally {
-      if (repository != null) {
-        repository.closeSession();
       }
-    }
+    };
+
+    vcs.getFactory(target).createBrowseClient().list(target, null, SVNDepth.IMMEDIATES, handler);
+    return result.get();
   }
 
   public static File getWcDb(final File file) {
