@@ -66,6 +66,12 @@ public abstract class ExpressionPostfixTemplateWithChooser extends PostfixTempla
       doIt(editor, expressions.get(0));
     }
     else {
+
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        doIt(editor, expressions.get(expressions.size() - 1));
+        return;
+      }
+
       IntroduceTargetChooser.showChooser(
         editor, expressions,
         new Pass<PsiElement>() {
