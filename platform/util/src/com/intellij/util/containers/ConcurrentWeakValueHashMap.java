@@ -75,7 +75,7 @@ public final class ConcurrentWeakValueHashMap<K,V> extends ConcurrentRefValueHas
   }
 
   @Override
-  protected ValueReference<K, V> createRef(@NotNull K key, @NotNull V value) {
+  protected ValueReference<K, V> createValueReference(@NotNull K key, @NotNull V value) {
     return new MyWeakReference<K,V>(key, value, myQueue);
   }
 }
