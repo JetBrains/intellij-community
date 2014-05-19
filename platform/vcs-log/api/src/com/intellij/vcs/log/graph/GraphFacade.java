@@ -49,7 +49,7 @@ public interface GraphFacade {
    * To get visible commits use {@link #getVisibleCommitCount} & {@link #getCommitAtRow}.
    */
   @NotNull
-  List<Integer> getAllCommits();
+  List<GraphCommit<Integer>> getAllCommits();
 
   /**
    * A shorthand to getVisibleCommits().get(visibleRow), but may be faster.
@@ -77,6 +77,8 @@ public interface GraphFacade {
    * @see #setVisibleBranches(Collection)
    */
   void setFilter(@Nullable Condition<Integer> visibilityPredicate);
+
+  void setSortType(@NotNull PermanentGraph.SortType sortType);
 
   /**
    * Returns the provider of some information about the graph.

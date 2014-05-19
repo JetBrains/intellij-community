@@ -13,13 +13,13 @@ import java.util.List;
 
 /**
  * Provides the information needed to build the VCS log, such as the list of most recent commits with their parents.
- *
- * @author Kirill Likhodedov
  */
 public interface VcsLogProvider {
 
   /**
-   * Reads the given number of the most recent commits from the log.
+   * Reads the most recent correctly ordered commits from the log. <br/>
+   * Commits should be at least topologically ordered, better considering commit time as well. <br/>
+   * Commits will be shown in the log in this order.
    * @param requirements some limitations on commit data that should be returned.
    */
   @NotNull
@@ -104,12 +104,6 @@ public interface VcsLogProvider {
      */
     int getCommitCount();
 
-    /**
-     * If true, commits should be returned ordered. <br/>
-     * This is needed only during the initialization procedure or during "simple" refreshes which happen before the full log is built. <br/>
-     * When the log is fully initialized, commits are requested unordered.
-     */
-    boolean isOrdered();
   }
 
 }

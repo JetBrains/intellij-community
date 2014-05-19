@@ -362,6 +362,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   //returns expression that evaluates tree to this descriptor
+  @Nullable
   public PsiExpression getTreeEvaluation(JavaValue value, DebuggerContextImpl context) throws EvaluateException {
     if(value.getParent() != null) {
       final NodeDescriptorImpl descriptor = value.getParent().getDescriptor();

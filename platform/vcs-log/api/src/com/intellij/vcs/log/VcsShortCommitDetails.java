@@ -23,7 +23,7 @@ public interface VcsShortCommitDetails extends TimedVcsCommit {
 
   @Override
   @NotNull
-  Hash getHash();
+  Hash getId();
 
   @NotNull
   VirtualFile getRoot();
@@ -33,7 +33,7 @@ public interface VcsShortCommitDetails extends TimedVcsCommit {
   List<Hash> getParents();
 
   @Override
-  long getTime();
+  long getTimestamp();
 
   @NotNull
   String getSubject();

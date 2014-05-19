@@ -353,7 +353,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
     });
   }
 
-  private static void runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task) {
+  public static void runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task) {
     final ProgressIndicator progressIndicator;
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       progressIndicator = new EmptyProgressIndicator();

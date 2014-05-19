@@ -24,13 +24,13 @@ import java.util.Set;
 public class RequirementsImpl implements VcsLogProviderRequirementsEx {
 
   private final int myCommitCount;
-  private final boolean myOrdered;
+  private final boolean myRefresh;
   @NotNull private final Set<VcsRef> myPreviousRefs;
   @NotNull private final Set<VcsRef> myCurrentRefs;
 
-  public RequirementsImpl(int count, boolean ordered, @NotNull Set<VcsRef> previousRefs, @NotNull Set<VcsRef> currentRefs) {
+  public RequirementsImpl(int count, boolean refresh, @NotNull Set<VcsRef> previousRefs, @NotNull Set<VcsRef> currentRefs) {
     myCommitCount = count;
-    myOrdered = ordered;
+    myRefresh = refresh;
     myPreviousRefs = previousRefs;
     myCurrentRefs = currentRefs;
   }
@@ -41,8 +41,8 @@ public class RequirementsImpl implements VcsLogProviderRequirementsEx {
   }
 
   @Override
-  public boolean isOrdered() {
-    return myOrdered;
+  public boolean isRefresh() {
+    return myRefresh;
   }
 
   @NotNull

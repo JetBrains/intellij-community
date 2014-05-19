@@ -30,6 +30,12 @@ import static com.intellij.vcs.log.VcsLogProvider.Requirements;
 public interface VcsLogProviderRequirementsEx extends Requirements {
 
   /**
+   * Tells if this request is made during log initialization, or during refresh
+   * Returns true if it is refresh; false if it is initialization.
+   */
+  boolean isRefresh();
+
+  /**
    * Returns the refs which were in the log before the refresh request.
    */
   @NotNull

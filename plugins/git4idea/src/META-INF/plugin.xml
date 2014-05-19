@@ -181,7 +181,6 @@
                     serviceImplementation="git4idea.branch.GitBrancherImpl"/>
     <projectService serviceImplementation="git4idea.GitUserRegistry" />
 
-    <projectService serviceImplementation="git4idea.log.GitContentRevisionFactory" />
     <projectService serviceImplementation="git4idea.branch.DeepComparatorHolder"/>
 
     <applicationService serviceImplementation="git4idea.history.wholeTree.GitCommitsSequentialIndex"

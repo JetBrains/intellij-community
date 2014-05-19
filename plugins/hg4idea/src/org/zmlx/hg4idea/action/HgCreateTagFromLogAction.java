@@ -24,7 +24,7 @@ import java.util.Collections;
 public class HgCreateTagFromLogAction extends HgLogSingleCommitAction {
   @Override
   protected void actionPerformed(@NotNull HgRepository repository, @NotNull VcsFullCommitDetails commit) {
-    String revisionHash = commit.getHash().asString();
+    String revisionHash = commit.getId().asString();
     new HgCreateTagAction().execute(repository.getProject(), Collections.singleton(repository), repository, revisionHash);
   }
 }

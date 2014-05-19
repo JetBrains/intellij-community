@@ -179,7 +179,7 @@ public class JavaStackFrame extends XStackFrame {
       final ObjectReference thisObjectReference = frame.thisObject();
       if (thisObjectReference != null) {
         ValueDescriptorImpl thisDescriptor = myNodeManager.getThisDescriptor(stackDescriptor, thisObjectReference);
-        children.add(new JavaValue(thisDescriptor, evaluationContext, myNodeManager));
+        children.add(JavaValue.create(thisDescriptor, evaluationContext, myNodeManager));
       }
       else {
         StaticDescriptorImpl staticDecriptor = myNodeManager.getStaticDescriptor(stackDescriptor, location.method().declaringType());
@@ -192,7 +192,7 @@ public class JavaStackFrame extends XStackFrame {
       final Pair<Method, Value> methodValuePair = debuggerContext.getDebugProcess().getLastExecutedMethod();
       if (methodValuePair != null) {
         ValueDescriptorImpl returnValueDescriptor = myNodeManager.getMethodReturnValueDescriptor(stackDescriptor, methodValuePair.getFirst(), methodValuePair.getSecond());
-        children.add(new JavaValue(returnValueDescriptor, evaluationContext, myNodeManager));
+        children.add(JavaValue.create(returnValueDescriptor, evaluationContext, myNodeManager));
       }
       // add context exceptions
       for (Pair<Breakpoint, Event> pair : DebuggerUtilsEx.getEventDescriptors(debuggerContext.getSuspendContext())) {
@@ -201,7 +201,7 @@ public class JavaStackFrame extends XStackFrame {
           final ObjectReference exception = ((ExceptionEvent)debugEvent).exception();
           if (exception != null) {
             final ValueDescriptorImpl exceptionDescriptor = myNodeManager.getThrownExceptionObjectDescriptor(stackDescriptor, exception);
-            children.add(new JavaValue(exceptionDescriptor, evaluationContext, myNodeManager));
+            children.add(JavaValue.create(exceptionDescriptor, evaluationContext, myNodeManager));
           }
         }
       }
@@ -218,7 +218,7 @@ public class JavaStackFrame extends XStackFrame {
               if ((!vm.canGetSyntheticAttribute() || field.isSynthetic()) && StringUtil
                 .startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
                 final FieldDescriptorImpl fieldDescriptor = myNodeManager.getFieldDescriptor(stackDescriptor, thisObjectReference, field);
-                children.add(new JavaValue(fieldDescriptor, evaluationContext, myNodeManager));
+                children.add(JavaValue.create(fieldDescriptor, evaluationContext, myNodeManager));
               }
             }
           }
@@ -288,7 +288,7 @@ public class JavaStackFrame extends XStackFrame {
         if (myAutoWatchMode) {
           for (String var : usedVars.first) {
             final LocalVariableDescriptorImpl descriptor = myNodeManager.getLocalVariableDescriptor(null, visibleVariables.get(var));
-            children.add(new JavaValue(descriptor, evaluationContext, myNodeManager));
+            children.add(JavaValue.create(descriptor, evaluationContext, myNodeManager));
           }
         }
         else {
@@ -299,7 +299,7 @@ public class JavaStackFrame extends XStackFrame {
         evalContextCopy.setAutoLoadClasses(false);
         for (TextWithImports text : usedVars.second) {
           WatchItemDescriptor descriptor = myNodeManager.getWatchItemDescriptor(null, text, null);
-          children.add(new JavaValue(descriptor, evaluationContext, myNodeManager));
+          children.add(JavaValue.create(descriptor, evaluationContext, myNodeManager));
         }
       }
     }
@@ -311,7 +311,7 @@ public class JavaStackFrame extends XStackFrame {
         int index = 0;
         for (Value argValue : argValues) {
           final ArgumentValueDescriptorImpl descriptor = myNodeManager.getArgumentValueDescriptor(null, index++, argValue, null);
-          children.add(new JavaValue(descriptor, evaluationContext, myNodeManager));
+          children.add(JavaValue.create(descriptor, evaluationContext, myNodeManager));
         }
         node.setMessage(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE.getLabel(), XDebuggerUIConstants.INFORMATION_MESSAGE_ICON, SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
         //myChildren.add(myNodeManager.createMessageNode(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE));
@@ -324,7 +324,7 @@ public class JavaStackFrame extends XStackFrame {
             for (DecompiledLocalVariable var : decompiled) {
               final Value value = values.get(var);
               final ArgumentValueDescriptorImpl descriptor = myNodeManager.getArgumentValueDescriptor(null, var.getSlot(), value, var.getName());
-              children.add(new JavaValue(descriptor, evaluationContext, myNodeManager));
+              children.add(JavaValue.create(descriptor, evaluationContext, myNodeManager));
             }
           }
           catch (Exception ex) {
@@ -342,7 +342,7 @@ public class JavaStackFrame extends XStackFrame {
     final StackFrameProxyImpl frame = getStackFrameProxy();
     for (final LocalVariableProxyImpl local : frame.visibleVariables()) {
       final LocalVariableDescriptorImpl descriptor = myNodeManager.getLocalVariableDescriptor(null, local);
-      children.add(new JavaValue(descriptor, evaluationContext, myNodeManager));
+      children.add(JavaValue.create(descriptor, evaluationContext, myNodeManager));
     }
   }
 
