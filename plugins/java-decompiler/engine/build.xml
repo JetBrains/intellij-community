@@ -37,7 +37,7 @@
 
     <target name="compile" depends="clean" description="compile sources (main module only)">
         <mkdir dir="${bin}"/>
-        <javac srcdir="${src}" destdir="${bin}" source="1.6" target="1.6" encoding="UTF-8"/>
+        <javac srcdir="${src}" destdir="${bin}" source="1.6" target="1.6" encoding="UTF-8" debug="true"/>
     </target>
 
     <target name="jar" depends="compile" description="generate jar file">
