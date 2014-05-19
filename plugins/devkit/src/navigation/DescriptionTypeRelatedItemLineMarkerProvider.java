@@ -29,6 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ConstantFunction;
+import com.intellij.util.containers.SortedList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.DescriptionCheckerUtil;
 import org.jetbrains.idea.devkit.inspections.DescriptionType;
@@ -38,8 +39,8 @@ import org.jetbrains.idea.devkit.util.PsiUtil;
 import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Comparator;
+import java.util.List;
 
 public class DescriptionTypeRelatedItemLineMarkerProvider extends RelatedItemLineMarkerProvider {
 
@@ -105,12 +106,17 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends RelatedItemLin
   private static void addBeforeAfterTemplateFilesGutterIcon(PsiClass psiClass,
                                                             PsiDirectory descriptionDirectory,
                                                             Collection<? super RelatedItemLineMarkerInfo> result) {
-    final Set<PsiFile> templateFiles = new HashSet<PsiFile>(2);
+    final List<PsiFile> templateFiles = new SortedList<PsiFile>(new Comparator<PsiFile>() {
+      @Override
+      public int compare(PsiFile o1, PsiFile o2) {
+        return o1.getName().compareTo(o2.getName());
+      }
+    });
     for (PsiFile file : descriptionDirectory.getFiles()) {
       final String fileName = file.getName();
       if (fileName.endsWith(".template")) {
-        if (fileName.startsWith("before.") ||
-            fileName.startsWith("after.")) {
+        if (fileName.startsWith("after.") ||
+            fileName.startsWith("before.")) {
           templateFiles.add(file);
         }
       }
