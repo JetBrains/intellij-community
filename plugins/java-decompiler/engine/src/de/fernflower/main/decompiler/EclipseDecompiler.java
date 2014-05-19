@@ -14,6 +14,8 @@
 
 package de.fernflower.main.decompiler;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 
 import de.fernflower.main.DecompilerContext;
@@ -36,8 +38,12 @@ public class EclipseDecompiler {
 		DecompilerContext.setLogger(logger);
 		
 	}
-	
-	public void decompileContext() {
+
+  public void addSpace(File file, boolean isOwn) throws IOException {
+    fernflower.getStructcontext().addSpace(file, isOwn);
+  }
+
+  public void decompileContext() {
 		fernflower.decompileContext();
 	}
 	
