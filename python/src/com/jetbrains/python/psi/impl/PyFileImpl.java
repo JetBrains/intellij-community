@@ -594,6 +594,13 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     }
 
     @Override
+    public void visitPyFile(PyFile node) {
+      if (node.getText().contains(PyNames.ALL)) {
+        super.visitPyFile(node);
+      }
+    }
+
+    @Override
     public void visitPyTargetExpression(PyTargetExpression node) {
       if (PyNames.ALL.equals(node.getName())) {
         myFoundDunderAll = true;
