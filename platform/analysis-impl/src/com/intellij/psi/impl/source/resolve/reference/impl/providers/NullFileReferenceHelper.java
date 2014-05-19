@@ -48,7 +48,7 @@ public class NullFileReferenceHelper extends FileReferenceHelper {
     return ContainerUtil.mapNotNull(ModuleRootManager.getInstance(module).getContentRoots(), new Function<VirtualFile, PsiFileSystemItem>() {
       @Override
       public PsiFileSystemItem fun(VirtualFile virtualFile) {
-        return PsiManager.getInstance(module.getProject()).findFile(virtualFile);
+        return PsiManager.getInstance(module.getProject()).findDirectory(virtualFile);
       }
     });
   }
