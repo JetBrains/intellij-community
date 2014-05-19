@@ -363,7 +363,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
         return commits;
       }
       catch (IllegalStateException e) {
-        LOG.error(e);
+        LOG.info(e);
         return null;
       }
     }
