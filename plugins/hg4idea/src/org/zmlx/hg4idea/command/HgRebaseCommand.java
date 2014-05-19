@@ -36,7 +36,7 @@ public class HgRebaseCommand {
   @Nullable
   public HgCommandResult startRebase() {
     HgCommandResult result =
-      new HgCommandExecutor(project).executeInCurrentThread(repo.getRoot(), "rebase", Collections.<String>emptyList(), null);
+      new HgCommandExecutor(project).executeInCurrentThread(repo.getRoot(), "rebase", Collections.<String>emptyList());
     repo.update();
     project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
     return result;
@@ -45,7 +45,7 @@ public class HgRebaseCommand {
   @Nullable
   public HgCommandResult continueRebase() {
     HgCommandResult result =
-      new HgCommandExecutor(project).executeInCurrentThread(repo.getRoot(), "rebase", Arrays.asList("--continue"), null);
+      new HgCommandExecutor(project).executeInCurrentThread(repo.getRoot(), "rebase", Arrays.asList("--continue"));
     repo.update();
     project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
     return result;
@@ -54,7 +54,7 @@ public class HgRebaseCommand {
   @Nullable
   public HgCommandResult abortRebase() {
     HgCommandResult result =
-      new HgCommandExecutor(project).executeInCurrentThread(repo.getRoot(), "rebase", Arrays.asList("--abort"), null);
+      new HgCommandExecutor(project).executeInCurrentThread(repo.getRoot(), "rebase", Arrays.asList("--abort"));
     repo.update();
     project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
     return result;
