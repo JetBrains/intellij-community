@@ -75,7 +75,7 @@ public class LatestExistentSearcher {
         myEndNumber = repository.getLatestRevision();
       }
 
-      final SVNURL existingParent = getExistingParent(myUrl, repository);
+      final SVNURL existingParent = getExistingParent(myUrl);
       if (existingParent == null) {
         return myStartNumber;
       }
@@ -128,8 +128,7 @@ public class LatestExistentSearcher {
       }
       // TODO: At least binary search could be applied here for optimization
       for (long i = myStartNumber + 1; i < myEndNumber; i++) {
-        final SVNNodeKind kind = repository.checkPath(myRelativeUrl, i);
-        if (SVNNodeKind.DIR.equals(kind) || SVNNodeKind.FILE.equals(kind)) {
+        if (existsInRevision(myUrl, i)) {
           latestOk = i;
         }
       }
@@ -165,19 +164,30 @@ public class LatestExistentSearcher {
   }
 
   @Nullable
-  private SVNURL getExistingParent(final SVNURL url, final SVNRepository repository) throws SVNException {
-    if (url.equals(myRepositoryUrl)) {
-      return url;
-    }
-    String relativeUrl = SVNURLUtil.getRelativeURL(myRepositoryUrl, url, true);
-    final SVNNodeKind kind = repository.checkPath(relativeUrl, myEndNumber);
-    if (SVNNodeKind.DIR.equals(kind) || SVNNodeKind.FILE.equals(kind)) {
+  private SVNURL getExistingParent(@NotNull SVNURL url) throws SVNException {
+    // TODO: Rewrite using while loop
+    if (url.equals(myRepositoryUrl) || existsInRevision(url, myEndNumber)) {
       return url;
     }
     final SVNURL parentUrl = url.removePathTail();
-    if (parentUrl == null) {
-      return null;
+
+    return parentUrl == null ? null : getExistingParent(parentUrl);
+  }
+
+  private boolean existsInRevision(@NotNull SVNURL url, long revisionNumber) throws SVNException {
+    SVNRevision revision = SVNRevision.create(revisionNumber);
+    SVNInfo info = null;
+
+    try {
+      info = myVcs.getInfo(url, revision, revision);
     }
-    return getExistingParent(parentUrl, repository);
+    catch (SVNException e) {
+      // throw error if not "does not exist" error code
+      if (!SVNErrorCode.RA_ILLEGAL_URL.equals(e.getErrorMessage().getErrorCode())) {
+        throw e;
+      }
+    }
+
+    return info != null;
   }
 }
