@@ -18,9 +18,11 @@ package org.jetbrains.plugins.gradle.tooling.internal;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.internal.ImmutableDomainObjectSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.BuildScriptClasspathModel;
 import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,6 +33,10 @@ import java.util.List;
 public class BuildScriptClasspathModelImpl implements BuildScriptClasspathModel {
 
   private final List<ClasspathEntryModel> myClasspathEntries;
+  @Nullable
+  private File gradleHomeDir;
+  @NotNull
+  private String myGradleVersion;
 
   public BuildScriptClasspathModelImpl() {
     myClasspathEntries = new ArrayList<ClasspathEntryModel>();
@@ -41,7 +47,27 @@ public class BuildScriptClasspathModelImpl implements BuildScriptClasspathModel 
     return ImmutableDomainObjectSet.of(myClasspathEntries);
   }
 
+  public void setGradleHomeDir(@Nullable File file) {
+    gradleHomeDir = file;
+  }
+
+  @Nullable
+  @Override
+  public File getGradleHomeDir() {
+    return gradleHomeDir;
+  }
+
   public void add(@NotNull ClasspathEntryModel classpathEntryModel) {
     myClasspathEntries.add(classpathEntryModel);
+  }
+
+  public void setGradleVersion(@NotNull String gradleVersion) {
+    myGradleVersion = gradleVersion;
+  }
+
+  @NotNull
+  @Override
+  public String getGradleVersion() {
+    return myGradleVersion;
   }
 }

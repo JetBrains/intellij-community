@@ -21,6 +21,7 @@ import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.Dependency;
 import org.gradle.plugins.ide.idea.model.ModuleLibrary;
 import org.gradle.plugins.ide.idea.model.Path;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.BuildScriptClasspathModel;
@@ -30,6 +31,7 @@ import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 import org.jetbrains.plugins.gradle.tooling.internal.BuildScriptClasspathModelImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.ClasspathEntryModelImpl;
 
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -53,6 +55,10 @@ public class ModelBuildScriptClasspathBuilderImpl implements ModelBuilderService
     if (buildScriptClasspath != null) return buildScriptClasspath;
 
     buildScriptClasspath = new BuildScriptClasspathModelImpl();
+    final File gradleHomeDir = project.getGradle().getGradleHomeDir();
+    buildScriptClasspath.setGradleHomeDir(gradleHomeDir);
+    buildScriptClasspath.setGradleVersion(GradleVersion.current().getVersion());
+
     final IdeaPlugin ideaPlugin = project.getPlugins().getPlugin(IdeaPlugin.class);
     if (ideaPlugin != null) {
       Project parent = project.getParent();
