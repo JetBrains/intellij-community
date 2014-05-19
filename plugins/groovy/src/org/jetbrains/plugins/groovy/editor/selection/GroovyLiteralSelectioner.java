@@ -29,10 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mGSTRING_CONTENT;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mREGEX_CONTENT;
-
 /**
  * @author ilyas
  */

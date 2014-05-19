@@ -26,14 +26,13 @@ import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes.GROOVY_DOC_COMMENT;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * @author ilyas
@@ -45,40 +44,40 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase {
 
 
   static final TokenSet tBLOCK_COMMENTS = TokenSet.create(
-      mML_COMMENT, GROOVY_DOC_COMMENT
+    GroovyTokenTypes.mML_COMMENT, GroovyDocElementTypes.GROOVY_DOC_COMMENT
   );
 
   static final TokenSet tLINE_COMMENTS = TokenSet.create(
-      mSL_COMMENT,
-      mSH_COMMENT
+    GroovyTokenTypes.mSL_COMMENT,
+    GroovyTokenTypes.mSH_COMMENT
   );
 
   static final TokenSet tBAD_CHARACTERS = TokenSet.create(
-      mWRONG
+    GroovyTokenTypes.mWRONG
   );
 
   static final TokenSet tGSTRINGS = TokenSet.create(
-      mGSTRING_BEGIN,
-      mGSTRING_CONTENT,
-      mGSTRING_END,
-      mGSTRING_LITERAL
+    GroovyTokenTypes.mGSTRING_BEGIN,
+    GroovyTokenTypes.mGSTRING_CONTENT,
+    GroovyTokenTypes.mGSTRING_END,
+    GroovyTokenTypes.mGSTRING_LITERAL
   );
 
   static final TokenSet tSTRINGS = TokenSet.create(
-      mSTRING_LITERAL
+    GroovyTokenTypes.mSTRING_LITERAL
   );
 
   static final TokenSet tBRACES = TokenSet.create(
-    mLCURLY,
-    mRCURLY
+    GroovyTokenTypes.mLCURLY,
+    GroovyTokenTypes.mRCURLY
   );
   static final TokenSet tPARENTHESES = TokenSet.create(
-    mLPAREN,
-    mRPAREN
+    GroovyTokenTypes.mLPAREN,
+    GroovyTokenTypes.mRPAREN
   );
   static final TokenSet tBRACKETS = TokenSet.create(
-    mLBRACK,
-    mRBRACK
+    GroovyTokenTypes.mLBRACK,
+    GroovyTokenTypes.mRBRACK
   );
 
   static final TokenSet tOperators = TokenSet.orSet(TokenSets.BINARY_OP_SET, TokenSets.UNARY_OP_SET, TokenSets.ASSIGN_OP_SET);
@@ -90,7 +89,9 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase {
     fillMap(ATTRIBUTES, TokenSets.NUMBERS, DefaultHighlighter.NUMBER);
     fillMap(ATTRIBUTES, tGSTRINGS, DefaultHighlighter.GSTRING);
     fillMap(ATTRIBUTES, tSTRINGS, DefaultHighlighter.STRING);
-    fillMap(ATTRIBUTES, DefaultHighlighter.STRING, mREGEX_BEGIN, mREGEX_CONTENT, mREGEX_END, mDOLLAR_SLASH_REGEX_BEGIN, mDOLLAR_SLASH_REGEX_CONTENT, mDOLLAR_SLASH_REGEX_END);
+    fillMap(ATTRIBUTES, DefaultHighlighter.STRING, GroovyTokenTypes.mREGEX_BEGIN, GroovyTokenTypes.mREGEX_CONTENT,
+            GroovyTokenTypes.mREGEX_END, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_BEGIN, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT,
+            GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END);
     fillMap(ATTRIBUTES, tBRACES, DefaultHighlighter.BRACES);
     fillMap(ATTRIBUTES, tBRACKETS, DefaultHighlighter.BRACKETS);
     fillMap(ATTRIBUTES, tPARENTHESES, DefaultHighlighter.PARENTHESES);
@@ -107,8 +108,9 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase {
     fillMap(POWER_SAVE_MODE_ATTRIBUTES, TokenSets.NUMBERS, DefaultHighlighter.NUMBER);
     fillMap(POWER_SAVE_MODE_ATTRIBUTES, tGSTRINGS, DefaultHighlighter.GSTRING);
     fillMap(POWER_SAVE_MODE_ATTRIBUTES, tSTRINGS, DefaultHighlighter.STRING);
-    fillMap(POWER_SAVE_MODE_ATTRIBUTES, DefaultHighlighter.STRING, mREGEX_BEGIN, mREGEX_CONTENT, mREGEX_END, mDOLLAR_SLASH_REGEX_BEGIN,
-            mDOLLAR_SLASH_REGEX_CONTENT, mDOLLAR_SLASH_REGEX_END);
+    fillMap(POWER_SAVE_MODE_ATTRIBUTES, DefaultHighlighter.STRING, GroovyTokenTypes.mREGEX_BEGIN, GroovyTokenTypes.mREGEX_CONTENT,
+            GroovyTokenTypes.mREGEX_END, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_BEGIN,
+            GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END);
     fillMap(POWER_SAVE_MODE_ATTRIBUTES, tBRACES, DefaultHighlighter.BRACES);
     fillMap(POWER_SAVE_MODE_ATTRIBUTES, tBRACKETS, DefaultHighlighter.BRACKETS);
     fillMap(POWER_SAVE_MODE_ATTRIBUTES, tPARENTHESES, DefaultHighlighter.PARENTHESES);
@@ -127,14 +129,14 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase {
   private static class GroovyHighlightingLexer extends LayeredLexer {
     private GroovyHighlightingLexer() {
       super(new GroovyLexer());
-      registerSelfStoppingLayer(new StringLiteralLexer(StringLiteralLexer.NO_QUOTE_CHAR, mSTRING_LITERAL, true, "$"),
-                                new IElementType[]{mSTRING_LITERAL}, IElementType.EMPTY_ARRAY);
-      registerSelfStoppingLayer(new StringLiteralLexer(StringLiteralLexer.NO_QUOTE_CHAR, mGSTRING_LITERAL, true, "$"),
-                                new IElementType[]{mGSTRING_LITERAL}, IElementType.EMPTY_ARRAY);
-      registerSelfStoppingLayer(new StringLiteralLexer(StringLiteralLexer.NO_QUOTE_CHAR, mGSTRING_CONTENT, true, "$"),
-                                new IElementType[]{mGSTRING_CONTENT}, IElementType.EMPTY_ARRAY);
-      registerSelfStoppingLayer(new GroovySlashyStringLexer(), new IElementType[]{mREGEX_CONTENT}, IElementType.EMPTY_ARRAY);
-      registerSelfStoppingLayer(new GroovyDollarSlashyStringLexer(), new IElementType[]{mDOLLAR_SLASH_REGEX_CONTENT}, IElementType.EMPTY_ARRAY);
+      registerSelfStoppingLayer(new StringLiteralLexer(StringLiteralLexer.NO_QUOTE_CHAR, GroovyTokenTypes.mSTRING_LITERAL, true, "$"),
+                                new IElementType[]{GroovyTokenTypes.mSTRING_LITERAL}, IElementType.EMPTY_ARRAY);
+      registerSelfStoppingLayer(new StringLiteralLexer(StringLiteralLexer.NO_QUOTE_CHAR, GroovyTokenTypes.mGSTRING_LITERAL, true, "$"),
+                                new IElementType[]{GroovyTokenTypes.mGSTRING_LITERAL}, IElementType.EMPTY_ARRAY);
+      registerSelfStoppingLayer(new StringLiteralLexer(StringLiteralLexer.NO_QUOTE_CHAR, GroovyTokenTypes.mGSTRING_CONTENT, true, "$"),
+                                new IElementType[]{GroovyTokenTypes.mGSTRING_CONTENT}, IElementType.EMPTY_ARRAY);
+      registerSelfStoppingLayer(new GroovySlashyStringLexer(), new IElementType[]{GroovyTokenTypes.mREGEX_CONTENT}, IElementType.EMPTY_ARRAY);
+      registerSelfStoppingLayer(new GroovyDollarSlashyStringLexer(), new IElementType[]{GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT}, IElementType.EMPTY_ARRAY);
     }
   }
 

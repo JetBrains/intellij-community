@@ -34,9 +34,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END;
-
 /**
  * @author Maxim.Medvedev
  */
@@ -563,7 +560,7 @@ public class GrStringUtil {
     if (!(gString instanceof GrString)) return false;
 
     PsiElement child = gString.getFirstChild();
-    if (!(child.getNode().getElementType() == mGSTRING_BEGIN)) return false;
+    if (!(child.getNode().getElementType() == GroovyTokenTypes.mGSTRING_BEGIN)) return false;
 
     child = child.getNextSibling();
     if (child == null || !(child instanceof GrStringContent)) return false;
@@ -834,10 +831,10 @@ public class GrStringUtil {
       builder.append(quote);
       for (PsiElement child = regex.getFirstChild(); child!=null; child = child.getNextSibling()) {
         final IElementType type = child.getNode().getElementType();
-        if (type == mREGEX_CONTENT || type == GroovyElementTypes.GSTRING_CONTENT) {
+        if (type == GroovyTokenTypes.mREGEX_CONTENT || type == GroovyElementTypes.GSTRING_CONTENT) {
           builder.append(escapeSymbolsForGString(unescapeSlashyString(child.getText()), quote.equals(DOUBLE_QUOTES), true));
         }
-        else if (type == mDOLLAR_SLASH_REGEX_CONTENT) {
+        else if (type == GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT) {
           builder.append(escapeSymbolsForGString(unescapeDollarSlashyString(child.getText()), quote.equals(DOUBLE_QUOTES), true));
         }
         else if (type == GroovyElementTypes.GSTRING_INJECTION) {
@@ -877,9 +874,9 @@ public class GrStringUtil {
     if (lastChild == null) return false;
 
     final IElementType lastType = lastChild.getNode().getElementType();
-    if (type == GroovyElementTypes.GSTRING) return lastType == mGSTRING_END;
-    if (type == GroovyElementTypes.REGEX) return lastType == mREGEX_END || lastType ==
-                                                                                            mDOLLAR_SLASH_REGEX_END;
+    if (type == GroovyElementTypes.GSTRING) return lastType == GroovyTokenTypes.mGSTRING_END;
+    if (type == GroovyElementTypes.REGEX) return lastType == GroovyTokenTypes.mREGEX_END || lastType ==
+                                                                                            GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END;
 
     return false;
   }

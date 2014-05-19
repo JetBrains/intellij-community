@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author ilyas
  */
-public class BranchStatement implements GroovyElementTypes {
+public class BranchStatement {
 
   public static final TokenSet BRANCH_KEYWORDS = TokenSet.create(GroovyTokenTypes.kRETURN,
                                                                  GroovyTokenTypes.kBREAK,
@@ -72,7 +72,7 @@ public class BranchStatement implements GroovyElementTypes {
     PsiBuilder.Marker marker = builder.mark();
     ParserUtils.getToken(builder, GroovyTokenTypes.kRETURN);
     AssignmentExpression.parse(builder, parser);
-    marker.done(RETURN_STATEMENT);
+    marker.done(GroovyElementTypes.RETURN_STATEMENT);
   }
 
   /**
@@ -87,7 +87,7 @@ public class BranchStatement implements GroovyElementTypes {
     if (!AssignmentExpression.parse(builder, parser)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
-    marker.done(THROW_STATEMENT);
+    marker.done(GroovyElementTypes.THROW_STATEMENT);
   }
 
   /**
@@ -110,7 +110,7 @@ public class BranchStatement implements GroovyElementTypes {
         builder.error(GroovyBundle.message("expression.expected"));
       }
     }
-    marker.done(ASSERT_STATEMENT);
+    marker.done(GroovyElementTypes.ASSERT_STATEMENT);
   }
 
   /**
@@ -121,7 +121,8 @@ public class BranchStatement implements GroovyElementTypes {
    */
   private static void breakOrContinueParse(PsiBuilder builder) {
     PsiBuilder.Marker marker = builder.mark();
-    GroovyElementType result = GroovyTokenTypes.kBREAK.equals(builder.getTokenType()) ? BREAK_STATEMENT : CONTINUE_STATEMENT;
+    GroovyElementType result = GroovyTokenTypes.kBREAK.equals(builder.getTokenType()) ? GroovyElementTypes.BREAK_STATEMENT
+                                                                                      : GroovyElementTypes.CONTINUE_STATEMENT;
 
     builder.advanceLexer();
 

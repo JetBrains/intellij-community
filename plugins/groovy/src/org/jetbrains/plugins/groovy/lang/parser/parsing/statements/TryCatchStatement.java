@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author ilyas
  */
-public class TryCatchStatement implements GroovyElementTypes {
+public class TryCatchStatement {
 
 
   public static boolean parse(PsiBuilder builder, GroovyParser parser) {
@@ -49,7 +49,7 @@ public class TryCatchStatement implements GroovyElementTypes {
     if (!(builder.getTokenType() == GroovyTokenTypes.kCATCH) &&
         !(builder.getTokenType() == GroovyTokenTypes.kFINALLY)) {
       builder.error(GroovyBundle.message("catch.or.finally.expected"));
-      marker.done(TRY_BLOCK_STATEMENT);
+      marker.done(GroovyElementTypes.TRY_BLOCK_STATEMENT);
       return true;
     }
 
@@ -57,11 +57,12 @@ public class TryCatchStatement implements GroovyElementTypes {
       parseHandlers(builder, parser);
     }
 
-    if (GroovyTokenTypes.kFINALLY.equals(builder.getTokenType()) || ParserUtils.lookAhead(builder, GroovyTokenTypes.mNLS, GroovyTokenTypes.kFINALLY)) {
+    if (GroovyTokenTypes.kFINALLY.equals(builder.getTokenType()) || ParserUtils.lookAhead(builder, GroovyTokenTypes.mNLS,
+                                                                                          GroovyTokenTypes.kFINALLY)) {
       parseFinally(builder, parser);
     }
 
-    marker.done(TRY_BLOCK_STATEMENT);
+    marker.done(GroovyElementTypes.TRY_BLOCK_STATEMENT);
     return true;
   }
 
@@ -79,7 +80,7 @@ public class TryCatchStatement implements GroovyElementTypes {
       warn.rollbackTo();
       builder.error(GroovyBundle.message("lcurly.expected"));
     }
-    finallyMarker.done(FINALLY_CLAUSE);
+    finallyMarker.done(GroovyElementTypes.FINALLY_CLAUSE);
   }
 
   /**
@@ -91,7 +92,7 @@ public class TryCatchStatement implements GroovyElementTypes {
     PsiBuilder.Marker catchMarker = builder.mark();
     ParserUtils.getToken(builder, GroovyTokenTypes.kCATCH);
     if (!ParserUtils.getToken(builder, GroovyTokenTypes.mLPAREN, GroovyBundle.message("lparen.expected"))) {
-      catchMarker.done(CATCH_CLAUSE);
+      catchMarker.done(GroovyElementTypes.CATCH_CLAUSE);
       return;
     }
 
@@ -101,7 +102,7 @@ public class TryCatchStatement implements GroovyElementTypes {
 
 
     if (!ParserUtils.getToken(builder, GroovyTokenTypes.mRPAREN, GroovyBundle.message("rparen.expected"))) {
-      catchMarker.done(CATCH_CLAUSE);
+      catchMarker.done(GroovyElementTypes.CATCH_CLAUSE);
       return;
     }
 
@@ -115,7 +116,7 @@ public class TryCatchStatement implements GroovyElementTypes {
       warn.drop();
     }
 
-    catchMarker.done(CATCH_CLAUSE);
+    catchMarker.done(GroovyElementTypes.CATCH_CLAUSE);
 
     if (builder.getTokenType() == GroovyTokenTypes.kCATCH ||
         ParserUtils.lookAhead(builder, GroovyTokenTypes.mNLS, GroovyTokenTypes.kCATCH)) {

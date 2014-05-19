@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author ilyas
  */
-public class OpenOrClosableBlock implements GroovyElementTypes {
+public class OpenOrClosableBlock {
 
   public static boolean parseOpenBlock(PsiBuilder builder, GroovyParser parser) {
     if (builder.getTokenType() != GroovyTokenTypes.mLCURLY) {
@@ -38,7 +38,7 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
     if (parser.parseDeep()) {
       parseOpenBlockDeep(builder, parser);
     } else {
-      parseBlockShallow(builder, OPEN_BLOCK);
+      parseBlockShallow(builder, GroovyElementTypes.OPEN_BLOCK);
     }
 
     return true;
@@ -55,7 +55,7 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
     }
 
     ParserUtils.getToken(builder, GroovyTokenTypes.mRCURLY, GroovyBundle.message("rcurly.expected"));
-    marker.done(OPEN_BLOCK);
+    marker.done(GroovyElementTypes.OPEN_BLOCK);
   }
 
 
@@ -64,9 +64,9 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
     if (parser.parseDeep()) {
       parseClosableBlockDeep(builder, parser);
     } else {
-      parseBlockShallow(builder, CLOSABLE_BLOCK);
+      parseBlockShallow(builder, GroovyElementTypes.CLOSABLE_BLOCK);
     }
-    return CLOSABLE_BLOCK;
+    return GroovyElementTypes.CLOSABLE_BLOCK;
   }
 
   public static void parseBlockShallow(PsiBuilder builder, IElementType blockType) {
@@ -99,7 +99,7 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
     closableBlockParamsOpt(builder, parser);
     parser.parseBlockBody(builder);
     ParserUtils.getToken(builder, GroovyTokenTypes.mRCURLY, GroovyBundle.message("rcurly.expected"));
-    marker.done(CLOSABLE_BLOCK);
+    marker.done(GroovyElementTypes.CLOSABLE_BLOCK);
   }
 
 

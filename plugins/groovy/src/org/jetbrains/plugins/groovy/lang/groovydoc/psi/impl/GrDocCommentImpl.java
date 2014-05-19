@@ -38,9 +38,9 @@ import java.util.ArrayList;
 /**
  * @author ilyas
  */
-public class GrDocCommentImpl extends LazyParseablePsiElement implements GroovyDocElementTypes, GrDocComment {
+public class GrDocCommentImpl extends LazyParseablePsiElement implements GrDocComment {
   public GrDocCommentImpl(CharSequence text) {
-    super(GROOVY_DOC_COMMENT, text);
+    super(GroovyDocElementTypes.GROOVY_DOC_COMMENT, text);
   }
 
   public String toString() {
@@ -114,7 +114,7 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GroovyD
       final ASTNode node = child.getNode();
       if (node == null) continue;
       final IElementType i = node.getElementType();
-      if (i == GDOC_TAG) break;
+      if (i == GroovyDocElementTypes.GDOC_TAG) break;
       if (i != GroovyDocTokenTypes.mGDOC_COMMENT_START && i != GroovyDocTokenTypes.mGDOC_COMMENT_END && i != GroovyDocTokenTypes.mGDOC_ASTERISKS) {
         array.add(child);
       }

@@ -32,8 +32,6 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-
 /**
  * @author Max Medvedev
  */
@@ -55,41 +53,41 @@ public class GroovyWrappingProcessor {
   }
   
   private static final TokenSet SKIP = TokenSet.create(
-    mCOMMA, mQUESTION, mSEMI,
+    GroovyTokenTypes.mCOMMA, GroovyTokenTypes.mQUESTION, GroovyTokenTypes.mSEMI,
 
-    mASSIGN, mBAND_ASSIGN, mBOR_ASSIGN, mBSR_ASSIGN,
-    mBXOR_ASSIGN, mDIV_ASSIGN,
-    mMINUS_ASSIGN, mMOD_ASSIGN, mPLUS_ASSIGN, mSL_ASSIGN,
-    mSR_ASSIGN,
-    mSTAR_ASSIGN, mSTAR_STAR_ASSIGN,
+    GroovyTokenTypes.mASSIGN, GroovyTokenTypes.mBAND_ASSIGN, GroovyTokenTypes.mBOR_ASSIGN, GroovyTokenTypes.mBSR_ASSIGN,
+    GroovyTokenTypes.mBXOR_ASSIGN, GroovyTokenTypes.mDIV_ASSIGN,
+    GroovyTokenTypes.mMINUS_ASSIGN, GroovyTokenTypes.mMOD_ASSIGN, GroovyTokenTypes.mPLUS_ASSIGN, GroovyTokenTypes.mSL_ASSIGN,
+    GroovyTokenTypes.mSR_ASSIGN,
+    GroovyTokenTypes.mSTAR_ASSIGN, GroovyTokenTypes.mSTAR_STAR_ASSIGN,
 
-    mASSIGN, mBAND_ASSIGN, mBOR_ASSIGN, mBSR_ASSIGN,
-    mBXOR_ASSIGN, mDIV_ASSIGN,
-    mMINUS_ASSIGN, mMOD_ASSIGN, mPLUS_ASSIGN, mSL_ASSIGN,
-    mSR_ASSIGN,
-    mSTAR_ASSIGN, mSTAR_STAR_ASSIGN,
+    GroovyTokenTypes.mASSIGN, GroovyTokenTypes.mBAND_ASSIGN, GroovyTokenTypes.mBOR_ASSIGN, GroovyTokenTypes.mBSR_ASSIGN,
+    GroovyTokenTypes.mBXOR_ASSIGN, GroovyTokenTypes.mDIV_ASSIGN,
+    GroovyTokenTypes.mMINUS_ASSIGN, GroovyTokenTypes.mMOD_ASSIGN, GroovyTokenTypes.mPLUS_ASSIGN, GroovyTokenTypes.mSL_ASSIGN,
+    GroovyTokenTypes.mSR_ASSIGN,
+    GroovyTokenTypes.mSTAR_ASSIGN, GroovyTokenTypes.mSTAR_STAR_ASSIGN,
 
-    mBAND, mBOR, mBXOR, mDIV, mEQUAL,
-    mGE, mGT, mLOR, mLT, mLE, mMINUS,
-    kAS, kIN,
-    mMOD, mPLUS, mSTAR, mSTAR_STAR, mNOT_EQUAL,
-    mCOMPARE_TO, mLAND, kINSTANCEOF,
+    GroovyTokenTypes.mBAND, GroovyTokenTypes.mBOR, GroovyTokenTypes.mBXOR, GroovyTokenTypes.mDIV, GroovyTokenTypes.mEQUAL,
+    GroovyTokenTypes.mGE, GroovyTokenTypes.mGT, GroovyTokenTypes.mLOR, GroovyTokenTypes.mLT, GroovyTokenTypes.mLE, GroovyTokenTypes.mMINUS,
+    GroovyTokenTypes.kAS, GroovyTokenTypes.kIN,
+    GroovyTokenTypes.mMOD, GroovyTokenTypes.mPLUS, GroovyTokenTypes.mSTAR, GroovyTokenTypes.mSTAR_STAR, GroovyTokenTypes.mNOT_EQUAL,
+    GroovyTokenTypes.mCOMPARE_TO, GroovyTokenTypes.mLAND, GroovyTokenTypes.kINSTANCEOF,
     GroovyElementTypes.COMPOSITE_LSHIFT_SIGN, GroovyElementTypes.COMPOSITE_RSHIFT_SIGN, GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN,
-    mREGEX_FIND, mREGEX_MATCH, mRANGE_INCLUSIVE, mRANGE_EXCLUSIVE,
+    GroovyTokenTypes.mREGEX_FIND, GroovyTokenTypes.mREGEX_MATCH, GroovyTokenTypes.mRANGE_INCLUSIVE, GroovyTokenTypes.mRANGE_EXCLUSIVE,
 
-    mBNOT, mLNOT, mMINUS, mDEC, mPLUS,
-    mINC,
+    GroovyTokenTypes.mBNOT, GroovyTokenTypes.mLNOT, GroovyTokenTypes.mMINUS, GroovyTokenTypes.mDEC, GroovyTokenTypes.mPLUS,
+    GroovyTokenTypes.mINC,
 
-    mSPREAD_DOT, mOPTIONAL_DOT, mMEMBER_POINTER, mDOT,
+    GroovyTokenTypes.mSPREAD_DOT, GroovyTokenTypes.mOPTIONAL_DOT, GroovyTokenTypes.mMEMBER_POINTER, GroovyTokenTypes.mDOT,
 
     GroovyElementTypes.COMPOSITE_LSHIFT_SIGN, GroovyElementTypes.COMPOSITE_RSHIFT_SIGN, GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN,
 
-    mLT, mGT, mLE, mGE, kIN,
+    GroovyTokenTypes.mLT, GroovyTokenTypes.mGT, GroovyTokenTypes.mLE, GroovyTokenTypes.mGE, GroovyTokenTypes.kIN,
 
-    kIN, mCOLON,
+    GroovyTokenTypes.kIN, GroovyTokenTypes.mCOLON,
 
     GroovyTokenTypes.mGSTRING_CONTENT, GroovyTokenTypes.mGSTRING_END, GroovyElementTypes.GSTRING_INJECTION, GroovyTokenTypes.mREGEX_CONTENT,
-    GroovyTokenTypes.mREGEX_END, mDOLLAR_SLASH_REGEX_CONTENT, mDOLLAR_SLASH_REGEX_END
+    GroovyTokenTypes.mREGEX_END, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END
   );
 
   public Wrap getChildWrap(ASTNode childNode) {
@@ -102,18 +100,18 @@ public class GroovyWrappingProcessor {
     }
 
     if (myParentType == GroovyElementTypes.EXTENDS_CLAUSE || myParentType == GroovyElementTypes.IMPLEMENTS_CLAUSE) {
-      if (childType == kEXTENDS || childType == kIMPLEMENTS) {
+      if (childType == GroovyTokenTypes.kEXTENDS || childType == GroovyTokenTypes.kIMPLEMENTS) {
         return Wrap.createWrap(mySettings.EXTENDS_KEYWORD_WRAP, true);
       }
     }
 
     if (myParentType == GroovyElementTypes.ARGUMENTS) {
-      if (childType == mLPAREN || childType == mRPAREN) {
+      if (childType == GroovyTokenTypes.mLPAREN || childType == GroovyTokenTypes.mRPAREN) {
         return createNoneWrap();
       }
     }
 
-    if (myParentType == GroovyElementTypes.THROW_CLAUSE && childType == kTHROWS) {
+    if (myParentType == GroovyElementTypes.THROW_CLAUSE && childType == GroovyTokenTypes.kTHROWS) {
       return Wrap.createWrap(mySettings.THROWS_KEYWORD_WRAP, true);
     }
 

@@ -70,8 +70,6 @@ import org.jetbrains.plugins.groovy.util.ResolveProfiler;
 
 import java.util.*;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-
 /**
  * @author ilyas
  */
@@ -158,13 +156,13 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     if (name == null || nameElement == null) return GroovyResolveResult.EMPTY_ARRAY;
 
     IElementType nameType = nameElement.getNode().getElementType();
-    if (nameType == kTHIS) {
+    if (nameType == GroovyTokenTypes.kTHIS) {
       ArrayList<GroovyResolveResult> results = new ArrayList<GroovyResolveResult>();
       if (GrReferenceResolveUtil.resolveThisExpression(this, results)) {
         return results.toArray(new GroovyResolveResult[results.size()]);
       }
     }
-    else if (nameType == kSUPER) {
+    else if (nameType == GroovyTokenTypes.kSUPER) {
       ArrayList<GroovyResolveResult> results = new ArrayList<GroovyResolveResult>();
       if (GrReferenceResolveUtil.resolveSuperExpression(this, results)) {
         return results.toArray(new GroovyResolveResult[results.size()]);
@@ -817,7 +815,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @NotNull
   private Kind getKind() {
-    if (getDotTokenType() == mMEMBER_POINTER) return Kind.METHOD_OR_PROPERTY;
+    if (getDotTokenType() == GroovyTokenTypes.mMEMBER_POINTER) return Kind.METHOD_OR_PROPERTY;
 
     PsiElement parent = getParent();
     if (parent instanceof GrMethodCallExpression || parent instanceof GrApplicationStatement) {
@@ -835,12 +833,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @Override
   public boolean hasAt() {
-    return findChildByType(mAT) != null;
+    return findChildByType(GroovyTokenTypes.mAT) != null;
   }
 
   @Override
   public boolean hasMemberPointer() {
-    return findChildByType(mMEMBER_POINTER) != null;
+    return findChildByType(GroovyTokenTypes.mMEMBER_POINTER) != null;
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.formatter.AlignmentProvider;
 import org.jetbrains.plugins.groovy.formatter.FormattingContext;
 import org.jetbrains.plugins.groovy.formatter.processors.GroovyWrappingProcessor;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 import java.util.ArrayList;
@@ -48,8 +49,8 @@ public class ParameterListBlock extends GroovyBlock {
   public ParameterListBlock(@NotNull GrMethod method, @NotNull Indent indent, @Nullable Wrap wrap, @NotNull FormattingContext context) {
     super(method.getParameterList().getNode(), indent, wrap, context);
     final ASTNode methodNode = method.getNode();
-    final ASTNode leftParenth = methodNode.findChildByType(mLPAREN);
-    final ASTNode rightParenth = methodNode.findChildByType(mRPAREN);
+    final ASTNode leftParenth = methodNode.findChildByType(GroovyTokenTypes.mLPAREN);
+    final ASTNode rightParenth = methodNode.findChildByType(GroovyTokenTypes.mRPAREN);
 
     final GroovyWrappingProcessor wrappingProcessor = new GroovyWrappingProcessor(this);
     mySubBlocks = new ArrayList<Block>();

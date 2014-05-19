@@ -81,8 +81,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mMEMBER_POINTER;
-
 /**
  * Created by Max Medvedev on 21/03/14
  */

@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.B
 /**
  * @author ilyas
  */
-public class ShiftExpression implements GroovyElementTypes {
+public class ShiftExpression {
 
   private static final TokenSet RANGES = TokenSet.create(
     GroovyTokenTypes.mRANGE_EXCLUSIVE,
@@ -42,7 +42,7 @@ public class ShiftExpression implements GroovyElementTypes {
     PsiBuilder.Marker marker = builder.mark();
     if (BinaryExpression.ADDITIVE.parseBinary(builder, parser)) {
       GroovyElementType shiftOrRange = isRangeOrShift(builder);
-      if (!shiftOrRange.equals(WRONGWAY)) {
+      if (!shiftOrRange.equals(GroovyElementTypes.WRONGWAY)) {
         if (ParserUtils.getToken(builder, RANGES) ||
                 getCompositeSign(builder)) {
           ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
@@ -81,7 +81,7 @@ public class ShiftExpression implements GroovyElementTypes {
         builder.getTokenText(); //todo[peter] remove look-ahead assertion
         builder.advanceLexer();
       }
-      marker.done(COMPOSITE_TRIPLE_SHIFT_SIGN);
+      marker.done(GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN);
       return true;
     }
     else if (ParserUtils.lookAhead(builder, GroovyTokenTypes.mLT, GroovyTokenTypes.mLT)) {
@@ -90,7 +90,7 @@ public class ShiftExpression implements GroovyElementTypes {
         builder.getTokenText(); //todo[peter] remove look-ahead assertion
         builder.advanceLexer();
       }
-      marker.done(COMPOSITE_LSHIFT_SIGN);
+      marker.done(GroovyElementTypes.COMPOSITE_LSHIFT_SIGN);
       return true;
     }
     else if (ParserUtils.lookAhead(builder, GroovyTokenTypes.mGT, GroovyTokenTypes.mGT)) {
@@ -99,7 +99,7 @@ public class ShiftExpression implements GroovyElementTypes {
         builder.getTokenText(); //todo[peter] remove look-ahead assertion
         builder.advanceLexer();
       }
-      marker.done(COMPOSITE_RSHIFT_SIGN);
+      marker.done(GroovyElementTypes.COMPOSITE_RSHIFT_SIGN);
       return true;
     }
     else {
@@ -108,15 +108,15 @@ public class ShiftExpression implements GroovyElementTypes {
   }
 
   private static GroovyElementType isRangeOrShift(PsiBuilder builder) {
-    if (RANGES.contains(builder.getTokenType())) return RANGE_EXPRESSION;
+    if (RANGES.contains(builder.getTokenType())) return GroovyElementTypes.RANGE_EXPRESSION;
     PsiBuilder.Marker marker = builder.mark();
     if (getCompositeSign(builder)) {
       marker.rollbackTo();
-      return SHIFT_EXPRESSION;
+      return GroovyElementTypes.SHIFT_EXPRESSION;
     } else {
       marker.rollbackTo();
     }
-    return WRONGWAY;
+    return GroovyElementTypes.WRONGWAY;
   }
 
   private static void subParse(PsiBuilder builder, PsiBuilder.Marker marker, GroovyElementType shiftOrRange, GroovyParser parser) {

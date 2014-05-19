@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.toplevel;
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.toplevel.packaging.PackageDefinition;
@@ -29,12 +29,12 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  *
  * @autor: Dmitry.Krasilschikov, ilyas
  */
-public class CompilationUnit implements GroovyElementTypes {
+public class CompilationUnit {
 
   public static void parseFile(PsiBuilder builder, GroovyParser parser) {
 
-    ParserUtils.getToken(builder, mSH_COMMENT);
-    ParserUtils.getToken(builder, mNLS);
+    ParserUtils.getToken(builder, GroovyTokenTypes.mSH_COMMENT);
+    ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
 
     if (!PackageDefinition.parse(builder, parser)) {
       parser.parseStatementWithImports(builder);

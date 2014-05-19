@@ -82,8 +82,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.refactoring.convertToJava.invocators.CustomMethodInvocator;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-
 /**
  * @author Maxim.Medvedev
  */
@@ -560,7 +558,7 @@ public class ExpressionGenerator extends Generator {
 
     GrExpression lValue = expression.getLValue();
     IElementType opToken = expression.getOperationTokenType();
-    if (opToken == mASSIGN) return rValue;
+    if (opToken == GroovyTokenTypes.mASSIGN) return rValue;
     Pair<String, IElementType> pair = GenerationUtil.getBinaryOperatorType(opToken);
     LOG.assertTrue(pair != null);
 
@@ -633,7 +631,7 @@ public class ExpressionGenerator extends Generator {
     final PsiElement token = expression.getOperationToken();
     final IElementType op = expression.getOperationTokenType();
 
-    if (op == mREGEX_FIND) {
+    if (op == GroovyTokenTypes.mREGEX_FIND) {
       builder.append(GroovyCommonClassNames.JAVA_UTIL_REGEX_PATTERN).append(".compile(");
       if (right != null) {
         right.accept(this);
@@ -643,7 +641,7 @@ public class ExpressionGenerator extends Generator {
       builder.append(')');
       return;
     }
-    if (op == mREGEX_MATCH) {
+    if (op == GroovyTokenTypes.mREGEX_MATCH) {
       builder.append(GroovyCommonClassNames.JAVA_UTIL_REGEX_PATTERN).append(".matches(");
       if (right != null) {
         right.accept(this);
@@ -653,12 +651,12 @@ public class ExpressionGenerator extends Generator {
       builder.append(')');
       return;
     }
-    if ((op == GroovyTokenTypes.mEQUAL || op == mNOT_EQUAL) && (GrInspectionUtil.isNull(left) || right != null && GrInspectionUtil.isNull(right))) {
+    if ((op == GroovyTokenTypes.mEQUAL || op == GroovyTokenTypes.mNOT_EQUAL) && (GrInspectionUtil.isNull(left) || right != null && GrInspectionUtil.isNull(right))) {
       writeSimpleBinaryExpression(token, left, right);
       return;
     }
 
-    if (op == kIN && right instanceof GrReferenceExpression && InheritanceUtil.isInheritor(right.getType(), CommonClassNames.JAVA_LANG_CLASS)) {
+    if (op == GroovyTokenTypes.kIN && right instanceof GrReferenceExpression && InheritanceUtil.isInheritor(right.getType(), CommonClassNames.JAVA_LANG_CLASS)) {
       final PsiType type = com.intellij.psi.util.PsiUtil.substituteTypeParameter(right.getType(), CommonClassNames.JAVA_LANG_CLASS, 0, true);
       writeInstanceof(left, type, expression);
       return;
@@ -676,7 +674,7 @@ public class ExpressionGenerator extends Generator {
         right = factory.createExpressionFromText("null");
       }
 
-      if (op == mNOT_EQUAL && "equals".equals(((PsiMethod)resolved).getName())) {
+      if (op == GroovyTokenTypes.mNOT_EQUAL && "equals".equals(((PsiMethod)resolved).getName())) {
         builder.append('!');
       }
       invokeMethodOn(
@@ -688,16 +686,16 @@ public class ExpressionGenerator extends Generator {
         resolveResult.getSubstitutor(),
         expression
       );
-      if (op == mGE) {
+      if (op == GroovyTokenTypes.mGE) {
         builder.append(" >= 0");
       }
-      else if (op == mGT) {
+      else if (op == GroovyTokenTypes.mGT) {
         builder.append(" > 0");
       }
-      else if (op == mLT) {
+      else if (op == GroovyTokenTypes.mLT) {
         builder.append(" < 0");
       }
-      else if (op == mLE) builder.append(" <= 0");
+      else if (op == GroovyTokenTypes.mLE) builder.append(" <= 0");
     }
     else {
       writeSimpleBinaryExpression(token, left, right);
@@ -708,7 +706,7 @@ public class ExpressionGenerator extends Generator {
     if (!GenerationSettings.replaceOperatorsWithMethodsForNumbers) {
 
       //adding something to string
-      if ((op == mPLUS || op == mPLUS_ASSIGN) && ltype != null && TypesUtil.isClassType(ltype, CommonClassNames.JAVA_LANG_STRING)) {
+      if ((op == GroovyTokenTypes.mPLUS || op == GroovyTokenTypes.mPLUS_ASSIGN) && ltype != null && TypesUtil.isClassType(ltype, CommonClassNames.JAVA_LANG_STRING)) {
         return true;
       }
 
@@ -716,7 +714,7 @@ public class ExpressionGenerator extends Generator {
       if (TypesUtil.isNumericType(ltype) && (right == null || TypesUtil.isNumericType(right.getType()))) return true;
     }
 
-    if (op == mLNOT && isBooleanType(ltype)) {
+    if (op == GroovyTokenTypes.mLNOT && isBooleanType(ltype)) {
       return true;
     }
 
@@ -749,7 +747,7 @@ public class ExpressionGenerator extends Generator {
 
     if (resolved instanceof PsiMethod) {
 
-      if (opType == mINC || opType == mDEC) {
+      if (opType == GroovyTokenTypes.mINC || opType == GroovyTokenTypes.mDEC) {
         if (!postfix || expression.getParent() instanceof GrStatementOwner || expression.getParent() instanceof GrControlStatement) {
           if (generatePrefixIncDec((PsiMethod)resolved, operand, expression)) return;
         }
@@ -759,7 +757,7 @@ public class ExpressionGenerator extends Generator {
         writeSimpleUnary(operand, expression, this);
       }
       else {
-        if (opType == mLNOT) {
+        if (opType == GroovyTokenTypes.mLNOT) {
           builder.append('!');
         }
         invokeMethodOn(
@@ -991,7 +989,7 @@ public class ExpressionGenerator extends Generator {
 
     GrExpression qualifierToUse = qualifier;
 
-    if (type == mMEMBER_POINTER) {
+    if (type == GroovyTokenTypes.mMEMBER_POINTER) {
       LOG.assertTrue(qualifier != null);
       builder.append("new ").append(GroovyCommonClassNames.ORG_CODEHAUS_GROOVY_RUNTIME_METHOD_CLOSURE).append('(');
       qualifier.accept(this);
@@ -999,7 +997,7 @@ public class ExpressionGenerator extends Generator {
       return;
     }
 
-    if (type == mOPTIONAL_DOT) {
+    if (type == GroovyTokenTypes.mOPTIONAL_DOT) {
       LOG.assertTrue(qualifier != null);
 
       String qualifierName = createVarByInitializer(qualifier);
@@ -1080,7 +1078,7 @@ public class ExpressionGenerator extends Generator {
       }
     }
 
-    if (type == mOPTIONAL_DOT) {
+    if (type == GroovyTokenTypes.mOPTIONAL_DOT) {
       builder.append(')');
     }
 
@@ -1155,7 +1153,7 @@ public class ExpressionGenerator extends Generator {
     builder.append(')');
 
     boolean insertParentheses =
-      operand instanceof GrBinaryExpression && ((GrBinaryExpression)operand).getOperationTokenType() == mEQUAL;
+      operand instanceof GrBinaryExpression && ((GrBinaryExpression)operand).getOperationTokenType() == GroovyTokenTypes.mEQUAL;
     if (insertParentheses) builder.append('(');
 
     if (operand != null) {

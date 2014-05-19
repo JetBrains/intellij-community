@@ -35,12 +35,12 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 
 
-public class AnnotationArguments implements GroovyElementTypes {
+public class AnnotationArguments {
   public static void parse(PsiBuilder builder, GroovyParser parser) {
 
     PsiBuilder.Marker annArgs = builder.mark();
     if (!ParserUtils.getToken(builder, GroovyTokenTypes.mLPAREN)) {
-      annArgs.done(ANNOTATION_ARGUMENTS);
+      annArgs.done(GroovyElementTypes.ANNOTATION_ARGUMENTS);
       return;
     }
 
@@ -50,12 +50,13 @@ public class AnnotationArguments implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
     ParserUtils.getToken(builder, GroovyTokenTypes.mRPAREN, GroovyBundle.message("rparen.expected"));
-    annArgs.done(ANNOTATION_ARGUMENTS);
+    annArgs.done(GroovyElementTypes.ANNOTATION_ARGUMENTS);
   }
 
   private static boolean checkIdentAndAssign(PsiBuilder builder) {
     final PsiBuilder.Marker marker = builder.mark();
-    boolean result = ParserUtils.getToken(builder, TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS) && ParserUtils.getToken(builder, GroovyTokenTypes.mASSIGN);
+    boolean result = ParserUtils.getToken(builder, TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS) && ParserUtils.getToken(builder,
+                                                                                                                         GroovyTokenTypes.mASSIGN);
     marker.rollbackTo();
     return result;
   }
@@ -77,7 +78,7 @@ public class AnnotationArguments implements GroovyElementTypes {
       }
 
       ParserUtils.getToken(builder, GroovyTokenTypes.mRBRACK, GroovyBundle.message("rbrack.expected"));
-      marker.done(ANNOTATION_ARRAY_INITIALIZER);
+      marker.done(GroovyElementTypes.ANNOTATION_ARRAY_INITIALIZER);
       return true;
     }
 
@@ -139,7 +140,7 @@ public class AnnotationArguments implements GroovyElementTypes {
       lfMarker.drop();
     }
 
-    marker.done(ANNOTATION_MEMBER_VALUE_PAIR);
+    marker.done(GroovyElementTypes.ANNOTATION_MEMBER_VALUE_PAIR);
     return true;
   }
 }

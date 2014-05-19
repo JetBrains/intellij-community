@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author ilyas
  */
-public class SynchronizedStatement implements GroovyElementTypes {
+public class SynchronizedStatement {
   public static boolean parse(PsiBuilder builder, GroovyParser parser) {
 
     PsiBuilder.Marker marker = builder.mark();
@@ -46,7 +46,7 @@ public class SynchronizedStatement implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
     if (!ParserUtils.getToken(builder, GroovyTokenTypes.mRPAREN, GroovyBundle.message("rparen.expected"))) {
-      marker.done(SYNCHRONIZED_STATEMENT);
+      marker.done(GroovyElementTypes.SYNCHRONIZED_STATEMENT);
       return true;
     }
 
@@ -59,7 +59,7 @@ public class SynchronizedStatement implements GroovyElementTypes {
     } else {
       warn.drop();
     }
-    marker.done(SYNCHRONIZED_STATEMENT);
+    marker.done(GroovyElementTypes.SYNCHRONIZED_STATEMENT);
 
     return true;
   }

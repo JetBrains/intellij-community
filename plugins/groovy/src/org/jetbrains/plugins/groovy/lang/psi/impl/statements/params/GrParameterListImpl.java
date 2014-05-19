@@ -31,8 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-
 /**
  * @author: Dmitry.Krasilschikov
  */
@@ -145,13 +143,13 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub> implements
         getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", anchor);
       }
       else if (before.booleanValue() && anchor == null) {
-        getNode().addLeaf(mCOMMA, ",", result);
+        getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", result);
       }
       else if (!before.booleanValue() && anchor != null) {
-        getNode().addLeaf(mCOMMA, ",", result);
+        getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", result);
       }
       else if (!before.booleanValue() && anchor == null) {
-        getNode().addLeaf(mCOMMA, ",", result.getTreeNext());
+        getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", result.getTreeNext());
       }
     }
     return result;

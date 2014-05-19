@@ -24,9 +24,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mIDENT;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTRING_LITERAL;
-
 /**
  * @author ven
 */

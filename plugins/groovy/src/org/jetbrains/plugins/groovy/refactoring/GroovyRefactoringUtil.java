@@ -72,10 +72,6 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
 import java.util.*;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSEMI;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSPREAD_DOT;
-
 /**
  * @author ilyas
  */
@@ -235,8 +231,8 @@ public abstract class GroovyRefactoringUtil {
     while (file.findElementAt(end - 1) instanceof PsiWhiteSpace ||
         (file.findElementAt(end - 1) instanceof PsiComment && trimComments) ||
         (file.findElementAt(end - 1) != null &&
-            (mNLS.equals(file.findElementAt(end - 1).getNode().getElementType()) ||
-                mSEMI.equals(file.findElementAt(end - 1).getNode().getElementType())))) {
+            (GroovyTokenTypes.mNLS.equals(file.findElementAt(end - 1).getNode().getElementType()) ||
+                GroovyTokenTypes.mSEMI.equals(file.findElementAt(end - 1).getNode().getElementType())))) {
       end--;
     }
 
@@ -790,7 +786,7 @@ public abstract class GroovyRefactoringUtil {
       GrReferenceExpression expression = (GrReferenceExpression)lValue;
       final PsiElement dot = expression.getDotToken();
       //noinspection ConstantConditions
-      if (dot != null && dot.getNode().getElementType() == mSPREAD_DOT) {
+      if (dot != null && dot.getNode().getElementType() == GroovyTokenTypes.mSPREAD_DOT) {
         return true;
       }
       else {

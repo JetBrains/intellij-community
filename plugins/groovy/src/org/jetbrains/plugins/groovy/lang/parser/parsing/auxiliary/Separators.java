@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary;
 
 import com.intellij.lang.PsiBuilder;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
@@ -25,12 +25,12 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  *
  * @author ilyas
  */
-public class Separators implements GroovyElementTypes {
+public class Separators {
 
   public static boolean parse(PsiBuilder builder) {
-    if (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType())) {
+    if (GroovyTokenTypes.mSEMI.equals(builder.getTokenType()) || GroovyTokenTypes.mNLS.equals(builder.getTokenType())) {
       builder.advanceLexer();
-      while (ParserUtils.getToken(builder, mNLS) || ParserUtils.getToken(builder, mSEMI)) {
+      while (ParserUtils.getToken(builder, GroovyTokenTypes.mNLS) || ParserUtils.getToken(builder, GroovyTokenTypes.mSEMI)) {
         // Parse newLines
       }
       return true;

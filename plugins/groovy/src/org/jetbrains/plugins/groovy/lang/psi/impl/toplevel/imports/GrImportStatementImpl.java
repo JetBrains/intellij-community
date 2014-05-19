@@ -47,10 +47,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GrDelegatingScopeProcessorWithHints;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kSTATIC;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mIDENT;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR;
-
 /**
  * @author ilyas
  */

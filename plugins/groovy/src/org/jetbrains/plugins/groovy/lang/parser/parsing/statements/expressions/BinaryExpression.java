@@ -29,18 +29,16 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.r
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.relational.RelationalExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-
 /**
  * @author peter
  */
 public class BinaryExpression {
   private static final BinaryExpression[] ourLogicalExpressions = {
-    new BinaryExpression(GroovyElementTypes.LOGICAL_OR_EXPRESSION, mLOR),
-    new BinaryExpression(GroovyElementTypes.LOGICAL_AND_EXPRESSION, mLAND),
-    new BinaryExpression(GroovyElementTypes.INCLUSIVE_OR_EXPRESSION, mBOR),
-    new BinaryExpression(GroovyElementTypes.EXCLUSIVE_OR_EXPRESSION, mBXOR),
-    new BinaryExpression(GroovyElementTypes.AND_EXPRESSION, mBAND) {
+    new BinaryExpression(GroovyElementTypes.LOGICAL_OR_EXPRESSION, GroovyTokenTypes.mLOR),
+    new BinaryExpression(GroovyElementTypes.LOGICAL_AND_EXPRESSION, GroovyTokenTypes.mLAND),
+    new BinaryExpression(GroovyElementTypes.INCLUSIVE_OR_EXPRESSION, GroovyTokenTypes.mBOR),
+    new BinaryExpression(GroovyElementTypes.EXCLUSIVE_OR_EXPRESSION, GroovyTokenTypes.mBXOR),
+    new BinaryExpression(GroovyElementTypes.AND_EXPRESSION, GroovyTokenTypes.mBAND) {
       @Override
       protected boolean parseNext(PsiBuilder builder, GroovyParser parser, int order) {
         return RegexExpression.parse(builder, parser);
@@ -49,20 +47,20 @@ public class BinaryExpression {
   };
 
   public static final BinaryExpression EQUALITY = new BinaryExpression(GroovyElementTypes.EQUALITY_EXPRESSION, GroovyTokenTypes.mEQUAL,
-                                                                       mNOT_EQUAL, GroovyTokenTypes.mCOMPARE_TO) {
+                                                                       GroovyTokenTypes.mNOT_EQUAL, GroovyTokenTypes.mCOMPARE_TO) {
     @Override
     protected boolean parseNext(PsiBuilder builder, GroovyParser parser, int order) {
       return RelationalExpression.parse(builder, parser);
     }
   };
-  public static final BinaryExpression ADDITIVE = new BinaryExpression(GroovyElementTypes.ADDITIVE_EXPRESSION, mPLUS,
-                                                                       mMINUS) {
+  public static final BinaryExpression ADDITIVE = new BinaryExpression(GroovyElementTypes.ADDITIVE_EXPRESSION, GroovyTokenTypes.mPLUS,
+                                                                       GroovyTokenTypes.mMINUS) {
     @Override
     protected boolean parseNext(PsiBuilder builder, GroovyParser parser, int order) {
       return MultiplicativeExpression.parse(builder, parser);
     }
   };
-  public static final BinaryExpression POWER = new BinaryExpression(GroovyElementTypes.POWER_EXPRESSION, mSTAR_STAR) {
+  public static final BinaryExpression POWER = new BinaryExpression(GroovyElementTypes.POWER_EXPRESSION, GroovyTokenTypes.mSTAR_STAR) {
     @Override
     protected boolean parseNext(PsiBuilder builder, GroovyParser parser, int order) {
       return UnaryExpression.parse(builder, parser);
@@ -117,7 +115,7 @@ public class BinaryExpression {
 
   private void subParse(PsiBuilder builder, PsiBuilder.Marker marker, GroovyParser parser, int order) {
     builder.advanceLexer();
-    ParserUtils.getToken(builder, mNLS);
+    ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
     if (!parseNext(builder, parser, order)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }

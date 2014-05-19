@@ -28,17 +28,17 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author ilyas
  */
-public class ListOrMapConstructorExpression implements GroovyElementTypes {
+public class ListOrMapConstructorExpression {
 
   public static GroovyElementType parse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
     if (!ParserUtils.getToken(builder, GroovyTokenTypes.mLBRACK, GroovyBundle.message("lbrack.expected"))) {
       marker.drop();
-      return WRONGWAY;
+      return GroovyElementTypes.WRONGWAY;
     }
     if (ParserUtils.getToken(builder, GroovyTokenTypes.mRBRACK)) {
-      marker.done(LIST_OR_MAP);
-      return LIST_OR_MAP;
+      marker.done(GroovyElementTypes.LIST_OR_MAP);
+      return GroovyElementTypes.LIST_OR_MAP;
     } else if (ParserUtils.getToken(builder, GroovyTokenTypes.mCOLON)) {
       ParserUtils.getToken(builder, GroovyTokenTypes.mRBRACK, GroovyBundle.message("rbrack.expected"));
     } else {
@@ -47,7 +47,7 @@ public class ListOrMapConstructorExpression implements GroovyElementTypes {
       ParserUtils.getToken(builder, GroovyTokenTypes.mRBRACK, GroovyBundle.message("rbrack.expected"));
     }
 
-    marker.done(LIST_OR_MAP);
-    return LIST_OR_MAP;
+    marker.done(GroovyElementTypes.LIST_OR_MAP);
+    return GroovyElementTypes.LIST_OR_MAP;
   }
 }

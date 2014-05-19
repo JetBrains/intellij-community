@@ -61,10 +61,6 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR_STAR;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR_STAR_ASSIGN;
-
 /**
  * @author Maxim.Medvedev
  */
@@ -484,17 +480,17 @@ public class GenerationUtil {
 
   static {
     binOpTypes.put(GroovyTokenTypes.mPLUS_ASSIGN, Pair.create("+", GroovyTokenTypes.mPLUS));
-    binOpTypes.put(mMINUS_ASSIGN, Pair.create("-", mMINUS));
-    binOpTypes.put(mSTAR_ASSIGN, Pair.create("*", mSTAR));
+    binOpTypes.put(GroovyTokenTypes.mMINUS_ASSIGN, Pair.create("-", GroovyTokenTypes.mMINUS));
+    binOpTypes.put(GroovyTokenTypes.mSTAR_ASSIGN, Pair.create("*", GroovyTokenTypes.mSTAR));
     binOpTypes.put(GroovyTokenTypes.mDIV_ASSIGN, Pair.create("/", GroovyTokenTypes.mDIV));
-    binOpTypes.put(mMOD_ASSIGN, Pair.create("%", mMOD));
-    binOpTypes.put(mSL_ASSIGN, new Pair<String, IElementType>("<<", GroovyElementTypes.COMPOSITE_LSHIFT_SIGN));
-    binOpTypes.put(mSR_ASSIGN, new Pair<String, IElementType>(">>", GroovyElementTypes.COMPOSITE_RSHIFT_SIGN));
-    binOpTypes.put(mBSR_ASSIGN, new Pair<String, IElementType>(">>>", GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN));
-    binOpTypes.put(mBAND_ASSIGN, Pair.create("&", mBAND));
-    binOpTypes.put(mBOR_ASSIGN, Pair.create("|", mBOR));
-    binOpTypes.put(mBXOR_ASSIGN, Pair.create("^", mBXOR));
-    binOpTypes.put(mSTAR_STAR_ASSIGN, Pair.create("**", mSTAR_STAR));
+    binOpTypes.put(GroovyTokenTypes.mMOD_ASSIGN, Pair.create("%", GroovyTokenTypes.mMOD));
+    binOpTypes.put(GroovyTokenTypes.mSL_ASSIGN, new Pair<String, IElementType>("<<", GroovyElementTypes.COMPOSITE_LSHIFT_SIGN));
+    binOpTypes.put(GroovyTokenTypes.mSR_ASSIGN, new Pair<String, IElementType>(">>", GroovyElementTypes.COMPOSITE_RSHIFT_SIGN));
+    binOpTypes.put(GroovyTokenTypes.mBSR_ASSIGN, new Pair<String, IElementType>(">>>", GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN));
+    binOpTypes.put(GroovyTokenTypes.mBAND_ASSIGN, Pair.create("&", GroovyTokenTypes.mBAND));
+    binOpTypes.put(GroovyTokenTypes.mBOR_ASSIGN, Pair.create("|", GroovyTokenTypes.mBOR));
+    binOpTypes.put(GroovyTokenTypes.mBXOR_ASSIGN, Pair.create("^", GroovyTokenTypes.mBXOR));
+    binOpTypes.put(GroovyTokenTypes.mSTAR_STAR_ASSIGN, Pair.create("**", GroovyTokenTypes.mSTAR_STAR));
   }
 
   public static Pair<String, IElementType> getBinaryOperatorType(IElementType op_assign) {

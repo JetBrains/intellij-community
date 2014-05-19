@@ -32,9 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mGSTRING_BEGIN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mGSTRING_END;
-
 /**
  * @author Max Medvedev
  */

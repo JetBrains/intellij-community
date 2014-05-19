@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author ilyas
  */
-public class CommandArguments implements GroovyElementTypes {
+public class CommandArguments {
 
   public static boolean parseCommandArguments(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
@@ -39,7 +39,7 @@ public class CommandArguments implements GroovyElementTypes {
           break;
         }
       }
-      marker.done(COMMAND_ARGUMENTS);
+      marker.done(GroovyElementTypes.COMMAND_ARGUMENTS);
       return true;
     }
 
@@ -55,7 +55,7 @@ public class CommandArguments implements GroovyElementTypes {
       if (!ExpressionStatement.argParse(builder, parser)) {
         builder.error(GroovyBundle.message("expression.expected"));
       }
-      commandMarker.done(NAMED_ARGUMENT);
+      commandMarker.done(GroovyElementTypes.NAMED_ARGUMENT);
       return true;
     }
 

@@ -61,8 +61,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import javax.swing.*;
 import java.util.concurrent.ConcurrentMap;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-
 /**
  * Implements all abstractions related to Groovy file
  *
@@ -443,7 +441,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       }
       fileNode.addChild(newNode, anchor);
       if (anchor != null && !anchor.getText().startsWith("\n\n")) {
-        fileNode.addLeaf(mNLS, "\n", anchor);
+        fileNode.addLeaf(GroovyTokenTypes.mNLS, "\n", anchor);
       }
     }
   }
@@ -455,7 +453,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     if (oldPackage == null) {
       if (newPackage != null) {
         final GrPackageDefinition result = (GrPackageDefinition)addAfter(newPackage, null);
-        getNode().addLeaf(mNLS, "\n", result.getNode().getTreeNext());
+        getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", result.getNode().getTreeNext());
         return result;
       }
     }

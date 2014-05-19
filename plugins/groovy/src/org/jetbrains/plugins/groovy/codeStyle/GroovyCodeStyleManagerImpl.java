@@ -37,10 +37,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 import java.util.Comparator;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSEMI;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSEMI;
-
 public class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
   @NotNull
   @Override
@@ -144,7 +140,7 @@ public class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
     while (PsiImplUtil.isWhiteSpaceOrNls(prev)) {
       prev = prev.getPrevSibling();
     }
-    if (PsiImplUtil.hasElementType(prev, mSEMI)) prev = prev.getPrevSibling();
+    if (PsiImplUtil.hasElementType(prev, GroovyTokenTypes.mSEMI)) prev = prev.getPrevSibling();
     if (PsiImplUtil.isWhiteSpaceOrNls(prev)) prev = prev.getPrevSibling();
 
     if (prev instanceof GrImportStatement) {
@@ -154,7 +150,7 @@ public class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
 
       //skip space and semicolon after import
       if (PsiImplUtil.isWhiteSpaceOrNls(prev.getNextSibling()) && PsiImplUtil
-        .hasElementType(prev.getNextSibling().getNextSibling(), mSEMI)) prev = prev.getNextSibling().getNextSibling();
+        .hasElementType(prev.getNextSibling().getNextSibling(), GroovyTokenTypes.mSEMI)) prev = prev.getNextSibling().getNextSibling();
       ASTNode node = psiFile.getNode();
       while (PsiImplUtil.isWhiteSpaceOrNls(prev.getNextSibling())) {
         node.removeChild(prev.getNextSibling().getNode());
@@ -170,7 +166,7 @@ public class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
 
     PsiElement next = result.getNextSibling();
     if (PsiImplUtil.isWhiteSpaceOrNls(next)) next = next.getNextSibling();
-    if (PsiImplUtil.hasElementType(next, mSEMI)) next = next.getNextSibling();
+    if (PsiImplUtil.hasElementType(next, GroovyTokenTypes.mSEMI)) next = next.getNextSibling();
     while (PsiImplUtil.isWhiteSpaceOrNls(next)) {
       next = next.getNextSibling();
     }
@@ -184,7 +180,7 @@ public class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
       while (PsiImplUtil.isWhiteSpaceOrNls(next.getPrevSibling())) {
         node.removeChild(next.getPrevSibling().getNode());
       }
-      node.addLeaf(mNLS, StringUtil.repeat("\n", spaceCount + 1), next.getNode());
+      node.addLeaf(GroovyTokenTypes.mNLS, StringUtil.repeat("\n", spaceCount + 1), next.getNode());
     }
   }
 
@@ -218,12 +214,12 @@ public class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
       before = before.getPrevSibling();
     }
 
-    if (PsiImplUtil.hasElementType(before.getPrevSibling(), mSEMI)) before = before.getPrevSibling();
+    if (PsiImplUtil.hasElementType(before.getPrevSibling(), GroovyTokenTypes.mSEMI)) before = before.getPrevSibling();
     if (PsiImplUtil.isWhiteSpaceOrNls(before.getPrevSibling())) before = before.getPrevSibling();
 
     PsiElement after = importStatement;
     if (PsiImplUtil.isWhiteSpaceOrNls(after.getNextSibling())) after = after.getNextSibling();
-    if (PsiImplUtil.hasElementType(after.getNextSibling(), mSEMI)) after = after.getNextSibling();
+    if (PsiImplUtil.hasElementType(after.getNextSibling(), GroovyTokenTypes.mSEMI)) after = after.getNextSibling();
     while (PsiImplUtil.isWhiteSpaceOrNls(after.getNextSibling())) after = after.getNextSibling();
 
 
@@ -243,7 +239,7 @@ public class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
     }
     else if (anchor_before != null && anchor_after != null) {
       String text = anchor_after instanceof GrTopStatement && anchor_before instanceof GrTopStatement ? "\n\n" : "\n";
-      psiElement.getNode().addLeaf(mNLS, text, anchor_after.getNode());
+      psiElement.getNode().addLeaf(GroovyTokenTypes.mNLS, text, anchor_after.getNode());
     }
   }
 }

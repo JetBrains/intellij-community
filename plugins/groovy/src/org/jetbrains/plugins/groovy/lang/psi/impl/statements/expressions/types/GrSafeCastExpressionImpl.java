@@ -41,9 +41,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 
 import java.util.HashMap;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kAS;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kAS;
-
 /**
  * @author ven
  */
@@ -146,7 +143,7 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
 
   @Override
   public TextRange getRangeInElement() {
-    final PsiElement as = findNotNullChildByType(kAS);
+    final PsiElement as = findNotNullChildByType(GroovyTokenTypes.kAS);
     final int offset = as.getStartOffsetInParent();
     return new TextRange(offset, offset + 2);
   }

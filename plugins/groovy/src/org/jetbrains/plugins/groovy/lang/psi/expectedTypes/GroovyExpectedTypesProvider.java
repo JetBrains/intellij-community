@@ -64,10 +64,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mPLUS;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mREGEX_FIND;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mREGEX_MATCH;
-
 /**
  * @author ven
  */

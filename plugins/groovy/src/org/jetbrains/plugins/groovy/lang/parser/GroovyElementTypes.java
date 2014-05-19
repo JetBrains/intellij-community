@@ -21,9 +21,7 @@ import com.intellij.psi.stubs.*;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
-import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -60,7 +58,7 @@ import java.io.IOException;
  *
  * @author Dmitry.Krasilschikov, ilyas
  */
-public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTypes {
+public interface GroovyElementTypes {
 
   /*
   Stub elements

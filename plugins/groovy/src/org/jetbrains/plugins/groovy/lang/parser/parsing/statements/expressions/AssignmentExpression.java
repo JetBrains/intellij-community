@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author ilyas
  */
-public class AssignmentExpression implements GroovyElementTypes {
+public class AssignmentExpression {
 
   public static boolean parse(PsiBuilder builder, GroovyParser parser) {
     return parse(builder, parser, false);
@@ -45,7 +45,7 @@ public class AssignmentExpression implements GroovyElementTypes {
         if (!parse(builder, parser, comExprAllowed)) {
           builder.error(GroovyBundle.message("expression.expected"));
         }
-        marker.done(ASSIGNMENT_EXPRESSION);
+        marker.done(GroovyElementTypes.ASSIGNMENT_EXPRESSION);
       }
       else {
         if (isTuple) {

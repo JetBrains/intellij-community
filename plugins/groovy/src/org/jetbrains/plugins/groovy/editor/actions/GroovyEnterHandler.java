@@ -58,66 +58,62 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCLOSABLE_BLOCK_OP;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDOLLAR;
-
 /**
  * @author ilyas
  */
 public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
 
-  private static final TokenSet GSTRING_TOKENS = TokenSet.create(mGSTRING_BEGIN, mGSTRING_CONTENT,
-                                                                 mGSTRING_END, mGSTRING_LITERAL);
+  private static final TokenSet GSTRING_TOKENS = TokenSet.create(GroovyTokenTypes.mGSTRING_BEGIN, GroovyTokenTypes.mGSTRING_CONTENT,
+                                                                 GroovyTokenTypes.mGSTRING_END, GroovyTokenTypes.mGSTRING_LITERAL);
 
-  private static final TokenSet REGEX_TOKENS = TokenSet.create(mREGEX_BEGIN, mREGEX_CONTENT,
-                                                               mREGEX_END, mDOLLAR_SLASH_REGEX_BEGIN,
-                                                               mDOLLAR_SLASH_REGEX_CONTENT,
-                                                               mDOLLAR_SLASH_REGEX_END);
+  private static final TokenSet REGEX_TOKENS = TokenSet.create(GroovyTokenTypes.mREGEX_BEGIN, GroovyTokenTypes.mREGEX_CONTENT,
+                                                               GroovyTokenTypes.mREGEX_END, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_BEGIN,
+                                                               GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT,
+                                                               GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END);
 
-  private static final TokenSet AFTER_DOLLAR = TokenSet.create(mLCURLY, GroovyTokenTypes.mIDENT, mDOLLAR,
-                                                               mGSTRING_END, mREGEX_END,
-                                                               mDOLLAR_SLASH_REGEX_END,
-                                                               GroovyElementTypes.GSTRING_CONTENT, mGSTRING_CONTENT,
-                                                               mREGEX_CONTENT,
-                                                               mDOLLAR_SLASH_REGEX_CONTENT);
+  private static final TokenSet AFTER_DOLLAR = TokenSet.create(GroovyTokenTypes.mLCURLY, GroovyTokenTypes.mIDENT, GroovyTokenTypes.mDOLLAR,
+                                                               GroovyTokenTypes.mGSTRING_END, GroovyTokenTypes.mREGEX_END,
+                                                               GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END,
+                                                               GroovyElementTypes.GSTRING_CONTENT, GroovyTokenTypes.mGSTRING_CONTENT,
+                                                               GroovyTokenTypes.mREGEX_CONTENT,
+                                                               GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT);
 
-  private static final TokenSet ALL_STRINGS = TokenSet.create(mSTRING_LITERAL, mGSTRING_LITERAL,
-                                                              mGSTRING_BEGIN, mGSTRING_END,
-                                                              mGSTRING_CONTENT, mRCURLY,
-                                                              mIDENT, mDOLLAR,
-                                                              mREGEX_BEGIN, mREGEX_CONTENT,
-                                                              mREGEX_END, mDOLLAR_SLASH_REGEX_BEGIN,
-                                                              mDOLLAR_SLASH_REGEX_CONTENT,
-                                                              mDOLLAR_SLASH_REGEX_END, mREGEX_LITERAL,
-                                                              mDOLLAR_SLASH_REGEX_LITERAL,
+  private static final TokenSet ALL_STRINGS = TokenSet.create(GroovyTokenTypes.mSTRING_LITERAL, GroovyTokenTypes.mGSTRING_LITERAL,
+                                                              GroovyTokenTypes.mGSTRING_BEGIN, GroovyTokenTypes.mGSTRING_END,
+                                                              GroovyTokenTypes.mGSTRING_CONTENT, GroovyTokenTypes.mRCURLY,
+                                                              GroovyTokenTypes.mIDENT, GroovyTokenTypes.mDOLLAR,
+                                                              GroovyTokenTypes.mREGEX_BEGIN, GroovyTokenTypes.mREGEX_CONTENT,
+                                                              GroovyTokenTypes.mREGEX_END, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_BEGIN,
+                                                              GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT,
+                                                              GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END, GroovyTokenTypes.mREGEX_LITERAL,
+                                                              GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL,
                                                               GroovyElementTypes.GSTRING_CONTENT);
 
-  private static final TokenSet BEFORE_DOLLAR =TokenSet.create(mGSTRING_BEGIN, mREGEX_BEGIN,
-                                                               mDOLLAR_SLASH_REGEX_BEGIN,
+  private static final TokenSet BEFORE_DOLLAR =TokenSet.create(GroovyTokenTypes.mGSTRING_BEGIN, GroovyTokenTypes.mREGEX_BEGIN,
+                                                               GroovyTokenTypes.mDOLLAR_SLASH_REGEX_BEGIN,
                                                                GroovyElementTypes.GSTRING_CONTENT,
-                                                               mGSTRING_CONTENT, mREGEX_CONTENT,
-                                                               mDOLLAR_SLASH_REGEX_CONTENT);
+                                                               GroovyTokenTypes.mGSTRING_CONTENT, GroovyTokenTypes.mREGEX_CONTENT,
+                                                               GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT);
 
-  private static final TokenSet EXPR_END = TokenSet.create(mRCURLY, mIDENT);
+  private static final TokenSet EXPR_END = TokenSet.create(GroovyTokenTypes.mRCURLY, GroovyTokenTypes.mIDENT);
 
-  private static final TokenSet AFTER_EXPR_END = TokenSet.create(mGSTRING_END, mDOLLAR,
-                                                                 mREGEX_END, mDOLLAR_SLASH_REGEX_END,
+  private static final TokenSet AFTER_EXPR_END = TokenSet.create(GroovyTokenTypes.mGSTRING_END, GroovyTokenTypes.mDOLLAR,
+                                                                 GroovyTokenTypes.mREGEX_END, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END,
                                                                  GroovyElementTypes.GSTRING_CONTENT,
-                                                                 mGSTRING_CONTENT, mREGEX_CONTENT,
-                                                                 mDOLLAR_SLASH_REGEX_CONTENT);
+                                                                 GroovyTokenTypes.mGSTRING_CONTENT, GroovyTokenTypes.mREGEX_CONTENT,
+                                                                 GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT);
 
-  private static final TokenSet STRING_END = TokenSet.create(mSTRING_LITERAL, mGSTRING_LITERAL,
-                                                             mGSTRING_END, mREGEX_END,
-                                                             mDOLLAR_SLASH_REGEX_END, mREGEX_LITERAL,
-                                                             mDOLLAR_SLASH_REGEX_LITERAL);
+  private static final TokenSet STRING_END = TokenSet.create(GroovyTokenTypes.mSTRING_LITERAL, GroovyTokenTypes.mGSTRING_LITERAL,
+                                                             GroovyTokenTypes.mGSTRING_END, GroovyTokenTypes.mREGEX_END,
+                                                             GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END, GroovyTokenTypes.mREGEX_LITERAL,
+                                                             GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL);
 
-  private static final TokenSet INNER_STRING_TOKENS = TokenSet.create(mGSTRING_BEGIN, mGSTRING_CONTENT,
-                                                                      mGSTRING_END, mREGEX_BEGIN,
-                                                                      mREGEX_CONTENT, mREGEX_END,
-                                                                      mDOLLAR_SLASH_REGEX_BEGIN,
-                                                                      mDOLLAR_SLASH_REGEX_CONTENT,
-                                                                      mDOLLAR_SLASH_REGEX_END,
+  private static final TokenSet INNER_STRING_TOKENS = TokenSet.create(GroovyTokenTypes.mGSTRING_BEGIN, GroovyTokenTypes.mGSTRING_CONTENT,
+                                                                      GroovyTokenTypes.mGSTRING_END, GroovyTokenTypes.mREGEX_BEGIN,
+                                                                      GroovyTokenTypes.mREGEX_CONTENT, GroovyTokenTypes.mREGEX_END,
+                                                                      GroovyTokenTypes.mDOLLAR_SLASH_REGEX_BEGIN,
+                                                                      GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT,
+                                                                      GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END,
                                                                       GroovyElementTypes.GSTRING_INJECTION,
                                                                       GroovyElementTypes.GSTRING_CONTENT);
 
@@ -155,7 +151,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
       while (!iterator.atEnd() && TokenType.WHITE_SPACE == iterator.getTokenType()) {
         iterator.retreat();
       }
-      boolean afterArrow = !iterator.atEnd() && iterator.getTokenType() == mCLOSABLE_BLOCK_OP;
+      boolean afterArrow = !iterator.atEnd() && iterator.getTokenType() == GroovyTokenTypes.mCLOSABLE_BLOCK_OP;
       if (afterArrow) {
         originalHandler.execute(editor, dataContext);
         PsiDocumentManager.getInstance(project).commitDocument(document);
@@ -166,11 +162,11 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
       while (!iterator.atEnd() && TokenType.WHITE_SPACE == iterator.getTokenType()) {
         iterator.advance();
       }
-      if (!iterator.atEnd() && mRCURLY == iterator.getTokenType()) {
+      if (!iterator.atEnd() && GroovyTokenTypes.mRCURLY == iterator.getTokenType()) {
         PsiDocumentManager.getInstance(project).commitDocument(document);
         final PsiElement element = file.findElementAt(iterator.getStart());
         if (element != null &&
-            element.getNode().getElementType() == mRCURLY &&
+            element.getNode().getElementType() == GroovyTokenTypes.mRCURLY &&
             element.getParent() instanceof GrClosableBlock &&
             docLength > caret && afterArrow) {
           return Result.DefaultForceIndent;
@@ -266,10 +262,10 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
       return false;
     }
     HighlighterIterator iterator = highlighter.createIterator(caret - 1);
-    if (mLBRACK == iterator.getTokenType()) {
+    if (GroovyTokenTypes.mLBRACK == iterator.getTokenType()) {
       if (text.length() > caret) {
         iterator = highlighter.createIterator(caret);
-        if (mRBRACK == iterator.getTokenType()) {
+        if (GroovyTokenTypes.mRBRACK == iterator.getTokenType()) {
           originalHandler.execute(editor, context);
           originalHandler.execute(editor, context);
           editor.getCaretModel().moveCaretRelatively(0, -1, false, false, true);
@@ -308,7 +304,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
 
     // For simple String literals like 'abc'
     CaretModel caretModel = editor.getCaretModel();
-    if (nodeElementType == mSTRING_LITERAL) {
+    if (nodeElementType == GroovyTokenTypes.mSTRING_LITERAL) {
       if (isSingleQuoteString(stringElement)) {
 
         //the case of print '\<caret>'
@@ -338,9 +334,9 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
 
     if (GSTRING_TOKENS.contains(nodeElementType) ||
         nodeElementType == GroovyElementTypes.GSTRING_CONTENT && GSTRING_TOKENS.contains(node.getFirstChildNode().getElementType()) ||
-        nodeElementType == mDOLLAR && node.getTreeParent().getTreeParent().getElementType() == GroovyElementTypes.GSTRING) {
+        nodeElementType == GroovyTokenTypes.mDOLLAR && node.getTreeParent().getTreeParent().getElementType() == GroovyElementTypes.GSTRING) {
       PsiElement parent = stringElement.getParent();
-      if (nodeElementType == mGSTRING_LITERAL) {
+      if (nodeElementType == GroovyTokenTypes.mGSTRING_LITERAL) {
         parent = stringElement;
       }
       else {
@@ -382,9 +378,9 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
 
     if (REGEX_TOKENS.contains(nodeElementType) ||
         nodeElementType == GroovyElementTypes.GSTRING_CONTENT && REGEX_TOKENS.contains(node.getFirstChildNode().getElementType()) ||
-        nodeElementType == mDOLLAR && node.getTreeParent().getTreeParent().getElementType() == GroovyElementTypes.REGEX) {
+        nodeElementType == GroovyTokenTypes.mDOLLAR && node.getTreeParent().getTreeParent().getElementType() == GroovyElementTypes.REGEX) {
       PsiElement parent = stringElement.getParent();
-      if (nodeElementType == mREGEX_LITERAL || nodeElementType == mDOLLAR_SLASH_REGEX_LITERAL) {
+      if (nodeElementType == GroovyTokenTypes.mREGEX_LITERAL || nodeElementType == GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL) {
         parent = stringElement;
       }
       else {

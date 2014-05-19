@@ -51,8 +51,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kSUPER;
-
 /**
  * @author Maxim.Medvedev
  *         Date: Apr 18, 2009 3:21:45 PM

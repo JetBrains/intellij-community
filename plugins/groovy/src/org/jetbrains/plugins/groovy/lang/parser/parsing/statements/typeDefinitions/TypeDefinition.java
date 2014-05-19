@@ -22,16 +22,13 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members.EnumConstant;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeParameters;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
-
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kINTERFACE;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kTRAIT;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -45,51 +42,51 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kTRAIT;
  *                          | AnnotationDefinition 
  */
 
-public class TypeDefinition implements GroovyElementTypes {
+public class TypeDefinition {
   public static IElementType parseAfterModifiers(PsiBuilder builder, GroovyParser parser) {
-    if (builder.getTokenType() == kCLASS) {
+    if (builder.getTokenType() == GroovyTokenTypes.kCLASS) {
       builder.advanceLexer();
       if (parseAfterKeyword(builder, parser, ClassType.CLASS)) {
-        return CLASS_DEFINITION;
+        return GroovyElementTypes.CLASS_DEFINITION;
       }
     }
 
-    if (builder.getTokenType() == kINTERFACE) {
+    if (builder.getTokenType() == GroovyTokenTypes.kINTERFACE) {
       builder.advanceLexer();
       if (parseAfterKeyword(builder, parser, ClassType.INTERFACE)) {
-        return INTERFACE_DEFINITION;
+        return GroovyElementTypes.INTERFACE_DEFINITION;
       }
     }
 
-    if (builder.getTokenType() == kENUM) {
+    if (builder.getTokenType() == GroovyTokenTypes.kENUM) {
       builder.advanceLexer();
       if (parseAfterKeyword(builder, parser, ClassType.ENUM)) {
-        return ENUM_DEFINITION;
+        return GroovyElementTypes.ENUM_DEFINITION;
       }
     }
 
-    if (builder.getTokenType() == kTRAIT) {
+    if (builder.getTokenType() == GroovyTokenTypes.kTRAIT) {
       builder.advanceLexer();
       if (parseAfterKeyword(builder, parser, ClassType.TRAIT)) {
-        return TRAIT_DEFINITION;
+        return GroovyElementTypes.TRAIT_DEFINITION;
       }
     }
 
-    if (builder.getTokenType() == mAT) {
+    if (builder.getTokenType() == GroovyTokenTypes.mAT) {
       builder.advanceLexer();
-      if (builder.getTokenType() == kINTERFACE) {
+      if (builder.getTokenType() == GroovyTokenTypes.kINTERFACE) {
         builder.advanceLexer();
         if (parseAfterKeyword(builder, parser, ClassType.ANNOTATION)) {
-          return ANNOTATION_DEFINITION;
+          return GroovyElementTypes.ANNOTATION_DEFINITION;
         }
       }
     }
 
-    return WRONGWAY;
+    return GroovyElementTypes.WRONGWAY;
   }
 
   private static boolean parseAfterKeyword(final PsiBuilder builder, final GroovyParser parser, final ClassType type) {
-    if (builder.getTokenType() != mIDENT) {
+    if (builder.getTokenType() != GroovyTokenTypes.mIDENT) {
       builder.error(GroovyBundle.message("identifier.expected"));
       return false;
     }
@@ -98,17 +95,17 @@ public class TypeDefinition implements GroovyElementTypes {
     assert name != null;
     builder.advanceLexer();
 
-    ParserUtils.getToken(builder, mNLS);
+    ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
     TypeParameters.parse(builder);
 
-    ParserUtils.getToken(builder, mNLS);
-    ReferenceElement.parseReferenceList(builder, kEXTENDS, EXTENDS_CLAUSE, type);
+    ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
+    ReferenceElement.parseReferenceList(builder, GroovyTokenTypes.kEXTENDS, GroovyElementTypes.EXTENDS_CLAUSE, type);
 
-    ParserUtils.getToken(builder, mNLS);
-    ReferenceElement.parseReferenceList(builder, kIMPLEMENTS, IMPLEMENTS_CLAUSE, type);
+    ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
+    ReferenceElement.parseReferenceList(builder, GroovyTokenTypes.kIMPLEMENTS, GroovyElementTypes.IMPLEMENTS_CLAUSE, type);
 
-    ParserUtils.getToken(builder, mNLS);
-    if (builder.getTokenType() == mLCURLY) {
+    ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
+    if (builder.getTokenType() == GroovyTokenTypes.mLCURLY) {
       if (type == ClassType.ENUM) {
         parseEnumBody(builder, name, parser);
       }
@@ -129,18 +126,18 @@ public class TypeDefinition implements GroovyElementTypes {
     //allow errors
     PsiBuilder.Marker cbMarker = builder.mark();
 
-    if (!ParserUtils.getToken(builder, mLCURLY)) {
+    if (!ParserUtils.getToken(builder, GroovyTokenTypes.mLCURLY)) {
       builder.error(GroovyBundle.message("lcurly.expected"));
       cbMarker.rollbackTo();
-      return WRONGWAY;
+      return GroovyElementTypes.WRONGWAY;
     }
 
     parseMembers(builder, className, parser, isInAnnotation);
 
-    ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
+    ParserUtils.getToken(builder, GroovyTokenTypes.mRCURLY, GroovyBundle.message("rcurly.expected"));
 
-    cbMarker.done(CLASS_BODY);
-    return CLASS_BODY;
+    cbMarker.done(GroovyElementTypes.CLASS_BODY);
+    return GroovyElementTypes.CLASS_BODY;
   }
 
   private static void parseMembers(@NotNull PsiBuilder builder,
@@ -149,12 +146,12 @@ public class TypeDefinition implements GroovyElementTypes {
                                    final boolean isInAnnotation) {
     Separators.parse(builder);
 
-    while (!builder.eof() && builder.getTokenType() != mRCURLY) {
+    while (!builder.eof() && builder.getTokenType() != GroovyTokenTypes.mRCURLY) {
       if (!parser.parseDeclaration(builder, true, isInAnnotation, className)) {
         builder.advanceLexer();
         builder.error(GroovyBundle.message("separator.or.rcurly.expected"));
       }
-      if (builder.getTokenType() == mRCURLY) {
+      if (builder.getTokenType() == GroovyTokenTypes.mRCURLY) {
         break;
       }
       if (!Separators.parse(builder)) {
@@ -168,24 +165,24 @@ public class TypeDefinition implements GroovyElementTypes {
                                             @NotNull GroovyParser parser) {
     PsiBuilder.Marker ebMarker = builder.mark();
 
-    if (!ParserUtils.getToken(builder, mLCURLY)) {
+    if (!ParserUtils.getToken(builder, GroovyTokenTypes.mLCURLY)) {
       ebMarker.rollbackTo();
-      return WRONGWAY;
+      return GroovyElementTypes.WRONGWAY;
     }
 
-    ParserUtils.getToken(builder, mNLS);
+    ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
 
     if (EnumConstant.parseConstantList(builder, parser)) {
-      if (!ParserUtils.lookAhead(builder, mRCURLY)) {
-        ParserUtils.getToken(builder, TokenSet.create(mNLS, mSEMI), GroovyBundle.message("separator.or.rcurly.expected"));
+      if (!ParserUtils.lookAhead(builder, GroovyTokenTypes.mRCURLY)) {
+        ParserUtils.getToken(builder, TokenSet.create(GroovyTokenTypes.mNLS, GroovyTokenTypes.mSEMI), GroovyBundle.message("separator.or.rcurly.expected"));
       }
     }
 
     parseMembers(builder, enumName, parser, false);
 
-    ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
+    ParserUtils.getToken(builder, GroovyTokenTypes.mRCURLY, GroovyBundle.message("rcurly.expected"));
 
-    ebMarker.done(ENUM_BODY);
-    return ENUM_BODY;
+    ebMarker.done(GroovyElementTypes.ENUM_BODY);
+    return GroovyElementTypes.ENUM_BODY;
   }
 }

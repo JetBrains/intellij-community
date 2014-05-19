@@ -17,30 +17,35 @@
 package org.jetbrains.plugins.groovy.formatter.models.spacing;
 
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 /**
  * @author ilyas
  */
-public interface SpacingTokens extends GroovyElementTypes {
+public interface SpacingTokens {
 
-  TokenSet LEFT_BRACES = TokenSet.create(mLPAREN, mLBRACK, mLCURLY);
-  TokenSet RIGHT_BRACES = TokenSet.create(mRPAREN, mRBRACK, mRCURLY);
+  TokenSet LEFT_BRACES = TokenSet.create(GroovyTokenTypes.mLPAREN, GroovyTokenTypes.mLBRACK, GroovyTokenTypes.mLCURLY);
+  TokenSet RIGHT_BRACES = TokenSet.create(GroovyTokenTypes.mRPAREN, GroovyTokenTypes.mRBRACK, GroovyTokenTypes.mRCURLY);
 
-  TokenSet INDEX_OR_ARRAY = TokenSet.create(PATH_INDEX_PROPERTY, ARRAY_TYPE, ARRAY_DECLARATOR);
+  TokenSet INDEX_OR_ARRAY = TokenSet.create(GroovyElementTypes.PATH_INDEX_PROPERTY, GroovyElementTypes.ARRAY_TYPE,
+                                            GroovyElementTypes.ARRAY_DECLARATOR);
 
-  TokenSet PREFIXES = TokenSet.create(mDEC, mINC, mAT, mBNOT, mLNOT);
-  TokenSet POSTFIXES = TokenSet.create(mDEC, mINC);
-  TokenSet PREFIXES_OPTIONAL = TokenSet.create(mPLUS, mMINUS);
+  TokenSet PREFIXES = TokenSet.create(GroovyTokenTypes.mDEC, GroovyTokenTypes.mINC, GroovyTokenTypes.mAT, GroovyTokenTypes.mBNOT,
+                                      GroovyTokenTypes.mLNOT);
+  TokenSet POSTFIXES = TokenSet.create(GroovyTokenTypes.mDEC, GroovyTokenTypes.mINC);
+  TokenSet PREFIXES_OPTIONAL = TokenSet.create(GroovyTokenTypes.mPLUS, GroovyTokenTypes.mMINUS);
 
-  TokenSet RANGES = TokenSet.create(mRANGE_EXCLUSIVE, mRANGE_INCLUSIVE);
+  TokenSet RANGES = TokenSet.create(GroovyTokenTypes.mRANGE_EXCLUSIVE, GroovyTokenTypes.mRANGE_INCLUSIVE);
 
-  TokenSet LOGICAL_OPERATORS = TokenSet.create(mLAND, mLOR);
-  TokenSet EQUALITY_OPERATORS = TokenSet.create(mEQUAL, mNOT_EQUAL);
-  TokenSet RELATIONAL_OPERATORS = TokenSet.create(mGT, mGE, mLT, mLE, mCOMPARE_TO);
-  TokenSet BITWISE_OPERATORS = TokenSet.create(mBAND, mBOR, mBXOR);
-  TokenSet ADDITIVE_OPERATORS = TokenSet.create(mPLUS, mMINUS);
-  TokenSet MULTIPLICATIVE_OPERATORS = TokenSet.create(mSTAR, mDIV, mMOD);
-  TokenSet SHIFT_OPERATORS = TokenSet.create(COMPOSITE_LSHIFT_SIGN, COMPOSITE_RSHIFT_SIGN, COMPOSITE_TRIPLE_SHIFT_SIGN);
-  TokenSet REGEX_OPERATORS = TokenSet.create(mREGEX_FIND, mREGEX_MATCH);
+  TokenSet LOGICAL_OPERATORS = TokenSet.create(GroovyTokenTypes.mLAND, GroovyTokenTypes.mLOR);
+  TokenSet EQUALITY_OPERATORS = TokenSet.create(GroovyTokenTypes.mEQUAL, GroovyTokenTypes.mNOT_EQUAL);
+  TokenSet RELATIONAL_OPERATORS = TokenSet.create(GroovyTokenTypes.mGT, GroovyTokenTypes.mGE, GroovyTokenTypes.mLT, GroovyTokenTypes.mLE,
+                                                  GroovyTokenTypes.mCOMPARE_TO);
+  TokenSet BITWISE_OPERATORS = TokenSet.create(GroovyTokenTypes.mBAND, GroovyTokenTypes.mBOR, GroovyTokenTypes.mBXOR);
+  TokenSet ADDITIVE_OPERATORS = TokenSet.create(GroovyTokenTypes.mPLUS, GroovyTokenTypes.mMINUS);
+  TokenSet MULTIPLICATIVE_OPERATORS = TokenSet.create(GroovyTokenTypes.mSTAR, GroovyTokenTypes.mDIV, GroovyTokenTypes.mMOD);
+  TokenSet SHIFT_OPERATORS = TokenSet.create(GroovyElementTypes.COMPOSITE_LSHIFT_SIGN, GroovyElementTypes.COMPOSITE_RSHIFT_SIGN,
+                                             GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN);
+  TokenSet REGEX_OPERATORS = TokenSet.create(GroovyTokenTypes.mREGEX_FIND, GroovyTokenTypes.mREGEX_MATCH);
 }

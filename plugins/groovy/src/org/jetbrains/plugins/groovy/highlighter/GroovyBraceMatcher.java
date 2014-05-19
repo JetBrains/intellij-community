@@ -24,12 +24,9 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
-
-import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSEMI;
 
 /**
  * @author ilyas
@@ -37,16 +34,16 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSEMI;
 public class GroovyBraceMatcher implements PairedBraceMatcher {
 
   private static final BracePair[] PAIRS = {
-    new BracePair(mLPAREN, mRPAREN, false),
-    new BracePair(mLBRACK, mRBRACK, false),
-    new BracePair(mLCURLY, mRCURLY, true),
+    new BracePair(GroovyTokenTypes.mLPAREN, GroovyTokenTypes.mRPAREN, false),
+    new BracePair(GroovyTokenTypes.mLBRACK, GroovyTokenTypes.mRBRACK, false),
+    new BracePair(GroovyTokenTypes.mLCURLY, GroovyTokenTypes.mRCURLY, true),
 
-    new BracePair(mGDOC_INLINE_TAG_START, mGDOC_INLINE_TAG_END, false),
-    new BracePair(mGDOC_TAG_VALUE_LPAREN, mGDOC_TAG_VALUE_RPAREN, false),
+    new BracePair(GroovyDocTokenTypes.mGDOC_INLINE_TAG_START, GroovyDocTokenTypes.mGDOC_INLINE_TAG_END, false),
+    new BracePair(GroovyDocTokenTypes.mGDOC_TAG_VALUE_LPAREN, GroovyDocTokenTypes.mGDOC_TAG_VALUE_RPAREN, false),
 
     new BracePair(GroovyTokenTypes.mGSTRING_BEGIN, GroovyTokenTypes.mGSTRING_END, false),
-    new BracePair(GroovyTokenTypes.mREGEX_BEGIN, mREGEX_END, false),
-    new BracePair(mDOLLAR_SLASH_REGEX_BEGIN, mDOLLAR_SLASH_REGEX_END, false),
+    new BracePair(GroovyTokenTypes.mREGEX_BEGIN, GroovyTokenTypes.mREGEX_END, false),
+    new BracePair(GroovyTokenTypes.mDOLLAR_SLASH_REGEX_BEGIN, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END, false),
   };
 
   @Override
@@ -58,14 +55,14 @@ public class GroovyBraceMatcher implements PairedBraceMatcher {
   public boolean isPairedBracesAllowedBeforeType(@NotNull IElementType braceType, @Nullable IElementType tokenType) {
     return tokenType == null
            || tokenType == TokenType.WHITE_SPACE
-           || tokenType == mSEMI
-           || tokenType == mCOMMA
-           || tokenType == mRPAREN
-           || tokenType == mRBRACK
-           || tokenType == mRCURLY
-           || tokenType == mGSTRING_BEGIN
-           || tokenType == mREGEX_BEGIN
-           || tokenType == mDOLLAR_SLASH_REGEX_BEGIN
+           || tokenType == GroovyTokenTypes.mSEMI
+           || tokenType == GroovyTokenTypes.mCOMMA
+           || tokenType == GroovyTokenTypes.mRPAREN
+           || tokenType == GroovyTokenTypes.mRBRACK
+           || tokenType == GroovyTokenTypes.mRCURLY
+           || tokenType == GroovyTokenTypes.mGSTRING_BEGIN
+           || tokenType == GroovyTokenTypes.mREGEX_BEGIN
+           || tokenType == GroovyTokenTypes.mDOLLAR_SLASH_REGEX_BEGIN
            || TokenSets.COMMENT_SET.contains(tokenType)
            || tokenType.getLanguage() != GroovyLanguage.INSTANCE;
   }

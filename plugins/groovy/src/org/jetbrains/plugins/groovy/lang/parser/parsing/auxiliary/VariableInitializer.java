@@ -19,7 +19,6 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary;
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -27,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author: ilyas
  */
-public class VariableInitializer implements GroovyElementTypes {
+public class VariableInitializer {
   public static void parse(PsiBuilder builder, GroovyParser parser) {
     if (ParserUtils.getToken(builder, GroovyTokenTypes.mASSIGN)) {
       ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);

@@ -56,9 +56,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCLOSABLE_BLOCK_OP;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCLOSABLE_BLOCK_OP;
-
 /**
  * @author ilyas
  */
@@ -267,7 +264,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
       final GrParameterList newParamList = (GrParameterList)addAfter(parameterList, getLBrace());
       parameterList.delete();
       ASTNode next = newParamList.getNode().getTreeNext();
-      getNode().addLeaf(mCLOSABLE_BLOCK_OP, "->", next);
+      getNode().addLeaf(GroovyTokenTypes.mCLOSABLE_BLOCK_OP, "->", next);
       return (GrParameter)newParamList.add(parameter);
     }
 
