@@ -21,9 +21,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.*;
-import org.jetbrains.idea.svn.api.ClientFactory;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnConfiguration;
+import org.jetbrains.idea.svn.SvnRevisionNumber;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -119,6 +122,8 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
   }
 
   public boolean validateOptions(final Collection<FilePath> roots) {
+    // TODO: Check if this logic is useful and needs to be uncommented.
+    // TODO: Also Check if setXxx() in UpdateRootInfo are thread safe.
     /*final SvnConfiguration configuration = SvnConfiguration.getInstance(myVcs.getProject());
 
     final Map<File,UpdateRootInfo> map = configuration.getUpdateInfosMap();
@@ -132,7 +137,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
         final SVNURL url = value.getUrl();
         if (url != null && (! url.equals(getSourceUrl(myVcs, root.getIOFile())))) {
           // switch
-          final SVNRevision updateRevision = correctRevision(value, url, value.getRevision());
+          final SVNRevision updateRevision = correctRevision(value);
           return true;
           // should be turned on after bugfix with copy url
           //return checkAncestry(ioFile, url, updateRevision);
@@ -147,23 +152,20 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
     return true;
   }
 
-  private SVNRevision correctRevision(final UpdateRootInfo value, final SVNURL url, final SVNRevision updateRevision) throws SVNException {
+  private SVNRevision correctRevision(@NotNull UpdateRootInfo value) throws SVNException {
     if (SVNRevision.HEAD.equals(value.getRevision())) {
       // find acual revision to update to (a bug if just say head in switch)
       SVNRepository repository = null;
       try {
-        repository = myVcs.getSvnKitManager().createRepository(url);
-        final long longRevision = repository.getLatestRevision();
-        final SVNRevision newRevision = SVNRevision.create(longRevision);
-        value.setRevision(newRevision);
-        return newRevision;
+        repository = myVcs.getSvnKitManager().createRepository(value.getUrl());
+        value.setRevision(SVNRevision.create(repository.getLatestRevision()));
       } finally {
         if (repository != null) {
           repository.closeSession();
         }
       }
     }
-    return updateRevision;
+    return value.getRevision();
   }
 
   // false - do not do update
