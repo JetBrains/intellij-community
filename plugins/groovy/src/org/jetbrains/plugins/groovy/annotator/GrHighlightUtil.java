@@ -30,6 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -134,8 +135,8 @@ public class GrHighlightUtil {
 
       if (((PsiMethod)resolved).isConstructor()) {
         if (refElement != null) {
-          if (refElement.getNode().getElementType() == kTHIS || //don't highlight this() or super()
-              refElement.getNode().getElementType() == kSUPER) {
+          if (refElement.getNode().getElementType() == GroovyTokenTypes.kTHIS || //don't highlight this() or super()
+              refElement.getNode().getElementType() == GroovyTokenTypes.kSUPER) {
             return null;
           }
           else {

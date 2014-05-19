@@ -31,6 +31,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -121,7 +122,7 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
 
   @Nullable
   private static TextAttributesKey getDeclarationAttribute(PsiElement element) {
-    if (element.getParent() instanceof GrAnnotation && element.getNode().getElementType() == mAT) {
+    if (element.getParent() instanceof GrAnnotation && element.getNode().getElementType() == GroovyTokenTypes.mAT) {
       return DefaultHighlighter.ANNOTATION;
     }
 
