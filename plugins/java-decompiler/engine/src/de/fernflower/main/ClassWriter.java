@@ -346,15 +346,28 @@ public class ClassWriter {
 			}
 			
 			// class annotations
-			List<AnnotationExprent> lstAnn = getAllAnnotations(cl.getAttributes()); 
-			for(AnnotationExprent annexpr : lstAnn) {
-				if("java/lang/Deprecated".equals(annexpr.getClassname())) {
-					isDeprecated = false;
-				}
-				writer.write(annexpr.toJava(indent));
-				writer.newLine();
-			}
-			
+      boolean hasDeprecatedAnno = false;
+      List<AnnotationExprent> lstAnn = getAllAnnotations(cl.getAttributes());
+      for(AnnotationExprent annexpr : lstAnn) {
+        if("java/lang/Deprecated".equals(annexpr.getClassname())) {
+          hasDeprecatedAnno = true;
+        }
+      }
+      if ((isDeprecated || hasDeprecatedAnno) && DecompilerContext.getOption(IFernflowerPreferences.DEPRECATED_COMMENT)) {
+        writer.write(indstr);
+        writer.write("/** @deprecated */");
+        writer.newLine();
+      }
+      if(isDeprecated && !hasDeprecatedAnno) {
+        writer.write(indstr);
+        writer.write("@Deprecated");
+        writer.newLine();
+      }
+      for(AnnotationExprent annexpr : lstAnn) {
+        writer.write(annexpr.toJava(indent));
+        writer.newLine();
+      }
+
 			boolean isSynthetic = (flags & CodeConstants.ACC_SYNTHETIC) != 0 || cl.getAttributes().containsKey("Synthetic");
 			
 			if(isSynthetic) {
@@ -362,19 +375,7 @@ public class ClassWriter {
 				writer.write("// $FF: synthetic class");
 				writer.newLine();
 			}
-			
-			if(isDeprecated) {
-				if(DecompilerContext.getOption(IFernflowerPreferences.DEPRECATED_COMMENT)) { // special comment for JB
-					writer.write(indstr);
-					writer.write("/** @deprecated */");
-					writer.newLine();
-				}
-				
-				writer.write(indstr);
-				writer.write("@Deprecated");
-				writer.newLine();
-			}
-			
+
 			writer.write(indstr);
 			
 			if(isEnum) {
@@ -488,33 +489,34 @@ public class ClassWriter {
 		boolean isDeprecated = fd.getAttributes().containsKey("Deprecated");
 		
 		// field annotations
-		List<AnnotationExprent> lstAnn = getAllAnnotations(fd.getAttributes()); 
-		for(AnnotationExprent annexpr : lstAnn) {
-			if("java/lang/Deprecated".equals(annexpr.getClassname())) {
-				isDeprecated = false;
-			}
-			writer.write(annexpr.toJava(indent));
-			writer.newLine();
-		}
-		
+    boolean hasDeprecatedAnno = false;
+    List<AnnotationExprent> lstAnn = getAllAnnotations(fd.getAttributes());
+    for(AnnotationExprent annexpr : lstAnn) {
+      if("java/lang/Deprecated".equals(annexpr.getClassname())) {
+        hasDeprecatedAnno = true;
+      }
+    }
+    if ((isDeprecated || hasDeprecatedAnno) && DecompilerContext.getOption(IFernflowerPreferences.DEPRECATED_COMMENT)) {
+      writer.write(indstr);
+      writer.write("/** @deprecated */");
+      writer.newLine();
+    }
+    if(isDeprecated && !hasDeprecatedAnno) {
+      writer.write(indstr);
+      writer.write("@Deprecated");
+      writer.newLine();
+    }
+    for(AnnotationExprent annexpr : lstAnn) {
+      writer.write(annexpr.toJava(indent));
+      writer.newLine();
+    }
+
 		boolean isSynthetic = (flags & CodeConstants.ACC_SYNTHETIC) != 0 || fd.getAttributes().containsKey("Synthetic");
 		boolean isEnum = DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM) && (flags & CodeConstants.ACC_ENUM) != 0;
 		
 		if(isSynthetic) {
 			writer.write(indstr);
 			writer.write("// $FF: synthetic field");
-			writer.newLine();
-		}
-		
-		if(isDeprecated) {
-			if(DecompilerContext.getOption(IFernflowerPreferences.DEPRECATED_COMMENT)) { // special comment for JB
-				writer.write(indstr);
-				writer.write("/** @deprecated */");
-				writer.newLine();
-			}
-			
-			writer.write(indstr);
-			writer.write("@Deprecated");
 			writer.newLine();
 		}
 
@@ -723,16 +725,29 @@ public class ClassWriter {
 				bufstrwriter.newLine();
 			}
 		}
-		
-		// method annotations
-		List<AnnotationExprent> lstAnn = getAllAnnotations(mt.getAttributes()); 
-		for(AnnotationExprent annexpr : lstAnn) {
-			if("java/lang/Deprecated".equals(annexpr.getClassname())) {
-				isDeprecated = false;
-			}
-			bufstrwriter.write(annexpr.toJava(indent));
-			bufstrwriter.newLine();
-		}
+
+    // method annotations
+    boolean hasDeprecatedAnno = false;
+    List<AnnotationExprent> lstAnn = getAllAnnotations(mt.getAttributes());
+    for(AnnotationExprent annexpr : lstAnn) {
+      if("java/lang/Deprecated".equals(annexpr.getClassname())) {
+        hasDeprecatedAnno = true;
+      }
+    }
+    if ((isDeprecated || hasDeprecatedAnno) && DecompilerContext.getOption(IFernflowerPreferences.DEPRECATED_COMMENT)) {
+      writer.write(indstr);
+      writer.write("/** @deprecated */");
+      writer.newLine();
+    }
+    if(isDeprecated && !hasDeprecatedAnno) {
+      bufstrwriter.write(indstr);
+      bufstrwriter.write("@Deprecated");
+      bufstrwriter.newLine();
+    }
+    for(AnnotationExprent annexpr : lstAnn) {
+      bufstrwriter.write(annexpr.toJava(indent));
+      bufstrwriter.newLine();
+    }
 
 		boolean isSynthetic = (flags & CodeConstants.ACC_SYNTHETIC) != 0 || mt.getAttributes().containsKey("Synthetic");
 		boolean isBridge = (flags & CodeConstants.ACC_BRIDGE) != 0;
@@ -748,19 +763,7 @@ public class ClassWriter {
 			bufstrwriter.write("// $FF: bridge method");
 			bufstrwriter.newLine();
 		}
-		
-		if(isDeprecated) {
-			if(DecompilerContext.getOption(IFernflowerPreferences.DEPRECATED_COMMENT)) { // special comment for JB
-				writer.write(indstr);
-				writer.write("/** @deprecated */");
-				writer.newLine();
-			}
-			
-			bufstrwriter.write(indstr);
-			bufstrwriter.write("@Deprecated");
-			bufstrwriter.newLine();
-		}
-		
+
 		bufstrwriter.write(indstr);
 		for(int i=0;i<modval_meth.length;i++) {
 			if(!isInterface || !mod_notinterface_meth.contains(modval_meth[i])) {
