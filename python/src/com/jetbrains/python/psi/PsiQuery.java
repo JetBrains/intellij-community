@@ -62,7 +62,9 @@ public class PsiQuery {
 
 
   /**
+   * TODO: Support types?
    * Filter children by function call
+  * @return {@link com.jetbrains.python.psi.PsiQuery} backed by {@link com.jetbrains.python.psi.PyCallExpression}
    */
   @NotNull
   public PsiQuery childrenCall(@NotNull final FQNamesProvider name) {
