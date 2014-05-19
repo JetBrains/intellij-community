@@ -35,11 +35,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.HintHint;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.Producer;
+import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -92,7 +94,9 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
         .setContentActive(true)
         .setExplicitClose(true)
         .setShowImmediately(true)
-        .setPreferredPosition(position.second == HintManager.ABOVE ? Balloon.Position.above : Balloon.Position.below);
+        .setPreferredPosition(position.second == HintManager.ABOVE ? Balloon.Position.above : Balloon.Position.below)
+        .setTextBg(myParentEditor.getColorsScheme().getDefaultBackground())
+        .setBorderInsets(new Insets(1, 1, 1, 1));
 
     int hintFlags = HintManager.HIDE_BY_OTHER_HINT | HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING;
     HintManagerImpl.getInstanceImpl().showEditorHint(this, myParentEditor, position.first, hintFlags, 0, false, hintHint);
@@ -155,6 +159,7 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
     settings.setVirtualSpace(false);
     settings.setWheelFontChangeEnabled(false);
     previewEditor.setCaretEnabled(false);
+    previewEditor.setBorder(IdeBorderFactory.createEmptyBorder());
 
     EditorColorsScheme colorsScheme = previewEditor.getColorsScheme();
     colorsScheme.setColor(EditorColors.CARET_ROW_COLOR, null);
@@ -170,6 +175,11 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
         Dimension contentSize = previewEditor.getContentSize();
         return new Dimension(maxWidth > contentSize.getWidth() ? (int)size.getWidth() : maxWidth,
                              maxHeight > contentSize.getHeight() ? (int)size.getHeight() : maxHeight);
+      }
+
+      @Override
+      public Insets getInsets() {
+        return JBInsets.NONE;
       }
     };
     panel.add(previewEditor.getComponent(), BorderLayout.CENTER);
