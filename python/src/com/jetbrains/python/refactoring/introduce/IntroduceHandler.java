@@ -320,19 +320,19 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     performActionOnElement(operation);
   }
 
-  private boolean breaksStringFormatting(@NotNull String s, @NotNull TextRange range) {
+  private static boolean breaksStringFormatting(@NotNull String s, @NotNull TextRange range) {
     return breaksRanges(substitutionsToRanges(filterSubstitutions(parsePercentFormat(s))), range);
   }
 
-  private boolean breaksNewStyleStringFormatting(@NotNull String s, @NotNull TextRange range) {
+  private static boolean breaksNewStyleStringFormatting(@NotNull String s, @NotNull TextRange range) {
     return breaksRanges(substitutionsToRanges(filterSubstitutions(parseNewStyleFormat(s))), range);
   }
 
-  private boolean breaksStringEscaping(@NotNull String s, @NotNull TextRange range) {
+  private static boolean breaksStringEscaping(@NotNull String s, @NotNull TextRange range) {
     return breaksRanges(getEscapeRanges(s), range);
   }
 
-  private boolean breaksRanges(@NotNull List<TextRange> ranges, @NotNull TextRange range) {
+  private static boolean breaksRanges(@NotNull List<TextRange> ranges, @NotNull TextRange range) {
     for (TextRange r : ranges) {
       if (range.contains(r)) {
         continue;
@@ -397,7 +397,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   protected boolean isValidIntroduceContext(PsiElement element) {
-    PyDecorator decorator = PsiTreeUtil.getParentOfType(element, PyDecorator.class);
+    final PyDecorator decorator = PsiTreeUtil.getParentOfType(element, PyDecorator.class);
     if (decorator != null && PsiTreeUtil.isAncestor(decorator.getCallee(), element, false)) {
       return false;
     }
@@ -407,6 +407,10 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   private static boolean isValidIntroduceVariant(PsiElement element) {
     final PyCallExpression call = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
     if (call != null && PsiTreeUtil.isAncestor(call.getCallee(), element, false)) {
+      return false;
+    }
+    final PyComprehensionElement comprehension = PsiTreeUtil.getParentOfType(element, PyComprehensionElement.class, true);
+    if (comprehension != null) {
       return false;
     }
     return true;
@@ -528,7 +532,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
         final Pair<String, String> quotes = detectedQuotes != null ? detectedQuotes : Pair.create("'", "'");
         final TextRange range = data.getSecond();
         final String substring = range.substring(text);
-        myResult.append(quotes.getFirst() + substring + quotes.getSecond());
+        myResult.append(quotes.getFirst()).append(substring).append(quotes.getSecond());
       }
       else {
         ASTNode child = node.getNode().getFirstChildNode();
@@ -596,7 +600,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     final PyExpression expression = operation.getInitializer();
     final Project project = operation.getProject();
     return new WriteCommandAction<PsiElement>(project, expression.getContainingFile()) {
-      protected void run(final Result<PsiElement> result) throws Throwable {
+      protected void run(@NotNull final Result<PsiElement> result) throws Throwable {
         result.setResult(addDeclaration(operation, declaration));
 
         PyExpression newExpression = createExpression(project, operation.getName(), declaration);
