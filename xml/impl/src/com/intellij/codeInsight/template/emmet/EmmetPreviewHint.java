@@ -41,7 +41,6 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.Producer;
-import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -179,9 +178,10 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
 
       @Override
       public Insets getInsets() {
-        return JBInsets.NONE;
+        return new Insets(1, 2, 0, 0);
       }
     };
+    panel.setBackground(previewEditor.getBackgroundColor());
     panel.add(previewEditor.getComponent(), BorderLayout.CENTER);
     return new EmmetPreviewHint(panel, previewEditor, parentEditor);
   }
