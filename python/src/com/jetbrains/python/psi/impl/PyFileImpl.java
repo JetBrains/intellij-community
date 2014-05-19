@@ -712,14 +712,16 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   public boolean calculateImportFromFuture(FutureFeature feature) {
-    final List<PyFromImportStatement> fromImports = getFromImports();
-    for (PyFromImportStatement fromImport : fromImports) {
-      if (fromImport.isFromFuture()) {
-        final PyImportElement[] pyImportElements = fromImport.getImportElements();
-        for (PyImportElement element : pyImportElements) {
-          final QualifiedName qName = element.getImportedQName();
-          if (qName != null && qName.matches(feature.toString())) {
-            return true;
+    if (getText().contains(feature.toString())) {
+      final List<PyFromImportStatement> fromImports = getFromImports();
+      for (PyFromImportStatement fromImport : fromImports) {
+        if (fromImport.isFromFuture()) {
+          final PyImportElement[] pyImportElements = fromImport.getImportElements();
+          for (PyImportElement element : pyImportElements) {
+            final QualifiedName qName = element.getImportedQName();
+            if (qName != null && qName.matches(feature.toString())) {
+              return true;
+            }
           }
         }
       }
