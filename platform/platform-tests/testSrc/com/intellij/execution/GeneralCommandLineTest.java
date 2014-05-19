@@ -162,10 +162,27 @@ public class GeneralCommandLineTest {
 
   @Test
   public void winShellScriptQuoting() throws Exception {
-    String param = "a&b";
-    GeneralCommandLine commandLine = new GeneralCommandLine("script.cmd", param);
-    String text = commandLine.getPreparedCommandLine(Platform.WINDOWS);
-    assertEquals("script.cmd\n\"" + param + "\"", text);
+    if (!SystemInfo.isWindows) {
+      return;
+    }
+    String scriptPrefix = "my_script";
+    for (String cmdScriptExt : new String[] {".cmd", ".bat"}) {
+      File script = ExecUtil.createTempExecutableScript(
+        scriptPrefix, cmdScriptExt,
+        "@echo %1\n"
+      );
+      String param = "a&b";
+      GeneralCommandLine commandLine = new GeneralCommandLine(script.getAbsolutePath(), param);
+      String text = commandLine.getPreparedCommandLine(Platform.WINDOWS);
+      assertEquals(commandLine.getExePath() + "\n" + StringUtil.wrapWithDoubleQuote(param), text);
+      try {
+        String output = execAndGetOutput(commandLine, null);
+        assertEquals(StringUtil.wrapWithDoubleQuote(param), output.trim());
+      }
+      finally {
+        FileUtil.delete(script);
+      }
+    }
   }
 
   @Test
