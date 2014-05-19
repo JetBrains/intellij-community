@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrPsiTypeStub;
 /**
  * @author Sergey Evdokimov
  */
-public class GrMethodWrapper extends GrLightMethodBuilder {
+public class GrMethodWrapper extends GrLightMethodBuilder implements PsiMirrorElement {
   private static final PsiType TYPE_MARKER = new GrPsiTypeStub() {
     @Override
     public boolean isValid() {
@@ -93,5 +93,11 @@ public class GrMethodWrapper extends GrLightMethodBuilder {
 
   public static GrLightMethodBuilder wrap(GrMethod method, PsiSubstitutor substitutor) {
     return new GrMethodWrapper(method, substitutor);
+  }
+
+  @NotNull
+  @Override
+  public PsiMethod getPrototype() {
+    return myWrappedMethod;
   }
 }

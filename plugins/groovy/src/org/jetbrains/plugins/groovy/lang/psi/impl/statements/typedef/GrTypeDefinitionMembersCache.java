@@ -205,9 +205,8 @@ public class GrTypeDefinitionMembersCache {
           }
         }
 
-        PsiClassType[] types = trait.getSuperTypes();
-        for (PsiClassType type : types) {
-          PsiClassType.ClassResolveResult resolveResult = type.resolveGenerics();
+        List<PsiClassType.ClassResolveResult> traits = getSuperTraitsByCorrectOrder(trait.getSuperTypes());
+        for (PsiClassType.ClassResolveResult resolveResult :traits) {
           PsiClass superClass = resolveResult.getElement();
           if (PsiImplUtil.isTrait(superClass)) {
             final PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, trait, substitutor);
@@ -225,7 +224,7 @@ public class GrTypeDefinitionMembersCache {
       if (clause == null) return Collections.emptyList();
       PsiClassType[] types = clause.getReferencedTypes();
 
-      List<PsiClassType.ClassResolveResult> traits = getSuperTraits(types);
+      List<PsiClassType.ClassResolveResult> traits = getSuperTraitsByCorrectOrder(types);
       if (traits.isEmpty()) return Collections.emptyList();
 
       Set<MethodSignature> existingSignatures = ContainerUtil.newHashSet(ContainerUtil.map(codeMethods, new Function<PsiMethod, MethodSignature>() {
@@ -265,10 +264,10 @@ public class GrTypeDefinitionMembersCache {
     }
 
     @NotNull
-    private List<PsiClassType.ClassResolveResult> getSuperTraits(@NotNull PsiClassType[] types) {
+    private List<PsiClassType.ClassResolveResult> getSuperTraitsByCorrectOrder(@NotNull PsiClassType[] types) {
       List<PsiClassType.ClassResolveResult> traits = ContainerUtil.newArrayList();
-      for (PsiClassType type : types) {
-        PsiClassType.ClassResolveResult resolveResult = type.resolveGenerics();
+      for (int i = types.length - 1; i >= 0; i--) {
+        PsiClassType.ClassResolveResult resolveResult = types[i].resolveGenerics();
         PsiClass superClass = resolveResult.getElement();
 
         if (PsiImplUtil.isTrait(superClass)) {
