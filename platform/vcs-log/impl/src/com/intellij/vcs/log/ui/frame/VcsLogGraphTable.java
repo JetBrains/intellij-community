@@ -385,6 +385,9 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   private class StringCellRenderer extends ColoredTableCellRenderer {
     @Override
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+      if (value == null) {
+        return;
+      }
       append(value.toString());
       applyHighlighters(this, row, selected);
       setBorder(null);
