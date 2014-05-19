@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocElementType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocElementTypeImpl;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocLexer;
@@ -38,11 +38,13 @@ public interface GroovyDocElementTypes extends GroovyDocTokenTypes {
    * GroovyDoc comment
    */
   ILazyParseableElementType GROOVY_DOC_COMMENT = new ILazyParseableElementType("GrDocComment") {
+    @Override
     @NotNull
     public Language getLanguage() {
-      return GroovyFileType.GROOVY_LANGUAGE;
+      return GroovyLanguage.INSTANCE;
     }
 
+    @Override
     public ASTNode parseContents(ASTNode chameleon) {
       final PsiElement parentElement = chameleon.getTreeParent().getPsi();
       final Project project = JavaPsiFacade.getInstance(parentElement.getProject()).getProject();

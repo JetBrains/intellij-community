@@ -36,7 +36,7 @@ import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -346,7 +346,7 @@ public class GrClassImplUtil {
 
     if (ResolveUtil.shouldProcessMethods(classHint)) {
       Map<String, List<CandidateInfo>> methodsMap = CollectClassMembersUtil.getAllMethods(grType, true);
-      boolean isPlaceGroovy = place.getLanguage() == GroovyFileType.GROOVY_LANGUAGE;
+      boolean isPlaceGroovy = place.getLanguage() == GroovyLanguage.INSTANCE;
       if (name == null) {
         for (List<CandidateInfo> list : methodsMap.values()) {
           for (CandidateInfo info : list) {

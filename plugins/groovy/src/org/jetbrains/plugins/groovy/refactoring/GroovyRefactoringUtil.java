@@ -42,7 +42,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.*;
@@ -68,7 +68,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
 import java.util.*;
@@ -246,7 +245,7 @@ public abstract class GroovyRefactoringUtil {
 
   @NotNull public static PsiElement[] findStatementsInRange(PsiFile file, int startOffset, int endOffset, boolean strict) {
     if (!(file instanceof GroovyFileBase)) return PsiElement.EMPTY_ARRAY;
-    Language language = GroovyFileType.GROOVY_LANGUAGE;
+    Language language = GroovyLanguage.INSTANCE;
     PsiElement element1 = file.getViewProvider().findElementAt(startOffset, language);
     PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, language);
 

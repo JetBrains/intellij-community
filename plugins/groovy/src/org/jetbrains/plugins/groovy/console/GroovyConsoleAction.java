@@ -22,7 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 
 /**
@@ -41,7 +41,7 @@ public class GroovyConsoleAction extends GroovyShellActionBase {
 
   @Override
   protected LanguageConsoleImpl createConsole(Project project, String title) {
-    return new LanguageConsoleImpl(project, title, GroovyFileType.GROOVY_LANGUAGE) {
+    return new LanguageConsoleImpl(project, title, GroovyLanguage.INSTANCE) {
       @NotNull
       @Override
       protected PsiFile createFile(@NotNull LightVirtualFile virtualFile, @NotNull Document document, @NotNull Project project) {

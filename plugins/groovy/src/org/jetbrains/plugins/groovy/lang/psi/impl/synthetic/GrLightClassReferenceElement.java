@@ -24,7 +24,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -42,7 +42,7 @@ public class GrLightClassReferenceElement extends LightElement implements GrCode
   private final PsiElement myContext;
 
   public GrLightClassReferenceElement(@NotNull String className, @NotNull String text, PsiElement context) {
-    super(context.getManager(), GroovyFileType.GROOVY_LANGUAGE);
+    super(context.getManager(), GroovyLanguage.INSTANCE);
     myClassName = className;
     myText = text;
     myContext = context;

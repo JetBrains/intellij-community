@@ -23,7 +23,7 @@ import com.intellij.psi.impl.light.LightVariableBuilder;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -44,7 +44,7 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
   private final PsiType myTypeGroovy;
 
   public GrLightParameter(@NotNull String name, @Nullable PsiType type, @NotNull PsiElement scope) {
-    super(scope.getManager(), name, getTypeNotNull(type, scope), GroovyFileType.GROOVY_LANGUAGE);
+    super(scope.getManager(), name, getTypeNotNull(type, scope), GroovyLanguage.INSTANCE);
     myScope = scope;
     myModifierList = new GrLightModifierList(this);
     myTypeGroovy = type;

@@ -34,7 +34,7 @@ import com.intellij.util.containers.ContainerUtil;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -90,7 +90,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   private PsiElement myContext;
 
   public GroovyFileImpl(FileViewProvider viewProvider) {
-    super(viewProvider, GroovyFileType.GROOVY_LANGUAGE);
+    super(viewProvider, GroovyLanguage.INSTANCE);
   }
 
   @Override

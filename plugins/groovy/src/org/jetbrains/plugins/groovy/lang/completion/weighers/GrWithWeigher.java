@@ -20,7 +20,7 @@ import com.intellij.codeInsight.completion.CompletionWeigher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
@@ -35,7 +35,7 @@ public class GrWithWeigher extends CompletionWeigher {
   @Override
   public Comparable weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {
     final PsiElement position = location.getCompletionParameters().getPosition();
-    if (position.getLanguage() == GroovyFileType.GROOVY_LANGUAGE) return null;
+    if (position.getLanguage() == GroovyLanguage.INSTANCE) return null;
 
     if (!(position.getParent() instanceof GrReferenceExpression)) return null;
 

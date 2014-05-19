@@ -31,7 +31,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
@@ -103,7 +103,7 @@ public class ConvertClosureToMethodIntention extends Intention {
     for (PsiReference usage : usages) {
       final PsiElement psiElement = usage.getElement();
       if (PsiUtil.isMethodUsage(psiElement)) continue;
-      if (!GroovyFileType.GROOVY_LANGUAGE.equals(psiElement.getLanguage())) {
+      if (!GroovyLanguage.INSTANCE.equals(psiElement.getLanguage())) {
         conflicts.putValue(psiElement, GroovyIntentionsBundle.message("closure.is.accessed.outside.of.groovy", fieldName));
       }
       else {
@@ -222,7 +222,7 @@ public class ConvertClosureToMethodIntention extends Intention {
   private static class MyPredicate implements PsiElementPredicate {
     @Override
     public boolean satisfiedBy(PsiElement element) {
-      if (element.getLanguage() != GroovyFileType.GROOVY_LANGUAGE) return false;
+      if (element.getLanguage() != GroovyLanguage.INSTANCE) return false;
       final PsiReference ref = element.getReference();
       GrField field;
       if (ref != null) {
