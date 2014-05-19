@@ -25,29 +25,34 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnState
 
 public class GroovyReturnFromFinallyBlockInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return ERROR_HANDLING;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "'return' inside 'finally' block";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "'#ref' inside 'finally' block #loc";
 
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
+    @Override
     public void visitReturnStatement(GrReturnStatement returnStatement) {
 
       super.visitReturnStatement(returnStatement);

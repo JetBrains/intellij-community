@@ -1,17 +1,17 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.jetbrains.plugins.groovy.mvc;
@@ -62,77 +62,94 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
     return myFramework;
   }
 
+  @Override
   public String getVMParameters() {
     return vmParams;
   }
 
+  @Override
   public void setVMParameters(String vmParams) {
     this.vmParams = vmParams;
   }
 
+  @Override
   public void setProgramParameters(@Nullable String value) {
     cmdLine = value;
   }
 
+  @Override
   @Nullable
   public String getProgramParameters() {
     return cmdLine;
   }
 
+  @Override
   public void setWorkingDirectory(@Nullable String value) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   @Nullable
   public String getWorkingDirectory() {
     return null;
   }
 
+  @Override
   public void setEnvs(@NotNull Map<String, String> envs) {
     this.envs.clear();
     this.envs.putAll(envs);
   }
 
+  @Override
   @NotNull
   public Map<String, String> getEnvs() {
     return envs;
   }
 
+  @Override
   public void setPassParentEnvs(boolean passParentEnv) {
     this.passParentEnv = passParentEnv;
   }
 
+  @Override
   public boolean isPassParentEnvs() {
     return passParentEnv;
   }
 
+  @Override
   public boolean isAlternativeJrePathEnabled() {
     return false;
   }
 
+  @Override
   public void setAlternativeJrePathEnabled(boolean enabled) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public String getAlternativeJrePath() {
     return null;
   }
 
+  @Override
   public void setAlternativeJrePath(String path) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   @Nullable
   public String getRunClass() {
     return null;
   }
 
+  @Override
   @Nullable
   public String getPackage() {
     return null;
   }
 
 
+  @Override
   public Collection<Module> getValidModules() {
     Module[] modules = ModuleManager.getInstance(getProject()).getModules();
     ArrayList<Module> res = new ArrayList<Module>();
@@ -144,6 +161,7 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
     return res;
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);
@@ -162,6 +180,7 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
     depsClasspath = !"false".equals(JDOMExternalizer.readString(element, "depsClasspath"));
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
     writeModule(element);
@@ -182,6 +201,7 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
     return myFramework.getSdkRoot(module) != null && !myFramework.isAuxModule(module);
   }
 
+  @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     final Module module = getModule();
     if (module == null) {
@@ -201,6 +221,7 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
     return getConfigurationModule().getModule();
   }
 
+  @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {
     final Module module = getModule();
     if (module == null) {
@@ -225,6 +246,7 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
     return new MvcCommandLineState(environment, cmdLine, module, false);
   }
 
+  @Override
   @NotNull
   public SettingsEditor<? extends MvcRunConfiguration> getConfigurationEditor() {
     return new MvcRunConfigurationEditor<MvcRunConfiguration>();
@@ -271,6 +293,7 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
       return handler;
     }
 
+    @Override
     protected final JavaParameters createJavaParameters() throws ExecutionException {
       JavaParameters javaParameters = createJavaParametersMVC();
       for(RunConfigurationExtension ext: Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {

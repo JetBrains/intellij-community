@@ -34,7 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.refactoring.convertJavaToGroovy.AnnotationArgConverter;
+import org.jetbrains.plugins.groovy.lang.psi.impl.AnnotationArgConverter;
 
 import java.util.List;
 

@@ -26,6 +26,7 @@ static
 strictfp
 synchronized
 throws
+trait
 transient
 void
 volatile

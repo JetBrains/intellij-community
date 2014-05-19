@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,17 +117,20 @@ public abstract class GrBinaryExpressionImpl extends GrExpressionImpl implements
     super(node);
   }
 
+  @Override
   @NotNull
   public GrExpression getLeftOperand() {
     return findNotNullChildByClass(GrExpression.class);
   }
 
+  @Override
   @Nullable
   public GrExpression getRightOperand() {
     final PsiElement last = getLastChild();
     return last instanceof GrExpression ? (GrExpression)last : null;
   }
 
+  @Override
   @NotNull
   public IElementType getOperationTokenType() {
     final PsiElement child = getOperationToken();
@@ -136,11 +139,13 @@ public abstract class GrBinaryExpressionImpl extends GrExpressionImpl implements
     return node.getElementType();
   }
 
+  @Override
   @NotNull
   public PsiElement getOperationToken() {
     return findNotNullChildByType(TokenSets.BINARY_OP_SET);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitBinaryExpression(this);
   }

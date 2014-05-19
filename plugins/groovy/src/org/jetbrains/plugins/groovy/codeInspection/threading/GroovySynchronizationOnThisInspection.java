@@ -27,29 +27,34 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 public class GroovySynchronizationOnThisInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return THREADING_ISSUES;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Synchronization on 'this'";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Synchronization on '#ref' #loc";
 
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
+    @Override
     public void visitSynchronizedStatement(GrSynchronizedStatement synchronizedStatement) {
       super.visitSynchronizedStatement(synchronizedStatement);
       final GrExpression lock = synchronizedStatement.getMonitor();

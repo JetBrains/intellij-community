@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ public class DynamicPropertyFix extends GroovyFix implements IntentionAction, Lo
     myTargetClass = targetClass;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return GroovyBundle.message("add.dynamic.property", getRefName());
@@ -76,15 +77,18 @@ public class DynamicPropertyFix extends GroovyFix implements IntentionAction, Lo
     }
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return GroovyBundle.message("add.dynamic.element");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     return (myReferenceExpression == null || myReferenceExpression.isValid()) && (myArgumentLabel == null || myArgumentLabel.isValid());
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     invokeInner();
   }
@@ -119,6 +123,7 @@ public class DynamicPropertyFix extends GroovyFix implements IntentionAction, Lo
     DynamicManager.getInstance(project).addProperty(settings);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

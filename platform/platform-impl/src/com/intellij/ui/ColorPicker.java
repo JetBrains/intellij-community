@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
@@ -789,7 +789,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
     @Nullable
     private Color getColor(MouseEvent event) {
-      Pair<Integer, Integer> pair = pointToCellCoords(event.getPoint());
+      Couple<Integer> pair = pointToCellCoords(event.getPoint());
       if (pair != null) {
         int ndx = pair.second + pair.first * 10;
         if (myRecentColors.size() > ndx) {
@@ -822,7 +822,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
 
     @Nullable
-    private Pair<Integer, Integer> pointToCellCoords(Point p) {
+    private Couple<Integer> pointToCellCoords(Point p) {
       int x = p.x;
       int y = p.y;
 
@@ -837,7 +837,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       int row = (y - top - 2) / 31;
       row = row > 1 ? 1 : row;
 
-      return row >= 0 && col >= 0 ? Pair.create(row, col) : null;
+      return row >= 0 && col >= 0 ? Couple.newOne(row, col) : null;
     }
 
     @Override

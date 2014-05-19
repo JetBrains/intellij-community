@@ -37,22 +37,26 @@ public class GroovyAccessToStaticFieldLockedOnInstanceInspection
     return true;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return THREADING_ISSUES;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Access to static field locked on instance data";
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return "Access to static field <code>#ref</code> locked on instance data #loc";
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
@@ -60,6 +64,7 @@ public class GroovyAccessToStaticFieldLockedOnInstanceInspection
   private static class Visitor
       extends BaseInspectionVisitor {
 
+    @Override
     public void visitReferenceExpression(
         @NotNull GrReferenceExpression expression) {
       super.visitReferenceExpression(expression);

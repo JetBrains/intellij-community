@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,9 @@ import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.changeBrowser.CvsChangeList;
+import com.intellij.cvsSupport2.changeBrowser.CvsRepositoryLocation;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
+import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.DefaultCvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
@@ -201,9 +203,17 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
   }
 
   public void reportAppendableHistory(FilePath path, VcsAppendableHistorySessionPartner partner) throws VcsException {
-    // todo some time after ... this could be done
-    final VcsHistorySession session = createSessionFor(path);
-    partner.reportCreatedEmptySession((VcsAbstractHistorySession) session);
+    final CvsRepositoryLocation location = (CvsRepositoryLocation)partner.getRepositoryLocation();
+    final VcsHistorySession session;
+    if (location != null) {
+      final List<VcsFileRevision> fileRevisionList = createRevisions(location.getEnvironment(), path.getIOFile());
+      if (fileRevisionList == null) return;
+      session = new MyHistorySession(fileRevisionList, path);
+    }
+    else {
+      session = createSessionFor(path);
+    }
+    partner.reportCreatedEmptySession((VcsAbstractHistorySession)session);
   }
 
   private static VcsRevisionNumber getCurrentRevision(FilePath filePath) {
@@ -222,21 +232,26 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     final VirtualFile root = CvsVfsUtil.refreshAndFindFileByIoFile(file.getParentFile());
     // check if we have a history pane open for a file in a package which has just been deleted
     if (root == null) return null;
-    final LocalPathIndifferentLogOperation logOperation = new LocalPathIndifferentLogOperation(file);
+    final CvsConnectionSettings env = CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(filePath.getVirtualFileParent());
+    final File lightweightFileForFile = CvsUtil.getCvsLightweightFileForFile(file);
+    return createRevisions(env, lightweightFileForFile);
+  }
+
+  private List<VcsFileRevision> createRevisions(final CvsEnvironment connectionSettings, final File lightweightFileForFile) {
+    final LocalPathIndifferentLogOperation logOperation = new LocalPathIndifferentLogOperation(connectionSettings);
+    logOperation.addFile(lightweightFileForFile);
     final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
     final ArrayList<VcsFileRevision> result = new ArrayList<VcsFileRevision>();
     executor.performActionSync(new CommandCvsHandler(CvsBundle.message("operation.name.load.file.content"), logOperation),
                                new DefaultCvsOperationExecutorCallback() {
                                  @Override
                                  public void executionFinishedSuccessfully() {
-                                   final CvsConnectionSettings env = CvsEntriesManager.getInstance()
-                                     .getCvsConnectionSettingsFor(filePath.getVirtualFileParent());
                                    final LogInformation firstLogInformation = logOperation.getFirstLogInformation();
                                    if (firstLogInformation != null) {
                                      final List<Revision> revisionList = firstLogInformation.getRevisionList();
                                      for (Revision revision : revisionList) {
-                                       result.add(new CvsFileRevisionImpl(revision, CvsUtil.getCvsLightweightFileForFile(file),
-                                                                          firstLogInformation, env, myProject));
+                                       result.add(new CvsFileRevisionImpl(revision, lightweightFileForFile,
+                                                                          firstLogInformation, connectionSettings, myProject));
                                      }
                                    }
                                  }

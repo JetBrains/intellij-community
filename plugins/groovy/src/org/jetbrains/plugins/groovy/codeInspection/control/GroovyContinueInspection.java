@@ -24,30 +24,35 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueSta
 
 public class GroovyContinueInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return CONTROL_FLOW;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Continue statement";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "#ref statement #loc";
 
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitContinueStatement(GrContinueStatement continueStatement) {
       super.visitContinueStatement(continueStatement);
       registerError(continueStatement);

@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 class StatementCountVisitor extends GroovyRecursiveElementVisitor {
   private int statementCount = 0;
 
+  @Override
   public void visitElement(GroovyPsiElement element) {
     int oldCount = 0;
     if (element instanceof GrMethod) {
@@ -37,6 +38,7 @@ class StatementCountVisitor extends GroovyRecursiveElementVisitor {
     }
   }
 
+  @Override
   public void visitStatement(@NotNull GrStatement statement) {
     super.visitStatement(statement);
     if (statement instanceof GrBlockStatement) {

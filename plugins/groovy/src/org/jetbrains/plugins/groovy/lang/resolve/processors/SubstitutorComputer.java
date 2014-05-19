@@ -60,7 +60,7 @@ public class SubstitutorComputer {
 
   private final GrControlFlowOwner myFlowOwner;
   private final PsiElement myPlaceToInferContext;
-  private PsiResolveHelper myHelper;
+  private final PsiResolveHelper myHelper;
 
 
   public SubstitutorComputer(PsiType thisType,

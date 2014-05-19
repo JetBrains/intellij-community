@@ -44,6 +44,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocParameterReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
@@ -258,7 +259,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       }
       else {
         PsiType type = newReturnType.getType(context, method.getManager());
-        method.setReturnType(substitutor.substitute(type));
+        GrReferenceAdjuster.shortenAllReferencesIn(method.setReturnType(substitutor.substitute(type)));
         if (oldReturnTypeElement == null) {
           modifierList.setModifierProperty(GrModifier.DEF, false);
         }
@@ -636,7 +637,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
         protected boolean check(PsiVariable var, ResolveState state) {
           if (var instanceof PsiField && !resolveHelper.isAccessible((PsiField)var, list, null)) return false;
           if (var instanceof GrVariable &&
-              GroovyRefactoringUtil.isLocalVariable(var) &&
+              PsiUtil.isLocalVariable(var) &&
               list.getTextRange().getStartOffset() <= var.getTextRange().getStartOffset()) {
             return false;
           }

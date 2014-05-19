@@ -104,6 +104,7 @@ public class GroovyIntroduceParameterUtil {
 
   public static void removeParametersFromCall(final GrClosureSignatureUtil.ArgInfo<PsiElement>[] actualArgs, final TIntArrayList parametersToRemove) {
     parametersToRemove.forEach(new TIntProcedure() {
+      @Override
       public boolean execute(final int paramNum) {
         try {
           final GrClosureSignatureUtil.ArgInfo<PsiElement> actualArg = actualArgs[paramNum];
@@ -139,6 +140,7 @@ public class GroovyIntroduceParameterUtil {
     }
 
     parametersToRemove.forEachDescending(new TIntProcedure() {
+      @Override
       public boolean execute(int paramNum) {
         try {
           if (paramNum == 0 && hasNamedArgs) {

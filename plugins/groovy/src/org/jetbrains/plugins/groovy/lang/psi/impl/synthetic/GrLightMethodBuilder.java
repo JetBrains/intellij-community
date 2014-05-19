@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
-import com.intellij.psi.OriginInfoAwareElement;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;

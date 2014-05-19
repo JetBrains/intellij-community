@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.LineMarkerRenderer;
 import com.intellij.openapi.editor.markup.LineSeparatorRenderer;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
@@ -71,10 +71,10 @@ public class FragmentBoundRenderer implements LineMarkerRenderer, LineSeparatorR
 
       if (((EditorImpl) editor).isMirrored()) {
         // continue
-        List<Pair<Integer, Integer>> points = myShoeneLine.getPoints();
+        List<Couple<Integer>> points = myShoeneLine.getPoints();
         int i = 0;
         for (; i < points.size(); i++) {
-          Pair<Integer, Integer> integerIntegerPair = points.get(i);
+          Couple<Integer> integerIntegerPair = points.get(i);
           if (integerIntegerPair.getFirst() - width >= editorWidth) {
             break;
           }
@@ -96,7 +96,7 @@ public class FragmentBoundRenderer implements LineMarkerRenderer, LineSeparatorR
         myOffsetsConsumer.consume(points.get(j).getSecond());
 
       } else {
-        List<Pair<Integer, Integer>> points = myShoeneLine.getPoints();
+        List<Couple<Integer>> points = myShoeneLine.getPoints();
         drawCurved(gr, 0, r.y, TornLineParams.ourDark, points, 0, false,0);
         gr.setColor(getColor().darker());
         drawCurved(gr, 0, r.y, TornLineParams.ourLight, points, 0, false,0);
@@ -128,7 +128,7 @@ public class FragmentBoundRenderer implements LineMarkerRenderer, LineSeparatorR
     try {
       ((Graphics2D) gr).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       gr.setColor(getColor());
-      List<Pair<Integer, Integer>> points = myShoeneLine.getPoints();
+      List<Couple<Integer>> points = myShoeneLine.getPoints();
       int i = getLastPointInBeforeGutter(width, points);
       points = points.subList(i, points.size());
       drawCurved(gr, x1, y, TornLineParams.ourDark, points, width, false,0);
@@ -139,10 +139,10 @@ public class FragmentBoundRenderer implements LineMarkerRenderer, LineSeparatorR
     }
   }
 
-  private int getLastPointInBeforeGutter(int width, List<Pair<Integer, Integer>> points) {
+  private int getLastPointInBeforeGutter(int width, List<Couple<Integer>> points) {
     int i = 0;
     for (; i < points.size(); i++) {
-      Pair<Integer, Integer> integerIntegerPair = points.get(i);
+      Couple<Integer> integerIntegerPair = points.get(i);
       if (integerIntegerPair.getFirst() >= width) break;
     }
     i = i == 0 ? 0 : i - 1;
@@ -153,10 +153,10 @@ public class FragmentBoundRenderer implements LineMarkerRenderer, LineSeparatorR
                           final int x1,
                           int y,
                           final int offset,
-                          final List<Pair<Integer, Integer>> points,
+                          final List<Couple<Integer>> points,
                           final int subtractX,
                           final boolean mirrorX, final int mirrorSize) {
-    final Iterator<Pair<Integer,Integer>> iterator = points.iterator();
+    final Iterator<Couple<Integer>> iterator = points.iterator();
     assert iterator.hasNext();
     final Convertor<Integer, Integer> c = new Convertor<Integer, Integer>() {
       @Override
@@ -168,9 +168,9 @@ public class FragmentBoundRenderer implements LineMarkerRenderer, LineSeparatorR
         return val;
       }
     };
-    Pair<Integer, Integer> previous = iterator.next();
+    Couple<Integer> previous = iterator.next();
     while (iterator.hasNext()) {
-      final Pair<Integer, Integer> next = iterator.next();
+      final Couple<Integer> next = iterator.next();
       UIUtil.drawLine(g, c.convert(previous.getFirst()), y + offset + previous.getSecond() - myLineHeight/2, c.convert(next.getFirst()),
                       y + offset + next.getSecond() - myLineHeight/2);
       UIUtil.drawLine(g, c.convert(previous.getFirst()), y - offset + previous.getSecond() - myLineHeight/2, c.convert(next.getFirst()),
@@ -180,21 +180,21 @@ public class FragmentBoundRenderer implements LineMarkerRenderer, LineSeparatorR
   }
 
   private static class ShoeneLine {
-    private List<Pair<Integer, Integer>> myPoints;
+    private List<Couple<Integer>> myPoints;
     private final int myYDiff;
 
     private ShoeneLine(final int yDiff) {
       myYDiff = yDiff;
-      myPoints = new ArrayList<Pair<Integer, Integer>>();
+      myPoints = new ArrayList<Couple<Integer>>();
     }
     
     public void ensureLastX(final int x) {
       if (myPoints.isEmpty() || myPoints.get(myPoints.size() - 1).getFirst() < x) {
         if (myPoints.isEmpty()) {
-          myPoints.add(new Pair<Integer, Integer>(0,0));
+          myPoints.add(Couple.newOne(0, 0));
           myPoints.addAll(generateLine(0,0,x,0,myYDiff,0));
         } else {
-          final Pair<Integer, Integer> lastPoint = myPoints.get(myPoints.size() - 1);
+          final Couple<Integer> lastPoint = myPoints.get(myPoints.size() - 1);
           int finalX = (x - lastPoint.getFirst()) < 5 ? x + 10 : x;
           myPoints.addAll(generateLine(lastPoint.getFirst(),lastPoint.getSecond(),finalX,0,myYDiff,lastPoint.getSecond()));
         }
@@ -202,19 +202,19 @@ public class FragmentBoundRenderer implements LineMarkerRenderer, LineSeparatorR
       }
     }
 
-    public List<Pair<Integer, Integer>> getPoints() {
+    public List<Couple<Integer>> getPoints() {
       return myPoints;
     }
   }
   
   private final static int xVariation = 7;
 
-  private static List<Pair<Integer, Integer>> generateLine(final int startX, int startY, int finalX, final int yBase, final int yDiff,
+  private static List<Couple<Integer>> generateLine(final int startX, int startY, int finalX, final int yBase, final int yDiff,
                                                            final int wasPrevStep) {
     int xCurrent = startX;
     int yCurrent = startY;
     
-    final List<Pair<Integer, Integer>> result = new ArrayList<Pair<Integer, Integer>>();
+    final List<Couple<Integer>> result = new ArrayList<Couple<Integer>>();
 
     final Random xRnd = new Random();
     final Random yRnd = new Random();
@@ -229,7 +229,7 @@ public class FragmentBoundRenderer implements LineMarkerRenderer, LineSeparatorR
       int newX = xCurrent + 4 + xRnd.nextInt(xVariation);
       newX = Math.min(newX, finalX);
       
-      result.add(new Pair<Integer, Integer>(newX, newY));
+      result.add(Couple.newOne(newX, newY));
       xCurrent = newX;
     }
 

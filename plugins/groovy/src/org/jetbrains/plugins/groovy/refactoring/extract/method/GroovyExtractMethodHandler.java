@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,6 +75,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
   protected static String REFACTORING_NAME = GroovyRefactoringBundle.message("extract.method.title");
   private static final Logger LOG = Logger.getInstance(GroovyExtractMethodHandler.class);
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, @Nullable DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     final SelectionModel model = editor.getSelectionModel();
@@ -109,6 +110,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
       this.file = file;
     }
 
+    @Override
     public void pass(@NotNull final GrExpression selectedValue) {
       final TextRange range = selectedValue.getTextRange();
       invokeImpl(project, editor, file, range.getStartOffset(), range.getEndOffset());
@@ -192,6 +194,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     if (helper == null) return;
 
     CommandProcessor.getInstance().executeCommand(helper.getProject(), new Runnable() {
+      @Override
       public void run() {
         final AccessToken lock = ApplicationManager.getApplication().acquireWriteActionLock(GroovyExtractMethodHandler.class);
         try {
@@ -236,6 +239,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
   }
 
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     // does nothing
   }
@@ -276,6 +280,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
       if (!oldName.equals(newName)) {
         for (final GrStatement statement : statements) {
           statement.accept(new PsiRecursiveElementVisitor() {
+            @Override
             public void visitElement(final PsiElement element) {
               super.visitElement(element);
               if (element instanceof GrReferenceExpression) {

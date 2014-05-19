@@ -159,7 +159,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   @Override
   @NotNull
   public DebuggerActionHandler getEvaluateHandler() {
-    return myEvaluateActionHandler;
+    return DISABLED;
   }
 
   @Override

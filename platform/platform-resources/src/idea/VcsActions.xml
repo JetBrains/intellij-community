@@ -150,6 +150,24 @@
       <action id="ShelvedChanges.DeleteDeleted" class="com.intellij.openapi.vcs.changes.shelf.DeleteAlreadyUnshelvedAction"/>
     </group>
 
+    <group id="ShelvedChangesToolbar">
+      <reference ref="ShelvedChanges.Diff"/>
+      <reference ref="ChangesView.CreatePatchFromChanges"/>
+    </group>
+
+    <group id="ShelvedChangesToolbarGear" popup="true" icon="AllIcons.General.SecondaryGroup">
+      <reference ref="ShelvedChanges.Unshelve"/>
+      <reference ref="ShelveChanges.UnshelveWithDialog"/>
+      <reference ref="ShelvedChanges.Restore"/>
+      <reference ref="ShelvedChanges.ImportPatches"/>
+      <separator/>
+      <reference ref="ShelvedChanges.Rename" />
+      <reference ref="$Delete" />
+      <separator/>
+      <reference ref="ShelvedChanges.ShowHideDeleted" />
+      <reference ref="ShelvedChanges.DeleteDeleted" />
+    </group>
+
     <group id="VcsHistoryActionsGroup"/>
 
     <group id="CommittedChangesToolbar">

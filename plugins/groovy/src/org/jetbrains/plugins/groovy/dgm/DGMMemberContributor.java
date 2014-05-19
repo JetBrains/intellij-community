@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.groovy.dgm;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
@@ -43,7 +43,7 @@ public class DGMMemberContributor extends NonCodeMembersContributor {
     GlobalSearchScope resolveScope = place.getResolveScope();
     GroovyPsiManager groovyPsiManager = GroovyPsiManager.getInstance(project);
 
-    Pair<List<String>, List<String>> extensions = GroovyExtensionProvider.getInstance(project).collectExtensions(resolveScope);
+    Couple<List<String>> extensions = GroovyExtensionProvider.getInstance(project).collectExtensions(resolveScope);
 
     List<String> instanceCategories = extensions.getFirst();
     List<String> staticCategories = extensions.getSecond();

@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.sdk.skeletons;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.notification.Notification;
@@ -37,7 +38,9 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.ZipUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -223,42 +226,33 @@ public class PySkeletonRefresher {
   }
 
   private static String calculateExtraSysPath(@NotNull final Sdk sdk, @Nullable final String skeletonsPath) {
-    File canonicalSkeleton = null;
-    File canonicalUserSkeletonsDir = null;
+    final File skeletons = skeletonsPath != null ? new File(skeletonsPath) : null;
 
-    try {
-      if (skeletonsPath != null) {
-        canonicalSkeleton = new File(skeletonsPath).getCanonicalFile();
-      }
-      final VirtualFile userSkeletonsDir = PyUserSkeletonsUtil.getUserSkeletonsDirectory();
-      if (userSkeletonsDir != null) {
-        canonicalUserSkeletonsDir = new File(userSkeletonsDir.getPath());
-      }
-    }catch (final IOException e) {
-      LOG.error("Error getting real paths", e);
-    }
+    final VirtualFile userSkeletonsDir = PyUserSkeletonsUtil.getUserSkeletonsDirectory();
+    final File userSkeletons = userSkeletonsDir != null ? new File(userSkeletonsDir.getPath()) : null;
 
+    final VirtualFile remoteSourcesDir = PySdkUtil.findRemoteLibrariesDir(sdk);
+    final File remoteSources = remoteSourcesDir != null ? new File(remoteSourcesDir.getPath()) : null;
 
     final VirtualFile[] classDirs = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
-    final StringBuilder builder = new StringBuilder("");
-    int countAddedPaths = 0;
-    for (final VirtualFile file : classDirs) {
-      if (countAddedPaths > 0) {
-        builder.append(File.pathSeparator);
-      }
-      if (file.isInLocalFileSystem()) {
-        // We compare canonical files, not strings because "c:/some/folder" equals "c:\\some\\bin\\..\\folder\\"
-        final File canonicalFile = new File(file.getPath());
-        if (canonicalFile.exists() && !canonicalFile.equals(canonicalSkeleton) && !canonicalFile.equals(canonicalUserSkeletonsDir)) {
-          final String pathname = file.getPath();
-          builder.append(pathname);
-          countAddedPaths += 1;
-        }
-      }
-    }
 
-    builder.append("");
-    return builder.toString();
+    return Joiner.on(File.pathSeparator).join(ContainerUtil.mapNotNull(classDirs, new Function<VirtualFile, Object>() {
+
+      @Override
+      public Object fun(VirtualFile file) {
+        if (file.isInLocalFileSystem()) {
+          // We compare canonical files, not strings because "c:/some/folder" equals "c:\\some\\bin\\..\\folder\\"
+          final File canonicalFile = new File(file.getPath());
+          if (canonicalFile.exists() &&
+              !FileUtil.filesEqual(canonicalFile, skeletons) &&
+              !FileUtil.filesEqual(canonicalFile, userSkeletons) &&
+              !FileUtil.filesEqual(canonicalFile, remoteSources)) {
+            return file.getPath();
+          }
+        }
+        return null;
+      }
+    }));
   }
 
   /**
@@ -279,7 +273,7 @@ public class PySkeletonRefresher {
   }
 
   public List<String> regenerateSkeletons(@Nullable SkeletonVersionChecker cachedChecker,
-                                   @Nullable Ref<Boolean> migrationFlag) throws InvalidSdkException {
+                                          @Nullable Ref<Boolean> migrationFlag) throws InvalidSdkException {
     final List<String> errorList = new SmartList<String>();
     final String homePath = mySdk.getHomePath();
     final String skeletonsPath = getSkeletonsPath();
@@ -411,7 +405,7 @@ public class PySkeletonRefresher {
     }
     if (PySdkUtil.isRemote(mySdk)) {
       try {
-        ((PyPackageManagerImpl) PyPackageManager.getInstance(mySdk)).loadPackages();
+        ((PyPackageManagerImpl)PyPackageManager.getInstance(mySdk)).loadPackages();
       }
       catch (PyExternalProcessException e) {
         // ignore - already logged

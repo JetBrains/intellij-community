@@ -44,7 +44,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -258,9 +257,18 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   @Override
   public boolean processRangeHighlightersOverlappingWith(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor) {
-    if (!myHighlighterTree.processOverlappingWith(start, end, processor)) return false;
-    TextRangeInterval lines = roundToLineBoundaries(start, end);
-    return myHighlighterTreeForLines.processOverlappingWith(lines.getStartOffset(), lines.getEndOffset(), processor);
+    DisposableIterator<RangeHighlighterEx> iterator = overlappingIterator(start, end);
+    try {
+      while (iterator.hasNext()) {
+        if (!processor.process(iterator.next())) {
+          return false;
+        }
+      }
+      return true;
+    }
+    finally {
+      iterator.dispose();
+    }
   }
 
   @Override
@@ -272,7 +280,8 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   @Override
   @NotNull
   public DisposableIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
-    IntervalTreeImpl.PeekableIterator<RangeHighlighterEx> exact = myHighlighterTree.overlappingIterator(new TextRangeInterval(startOffset, endOffset));
+    startOffset = Math.max(0,startOffset);
+    IntervalTreeImpl.PeekableIterator<RangeHighlighterEx> exact = myHighlighterTree.overlappingIterator(new TextRangeInterval(startOffset, Math.max(startOffset, endOffset)));
     IntervalTreeImpl.PeekableIterator<RangeHighlighterEx> lines = myHighlighterTreeForLines.overlappingIterator(roundToLineBoundaries(startOffset, endOffset));
     return merge(exact, lines);
   }
@@ -318,26 +327,5 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     int lineStartOffset = startOffset <= 0 ? 0 : document.getLineStartOffset(document.getLineNumber(startOffset));
     int lineEndOffset = endOffset <= 0 ? 0 : endOffset >= document.getTextLength() ? document.getTextLength() : document.getLineEndOffset(document.getLineNumber(endOffset));
     return new TextRangeInterval(lineStartOffset, lineEndOffset);
-  }
-
-  @Override
-  public boolean sweep(int start, int end, @NotNull SweepProcessor<RangeHighlighterEx> sweepProcessor) {
-    TextRangeInterval lines = roundToLineBoundaries(start, end);
-    List<RangeHighlighterEx> linesInRange = new ArrayList<RangeHighlighterEx>();
-    myHighlighterTreeForLines.processOverlappingWith(lines.getStartOffset(), lines.getEndOffset(), new CommonProcessors.CollectProcessor<RangeHighlighterEx>(linesInRange));
-    if (linesInRange.isEmpty()) {
-      return myHighlighterTree.sweep(start, end, sweepProcessor);
-    }
-    final List<RangeHighlighterEx> highlighters = new ArrayList<RangeHighlighterEx>();
-    myHighlighterTree.processOverlappingWith(start, end, new CommonProcessors.CollectProcessor<RangeHighlighterEx>(highlighters));
-    highlighters.addAll(linesInRange);
-    Collections.sort(highlighters, RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
-
-    return RangeMarkerTree.sweep(new RangeMarkerTree.Generator<RangeHighlighterEx>() {
-      @Override
-      public boolean generateInStartOffsetOrder(@NotNull Processor<RangeHighlighterEx> processor) {
-        return ContainerUtil.process(highlighters, processor);
-      }
-    }, sweepProcessor);
   }
 }

@@ -43,28 +43,33 @@ public class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection {
   @SuppressWarnings({"PublicField", "WeakerAccess"})
   public boolean ignoreNonEmtpyLoops = false;
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return THREADING_ISSUES;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "While loop spins on field";
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return "<code>#ref</code> loop spins on field #loc";
   }
 
+  @Override
   @Nullable
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel("Only warn if loop is empty",
         this, "ignoreNonEmtpyLoops");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new WhileLoopSpinsOnFieldVisitor();
   }
@@ -72,6 +77,7 @@ public class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection {
   private class WhileLoopSpinsOnFieldVisitor
       extends BaseInspectionVisitor {
 
+    @Override
     public void visitWhileStatement(@NotNull GrWhileStatement statement) {
       super.visitWhileStatement(statement);
       final GrStatement body = statement.getBody();

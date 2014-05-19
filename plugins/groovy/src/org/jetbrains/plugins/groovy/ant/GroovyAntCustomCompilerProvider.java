@@ -45,11 +45,12 @@ public class GroovyAntCustomCompilerProvider extends ChunkCustomCompilerExtensio
   /**
    * The property for groovyc task SDK
    */
-  @NonNls private final static String GROOVYC_TASK_SDK_PROPERTY = "grooovyc.task.sdk";
+  @NonNls private static final String GROOVYC_TASK_SDK_PROPERTY = "grooovyc.task.sdk";
 
   /**
    * {@inheritDoc}
    */
+  @Override
   public void generateCustomCompile(Project project,
                                     ModuleChunk chunk,
                                     GenerationOptions genOptions,
@@ -76,6 +77,7 @@ public class GroovyAntCustomCompilerProvider extends ChunkCustomCompilerExtensio
   /**
    * {@inheritDoc}
    */
+  @Override
   public void generateCustomCompilerTaskRegistration(Project project, GenerationOptions genOptions, CompositeGenerator generator) {
     final GroovyConfigUtils utils = GroovyConfigUtils.getInstance();
     // find SDK library with maximum version number in order to use for compiler
@@ -105,11 +107,13 @@ public class GroovyAntCustomCompilerProvider extends ChunkCustomCompilerExtensio
   /**
    * {@inheritDoc}
    */
+  @Override
   public boolean hasCustomCompile(ModuleChunk chunk) {
     for (Module m : chunk.getModules()) {
       if (LibrariesUtil.hasGroovySdk(m)) {
         final Set<String> scriptExtensions = GroovyFileTypeLoader.getCustomGroovyScriptExtensions();
         final ContentIterator groovyFileSearcher = new ContentIterator() {
+          @Override
           public boolean processFile(VirtualFile fileOrDir) {
             ProgressManager.checkCanceled();
             if (isCompilableGroovyFile(fileOrDir, scriptExtensions)) {

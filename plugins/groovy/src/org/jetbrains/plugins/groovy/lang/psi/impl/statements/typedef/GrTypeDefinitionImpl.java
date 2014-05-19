@@ -69,14 +69,14 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.runner.GroovyRunnerUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyRunnerPsiUtil;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil.isClassEquivalentTo;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSEMI;
 
 /**
  * @author ilyas
@@ -119,7 +119,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     PsiElement parent = getParent();
     if (parent instanceof GroovyFile) {
       String packageName = ((GroovyFile)parent).getPackageName();
-      return packageName.length() > 0 ? packageName + "." + getName() : getName();
+      return !packageName.isEmpty() ? packageName + "." + getName() : getName();
     }
 
     final PsiClass containingClass = getContainingClass();
@@ -195,6 +195,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     return ArrayUtil.toStringArray(extendsNames);
   }
 
+  @Override
   @NotNull
   public PsiElement getNameIdentifierGroovy() {
     PsiElement result = findChildByType(TokenSets.PROPERTY_NAMES);
@@ -240,7 +241,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   @Override
   public boolean isEquivalentTo(PsiElement another) {
-    return isClassEquivalentTo(this, another);
+    return GrClassImplUtil.isClassEquivalentTo(this, another);
   }
 
   @Override
@@ -639,7 +640,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   //hack to get runnable icon for all classes that can be run by Groovy
   private int getFlagsInner() {
-    return !DumbService.isDumb(getProject()) && GroovyRunnerUtil.isRunnable(this) ? ElementPresentationUtil.FLAGS_RUNNABLE : 0;
+    return !DumbService.isDumb(getProject()) && GroovyRunnerPsiUtil.isRunnable(this) ? ElementPresentationUtil.FLAGS_RUNNABLE : 0;
   }
 
   private Icon getIconInner() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,10 +44,12 @@ public class GrModifierListElementType extends GrStubElementType<GrModifierListS
     return new GrModifierListStub(parentStub, GroovyElementTypes.MODIFIERS, GrModifierListStub.buildFlags(psi));
   }
 
+  @Override
   public void serialize(@NotNull GrModifierListStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeVarInt(stub.getModifiersFlags());
   }
 
+  @Override
   @NotNull
   public GrModifierListStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return new GrModifierListStub(parentStub, GroovyElementTypes.MODIFIERS, dataStream.readVarInt());

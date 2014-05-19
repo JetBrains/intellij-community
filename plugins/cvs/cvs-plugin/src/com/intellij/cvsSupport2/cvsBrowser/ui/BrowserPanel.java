@@ -35,11 +35,9 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -88,8 +86,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
     DefaultActionGroup result = new DefaultActionGroup();
     result.add(new EditSourceAction());
     result.add(new MyCheckoutAction());
-    //TODO lesya
-    //result.add(new ShowLightCvsFileHistoryAction());
+    result.add(new MyHistoryAction());
     result.add(new MyAnnotateAction());
     result.add(new BrowseChangesAction());
     return result;
@@ -151,6 +148,33 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
 
       new CheckoutAction(new CvsElement[]{selectedElement}, myCheckoutHelper.getCheckoutLocation(), false).
           actionPerformed(context, checkoutHandler);
+    }
+  }
+
+  private class MyHistoryAction extends AnAction implements DumbAware {
+    public MyHistoryAction() {
+      super(CvsBundle.message("operation.name.show.file.history"),
+            CvsBundle.message("operation.name.show.file.history.description"), AllIcons.Vcs.History);
+    }
+
+    public void update(AnActionEvent e) {
+      Presentation presentation = e.getPresentation();
+      presentation.setVisible(true);
+      CvsLightweightFile cvsLightFile = getCvsLightFile();
+      presentation.setEnabled(cvsLightFile != null && cvsLightFile.getCvsFile() != null);
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      CvsElement[] currentSelection = myTree.getCurrentSelection();
+      if (currentSelection.length != 1) return;
+      final CvsElement cvsElement = currentSelection[0];
+      final VirtualFile virtualFile = cvsElement.getVirtualFile();
+      if (virtualFile == null || virtualFile.isDirectory()) return;
+      final CvsVcs2 vcs = CvsVcs2.getInstance(myProject);
+      final VcsHistoryProvider historyProvider = vcs.getVcsHistoryProvider();
+      final String moduleName = cvsElement.getElementPath();
+      final CvsRepositoryLocation location = new CvsRepositoryLocation(null, myCvsRootConfiguration, moduleName);
+      AbstractVcsHelper.getInstance(myProject).showFileHistory(historyProvider, new FilePathImpl(virtualFile), vcs, location);
     }
   }
 

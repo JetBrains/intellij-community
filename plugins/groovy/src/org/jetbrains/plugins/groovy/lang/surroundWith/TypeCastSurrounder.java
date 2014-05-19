@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
  * Date: 25.05.2007
  */
 public class TypeCastSurrounder extends GroovyExpressionSurrounder {
+  @Override
   protected TextRange surroundExpression(GrExpression expression, PsiElement context) {
     GrParenthesizedExpression parenthesized = (GrParenthesizedExpression) GroovyPsiElementFactory.getInstance(expression.getProject()).createExpressionFromText("((Type)a)", context);
     GrTypeCastExpression typeCast = (GrTypeCastExpression) parenthesized.getOperand();
@@ -42,6 +43,7 @@ public class TypeCastSurrounder extends GroovyExpressionSurrounder {
     return new TextRange(endOffset, endOffset);
   }
 
+  @Override
   public String getTemplateDescription() {
     return "((Type) expr)";
   }

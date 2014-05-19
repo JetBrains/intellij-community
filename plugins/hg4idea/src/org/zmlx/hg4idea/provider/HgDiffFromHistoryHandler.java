@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
@@ -83,7 +83,7 @@ public class HgDiffFromHistoryHandler implements DiffFromHistoryHandler {
       HgFileRevision left = (HgFileRevision)revision1;
       HgFileRevision right = (HgFileRevision)revision2;
       if (autoSort) {
-        Pair<VcsFileRevision, VcsFileRevision> pair = VcsHistoryUtil.sortRevisions(revision1, revision2);
+        Couple<VcsFileRevision> pair = VcsHistoryUtil.sortRevisions(revision1, revision2);
         left = (HgFileRevision)pair.first;
         right = (HgFileRevision)pair.second;
       }

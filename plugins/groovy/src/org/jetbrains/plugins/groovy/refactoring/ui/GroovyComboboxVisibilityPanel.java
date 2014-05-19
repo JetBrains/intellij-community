@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,21 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.ui;
 
+import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.ui.ComboBoxVisibilityPanel;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
-
-import static com.intellij.psi.PsiModifier.*;
-import static com.intellij.util.VisibilityUtil.toPresentableText;
 
 /**
  * @author Max Medvedev
  */
 public class GroovyComboboxVisibilityPanel extends ComboBoxVisibilityPanel<String> {
-  private static final String[] MODIFIERS = {PRIVATE, PROTECTED, PUBLIC, GrModifier.DEF};
+  private static final String[] MODIFIERS = {PsiModifier.PRIVATE, PsiModifier.PROTECTED, PsiModifier.PUBLIC, GrModifier.DEF};
 
   private static final String[] PRESENTABLE_NAMES = {
-    toPresentableText(PRIVATE),
-    toPresentableText(PROTECTED),
-    toPresentableText(PUBLIC),
+    VisibilityUtil.toPresentableText(PsiModifier.PRIVATE),
+    VisibilityUtil.toPresentableText(PsiModifier.PROTECTED),
+    VisibilityUtil.toPresentableText(PsiModifier.PUBLIC),
     GrModifier.DEF
   };
 

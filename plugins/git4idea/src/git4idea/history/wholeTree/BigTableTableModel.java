@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package git4idea.history.wholeTree;
 
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.BigArray;
 import com.intellij.openapi.vcs.GroupingMerger;
 import com.intellij.openapi.vcs.changes.committed.DateChangeListGroupingStrategy;
@@ -72,7 +72,7 @@ public class BigTableTableModel extends AbstractTableModel {
   private final Set<VirtualFile> myActiveRoots;
   private final CommitGroupingStrategy myDefaultStrategy;
   private final CommitGroupingStrategy myNoGrouping;
-  private final Map<VirtualFile,Pair<AbstractHash, AbstractHash>> myStashTops;
+  private final Map<VirtualFile,Couple<AbstractHash>> myStashTops;
   
   private final Map<VirtualFile, TreeHighlighter> myTreeHighlighter;
 
@@ -113,7 +113,7 @@ public class BigTableTableModel extends AbstractTableModel {
       public void beforeStart() {
       }
     };
-    myStashTops = new HashMap<VirtualFile, Pair<AbstractHash, AbstractHash>>();
+    myStashTops = new HashMap<VirtualFile, Couple<AbstractHash>>();
     myTreeHighlighter = new HashMap<VirtualFile, TreeHighlighter>();
   }
   
@@ -242,12 +242,12 @@ public class BigTableTableModel extends AbstractTableModel {
     return map;
   }
 
-  public void stashFor(VirtualFile root, Pair<AbstractHash, AbstractHash> hash) {
+  public void stashFor(VirtualFile root, Couple<AbstractHash> hash) {
     myStashTops.put(root, hash);
   }
 
   public boolean isStashed(final CommitI commitI) {
-    final Pair<AbstractHash, AbstractHash> pair =
+    final Couple<AbstractHash> pair =
       myStashTops.get(commitI.selectRepository(myRootsHolder.getRoots()));
     return pair != null && (pair.getFirst() != null && pair.getFirst().equals(commitI.getHash()) ||
                             pair.getSecond() != null && pair.getSecond().equals(commitI.getHash()));
@@ -597,14 +597,14 @@ public class BigTableTableModel extends AbstractTableModel {
       @Override
       protected String getGroup(CommitI commitI) {
         if (getCurrentGroup() == null) {
-          final Pair<AbstractHash, AbstractHash> stashTop = myStashTops.get(commitI.selectRepository(myRootsHolder.getRoots()));
+          final Couple<AbstractHash> stashTop = myStashTops.get(commitI.selectRepository(myRootsHolder.getRoots()));
           if (stashTop != null && (Comparing.equal(stashTop.getFirst(), commitI.getHash()))) {
             return STASH;
           }
         }
         if (STASH.equals(getCurrentGroup())) { // index on <branchname>: <short hash> <base commit description>
           final VirtualFile root = commitI.selectRepository(myRootsHolder.getRoots());
-          final Pair<AbstractHash, AbstractHash> stashTop = myStashTops.get(root);
+          final Couple<AbstractHash> stashTop = myStashTops.get(root);
           if (stashTop != null && (Comparing.equal(stashTop.getSecond(), commitI.getHash()))) {
             return STASH;
           }

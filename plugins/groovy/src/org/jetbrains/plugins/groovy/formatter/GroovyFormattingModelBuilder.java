@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
  * @author ilyas
  */
 public class GroovyFormattingModelBuilder implements FormattingModelBuilder {
+  @Override
   @NotNull
   public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
     ASTNode node = element.getNode();
@@ -75,6 +76,7 @@ public class GroovyFormattingModelBuilder implements FormattingModelBuilder {
     return new GroovyFormattingModel(containingFile, block, FormattingDocumentModelImpl.createOn(containingFile));
   }
 
+  @Override
   @Nullable
   public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
     return null;

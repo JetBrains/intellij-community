@@ -78,6 +78,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
     myMethod = method;
   }
 
+  @Override
   @Nullable
   public MultiMap<PsiElement, String> getConflicts(@NotNull PsiReference reference, @NotNull PsiElement referenced) {
     PsiElement element = reference.getElement();
@@ -121,6 +122,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
     return conflicts;
   }
 
+  @Override
   public void inlineUsage(@NotNull UsageInfo usage, @NotNull PsiElement referenced) {
     PsiElement element=usage.getElement();
 
@@ -321,10 +323,12 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
   @NotNull
   private static String generateQualifierName(@NotNull GrCallExpression call, @Nullable GrMethod method, @NotNull final Project project, @NotNull GrExpression qualifier) {
     String[] possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(qualifier, new NameValidator() {
+      @Override
       public String validateName(String name, boolean increaseNumber) {
         return name;
       }
 
+      @Override
       public Project getProject() {
         return project;
       }

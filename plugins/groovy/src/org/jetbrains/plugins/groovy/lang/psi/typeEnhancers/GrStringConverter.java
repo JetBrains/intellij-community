@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,13 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.isClassType;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.unboxPrimitiveTypeWrapper;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_GSTRING;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 /**
  * Created by Max Medvedev on 8/15/13
@@ -37,12 +35,13 @@ public class GrStringConverter extends GrTypeConverter {
   @Nullable
   @Override
   public Boolean isConvertible(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context) {
-    if (isClassType(lType, JAVA_LANG_STRING)) {
+    if (TypesUtil.isClassType(lType, CommonClassNames.JAVA_LANG_STRING)) {
       return Boolean.TRUE;
     }
 
-    if (unboxPrimitiveTypeWrapper(lType) == PsiType.CHAR &&
-        (isClassType(rType, JAVA_LANG_STRING) || isClassType(rType, GROOVY_LANG_GSTRING))) {
+    if (TypesUtil.unboxPrimitiveTypeWrapper(lType) == PsiType.CHAR &&
+        (TypesUtil.isClassType(rType, CommonClassNames.JAVA_LANG_STRING) || TypesUtil
+          .isClassType(rType, GroovyCommonClassNames.GROOVY_LANG_GSTRING))) {
       return Boolean.TRUE;
     }
 

@@ -15,14 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,18 +35,17 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrRe
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.AstTransformContributor;
 
 import java.util.*;
-
-import static com.intellij.psi.util.PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil.addExpandingReflectedMethods;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil.collectMethodsFromBody;
 
 /**
  * Created by Max Medvedev on 03/03/14
  */
 public class GrTypeDefinitionMembersCache {
+  private static final Logger LOG = Logger.getInstance(GrTypeDefinitionMembersCache.class);
+
   private static final Condition<PsiMethod> CONSTRUCTOR_CONDITION = new Condition<PsiMethod>() {
     @Override
     public boolean value(PsiMethod method) {
@@ -102,7 +99,8 @@ public class GrTypeDefinitionMembersCache {
       @Override
       public Result<PsiMethod[]> compute() {
         List<PsiMethod> result = ContainerUtil.findAll(myDefinition.getMethods(), CONSTRUCTOR_CONDITION);
-        return Result.create(result.toArray(new PsiMethod[result.size()]), myTreeChangeTracker, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+        return Result.create(result.toArray(new PsiMethod[result.size()]), myTreeChangeTracker,
+                             PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       }
     });
   }
@@ -125,7 +123,7 @@ public class GrTypeDefinitionMembersCache {
       @Nullable
       @Override
       public Result<GrField[]> compute() {
-        return Result.create(getFieldsImpl(), myTreeChangeTracker, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+        return Result.create(getFieldsImpl(), myTreeChangeTracker, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       }
     });
   }
@@ -151,7 +149,8 @@ public class GrTypeDefinitionMembersCache {
       @Nullable
       @Override
       public Result<List<GrField>> compute() {
-        return Result.create(AstTransformContributor.runContributorsForFields(myDefinition), myTreeChangeTracker, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+        return Result.create(AstTransformContributor.runContributorsForFields(myDefinition), myTreeChangeTracker,
+                             PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       }
     });
   }
@@ -161,18 +160,19 @@ public class GrTypeDefinitionMembersCache {
       @Override
       public Result<PsiMethod[]> compute() {
         List<PsiMethod> result = ContainerUtil.newArrayList();
-        collectMethodsFromBody(myDefinition, result);
+        GrClassImplUtil.collectMethodsFromBody(myDefinition, result);
         result.addAll(new TraitMethodCollector().collect(result));
 
         for (PsiMethod method : AstTransformContributor.runContributorsForMethods(myDefinition)) {
-          addExpandingReflectedMethods(result, method);
+          GrClassImplUtil.addExpandingReflectedMethods(result, method);
         }
 
         for (GrField field : getSyntheticFields()) {
           ContainerUtil.addIfNotNull(result, field.getSetter());
           Collections.addAll(result, field.getGetters());
         }
-        return Result.create(result.toArray(new PsiMethod[result.size()]), myTreeChangeTracker, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+        return Result.create(result.toArray(new PsiMethod[result.size()]), myTreeChangeTracker,
+                             PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       }
     });
   }
@@ -228,17 +228,18 @@ public class GrTypeDefinitionMembersCache {
       List<PsiClassType.ClassResolveResult> traits = getSuperTraits(types);
       if (traits.isEmpty()) return Collections.emptyList();
 
-      Set<MethodSignature> existingSignatures = ContainerUtil.map2Set(codeMethods, new Function<PsiMethod, MethodSignature>() {
+      Set<MethodSignature> existingSignatures = ContainerUtil.newHashSet(ContainerUtil.map(codeMethods, new Function<PsiMethod, MethodSignature>() {
         @Override
         public MethodSignature fun(PsiMethod method) {
           return method.getSignature(PsiSubstitutor.EMPTY);
         }
-      });
+      }));
 
       List<PsiMethod> result = ContainerUtil.newArrayList();
 
       for (PsiClassType.ClassResolveResult resolveResult : traits) {
         GrTypeDefinition trait = (GrTypeDefinition)resolveResult.getElement();
+        LOG.assertTrue(trait != null);
 
         List<CandidateInfo> concreteTraitMethods = new TraitProcessor(trait, resolveResult.getSubstitutor()).getResult();
         for (CandidateInfo candidateInfo : concreteTraitMethods) {

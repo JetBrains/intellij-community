@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.overrideImplement;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.lang.LanguageCodeInsightActionHandler;
@@ -26,29 +25,35 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 11.09.2007
  */
 public class GroovyOverrideMethodsHandler implements LanguageCodeInsightActionHandler {
+  @Override
   public boolean isValidFor(Editor editor, PsiFile psiFile) {
     return psiFile != null && GroovyFileType.GROOVY_FILE_TYPE.equals(psiFile.getFileType());
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
     PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, true);
-    if (aClass == null) return;
+    if (aClass instanceof GrTypeDefinition) {
+      GrTypeDefinition typeDefinition = (GrTypeDefinition)aClass;
 
-    if (OverrideImplementExploreUtil.getMethodSignaturesToOverride(aClass).isEmpty()) {
-      HintManager.getInstance().showErrorHint(editor, "No methods to override have been found");
-      return;
+      if (GroovyOverrideImplementExploreUtil.getMethodSignaturesToOverride(typeDefinition).isEmpty()) {
+        HintManager.getInstance().showErrorHint(editor, "No methods to override have been found");
+        return;
+      }
+
+      GroovyOverrideImplementUtil.chooseAndOverrideMethods(project, editor, typeDefinition);
     }
-
-    OverrideImplementUtil.chooseAndOverrideMethods(project, editor, aClass);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

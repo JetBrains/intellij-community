@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ import java.util.Collection;
  * @author Maxim.Medvedev
  */
 public class ConvertMethodToClosureIntention extends Intention {
-  private static Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.intentions.conversions.ConvertMethodToclosureIntention");
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.intentions.conversions.ConvertMethodToclosureIntention");
 
   @NotNull
   @Override
@@ -97,7 +97,7 @@ public class ConvertMethodToClosureIntention extends Intention {
         }
       }
     }
-    if (conflicts.size() > 0) {
+    if (!conflicts.isEmpty()) {
       ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts, new Runnable() {
         @Override
         public void run() {
@@ -112,12 +112,13 @@ public class ConvertMethodToClosureIntention extends Intention {
 
   private static void execute(final GrMethod method, final Collection<GrReferenceExpression> usagesToConvert) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(method.getProject());
 
         StringBuilder builder = new StringBuilder(method.getTextLength());
         String modifiers = method.getModifierList().getText();
-        if (modifiers.trim().length() == 0) {
+        if (modifiers.trim().isEmpty()) {
           modifiers = GrModifier.DEF;
         }
         builder.append(modifiers).append(' ');
@@ -141,6 +142,7 @@ public class ConvertMethodToClosureIntention extends Intention {
   }
 
   private static class MyPredicate implements PsiElementPredicate {
+    @Override
     public boolean satisfiedBy(PsiElement element) {
       if (element.getLanguage() != GroovyFileType.GROOVY_LANGUAGE) return false;
 

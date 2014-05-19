@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -116,7 +116,7 @@ public class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
       GitFileRevision left = (GitFileRevision)revision1;
       GitFileRevision right = (GitFileRevision)revision2;
       if (autoSort) {
-        Pair<VcsFileRevision, VcsFileRevision> pair = VcsHistoryUtil.sortRevisions(revision1, revision2);
+        Couple<VcsFileRevision> pair = VcsHistoryUtil.sortRevisions(revision1, revision2);
         left = (GitFileRevision)pair.first;
         right = (GitFileRevision)pair.second;
       }

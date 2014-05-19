@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
@@ -30,13 +31,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import static com.intellij.patterns.PlatformPatterns.psiElement;
-
 /**
 * Created by Max Medvedev on 14/05/14
 */
 class GrThisSuperCompletionProvider extends CompletionProvider<CompletionParameters> {
-  private static final ElementPattern<PsiElement> AFTER_DOT = psiElement().afterLeaf(".").withParent(GrReferenceExpression.class);
+  private static final ElementPattern<PsiElement> AFTER_DOT = PlatformPatterns.psiElement().afterLeaf(".").withParent(GrReferenceExpression.class);
   private static final String[] THIS_SUPER = {"this", "super"};
 
   public static void register(CompletionContributor contributor) {

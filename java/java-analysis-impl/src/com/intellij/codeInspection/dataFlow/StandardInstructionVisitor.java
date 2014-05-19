@@ -118,6 +118,12 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     if (dfaDest instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue) dfaDest;
+
+      DfaValueFactory factory = runner.getFactory();
+      if (dfaSource instanceof DfaVariableValue && factory.getVarFactory().getAllQualifiedBy(var).contains(dfaSource)) {
+        dfaSource = factory.createTypeValue(((DfaVariableValue)dfaSource).getVariableType(), ((DfaVariableValue)dfaSource).getInherentNullability());
+      }
+
       if (var.getInherentNullability() == Nullness.NOT_NULL) {
         checkNotNullable(memState, dfaSource, NullabilityProblem.assigningToNotNull, instruction.getRExpression());
       }

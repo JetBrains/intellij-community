@@ -44,6 +44,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
+import org.jetbrains.plugins.groovy.refactoring.HelpID;
 import org.jetbrains.plugins.groovy.refactoring.extract.GroovyExtractChooser;
 import org.jetbrains.plugins.groovy.refactoring.extract.InitialInfo;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
@@ -57,10 +58,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static org.jetbrains.plugins.groovy.refactoring.HelpID.GROOVY_INTRODUCE_PARAMETER;
-import static org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GroovyIntroduceParameterUtil.findExpr;
-import static org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GroovyIntroduceParameterUtil.findVar;
-
 /**
  * @author Maxim.Medvedev
  */
@@ -68,7 +65,8 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
   static final String REFACTORING_NAME = RefactoringBundle.message("introduce.parameter.title");
   private JBPopup myEnclosingMethodsPopup;
 
-  public void invoke(final @NotNull Project project, @NotNull final Editor editor, @NotNull final PsiFile file, final @Nullable DataContext dataContext) {
+  @Override
+  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file, @Nullable final DataContext dataContext) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (!selectionModel.hasSelection()) {
       final int offset = editor.getCaretModel().getOffset();
@@ -83,6 +81,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
       }
       else {
         IntroduceTargetChooser.showChooser(editor, expressions, new Pass<GrExpression>() {
+          @Override
           public void pass(final GrExpression selectedValue) {
             invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(), selectedValue.getTextRange().getEndOffset());
           }
@@ -106,14 +105,15 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
     }
     catch (GrRefactoringError e) {
       if (ApplicationManager.getApplication().isUnitTestMode()) throw e;
-      CommonRefactoringUtil.showErrorHint(project, editor, e.getMessage(), RefactoringBundle.message("introduce.parameter.title"), GROOVY_INTRODUCE_PARAMETER);
+      CommonRefactoringUtil.showErrorHint(project, editor, e.getMessage(), RefactoringBundle.message("introduce.parameter.title"),
+                                          HelpID.GROOVY_INTRODUCE_PARAMETER);
     }
   }
 
   private void chooseScopeAndRun(@NotNull final InitialInfo initialInfo, @NotNull final Editor editor) {
     final List<GrParametersOwner> scopes = findScopes(initialInfo);
 
-    if (scopes.size() == 0) {
+    if (scopes.isEmpty()) {
       throw new GrRefactoringError(GroovyRefactoringBundle.message("there.is.no.method.or.closure"));
     }
     else if (scopes.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
@@ -188,7 +188,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
 
   private static boolean isInplace(@NotNull IntroduceParameterInfo info,
                                    @NotNull Editor editor) {
-    return findExpr(info) != null &&
+    return GroovyIntroduceParameterUtil.findExpr(info) != null &&
            info.getToReplaceIn() instanceof GrMethod &&
            info.getToSearchFor() instanceof PsiMethod &&
            GrIntroduceHandlerBase.isInplace(editor, info.getContext());
@@ -201,8 +201,8 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
 
   private static GrIntroduceContext createContext(@NotNull IntroduceParameterInfo info,
                                                   @NotNull Editor editor) {
-    GrExpression expr = findExpr(info);
-    GrVariable var = findVar(info);
+    GrExpression expr = GroovyIntroduceParameterUtil.findExpr(info);
+    GrVariable var = GroovyIntroduceParameterUtil.findVar(info);
     StringPartInfo stringPart = info.getStringPartInfo();
     return new GrIntroduceVariableHandler().getContext(info.getProject(), editor, expr, var, stringPart, info.getToReplaceIn());
   }

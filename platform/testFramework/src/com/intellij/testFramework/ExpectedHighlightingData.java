@@ -32,10 +32,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -47,10 +44,10 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.junit.Assert;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Assert;
 
 import java.awt.*;
 import java.lang.reflect.Field;
@@ -538,14 +535,14 @@ public class ExpectedHighlightingData {
 
     // combine highlighting data with original text
     StringBuilder sb = new StringBuilder();
-    Pair<Integer, Integer> result = composeText(sb, list, 0, text, text.length(), 0);
+    Couple<Integer> result = composeText(sb, list, 0, text, text.length(), 0);
     sb.insert(0, text.substring(0, result.second));
     return sb.toString();
   }
 
-  private static Pair<Integer, Integer> composeText(StringBuilder sb,
-                                                    List<Pair<String, HighlightInfo>> list, int index,
-                                                    String text, int endPos, int startPos) {
+  private static Couple<Integer> composeText(StringBuilder sb,
+                                             List<Pair<String, HighlightInfo>> list, int index,
+                                             String text, int endPos, int startPos) {
     int i = index;
     while (i < list.size()) {
       Pair<String, HighlightInfo> pair = list.get(i);
@@ -561,7 +558,7 @@ public class ExpectedHighlightingData {
       sb.insert(0, "</" + severity + ">");
       endPos = info.endOffset;
       if (prev != null && prev.endOffset > info.startOffset) {
-        Pair<Integer, Integer> result = composeText(sb, list, i + 1, text, endPos, info.startOffset);
+        Couple<Integer> result = composeText(sb, list, i + 1, text, endPos, info.startOffset);
         i = result.first - 1;
         endPos = result.second;
       }
@@ -572,7 +569,7 @@ public class ExpectedHighlightingData {
       i++;
     }
 
-    return Pair.create(i, endPos);
+    return Couple.newOne(i, endPos);
   }
 
   private static boolean infosContainsExpectedInfo(Collection<HighlightInfo> infos, HighlightInfo expectedInfo) {

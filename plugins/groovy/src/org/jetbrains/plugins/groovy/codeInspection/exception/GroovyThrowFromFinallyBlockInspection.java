@@ -25,29 +25,34 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatem
 
 public class GroovyThrowFromFinallyBlockInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return ERROR_HANDLING;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "'throw' inside 'finally' block";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "'#ref' inside 'finally' block #loc";
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitThrowStatement(GrThrowStatement throwStatement) {
       super.visitThrowStatement(throwStatement);
       if (!ControlFlowUtils.isInFinallyBlock(throwStatement)) {

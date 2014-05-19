@@ -42,5 +42,9 @@ public class NotExpressionPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testExclamation() {
     doTest();
   }
+
+  public void testConditionInBooleanMethodCall() {
+    doTest();
+  }
   //  public void testNegation()          { doTest(); } // todo: test for chooser
 }

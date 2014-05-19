@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ public class GrBuiltInTypeElementImpl extends GroovyPsiElementImpl implements Gr
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitBuiltinTypeElement(this);
   }
@@ -41,6 +42,7 @@ public class GrBuiltInTypeElementImpl extends GroovyPsiElementImpl implements Gr
     return "Built in type";
   }
 
+  @Override
   @NotNull
   public PsiType getType() {
     return TypesUtil.getPrimitiveTypeByText(getText());

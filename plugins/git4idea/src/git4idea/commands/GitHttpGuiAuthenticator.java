@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.AuthData;
@@ -194,7 +195,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
   @NotNull
   private static String getHost(@NotNull String url) {
-    Pair<String, String> split = UriUtil.splitScheme(url);
+    Couple<String> split = UriUtil.splitScheme(url);
     String scheme = split.getFirst();
     String urlItself = split.getSecond();
     int pathStart = urlItself.indexOf("/");
@@ -248,7 +249,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     if (login == null) {
       return url;
     }
-    Pair<String, String> pair = UriUtil.splitScheme(url);
+    Couple<String> pair = UriUtil.splitScheme(url);
     String scheme = pair.getFirst();
     if (StringUtil.isEmpty(scheme)) {
       return scheme + URLUtil.SCHEME_SEPARATOR + login + "@" + pair.getSecond();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,8 +38,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.getPropertyNameByGetterName;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.getPropertyNameBySetterName;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mAT;
 
 /**
  * @author Max Medvedev
@@ -86,6 +86,7 @@ public class GroovyEncapsulateFieldHelper extends EncapsulateFieldHelper {
     }
   }
 
+  @Override
   @Nullable
   public EncapsulateFieldUsageInfo createUsage(@NotNull EncapsulateFieldsDescriptor descriptor,
                                                @NotNull FieldDescriptor fieldDescriptor,
@@ -129,6 +130,7 @@ public class GroovyEncapsulateFieldHelper extends EncapsulateFieldHelper {
     return null;
   }
 
+  @Override
   public boolean processUsage(@NotNull EncapsulateFieldUsageInfo usage,
                               @NotNull EncapsulateFieldsDescriptor descriptor,
                               PsiMethod setter,
@@ -233,7 +235,7 @@ public class GroovyEncapsulateFieldHelper extends EncapsulateFieldHelper {
           }
         }
 
-        @NonNls String text = sign == GroovyTokenTypes.mINC
+        @NonNls String text = sign == mINC
                               ? "a+1"
                               : "a-1";
         GrBinaryExpression binExpr = (GrBinaryExpression)factory.createExpressionFromText(text, parent);
@@ -280,7 +282,7 @@ public class GroovyEncapsulateFieldHelper extends EncapsulateFieldHelper {
       ref.setQualifier(thisRef);
     }
 
-    ref.getNode().addLeaf(GroovyTokenTypes.mAT, "@", ref.getDotToken().getNode().getTreeNext());
+    ref.getNode().addLeaf(mAT, "@", ref.getDotToken().getNode().getTreeNext());
   }
 
   private static PsiClass findContainingClass(@NotNull GrReferenceExpression ref, @NotNull PsiField field) {
@@ -312,12 +314,12 @@ public class GroovyEncapsulateFieldHelper extends EncapsulateFieldHelper {
   }
 
   private static boolean checkSetterIsSimple(@NotNull PsiField field, @NotNull PsiMethod setter) {
-    final String nameBySetter = getPropertyNameBySetterName(setter.getName());
+    final String nameBySetter = GroovyPropertyUtils.getPropertyNameBySetterName(setter.getName());
     return field.getName().equals(nameBySetter);
   }
 
   private static boolean checkGetterIsSimple(@NotNull PsiField field, @NotNull PsiMethod getter) {
-    final String nameByGetter = getPropertyNameByGetterName(getter.getName(), true);
+    final String nameByGetter = GroovyPropertyUtils.getPropertyNameByGetterName(getter.getName(), true);
     return field.getName().equals(nameByGetter);
   }
 

@@ -59,12 +59,14 @@ public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptySt
     return getParentByStub();
   }
 
+  @Override
   public abstract void accept(GroovyElementVisitor visitor);
 
   public String toString() {
     return "Type definition body";
   }
 
+  @Override
   public GrField[] getFields() {
     GrVariableDeclaration[] declarations = getStubOrPsiChildren(GroovyElementTypes.VARIABLE_DEFINITION, GrVariableDeclaration.ARRAY_FACTORY);
     List<GrField> result = ContainerUtil.newArrayList();
@@ -80,37 +82,45 @@ public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptySt
     return result.toArray(new GrField[result.size()]);
   }
 
+  @Override
   public GrMethod[] getMethods() {
     return getStubOrPsiChildren(TokenSets.METHOD_DEFS, GrMethod.ARRAY_FACTORY);
   }
 
+  @Override
   public GrMembersDeclaration[] getMemberDeclarations() {
     return findChildrenByClass(GrMembersDeclaration.class);
   }
 
+  @Override
   @Nullable
   public PsiElement getLBrace() {
     return findChildByType(GroovyTokenTypes.mLCURLY);
   }
 
+  @Override
   @Nullable
   public PsiElement getRBrace() {
     return findChildByType(GroovyTokenTypes.mRCURLY);
   }
 
+  @Override
   @NotNull
   public GrClassInitializer[] getInitializers() {
     return findChildrenByClass(GrClassInitializer.class);
   }
 
+  @Override
   public PsiClass[] getInnerClasses() {
-    return getStubOrPsiChildren(GroovyElementTypes.TYPE_DEFINITION_TYPES, PsiClass.ARRAY_FACTORY);
+    return getStubOrPsiChildren(TokenSets.TYPE_DEFINITIONS, PsiClass.ARRAY_FACTORY);
   }
 
+  @Override
   public void removeVariable(GrVariable variable) {
     PsiImplUtil.removeVariable(variable);
   }
 
+  @Override
   public GrVariableDeclaration addVariableDeclarationBefore(GrVariableDeclaration declaration, GrStatement anchor) throws IncorrectOperationException {
     PsiElement rBrace = getRBrace();
     if (anchor == null && rBrace == null) {
@@ -155,6 +165,7 @@ public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptySt
       super(stub, GroovyElementTypes.CLASS_BODY);
     }
 
+    @Override
     public void accept(GroovyElementVisitor visitor) {
       visitor.visitTypeDefinitionBody(this);
     }
@@ -170,11 +181,13 @@ public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptySt
       super(stub, GroovyElementTypes.ENUM_BODY);
     }
 
+    @Override
     @Nullable
     public GrEnumConstantList getEnumConstantList() {
       return getStubOrPsiChild(GroovyElementTypes.ENUM_CONSTANTS);
     }
 
+    @Override
     public void accept(GroovyElementVisitor visitor) {
       visitor.visitEnumDefinitionBody(this);
     }

@@ -33,7 +33,6 @@ public class RegistrationProblemsInspectionCodeTest extends PluginModuleTestCase
     myFixture.addClass("package com.intellij.openapi.actionSystem; public class AnAction {}");
 
     myFixture.addClass("package com.intellij.openapi.components; public interface ApplicationComponent {}");
-    myFixture.addClass("package com.intellij.openapi.module; public interface ModuleComponent {}");
 
     myFixture.enableInspections(new RegistrationProblemsInspection());
   }

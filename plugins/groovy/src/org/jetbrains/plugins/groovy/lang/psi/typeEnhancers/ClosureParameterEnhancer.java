@@ -42,8 +42,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import java.util.Map;
 import java.util.Set;
 
-import static com.intellij.psi.CommonClassNames.JAVA_IO_FILE;
-
 /**
  * @author peter
  */
@@ -63,13 +61,13 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     simpleTypes.put("withDataOutputStream", "java.io.DataOutputStream");
     simpleTypes.put("withDataInputStream", "java.io.DataInputStream");
     simpleTypes.put("eachLine", "java.lang.String");
-    simpleTypes.put("eachFile", JAVA_IO_FILE);
-    simpleTypes.put("eachDir", JAVA_IO_FILE);
-    simpleTypes.put("eachFileRecurse", JAVA_IO_FILE);
-    simpleTypes.put("traverse", JAVA_IO_FILE);
-    simpleTypes.put("eachDirRecurse", JAVA_IO_FILE);
-    simpleTypes.put("eachFileMatch", JAVA_IO_FILE);
-    simpleTypes.put("eachDirMatch", JAVA_IO_FILE);
+    simpleTypes.put("eachFile", CommonClassNames.JAVA_IO_FILE);
+    simpleTypes.put("eachDir", CommonClassNames.JAVA_IO_FILE);
+    simpleTypes.put("eachFileRecurse", CommonClassNames.JAVA_IO_FILE);
+    simpleTypes.put("traverse", CommonClassNames.JAVA_IO_FILE);
+    simpleTypes.put("eachDirRecurse", CommonClassNames.JAVA_IO_FILE);
+    simpleTypes.put("eachFileMatch", CommonClassNames.JAVA_IO_FILE);
+    simpleTypes.put("eachDirMatch", CommonClassNames.JAVA_IO_FILE);
     simpleTypes.put("withReader", "java.io.Reader");
     simpleTypes.put("withWriter", "java.io.Writer");
     simpleTypes.put("withWriterAppend", "java.io.Writer");
@@ -312,7 +310,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
       return extracted;
     }
 
-    if (TypesUtil.isClassType(type, CommonClassNames.JAVA_LANG_STRING) || TypesUtil.isClassType(type, JAVA_IO_FILE)) {
+    if (TypesUtil.isClassType(type, CommonClassNames.JAVA_LANG_STRING) || TypesUtil.isClassType(type, CommonClassNames.JAVA_IO_FILE)) {
       return PsiType.getJavaLangString(manager, resolveScope);
     }
 

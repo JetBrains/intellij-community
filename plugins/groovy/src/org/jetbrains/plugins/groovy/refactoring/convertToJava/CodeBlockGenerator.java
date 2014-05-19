@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,9 +59,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import java.util.Collection;
 import java.util.Set;
 
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.*;
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.writeType;
-
 /**
  * @author Maxim.Medvedev
  */
@@ -73,7 +70,7 @@ public class CodeBlockGenerator extends Generator {
   private final StringBuilder builder;
   private final ExpressionContext context;
 
-  private Set<GrStatement> myExitPoints;
+  private final Set<GrStatement> myExitPoints;
 
   public CodeBlockGenerator(StringBuilder builder, ExpressionContext context) {
     this(builder, context, null);
@@ -147,7 +144,7 @@ public class CodeBlockGenerator extends Generator {
     for (GrParameter parameter : parameters) {
       if (context.analyzedVars.toWrap(parameter)) {
         StringBuilder typeText = new StringBuilder().append(GroovyCommonClassNames.GROOVY_LANG_REFERENCE);
-        writeTypeParameters(typeText, new PsiType[]{context.typeProvider.getParameterType(parameter)}, parameter,
+        GenerationUtil.writeTypeParameters(typeText, new PsiType[]{context.typeProvider.getParameterType(parameter)}, parameter,
                             new GeneratorClassNameProvider());
         builder.append("final ").append(typeText).append(' ').append(context.analyzedVars.toVarName(parameter))
           .append(" = new ").append(typeText).append('(').append(parameter.getName()).append(");\n");
@@ -227,6 +224,7 @@ public class CodeBlockGenerator extends Generator {
 
   }
 
+  @Override
   public void visitStatement(GrStatement statement) {
     LOG.error("all statements must be overloaded");
   }
@@ -354,7 +352,7 @@ public class CodeBlockGenerator extends Generator {
 
     final PsiType expectedReturnType = PsiImplUtil.inferReturnType(expression);
     final PsiType nnReturnType = expectedReturnType == null || expectedReturnType == PsiType.VOID ? TypesUtil.getJavaLangObject(expression) : expectedReturnType;
-    wrapInCastIfNeeded(builder, nnReturnType, expression.getNominalType(), expression, context, new StatementWriter() {
+    GenerationUtil.wrapInCastIfNeeded(builder, nnReturnType, expression.getNominalType(), expression, context, new StatementWriter() {
       @Override
       public void writeStatement(StringBuilder builder, ExpressionContext context) {
         writeExpression(expression, builder, context);
@@ -388,7 +386,7 @@ public class CodeBlockGenerator extends Generator {
             writeExpression(condition, builder, context);
           }
           else {
-            invokeMethodByName(
+            GenerationUtil.invokeMethodByName(
               condition,
               "asBoolean",
               GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY,
@@ -480,7 +478,7 @@ public class CodeBlockGenerator extends Generator {
 
   private static void writeVariableWithoutSemicolonAndInitializer(StringBuilder builder, GrVariable var, ExpressionContext context) {
     ModifierListGenerator.writeModifiers(builder, var.getModifierList());
-    writeType(builder, context.typeProvider.getVarType(var), var);
+    TypeWriter.writeType(builder, context.typeProvider.getVarType(var), var);
     builder.append(' ').append(var.getName());
   }
 
@@ -584,7 +582,7 @@ public class CodeBlockGenerator extends Generator {
           writeTupleDeclaration(variableDeclaration, builder, context);
         }
         else {
-          writeSimpleVarDeclaration(variableDeclaration, builder, context);
+          GenerationUtil.writeSimpleVarDeclaration(variableDeclaration, builder, context);
         }
       }
     });
@@ -597,14 +595,15 @@ public class CodeBlockGenerator extends Generator {
     final GrExpression tupleInitializer = variableDeclaration.getTupleInitializer();
     if (tupleInitializer instanceof GrListOrMap) {
       for (GrVariable variable : variables) {
-        writeVariableSeparately(variable, builder, expressionContext);
+        GenerationUtil.writeVariableSeparately(variable, builder, expressionContext);
         builder.append(";\n");
       }
     }
     else if (tupleInitializer != null) {
 
       GroovyResolveResult iteratorMethodResult =
-        resolveMethod(tupleInitializer, "iterator", GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY,
+        GenerationUtil
+          .resolveMethod(tupleInitializer, "iterator", GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY,
                       variableDeclaration);
 
       final PsiType iteratorType = inferIteratorType(iteratorMethodResult, tupleInitializer);
@@ -619,11 +618,11 @@ public class CodeBlockGenerator extends Generator {
       for (final GrVariable v : variables) {
         ModifierListGenerator.writeModifiers(builder, modifierList);
         final PsiType type = context.typeProvider.getVarType(v);
-        writeType(builder, type, variableDeclaration);
+        TypeWriter.writeType(builder, type, variableDeclaration);
         builder.append(' ').append(v.getName());
 
         builder.append(" = ");
-        wrapInCastIfNeeded(builder, type, iterableTypeParameter, tupleInitializer, expressionContext, new StatementWriter() {
+        GenerationUtil.wrapInCastIfNeeded(builder, type, iterableTypeParameter, tupleInitializer, expressionContext, new StatementWriter() {
           @Override
           public void writeStatement(StringBuilder builder, ExpressionContext context) {
             builder.append(iteratorName).append(".hasNext() ? ").append(iteratorName).append(".next() : null");
@@ -633,7 +632,7 @@ public class CodeBlockGenerator extends Generator {
       }
     }
     else {
-      writeSimpleVarDeclaration(variableDeclaration, builder, expressionContext);
+      GenerationUtil.writeSimpleVarDeclaration(variableDeclaration, builder, expressionContext);
     }
   }
 
@@ -644,12 +643,13 @@ public class CodeBlockGenerator extends Generator {
                                        PsiType iteratorType,
                                        GroovyResolveResult iteratorMethodResult) {
 
-    final String iteratorName = suggestVarName(iteratorType, variableDeclaration, expressionContext);
+    final String iteratorName = GenerationUtil.suggestVarName(iteratorType, variableDeclaration, expressionContext);
     builder.append("final ");
-    writeType(builder, iteratorType, variableDeclaration);
+    TypeWriter.writeType(builder, iteratorType, variableDeclaration);
     builder.append(' ').append(iteratorName).append(" = ");
 
-    invokeMethodByResolveResult(tupleInitializer, iteratorMethodResult, "iterator", GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY,
+    GenerationUtil
+      .invokeMethodByResolveResult(tupleInitializer, iteratorMethodResult, "iterator", GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY,
                                 GrClosableBlock.EMPTY_ARRAY, new ExpressionGenerator(builder, expressionContext), variableDeclaration);
     builder.append(";\n");
     return iteratorName;

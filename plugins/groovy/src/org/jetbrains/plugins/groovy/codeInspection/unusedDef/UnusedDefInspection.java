@@ -63,18 +63,21 @@ import java.util.Set;
 public class UnusedDefInspection extends GroovyLocalInspectionBase {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection");
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return GroovyInspectionBundle.message("groovy.dfa.issues");
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return GroovyInspectionBundle.message("unused.assignment");
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getShortName() {
@@ -82,6 +85,7 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
   }
 
 
+  @Override
   protected void check(final GrControlFlowOwner owner, final ProblemsHolder problemsHolder) {
     final Instruction[] flow = owner.getControlFlow();
     final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance(flow);
@@ -107,8 +111,10 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
           final String varName = varInst.getVariableName();
           DefinitionMap e = dfaResult.get(i);
           e.forEachValue(new TObjectProcedure<TIntHashSet>() {
+            @Override
             public boolean execute(TIntHashSet reaching) {
               reaching.forEach(new TIntProcedure() {
+                @Override
                 public boolean execute(int defNum) {
                   final String defName = ((ReadWriteVariableInstruction) flow[defNum]).getVariableName();
                   if (varName.equals(defName)) {
@@ -127,6 +133,7 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
     final Set<PsiElement> checked = ContainerUtil.newHashSet();
 
     unusedDefs.forEach(new TIntProcedure() {
+      @Override
       public boolean execute(int num) {
         final ReadWriteVariableInstruction instruction = (ReadWriteVariableInstruction)flow[num];
         final PsiElement element = instruction.getElement();
@@ -208,6 +215,7 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
       }
 
       return ReferencesSearch.search(var, var.getUseScope()).forEach(new Processor<PsiReference>() {
+        @Override
         public boolean process(PsiReference ref) {
           return ControlFlowUtils.findControlFlowOwner(ref.getElement()) == scope;
         }
@@ -234,6 +242,7 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
     return !(var instanceof GrField || var instanceof GrParameter && !parametersAllowed);
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

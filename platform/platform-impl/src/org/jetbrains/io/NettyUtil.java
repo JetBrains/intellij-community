@@ -29,6 +29,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.channel.socket.oio.OioSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
@@ -109,7 +110,7 @@ public final class NettyUtil {
   }
 
   // applicable only in case of ClientBootstrap&OioClientSocketChannelFactory
-  public static void closeAndReleaseFactory(Channel channel) {
+  public static void closeAndReleaseFactory(@NotNull Channel channel) {
     EventLoop channelFactory = channel.eventLoop();
     try {
       channel.close().awaitUninterruptibly();

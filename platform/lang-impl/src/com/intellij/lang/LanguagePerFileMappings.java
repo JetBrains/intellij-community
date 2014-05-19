@@ -272,4 +272,10 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
     return true;
   }
 
+  public boolean hasMappings() {
+    synchronized (myMappings) {
+      return !myMappings.isEmpty();
+    }
+  }
+
 }

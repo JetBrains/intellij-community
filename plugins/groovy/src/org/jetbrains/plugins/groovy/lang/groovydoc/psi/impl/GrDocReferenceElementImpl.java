@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -36,6 +35,7 @@ public class GrDocReferenceElementImpl extends GroovyDocPsiElementImpl implement
     return "GrDocReferenceElement";
   }
 
+  @Override
   @Nullable
   public GrCodeReferenceElement getReferenceElement() {
     return findChildByClass(GrCodeReferenceElement.class);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -295,6 +295,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
   protected Set<VirtualFile> enumerateGroovyFiles(final Module module) {
     final Set<VirtualFile> moduleClasses = new THashSet<VirtualFile>();
     ModuleRootManager.getInstance(module).getFileIndex().iterateContent(new ContentIterator() {
+      @Override
       public boolean processFile(final VirtualFile vfile) {
         if (!vfile.isDirectory() &&
             GroovyFileType.GROOVY_FILE_TYPE.equals(vfile.getFileType())) {
@@ -353,6 +354,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     return new ModuleChunk((CompileContextEx)context, new Chunk<Module>(module), Collections.<Module, List<VirtualFile>>emptyMap());
   }
 
+  @Override
   public void compile(final CompileContext compileContext, Chunk<Module> moduleChunk, final VirtualFile[] virtualFiles, OutputSink sink) {
     Map<Module, List<VirtualFile>> mapModulesToVirtualFiles;
     if (moduleChunk.getNodes().size() == 1) {
@@ -420,6 +422,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
   protected abstract void compileFiles(CompileContext compileContext, Module module,
                                        List<VirtualFile> toCompile, OutputSink sink, boolean tests);
 
+  @Override
   public boolean isCompilableFile(VirtualFile file, CompileContext context) {
     final boolean result = GroovyFileType.GROOVY_FILE_TYPE.equals(file.getFileType());
     if (result && LOG.isDebugEnabled()) {

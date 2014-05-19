@@ -81,10 +81,12 @@ public class GrDynamicImplicitMethod extends GrLightMethodBuilder implements GrD
     myReturnType = returnType;
   }
 
+  @Override
   public String getContainingClassName() {
     return myContainingClassName;
   }
 
+  @Override
   @Nullable
   public PsiClass getContainingClassElement() {
     return JavaPsiFacade.getInstance(getProject()).findClass(myContainingClassName, ProjectScope.getAllScope(getProject()));
@@ -98,10 +100,12 @@ public class GrDynamicImplicitMethod extends GrLightMethodBuilder implements GrD
     return super.setName(name);
   }
 
+  @Override
   public GrDynamicImplicitMethod copy() {
     return new GrDynamicImplicitMethod(myManager, getName(), getContainingClassName(), hasModifierProperty(PsiModifier.STATIC), ContainerUtil.newArrayList(myParamInfos), myReturnType);
   }
 
+  @Override
   public boolean isValid() {
     return true;
   }
@@ -114,6 +118,7 @@ public class GrDynamicImplicitMethod extends GrLightMethodBuilder implements GrD
     return psiClass.getContainingFile();
   }
 
+  @Override
   @Nullable
   public PsiClass getContainingClass() {
     return ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
@@ -140,14 +145,17 @@ public class GrDynamicImplicitMethod extends GrLightMethodBuilder implements GrD
     return "DynamicMethod:" + getName();
   }
 
+  @Override
   @NotNull
   public SearchScope getUseScope() {
     return GlobalSearchScope.projectScope(getProject());
   }
 
+  @Override
   public void navigate(boolean requestFocus) {
 
     DynamicToolWindowWrapper.getInstance(getProject()).getToolWindow().activate(new Runnable() {
+      @Override
       public void run() {
         DynamicToolWindowWrapper toolWindowWrapper = DynamicToolWindowWrapper.getInstance(getProject());
         final TreeTable treeTable = toolWindowWrapper.getTreeTable();
@@ -205,27 +213,33 @@ public class GrDynamicImplicitMethod extends GrLightMethodBuilder implements GrD
     }, true);
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return false;
   }
 
+  @Override
   public boolean canNavigate() {
     return true;
   }
 
+  @Override
   public boolean isWritable() {
     return true;
   }
 
+  @Override
   public String getPresentableText() {
     return getName();
   }
 
+  @Override
   @Nullable
   public String getLocationString() {
     return null;
   }
 
+  @Override
   @Nullable
   public Icon getIcon(boolean open) {
     return JetgroovyIcons.Groovy.Method;

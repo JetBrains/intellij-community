@@ -50,9 +50,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.*;
 
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.writeTypeParameters;
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.writeType;
-
 /**
  * @author Maxim.Medvedev
  */
@@ -120,14 +117,14 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
 
 
     if (method.hasTypeParameters()) {
-      writeTypeParameters(builder, method, classNameProvider);
+      GenerationUtil.writeTypeParameters(builder, method, classNameProvider);
       builder.append(' ');
     }
 
     //append return type
     if (!method.isConstructor()) {
       PsiType retType = context.typeProvider.getReturnType(method);
-      writeType(builder, retType, method, classNameProvider);
+      TypeWriter.writeType(builder, retType, method, classNameProvider);
       builder.append(' ');
     }
     builder.append(name);
@@ -307,7 +304,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       PsiType type = extended.typeProvider.getVarType(variable);
       ModifierListGenerator.writeModifiers(builder, variable.getModifierList());
 
-      writeType(builder, type, variable);
+      TypeWriter.writeType(builder, type, variable);
       builder.append(' ');
 
       builder.append(variable.getName());
@@ -330,7 +327,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       builder.append(";\n");
     }
 
-    if (extended.myStatements.size()>0) {
+    if (!extended.myStatements.isEmpty()) {
       initBuilder.append("}\n");
       mainBuilder.append(initBuilder);
     }
@@ -391,6 +388,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
 
 
 
+  @Override
   public void writeImplementsList(StringBuilder text, PsiClass typeDefinition) {
     final Collection<PsiClassType> implementsTypes = new LinkedHashSet<PsiClassType>();
     Collections.addAll(implementsTypes, typeDefinition.getImplementsListTypes());
@@ -403,10 +401,10 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       if (shouldSkipInImplements(typeDefinition, implementsType)) {
         continue;
       }
-      writeType(text, implementsType, typeDefinition, classNameProvider);
+      TypeWriter.writeType(text, implementsType, typeDefinition, classNameProvider);
       text.append(", ");
     }
-    if (implementsTypes.size() > 0) text.delete(text.length() - 2, text.length());
+    if (!implementsTypes.isEmpty()) text.delete(text.length() - 2, text.length());
     text.append(' ');
   }
 
@@ -419,6 +417,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
         !containsMethodsOf((GrTypeDefinition)typeDefinition, GroovyCommonClassNames.GROOVY_OBJECT);
   }
 
+  @Override
   public void writeExtendsList(StringBuilder text, PsiClass typeDefinition) {
     final PsiClassType[] extendsClassesTypes = typeDefinition.getExtendsListTypes();
 
@@ -434,7 +433,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       }
 
       text.append("extends ");
-      writeType(text, type, typeDefinition, classNameProvider);
+      TypeWriter.writeType(text, type, typeDefinition, classNameProvider);
       text.append(' ');
     }
   }

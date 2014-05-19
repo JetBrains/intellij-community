@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeParameters;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
-import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.FAIL;
-import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.REF_WITH_TYPE_PARAMS;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -114,7 +113,7 @@ public class Declaration implements GroovyElementTypes {
 
     boolean typeParsed = false;
     if (!ParserUtils.lookAhead(builder, mIDENT, mLPAREN)) {
-      typeParsed = TypeSpec.parse(builder, true, expressionPossible) != FAIL;
+      typeParsed = TypeSpec.parse(builder, true, expressionPossible) != ReferenceElement.ReferenceElementResult.FAIL;
       //type specification starts with upper case letter
       if (!typeParsed) {
         return WRONGWAY;
@@ -155,7 +154,7 @@ public class Declaration implements GroovyElementTypes {
     PsiBuilder.Marker checkMarker = builder.mark(); //point to begin of type or variable
 
     ReferenceElement.ReferenceElementResult typeResult = TypeSpec.parse(builder, false, expressionPossible);
-    if (typeResult == FAIL) { //if type wasn't recognized trying parse VariableDeclaration
+    if (typeResult == ReferenceElement.ReferenceElementResult.FAIL) { //if type wasn't recognized trying parse VariableDeclaration
       checkMarker.rollbackTo();
 
       if (isInAnnotation) {
@@ -171,7 +170,7 @@ public class Declaration implements GroovyElementTypes {
                                                                             modifiersParsed, false, parser);
 
       if (varDeclarationTop == WRONGWAY) {
-        if (typeResult == REF_WITH_TYPE_PARAMS) {
+        if (typeResult == ReferenceElement.ReferenceElementResult.REF_WITH_TYPE_PARAMS) {
           checkMarker.drop();
           return VARIABLE_DEFINITION_ERROR;
         }

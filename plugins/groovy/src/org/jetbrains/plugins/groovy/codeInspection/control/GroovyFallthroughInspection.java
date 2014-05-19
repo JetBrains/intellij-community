@@ -33,28 +33,33 @@ import java.util.regex.Pattern;
 
 public class GroovyFallthroughInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return CONTROL_FLOW;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Fall-through in switch statement";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Fall-through in switch statement #loc";
 
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
@@ -62,6 +67,7 @@ public class GroovyFallthroughInspection extends BaseInspection {
   private static class Visitor extends BaseInspectionVisitor {
     private static final Pattern commentPattern = Pattern.compile("(?i)falls?\\s*thro?u");
 
+    @Override
     public void visitSwitchStatement(GrSwitchStatement switchStatement) {
       super.visitSwitchStatement(switchStatement);
       final GrCaseSection[] caseSections = switchStatement.getCaseSections();

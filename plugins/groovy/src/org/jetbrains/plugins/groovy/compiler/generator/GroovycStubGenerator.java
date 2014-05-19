@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompilerBase;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.convertToJava.GroovyToJavaGenerator;
 
 import java.io.File;
@@ -67,7 +67,7 @@ import java.util.*;
  * @author peter
  */
 public class GroovycStubGenerator extends GroovyCompilerBase {
-  private static Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.compiler.generator.GroovycStubGenerator");
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.compiler.generator.GroovycStubGenerator");
 
   public static final String GROOVY_STUBS = "groovyStubs";
 
@@ -214,11 +214,13 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
     }
   }
 
+  @Override
   @NotNull
   public String getDescription() {
     return "Groovy to java source code generator";
   }
 
+  @Override
   public boolean validateConfiguration(CompileScope scope) {
     return true;
   }

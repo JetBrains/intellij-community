@@ -17,7 +17,7 @@ package org.zmlx.hg4idea.log;
 
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -80,7 +80,7 @@ public abstract class HgBaseLogParser<CommitT> implements Function<String, Commi
       SmartList<HgRevisionNumber> parents = parseParentRevisions(parentsString, revisionString);
 
       Date revisionDate = DATE_FORMAT.parse(attributes.get(DATE_INDEX));
-      Pair<String, String> authorAndEmail = HgUtil.parseUserNameAndEmail(attributes.get(AUTHOR_INDEX));
+      Couple<String> authorAndEmail = HgUtil.parseUserNameAndEmail(attributes.get(AUTHOR_INDEX));
       return convertDetails(revisionString, changeset, parents, revisionDate, authorAndEmail.first, authorAndEmail.second, attributes);
     }
     catch (ParseException e) {

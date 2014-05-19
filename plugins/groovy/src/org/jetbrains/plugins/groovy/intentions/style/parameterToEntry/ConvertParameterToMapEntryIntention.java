@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,8 +72,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-import static org.jetbrains.plugins.groovy.intentions.style.parameterToEntry.ConvertParameterToMapEntryIntention.FIRST_PARAMETER_KIND.*;
-
 /**
  * @author ilyas
  */
@@ -89,6 +87,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
   @NonNls private static final String MAP_TYPE_TEXT = "Map";
   @NonNls private static final String[] MY_POSSIBLE_NAMES = new String[]{"attrs", "args", "params", "map"};
 
+  @Override
   protected void processIntention(@NotNull final PsiElement element, final Project project, Editor editor) throws IncorrectOperationException {
     // Method or closure to be refactored
     final GrParametersOwner owner = PsiTreeUtil.getParentOfType(element, GrParametersOwner.class);
@@ -127,6 +126,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
           final String[] possibleNames = generateValidNames(MY_POSSIBLE_NAMES, firstParam);
 
           ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
             public void run() {
               final GroovyMapParameterDialog dialog = new GroovyMapParameterDialog(project, possibleNames, true) {
                 @Override
@@ -173,6 +173,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
 
   private static String[] generateValidNames(final String[] names, final GrParameter param) {
     return ContainerUtil.map2Array(names, String.class, new Function<String, String>() {
+      @Override
       public String fun(final String s) {
         return (new GroovyValidationUtil.ParameterNameSuggester(s, param)).generateName();
       }
@@ -193,6 +194,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
 
     final Project project = element.getProject();
     final Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
 
@@ -275,8 +277,9 @@ public class ConvertParameterToMapEntryIntention extends Intention {
 
             final GrNamedArgument namedArg;
             if (argInfo.isMultiArg) {
-              if (argInfo.args.size() == 0) continue;
+              if (argInfo.args.isEmpty()) continue;
               String arg = "[" + StringUtil.join(ContainerUtil.map(argInfo.args, new Function<PsiElement, String>() {
+                @Override
                 public String fun(PsiElement element) {
                   return element.getText();
                 }
@@ -287,7 +290,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
               namedArg = factory.createNamedArgument(paramName, factory.createExpressionFromText(arg));
             }
             else {
-              if (argInfo.args.size() == 0) continue;
+              if (argInfo.args.isEmpty()) continue;
               final PsiElement argument = argInfo.args.iterator().next();
               assert argument instanceof GrExpression;
               namedArg = factory.createNamedArgument(paramName, (GrExpression)argument);
@@ -328,6 +331,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
     };
 
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(runnable);
       }
@@ -382,11 +386,11 @@ public class ConvertParameterToMapEntryIntention extends Intention {
     }
     if (thereAreNamedArguments) {
       if (firstOwnerParameterMustBeMap(owner)) {
-        return MUST_BE_MAP;
+        return FIRST_PARAMETER_KIND.MUST_BE_MAP;
       }
-      return ERROR;
+      return FIRST_PARAMETER_KIND.ERROR;
     }
-    return IS_NOT_MAP;
+    return FIRST_PARAMETER_KIND.IS_NOT_MAP;
   }
 
   private static boolean firstOwnerParameterMustBeMap(final GrParametersOwner owner) {
@@ -444,6 +448,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
     final Ref<Boolean> result = new Ref<Boolean>(true);
     final Task task = new Task.Modal(project, GroovyIntentionsBundle
       .message("find.method.ro.closure.usages.0", owner instanceof GrClosableBlock ? CLOSURE_CAPTION : METHOD_CAPTION), true) {
+      @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         final Collection<PsiReference> references = Collections.synchronizedSet(new HashSet<PsiReference>());
         final Processor<PsiReference> consumer = new Processor<PsiReference>() {
@@ -482,12 +487,14 @@ public class ConvertParameterToMapEntryIntention extends Intention {
     return result.get().booleanValue();
   }
 
+  @Override
   @NotNull
   protected PsiElementPredicate getElementPredicate() {
     return new MyPsiElementPredicate();
   }
 
   private static class MyPsiElementPredicate implements PsiElementPredicate {
+    @Override
     public boolean satisfiedBy(final PsiElement element) {
       GrParameter parameter = null;
       if (element instanceof GrParameter) {
@@ -527,7 +534,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
   }
 
   private static boolean reportConflicts(final MultiMap<PsiElement, String> conflicts, final Project project) {
-    if (conflicts.size() == 0) return true;
+    if (conflicts.isEmpty()) return true;
     ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
     conflictsDialog.show();
     return conflictsDialog.isOK();

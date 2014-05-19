@@ -572,8 +572,10 @@ public class JavaCompletionData extends JavaAwareCompletionData {
   }
 
   static void addExpectedTypeMembers(CompletionParameters parameters, final CompletionResultSet result) {
-    for (final ExpectedTypeInfo info : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {
-      new JavaMembersGetter(info.getDefaultType(), parameters).addMembers(parameters.getInvocationCount() > 1, result);
+    if (parameters.getInvocationCount() <= 1) { // on second completion, StaticMemberProcessor will suggest those
+      for (final ExpectedTypeInfo info : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {
+        new JavaMembersGetter(info.getDefaultType(), parameters).addMembers(false, result);
+      }
     }
   }
 

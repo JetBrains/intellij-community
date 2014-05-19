@@ -5,7 +5,7 @@ import java.util.*;
 public class DeclareCollectionAsInterface
 {
     private HashMap<String, String> m_mapThree = new HashMap<String, String>(2);
-    private <warning descr="Declaration of 'HashMap' should probably be weakened to 'java.util.AbstractMap'">HashMap</warning> m_setOne = new HashMap(2);
+    private <warning descr="Declaration of 'HashMap' should probably be weakened to 'java.util.Map'">HashMap</warning> m_setOne = new HashMap(2);
     private Map m_setTwo = new HashMap(2);
 
     public DeclareCollectionAsInterface()
@@ -16,13 +16,13 @@ public class DeclareCollectionAsInterface
 
     public void fooBar()
     {
-        final <warning descr="Declaration of 'HashMap' should probably be weakened to 'java.util.AbstractMap'">HashMap</warning> map1 = new HashMap(2);
+        final <warning descr="Declaration of 'HashMap' should probably be weakened to 'java.util.Map'">HashMap</warning> map1 = new HashMap(2);
         final Map map2 = new HashMap(2);
         map1.put("foo", "foo");
         map2.put("bar", "bar");
     }
 
-    public void fooBaz(<warning descr="Declaration of 'HashMap' should probably be weakened to 'java.util.AbstractMap'">HashMap</warning> set1, Map set2)
+    public void fooBaz(<warning descr="Declaration of 'HashMap' should probably be weakened to 'java.util.Map'">HashMap</warning> set1, Map set2)
     {
         set1.put("foo", "foo");
         set2.put("bar", "bar");
@@ -49,10 +49,10 @@ public class DeclareCollectionAsInterface
     }
 
     void makeItRight() {
-      <warning descr="Declaration of 'ArrayList' should probably be weakened to 'java.util.AbstractList'">ArrayList</warning> list22 = new ArrayList();
+      <warning descr="Declaration of 'ArrayList' should probably be weakened to 'java.util.List'">ArrayList</warning> list22 = new ArrayList();
       System.out.println(list22.get(0));
 
-      <warning descr="Declaration of 'ArrayList' should probably be weakened to 'java.util.AbstractList'">ArrayList</warning><String> list33 = new ArrayList();
+      <warning descr="Declaration of 'ArrayList' should probably be weakened to 'java.util.List'">ArrayList</warning><String> list33 = new ArrayList();
       System.out.println(list33.get(0));
     }
 

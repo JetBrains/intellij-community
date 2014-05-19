@@ -20,7 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -113,12 +113,12 @@ public class PsiEquivalenceUtil {
   }
 
   public static void findChildRangeDuplicates(PsiElement first, PsiElement last,
-                                              final List<Pair<PsiElement, PsiElement>> result,
+                                              final List<Couple<PsiElement>> result,
                                               PsiElement scope) {
     findChildRangeDuplicates(first, last, scope, new PairConsumer<PsiElement, PsiElement>() {
       @Override
       public void consume(final PsiElement start, final PsiElement end) {
-        result.add(Pair.create(start, end));
+        result.add(Couple.newOne(start, end));
       }
     });
   }

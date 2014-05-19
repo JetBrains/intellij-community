@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,10 +46,12 @@ public class GrDocFieldReferenceImpl extends GrDocMemberReferenceImpl implements
     return "GrDocFieldReference";
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitDocFieldReference(this);
   }
 
+  @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     final PsiElement resolved = resolve();
     if (resolved instanceof PsiMethod) {
@@ -78,6 +80,7 @@ public class GrDocFieldReferenceImpl extends GrDocMemberReferenceImpl implements
     return super.handleElementRename(newElementName);
   }
 
+  @Override
   protected ResolveResult[] multiResolveImpl() {
     String name = getReferenceName();
     GrDocReferenceElement holder = getReferenceHolder();

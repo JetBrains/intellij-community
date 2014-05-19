@@ -33,19 +33,17 @@ import org.jetbrains.plugins.groovy.lang.psi.util.StaticChecker;
 
 import java.util.*;
 
-import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind.*;
-
 /**
  * @author ven
  */
 public class ResolverProcessor extends GrScopeProcessorWithHints {
   public static final Key<PsiElement> RESOLVE_CONTEXT = Key.create("RESOLVE_CONTEXT");
 
-  public static final EnumSet<ResolveKind> RESOLVE_KINDS_CLASS_PACKAGE = EnumSet.of(CLASS, PACKAGE);
-  public static final EnumSet<ResolveKind> RESOLVE_KINDS_CLASS = EnumSet.of(CLASS);
-  public static final EnumSet<ResolveKind> RESOLVE_KINDS_METHOD = EnumSet.of(METHOD);
-  public static final EnumSet<ResolveKind> RESOLVE_KINDS_METHOD_PROPERTY = EnumSet.of(METHOD, PROPERTY);
-  public static final EnumSet<ResolveKind> RESOLVE_KINDS_PROPERTY = EnumSet.of(PROPERTY);
+  public static final EnumSet<ResolveKind> RESOLVE_KINDS_CLASS_PACKAGE = EnumSet.of(ResolveKind.CLASS, ResolveKind.PACKAGE);
+  public static final EnumSet<ResolveKind> RESOLVE_KINDS_CLASS = EnumSet.of(ResolveKind.CLASS);
+  public static final EnumSet<ResolveKind> RESOLVE_KINDS_METHOD = EnumSet.of(ResolveKind.METHOD);
+  public static final EnumSet<ResolveKind> RESOLVE_KINDS_METHOD_PROPERTY = EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY);
+  public static final EnumSet<ResolveKind> RESOLVE_KINDS_PROPERTY = EnumSet.of(ResolveKind.PROPERTY);
 
   private Set<String> myProcessedClasses;
   protected final PsiElement myPlace;
@@ -177,10 +175,10 @@ public class ResolverProcessor extends GrScopeProcessorWithHints {
 
   @Nullable
   private static ResolveKind getResolveKind(PsiElement element) {
-    if (element instanceof PsiVariable) return PROPERTY;
-    if (element instanceof PsiMethod) return METHOD;
-    if (element instanceof PsiPackage) return PACKAGE;
-    if (element instanceof PsiClass) return CLASS;
+    if (element instanceof PsiVariable) return ResolveKind.PROPERTY;
+    if (element instanceof PsiMethod) return ResolveKind.METHOD;
+    if (element instanceof PsiPackage) return ResolveKind.PACKAGE;
+    if (element instanceof PsiClass) return ResolveKind.CLASS;
     return null;
   }
 

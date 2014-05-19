@@ -17,64 +17,44 @@ package com.intellij.openapi.diff.impl.settings;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
 import java.util.Collection;
 
 /**
  * The "gear" action allowing to configure merge tool visual preferences, such as displaying whitespaces, line numbers and soft wraps.
  *
- * @author Kirill Likhodedov
  * @see DiffMergeSettings
  */
-public class DiffMergeSettingsAction extends AnAction {
+public class DiffMergeSettingsAction extends ActionGroup {
 
   @NotNull private final Collection<Editor> myEditors;
-  @NotNull private final ActionGroup myActionGroup;
   @NotNull private final DiffMergeSettings mySettings;
 
   public DiffMergeSettingsAction(@NotNull Collection<Editor> editors, @NotNull DiffMergeSettings settings) {
-    super(AllIcons.General.Gear);
+    super("Settings", null, AllIcons.General.SecondaryGroup);
+    setPopup(true);
     myEditors = editors;
     mySettings = settings;
-    myActionGroup = new MergeToolActionGroup();
   }
 
+  @NotNull
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    InputEvent inputEvent = e.getInputEvent();
-    ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ToolWindowContentUi.POPUP_PLACE, myActionGroup);
-    int x = 0;
-    int y = 0;
-    if (inputEvent instanceof MouseEvent) {
-      x = ((MouseEvent)inputEvent).getX();
-      y = ((MouseEvent)inputEvent).getY();
-    }
-    popupMenu.getComponent().show(inputEvent.getComponent(), x, y);
+  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    return new AnAction[] {
+      new DiffMergeToggleAction("EditorToggleShowWhitespaces", DiffMergeEditorSetting.WHITESPACES, myEditors, mySettings),
+      new DiffMergeToggleAction("EditorToggleShowLineNumbers", DiffMergeEditorSetting.LINE_NUMBERS, myEditors, mySettings),
+      new DiffMergeToggleAction("EditorToggleShowIndentLines", DiffMergeEditorSetting.INDENT_LINES, myEditors, mySettings),
+      new DiffMergeToggleAction("EditorToggleUseSoftWraps", DiffMergeEditorSetting.SOFT_WRAPS, myEditors, mySettings)
+    };
   }
 
-  private class MergeToolActionGroup extends ActionGroup {
-    @NotNull
-    @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
-      return new AnAction[] {
-        new DiffMergeToggleAction("EditorToggleShowWhitespaces", DiffMergeEditorSetting.WHITESPACES, myEditors, mySettings),
-        new DiffMergeToggleAction("EditorToggleShowLineNumbers", DiffMergeEditorSetting.LINE_NUMBERS, myEditors, mySettings),
-        new DiffMergeToggleAction("EditorToggleShowIndentLines", DiffMergeEditorSetting.INDENT_LINES, myEditors, mySettings),
-        new DiffMergeToggleAction("EditorToggleUseSoftWraps", DiffMergeEditorSetting.SOFT_WRAPS, myEditors, mySettings)
-      };
-    }
-  }
-
-  /**
-   * Common class for all actions toggling merge tool editor settings.
-   */
   private static class DiffMergeToggleAction extends ToggleAction {
 
     @NotNull private final DiffMergeEditorSetting mySetting;

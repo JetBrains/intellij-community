@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,6 +72,7 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiModifierListOw
     return result;
   }
 
+  @Override
   public boolean execute(@NotNull final AnnotatedElementsSearch.Parameters p, @NotNull final Processor<PsiModifierListOwner> consumer) {
     final PsiClass annClass = p.getAnnotationClass();
     assert annClass.isAnnotationType() : "Annotation type should be passed to annotated members search";
@@ -96,10 +97,12 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiModifierListOw
       for (PsiElement element : ((LocalSearchScope)scope).getScope()) {
         if (element instanceof GroovyPsiElement) {
           ((GroovyPsiElement)element).accept(new GroovyRecursiveElementVisitor() {
+            @Override
             public void visitMethod(GrMethod method) {
               candidates.add(method);
             }
 
+            @Override
             public void visitField(GrField field) {
               candidates.add(field);
             }

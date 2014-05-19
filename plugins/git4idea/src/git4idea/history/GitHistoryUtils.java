@@ -356,11 +356,11 @@ public class GitHistoryUtils {
             revisionPath = currentPath.get();
           }
 
-          final Pair<String, String> authorPair = Pair.create(record.getAuthorName(), record.getAuthorEmail());
-          final Pair<String, String> committerPair =
-            record.getCommitterName() == null ? null : Pair.create(record.getCommitterName(), record.getCommitterEmail());
+          final Couple<String> authorPair = Couple.newOne(record.getAuthorName(), record.getAuthorEmail());
+          final Couple<String> committerPair =
+            record.getCommitterName() == null ? null : Couple.newOne(record.getCommitterName(), record.getCommitterEmail());
           Collection<String> parents = parentHashes == null ? Collections.<String>emptyList() : Arrays.asList(parentHashes);
-          consumer.consume(new GitFileRevision(project, revisionPath, revision, Pair.create(authorPair, committerPair), message, null,
+          consumer.consume(new GitFileRevision(project, revisionPath, revision, Couple.newOne(authorPair, committerPair), message, null,
                                                new Date(record.getAuthorTimeStamp()), parents));
           List<GitLogStatusInfo> statusInfos = record.getStatusInfos();
           if (statusInfos.isEmpty()) {
@@ -986,7 +986,7 @@ public class GitHistoryUtils {
   }
 
   @Nullable
-  public static Pair<AbstractHash, AbstractHash> getStashTop(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
+  public static Couple<AbstractHash> getStashTop(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.STASH.readLockingCommand());
     GitLogParser parser = new GitLogParser(project, HASH, PARENTS);
     h.setSilent(true);
@@ -1026,7 +1026,7 @@ public class GitHistoryUtils {
           indexCommit = parentsShortHashes[0];
         }
       }
-      return Pair.create(AbstractHash.create(gitLogRecord.getHash()), indexCommit == null ? null : AbstractHash.create(indexCommit));
+      return Couple.newOne(AbstractHash.create(gitLogRecord.getHash()), indexCommit == null ? null : AbstractHash.create(indexCommit));
     }
     return null;
   }

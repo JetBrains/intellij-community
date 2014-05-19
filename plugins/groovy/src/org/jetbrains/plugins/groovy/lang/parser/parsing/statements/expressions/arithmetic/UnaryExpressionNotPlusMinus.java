@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitio
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
-import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.FAIL;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * @author ilyas
@@ -41,7 +41,7 @@ public class UnaryExpressionNotPlusMinus implements GroovyElementTypes {
     PsiBuilder.Marker marker = builder.mark();
     if (builder.getTokenType() == mLPAREN) {
       final ReferenceElement.ReferenceElementResult result = parseTypeCast(builder);
-      if (result != FAIL) {
+      if (result != ReferenceElement.ReferenceElementResult.FAIL) {
         if (ConditionalExpression.parse(builder, parser) || result == ReferenceElement.ReferenceElementResult.REF_WITH_TYPE_PARAMS) {
           marker.done(CAST_EXPRESSION);
           return true;
@@ -67,24 +67,24 @@ public class UnaryExpressionNotPlusMinus implements GroovyElementTypes {
     PsiBuilder.Marker marker = builder.mark();
     if (!ParserUtils.getToken(builder, mLPAREN, GroovyBundle.message("lparen.expected"))) {
       marker.rollbackTo();
-      return FAIL;
+      return ReferenceElement.ReferenceElementResult.FAIL;
     }
     if (TokenSets.BUILT_IN_TYPES.contains(builder.getTokenType()) || mIDENT.equals(builder.getTokenType())) {
       final ReferenceElement.ReferenceElementResult result = TypeSpec.parseStrict(builder, true);
-      if (result == FAIL) {
+      if (result == ReferenceElement.ReferenceElementResult.FAIL) {
         marker.rollbackTo();
-        return FAIL;
+        return ReferenceElement.ReferenceElementResult.FAIL;
       }
       if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
         marker.rollbackTo();
-        return FAIL;
+        return ReferenceElement.ReferenceElementResult.FAIL;
       }
       marker.drop();
       return result;
     }
     else {
       marker.rollbackTo();
-      return FAIL;
+      return ReferenceElement.ReferenceElementResult.FAIL;
     }
   }
 }

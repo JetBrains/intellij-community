@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,22 +28,26 @@ public class LightReferenceList extends LightElement implements PsiReferenceList
     super(manager, GroovyFileType.GROOVY_LANGUAGE);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor) visitor).visitReferenceList(this);
     }
   }
 
+  @Override
   @NotNull
   public PsiJavaCodeReferenceElement[] getReferenceElements() {
     return PsiJavaCodeReferenceElement.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiClassType[] getReferencedTypes() {
     return PsiClassType.EMPTY_ARRAY;
   }
 
+  @Override
   public Role getRole() {
     return Role.THROWS_LIST;
   }

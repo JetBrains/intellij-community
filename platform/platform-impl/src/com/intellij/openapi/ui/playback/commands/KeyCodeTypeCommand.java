@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.wm.IdeFocusManager;
 
 import javax.swing.*;
@@ -113,9 +113,9 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
     return result;
   }
 
-  public static Pair<List<Integer>, List<Integer>> parseKeyCodes(String keyCodesText) {
-    ArrayList<Integer> codes = new ArrayList<Integer>();
-    ArrayList<Integer> modifiers = new ArrayList<Integer>();
+  public static Couple<List<Integer>> parseKeyCodes(String keyCodesText) {
+    List<Integer> codes = new ArrayList<Integer>();
+    List<Integer> modifiers = new ArrayList<Integer>();
 
     if (keyCodesText != null) {
       String[] pairs = keyCodesText.split(CODE_DELIMITER);
@@ -128,10 +128,10 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
       }
     }
 
-    return new Pair<List<Integer>, List<Integer>>(codes, modifiers);
+    return Couple.newOne(codes, modifiers);
   }
 
-  public static String unparseKeyCodes(Pair<List<Integer>, List<Integer>> pairs) {
+  public static String unparseKeyCodes(Couple<List<Integer>> pairs) {
     StringBuilder result = new StringBuilder();
 
     List<Integer> codes = pairs.getFirst();

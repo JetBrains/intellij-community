@@ -134,7 +134,10 @@ public class CreateFromTemplateDialog extends DialogWrapper {
 
   @Nullable
   private String filterMessage(String message){
-    if (message == null) return null;
+    if (message == null) {
+      message = "unknown error";
+    }
+
     @NonNls String ioExceptionPrefix = "java.io.IOException:";
     if (message.startsWith(ioExceptionPrefix)){
       return message.substring(ioExceptionPrefix.length());

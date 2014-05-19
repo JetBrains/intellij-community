@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,18 +42,22 @@ public class GrAnnotationTypeDefinitionImpl extends GrTypeDefinitionImpl impleme
     return "Annotation definition";
   }
 
+  @Override
   public boolean isAnnotationType() {
     return true;
   }
 
+  @Override
   public boolean isInterface() {
     return true;
   }
 
+  @Override
   protected String[] getExtendsNames() {
     return new String[]{"Annotation"};
   }
 
+  @Override
   @NotNull
   public PsiClassType[] getExtendsListTypes() {
     return new PsiClassType[]{createAnnotationType()};

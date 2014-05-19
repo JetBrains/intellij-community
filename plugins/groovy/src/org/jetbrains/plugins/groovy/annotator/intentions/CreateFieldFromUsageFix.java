@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ public class CreateFieldFromUsageFix extends GrCreateFromUsageBaseFix {
     super(refExpression);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return GroovyBundle.message("create.from.usage.family.name");
@@ -58,6 +59,7 @@ public class CreateFieldFromUsageFix extends GrCreateFromUsageBaseFix {
     return GroovyExpectedTypesProvider.calculateTypeConstraints(getRefExpr());
   }
 
+  @Override
   @NotNull
   public String getText() {
     return GroovyBundle.message("create.field.from.usage", getFieldName());

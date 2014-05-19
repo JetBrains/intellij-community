@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -195,7 +196,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     myToolBar = createRevisionsToolbar(actions);
     myRevisionsList = new RevisionsList(new RevisionsList.SelectionListener() {
       public void revisionsSelected(final int first, final int last) {
-        scheduleDiffUpdate(Pair.create(first, last));
+        scheduleDiffUpdate(Couple.newOne(first, last));
       }
     });
     addPopupMenuToComponent(myRevisionsList.getComponent(), actions);
@@ -243,7 +244,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     return m.createActionPopupMenu(ActionPlaces.UNKNOWN, ag);
   }
 
-  private void scheduleDiffUpdate(@Nullable final Pair<Integer, Integer> toSelect) {
+  private void scheduleDiffUpdate(@Nullable final Couple<Integer> toSelect) {
     doScheduleUpdate(UPDATE_DIFFS, new Computable<Runnable>() {
       public Runnable compute() {
         synchronized (myModel) {

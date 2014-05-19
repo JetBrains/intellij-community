@@ -34,22 +34,26 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 
 public class GroovyUnconditionalWaitInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return THREADING_ISSUES;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Unconditional 'wait' call";
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return "Unconditional call to <code>#ref()</code> #loc";
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new UnconditionalWaitVisitor();
   }
@@ -57,6 +61,7 @@ public class GroovyUnconditionalWaitInspection extends BaseInspection {
   private static class UnconditionalWaitVisitor
       extends BaseInspectionVisitor {
 
+    @Override
     public void visitMethod(@NotNull GrMethod method) {
       super.visitMethod(method);
       if (!method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
@@ -68,6 +73,7 @@ public class GroovyUnconditionalWaitInspection extends BaseInspection {
       }
     }
 
+    @Override
     public void visitSynchronizedStatement(
         @NotNull GrSynchronizedStatement statement) {
       super.visitSynchronizedStatement(statement);

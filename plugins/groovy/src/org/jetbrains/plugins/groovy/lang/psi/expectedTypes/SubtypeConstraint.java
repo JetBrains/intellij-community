@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,6 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType;
-
 /**
  * @author ven
  */
@@ -34,10 +32,12 @@ public  class SubtypeConstraint extends TypeConstraint {
     myDefaultType = defaultType;
   }
 
+  @Override
   public boolean satisfied(PsiType type, @NotNull PsiElement context){
     return TypesUtil.isAssignableByMethodCallConversion(getType(), type, context);
   }
 
+  @Override
   @NotNull
   public PsiType getDefaultType() {
     return myDefaultType;
@@ -48,7 +48,7 @@ public  class SubtypeConstraint extends TypeConstraint {
   }
 
   public static SubtypeConstraint create(String fqName, PsiElement context) {
-    PsiClassType type = createType(fqName, context);
+    PsiClassType type = TypesUtil.createType(fqName, context);
     return new SubtypeConstraint(type, type);
   }
 }

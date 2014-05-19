@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,10 +49,12 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
     return "GrDocParameterReference";
   }
 
+  @Override
   public PsiReference getReference() {
     return this;
   }
 
+  @Override
   @NotNull
   public ResolveResult[] multiResolve(boolean incompleteCode) {
     final String name = getName();
@@ -88,10 +90,12 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
     return ResolveResult.EMPTY_ARRAY;
   }
 
+  @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @Override
   public TextRange getRangeInElement() {
     return new TextRange(0, getTextLength());
   }
@@ -101,6 +105,7 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
     return getText();
   }
 
+  @Override
   @Nullable
   public PsiElement resolve() {
     final ResolveResult[] results = multiResolve(false);
@@ -108,11 +113,13 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
     return results[0].getElement();
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     return getName();
   }
 
+  @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     ASTNode node = getNode();
     ASTNode newNameNode = GroovyPsiElementFactory.getInstance(getProject()).createDocMemberReferenceNameFromText(newElementName).getNode();
@@ -121,16 +128,19 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
     return this;
   }
 
+  @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     if (isReferenceTo(element)) return this;
     return null;
   }
 
+  @Override
   public boolean isReferenceTo(PsiElement element) {
     if (!(element instanceof GrParameter || element instanceof GrTypeParameter)) return false;
     return getManager().areElementsEquivalent(element, resolve());
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     final PsiElement owner = GrDocCommentUtil.findDocOwner(this);
@@ -147,10 +157,12 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
+  @Override
   public boolean isSoft() {
     return false;
   }
 
+  @Override
   @NotNull
   public GrDocTagValueToken getReferenceNameElement() {
     GrDocTagValueToken token = findChildByClass(GrDocTagValueToken.class);

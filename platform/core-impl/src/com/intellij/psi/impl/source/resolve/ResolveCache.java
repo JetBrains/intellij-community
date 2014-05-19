@@ -100,7 +100,7 @@ public class ResolveCache {
     Getter<TResult> reference = map.get(ref);
     TResult result = reference == null ? null : reference.get();
     if (result != null) {
-      //return result;
+      return result;
     }
 
     RecursionGuard.StackStamp stamp = myGuard.markStack();

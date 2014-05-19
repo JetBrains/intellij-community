@@ -55,14 +55,17 @@ public class GrDynamicPropertyImpl extends LightElement implements GrField {
     myField = field;
   }
 
+  @Override
   public GrDocComment getDocComment() {
     return null;
   }
 
+  @Override
   public PsiClass getContainingClass() {
     return myContainingClass;
   }
 
+  @Override
   public boolean isDeprecated() {
     return false;
   }
@@ -89,113 +92,140 @@ public class GrDynamicPropertyImpl extends LightElement implements GrField {
     return "Dynamic Property: " + getName();
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myField.getName();
   }
 
+  @Override
   @NotNull
   public PsiType getType() {
     return myField.getType();
   }
 
+  @Override
   public GrModifierList getModifierList() {
     return myField.getModifierList();
   }
 
+  @Override
   public PsiTypeElement getTypeElement() {
     return myField.getTypeElement();
   }
 
+  @Override
   public boolean hasModifierProperty(@NonNls @NotNull String name) {
     return myField.hasModifierProperty(name);
   }
 
+  @Override
   public PsiExpression getInitializer() {
     return myField.getInitializer();
   }
 
+  @Override
   public void setInitializer(@Nullable PsiExpression initializer) throws IncorrectOperationException {
     throw new IncorrectOperationException("Cannot set initializer");
   }
 
+  @Override
   @NotNull
   public PsiIdentifier getNameIdentifier() {
     return myField.getNameIdentifier();
   }
 
+  @Override
   public boolean hasInitializer() {
     return myField.hasInitializer();
   }
 
+  @Override
   public void normalizeDeclaration() throws IncorrectOperationException {
     throw new IncorrectOperationException("cannot normalize declaration");
   }
 
+  @Override
   public Object computeConstantValue() {
     return null;
   }
 
+  @Override
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
     return this;
   }
 
+  @Override
   public String getText() {
     return null;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
 
   }
 
+  @Override
   public PsiElement copy() {
     return null;
   }
 
+  @Override
   @NotNull
   public PsiElement getNameIdentifierGroovy() {
     return myField.getNameIdentifierGroovy();
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
   }
 
+  @Override
   public void acceptChildren(GroovyElementVisitor visitor) {
   }
 
+  @Override
   public PsiType getTypeGroovy() {
     return myField.getTypeGroovy();
   }
 
+  @Override
   public PsiType getDeclaredType() {
     return myField.getDeclaredType();
   }
 
+  @Override
   public boolean isProperty() {
     return myField.isProperty();
   }
 
+  @Override
   public GrExpression getInitializerGroovy() {
     return myField.getInitializerGroovy();
   }
 
+  @Override
   public void setType(@Nullable PsiType type) throws IncorrectOperationException {
     throw new IncorrectOperationException("cannot set type to dynamic property");
   }
 
+  @Override
   public GrAccessorMethod getSetter() {
     return myField.getSetter();
   }
 
+  @Override
   @NotNull
   public GrAccessorMethod[] getGetters() {
     return myField.getGetters();
   }
 
+  @Override
   public GrTypeElement getTypeElementGroovy() {
     return myField.getTypeElementGroovy();
   }
 
+  @Override
   @NotNull
   public Map<String, NamedArgumentDescriptor> getNamedParameters() {
     return myField.getNamedParameters();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,14 @@ package org.intellij.plugins.intelliLang.inject.groovy;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.patterns.PatternCondition;
+import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.java.LanguageReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
-
-import static com.intellij.patterns.StandardPatterns.string;
-import static org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns.groovyLiteralExpression;
+import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns;
 
 
 /**
@@ -36,8 +35,8 @@ public class GrLanguageReferenceProvider extends PsiReferenceContributor {
   public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
     final Configuration configuration = Configuration.getInstance();
     registrar.registerReferenceProvider(
-      groovyLiteralExpression().annotationParam(string().with(isLanguageAnnotation(configuration)), "value").and(
-        groovyLiteralExpression().with(isStringLiteral())), new PsiReferenceProvider() {
+      GroovyPatterns.groovyLiteralExpression().annotationParam(StandardPatterns.string().with(isLanguageAnnotation(configuration)), "value").and(
+        GroovyPatterns.groovyLiteralExpression().with(isStringLiteral())), new PsiReferenceProvider() {
       @NotNull
       @Override
       public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {

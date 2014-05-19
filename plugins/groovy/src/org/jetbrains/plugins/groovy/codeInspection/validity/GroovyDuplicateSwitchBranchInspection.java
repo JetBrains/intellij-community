@@ -36,28 +36,33 @@ public class GroovyDuplicateSwitchBranchInspection extends BaseInspection {
     return true;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return VALIDITY_ISSUES;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Duplicate switch case";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Duplicate switch case '#ref' #loc";
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
+    @Override
     public void visitSwitchStatement(GrSwitchStatement grSwitchStatement) {
       super.visitSwitchStatement(grSwitchStatement);
       final Set<GrExpression> duplicateExpressions = new HashSet<GrExpression>();
@@ -83,11 +88,13 @@ public class GroovyDuplicateSwitchBranchInspection extends BaseInspection {
   private static GrCaseLabel[] collectCaseLabels(final GrSwitchStatement containingStatelent) {
     final Set<GrCaseLabel> labels = new HashSet<GrCaseLabel>();
     final GroovyRecursiveElementVisitor visitor = new GroovyRecursiveElementVisitor() {
+      @Override
       public void visitCaseLabel(GrCaseLabel grCaseLabel) {
         super.visitCaseLabel(grCaseLabel);
         labels.add(grCaseLabel);
       }
 
+      @Override
       public void visitSwitchStatement(GrSwitchStatement grSwitchStatement) {
         if (containingStatelent.equals(grSwitchStatement)) {
           super.visitSwitchStatement(grSwitchStatement);

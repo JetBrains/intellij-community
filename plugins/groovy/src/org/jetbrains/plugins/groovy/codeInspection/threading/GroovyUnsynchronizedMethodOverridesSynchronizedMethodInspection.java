@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,29 +31,34 @@ public class GroovyUnsynchronizedMethodOverridesSynchronizedMethodInspection ext
     return true;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return THREADING_ISSUES;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Unsynchronized method overrides synchronized method";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Unsynchronized method '#ref' overrides a synchronized method #loc";
 
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
+    @Override
     public void visitMethod(GrMethod method) {
       super.visitMethod(method);
       if (method.isConstructor()) {

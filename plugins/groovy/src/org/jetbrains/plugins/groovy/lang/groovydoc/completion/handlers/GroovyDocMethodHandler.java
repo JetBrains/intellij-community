@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
  */
 public class GroovyDocMethodHandler implements ContextSpecificInsertHandler {
 
+  @Override
   public boolean isAcceptable(InsertionContext context, int startOffset, LookupElement item) {
     PsiFile file = context.getFile();
     if (!(file instanceof GroovyFile)) return false;
@@ -53,6 +54,7 @@ public class GroovyDocMethodHandler implements ContextSpecificInsertHandler {
 
   }
 
+  @Override
   public void handleInsert(InsertionContext context, int startOffset, LookupElement item) {
 
     Editor editor = context.getEditor();

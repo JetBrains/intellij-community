@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 
 /**
  * Created by Max Medvedev on 15/04/14
@@ -57,7 +57,7 @@ public class GroovyTraitFieldSearcher extends QueryExecutorBase<PsiReference, Re
     if (target instanceof GrField && ((GrField)target).hasModifierProperty(PsiModifier.PUBLIC)) {
       PsiClass aClass = ((GrField)target).getContainingClass();
       if (PsiImplUtil.isTrait(aClass)) {
-        String prefix = CollectClassMembersUtil.getTraitFieldPrefix(aClass);
+        String prefix = GrTraitUtil.getTraitFieldPrefix(aClass);
 
         return prefix + ((GrField)target).getName();
       }

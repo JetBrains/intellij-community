@@ -26,25 +26,30 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 
 public class GroovyMultipleReturnPointsPerMethodInspection
     extends GroovyMethodMetricInspection {
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return METHOD_METRICS;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Method with multiple return points";
   }
 
+  @Override
   protected int getDefaultLimit() {
     return 1;
   }
 
+  @Override
   protected String getConfigurationLabel() {
     return "Return point limit:";
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final Integer returnPointCount = (Integer) infos[0];
@@ -52,12 +57,14 @@ public class GroovyMultipleReturnPointsPerMethodInspection
 
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new MultipleReturnPointsVisitor();
   }
 
   private class MultipleReturnPointsVisitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitMethod(@NotNull GrMethod method) {
       // note: no call to super
       if (method.getNameIdentifier() == null) {

@@ -136,8 +136,8 @@ public final class TextWithImportsImpl implements TextWithImports{
   }
 
   @Nullable
-  public static XExpression toXExpression(TextWithImports text) {
-    if (!text.getText().isEmpty()) {
+  public static XExpression toXExpression(@Nullable TextWithImports text) {
+    if (text != null && !text.getText().isEmpty()) {
       return new XExpressionImpl(text.getText(),
                                  XDebuggerEditorBase.getFileTypeLanguage(text.getFileType()),
                                  StringUtil.nullize(text.getImports()),

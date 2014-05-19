@@ -91,6 +91,7 @@ public abstract class MvcActionBase extends DumbAwareAction {
     return result;
   }
 
+  @Override
   public final void update(AnActionEvent event) {
     Pair<MvcFramework, Module> pair = guessFramework(event);
     if (pair != null && isSupported(pair.getFirst(), pair.getSecond())) {

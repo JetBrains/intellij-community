@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import java.util.List;
 public class GroovyDebuggerClassFilterProvider implements DebuggerClassFilterProvider {
   private static final List<ClassFilter> FILTERS = Arrays.asList(new ClassFilter("org.codehaus.groovy.*"), new ClassFilter("groovy.*"));
 
+  @Override
   public List<ClassFilter> getFilters() {
     GroovyDebuggerSettings settings = GroovyDebuggerSettings.getInstance();
     Boolean flag = settings.DEBUG_DISABLE_SPECIFIC_GROOVY_METHODS;

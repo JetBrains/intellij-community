@@ -28,28 +28,33 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 
 public class GroovyBusyWaitInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return THREADING_ISSUES;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Busy wait";
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return "Call to <code>Thread.#ref()</code> in a loop, probably busy-waiting #loc";
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new BusyWaitVisitor();
   }
 
   private static class BusyWaitVisitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitMethodCallExpression(
         @NotNull GrMethodCallExpression grMethodCallExpression) {
       super.visitMethodCallExpression(grMethodCallExpression);

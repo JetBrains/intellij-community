@@ -54,6 +54,7 @@ import java.util.Map;
  * @author ven
  */
 public class MissingReturnInspection extends GroovySuppressableInspectionTool {
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
@@ -66,6 +67,7 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
     return new String[]{"Groovy", getGroupDisplayName()};
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
@@ -140,14 +142,17 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
     return TypesUtil.getLeastUpperBoundNullable(expectedReturnTypes, closure.getManager());
   }
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder problemsHolder, boolean onTheFly) {
     return new GroovyPsiElementVisitor(new GroovyElementVisitor() {
+      @Override
       public void visitClosure(GrClosableBlock closure) {
         super.visitClosure(closure);
         check(closure, problemsHolder, ReturnStatus.getReturnStatus(closure));
       }
 
+      @Override
       public void visitMethod(GrMethod method) {
         super.visitMethod(method);
 
@@ -220,12 +225,14 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
     holder.registerProblem(lastChild, GroovyInspectionBundle.message("no.return.message"));
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getShortName() {
     return "GroovyMissingReturnStatement";
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

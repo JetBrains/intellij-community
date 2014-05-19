@@ -30,29 +30,34 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 
 public class GroovyWaitCallNotInLoopInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return THREADING_ISSUES;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "'wait()' not in loop";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Call to'#ref' outside of loop #loc";
 
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
+    @Override
     public void visitMethodCallExpression(GrMethodCallExpression grMethodCallExpression) {
       super.visitMethodCallExpression(grMethodCallExpression);
       final GrExpression methodExpression = grMethodCallExpression.getInvokedExpression();

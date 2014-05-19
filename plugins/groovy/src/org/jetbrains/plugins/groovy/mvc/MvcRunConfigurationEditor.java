@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,7 @@ public class MvcRunConfigurationEditor<T extends MvcRunConfiguration> extends Se
     setAnchor(myEnvVariablesComponent.getLabel());
   }
 
+  @Override
   protected void resetEditorFrom(T configuration) {
     myFramework = configuration.getFramework();
     myVMParameters.setDialogCaption("VM Options");
@@ -122,6 +123,7 @@ public class MvcRunConfigurationEditor<T extends MvcRunConfiguration> extends Se
     }
   }
 
+  @Override
   protected void applyEditorTo(T configuration) throws ConfigurationException {
     configuration.setModule(getSelectedModule());
     configuration.vmParams = myVMParameters.getText().trim();
@@ -147,6 +149,7 @@ public class MvcRunConfigurationEditor<T extends MvcRunConfiguration> extends Se
     myExtensionPanel.add(component, BorderLayout.PAGE_START);
   }
 
+  @Override
   @NotNull
   protected JComponent createEditor() {
     myModulesModel = new DefaultComboBoxModel();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators.GrBinaryExpressionUtil.*;
-
 /**
  * Created by Max Medvedev on 12/20/13
  */
@@ -39,11 +37,11 @@ public class GrNumericBinaryExpressionTypeCalculator implements NullableFunction
 
     final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(e.multiResolve(false));
     if (resolveResult.isApplicable() && !PsiUtil.isDGMMethod(resolveResult.getElement())) {
-      return ResolveUtil.extractReturnTypeFromCandidate(resolveResult, e.getPsiElement(), new PsiType[]{getRightType(e)});
+      return ResolveUtil.extractReturnTypeFromCandidate(resolveResult, e.getPsiElement(), new PsiType[]{GrBinaryExpressionUtil.getRightType(e)});
     }
 
-    PsiType lType = getLeftType(e);
-    PsiType rType = getRightType(e);
+    PsiType lType = GrBinaryExpressionUtil.getLeftType(e);
+    PsiType rType = GrBinaryExpressionUtil.getRightType(e);
     if (TypesUtil.isNumericType(lType) && TypesUtil.isNumericType(rType)) {
       assert lType != null;
       assert rType != null;
@@ -55,6 +53,6 @@ public class GrNumericBinaryExpressionTypeCalculator implements NullableFunction
 
   @Nullable
   protected PsiType inferNumericType(@NotNull PsiType ltype, @NotNull PsiType rtype, GrBinaryFacade e) {
-    return getDefaultNumericResultType(ltype, rtype, e);
+    return GrBinaryExpressionUtil.getDefaultNumericResultType(ltype, rtype, e);
   }
 }

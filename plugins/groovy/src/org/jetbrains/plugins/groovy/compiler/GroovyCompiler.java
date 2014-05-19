@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,7 @@ public class GroovyCompiler extends GroovyCompilerBase {
     super(project);
   }
 
+  @Override
   @NotNull
   public String getDescription() {
     return "groovy compiler";
@@ -73,6 +74,7 @@ public class GroovyCompiler extends GroovyCompilerBase {
     runGroovycCompiler(context, module, toCompile, false, getMainOutput(context, module, tests), sink, tests);
   }
 
+  @Override
   public boolean validateConfiguration(CompileScope compileScope) {
     VirtualFile[] files = compileScope.getFiles(GroovyFileType.GROOVY_FILE_TYPE, true);
     if (files.length == 0) return true;

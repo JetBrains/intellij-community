@@ -23,6 +23,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -32,11 +33,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.GSTRING_CONTENT;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.GSTRING_INJECTION;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END;
 
 /**
  * @author Maxim.Medvedev
@@ -513,12 +512,12 @@ public class GrStringUtil {
 
     final GrExpression template = factory.createExpressionFromText(quotes + "$x" + quotes);
     if (firstChild != null &&
-        firstChild.getNode().getElementType() == mGSTRING_BEGIN &&
+        firstChild.getNode().getElementType() == GroovyTokenTypes.mGSTRING_BEGIN &&
         !quotes.equals(firstChild.getText())) {
       grString.getNode().replaceChild(firstChild.getNode(), template.getFirstChild().getNode());
     }
     if (lastChild != null &&
-        lastChild.getNode().getElementType() == mGSTRING_END &&
+        lastChild.getNode().getElementType() == GroovyTokenTypes.mGSTRING_END &&
         !quotes.equals(lastChild.getText())) {
       grString.getNode().replaceChild(lastChild.getNode(), template.getLastChild().getNode());
     }
@@ -576,7 +575,7 @@ public class GrStringUtil {
     if (!(refExprCopy instanceof GrReferenceExpression)) return false;
 
     final GrReferenceExpression refExpr = (GrReferenceExpression)injected;
-    return GroovyRefactoringUtil.checkPsiElementsAreEqual(refExpr, refExprCopy);
+    return PsiUtil.checkPsiElementsAreEqual(refExpr, refExprCopy);
   }
 
   public static void removeUnnecessaryBracesInGString(GrString grString) {
@@ -835,13 +834,13 @@ public class GrStringUtil {
       builder.append(quote);
       for (PsiElement child = regex.getFirstChild(); child!=null; child = child.getNextSibling()) {
         final IElementType type = child.getNode().getElementType();
-        if (type == mREGEX_CONTENT || type == GSTRING_CONTENT) {
+        if (type == mREGEX_CONTENT || type == GroovyElementTypes.GSTRING_CONTENT) {
           builder.append(escapeSymbolsForGString(unescapeSlashyString(child.getText()), quote.equals(DOUBLE_QUOTES), true));
         }
         else if (type == mDOLLAR_SLASH_REGEX_CONTENT) {
           builder.append(escapeSymbolsForGString(unescapeDollarSlashyString(child.getText()), quote.equals(DOUBLE_QUOTES), true));
         }
-        else if (type == GSTRING_INJECTION) {
+        else if (type == GroovyElementTypes.GSTRING_INJECTION) {
           builder.append(child.getText());
         }
       }
@@ -879,7 +878,8 @@ public class GrStringUtil {
 
     final IElementType lastType = lastChild.getNode().getElementType();
     if (type == GroovyElementTypes.GSTRING) return lastType == mGSTRING_END;
-    if (type == GroovyElementTypes.REGEX) return lastType == mREGEX_END || lastType == mDOLLAR_SLASH_REGEX_END;
+    if (type == GroovyElementTypes.REGEX) return lastType == mREGEX_END || lastType ==
+                                                                                            mDOLLAR_SLASH_REGEX_END;
 
     return false;
   }

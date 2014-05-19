@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -48,7 +49,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import java.util.List;
 import java.util.Set;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.*;
+import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * @author ilyas
@@ -68,7 +70,7 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements Groovy
     if (node == null) return;
     IElementType type = node.getElementType();
 
-    if (BLOCK_SET.contains(type) && !isSingleHighLevelClassBody(element) || type == CLOSABLE_BLOCK) {
+    if (TokenSets.BLOCK_SET.contains(type) && !isSingleHighLevelClassBody(element) || type == CLOSABLE_BLOCK) {
       if (isMultiline(element)) {
         collapseBlock(descriptors, element);
       }
@@ -229,7 +231,7 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements Groovy
   @Override
   protected String getLanguagePlaceholderText(@NotNull ASTNode node, @NotNull TextRange range) {
     final IElementType elemType = node.getElementType();
-    if (BLOCK_SET.contains(elemType) || elemType == CLOSABLE_BLOCK) {
+    if (TokenSets.BLOCK_SET.contains(elemType) || elemType == CLOSABLE_BLOCK) {
       return "{...}";
     }
     if (elemType.equals(mML_COMMENT)) {
@@ -301,7 +303,7 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements Groovy
   }
 
   private static boolean isMultiLineStringLiteral(ASTNode node) {
-    return (STRING_LITERAL_SET.contains(node.getElementType()) ||
+    return (TokenSets.STRING_LITERAL_SET.contains(node.getElementType()) ||
             node.getElementType().equals(GSTRING) ||
             node.getElementType().equals(REGEX)) &&
            isMultiline(node.getPsi()) &&
@@ -310,7 +312,7 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements Groovy
 
   @Override
   protected boolean isCustomFoldingCandidate(ASTNode node) {
-    return node.getElementType() == GroovyTokenTypes.mSL_COMMENT;
+    return node.getElementType() == mSL_COMMENT;
   }
 
   @Override

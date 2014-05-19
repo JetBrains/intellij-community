@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 package org.jetbrains.idea.devkit.references.extensions
-
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.lang.documentation.DocumentationProvider
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.pom.PomTargetPsiElement
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.xml.DomTarget
 
 class ExtensionPointDocumentationProviderTest extends LightCodeInsightFixtureTestCase {
@@ -40,8 +40,9 @@ class ExtensionPointDocumentationProviderTest extends LightCodeInsightFixtureTes
     PsiElement epPsiElement = domTarget.getNavigationElement()
 
     DocumentationProvider provider = DocumentationManager.getProviderFromElement(epPsiElement)
-    assertEquals("""<html><head>    <style type="text/css">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head><body><small><b>bar</b></small><PRE>public interface <b>MyExtensionPoint</b></PRE>
-   MyExtensionPoint JavaDoc.</body></html>""", provider.generateDoc(epPsiElement, originalElement))
+    String docBody = UIUtil.getHtmlBody(provider.generateDoc(epPsiElement, originalElement))
+    assertEquals("""<small><b>bar</b></small><PRE>public interface <b>MyExtensionPoint</b></PRE>
+   MyExtensionPoint JavaDoc.""", docBody)
 
     assertEquals("""[$myModule.name] foo
 <b>bar</b> [extensionPointDocumentation.xml]

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
-import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.FAIL;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * @autor: ilyas
@@ -82,12 +82,12 @@ public class TypeParameters implements GroovyElementTypes {
     PsiBuilder.Marker marker = builder.mark();
     ParserUtils.getToken(builder, kEXTENDS);
     ParserUtils.getToken(builder, mNLS);
-    if (ReferenceElement.parseReferenceElement(builder) == FAIL) {
+    if (ReferenceElement.parseReferenceElement(builder) == ReferenceElement.ReferenceElementResult.FAIL) {
       builder.error(GroovyBundle.message("identifier.expected"));
     } else {
       while (ParserUtils.getToken(builder, mBAND)) {
         ParserUtils.getToken(builder, mNLS);
-        if (ReferenceElement.parseReferenceElement(builder) == FAIL) {
+        if (ReferenceElement.parseReferenceElement(builder) == ReferenceElement.ReferenceElementResult.FAIL) {
           builder.error(GroovyBundle.message("type.expected"));
         }
       }

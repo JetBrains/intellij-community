@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,6 +88,7 @@ public class GroovyDocLexer extends MergingLexerAdapter implements GroovyDocToke
       myFlexLexer = lexer;
     }
 
+    @Override
     public final void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
       myBuffer = buffer;
       myBufferIndex = startOffset;
@@ -97,35 +98,42 @@ public class GroovyDocLexer extends MergingLexerAdapter implements GroovyDocToke
       myFlexLexer.reset(myBuffer, startOffset, endOffset, initialState);
     }
 
+    @Override
     public int getState() {
       return myState;
     }
 
+    @Override
     @NotNull
     public CharSequence getBufferSequence() {
       return myBuffer;
     }
 
+    @Override
     public int getBufferEnd() {
       return myBufferEndOffset;
     }
 
+    @Override
     public final IElementType getTokenType() {
       locateToken();
       return myTokenType;
     }
 
+    @Override
     public final int getTokenStart() {
       locateToken();
       return myBufferIndex;
     }
 
+    @Override
     public final int getTokenEnd() {
       locateToken();
       return myTokenEndOffset;
     }
 
 
+    @Override
     public final void advance() {
       locateToken();
       myTokenType = null;

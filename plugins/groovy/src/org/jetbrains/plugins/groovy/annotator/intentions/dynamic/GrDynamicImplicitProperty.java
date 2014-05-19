@@ -56,6 +56,7 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
     setOriginInfo("dynamic property");
   }
 
+  @Override
   @Nullable
   public PsiClass getContainingClassElement() {
     final PsiClassType containingClassType = JavaPsiFacade.getInstance(getProject()).getElementFactory().
@@ -64,6 +65,7 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
     return containingClassType.resolve();
   }
 
+  @Override
   public String getContainingClassName() {
     return myContainingClassName;
   }
@@ -82,26 +84,31 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
     return super.setName(name);
   }
 
+  @Override
   public String getPresentableText() {
     return getName();
   }
 
+  @Override
   @Nullable
   public String getLocationString() {
     return null;
   }
 
+  @Override
   @NotNull
   public SearchScope getUseScope() {
     return GlobalSearchScope.projectScope(myProject);
   }
 
+  @Override
   public void navigate(boolean requestFocus) {
     if (canNavigateToSource()) {
       super.navigate(requestFocus);
       return;
     }
     DynamicToolWindowWrapper.getInstance(myProject).getToolWindow().activate(new Runnable() {
+      @Override
       public void run() {
         DynamicToolWindowWrapper toolWindowWrapper = DynamicToolWindowWrapper.getInstance(myProject);
         final TreeTable treeTable = toolWindowWrapper.getTreeTable();
@@ -149,35 +156,43 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
     }, true);
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return false;
   }
 
+  @Override
   public boolean canNavigate() {
     return true;
   }
 
+  @Override
   public boolean isWritable() {
     return true;
   }
 
+  @Override
   @Nullable
   public Icon getIcon(boolean open) {
     return JetgroovyIcons.Groovy.Property;
   }
 
+  @Override
   public boolean isValid() {
     return true;
   }
 
+  @Override
   public PsiClass getContainingClass() {
     return getContainingClassElement();
   }
 
+    @Override
     public PsiDocComment getDocComment() {
         return null;
     }
 
+    @Override
     public boolean isDeprecated() {
         return false;
     }

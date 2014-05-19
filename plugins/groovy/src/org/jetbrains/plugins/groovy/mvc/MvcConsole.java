@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,7 +138,7 @@ public class MvcConsole implements Disposable {
   private static class MyProcessInConsole implements ConsoleProcessDescriptor {
     final Module module;
     final GeneralCommandLine commandLine;
-    final @Nullable Runnable onDone;
+    @Nullable final Runnable onDone;
     final boolean closeOnDone;
     final boolean showConsole;
     final String[] input;
@@ -160,6 +160,7 @@ public class MvcConsole implements Disposable {
       this.showConsole = showConsole;
     }
 
+    @Override
     public ConsoleProcessDescriptor addProcessListener(@NotNull ProcessListener listener) {
       if (myHandler != null) {
         myHandler.addProcessListener(listener);
@@ -170,6 +171,7 @@ public class MvcConsole implements Disposable {
       return this;
     }
 
+    @Override
     public ConsoleProcessDescriptor waitWith(ProgressIndicator progressIndicator) {
       if (myHandler != null) {
         doWait(progressIndicator);
@@ -196,7 +198,7 @@ public class MvcConsole implements Disposable {
 
   public static ConsoleProcessDescriptor executeProcess(final Module module,
                                                         final GeneralCommandLine commandLine,
-                                                        final @Nullable Runnable onDone,
+                                                        @Nullable final Runnable onDone,
                                                         final boolean closeOnDone,
                                                         final String... input) {
     return getInstance(module.getProject()).executeProcess(module, commandLine, onDone, true, closeOnDone, input);
@@ -204,7 +206,7 @@ public class MvcConsole implements Disposable {
 
   public ConsoleProcessDescriptor executeProcess(final Module module,
                                                  final GeneralCommandLine commandLine,
-                                                 final @Nullable Runnable onDone,
+                                                 @Nullable final Runnable onDone,
                                                  boolean showConsole,
                                                  final boolean closeOnDone,
                                                  final String... input) {
@@ -262,15 +264,18 @@ public class MvcConsole implements Disposable {
 
       final Ref<Boolean> gotError = new Ref<Boolean>(false);
       handler.addProcessListener(new ProcessAdapter() {
+        @Override
         public void onTextAvailable(ProcessEvent event, Key key) {
           if (key == ProcessOutputTypes.STDERR) gotError.set(true);
           LOG.debug("got text: " + event.getText());
         }
 
+        @Override
         public void processTerminated(ProcessEvent event) {
           final int exitCode = event.getExitCode();
           if (exitCode == 0 && !gotError.get().booleanValue()) {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
               public void run() {
                 if (myProject.isDisposed() || !closeOnDone) return;
                 myToolWindow.hide(null);
@@ -282,6 +287,7 @@ public class MvcConsole implements Disposable {
     }
     catch (final Exception e) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           Messages.showErrorDialog(e.getMessage(), "Cannot Start Process");
 
@@ -306,11 +312,13 @@ public class MvcConsole implements Disposable {
     myConsole.scrollToEnd();
     myConsole.attachToProcess(handler);
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
       public void run() {
         handler.startNotify();
         handler.waitFor();
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             if (myProject.isDisposed()) return;
 
@@ -340,6 +348,7 @@ public class MvcConsole implements Disposable {
     });
   }
 
+  @Override
   public void dispose() {
   }
 
@@ -360,6 +369,7 @@ public class MvcConsole implements Disposable {
       e.getPresentation().setEnabled(isEnabled());
     }
 
+    @Override
     public void actionPerformed(final AnActionEvent e) {
       if (myHandler != null) {
         final Process process = myHandler.getProcess();

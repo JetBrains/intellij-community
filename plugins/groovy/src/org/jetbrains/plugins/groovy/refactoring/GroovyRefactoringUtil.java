@@ -34,6 +34,8 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionUtil;
@@ -66,13 +68,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
 import java.util.*;
 
-import static com.intellij.refactoring.util.RefactoringUtil.*;
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isNewLine;
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSEMI;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSPREAD_DOT;
 
 /**
  * @author ilyas
@@ -133,6 +136,7 @@ public abstract class GroovyRefactoringUtil {
   public static PsiElement[] getExpressionOccurrences(@NotNull PsiElement expr, @NotNull PsiElement scope) {
     ArrayList<PsiElement> occurrences = new ArrayList<PsiElement>();
     Comparator<PsiElement> comparator = new Comparator<PsiElement>() {
+      @Override
       public int compare(PsiElement element1, PsiElement element2) {
         if (element1 != null && element1.equals(element2)) return 0;
 
@@ -188,16 +192,13 @@ public abstract class GroovyRefactoringUtil {
 
   public static void sortOccurrences(PsiElement[] occurrences) {
     Arrays.sort(occurrences, new Comparator<PsiElement>() {
+      @Override
       public int compare(PsiElement elem1, PsiElement elem2) {
         final int offset1 = elem1.getTextRange().getStartOffset();
         final int offset2 = elem2.getTextRange().getStartOffset();
         return offset1 - offset2;
       }
     });
-  }
-
-  public static boolean isLocalVariable(@Nullable PsiElement variable) {
-    return variable instanceof GrVariable && !(variable instanceof GrField || variable instanceof GrParameter);
   }
 
 
@@ -235,8 +236,8 @@ public abstract class GroovyRefactoringUtil {
     while (file.findElementAt(end - 1) instanceof PsiWhiteSpace ||
         (file.findElementAt(end - 1) instanceof PsiComment && trimComments) ||
         (file.findElementAt(end - 1) != null &&
-            (GroovyTokenTypes.mNLS.equals(file.findElementAt(end - 1).getNode().getElementType()) ||
-                GroovyTokenTypes.mSEMI.equals(file.findElementAt(end - 1).getNode().getElementType())))) {
+            (mNLS.equals(file.findElementAt(end - 1).getNode().getElementType()) ||
+                mSEMI.equals(file.findElementAt(end - 1).getNode().getElementType())))) {
       end--;
     }
 
@@ -249,11 +250,11 @@ public abstract class GroovyRefactoringUtil {
     PsiElement element1 = file.getViewProvider().findElementAt(startOffset, language);
     PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, language);
 
-    if (element1 instanceof PsiWhiteSpace || isNewLine(element1)) {
+    if (element1 instanceof PsiWhiteSpace || org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isNewLine(element1)) {
       startOffset = element1.getTextRange().getEndOffset();
       element1 = file.findElementAt(startOffset);
     }
-    if (element2 instanceof PsiWhiteSpace || isNewLine(element2)) {
+    if (element2 instanceof PsiWhiteSpace || org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isNewLine(element2)) {
       endOffset = element2.getTextRange().getStartOffset();
       element2 = file.findElementAt(endOffset - 1);
     }
@@ -423,10 +424,12 @@ public abstract class GroovyRefactoringUtil {
 
     Project project = expr.getProject();
     String[] suggestedNames =GroovyNameSuggestionUtil.suggestVariableNames(expr, new NameValidator() {
+      @Override
       public String validateName(String name, boolean increaseNumber) {
         return name;
       }
 
+      @Override
       public Project getProject() {
         return context.getProject();
       }
@@ -445,7 +448,8 @@ public abstract class GroovyRefactoringUtil {
       modifiers = ArrayUtil.EMPTY_STRING_ARRAY;
     }
     GrVariableDeclaration decl =
-      factory.createVariableDeclaration(modifiers, (GrExpression)skipParentheses(expr, false), expr.getType(), id);
+      factory.createVariableDeclaration(modifiers, (GrExpression)org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
+        .skipParentheses(expr, false), expr.getType(), id);
 /*    if (declareFinal) {
       com.intellij.psi.util.PsiUtil.setModifierProperty((decl.getMembers()[0]), PsiModifier.FINAL, true);
     }*/
@@ -460,31 +464,31 @@ public abstract class GroovyRefactoringUtil {
   }
 
   private static int verifySafeCopyExpressionSubElement(PsiElement element) {
-    int result = EXPR_COPY_SAFE;
+    int result = RefactoringUtil.EXPR_COPY_SAFE;
     if (element == null) return result;
 
     if (element instanceof GrNamedElement) {
-      return EXPR_COPY_SAFE;
+      return RefactoringUtil.EXPR_COPY_SAFE;
     }
 
     if (element instanceof GrMethodCallExpression) {
-      result = EXPR_COPY_UNSAFE;
+      result = RefactoringUtil.EXPR_COPY_UNSAFE;
     }
 
     if (element instanceof GrNewExpression) {
-      return EXPR_COPY_PROHIBITED;
+      return RefactoringUtil.EXPR_COPY_PROHIBITED;
     }
 
     if (element instanceof GrAssignmentExpression) {
-      return EXPR_COPY_PROHIBITED;
+      return RefactoringUtil.EXPR_COPY_PROHIBITED;
     }
 
     if (element instanceof GrClosableBlock) {
-      return EXPR_COPY_PROHIBITED;
+      return RefactoringUtil.EXPR_COPY_PROHIBITED;
     }
 
     if (isPlusPlusOrMinusMinus(element)) {
-      return EXPR_COPY_PROHIBITED;
+      return RefactoringUtil.EXPR_COPY_PROHIBITED;
     }
 
     PsiElement[] children = element.getChildren();
@@ -536,7 +540,7 @@ public abstract class GroovyRefactoringUtil {
     for (PsiElement argument : arguments) {
       argText.append(argument.getText()).append(", ");
     }
-    if (arguments.size() > 0) {
+    if (!arguments.isEmpty()) {
       argText.delete(argText.length() - 2, argText.length());
     }
     argText.append("]");
@@ -653,7 +657,7 @@ public abstract class GroovyRefactoringUtil {
   }
 
   public static boolean isDiamondNewOperator(GrExpression expression) {
-    PsiElement element = skipParentheses(expression, false);
+    PsiElement element = org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses(expression, false);
     if (!(element instanceof GrNewExpression)) return false;
     if (((GrNewExpression)element).getArrayCount() > 0) return false;
 
@@ -662,21 +666,6 @@ public abstract class GroovyRefactoringUtil {
 
     GrTypeArgumentList typeArgumentList = referenceElement.getTypeArgumentList();
     return typeArgumentList != null && typeArgumentList.isDiamond();
-  }
-
-  public static boolean checkPsiElementsAreEqual(PsiElement l, PsiElement r) {
-    if (!l.getText().equals(r.getText())) return false;
-    if (l.getNode().getElementType() != r.getNode().getElementType()) return false;
-
-    final PsiElement[] lChildren = l.getChildren();
-    final PsiElement[] rChildren = r.getChildren();
-
-    if (lChildren.length != rChildren.length) return false;
-
-    for (int i = 0; i < rChildren.length; i++) {
-      if (!checkPsiElementsAreEqual(lChildren[i], rChildren[i])) return false;
-    }
-    return true;
   }
 
   @Nullable
@@ -761,14 +750,17 @@ public abstract class GroovyRefactoringUtil {
       class TypeParameterSearcher extends PsiTypeVisitor<Boolean> {
         private final Set<PsiTypeParameter> myTypeParams = new HashSet<PsiTypeParameter>();
 
+        @Override
         public Boolean visitType(final PsiType type) {
           return false;
         }
 
+        @Override
         public Boolean visitArrayType(final PsiArrayType arrayType) {
           return arrayType.getComponentType().accept(this);
         }
 
+        @Override
         public Boolean visitClassType(final PsiClassType classType) {
           final PsiClass aClass = classType.resolve();
           if (aClass instanceof PsiTypeParameter) {
@@ -782,6 +774,7 @@ public abstract class GroovyRefactoringUtil {
           return false;
         }
 
+        @Override
         public Boolean visitWildcardType(final PsiWildcardType wildcardType) {
           final PsiType bound = wildcardType.getBound();
           if (bound != null) {
@@ -798,7 +791,7 @@ public abstract class GroovyRefactoringUtil {
       GrReferenceExpression expression = (GrReferenceExpression)lValue;
       final PsiElement dot = expression.getDotToken();
       //noinspection ConstantConditions
-      if (dot != null && dot.getNode().getElementType() == GroovyTokenTypes.mSPREAD_DOT) {
+      if (dot != null && dot.getNode().getElementType() == mSPREAD_DOT) {
         return true;
       }
       else {

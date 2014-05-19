@@ -32,7 +32,9 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.p
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeArguments;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
-import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.PathExpression.Result.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mAT;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mMEMBER_POINTER;
 
 /**
  * @author ilyas
@@ -45,7 +47,7 @@ public class PathExpression implements GroovyElementTypes {
   private static final TokenSet PATH_ELEMENT_START = TokenSet.create(mSPREAD_DOT, mOPTIONAL_DOT, mMEMBER_POINTER, mLBRACK, mLPAREN, mLCURLY, mDOT);
 
   public static boolean parse(@NotNull PsiBuilder builder, @NotNull GroovyParser parser) {
-    return parsePathExprQualifierForExprStatement(builder, parser) != WRONG_WAY;
+    return parsePathExprQualifierForExprStatement(builder, parser) != Result.WRONG_WAY;
   }
 
   /**
@@ -60,7 +62,7 @@ public class PathExpression implements GroovyElementTypes {
     }
     else {
       marker.drop();
-      return WRONG_WAY;
+      return Result.WRONG_WAY;
     }
   }
 
@@ -84,7 +86,7 @@ public class PathExpression implements GroovyElementTypes {
     else {
       marker.drop();
       if (qualifierType == LITERAL) return Result.LITERAL;
-      return INVOKED_EXPR;
+      return Result.INVOKED_EXPR;
     }
   }
 
@@ -146,10 +148,10 @@ public class PathExpression implements GroovyElementTypes {
       PsiBuilder.Marker argsMarker = builder.mark();
       argsMarker.done(ARGUMENTS);
       ParserUtils.getToken(builder, mNLS);
-      return pathElementParse(builder, newMarker, parser, METHOD_CALL);
+      return pathElementParse(builder, newMarker, parser, Result.METHOD_CALL);
     }
     else {
-      return pathElementParse(builder, newMarker, parser, INVOKED_EXPR);
+      return pathElementParse(builder, newMarker, parser, Result.INVOKED_EXPR);
     }
   }
 
@@ -157,12 +159,12 @@ public class PathExpression implements GroovyElementTypes {
   private static Result parseAfterArguments(@NotNull PsiBuilder builder, @NotNull PsiBuilder.Marker marker, @NotNull GroovyParser parser) {
     if (checkForLCurly(builder)) {
       ParserUtils.getToken(builder, mNLS);
-      return pathElementParse(builder, marker, parser, METHOD_CALL);
+      return pathElementParse(builder, marker, parser, Result.METHOD_CALL);
     }
     else {
       PsiBuilder.Marker newMarker = marker.precede();
       marker.done(PATH_METHOD_CALL);
-      return pathElementParse(builder, newMarker, parser, METHOD_CALL);
+      return pathElementParse(builder, newMarker, parser, Result.METHOD_CALL);
     }
   }
 

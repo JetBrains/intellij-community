@@ -43,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
@@ -96,10 +97,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.RELATIONS;
-import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.SHIFT_SIGNS;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_IMMUTABLE;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_IMMUTABLE;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kDEF;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR_STAR;
 
 public class PsiImplUtil {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil");
@@ -368,9 +367,9 @@ public class PsiImplUtil {
       if (opToken == mSTAR_STAR) priority = 7;
       else if (opToken == mSTAR || opToken == mDIV) priority = 8;
       else if (opToken == mPLUS || opToken == mMINUS) priority = 9;
-      else if (SHIFT_SIGNS.contains(opToken)) priority = 10;
+      else if (TokenSets.SHIFT_SIGNS.contains(opToken)) priority = 10;
       else if (opToken == mRANGE_EXCLUSIVE || opToken == mRANGE_INCLUSIVE) priority = 11;
-      else if (RELATIONS.contains(opToken)) priority = 12;
+      else if (TokenSets.RELATIONS.contains(opToken)) priority = 12;
       else if (opToken == mEQUAL || opToken == mNOT_EQUAL || opToken == mCOMPARE_TO) priority = 13;
       else if (opToken == mREGEX_FIND || opToken == mREGEX_MATCH) priority = 14;
       else if (opToken == mBAND) priority = 15;
@@ -492,7 +491,7 @@ public class PsiImplUtil {
   public static void removeNewLineAfter(@NotNull GrStatement statement) {
     ASTNode parentNode = statement.getParent().getNode();
     ASTNode next = statement.getNode().getTreeNext();
-    if (parentNode != null && next != null && mNLS == next.getElementType()) {
+    if (parentNode != null && next != null && GroovyTokenTypes.mNLS == next.getElementType()) {
       parentNode.removeChild(next);
     }
   }
@@ -845,8 +844,8 @@ public class PsiImplUtil {
   }
 
   public static boolean hasImmutableAnnotation(PsiModifierList modifierList) {
-    return modifierList.findAnnotation(GROOVY_LANG_IMMUTABLE) != null ||
-           modifierList.findAnnotation(GROOVY_TRANSFORM_IMMUTABLE) != null;
+    return modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_LANG_IMMUTABLE) != null ||
+           modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_IMMUTABLE) != null;
   }
 
   public static boolean isWhiteSpaceOrNls(@Nullable PsiElement sibling) {

@@ -68,21 +68,25 @@ public class GrImmediateClosureSignatureImpl implements GrClosureSignature {
     mySubstitutor = PsiSubstitutor.EMPTY;
   }
 
+  @Override
   public boolean isVarargs() {
     return myIsVarargs;
   }
 
 
+  @Override
   @Nullable
   public PsiType getReturnType() {
     return myReturnType;
   }
 
+  @Override
   @NotNull
   public PsiSubstitutor getSubstitutor() {
     return mySubstitutor;
   }
 
+  @Override
   @NotNull
   public GrClosureParameter[] getParameters() {
     GrClosureParameter[] result = new GrClosureParameter[myParameters.length];
@@ -95,11 +99,13 @@ public class GrImmediateClosureSignatureImpl implements GrClosureSignature {
     return myParameters.length;
   }
 
+  @Override
   @Nullable
   public GrSignature curry(@NotNull PsiType[] args, int position, @NotNull PsiElement context) {
     return GrClosureSignatureUtil.curryImpl(this, args, position, context);
   }
 
+  @Override
   public boolean isValid() {
     for (GrClosureParameter parameter : myParameters) {
       if (!parameter.isValid()) return false;
@@ -117,6 +123,7 @@ public class GrImmediateClosureSignatureImpl implements GrClosureSignature {
     return super.equals(obj);
   }
 
+  @Override
   public boolean isCurried() {
     return myCurried;
   }

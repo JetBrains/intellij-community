@@ -34,7 +34,6 @@ public class RegistrationProblemsInspectionXmlTest extends LightCodeInsightFixtu
     myFixture.addClass("package com.intellij.openapi.actionSystem; public class AnAction {}");
 
     myFixture.addClass("package com.intellij.openapi.components; public interface ApplicationComponent {}");
-    myFixture.addClass("package com.intellij.openapi.module; public interface ModuleComponent {}");
 
     myFixture.enableInspections(new RegistrationProblemsInspection());
   }
@@ -54,6 +53,8 @@ public class RegistrationProblemsInspectionXmlTest extends LightCodeInsightFixtu
   }
 
   public void testComponentMultipleWithSameInterface() {
+    myFixture.addClass("package com.intellij.openapi.module; public interface ModuleComponent {}");
+
     myFixture.testHighlighting("ComponentMultipleWithSameInterface.xml",
                                "ApplicationComponent.java", "ApplicationComponentInterface.java",
                                "MyModuleComponent.java", "MyModuleComponentInterface.java");

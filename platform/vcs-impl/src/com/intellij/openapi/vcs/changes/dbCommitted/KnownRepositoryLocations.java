@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.dbCommitted;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.util.containers.MultiMap;
 
 import java.util.*;
@@ -31,14 +31,14 @@ public class KnownRepositoryLocations {
 
   private final Map<String, Long> myJustVcs;
   private final MultiMap<String, String> myMap;
-  private final Map<Pair<String, String>, Long> myLocations;
+  private final Map<Couple<String>, Long> myLocations;
   private final Map<Long, RevisionId> myLastRevision;
   private final Map<Long, RevisionId> myFirstRevision;
   private final Map<String, Long> myAuthors;
 
   public KnownRepositoryLocations() {
     myMap = MultiMap.createSet();
-    myLocations = new HashMap<Pair<String, String>, Long>();
+    myLocations = new HashMap<Couple<String>, Long>();
     myLastRevision = new HashMap<Long, RevisionId>();
     myFirstRevision = new HashMap<Long, RevisionId>();
     myJustVcs = new HashMap<String, Long>();
@@ -106,7 +106,7 @@ public class KnownRepositoryLocations {
 
   public long getLocationId(final String key, final String path) {
     synchronized (myMap) {
-      final Long id = myLocations.get(Pair.create(key, path));
+      final Long id = myLocations.get(Couple.newOne(key, path));
       assert  id != null;
       return id;
     }
@@ -115,7 +115,7 @@ public class KnownRepositoryLocations {
   public void add(final String key, final String path, final long id) {
     synchronized (myMap) {
       myMap.putValue(key, path);
-      myLocations.put(Pair.create(key, path), id);
+      myLocations.put(Couple.newOne(key, path), id);
     }
   }
 

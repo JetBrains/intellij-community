@@ -331,7 +331,7 @@ public class GradleScriptType extends GroovyScriptType {
       for (final VirtualFile root : files) {
         result = result.uniteWith(new NonClasspathDirectoryScope(root));
       }
-      result = new ExternalModuleBuildGlobalSearchScope(result, modulePath);
+      result = new ExternalModuleBuildGlobalSearchScope(module.getProject(), result, modulePath);
     }
     return result;
   }

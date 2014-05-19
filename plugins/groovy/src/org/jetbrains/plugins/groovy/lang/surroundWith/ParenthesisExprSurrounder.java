@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParent
  * Date: 22.05.2007
  */
 public class ParenthesisExprSurrounder extends GroovyExpressionSurrounder {
+  @Override
   protected TextRange surroundExpression(GrExpression expression, PsiElement context) {
     GrParenthesizedExpression result = (GrParenthesizedExpression) GroovyPsiElementFactory.getInstance(expression.getProject()).createExpressionFromText("(a)", context);
     replaceToOldExpression(result.getOperand(), expression);
@@ -34,6 +35,7 @@ public class ParenthesisExprSurrounder extends GroovyExpressionSurrounder {
     return new TextRange(result.getTextRange().getEndOffset(), result.getTextRange().getEndOffset());
   }
 
+  @Override
   public String getTemplateDescription() {
     return "(expr)";
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,9 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
  * @author Max Medvedev
  */
 public class InlineLocalVarSettings {
-  private GrExpression myInitializer;
-  private int myWriteInstructionNumber;
-  private Instruction[] myFlow;
+  private final GrExpression myInitializer;
+  private final int myWriteInstructionNumber;
+  private final Instruction[] myFlow;
 
   public InlineLocalVarSettings(GrExpression initializer, int writeInstructionNumber, Instruction[] flow) {
     myWriteInstructionNumber = writeInstructionNumber;

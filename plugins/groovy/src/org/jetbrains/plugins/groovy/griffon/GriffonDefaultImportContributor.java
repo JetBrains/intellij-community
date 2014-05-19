@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,10 +45,10 @@ import java.util.List;
  */
 public class GriffonDefaultImportContributor extends DefaultImportContributor {
 
-  private static Pair<List<String>, List<String>> getDefaultImports(@NotNull final Module module) {
-    return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, new CachedValueProvider<Pair<List<String>, List<String>>>() {
+  private static Couple<List<String>> getDefaultImports(@NotNull final Module module) {
+    return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, new CachedValueProvider<Couple<List<String>>>() {
       @Override
-      public Result<Pair<List<String>, List<String>>> compute() {
+      public Result<Couple<List<String>>> compute() {
         PsiPackage aPackage = JavaPsiFacade.getInstance(module.getProject()).findPackage("META-INF");
         if (aPackage != null) {
           for (PsiDirectory directory : aPackage.getDirectories(GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module))) {
@@ -56,12 +56,12 @@ public class GriffonDefaultImportContributor extends DefaultImportContributor {
             if (file instanceof PropertiesFile) {
               List<String> modelImports = tokenize(((PropertiesFile)file).findPropertyByKey("models"));
               List<String> viewImports = tokenize(((PropertiesFile)file).findPropertyByKey("views"));
-              return Result.create(Pair.create(modelImports, viewImports), PsiModificationTracker.MODIFICATION_COUNT);
+              return Result.create(Couple.newOne(modelImports, viewImports), PsiModificationTracker.MODIFICATION_COUNT);
             }
           }
         }
 
-        return Result.create(new Pair<List<String>, List<String>>(new ArrayList<String>(), new ArrayList<String>()),
+        return Result.create(Couple.<List<String>>newOne(new ArrayList<String>(), new ArrayList<String>()),
                              PsiModificationTracker.MODIFICATION_COUNT);
       }
 

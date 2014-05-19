@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,10 +102,12 @@ public class ReachingDefinitionsCollector {
     final VariableInfo[] oarr = filterNonlocals(omap, first);
 
     return new FragmentVariableInfos() {
+      @Override
       public VariableInfo[] getInputVariableNames() {
         return iarr;
       }
 
+      @Override
       public VariableInfo[] getOutputVariableNames() {
         return oarr;
       }
@@ -125,6 +127,7 @@ public class ReachingDefinitionsCollector {
                                        final GrStatement last,
                                        GrControlFlowOwner flowOwner) {
     flowOwner.accept(new GroovyRecursiveElementVisitor() {
+      @Override
       public void visitClosure(GrClosableBlock closure) {
         addUsagesInClosure(imap, omap, closure, first, last);
         super.visitClosure(closure);
@@ -136,6 +139,7 @@ public class ReachingDefinitionsCollector {
                                       final GrStatement first,
                                       final GrStatement last) {
         closure.accept(new GroovyRecursiveElementVisitor() {
+          @Override
           public void visitReferenceExpression(GrReferenceExpression refExpr) {
             if (refExpr.isQualified()) {
               return;
@@ -372,9 +376,11 @@ public class ReachingDefinitionsCollector {
       TIntObjectHashMap<TIntHashSet> map = dfaResult.get(i);
       buffer.append("At ").append(i).append(":\n");
       map.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
+        @Override
         public boolean execute(int i, TIntHashSet defs) {
           buffer.append(i).append(" -> ");
           defs.forEach(new TIntProcedure() {
+            @Override
             public boolean execute(int i) {
               buffer.append(i).append(" ");
               return true;
@@ -390,12 +396,10 @@ public class ReachingDefinitionsCollector {
   }
 
   private static class VariableInfoImpl implements VariableInfo {
-    private
-    @NotNull final String myName;
+    @NotNull private final String myName;
     private final PsiManager myManager;
 
-    private
-    @Nullable
+    @Nullable private
     PsiType myType;
 
     VariableInfoImpl(@NotNull String name, PsiManager manager) {
@@ -403,11 +407,13 @@ public class ReachingDefinitionsCollector {
       myManager = manager;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return myName;
     }
 
+    @Override
     @Nullable
     public PsiType getType() {
       if (myType instanceof PsiIntersectionType) return ((PsiIntersectionType)myType).getConjuncts()[0];

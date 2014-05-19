@@ -27,19 +27,23 @@ public class GroovyStaticVariableNamingConventionInspection extends ConventionIn
     private static final int DEFAULT_MIN_LENGTH = 4;
     private static final int DEFAULT_MAX_LENGTH = 32;
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return "Static variable naming convention";
     }
 
+    @Override
     protected GroovyFix buildFix(PsiElement location) {
         return new RenameFix();
     }
 
+    @Override
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... args) {
         final String className = (String) args[0];
@@ -51,24 +55,29 @@ public class GroovyStaticVariableNamingConventionInspection extends ConventionIn
         return "Static variable name '#ref' doesn't match regex '" + getRegex() + "' #loc";
     }
 
+    @Override
     protected String getDefaultRegex() {
         return "s_[a-z][A-Za-z\\d]*";
     }
 
+    @Override
     protected int getDefaultMinLength() {
         return DEFAULT_MIN_LENGTH;
     }
 
+    @Override
     protected int getDefaultMaxLength() {
         return DEFAULT_MAX_LENGTH;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new NamingConventionsVisitor();
     }
 
 
     private class NamingConventionsVisitor extends BaseInspectionVisitor {
+        @Override
         public void visitField(GrField grField) {
             super.visitField(grField);
             if (!grField.hasModifierProperty(PsiModifier.STATIC)) {

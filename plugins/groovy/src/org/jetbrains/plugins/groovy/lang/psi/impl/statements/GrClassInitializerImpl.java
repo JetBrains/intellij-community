@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,16 +51,19 @@ public class GrClassInitializerImpl extends GroovyPsiElementImpl implements GrCl
     return "Class initializer";
   }
 
+  @Override
   @NotNull
   public GrOpenBlock getBlock() {
     return findNotNullChildByClass(GrOpenBlock.class);
   }
 
+  @Override
   public boolean isStatic() {
     return getModifierList().hasExplicitModifier(PsiModifier.STATIC);
   }
 
 
+  @Override
   public PsiClass getContainingClass() {
     PsiElement parent = getParent();
     if (parent instanceof GrTypeDefinitionBody) {
@@ -77,11 +80,13 @@ public class GrClassInitializerImpl extends GroovyPsiElementImpl implements GrCl
     return new GrMember[]{this};
   }
 
+  @Override
   @NotNull
   public GrModifierList getModifierList() {
     return findNotNullChildByClass(GrModifierList.class);
   }
 
+  @Override
   public boolean hasModifierProperty(@GrModifier.GrModifierConstant @NonNls @NotNull String name) {
     return getModifierList().hasModifierProperty(name);
   }

@@ -29,16 +29,17 @@ import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
 // todo: support for int[].var (parses as .class access!)
-public class IntroduceVariablePostfixTemplate extends ExpressionPostfixTemplateWithChooser {
+public class IntroduceVariablePostfixTemplate extends JavaPostfixTemplateWithChooser {
   public IntroduceVariablePostfixTemplate() {
     super("var", "T name = expr;");
   }
 
   @Override
-  protected void doIt(@NotNull Editor editor, @NotNull PsiExpression expression) {
+  protected void doIt(@NotNull Editor editor, @NotNull PsiElement expression) {
     // for advanced stuff use ((PsiJavaCodeReferenceElement)expression).advancedResolve(true).getElement();
-    IntroduceVariableHandler handler = ApplicationManager.getApplication().isUnitTestMode() ? getMockHandler() : new IntroduceVariableHandler();
-    handler.invoke(expression.getProject(), editor, expression);
+    IntroduceVariableHandler handler =
+      ApplicationManager.getApplication().isUnitTestMode() ? getMockHandler() : new IntroduceVariableHandler();
+    handler.invoke(expression.getProject(), editor, (PsiExpression)expression);
   }
 
   @NotNull

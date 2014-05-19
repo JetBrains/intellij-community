@@ -22,33 +22,40 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 
 public class GroovyOverlyLongMethodInspection extends GroovyMethodMetricInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Overly long method";
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return METHOD_METRICS;
   }
 
+  @Override
   protected int getDefaultLimit() {
     return 30;
   }
 
+  @Override
   protected String getConfigurationLabel() {
     return "Maximum statements per method:";
   }
 
+  @Override
   public String buildErrorString(Object... args) {
     return "Method '#ref' is too long ( statement count =" + args[0] + '>' + args[1] + ')';
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private class Visitor extends BaseInspectionVisitor {
+    @Override
     public void visitMethod(GrMethod method) {
       super.visitMethod(method);
       final int limit = getLimit();

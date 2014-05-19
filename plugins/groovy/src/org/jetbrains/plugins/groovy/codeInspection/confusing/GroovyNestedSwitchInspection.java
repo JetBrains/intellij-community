@@ -25,30 +25,35 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
 
 public class GroovyNestedSwitchInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return CONFUSING_CODE_CONSTRUCTS;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Nested switch statement";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Nested #ref statement #loc";
 
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitSwitchStatement(GrSwitchStatement switchStatement) {
       super.visitSwitchStatement(switchStatement);
       final GrSwitchStatement containingSwitch = PsiTreeUtil.getParentOfType(switchStatement, GrSwitchStatement.class);

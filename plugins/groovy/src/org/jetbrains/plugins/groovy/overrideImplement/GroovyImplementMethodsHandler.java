@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,29 +25,34 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 14.09.2007
  */
 public class GroovyImplementMethodsHandler implements LanguageCodeInsightActionHandler {
+  @Override
   public boolean isValidFor(Editor editor, PsiFile psiFile) {
     return psiFile != null && GroovyFileType.GROOVY_FILE_TYPE.equals(psiFile.getFileType());
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
     PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, true);
-    if (aClass == null) return;
+    if (aClass instanceof GrTypeDefinition) {
+      GrTypeDefinition typeDefinition = (GrTypeDefinition)aClass;
+      if (GroovyOverrideImplementExploreUtil.getMethodSignaturesToImplement(typeDefinition).isEmpty()) {
+        HintManager.getInstance().showErrorHint(editor, "No methods to implement have been found");
+        return;
+      }
 
-    if (OverrideImplementUtil.getMethodSignaturesToImplement(aClass).isEmpty()) {
-      HintManager.getInstance().showErrorHint(editor, "No methods to implement have been found");
-      return;
+      GroovyOverrideImplementUtil.chooseAndImplementMethods(project, editor, typeDefinition);
     }
-
-    OverrideImplementUtil.chooseAndImplementMethods(project, editor, aClass);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

@@ -43,6 +43,7 @@ class RenameFix extends GroovyFix {
     this.targetName = targetName;
   }
 
+  @Override
   @NotNull
   public String getName() {
     if (targetName == null) {
@@ -52,6 +53,7 @@ class RenameFix extends GroovyFix {
     }
   }
 
+  @Override
   public void doFix(final Project project, ProblemDescriptor descriptor) {
     final PsiElement nameIdentifier = descriptor.getPsiElement();
     final PsiElement elementToRename = nameIdentifier.getParent();
@@ -63,6 +65,7 @@ class RenameFix extends GroovyFix {
       final DataManager dataManager = DataManager.getInstance();
       final DataContext dataContext = dataManager.getDataContext();
       Runnable runnable = new Runnable() {
+        @Override
         public void run() {
           renameHandler.invoke(project, new PsiElement[]{elementToRename},
                                dataContext);

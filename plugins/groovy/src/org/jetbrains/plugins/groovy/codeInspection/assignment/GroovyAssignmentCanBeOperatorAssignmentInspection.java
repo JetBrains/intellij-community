@@ -52,17 +52,20 @@ public class GroovyAssignmentCanBeOperatorAssignmentInspection
    */
   public boolean ignoreObscureOperators = false;
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return ASSIGNMENT_ISSUES;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Assignment replaceable with operator assignment";
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final GrAssignmentExpression assignmentExpression =
@@ -70,6 +73,7 @@ public class GroovyAssignmentCanBeOperatorAssignmentInspection
     return "<code>#ref</code> could be simplified to '" + calculateReplacementExpression(assignmentExpression) + "' #loc";
   }
 
+  @Override
   @Nullable
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel =
@@ -98,10 +102,12 @@ public class GroovyAssignmentCanBeOperatorAssignmentInspection
     return lhs.getText() + ' ' + signText + "= " + rhsRhs.getText();
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ReplaceAssignmentWithOperatorAssignmentVisitor();
   }
 
+  @Override
   public GroovyFix buildFix(PsiElement location) {
     return new ReplaceAssignmentWithOperatorAssignmentFix(
         (GrAssignmentExpression) location);
@@ -129,11 +135,13 @@ public class GroovyAssignmentCanBeOperatorAssignmentInspection
       m_name = "Replace '=' with '" + signText + "='";
     }
 
+    @Override
     @NotNull
     public String getName() {
       return m_name;
     }
 
+    @Override
     public void doFix(@NotNull Project project,
                       ProblemDescriptor descriptor)
         throws IncorrectOperationException {
@@ -152,6 +160,7 @@ public class GroovyAssignmentCanBeOperatorAssignmentInspection
   private class ReplaceAssignmentWithOperatorAssignmentVisitor
       extends BaseInspectionVisitor {
 
+    @Override
     public void visitAssignmentExpression(@NotNull GrAssignmentExpression assignment) {
       super.visitAssignmentExpression(assignment);
       final IElementType assignmentTokenType = assignment.getOperationTokenType();

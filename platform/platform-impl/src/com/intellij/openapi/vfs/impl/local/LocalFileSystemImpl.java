@@ -497,11 +497,6 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   }
 
   @Override
-  public boolean isReadOnly() {
-    return false;
-  }
-
-  @Override
   public void refreshWithoutFileWatcher(final boolean asynchronous) {
     Runnable heavyRefresh = new Runnable() {
       @Override

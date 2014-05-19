@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,28 +61,33 @@ public class UnassignedVariableAccessInspection extends GroovyLocalInspectionBas
     return optionsPanel;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return GroovyInspectionBundle.message("groovy.dfa.issues");
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return GroovyInspectionBundle.message("unassigned.access");
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getShortName() {
     return "GroovyVariableNotAssigned";
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   protected void check(GrControlFlowOwner owner, ProblemsHolder problemsHolder) {
     Instruction[] flow = owner.getControlFlow();
     ReadWriteVariableInstruction[] reads = ControlFlowBuilderUtil.getReadsWithoutPriorWrites(flow, true);

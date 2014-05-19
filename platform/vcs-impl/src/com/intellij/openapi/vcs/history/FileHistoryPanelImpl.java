@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,10 +60,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.dualView.CellWrapper;
-import com.intellij.ui.dualView.DualTreeElement;
-import com.intellij.ui.dualView.DualView;
-import com.intellij.ui.dualView.DualViewColumnInfo;
+import com.intellij.ui.dualView.*;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.*;
 import com.intellij.util.text.DateFormatUtil;
@@ -404,6 +401,16 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
     myHistoryPanelRefresh = new AsynchConsumer<VcsHistorySession>() {
       public void finished() {
+        if (treeHistoryProvider != null) {
+          // scroll tree view to most recent change
+          final TreeTableView treeView = myDualView.getTreeView();
+          final int lastRow = treeView.getRowCount() - 1;
+          if (lastRow >= 0) {
+            treeView.addRowSelectionInterval(lastRow, lastRow);
+            treeView.scrollRectToVisible(treeView.getCellRect(lastRow, 0, true));
+          }
+        }
+        myDualView.getFlatView().addRowSelectionInterval(0, 0);
         myInRefresh = false;
         myTargetSelection = null;
 

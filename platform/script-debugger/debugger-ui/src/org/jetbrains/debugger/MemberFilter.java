@@ -2,11 +2,11 @@ package org.jetbrains.debugger;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import java.util.Collection;
 
 public interface MemberFilter {
   boolean isMemberVisible(@NotNull Variable variable, boolean filterFunctions);
 
   @NotNull
-  List<Variable> getAdditionalVariables();
+  Collection<Variable> getAdditionalVariables();
 }

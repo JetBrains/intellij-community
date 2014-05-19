@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -38,7 +39,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
-import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -260,15 +260,15 @@ public class VcsHistoryUtil {
    * Compares the given revisions and returns a pair of them, where the first one is older, and second is newer.
    */
   @NotNull
-  public static Pair<VcsFileRevision, VcsFileRevision> sortRevisions(@NotNull VcsFileRevision revision1,
-                                                                     @NotNull VcsFileRevision revision2) {
+  public static Couple<VcsFileRevision> sortRevisions(@NotNull VcsFileRevision revision1,
+                                                      @NotNull VcsFileRevision revision2) {
     VcsFileRevision left = revision1;
     VcsFileRevision right = revision2;
     if (compare(revision1, revision2) > 0) {
       left = revision2;
       right = revision1;
     }
-    return Pair.create(left, right);
+    return Couple.newOne(left, right);
   }
 
 }

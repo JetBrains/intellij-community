@@ -26,29 +26,34 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatem
 
 public class GroovyBreakInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return CONTROL_FLOW;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Break statement";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "#ref statement #loc";
 
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
+    @Override
     public void visitBreakStatement(GrBreakStatement breakStatement) {
 
       super.visitBreakStatement(breakStatement);

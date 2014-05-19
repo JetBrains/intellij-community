@@ -33,29 +33,34 @@ public class GroovySynchronizationOnVariableInitializedWithLiteralInspection ext
     return true;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return THREADING_ISSUES;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Synchronization on variable initialized with literal";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Synchronization on variable '#ref', which was initialized with a literal #loc";
 
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
+    @Override
     public void visitSynchronizedStatement(GrSynchronizedStatement synchronizedStatement) {
       super.visitSynchronizedStatement(synchronizedStatement);
       final GrExpression lock = synchronizedStatement.getMonitor();

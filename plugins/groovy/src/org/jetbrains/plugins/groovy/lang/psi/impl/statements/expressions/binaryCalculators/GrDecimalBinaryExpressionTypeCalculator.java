@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators.GrBinaryExpressionUtil.*;
-
 /**
  * Created by Max Medvedev on 12/20/13
  */
@@ -30,9 +28,9 @@ public class GrDecimalBinaryExpressionTypeCalculator extends GrNumericBinaryExpr
   @Nullable
   @Override
   protected PsiType inferNumericType(@NotNull PsiType ltype, @NotNull PsiType rtype, GrBinaryFacade e) {
-    if (isBigDecimal(ltype, rtype)) return null;
-    if (isFloatOrDouble(ltype, rtype)) return null;
-    if (isLong(ltype, rtype)) return createLong(e);
-    return createInteger(e);
+    if (GrBinaryExpressionUtil.isBigDecimal(ltype, rtype)) return null;
+    if (GrBinaryExpressionUtil.isFloatOrDouble(ltype, rtype)) return null;
+    if (GrBinaryExpressionUtil.isLong(ltype, rtype)) return GrBinaryExpressionUtil.createLong(e);
+    return GrBinaryExpressionUtil.createInteger(e);
   }
 }

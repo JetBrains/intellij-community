@@ -44,11 +44,12 @@ public class CutHandler extends EditorWriteActionHandler {
   }
 
   @Override
-  public void executeWriteAction(final Editor editor, DataContext dataContext) {
+  public void executeWriteAction(final Editor editor, Caret caret, DataContext dataContext) {
+    assert caret == null : "Invocation of 'cut' operation for specific caret is not supported";
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getContentComponent()));
     if (project == null) {
       if (myOriginalHandler != null) {
-        myOriginalHandler.execute(editor, dataContext);
+        myOriginalHandler.execute(editor, null, dataContext);
       }
       return;
     }
@@ -57,7 +58,7 @@ public class CutHandler extends EditorWriteActionHandler {
 
     if (file == null) {
       if (myOriginalHandler != null) {
-        myOriginalHandler.execute(editor, dataContext);
+        myOriginalHandler.execute(editor, null, dataContext);
       }
       return;
     }
@@ -88,7 +89,7 @@ public class CutHandler extends EditorWriteActionHandler {
       });
     }
 
-    EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_COPY).execute(editor, dataContext);
+    EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_COPY).execute(editor, null, dataContext);
 
     if (editor.getCaretModel().supportsMultipleCarets()) {
 

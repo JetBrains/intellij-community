@@ -42,12 +42,14 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrImportStatementStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GrDelegatingScopeProcessorWithHints;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.shouldProcessClasses;
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.shouldProcessMethods;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kSTATIC;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mIDENT;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR;
 
 /**
  * @author ilyas
@@ -163,7 +165,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
       }
     }
 
-    if (shouldProcessMethods(processor.getHint(ClassHint.KEY))) {
+    if (ResolveUtil.shouldProcessMethods(processor.getHint(ClassHint.KEY))) {
       if (hintName == null || importedName.equals(GroovyPropertyUtils.getPropertyNameByGetterName(hintName, true))) {
         if (!clazz.processDeclarations(new StaticGetterProcessor(refName, processor), state, lastParent, place)) {
           return false;
@@ -181,7 +183,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
   }
 
   private boolean processSingleClassImport(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state) {
-    if (!shouldProcessClasses(processor.getHint(ClassHint.KEY))) return true;
+    if (!ResolveUtil.shouldProcessClasses(processor.getHint(ClassHint.KEY))) return true;
 
     GrCodeReferenceElement ref = getImportReference();
     if (ref == null) return true;
@@ -229,7 +231,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
       }
     }
     else {
-      if (shouldProcessClasses(processor.getHint(ClassHint.KEY))) {
+      if (ResolveUtil.shouldProcessClasses(processor.getHint(ClassHint.KEY))) {
         String qName = PsiUtil.getQualifiedReferenceText(ref);
         if (qName != null) {
           PsiPackage aPackage = JavaPsiFacade.getInstance(getProject()).findPackage(qName);
@@ -362,6 +364,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
       super(refName, processor);
     }
 
+    @Override
     protected boolean isAccessor(@NotNull PsiMethod method) {
       return GroovyPropertyUtils.isSimplePropertySetter(method, getPropertyName());
     }
@@ -382,7 +385,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
   /**
    * Created by Max Medvedev on 26/03/14
    */
-  private static abstract class StaticAccessorProcessor extends GrDelegatingScopeProcessorWithHints {
+  private abstract static class StaticAccessorProcessor extends GrDelegatingScopeProcessorWithHints {
     private final String myPropertyName;
 
     public StaticAccessorProcessor(@NotNull String propertyName, @NotNull PsiScopeProcessor processor) {

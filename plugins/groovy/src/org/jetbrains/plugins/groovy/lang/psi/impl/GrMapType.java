@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,19 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.*;
-
-import static com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.JAVA_UTIL_LINKED_HASH_MAP;
 
 /**
  * @author peter
@@ -64,7 +59,9 @@ public abstract class GrMapType extends GrLiteralClassType {
                       LanguageLevel languageLevel) {
     super(languageLevel, scope, facade);
 
-    myJavaClassName = facade.findClass(JAVA_UTIL_LINKED_HASH_MAP, scope) != null ? JAVA_UTIL_LINKED_HASH_MAP : JAVA_UTIL_MAP;
+    myJavaClassName = facade.findClass(
+      GroovyCommonClassNames.JAVA_UTIL_LINKED_HASH_MAP, scope) != null ? GroovyCommonClassNames.JAVA_UTIL_LINKED_HASH_MAP
+                                                                       : CommonClassNames.JAVA_UTIL_MAP;
   }
 
   @NotNull
@@ -94,7 +91,7 @@ public abstract class GrMapType extends GrLiteralClassType {
   protected abstract PsiType[] getAllValueTypes();
 
   @NotNull
-  protected abstract List<Pair<PsiType, PsiType>> getOtherEntries();
+  protected abstract List<Couple<PsiType>> getOtherEntries();
 
   @NotNull
   protected abstract Map<String, PsiType> getStringEntries();
@@ -109,7 +106,7 @@ public abstract class GrMapType extends GrLiteralClassType {
   @NotNull
   public String getInternalCanonicalText() {
     Set<String> stringKeys = getStringKeys();
-    List<Pair<PsiType, PsiType>> otherEntries = getOtherEntries();
+    List<Couple<PsiType>> otherEntries = getOtherEntries();
 
     if (stringKeys.isEmpty()) {
       if (otherEntries.isEmpty()) return "[:]";
@@ -122,7 +119,7 @@ public abstract class GrMapType extends GrLiteralClassType {
     for (String s : stringKeys) {
       components.add("'" + s + "':" + getInternalCanonicalText(getTypeByStringKey(s)));
     }
-    for (Pair<PsiType, PsiType> entry : otherEntries) {
+    for (Couple<PsiType> entry : otherEntries) {
       components.add(getInternalCanonicalText(entry.first) + ":" + getInternalCanonicalText(entry.second));
     }
     boolean tooMany = components.size() > 2;
@@ -156,7 +153,7 @@ public abstract class GrMapType extends GrLiteralClassType {
     strings.putAll(l.getStringEntries());
     strings.putAll(r.getStringEntries());
 
-    List<Pair<PsiType, PsiType>> other = new ArrayList<Pair<PsiType, PsiType>>();
+    List<Couple<PsiType>> other = new ArrayList<Couple<PsiType>>();
     other.addAll(l.getOtherEntries());
     other.addAll(r.getOtherEntries());
 
@@ -166,13 +163,13 @@ public abstract class GrMapType extends GrLiteralClassType {
   public static GrMapType create(JavaPsiFacade facade,
                                  GlobalSearchScope scope,
                                  Map<String, PsiType> stringEntries,
-                                 List<Pair<PsiType, PsiType>> otherEntries) {
+                                 List<Couple<PsiType>> otherEntries) {
     return new GrMapTypeImpl(facade, scope, stringEntries, otherEntries, LanguageLevel.JDK_1_5);
   }
 
   public static GrMapType create(GlobalSearchScope scope) {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(scope.getProject());
-    List<Pair<PsiType, PsiType>> otherEntries = Collections.emptyList();
+    List<Couple<PsiType>> otherEntries = Collections.emptyList();
     Map<String, PsiType> stringEntries = Collections.emptyMap();
     return new GrMapTypeImpl(facade, scope, stringEntries, otherEntries, LanguageLevel.JDK_1_5);
   }

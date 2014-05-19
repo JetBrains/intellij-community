@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,6 +119,7 @@ public class MethodOrClosureScopeChooser {
     final TextAttributes attributes =
       EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     list.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(final ListSelectionEvent e) {
         final GrParametersOwner selectedMethod = (GrParametersOwner)list.getSelectedValue();
         if (selectedMethod == null) return;
@@ -151,6 +152,7 @@ public class MethodOrClosureScopeChooser {
             toSearchFor = superMethod.isEnabled() && superMethod.isSelected() ? ToSearchIn.getParent() : null;
           }
           IdeFocusManager.findInstance().doWhenFocusSettlesDown(new Runnable() {
+            @Override
             public void run() {
               callback.fun(ToSearchIn, toSearchFor);
             }

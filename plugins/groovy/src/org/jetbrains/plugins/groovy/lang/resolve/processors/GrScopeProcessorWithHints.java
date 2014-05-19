@@ -25,8 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 
-import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind.*;
-
 /**
  * Created by Max Medvedev on 31/03/14
  */
@@ -64,18 +62,18 @@ public abstract class GrScopeProcessorWithHints implements PsiScopeProcessor, Na
   public boolean shouldProcess(DeclarationKind kind) {
     switch (kind) {
       case CLASS:
-        return shouldProcess(CLASS);
+        return shouldProcess(ResolveKind.CLASS);
 
       case ENUM_CONST:
       case VARIABLE:
       case FIELD:
-        return shouldProcess(PROPERTY);
+        return shouldProcess(ResolveKind.PROPERTY);
 
       case METHOD:
-        return shouldProcess(METHOD);
+        return shouldProcess(ResolveKind.METHOD);
 
       case PACKAGE:
-        return shouldProcess(PACKAGE);
+        return shouldProcess(ResolveKind.PACKAGE);
     }
 
     return false;

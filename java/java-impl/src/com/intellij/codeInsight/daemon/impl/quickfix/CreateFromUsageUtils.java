@@ -864,7 +864,7 @@ public class CreateFromUsageUtils {
 
   public static boolean isAccessedForWriting(final PsiExpression[] expressionOccurences) {
     for (PsiExpression expression : expressionOccurences) {
-      if(PsiUtil.isAccessedForWriting(expression)) return true;
+      if(expression.isValid() && PsiUtil.isAccessedForWriting(expression)) return true;
     }
 
     return false;

@@ -74,7 +74,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     return myDumb;
   }
 
-  private boolean isValid() {
+  protected boolean isValid() {
     if (isDumbMode() && !DumbService.isDumbAware(this)) {
       return false;
     }

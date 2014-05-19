@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ public class GrLabelReference implements PsiReference {
     myStatement = statement;
   }
 
+  @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     if (element instanceof GrLabeledStatement) {
       myStatement = handleElementRename(((GrLabeledStatement)element).getName());
@@ -48,6 +49,7 @@ public class GrLabelReference implements PsiReference {
     throw new IncorrectOperationException("Can't bind not to labeled statement");
   }
 
+  @Override
   public TextRange getRangeInElement() {
     final PsiElement identifier = myStatement.getLabelIdentifier();
     if (identifier == null) {
@@ -57,10 +59,12 @@ public class GrLabelReference implements PsiReference {
     return new TextRange(offsetInParent, offsetInParent + identifier.getTextLength());
   }
 
+  @Override
   public boolean isReferenceTo(PsiElement element) {
     return resolve() == element;
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     final String name = myStatement.getLabelName();
@@ -68,6 +72,7 @@ public class GrLabelReference implements PsiReference {
     return name;
   }
 
+  @Override
   public GrFlowInterruptingStatement handleElementRename(String newElementName) throws IncorrectOperationException {
     if (myStatement instanceof GrBreakStatement) {
       myStatement = (GrFlowInterruptingStatement)myStatement.replaceWithStatement(
@@ -80,6 +85,7 @@ public class GrLabelReference implements PsiReference {
     return myStatement;
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     final List<PsiElement> result = new ArrayList<PsiElement>();
@@ -93,14 +99,17 @@ public class GrLabelReference implements PsiReference {
     return ArrayUtil.toObjectArray(result);
   }
 
+  @Override
   public boolean isSoft() {
     return false;
   }
 
+  @Override
   public GrFlowInterruptingStatement getElement() {
     return myStatement;
   }
 
+  @Override
   public PsiElement resolve() {
     return myStatement.resolveLabel();
   }

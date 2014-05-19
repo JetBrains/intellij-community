@@ -44,6 +44,7 @@ switch
 synchronized
 this
 throw
+trait
 transient
 true
 try

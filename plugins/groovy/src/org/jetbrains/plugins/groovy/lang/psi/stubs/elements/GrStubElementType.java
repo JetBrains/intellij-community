@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
@@ -34,9 +32,11 @@ public abstract class GrStubElementType<S extends StubElement, T extends GroovyP
     super(debugName, GroovyFileType.GROOVY_LANGUAGE);
   }
 
+  @Override
   public void indexStub(@NotNull final S stub, @NotNull final IndexSink sink) {
   }
 
+  @Override
   @NotNull
   public String getExternalId() {
     return "gr." + super.toString();

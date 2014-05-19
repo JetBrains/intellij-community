@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import java.util.Set;
  * @author Maxim.Medvedev
  */
 public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper<Set<GroovyFile>> {
+  @Override
   public Set<GroovyFile> prepareOperation(UsageInfo[] usages) {
     Set<GroovyFile> files = new HashSet<GroovyFile>();
     for (UsageInfo usage : usages) {
@@ -55,10 +56,12 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
     return files;
   }
 
+  @Override
   public void performOperation(final Project project, final Set<GroovyFile> files) {
     final ProgressManager progressManager = ProgressManager.getInstance();
     final Map<GroovyFile, Pair<List<GrImportStatement>, Set<GrImportStatement>>> redundants = new HashMap<GroovyFile, Pair<List<GrImportStatement>, Set<GrImportStatement>>>();
     final Runnable findUnusedImports = new Runnable() {
+      @Override
       public void run() {
         final ProgressIndicator progressIndicator = progressManager.getProgressIndicator();
         final int total = files.size();
@@ -74,6 +77,7 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
             progressIndicator.setFraction((double)i++/total);
           }
           ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
             public void run() {
               final Set<GrImportStatement> usedImports = GroovyImportOptimizer.findUsedImports(file);
               final List<GrImportStatement> validImports = PsiUtil.getValidImportStatements(file);

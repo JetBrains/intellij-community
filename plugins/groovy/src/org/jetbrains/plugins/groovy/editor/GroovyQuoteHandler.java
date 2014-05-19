@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,19 +22,23 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mREGEX_BEGIN;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mREGEX_END;
 
 /**
  * @author ven
  */
 public class GroovyQuoteHandler implements MultiCharQuoteHandler {
 
+  @Override
   public boolean isClosingQuote(HighlighterIterator iterator, int offset) {
     final IElementType tokenType = iterator.getTokenType();
 
     if (tokenType == mGSTRING_END) return true;
-    if (tokenType == mSTRING_LITERAL || tokenType == mGSTRING_LITERAL) {
+    if (tokenType == GroovyTokenTypes.mSTRING_LITERAL || tokenType == mGSTRING_LITERAL) {
       int start = iterator.getStart();
       int end = iterator.getEnd();
       return end - start >= 1 && offset == end - 1 ||
@@ -48,6 +52,7 @@ public class GroovyQuoteHandler implements MultiCharQuoteHandler {
     return false;
   }
 
+  @Override
   public boolean isOpeningQuote(HighlighterIterator iterator, int offset) {
     final IElementType tokenType = iterator.getTokenType();
 
@@ -59,9 +64,12 @@ public class GroovyQuoteHandler implements MultiCharQuoteHandler {
     return false;
   }
 
+  @Override
   public boolean hasNonClosedLiteral(Editor editor, HighlighterIterator iterator, int offset) {
     final IElementType tokenType = iterator.getTokenType();
-    if (tokenType == mSTRING_LITERAL || tokenType == mGSTRING_BEGIN || tokenType == mGSTRING_LITERAL || tokenType == mGSTRING_CONTENT) {
+    if (tokenType == mSTRING_LITERAL || tokenType == mGSTRING_BEGIN || tokenType ==
+                                                                                                         mGSTRING_LITERAL || tokenType ==
+                                                                                                                                              mGSTRING_CONTENT) {
       final Document document = iterator.getDocument();
       if (document == null) return false;
       final String literal = document.getText().substring(iterator.getStart(), offset + 1);
@@ -70,9 +78,12 @@ public class GroovyQuoteHandler implements MultiCharQuoteHandler {
       }
     }
 
-    return !(tokenType == mGSTRING_CONTENT || tokenType == mGSTRING_LITERAL || tokenType == mSTRING_LITERAL || tokenType == mGSTRING_END);
+    return !(tokenType == mGSTRING_CONTENT || tokenType == mGSTRING_LITERAL || tokenType ==
+                                                                                                                 mSTRING_LITERAL || tokenType ==
+                                                                                                                                                     mGSTRING_END);
   }
 
+  @Override
   public boolean isInsideLiteral(HighlighterIterator iterator) {
     final IElementType tokenType = iterator.getTokenType();
     return tokenType == mSTRING_LITERAL || tokenType == mGSTRING_LITERAL;

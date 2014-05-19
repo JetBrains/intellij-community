@@ -34,39 +34,46 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 
 public class GroovyReturnFromClosureCanBeImplicitInspection extends BaseInspection {
 
+  @Override
   @Nls
     @NotNull
     public String getGroupDisplayName() {
         return CONTROL_FLOW;
     }
 
+    @Override
     @Nls
     @NotNull
     public String getDisplayName() {
         return "'return' statement can be implicit";
     }
 
+    @Override
     @Nullable
     protected String buildErrorString(Object... args) {
         return "#ref statement at end of a closure can be made implicit #loc";
 
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new Visitor();
     }
 
+    @Override
     @Nullable
     protected GroovyFix buildFix(PsiElement location) {
         return new MakeReturnImplicitFix();
     }
 
     private static class MakeReturnImplicitFix extends GroovyFix {
+        @Override
         @NotNull
         public String getName() {
             return "Make return implicit";
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
 
             final PsiElement returnKeywordElement = descriptor.getPsiElement();
@@ -79,6 +86,7 @@ public class GroovyReturnFromClosureCanBeImplicitInspection extends BaseInspecti
 
     private static class Visitor extends BaseInspectionVisitor {
 
+        @Override
         public void visitReturnStatement(GrReturnStatement returnStatement) {
             super.visitReturnStatement(returnStatement);
             final GrExpression returnValue = returnStatement.getReturnValue();

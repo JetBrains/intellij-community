@@ -25,34 +25,40 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 
 public class GroovyInfiniteRecursionInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return PROBABLE_BUGS;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Infinite recursion";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "<code>#ref</code> recurses infinitely, and can only complete by throwing an exception #loc";
 
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitMethod(@NotNull GrMethod method) {
       super.visitMethod(method);
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {

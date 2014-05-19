@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ public abstract class TableWithButtons {
   public TableWithButtons(RowEditableTableModel model) {
     myModel = model;
     myAddButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         int selectedColumn = myTable.getSelectedColumn();
         if (selectedColumn < 0) selectedColumn = 0;
@@ -43,6 +44,7 @@ public abstract class TableWithButtons {
       }
     });
     myRemoveButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         int selectedRow = myTable.getSelectedRow();
         int selectedColumn = myTable.getSelectedColumn();
@@ -58,6 +60,7 @@ public abstract class TableWithButtons {
       }
     });
     myMoveUpButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final int selectedRow = myTable.getSelectedRow();
         int selectedColumn = myTable.getSelectedColumn();
@@ -69,6 +72,7 @@ public abstract class TableWithButtons {
       }
     });
     myMoveDownButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final int selectedRow = myTable.getSelectedRow();
         int selectedColumn = myTable.getSelectedColumn();
@@ -81,13 +85,14 @@ public abstract class TableWithButtons {
     });
 
     myModel.addTableModelListener(new TableModelListener() {
+      @Override
       public void tableChanged(TableModelEvent e) {
         innerUpdate();
       }
     });
   }
 
-  private RowEditableTableModel myModel;
+  private final RowEditableTableModel myModel;
 
   private JPanel myPanel;
   private JButton myAddButton;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
 
@@ -33,8 +34,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.*;
 
 /**
  * @author peter
@@ -48,9 +47,9 @@ public class ConstructorAnnotationsProcessor extends AstTransformContributor {
     PsiModifierList modifierList = typeDefinition.getModifierList();
     if (modifierList == null) return;
 
-    final PsiAnnotation tupleConstructor = modifierList.findAnnotation(GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR);
+    final PsiAnnotation tupleConstructor = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR);
     final boolean immutable = PsiImplUtil.hasImmutableAnnotation(modifierList);
-    final boolean canonical = modifierList.findAnnotation(GROOVY_TRANSFORM_CANONICAL) != null;
+    final boolean canonical = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_CANONICAL) != null;
     if (!immutable && !canonical && tupleConstructor == null) {
       return;
     }
@@ -128,7 +127,7 @@ public class ConstructorAnnotationsProcessor extends AstTransformContributor {
                                             boolean superFields,
                                             boolean superProperties, Set<PsiClass> visited, Set<String> excludes) {
     PsiClass parent = typeDefinition.getSuperClass();
-    if (parent != null && visited.add(parent) && !GROOVY_OBJECT_SUPPORT.equals(parent.getQualifiedName())) {
+    if (parent != null && visited.add(parent) && !GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT.equals(parent.getQualifiedName())) {
       addParametersForSuper(parent, fieldsConstructor, superFields, superProperties, visited, excludes);
       addParameters(parent, fieldsConstructor, superProperties, superFields, true, excludes);
     }

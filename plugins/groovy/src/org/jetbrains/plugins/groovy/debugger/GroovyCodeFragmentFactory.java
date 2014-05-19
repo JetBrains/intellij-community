@@ -69,6 +69,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
            "}\n";
   }
 
+  @Override
   public JavaCodeFragment createCodeFragment(TextWithImports textWithImports, PsiElement context, Project project) {
     final Pair<Map<String, String>, GroovyFile> pair = externalParameters(textWithImports.getText(), context);
     GroovyFile toEval = pair.second;
@@ -76,6 +77,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
 
     List<String> names = new ArrayList<String>(parameters.keySet());
     List<String> values = ContainerUtil.map(names, new Function<String, String>() {
+      @Override
       public String fun(String name) {
         return parameters.get(name);
       }
@@ -179,6 +181,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     final Map<String, String> parameters = new THashMap<String, String>();
     final Map<GrExpression, String> replacements = new HashMap<GrExpression, String>();
     toEval.accept(new GroovyRecursiveElementVisitor() {
+      @Override
       public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
         super.visitReferenceExpression(referenceExpression);
 
@@ -249,6 +252,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
         replacements.put(expr, exprText);
       }
 
+      @Override
       public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
         super.visitCodeReferenceElement(refElement);
         if (refElement.getQualifier() == null) {
@@ -282,6 +286,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     return StringUtil.escapeStringCharacters(text);
   }
 
+  @Override
   public JavaCodeFragment createPresentationCodeFragment(TextWithImports item, PsiElement context, Project project) {
     GroovyCodeFragment result = new GroovyCodeFragment(project, item.getText());
     result.setContext(context);
@@ -303,10 +308,12 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     return false;
   }
 
+  @Override
   public boolean isContextAccepted(PsiElement context) {
     return context != null && context.getLanguage().equals(GroovyFileType.GROOVY_LANGUAGE);
   }
 
+  @Override
   public LanguageFileType getFileType() {
     return GroovyFileType.GROOVY_FILE_TYPE;
   }

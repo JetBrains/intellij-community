@@ -37,7 +37,8 @@ import java.lang.ref.SoftReference;
  * @author mike
  */
 public class PsiInvalidElementAccessException extends RuntimeException implements ExceptionWithAttachments {
-  private static final Key<Object> INVALIDATION_TRACE = Key.create("TRACK_INVALIDATION_KEY");
+  private static final Key<Object> INVALIDATION_TRACE = Key.create("INVALIDATION_TRACE");
+  private static final Key<Boolean> REPORTING_EXCEPTION = Key.create("REPORTING_EXCEPTION");
   private final SoftReference<PsiElement> myElementReference;  // to prevent leaks, since exceptions are stored in IdeaLogger
   private final Attachment[] myDiagnostic;
   private final String myMessage;
@@ -62,21 +63,34 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
       myMessage = message;
       myDiagnostic = Attachment.EMPTY_ARRAY;
     } else {
-      Object trace = findInvalidationTrace(element.getNode());
-      String reason = "Element: " + element.getClass() +
-                      " because: " + reason(element) +
-                      "\ninvalidated at: " +
-                      (!isTrackingInvalidation() ? "disabled" :
-                       trace != null ? "see attachment" :
-                       "no info");
-      myMessage = reason + (message == null ? "" : "; " + message);
-      if (trace == null) {
-        myDiagnostic = Attachment.EMPTY_ARRAY;
-      } else {
-        String diagnostic = trace instanceof Throwable ? ExceptionUtil.getThrowableText((Throwable)trace) : trace.toString();
-        myDiagnostic = new Attachment[]{new Attachment("diagnostic.txt", diagnostic)};
+      boolean recursiveInvocation = Boolean.TRUE.equals(element.getUserData(REPORTING_EXCEPTION));
+      element.putUserData(REPORTING_EXCEPTION, Boolean.TRUE);
+
+      try {
+        Object trace = recursiveInvocation ? null : findInvalidationTrace(element.getNode());
+        myMessage = getMessageWithReason(element, message, recursiveInvocation, trace);
+        if (trace == null) {
+          myDiagnostic = Attachment.EMPTY_ARRAY;
+        } else {
+          String diagnostic = trace instanceof Throwable ? ExceptionUtil.getThrowableText((Throwable)trace) : trace.toString();
+          myDiagnostic = new Attachment[]{new Attachment("diagnostic.txt", diagnostic)};
+        }
+      }
+      finally {
+        element.putUserData(REPORTING_EXCEPTION, null);
       }
     }
+  }
+
+  private static String getMessageWithReason(@NotNull PsiElement element, @Nullable String message, boolean recursiveInvocation, @Nullable Object trace) {
+    String reason = "Element: " + element.getClass();
+    if (!recursiveInvocation) {
+      String traceText = !isTrackingInvalidation() ? "disabled" :
+                         trace != null ? "see attachment" :
+                         "no info";
+      reason += " because: " + reason(element) + "\ninvalidated at: " + traceText;
+    }
+    return reason + (message == null ? "" : "; " + message);
   }
 
   @Override

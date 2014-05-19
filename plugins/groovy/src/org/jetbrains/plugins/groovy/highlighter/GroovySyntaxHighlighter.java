@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,17 +27,18 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.*;
+import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes.GROOVY_DOC_COMMENT;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * @author ilyas
  */
-public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements GroovyTokenTypes {
+public class GroovySyntaxHighlighter extends SyntaxHighlighterBase {
 
   private static final Map<IElementType, TextAttributesKey> ATTRIBUTES = new HashMap<IElementType, TextAttributesKey>();
   private static final Map<IElementType, TextAttributesKey> POWER_SAVE_MODE_ATTRIBUTES = new HashMap<IElementType, TextAttributesKey>();
@@ -80,13 +81,13 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
     mRBRACK
   );
 
-  static final TokenSet tOperators = TokenSet.orSet(BINARY_OP_SET, UNARY_OP_SET, ASSIGN_OP_SET);
+  static final TokenSet tOperators = TokenSet.orSet(TokenSets.BINARY_OP_SET, TokenSets.UNARY_OP_SET, TokenSets.ASSIGN_OP_SET);
 
   static {
     fillMap(ATTRIBUTES, tLINE_COMMENTS, DefaultHighlighter.LINE_COMMENT);
     fillMap(ATTRIBUTES, tBLOCK_COMMENTS, DefaultHighlighter.BLOCK_COMMENT);
     fillMap(ATTRIBUTES, tBAD_CHARACTERS, DefaultHighlighter.BAD_CHARACTER);
-    fillMap(ATTRIBUTES, NUMBERS, DefaultHighlighter.NUMBER);
+    fillMap(ATTRIBUTES, TokenSets.NUMBERS, DefaultHighlighter.NUMBER);
     fillMap(ATTRIBUTES, tGSTRINGS, DefaultHighlighter.GSTRING);
     fillMap(ATTRIBUTES, tSTRINGS, DefaultHighlighter.STRING);
     fillMap(ATTRIBUTES, DefaultHighlighter.STRING, mREGEX_BEGIN, mREGEX_CONTENT, mREGEX_END, mDOLLAR_SLASH_REGEX_BEGIN, mDOLLAR_SLASH_REGEX_CONTENT, mDOLLAR_SLASH_REGEX_END);
@@ -103,7 +104,7 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
     fillMap(POWER_SAVE_MODE_ATTRIBUTES, tLINE_COMMENTS, DefaultHighlighter.LINE_COMMENT);
     fillMap(POWER_SAVE_MODE_ATTRIBUTES, tBLOCK_COMMENTS, DefaultHighlighter.BLOCK_COMMENT);
     fillMap(POWER_SAVE_MODE_ATTRIBUTES, tBAD_CHARACTERS, DefaultHighlighter.BAD_CHARACTER);
-    fillMap(POWER_SAVE_MODE_ATTRIBUTES, NUMBERS, DefaultHighlighter.NUMBER);
+    fillMap(POWER_SAVE_MODE_ATTRIBUTES, TokenSets.NUMBERS, DefaultHighlighter.NUMBER);
     fillMap(POWER_SAVE_MODE_ATTRIBUTES, tGSTRINGS, DefaultHighlighter.GSTRING);
     fillMap(POWER_SAVE_MODE_ATTRIBUTES, tSTRINGS, DefaultHighlighter.STRING);
     fillMap(POWER_SAVE_MODE_ATTRIBUTES, DefaultHighlighter.STRING, mREGEX_BEGIN, mREGEX_CONTENT, mREGEX_END, mDOLLAR_SLASH_REGEX_BEGIN,
@@ -114,9 +115,10 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
     fillMap(POWER_SAVE_MODE_ATTRIBUTES, DefaultHighlighter.VALID_STRING_ESCAPE, StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN);
     fillMap(POWER_SAVE_MODE_ATTRIBUTES, DefaultHighlighter.INVALID_STRING_ESCAPE, StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN);
     fillMap(POWER_SAVE_MODE_ATTRIBUTES, DefaultHighlighter.INVALID_STRING_ESCAPE, StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN);
-    fillMap(POWER_SAVE_MODE_ATTRIBUTES, KEYWORDS, DefaultHighlighter.KEYWORD);
+    fillMap(POWER_SAVE_MODE_ATTRIBUTES, TokenSets.KEYWORDS, DefaultHighlighter.KEYWORD);
   }
 
+  @Override
   @NotNull
   public Lexer getHighlightingLexer() {
     return new GroovyHighlightingLexer();
@@ -125,17 +127,18 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
   private static class GroovyHighlightingLexer extends LayeredLexer {
     private GroovyHighlightingLexer() {
       super(new GroovyLexer());
-      registerSelfStoppingLayer(new StringLiteralLexer(StringLiteralLexer.NO_QUOTE_CHAR, GroovyTokenTypes.mSTRING_LITERAL, true, "$"),
-                                new IElementType[]{GroovyTokenTypes.mSTRING_LITERAL}, IElementType.EMPTY_ARRAY);
-      registerSelfStoppingLayer(new StringLiteralLexer(StringLiteralLexer.NO_QUOTE_CHAR, GroovyTokenTypes.mGSTRING_LITERAL, true, "$"),
-                                new IElementType[]{GroovyTokenTypes.mGSTRING_LITERAL}, IElementType.EMPTY_ARRAY);
-      registerSelfStoppingLayer(new StringLiteralLexer(StringLiteralLexer.NO_QUOTE_CHAR, GroovyTokenTypes.mGSTRING_CONTENT, true, "$"),
-                                new IElementType[]{GroovyTokenTypes.mGSTRING_CONTENT}, IElementType.EMPTY_ARRAY);
-      registerSelfStoppingLayer(new GroovySlashyStringLexer(), new IElementType[]{GroovyTokenTypes.mREGEX_CONTENT}, IElementType.EMPTY_ARRAY);
-      registerSelfStoppingLayer(new GroovyDollarSlashyStringLexer(), new IElementType[]{GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT}, IElementType.EMPTY_ARRAY);
+      registerSelfStoppingLayer(new StringLiteralLexer(StringLiteralLexer.NO_QUOTE_CHAR, mSTRING_LITERAL, true, "$"),
+                                new IElementType[]{mSTRING_LITERAL}, IElementType.EMPTY_ARRAY);
+      registerSelfStoppingLayer(new StringLiteralLexer(StringLiteralLexer.NO_QUOTE_CHAR, mGSTRING_LITERAL, true, "$"),
+                                new IElementType[]{mGSTRING_LITERAL}, IElementType.EMPTY_ARRAY);
+      registerSelfStoppingLayer(new StringLiteralLexer(StringLiteralLexer.NO_QUOTE_CHAR, mGSTRING_CONTENT, true, "$"),
+                                new IElementType[]{mGSTRING_CONTENT}, IElementType.EMPTY_ARRAY);
+      registerSelfStoppingLayer(new GroovySlashyStringLexer(), new IElementType[]{mREGEX_CONTENT}, IElementType.EMPTY_ARRAY);
+      registerSelfStoppingLayer(new GroovyDollarSlashyStringLexer(), new IElementType[]{mDOLLAR_SLASH_REGEX_CONTENT}, IElementType.EMPTY_ARRAY);
     }
   }
 
+  @Override
   @NotNull
   public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
     return pack(PowerSaveMode.isEnabled() ? POWER_SAVE_MODE_ATTRIBUTES.get(tokenType) : ATTRIBUTES.get(tokenType));

@@ -173,7 +173,7 @@ public class XDebuggerTestUtil {
 
   public static XTestValueNode computePresentation(XValue value, long timeout) throws InterruptedException {
     XTestValueNode node = new XTestValueNode();
-    if (value instanceof com.intellij.xdebugger.frame.XNamedValue) {
+    if (value instanceof XNamedValue) {
       node.myName = ((XNamedValue)value).getName();
     }
     value.computePresentation(node, XValuePlace.TREE);

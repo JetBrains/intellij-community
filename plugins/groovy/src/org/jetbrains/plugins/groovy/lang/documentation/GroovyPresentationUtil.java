@@ -64,6 +64,7 @@ public class GroovyPresentationUtil {
       builder.append(parameter.getName());
       final Set<String> structural = Collections.synchronizedSet(new LinkedHashSet<String>());
       ReferencesSearch.search(parameter, parameter.getUseScope()).forEach(new Processor<PsiReference>() {
+        @Override
         public boolean process(PsiReference ref) {
           PsiElement parent = ref.getElement().getParent();
           if (parent instanceof GrReferenceExpression) {

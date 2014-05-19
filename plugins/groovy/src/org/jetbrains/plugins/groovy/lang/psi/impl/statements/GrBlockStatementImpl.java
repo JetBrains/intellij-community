@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ public class GrBlockStatementImpl extends GroovyPsiElementImpl implements GrBloc
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitBlockStatement(this);
   }
@@ -39,6 +40,7 @@ public class GrBlockStatementImpl extends GroovyPsiElementImpl implements GrBloc
     return "Block statement";
   }
 
+  @Override
   @NotNull
   public GrOpenBlock getBlock() {
     return findNotNullChildByClass(GrOpenBlock.class);

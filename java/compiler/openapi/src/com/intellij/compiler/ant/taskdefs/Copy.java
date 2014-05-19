@@ -17,7 +17,7 @@
 package com.intellij.compiler.ant.taskdefs;
 
 import com.intellij.compiler.ant.Tag;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -27,10 +27,10 @@ import org.jetbrains.annotations.NonNls;
 public class Copy extends Tag {
   public Copy(@NonNls String toDir) {
     //noinspection HardCodedStringLiteral
-    super("copy", new Pair[] {Pair.create("todir", toDir)});
+    super("copy", Couple.newOne("todir", toDir));
   }
   public Copy(@NonNls String file, @NonNls String toFile) {
     //noinspection HardCodedStringLiteral
-    super("copy", new Pair[] {Pair.create("file", file), Pair.create("tofile", toFile)});
+    super("copy", Couple.newOne("file", file), Couple.newOne("tofile", toFile));
   }
 }

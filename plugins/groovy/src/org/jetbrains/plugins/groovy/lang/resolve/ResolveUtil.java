@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -28,6 +27,7 @@ import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -68,17 +68,11 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrScriptField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
-import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
+import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil.isCall;
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getContextClass;
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getSmartReturnType;
 
 /**
  * @author ven
@@ -128,7 +122,7 @@ public class ResolveUtil {
       return doTreeWalkUp(place, originalPlace, processor, nonCodeProcessor, state);
     }
     catch (StackOverflowError e) {
-      LogMessageEx.error(LOG, "StackOverflow", e, place.getContainingFile().getText());
+      LOG.error("StackOverflow", e, place.getContainingFile().getText());
       throw e;
     }
   }
@@ -663,7 +657,7 @@ public class ResolveUtil {
   }
 
   public static boolean isKeyOfMap(GrReferenceExpression ref) {
-    if (!(ref.getParent() instanceof GrIndexProperty) && isCall(ref)) return false;
+    if (!(ref.getParent() instanceof GrIndexProperty) && org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isCall(ref)) return false;
     if (ref.multiResolve(false).length > 0) return false;
     return mayBeKeyOfMap(ref);
   }
@@ -777,7 +771,7 @@ public class ResolveUtil {
       for (GroovyResolveResult candidate : candidates) {
         PsiMethod method = (PsiMethod)candidate.getElement();
         assert method != null;
-        final PsiType type = getSmartReturnType(method);
+        final PsiType type = org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getSmartReturnType(method);
         if (isApplicableClosureType(type, argumentTypes, place)) {
           applicable.add(candidate);
         }
@@ -809,7 +803,7 @@ public class ResolveUtil {
   public static PsiType extractReturnTypeFromCandidate(GroovyResolveResult candidate, GrExpression expression, @Nullable PsiType[] args) {
     final PsiElement element = candidate.getElement();
     if (element instanceof PsiMethod && !candidate.isInvokedOnProperty()) {
-      return TypesUtil.substituteBoxAndNormalizeType(getSmartReturnType((PsiMethod)element), candidate.getSubstitutor(), candidate.getSpreadState(), expression);
+      return TypesUtil.substituteBoxAndNormalizeType(org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getSmartReturnType((PsiMethod)element), candidate.getSubstitutor(), candidate.getSpreadState(), expression);
     }
 
     final PsiType type;
@@ -817,7 +811,7 @@ public class ResolveUtil {
       type = ((GrField)element).getTypeGroovy();
     }
     else if (element instanceof PsiMethod) {
-      type = getSmartReturnType((PsiMethod)element);
+      type = org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getSmartReturnType((PsiMethod)element);
     }
     else {
       return null;
@@ -841,7 +835,7 @@ public class ResolveUtil {
   }
 
   public static boolean isScriptField(GrVariable var) {
-    PsiClass context = getContextClass(var.getParent());
+    PsiClass context = org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getContextClass(var.getParent());
     final GrModifierList modifierList = var.getModifierList();
     return context instanceof GroovyScriptClass &&
            modifierList != null &&

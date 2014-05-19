@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,11 +37,13 @@ public class GrFullClassNameIndex extends IntStubIndexExtension<PsiClass> {
     return ourInstance;
   }
 
+  @Override
   @NotNull
   public StubIndexKey<Integer, PsiClass> getKey() {
     return KEY;
   }
 
+  @Override
   public Collection<PsiClass> get(final Integer integer, final Project project, final GlobalSearchScope scope) {
     return StubIndex.getElements(getKey(), integer, project, new GrSourceFilterScope(scope), PsiClass.class);
   }

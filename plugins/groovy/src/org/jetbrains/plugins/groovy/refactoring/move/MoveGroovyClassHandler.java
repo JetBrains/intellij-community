@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,7 @@ import java.util.Iterator;
 public class MoveGroovyClassHandler implements MoveClassHandler {
   Logger LOG = Logger.getInstance(MoveGroovyClassHandler.class);
 
+  @Override
   public PsiClass doMoveClass(@NotNull PsiClass aClass, @NotNull PsiDirectory moveDestination) throws IncorrectOperationException {
     if (!aClass.getLanguage().equals(GroovyFileType.GROOVY_LANGUAGE)) return null;
     PsiFile file = aClass.getContainingFile();
@@ -156,7 +157,7 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
       }
     }
 
-    if (modifiersText != null && modifiersText.length() > 0) {
+    if (modifiersText != null && !modifiersText.isEmpty()) {
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(file.getProject());
       final GrPackageDefinition newPackageDefinition = (GrPackageDefinition)factory.createTopElementFromText(modifiersText + " package " + newPackageName);
       newFile.setPackage(newPackageDefinition);
@@ -210,6 +211,7 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
     return newFile;
   }
 
+  @Override
   @Nullable
   public String getName(PsiClass clazz) {
     final PsiFile file = clazz.getContainingFile();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.ArrayList;
 
@@ -230,7 +229,7 @@ public class RemoveUnnecessarySemicolonsIntention implements IntentionAction {
       return after instanceof GrMethodCall && before.getText().equals(after.getText());
     }
     else {
-      return GroovyRefactoringUtil.checkPsiElementsAreEqual(before, after);
+      return PsiUtil.checkPsiElementsAreEqual(before, after);
     }
   }
 

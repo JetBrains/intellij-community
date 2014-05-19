@@ -27,7 +27,6 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLoopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -35,32 +34,38 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueSta
 
 public class GroovyUnnecessaryContinueInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return CONTROL_FLOW;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Unnecessary 'continue' statement";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "#ref is unnecessary as the last statement in a loop #loc";
 
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
+  @Override
   @Nullable
   protected GroovyFix buildFix(PsiElement location) {
     return new UnnecessaryContinueFix();
@@ -68,11 +73,13 @@ public class GroovyUnnecessaryContinueInspection extends BaseInspection {
 
   private static class UnnecessaryContinueFix extends GroovyFix {
 
+    @Override
     @NotNull
     public String getName() {
       return "Remove unnecessary continue";
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
         throws IncorrectOperationException {
       final PsiElement continueKeywordElement = descriptor.getPsiElement();
@@ -84,6 +91,7 @@ public class GroovyUnnecessaryContinueInspection extends BaseInspection {
 
   private static class Visitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitContinueStatement(GrContinueStatement continueStatement) {
       super.visitContinueStatement(continueStatement);
       if (continueStatement.getContainingFile().getViewProvider() instanceof TemplateLanguageFileViewProvider) {

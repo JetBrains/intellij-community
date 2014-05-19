@@ -312,7 +312,7 @@ public class GitLogUI implements Disposable {
       }
 
       @Override
-      public void reportStash(VirtualFile root, @Nullable Pair<AbstractHash, AbstractHash> hash) {
+      public void reportStash(VirtualFile root, @Nullable Couple<AbstractHash> hash) {
         myTableModel.stashFor(root, hash);
       }
 

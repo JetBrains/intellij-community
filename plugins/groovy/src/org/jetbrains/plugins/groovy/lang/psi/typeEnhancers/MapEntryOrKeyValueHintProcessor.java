@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -100,7 +100,7 @@ public class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
   }
 
   private static Boolean parseIndex(String value) {
-    Pair<String, String> pair = parseValue(value);
+    Couple<String> pair = parseValue(value);
     if (pair == null) return null;
 
     Boolean parsedValue = StringUtilRt.parseBoolean(pair.getSecond(), false);
@@ -112,7 +112,7 @@ public class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
   }
 
   private static Integer parseArgNum(String value) {
-    Pair<String, String> pair = parseValue(value);
+    Couple<String> pair = parseValue(value);
     if (pair == null) return null;
 
     Integer parsedValue = StringUtilRt.parseInt(pair.getSecond(), 0);
@@ -124,11 +124,11 @@ public class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
   }
 
   @Nullable
-  private static Pair<String, String> parseValue(String value) {
+  private static Couple<String> parseValue(String value) {
     String[] splitted = value.split("=");
 
     if (splitted.length == 2) {
-      return Pair.create(splitted[0].trim(), splitted[1].trim());
+      return Couple.newOne(splitted[0].trim(), splitted[1].trim());
     }
 
     return null;

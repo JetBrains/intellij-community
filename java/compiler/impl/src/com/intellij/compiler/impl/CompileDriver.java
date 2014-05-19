@@ -126,7 +126,7 @@ public class CompileDriver {
   public static volatile boolean ourDebugMode = false;
 
   private final Project myProject;
-  private final Map<Pair<IntermediateOutputCompiler, Module>, Pair<VirtualFile, VirtualFile>> myGenerationCompilerModuleToOutputDirMap; // [IntermediateOutputCompiler, Module] -> [ProductionSources, TestSources]
+  private final Map<Pair<IntermediateOutputCompiler, Module>, Couple<VirtualFile>> myGenerationCompilerModuleToOutputDirMap; // [IntermediateOutputCompiler, Module] -> [ProductionSources, TestSources]
   private final String myCachesDirectoryPath;
   private boolean myShouldClearOutputDirectory;
 
@@ -171,7 +171,7 @@ public class CompileDriver {
     myCachesDirectoryPath = CompilerPaths.getCacheStoreDirectory(myProject).getPath().replace('/', File.separatorChar);
     myShouldClearOutputDirectory = CompilerWorkspaceConfiguration.getInstance(myProject).CLEAR_OUTPUT_DIRECTORY;
 
-    myGenerationCompilerModuleToOutputDirMap = new HashMap<Pair<IntermediateOutputCompiler, Module>, Pair<VirtualFile, VirtualFile>>();
+    myGenerationCompilerModuleToOutputDirMap = new HashMap<Pair<IntermediateOutputCompiler, Module>, Couple<VirtualFile>>();
 
     if (!useOutOfProcessBuild()) {
       final LocalFileSystem lfs = LocalFileSystem.getInstance();
@@ -183,7 +183,7 @@ public class CompileDriver {
           final VirtualFile productionOutput = lookupVFile(lfs, CompilerPaths.getGenerationOutputPath(compiler, module, false));
           final VirtualFile testOutput = lookupVFile(lfs, CompilerPaths.getGenerationOutputPath(compiler, module, true));
           final Pair<IntermediateOutputCompiler, Module> pair = Pair.create(compiler, module);
-          final Pair<VirtualFile, VirtualFile> outputs = Pair.create(productionOutput, testOutput);
+          final Couple<VirtualFile> outputs = Couple.newOne(productionOutput, testOutput);
           myGenerationCompilerModuleToOutputDirMap.put(pair, outputs);
         }
         if (config.getAnnotationProcessingConfiguration(module).isEnabled()) {
@@ -246,8 +246,8 @@ public class CompileDriver {
         return false;
       }
 
-      for (Map.Entry<Pair<IntermediateOutputCompiler, Module>, Pair<VirtualFile, VirtualFile>> entry : myGenerationCompilerModuleToOutputDirMap.entrySet()) {
-        final Pair<VirtualFile, VirtualFile> outputs = entry.getValue();
+      for (Map.Entry<Pair<IntermediateOutputCompiler, Module>, Couple<VirtualFile>> entry : myGenerationCompilerModuleToOutputDirMap.entrySet()) {
+        final Couple<VirtualFile> outputs = entry.getValue();
         final Pair<IntermediateOutputCompiler, Module> key = entry.getKey();
         final Module module = key.getSecond();
         compileContext.assignModule(outputs.getFirst(), module, false, key.getFirst());
@@ -439,10 +439,10 @@ public class CompileDriver {
   private CompileScope attachIntermediateOutputDirectories(CompileScope originalScope, CompilerFilter filter) {
     CompileScope scope = originalScope;
     final Set<Module> affected = new HashSet<Module>(Arrays.asList(originalScope.getAffectedModules()));
-    for (Map.Entry<Pair<IntermediateOutputCompiler, Module>, Pair<VirtualFile, VirtualFile>> entry : myGenerationCompilerModuleToOutputDirMap.entrySet()) {
+    for (Map.Entry<Pair<IntermediateOutputCompiler, Module>, Couple<VirtualFile>> entry : myGenerationCompilerModuleToOutputDirMap.entrySet()) {
       final Module module = entry.getKey().getSecond();
       if (affected.contains(module) && filter.acceptCompiler(entry.getKey().getFirst())) {
-        final Pair<VirtualFile, VirtualFile> outputs = entry.getValue();
+        final Couple<VirtualFile> outputs = entry.getValue();
         scope = new CompositeScope(scope, new FileSetCompileScope(Arrays.asList(outputs.getFirst(), outputs.getSecond()), new Module[]{module}));
       }
     }
@@ -675,8 +675,8 @@ public class CompileDriver {
       new CompileContextImpl(myProject, compileTask, scope, dependencyCache, !isRebuild && !forceCompile, isRebuild);
 
     if (!useExtProcessBuild) {
-      for (Map.Entry<Pair<IntermediateOutputCompiler, Module>, Pair<VirtualFile, VirtualFile>> entry : myGenerationCompilerModuleToOutputDirMap.entrySet()) {
-        final Pair<VirtualFile, VirtualFile> outputs = entry.getValue();
+      for (Map.Entry<Pair<IntermediateOutputCompiler, Module>, Couple<VirtualFile>> entry : myGenerationCompilerModuleToOutputDirMap.entrySet()) {
+        final Couple<VirtualFile> outputs = entry.getValue();
         final Pair<IntermediateOutputCompiler, Module> key = entry.getKey();
         final Module module = key.getSecond();
         compileContext.assignModule(outputs.getFirst(), module, false, key.getFirst());
@@ -1082,7 +1082,7 @@ public class CompileDriver {
             outputsToRefresh.add(output);
           }
           for (Pair<IntermediateOutputCompiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
-            final Pair<VirtualFile, VirtualFile> generated = myGenerationCompilerModuleToOutputDirMap.get(pair);
+            final Couple<VirtualFile> generated = myGenerationCompilerModuleToOutputDirMap.get(pair);
             walkChildren(generated.getFirst(), context);
             outputsToRefresh.add(generated.getFirst());
             walkChildren(generated.getSecond(), context);
@@ -1881,7 +1881,7 @@ public class CompileDriver {
   }
 
   private VirtualFile getGenerationOutputDir(final IntermediateOutputCompiler compiler, final Module module, final boolean forTestSources) {
-    final Pair<VirtualFile, VirtualFile> outputs =
+    final Couple<VirtualFile> outputs =
       myGenerationCompilerModuleToOutputDirMap.get(Pair.create(compiler, module));
     return forTestSources? outputs.getSecond() : outputs.getFirst();
   }

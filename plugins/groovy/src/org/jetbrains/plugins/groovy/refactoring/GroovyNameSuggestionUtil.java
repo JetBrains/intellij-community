@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
@@ -60,7 +61,7 @@ public class GroovyNameSuggestionUtil {
     }
 
     possibleNames.remove("");
-    if (possibleNames.size() == 0) {
+    if (possibleNames.isEmpty()) {
       possibleNames.add(validator.validateName("var", true));
     }
     return ArrayUtil.toStringArray(possibleNames);
@@ -243,7 +244,7 @@ public class GroovyNameSuggestionUtil {
   private static void generateCamelNames(Set<String> possibleNames, NameValidator validator, String typeName) {
     ArrayList<String> camelTokens = GroovyNamesUtil.camelizeString(typeName);
     Collections.reverse(camelTokens);
-    if (camelTokens.size() > 0) {
+    if (!camelTokens.isEmpty()) {
       String possibleName = "";
       for (String camelToken : camelTokens) {
         possibleName = camelToken + fromUpperLetter(possibleName);
@@ -264,7 +265,7 @@ public class GroovyNameSuggestionUtil {
   }
 
   private static String fromUpperLetter(String str) {
-    if (str.length() == 0) return "";
+    if (str.isEmpty()) return "";
     if (str.length() == 1) return str.toUpperCase();
     return str.substring(0, 1).toUpperCase() + str.substring(1);
   }

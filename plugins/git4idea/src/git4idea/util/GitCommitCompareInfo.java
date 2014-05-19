@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package git4idea.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.changes.Change;
 import git4idea.GitCommit;
 import git4idea.repo.GitRepository;
@@ -31,7 +31,7 @@ public class GitCommitCompareInfo {
   
   private static final Logger LOG = Logger.getInstance(GitCommitCompareInfo.class);
   
-  private final Map<GitRepository, Pair<List<GitCommit>, List<GitCommit>>> myInfo = new HashMap<GitRepository, Pair<List<GitCommit>, List<GitCommit>>>();
+  private final Map<GitRepository, Couple<List<GitCommit>>> myInfo = new HashMap<GitRepository, Couple<List<GitCommit>>>();
   private final Map<GitRepository, Collection<Change>> myTotalDiff = new HashMap<GitRepository, Collection<Change>>();
   private final InfoType myInfoType;
 
@@ -43,7 +43,7 @@ public class GitCommitCompareInfo {
     myInfoType = infoType;
   }
 
-  public void put(@NotNull GitRepository repository, @NotNull Pair<List<GitCommit>, List<GitCommit>> commits) {
+  public void put(@NotNull GitRepository repository, @NotNull Couple<List<GitCommit>> commits) {
     myInfo.put(repository, commits);
   }
 
@@ -62,11 +62,11 @@ public class GitCommitCompareInfo {
   }
 
   @NotNull
-  private Pair<List<GitCommit>, List<GitCommit>> getCompareInfo(@NotNull GitRepository repo) {
-    Pair<List<GitCommit>, List<GitCommit>> pair = myInfo.get(repo);
+  private Couple<List<GitCommit>> getCompareInfo(@NotNull GitRepository repo) {
+    Couple<List<GitCommit>> pair = myInfo.get(repo);
     if (pair == null) {
       LOG.error("Compare info not found for repository " + repo);
-      return Pair.create(Collections.<GitCommit>emptyList(), Collections.<GitCommit>emptyList());
+      return Couple.newOne(Collections.<GitCommit>emptyList(), Collections.<GitCommit>emptyList());
     }
     return pair;
   }

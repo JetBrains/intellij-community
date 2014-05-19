@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinary
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 public class FlipConjunctionIntention extends MutablyNamedIntention {
+  @Override
   protected String getTextForElement(PsiElement element) {
     final GrBinaryExpression binaryExpression = (GrBinaryExpression)element;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
@@ -37,11 +38,13 @@ public class FlipConjunctionIntention extends MutablyNamedIntention {
     return GroovyIntentionsBundle.message("flip.smth.intention.name", conjunction);
   }
 
+  @Override
   @NotNull
   public PsiElementPredicate getElementPredicate() {
     return new ConjunctionPredicate();
   }
 
+  @Override
   public void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
     final GrBinaryExpression exp = (GrBinaryExpression)element;
     final IElementType tokenType = exp.getOperationTokenType();

@@ -27,29 +27,34 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
 public class GroovySystemRunFinalizersOnExitInspection extends BaseInspection {
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return THREADING_ISSUES;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Call to System.runFinalizersOnExit()";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Call to System.'#ref' #loc";
 
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
+    @Override
     public void visitMethodCallExpression(GrMethodCallExpression grMethodCallExpression) {
       super.visitMethodCallExpression(grMethodCallExpression);
       final GrExpression methodExpression = grMethodCallExpression.getInvokedExpression();

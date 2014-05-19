@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -37,6 +38,8 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kFALSE;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kTRUE;
 
 /**
  * @author ilyas
@@ -52,15 +55,18 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
     return "Literal";
   }
 
+  @Override
   public PsiType getType() {
     IElementType elemType = getLiteralType(this);
     return TypesUtil.getPsiType(this, elemType);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitLiteralExpression(this);
   }
 
+  @Override
   public Object getValue() {
     return getLiteralValue(getFirstChild());
   }
@@ -71,10 +77,10 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
     if (TokenSets.NUMBERS.contains(elemType)) {
       text = text.replaceAll("_", "");
       try {
-        if (elemType == mNUM_INT) {
+        if (elemType == GroovyTokenTypes.mNUM_INT) {
           return Integer.parseInt(text);
         }
-        else if (elemType == mNUM_LONG) {
+        else if (elemType == GroovyTokenTypes.mNUM_LONG) {
           return Long.parseLong(text);
         }
         else if (elemType == mNUM_FLOAT) {
@@ -83,10 +89,10 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
         else if (elemType == mNUM_DOUBLE) {
           return Double.parseDouble(text);
         }
-        else if (elemType == mNUM_BIG_INT) {
+        else if (elemType == GroovyTokenTypes.mNUM_BIG_INT) {
           return new BigInteger(text);
         }
-        else if (elemType == mNUM_BIG_DECIMAL) {
+        else if (elemType == GroovyTokenTypes.mNUM_BIG_DECIMAL) {
 
           return new BigDecimal(text);
         }
@@ -153,6 +159,7 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
     return TokenSets.STRING_LITERAL_SET.contains(elementType);
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiReferenceService.Hints.NO_HINTS);
@@ -176,6 +183,7 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
     return getValue() instanceof String;
   }
 
+  @Override
   public GrLiteralImpl updateText(@NotNull final String text) {
     final GrExpression newExpr = GroovyPsiElementFactory.getInstance(getProject()).createExpressionFromText(text);
     LOG.assertTrue(newExpr instanceof GrLiteral, text);
@@ -185,6 +193,7 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
     return this;
   }
 
+  @Override
   @NotNull
   public LiteralTextEscaper<GrLiteralContainer> createLiteralTextEscaper() {
     return new GrLiteralEscaper(this);

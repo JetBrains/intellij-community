@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
@@ -32,7 +34,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLPAREN;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mRPAREN;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -46,6 +49,7 @@ public class GrAnnotationArgumentListImpl extends GroovyPsiElementImpl implement
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitAnnotationArgumentList(this);
   }
@@ -54,6 +58,7 @@ public class GrAnnotationArgumentListImpl extends GroovyPsiElementImpl implement
     return "Annotation arguments";
   }
 
+  @Override
   @NotNull
   public GrAnnotationNameValuePair[] getAttributes() {
     List<GrAnnotationNameValuePair> result = new ArrayList<GrAnnotationNameValuePair>();
@@ -65,14 +70,15 @@ public class GrAnnotationArgumentListImpl extends GroovyPsiElementImpl implement
 
   @Override
   public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
-    if (first.getElementType() == ANNOTATION_MEMBER_VALUE_PAIR && last.getElementType() == ANNOTATION_MEMBER_VALUE_PAIR) {
+    if (first.getElementType() == GroovyElementTypes.ANNOTATION_MEMBER_VALUE_PAIR && last.getElementType() ==
+                                                                                     GroovyElementTypes.ANNOTATION_MEMBER_VALUE_PAIR) {
       ASTNode lparenth = getNode().getFirstChildNode();
       ASTNode rparenth = getNode().getLastChildNode();
       if (lparenth == null) {
-        getNode().addLeaf(mLPAREN, "(", null);
+        getNode().addLeaf(GroovyTokenTypes.mLPAREN, "(", null);
       }
       if (rparenth == null) {
-        getNode().addLeaf(mRPAREN, ")", null);
+        getNode().addLeaf(GroovyTokenTypes.mRPAREN, ")", null);
       }
 
       final PsiNameValuePair[] nodes = getAttributes();

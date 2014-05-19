@@ -26,19 +26,23 @@ public class GroovyClassNamingConventionInspection extends ConventionInspection 
   private static final int DEFAULT_MIN_LENGTH = 8;
   private static final int DEFAULT_MAX_LENGTH = 64;
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Class naming convention";
   }
 
+  @Override
   protected GroovyFix buildFix(@NotNull PsiElement location) {
     return new RenameFix();
   }
 
+  @Override
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
     return true;
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... args) {
     final String className = (String) args[0];
@@ -50,18 +54,22 @@ public class GroovyClassNamingConventionInspection extends ConventionInspection 
     return "Class name '#ref' doesn't match regex '" + getRegex() + "' #loc";
   }
 
+  @Override
   protected String getDefaultRegex() {
     return "[A-Z][A-Za-z\\d]*";
   }
 
+  @Override
   protected int getDefaultMinLength() {
     return DEFAULT_MIN_LENGTH;
   }
 
+  @Override
   protected int getDefaultMaxLength() {
     return DEFAULT_MAX_LENGTH;
   }
 
+  @Override
   @NotNull
   public BaseInspectionVisitor buildVisitor() {
     return new NamingConventionsVisitor();
