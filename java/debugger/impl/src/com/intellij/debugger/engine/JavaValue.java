@@ -22,6 +22,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
+import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -97,30 +98,36 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
 
   @Override
   public void computePresentation(@NotNull final XValueNode node, @NotNull XValuePlace place) {
-    Icon nodeIcon;
-    if (myValueDescriptor instanceof FieldDescriptorImpl && ((FieldDescriptorImpl)myValueDescriptor).isStatic()) {
-      nodeIcon = PlatformIcons.FIELD_ICON;
-    }
-    else if (myValueDescriptor.isArray()) {
-      nodeIcon = AllIcons.Debugger.Db_array;
-    }
-    else if (myValueDescriptor.isPrimitive()) {
-      nodeIcon = AllIcons.Debugger.Db_primitive;
-    }
-    else {
-      if (myValueDescriptor instanceof WatchItemDescriptor) {
-        nodeIcon = AllIcons.Debugger.Watch;
+    if (myEvaluationContext.getSuspendContext().isResumed()) return;
+    myEvaluationContext.getDebugProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(getDebuggerContext()) {
+      @Override
+      public void threadAction() {
+        Icon nodeIcon;
+        if (myValueDescriptor instanceof FieldDescriptorImpl && ((FieldDescriptorImpl)myValueDescriptor).isStatic()) {
+          nodeIcon = PlatformIcons.FIELD_ICON;
+        }
+        else if (myValueDescriptor.isArray()) {
+          nodeIcon = AllIcons.Debugger.Db_array;
+        }
+        else if (myValueDescriptor.isPrimitive()) {
+          nodeIcon = AllIcons.Debugger.Db_primitive;
+        }
+        else {
+          if (myValueDescriptor instanceof WatchItemDescriptor) {
+            nodeIcon = AllIcons.Debugger.Watch;
+          }
+          else {
+            nodeIcon = AllIcons.Debugger.Value;
+          }
+        }
+        final String[] strings = splitValue(myValueDescriptor.getValueLabel());
+        XValuePresentation presentation = new XRegularValuePresentation(strings[1], strings[0]);
+        if (myValueDescriptor.isString()) {
+          presentation = new TypedStringValuePresentation(StringUtil.unquoteString(strings[1]), strings[0]);
+        }
+        node.setPresentation(nodeIcon, presentation, myValueDescriptor.isExpandable());
       }
-      else {
-        nodeIcon = AllIcons.Debugger.Value;
-      }
-    }
-    final String[] strings = splitValue(myValueDescriptor.getValueLabel());
-    XValuePresentation presentation = new XRegularValuePresentation(strings[1], strings[0]);
-    if (myValueDescriptor.isString()) {
-      presentation = new TypedStringValuePresentation(StringUtil.unquoteString(strings[1]), strings[0]);
-    }
-    node.setPresentation(nodeIcon, presentation, myValueDescriptor.isExpandable());
+    });
   }
 
   private static class TypedStringValuePresentation extends XStringValuePresentation {
