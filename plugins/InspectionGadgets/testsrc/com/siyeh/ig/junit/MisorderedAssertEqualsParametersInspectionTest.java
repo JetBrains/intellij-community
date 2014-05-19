@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ public class MisorderedAssertEqualsParametersInspectionTest extends LightInspect
       "package org.junit;" +
       "public class Assert {" +
       "  static public void assertEquals(long expected, long actual) {}" +
+      "  static public void assertEquals(Object expected, Object actual){}" +
       "  static public void assertSame(Object expected, Object actual) {}" +
       "}",
       "package junit.framework;" +
