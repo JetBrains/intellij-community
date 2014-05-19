@@ -2137,5 +2137,36 @@ class Fo {
     assertEquals('C', clazz.qualifiedName)
   }
 
+  void testSuperReferenceWithTraitQualifier() {
+    def method = resolveByText('''
+trait A {
+    String exec() { 'A' }
+}
+trait B {
+    String exec() { 'B' }
+}
+
+class C implements A,B {
+    String exec() {A.super.exe<caret>c() }
+}
+''', PsiMethod)
+    assertTrue(method.containingClass.name == 'A')
+  }
+
+  void testSuperReferenceWithTraitQualifier2() {
+    def method = resolveByText('''
+trait A {
+    String exec() { 'A' }
+}
+trait B {
+    String exec() { 'B' }
+}
+
+class C implements A,B {
+    String exec() {B.super.exe<caret>c() }
+}
+''', PsiMethod)
+    assertTrue(method.containingClass.name == 'B')
+  }
 
 }

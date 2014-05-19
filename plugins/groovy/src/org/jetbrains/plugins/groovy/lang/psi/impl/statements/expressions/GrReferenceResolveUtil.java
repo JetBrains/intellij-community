@@ -43,13 +43,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.List;
-
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSPREAD_DOT;
 
 /**
  * @author Medvedev Max
@@ -305,9 +304,17 @@ public class GrReferenceResolveUtil {
       GroovyResolveResult result = ((GrReferenceExpression)qualifier).advancedResolve();
       PsiElement resolved = result.getElement();
       if (!(resolved instanceof PsiClass)) return false;
+      aClass = (PsiClass)resolved;
+
+      GrTypeDefinition scopeClass = PsiTreeUtil.getParentOfType(ref, GrTypeDefinition.class, true);
+      if (GrTraitUtil.isTrait(aClass) && scopeClass != null && PsiUtil.scopeClassImplementsTrait(aClass, ref)) {
+        PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(aClass, scopeClass, PsiSubstitutor.EMPTY);
+        results.add(new GroovyResolveResultImpl(aClass, null, null, superClassSubstitutor, true, true));
+        return true;
+      }
+
       if (!PsiUtil.hasEnclosingInstanceInScope((PsiClass)resolved, ref, false)) return false;
 
-      aClass = (PsiClass)resolved;
     }
     PsiClass superClass = aClass.getSuperClass();
     if (superClass == null) return true; //no super class, but the reference is definitely super-reference
