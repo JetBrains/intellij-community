@@ -28,7 +28,7 @@ import com.intellij.psi.impl.source.codeStyle.PostFormatProcessorHelper;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -46,7 +46,7 @@ public class GroovyBraceEnforcer extends GroovyRecursiveElementVisitor {
   private final PostFormatProcessorHelper myPostProcessor;
 
   public GroovyBraceEnforcer(CodeStyleSettings settings) {
-    myPostProcessor = new PostFormatProcessorHelper(settings.getCommonSettings(GroovyLanguage.INSTANCE));
+    myPostProcessor = new PostFormatProcessorHelper(settings.getCommonSettings(GroovyFileType.GROOVY_LANGUAGE));
   }
 
   public TextRange processText(final GroovyFile source, final TextRange rangeToReformat) {

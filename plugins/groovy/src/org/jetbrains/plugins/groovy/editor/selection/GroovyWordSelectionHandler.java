@@ -22,7 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
@@ -47,7 +47,7 @@ public class GroovyWordSelectionHandler extends ExtendWordSelectionHandlerBase {
 
   @Override
   public boolean canSelect(PsiElement e) {
-    return (e instanceof GroovyPsiElement || e.getLanguage() == GroovyLanguage.INSTANCE) &&
+    return (e instanceof GroovyPsiElement || e.getLanguage() == GroovyFileType.GROOVY_LANGUAGE) &&
            !(e.getNode().getElementType() == GroovyTokenTypes.mDOLLAR);
   }
 

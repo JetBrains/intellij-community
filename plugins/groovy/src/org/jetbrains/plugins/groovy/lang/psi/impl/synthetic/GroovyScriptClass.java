@@ -34,7 +34,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -66,7 +66,7 @@ public class GroovyScriptClass extends LightElement implements PsiClass, Synthet
     super(file.getManager(), file.getLanguage());
     myFile = file;
 
-    myModifierList = new LightModifierList(myManager, GroovyLanguage.INSTANCE, PsiModifier.PUBLIC);
+    myModifierList = new LightModifierList(myManager, GroovyFileType.GROOVY_LANGUAGE, PsiModifier.PUBLIC);
   }
 
 
@@ -343,12 +343,12 @@ public class GroovyScriptClass extends LightElement implements PsiClass, Synthet
 
   private synchronized void initMethods() {
     if (myInitialized) return;
-    myMainMethod = new LightMethodBuilder(getManager(), GroovyLanguage.INSTANCE, "main").
+    myMainMethod = new LightMethodBuilder(getManager(), GroovyFileType.GROOVY_LANGUAGE, "main").
       setContainingClass(this).
       setMethodReturnType(PsiType.VOID).
       addParameter("args", new PsiArrayType(PsiType.getJavaLangString(getManager(), getResolveScope()))).
       addModifiers(PsiModifier.PUBLIC, PsiModifier.STATIC);
-    myRunMethod = new LightMethodBuilder(getManager(), GroovyLanguage.INSTANCE, "run").
+    myRunMethod = new LightMethodBuilder(getManager(), GroovyFileType.GROOVY_LANGUAGE, "run").
       setContainingClass(this).
       setMethodReturnType(TypesUtil.getJavaLangObject(this)).
       addModifier(PsiModifier.PUBLIC);

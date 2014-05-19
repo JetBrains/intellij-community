@@ -23,7 +23,7 @@ import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 /**
@@ -33,7 +33,7 @@ public class GroovyScriptClassSearcher implements ClassSearcher {
   @Nullable
   @Override
   public PsiClass findClass(@NotNull PsiElement place) {
-    if (place.getLanguage() == GroovyLanguage.INSTANCE) {
+    if (place.getLanguage() == GroovyFileType.GROOVY_LANGUAGE) {
       PsiClass containingClass = PsiTreeUtil.getParentOfType(place, PsiClass.class, false);
       while (containingClass instanceof PsiTypeParameter) {
         containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class);

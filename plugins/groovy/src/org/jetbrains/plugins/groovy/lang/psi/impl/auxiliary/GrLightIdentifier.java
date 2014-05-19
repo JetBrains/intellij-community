@@ -20,7 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
@@ -31,7 +31,7 @@ public class GrLightIdentifier extends LightElement {
   private final String myText;
 
   public GrLightIdentifier(PsiManager manager, String text) {
-    super(manager, GroovyLanguage.INSTANCE);
+    super(manager, GroovyFileType.GROOVY_LANGUAGE);
     myText = text;
   }
 

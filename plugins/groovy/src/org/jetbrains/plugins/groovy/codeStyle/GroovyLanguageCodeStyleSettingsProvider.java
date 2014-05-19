@@ -25,7 +25,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import javax.swing.*;
 
@@ -41,7 +41,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
   @NotNull
   @Override
   public Language getLanguage() {
-    return GroovyLanguage.INSTANCE;
+    return GroovyFileType.GROOVY_LANGUAGE;
   }
 
   @Override
@@ -261,7 +261,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
 
   @Override
   public CommonCodeStyleSettings getDefaultCommonSettings() {
-    CommonCodeStyleSettings defaultSettings = new CommonCodeStyleSettings(GroovyLanguage.INSTANCE);
+    CommonCodeStyleSettings defaultSettings = new CommonCodeStyleSettings(GroovyFileType.GROOVY_LANGUAGE);
     defaultSettings.initIndentOptions();
     defaultSettings.SPACE_WITHIN_BRACES = true;
     defaultSettings.KEEP_SIMPLE_CLASSES_IN_ONE_LINE = true;

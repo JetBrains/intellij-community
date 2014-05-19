@@ -24,7 +24,7 @@ import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrRenameableLightElement;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 
@@ -46,6 +46,6 @@ public class GrLightElementRenamer extends RenamePsiElementProcessor {
     if (!(element instanceof LightElement)) return false;
     if (element instanceof GrRenameableLightElement) return false;
     final Language language = element.getLanguage();
-    return GroovyLanguage.INSTANCE.equals(language);
+    return GroovyFileType.GROOVY_LANGUAGE.equals(language);
   }
 }

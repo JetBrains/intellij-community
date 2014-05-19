@@ -26,7 +26,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
  * @author peter
@@ -36,7 +36,7 @@ public class ExcludeFromStubGenerationAction extends AnAction implements DumbAwa
   public void actionPerformed(final AnActionEvent e) {
     final PsiFile file = e.getData(DataKeys.PSI_FILE);
 
-    assert file != null && file.getLanguage() == GroovyLanguage.INSTANCE;
+    assert file != null && file.getLanguage() == GroovyFileType.GROOVY_LANGUAGE;
 
     doExcludeFromStubGeneration(file);
   }
@@ -66,7 +66,7 @@ public class ExcludeFromStubGenerationAction extends AnAction implements DumbAwa
 
   private static boolean isEnabled(AnActionEvent e) {
     PsiFile file = e.getData(DataKeys.PSI_FILE);
-    if (file == null || file.getLanguage() != GroovyLanguage.INSTANCE) {
+    if (file == null || file.getLanguage() != GroovyFileType.GROOVY_LANGUAGE) {
       return false;
     }
 

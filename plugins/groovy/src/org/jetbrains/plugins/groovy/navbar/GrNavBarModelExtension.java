@@ -24,7 +24,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
@@ -48,7 +48,7 @@ public class GrNavBarModelExtension extends AbstractNavBarModelExtension {
       if (file != null && (index.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES) || index.isInLibraryClasses(file) || index.isInLibrarySource(file))) {
         if (psiElement instanceof GroovyFileBase) {
           final GroovyFileBase grFile = (GroovyFileBase)psiElement;
-          if (grFile.getViewProvider().getBaseLanguage().equals(GroovyLanguage.INSTANCE)) {
+          if (grFile.getViewProvider().getBaseLanguage().equals(GroovyFileType.GROOVY_LANGUAGE)) {
             final PsiClass[] psiClasses = grFile.getClasses();
             if (psiClasses.length == 1 && !grFile.isScript()) {
               return psiClasses[0];

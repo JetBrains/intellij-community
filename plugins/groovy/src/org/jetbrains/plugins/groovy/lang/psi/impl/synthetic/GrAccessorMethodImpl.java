@@ -24,7 +24,7 @@ import com.intellij.psi.impl.light.LightParameterListBuilder;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -44,8 +44,8 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
   private final boolean myIsSetter;
 
   public GrAccessorMethodImpl(@NotNull GrField property, boolean isSetter, String name) {
-    super(property.getManager(), GroovyLanguage.INSTANCE, name,
-          new LightParameterListBuilder(property.getManager(), GroovyLanguage.INSTANCE),
+    super(property.getManager(), GroovyFileType.GROOVY_LANGUAGE, name,
+          new LightParameterListBuilder(property.getManager(), GroovyFileType.GROOVY_LANGUAGE),
           new LightModifierList(property.getManager()) {
             @Override
             public String getText() {

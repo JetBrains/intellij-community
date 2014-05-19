@@ -47,7 +47,7 @@ import com.intellij.util.containers.MultiMap;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -426,7 +426,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
       argList.addAfter(factory.createExpressionFromText(settings.getName()), anchor);
     }
     else {
-      PsiElement initializer = ExpressionConverter.getExpression(expression, GroovyLanguage.INSTANCE, settings.getProject());
+      PsiElement initializer = ExpressionConverter.getExpression(expression, GroovyFileType.GROOVY_LANGUAGE, settings.getProject());
       LOG.assertTrue(initializer instanceof GrExpression);
 
       GrExpression newArg = GroovyIntroduceParameterUtil.addClosureToCall(initializer, argList);

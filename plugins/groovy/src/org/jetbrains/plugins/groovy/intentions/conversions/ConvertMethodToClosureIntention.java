@@ -31,7 +31,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
@@ -86,7 +86,7 @@ public class ConvertMethodToClosureIntention extends Intention {
     final Collection<GrReferenceExpression> usagesToConvert = new HashSet<GrReferenceExpression>(references.size());
     for (PsiReference ref : references) {
       final PsiElement psiElement = ref.getElement();
-      if (!GroovyLanguage.INSTANCE.equals(psiElement.getLanguage())) {
+      if (!GroovyFileType.GROOVY_LANGUAGE.equals(psiElement.getLanguage())) {
         conflicts.putValue(psiElement, GroovyIntentionsBundle.message("method.is.used.outside.of.groovy"));
       }
       else if (!PsiUtil.isMethodUsage(psiElement)) {
@@ -144,7 +144,7 @@ public class ConvertMethodToClosureIntention extends Intention {
   private static class MyPredicate implements PsiElementPredicate {
     @Override
     public boolean satisfiedBy(PsiElement element) {
-      if (element.getLanguage() != GroovyLanguage.INSTANCE) return false;
+      if (element.getLanguage() != GroovyFileType.GROOVY_LANGUAGE) return false;
 
       GrMethod method;
       final PsiReference ref = element.getReference();

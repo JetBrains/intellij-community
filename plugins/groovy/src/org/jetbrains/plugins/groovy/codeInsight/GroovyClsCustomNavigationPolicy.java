@@ -22,7 +22,7 @@ import com.intellij.psi.impl.compiled.ClsMethodImpl;
 import com.intellij.psi.impl.light.LightElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
  * @author Max Medvedev
@@ -32,7 +32,7 @@ public class GroovyClsCustomNavigationPolicy extends ClsCustomNavigationPolicyEx
   @Nullable
   public PsiElement getNavigationElement(@NotNull ClsMethodImpl clsMethod) {
     PsiMethod source = clsMethod.getSourceMirrorMethod();
-    if (source instanceof LightElement && source.getLanguage() == GroovyLanguage.INSTANCE) {
+    if (source instanceof LightElement && source.getLanguage() == GroovyFileType.GROOVY_LANGUAGE) {
       return source.getNavigationElement();
     }
 

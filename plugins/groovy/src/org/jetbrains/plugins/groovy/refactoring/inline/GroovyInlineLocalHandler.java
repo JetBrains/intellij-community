@@ -31,7 +31,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -56,7 +56,7 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
 
   @Override
   public boolean isEnabledForLanguage(Language l) {
-    return GroovyLanguage.INSTANCE == l;
+    return GroovyFileType.GROOVY_LANGUAGE == l;
   }
 
   @Override

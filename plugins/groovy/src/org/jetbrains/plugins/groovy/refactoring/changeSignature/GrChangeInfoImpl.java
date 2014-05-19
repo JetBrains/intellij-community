@@ -25,7 +25,7 @@ import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
@@ -278,7 +278,7 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
 
   @Override
   public Language getLanguage() {
-    return GroovyLanguage.INSTANCE;
+    return GroovyFileType.GROOVY_LANGUAGE;
   }
 
   @Override

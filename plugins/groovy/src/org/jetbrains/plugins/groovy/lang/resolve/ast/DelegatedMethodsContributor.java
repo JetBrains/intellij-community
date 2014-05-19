@@ -32,7 +32,7 @@ import gnu.trove.THashMap;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
@@ -286,7 +286,7 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
                                                   PsiClass superClass,
                                                   PsiSubstitutor substitutor,
                                                   boolean keepParameterAnnotations) {
-    final LightMethodBuilder builder = new LightMethodBuilder(superClass.getManager(), GroovyLanguage.INSTANCE, method.getName());
+    final LightMethodBuilder builder = new LightMethodBuilder(superClass.getManager(), GroovyFileType.GROOVY_LANGUAGE, method.getName());
     builder.setContainingClass(superClass);
     builder.setMethodReturnType(substitutor.substitute(method.getReturnType()));
     builder.setNavigationElement(method);

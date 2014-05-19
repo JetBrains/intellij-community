@@ -37,7 +37,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -139,7 +138,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
           if (!InheritanceUtil.isInheritor(containingClass, CommonClassNames.JAVA_UTIL_MAP)) continue;
           final String name = containingClass.getQualifiedName();
           if (name != null && name.startsWith("java.")) continue;
-          if (containingClass.getLanguage() != GroovyLanguage.INSTANCE &&
+          if (containingClass.getLanguage() != GroovyFileType.GROOVY_LANGUAGE &&
               !InheritanceUtil.isInheritor(containingClass, GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME)) {
             continue;
           }

@@ -33,7 +33,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.formatter.AlignmentProvider;
 import org.jetbrains.plugins.groovy.formatter.FormattingContext;
 import org.jetbrains.plugins.groovy.formatter.processors.GroovyIndentProcessor;
@@ -605,7 +605,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     if (psi instanceof OuterLanguageElement) {
       TextRange range = node.getTextRange();
       ArrayList<ASTNode> childList = new ArrayList<ASTNode>();
-      PsiFile groovyFile = psi.getContainingFile().getViewProvider().getPsi(GroovyLanguage.INSTANCE);
+      PsiFile groovyFile = psi.getContainingFile().getViewProvider().getPsi(GroovyFileType.GROOVY_LANGUAGE);
       if (groovyFile instanceof GroovyFileBase) {
         addChildNodes(groovyFile, childList, range);
       }

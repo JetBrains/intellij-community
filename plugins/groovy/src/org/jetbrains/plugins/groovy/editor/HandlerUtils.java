@@ -28,7 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
  * @author ilyas
@@ -42,7 +42,7 @@ public class HandlerUtils {
     final Project project = getProject(dataContext);
     if (project != null) {
       final Language language = PsiUtilBase.getLanguageInEditor(editor, project);
-      if (language == GroovyLanguage.INSTANCE) {
+      if (language == GroovyFileType.GROOVY_LANGUAGE) {
         return true;
       }
     }

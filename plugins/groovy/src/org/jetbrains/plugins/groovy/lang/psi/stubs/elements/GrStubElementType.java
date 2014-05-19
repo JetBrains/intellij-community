@@ -20,7 +20,7 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 public abstract class GrStubElementType<S extends StubElement, T extends GroovyPsiElement> extends IStubElementType<S, T> {
 
   public GrStubElementType(@NonNls @NotNull String debugName) {
-    super(debugName, GroovyLanguage.INSTANCE);
+    super(debugName, GroovyFileType.GROOVY_LANGUAGE);
   }
 
   @Override

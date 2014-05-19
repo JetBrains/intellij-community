@@ -24,7 +24,7 @@ import com.intellij.refactoring.introduceParameter.ExternalUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
@@ -80,7 +80,7 @@ public class ExtractClosureFromClosureProcessor extends ExtractClosureProcessorB
       final List<UsageInfo> result = new ArrayList<UsageInfo>();
       for (PsiReference ref : ReferencesSearch.search(var)) {
         final PsiElement element = ref.getElement();
-        if (element.getLanguage() != GroovyLanguage.INSTANCE) {
+        if (element.getLanguage() != GroovyFileType.GROOVY_LANGUAGE) {
           result.add(new OtherLanguageUsageInfo(ref));
           continue;
         }

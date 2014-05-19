@@ -19,7 +19,6 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.lang.CodeInsightActions;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;
@@ -41,7 +40,7 @@ public class GroovyGoToSuperTest extends LightCodeInsightFixtureTestCase {
   private void doTest() throws Throwable {
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, data.get(0));
-    final CodeInsightActionHandler handler = CodeInsightActions.GOTO_SUPER.forLanguage(GroovyLanguage.INSTANCE);
+    final CodeInsightActionHandler handler = CodeInsightActions.GOTO_SUPER.forLanguage(GroovyFileType.GROOVY_LANGUAGE);
     handler.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
 
     myFixture.checkResult(data.get(1));

@@ -24,7 +24,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrBuilderMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
@@ -40,7 +40,7 @@ class AntBuilderMethod extends LightMethodBuilder implements GrBuilderMethod {
   @Nullable private final Class myAntClass;
 
   public AntBuilderMethod(PsiFile place, String name, PsiType closureType, @Nullable Class antClass, final PsiType stringType) {
-    super(place.getManager(), GroovyLanguage.INSTANCE, name);
+    super(place.getManager(), GroovyFileType.GROOVY_LANGUAGE, name);
     myPlace = place;
     myAntClass = antClass;
     setModifiers(PsiModifier.PUBLIC);

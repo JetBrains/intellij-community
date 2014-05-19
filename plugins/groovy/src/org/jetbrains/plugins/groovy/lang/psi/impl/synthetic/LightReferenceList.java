@@ -18,14 +18,14 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
  * @author ven
  */
 public class LightReferenceList extends LightElement implements PsiReferenceList {
   protected LightReferenceList(PsiManager manager) {
-    super(manager, GroovyLanguage.INSTANCE);
+    super(manager, GroovyFileType.GROOVY_LANGUAGE);
   }
 
   @Override

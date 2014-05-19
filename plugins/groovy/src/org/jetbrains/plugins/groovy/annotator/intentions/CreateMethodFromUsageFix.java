@@ -24,7 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -126,7 +126,7 @@ public class CreateMethodFromUsageFix extends GrCreateFromUsageBaseFix implement
       final PsiParameter p = factory.createParameter("o", argType);
       parameterList.add(p);
       TypeConstraint[] constraints = {SupertypeConstraint.create(argType)};
-      boolean isGroovy = method.getLanguage() == GroovyLanguage.INSTANCE;
+      boolean isGroovy = method.getLanguage() == GroovyFileType.GROOVY_LANGUAGE;
       paramTypesExpressions[i] = new ChooseTypeExpression(constraints, method.getManager(), method.getResolveScope(), isGroovy);
     }
     return paramTypesExpressions;

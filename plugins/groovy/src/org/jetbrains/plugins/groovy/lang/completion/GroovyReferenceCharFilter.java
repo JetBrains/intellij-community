@@ -22,7 +22,7 @@ import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
@@ -36,7 +36,7 @@ public class GroovyReferenceCharFilter extends CharFilter {
   @Nullable
   public Result acceptChar(char c, int prefixLength, Lookup lookup) {
     final PsiFile psiFile = lookup.getPsiFile();
-    if (psiFile != null && !psiFile.getViewProvider().getLanguages().contains(GroovyLanguage.INSTANCE)) return null;
+    if (psiFile != null && !psiFile.getViewProvider().getLanguages().contains(GroovyFileType.GROOVY_LANGUAGE)) return null;
 
     LookupElement item = lookup.getCurrentItem();
     if (item == null) return null;

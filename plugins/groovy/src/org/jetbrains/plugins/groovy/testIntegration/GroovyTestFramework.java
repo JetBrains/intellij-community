@@ -29,7 +29,7 @@ import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.util.IncorrectOperationException;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -50,7 +50,7 @@ public class GroovyTestFramework extends JavaTestFramework {
 
   @Override
   protected boolean isTestClass(PsiClass clazz, boolean canBePotential) {
-    return clazz.getLanguage() == GroovyLanguage.INSTANCE &&
+    return clazz.getLanguage() == GroovyFileType.GROOVY_LANGUAGE &&
            //JUnitUtil.isTestClass(clazz) &&
            InheritanceUtil.isInheritor(clazz, GroovyCommonClassNames.GROOVY_UTIL_TEST_CASE);
   }
@@ -77,7 +77,7 @@ public class GroovyTestFramework extends JavaTestFramework {
 
   @Override
   protected PsiMethod findOrCreateSetUpMethod(PsiClass clazz) throws IncorrectOperationException {
-    LOG.assertTrue(clazz.getLanguage() == GroovyLanguage.INSTANCE);
+    LOG.assertTrue(clazz.getLanguage() == GroovyFileType.GROOVY_LANGUAGE);
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(clazz.getProject());
 
     final PsiMethod patternMethod = createSetUpPatternMethod(factory);
@@ -160,6 +160,6 @@ public class GroovyTestFramework extends JavaTestFramework {
   @Override
   @NotNull
   public Language getLanguage() {
-    return GroovyLanguage.INSTANCE;
+    return GroovyFileType.GROOVY_LANGUAGE;
   }
 }

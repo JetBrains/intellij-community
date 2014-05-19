@@ -39,7 +39,7 @@ import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
@@ -69,7 +69,7 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
 
   private static boolean isGroovyUsage(UsageInfo usage) {
     final PsiElement el = usage.getElement();
-    return el != null && GroovyLanguage.INSTANCE.equals(el.getLanguage());
+    return el != null && GroovyFileType.GROOVY_LANGUAGE.equals(el.getLanguage());
   }
 
   @Override
@@ -119,7 +119,7 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
     }
     else {
       final PsiElement _expr = data.getParameterInitializer().getExpression();
-      PsiElement initializer = ExpressionConverter.getExpression(_expr, GroovyLanguage.INSTANCE, data.getProject());
+      PsiElement initializer = ExpressionConverter.getExpression(_expr, GroovyFileType.GROOVY_LANGUAGE, data.getProject());
       LOG.assertTrue(initializer instanceof GrExpression);
 
       GrExpression newArg = GroovyIntroduceParameterUtil.addClosureToCall(initializer, argList);

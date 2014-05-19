@@ -25,7 +25,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.lang.psi.impl.utils.BoolUtils;
@@ -85,7 +85,7 @@ public abstract class Intention implements IntentionAction {
 
   @Nullable
   PsiElement findMatchingElement(PsiFile file, Editor editor) {
-    if (!file.getViewProvider().getLanguages().contains(GroovyLanguage.INSTANCE)) {
+    if (!file.getViewProvider().getLanguages().contains(GroovyFileType.GROOVY_LANGUAGE)) {
       return null;
     }
 

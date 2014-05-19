@@ -17,14 +17,14 @@ package org.jetbrains.plugins.groovy.codeStyle;
 
 import com.intellij.application.options.TabbedLanguageCodeStylePanel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
  * @author Max Medvedev
  */
 public class GroovyCodeStyleMainPanel extends TabbedLanguageCodeStylePanel {
   public GroovyCodeStyleMainPanel(CodeStyleSettings currentSettings, CodeStyleSettings settings) {
-    super(GroovyLanguage.INSTANCE, currentSettings, settings);
+    super(GroovyFileType.GROOVY_LANGUAGE, currentSettings, settings);
   }
 
   @Override

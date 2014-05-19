@@ -32,7 +32,7 @@ import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -182,7 +182,7 @@ public class ResolveUtil {
   static PsiScopeProcessor substituteProcessor(PsiScopeProcessor processor, PsiElement scope) {
     //hack for walking up in java code
     //java's processDeclarations don't check names so we should do it manually
-    if (scope.getLanguage() != GroovyLanguage.INSTANCE && processor.getHint(NameHint.KEY) != null) {
+    if (scope.getLanguage() != GroovyFileType.GROOVY_LANGUAGE && processor.getHint(NameHint.KEY) != null) {
       return new JavaResolverProcessor(processor);
     }
     return processor;

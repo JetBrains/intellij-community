@@ -22,7 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.testIntegration.GroovyTestFramework;
@@ -78,7 +78,7 @@ public class SpockTestFramework extends GroovyTestFramework {
 
   @Override
   protected boolean isTestClass(PsiClass clazz, boolean canBePotential) {
-    return clazz.getLanguage() == GroovyLanguage.INSTANCE
+    return clazz.getLanguage() == GroovyFileType.GROOVY_LANGUAGE
            && GroovyPsiManager.isInheritorCached(clazz, SpockUtils.SPEC_CLASS_NAME);
   }
 

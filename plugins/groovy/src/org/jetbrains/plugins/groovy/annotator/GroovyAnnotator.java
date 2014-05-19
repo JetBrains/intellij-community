@@ -55,7 +55,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.annotator.checkers.AnnotationChecker;
 import org.jetbrains.plugins.groovy.annotator.checkers.CustomAnnotationChecker;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
@@ -1553,7 +1553,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
           else {
             final PsiExpression _initializer = ((PsiField)resolved).getInitializer();
             initializer = _initializer != null
-                          ? (GrExpression)ExpressionConverter.getExpression(_initializer, GroovyLanguage.INSTANCE, value.getProject())
+                          ? (GrExpression)ExpressionConverter.getExpression(_initializer, GroovyFileType.GROOVY_LANGUAGE, value.getProject())
                           : null;
           }
         }

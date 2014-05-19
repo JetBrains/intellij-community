@@ -31,7 +31,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -75,7 +75,7 @@ public class IntentionUtils {
     PsiTypeElement typeElement = method.getReturnTypeElement();
     ChooseTypeExpression expr =
       new ChooseTypeExpression(constraints, PsiManager.getInstance(project), context.getResolveScope(),
-                               method.getLanguage() == GroovyLanguage.INSTANCE
+                               method.getLanguage() == GroovyFileType.GROOVY_LANGUAGE
       );
     TemplateBuilderImpl builder = new TemplateBuilderImpl(method);
     if (!isConstructor) {
