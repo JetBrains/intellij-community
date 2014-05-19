@@ -5457,7 +5457,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public void mouseReleased(@NotNull MouseEvent e) {
       myMousePressArea = null;
-      runMouseReleasedCommand(e);
+      if (myMousePressedEvent == null || !myMousePressedEvent.isConsumed()) {
+        runMouseReleasedCommand(e);
+      }
       if (!e.isConsumed() && myMousePressedEvent != null && !myMousePressedEvent.isConsumed() &&
           Math.abs(e.getX() - myMousePressedEvent.getX()) < EditorUtil.getSpaceWidth(Font.PLAIN, EditorImpl.this) &&
           Math.abs(e.getY() - myMousePressedEvent.getY()) < getLineHeight()) {
@@ -5632,6 +5634,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           getScrollingModel().scrollVertically(y - scrollShift);
           myGutterComponent.updateSize();
           validateMousePointer(e);
+          e.consume();
           return isNavigation;
         }
       }
