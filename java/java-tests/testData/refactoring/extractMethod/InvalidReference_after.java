@@ -6,6 +6,6 @@ class Test {
   }
 
     private PsiPackage newMethod(IOException targetElement) {
-        return JavaDirectoryService.getInstance().getPackage((IOException)targetElement);
+        return JavaDirectoryService.getInstance().getPackage(targetElement);
     }
 }
