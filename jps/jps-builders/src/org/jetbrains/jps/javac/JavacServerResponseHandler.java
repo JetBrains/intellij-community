@@ -17,10 +17,12 @@ package org.jetbrains.jps.javac;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.MessageLite;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.client.ProtobufResponseHandler;
 import org.jetbrains.jps.incremental.BinaryContent;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.net.URI;
 import java.util.Collection;
@@ -33,11 +35,14 @@ import java.util.Locale;
 public class JavacServerResponseHandler implements ProtobufResponseHandler{
   private final DiagnosticOutputConsumer myDiagnosticSink;
   private final OutputFileConsumer myOutputSink;
+  @Nullable
+  private final String myEncodingName;
   private volatile boolean myTerminatedSuccessfully;
 
-  public JavacServerResponseHandler(DiagnosticOutputConsumer diagnosticSink, OutputFileConsumer outputSink) {
+  public JavacServerResponseHandler(DiagnosticOutputConsumer diagnosticSink, OutputFileConsumer outputSink, @Nullable final String encodingName) {
     myDiagnosticSink = diagnosticSink;
     myOutputSink = outputSink;
+    myEncodingName = encodingName;
   }
 
   public boolean handleMessage(MessageLite message) throws Exception {
@@ -93,7 +98,7 @@ public class JavacServerResponseHandler implements ProtobufResponseHandler{
           convertKind(kind),
           outputObject.hasClassName()? outputObject.getClassName() : null,
           srcUri,
-          fileObjectContent
+          myEncodingName, fileObjectContent
         );
 
         myOutputSink.save(fileObject);
