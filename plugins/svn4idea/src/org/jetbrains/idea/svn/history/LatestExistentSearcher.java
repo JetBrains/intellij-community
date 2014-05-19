@@ -25,6 +25,7 @@ import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -38,20 +39,29 @@ public class LatestExistentSearcher {
 
   private long myStartNumber;
   private boolean myStartExistsKnown;
-  private final SVNURL myUrl;
+  @NotNull private final SVNURL myUrl;
+  @NotNull private final SVNURL myRepositoryUrl;
+  @NotNull private final String myRelativeUrl;
   private final SvnVcs myVcs;
   private long myEndNumber;
 
-  public LatestExistentSearcher(final SvnVcs vcs, final SVNURL url) {
-    this(0, -1, false, vcs, url);
+  public LatestExistentSearcher(final SvnVcs vcs, @NotNull SVNURL url, @NotNull SVNURL repositoryUrl) {
+    this(0, -1, false, vcs, url, repositoryUrl);
   }
 
-  public LatestExistentSearcher(final long startNumber, final long endNumber, final boolean startExistsKnown, final SvnVcs vcs, final SVNURL url) {
+  public LatestExistentSearcher(final long startNumber,
+                                final long endNumber,
+                                final boolean startExistsKnown,
+                                final SvnVcs vcs,
+                                @NotNull SVNURL url,
+                                @NotNull SVNURL repositoryUrl) {
     myStartNumber = startNumber;
     myEndNumber = endNumber;
     myStartExistsKnown = startExistsKnown;
     myVcs = vcs;
     myUrl = url;
+    myRepositoryUrl = repositoryUrl;
+    myRelativeUrl = SVNURLUtil.getRelativeURL(myRepositoryUrl, myUrl, true);
   }
 
   public long getDeletionRevision() {
@@ -61,23 +71,19 @@ public class LatestExistentSearcher {
     SVNRepository repository = null;
     try {
       repository = myVcs.getSvnKitManager().createRepository(myUrl.toString());
-      final SVNURL repRoot = repository.getRepositoryRoot(true);
-      if (repRoot != null) {
-        if (myEndNumber == -1) {
-          myEndNumber = repository.getLatestRevision();
-        }
-
-        final SVNURL existingParent = getExistingParent(myUrl, repository, repRoot.toString().length());
-        if (existingParent == null) {
-          return myStartNumber;
-        }
-
-        final String urlRelativeString = myUrl.toString().substring(repRoot.toString().length());
-        final SVNRevision startRevision = SVNRevision.create(myStartNumber);
-        SvnTarget target = SvnTarget.fromURL(existingParent, startRevision);
-        myVcs.getFactory(target).createHistoryClient()
-          .doLog(target, startRevision, SVNRevision.HEAD, false, true, false, 0, null, createHandler(latest, urlRelativeString));
+      if (myEndNumber == -1) {
+        myEndNumber = repository.getLatestRevision();
       }
+
+      final SVNURL existingParent = getExistingParent(myUrl, repository);
+      if (existingParent == null) {
+        return myStartNumber;
+      }
+
+      final SVNRevision startRevision = SVNRevision.create(myStartNumber);
+      SvnTarget target = SvnTarget.fromURL(existingParent, startRevision);
+      myVcs.getFactory(target).createHistoryClient().doLog(target, startRevision, SVNRevision.HEAD, false, true, false, 0, null,
+                                                           createHandler(latest));
     }
     catch (SVNException e) {
       LOG.info(e);
@@ -95,13 +101,13 @@ public class LatestExistentSearcher {
   }
 
   @NotNull
-  private static ISVNLogEntryHandler createHandler(@NotNull final Ref<Long> latest, @NotNull final String urlRelativeString) {
+  private ISVNLogEntryHandler createHandler(@NotNull final Ref<Long> latest) {
     return new ISVNLogEntryHandler() {
       public void handleLogEntry(final SVNLogEntry logEntry) throws SVNException {
         final Map changedPaths = logEntry.getChangedPaths();
         for (Object o : changedPaths.values()) {
           final SVNLogEntryPath path = (SVNLogEntryPath)o;
-          if ((path.getType() == 'D') && (urlRelativeString.equals(path.getPath()))) {
+          if ((path.getType() == 'D') && (myRelativeUrl.equals(path.getPath()))) {
             latest.set(logEntry.getRevision());
             throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE);
           }
@@ -117,17 +123,14 @@ public class LatestExistentSearcher {
     long latestOk = myStartNumber;
     try {
       repository = myVcs.getSvnKitManager().createRepository(myUrl.toString());
-      final SVNURL repRoot = repository.getRepositoryRoot(true);
-      if (repRoot != null) {
-        if (myEndNumber == -1) {
-          myEndNumber = repository.getLatestRevision();
-        }
-        final String urlString = myUrl.toString().substring(repRoot.toString().length());
-        for (long i = myStartNumber + 1; i < myEndNumber; i++) {
-          final SVNNodeKind kind = repository.checkPath(urlString, i);
-          if (SVNNodeKind.DIR.equals(kind) || SVNNodeKind.FILE.equals(kind)) {
-            latestOk = i;
-          }
+      if (myEndNumber == -1) {
+        myEndNumber = repository.getLatestRevision();
+      }
+      // TODO: At least binary search could be applied here for optimization
+      for (long i = myStartNumber + 1; i < myEndNumber; i++) {
+        final SVNNodeKind kind = repository.checkPath(myRelativeUrl, i);
+        if (SVNNodeKind.DIR.equals(kind) || SVNNodeKind.FILE.equals(kind)) {
+          latestOk = i;
         }
       }
     }
@@ -162,13 +165,12 @@ public class LatestExistentSearcher {
   }
 
   @Nullable
-  private SVNURL getExistingParent(final SVNURL url, final SVNRepository repository, final int repoRootLen) throws SVNException {
-    final String urlString = url.toString().substring(repoRootLen);
-    if (urlString.length() == 0) {
-      // === repository url
+  private SVNURL getExistingParent(final SVNURL url, final SVNRepository repository) throws SVNException {
+    if (url.equals(myRepositoryUrl)) {
       return url;
     }
-    final SVNNodeKind kind = repository.checkPath(urlString, myEndNumber);
+    String relativeUrl = SVNURLUtil.getRelativeURL(myRepositoryUrl, url, true);
+    final SVNNodeKind kind = repository.checkPath(relativeUrl, myEndNumber);
     if (SVNNodeKind.DIR.equals(kind) || SVNNodeKind.FILE.equals(kind)) {
       return url;
     }
@@ -176,6 +178,6 @@ public class LatestExistentSearcher {
     if (parentUrl == null) {
       return null;
     }
-    return getExistingParent(parentUrl, repository, repoRootLen);
+    return getExistingParent(parentUrl, repository);
   }
 }
