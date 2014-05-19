@@ -134,7 +134,7 @@ public class LatestExistentSearcher {
       }
     }
     catch (SVNException e) {
-      //
+      LOG.info(e);
     } finally {
       if (repository != null) {
         repository.closeSession();
@@ -150,9 +150,6 @@ public class LatestExistentSearcher {
       final RootUrlInfo rootUrlInfo = mapping.getWcRootForUrl(myUrl.toString());
       if (rootUrlInfo == null) return true;
       final VirtualFile vf = rootUrlInfo.getVirtualFile();
-      if (vf == null) {
-        return true;
-      }
       final SVNInfo info = myVcs.getInfo(vf);
       if ((info == null) || (info.getRevision() == null)) {
         return false;
@@ -164,14 +161,12 @@ public class LatestExistentSearcher {
   }
 
   @Nullable
-  private SVNURL getExistingParent(@NotNull SVNURL url) throws SVNException {
-    // TODO: Rewrite using while loop
-    if (url.equals(myRepositoryUrl) || existsInRevision(url, myEndNumber)) {
-      return url;
+  private SVNURL getExistingParent(SVNURL url) throws SVNException {
+    while (url != null && !url.equals(myRepositoryUrl) && !existsInRevision(url, myEndNumber)) {
+      url = url.removePathTail();
     }
-    final SVNURL parentUrl = url.removePathTail();
 
-    return parentUrl == null ? null : getExistingParent(parentUrl);
+    return url;
   }
 
   private boolean existsInRevision(@NotNull SVNURL url, long revisionNumber) throws SVNException {
