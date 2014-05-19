@@ -90,6 +90,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/javaFX/javaFX-jps-plugin/javaFX-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/javaFX/javaFX-jps-plugin/javaFX-jps-plugin.iml" group="plugins/JavaFX" />
       <module fileurl="file://$PROJECT_DIR$/java/compiler/javac2/javac2.iml" filepath="$PROJECT_DIR$/java/compiler/javac2/javac2.iml" group="java/compiler" />
       <module fileurl="file://$PROJECT_DIR$/plugins/cvs/javacvs-src/javacvs-src.iml" filepath="$PROJECT_DIR$/plugins/cvs/javacvs-src/javacvs-src.iml" group="plugins/VCS/cvs" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/groovy/groovy-psi/groovy-psi.iml" filepath="$PROJECT_DIR$/plugins/groovy/groovy-psi/groovy-psi.iml" group="plugins/Groovy" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/jetgroovy.iml" filepath="$PROJECT_DIR$/plugins/groovy/jetgroovy.iml" group="plugins/Groovy" />
       <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tasks-core/jira/jira.iml" filepath="$PROJECT_DIR$/plugins/tasks/tasks-core/jira/jira.iml" group="plugins/tasks" />
       <module fileurl="file://$PROJECT_DIR$/jps/jps-builders/jps-builders.iml" filepath="$PROJECT_DIR$/jps/jps-builders/jps-builders.iml" group="jps" />

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,24 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy;
+package org.jetbrains.plugins.groovy.lang.groovydoc.lexer;
 
-import com.intellij.lang.Language;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 
 /**
- * All main properties for Groovy language
- *
  * @author ilyas
  */
-public class GroovyLanguage extends Language {
+public class GroovyDocElementTypeImpl extends GroovyDocElementType {
 
-  public GroovyLanguage() {
-    super("Groovy");
+  private String debugName = null;
+
+  public GroovyDocElementTypeImpl(@NonNls String debugName) {
+    super(debugName, GroovyLanguage.INSTANCE);
+    this.debugName = debugName;
   }
 
-  @Override
-  public boolean isCaseSensitive() {
-    return true;
+  public String toString() {
+    return debugName;
   }
 }

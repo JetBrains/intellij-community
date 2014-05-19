@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.highlighter;
 
-import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.lexer.LexerBase;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.StringEscapesTokenTypes;
@@ -45,7 +45,7 @@ public abstract class GroovyStringLexerBase extends LexerBase {
   @Override
   public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
     if (buffer.length() < endOffset) {
-      LogMessageEx.error(LOG, "buffer Length: " + buffer.length() + ", endOffset: " + endOffset, buffer.toString());
+      LOG.error("buffer Length: " + buffer.length() + ", endOffset: " + endOffset, new Attachment("",buffer.toString()));
     }
 
     myBuffer = buffer;

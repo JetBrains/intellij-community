@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
@@ -37,10 +38,10 @@ public class AssignmentExpression implements GroovyElementTypes {
 
   public static boolean parse(PsiBuilder builder, GroovyParser parser, boolean comExprAllowed) {
     Marker marker = builder.mark();
-    final boolean isTuple = ParserUtils.lookAhead(builder, mLPAREN, mIDENT, mCOMMA);
+    final boolean isTuple = ParserUtils.lookAhead(builder, GroovyTokenTypes.mLPAREN, GroovyTokenTypes.mIDENT, GroovyTokenTypes.mCOMMA);
     if (parseSide(builder, parser, isTuple,comExprAllowed)) {
       if (ParserUtils.getToken(builder, TokenSets.ASSIGNMENTS)) {
-        ParserUtils.getToken(builder, mNLS);
+        ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
         if (!parse(builder, parser, comExprAllowed)) {
           builder.error(GroovyBundle.message("expression.expected"));
         }

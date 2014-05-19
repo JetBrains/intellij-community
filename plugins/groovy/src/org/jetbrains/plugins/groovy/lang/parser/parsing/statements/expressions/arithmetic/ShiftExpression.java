@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -31,8 +32,8 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.B
 public class ShiftExpression implements GroovyElementTypes {
 
   private static final TokenSet RANGES = TokenSet.create(
-          mRANGE_EXCLUSIVE,
-          mRANGE_INCLUSIVE
+    GroovyTokenTypes.mRANGE_EXCLUSIVE,
+    GroovyTokenTypes.mRANGE_INCLUSIVE
   );
 
   public static boolean parse(PsiBuilder builder, GroovyParser parser) {
@@ -44,7 +45,7 @@ public class ShiftExpression implements GroovyElementTypes {
       if (!shiftOrRange.equals(WRONGWAY)) {
         if (ParserUtils.getToken(builder, RANGES) ||
                 getCompositeSign(builder)) {
-          ParserUtils.getToken(builder, mNLS);
+          ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
           if (!BinaryExpression.ADDITIVE.parseBinary(builder, parser)) {
             builder.error(GroovyBundle.message("expression.expected"));
           }
@@ -74,7 +75,7 @@ public class ShiftExpression implements GroovyElementTypes {
    * For composite shift operators like >>>
    */
   private static boolean getCompositeSign(PsiBuilder builder) {
-    if (ParserUtils.lookAhead(builder, mGT, mGT, mGT)) {
+    if (ParserUtils.lookAhead(builder, GroovyTokenTypes.mGT, GroovyTokenTypes.mGT, GroovyTokenTypes.mGT)) {
       PsiBuilder.Marker marker = builder.mark();
       for (int i = 0; i < 3; i++) {
         builder.getTokenText(); //todo[peter] remove look-ahead assertion
@@ -83,7 +84,7 @@ public class ShiftExpression implements GroovyElementTypes {
       marker.done(COMPOSITE_TRIPLE_SHIFT_SIGN);
       return true;
     }
-    else if (ParserUtils.lookAhead(builder, mLT, mLT)) {
+    else if (ParserUtils.lookAhead(builder, GroovyTokenTypes.mLT, GroovyTokenTypes.mLT)) {
       PsiBuilder.Marker marker = builder.mark();
       for (int i = 0; i < 2; i++) {
         builder.getTokenText(); //todo[peter] remove look-ahead assertion
@@ -92,7 +93,7 @@ public class ShiftExpression implements GroovyElementTypes {
       marker.done(COMPOSITE_LSHIFT_SIGN);
       return true;
     }
-    else if (ParserUtils.lookAhead(builder, mGT, mGT)) {
+    else if (ParserUtils.lookAhead(builder, GroovyTokenTypes.mGT, GroovyTokenTypes.mGT)) {
       PsiBuilder.Marker marker = builder.mark();
       for (int i = 0; i < 2; i++) {
         builder.getTokenText(); //todo[peter] remove look-ahead assertion
@@ -120,7 +121,7 @@ public class ShiftExpression implements GroovyElementTypes {
 
   private static void subParse(PsiBuilder builder, PsiBuilder.Marker marker, GroovyElementType shiftOrRange, GroovyParser parser) {
     ParserUtils.getToken(builder, RANGES);
-    ParserUtils.getToken(builder, mNLS);
+    ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
     if (!BinaryExpression.ADDITIVE.parseBinary(builder, parser)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }

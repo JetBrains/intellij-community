@@ -16,22 +16,18 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.lexer;
 
+import com.intellij.psi.tree.IElementType;
+import com.intellij.lang.Language;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ilyas
  */
-public class GroovyDocElementTypeImpl extends GroovyDocElementType {
+public abstract class GroovyDocElementType extends IElementType implements IGroovyDocElementType{
 
-  private String debugName = null;
-
-  public GroovyDocElementTypeImpl(@NonNls String debugName) {
-    super(debugName, GroovyFileType.GROOVY_LANGUAGE);
-    this.debugName = debugName;
-  }
-
-  public String toString() {
-    return debugName;
+  public GroovyDocElementType(@NotNull @NonNls String debugName, @Nullable Language language) {
+    super(debugName, language);
   }
 }

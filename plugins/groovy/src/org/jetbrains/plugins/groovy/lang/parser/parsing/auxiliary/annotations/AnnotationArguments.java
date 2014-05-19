@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations;
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
@@ -38,23 +39,23 @@ public class AnnotationArguments implements GroovyElementTypes {
   public static void parse(PsiBuilder builder, GroovyParser parser) {
 
     PsiBuilder.Marker annArgs = builder.mark();
-    if (!ParserUtils.getToken(builder, mLPAREN)) {
+    if (!ParserUtils.getToken(builder, GroovyTokenTypes.mLPAREN)) {
       annArgs.done(ANNOTATION_ARGUMENTS);
       return;
     }
 
-    if (builder.getTokenType() != mRPAREN) {
+    if (builder.getTokenType() != GroovyTokenTypes.mRPAREN) {
       parsePairs(builder, parser);
     }
 
-    ParserUtils.getToken(builder, mNLS);
-    ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"));
+    ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
+    ParserUtils.getToken(builder, GroovyTokenTypes.mRPAREN, GroovyBundle.message("rparen.expected"));
     annArgs.done(ANNOTATION_ARGUMENTS);
   }
 
   private static boolean checkIdentAndAssign(PsiBuilder builder) {
     final PsiBuilder.Marker marker = builder.mark();
-    boolean result = ParserUtils.getToken(builder, TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS) && ParserUtils.getToken(builder, mASSIGN);
+    boolean result = ParserUtils.getToken(builder, TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS) && ParserUtils.getToken(builder, GroovyTokenTypes.mASSIGN);
     marker.rollbackTo();
     return result;
   }
@@ -64,24 +65,24 @@ public class AnnotationArguments implements GroovyElementTypes {
   */
 
   public static boolean parseAnnotationMemberValueInitializer(PsiBuilder builder, GroovyParser parser) {
-    if (builder.getTokenType() == mAT) {
+    if (builder.getTokenType() == GroovyTokenTypes.mAT) {
       return Annotation.parse(builder, parser);
     }
-    else if (builder.getTokenType() == mLBRACK) {
+    else if (builder.getTokenType() == GroovyTokenTypes.mLBRACK) {
       PsiBuilder.Marker marker = builder.mark();
-      ParserUtils.getToken(builder, mLBRACK);
+      ParserUtils.getToken(builder, GroovyTokenTypes.mLBRACK);
       while (parseAnnotationMemberValueInitializer(builder, parser)) {
-        if (builder.eof() || builder.getTokenType() == mRBRACK) break;
-        ParserUtils.getToken(builder, mCOMMA, GroovyBundle.message("comma.expected"));
+        if (builder.eof() || builder.getTokenType() == GroovyTokenTypes.mRBRACK) break;
+        ParserUtils.getToken(builder, GroovyTokenTypes.mCOMMA, GroovyBundle.message("comma.expected"));
       }
 
-      ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"));
+      ParserUtils.getToken(builder, GroovyTokenTypes.mRBRACK, GroovyBundle.message("rbrack.expected"));
       marker.done(ANNOTATION_ARRAY_INITIALIZER);
       return true;
     }
 
     //check
-    return ConditionalExpression.parse(builder, parser) && !ParserUtils.getToken(builder, mASSIGN);
+    return ConditionalExpression.parse(builder, parser) && !ParserUtils.getToken(builder, GroovyTokenTypes.mASSIGN);
   }
 
   /*
@@ -96,8 +97,8 @@ public class AnnotationArguments implements GroovyElementTypes {
       return false;
     }
 
-    while (ParserUtils.getToken(builder, mCOMMA)) {
-      ParserUtils.getToken(builder, mNLS);
+    while (ParserUtils.getToken(builder, GroovyTokenTypes.mCOMMA)) {
+      ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
 
       parsePair(builder, parser);
     }
@@ -116,10 +117,10 @@ public class AnnotationArguments implements GroovyElementTypes {
     final PsiBuilder.Marker lfMarker;
     if (checkIdentAndAssign(builder)) {
       ParserUtils.getToken(builder, TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS);
-      ParserUtils.getToken(builder, mASSIGN);
+      ParserUtils.getToken(builder, GroovyTokenTypes.mASSIGN);
 
       lfMarker = builder.mark();
-      ParserUtils.getToken(builder, mNLS);
+      ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
     }
     else {
       lfMarker = null;

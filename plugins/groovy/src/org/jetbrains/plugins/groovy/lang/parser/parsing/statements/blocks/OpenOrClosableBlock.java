@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters.ParameterList;
@@ -30,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 public class OpenOrClosableBlock implements GroovyElementTypes {
 
   public static boolean parseOpenBlock(PsiBuilder builder, GroovyParser parser) {
-    if (builder.getTokenType() != mLCURLY) {
+    if (builder.getTokenType() != GroovyTokenTypes.mLCURLY) {
       return false;
     }
 
@@ -46,20 +47,20 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
   public static void parseOpenBlockDeep(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
     builder.advanceLexer();
-    ParserUtils.getToken(builder, mNLS);
+    ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
     parser.parseBlockBody(builder);
-    if (!builder.eof() && builder.getTokenType() != mRCURLY) {
+    if (!builder.eof() && builder.getTokenType() != GroovyTokenTypes.mRCURLY) {
       builder.error(GroovyBundle.message("statement.expected"));
       ParserUtils.skipCountingBraces(builder, GroovyParser.RCURLY_ONLY);
     }
 
-    ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
+    ParserUtils.getToken(builder, GroovyTokenTypes.mRCURLY, GroovyBundle.message("rcurly.expected"));
     marker.done(OPEN_BLOCK);
   }
 
 
   public static IElementType parseClosableBlock(PsiBuilder builder, GroovyParser parser) {
-    assert builder.getTokenType() == mLCURLY : builder.getTokenType();
+    assert builder.getTokenType() == GroovyTokenTypes.mLCURLY : builder.getTokenType();
     if (parser.parseDeep()) {
       parseClosableBlockDeep(builder, parser);
     } else {
@@ -77,9 +78,9 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
         break;
       }
 
-      if (tokenType == mLCURLY) {
+      if (tokenType == GroovyTokenTypes.mLCURLY) {
         braceCount++;
-      } else if (tokenType == mRCURLY) {
+      } else if (tokenType == GroovyTokenTypes.mRCURLY) {
         braceCount--;
       }
       builder.advanceLexer();
@@ -91,21 +92,21 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
   }
 
   public static void parseClosableBlockDeep(PsiBuilder builder, GroovyParser parser) {
-    assert builder.getTokenType() == mLCURLY : builder.getTokenType();
+    assert builder.getTokenType() == GroovyTokenTypes.mLCURLY : builder.getTokenType();
     PsiBuilder.Marker marker = builder.mark();
     builder.advanceLexer();
-    ParserUtils.getToken(builder, mNLS);
+    ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
     closableBlockParamsOpt(builder, parser);
     parser.parseBlockBody(builder);
-    ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
+    ParserUtils.getToken(builder, GroovyTokenTypes.mRCURLY, GroovyBundle.message("rcurly.expected"));
     marker.done(CLOSABLE_BLOCK);
   }
 
 
   private static void closableBlockParamsOpt(PsiBuilder builder, GroovyParser parser) {
-    ParameterList.parse(builder, mCLOSABLE_BLOCK_OP, parser);
-    ParserUtils.getToken(builder, mNLS);
-    ParserUtils.getToken(builder, mCLOSABLE_BLOCK_OP);
+    ParameterList.parse(builder, GroovyTokenTypes.mCLOSABLE_BLOCK_OP, parser);
+    ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
+    ParserUtils.getToken(builder, GroovyTokenTypes.mCLOSABLE_BLOCK_OP);
   }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,16 @@ package org.jetbrains.plugins.groovy.highlighter;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
- * @author Max Medvedev
+ * Created by Max Medvedev on 10/22/13
  */
-public class GroovySlashyStringLexer extends GroovyStringLexerBase {
-
-  public GroovySlashyStringLexer() {
-    super(GroovyTokenTypes.mREGEX_CONTENT);
+public class GroovyDollarSlashyStringLexer extends GroovyStringLexerBase {
+  public GroovyDollarSlashyStringLexer() {
+    super(GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT);
   }
 
   @Override
   protected boolean checkForSimpleValidEscape(int start) {
-    return charAt(start) == '\\' && start + 1 < getBufferEnd() && charAt(start + 1) == '/';
+    return charAt(start) == '$' && start + 1 < getBufferEnd() && (charAt(start + 1) == '$' || charAt(start + 1) == '/');
   }
 
   @Override
@@ -38,6 +37,6 @@ public class GroovySlashyStringLexer extends GroovyStringLexerBase {
 
   @Override
   protected boolean checkForHexCodeStart(int start) {
-    return charAt(start) == '\\' && start + 1 < getBufferEnd() && charAt(start + 1) == 'u';
+    return false;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,26 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers;
 
-import com.intellij.psi.PsiModifier;
-import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.NonNls;
-
 /**
  * @author Maxim.Medvedev
  */
-public interface GrModifier extends PsiModifier {
-  @NonNls String DEF = "def";
-
-  @GrModifierConstant
-  String[] GROOVY_MODIFIERS =
-    {PUBLIC, PROTECTED, PRIVATE, STATIC, ABSTRACT, FINAL, NATIVE, SYNCHRONIZED, STRICTFP, TRANSIENT, VOLATILE, DEF};
-
-  @MagicConstant(stringValues = {DEF, PUBLIC, PROTECTED, PRIVATE, STATIC, ABSTRACT, FINAL, NATIVE, SYNCHRONIZED, STRICTFP, TRANSIENT, VOLATILE, PACKAGE_LOCAL})
-  @interface GrModifierConstant {}
-
+public interface GrModifierFlags {
+  int PUBLIC_MASK = 0x0001;
+  int PRIVATE_MASK = 0x0002;
+  int PROTECTED_MASK = 0x0004;
+  int STATIC_MASK = 0x0008;
+  int FINAL_MASK = 0x0010;
+  int SYNCHRONIZED_MASK = 0x0020;
+  int VOLATILE_MASK = 0x0040;
+  int TRANSIENT_MASK = 0x0080;
+  int NATIVE_MASK = 0x0100;
+  int INTERFACE_MASK = 0x0200;
+  int ABSTRACT_MASK = 0x0400;
+  int STRICTFP_MASK = 0x0800;
+  int PACKAGE_LOCAL_MASK = 0x1000;
+  int DEPRECATED_MASK = 0x2000;
+  int ENUM_MASK = 0x4000;
+  int ANNOTATION_TYPE_MASK = 0x8000;
+  int ANNOTATION_DEPRECATED_MASK = 0x10000;
+  int DEF_MASK = 0x20000;
 }

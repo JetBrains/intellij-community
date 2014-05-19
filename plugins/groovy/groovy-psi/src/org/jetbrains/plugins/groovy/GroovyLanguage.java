@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiQualifiedReferenceElement;
-import org.jetbrains.annotations.Nullable;
+package org.jetbrains.plugins.groovy;
+
+import com.intellij.lang.Language;
 
 /**
- * @author Maxim.Medvedev
+ * All main properties for Groovy language
+ *
+ * @author ilyas
  */
-public interface GrQualifiedReference<Qualifier extends PsiElement> extends PsiQualifiedReferenceElement {
-  @Nullable
-  Qualifier getQualifier();
+public class GroovyLanguage extends Language {
+  public static final GroovyLanguage INSTANCE = new GroovyLanguage();
+  public GroovyLanguage() {
+    super("Groovy");
+  }
 
-  void setQualifier(@Nullable Qualifier qualifier);
-
-  @Nullable
-  PsiElement getReferenceNameElement();
-
-  boolean isQualified();
+  @Override
+  public boolean isCaseSensitive() {
+    return true;
+  }
 }

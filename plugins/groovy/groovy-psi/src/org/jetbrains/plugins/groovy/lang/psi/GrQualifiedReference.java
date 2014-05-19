@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.plugins.groovy.lang.psi;
 
-package org.jetbrains.plugins.groovy.lang.groovydoc.lexer;
-
-import com.intellij.psi.tree.IElementType;
-import com.intellij.lang.Language;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiQualifiedReferenceElement;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 /**
- * @author ilyas
+ * @author Maxim.Medvedev
  */
-public abstract class GroovyDocElementType extends IElementType implements IGroovyDocElementType{
+public interface GrQualifiedReference<Qualifier extends PsiElement> extends PsiQualifiedReferenceElement {
+  @Nullable
+  Qualifier getQualifier();
 
-  public GroovyDocElementType(@NotNull @NonNls String debugName, @Nullable Language language) {
-    super(debugName, language);
-  }
+  void setQualifier(@Nullable Qualifier qualifier);
+
+  @Nullable
+  PsiElement getReferenceNameElement();
+
+  boolean isQualified();
 }

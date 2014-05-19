@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
@@ -31,29 +32,29 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class BranchStatement implements GroovyElementTypes {
 
-  public static final TokenSet BRANCH_KEYWORDS = TokenSet.create(kRETURN,
-          kBREAK,
-          kCONTINUE,
-          kTHROW,
-          kRETURN,
-          kASSERT);
+  public static final TokenSet BRANCH_KEYWORDS = TokenSet.create(GroovyTokenTypes.kRETURN,
+                                                                 GroovyTokenTypes.kBREAK,
+                                                                 GroovyTokenTypes.kCONTINUE,
+                                                                 GroovyTokenTypes.kTHROW,
+                                                                 GroovyTokenTypes.kRETURN,
+                                                                 GroovyTokenTypes.kASSERT);
 
   public static boolean parse(PsiBuilder builder, GroovyParser parser) {
 
-    if (kTHROW.equals(builder.getTokenType())) {
+    if (GroovyTokenTypes.kTHROW.equals(builder.getTokenType())) {
       throwParse(builder, parser);
       return true;
     }
-    if (kASSERT.equals(builder.getTokenType())) {
+    if (GroovyTokenTypes.kASSERT.equals(builder.getTokenType())) {
       assertParse(builder, parser);
       return true;
     }
-    if (kRETURN.equals(builder.getTokenType())) {
+    if (GroovyTokenTypes.kRETURN.equals(builder.getTokenType())) {
       returnParse(builder, parser);
       return true;
     }
-    if (kBREAK.equals(builder.getTokenType()) ||
-            kCONTINUE.equals(builder.getTokenType())) {
+    if (GroovyTokenTypes.kBREAK.equals(builder.getTokenType()) ||
+        GroovyTokenTypes.kCONTINUE.equals(builder.getTokenType())) {
       breakOrContinueParse(builder);
       return true;
     }
@@ -69,7 +70,7 @@ public class BranchStatement implements GroovyElementTypes {
    */
   private static void returnParse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
-    ParserUtils.getToken(builder, kRETURN);
+    ParserUtils.getToken(builder, GroovyTokenTypes.kRETURN);
     AssignmentExpression.parse(builder, parser);
     marker.done(RETURN_STATEMENT);
   }
@@ -82,7 +83,7 @@ public class BranchStatement implements GroovyElementTypes {
    */
   private static void throwParse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
-    ParserUtils.getToken(builder, kTHROW);
+    ParserUtils.getToken(builder, GroovyTokenTypes.kTHROW);
     if (!AssignmentExpression.parse(builder, parser)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
@@ -97,14 +98,14 @@ public class BranchStatement implements GroovyElementTypes {
    */
   private static void assertParse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
-    ParserUtils.getToken(builder, kASSERT);
+    ParserUtils.getToken(builder, GroovyTokenTypes.kASSERT);
     if (!ConditionalExpression.parse(builder, parser)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
 
-    if (ParserUtils.lookAhead(builder, mCOLON) || mCOMMA.equals(builder.getTokenType())) {
+    if (ParserUtils.lookAhead(builder, GroovyTokenTypes.mCOLON) || GroovyTokenTypes.mCOMMA.equals(builder.getTokenType())) {
       builder.advanceLexer();
-      ParserUtils.getToken(builder, mNLS);
+      ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
       if (!AssignmentExpression.parse(builder, parser)) {
         builder.error(GroovyBundle.message("expression.expected"));
       }
@@ -120,11 +121,11 @@ public class BranchStatement implements GroovyElementTypes {
    */
   private static void breakOrContinueParse(PsiBuilder builder) {
     PsiBuilder.Marker marker = builder.mark();
-    GroovyElementType result = kBREAK.equals(builder.getTokenType()) ? BREAK_STATEMENT : CONTINUE_STATEMENT;
+    GroovyElementType result = GroovyTokenTypes.kBREAK.equals(builder.getTokenType()) ? BREAK_STATEMENT : CONTINUE_STATEMENT;
 
     builder.advanceLexer();
 
-    ParserUtils.getToken(builder, mIDENT);
+    ParserUtils.getToken(builder, GroovyTokenTypes.mIDENT);
 
     marker.done(result);
   }
