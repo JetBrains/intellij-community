@@ -40,7 +40,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
 import org.jetbrains.plugins.groovy.annotator.intentions.CreateClassActionBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -59,7 +59,7 @@ public class GrCreateSubclassAction extends CreateSubclassAction {
 
   @Override
   protected boolean isSupportedLanguage(PsiClass aClass) {
-    return aClass.getLanguage() == GroovyFileType.GROOVY_LANGUAGE;
+    return aClass.getLanguage() == GroovyLanguage.INSTANCE;
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 
 /**
  * @author ilyas
@@ -42,7 +42,7 @@ public class HandlerUtils {
     final Project project = getProject(dataContext);
     if (project != null) {
       final Language language = PsiUtilBase.getLanguageInEditor(editor, project);
-      if (language == GroovyFileType.GROOVY_LANGUAGE) {
+      if (language == GroovyLanguage.INSTANCE) {
         return true;
       }
     }

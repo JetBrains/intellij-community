@@ -26,7 +26,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -151,7 +151,7 @@ public class GrIntroduceConstantProcessor {
 
   @Nullable
   private  String check(@NotNull PsiClass targetClass, @Nullable final String fieldName) {
-    if (!GroovyFileType.GROOVY_LANGUAGE.equals(targetClass.getLanguage())) {
+    if (!GroovyLanguage.INSTANCE.equals(targetClass.getLanguage())) {
       return GroovyRefactoringBundle.message("class.language.is.not.groovy");
     }
 

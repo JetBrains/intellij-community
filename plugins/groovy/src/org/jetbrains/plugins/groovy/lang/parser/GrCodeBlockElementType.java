@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.intellij.psi.tree.ICompositeElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IErrorCounterReparseableElementType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrBlockImpl;
@@ -34,7 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrBlockImpl;
 public abstract class GrCodeBlockElementType extends IErrorCounterReparseableElementType implements ICompositeElementType {
 
   protected GrCodeBlockElementType(String debugName) {
-    super(debugName, GroovyFileType.GROOVY_LANGUAGE);
+    super(debugName, GroovyLanguage.INSTANCE);
   }
 
   @NotNull

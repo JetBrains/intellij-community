@@ -23,8 +23,7 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 
@@ -68,7 +67,7 @@ public class GroovyBraceMatcher implements PairedBraceMatcher {
            || tokenType == mREGEX_BEGIN
            || tokenType == mDOLLAR_SLASH_REGEX_BEGIN
            || TokenSets.COMMENT_SET.contains(tokenType)
-           || tokenType.getLanguage() != GroovyFileType.GROOVY_LANGUAGE;
+           || tokenType.getLanguage() != GroovyLanguage.INSTANCE;
   }
 
   @Override
