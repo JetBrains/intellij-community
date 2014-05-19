@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +47,9 @@ class GitBekParentFixer {
 
   @NotNull
   List<TimedVcsCommit> getCorrectCommits() throws VcsException {
+    if (!BekSorter.isBekEnabled())
+      return myAllCommits;
+
     final Set<Hash> wrongCommits = getWrongCommits();
     return new AbstractList<TimedVcsCommit>() {
       @Override

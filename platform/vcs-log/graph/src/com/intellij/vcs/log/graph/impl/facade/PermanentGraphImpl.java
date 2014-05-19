@@ -112,6 +112,9 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
 
   @NotNull
   private PermanentGraphInfo<CommitId> createBekSort() {
+    if (!BekSorter.isBekEnabled())
+      return this;
+
     BekIntMap bekMap = BekSorter.createBekMap(myPermanentLinearGraph, myPermanentGraphLayout, myPermanentCommitsInfo.getTimestampGetter());
 
     DelegatedPermanentGraphInfo<CommitId> graphInfo = new DelegatedPermanentGraphInfo<CommitId>(this, bekMap);

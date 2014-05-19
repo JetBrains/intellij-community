@@ -18,13 +18,14 @@ import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogDataKeys;
+import com.intellij.vcs.log.VcsLogFilterUi;
 import com.intellij.vcs.log.VcsLogSettings;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
-import com.intellij.vcs.log.VcsLogFilterUi;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
@@ -296,6 +297,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     @Override
     public void update(AnActionEvent e) {
       super.update(e);
+      e.getPresentation().setVisible(BekSorter.isBekEnabled());
       e.getPresentation().setEnabled(areGraphActionsEnabled());
     }
   }
