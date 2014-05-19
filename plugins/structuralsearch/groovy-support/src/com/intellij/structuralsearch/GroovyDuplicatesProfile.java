@@ -6,7 +6,7 @@ import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -18,7 +18,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 public class GroovyDuplicatesProfile extends DefaultDuplicatesProfile {
   @Override
   public boolean isMyLanguage(@NotNull Language language) {
-    return language.isKindOf(GroovyLanguage.INSTANCE);
+    return language.isKindOf(GroovyFileType.GROOVY_LANGUAGE);
   }
 
   @Override

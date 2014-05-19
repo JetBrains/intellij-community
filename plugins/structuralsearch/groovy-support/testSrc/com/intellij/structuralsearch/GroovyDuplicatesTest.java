@@ -6,7 +6,7 @@ import com.intellij.dupLocator.util.DuplocatorUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.PathManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
  * @author Eugene.Kudelevsky
@@ -21,7 +21,7 @@ public class GroovyDuplicatesTest extends DuplicatesTestCase {
 
   @Override
   protected Language[] getLanguages() {
-    return new Language[]{GroovyLanguage.INSTANCE};
+    return new Language[]{GroovyFileType.GROOVY_LANGUAGE};
   }
 
   @Override
@@ -32,7 +32,7 @@ public class GroovyDuplicatesTest extends DuplicatesTestCase {
                               int patternCount,
                               String suffix,
                               int lowerBound) throws Exception {
-    final DefaultDuplocatorState state = (DefaultDuplocatorState)DuplocatorUtil.registerAndGetState(GroovyLanguage.INSTANCE);
+    final DefaultDuplocatorState state = (DefaultDuplocatorState)DuplocatorUtil.registerAndGetState(GroovyFileType.GROOVY_LANGUAGE);
     final boolean oldFuncs = state.DISTINGUISH_FUNCTIONS;
     final boolean oldLits = state.DISTINGUISH_LITERALS;
     final boolean oldVars = state.DISTINGUISH_VARIABLES;

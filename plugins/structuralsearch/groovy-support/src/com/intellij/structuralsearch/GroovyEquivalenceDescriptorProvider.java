@@ -6,7 +6,7 @@ import com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -27,7 +27,7 @@ public class GroovyEquivalenceDescriptorProvider extends EquivalenceDescriptorPr
 
   @Override
   public boolean isMyContext(@NotNull PsiElement context) {
-    return context.getLanguage().isKindOf(GroovyLanguage.INSTANCE);
+    return context.getLanguage().isKindOf(GroovyFileType.GROOVY_LANGUAGE);
   }
 
   @Override
