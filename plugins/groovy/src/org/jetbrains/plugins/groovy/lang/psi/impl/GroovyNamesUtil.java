@@ -19,8 +19,13 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Function;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
@@ -29,6 +34,8 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -106,5 +113,32 @@ public class GroovyNamesUtil {
     lexer.start(name);
     final IElementType type = lexer.getTokenType();
     return TokenSets.KEYWORDS.contains(type);
+  }
+
+  public static String[] getMethodArgumentsNames(Project project, PsiType[] types) {
+    Set<String> uniqNames = new LinkedHashSet<String>();
+    Set<String> nonUniqNames = new THashSet<String>();
+    for (PsiType type : types) {
+      final SuggestedNameInfo nameInfo =
+        JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.PARAMETER, null, null, type);
+
+      final String name = nameInfo.names[0];
+      if (uniqNames.contains(name)) {
+        int i = 2;
+        while (uniqNames.contains(name + i)) i++;
+        uniqNames.add(name + i);
+        nonUniqNames.add(name);
+      } else {
+        uniqNames.add(name);
+      }
+    }
+
+    final String[] result = new String[uniqNames.size()];
+    int i = 0;
+    for (String name : uniqNames) {
+      result[i] = nonUniqNames.contains(name) ? name + 1 : name;
+      i++;
+    }
+    return result;
   }
 }

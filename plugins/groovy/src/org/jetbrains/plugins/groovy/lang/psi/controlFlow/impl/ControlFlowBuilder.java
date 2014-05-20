@@ -15,14 +15,16 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
-import com.intellij.diagnostic.LogMessageEx;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1101,8 +1103,10 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   private void error(String descr) {
     PsiFile file = myScope.getContainingFile();
     String fileText = file != null ? file.getText() : null;
+    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(file);
+    String path = virtualFile == null ? null : virtualFile.getPresentableUrl();
 
-    LogMessageEx.error(LOG, descr, myScope.getText(), "\n------------------\n", fileText);
+    LOG.error(descr+ myScope.getText(), new Attachment(path+"", fileText+""));
   }
 
   private AfterCallInstruction addCallNode(InstructionImpl finallyInstruction, GroovyPsiElement scopeWhenAdded, InstructionImpl src) {
