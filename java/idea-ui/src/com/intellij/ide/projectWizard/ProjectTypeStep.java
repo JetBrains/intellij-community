@@ -203,6 +203,11 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
         ModuleBuilder builder = getSelectedBuilder();
         return StringUtil.notNullize(builder.getContentEntryPath());
       }
+
+      @Override
+      public ModuleBuilder getModuleBuilder() {
+        return getSelectedBuilder();
+      }
     };
     myFrameworksPanel = new AddSupportForFrameworksPanel(Collections.<FrameworkSupportInModuleProvider>emptyList(), model, true, myHeaderPanel);
     Disposer.register(this, myFrameworksPanel);
