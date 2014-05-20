@@ -27,6 +27,9 @@
       <option name="workspace" value="true"/>
     </component> -->
     <component>
+      <implementation-class>com.intellij.openapi.vcs.changes.VcsEventWatcher</implementation-class>
+    </component>
+    <component>
       <implementation-class>com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage</implementation-class>
       <skipForDefaultProject/>
     </component>
