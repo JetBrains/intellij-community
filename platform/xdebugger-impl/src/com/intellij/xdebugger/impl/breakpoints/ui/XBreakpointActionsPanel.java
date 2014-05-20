@@ -16,12 +16,13 @@
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
-import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,14 +38,16 @@ import java.awt.event.ActionListener;
  * Time: 9:45
  * To change this template use File | Settings | File Templates.
  */
-public class XBreakpointActionsPanel<B extends XBreakpoint<?>> extends XBreakpointPropertiesSubPanel<B> {
+public class XBreakpointActionsPanel<B extends XBreakpointBase<?,?,?>> extends XBreakpointPropertiesSubPanel<B> {
+  public static final String LOG_EXPRESSION_HISTORY_ID = "breakpointLogExpression";
+
   private JCheckBox myLogMessageCheckBox;
   private JCheckBox myLogExpressionCheckBox;
   private JPanel myLogExpressionPanel;
   private JPanel myContentPane;
   private JPanel myMainPanel;
   private JCheckBox myTemporaryCheckBox;
-  XBreakpointCustomPropertiesPanel<B> logExpressionPanel;
+  private XDebuggerExpressionComboBox myLogExpressionComboBox;
 
   public void init(Project project, XBreakpointManager breakpointManager, @NotNull B breakpoint, @Nullable XDebuggerEditorsProvider debuggerEditorsProvider) {
     init(project, breakpointManager, breakpoint);
@@ -54,13 +57,13 @@ public class XBreakpointActionsPanel<B extends XBreakpoint<?>> extends XBreakpoi
           onCheckboxChanged();
         }
       };
-      logExpressionPanel = new DefaultLogExpressionComboBoxPanel<B>(project, debuggerEditorsProvider, myBreakpoint.getSourcePosition());
-      JComponent logExpressionComponent = logExpressionPanel.getComponent();
+      myLogExpressionComboBox = new XDebuggerExpressionComboBox(project, debuggerEditorsProvider, LOG_EXPRESSION_HISTORY_ID, myBreakpoint.getSourcePosition());
+      JComponent logExpressionComponent = myLogExpressionComboBox.getComponent();
       myLogExpressionPanel.add(logExpressionComponent, BorderLayout.CENTER);
-      logExpressionComponent.setEnabled(false);
+      myLogExpressionComboBox.setEnabled(false);
       myTemporaryCheckBox.setVisible(breakpoint instanceof XLineBreakpoint);
       myLogExpressionCheckBox.addActionListener(listener);
-      DebuggerUIUtil.focusEditorOnCheck(myLogExpressionCheckBox, logExpressionComponent);
+      DebuggerUIUtil.focusEditorOnCheck(myLogExpressionCheckBox, myLogExpressionComboBox.getEditorComponent());
     }
     else {
       myLogExpressionCheckBox.setVisible(false);
@@ -80,8 +83,8 @@ public class XBreakpointActionsPanel<B extends XBreakpoint<?>> extends XBreakpoi
   }
 
   private void onCheckboxChanged() {
-    if (logExpressionPanel != null) {
-      logExpressionPanel.getComponent().setEnabled(myLogExpressionCheckBox.isSelected());
+    if (myLogExpressionComboBox != null) {
+      myLogExpressionComboBox.setEnabled(myLogExpressionCheckBox.isSelected());
     }
   }
 
@@ -93,9 +96,10 @@ public class XBreakpointActionsPanel<B extends XBreakpoint<?>> extends XBreakpoi
       myTemporaryCheckBox.setSelected(((XLineBreakpoint)myBreakpoint).isTemporary());
     }
 
-    if (logExpressionPanel != null) {
-      myLogExpressionCheckBox.setSelected(myBreakpoint.getLogExpression() != null);
-      logExpressionPanel.loadFrom(myBreakpoint);
+    if (myLogExpressionComboBox != null) {
+      XExpression logExpression = myBreakpoint.getLogExpressionObjectInt();
+      myLogExpressionComboBox.setExpression(logExpression);
+      myLogExpressionCheckBox.setSelected(myBreakpoint.isLogExpressionEnabled() && logExpression != null);
     }
     onCheckboxChanged();
   }
@@ -108,14 +112,14 @@ public class XBreakpointActionsPanel<B extends XBreakpoint<?>> extends XBreakpoi
       ((XLineBreakpoint)myBreakpoint).setTemporary(myTemporaryCheckBox.isSelected());
     }
 
-    if (logExpressionPanel != null) {
-      logExpressionPanel.saveTo(myBreakpoint);
+    if (myLogExpressionComboBox != null) {
+      myBreakpoint.setLogExpressionEnabled(myLogExpressionCheckBox.isSelected());
+      XExpression expression = myLogExpressionComboBox.getExpression();
+      myBreakpoint.setLogExpressionObject(expression != null && !expression.getExpression().isEmpty() ? expression : null);
+      myLogExpressionComboBox.saveTextInHistory();
     }
   }
 
   public void dispose() {
-    if (logExpressionPanel != null) {
-      logExpressionPanel.dispose();
-    }
   }
 }

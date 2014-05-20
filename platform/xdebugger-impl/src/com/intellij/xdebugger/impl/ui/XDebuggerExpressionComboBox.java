@@ -79,10 +79,10 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     if (enable == myComboBox.isEnabled()) return;
 
     myComboBox.setEnabled(enable);
-    myComboBox.setEditable(enable);
+    //myComboBox.setEditable(enable);
 
     if (enable) {
-      initEditor();
+      //initEditor();
     }
     else {
       myExpression = getExpression();
@@ -127,9 +127,9 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
       myComboBox.setSelectedIndex(0);
     }
 
-    if (myComboBox.isEditable()) {
+    //if (myComboBox.isEditable()) {
       myEditor.setItem(text);
-    }
+    //}
     myExpression = text;
   }
 

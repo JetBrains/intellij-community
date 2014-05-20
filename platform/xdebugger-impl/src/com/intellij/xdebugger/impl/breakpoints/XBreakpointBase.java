@@ -62,7 +62,9 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   private final XBreakpointManagerImpl myBreakpointManager;
   private Icon myIcon;
   private CustomizedBreakpointPresentation myCustomizedPresentation;
+  private boolean myConditionEnabled;
   private XExpression myCondition;
+  private boolean myLogExpressionEnabled;
   private XExpression myLogExpression;
 
   public XBreakpointBase(final XBreakpointType<Self, P> type, XBreakpointManagerImpl breakpointManager, final @Nullable P properties, final S state) {
@@ -85,8 +87,10 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   private void initExpressions() {
+    myConditionEnabled = myState.isConditionEnabled();
     BreakpointState.Condition condition = myState.getCondition();
     myCondition = condition != null ? condition.toXExpression() : null;
+    myLogExpressionEnabled = myState.isLogExpressionEnabled();
     BreakpointState.LogExpression expression = myState.getLogExpression();
     myLogExpression = expression != null ? expression.toXExpression() : null;
   }
@@ -158,9 +162,26 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     }
   }
 
+  public boolean isConditionEnabled() {
+    return myConditionEnabled;
+  }
+
+  public void setConditionEnabled(boolean conditionEnabled) {
+    myConditionEnabled = conditionEnabled;
+  }
+
+  public boolean isLogExpressionEnabled() {
+    return myLogExpressionEnabled;
+  }
+
+  public void setLogExpressionEnabled(boolean logExpressionEnabled) {
+    myLogExpressionEnabled = logExpressionEnabled;
+  }
+
   @Override
   public String getLogExpression() {
-    return myLogExpression != null ? myLogExpression.getExpression() : null;
+    XExpression expression = getLogExpressionObject();
+    return expression != null ? expression.getExpression() : null;
   }
 
   @Override
@@ -171,10 +192,14 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     }
   }
 
+  public XExpression getLogExpressionObjectInt() {
+    return myLogExpression;
+  }
+
   @Nullable
   @Override
   public XExpression getLogExpressionObject() {
-    return myLogExpression;
+    return myLogExpressionEnabled ? myLogExpression : null;
   }
 
   @Override
@@ -187,7 +212,8 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   @Override
   public String getCondition() {
-    return myCondition != null ? myCondition.getExpression() : null;
+    XExpression expression = getConditionExpression();
+    return expression != null ? expression.getExpression() : null;
   }
 
   @Override
@@ -198,10 +224,14 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     }
   }
 
+  public XExpression getConditionExpressionInt() {
+    return myCondition;
+  }
+
   @Nullable
   @Override
   public XExpression getConditionExpression() {
-    return myCondition;
+    return myConditionEnabled ? myCondition : null;
   }
 
   @Override
@@ -235,8 +265,8 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   public S getState() {
     Element propertiesElement = myProperties != null ? XmlSerializer.serialize(myProperties.getState(), SERIALIZATION_FILTERS) : null;
-    myState.setCondition(myCondition != null && !myCondition.getExpression().isEmpty() ? new BreakpointState.Condition(myCondition) : null);
-    myState.setLogExpression(myLogExpression != null && !myLogExpression.getExpression().isEmpty() ? new BreakpointState.LogExpression(myLogExpression) : null);
+    myState.setCondition(BreakpointState.Condition.create(!myConditionEnabled, myCondition));
+    myState.setLogExpression(BreakpointState.LogExpression.create(!myLogExpressionEnabled, myLogExpression));
     myState.setPropertiesElement(propertiesElement);
     return myState;
   }
