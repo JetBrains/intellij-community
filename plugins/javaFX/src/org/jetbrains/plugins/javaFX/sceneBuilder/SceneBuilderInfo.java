@@ -76,13 +76,13 @@ public class SceneBuilderInfo {
       }
       sceneBuilderRoot = sceneBuilderRootDir != null ? sceneBuilderRootDir.getParentFile() : null;
       if (sceneBuilderRoot != null) {
-        final File libFile = new File(sceneBuilderRoot, "lib");
-        if (libFile.isDirectory()) {
-          sceneBuilderLibsFile = libFile;
+        final File appFile = new File(sceneBuilderRootDir, "app");
+        if (appFile.isDirectory()) {
+          sceneBuilderLibsFile = appFile;
         }
         else {
-          final File appFile = new File(sceneBuilderRootDir, "app");
-          sceneBuilderLibsFile = appFile.isDirectory() ? appFile : null;
+          final File libFile = new File(sceneBuilderRoot, "lib");
+          sceneBuilderLibsFile = libFile.isDirectory() ? libFile : null;
         }
       }
       else {
