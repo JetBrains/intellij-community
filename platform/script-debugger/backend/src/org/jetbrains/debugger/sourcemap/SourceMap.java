@@ -56,7 +56,7 @@ public class SourceMap {
       if (resolver != null) {
         SourceResolver.Resolver resolverValue = resolver.getValue();
         if (resolverValue != null) {
-          mappings = sourceResolver.findMappings(this, resolverValue);
+          mappings = sourceResolver.findMappings(sourceFile, this, resolverValue);
         }
       }
       if (mappings == null) {

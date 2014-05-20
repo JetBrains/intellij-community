@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.Url;
 import com.intellij.util.UrlImpl;
 import com.intellij.util.Urls;
@@ -28,16 +29,25 @@ public class SourceResolver {
   // absoluteLocalPathToSourceIndex contains canonical paths too, but this map contains only used (specified in the source map) path
   private String[] sourceIndexToAbsoluteLocalPath;
 
+  // only if rawSource is filename, but not path
+  private final ObjectIntHashMap<String> nameToSourceIndex;
+
   public SourceResolver(@NotNull List<String> sources, boolean trimFileScheme, @Nullable Url baseFileUrl) {
     rawSources = sources;
     canonicalizedSources = new Url[sources.size()];
     canonicalizedSourcesMap = SystemInfo.isFileSystemCaseSensitive
                               ? new ObjectIntHashMap<Url>(canonicalizedSources.length)
                               : new ObjectIntHashMap<Url>(canonicalizedSources.length, Urls.getCaseInsensitiveUrlHashingStrategy());
+    nameToSourceIndex = createStringIntMap(-1);
     for (int i = 0; i < sources.size(); i++) {
-      Url url = canonicalizeUrl(sources.get(i), baseFileUrl, trimFileScheme, i);
+      String rawSource = sources.get(i);
+      Url url = canonicalizeUrl(rawSource, baseFileUrl, trimFileScheme, i);
       canonicalizedSources[i] = url;
       canonicalizedSourcesMap.put(url, i);
+
+      if (PathUtilRt.isValidFileName(rawSource)) {
+        nameToSourceIndex.put(rawSource, i);
+      }
     }
   }
 
@@ -79,9 +89,7 @@ public class SourceResolver {
       if (file != null) {
         if (absoluteLocalPathToSourceIndex == null) {
           // must be linked, on iterate original path must be first
-          absoluteLocalPathToSourceIndex = SystemInfo.isFileSystemCaseSensitive
-                                           ? new ObjectIntHashMap<String>(rawSources.size())
-                                           : new ObjectIntHashMap<String>(rawSources.size(), CaseInsensitiveStringHashingStrategy.INSTANCE);
+          absoluteLocalPathToSourceIndex = createStringIntMap(rawSources.size());
           sourceIndexToAbsoluteLocalPath = new String[rawSources.size()];
         }
         absoluteLocalPathToSourceIndex.put(path, sourceIndex);
@@ -93,6 +101,16 @@ public class SourceResolver {
       }
     }
     return new UrlImpl(baseUrl.getScheme(), baseUrl.getAuthority(), path, null);
+  }
+
+  @NotNull
+  private static ObjectIntHashMap<String> createStringIntMap(int initialCapacity) {
+    if (initialCapacity == -1) {
+      initialCapacity = 4;
+    }
+    return SystemInfo.isFileSystemCaseSensitive
+           ? new ObjectIntHashMap<String>(initialCapacity)
+           : new ObjectIntHashMap<String>(initialCapacity, CaseInsensitiveStringHashingStrategy.INSTANCE);
   }
 
   @Nullable
@@ -114,12 +132,12 @@ public class SourceResolver {
   }
 
   public interface Resolver {
-    int resolve(@NotNull ObjectIntHashMap<Url> map);
+    int resolve(@NotNull VirtualFile sourceFile, @NotNull ObjectIntHashMap<Url> map, @NotNull ObjectIntHashMap<String> nameToSourceIndex);
   }
 
   @Nullable
-  public MappingList findMappings(@NotNull SourceMap sourceMap, @NotNull Resolver resolver) {
-    int index = resolver.resolve(canonicalizedSourcesMap);
+  public MappingList findMappings(@NotNull VirtualFile sourceFile, @NotNull SourceMap sourceMap, @NotNull Resolver resolver) {
+    int index = resolver.resolve(sourceFile, canonicalizedSourcesMap, nameToSourceIndex);
     return index < 0 ? null : sourceMap.sourceIndexToMappings[index];
   }
 
