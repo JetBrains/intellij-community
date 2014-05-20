@@ -1817,6 +1817,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           return getFontMetrics(Font.PLAIN).stringWidth(Integer.toString(lineNumber + 2)) + 6;
         }
       });
+      myGutterComponent.updateSize();
 
       myEditorComponent.setSize(dim);
       myEditorComponent.fireResized();
