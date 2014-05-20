@@ -69,6 +69,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrReflectedMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrMethodStub;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -343,7 +344,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   @Override
   @Nullable
   public PsiCodeBlock getBody() {
-    if (PsiImplUtil.isTrait(getContainingClass())) return null;
+    if (GrTraitUtil.isTrait(getContainingClass())) return null;
     return PsiImplUtil.getOrCreatePsiCodeBlock(getBlock());
   }
 

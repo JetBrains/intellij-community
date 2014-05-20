@@ -38,7 +38,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -74,7 +73,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrI
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
@@ -97,8 +95,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kDEF;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR_STAR;
 
 public class PsiImplUtil {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil");
@@ -886,11 +882,6 @@ public class PsiImplUtil {
       sibling = sibling.getNextSibling();
     }
     return null;
-  }
-
-  @Contract("null->false")
-  public static boolean isTrait(@Nullable PsiClass aClass) {
-    return aClass instanceof GrTypeDefinition && ((GrTypeDefinition)aClass).isTrait();
   }
 
   @Nullable

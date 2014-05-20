@@ -132,7 +132,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   public static final Condition<PsiClass> IS_TRAIT = new Condition<PsiClass>() {
     @Override
     public boolean value(PsiClass aClass) {
-      return PsiImplUtil.isTrait(aClass);
+      return GrTraitUtil.isTrait(aClass);
     }
   };
 
