@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -491,9 +491,11 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
     return finishRunnable;
   }
 
-  private Processor<Document> handleCommitWithoutPsi(final PsiDocumentManagerImpl documentManager,
-                                                     Document document,
-                                                     final CommitTask task, final boolean synchronously) {
+  @NotNull
+  private Processor<Document> handleCommitWithoutPsi(@NotNull final PsiDocumentManagerImpl documentManager,
+                                                     @NotNull Document document,
+                                                     @NotNull final CommitTask task,
+                                                     final boolean synchronously) {
     final long startDocModificationTimeStamp = document.getModificationStamp();
     return new Processor<Document>() {
       @Override
