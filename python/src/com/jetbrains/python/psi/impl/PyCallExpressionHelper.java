@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.FunctionParameter;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.nameResolver.FQNamesProvider;
 import com.jetbrains.python.nameResolver.NameResolverTools;
@@ -359,6 +360,27 @@ public class PyCallExpressionHelper {
       }
     }
     return false;
+  }
+
+
+  /**
+   * Returns argument if it exists and has appropriate type
+   * @param parameter argument
+   * @param argClass expected class
+   * @param expression call expression
+   * @param <T> expected class
+   * @return argument expression or null if has wrong type of does not exist
+   */
+  @Nullable
+  public static  <T extends PsiElement> T getArgument(
+    @NotNull final FunctionParameter parameter,
+    @NotNull final Class<T> argClass,
+    @NotNull final PyCallExpression expression) {
+    final PyArgumentList list = expression.getArgumentList();
+    if (list == null) {
+      return null;
+    }
+    return PyUtil.as(list.getValueExpressionForParam(parameter), argClass);
   }
 
   @Nullable
