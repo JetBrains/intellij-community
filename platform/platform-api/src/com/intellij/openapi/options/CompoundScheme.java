@@ -19,7 +19,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Constructor;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 
 public class CompoundScheme<T extends SchemeElement> implements ExternalizableScheme {
@@ -52,11 +55,13 @@ public class CompoundScheme<T extends SchemeElement> implements ExternalizableSc
     return Collections.unmodifiableList(new ArrayList<T>(myElements));
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myName;
   }
 
+  @Override
   public void setName(@NotNull final String name) {
     myName = name;
     for (T template : myElements) {
@@ -65,8 +70,8 @@ public class CompoundScheme<T extends SchemeElement> implements ExternalizableSc
   }
 
   public void removeElement(final T template) {
-    for (Iterator templateIterator = myElements.iterator(); templateIterator.hasNext();) {
-      T t = (T)templateIterator.next();
+    for (Iterator<T> templateIterator = myElements.iterator(); templateIterator.hasNext();) {
+      T t = templateIterator.next();
       if (t.getKey() != null && t.getKey().equals(template.getKey())) {
         templateIterator.remove();
       }
@@ -77,6 +82,7 @@ public class CompoundScheme<T extends SchemeElement> implements ExternalizableSc
     return myElements.isEmpty();
   }
 
+  @Override
   @NotNull
   public ExternalInfo getExternalInfo() {
     return myExternalInfo;
@@ -85,6 +91,7 @@ public class CompoundScheme<T extends SchemeElement> implements ExternalizableSc
   public CompoundScheme copy() {
     CompoundScheme result = createNewInstance(getName());
     for (T element : myElements) {
+      //noinspection unchecked
       result.addElement(element.copy());
     }
     result.getExternalInfo().copy(getExternalInfo());
