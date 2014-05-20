@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.FunctionParameter;
 import com.jetbrains.python.nameResolver.FQNamesProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
@@ -65,6 +66,16 @@ public interface PyCallExpression extends PyExpression {
    */
   @Nullable
   <T extends PsiElement> T getArgument(int index, String keyword, Class<T> argClass);
+
+  /**
+   * Returns the argument if one is present in the list.
+   *
+   * @param parameter parameter
+   * @param argClass argument expected type
+   * @return the argument or null
+   */
+  @Nullable
+  <T extends PsiElement> T getArgument(@NotNull final FunctionParameter parameter, @NotNull Class<T> argClass);
 
   @Nullable
   PyExpression getKeywordArgument(String keyword);

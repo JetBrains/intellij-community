@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.FunctionParameter;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
@@ -126,6 +127,12 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
       return argClass.isInstance(argument) ? argClass.cast(argument) : null;
     }
     return getArgument(index, argClass);
+  }
+
+  @Nullable
+  @Override
+  public <T extends PsiElement> T getArgument(@NotNull final FunctionParameter parameter, @NotNull final Class<T> argClass) {
+    return PyCallExpressionHelper.getArgument(parameter, argClass, this);
   }
 
   @Override
