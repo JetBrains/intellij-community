@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -34,7 +35,8 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class CopyPasteFoldingProcessor implements CopyPastePostProcessor<FoldingTransferableData> {
+public class CopyPasteFoldingProcessor extends CopyPastePostProcessor<FoldingTransferableData> {
+  @NotNull
   @Override
   public List<FoldingTransferableData> collectTransferableData(final PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets) {
     // might be slow
@@ -60,6 +62,7 @@ public class CopyPasteFoldingProcessor implements CopyPastePostProcessor<Folding
     return Collections.singletonList(new FoldingTransferableData(list.toArray(new FoldingData[list.size()])));
   }
 
+  @NotNull
   @Override
   public List<FoldingTransferableData> extractTransferableData(final Transferable content) {
     FoldingTransferableData foldingData = null;
@@ -79,7 +82,7 @@ public class CopyPasteFoldingProcessor implements CopyPastePostProcessor<Folding
     if (foldingData != null) { // copy to prevent changing of original by convertLineSeparators
       return Collections.singletonList(foldingData.clone());
     }
-    return null;
+    return Collections.emptyList();
   }
 
   @Override

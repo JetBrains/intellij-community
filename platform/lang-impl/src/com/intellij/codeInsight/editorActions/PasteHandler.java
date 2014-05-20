@@ -160,7 +160,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       Collection<TextBlockTransferableData> allValues = new ArrayList<TextBlockTransferableData>();
       for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
         List<? extends TextBlockTransferableData> data = processor.extractTransferableData(content);
-        if (data != null) {
+        if (!data.isEmpty()) {
           extraData.put(processor, data);
           allValues.addAll(data);
         }
