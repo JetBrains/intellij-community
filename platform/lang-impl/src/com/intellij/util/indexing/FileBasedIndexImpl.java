@@ -159,7 +159,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     final MessageBusConnection connection = bus.connect();
     connection.subscribe(PsiDocumentTransactionListener.TOPIC, new PsiDocumentTransactionListener() {
       @Override
-      public void transactionStarted(final Document doc, final PsiFile file) {
+      public void transactionStarted(@NotNull final Document doc, @NotNull final PsiFile file) {
         if (file != null) {
           myTransactionMap = myTransactionMap.plus(doc, file);
           myUpToDateIndicesForUnsavedOrTransactedDocuments.clear();
@@ -167,7 +167,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
 
       @Override
-      public void transactionCompleted(final Document doc, final PsiFile file) {
+      public void transactionCompleted(@NotNull final Document doc, @NotNull final PsiFile file) {
         myTransactionMap = myTransactionMap.minus(doc);
       }
     });
