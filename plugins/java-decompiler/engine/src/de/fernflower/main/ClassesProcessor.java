@@ -162,10 +162,16 @@ public class ClassesProcessor {
 						
 						String superClass = stack.removeFirst();
 						ClassNode supernode = mapRootClasses.get(superClass);
-						
+
 						HashSet<String> setNestedClasses = mapNestedClassReferences.get(superClass);
 						if(setNestedClasses != null) {
-							for(String nestedClass : setNestedClasses) {
+              StructClass scl = supernode.classStruct;
+              StructInnerClassesAttribute inner = (StructInnerClassesAttribute)scl.getAttributes().getWithKey("InnerClasses");
+              for(int i=0;i<inner.getStringentries().size();i++) {
+                String nestedClass = inner.getStringentries().get(i)[0];
+                if(!setNestedClasses.contains(nestedClass)) {
+                  continue;
+                }
 								
 								if(setVisited.contains(nestedClass)) {
 									continue;
