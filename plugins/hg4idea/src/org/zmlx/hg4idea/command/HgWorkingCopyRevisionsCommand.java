@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgRemoteCommandExecutor;
 import org.zmlx.hg4idea.util.HgChangesetUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
@@ -136,7 +137,7 @@ public class HgWorkingCopyRevisionsCommand {
    */
   @NotNull
   public Couple<HgRevisionNumber> identify(@NotNull VirtualFile repo) {
-    HgCommandExecutor commandExecutor = new HgCommandExecutor(myProject);
+    HgRemoteCommandExecutor commandExecutor = new HgRemoteCommandExecutor(myProject);
     commandExecutor.setSilent(true);
     HgCommandResult result = commandExecutor.executeInCurrentThread(repo, "identify", Arrays.asList("--num", "--id"));
     if (result == null) {
