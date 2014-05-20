@@ -79,12 +79,17 @@ public class JavaExecutionStack extends XExecutionStack {
   public JavaStackFrame getTopFrame() {
     if (!myTopFrameReady) {
       //TODO: remove sync calculation
-      myDebugProcess.getManagerThread().invokeAndWait(new DebuggerCommandImpl() {
-        @Override
-        protected void action() throws Exception {
-          myTopFrame = calcTopFrame();
-        }
-      });
+      if (DebuggerManagerThreadImpl.isManagerThread()) {
+        myTopFrame = calcTopFrame();
+      }
+      else {
+        myDebugProcess.getManagerThread().invokeAndWait(new DebuggerCommandImpl() {
+          @Override
+          protected void action() throws Exception {
+            myTopFrame = calcTopFrame();
+          }
+        });
+      }
     }
     return myTopFrame;
   }
