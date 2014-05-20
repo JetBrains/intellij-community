@@ -18,6 +18,7 @@ package com.intellij.tools;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -41,7 +42,7 @@ public abstract class BaseExternalToolsGroup<T extends Tool> extends SimpleActio
     List<ToolsGroup<T>> groups = getToolsGroups();
     for (ToolsGroup group : groups) {
       String groupName = group.getName();
-      if (groupName != null && groupName.trim().length() > 0) {
+      if (!StringUtil.isEmptyOrSpaces(groupName)) {
         SimpleActionGroup subgroup = new SimpleActionGroup();
         subgroup.getTemplatePresentation().setText(groupName, false);
         subgroup.setPopup(true);
