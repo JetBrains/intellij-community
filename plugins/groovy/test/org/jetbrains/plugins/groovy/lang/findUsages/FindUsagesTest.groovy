@@ -429,7 +429,7 @@ print a<caret>a
   }
 
   void testTraitField() {
-    doTest(4, '''
+    doTest(6, '''
 trait T {
   public int fi<caret>eld = 4
 
