@@ -59,9 +59,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kTRUE;
-
 /**
  * @author ven
  */
@@ -115,60 +112,60 @@ public class TypesUtil {
   private static final String NULL = "null";
 
   static {
-    ourPrimitiveTypesToClassNames.put(mSTRING_LITERAL, CommonClassNames.JAVA_LANG_STRING);
-    ourPrimitiveTypesToClassNames.put(mGSTRING_LITERAL, CommonClassNames.JAVA_LANG_STRING);
-    ourPrimitiveTypesToClassNames.put(mREGEX_LITERAL, CommonClassNames.JAVA_LANG_STRING);
-    ourPrimitiveTypesToClassNames.put(mDOLLAR_SLASH_REGEX_LITERAL, CommonClassNames.JAVA_LANG_STRING);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.mSTRING_LITERAL, CommonClassNames.JAVA_LANG_STRING);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.mGSTRING_LITERAL, CommonClassNames.JAVA_LANG_STRING);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.mREGEX_LITERAL, CommonClassNames.JAVA_LANG_STRING);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL, CommonClassNames.JAVA_LANG_STRING);
     ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.mNUM_INT, CommonClassNames.JAVA_LANG_INTEGER);
     ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.mNUM_LONG, CommonClassNames.JAVA_LANG_LONG);
-    ourPrimitiveTypesToClassNames.put(mNUM_FLOAT, CommonClassNames.JAVA_LANG_FLOAT);
-    ourPrimitiveTypesToClassNames.put(mNUM_DOUBLE, CommonClassNames.JAVA_LANG_DOUBLE);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.mNUM_FLOAT, CommonClassNames.JAVA_LANG_FLOAT);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.mNUM_DOUBLE, CommonClassNames.JAVA_LANG_DOUBLE);
     ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.mNUM_BIG_INT, GroovyCommonClassNames.JAVA_MATH_BIG_INTEGER);
     ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.mNUM_BIG_DECIMAL, GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL);
-    ourPrimitiveTypesToClassNames.put(kFALSE, CommonClassNames.JAVA_LANG_BOOLEAN);
-    ourPrimitiveTypesToClassNames.put(kTRUE, CommonClassNames.JAVA_LANG_BOOLEAN);
-    ourPrimitiveTypesToClassNames.put(kNULL, NULL);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kFALSE, CommonClassNames.JAVA_LANG_BOOLEAN);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kTRUE, CommonClassNames.JAVA_LANG_BOOLEAN);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kNULL, NULL);
 
-    ourPrimitiveTypesToClassNames.put(kINT, CommonClassNames.JAVA_LANG_INTEGER);
-    ourPrimitiveTypesToClassNames.put(kLONG, CommonClassNames.JAVA_LANG_LONG);
-    ourPrimitiveTypesToClassNames.put(kFLOAT, CommonClassNames.JAVA_LANG_FLOAT);
-    ourPrimitiveTypesToClassNames.put(kDOUBLE, CommonClassNames.JAVA_LANG_DOUBLE);
-    ourPrimitiveTypesToClassNames.put(kBOOLEAN, CommonClassNames.JAVA_LANG_BOOLEAN);
-    ourPrimitiveTypesToClassNames.put(kCHAR, CommonClassNames.JAVA_LANG_CHARACTER);
-    ourPrimitiveTypesToClassNames.put(kBYTE, CommonClassNames.JAVA_LANG_BYTE);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kINT, CommonClassNames.JAVA_LANG_INTEGER);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kLONG, CommonClassNames.JAVA_LANG_LONG);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kFLOAT, CommonClassNames.JAVA_LANG_FLOAT);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kDOUBLE, CommonClassNames.JAVA_LANG_DOUBLE);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kBOOLEAN, CommonClassNames.JAVA_LANG_BOOLEAN);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kCHAR, CommonClassNames.JAVA_LANG_CHARACTER);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kBYTE, CommonClassNames.JAVA_LANG_BYTE);
   }
 
   private static final Map<IElementType, String> ourOperationsToOperatorNames = new HashMap<IElementType, String>();
   private static final Map<IElementType, String> ourUnaryOperationsToOperatorNames = new HashMap<IElementType, String>();
 
   static {
-    ourOperationsToOperatorNames.put(mPLUS, "plus");
-    ourOperationsToOperatorNames.put(mMINUS, "minus");
-    ourOperationsToOperatorNames.put(mBAND, "and");
-    ourOperationsToOperatorNames.put(mBOR, "or");
-    ourOperationsToOperatorNames.put(mBXOR, "xor");
-    ourOperationsToOperatorNames.put(mDIV, "div");
-    ourOperationsToOperatorNames.put(mMOD, "mod");
-    ourOperationsToOperatorNames.put(mSTAR, "multiply");
-    ourOperationsToOperatorNames.put(kAS, "asType");
-    ourOperationsToOperatorNames.put(mCOMPARE_TO, "compareTo");
-    ourOperationsToOperatorNames.put(mGT, "compareTo");
-    ourOperationsToOperatorNames.put(mGE, "compareTo");
-    ourOperationsToOperatorNames.put(mLT, "compareTo");
-    ourOperationsToOperatorNames.put(mLE, "compareTo");
-    ourOperationsToOperatorNames.put(mSTAR_STAR, "power");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mPLUS, "plus");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mMINUS, "minus");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mBAND, "and");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mBOR, "or");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mBXOR, "xor");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mDIV, "div");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mMOD, "mod");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mSTAR, "multiply");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.kAS, "asType");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mCOMPARE_TO, "compareTo");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mGT, "compareTo");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mGE, "compareTo");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mLT, "compareTo");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mLE, "compareTo");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mSTAR_STAR, "power");
     ourOperationsToOperatorNames.put(GroovyElementTypes.COMPOSITE_LSHIFT_SIGN, "leftShift");
     ourOperationsToOperatorNames.put(GroovyElementTypes.COMPOSITE_RSHIFT_SIGN, "rightShift");
     ourOperationsToOperatorNames.put(GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN, "rightShiftUnsigned");
-    ourOperationsToOperatorNames.put(mEQUAL, "equals");
-    ourOperationsToOperatorNames.put(mNOT_EQUAL, "equals");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mEQUAL, "equals");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mNOT_EQUAL, "equals");
 
-    ourUnaryOperationsToOperatorNames.put(mLNOT, "asBoolean");
-    ourUnaryOperationsToOperatorNames.put(mPLUS, "positive");
-    ourUnaryOperationsToOperatorNames.put(mMINUS, "negative");
-    ourUnaryOperationsToOperatorNames.put(mDEC, "previous");
-    ourUnaryOperationsToOperatorNames.put(mINC, "next");
-    ourUnaryOperationsToOperatorNames.put(mBNOT, "bitwiseNegate");
+    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mLNOT, "asBoolean");
+    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mPLUS, "positive");
+    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mMINUS, "negative");
+    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mDEC, "previous");
+    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mINC, "next");
+    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mBNOT, "bitwiseNegate");
   }
 
   private static final TObjectIntHashMap<String> TYPE_TO_RANK = new TObjectIntHashMap<String>();
@@ -599,7 +596,7 @@ public class TypesUtil {
 
   @Nullable
   public static PsiType getPsiType(PsiElement context, IElementType elemType) {
-    if (elemType == kNULL) {
+    if (elemType == GroovyTokenTypes.kNULL) {
       return PsiType.NULL;
     }
     final String typeName = getBoxedTypeName(elemType);
@@ -771,49 +768,6 @@ public class TypesUtil {
 
     if (containerType instanceof PsiArrayType) return ((PsiArrayType)containerType).getComponentType();
     return PsiUtil.extractIterableTypeParameter(containerType, false);
-  }
-
-  @Nullable
-  public static PsiClassType createSimilarCollection(@Nullable PsiType collection, Project project, PsiType... itemType) {
-    if (InheritanceUtil.isInheritor(collection, "java.util.SortedSet")) {
-      return createCollection(project, "java.util.SortedSet", itemType);
-    }
-    if (InheritanceUtil.isInheritor(collection, "java.util.LinkedHashSet")) {
-      return createCollection(project, "java.util.LinkedHashSet", itemType);
-    }
-    if (InheritanceUtil.isInheritor(collection, CommonClassNames.JAVA_UTIL_SET)) {
-      return createCollection(project, "java.util.HashSet", itemType);
-    }
-    if (InheritanceUtil.isInheritor(collection, "java.util.LinkedList")) {
-      return createCollection(project, "java.util.LInkedList", itemType);
-    }
-    if (InheritanceUtil.isInheritor(collection, "java.util.Stack")) {
-      return createCollection(project, "java.util.Stack", itemType);
-    }
-    if (InheritanceUtil.isInheritor(collection, "java.util.Vector")) {
-      return createCollection(project, "java.util.Vector", itemType);
-    }
-    if (InheritanceUtil.isInheritor(collection, CommonClassNames.JAVA_UTIL_LIST)) {
-      return createCollection(project, "java.util.ArrayList", itemType);
-    }
-    if (InheritanceUtil.isInheritor(collection, "java.util.Queue")) {
-      return createCollection(project, "java.util.LinkedList", itemType);
-    }
-
-    return createCollection(project, "java.util.ArrayList", itemType);
-  }
-
-  @Nullable
-  private static PsiClassType createCollection(Project project, String collectionName, PsiType... item) {
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    PsiClass collection =
-      JavaPsiFacade.getInstance(project).findClass(collectionName, GlobalSearchScope.allScope(project));
-    if (collection == null) return null;
-
-    PsiTypeParameter[] parameters = collection.getTypeParameters();
-    if (parameters.length != 1) return null;
-
-    return factory.createType(collection, item);
   }
 
   @Nullable

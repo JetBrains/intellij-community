@@ -133,8 +133,10 @@ original_warn = ui.ui.warn
 @monkeypatch_method(ui.ui)
 def warn(self, *msg):
     original_warn(self, *msg)
-    
-    port = int(self.config( 'hg4ideawarn', 'port', None, True))
+    hg4ideaWarnConfig = self.config('hg4ideawarn', 'port', None, True)
+    if hg4ideaWarnConfig is None:
+        return
+    port = int(hg4ideaWarnConfig)
   
     if not port:
         raise util.Abort("No port was specified")

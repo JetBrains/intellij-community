@@ -28,7 +28,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -139,23 +139,23 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
         PsiMethod[] defMethods = new PsiMethod[4];
         final PsiManagerEx manager = getManager();
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
-        defMethods[0] = new LightMethodBuilder(manager, GroovyFileType.GROOVY_LANGUAGE, "values")
+        defMethods[0] = new LightMethodBuilder(manager, GroovyLanguage.INSTANCE, "values")
           .setMethodReturnType(factory.createTypeFromText(CommonClassNames.JAVA_UTIL_COLLECTION + "<" + getName() + ">", GrEnumTypeDefinitionImpl.this))
           .setContainingClass(GrEnumTypeDefinitionImpl.this)
           .addModifier(PsiModifier.PUBLIC)
           .addModifier(PsiModifier.STATIC);
 
-        defMethods[1] = new LightMethodBuilder(manager, GroovyFileType.GROOVY_LANGUAGE, "next")
+        defMethods[1] = new LightMethodBuilder(manager, GroovyLanguage.INSTANCE, "next")
           .setMethodReturnType(factory.createType(GrEnumTypeDefinitionImpl.this))
           .setContainingClass(GrEnumTypeDefinitionImpl.this)
           .addModifier(PsiModifier.PUBLIC);
 
-        defMethods[2] = new LightMethodBuilder(manager, GroovyFileType.GROOVY_LANGUAGE, "previous")
+        defMethods[2] = new LightMethodBuilder(manager, GroovyLanguage.INSTANCE, "previous")
           .setMethodReturnType(factory.createType(GrEnumTypeDefinitionImpl.this))
           .setContainingClass(GrEnumTypeDefinitionImpl.this)
           .addModifier(PsiModifier.PUBLIC);
 
-        defMethods[3] = new LightMethodBuilder(manager, GroovyFileType.GROOVY_LANGUAGE, "valueOf")
+        defMethods[3] = new LightMethodBuilder(manager, GroovyLanguage.INSTANCE, "valueOf")
           .setMethodReturnType(factory.createType(GrEnumTypeDefinitionImpl.this))
           .setContainingClass(GrEnumTypeDefinitionImpl.this)
           .addParameter("name", CommonClassNames.JAVA_LANG_STRING)

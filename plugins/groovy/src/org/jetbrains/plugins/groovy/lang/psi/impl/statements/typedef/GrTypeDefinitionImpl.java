@@ -76,8 +76,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSEMI;
-
 /**
  * @author ilyas
  */

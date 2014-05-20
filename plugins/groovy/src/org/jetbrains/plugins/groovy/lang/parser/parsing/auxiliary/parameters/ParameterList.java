@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -27,16 +28,16 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @author: Dmitry.Krasilschikov, ilyas
  * @date: 26.03.2007
  */
-public class ParameterList implements GroovyElementTypes {
+public class ParameterList {
 
   /**
    * @param builder Given builder
    * @param ending  ending:  -> or ) in various cases
    */
   public static void parse(PsiBuilder builder, IElementType ending, GroovyParser parser) {
-    if (builder.getTokenType() == mRPAREN && mRPAREN.equals(ending)) {
+    if (builder.getTokenType() == GroovyTokenTypes.mRPAREN && GroovyTokenTypes.mRPAREN.equals(ending)) {
       PsiBuilder.Marker marker = builder.mark();
-      marker.done(PARAMETERS_LIST);
+      marker.done(GroovyElementTypes.PARAMETERS_LIST);
       return;
     }
 
@@ -46,29 +47,29 @@ public class ParameterList implements GroovyElementTypes {
     if (!ParameterDeclaration.parseSimpleParameter(builder, parser)) {
       marker.rollbackTo();
       marker = builder.mark();
-      marker.done(PARAMETERS_LIST);
+      marker.done(GroovyElementTypes.PARAMETERS_LIST);
       return;
     }
 
     while (!builder.eof() &&
-            mCOMMA.equals(builder.getTokenType())) {
-      ParserUtils.getToken(builder, mCOMMA);
-      ParserUtils.getToken(builder, mNLS);
+            GroovyTokenTypes.mCOMMA.equals(builder.getTokenType())) {
+      ParserUtils.getToken(builder, GroovyTokenTypes.mCOMMA);
+      ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
       if (!ParameterDeclaration.parseSimpleParameter(builder, parser)) {
         builder.error(GroovyBundle.message("param.expected"));
       }
     }
 
-    ParserUtils.getToken(builder, mNLS);
+    ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
 
-    if ((ending.equals(mCLOSABLE_BLOCK_OP) &&
-            mCLOSABLE_BLOCK_OP.equals(builder.getTokenType()))
-            || ending.equals(mRPAREN)) {
-      marker.done(PARAMETERS_LIST);
+    if ((ending.equals(GroovyTokenTypes.mCLOSABLE_BLOCK_OP) &&
+            GroovyTokenTypes.mCLOSABLE_BLOCK_OP.equals(builder.getTokenType()))
+            || ending.equals(GroovyTokenTypes.mRPAREN)) {
+      marker.done(GroovyElementTypes.PARAMETERS_LIST);
     } else {
       marker.rollbackTo();
       marker = builder.mark();
-      marker.done(PARAMETERS_LIST);
+      marker.done(GroovyElementTypes.PARAMETERS_LIST);
     }
 
   }

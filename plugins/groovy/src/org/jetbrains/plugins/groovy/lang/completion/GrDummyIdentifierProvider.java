@@ -30,8 +30,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-
 /**
  * Created by Max Medvedev on 14/05/14
  */
@@ -105,7 +103,7 @@ public class GrDummyIdentifierProvider {
     HighlighterIterator iterator = ((EditorEx)myContext.getEditor()).getHighlighter().createIterator(myContext.getStartOffset());
     if (iterator.atEnd()) return false;
 
-    if (iterator.getTokenType() == mIDENT) {
+    if (iterator.getTokenType() == GroovyTokenTypes.mIDENT) {
       iterator.advance();
     }
 

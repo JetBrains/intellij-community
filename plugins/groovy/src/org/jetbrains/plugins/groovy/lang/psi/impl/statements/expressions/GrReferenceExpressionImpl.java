@@ -36,7 +36,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -69,8 +69,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 import org.jetbrains.plugins.groovy.util.ResolveProfiler;
 
 import java.util.*;
-
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * @author ilyas
@@ -138,7 +136,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
           if (!InheritanceUtil.isInheritor(containingClass, CommonClassNames.JAVA_UTIL_MAP)) continue;
           final String name = containingClass.getQualifiedName();
           if (name != null && name.startsWith("java.")) continue;
-          if (containingClass.getLanguage() != GroovyFileType.GROOVY_LANGUAGE &&
+          if (containingClass.getLanguage() != GroovyLanguage.INSTANCE &&
               !InheritanceUtil.isInheritor(containingClass, GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME)) {
             continue;
           }
@@ -158,13 +156,13 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     if (name == null || nameElement == null) return GroovyResolveResult.EMPTY_ARRAY;
 
     IElementType nameType = nameElement.getNode().getElementType();
-    if (nameType == kTHIS) {
+    if (nameType == GroovyTokenTypes.kTHIS) {
       ArrayList<GroovyResolveResult> results = new ArrayList<GroovyResolveResult>();
       if (GrReferenceResolveUtil.resolveThisExpression(this, results)) {
         return results.toArray(new GroovyResolveResult[results.size()]);
       }
     }
-    else if (nameType == kSUPER) {
+    else if (nameType == GroovyTokenTypes.kSUPER) {
       ArrayList<GroovyResolveResult> results = new ArrayList<GroovyResolveResult>();
       if (GrReferenceResolveUtil.resolveSuperExpression(this, results)) {
         return results.toArray(new GroovyResolveResult[results.size()]);
@@ -173,8 +171,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
 
     EnumSet<ClassHint.ResolveKind> kinds = getParent() instanceof GrReferenceExpression
-                                           ? ResolverProcessor.RESOLVE_KINDS_CLASS_PACKAGE
-                                           : ResolverProcessor.RESOLVE_KINDS_CLASS;
+                                           ? ClassHint.RESOLVE_KINDS_CLASS_PACKAGE
+                                           : ClassHint.RESOLVE_KINDS_CLASS;
 
     GroovyResolveResult[] classCandidates = null;
 
@@ -267,7 +265,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     if (!isQualified() && getContext() instanceof GrMethodCall) {
       for (PsiElement e = this.getContext(); e != null; e = e.getContext()) {
         if (e instanceof GrClosableBlock) {
-          ResolveState state = ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, e);
+          ResolveState state = ResolveState.initial().put(ClassHint.RESOLVE_CONTEXT, e);
           for (ClosureMissingMethodContributor contributor : ClosureMissingMethodContributor.EP_NAME.getExtensions()) {
             if (!contributor.processMembers((GrClosableBlock)e, methodResolver, this, state)) {
               return;
@@ -313,7 +311,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       for (GroovyResolveResult result : shapeResults.second) {
         final ResolveState state = ResolveState.initial().
           put(PsiSubstitutor.KEY, result.getSubstitutor()).
-          put(ResolverProcessor.RESOLVE_CONTEXT, result.getCurrentFileResolveContext()).
+          put(ClassHint.RESOLVE_CONTEXT, result.getCurrentFileResolveContext()).
           put(SpreadState.SPREAD_STATE, result.getSpreadState());
         PsiElement element = result.getElement();
         assert element != null;
@@ -817,7 +815,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @NotNull
   private Kind getKind() {
-    if (getDotTokenType() == mMEMBER_POINTER) return Kind.METHOD_OR_PROPERTY;
+    if (getDotTokenType() == GroovyTokenTypes.mMEMBER_POINTER) return Kind.METHOD_OR_PROPERTY;
 
     PsiElement parent = getParent();
     if (parent instanceof GrMethodCallExpression || parent instanceof GrApplicationStatement) {
@@ -835,12 +833,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @Override
   public boolean hasAt() {
-    return findChildByType(mAT) != null;
+    return findChildByType(GroovyTokenTypes.mAT) != null;
   }
 
   @Override
   public boolean hasMemberPointer() {
-    return findChildByType(mMEMBER_POINTER) != null;
+    return findChildByType(GroovyTokenTypes.mMEMBER_POINTER) != null;
   }
 
   @Override

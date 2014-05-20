@@ -121,7 +121,7 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
   public FrameworkSupportConfigurable getFrameworkConfigurable(@NotNull @NonNls String providerId) {
     FrameworkSupportConfigurable configurable = findFrameworkConfigurable(providerId);
     if (configurable == null) {
-      throw new IllegalArgumentException("provider '" + providerId + " not found");
+      throw new IllegalArgumentException("provider '" + providerId + "' not found");
     }
     return configurable;
   }

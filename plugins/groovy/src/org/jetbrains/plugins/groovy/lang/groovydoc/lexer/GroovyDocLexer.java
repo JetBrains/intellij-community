@@ -31,10 +31,10 @@ import java.io.IOException;
 /**
  * @author ilyas
  */
-public class GroovyDocLexer extends MergingLexerAdapter implements GroovyDocTokenTypes {
+public class GroovyDocLexer extends MergingLexerAdapter {
 
   private static final TokenSet TOKENS_TO_MERGE = TokenSet.create(
-      mGDOC_COMMENT_DATA,
+      GroovyDocTokenTypes.mGDOC_COMMENT_DATA,
       TokenType.WHITE_SPACE
   );
 
@@ -42,23 +42,23 @@ public class GroovyDocLexer extends MergingLexerAdapter implements GroovyDocToke
     super(new LookAheadLexer(new AsteriskStripperLexer(new _GroovyDocLexer())) {
       @Override
       protected void lookAhead(Lexer baseLexer) {
-        if (baseLexer.getTokenType() == mGDOC_INLINE_TAG_END) {
-          advanceAs(baseLexer, mGDOC_COMMENT_DATA);
+        if (baseLexer.getTokenType() == GroovyDocTokenTypes.mGDOC_INLINE_TAG_END) {
+          advanceAs(baseLexer, GroovyDocTokenTypes.mGDOC_COMMENT_DATA);
           return;
         }
         
-        if (baseLexer.getTokenType() == mGDOC_INLINE_TAG_START) {
+        if (baseLexer.getTokenType() == GroovyDocTokenTypes.mGDOC_INLINE_TAG_START) {
           int depth = 0;
           while (true) {
             IElementType type = baseLexer.getTokenType();
             if (type == null) {
               break;
             }
-            if (type == mGDOC_INLINE_TAG_START) {
+            if (type == GroovyDocTokenTypes.mGDOC_INLINE_TAG_START) {
               depth++;
             }
             advanceLexer(baseLexer);
-            if (type == mGDOC_INLINE_TAG_END) {
+            if (type == GroovyDocTokenTypes.mGDOC_INLINE_TAG_END) {
               depth--;
             }
             if (depth == 0) {
@@ -166,7 +166,7 @@ public class GroovyDocLexer extends MergingLexerAdapter implements GroovyDocToke
 
         myInLeadingSpace = true;
         if (myBufferIndex < myTokenEndOffset) {
-          myTokenType = mGDOC_ASTERISKS;
+          myTokenType = GroovyDocTokenTypes.mGDOC_ASTERISKS;
           return;
         }
       }
@@ -191,7 +191,7 @@ public class GroovyDocLexer extends MergingLexerAdapter implements GroovyDocToke
         if (myBufferIndex < myTokenEndOffset) {
           myTokenType = lf || state == _GroovyDocLexer.PARAM_TAG_SPACE || state == _GroovyDocLexer.TAG_DOC_SPACE || state == _GroovyDocLexer.INLINE_TAG_NAME || state == _GroovyDocLexer.DOC_TAG_VALUE_IN_PAREN
               ? TokenType.WHITE_SPACE
-              : mGDOC_COMMENT_DATA;
+              : GroovyDocTokenTypes.mGDOC_COMMENT_DATA;
 
           return;
         }

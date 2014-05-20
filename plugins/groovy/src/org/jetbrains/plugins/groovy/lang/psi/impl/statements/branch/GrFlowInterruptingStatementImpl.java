@@ -21,7 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrFlowInterruptingStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrLabelReference;
@@ -37,7 +37,7 @@ public abstract class GrFlowInterruptingStatementImpl extends GroovyPsiElementIm
   @Override
   @Nullable
   public PsiElement getLabelIdentifier() {
-    return findChildByType(GroovyElementTypes.mIDENT);
+    return findChildByType(GroovyTokenTypes.mIDENT);
   }
 
   @Override

@@ -64,10 +64,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kNEW;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mASSIGN;
-
 /**
  * @author Maxim.Medvedev
  */
@@ -77,7 +73,8 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
     PlatformPatterns.psiElement().withSuperParent(3, PlatformPatterns.psiElement(GrTypeCastExpression.class).withParent(
       StandardPatterns.or(PlatformPatterns.psiElement(GrAssignmentExpression.class), PlatformPatterns.psiElement(GrVariable.class))));
 
-  static final ElementPattern<PsiElement> AFTER_NEW = PlatformPatterns.psiElement().afterLeaf(PlatformPatterns.psiElement(GroovyTokenTypes.kNEW));
+  static final ElementPattern<PsiElement> AFTER_NEW = PlatformPatterns.psiElement().afterLeaf(PlatformPatterns.psiElement(
+    GroovyTokenTypes.kNEW));
 
   private static final ElementPattern<PsiElement> IN_ANNOTATION = PlatformPatterns
     .psiElement().withParent(PlatformPatterns.psiElement(GrReferenceExpression.class).withParent(GrAnnotationNameValuePair.class));
@@ -371,7 +368,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
         GrExpression lvalue = assignment.getLValue();
         GrExpression rvalue = assignment.getRValue();
 
-        if (pparent == rvalue && optoken == mASSIGN) {
+        if (pparent == rvalue && optoken == GroovyTokenTypes.mASSIGN) {
           return lvalue.getNominalType();
         }
       }

@@ -22,22 +22,19 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeArguments;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrReferenceListElementType;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR;
-
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 20.03.2007
  */
 
-public class ReferenceElement implements GroovyElementTypes {
+public class ReferenceElement {
   public static final String DUMMY_IDENTIFIER = CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED; //inserted by completion
 
   @NotNull
@@ -48,18 +45,18 @@ public class ReferenceElement implements GroovyElementTypes {
     PsiBuilder.Marker isMarker = builder.mark();
 
     if (!ParserUtils.getToken(builder, startElement)) {
-      if (clauseType == IMPLEMENTS_CLAUSE && (type == ClassType.INTERFACE || type == ClassType.ANNOTATION) ||
-          clauseType == EXTENDS_CLAUSE && type == ClassType.ENUM ||
+      if (clauseType == GroovyElementTypes.IMPLEMENTS_CLAUSE && (type == ClassType.INTERFACE || type == ClassType.ANNOTATION) ||
+          clauseType == GroovyElementTypes.EXTENDS_CLAUSE && type == ClassType.ENUM ||
           type == ClassType.ANNOTATION) {
         isMarker.rollbackTo();
-        return NONE;
+        return GroovyElementTypes.NONE;
       }
 
       return finish(builder, clauseType, isMarker, null, null);
     }
 
     PsiBuilder.Marker space = builder.mark();
-    ParserUtils.getToken(builder, mNLS);
+    ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
 
     if (parseReferenceElement(builder) == ReferenceElementResult.FAIL) {
       return finish(builder, clauseType, isMarker, space, GroovyBundle.message("identifier.expected"));
@@ -68,9 +65,9 @@ public class ReferenceElement implements GroovyElementTypes {
       space.drop();
     }
 
-    while (ParserUtils.getToken(builder, mCOMMA)) {
+    while (ParserUtils.getToken(builder, GroovyTokenTypes.mCOMMA)) {
       space = builder.mark();
-      ParserUtils.getToken(builder, mNLS);
+      ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
 
       if (parseReferenceElement(builder) == ReferenceElementResult.FAIL) {
         return finish(builder, clauseType, isMarker, space, GroovyBundle.message("identifier.expected"));
@@ -136,22 +133,25 @@ public class ReferenceElement implements GroovyElementTypes {
       hasTypeArguments = true;
     }
 
-    internalTypeMarker.done(REFERENCE_ELEMENT);
+    internalTypeMarker.done(GroovyElementTypes.REFERENCE_ELEMENT);
     internalTypeMarker = internalTypeMarker.precede();
 
-    boolean hasDots = builder.getTokenType() == mDOT;
+    boolean hasDots = builder.getTokenType() == GroovyTokenTypes.mDOT;
 
-    while (builder.getTokenType() == mDOT) {
+    while (builder.getTokenType() == GroovyTokenTypes.mDOT) {
 
-      if ((ParserUtils.lookAhead(builder, mDOT, mSTAR) || ParserUtils.lookAhead(builder, mDOT, mNLS, mSTAR)) && lineFeedAllowed) {
+      if ((ParserUtils.lookAhead(builder, GroovyTokenTypes.mDOT, GroovyTokenTypes.mSTAR) || ParserUtils.lookAhead(builder,
+                                                                                                                  GroovyTokenTypes.mDOT,
+                                                                                                                  GroovyTokenTypes.mNLS,
+                                                                                                                  GroovyTokenTypes.mSTAR)) && lineFeedAllowed) {
         internalTypeMarker.drop();
         return ReferenceElementResult.PATH_REF;
       }
 
-      ParserUtils.getToken(builder, mDOT);
+      ParserUtils.getToken(builder, GroovyTokenTypes.mDOT);
 
       if (lineFeedAllowed) {
-        ParserUtils.getToken(builder, mNLS);
+        ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
       }
 
       lastIdentifier = builder.getTokenText();
@@ -162,7 +162,7 @@ public class ReferenceElement implements GroovyElementTypes {
           return ReferenceElementResult.FAIL;
         }
         builder.error(GroovyBundle.message("identifier.expected"));
-        internalTypeMarker.done(REFERENCE_ELEMENT);
+        internalTypeMarker.done(GroovyElementTypes.REFERENCE_ELEMENT);
         return ReferenceElementResult.PATH_REF;
       }
 
@@ -170,7 +170,7 @@ public class ReferenceElement implements GroovyElementTypes {
         hasTypeArguments = true;
       }
 
-      internalTypeMarker.done(REFERENCE_ELEMENT);
+      internalTypeMarker.done(GroovyElementTypes.REFERENCE_ELEMENT);
       internalTypeMarker = internalTypeMarker.precede();
     }
 

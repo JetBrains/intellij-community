@@ -18,8 +18,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
-import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgRemoteCommandExecutor;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.util.LinkedList;
@@ -73,7 +73,7 @@ public class HgPullCommand {
 
     arguments.add(source);
 
-    final HgCommandExecutor executor = new HgCommandExecutor(project, source);
+    final HgRemoteCommandExecutor executor = new HgRemoteCommandExecutor(project, source);
     executor.setShowOutput(true);
     HgCommandResult result = executor.executeInCurrentThread(repo, "pull", arguments);
     if (HgErrorUtil.isAuthorizationError(result)) {

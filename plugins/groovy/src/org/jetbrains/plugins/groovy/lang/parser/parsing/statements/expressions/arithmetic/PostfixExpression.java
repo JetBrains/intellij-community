@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author ilyas
  */
-public class PostfixExpression implements GroovyElementTypes {
+public class PostfixExpression {
 
   public static boolean parse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
@@ -42,7 +42,7 @@ public class PostfixExpression implements GroovyElementTypes {
   private static void subParse(PsiBuilder builder, PsiBuilder.Marker marker) {
     if (ParserUtils.getToken(builder, TokenSets.POSTFIX_UNARY_OP_SET)) {
       PsiBuilder.Marker newMarker = marker.precede();
-      marker.done(UNARY_EXPRESSION);
+      marker.done(GroovyElementTypes.UNARY_EXPRESSION);
       subParse(builder, newMarker);
     }
     else {

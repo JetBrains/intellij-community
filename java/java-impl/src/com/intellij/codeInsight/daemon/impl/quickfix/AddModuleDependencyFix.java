@@ -34,11 +34,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
@@ -46,7 +48,7 @@ import java.util.List;
  * Date: 11/20/12
  */
 class AddModuleDependencyFix extends OrderEntryFix {
-  private final List<Module> myModules = new ArrayList<Module>();
+  private final LinkedHashSet<Module> myModules = new LinkedHashSet<Module>();
   private final Module myCurrentModule;
   private final VirtualFile myClassVFile;
   private final PsiClass[] myClasses;
@@ -82,8 +84,14 @@ class AddModuleDependencyFix extends OrderEntryFix {
   @Override
   @NotNull
   public String getText() {
-    return myModules.size() == 1 ? QuickFixBundle.message("orderEntry.fix.add.dependency.on.module", myModules.get(0).getName())
-                                 : "Add dependency on module...";
+    if (myModules.size() == 1) {
+      final Module module = ContainerUtil.getFirstItem(myModules);
+      LOG.assertTrue(module != null);
+      return QuickFixBundle.message("orderEntry.fix.add.dependency.on.module", module.getName());
+    }
+    else {
+      return "Add dependency on module...";
+    }
   }
 
   @Override
@@ -103,7 +111,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
   @Override
   public void invoke(@NotNull final Project project, @Nullable final Editor editor, PsiFile file) {
     if (myModules.size() == 1) {
-      addDependencyOnModule(project, editor, myModules.get(0));
+      addDependencyOnModule(project, editor, ContainerUtil.getFirstItem(myModules));
     }
     else {
       final JBList list = new JBList(myModules);

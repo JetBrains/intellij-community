@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.editor.Document;
@@ -31,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.*;
 
-public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClassAccessInspectionBase {
+public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClassAccessInspectionBase implements CleanupLocalInspectionTool{
 
   @Override
   public JComponent createOptionsPanel() {

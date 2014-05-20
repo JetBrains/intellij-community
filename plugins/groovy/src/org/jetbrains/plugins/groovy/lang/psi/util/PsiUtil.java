@@ -1220,7 +1220,7 @@ public class PsiUtil {
   public static boolean isProperty(@NotNull GrField field) {
     final PsiClass clazz = field.getContainingClass();
     if (clazz == null) return false;
-    if (clazz.isInterface() && !PsiImplUtil.isTrait(clazz)) return false;
+    if (clazz.isInterface() && !GrTraitUtil.isTrait(clazz)) return false;
     final GrModifierList modifierList = field.getModifierList();
     return modifierList == null || !modifierList.hasExplicitVisibilityModifiers();
   }

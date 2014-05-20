@@ -2023,7 +2023,8 @@ def abc(String s) { print 'hjk' }
   }
 
 
-  void testScriptMethodVSStaticImportInsideClosure() {
+  //IDEA-125331
+  void _testScriptMethodVSStaticImportInsideClosure() {
     def method = resolveByText '''
 import static C.abc
 

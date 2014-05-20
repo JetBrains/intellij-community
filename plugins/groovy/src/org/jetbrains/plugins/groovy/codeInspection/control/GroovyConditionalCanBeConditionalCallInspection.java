@@ -35,8 +35,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDOT;
-
 public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspection {
 
   @Override
@@ -57,7 +55,7 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
   }
 
   @Override
-  public GroovyFix buildFix(PsiElement location) {
+  public GroovyFix buildFix(@NotNull PsiElement location) {
     return new CollapseConditionalFix();
   }
 
@@ -89,6 +87,7 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
     }
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();

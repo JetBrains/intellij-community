@@ -31,6 +31,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -45,8 +46,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * @author Max Medvedev
@@ -100,14 +99,14 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
     if (parent instanceof GrArgumentLabel) return false; //don't highlight: print (void:'foo')
 
     if (PsiTreeUtil.getParentOfType(element, GrCodeReferenceElement.class) != null) {
-      if (token == kDEF || token == kIN || token == kAS) {
+      if (token == GroovyTokenTypes.kDEF || token == GroovyTokenTypes.kIN || token == GroovyTokenTypes.kAS) {
         return false; //It is allowed to name packages 'as', 'in' or 'def'
       }
     }
-    else if (token == kDEF && element.getParent() instanceof GrAnnotationNameValuePair) return false;
+    else if (token == GroovyTokenTypes.kDEF && element.getParent() instanceof GrAnnotationNameValuePair) return false;
     else if (parent instanceof GrReferenceExpression && element == ((GrReferenceExpression)parent).getReferenceNameElement()) {
-      if (token == kSUPER && ((GrReferenceExpression)parent).getQualifier() == null) return true;
-      if (token == kTHIS && ((GrReferenceExpression)parent).getQualifier() == null) return true;
+      if (token == GroovyTokenTypes.kSUPER && ((GrReferenceExpression)parent).getQualifier() == null) return true;
+      if (token == GroovyTokenTypes.kTHIS && ((GrReferenceExpression)parent).getQualifier() == null) return true;
       return false; //don't highlight foo.def
     }
 
@@ -123,7 +122,7 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
 
   @Nullable
   private static TextAttributesKey getDeclarationAttribute(PsiElement element) {
-    if (element.getParent() instanceof GrAnnotation && element.getNode().getElementType() == mAT) {
+    if (element.getParent() instanceof GrAnnotation && element.getNode().getElementType() == GroovyTokenTypes.mAT) {
       return DefaultHighlighter.ANNOTATION;
     }
 

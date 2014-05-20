@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers;
 
 import com.intellij.lang.PsiBuilder;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
@@ -34,13 +35,13 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  *              | {annotation nls}+
  */
 
-public class Modifiers implements GroovyElementTypes {
+public class Modifiers {
   public static boolean parse(PsiBuilder builder, GroovyParser parser) {
     boolean endsWithNewLine;
     PsiBuilder.Marker modifiersMarker = builder.mark();
 
     if (!Annotation.parse(builder, parser) && !parseModifier(builder)) {
-      modifiersMarker.done(MODIFIERS);
+      modifiersMarker.done(GroovyElementTypes.MODIFIERS);
       return false;
     }
 
@@ -48,7 +49,7 @@ public class Modifiers implements GroovyElementTypes {
     while (true) {
       newLineMarker.drop();
       newLineMarker = builder.mark();
-      endsWithNewLine = ParserUtils.getToken(builder, mNLS);
+      endsWithNewLine = ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
 
       if (!Annotation.parse(builder, parser) && !parseModifier(builder)) break;
     }
@@ -59,8 +60,8 @@ public class Modifiers implements GroovyElementTypes {
     } else {
       newLineMarker.drop();
     }
-    modifiersMarker.done(MODIFIERS);
-    ParserUtils.getToken(builder, mNLS);
+    modifiersMarker.done(GroovyElementTypes.MODIFIERS);
+    ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
     return true;
 
   }

@@ -37,6 +37,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocInlinedTag;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -67,9 +68,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_NAME;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-
 /**
  * @author ilyas
  */
@@ -80,7 +78,7 @@ public class GroovyCompletionData {
     PsiJavaPatterns.psiElement().afterLeaf(PsiJavaPatterns.psiElement().withText("(").withParent(
       PsiJavaPatterns.psiElement(GrParenthesizedExpression.class, GrTypeCastExpression.class))),
     PsiJavaPatterns
-      .psiElement().afterLeaf(PsiJavaPatterns.psiElement().withElementType(kAS).withParent(GrSafeCastExpression.class))
+      .psiElement().afterLeaf(PsiJavaPatterns.psiElement().withElementType(GroovyTokenTypes.kAS).withParent(GrSafeCastExpression.class))
   );
   static final String[] INLINED_DOC_TAGS = {"code", "docRoot", "inheritDoc", "link", "linkplain", "literal"};
   static final String[] DOC_TAGS = {"author", "deprecated", "exception", "param", "return", "see", "serial", "serialData",
@@ -224,7 +222,7 @@ public class GroovyCompletionData {
 
   private static void addTypeDefinitionKeywords(CompletionResultSet result, PsiElement position) {
     if (suggestClassInterfaceEnum(position)) {
-      addKeywords(result, true, PsiKeyword.CLASS, PsiKeyword.INTERFACE, PsiKeyword.ENUM, kTRAIT.toString());
+      addKeywords(result, true, PsiKeyword.CLASS, PsiKeyword.INTERFACE, PsiKeyword.ENUM, GroovyTokenTypes.kTRAIT.toString());
     }
   }
 
@@ -336,7 +334,7 @@ public class GroovyCompletionData {
 
   public static void addGroovyDocKeywords(CompletionParameters parameters, CompletionResultSet result) {
     PsiElement position = parameters.getPosition();
-    if (PlatformPatterns.psiElement(mGDOC_TAG_NAME).andNot(PlatformPatterns.psiElement().afterLeaf(".")).accepts(
+    if (PlatformPatterns.psiElement(GroovyDocTokenTypes.mGDOC_TAG_NAME).andNot(PlatformPatterns.psiElement().afterLeaf(".")).accepts(
       position)) {
       String[] tags = position.getParent() instanceof GrDocInlinedTag ? INLINED_DOC_TAGS : DOC_TAGS;
       for (String docTag : tags) {
@@ -452,7 +450,7 @@ public class GroovyCompletionData {
   private static boolean afterAtInType(PsiElement context) {
     PsiElement previous = PsiImplUtil.realPrevious(PsiTreeUtil.prevLeaf(context));
     if (previous != null &&
-        mAT.equals(previous.getNode().getElementType()) &&
+        GroovyTokenTypes.mAT.equals(previous.getNode().getElementType()) &&
         (context.getParent() != null && context.getParent().getParent() instanceof GroovyFile ||
          context.getParent() instanceof GrCodeReferenceElement && context.getParent().getParent() instanceof GrAnnotation)) {
       return true;
@@ -620,7 +618,7 @@ public class GroovyCompletionData {
         if (!TokenSets.DOTS.contains(prevSibling.getNode().getElementType())) {
           return true;
         }
-      } else if (!(previous != null && mAT.equals(previous.getNode().getElementType()))) {
+      } else if (!(previous != null && GroovyTokenTypes.mAT.equals(previous.getNode().getElementType()))) {
         return true;
       }
 
@@ -628,7 +626,7 @@ public class GroovyCompletionData {
 
     if (GroovyCompletionUtil.isTupleVarNameWithoutTypeDeclared(context)) return true;
 
-    if (previous != null && mAT.equals(previous.getNode().getElementType())) {
+    if (previous != null && GroovyTokenTypes.mAT.equals(previous.getNode().getElementType())) {
       return false;
     }
     if (GroovyCompletionUtil.asSimpleVariable(context) ||

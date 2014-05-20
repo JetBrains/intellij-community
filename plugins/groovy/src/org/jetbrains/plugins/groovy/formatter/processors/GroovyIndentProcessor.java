@@ -61,18 +61,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrWildcardTypeArgument;
 
-import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_COMMENT_START;
-import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_NAME;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kASSERT;
-
 /**
  * @author ilyas
  */
 public class GroovyIndentProcessor extends GroovyElementVisitor {
   public static final int GDOC_COMMENT_INDENT = 1;
   private static final TokenSet GSTRING_TOKENS_INNER = TokenSet.create(GroovyTokenTypes.mGSTRING_CONTENT, GroovyTokenTypes.mGSTRING_END,
-                                                                       mDOLLAR);
+                                                                       GroovyTokenTypes.mDOLLAR);
 
   private Indent myResult = null;
 
@@ -94,7 +89,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
       if (myChildType == GroovyElementTypes.PARAMETERS_LIST) {
         return Indent.getNoneIndent();
       }
-      else if (myChildType != mLCURLY && myChildType != mRCURLY) {
+      else if (myChildType != GroovyTokenTypes.mLCURLY && myChildType != GroovyTokenTypes.mRCURLY) {
         return Indent.getNormalIndent();
       }
     }
@@ -123,21 +118,21 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitAssertStatement(GrAssertStatement assertStatement) {
-    if (myChildType != kASSERT) {
+    if (myChildType != GroovyTokenTypes.kASSERT) {
       myResult = Indent.getContinuationIndent();
     }
   }
 
   @Override
   public void visitAnnotationArrayInitializer(GrAnnotationArrayInitializer arrayInitializer) {
-    if (myChildType != mLBRACK && myChildType != mRBRACK) {
+    if (myChildType != GroovyTokenTypes.mLBRACK && myChildType != GroovyTokenTypes.mRBRACK) {
       myResult = Indent.getContinuationWithoutFirstIndent();
     }
   }
 
   @Override
   public void visitListOrMap(GrListOrMap listOrMap) {
-    if (myChildType != mLBRACK && myChildType != mRBRACK) {
+    if (myChildType != GroovyTokenTypes.mLBRACK && myChildType != GroovyTokenTypes.mRBRACK) {
       myResult = Indent.getContinuationWithoutFirstIndent();
     }
   }
@@ -186,7 +181,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitArgumentList(GrArgumentList list) {
-    if (myChildType != GroovyTokenTypes.mLPAREN && myChildType != mRPAREN) {
+    if (myChildType != GroovyTokenTypes.mLPAREN && myChildType != GroovyTokenTypes.mRPAREN) {
       myResult = Indent.getContinuationWithoutFirstIndent();
     }
   }
@@ -213,7 +208,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitAnnotationArgumentList(GrAnnotationArgumentList annotationArgumentList) {
-    if (myChildType == mLPAREN || myChildType == mRPAREN) {
+    if (myChildType == GroovyTokenTypes.mLPAREN || myChildType == GroovyTokenTypes.mRPAREN) {
       myResult = Indent.getNoneIndent();
     }
     else {
@@ -235,7 +230,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitDocComment(GrDocComment comment) {
-    if (myChildType != mGDOC_COMMENT_START) {
+    if (myChildType != GroovyDocTokenTypes.mGDOC_COMMENT_START) {
       myResult = Indent.getSpaceIndent(GDOC_COMMENT_INDENT);
     }
   }
@@ -249,7 +244,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitDocTag(GrDocTag docTag) {
-    if (myChildType != mGDOC_TAG_NAME) {
+    if (myChildType != GroovyDocTokenTypes.mGDOC_TAG_NAME) {
       myResult = Indent.getSpaceIndent(GDOC_COMMENT_INDENT);
     }
   }
@@ -308,14 +303,14 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitTypeDefinitionBody(GrTypeDefinitionBody typeDefinitionBody) {
-    if (myChildType != mLCURLY && myChildType != mRCURLY) {
+    if (myChildType != GroovyTokenTypes.mLCURLY && myChildType != GroovyTokenTypes.mRCURLY) {
       myResult = Indent.getNormalIndent();
     }
   }
 
   @Override
   public void visitClosure(GrClosableBlock closure) {
-    if (myChildType != mLCURLY && myChildType != mRCURLY) {
+    if (myChildType != GroovyTokenTypes.mLCURLY && myChildType != GroovyTokenTypes.mRCURLY) {
       myResult = Indent.getNormalIndent();
     }
   }
@@ -325,7 +320,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
     final IElementType type = block.getNode().getElementType();
     if (type != GroovyElementTypes.OPEN_BLOCK && type != GroovyElementTypes.CONSTRUCTOR_BODY) return;
 
-    if (myChildType != mLCURLY && myChildType != mRCURLY) {
+    if (myChildType != GroovyTokenTypes.mLCURLY && myChildType != GroovyTokenTypes.mRCURLY) {
       myResult = Indent.getNormalIndent();
     }
   }
@@ -363,7 +358,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitParenthesizedExpression(GrParenthesizedExpression expression) {
-    if (myChildType == mLPAREN || myChildType == mRPAREN) {
+    if (myChildType == GroovyTokenTypes.mLPAREN || myChildType == GroovyTokenTypes.mRPAREN) {
       myResult = Indent.getNoneIndent();
     }
     else {

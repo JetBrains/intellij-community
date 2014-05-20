@@ -33,8 +33,7 @@ import java.util.Map;
 /**
  * @author ilyas
  */
-public class GroovyDocSyntaxHighlighter extends SyntaxHighlighterBase implements GroovyDocTokenTypes {
-
+public class GroovyDocSyntaxHighlighter extends SyntaxHighlighterBase {
   private static final Map<IElementType, TextAttributesKey> ATTRIBUTES = new HashMap<IElementType, TextAttributesKey>();
   private static final IElementType mGDOC_COMMENT_CONTENT = new GroovyDocElementTypeImpl("GDOC_COMMENT_CONTENT");
 
@@ -44,11 +43,11 @@ public class GroovyDocSyntaxHighlighter extends SyntaxHighlighterBase implements
     return new GroovyDocHighlightingLexer();
   }
 
-  static final TokenSet tGDOC_COMMENT_TAGS = TokenSet.create(
-      mGDOC_TAG_NAME
+  private static final TokenSet tGDOC_COMMENT_TAGS = TokenSet.create(
+      GroovyDocTokenTypes.mGDOC_TAG_NAME
   );
 
-  static final TokenSet tGDOC_COMMENT_CONTENT = TokenSet.create(
+  private static final TokenSet tGDOC_COMMENT_CONTENT = TokenSet.create(
       mGDOC_COMMENT_CONTENT
   );
 
@@ -68,7 +67,7 @@ public class GroovyDocSyntaxHighlighter extends SyntaxHighlighterBase implements
   private static class GroovyDocHighlightingLexer extends GroovyDocLexer {
     @Override
     public IElementType getTokenType() {
-      return super.getTokenType() == mGDOC_TAG_NAME ? mGDOC_TAG_NAME : super.getTokenType();
+      return super.getTokenType() == GroovyDocTokenTypes.mGDOC_TAG_NAME ? GroovyDocTokenTypes.mGDOC_TAG_NAME : super.getTokenType();
     }
   }
 }

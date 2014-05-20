@@ -45,11 +45,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GrDelegatingScopeProcessorWithHints;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
-
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kSTATIC;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mIDENT;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR;
 
 /**
  * @author ilyas
@@ -152,7 +147,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
     PsiClass clazz = resolveQualifier();
     if (clazz == null) return true;
 
-    state = state.put(ResolverProcessor.RESOLVE_CONTEXT, this);
+    state = state.put(ClassHint.RESOLVE_CONTEXT, this);
 
     final String refName = ref.getReferenceName();
 
@@ -197,7 +192,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
       return true; //don't process classes from the same package because such import statements are ignored by compiler
     }
 
-    return processor.execute(resolved, state.put(ResolverProcessor.RESOLVE_CONTEXT, this));
+    return processor.execute(resolved, state.put(ClassHint.RESOLVE_CONTEXT, this));
   }
 
   private boolean isFromSamePackage(@NotNull PsiClass resolved) {
@@ -217,7 +212,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
     if (isStatic()) {
       final PsiElement resolved = ref.resolve();
       if (resolved instanceof PsiClass) {
-        state = state.put(ResolverProcessor.RESOLVE_CONTEXT, this);
+        state = state.put(ClassHint.RESOLVE_CONTEXT, this);
         final PsiClass clazz = (PsiClass)resolved;
         if (!clazz.processDeclarations(new DelegatingScopeProcessor(processor) {
           @Override
@@ -236,7 +231,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
         if (qName != null) {
           PsiPackage aPackage = JavaPsiFacade.getInstance(getProject()).findPackage(qName);
           if (aPackage != null && !((GroovyFile)getContainingFile()).getPackageName().equals(aPackage.getQualifiedName())) {
-            state = state.put(ResolverProcessor.RESOLVE_CONTEXT, this);
+            state = state.put(ClassHint.RESOLVE_CONTEXT, this);
             if (!aPackage.processDeclarations(processor, state, lastParent, place)) return false;
           }
         }
@@ -389,7 +384,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
     private final String myPropertyName;
 
     public StaticAccessorProcessor(@NotNull String propertyName, @NotNull PsiScopeProcessor processor) {
-      super(processor, null, ResolverProcessor.RESOLVE_KINDS_METHOD);
+      super(processor, null, RESOLVE_KINDS_METHOD);
       myPropertyName = propertyName;
     }
 

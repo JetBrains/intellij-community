@@ -30,6 +30,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
 import org.jetbrains.plugins.groovy.actions.NewGroovyActionBase;
@@ -62,7 +63,7 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
 
   @Override
   public PsiClass doMoveClass(@NotNull PsiClass aClass, @NotNull PsiDirectory moveDestination) throws IncorrectOperationException {
-    if (!aClass.getLanguage().equals(GroovyFileType.GROOVY_LANGUAGE)) return null;
+    if (!aClass.getLanguage().equals(GroovyLanguage.INSTANCE)) return null;
     PsiFile file = aClass.getContainingFile();
     if (!(file instanceof GroovyFile)) return null;
 

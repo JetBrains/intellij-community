@@ -46,10 +46,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMMA;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMMA;
-
 /**
  * @author ilyas
  */
@@ -88,10 +84,10 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
     if (psi instanceof GrExpression || psi instanceof GrNamedArgument) {
       PsiElement prev = PsiUtil.getPrevNonSpace(psi);
       PsiElement next = PsiUtil.getNextNonSpace(psi);
-      if (prev != null && prev.getNode() != null && prev.getNode().getElementType() == mCOMMA) {
+      if (prev != null && prev.getNode() != null && prev.getNode().getElementType() == GroovyTokenTypes.mCOMMA) {
         super.deleteChildInternal(prev.getNode());
       }
-      else if (next instanceof LeafPsiElement && next.getNode() != null && next.getNode().getElementType() == mCOMMA) {
+      else if (next instanceof LeafPsiElement && next.getNode() != null && next.getNode().getElementType() == GroovyTokenTypes.mCOMMA) {
         super.deleteChildInternal(next.getNode());
       }
     }

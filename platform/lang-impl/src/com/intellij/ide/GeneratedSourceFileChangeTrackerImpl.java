@@ -16,6 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.AppTopics;
+import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.editor.Document;
@@ -25,10 +26,13 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
+import com.intellij.openapi.roots.ModuleRootAdapter;
+import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
@@ -91,6 +95,14 @@ public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileCha
         myEditedGeneratedFiles.remove(file);
       }
     });
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+      @Override
+      public void rootsChanged(ModuleRootEvent event) {
+        myFilesToCheck.addAll(myEditedGeneratedFiles);
+        myEditedGeneratedFiles.clear();
+        myCheckingQueue.queue(check);
+      }
+    });
     myCheckingQueue.activate();
   }
 
@@ -118,17 +130,8 @@ public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileCha
     }.execute();
 
     if (!newEditedGeneratedFiles.isEmpty()) {
-      List<VirtualFile> toNotify = new ArrayList<VirtualFile>();
-      synchronized (myEditedGeneratedFiles) {
-        for (VirtualFile file : newEditedGeneratedFiles) {
-          if (myEditedGeneratedFiles.add(file)) {
-            toNotify.add(file);
-          }
-        }
-      }
-      for (VirtualFile file : toNotify) {
-        myEditorNotifications.updateNotifications(file);
-      }
+      myEditedGeneratedFiles.addAll(newEditedGeneratedFiles);
+      myEditorNotifications.updateAllNotifications();
     }
   }
 

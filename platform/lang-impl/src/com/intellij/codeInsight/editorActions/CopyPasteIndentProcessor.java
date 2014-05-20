@@ -32,6 +32,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -43,14 +44,15 @@ import java.util.List;
 /**
  * @author yole
  */
-public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTransferableData> {
+public class CopyPasteIndentProcessor extends CopyPastePostProcessor<IndentTransferableData> {
+  @NotNull
   @Override
   public List<IndentTransferableData> collectTransferableData(PsiFile file,
                                                           Editor editor,
                                                           int[] startOffsets,
                                                           int[] endOffsets) {
     if (!acceptFileType(file.getFileType())) {
-      return null;
+      return Collections.emptyList();
     }
     return Collections.singletonList(new IndentTransferableData(editor.getCaretModel().getOffset()));
   }
@@ -64,6 +66,7 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
     return false;
   }
 
+  @NotNull
   @Override
   public List<IndentTransferableData> extractTransferableData(Transferable content) {
     IndentTransferableData indentData = new IndentTransferableData(-1);

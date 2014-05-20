@@ -34,12 +34,12 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.TreeItem;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -188,10 +188,10 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     final Collection<TreeItem<Pair<AbstractUrl, String>>> list = getFavoritesListRootUrls(name);
 
     final HashSet<AbstractUrl> set =
-      new HashSet<AbstractUrl>(ObjectsConvertor.convert(list, new Convertor<TreeItem<Pair<AbstractUrl, String>>, AbstractUrl>() {
+      new HashSet<AbstractUrl>(ContainerUtil.map(list, new Function<TreeItem<Pair<AbstractUrl,String>>, AbstractUrl>() {
         @Override
-        public AbstractUrl convert(TreeItem<Pair<AbstractUrl, String>> o) {
-          return o.getData().getFirst();
+        public AbstractUrl fun(TreeItem<Pair<AbstractUrl, String>> item) {
+          return item.getData().getFirst();
         }
       }));
     for (AbstractTreeNode node : nodes) {

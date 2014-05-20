@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.completion
-
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
@@ -23,8 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlText
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry
-import org.jetbrains.plugins.groovy.GroovyFileType
-
+import org.jetbrains.plugins.groovy.GroovyLanguage
 /**
  * @author peter
  */
@@ -37,7 +35,7 @@ s.codePo<caret>charAt(0)
 </groovy>""")
 
     def host = PsiTreeUtil.findElementOfClassAtOffset(myFixture.file, myFixture.editor.caretModel.offset, XmlText, false)
-    TemporaryPlacesRegistry.getInstance(project).getLanguageInjectionSupport().addInjectionInPlace(GroovyFileType.GROOVY_LANGUAGE, host);
+    TemporaryPlacesRegistry.getInstance(project).getLanguageInjectionSupport().addInjectionInPlace(GroovyLanguage.INSTANCE, host);
 
     myFixture.completeBasic()
     myFixture.type('\t')

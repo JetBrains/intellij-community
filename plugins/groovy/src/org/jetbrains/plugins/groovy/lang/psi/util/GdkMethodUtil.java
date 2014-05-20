@@ -59,7 +59,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GrDelegatingScopeProcessorWithHints;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.List;
 import java.util.Set;
@@ -104,7 +103,7 @@ public class GdkMethodUtil {
 
     if (!(call.resolveMethod() instanceof GrGdkMethod)) return true;
 
-    state = state.put(ResolverProcessor.RESOLVE_CONTEXT, call);
+    state = state.put(ClassHint.RESOLVE_CONTEXT, call);
 
     if ((args.length == 1 || args.length == 2 && placeEqualsLastArg(place, args))) {
       PsiType type = args[0].getType();
@@ -163,7 +162,7 @@ public class GdkMethodUtil {
                                                final PsiScopeProcessor processor,
                                                @NotNull final ResolveState state,
                                                @NotNull final PsiClass categoryClass) {
-    final PsiScopeProcessor delegate = new GrDelegatingScopeProcessorWithHints(processor, null, ResolverProcessor.RESOLVE_KINDS_METHOD) {
+    final PsiScopeProcessor delegate = new GrDelegatingScopeProcessorWithHints(processor, null, ClassHint.RESOLVE_KINDS_METHOD) {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState delegateState) {
         if (element instanceof PsiMethod && isCategoryMethod((PsiMethod)element, null, null, null)) {
@@ -358,7 +357,6 @@ public class GdkMethodUtil {
   }
 
   /**
-   * @param call
    * @return (type[1] in which methods mixed, reference to type[1], type[2] to mixin)
    */
   @Nullable

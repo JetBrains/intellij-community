@@ -19,6 +19,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actions.CopyAction;
@@ -36,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CopyHandler extends EditorActionHandler {
+  private static final Logger LOG = Logger.getInstance(CopyHandler.class);
 
   private final EditorActionHandler myOriginalAction;
 
@@ -88,10 +90,7 @@ public class CopyHandler extends EditorActionHandler {
 
     List<TextBlockTransferableData> transferableDatas = new ArrayList<TextBlockTransferableData>();
     for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
-      final List<? extends TextBlockTransferableData> data = processor.collectTransferableData(file, editor, startOffsets, endOffsets);
-      if (data != null) {
-        transferableDatas.addAll(data);
-      }
+      transferableDatas.addAll(processor.collectTransferableData(file, editor, startOffsets, endOffsets));
     }
 
     String rawText = TextBlockTransferable.convertLineSeparators(selectionModel.getSelectedText(true), "\n", transferableDatas);

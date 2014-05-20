@@ -23,7 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.refactoring.convertToJava.ConvertToJavaHandler;
 
@@ -49,7 +49,7 @@ public class ConvertToJavaAction extends BaseRefactoringAction {
 
   @Override
   protected boolean isAvailableForLanguage(Language language) {
-    return GroovyFileType.GROOVY_LANGUAGE == language;
+    return GroovyLanguage.INSTANCE == language;
   }
 
   @Override

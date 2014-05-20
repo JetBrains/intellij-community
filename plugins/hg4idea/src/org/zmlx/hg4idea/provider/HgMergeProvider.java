@@ -34,8 +34,8 @@ import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgResolveCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
-import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgPromptCommandExecutor;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
@@ -92,7 +92,7 @@ public class HgMergeProvider implements MergeProvider {
           String serverChangeset = serverRevisionNumber.getChangeset();
           arguments.add(StringUtil.isEmptyOrSpaces(localChangeset) ? localRevisionNumber.getRevision() : localChangeset);
           arguments.add(StringUtil.isEmptyOrSpaces(serverChangeset) ? serverRevisionNumber.getRevision() : serverChangeset);
-          HgCommandResult result = new HgCommandExecutor(myProject).executeInCurrentThread(repo, "debugancestor", arguments);
+          HgCommandResult result = new HgPromptCommandExecutor(myProject).executeInCurrentThread(repo, "debugancestor", arguments);
           if (result != null) {
             String output = result.getRawOutput();
             final List<String> parts = StringUtil.split(output, ":");

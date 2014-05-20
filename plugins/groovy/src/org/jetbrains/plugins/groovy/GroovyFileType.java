@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.EditorHighlighterProvider;
@@ -41,11 +40,10 @@ import javax.swing.*;
 public class GroovyFileType extends LanguageFileType {
 
   public static final GroovyFileType GROOVY_FILE_TYPE = new GroovyFileType();
-  public static final Language GROOVY_LANGUAGE = GROOVY_FILE_TYPE.getLanguage();
   @NonNls public static final String DEFAULT_EXTENSION = "groovy";
 
   private GroovyFileType() {
-    super(new GroovyLanguage());
+    super(GroovyLanguage.INSTANCE);
     FileTypeEditorHighlighterProviders.INSTANCE.addExplicitExtension(this, new EditorHighlighterProvider() {
       @Override
       public EditorHighlighter getEditorHighlighter(@Nullable Project project,
@@ -56,28 +54,33 @@ public class GroovyFileType extends LanguageFileType {
     });
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getName() {
     return "Groovy";
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getDescription() {
     return "Groovy Files";
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getDefaultExtension() {
     return DEFAULT_EXTENSION;
   }
 
+  @Override
   public Icon getIcon() {
     return JetgroovyIcons.Groovy.Groovy_16x16;
   }
 
+  @Override
   public boolean isJVMDebuggingSupported() {
     return true;
   }

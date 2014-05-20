@@ -34,19 +34,13 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_COMMENT_DATA;
-import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_NAME;
-import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN;
-import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes.*;
-import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes.GDOC_FIELD_REF;
-
 /**
  * @author ilyas
  */
 public class GrDocInlinedTagImpl extends GroovyDocPsiElementImpl implements GrDocInlinedTag {
   private static final TokenSet VALUE_BIT_SET = TokenSet
-    .create(mGDOC_TAG_VALUE_TOKEN, GroovyDocElementTypes.GDOC_METHOD_REF, GDOC_FIELD_REF,
-            GroovyDocElementTypes.GDOC_PARAM_REF, GroovyDocElementTypes.GDOC_REFERENCE_ELEMENT, mGDOC_COMMENT_DATA,
+    .create(GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN, GroovyDocElementTypes.GDOC_METHOD_REF, GroovyDocElementTypes.GDOC_FIELD_REF,
+            GroovyDocElementTypes.GDOC_PARAM_REF, GroovyDocElementTypes.GDOC_REFERENCE_ELEMENT, GroovyDocTokenTypes.mGDOC_COMMENT_DATA,
             GroovyDocElementTypes.GDOC_INLINED_TAG);
 
   public GrDocInlinedTagImpl(@NotNull ASTNode node) {
@@ -71,7 +65,7 @@ public class GrDocInlinedTagImpl extends GroovyDocPsiElementImpl implements GrDo
   @Override
   @NotNull
   public PsiElement getNameElement() {
-    PsiElement element = findChildByType(mGDOC_TAG_NAME);
+    PsiElement element = findChildByType(GroovyDocTokenTypes.mGDOC_TAG_NAME);
     assert element != null;
     return element;
   }

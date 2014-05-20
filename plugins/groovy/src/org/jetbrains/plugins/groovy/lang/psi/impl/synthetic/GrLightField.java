@@ -50,8 +50,8 @@ public class GrLightField extends GrLightVariable implements GrField {
   public GrLightField(@NotNull PsiClass containingClass,
                       @NonNls String name,
                       @NotNull PsiType type,
-                      @NotNull PsiElement element) {
-    super(containingClass.getManager(), name, type, element);
+                      @NotNull PsiElement navigationElement) {
+    super(containingClass.getManager(), name, type, navigationElement);
     myContainingClass = containingClass;
   }
 

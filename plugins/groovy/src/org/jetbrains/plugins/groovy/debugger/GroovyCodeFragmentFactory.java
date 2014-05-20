@@ -33,6 +33,7 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -310,7 +311,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
 
   @Override
   public boolean isContextAccepted(PsiElement context) {
-    return context != null && context.getLanguage().equals(GroovyFileType.GROOVY_LANGUAGE);
+    return context != null && context.getLanguage().equals(GroovyLanguage.INSTANCE);
   }
 
   @Override

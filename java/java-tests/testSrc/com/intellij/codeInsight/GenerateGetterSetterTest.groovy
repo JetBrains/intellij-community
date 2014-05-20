@@ -20,6 +20,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
 import org.jetbrains.annotations.Nullable
 /**
  * @author peter
@@ -62,6 +63,27 @@ class Foo {
 
     public boolean isStateForceMailField() {
         return isStateForceMailField;
+    }
+}
+'''
+  }
+
+  public void "test qualified this"() {
+    myFixture.enableInspections(UnqualifiedFieldAccessInspection.class)
+    myFixture.configureByText 'a.java', '''
+class Foo {
+    boolean isStateForceMailField;
+
+    <caret>
+}
+'''
+    generateGetter()
+    myFixture.checkResult '''
+class Foo {
+    boolean isStateForceMailField;
+
+    public boolean isStateForceMailField() {
+        return this.isStateForceMailField;
     }
 }
 '''

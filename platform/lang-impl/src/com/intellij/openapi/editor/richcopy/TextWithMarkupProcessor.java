@@ -46,33 +46,31 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.awt.datatransfer.Transferable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
 
-public class TextWithMarkupProcessor implements CopyPastePostProcessor<RawTextWithMarkup> {
+public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithMarkup> {
   private static final Logger LOG = Logger.getInstance("#" + TextWithMarkupProcessor.class.getName());
 
   private List<RawTextWithMarkup> myResult;
 
-  @Nullable
+  @NotNull
   @Override
   public List<RawTextWithMarkup> collectTransferableData(PsiFile file, Editor editor, int[] startOffsets, int[] endOffsets) {
     if (!Registry.is("editor.richcopy.enable")) {
-      return null;
+      return Collections.emptyList();
     }
 
     try {
       SelectionModel selectionModel = editor.getSelectionModel();
       if (selectionModel.hasBlockSelection()) {
-        return null; // unsupported legacy mode
+        return Collections.emptyList(); // unsupported legacy mode
       }
 
       RichCopySettings settings = RichCopySettings.getInstance();
@@ -138,19 +136,13 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<RawTextWi
       logSyntaxInfo(syntaxInfo);
 
       createResult(syntaxInfo);
-      return myResult;
+      return ObjectUtils.notNull(myResult, Collections.<RawTextWithMarkup>emptyList());
     }
     catch (Exception e) {
       // catching the exception so that the rest of copy/paste functionality can still work fine
       LOG.error(e);
     }
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public List<RawTextWithMarkup> extractTransferableData(Transferable content) {
-    return null;
+    return Collections.emptyList();
   }
 
   @Override

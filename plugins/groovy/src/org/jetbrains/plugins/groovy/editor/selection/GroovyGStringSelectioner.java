@@ -31,9 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mGSTRING_END;
-
 /**
  * @author Maxim.Medvedev
  */
@@ -126,7 +123,7 @@ public class GroovyGStringSelectioner extends ExtendWordSelectionHandlerBase {
         final ASTNode node = next.getNode();
         if (node == null) break;
         final IElementType type = node.getElementType();
-        if (type == mGSTRING_BEGIN) break;
+        if (type == GroovyTokenTypes.mGSTRING_BEGIN) break;
         if (type == GroovyElementTypes.GSTRING_CONTENT) {
           final int i = next.getText().lastIndexOf('\n');
           if (i >= 0) {
@@ -148,7 +145,7 @@ public class GroovyGStringSelectioner extends ExtendWordSelectionHandlerBase {
         if (node == null) break;
 
         final IElementType type = node.getElementType();
-        if (type == mGSTRING_END) {
+        if (type == GroovyTokenTypes.mGSTRING_END) {
           endOffset = next.getTextOffset();
           break;
         }

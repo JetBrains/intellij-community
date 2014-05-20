@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions;
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -25,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author ilyas
  */
-public class ConditionalExpression implements GroovyElementTypes {
+public class ConditionalExpression {
 
   public static boolean parse(PsiBuilder builder, GroovyParser parser) {
 
@@ -41,27 +42,27 @@ public class ConditionalExpression implements GroovyElementTypes {
   }
 
   public static void parseAfterCondition(PsiBuilder builder, GroovyParser parser, PsiBuilder.Marker marker) {
-    if (ParserUtils.getToken(builder, mQUESTION)) {
-      ParserUtils.getToken(builder, mNLS);
+    if (ParserUtils.getToken(builder, GroovyTokenTypes.mQUESTION)) {
+      ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
       if (!AssignmentExpression.parse(builder, parser)) {
         builder.error(GroovyBundle.message("expression.expected"));
       }
 
-      if (ParserUtils.lookAhead(builder, mNLS, mCOLON)) {
-        ParserUtils.getToken(builder, mNLS);
+      if (ParserUtils.lookAhead(builder, GroovyTokenTypes.mNLS, GroovyTokenTypes.mCOLON)) {
+        ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
       }
-      if (ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"))) {
-        ParserUtils.getToken(builder, mNLS);
+      if (ParserUtils.getToken(builder, GroovyTokenTypes.mCOLON, GroovyBundle.message("colon.expected"))) {
+        ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
         parse(builder, parser);
       }
-      marker.done(CONDITIONAL_EXPRESSION);
+      marker.done(GroovyElementTypes.CONDITIONAL_EXPRESSION);
     }
-    else if (ParserUtils.getToken(builder, mELVIS)) {
-      ParserUtils.getToken(builder, mNLS);
+    else if (ParserUtils.getToken(builder, GroovyTokenTypes.mELVIS)) {
+      ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
       if (!parse(builder, parser)) {
         builder.error(GroovyBundle.message("expression.expected"));
       }
-      marker.done(ELVIS_EXPRESSION);
+      marker.done(GroovyElementTypes.ELVIS_EXPRESSION);
     }
     else {
       marker.drop();

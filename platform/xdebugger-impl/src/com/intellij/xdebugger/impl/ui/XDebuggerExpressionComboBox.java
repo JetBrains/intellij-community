@@ -46,7 +46,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   public XDebuggerExpressionComboBox(final @NotNull Project project, final @NotNull XDebuggerEditorsProvider debuggerEditorsProvider, final @Nullable @NonNls String historyId,
                                      final @Nullable XSourcePosition sourcePosition) {
     super(project, debuggerEditorsProvider, EvaluationMode.EXPRESSION, historyId, sourcePosition);
-    myComboBox = new ComboBox();
+    myComboBox = new ComboBox(100);
     myComboBox.setEditable(true);
     myExpression = XExpressionImpl.EMPTY_EXPRESSION;
     Dimension minimumSize = new Dimension(myComboBox.getMinimumSize());
@@ -79,10 +79,10 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     if (enable == myComboBox.isEnabled()) return;
 
     myComboBox.setEnabled(enable);
-    myComboBox.setEditable(enable);
+    //myComboBox.setEditable(enable);
 
     if (enable) {
-      initEditor();
+      //initEditor();
     }
     else {
       myExpression = getExpression();
@@ -127,9 +127,9 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
       myComboBox.setSelectedIndex(0);
     }
 
-    if (myComboBox.isEditable()) {
+    //if (myComboBox.isEditable()) {
       myEditor.setItem(text);
-    }
+    //}
     myExpression = text;
   }
 

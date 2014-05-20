@@ -21,7 +21,6 @@ import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.nio.charset.Charset;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -37,7 +36,6 @@ public class HgCatCommand {
   public String execute(HgFile hgFile, HgRevisionNumber vcsRevisionNumber, Charset charset) {
     final List<String> arguments = createArguments(vcsRevisionNumber, hgFile.getRelativePath());
     final HgCommandExecutor executor = new HgCommandExecutor(myProject);
-    executor.setOptions(Collections.<String>emptyList());
     executor.setSilent(true);
     executor.setOutputAlwaysSuppressed(true);
     executor.setCharset(charset);

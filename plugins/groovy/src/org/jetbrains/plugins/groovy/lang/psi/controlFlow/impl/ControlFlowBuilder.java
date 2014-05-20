@@ -52,10 +52,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kIN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLAND;
-
 /**
  * @author ven
  */
@@ -564,7 +560,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       return;
     }
 
-    if (opType != GroovyTokenTypes.mLOR && opType != GroovyTokenTypes.mLAND && opType != kIN) {
+    if (opType != GroovyTokenTypes.mLOR && opType != GroovyTokenTypes.mLAND && opType != GroovyTokenTypes.kIN) {
       left.accept(this);
       if (right != null) {
         right.accept(this);
@@ -585,7 +581,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     visitCall(expression);
 
-    if (opType == mLAND) {
+    if (opType == GroovyTokenTypes.mLAND) {
       InstructionImpl head = myHead;
       if (negations.isEmpty()) {
         addNode(new NegatingGotoInstruction(expression, condition));

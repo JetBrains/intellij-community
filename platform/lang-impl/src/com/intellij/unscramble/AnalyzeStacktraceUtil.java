@@ -102,7 +102,8 @@ public class AnalyzeStacktraceUtil {
     for (AnAction action: consoleView.createConsoleActions()) {
       toolbarActions.add(action);
     }
-    toolbarActions.add(new AnnotateStackTraceAction((ConsoleViewImpl)consoleView));
+    final ConsoleViewImpl console = (ConsoleViewImpl)consoleView;
+    toolbarActions.add(new AnnotateStackTraceAction(console.getEditor(), console.getHyperlinks()));
     toolbarActions.add(new CloseAction(executor, descriptor, project));
     ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, descriptor);
     consoleView.allowHeavyFilters();

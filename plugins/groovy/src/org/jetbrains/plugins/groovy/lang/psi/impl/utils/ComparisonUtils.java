@@ -29,7 +29,6 @@ public class ComparisonUtils {
   private static final Map<IElementType, String> s_invertedComparisons = new HashMap<IElementType, String>(6);
 
   private ComparisonUtils() {
-    super();
   }
 
   static {

@@ -21,14 +21,14 @@ import com.intellij.psi.impl.light.LightVariableBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 
 /**
  * @author ilyas
  */
 public class GrImplicitVariableImpl extends LightVariableBase implements GrImplicitVariable {
   public GrImplicitVariableImpl(PsiManager manager, PsiIdentifier nameIdentifier, @NotNull PsiType type, boolean writable, PsiElement scope) {
-    super(manager, nameIdentifier, GroovyFileType.GROOVY_LANGUAGE, type, writable, scope);
+    super(manager, nameIdentifier, GroovyLanguage.INSTANCE, type, writable, scope);
   }
 
   public GrImplicitVariableImpl(PsiManager manager, @NonNls String name, @NonNls @NotNull String type, PsiElement scope) {

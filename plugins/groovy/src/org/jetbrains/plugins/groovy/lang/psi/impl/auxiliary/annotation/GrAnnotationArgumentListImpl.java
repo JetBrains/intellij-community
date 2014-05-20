@@ -34,9 +34,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLPAREN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mRPAREN;
-
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 04.04.2007

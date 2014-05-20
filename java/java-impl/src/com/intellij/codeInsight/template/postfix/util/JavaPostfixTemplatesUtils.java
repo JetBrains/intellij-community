@@ -121,6 +121,16 @@ public abstract class JavaPostfixTemplatesUtils {
     }
   };
 
+  public static Condition<PsiElement> IS_ITERABLE_OR_ARRAY = new Condition<PsiElement>() {
+    @Override
+    public boolean value(PsiElement element) {
+      if (!(element instanceof PsiExpression)) return false;
+
+      PsiType type = ((PsiExpression)element).getType();
+      return (isArray(type) || isIterable(type));
+    }
+  };
+
   @Contract("null -> false")
   public static boolean isNotPrimitiveTypeExpression(@Nullable PsiExpression expression) {
     return expression != null && !(expression.getType() instanceof PsiPrimitiveType);
