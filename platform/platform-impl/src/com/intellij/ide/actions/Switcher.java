@@ -283,7 +283,7 @@ public class Switcher extends AnAction implements DumbAware {
                                                       int index,
                                                       boolean selected,
                                                       boolean hasFocus) {
-          final JComponent renderer = (JComponent)super.getListCellRendererComponent(list, value, index, selected, hasFocus);
+          final JComponent renderer = (JComponent)super.getListCellRendererComponent(list, value, index, selected, selected);
           if (selected) {
             return renderer;
           }
@@ -393,7 +393,7 @@ public class Switcher extends AnAction implements DumbAware {
                                                       int index,
                                                       boolean selected,
                                                       boolean hasFocus) {
-          final Component c = super.getListCellRendererComponent(list, value, index, selected, hasFocus);
+          final Component c = super.getListCellRendererComponent(list, value, index, selected, selected);
           final Color bg = UIUtil.getListBackground();
           final Color fg = UIUtil.getListForeground();
           myLabel.setFont(list.getFont());
@@ -403,6 +403,12 @@ public class Switcher extends AnAction implements DumbAware {
           myPanel.add(myLabel, BorderLayout.WEST);
           myPanel.add(c, BorderLayout.CENTER);
           return myPanel;
+        }
+
+        @Override
+        protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+          setPaintFocusBorder(false);
+          super.customizeCellRenderer(list, value, index, selected, hasFocus);
         }
       };
 
