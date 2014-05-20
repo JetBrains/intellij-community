@@ -84,7 +84,7 @@ public class UnscrambleDialog extends DialogWrapper {
   protected AnalyzeStacktraceUtil.StacktraceEditorPanel myStacktraceEditorPanel;
   private VcsContentAnnotationConfigurable myConfigurable;
 
-  public UnscrambleDialog(Project project) {
+  public UnscrambleDialog(@NotNull Project project) {
     super(false);
     myProject = project;
 
