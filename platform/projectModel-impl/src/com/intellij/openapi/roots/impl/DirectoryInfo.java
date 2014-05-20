@@ -33,7 +33,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class DirectoryInfo {
+public abstract class DirectoryInfo {
   public static final int MAX_ROOT_TYPE_ID = (1 << (Byte.SIZE - 2)) - 1;
   private final Module module; // module to which content it belongs or null
   private final VirtualFile libraryClassRoot; // class root in library
@@ -44,29 +44,16 @@ public class DirectoryInfo {
   private static final byte LIBRARY_SOURCE_FLAG = 2; // set if it's a directory with sources of some library
   private final byte sourceRootTypeData;//two least significant bits are used for MODULE_SOURCE_FLAG and LIBRARY_SOURCE_FLAG, the remaining bits store module root type id (source/tests/resources/...)
 
-  /**
-   * orderEntry to (classes of) which a directory belongs
-   * MUST BE SORTED WITH {@link #BY_OWNER_MODULE}
-   */
-  @Nullable
-  private final OrderEntry[] orderEntries;
-
-  public static DirectoryInfo createNew() {
-    return new DirectoryInfo(null, null, null, null, (byte)0, null);
-  }
-
   DirectoryInfo(Module module,
                 VirtualFile contentRoot,
                 VirtualFile sourceRoot,
                 VirtualFile libraryClassRoot,
-                byte sourceRootTypeData,
-                @Nullable OrderEntry[] orderEntries) {
+                byte sourceRootTypeData) {
     this.module = module;
     this.libraryClassRoot = libraryClassRoot;
     this.contentRoot = contentRoot;
     this.sourceRoot = sourceRoot;
     this.sourceRootTypeData = sourceRootTypeData;
-    this.orderEntries = orderEntries;
   }
 
   @Override
@@ -109,10 +96,7 @@ public class DirectoryInfo {
   }
 
   @NotNull
-  public OrderEntry[] getOrderEntries() {
-    OrderEntry[] entries = orderEntries;
-    return entries == null ? OrderEntry.EMPTY_ARRAY : entries;
-  }
+  public abstract OrderEntry[] getOrderEntries();
 
   @Nullable
   OrderEntry findOrderEntryWithOwnerModule(@NotNull Module ownerModule) {

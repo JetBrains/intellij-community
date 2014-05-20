@@ -43,7 +43,13 @@ import java.util.*;
 
 public class RootIndex extends DirectoryIndex {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.RootIndex");
-  private static final DirectoryInfo NULL_INFO = DirectoryInfo.createNew();
+  private static final DirectoryInfo NULL_INFO = new DirectoryInfo(null, null, null, null, (byte)0) {
+    @NotNull
+    @Override
+    public OrderEntry[] getOrderEntries() {
+      throw new UnsupportedOperationException("Not implemented");
+    }
+  };
 
   private final Set<VirtualFile> myProjectExcludedRoots = ContainerUtil.newHashSet();
   private final Set<VirtualFile> myModuleExcludedRoots;
@@ -571,8 +577,7 @@ public class RootIndex extends DirectoryIndex {
                                                     moduleContentRoot,
                                                     sourceRoot,
                                                     libraryClassRoot,
-                                                    (byte)DirectoryInfo.createSourceRootTypeData(inModuleSources, inLibrarySource, typeId),
-                                                    null) {
+                                                    (byte)DirectoryInfo.createSourceRootTypeData(inModuleSources, inLibrarySource, typeId)) {
       @NotNull
       @Override
       public OrderEntry[] getOrderEntries() {
