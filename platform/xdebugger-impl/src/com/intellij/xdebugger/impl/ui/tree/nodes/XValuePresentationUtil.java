@@ -17,11 +17,14 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +49,7 @@ public class XValuePresentationUtil {
         lastOffset = i + 1;
 
         if (escapeAttributes == null) {
-          TextAttributes fromHighlighter = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE);
+          TextAttributes fromHighlighter = getColorScheme().getAttributes(DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE);
           if (fromHighlighter != null) {
             escapeAttributes = SimpleTextAttributes.fromTextAttributes(fromHighlighter);
           }
@@ -127,5 +130,17 @@ public class XValuePresentationUtil {
     public String getText() {
       return myBuilder.toString();
     }
+  }
+
+  @NotNull
+  public static EditorColorsScheme getColorScheme() {
+    EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+    if (UIUtil.isUnderDarcula() != ColorUtil.isDark(globalScheme.getDefaultBackground())) {
+      EditorColorsScheme scheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+      if (scheme != null) {
+        return scheme;
+      }
+    }
+    return globalScheme;
   }
 }

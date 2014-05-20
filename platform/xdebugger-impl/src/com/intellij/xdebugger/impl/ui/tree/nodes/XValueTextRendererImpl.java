@@ -16,7 +16,6 @@
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.ColoredTextContainer;
@@ -41,14 +40,14 @@ class XValueTextRendererImpl extends XValueTextRendererBase {
 
   @Override
   protected void renderRawValue(@NotNull String value, @NotNull TextAttributesKey key) {
-    TextAttributes textAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(key);
+    TextAttributes textAttributes = XValuePresentationUtil.getColorScheme().getAttributes(key);
     SimpleTextAttributes attributes = SimpleTextAttributes.fromTextAttributes(textAttributes);
     myText.append(value, attributes);
   }
 
   @Override
   public void renderStringValue(@NotNull String value, @Nullable String additionalSpecialCharsToHighlight, int maxLength) {
-    TextAttributes textAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DefaultLanguageHighlighterColors.STRING);
+    TextAttributes textAttributes = XValuePresentationUtil.getColorScheme().getAttributes(DefaultLanguageHighlighterColors.STRING);
     SimpleTextAttributes attributes = SimpleTextAttributes.fromTextAttributes(textAttributes);
     myText.append("\"", attributes);
     XValuePresentationUtil.renderValue(value, myText, attributes, maxLength, additionalSpecialCharsToHighlight);
