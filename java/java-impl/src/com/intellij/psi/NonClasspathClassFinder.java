@@ -47,7 +47,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   public NonClasspathClassFinder(Project project, String... fileExtensions) {
     myProject = project;
     myManager = PsiManager.getInstance(myProject);
-    myFileExtensions = ArrayUtil.append(fileExtensions, ".class");
+    myFileExtensions = ArrayUtil.append(fileExtensions, "class");
   }
 
   protected List<VirtualFile> getClassRoots(@Nullable GlobalSearchScope scope) {
