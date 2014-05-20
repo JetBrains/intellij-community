@@ -184,7 +184,7 @@ public class GenericInlineHandler {
       }
     }
     else {
-      conflicts.putValue(referenceElement, "Cannot inline reference from " + language.getID());
+      conflicts.putValue(referenceElement, "Cannot inline reference from " + language.getDisplayName());
     }
   }
 
