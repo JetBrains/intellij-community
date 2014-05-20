@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,19 +22,22 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author ilyas
  */
-public class PsiCategoryUtil {
+public class PsiMethodCategory implements PsiEnhancerCategory {
 
   @Nullable
-  public static PsiClass getClassType(PsiType type, PsiElement place) {
-    if (type instanceof PsiClassType) {
-      PsiClassType classType = (PsiClassType)type;
-      return classType.resolve();
-    } else if (type instanceof PsiPrimitiveType) {
-      final PsiClassType boxed = ((PsiPrimitiveType)type).getBoxedType(place);
-      if (boxed != null) return boxed.resolve();
-      else return null;
-    } else {
-      return null;
-    }
+  public static PsiClass getClassType(PsiField field) {
+    final PsiType type = field.getType();
+    return PsiCategoryUtil.getClassType(type, field);
   }
+
+  static Map getParamStringVector(PsiMethod method) {
+    def Map result = [:]
+    int idx = 1
+    for (p in method.parameterList.parameters) {
+      result.put("value$idx", p.getType().getCanonicalText())
+      idx++
+    }
+    return result;
+  }
+
 }

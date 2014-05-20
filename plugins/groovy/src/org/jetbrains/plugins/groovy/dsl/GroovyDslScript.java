@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,8 @@ import org.codehaus.groovy.runtime.InvokerInvocationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
-import org.jetbrains.plugins.groovy.dsl.toplevel.ClassContextFilter;
 import org.jetbrains.plugins.groovy.dsl.toplevel.ContextFilter;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ClassUtil;
 
 import java.util.List;
 
@@ -87,7 +87,7 @@ public class GroovyDslScript {
 
   private CustomMembersHolder addGdslMembers(GroovyClassDescriptor descriptor, String qname, final PsiType psiType) {
     final ProcessingContext ctx = new ProcessingContext();
-    ctx.put(ClassContextFilter.getClassKey(qname), psiType);
+    ctx.put(ClassUtil.getClassKey(qname), psiType);
     ctx.put(INITIAL_CONTEXT, descriptor);
     try {
       if (!isApplicable(executor, descriptor, ctx)) {

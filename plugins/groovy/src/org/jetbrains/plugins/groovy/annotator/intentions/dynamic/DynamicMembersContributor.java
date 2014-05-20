@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ClassUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -36,7 +36,7 @@ public class DynamicMembersContributor extends NonCodeMembersContributor {
 
     final DynamicManager manager = DynamicManager.getInstance(place.getProject());
 
-    for (String qName : TypesUtil.getSuperClassesWithCache(aClass).keySet()) {
+    for (String qName : ClassUtil.getSuperClassesWithCache(aClass).keySet()) {
       for (PsiMethod method : manager.getMethods(qName)) {
         if (!ResolveUtil.processElement(processor, method, state)) return;
       }
