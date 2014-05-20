@@ -162,9 +162,7 @@ public class GeneralCommandLineTest {
 
   @Test
   public void winShellScriptQuoting() throws Exception {
-    if (!SystemInfo.isWindows) {
-      return;
-    }
+    assumeTrue(SystemInfo.isWindows);
     String scriptPrefix = "my_script";
     for (String cmdScriptExt : new String[] {".cmd", ".bat"}) {
       File script = ExecUtil.createTempExecutableScript(
