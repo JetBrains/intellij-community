@@ -28,8 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -157,11 +155,8 @@ public class CollectClassMembersUtil {
 
     if (!visitedClasses.add(aClass)) return;
 
-    String fieldPrefix = PsiImplUtil.isTrait(aClass) ? GrTraitUtil.getTraitFieldPrefix(aClass) : null;
-
     for (PsiField field : getFields(aClass, includeSynthetic)) {
-      String originalName = field.getName();
-      String name = field.hasModifierProperty(PsiModifier.PUBLIC) && fieldPrefix != null ? fieldPrefix + originalName : originalName;
+      String name = field.getName();
 
       if (!allFields.containsKey(name)) {
         allFields.put(name, new CandidateInfo(field, substitutor));
