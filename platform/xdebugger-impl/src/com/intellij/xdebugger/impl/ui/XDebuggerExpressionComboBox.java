@@ -46,7 +46,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   public XDebuggerExpressionComboBox(final @NotNull Project project, final @NotNull XDebuggerEditorsProvider debuggerEditorsProvider, final @Nullable @NonNls String historyId,
                                      final @Nullable XSourcePosition sourcePosition) {
     super(project, debuggerEditorsProvider, EvaluationMode.EXPRESSION, historyId, sourcePosition);
-    myComboBox = new ComboBox();
+    myComboBox = new ComboBox(100);
     myComboBox.setEditable(true);
     myExpression = XExpressionImpl.EMPTY_EXPRESSION;
     Dimension minimumSize = new Dimension(myComboBox.getMinimumSize());
