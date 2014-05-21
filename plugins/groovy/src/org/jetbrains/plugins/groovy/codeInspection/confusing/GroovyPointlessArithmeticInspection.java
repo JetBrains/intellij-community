@@ -32,10 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinary
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR;
-
 public class GroovyPointlessArithmeticInspection extends BaseInspection {
 
   @Override
@@ -55,6 +51,7 @@ public class GroovyPointlessArithmeticInspection extends BaseInspection {
     return false;
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new PointlessArithmeticVisitor();
@@ -80,11 +77,11 @@ public class GroovyPointlessArithmeticInspection extends BaseInspection {
       }
     }
 
-    if (mMINUS == sign) {
+    if (GroovyTokenTypes.mMINUS == sign) {
       return lhs.getText();
     }
 
-    if (mSTAR == sign) {
+    if (GroovyTokenTypes.mSTAR == sign) {
       if (isOne(lhs)) {
         return rhs.getText();
       }
@@ -104,7 +101,7 @@ public class GroovyPointlessArithmeticInspection extends BaseInspection {
   }
 
   @Override
-  public GroovyFix buildFix(PsiElement location) {
+  public GroovyFix buildFix(@NotNull PsiElement location) {
     return new PointlessArithmeticFix();
   }
 
@@ -125,8 +122,8 @@ public class GroovyPointlessArithmeticInspection extends BaseInspection {
 
   private static class PointlessArithmeticVisitor extends BaseInspectionVisitor {
 
-    private final TokenSet arithmeticTokens = TokenSet.create(mPLUS, mMINUS, mSTAR,
-                                                              mDIV);
+    private final TokenSet arithmeticTokens = TokenSet.create(GroovyTokenTypes.mPLUS, GroovyTokenTypes.mMINUS, GroovyTokenTypes.mSTAR,
+                                                              GroovyTokenTypes.mDIV);
 
     @Override
     public void visitBinaryExpression(@NotNull GrBinaryExpression expression) {
@@ -140,16 +137,16 @@ public class GroovyPointlessArithmeticInspection extends BaseInspection {
       final GrExpression lhs = expression.getLeftOperand();
 
       final boolean isPointless;
-      if (sign.equals(mPLUS)) {
+      if (sign.equals(GroovyTokenTypes.mPLUS)) {
         isPointless = additionExpressionIsPointless(lhs, rhs);
       }
-      else if (sign.equals(mMINUS)) {
+      else if (sign.equals(GroovyTokenTypes.mMINUS)) {
         isPointless = subtractionExpressionIsPointless(rhs);
       }
-      else if (sign.equals(mSTAR)) {
+      else if (sign.equals(GroovyTokenTypes.mSTAR)) {
         isPointless = multiplyExpressionIsPointless(lhs, rhs);
       }
-      else if (sign.equals(mDIV)) {
+      else if (sign.equals(GroovyTokenTypes.mDIV)) {
         isPointless = divideExpressionIsPointless(rhs);
       }
       else {

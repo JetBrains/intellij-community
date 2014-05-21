@@ -26,8 +26,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -155,7 +155,7 @@ public class GroovyOverrideImplementExploreUtil {
 
   private static boolean isDefaultMethod(PsiMethod method) {
     return method instanceof GrMethod && !method.getModifierList().hasExplicitModifier(PsiModifier.ABSTRACT) &&
-           PsiImplUtil.isTrait(method.getContainingClass());
+           GrTraitUtil.isTrait(method.getContainingClass());
   }
 
   public static void collectMethodsToImplement(PsiClass aClass,

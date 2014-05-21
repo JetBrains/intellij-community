@@ -108,7 +108,6 @@ public class ThreadDumpPanel extends JPanel {
     toolbarActions.add(filterAction);
     toolbarActions.add(new CopyToClipboardAction(threadDump, project));
     toolbarActions.add(new SortThreadsAction());
-    //toolbarActions.add(new ShowRecentlyChanged());
     add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, false).getComponent(), BorderLayout.WEST);
 
     JPanel leftPanel = new JPanel(new BorderLayout());

@@ -43,13 +43,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.List;
-
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSPREAD_DOT;
 
 /**
  * @author Medvedev Max
@@ -83,7 +83,7 @@ public class GrReferenceResolveUtil {
         final PsiType componentType = ClosureParameterEnhancer.findTypeForIteration(qtype, place);
         if (componentType != null) {
           final ResolveState state = ResolveState.initial()
-            .put(ResolverProcessor.RESOLVE_CONTEXT, qualifier)
+            .put(ClassHint.RESOLVE_CONTEXT, qualifier)
             .put(SpreadState.SPREAD_STATE, SpreadState.create(qtype, null));
           if (!processQualifierType(processor, componentType, state, place)) return false;
         }
@@ -113,7 +113,7 @@ public class GrReferenceResolveUtil {
     final PsiType[] params = ((PsiClassType)type).getParameters();
     if (params.length != 1) return true;
 
-    if (!processQualifierType(processor, params[0], ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, resolveContext), place)) {
+    if (!processQualifierType(processor, params[0], ResolveState.initial().put(ClassHint.RESOLVE_CONTEXT, resolveContext), place)) {
       return false;
     }
     return true;
@@ -123,7 +123,7 @@ public class GrReferenceResolveUtil {
                                          @NotNull GrExpression qualifier,
                                          @NotNull GrReferenceExpression place) {
     PsiType qualifierType = qualifier.getType();
-    ResolveState state = ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, qualifier);
+    ResolveState state = ResolveState.initial().put(ClassHint.RESOLVE_CONTEXT, qualifier);
     if (qualifierType == null || qualifierType == PsiType.VOID) {
       if (qualifier instanceof GrReferenceExpression) {
         PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
@@ -305,9 +305,17 @@ public class GrReferenceResolveUtil {
       GroovyResolveResult result = ((GrReferenceExpression)qualifier).advancedResolve();
       PsiElement resolved = result.getElement();
       if (!(resolved instanceof PsiClass)) return false;
+      aClass = (PsiClass)resolved;
+
+      GrTypeDefinition scopeClass = PsiTreeUtil.getParentOfType(ref, GrTypeDefinition.class, true);
+      if (GrTraitUtil.isTrait(aClass) && scopeClass != null && PsiUtil.scopeClassImplementsTrait(aClass, ref)) {
+        PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(aClass, scopeClass, PsiSubstitutor.EMPTY);
+        results.add(new GroovyResolveResultImpl(aClass, null, null, superClassSubstitutor, true, true));
+        return true;
+      }
+
       if (!PsiUtil.hasEnclosingInstanceInScope((PsiClass)resolved, ref, false)) return false;
 
-      aClass = (PsiClass)resolved;
     }
     PsiClass superClass = aClass.getSuperClass();
     if (superClass == null) return true; //no super class, but the reference is definitely super-reference

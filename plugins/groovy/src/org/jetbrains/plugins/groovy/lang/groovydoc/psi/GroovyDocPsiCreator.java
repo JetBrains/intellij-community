@@ -24,12 +24,10 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.elements.GroovyDocTagValueTokenType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.*;
 
-import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes.*;
-
 /**
  * @author ilyas
  */
-public class GroovyDocPsiCreator implements GroovyDocElementTypes {
+public class GroovyDocPsiCreator {
 
   public static PsiElement createElement(ASTNode node) {
     IElementType type = node.getElementType();
@@ -43,14 +41,14 @@ public class GroovyDocPsiCreator implements GroovyDocElementTypes {
     }
 
 
-    if (type == GDOC_TAG) return new GrDocTagImpl(node);
-    if (type == GDOC_INLINED_TAG) return new GrDocInlinedTagImpl(node);
+    if (type == GroovyDocElementTypes.GDOC_TAG) return new GrDocTagImpl(node);
+    if (type == GroovyDocElementTypes.GDOC_INLINED_TAG) return new GrDocInlinedTagImpl(node);
 
-    if (type == GDOC_METHOD_REF) return new GrDocMethodReferenceImpl(node);
-    if (type == GDOC_FIELD_REF) return new GrDocFieldReferenceImpl(node);
-    if (type == GDOC_PARAM_REF) return new GrDocParameterReferenceImpl(node);
-    if (type == GDOC_METHOD_PARAMS) return new GrDocMethodParamsImpl(node);
-    if (type == GDOC_METHOD_PARAMETER) return new GrDocMethodParameterImpl(node);
+    if (type == GroovyDocElementTypes.GDOC_METHOD_REF) return new GrDocMethodReferenceImpl(node);
+    if (type == GroovyDocElementTypes.GDOC_FIELD_REF) return new GrDocFieldReferenceImpl(node);
+    if (type == GroovyDocElementTypes.GDOC_PARAM_REF) return new GrDocParameterReferenceImpl(node);
+    if (type == GroovyDocElementTypes.GDOC_METHOD_PARAMS) return new GrDocMethodParamsImpl(node);
+    if (type == GroovyDocElementTypes.GDOC_METHOD_PARAMETER) return new GrDocMethodParameterImpl(node);
 
     return new ASTWrapperPsiElement(node);
   }

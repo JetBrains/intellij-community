@@ -4,8 +4,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgRemoteCommandExecutor;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -31,7 +31,7 @@ public class HgIdentifyCommand {
   public HgCommandResult execute(@NotNull ModalityState state) {
     final List<String> arguments = new LinkedList<String>();
     arguments.add(source);
-    final HgCommandExecutor executor = new HgCommandExecutor(project, source, state);
+    final HgRemoteCommandExecutor executor = new HgRemoteCommandExecutor(project, source, state);
     executor.setSilent(true);
     return executor.executeInCurrentThread(null, "identify", arguments);
   }

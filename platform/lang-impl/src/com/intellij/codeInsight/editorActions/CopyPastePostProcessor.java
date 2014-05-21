@@ -22,27 +22,27 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.Transferable;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author yole
  */
-public interface CopyPastePostProcessor<T extends TextBlockTransferableData> {
-  ExtensionPointName<CopyPastePostProcessor<? extends TextBlockTransferableData>> EP_NAME = ExtensionPointName.create("com.intellij.copyPastePostProcessor");
+public abstract class CopyPastePostProcessor<T extends TextBlockTransferableData> {
+  public static final ExtensionPointName<CopyPastePostProcessor<? extends TextBlockTransferableData>> EP_NAME = ExtensionPointName.create("com.intellij.copyPastePostProcessor");
 
-  @Nullable
-  List<T> collectTransferableData(final PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets);
+  @NotNull
+  public abstract List<T> collectTransferableData(final PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets);
 
-  @Nullable
-  List<T> extractTransferableData(final Transferable content);
+  @NotNull
+  public List<T> extractTransferableData(final Transferable content) {
+    return Collections.emptyList();
+  }
 
-  void processTransferableData(final Project project,
-                               final Editor editor,
-                               final RangeMarker bounds,
-                               int caretOffset,
-                               Ref<Boolean> indented,
-                               final List<T> values);
+  public void processTransferableData(final Project project, final Editor editor, final RangeMarker bounds, int caretOffset,
+                                      Ref<Boolean> indented, final List<T> values) {
+  }
 }

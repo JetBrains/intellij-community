@@ -18,12 +18,13 @@ package org.jetbrains.plugins.groovy.lang.lexer;
 import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
-import java.util.*;
+import com.intellij.util.containers.Stack;
+import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 
 %%
 
 %class _GroovyLexer
-%implements FlexLexer, GroovyTokenTypes, TokenType
+%implements FlexLexer
 %unicode
 %public
 
@@ -221,25 +222,25 @@ mGSTRING_LITERAL = \"\"
 %%
 <NLS_AFTER_COMMENT>{
 
-  {mSL_COMMENT}                             {  return mSL_COMMENT; }
-  {mML_COMMENT}                             {  return mML_COMMENT; }
-  {mDOC_COMMENT}                            {  return GROOVY_DOC_COMMENT; }
+  {mSL_COMMENT}                             {  return GroovyTokenTypes.mSL_COMMENT; }
+  {mML_COMMENT}                             {  return GroovyTokenTypes.mML_COMMENT; }
+  {mDOC_COMMENT}                            {  return GroovyDocElementTypes.GROOVY_DOC_COMMENT; }
 
-  ({mNLS}|{WHITE_SPACE})+                   {  return WHITE_SPACE; }
+  ({mNLS}|{WHITE_SPACE})+                   {  return TokenType.WHITE_SPACE; }
 
   [^]                                       { yypushback(1);
                                               yybegin(afterComment);  }
 }
 <NLS_AFTER_LBRACE>{
 
-  ({mNLS}|{WHITE_SPACE})+                   { return WHITE_SPACE; }
+  ({mNLS}|{WHITE_SPACE})+                   { return TokenType.WHITE_SPACE; }
 
   [^]                                       { yypushback(1);
                                               yybegin(WAIT_FOR_REGEX);  }
 }
 <NLS_AFTER_NLS>{
 
-  ({mNLS}|{WHITE_SPACE})+                   { return WHITE_SPACE; }
+  ({mNLS}|{WHITE_SPACE})+                   { return TokenType.WHITE_SPACE; }
 
   [^]                                       { yypushback(1);
                                               yybegin(NLS_AFTER_COMMENT);  }
@@ -249,88 +250,88 @@ mGSTRING_LITERAL = \"\"
 // Single double-quoted GString
 <IN_SINGLE_IDENT>{
   {mIDENT_NOBUCKS}                        {  yybegin(IN_SINGLE_DOT);
-                                             return mIDENT;  }
+                                             return GroovyTokenTypes.mIDENT;  }
   [^]                                     {  yypushback(1);
                                              yybegin(IN_SINGLE_GSTRING);  }
 }
 <IN_SINGLE_DOT>{
   "." /{mIDENT_NOBUCKS}                   {  yybegin(IN_SINGLE_IDENT);
-                                             return mDOT;  }
+                                             return GroovyTokenTypes.mDOT;  }
   [^]                                     {  yypushback(1);
                                              yybegin(IN_SINGLE_GSTRING);  }
 }
 
 <IN_SINGLE_GSTRING_DOLLAR> {
 
-  "package"                               {  return( kPACKAGE );  }
-  "strictfp"                              {  return( kSTRICTFP );  }
-  "import"                                {  return( kIMPORT );  }
-  "static"                                {  return( kSTATIC );  }
-  "def"                                   {  return( kDEF );  }
-  "class"                                 {  return( kCLASS );  }
-  "interface"                             {  return( kINTERFACE );  }
-  "enum"                                  {  return( kENUM );  }
-  "trait"                                 {  return( kTRAIT );  }
-  "extends"                               {  return( kEXTENDS );  }
-  "super"                                 {  return( kSUPER );  }
-  "void"                                  {  return( kVOID );  }
-  "boolean"                               {  return( kBOOLEAN );  }
-  "byte"                                  {  return( kBYTE );  }
-  "char"                                  {  return( kCHAR );  }
-  "short"                                 {  return( kSHORT );  }
-  "int"                                   {  return( kINT );  }
-  "float"                                 {  return( kFLOAT );  }
-  "long"                                  {  return( kLONG );  }
-  "double"                                {  return( kDOUBLE );  }
-  "as"                                    {  return( kAS );  }
-  "private"                               {  return( kPRIVATE );  }
-  "abstract"                              {  return( kABSTRACT );  }
-  "public"                                {  return( kPUBLIC );  }
-  "protected"                             {  return( kPROTECTED );  }
-  "transient"                             {  return( kTRANSIENT );  }
-  "native"                                {  return( kNATIVE );  }
-  "synchronized"                          {  return( kSYNCHRONIZED );  }
-  "volatile"                              {  return( kVOLATILE );  }
-  "default"                               {  return( kDEFAULT );  }
-  "do"                                    {  return( kDO );  }
-  "throws"                                {  return( kTHROWS );  }
-  "implements"                            {  return( kIMPLEMENTS );  }
-  "this"                                  {  return( kTHIS );  }
-  "if"                                    {  return( kIF );  }
-  "else"                                  {  return( kELSE );  }
-  "while"                                 {  return( kWHILE );  }
-  "switch"                                {  return( kSWITCH );  }
-  "for"                                   {  return( kFOR );  }
-  "in"                                    {  return( kIN );  }
-  "return"                                {  return( kRETURN );  }
-  "break"                                 {  return( kBREAK );  }
-  "continue"                              {  return( kCONTINUE );  }
-  "throw"                                 {  return( kTHROW );  }
-  "assert"                                {  return( kASSERT );  }
-  "case"                                  {  return( kCASE );  }
-  "try"                                   {  return( kTRY );  }
-  "finally"                               {  return( kFINALLY );  }
-  "catch"                                 {  return( kCATCH );  }
-  "instanceof"                            {  return( kINSTANCEOF );  }
-  "new"                                   {  return( kNEW );  }
-  "true"                                  {  return( kTRUE );  }
-  "false"                                 {  return( kFALSE );  }
-  "null"                                  {  return( kNULL );  }
-  "final"                                 {  return( kFINAL );  }
+  "package"                               {  return ( GroovyTokenTypes.kPACKAGE );  }
+  "strictfp"                              {  return ( GroovyTokenTypes.kSTRICTFP );  }
+  "import"                                {  return ( GroovyTokenTypes.kIMPORT );  }
+  "static"                                {  return ( GroovyTokenTypes.kSTATIC );  }
+  "def"                                   {  return ( GroovyTokenTypes.kDEF );  }
+  "class"                                 {  return ( GroovyTokenTypes.kCLASS );  }
+  "interface"                             {  return ( GroovyTokenTypes.kINTERFACE );  }
+  "enum"                                  {  return ( GroovyTokenTypes.kENUM );  }
+  "trait"                                 {  return ( GroovyTokenTypes.kTRAIT );  }
+  "extends"                               {  return ( GroovyTokenTypes.kEXTENDS );  }
+  "super"                                 {  return ( GroovyTokenTypes.kSUPER );  }
+  "void"                                  {  return ( GroovyTokenTypes.kVOID );  }
+  "boolean"                               {  return ( GroovyTokenTypes.kBOOLEAN );  }
+  "byte"                                  {  return ( GroovyTokenTypes.kBYTE );  }
+  "char"                                  {  return ( GroovyTokenTypes.kCHAR );  }
+  "short"                                 {  return ( GroovyTokenTypes.kSHORT );  }
+  "int"                                   {  return ( GroovyTokenTypes.kINT );  }
+  "float"                                 {  return ( GroovyTokenTypes.kFLOAT );  }
+  "long"                                  {  return ( GroovyTokenTypes.kLONG );  }
+  "double"                                {  return ( GroovyTokenTypes.kDOUBLE );  }
+  "as"                                    {  return ( GroovyTokenTypes.kAS );  }
+  "private"                               {  return ( GroovyTokenTypes.kPRIVATE );  }
+  "abstract"                              {  return ( GroovyTokenTypes.kABSTRACT );  }
+  "public"                                {  return ( GroovyTokenTypes.kPUBLIC );  }
+  "protected"                             {  return ( GroovyTokenTypes.kPROTECTED );  }
+  "transient"                             {  return ( GroovyTokenTypes.kTRANSIENT );  }
+  "native"                                {  return ( GroovyTokenTypes.kNATIVE );  }
+  "synchronized"                          {  return ( GroovyTokenTypes.kSYNCHRONIZED );  }
+  "volatile"                              {  return ( GroovyTokenTypes.kVOLATILE );  }
+  "default"                               {  return ( GroovyTokenTypes.kDEFAULT );  }
+  "do"                                    {  return ( GroovyTokenTypes.kDO );  }
+  "throws"                                {  return ( GroovyTokenTypes.kTHROWS );  }
+  "implements"                            {  return ( GroovyTokenTypes.kIMPLEMENTS );  }
+  "this"                                  {  return ( GroovyTokenTypes.kTHIS );  }
+  "if"                                    {  return ( GroovyTokenTypes.kIF );  }
+  "else"                                  {  return ( GroovyTokenTypes.kELSE );  }
+  "while"                                 {  return ( GroovyTokenTypes.kWHILE );  }
+  "switch"                                {  return ( GroovyTokenTypes.kSWITCH );  }
+  "for"                                   {  return ( GroovyTokenTypes.kFOR );  }
+  "in"                                    {  return ( GroovyTokenTypes.kIN );  }
+  "return"                                {  return ( GroovyTokenTypes.kRETURN );  }
+  "break"                                 {  return ( GroovyTokenTypes.kBREAK );  }
+  "continue"                              {  return ( GroovyTokenTypes.kCONTINUE );  }
+  "throw"                                 {  return ( GroovyTokenTypes.kTHROW );  }
+  "assert"                                {  return ( GroovyTokenTypes.kASSERT );  }
+  "case"                                  {  return ( GroovyTokenTypes.kCASE );  }
+  "try"                                   {  return ( GroovyTokenTypes.kTRY );  }
+  "finally"                               {  return ( GroovyTokenTypes.kFINALLY );  }
+  "catch"                                 {  return ( GroovyTokenTypes.kCATCH );  }
+  "instanceof"                            {  return ( GroovyTokenTypes.kINSTANCEOF );  }
+  "new"                                   {  return ( GroovyTokenTypes.kNEW );  }
+  "true"                                  {  return ( GroovyTokenTypes.kTRUE );  }
+  "false"                                 {  return ( GroovyTokenTypes.kFALSE );  }
+  "null"                                  {  return ( GroovyTokenTypes.kNULL );  }
+  "final"                                 {  return ( GroovyTokenTypes.kFINAL );  }
 
   {mIDENT_NOBUCKS}                        {  yybegin(IN_SINGLE_DOT);
-                                             return mIDENT; }
-  "{"                                     {  blockStack.push(mLPAREN);
-                                             braceCount.push(mLCURLY);
+                                             return GroovyTokenTypes.mIDENT; }
+  "{"                                     {  blockStack.push(GroovyTokenTypes.mLPAREN);
+                                             braceCount.push(GroovyTokenTypes.mLCURLY);
                                              yybegin(NLS_AFTER_LBRACE);
-                                             return mLCURLY; }
+                                             return GroovyTokenTypes.mLCURLY; }
   [^]                                     {  yypushback(1);
                                              yybegin(IN_SINGLE_GSTRING); }
 }
 
 <IN_SINGLE_GSTRING> {
-  {mGSTRING_SINGLE_CONTENT} (\\)?         {  return mGSTRING_CONTENT; }
-  \\                                      {  return mGSTRING_CONTENT; }
+  {mGSTRING_SINGLE_CONTENT} (\\)?         {  return GroovyTokenTypes.mGSTRING_CONTENT; }
+  \\                                      {  return GroovyTokenTypes.mGSTRING_CONTENT; }
 
   \"                                      {  if (!gStringStack.isEmpty()) {
                                                gStringStack.pop();
@@ -340,134 +341,134 @@ mGSTRING_LITERAL = \"\"
                                              } else {
                                                yybegin(IN_INNER_BLOCK);
                                              }
-                                             return mGSTRING_END; }
+                                             return GroovyTokenTypes.mGSTRING_END; }
   "$"                                     {  yybegin(IN_SINGLE_GSTRING_DOLLAR);
-                                             return mDOLLAR;
+                                             return GroovyTokenTypes.mDOLLAR;
                                           }
   {mNLS}                                  {  clearStacks();
                                              yybegin(NLS_AFTER_NLS);
                                              afterComment = YYINITIAL;
-                                             return mNLS; }
+                                             return GroovyTokenTypes.mNLS; }
 }
 
 <IN_INNER_BLOCK>{
-  "{"                                     {  blockStack.push(mLCURLY);
-                                             braceCount.push(mLCURLY);
+  "{"                                     {  blockStack.push(GroovyTokenTypes.mLCURLY);
+                                             braceCount.push(GroovyTokenTypes.mLCURLY);
                                              yybegin(NLS_AFTER_LBRACE);
-                                             return(mLCURLY);  }
+                                             return (GroovyTokenTypes.mLCURLY);  }
 
   "}"                                     {  if (!blockStack.isEmpty()) {
                                                IElementType br = blockStack.pop();
-                                               if (br.equals(mLPAREN)) yybegin(IN_SINGLE_GSTRING);
-                                               if (br.equals(mLBRACK)) yybegin(IN_TRIPLE_GSTRING);
-                                               if (br.equals(mDIV)) yybegin(IN_REGEX);
-                                               if (br.equals(mDOLLAR)) yybegin(IN_DOLLAR_SLASH_REGEX);
+                                               if (br.equals(GroovyTokenTypes.mLPAREN)) yybegin(IN_SINGLE_GSTRING);
+                                               if (br.equals(GroovyTokenTypes.mLBRACK)) yybegin(IN_TRIPLE_GSTRING);
+                                               if (br.equals(GroovyTokenTypes.mDIV)) yybegin(IN_REGEX);
+                                               if (br.equals(GroovyTokenTypes.mDOLLAR)) yybegin(IN_DOLLAR_SLASH_REGEX);
                                              }
-                                             while (!braceCount.isEmpty() && mLCURLY != braceCount.peek()) {
+                                             while (!braceCount.isEmpty() && GroovyTokenTypes.mLCURLY != braceCount.peek()) {
                                                braceCount.pop();
                                              }
-                                             if (!braceCount.isEmpty() && mLCURLY == braceCount.peek()) {
+                                             if (!braceCount.isEmpty() && GroovyTokenTypes.mLCURLY == braceCount.peek()) {
                                                braceCount.pop();
                                              }
-                                             return mRCURLY; }
+                                             return GroovyTokenTypes.mRCURLY; }
 }
 
 // Triple double-quoted GString
 <IN_TRIPLE_IDENT>{
   {mIDENT_NOBUCKS}                        {  yybegin(IN_TRIPLE_DOT);
-                                             return mIDENT;  }
+                                             return GroovyTokenTypes.mIDENT;  }
   [^]                                     {  yypushback(1);
                                              yybegin(IN_TRIPLE_GSTRING);  }
 }
 <IN_TRIPLE_DOT>{
   "." /{mIDENT_NOBUCKS}                   {  yybegin(IN_TRIPLE_NLS);
-                                             return mDOT;  }
+                                             return GroovyTokenTypes.mDOT;  }
   [^]                                     {  yypushback(1);
                                              yybegin(IN_TRIPLE_GSTRING);  }
 }
 <IN_TRIPLE_NLS>{
   {mNLS}                                  {  yybegin(NLS_AFTER_NLS);
                                              afterComment = IN_TRIPLE_IDENT;
-                                             return mNLS;  }
+                                             return GroovyTokenTypes.mNLS;  }
   [^]                                     {  yypushback(1);
                                              yybegin(IN_TRIPLE_IDENT);  }
 
 }
 
 <IN_TRIPLE_GSTRING_DOLLAR> {
-  "package"                               {  return( kPACKAGE );  }
-  "strictfp"                              {  return( kSTRICTFP );  }
-  "import"                                {  return( kIMPORT );  }
-  "static"                                {  return( kSTATIC );  }
-  "def"                                   {  return( kDEF );  }
-  "class"                                 {  return( kCLASS );  }
-  "interface"                             {  return( kINTERFACE );  }
-  "enum"                                  {  return( kENUM );  }
-  "trait"                                 {  return( kTRAIT );  }
-  "extends"                               {  return( kEXTENDS );  }
-  "super"                                 {  return( kSUPER );  }
-  "void"                                  {  return( kVOID );  }
-  "boolean"                               {  return( kBOOLEAN );  }
-  "byte"                                  {  return( kBYTE );  }
-  "char"                                  {  return( kCHAR );  }
-  "short"                                 {  return( kSHORT );  }
-  "int"                                   {  return( kINT );  }
-  "float"                                 {  return( kFLOAT );  }
-  "long"                                  {  return( kLONG );  }
-  "double"                                {  return( kDOUBLE );  }
-  "as"                                    {  return( kAS );  }
-  "private"                               {  return( kPRIVATE );  }
-  "abstract"                              {  return( kABSTRACT );  }
-  "public"                                {  return( kPUBLIC );  }
-  "protected"                             {  return( kPROTECTED );  }
-  "transient"                             {  return( kTRANSIENT );  }
-  "native"                                {  return( kNATIVE );  }
-  "synchronized"                          {  return( kSYNCHRONIZED );  }
-  "volatile"                              {  return( kVOLATILE );  }
-  "default"                               {  return( kDEFAULT );  }
-  "do"                                    {  return( kDO );  }
-  "throws"                                {  return( kTHROWS );  }
-  "implements"                            {  return( kIMPLEMENTS );  }
-  "this"                                  {  return( kTHIS );  }
-  "if"                                    {  return( kIF );  }
-  "else"                                  {  return( kELSE );  }
-  "while"                                 {  return( kWHILE );  }
-  "switch"                                {  return( kSWITCH );  }
-  "for"                                   {  return( kFOR );  }
-  "in"                                    {  return( kIN );  }
-  "return"                                {  return( kRETURN );  }
-  "break"                                 {  return( kBREAK );  }
-  "continue"                              {  return( kCONTINUE );  }
-  "throw"                                 {  return( kTHROW );  }
-  "assert"                                {  return( kASSERT );  }
-  "case"                                  {  return( kCASE );  }
-  "try"                                   {  return( kTRY );  }
-  "finally"                               {  return( kFINALLY );  }
-  "catch"                                 {  return( kCATCH );  }
-  "instanceof"                            {  return( kINSTANCEOF );  }
-  "new"                                   {  return( kNEW );  }
-  "true"                                  {  return( kTRUE );  }
-  "false"                                 {  return( kFALSE );  }
-  "null"                                  {  return( kNULL );  }
-  "final"                                 {  return( kFINAL );  }
+  "package"                               {  return ( GroovyTokenTypes.kPACKAGE );  }
+  "strictfp"                              {  return ( GroovyTokenTypes.kSTRICTFP );  }
+  "import"                                {  return ( GroovyTokenTypes.kIMPORT );  }
+  "static"                                {  return ( GroovyTokenTypes.kSTATIC );  }
+  "def"                                   {  return ( GroovyTokenTypes.kDEF );  }
+  "class"                                 {  return ( GroovyTokenTypes.kCLASS );  }
+  "interface"                             {  return ( GroovyTokenTypes.kINTERFACE );  }
+  "enum"                                  {  return ( GroovyTokenTypes.kENUM );  }
+  "trait"                                 {  return ( GroovyTokenTypes.kTRAIT );  }
+  "extends"                               {  return ( GroovyTokenTypes.kEXTENDS );  }
+  "super"                                 {  return ( GroovyTokenTypes.kSUPER );  }
+  "void"                                  {  return ( GroovyTokenTypes.kVOID );  }
+  "boolean"                               {  return ( GroovyTokenTypes.kBOOLEAN );  }
+  "byte"                                  {  return ( GroovyTokenTypes.kBYTE );  }
+  "char"                                  {  return ( GroovyTokenTypes.kCHAR );  }
+  "short"                                 {  return ( GroovyTokenTypes.kSHORT );  }
+  "int"                                   {  return ( GroovyTokenTypes.kINT );  }
+  "float"                                 {  return ( GroovyTokenTypes.kFLOAT );  }
+  "long"                                  {  return ( GroovyTokenTypes.kLONG );  }
+  "double"                                {  return ( GroovyTokenTypes.kDOUBLE );  }
+  "as"                                    {  return ( GroovyTokenTypes.kAS );  }
+  "private"                               {  return ( GroovyTokenTypes.kPRIVATE );  }
+  "abstract"                              {  return ( GroovyTokenTypes.kABSTRACT );  }
+  "public"                                {  return ( GroovyTokenTypes.kPUBLIC );  }
+  "protected"                             {  return ( GroovyTokenTypes.kPROTECTED );  }
+  "transient"                             {  return ( GroovyTokenTypes.kTRANSIENT );  }
+  "native"                                {  return ( GroovyTokenTypes.kNATIVE );  }
+  "synchronized"                          {  return ( GroovyTokenTypes.kSYNCHRONIZED );  }
+  "volatile"                              {  return ( GroovyTokenTypes.kVOLATILE );  }
+  "default"                               {  return ( GroovyTokenTypes.kDEFAULT );  }
+  "do"                                    {  return ( GroovyTokenTypes.kDO );  }
+  "throws"                                {  return ( GroovyTokenTypes.kTHROWS );  }
+  "implements"                            {  return ( GroovyTokenTypes.kIMPLEMENTS );  }
+  "this"                                  {  return ( GroovyTokenTypes.kTHIS );  }
+  "if"                                    {  return ( GroovyTokenTypes.kIF );  }
+  "else"                                  {  return ( GroovyTokenTypes.kELSE );  }
+  "while"                                 {  return ( GroovyTokenTypes.kWHILE );  }
+  "switch"                                {  return ( GroovyTokenTypes.kSWITCH );  }
+  "for"                                   {  return ( GroovyTokenTypes.kFOR );  }
+  "in"                                    {  return ( GroovyTokenTypes.kIN );  }
+  "return"                                {  return ( GroovyTokenTypes.kRETURN );  }
+  "break"                                 {  return ( GroovyTokenTypes.kBREAK );  }
+  "continue"                              {  return ( GroovyTokenTypes.kCONTINUE );  }
+  "throw"                                 {  return ( GroovyTokenTypes.kTHROW );  }
+  "assert"                                {  return ( GroovyTokenTypes.kASSERT );  }
+  "case"                                  {  return ( GroovyTokenTypes.kCASE );  }
+  "try"                                   {  return ( GroovyTokenTypes.kTRY );  }
+  "finally"                               {  return ( GroovyTokenTypes.kFINALLY );  }
+  "catch"                                 {  return ( GroovyTokenTypes.kCATCH );  }
+  "instanceof"                            {  return ( GroovyTokenTypes.kINSTANCEOF );  }
+  "new"                                   {  return ( GroovyTokenTypes.kNEW );  }
+  "true"                                  {  return ( GroovyTokenTypes.kTRUE );  }
+  "false"                                 {  return ( GroovyTokenTypes.kFALSE );  }
+  "null"                                  {  return ( GroovyTokenTypes.kNULL );  }
+  "final"                                 {  return ( GroovyTokenTypes.kFINAL );  }
 
   {mIDENT_NOBUCKS}                        {  yybegin(IN_TRIPLE_DOT);
-                                             return mIDENT; }
-  "{"                                     {  blockStack.push(mLBRACK);
-                                             braceCount.push(mLCURLY);
+                                             return GroovyTokenTypes.mIDENT; }
+  "{"                                     {  blockStack.push(GroovyTokenTypes.mLBRACK);
+                                             braceCount.push(GroovyTokenTypes.mLCURLY);
                                              yybegin(NLS_AFTER_LBRACE);
-                                             return mLCURLY; }
+                                             return GroovyTokenTypes.mLCURLY; }
   [^]                                     {  yypushback(1);
                                              yybegin(IN_TRIPLE_GSTRING); }
 }
 
 <IN_TRIPLE_GSTRING> {
-  {mGSTRING_TRIPLE_CONTENT} /(\"\"\")?    { return mGSTRING_CONTENT; }
+  {mGSTRING_TRIPLE_CONTENT} /(\"\"\")?    { return GroovyTokenTypes.mGSTRING_CONTENT; }
   {mGSTRING_TRIPLE_CONTENT}?
-                     (\" (\")? | \\)      { return mGSTRING_CONTENT; }
+                     (\" (\")? | \\)      { return GroovyTokenTypes.mGSTRING_CONTENT; }
 
   "$"                                     {  yybegin(IN_TRIPLE_GSTRING_DOLLAR);
-                                             return mDOLLAR;}
+                                             return GroovyTokenTypes.mDOLLAR;}
   \"\"\"                                  {  if (!gStringStack.isEmpty()){
                                                gStringStack.pop();
                                              }
@@ -476,7 +477,7 @@ mGSTRING_LITERAL = \"\"
                                              } else {
                                                yybegin(IN_INNER_BLOCK);
                                              }
-                                             return mGSTRING_END; }
+                                             return GroovyTokenTypes.mGSTRING_END; }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -486,19 +487,19 @@ mGSTRING_LITERAL = \"\"
 <WAIT_FOR_REGEX> {
 
   {WHITE_SPACE}                           {  afterComment = YYINITIAL;
-                                           return(WHITE_SPACE);  }
+                                           return (TokenType.WHITE_SPACE);  }
 
-  {mSL_COMMENT}                           {  return mSL_COMMENT; }
-  {mML_COMMENT}                           {  return mML_COMMENT; }
-  {mDOC_COMMENT}                          {  return GROOVY_DOC_COMMENT; }
+  {mSL_COMMENT}                           {  return GroovyTokenTypes.mSL_COMMENT; }
+  {mML_COMMENT}                           {  return GroovyTokenTypes.mML_COMMENT; }
+  {mDOC_COMMENT}                          {  return GroovyDocElementTypes.GROOVY_DOC_COMMENT; }
 
   "/"                                     {  yybegin(IN_REGEX);
-                                             gStringStack.push(mDIV);
-                                             return mREGEX_BEGIN; }
+                                             gStringStack.push(GroovyTokenTypes.mDIV);
+                                             return GroovyTokenTypes.mREGEX_BEGIN; }
 
   "$""/"                                  {  yybegin(IN_DOLLAR_SLASH_REGEX);
-                                             gStringStack.push(mDOLLAR);
-                                             return mDOLLAR_SLASH_REGEX_BEGIN; }
+                                             gStringStack.push(GroovyTokenTypes.mDOLLAR);
+                                             return GroovyTokenTypes.mDOLLAR_SLASH_REGEX_BEGIN; }
 
   [^]                                     {  yypushback(1);
                                              if (blockStack.isEmpty()){
@@ -518,95 +519,95 @@ mGSTRING_LITERAL = \"\"
                                              } else {
                                                yybegin(IN_INNER_BLOCK);
                                              }
-                                             return mREGEX_END; }
+                                             return GroovyTokenTypes.mREGEX_END; }
 
   {mREGEX_CONTENT}? "$"
-  /[^"{"[:letter:]"_"]                    {  return mREGEX_CONTENT; }
+  /[^"{"[:letter:]"_"]                    {  return GroovyTokenTypes.mREGEX_CONTENT; }
 
-  {mREGEX_CONTENT}                        {  return mREGEX_CONTENT; }
+  {mREGEX_CONTENT}                        {  return GroovyTokenTypes.mREGEX_CONTENT; }
 
   "$"                                     {  yybegin(IN_REGEX_DOLLAR);
-                                             return mDOLLAR;}
+                                             return GroovyTokenTypes.mDOLLAR;}
 }
 
 <IN_REGEX_DOLLAR> {
 
-  "package"                               {  return( kPACKAGE );  }
-  "strictfp"                              {  return( kSTRICTFP );  }
-  "import"                                {  return( kIMPORT );  }
-  "static"                                {  return( kSTATIC );  }
-  "def"                                   {  return( kDEF );  }
-  "class"                                 {  return( kCLASS );  }
-  "interface"                             {  return( kINTERFACE );  }
-  "enum"                                  {  return( kENUM );  }
-  "trait"                                 {  return( kTRAIT );  }
-  "extends"                               {  return( kEXTENDS );  }
-  "super"                                 {  return( kSUPER );  }
-  "void"                                  {  return( kVOID );  }
-  "boolean"                               {  return( kBOOLEAN );  }
-  "byte"                                  {  return( kBYTE );  }
-  "char"                                  {  return( kCHAR );  }
-  "short"                                 {  return( kSHORT );  }
-  "int"                                   {  return( kINT );  }
-  "float"                                 {  return( kFLOAT );  }
-  "long"                                  {  return( kLONG );  }
-  "double"                                {  return( kDOUBLE );  }
-  "as"                                    {  return( kAS );  }
-  "private"                               {  return( kPRIVATE );  }
-  "abstract"                              {  return( kABSTRACT );  }
-  "public"                                {  return( kPUBLIC );  }
-  "protected"                             {  return( kPROTECTED );  }
-  "transient"                             {  return( kTRANSIENT );  }
-  "native"                                {  return( kNATIVE );  }
-  "synchronized"                          {  return( kSYNCHRONIZED );  }
-  "volatile"                              {  return( kVOLATILE );  }
-  "default"                               {  return( kDEFAULT );  }
-  "do"                                    {  return( kDO );  }
-  "throws"                                {  return( kTHROWS );  }
-  "implements"                            {  return( kIMPLEMENTS );  }
-  "this"                                  {  return( kTHIS );  }
-  "if"                                    {  return( kIF );  }
-  "else"                                  {  return( kELSE );  }
-  "while"                                 {  return( kWHILE );  }
-  "switch"                                {  return( kSWITCH );  }
-  "for"                                   {  return( kFOR );  }
-  "in"                                    {  return( kIN );  }
-  "return"                                {  return( kRETURN );  }
-  "break"                                 {  return( kBREAK );  }
-  "continue"                              {  return( kCONTINUE );  }
-  "throw"                                 {  return( kTHROW );  }
-  "assert"                                {  return( kASSERT );  }
-  "case"                                  {  return( kCASE );  }
-  "try"                                   {  return( kTRY );  }
-  "finally"                               {  return( kFINALLY );  }
-  "catch"                                 {  return( kCATCH );  }
-  "instanceof"                            {  return( kINSTANCEOF );  }
-  "new"                                   {  return( kNEW );  }
-  "true"                                  {  return( kTRUE );  }
-  "false"                                 {  return( kFALSE );  }
-  "null"                                  {  return( kNULL );  }
-  "final"                                 {  return( kFINAL );  }
+  "package"                               {  return ( GroovyTokenTypes.kPACKAGE );  }
+  "strictfp"                              {  return ( GroovyTokenTypes.kSTRICTFP );  }
+  "import"                                {  return ( GroovyTokenTypes.kIMPORT );  }
+  "static"                                {  return ( GroovyTokenTypes.kSTATIC );  }
+  "def"                                   {  return ( GroovyTokenTypes.kDEF );  }
+  "class"                                 {  return ( GroovyTokenTypes.kCLASS );  }
+  "interface"                             {  return ( GroovyTokenTypes.kINTERFACE );  }
+  "enum"                                  {  return ( GroovyTokenTypes.kENUM );  }
+  "trait"                                 {  return ( GroovyTokenTypes.kTRAIT );  }
+  "extends"                               {  return ( GroovyTokenTypes.kEXTENDS );  }
+  "super"                                 {  return ( GroovyTokenTypes.kSUPER );  }
+  "void"                                  {  return ( GroovyTokenTypes.kVOID );  }
+  "boolean"                               {  return ( GroovyTokenTypes.kBOOLEAN );  }
+  "byte"                                  {  return ( GroovyTokenTypes.kBYTE );  }
+  "char"                                  {  return ( GroovyTokenTypes.kCHAR );  }
+  "short"                                 {  return ( GroovyTokenTypes.kSHORT );  }
+  "int"                                   {  return ( GroovyTokenTypes.kINT );  }
+  "float"                                 {  return ( GroovyTokenTypes.kFLOAT );  }
+  "long"                                  {  return ( GroovyTokenTypes.kLONG );  }
+  "double"                                {  return ( GroovyTokenTypes.kDOUBLE );  }
+  "as"                                    {  return ( GroovyTokenTypes.kAS );  }
+  "private"                               {  return ( GroovyTokenTypes.kPRIVATE );  }
+  "abstract"                              {  return ( GroovyTokenTypes.kABSTRACT );  }
+  "public"                                {  return ( GroovyTokenTypes.kPUBLIC );  }
+  "protected"                             {  return ( GroovyTokenTypes.kPROTECTED );  }
+  "transient"                             {  return ( GroovyTokenTypes.kTRANSIENT );  }
+  "native"                                {  return ( GroovyTokenTypes.kNATIVE );  }
+  "synchronized"                          {  return ( GroovyTokenTypes.kSYNCHRONIZED );  }
+  "volatile"                              {  return ( GroovyTokenTypes.kVOLATILE );  }
+  "default"                               {  return ( GroovyTokenTypes.kDEFAULT );  }
+  "do"                                    {  return ( GroovyTokenTypes.kDO );  }
+  "throws"                                {  return ( GroovyTokenTypes.kTHROWS );  }
+  "implements"                            {  return ( GroovyTokenTypes.kIMPLEMENTS );  }
+  "this"                                  {  return ( GroovyTokenTypes.kTHIS );  }
+  "if"                                    {  return ( GroovyTokenTypes.kIF );  }
+  "else"                                  {  return ( GroovyTokenTypes.kELSE );  }
+  "while"                                 {  return ( GroovyTokenTypes.kWHILE );  }
+  "switch"                                {  return ( GroovyTokenTypes.kSWITCH );  }
+  "for"                                   {  return ( GroovyTokenTypes.kFOR );  }
+  "in"                                    {  return ( GroovyTokenTypes.kIN );  }
+  "return"                                {  return ( GroovyTokenTypes.kRETURN );  }
+  "break"                                 {  return ( GroovyTokenTypes.kBREAK );  }
+  "continue"                              {  return ( GroovyTokenTypes.kCONTINUE );  }
+  "throw"                                 {  return ( GroovyTokenTypes.kTHROW );  }
+  "assert"                                {  return ( GroovyTokenTypes.kASSERT );  }
+  "case"                                  {  return ( GroovyTokenTypes.kCASE );  }
+  "try"                                   {  return ( GroovyTokenTypes.kTRY );  }
+  "finally"                               {  return ( GroovyTokenTypes.kFINALLY );  }
+  "catch"                                 {  return ( GroovyTokenTypes.kCATCH );  }
+  "instanceof"                            {  return ( GroovyTokenTypes.kINSTANCEOF );  }
+  "new"                                   {  return ( GroovyTokenTypes.kNEW );  }
+  "true"                                  {  return ( GroovyTokenTypes.kTRUE );  }
+  "false"                                 {  return ( GroovyTokenTypes.kFALSE );  }
+  "null"                                  {  return ( GroovyTokenTypes.kNULL );  }
+  "final"                                 {  return ( GroovyTokenTypes.kFINAL );  }
 
   {mIDENT_NOBUCKS}                        {  yybegin(IN_REGEX_DOT);
-                                             return mIDENT; }
-  "{"                                     {  blockStack.push(mDIV);
-                                             braceCount.push(mLCURLY);
+                                             return GroovyTokenTypes.mIDENT; }
+  "{"                                     {  blockStack.push(GroovyTokenTypes.mDIV);
+                                             braceCount.push(GroovyTokenTypes.mLCURLY);
                                              yybegin(NLS_AFTER_LBRACE);
-                                             return mLCURLY; }
+                                             return GroovyTokenTypes.mLCURLY; }
   [^]                                     {  yypushback(1);
                                              yybegin(IN_REGEX); }
 }
 
 <IN_REGEX_DOT>{
   "." /{mIDENT_NOBUCKS}                   {  yybegin(IN_REGEX_IDENT);
-                                             return mDOT;  }
+                                             return GroovyTokenTypes.mDOT;  }
   [^]                                     {  yypushback(1);
                                              yybegin(IN_REGEX);  }
 }
 
 <IN_REGEX_IDENT>{
   {mIDENT_NOBUCKS}                        {  yybegin(IN_REGEX_DOT);
-                                             return mIDENT;  }
+                                             return GroovyTokenTypes.mIDENT;  }
   [^]                                     {  yypushback(1);
                                              yybegin(IN_REGEX);  }
 }
@@ -620,83 +621,83 @@ mGSTRING_LITERAL = \"\"
                                              } else {
                                                yybegin(IN_INNER_BLOCK);
                                              }
-                                             return mDOLLAR_SLASH_REGEX_END; }
+                                             return GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END; }
 
   {mDOLLAR_SLASH_REGEX_CONTENT}? "$"
-    /[^"{"[:letter:]"_"]                  {  return mDOLLAR_SLASH_REGEX_CONTENT; }
+    /[^"{"[:letter:]"_"]                  {  return GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT; }
 
-  "/"                                     {  return mDOLLAR_SLASH_REGEX_CONTENT; }
+  "/"                                     {  return GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT; }
 
-  {mDOLLAR_SLASH_REGEX_CONTENT}           {  return mDOLLAR_SLASH_REGEX_CONTENT; }
+  {mDOLLAR_SLASH_REGEX_CONTENT}           {  return GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT; }
 
   "$"                                     {  yybegin(IN_DOLLAR_SLASH_REGEX_DOLLAR);
-                                             return mDOLLAR;}
+                                             return GroovyTokenTypes.mDOLLAR;}
 }
 
 <IN_DOLLAR_SLASH_REGEX_DOLLAR> {
 
-  "package"                               {  return( kPACKAGE );  }
-  "strictfp"                              {  return( kSTRICTFP );  }
-  "import"                                {  return( kIMPORT );  }
-  "static"                                {  return( kSTATIC );  }
-  "def"                                   {  return( kDEF );  }
-  "class"                                 {  return( kCLASS );  }
-  "interface"                             {  return( kINTERFACE );  }
-  "enum"                                  {  return( kENUM );  }
-  "trait"                                 {  return( kTRAIT );  }
-  "extends"                               {  return( kEXTENDS );  }
-  "super"                                 {  return( kSUPER );  }
-  "void"                                  {  return( kVOID );  }
-  "boolean"                               {  return( kBOOLEAN );  }
-  "byte"                                  {  return( kBYTE );  }
-  "char"                                  {  return( kCHAR );  }
-  "short"                                 {  return( kSHORT );  }
-  "int"                                   {  return( kINT );  }
-  "float"                                 {  return( kFLOAT );  }
-  "long"                                  {  return( kLONG );  }
-  "double"                                {  return( kDOUBLE );  }
-  "as"                                    {  return( kAS );  }
-  "private"                               {  return( kPRIVATE );  }
-  "abstract"                              {  return( kABSTRACT );  }
-  "public"                                {  return( kPUBLIC );  }
-  "protected"                             {  return( kPROTECTED );  }
-  "transient"                             {  return( kTRANSIENT );  }
-  "native"                                {  return( kNATIVE );  }
-  "synchronized"                          {  return( kSYNCHRONIZED );  }
-  "volatile"                              {  return( kVOLATILE );  }
-  "default"                               {  return( kDEFAULT );  }
-  "do"                                    {  return( kDO );  }
-  "throws"                                {  return( kTHROWS );  }
-  "implements"                            {  return( kIMPLEMENTS );  }
-  "this"                                  {  return( kTHIS );  }
-  "if"                                    {  return( kIF );  }
-  "else"                                  {  return( kELSE );  }
-  "while"                                 {  return( kWHILE );  }
-  "switch"                                {  return( kSWITCH );  }
-  "for"                                   {  return( kFOR );  }
-  "in"                                    {  return( kIN );  }
-  "return"                                {  return( kRETURN );  }
-  "break"                                 {  return( kBREAK );  }
-  "continue"                              {  return( kCONTINUE );  }
-  "throw"                                 {  return( kTHROW );  }
-  "assert"                                {  return( kASSERT );  }
-  "case"                                  {  return( kCASE );  }
-  "try"                                   {  return( kTRY );  }
-  "finally"                               {  return( kFINALLY );  }
-  "catch"                                 {  return( kCATCH );  }
-  "instanceof"                            {  return( kINSTANCEOF );  }
-  "new"                                   {  return( kNEW );  }
-  "true"                                  {  return( kTRUE );  }
-  "false"                                 {  return( kFALSE );  }
-  "null"                                  {  return( kNULL );  }
-  "final"                                 {  return( kFINAL );  }
+  "package"                               {  return ( GroovyTokenTypes.kPACKAGE );  }
+  "strictfp"                              {  return ( GroovyTokenTypes.kSTRICTFP );  }
+  "import"                                {  return ( GroovyTokenTypes.kIMPORT );  }
+  "static"                                {  return ( GroovyTokenTypes.kSTATIC );  }
+  "def"                                   {  return ( GroovyTokenTypes.kDEF );  }
+  "class"                                 {  return ( GroovyTokenTypes.kCLASS );  }
+  "interface"                             {  return ( GroovyTokenTypes.kINTERFACE );  }
+  "enum"                                  {  return ( GroovyTokenTypes.kENUM );  }
+  "trait"                                 {  return ( GroovyTokenTypes.kTRAIT );  }
+  "extends"                               {  return ( GroovyTokenTypes.kEXTENDS );  }
+  "super"                                 {  return ( GroovyTokenTypes.kSUPER );  }
+  "void"                                  {  return ( GroovyTokenTypes.kVOID );  }
+  "boolean"                               {  return ( GroovyTokenTypes.kBOOLEAN );  }
+  "byte"                                  {  return ( GroovyTokenTypes.kBYTE );  }
+  "char"                                  {  return ( GroovyTokenTypes.kCHAR );  }
+  "short"                                 {  return ( GroovyTokenTypes.kSHORT );  }
+  "int"                                   {  return ( GroovyTokenTypes.kINT );  }
+  "float"                                 {  return ( GroovyTokenTypes.kFLOAT );  }
+  "long"                                  {  return ( GroovyTokenTypes.kLONG );  }
+  "double"                                {  return ( GroovyTokenTypes.kDOUBLE );  }
+  "as"                                    {  return ( GroovyTokenTypes.kAS );  }
+  "private"                               {  return ( GroovyTokenTypes.kPRIVATE );  }
+  "abstract"                              {  return ( GroovyTokenTypes.kABSTRACT );  }
+  "public"                                {  return ( GroovyTokenTypes.kPUBLIC );  }
+  "protected"                             {  return ( GroovyTokenTypes.kPROTECTED );  }
+  "transient"                             {  return ( GroovyTokenTypes.kTRANSIENT );  }
+  "native"                                {  return ( GroovyTokenTypes.kNATIVE );  }
+  "synchronized"                          {  return ( GroovyTokenTypes.kSYNCHRONIZED );  }
+  "volatile"                              {  return ( GroovyTokenTypes.kVOLATILE );  }
+  "default"                               {  return ( GroovyTokenTypes.kDEFAULT );  }
+  "do"                                    {  return ( GroovyTokenTypes.kDO );  }
+  "throws"                                {  return ( GroovyTokenTypes.kTHROWS );  }
+  "implements"                            {  return ( GroovyTokenTypes.kIMPLEMENTS );  }
+  "this"                                  {  return ( GroovyTokenTypes.kTHIS );  }
+  "if"                                    {  return ( GroovyTokenTypes.kIF );  }
+  "else"                                  {  return ( GroovyTokenTypes.kELSE );  }
+  "while"                                 {  return ( GroovyTokenTypes.kWHILE );  }
+  "switch"                                {  return ( GroovyTokenTypes.kSWITCH );  }
+  "for"                                   {  return ( GroovyTokenTypes.kFOR );  }
+  "in"                                    {  return ( GroovyTokenTypes.kIN );  }
+  "return"                                {  return ( GroovyTokenTypes.kRETURN );  }
+  "break"                                 {  return ( GroovyTokenTypes.kBREAK );  }
+  "continue"                              {  return ( GroovyTokenTypes.kCONTINUE );  }
+  "throw"                                 {  return ( GroovyTokenTypes.kTHROW );  }
+  "assert"                                {  return ( GroovyTokenTypes.kASSERT );  }
+  "case"                                  {  return ( GroovyTokenTypes.kCASE );  }
+  "try"                                   {  return ( GroovyTokenTypes.kTRY );  }
+  "finally"                               {  return ( GroovyTokenTypes.kFINALLY );  }
+  "catch"                                 {  return ( GroovyTokenTypes.kCATCH );  }
+  "instanceof"                            {  return ( GroovyTokenTypes.kINSTANCEOF );  }
+  "new"                                   {  return ( GroovyTokenTypes.kNEW );  }
+  "true"                                  {  return ( GroovyTokenTypes.kTRUE );  }
+  "false"                                 {  return ( GroovyTokenTypes.kFALSE );  }
+  "null"                                  {  return ( GroovyTokenTypes.kNULL );  }
+  "final"                                 {  return ( GroovyTokenTypes.kFINAL );  }
 
   {mIDENT_NOBUCKS}                        {  yybegin(IN_DOLLAR_SLASH_REGEX_DOT);
-                                             return mIDENT; }
-  "{"                                     {  blockStack.push(mDOLLAR);
-                                             braceCount.push(mLCURLY);
+                                             return GroovyTokenTypes.mIDENT; }
+  "{"                                     {  blockStack.push(GroovyTokenTypes.mDOLLAR);
+                                             braceCount.push(GroovyTokenTypes.mLCURLY);
                                              yybegin(NLS_AFTER_LBRACE);
-                                             return mLCURLY; }
+                                             return GroovyTokenTypes.mLCURLY; }
 
 [^]                                     {  yypushback(1);
                                            yybegin(IN_DOLLAR_SLASH_REGEX); }
@@ -704,14 +705,14 @@ mGSTRING_LITERAL = \"\"
 
 <IN_DOLLAR_SLASH_REGEX_DOT>{
   "." /{mIDENT_NOBUCKS}                   {  yybegin(IN_DOLLAR_SLASH_REGEX_IDENT);
-                                             return mDOT;  }
+                                             return GroovyTokenTypes.mDOT;  }
   [^]                                     {  yypushback(1);
                                              yybegin(IN_DOLLAR_SLASH_REGEX);  }
 }
 
 <IN_DOLLAR_SLASH_REGEX_IDENT>{
   {mIDENT_NOBUCKS}                        {  yybegin(IN_DOLLAR_SLASH_REGEX_DOT);
-                                             return mIDENT;  }
+                                             return GroovyTokenTypes.mIDENT;  }
   [^]                                     {  yypushback(1);
                                              yybegin(IN_DOLLAR_SLASH_REGEX);  }
 }
@@ -721,13 +722,13 @@ mGSTRING_LITERAL = \"\"
 <YYINITIAL> {
 
 "}"                                       {
-                                             while (!braceCount.isEmpty() && mLCURLY != braceCount.peek()) {
+                                             while (!braceCount.isEmpty() && GroovyTokenTypes.mLCURLY != braceCount.peek()) {
                                                braceCount.pop();
                                              }
-                                             if (!braceCount.isEmpty() && mLCURLY == braceCount.peek()) {
+                                             if (!braceCount.isEmpty() && GroovyTokenTypes.mLCURLY == braceCount.peek()) {
                                                braceCount.pop();
                                              }
-                                             return mRCURLY;  }
+                                             return GroovyTokenTypes.mRCURLY;  }
 
 }
 
@@ -735,129 +736,129 @@ mGSTRING_LITERAL = \"\"
 ///////////////////////// White spaces & NewLines //////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-{WHITE_SPACE}                             {  return WHITE_SPACE; }
+{WHITE_SPACE}                             {  return TokenType.WHITE_SPACE; }
 {mNLS}                                    {  yybegin(NLS_AFTER_NLS);
                                              afterComment = WAIT_FOR_REGEX;
                                              return !braceCount.isEmpty() &&
-                                                 mLPAREN == braceCount.peek() ? WHITE_SPACE : mNLS; }
+                                                 GroovyTokenTypes.mLPAREN == braceCount.peek() ? TokenType.WHITE_SPACE : GroovyTokenTypes.mNLS; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////Comments //////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-{mSH_COMMENT}                             {  return mSH_COMMENT; }
-{mSL_COMMENT}                             {  return mSL_COMMENT; }
-{mML_COMMENT}                             {  return mML_COMMENT; }
-{mDOC_COMMENT}                            {  return GROOVY_DOC_COMMENT; }
+{mSH_COMMENT}                             {  return GroovyTokenTypes.mSH_COMMENT; }
+{mSL_COMMENT}                             {  return GroovyTokenTypes.mSL_COMMENT; }
+{mML_COMMENT}                             {  return GroovyTokenTypes.mML_COMMENT; }
+{mDOC_COMMENT}                            {  return GroovyDocElementTypes.GROOVY_DOC_COMMENT; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Integers and floats //////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-{mNUM_INT}                                {  return mNUM_INT; }
-{mNUM_BIG_INT}                            {  return mNUM_BIG_INT; }
-{mNUM_BIG_DECIMAL}                        {  return mNUM_BIG_DECIMAL; }
-{mNUM_FLOAT}                              {  return mNUM_FLOAT; }
-{mNUM_DOUBLE}                             {  return mNUM_DOUBLE; }
-{mNUM_LONG}                               {  return mNUM_LONG; }
+{mNUM_INT}                                {  return GroovyTokenTypes.mNUM_INT; }
+{mNUM_BIG_INT}                            {  return GroovyTokenTypes.mNUM_BIG_INT; }
+{mNUM_BIG_DECIMAL}                        {  return GroovyTokenTypes.mNUM_BIG_DECIMAL; }
+{mNUM_FLOAT}                              {  return GroovyTokenTypes.mNUM_FLOAT; }
+{mNUM_DOUBLE}                             {  return GroovyTokenTypes.mNUM_DOUBLE; }
+{mNUM_LONG}                               {  return GroovyTokenTypes.mNUM_LONG; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Strings & regular expressions ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Java strings
-{mSTRING_LITERAL}                                          {  return mSTRING_LITERAL; }
-{mSINGLE_QUOTED_STRING_BEGIN}                              {  return mSTRING_LITERAL; }
+{mSTRING_LITERAL}                                          {  return GroovyTokenTypes.mSTRING_LITERAL; }
+{mSINGLE_QUOTED_STRING_BEGIN}                              {  return GroovyTokenTypes.mSTRING_LITERAL; }
 
 // GStrings
 \"\"\"                                                     {  yybegin(IN_TRIPLE_GSTRING);
-                                                              gStringStack.push(mLBRACK);
-                                                              return mGSTRING_BEGIN; }
+                                                              gStringStack.push(GroovyTokenTypes.mLBRACK);
+                                                              return GroovyTokenTypes.mGSTRING_BEGIN; }
 
 \"                                                         {  yybegin(IN_SINGLE_GSTRING);
-                                                              gStringStack.push(mLPAREN);
-                                                              return mGSTRING_BEGIN; }
+                                                              gStringStack.push(GroovyTokenTypes.mLPAREN);
+                                                              return GroovyTokenTypes.mGSTRING_BEGIN; }
 
-{mGSTRING_LITERAL}                                         {  return mGSTRING_LITERAL; }
+{mGSTRING_LITERAL}                                         {  return GroovyTokenTypes.mGSTRING_LITERAL; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////// keywords /////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-"package"                                 {  return( kPACKAGE );  }
-"strictfp"                                {  return( kSTRICTFP );  }
-"import"                                  {  return( kIMPORT );  }
-"static"                                  {  return( kSTATIC );  }
-"def"                                     {  return( kDEF );  }
-"class"                                   {  return( kCLASS );  }
-"interface"                               {  return( kINTERFACE );  }
-"enum"                                    {  return( kENUM );  }
-"trait"                                   {  return( kTRAIT );  }
-"extends"                                 {  return( kEXTENDS );  }
-"super"                                   {  return( kSUPER );  }
-"void"                                    {  return( kVOID );  }
-"boolean"                                 {  return( kBOOLEAN );  }
-"byte"                                    {  return( kBYTE );  }
-"char"                                    {  return( kCHAR );  }
-"short"                                   {  return( kSHORT );  }
-"int"                                     {  return( kINT );  }
-"float"                                   {  return( kFLOAT );  }
-"long"                                    {  return( kLONG );  }
-"double"                                  {  return( kDOUBLE );  }
-"as"                                      {  return( kAS );  }
-"private"                                 {  return( kPRIVATE );  }
-"abstract"                                {  return( kABSTRACT );  }
-"public"                                  {  return( kPUBLIC );  }
-"protected"                               {  return( kPROTECTED );  }
-"transient"                               {  return( kTRANSIENT );  }
-"native"                                  {  return( kNATIVE );  }
-"synchronized"                            {  return( kSYNCHRONIZED );  }
-"volatile"                                {  return( kVOLATILE );  }
-"default"                                 {  return( kDEFAULT );  }
-"do"                                      {  return( kDO );  }
-"throws"                                  {  return( kTHROWS );  }
-"implements"                              {  return( kIMPLEMENTS );  }
-"this"                                    {  return( kTHIS );  }
-"if"                                      {  return( kIF );  }
-"else"                                    {  return( kELSE );  }
-"while"                                   {  return( kWHILE );  }
-"switch"                                  {  return( kSWITCH );  }
-"for"                                     {  return( kFOR );  }
-"in"                                      {  return( kIN );  }
-"return"                                  {  return( kRETURN );  }
-"break"                                   {  return( kBREAK );  }
-"continue"                                {  return( kCONTINUE );  }
-"throw"                                   {  return( kTHROW );  }
-"assert"                                  {  return( kASSERT );  }
-"case"                                    {  return( kCASE );  }
-"try"                                     {  return( kTRY );  }
-"finally"                                 {  return( kFINALLY );  }
-"catch"                                   {  return( kCATCH );  }
-"instanceof"                              {  return( kINSTANCEOF );  }
-"new"                                     {  return( kNEW );  }
-"true"                                    {  return( kTRUE );  }
-"false"                                   {  return( kFALSE );  }
-"null"                                    {  return( kNULL );  }
-"final"                                   {  return( kFINAL );  }
+"package"                                 {  return ( GroovyTokenTypes.kPACKAGE );  }
+"strictfp"                                {  return ( GroovyTokenTypes.kSTRICTFP );  }
+"import"                                  {  return ( GroovyTokenTypes.kIMPORT );  }
+"static"                                  {  return ( GroovyTokenTypes.kSTATIC );  }
+"def"                                     {  return ( GroovyTokenTypes.kDEF );  }
+"class"                                   {  return ( GroovyTokenTypes.kCLASS );  }
+"interface"                               {  return ( GroovyTokenTypes.kINTERFACE );  }
+"enum"                                    {  return ( GroovyTokenTypes.kENUM );  }
+"trait"                                   {  return ( GroovyTokenTypes.kTRAIT );  }
+"extends"                                 {  return ( GroovyTokenTypes.kEXTENDS );  }
+"super"                                   {  return ( GroovyTokenTypes.kSUPER );  }
+"void"                                    {  return ( GroovyTokenTypes.kVOID );  }
+"boolean"                                 {  return ( GroovyTokenTypes.kBOOLEAN );  }
+"byte"                                    {  return ( GroovyTokenTypes.kBYTE );  }
+"char"                                    {  return ( GroovyTokenTypes.kCHAR );  }
+"short"                                   {  return ( GroovyTokenTypes.kSHORT );  }
+"int"                                     {  return ( GroovyTokenTypes.kINT );  }
+"float"                                   {  return ( GroovyTokenTypes.kFLOAT );  }
+"long"                                    {  return ( GroovyTokenTypes.kLONG );  }
+"double"                                  {  return ( GroovyTokenTypes.kDOUBLE );  }
+"as"                                      {  return ( GroovyTokenTypes.kAS );  }
+"private"                                 {  return ( GroovyTokenTypes.kPRIVATE );  }
+"abstract"                                {  return ( GroovyTokenTypes.kABSTRACT );  }
+"public"                                  {  return ( GroovyTokenTypes.kPUBLIC );  }
+"protected"                               {  return ( GroovyTokenTypes.kPROTECTED );  }
+"transient"                               {  return ( GroovyTokenTypes.kTRANSIENT );  }
+"native"                                  {  return ( GroovyTokenTypes.kNATIVE );  }
+"synchronized"                            {  return ( GroovyTokenTypes.kSYNCHRONIZED );  }
+"volatile"                                {  return ( GroovyTokenTypes.kVOLATILE );  }
+"default"                                 {  return ( GroovyTokenTypes.kDEFAULT );  }
+"do"                                      {  return ( GroovyTokenTypes.kDO );  }
+"throws"                                  {  return ( GroovyTokenTypes.kTHROWS );  }
+"implements"                              {  return ( GroovyTokenTypes.kIMPLEMENTS );  }
+"this"                                    {  return ( GroovyTokenTypes.kTHIS );  }
+"if"                                      {  return ( GroovyTokenTypes.kIF );  }
+"else"                                    {  return ( GroovyTokenTypes.kELSE );  }
+"while"                                   {  return ( GroovyTokenTypes.kWHILE );  }
+"switch"                                  {  return ( GroovyTokenTypes.kSWITCH );  }
+"for"                                     {  return ( GroovyTokenTypes.kFOR );  }
+"in"                                      {  return ( GroovyTokenTypes.kIN );  }
+"return"                                  {  return ( GroovyTokenTypes.kRETURN );  }
+"break"                                   {  return ( GroovyTokenTypes.kBREAK );  }
+"continue"                                {  return ( GroovyTokenTypes.kCONTINUE );  }
+"throw"                                   {  return ( GroovyTokenTypes.kTHROW );  }
+"assert"                                  {  return ( GroovyTokenTypes.kASSERT );  }
+"case"                                    {  return ( GroovyTokenTypes.kCASE );  }
+"try"                                     {  return ( GroovyTokenTypes.kTRY );  }
+"finally"                                 {  return ( GroovyTokenTypes.kFINALLY );  }
+"catch"                                   {  return ( GroovyTokenTypes.kCATCH );  }
+"instanceof"                              {  return ( GroovyTokenTypes.kINSTANCEOF );  }
+"new"                                     {  return ( GroovyTokenTypes.kNEW );  }
+"true"                                    {  return ( GroovyTokenTypes.kTRUE );  }
+"false"                                   {  return ( GroovyTokenTypes.kFALSE );  }
+"null"                                    {  return ( GroovyTokenTypes.kNULL );  }
+"final"                                   {  return ( GroovyTokenTypes.kFINAL );  }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////      identifiers      ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-{mIDENT}                                  {   return mIDENT; }
+{mIDENT}                                  {   return GroovyTokenTypes.mIDENT; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Reserved shorthands //////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 "?"                                       {  yybegin(WAIT_FOR_REGEX);
-                                             return(mQUESTION);  }
+                                             return(GroovyTokenTypes.mQUESTION);  }
 "/"                                       {  if (zzStartRead == 0 ||
                                                zzBuffer.subSequence(0, zzStartRead).toString().trim().length() == 0) {
                                                yypushback(1);
                                                yybegin(WAIT_FOR_REGEX);
                                              } else {
-                                               return(mDIV);
+                                               return(GroovyTokenTypes.mDIV);
                                              }
                                           }
 "$""/"                                    {  if (zzStartRead == 0 ||
@@ -866,133 +867,133 @@ mGSTRING_LITERAL = \"\"
                                                yybegin(WAIT_FOR_REGEX);
                                              } else {
                                                yypushback(1);
-                                               return(mDOLLAR);
+                                               return (GroovyTokenTypes.mDOLLAR);
                                              }
                                           }
 "/="                                      {  yybegin(WAIT_FOR_REGEX);
-                                             return(mDIV_ASSIGN);  }
+                                             return (GroovyTokenTypes.mDIV_ASSIGN);  }
 "("                                       {  yybegin(WAIT_FOR_REGEX);
-                                             braceCount.push(mLPAREN);
-                                             return(mLPAREN);  }
-")"                                       {  if (!braceCount.isEmpty() && mLPAREN == braceCount.peek()) {
+                                             braceCount.push(GroovyTokenTypes.mLPAREN);
+                                             return (GroovyTokenTypes.mLPAREN);  }
+")"                                       {  if (!braceCount.isEmpty() && GroovyTokenTypes.mLPAREN == braceCount.peek()) {
                                                braceCount.pop();
                                              }
-                                             return(mRPAREN);  }
+                                             return (GroovyTokenTypes.mRPAREN);  }
 "["                                       {  yybegin(WAIT_FOR_REGEX);
-                                             braceCount.push(mLPAREN);
-                                             return(mLBRACK);  }
-"]"                                       {  if (!braceCount.isEmpty() && mLPAREN == braceCount.peek()) {
+                                             braceCount.push(GroovyTokenTypes.mLPAREN);
+                                             return (GroovyTokenTypes.mLBRACK);  }
+"]"                                       {  if (!braceCount.isEmpty() && GroovyTokenTypes.mLPAREN == braceCount.peek()) {
                                                braceCount.pop();
                                              }
-                                             return(mRBRACK);  }
+                                             return (GroovyTokenTypes.mRBRACK);  }
 "{"                                       {  yybegin(NLS_AFTER_LBRACE);
-                                             braceCount.push(mLCURLY);
-                                             return(mLCURLY);  }
+                                             braceCount.push(GroovyTokenTypes.mLCURLY);
+                                             return (GroovyTokenTypes.mLCURLY);  }
 ":"                                       {  yybegin(WAIT_FOR_REGEX);
-                                             return(mCOLON);  }
+                                             return (GroovyTokenTypes.mCOLON);  }
 ","                                       {  yybegin(WAIT_FOR_REGEX);
-                                             return(mCOMMA);  }
+                                             return (GroovyTokenTypes.mCOMMA);  }
 "."                                       {  yybegin(WAIT_FOR_REGEX);
-                                             return(mDOT);  }
+                                             return (GroovyTokenTypes.mDOT);  }
 "="                                       {  yybegin(WAIT_FOR_REGEX);
-                                             return(mASSIGN);  }
+                                             return (GroovyTokenTypes.mASSIGN);  }
 "<=>"                                     {  yybegin(WAIT_FOR_REGEX);
-                                             return(mCOMPARE_TO);  }
+                                             return (GroovyTokenTypes.mCOMPARE_TO);  }
 "=="|"==="                                {  yybegin(WAIT_FOR_REGEX);
-                                             return(mEQUAL);  }
+                                             return (GroovyTokenTypes.mEQUAL);  }
 "!"                                       {  yybegin(WAIT_FOR_REGEX);
-                                             return(mLNOT);  }
+                                             return (GroovyTokenTypes.mLNOT);  }
 "~"                                       {  yybegin(WAIT_FOR_REGEX);
-                                             return(mBNOT);  }
+                                             return (GroovyTokenTypes.mBNOT);  }
 "!="|"!=="                                {  yybegin(WAIT_FOR_REGEX);
-                                             return(mNOT_EQUAL);  }
+                                             return (GroovyTokenTypes.mNOT_EQUAL);  }
 "+"                                       {  yybegin(WAIT_FOR_REGEX);
-                                             return(mPLUS);  }
+                                             return (GroovyTokenTypes.mPLUS);  }
 "+="                                      {  yybegin(WAIT_FOR_REGEX);
-                                             return(mPLUS_ASSIGN);  }
+                                             return (GroovyTokenTypes.mPLUS_ASSIGN);  }
 "++"                                      {  yybegin(WAIT_FOR_REGEX);
-                                             return(mINC);  }
+                                             return (GroovyTokenTypes.mINC);  }
 "-"                                       {  yybegin(WAIT_FOR_REGEX);
-                                             return(mMINUS);  }
+                                             return (GroovyTokenTypes.mMINUS);  }
 "-="                                      {  yybegin(WAIT_FOR_REGEX);
-                                             return(mMINUS_ASSIGN);  }
+                                             return (GroovyTokenTypes.mMINUS_ASSIGN);  }
 "--"                                      {  yybegin(WAIT_FOR_REGEX);
-                                             return(mDEC);  }
+                                             return (GroovyTokenTypes.mDEC);  }
 "*"                                       {  yybegin(WAIT_FOR_REGEX);
-                                             return(mSTAR);  }
+                                             return (GroovyTokenTypes.mSTAR);  }
 "*="                                      {  yybegin(WAIT_FOR_REGEX);
-                                             return(mSTAR_ASSIGN);  }
+                                             return (GroovyTokenTypes.mSTAR_ASSIGN);  }
 "%"                                       {  yybegin(WAIT_FOR_REGEX);
-                                             return(mMOD);  }
+                                             return (GroovyTokenTypes.mMOD);  }
 "%="                                      {  yybegin(WAIT_FOR_REGEX);
-                                             return(mMOD_ASSIGN);  }
+                                             return (GroovyTokenTypes.mMOD_ASSIGN);  }
 ">>="                                     {  yybegin(WAIT_FOR_REGEX);
-                                             return(mSR_ASSIGN);  }
+                                             return (GroovyTokenTypes.mSR_ASSIGN);  }
 ">>>="                                    {  yybegin(WAIT_FOR_REGEX);
-                                             return(mBSR_ASSIGN);  }
+                                             return (GroovyTokenTypes.mBSR_ASSIGN);  }
 ">="                                      {  yybegin(WAIT_FOR_REGEX);
-                                             return(mGE);  }
+                                             return (GroovyTokenTypes.mGE);  }
 ">"                                       {  yybegin(WAIT_FOR_REGEX);
-                                             return(mGT);  }
+                                             return (GroovyTokenTypes.mGT);  }
 "<<="                                     {  yybegin(WAIT_FOR_REGEX);
-                                             return(mSL_ASSIGN);  }
+                                             return (GroovyTokenTypes.mSL_ASSIGN);  }
 "<="                                      {  yybegin(WAIT_FOR_REGEX);
-                                             return(mLE);  }
+                                             return (GroovyTokenTypes.mLE);  }
 "?:"                                      {  yybegin(WAIT_FOR_REGEX);
-                                             return(mELVIS);  }
+                                             return (GroovyTokenTypes.mELVIS);  }
 "<"                                       {  yybegin(WAIT_FOR_REGEX);
-                                             return(mLT);  }
+                                             return (GroovyTokenTypes.mLT);  }
 "^"                                       {  yybegin(WAIT_FOR_REGEX);
-                                             return(mBXOR);  }
+                                             return (GroovyTokenTypes.mBXOR);  }
 "^="                                      {  yybegin(WAIT_FOR_REGEX);
-                                             return(mBXOR_ASSIGN);  }
+                                             return (GroovyTokenTypes.mBXOR_ASSIGN);  }
 "|"                                       {  yybegin(WAIT_FOR_REGEX);
-                                             return(mBOR);  }
+                                             return (GroovyTokenTypes.mBOR);  }
 "|="                                      {  yybegin(WAIT_FOR_REGEX);
-                                             return(mBOR_ASSIGN);  }
+                                             return (GroovyTokenTypes.mBOR_ASSIGN);  }
 "||"                                      {  yybegin(WAIT_FOR_REGEX);
-                                             return(mLOR);  }
+                                             return (GroovyTokenTypes.mLOR);  }
 "&"                                       {  yybegin(WAIT_FOR_REGEX);
-                                             return(mBAND);  }
+                                             return (GroovyTokenTypes.mBAND);  }
 "&="                                      {  yybegin(WAIT_FOR_REGEX);
-                                             return(mBAND_ASSIGN);  }
+                                             return (GroovyTokenTypes.mBAND_ASSIGN);  }
 "&&"                                      {  yybegin(WAIT_FOR_REGEX);
-                                             return(mLAND);  }
+                                             return (GroovyTokenTypes.mLAND);  }
 ";"                                       {  yybegin(WAIT_FOR_REGEX);
-                                             return(mSEMI);  }
+                                             return (GroovyTokenTypes.mSEMI);  }
 "$"                                       {  yybegin(WAIT_FOR_REGEX);
-                                             return(mDOLLAR);  }
+                                             return (GroovyTokenTypes.mDOLLAR);  }
 ".."                                      {  yybegin(WAIT_FOR_REGEX);
-                                             return(mRANGE_INCLUSIVE);  }
+                                             return (GroovyTokenTypes.mRANGE_INCLUSIVE);  }
 "..<"                                     {  yybegin(WAIT_FOR_REGEX);
-                                             return(mRANGE_EXCLUSIVE);  }
+                                             return (GroovyTokenTypes.mRANGE_EXCLUSIVE);  }
 "..."                                     {  yybegin(WAIT_FOR_REGEX);
-                                             return(mTRIPLE_DOT);  }
+                                             return (GroovyTokenTypes.mTRIPLE_DOT);  }
 "*."                                      {  yybegin(WAIT_FOR_REGEX);
-                                             return(mSPREAD_DOT);  }
+                                             return (GroovyTokenTypes.mSPREAD_DOT);  }
 "?."                                      {  yybegin(WAIT_FOR_REGEX);
-                                             return(mOPTIONAL_DOT);  }
+                                             return (GroovyTokenTypes.mOPTIONAL_DOT);  }
 ".&"                                      {  yybegin(WAIT_FOR_REGEX);
-                                             return(mMEMBER_POINTER);  }
+                                             return (GroovyTokenTypes.mMEMBER_POINTER);  }
 "=~"                                      {  yybegin(WAIT_FOR_REGEX);
-                                             return(mREGEX_FIND);  }
+                                             return (GroovyTokenTypes.mREGEX_FIND);  }
 "==~"                                     {  yybegin(WAIT_FOR_REGEX);
-                                             return(mREGEX_MATCH);  }
+                                             return (GroovyTokenTypes.mREGEX_MATCH);  }
 "**"                                      {  yybegin(WAIT_FOR_REGEX);
-                                             return(mSTAR_STAR);  }
+                                             return (GroovyTokenTypes.mSTAR_STAR);  }
 "**="                                     {  yybegin(WAIT_FOR_REGEX);
-                                             return(mSTAR_STAR_ASSIGN);  }
+                                             return (GroovyTokenTypes.mSTAR_STAR_ASSIGN);  }
 "->"                                      {  yybegin(WAIT_FOR_REGEX);
-                                             return(mCLOSABLE_BLOCK_OP);  }
+                                             return (GroovyTokenTypes.mCLOSABLE_BLOCK_OP);  }
 "@"                                       {  yybegin(WAIT_FOR_REGEX);
-                                             return(mAT);  }
+                                             return (GroovyTokenTypes.mAT);  }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Other ////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Unknown symbol is using for debug goals.
-.                                         {   return mWRONG; }
+.                                         {   return GroovyTokenTypes.mWRONG; }
 
 
 

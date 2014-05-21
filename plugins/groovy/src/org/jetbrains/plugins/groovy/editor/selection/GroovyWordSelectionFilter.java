@@ -17,7 +17,7 @@ package org.jetbrains.plugins.groovy.editor.selection;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 public class GroovyWordSelectionFilter implements Condition<PsiElement> {
   @Override
   public boolean value(PsiElement element) {
-return !(element instanceof GroovyPsiElement || element.getLanguage() == GroovyFileType.GROOVY_LANGUAGE);
+return !(element instanceof GroovyPsiElement || element.getLanguage() == GroovyLanguage.INSTANCE);
 /*    final ASTNode node = element.getNode();
     if (node == null) return false;
 

@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.source.tree.java.PsiLocalVariableImpl;
@@ -37,13 +36,6 @@ import java.util.*;
  * @author ven
  */
 public class ResolverProcessor extends GrScopeProcessorWithHints {
-  public static final Key<PsiElement> RESOLVE_CONTEXT = Key.create("RESOLVE_CONTEXT");
-
-  public static final EnumSet<ResolveKind> RESOLVE_KINDS_CLASS_PACKAGE = EnumSet.of(ResolveKind.CLASS, ResolveKind.PACKAGE);
-  public static final EnumSet<ResolveKind> RESOLVE_KINDS_CLASS = EnumSet.of(ResolveKind.CLASS);
-  public static final EnumSet<ResolveKind> RESOLVE_KINDS_METHOD = EnumSet.of(ResolveKind.METHOD);
-  public static final EnumSet<ResolveKind> RESOLVE_KINDS_METHOD_PROPERTY = EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY);
-  public static final EnumSet<ResolveKind> RESOLVE_KINDS_PROPERTY = EnumSet.of(ResolveKind.PROPERTY);
 
   private Set<String> myProcessedClasses;
   protected final PsiElement myPlace;

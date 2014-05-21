@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
@@ -26,12 +27,10 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitio
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-
 /**
  * @author ilyas
  */
-public class UnaryExpressionNotPlusMinus implements GroovyElementTypes {
+public class UnaryExpressionNotPlusMinus {
 
   public static boolean parse(PsiBuilder builder, GroovyParser parser) {
     return parse(builder, parser, true);
@@ -39,11 +38,11 @@ public class UnaryExpressionNotPlusMinus implements GroovyElementTypes {
 
   public static boolean parse(PsiBuilder builder, GroovyParser parser, boolean runPostfixIfFail) {
     PsiBuilder.Marker marker = builder.mark();
-    if (builder.getTokenType() == mLPAREN) {
+    if (builder.getTokenType() == GroovyTokenTypes.mLPAREN) {
       final ReferenceElement.ReferenceElementResult result = parseTypeCast(builder);
       if (result != ReferenceElement.ReferenceElementResult.FAIL) {
         if (ConditionalExpression.parse(builder, parser) || result == ReferenceElement.ReferenceElementResult.REF_WITH_TYPE_PARAMS) {
-          marker.done(CAST_EXPRESSION);
+          marker.done(GroovyElementTypes.CAST_EXPRESSION);
           return true;
         } else {
           marker.rollbackTo();
@@ -65,17 +64,17 @@ public class UnaryExpressionNotPlusMinus implements GroovyElementTypes {
 
   private static ReferenceElement.ReferenceElementResult parseTypeCast(PsiBuilder builder) {
     PsiBuilder.Marker marker = builder.mark();
-    if (!ParserUtils.getToken(builder, mLPAREN, GroovyBundle.message("lparen.expected"))) {
+    if (!ParserUtils.getToken(builder, GroovyTokenTypes.mLPAREN, GroovyBundle.message("lparen.expected"))) {
       marker.rollbackTo();
       return ReferenceElement.ReferenceElementResult.FAIL;
     }
-    if (TokenSets.BUILT_IN_TYPES.contains(builder.getTokenType()) || mIDENT.equals(builder.getTokenType())) {
+    if (TokenSets.BUILT_IN_TYPES.contains(builder.getTokenType()) || GroovyTokenTypes.mIDENT.equals(builder.getTokenType())) {
       final ReferenceElement.ReferenceElementResult result = TypeSpec.parseStrict(builder, true);
       if (result == ReferenceElement.ReferenceElementResult.FAIL) {
         marker.rollbackTo();
         return ReferenceElement.ReferenceElementResult.FAIL;
       }
-      if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
+      if (!ParserUtils.getToken(builder, GroovyTokenTypes.mRPAREN, GroovyBundle.message("rparen.expected"))) {
         marker.rollbackTo();
         return ReferenceElement.ReferenceElementResult.FAIL;
       }

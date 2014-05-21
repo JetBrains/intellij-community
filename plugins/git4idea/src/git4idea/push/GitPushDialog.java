@@ -219,7 +219,7 @@ public class GitPushDialog extends DialogWrapper {
   private static String logMessageForCommits(GitCommitsByRepoAndBranch commitsToPush) {
     StringBuilder logMessage = new StringBuilder();
     for (GitCommit commit : commitsToPush.getAllCommits()) {
-      logMessage.append(GitUtil.getShortHash(commit.getHash().toString()));
+      logMessage.append(GitUtil.getShortHash(commit.getId().toString()));
     }
     return logMessage.toString();
   }

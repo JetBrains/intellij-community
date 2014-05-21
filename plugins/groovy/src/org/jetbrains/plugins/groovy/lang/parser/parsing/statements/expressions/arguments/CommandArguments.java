@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ExpressionStatement;
@@ -26,19 +27,19 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author ilyas
  */
-public class CommandArguments implements GroovyElementTypes {
+public class CommandArguments {
 
   public static boolean parseCommandArguments(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
     if (commandArgParse(builder, parser)) {
-      while (ParserUtils.getToken(builder, mCOMMA)) {
-        ParserUtils.getToken(builder, mNLS);
+      while (ParserUtils.getToken(builder, GroovyTokenTypes.mCOMMA)) {
+        ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
         if (!commandArgParse(builder, parser)) {
           builder.error(GroovyBundle.message("expression.expected"));
           break;
         }
       }
-      marker.done(COMMAND_ARGUMENTS);
+      marker.done(GroovyElementTypes.COMMAND_ARGUMENTS);
       return true;
     }
 
@@ -49,12 +50,12 @@ public class CommandArguments implements GroovyElementTypes {
   private static boolean commandArgParse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker commandMarker = builder.mark();
     if (ArgumentList.argumentLabelStartCheck(builder, parser)) {
-      ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"));
-      ParserUtils.getToken(builder, mNLS);
+      ParserUtils.getToken(builder, GroovyTokenTypes.mCOLON, GroovyBundle.message("colon.expected"));
+      ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
       if (!ExpressionStatement.argParse(builder, parser)) {
         builder.error(GroovyBundle.message("expression.expected"));
       }
-      commandMarker.done(NAMED_ARGUMENT);
+      commandMarker.done(GroovyElementTypes.NAMED_ARGUMENT);
       return true;
     }
 

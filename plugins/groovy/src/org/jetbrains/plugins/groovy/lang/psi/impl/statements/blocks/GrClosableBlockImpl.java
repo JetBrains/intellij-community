@@ -53,11 +53,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
-
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCLOSABLE_BLOCK_OP;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCLOSABLE_BLOCK_OP;
 
 /**
  * @author ilyas
@@ -158,12 +154,12 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
                                   @Nullable final PsiType classToDelegate) {
     if (classToDelegate == null) return true;
 
-    if (state.get(ResolverProcessor.RESOLVE_CONTEXT) == null) {
-      state = state.put(ResolverProcessor.RESOLVE_CONTEXT, this);
+    if (state.get(ClassHint.RESOLVE_CONTEXT) == null) {
+      state = state.put(ClassHint.RESOLVE_CONTEXT, this);
     }
 
     return ResolveUtil.processAllDeclarationsSeparately(classToDelegate, processor, nonCodeProcessor,
-                                            state.put(ResolverProcessor.RESOLVE_CONTEXT, this), place);
+                                            state.put(ClassHint.RESOLVE_CONTEXT, this), place);
   }
 
   private boolean processClosureClassMembers(@NotNull PsiScopeProcessor processor,
@@ -173,7 +169,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     final PsiClass closureClass = GroovyPsiManager.getInstance(getProject()).findClassWithCache(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, getResolveScope());
     if (closureClass == null) return true;
 
-    return closureClass.processDeclarations(processor, state.put(ResolverProcessor.RESOLVE_CONTEXT, this), lastParent, place);
+    return closureClass.processDeclarations(processor, state.put(ClassHint.RESOLVE_CONTEXT, this), lastParent, place);
   }
 
   private boolean processParameters(@NotNull PsiScopeProcessor processor,
@@ -189,7 +185,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     else if (!isItAlreadyDeclared(place)) {
       GrParameter[] synth = getSyntheticItParameter();
       if (synth.length > 0) {
-        if (!ResolveUtil.processElement(processor, synth[0], state.put(ResolverProcessor.RESOLVE_CONTEXT, this))) return false;
+        if (!ResolveUtil.processElement(processor, synth[0], state.put(ClassHint.RESOLVE_CONTEXT, this))) return false;
       }
     }
     return true;
@@ -267,7 +263,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
       final GrParameterList newParamList = (GrParameterList)addAfter(parameterList, getLBrace());
       parameterList.delete();
       ASTNode next = newParamList.getNode().getTreeNext();
-      getNode().addLeaf(mCLOSABLE_BLOCK_OP, "->", next);
+      getNode().addLeaf(GroovyTokenTypes.mCLOSABLE_BLOCK_OP, "->", next);
       return (GrParameter)newParamList.add(parameter);
     }
 

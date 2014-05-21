@@ -47,8 +47,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-
 /**
  * @author Max Medvedev
  */
@@ -101,14 +99,14 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
     if (parent instanceof GrArgumentLabel) return false; //don't highlight: print (void:'foo')
 
     if (PsiTreeUtil.getParentOfType(element, GrCodeReferenceElement.class) != null) {
-      if (token == GroovyTokenTypes.kDEF || token == kIN || token == GroovyTokenTypes.kAS) {
+      if (token == GroovyTokenTypes.kDEF || token == GroovyTokenTypes.kIN || token == GroovyTokenTypes.kAS) {
         return false; //It is allowed to name packages 'as', 'in' or 'def'
       }
     }
-    else if (token == kDEF && element.getParent() instanceof GrAnnotationNameValuePair) return false;
+    else if (token == GroovyTokenTypes.kDEF && element.getParent() instanceof GrAnnotationNameValuePair) return false;
     else if (parent instanceof GrReferenceExpression && element == ((GrReferenceExpression)parent).getReferenceNameElement()) {
-      if (token == kSUPER && ((GrReferenceExpression)parent).getQualifier() == null) return true;
-      if (token == kTHIS && ((GrReferenceExpression)parent).getQualifier() == null) return true;
+      if (token == GroovyTokenTypes.kSUPER && ((GrReferenceExpression)parent).getQualifier() == null) return true;
+      if (token == GroovyTokenTypes.kTHIS && ((GrReferenceExpression)parent).getQualifier() == null) return true;
       return false; //don't highlight foo.def
     }
 
@@ -118,9 +116,8 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
 
   @Override
   public void doApplyInformationToEditor() {
-    if (toHighlight == null) return;
-    UpdateHighlightersUtil
-      .setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), toHighlight, getColorsScheme(), getId());
+    if (toHighlight == null || myDocument == null) return;
+    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), toHighlight, getColorsScheme(), getId());
   }
 
   @Nullable

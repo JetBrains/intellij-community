@@ -1,16 +1,14 @@
 package com.intellij.vcs.log.data;
 
-import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.impl.VcsRefImpl;
-import com.intellij.vcs.log.SimpleHash;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.TimedCommitParser;
+import com.intellij.vcs.log.TimedVcsCommit;
+import com.intellij.vcs.log.impl.HashImpl;
 import org.junit.Test;
 
-import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 
@@ -25,20 +23,20 @@ public class VcsLogJoinerTest {
   public void runTest(List<String> initial, List<String> updateBlock, List<String> oldRefs, List<String> newRefs, String expected) {
     List<TimedVcsCommit> savedLog = TimedCommitParser.log(ArrayUtil.toStringArray(initial));
     List<? extends TimedVcsCommit> firstBlock = TimedCommitParser.log(ArrayUtil.toStringArray(updateBlock));
-    Collection<VcsRef> vcsOldRefs = ContainerUtil.map(oldRefs, new Function<String, VcsRef>() {
+    Collection<Hash> vcsOldRefs = ContainerUtil.map(oldRefs, new Function<String, Hash>() {
       @Override
-      public VcsRef fun(String s) {
-        return ref(s, s);
+      public Hash fun(String s) {
+        return HashImpl.build(s);
       }
     });
-    Collection<VcsRef> vcsNewRefs = ContainerUtil.map(newRefs, new Function<String, VcsRef>() {
+    Collection<Hash> vcsNewRefs = ContainerUtil.map(newRefs, new Function<String, Hash>() {
       @Override
-      public VcsRef fun(String s) {
-        return ref(s, s);
+      public Hash fun(String s) {
+        return HashImpl.build(s);
       }
     });
 
-    List<? extends TimedVcsCommit> result = new VcsLogJoiner().addCommits(savedLog, vcsOldRefs, firstBlock, vcsNewRefs).getFirst();
+    List<? extends TimedVcsCommit> result = new VcsLogJoiner<Hash, TimedVcsCommit>().addCommits(savedLog, vcsOldRefs, firstBlock, vcsNewRefs).getFirst();
     assertEquals(expected, toStr(result));
   }
 
@@ -136,23 +134,8 @@ public class VcsLogJoinerTest {
       if (s.length() != 0) {
         s.append(", ");
       }
-      s.append(commit.getHash().asString());
+      s.append(commit.getId().asString());
     }
     return s.toString();
-  }
-
-  private static VcsRef ref(String name, String hash) {
-    return new VcsRefImpl(new SimpleHash(hash), name, new VcsRefType() {
-      @Override
-      public boolean isBranch() {
-        return true;
-      }
-
-      @NotNull
-      @Override
-      public Color getBackgroundColor() {
-        return Color.WHITE;
-      }
-    }, new StubVirtualFile());
   }
 }

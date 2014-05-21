@@ -58,7 +58,7 @@ import java.util.List;
  *
  * @author ilyas
  */
-public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
+public class GroovyBlock implements Block, ASTBlock {
   private static final Logger LOG = Logger.getInstance(GroovyBlock.class);
 
   protected final ASTNode myNode;
@@ -202,10 +202,10 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
       return getSwitchIndent((GrCaseSection)psiParent, newChildIndex);
     }
 
-    if (TokenSets.BLOCK_SET.contains(astNode.getElementType()) || SWITCH_STATEMENT.equals(astNode.getElementType())) {
+    if (TokenSets.BLOCK_SET.contains(astNode.getElementType()) || GroovyElementTypes.SWITCH_STATEMENT.equals(astNode.getElementType())) {
       return new ChildAttributes(Indent.getNormalIndent(), null);
     }
-    if (CASE_SECTION.equals(astNode.getElementType())) {
+    if (GroovyElementTypes.CASE_SECTION.equals(astNode.getElementType())) {
       return new ChildAttributes(Indent.getNormalIndent(), null);
     }
     if (psiParent instanceof GrBinaryExpression ||

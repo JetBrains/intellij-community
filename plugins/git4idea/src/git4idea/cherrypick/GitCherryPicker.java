@@ -99,7 +99,7 @@ public class GitCherryPicker {
       GitSimpleEventDetector localChangesOverwrittenDetector = new GitSimpleEventDetector(LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK);
       GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector =
         new GitUntrackedFilesOverwrittenByOperationDetector(repository.getRoot());
-      GitCommandResult result = myGit.cherryPick(repository, commit.getHash().asString(), myAutoCommit,
+      GitCommandResult result = myGit.cherryPick(repository, commit.getId().asString(), myAutoCommit,
                                                  conflictDetector, localChangesOverwrittenDetector, untrackedFilesDetector);
       GitCommitWrapper commitWrapper = new GitCommitWrapper(commit);
       if (result.success()) {
@@ -117,7 +117,7 @@ public class GitCherryPicker {
       }
       else if (conflictDetector.hasHappened()) {
         boolean mergeCompleted = new CherryPickConflictResolver(myProject, myGit, myPlatformFacade, repository.getRoot(),
-                                                                commit.getHash().asString(), commit.getAuthor().getName(),
+                                                                commit.getId().asString(), commit.getAuthor().getName(),
                                                                 commit.getSubject()).merge();
 
         if (mergeCompleted) {
@@ -180,7 +180,7 @@ public class GitCherryPicker {
   private void notifyConflictWarning(@NotNull GitRepository repository, @NotNull GitCommitWrapper commit,
                                      @NotNull List<GitCommitWrapper> successfulCommits) {
     NotificationListener resolveLinkListener = new ResolveLinkListener(myProject, myGit, myPlatformFacade, repository.getRoot(),
-                                                                       commit.getCommit().getHash().toShortString(),
+                                                                       commit.getCommit().getId().toShortString(),
                                                                        commit.getCommit().getAuthor().getName(),
                                                                        commit.getSubject());
     String description = commitDetails(commit)
@@ -235,7 +235,7 @@ public class GitCherryPicker {
 
   @NotNull
   private static String createCommitMessage(@NotNull VcsFullCommitDetails commit) {
-    return commit.getFullMessage() + "\n(cherry picked from commit " + commit.getHash().toShortString() + ")";
+    return commit.getFullMessage() + "\n(cherry picked from commit " + commit.getId().toShortString() + ")";
   }
 
   private boolean showCommitDialogAndWaitForCommit(@NotNull final GitRepository repository, @NotNull final GitCommitWrapper commit,
@@ -355,7 +355,7 @@ public class GitCherryPicker {
 
   @NotNull
   private static String commitDetails(@NotNull GitCommitWrapper commit) {
-    return commit.getCommit().getHash().toShortString() + " " + commit.getOriginalSubject();
+    return commit.getCommit().getId().toShortString() + " " + commit.getOriginalSubject();
   }
 
   private void refreshChangedFiles(@NotNull Collection<FilePath> filePaths) {

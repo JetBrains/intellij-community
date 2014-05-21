@@ -31,16 +31,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNLS;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNLS;
 
 /**
  * @author Max Medvedev
@@ -51,7 +48,7 @@ public class ConvertToGeeseBracesIntention extends Intention {
   private static final PsiElementPredicate MY_PREDICATE = new PsiElementPredicate() {
     @Override
     public boolean satisfiedBy(PsiElement element) {
-      if (element.getLanguage() != GroovyFileType.GROOVY_LANGUAGE) return false;
+      if (element.getLanguage() != GroovyLanguage.INSTANCE) return false;
       if (!CodeStyleSettingsManager.getInstance(element.getProject()).getCurrentSettings()
         .getCustomSettings(GroovyCodeStyleSettings.class).USE_FLYING_GEESE_BRACES) {
         return false;
@@ -81,7 +78,7 @@ public class ConvertToGeeseBracesIntention extends Intention {
   @Nullable
   private static PsiElement getNext(PsiElement element) {
     PsiElement next = GeeseUtil.getNextNonWhitespaceToken(element);
-    if (next != null && next.getNode().getElementType() == mNLS) next = GeeseUtil.getNextNonWhitespaceToken(next);
+    if (next != null && next.getNode().getElementType() == GroovyTokenTypes.mNLS) next = GeeseUtil.getNextNonWhitespaceToken(next);
     return next;
   }
 

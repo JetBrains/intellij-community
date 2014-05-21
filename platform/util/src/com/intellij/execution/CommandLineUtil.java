@@ -77,7 +77,7 @@ public class CommandLineUtil {
   }
 
   private static boolean isWinShell(@NotNull String command, @NotNull List<String> parameters) {
-    if (command.endsWith(".cmd")) {
+    if (command.endsWith(".cmd") || command.endsWith(".bat")) {
       return true;
     }
     return ("cmd".equalsIgnoreCase(command) || "cmd.exe".equalsIgnoreCase(command)) &&

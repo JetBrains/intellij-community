@@ -74,7 +74,7 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell> {
     List<VcsRef> refs = Collections.emptyList();
     if (details != null) {
       message = details.getSubject();
-      refs = (List<VcsRef>)myDataPack.getRefsModel().refsToCommit(details.getHash());
+      refs = (List<VcsRef>)myDataPack.getRefsModel().refsToCommit(details.getId());
     }
     return new GraphCommitCell(message, refs);
   }

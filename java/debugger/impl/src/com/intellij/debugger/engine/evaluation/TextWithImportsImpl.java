@@ -40,7 +40,7 @@ public final class TextWithImportsImpl implements TextWithImports{
   private final FileType myFileType;
   private final String myImports;
 
-  public TextWithImportsImpl (PsiExpression expression) {
+  public TextWithImportsImpl(@NotNull PsiExpression expression) {
     myKind = CodeFragmentKind.EXPRESSION;
     final String text = expression.getText();
     PsiFile containingFile = expression.getContainingFile();

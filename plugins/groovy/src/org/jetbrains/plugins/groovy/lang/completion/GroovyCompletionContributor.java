@@ -30,8 +30,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 
 import java.util.Set;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-
 /**
  * @author ilyas
  */
@@ -40,8 +38,8 @@ public class GroovyCompletionContributor extends CompletionContributor {
   private static final ElementPattern<PsiElement> AFTER_NUMBER_LITERAL = PlatformPatterns.psiElement().afterLeafSkipping(
     StandardPatterns.alwaysFalse(),
     PlatformPatterns.psiElement().withElementType(PsiJavaPatterns
-                                                    .elementType().oneOf(mNUM_DOUBLE, GroovyTokenTypes.mNUM_INT,
-                                                                         GroovyTokenTypes.mNUM_LONG, mNUM_FLOAT,
+                                                    .elementType().oneOf(GroovyTokenTypes.mNUM_DOUBLE, GroovyTokenTypes.mNUM_INT,
+                                                                         GroovyTokenTypes.mNUM_LONG, GroovyTokenTypes.mNUM_FLOAT,
                                                                          GroovyTokenTypes.mNUM_BIG_INT, GroovyTokenTypes.mNUM_BIG_DECIMAL)));
 
 
@@ -91,7 +89,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
     //don't eat $ from gstrings when completing previous injection ref. see IDEA-110369
     PsiElement position = context.getFile().findElementAt(context.getStartOffset());
-    if (position!= null && position.getNode().getElementType() == mDOLLAR) {
+    if (position!= null && position.getNode().getElementType() == GroovyTokenTypes.mDOLLAR) {
       context.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, context.getStartOffset());
     }
   }

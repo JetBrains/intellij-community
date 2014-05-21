@@ -1817,6 +1817,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           return getFontMetrics(Font.PLAIN).stringWidth(Integer.toString(lineNumber + 2)) + 6;
         }
       });
+      myGutterComponent.updateSize();
 
       myEditorComponent.setSize(dim);
       myEditorComponent.fireResized();
@@ -3997,7 +3998,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private void processMouseReleased(@NotNull MouseEvent e) {
     if (checkIgnore(e, true)) return;
 
-    if (e.getSource() == myGutterComponent) {
+    if (e.getSource() == myGutterComponent && !(myMousePressedEvent != null && myMousePressedEvent.isConsumed())) {
       myGutterComponent.mouseReleased(e);
     }
 
@@ -5632,6 +5633,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           getScrollingModel().scrollVertically(y - scrollShift);
           myGutterComponent.updateSize();
           validateMousePointer(e);
+          e.consume();
           return isNavigation;
         }
       }

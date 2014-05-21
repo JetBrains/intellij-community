@@ -32,7 +32,7 @@ import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -182,7 +182,7 @@ public class ResolveUtil {
   static PsiScopeProcessor substituteProcessor(PsiScopeProcessor processor, PsiElement scope) {
     //hack for walking up in java code
     //java's processDeclarations don't check names so we should do it manually
-    if (scope.getLanguage() != GroovyFileType.GROOVY_LANGUAGE && processor.getHint(NameHint.KEY) != null) {
+    if (scope.getLanguage() != GroovyLanguage.INSTANCE && processor.getHint(NameHint.KEY) != null) {
       return new JavaResolverProcessor(processor);
     }
     return processor;
@@ -214,7 +214,7 @@ public class ResolveUtil {
     }
 
     if (scope instanceof GrClosableBlock) {
-      ResolveState _state = state.put(ResolverProcessor.RESOLVE_CONTEXT, scope);
+      ResolveState _state = state.put(ClassHint.RESOLVE_CONTEXT, scope);
 
       PsiClass superClass = getLiteralSuperClass((GrClosableBlock)scope);
       if (superClass != null && !superClass.processDeclarations(processor, _state, null, place)) return false;
@@ -719,7 +719,7 @@ public class ResolveUtil {
 
     MethodResolverProcessor processor =
       new MethodResolverProcessor(methodName, place, false, thisType, argumentTypes, PsiType.EMPTY_ARRAY, allVariants, byShape);
-    final ResolveState state = ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, place);
+    final ResolveState state = ResolveState.initial().put(ClassHint.RESOLVE_CONTEXT, place);
     processAllDeclarations(thisType, processor, state, place);
     boolean hasApplicableMethods = processor.hasApplicableCandidates();
     final GroovyResolveResult[] methodCandidates = processor.getCandidates();
@@ -955,10 +955,10 @@ public class ResolveUtil {
                                              @NotNull PsiElement place) {
     if (!shouldProcessMethods(resolver.getHint(ClassHint.KEY))) return true;
 
-    return file.processDeclarations(new GrDelegatingScopeProcessorWithHints(resolver, null, ResolverProcessor.RESOLVE_KINDS_METHOD) {
+    return file.processDeclarations(new GrDelegatingScopeProcessorWithHints(resolver, null, ClassHint.RESOLVE_KINDS_METHOD) {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState _state) {
-        if (_state.get(ResolverProcessor.RESOLVE_CONTEXT) instanceof GrImportStatement) {
+        if (_state.get(RESOLVE_CONTEXT) instanceof GrImportStatement) {
           super.execute(element, _state);
         }
         return true;

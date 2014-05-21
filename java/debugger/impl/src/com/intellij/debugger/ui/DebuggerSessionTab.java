@@ -385,7 +385,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     DebugProcessImpl process = getDebugProcess();
     DebugProcessImpl reuseProcess = reuseSession.getDebugProcess();
     if (process != null && reuseProcess != null) {
-      process.setBreakpointsMuted(reuseProcess.areBreakpointsMuted());
+      //process.setBreakpointsMuted(reuseProcess.areBreakpointsMuted());
     }
   }
 

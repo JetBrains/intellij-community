@@ -154,8 +154,8 @@ public class BuiltInServer implements Disposable {
     LOG.info("web server stopped");
   }
 
-  public static void replaceDefaultHandler(@NotNull ChannelHandlerContext context, @NotNull SimpleChannelInboundHandler messageChannelHandler) {
-    context.pipeline().replace(DelegatingHttpRequestHandler.class, "replacedDefaultHandler", messageChannelHandler);
+  public static void replaceDefaultHandler(@NotNull ChannelHandlerContext context, @NotNull ChannelHandler channelHandler) {
+    context.pipeline().replace(DelegatingHttpRequestHandler.class, "replacedDefaultHandler", channelHandler);
   }
 
   @ChannelHandler.Sharable

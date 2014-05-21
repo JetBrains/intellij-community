@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
@@ -29,18 +30,16 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.a
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.PrimaryExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-
 /**
  * Main classdef for any general expression parsing
  *
  * http://svn.codehaus.org/groovy/trunk/groovy/groovy-core/src/test/gls/syntax/Gep3Test.groovy
  * @author ilyas
  */
-public class ExpressionStatement implements GroovyElementTypes {
+public class ExpressionStatement {
 
   private static IElementType parseExpressionStatement(PsiBuilder builder, GroovyParser parser) {
-    if (checkForTypeCast(builder, parser)) return CAST_EXPRESSION;
+    if (checkForTypeCast(builder, parser)) return GroovyElementTypes.CAST_EXPRESSION;
     PsiBuilder.Marker marker = builder.mark();
     final PathExpression.Result result = PathExpression.parsePathExprQualifierForExprStatement(builder, parser);
     if (result != PathExpression.Result.WRONG_WAY &&
@@ -49,7 +48,7 @@ public class ExpressionStatement implements GroovyElementTypes {
         !TokenSets.POSTFIX_UNARY_OP_SET.contains(builder.getTokenType())) {
       if (result == PathExpression.Result.METHOD_CALL) {
         marker.drop();
-        return PATH_METHOD_CALL;
+        return GroovyElementTypes.PATH_METHOD_CALL;
       }
 
       if (result == PathExpression.Result.LITERAL) {
@@ -59,12 +58,12 @@ public class ExpressionStatement implements GroovyElementTypes {
         PrimaryExpression.parsePrimaryExpression(builder, parser, true);
       }
       if (CommandArguments.parseCommandArguments(builder, parser)) {
-        marker.done(CALL_EXPRESSION);
-        return CALL_EXPRESSION;
+        marker.done(GroovyElementTypes.CALL_EXPRESSION);
+        return GroovyElementTypes.CALL_EXPRESSION;
       }
     }
     marker.drop();
-    return WRONGWAY;
+    return GroovyElementTypes.WRONGWAY;
   }
 
   private static boolean checkForTypeCast(PsiBuilder builder, GroovyParser parser) {
@@ -89,51 +88,51 @@ public class ExpressionStatement implements GroovyElementTypes {
     PsiBuilder.Marker marker = builder.mark();
 
     final IElementType result = parseExpressionStatement(builder, parser);
-    if (result != CALL_EXPRESSION && result != PATH_METHOD_CALL) {
+    if (result != GroovyElementTypes.CALL_EXPRESSION && result != GroovyElementTypes.PATH_METHOD_CALL) {
       marker.drop();
-      return result == WRONGWAY ? Result.WRONG_WAY : Result.EXPRESSION;
+      return result == GroovyElementTypes.WRONGWAY ? Result.WRONG_WAY : Result.EXPRESSION;
     }
 
-    boolean isExprStatement = result == CALL_EXPRESSION;
+    boolean isExprStatement = result == GroovyElementTypes.CALL_EXPRESSION;
 
     while (true) {
-      boolean nameParsed = namePartParse(builder, parser) == REFERENCE_EXPRESSION;
+      boolean nameParsed = namePartParse(builder, parser) == GroovyElementTypes.REFERENCE_EXPRESSION;
 
       PsiBuilder.Marker exprStatement;
 
       if (nameParsed) {
         exprStatement = marker.precede();
-        marker.done(REFERENCE_EXPRESSION);
+        marker.done(GroovyElementTypes.REFERENCE_EXPRESSION);
       }
       else {
         exprStatement = marker;
       }
 
-      if (builder.getTokenType() == mLPAREN) {
+      if (builder.getTokenType() == GroovyTokenTypes.mLPAREN) {
         PrimaryExpression.methodCallArgsParse(builder, parser);
-        exprStatement.done(PATH_METHOD_CALL);
+        exprStatement.done(GroovyElementTypes.PATH_METHOD_CALL);
       }
-      else if (mLBRACK.equals(builder.getTokenType()) &&
-               !ParserUtils.lookAhead(builder, mLBRACK, mCOLON) &&
-               !ParserUtils.lookAhead(builder, mLBRACK, mNLS, mCOLON)) {
+      else if (GroovyTokenTypes.mLBRACK.equals(builder.getTokenType()) &&
+               !ParserUtils.lookAhead(builder, GroovyTokenTypes.mLBRACK, GroovyTokenTypes.mCOLON) &&
+               !ParserUtils.lookAhead(builder, GroovyTokenTypes.mLBRACK, GroovyTokenTypes.mNLS, GroovyTokenTypes.mCOLON)) {
         PathExpression.indexPropertyArgsParse(builder, parser);
-        exprStatement.done(PATH_INDEX_PROPERTY);
-        if (mLPAREN.equals(builder.getTokenType())) {
+        exprStatement.done(GroovyElementTypes.PATH_INDEX_PROPERTY);
+        if (GroovyTokenTypes.mLPAREN.equals(builder.getTokenType())) {
           PrimaryExpression.methodCallArgsParse(builder, parser);
         }
-        else if (mLCURLY.equals(builder.getTokenType())) {
+        else if (GroovyTokenTypes.mLCURLY.equals(builder.getTokenType())) {
           PsiBuilder.Marker argsMarker = builder.mark();
-          argsMarker.done(ARGUMENTS);
+          argsMarker.done(GroovyElementTypes.ARGUMENTS);
         }
-        while (mLCURLY.equals(builder.getTokenType())) {
+        while (GroovyTokenTypes.mLCURLY.equals(builder.getTokenType())) {
           OpenOrClosableBlock.parseClosableBlock(builder, parser);
         }
         exprStatement = exprStatement.precede();
-        exprStatement.done(PATH_METHOD_CALL);
+        exprStatement.done(GroovyElementTypes.PATH_METHOD_CALL);
       }
       else if (nameParsed && CommandArguments.parseCommandArguments(builder, parser)) {
         isExprStatement = true;
-        exprStatement.done(CALL_EXPRESSION);
+        exprStatement.done(GroovyElementTypes.CALL_EXPRESSION);
       }
       else {
         exprStatement.drop();
@@ -147,12 +146,12 @@ public class ExpressionStatement implements GroovyElementTypes {
   }
 
   private static GroovyElementType namePartParse(PsiBuilder builder, GroovyParser parser) {
-    if (TokenSets.BINARY_OP_SET.contains(builder.getTokenType())) return WRONGWAY;
-    if (TokenSets.KEYWORDS.contains(builder.getTokenType())) return WRONGWAY;
+    if (TokenSets.BINARY_OP_SET.contains(builder.getTokenType())) return GroovyElementTypes.WRONGWAY;
+    if (TokenSets.KEYWORDS.contains(builder.getTokenType())) return GroovyElementTypes.WRONGWAY;
     final GroovyElementType type = PathExpression.namePartParse(builder, parser);
-    if (type == WRONGWAY && TokenSets.NUMBERS.contains(builder.getTokenType())) {
+    if (type == GroovyElementTypes.WRONGWAY && TokenSets.NUMBERS.contains(builder.getTokenType())) {
       builder.advanceLexer();
-      return REFERENCE_EXPRESSION;
+      return GroovyElementTypes.REFERENCE_EXPRESSION;
     }
     return type;
   }

@@ -26,7 +26,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 
 /**
@@ -38,7 +38,7 @@ public class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
   private final PsiMethod myMethod;
 
   private GrGdkMethodImpl(PsiMethod method, boolean isStatic, @Nullable String originInfo) {
-    super(method.getManager(), GroovyFileType.GROOVY_LANGUAGE, method.getName());
+    super(method.getManager(), GroovyLanguage.INSTANCE, method.getName());
     myMethod = method;
 
     addModifier(PsiModifier.PUBLIC);

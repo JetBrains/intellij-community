@@ -203,10 +203,6 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.openapi.vcs.changes.VcsEventWatcher</implementation-class>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater</implementation-class>
     </component>
 

@@ -37,7 +37,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
@@ -133,7 +133,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
 
     for (PsiReference ref1 : MethodReferencesSearch.search(toSearchFor, GlobalSearchScope.projectScope(myProject), true)) {
       PsiElement ref = ref1.getElement();
-      if (ref.getLanguage() != GroovyFileType.GROOVY_LANGUAGE) {
+      if (ref.getLanguage() != GroovyLanguage.INSTANCE) {
         result.add(new OtherLanguageUsageInfo(ref1));
         continue;
       }

@@ -81,6 +81,7 @@ public class SdkSettingsStep extends ModuleWizardStep {
         if (jdk != null) {
           component.setValue(selectedJdkProperty, jdk.getName());
         }
+        OnSdkSelected(jdk);
       }
     });
 
@@ -117,6 +118,8 @@ public class SdkSettingsStep extends ModuleWizardStep {
     myJdkPanel.add(myJdkComboBox);
     myJdkPanel.add(myJdkComboBox.getSetUpButton(), BorderLayout.EAST);
   }
+
+  protected void OnSdkSelected(Sdk sdk) {}
 
   public boolean isEmpty() {
     return myJdkPanel.getComponentCount() == 0;

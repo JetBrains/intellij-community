@@ -38,11 +38,11 @@ import static org.zmlx.hg4idea.HgErrorHandler.ensureSuccess;
 
 public class HgRegularUpdater implements HgUpdater {
 
-  private final Project project;
+  @NotNull private final Project project;
   @NotNull private final VirtualFile repoRoot;
   @NotNull private final UpdateConfiguration updateConfiguration;
 
-  public HgRegularUpdater(Project project, @NotNull VirtualFile repository, @NotNull UpdateConfiguration configuration) {
+  public HgRegularUpdater(@NotNull Project project, @NotNull VirtualFile repository, @NotNull UpdateConfiguration configuration) {
     this.project = project;
     this.repoRoot = repository;
     this.updateConfiguration = configuration;

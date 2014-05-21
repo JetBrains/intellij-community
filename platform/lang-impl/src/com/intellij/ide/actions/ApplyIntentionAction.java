@@ -32,28 +32,31 @@ import java.util.List;
 
 public class ApplyIntentionAction extends AnAction {
 
-  private final HighlightInfo.IntentionActionDescriptor myDescriptor;
+  private final IntentionAction myAction;
   private final Editor myEditor;
   private final PsiFile myFile;
 
   public ApplyIntentionAction(final HighlightInfo.IntentionActionDescriptor descriptor, String text, Editor editor, PsiFile file) {
+    this(descriptor.getAction(), text, editor, file);
+  }
+
+  public ApplyIntentionAction(final IntentionAction action, String text, Editor editor, PsiFile file) {
     super(text);
-    myDescriptor = descriptor;
+    myAction = action;
     myEditor = editor;
     myFile = file;
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final IntentionAction action = myDescriptor.getAction();
-    ShowIntentionActionsHandler.chooseActionAndInvoke(myFile, myEditor, action, action.getText());
+    ShowIntentionActionsHandler.chooseActionAndInvoke(myFile, myEditor, myAction, myAction.getText());
   }
 
   public String getName() {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       @Override
       public String compute() {
-        return myDescriptor.getAction().getText();
+        return myAction.getText();
       }
     });
   }

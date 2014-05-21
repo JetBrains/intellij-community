@@ -131,7 +131,7 @@ public class HgStatusCommand {
       return Collections.emptySet();
     }
 
-    HgCommandExecutor executor = new HgCommandExecutor(myProject, null);
+    HgCommandExecutor executor = new HgCommandExecutor(myProject);
     executor.setSilent(true);
 
     List<String> options = new LinkedList<String>();

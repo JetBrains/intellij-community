@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arguments.ArgumentList;
@@ -27,26 +28,26 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author ilyas
  */
-public class ListOrMapConstructorExpression implements GroovyElementTypes {
+public class ListOrMapConstructorExpression {
 
   public static GroovyElementType parse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
-    if (!ParserUtils.getToken(builder, mLBRACK, GroovyBundle.message("lbrack.expected"))) {
+    if (!ParserUtils.getToken(builder, GroovyTokenTypes.mLBRACK, GroovyBundle.message("lbrack.expected"))) {
       marker.drop();
-      return WRONGWAY;
+      return GroovyElementTypes.WRONGWAY;
     }
-    if (ParserUtils.getToken(builder, mRBRACK)) {
-      marker.done(LIST_OR_MAP);
-      return LIST_OR_MAP;
-    } else if (ParserUtils.getToken(builder, mCOLON)) {
-      ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"));
+    if (ParserUtils.getToken(builder, GroovyTokenTypes.mRBRACK)) {
+      marker.done(GroovyElementTypes.LIST_OR_MAP);
+      return GroovyElementTypes.LIST_OR_MAP;
+    } else if (ParserUtils.getToken(builder, GroovyTokenTypes.mCOLON)) {
+      ParserUtils.getToken(builder, GroovyTokenTypes.mRBRACK, GroovyBundle.message("rbrack.expected"));
     } else {
-      ArgumentList.parseArgumentList(builder, mRBRACK, parser);
-      ParserUtils.getToken(builder, mNLS);
-      ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"));
+      ArgumentList.parseArgumentList(builder, GroovyTokenTypes.mRBRACK, parser);
+      ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
+      ParserUtils.getToken(builder, GroovyTokenTypes.mRBRACK, GroovyBundle.message("rbrack.expected"));
     }
 
-    marker.done(LIST_OR_MAP);
-    return LIST_OR_MAP;
+    marker.done(GroovyElementTypes.LIST_OR_MAP);
+    return GroovyElementTypes.LIST_OR_MAP;
   }
 }

@@ -35,7 +35,7 @@ import javax.swing.*;
 
 class XBreakpointItem extends BreakpointItem {
   private final XBreakpoint<?> myBreakpoint;
-  private XLightBreakpointPropertiesPanel<XBreakpoint<?>> myPropertiesPanel;
+  private XLightBreakpointPropertiesPanel<XBreakpointBase<?,?,?>> myPropertiesPanel;
 
   public XBreakpointItem(XBreakpoint<?> breakpoint) {
     myBreakpoint = breakpoint;
@@ -95,14 +95,15 @@ class XBreakpointItem extends BreakpointItem {
   }
 
   public void doUpdateDetailView(DetailView panel, boolean editorOnly) {
-    Project project = ((XBreakpointBase)myBreakpoint).getProject();
+    XBreakpointBase breakpoint = (XBreakpointBase)myBreakpoint;
+    Project project = breakpoint.getProject();
     //saveState();
     if (myPropertiesPanel != null) {
       myPropertiesPanel.dispose();
       myPropertiesPanel = null;
     }
     if (!editorOnly) {
-      myPropertiesPanel = new XLightBreakpointPropertiesPanel<XBreakpoint<?>>(project, getManager(), myBreakpoint, true);
+      myPropertiesPanel = new XLightBreakpointPropertiesPanel<XBreakpointBase<?,?,?>>(project, getManager(), breakpoint, true);
 
       panel.setPropertiesPanel(myPropertiesPanel.getMainPanel());
     }

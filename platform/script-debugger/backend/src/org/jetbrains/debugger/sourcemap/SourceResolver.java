@@ -35,7 +35,8 @@ public class SourceResolver {
                               ? new ObjectIntHashMap<Url>(canonicalizedSources.length)
                               : new ObjectIntHashMap<Url>(canonicalizedSources.length, Urls.getCaseInsensitiveUrlHashingStrategy());
     for (int i = 0; i < sources.size(); i++) {
-      Url url = canonicalizeUrl(sources.get(i), baseFileUrl, trimFileScheme, i);
+      String rawSource = sources.get(i);
+      Url url = canonicalizeUrl(rawSource, baseFileUrl, trimFileScheme, i);
       canonicalizedSources[i] = url;
       canonicalizedSourcesMap.put(url, i);
     }
@@ -79,9 +80,7 @@ public class SourceResolver {
       if (file != null) {
         if (absoluteLocalPathToSourceIndex == null) {
           // must be linked, on iterate original path must be first
-          absoluteLocalPathToSourceIndex = SystemInfo.isFileSystemCaseSensitive
-                                           ? new ObjectIntHashMap<String>(rawSources.size())
-                                           : new ObjectIntHashMap<String>(rawSources.size(), CaseInsensitiveStringHashingStrategy.INSTANCE);
+          absoluteLocalPathToSourceIndex = createStringIntMap(rawSources.size());
           sourceIndexToAbsoluteLocalPath = new String[rawSources.size()];
         }
         absoluteLocalPathToSourceIndex.put(path, sourceIndex);
@@ -93,6 +92,16 @@ public class SourceResolver {
       }
     }
     return new UrlImpl(baseUrl.getScheme(), baseUrl.getAuthority(), path, null);
+  }
+
+  @NotNull
+  private static ObjectIntHashMap<String> createStringIntMap(int initialCapacity) {
+    if (initialCapacity == -1) {
+      initialCapacity = 4;
+    }
+    return SystemInfo.isFileSystemCaseSensitive
+           ? new ObjectIntHashMap<String>(initialCapacity)
+           : new ObjectIntHashMap<String>(initialCapacity, CaseInsensitiveStringHashingStrategy.INSTANCE);
   }
 
   @Nullable
@@ -114,12 +123,12 @@ public class SourceResolver {
   }
 
   public interface Resolver {
-    int resolve(@NotNull ObjectIntHashMap<Url> map);
+    int resolve(@NotNull VirtualFile sourceFile, @NotNull ObjectIntHashMap<Url> map);
   }
 
   @Nullable
-  public MappingList findMappings(@NotNull SourceMap sourceMap, @NotNull Resolver resolver) {
-    int index = resolver.resolve(canonicalizedSourcesMap);
+  public MappingList findMappings(@NotNull VirtualFile sourceFile, @NotNull SourceMap sourceMap, @NotNull Resolver resolver) {
+    int index = resolver.resolve(sourceFile, canonicalizedSourcesMap);
     return index < 0 ? null : sourceMap.sourceIndexToMappings[index];
   }
 
@@ -143,14 +152,19 @@ public class SourceResolver {
   }
 
   @Nullable
+  private static MappingList getMappingsBySource(@NotNull SourceMap sourceMap, int index) {
+    return index == -1 ? null : sourceMap.sourceIndexToMappings[index];
+  }
+
+  @Nullable
   private MappingList findByFile(@NotNull SourceMap sourceMap, @NotNull VirtualFile sourceFile) {
     MappingList mappings = null;
     if (absoluteLocalPathToSourceIndex != null && sourceFile.isInLocalFileSystem()) {
-      mappings = sourceMap.sourceIndexToMappings[absoluteLocalPathToSourceIndex.get(sourceFile.getPath())];
+      mappings = getMappingsBySource(sourceMap, absoluteLocalPathToSourceIndex.get(sourceFile.getPath()));
       if (mappings == null) {
         String sourceFileCanonicalPath = sourceFile.getCanonicalPath();
         if (sourceFileCanonicalPath != null) {
-          mappings = sourceMap.sourceIndexToMappings[absoluteLocalPathToSourceIndex.get(sourceFileCanonicalPath)];
+          mappings = getMappingsBySource(sourceMap, absoluteLocalPathToSourceIndex.get(sourceFileCanonicalPath));
         }
       }
     }

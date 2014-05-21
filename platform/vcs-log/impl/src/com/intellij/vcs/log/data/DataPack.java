@@ -1,40 +1,83 @@
 package com.intellij.vcs.log.data;
 
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.graph.GraphColorManagerImpl;
+import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.GraphFacade;
-import com.intellij.vcs.log.newgraph.facade.GraphFacadeImpl;
+import com.intellij.vcs.log.graph.PermanentGraph;
+import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl;
+import com.intellij.vcs.log.printer.idea.ColorGenerator;
+import com.intellij.vcs.log.util.StopWatch;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public class DataPack implements VcsLogDataPack {
 
   @NotNull private final RefsModel myRefsModel;
+  @NotNull private final PermanentGraph<Integer> myPermanentGraph;
   @NotNull private final GraphFacade myGraphFacade;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
+  private boolean myFull;
 
   @NotNull
-  public static DataPack build(@NotNull List<? extends GraphCommit> commits,
-                               @NotNull Collection<VcsRef> allRefs,
-                               @NotNull ProgressIndicator indicator,
+  static DataPack build(@NotNull List<? extends GraphCommit<Integer>> commits,
+                               @NotNull RefsModel refsModel,
                                @NotNull NotNullFunction<Hash, Integer> indexGetter,
                                @NotNull NotNullFunction<Integer, Hash> hashGetter, 
-                               @NotNull Map<VirtualFile, VcsLogProvider> providers) {
-    indicator.setText("Building graph...");
-    final RefsModel refsModel = new RefsModel(allRefs, indexGetter);
-    GraphColorManagerImpl colorManager = new GraphColorManagerImpl(refsModel, hashGetter, getRefManagerMap(providers));
+                               @NotNull Map<VirtualFile, VcsLogProvider> providers,
+                               boolean full) {
+    PermanentGraph<Integer> permanentGraph;
     if (!commits.isEmpty()) {
-      return new DataPack(refsModel, GraphFacadeImpl.newInstance(commits, getBranchCommitHashIndexes(allRefs, indexGetter), colorManager),
-                          providers);
+      permanentGraph = buildPermanentGraph(commits, refsModel, indexGetter, hashGetter, providers);
     }
     else {
-      return new DataPack(refsModel, new EmptyGraphFacade(), providers);
+      permanentGraph = EmptyPermanentGraph.getInstance();
     }
+    return build(permanentGraph, providers, refsModel, full);
+  }
+
+  @NotNull
+  static DataPack build(@NotNull PermanentGraph<Integer> permanentGraph, @NotNull Map<VirtualFile, VcsLogProvider> providers,
+                        @NotNull RefsModel refsModel, boolean full) {
+    return new DataPack(refsModel, permanentGraph, createGraphFacade(permanentGraph), providers, full);
+  }
+
+  @NotNull
+  private static GraphFacade createGraphFacade(@NotNull PermanentGraph<Integer> permanentGraph) {
+    GraphFacade facade;
+    if (!permanentGraph.getAllCommits().isEmpty()) {
+      ColorGenerator colorGenerator = new ColorGenerator() {
+        @Override
+        public Color getColor(int colorId) {
+          return com.intellij.vcs.log.graph.ColorGenerator.getColor(colorId);
+        }
+      };
+      facade = new DelegateGraphFacade(permanentGraph, colorGenerator);
+    }
+    else {
+      facade = new EmptyGraphFacade();
+    }
+    return facade;
+  }
+
+  @NotNull
+  static PermanentGraph<Integer> buildPermanentGraph(@NotNull List<? extends GraphCommit<Integer>> commits,
+                                                     @NotNull RefsModel refsModel,
+                                                     @NotNull NotNullFunction<Hash, Integer> indexGetter,
+                                                     @NotNull NotNullFunction<Integer, Hash> hashGetter,
+                                                     @NotNull Map<VirtualFile, VcsLogProvider> providers) {
+    GraphColorManagerImpl colorManager = new GraphColorManagerImpl(refsModel, hashGetter, getRefManagerMap(providers));
+    Set<Integer> branches = getBranchCommitHashIndexes(refsModel.getAllRefs(), indexGetter);
+    StopWatch sw = StopWatch.start("building graph");
+    PermanentGraphImpl<Integer> permanentGraph = PermanentGraphImpl.newInstance(commits, colorManager, branches);
+    sw.report();
+    return permanentGraph;
   }
 
   @NotNull
@@ -57,10 +100,13 @@ public class DataPack implements VcsLogDataPack {
     return map;
   }
 
-  private DataPack(@NotNull RefsModel refsModel, @NotNull GraphFacade graphFacade, @NotNull Map<VirtualFile, VcsLogProvider> providers) {
+  DataPack(@NotNull RefsModel refsModel, @NotNull PermanentGraph<Integer> permanentGraph, @NotNull GraphFacade graphFacade,
+           @NotNull Map<VirtualFile, VcsLogProvider> providers, boolean full) {
     myRefsModel = refsModel;
+    myPermanentGraph = permanentGraph;
     myGraphFacade = graphFacade;
     myLogProviders = providers;
+    myFull = full;
   }
 
   @NotNull
@@ -83,6 +129,15 @@ public class DataPack implements VcsLogDataPack {
   @Override
   public Map<VirtualFile, VcsLogProvider> getLogProviders() {
     return myLogProviders;
+  }
+
+  @NotNull
+  public PermanentGraph<Integer> getPermanentGraph() {
+    return myPermanentGraph;
+  }
+
+  public boolean isFull() {
+    return myFull;
   }
 
 }

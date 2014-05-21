@@ -23,12 +23,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
-import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ArrayUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ParamInfo;
@@ -37,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -97,33 +94,6 @@ public class QuickfixUtil {
     assert vFile != null;
     OpenFileDescriptor descriptor = new OpenFileDescriptor(project, vFile, textOffset);
     return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-  }
-
-  public static String[] getMethodArgumentsNames(Project project, PsiType[] types) {
-    Set<String> uniqNames = new LinkedHashSet<String>();
-    Set<String> nonUniqNames = new THashSet<String>();
-    for (PsiType type : types) {
-      final SuggestedNameInfo nameInfo =
-        JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.PARAMETER, null, null, type);
-
-      final String name = nameInfo.names[0];
-      if (uniqNames.contains(name)) {
-        int i = 2;
-        while (uniqNames.contains(name + i)) i++;
-        uniqNames.add(name + i);
-        nonUniqNames.add(name);
-      } else {
-        uniqNames.add(name);
-      }
-    }
-
-    final String[] result = new String[uniqNames.size()];
-    int i = 0;
-    for (String name : uniqNames) {
-      result[i] = nonUniqNames.contains(name) ? name + 1 : name;
-      i++;
-    }
-    return result;
   }
 
   public static List<ParamInfo> swapArgumentsAndTypes(String[] names, PsiType[] types) {
@@ -193,7 +163,7 @@ public class QuickfixUtil {
         unboxedTypes.add(TypesUtil.unboxPrimitiveTypeWrapperAndEraseGenerics(type));
       }
       final PsiType[] types = unboxedTypes.toArray(PsiType.createArray(unboxedTypes.size()));
-      final String[] names = getMethodArgumentsNames(referenceExpression.getProject(), types);
+      final String[] names = GroovyNamesUtil.getMethodArgumentsNames(referenceExpression.getProject(), types);
       final List<ParamInfo> infos = swapArgumentsAndTypes(names, types);
 
       settings.setMethod(true);

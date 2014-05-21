@@ -56,9 +56,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.Set;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kSUPER;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kTHIS;
-
 /**
  * @author Max Medvedev
  */

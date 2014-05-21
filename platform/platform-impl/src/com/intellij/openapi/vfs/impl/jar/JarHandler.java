@@ -53,6 +53,7 @@ public class JarHandler extends ZipHandler {
   private static final int FS_TIME_RESOLUTION = 2000;
 
   private final JarFileSystemImpl myFileSystem;
+  private volatile File myFileWithMirrorResolved;
 
   public JarHandler(@NotNull String path) {
     super(path);
@@ -62,7 +63,11 @@ public class JarHandler extends ZipHandler {
   @NotNull
   @Override
   protected File getFileToUse() {
-    return getMirrorFile(getFile());
+    File fileWithMirrorResolved = myFileWithMirrorResolved;
+    if (fileWithMirrorResolved == null) {
+      myFileWithMirrorResolved = fileWithMirrorResolved = getMirrorFile(getFile());
+    }
+    return fileWithMirrorResolved;
   }
 
   private File getMirrorFile(@NotNull File originalFile) {

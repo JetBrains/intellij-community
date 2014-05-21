@@ -42,7 +42,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.*;
@@ -68,14 +68,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
 import java.util.*;
-
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSEMI;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSPREAD_DOT;
 
 /**
  * @author ilyas
@@ -236,8 +231,8 @@ public abstract class GroovyRefactoringUtil {
     while (file.findElementAt(end - 1) instanceof PsiWhiteSpace ||
         (file.findElementAt(end - 1) instanceof PsiComment && trimComments) ||
         (file.findElementAt(end - 1) != null &&
-            (mNLS.equals(file.findElementAt(end - 1).getNode().getElementType()) ||
-                mSEMI.equals(file.findElementAt(end - 1).getNode().getElementType())))) {
+            (GroovyTokenTypes.mNLS.equals(file.findElementAt(end - 1).getNode().getElementType()) ||
+                GroovyTokenTypes.mSEMI.equals(file.findElementAt(end - 1).getNode().getElementType())))) {
       end--;
     }
 
@@ -246,7 +241,7 @@ public abstract class GroovyRefactoringUtil {
 
   @NotNull public static PsiElement[] findStatementsInRange(PsiFile file, int startOffset, int endOffset, boolean strict) {
     if (!(file instanceof GroovyFileBase)) return PsiElement.EMPTY_ARRAY;
-    Language language = GroovyFileType.GROOVY_LANGUAGE;
+    Language language = GroovyLanguage.INSTANCE;
     PsiElement element1 = file.getViewProvider().findElementAt(startOffset, language);
     PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, language);
 
@@ -791,7 +786,7 @@ public abstract class GroovyRefactoringUtil {
       GrReferenceExpression expression = (GrReferenceExpression)lValue;
       final PsiElement dot = expression.getDotToken();
       //noinspection ConstantConditions
-      if (dot != null && dot.getNode().getElementType() == mSPREAD_DOT) {
+      if (dot != null && dot.getNode().getElementType() == GroovyTokenTypes.mSPREAD_DOT) {
         return true;
       }
       else {

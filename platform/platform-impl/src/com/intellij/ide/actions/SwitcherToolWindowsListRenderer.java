@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ class SwitcherToolWindowsListRenderer extends ColoredListCellRenderer {
 
   protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
     hide = false;
+    setPaintFocusBorder(false);
     if (value instanceof ToolWindow) {
       final ToolWindow tw = (ToolWindow)value;
       setIcon(getIcon(tw));

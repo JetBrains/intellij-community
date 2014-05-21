@@ -72,7 +72,7 @@ public class GitCherryPickAction extends DumbAwareAction {
     }
 
     for (VcsFullCommitDetails commit : commits) {
-      myIdsInProgress.add(commit.getHash());
+      myIdsInProgress.add(commit.getId());
     }
 
     FileDocumentManager.getInstance().saveAllDocuments();
@@ -90,7 +90,7 @@ public class GitCherryPickAction extends DumbAwareAction {
             public void run() {
               myPlatformFacade.getChangeListManager(project).unblockModalNotifications();
               for (VcsFullCommitDetails commit : commits) {
-                myIdsInProgress.remove(commit.getHash());
+                myIdsInProgress.remove(commit.getId());
               }
             }
           });
@@ -151,7 +151,7 @@ public class GitCherryPickAction extends DumbAwareAction {
     }
 
     for (VcsFullCommitDetails commit : commits) {
-      if (myIdsInProgress.contains(commit.getHash())) {
+      if (myIdsInProgress.contains(commit.getId())) {
         return false;
       }
       GitRepository repository = myPlatformFacade.getRepositoryManager(project).getRepositoryForRoot(commit.getRoot());
@@ -237,7 +237,7 @@ public class GitCherryPickAction extends DumbAwareAction {
   private static Collection<String> getContainingBranches(AnActionEvent event, VcsFullCommitDetails commit, GitRepository repository) {
     GitCommitDetailsProvider detailsProvider = event.getData(GitVcs.COMMIT_DETAILS_PROVIDER);
     if (detailsProvider != null) {
-      return detailsProvider.getContainingBranches(repository.getRoot(), AbstractHash.create(commit.getHash().toShortString()));
+      return detailsProvider.getContainingBranches(repository.getRoot(), AbstractHash.create(commit.getId().toShortString()));
     }
     if (event.getProject() == null) {
       return null;
@@ -246,7 +246,7 @@ public class GitCherryPickAction extends DumbAwareAction {
     if (log == null) {
       return null;
     }
-    return log.getContainingBranches(commit.getHash());
+    return log.getContainingBranches(commit.getId());
   }
 
 }

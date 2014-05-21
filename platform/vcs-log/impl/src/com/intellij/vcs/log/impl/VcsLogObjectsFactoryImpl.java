@@ -19,12 +19,6 @@ public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
 
   @NotNull
   @Override
-  public VcsCommit createCommit(@NotNull Hash hash, @NotNull List<Hash> parents) {
-    return new VcsCommitImpl(hash, parents);
-  }
-
-  @NotNull
-  @Override
   public TimedVcsCommit createTimedCommit(@NotNull Hash hash, @NotNull List<Hash> parents, long timeStamp) {
     return new TimedVcsCommitImpl(hash, parents, timeStamp);
   }

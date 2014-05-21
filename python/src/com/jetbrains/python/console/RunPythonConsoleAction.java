@@ -54,7 +54,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
 
   public static final String WORKING_DIR_ENV = "WORKING_DIR_AND_PYTHON_PATHS";
 
-  public static final String PYTHON_ENV_COMMAND = "import sys; print('Python %s on %s' % (sys.version, sys.platform))\n" +
+  public static final String CONSOLE_START_COMMAND = "import sys; print('Python %s on %s' % (sys.version, sys.platform))\n" +
                                                    "sys.path.extend([" + WORKING_DIR_ENV + "])\n";
 
   public RunPythonConsoleAction() {
@@ -103,7 +103,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
       pythonPath = mappingSettings.convertToRemote(pythonPath);
     }
 
-    String customStartScript = settingsProvider.getCustomStartScript();
+    String customStartScript = settingsProvider == null ? "" : settingsProvider.getCustomStartScript();
 
     if(customStartScript.trim().length() > 0){
       customStartScript = "\n" + customStartScript;

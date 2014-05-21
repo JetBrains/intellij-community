@@ -3,11 +3,15 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
@@ -24,13 +28,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class VcsLogFilterer {
 
   private static final Logger LOG = Logger.getInstance(VcsLogFilterer.class);
 
-  private static final int LOAD_MORE_COMMITS_FIRST_STEP_LIMIT = 200;
+  private static final int LOAD_MORE_COMMITS_FIRST_STEP_LIMIT = 2000;
 
   @NotNull private final VcsLogDataHolder myLogDataHolder;
   @NotNull private final VcsLogUiImpl myUI;
@@ -90,7 +95,7 @@ public class VcsLogFilterer {
                          @NotNull final LoadMoreStage loadMoreStage, @NotNull final Runnable onSuccess) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     int maxCount = loadMoreStage == LoadMoreStage.INITIAL ? LOAD_MORE_COMMITS_FIRST_STEP_LIMIT : -1;
-    myLogDataHolder.getFilteredDetailsFromTheVcs(filters, new Consumer<List<Hash>>() {
+    getFilteredDetailsFromTheVcs(dataPack.getLogProviders(), filters, new Consumer<List<Hash>>() {
       @Override
       public void consume(List<Hash> hashes) {
         LoadMoreStage newLoadMoreStage = advanceLoadMoreStage(loadMoreStage);
@@ -165,7 +170,7 @@ public class VcsLogFilterer {
         break;
       }
       if (matchesAllFilters(data, detailsFilters)) {
-        result.add(data.getHash());
+        result.add(data.getId());
       }
     }
     return result;
@@ -195,6 +200,48 @@ public class VcsLogFilterer {
       }
     });
     return ref.get();
+  }
+
+  public void getFilteredDetailsFromTheVcs(@NotNull final Map<VirtualFile, VcsLogProvider> providers,
+                                           @NotNull final VcsLogFilterCollection filterCollection,
+                                           @NotNull final Consumer<List<Hash>> success,
+                                           final int maxCount) {
+    myLogDataHolder.runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
+      @Override
+      public void consume(ProgressIndicator indicator) throws VcsException {
+        Collection<List<? extends TimedVcsCommit>> logs = ContainerUtil.newArrayList();
+        for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
+          final VirtualFile root = entry.getKey();
+
+          if (filterCollection.getStructureFilter() != null && filterCollection.getStructureFilter().getFiles(root).isEmpty()
+              || filterCollection.getUserFilter() != null && filterCollection.getUserFilter().getUserNames(root).isEmpty()) {
+            // there is a structure or user filter, but it doesn't match this root
+            continue;
+          }
+
+          List<TimedVcsCommit> matchingCommits = entry.getValue().getCommitsMatchingFilter(root, filterCollection, maxCount);
+          logs.add(matchingCommits);
+        }
+
+        final List<? extends TimedVcsCommit> compoundLog = new VcsLogMultiRepoJoiner().join(logs);
+
+        final List<Hash> list = ContainerUtil.map(compoundLog, new Function<TimedVcsCommit, Hash>() {
+          @Override
+          public Hash fun(TimedVcsCommit commit) {
+            return commit.getId();
+          }
+        });
+
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            if (!myLogDataHolder.getProject().isDisposed()) {
+              success.consume(list);
+            }
+          }
+        });
+      }
+    }, "Looking for more results...");
   }
 
 }

@@ -52,9 +52,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNLS;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNLS;
-
 /**
  * @author ilyas
  */
@@ -177,7 +174,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
       getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", anchor.getNode());
     }
     else {
-      getNode().addLeaf(mNLS, "\n", result.getNode());
+      getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", result.getNode());
     }
     return (GrStatement)result;
   }

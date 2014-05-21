@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 import static com.intellij.psi.PsiModifier.ABSTRACT;
 
@@ -34,7 +33,7 @@ public class GrTraitUtil {
 
   @Contract("null -> false")
   public static boolean isInterface(@Nullable PsiClass aClass) {
-    return aClass != null && aClass.isInterface() && !PsiImplUtil.isTrait(aClass);
+    return aClass != null && aClass.isInterface() && !isTrait(aClass);
   }
 
   public static boolean isMethodAbstract(PsiMethod method) {

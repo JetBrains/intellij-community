@@ -12,4 +12,9 @@ public interface FQNamesProvider {
    */
   @NotNull
   String[] getNames();
+
+  /**
+   * @return is name of class (true) or function (false)
+   */
+  boolean isClass();
 }

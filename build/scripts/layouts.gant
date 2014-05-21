@@ -450,6 +450,7 @@ public def layoutCommunityPlugins(String home) {
           module("jetgroovy") {
             exclude(name: "standardDsls/**")
           }
+          module("groovy-psi")
         }
         //layout of groovy jars must be consistent with GroovyBuilder.getGroovyRtRoot method
         jar("groovy-jps-plugin.jar") {

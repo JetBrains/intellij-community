@@ -93,6 +93,13 @@ public abstract class JavaPostfixTemplatesUtils {
     }
   };
 
+  public static Condition<PsiElement> IS_NUMBER = new Condition<PsiElement>() {
+    @Override
+    public boolean value(PsiElement element) {
+      return element instanceof PsiExpression && isNumber(((PsiExpression)element).getType());
+    }
+  };
+
   public static Condition<PsiElement> IS_BOOLEAN = new Condition<PsiElement>() {
     @Override
     public boolean value(PsiElement element) {
@@ -118,6 +125,16 @@ public abstract class JavaPostfixTemplatesUtils {
     @Override
     public boolean value(PsiElement element) {
       return element instanceof PsiExpression && isNotPrimitiveTypeExpression(((PsiExpression)element));
+    }
+  };
+
+  public static Condition<PsiElement> IS_ITERABLE_OR_ARRAY = new Condition<PsiElement>() {
+    @Override
+    public boolean value(PsiElement element) {
+      if (!(element instanceof PsiExpression)) return false;
+
+      PsiType type = ((PsiExpression)element).getType();
+      return (isArray(type) || isIterable(type));
     }
   };
 

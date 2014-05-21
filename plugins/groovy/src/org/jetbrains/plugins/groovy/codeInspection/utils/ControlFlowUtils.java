@@ -59,9 +59,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDEC;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mINC;
-
 @SuppressWarnings({"OverlyComplexClass"})
 public class ControlFlowUtils {
   private static final Logger LOG = Logger.getInstance(ControlFlowUtils.class);

@@ -40,10 +40,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMMA;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMMA;
-
 /**
  * @author ilyas
  */
@@ -203,7 +199,7 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
           astNode.addLeaf(GroovyTokenTypes.mCOMMA, ",", result.getNextSibling().getNode());
         }
         else {
-          astNode.addLeaf(mCOMMA, ",", result.getNode());
+          astNode.addLeaf(GroovyTokenTypes.mCOMMA, ",", result.getNode());
         }
         CodeStyleManager.getInstance(getManager().getProject()).reformat(this);
       }
@@ -218,7 +214,7 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
     PsiElement element = child.getPsi();
     if (element instanceof GrExpression || element instanceof GrNamedArgument) {
       ASTNode prev = TreeUtil.skipElementsBack(child.getTreePrev(), TokenSets.WHITE_SPACES_OR_COMMENTS);
-      if (prev != null && prev.getElementType() == mCOMMA) {
+      if (prev != null && prev.getElementType() == GroovyTokenTypes.mCOMMA) {
         final ASTNode pprev = prev.getTreePrev();
         if (pprev != null && PsiImplUtil.isWhiteSpaceOrNls(pprev)) {
           super.deleteChildInternal(pprev);
@@ -227,7 +223,7 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
       }
       else {
         ASTNode next = TreeUtil.skipElements(child.getTreeNext(), TokenSets.WHITE_SPACES_OR_COMMENTS);
-        if (next != null && next.getElementType() == mCOMMA) {
+        if (next != null && next.getElementType() == GroovyTokenTypes.mCOMMA) {
           final ASTNode nnext = next.getTreeNext();
           if (nnext != null && PsiImplUtil.isWhiteSpaceOrNls(nnext)) {
             super.deleteChildInternal(nnext);

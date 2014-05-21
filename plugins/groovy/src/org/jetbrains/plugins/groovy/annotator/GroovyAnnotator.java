@@ -55,7 +55,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.annotator.checkers.AnnotationChecker;
 import org.jetbrains.plugins.groovy.annotator.checkers.CustomAnnotationChecker;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
@@ -132,7 +132,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   public static final Condition<PsiClass> IS_TRAIT = new Condition<PsiClass>() {
     @Override
     public boolean value(PsiClass aClass) {
-      return PsiImplUtil.isTrait(aClass);
+      return GrTraitUtil.isTrait(aClass);
     }
   };
 
@@ -1553,7 +1553,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
           else {
             final PsiExpression _initializer = ((PsiField)resolved).getInitializer();
             initializer = _initializer != null
-                          ? (GrExpression)ExpressionConverter.getExpression(_initializer, GroovyFileType.GROOVY_LANGUAGE, value.getProject())
+                          ? (GrExpression)ExpressionConverter.getExpression(_initializer, GroovyLanguage.INSTANCE, value.getProject())
                           : null;
           }
         }
@@ -1690,7 +1690,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     return PsiTreeUtil.getParentOfType(statement, GrLoopStatement.class, true, GrClosableBlock.class, GrMember.class, GroovyFile.class);
   }
 
-  private static void checkThisOrSuperReferenceExpression(GrReferenceExpression ref, AnnotationHolder holder) {
+  private static void checkThisOrSuperReferenceExpression(final GrReferenceExpression ref, AnnotationHolder holder) {
     PsiElement nameElement = ref.getReferenceNameElement();
     if (nameElement == null) return;
 
@@ -1701,8 +1701,21 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     if (qualifier instanceof GrReferenceExpression) {
       final PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
       if (resolved instanceof PsiClass) {
-
         GrTypeDefinition containingClass = PsiTreeUtil.getParentOfType(ref, GrTypeDefinition.class, true, GroovyFile.class);
+
+        if (elementType == GroovyTokenTypes.kSUPER && containingClass != null && GrTraitUtil.isTrait((PsiClass)resolved)) {
+          PsiClassType[] superTypes = containingClass.getSuperTypes();
+          if (ContainerUtil.find(superTypes, new Condition<PsiClassType>() {
+            @Override
+            public boolean value(PsiClassType type) {
+              return ref.getManager().areElementsEquivalent(type.resolve(), resolved);
+            }
+          }) != null) {
+            holder.createInfoAnnotation(nameElement, null).setTextAttributes(DefaultHighlighter.KEYWORD);
+            return; // reference to trait method
+          }
+        }
+
         if (containingClass == null || containingClass.getContainingClass() == null && !containingClass.isAnonymous()) {
           holder.createErrorAnnotation(ref, GroovyBundle.message("qualified.0.is.allowed.only.in.nested.or.inner.classes",
                                                                  nameElement.getText()));

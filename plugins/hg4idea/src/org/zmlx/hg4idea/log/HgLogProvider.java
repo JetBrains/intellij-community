@@ -60,8 +60,7 @@ public class HgLogProvider implements VcsLogProvider {
   @Override
   public List<? extends VcsCommitMetadata> readFirstBlock(@NotNull VirtualFile root,
                                                           @NotNull Requirements requirements) throws VcsException {
-    return HgHistoryUtil.loadMetadata(myProject, root, requirements.getCommitCount(),
-                                      requirements.isOrdered() ? Collections.<String>emptyList() : Arrays.asList("-r", "0:tip"));
+    return HgHistoryUtil.loadMetadata(myProject, root, requirements.getCommitCount(), Collections.<String>emptyList());
   }
 
   @NotNull

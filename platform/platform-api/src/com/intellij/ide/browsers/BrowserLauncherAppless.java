@@ -162,6 +162,11 @@ public class BrowserLauncherAppless extends BrowserLauncher {
     else {
       File file = new File(url);
       if (!browse && isDesktopActionSupported(Desktop.Action.OPEN)) {
+        if (!file.exists()) {
+          doShowError(IdeBundle.message("error.file.does.not.exist", file.getPath()), null, null, null);
+          return;
+        }
+
         try {
           Desktop.getDesktop().open(file);
           return;

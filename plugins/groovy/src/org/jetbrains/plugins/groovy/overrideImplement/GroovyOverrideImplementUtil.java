@@ -48,7 +48,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyChangeContextUtil;
 
@@ -206,7 +205,7 @@ public class GroovyOverrideImplementUtil {
         PsiElement element = candidate.getElement();
         if (element instanceof GrMethod) {
           GrMethod method = (GrMethod)element;
-          if (PsiImplUtil.isTrait(method.getContainingClass()) && !GrTraitUtil.isMethodAbstract(method)) {
+          if (GrTraitUtil.isTrait(method.getContainingClass()) && !GrTraitUtil.isMethodAbstract(method)) {
             iterator.remove();
             secondary.add(candidate);
           }

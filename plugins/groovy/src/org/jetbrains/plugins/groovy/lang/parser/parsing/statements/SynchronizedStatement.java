@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements;
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
@@ -27,14 +28,14 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author ilyas
  */
-public class SynchronizedStatement implements GroovyElementTypes {
+public class SynchronizedStatement {
   public static boolean parse(PsiBuilder builder, GroovyParser parser) {
 
     PsiBuilder.Marker marker = builder.mark();
 
-    ParserUtils.getToken(builder, kSYNCHRONIZED);
+    ParserUtils.getToken(builder, GroovyTokenTypes.kSYNCHRONIZED);
 
-    if (!ParserUtils.getToken(builder, mLPAREN, GroovyBundle.message("lparen.expected"))) {
+    if (!ParserUtils.getToken(builder, GroovyTokenTypes.mLPAREN, GroovyBundle.message("lparen.expected"))) {
       marker.drop();
       return false;
     }
@@ -43,22 +44,22 @@ public class SynchronizedStatement implements GroovyElementTypes {
       builder.error(GroovyBundle.message("expression.expected"));
     }
 
-    ParserUtils.getToken(builder, mNLS);
-    if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
-      marker.done(SYNCHRONIZED_STATEMENT);
+    ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
+    if (!ParserUtils.getToken(builder, GroovyTokenTypes.mRPAREN, GroovyBundle.message("rparen.expected"))) {
+      marker.done(GroovyElementTypes.SYNCHRONIZED_STATEMENT);
       return true;
     }
 
     PsiBuilder.Marker warn = builder.mark();
-    ParserUtils.getToken(builder, mNLS);
+    ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
 
-    if (mLCURLY.equals(builder.getTokenType()) && !OpenOrClosableBlock.parseOpenBlock(builder, parser)) {
+    if (GroovyTokenTypes.mLCURLY.equals(builder.getTokenType()) && !OpenOrClosableBlock.parseOpenBlock(builder, parser)) {
       warn.rollbackTo();
       builder.error(GroovyBundle.message("block.expression.expected"));
     } else {
       warn.drop();
     }
-    marker.done(SYNCHRONIZED_STATEMENT);
+    marker.done(GroovyElementTypes.SYNCHRONIZED_STATEMENT);
 
     return true;
   }

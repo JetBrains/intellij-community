@@ -2673,6 +2673,11 @@ public class HighlightUtil extends HighlightUtilBase {
       if (method != null) {
         QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createMethodReturnFix(method, parameter.getType(), true));
       }
+    } else if (expr instanceof PsiReferenceExpression) {
+      final PsiElement resolve = ((PsiReferenceExpression)expr).resolve();
+      if (resolve instanceof PsiVariable) {
+        registerChangeVariableTypeFixes((PsiVariable)resolve, parameter.getType(), null, highlightInfo);
+      }
     }
   }
 

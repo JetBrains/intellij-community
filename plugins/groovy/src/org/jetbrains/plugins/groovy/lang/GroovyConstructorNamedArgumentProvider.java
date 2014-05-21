@@ -38,7 +38,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -115,7 +114,7 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
         }
       };
 
-      processor.setResolveTargetKinds(ResolverProcessor.RESOLVE_KINDS_METHOD_PROPERTY);
+      processor.setResolveTargetKinds(ClassHint.RESOLVE_KINDS_METHOD_PROPERTY);
 
       ResolveUtil.processAllDeclarations(type, processor, ResolveState.initial(), call);
 
@@ -134,12 +133,12 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
         }
       };
 
-      processor.setResolveTargetKinds(ResolverProcessor.RESOLVE_KINDS_METHOD);
+      processor.setResolveTargetKinds(ClassHint.RESOLVE_KINDS_METHOD);
       processor.setNameHint(GroovyPropertyUtils.getSetterName(argumentName));
 
       ResolveUtil.processAllDeclarations(type, processor, ResolveState.initial(), call);
 
-      processor.setResolveTargetKinds(ResolverProcessor.RESOLVE_KINDS_PROPERTY);
+      processor.setResolveTargetKinds(ClassHint.RESOLVE_KINDS_PROPERTY);
       processor.setNameHint(argumentName);
 
       ResolveUtil.processAllDeclarations(type, processor, ResolveState.initial(), call);

@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.formatter
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import org.jetbrains.plugins.groovy.GroovyFileType
+import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
@@ -784,7 +785,7 @@ def foo() {
 
   void testLabelWithDescription() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class)
-    CommonCodeStyleSettings commonSettings = myTempSettings.getCommonSettings(GroovyFileType.GROOVY_LANGUAGE)
+    CommonCodeStyleSettings commonSettings = myTempSettings.getCommonSettings(GroovyLanguage.INSTANCE)
 
     boolean indentLabelBlocks = customSettings.INDENT_LABEL_BLOCKS
     int labelIndentSize = commonSettings.indentOptions.LABEL_INDENT_SIZE

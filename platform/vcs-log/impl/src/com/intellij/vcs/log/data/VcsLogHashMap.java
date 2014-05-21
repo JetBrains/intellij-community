@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.Page;
@@ -40,7 +41,7 @@ import java.io.IOException;
 /**
  * Supports the int <-> Hash persistent mapping.
  */
-class VcsLogHashMap implements Disposable {
+public class VcsLogHashMap implements Disposable {
 
   private static final File LOG_CACHE_APP_DIR = new File(PathManager.getSystemPath(), "vcs-log");
   private static final Logger LOG = Logger.getInstance(VcsLogHashMap.class);
@@ -58,15 +59,60 @@ class VcsLogHashMap implements Disposable {
   }
 
   @Nullable
-  Hash getHash(int index) throws IOException {
+  private Hash doGetHash(int index) throws IOException {
     return myPersistentEnumerator.valueOf(index);
   }
 
-  int getOrPut(@NotNull Hash hash) throws IOException {
+  private int getOrPut(@NotNull Hash hash) throws IOException {
     return myPersistentEnumerator.enumerate(hash);
   }
 
-  void flush() {
+  public int getCommitIndex(@NotNull Hash hash) {
+    try {
+      return getOrPut(hash);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e); // TODO the map is corrupted => need to rebuild
+    }
+  }
+
+  @NotNull
+  public Hash getHash(int commitIndex) {
+    try {
+      Hash hash = doGetHash(commitIndex);
+      if (hash == null) {
+        throw new RuntimeException("Unknown commit index: " + commitIndex); // TODO this shouldn't happen => need to recreate the map
+      }
+      return hash;
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e); // TODO map is corrupted => need to recreate it
+    }
+  }
+
+  @NotNull
+  public NotNullFunction<Hash, Integer> asIndexGetter() {
+    return new NotNullFunction<Hash, Integer>() {
+      @NotNull
+      @Override
+      public Integer fun(Hash hash) {
+        return getCommitIndex(hash);
+      }
+    };
+  }
+
+  @NotNull
+  public NotNullFunction<Integer, Hash> asHashGetter() {
+    return new NotNullFunction<Integer, Hash>() {
+      @NotNull
+      @Override
+      public Hash fun(Integer commitIndex) {
+        return getHash(commitIndex);
+      }
+    };
+  }
+
+  public void flush() {
     myPersistentEnumerator.force();
   }
 

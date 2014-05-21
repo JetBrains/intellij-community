@@ -70,6 +70,9 @@ public class ExpectedHighlightingData {
   @NonNls private static final String END_LINE_WARNING_MARKER = "EOLWarning";
   @NonNls private static final String LINE_MARKER = "lineMarker";
 
+  private static final String[] XML_CHARS = new String[]{"<", ">", "&", "\""};
+  private static final String[] XML_ESCAPES = new String[]{"&lt;", "&gt;", "&amp;", "&quot;"};
+
   @NotNull private final Document myDocument;
   private final PsiFile myFile;
   @NonNls private static final String ANY_TEXT = "*";
@@ -278,6 +281,7 @@ public class ExpectedHighlightingData {
     }
     if (descr != null) {
       descr = descr.replaceAll("\\\\\\\\\"", "\"");  // replace: \\" to ", doesn't check symbol before sequence \\"
+      descr = StringUtil.replace(descr, XML_ESCAPES, XML_CHARS);
     }
 
     HighlightInfoType type = WHATEVER;
@@ -563,7 +567,7 @@ public class ExpectedHighlightingData {
         endPos = result.second;
       }
       sb.insert(0, text.substring(info.startOffset, endPos));
-      sb.insert(0, "<" + severity + " descr=\"" + info.getDescription() + "\">");
+      sb.insert(0, "<" + severity + " descr=\"" + StringUtil.replace(info.getDescription(), XML_CHARS, XML_ESCAPES) + "\">");
 
       endPos = info.startOffset;
       i++;

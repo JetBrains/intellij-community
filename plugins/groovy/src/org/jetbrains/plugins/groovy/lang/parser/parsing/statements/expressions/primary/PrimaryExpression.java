@@ -20,6 +20,7 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
@@ -34,7 +35,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author ilyas
  */
-public class PrimaryExpression implements GroovyElementTypes {
+public class PrimaryExpression {
 
 
   public static IElementType parsePrimaryExpression(PsiBuilder builder, GroovyParser parser) {
@@ -44,73 +45,76 @@ public class PrimaryExpression implements GroovyElementTypes {
 
     final IElementType tokenType = builder.getTokenType();
     if (TokenSets.BUILT_IN_TYPES.contains(tokenType)) {
-      ParserUtils.eatElement(builder, BUILT_IN_TYPE_EXPRESSION);
-      return BUILT_IN_TYPE_EXPRESSION;
+      ParserUtils.eatElement(builder, GroovyElementTypes.BUILT_IN_TYPE_EXPRESSION);
+      return GroovyElementTypes.BUILT_IN_TYPE_EXPRESSION;
     }
-    if (kNEW == tokenType) {
+    if (GroovyTokenTypes.kNEW == tokenType) {
       PsiBuilder.Marker marker = builder.mark();
       final GroovyElementType type = newExprParse(builder, parser);
       marker.done(type);
       return type;
     }
-    if (mIDENT == tokenType || kSUPER == tokenType || kTHIS == tokenType) {
-      ParserUtils.eatElement(builder, REFERENCE_EXPRESSION);
-      return REFERENCE_EXPRESSION;
+    if (GroovyTokenTypes.mIDENT == tokenType || GroovyTokenTypes.kSUPER == tokenType || GroovyTokenTypes.kTHIS == tokenType) {
+      ParserUtils.eatElement(builder, GroovyElementTypes.REFERENCE_EXPRESSION);
+      return GroovyElementTypes.REFERENCE_EXPRESSION;
     }
-    if (mGSTRING_BEGIN == tokenType) {
-      final boolean result = CompoundStringExpression.parse(builder, parser, false, mGSTRING_BEGIN, mGSTRING_CONTENT, mGSTRING_END, null,
-                                                            GSTRING, GroovyBundle.message("string.end.expected"));
-      return result ? GSTRING : LITERAL;
+    if (GroovyTokenTypes.mGSTRING_BEGIN == tokenType) {
+      final boolean result = CompoundStringExpression.parse(builder, parser, false, GroovyTokenTypes.mGSTRING_BEGIN,
+                                                            GroovyTokenTypes.mGSTRING_CONTENT, GroovyTokenTypes.mGSTRING_END, null,
+                                                            GroovyElementTypes.GSTRING, GroovyBundle.message("string.end.expected"));
+      return result ? GroovyElementTypes.GSTRING : GroovyElementTypes.LITERAL;
     }
-    if (mREGEX_BEGIN == tokenType) {
-      CompoundStringExpression.parse(builder, parser, false, mREGEX_BEGIN, mREGEX_CONTENT, mREGEX_END, mREGEX_LITERAL,
-                                     REGEX, GroovyBundle.message("regex.end.expected"));
-      return REGEX;
+    if (GroovyTokenTypes.mREGEX_BEGIN == tokenType) {
+      CompoundStringExpression.parse(builder, parser, false, GroovyTokenTypes.mREGEX_BEGIN, GroovyTokenTypes.mREGEX_CONTENT,
+                                     GroovyTokenTypes.mREGEX_END, GroovyTokenTypes.mREGEX_LITERAL,
+                                     GroovyElementTypes.REGEX, GroovyBundle.message("regex.end.expected"));
+      return GroovyElementTypes.REGEX;
     }
-    if (mDOLLAR_SLASH_REGEX_BEGIN == tokenType) {
+    if (GroovyTokenTypes.mDOLLAR_SLASH_REGEX_BEGIN == tokenType) {
       CompoundStringExpression
-        .parse(builder, parser, false, mDOLLAR_SLASH_REGEX_BEGIN, mDOLLAR_SLASH_REGEX_CONTENT, mDOLLAR_SLASH_REGEX_END,
-               mDOLLAR_SLASH_REGEX_LITERAL,
-               REGEX, GroovyBundle.message("dollar.slash.end.expected"));
-      return REGEX;
+        .parse(builder, parser, false, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_BEGIN, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT,
+               GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END,
+               GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL,
+               GroovyElementTypes.REGEX, GroovyBundle.message("dollar.slash.end.expected"));
+      return GroovyElementTypes.REGEX;
     }
-    if (mLBRACK == tokenType) {
+    if (GroovyTokenTypes.mLBRACK == tokenType) {
       return ListOrMapConstructorExpression.parse(builder, parser);
     }
-    if (mLPAREN == tokenType) {
+    if (GroovyTokenTypes.mLPAREN == tokenType) {
       return parenthesizedExprParse(builder, parser);
     }
-    if (mLCURLY == tokenType) {
+    if (GroovyTokenTypes.mLCURLY == tokenType) {
       return OpenOrClosableBlock.parseClosableBlock(builder, parser);
     }
-    if (tokenType == mSTRING_LITERAL || tokenType == mGSTRING_LITERAL) {
-      return ParserUtils.eatElement(builder, literalsAsRefExprs ? REFERENCE_EXPRESSION : LITERAL);
+    if (tokenType == GroovyTokenTypes.mSTRING_LITERAL || tokenType == GroovyTokenTypes.mGSTRING_LITERAL) {
+      return ParserUtils.eatElement(builder, literalsAsRefExprs ? GroovyElementTypes.REFERENCE_EXPRESSION : GroovyElementTypes.LITERAL);
     }
     if (TokenSets.CONSTANTS.contains(tokenType)) {
-      return ParserUtils.eatElement(builder, LITERAL);
+      return ParserUtils.eatElement(builder, GroovyElementTypes.LITERAL);
     }
 
-    return WRONGWAY;
+    return GroovyElementTypes.WRONGWAY;
   }
 
   public static GroovyElementType parenthesizedExprParse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
-    ParserUtils.getToken(builder, mLPAREN);
+    ParserUtils.getToken(builder, GroovyTokenTypes.mLPAREN);
     if (!AssignmentExpression.parse(builder, parser)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
-    ParserUtils.getToken(builder, mNLS);
-    ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"));
-    marker.done(PARENTHESIZED_EXPRESSION);
-    return PARENTHESIZED_EXPRESSION;
+    ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
+    ParserUtils.getToken(builder, GroovyTokenTypes.mRPAREN, GroovyBundle.message("rparen.expected"));
+    marker.done(GroovyElementTypes.PARENTHESIZED_EXPRESSION);
+    return GroovyElementTypes.PARENTHESIZED_EXPRESSION;
   }
 
   public static GroovyElementType newExprParse(PsiBuilder builder, GroovyParser parser) {
-    ParserUtils.getToken(builder, kNEW);
-    ParserUtils.getToken(builder, mNLS);
+    ParserUtils.getToken(builder, GroovyTokenTypes.kNEW);
+    ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
     PsiBuilder.Marker rb = builder.mark();
     TypeArguments.parseTypeArguments(builder, false);
-    if (!TokenSets.BUILT_IN_TYPES.contains(builder.getTokenType()) && mIDENT != builder.getTokenType()) {
+    if (!TokenSets.BUILT_IN_TYPES.contains(builder.getTokenType()) && GroovyTokenTypes.mIDENT != builder.getTokenType()) {
       rb.rollbackTo();
     }
     else {
@@ -120,7 +124,7 @@ public class PrimaryExpression implements GroovyElementTypes {
     PsiBuilder.Marker anonymousMarker = builder.mark();
     String name;
     if (TokenSets.BUILT_IN_TYPES.contains(builder.getTokenType())) {
-      ParserUtils.eatElement(builder, BUILT_IN_TYPE);
+      ParserUtils.eatElement(builder, GroovyElementTypes.BUILT_IN_TYPE);
       name = null;
     }
     else if (TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS.contains(builder.getTokenType())) {
@@ -130,42 +134,44 @@ public class PrimaryExpression implements GroovyElementTypes {
     else {
       builder.error(GroovyBundle.message("type.specification.expected"));
       anonymousMarker.drop();
-      return NEW_EXPRESSION;
+      return GroovyElementTypes.NEW_EXPRESSION;
     }
 
-    if (builder.getTokenType() == mLPAREN || ParserUtils.lookAhead(builder, mNLS, mLPAREN)) {
-      ParserUtils.getToken(builder, mNLS);
+    if (builder.getTokenType() == GroovyTokenTypes.mLPAREN || ParserUtils.lookAhead(builder, GroovyTokenTypes.mNLS,
+                                                                                    GroovyTokenTypes.mLPAREN)) {
+      ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
       methodCallArgsParse(builder, parser);
-      if (builder.getTokenType() == mLCURLY || ParserUtils.lookAhead(builder, mNLS, mLCURLY)) {
-        ParserUtils.getToken(builder, mNLS);
+      if (builder.getTokenType() == GroovyTokenTypes.mLCURLY || ParserUtils.lookAhead(builder, GroovyTokenTypes.mNLS,
+                                                                                      GroovyTokenTypes.mLCURLY)) {
+        ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
         TypeDefinition.parseBody(builder, name, parser, false);
-        anonymousMarker.done(ANONYMOUS_CLASS_DEFINITION);
-        return NEW_EXPRESSION;
+        anonymousMarker.done(GroovyElementTypes.ANONYMOUS_CLASS_DEFINITION);
+        return GroovyElementTypes.NEW_EXPRESSION;
       }
     }
-    else if (builder.getTokenType() == mLBRACK) {
+    else if (builder.getTokenType() == GroovyTokenTypes.mLBRACK) {
       PsiBuilder.Marker forArray = builder.mark();
-      ParserUtils.getToken(builder, mNLS);
-      ParserUtils.getToken(builder, mLBRACK);
+      ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
+      ParserUtils.getToken(builder, GroovyTokenTypes.mLBRACK);
       if (!AssignmentExpression.parse(builder, parser)) {
         builder.error(GroovyBundle.message("expression.expected"));
       }
-      ParserUtils.getToken(builder, mNLS);
-      ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"));
-      while (ParserUtils.getToken(builder, mLBRACK)) {
-        ParserUtils.getToken(builder, mNLS);
+      ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
+      ParserUtils.getToken(builder, GroovyTokenTypes.mRBRACK, GroovyBundle.message("rbrack.expected"));
+      while (ParserUtils.getToken(builder, GroovyTokenTypes.mLBRACK)) {
+        ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
         AssignmentExpression.parse(builder, parser);
-        ParserUtils.getToken(builder, mNLS);
-        ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"));
+        ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
+        ParserUtils.getToken(builder, GroovyTokenTypes.mRBRACK, GroovyBundle.message("rbrack.expected"));
       }
-      forArray.done(ARRAY_DECLARATOR);
+      forArray.done(GroovyElementTypes.ARRAY_DECLARATOR);
     }
     else {
       builder.error(GroovyBundle.message("lparen.expected"));
     }
 
     anonymousMarker.drop();
-    return NEW_EXPRESSION;
+    return GroovyElementTypes.NEW_EXPRESSION;
   }
 
   /**
@@ -176,14 +182,14 @@ public class PrimaryExpression implements GroovyElementTypes {
    */
   public static boolean methodCallArgsParse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
-    if (ParserUtils.getToken(builder, mLPAREN, GroovyBundle.message("lparen.expected"))) {
-      ParserUtils.getToken(builder, mNLS);
-      ArgumentList.parseArgumentList(builder, mRPAREN, parser);
-      ParserUtils.getToken(builder, mNLS);
-      ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"));
+    if (ParserUtils.getToken(builder, GroovyTokenTypes.mLPAREN, GroovyBundle.message("lparen.expected"))) {
+      ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
+      ArgumentList.parseArgumentList(builder, GroovyTokenTypes.mRPAREN, parser);
+      ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
+      ParserUtils.getToken(builder, GroovyTokenTypes.mRPAREN, GroovyBundle.message("rparen.expected"));
     }
 
-    marker.done(ARGUMENTS);
+    marker.done(GroovyElementTypes.ARGUMENTS);
     return true;
   }
 }

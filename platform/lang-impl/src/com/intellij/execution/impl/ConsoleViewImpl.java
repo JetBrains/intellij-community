@@ -1520,7 +1520,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     consoleActions[3] = autoScrollToTheEndAction;
     consoleActions[4] = ActionManager.getInstance().getAction("Print");
     consoleActions[5] = new ClearAllAction();
-    //consoleActions[4] = new ShowRecentlyChanged();
     for (int i = 0; i < customActions.size(); ++i) {
       consoleActions[i + 6] = customActions.get(i);
     }

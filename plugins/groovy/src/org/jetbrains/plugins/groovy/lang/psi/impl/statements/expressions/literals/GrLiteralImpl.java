@@ -37,10 +37,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kFALSE;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kTRUE;
-
 /**
  * @author ilyas
  */
@@ -83,10 +79,10 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
         else if (elemType == GroovyTokenTypes.mNUM_LONG) {
           return Long.parseLong(text);
         }
-        else if (elemType == mNUM_FLOAT) {
+        else if (elemType == GroovyTokenTypes.mNUM_FLOAT) {
           return Float.parseFloat(text);
         }
-        else if (elemType == mNUM_DOUBLE) {
+        else if (elemType == GroovyTokenTypes.mNUM_DOUBLE) {
           return Double.parseDouble(text);
         }
         else if (elemType == GroovyTokenTypes.mNUM_BIG_INT) {
@@ -101,27 +97,27 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
       }
     }
 
-    else if (elemType == kFALSE) {
+    else if (elemType == GroovyTokenTypes.kFALSE) {
       return Boolean.FALSE;
     }
-    else if (elemType == kTRUE) {
+    else if (elemType == GroovyTokenTypes.kTRUE) {
       return Boolean.TRUE;
     }
-    else if (elemType == mSTRING_LITERAL) {
+    else if (elemType == GroovyTokenTypes.mSTRING_LITERAL) {
       if (!text.startsWith("'")) return null;
       text = GrStringUtil.removeQuotes(text);
       StringBuilder chars = new StringBuilder(text.length());
       boolean result = GrStringUtil.parseStringCharacters(text, chars, null);
       return result ? chars.toString() : null;
     }
-    else if (elemType == mGSTRING_LITERAL) {
+    else if (elemType == GroovyTokenTypes.mGSTRING_LITERAL) {
       if (!text.startsWith("\"")) return null;
       text = GrStringUtil.removeQuotes(text);
       StringBuilder chars = new StringBuilder(text.length());
       boolean result = GrStringUtil.parseStringCharacters(text, chars, null);
       return result ? chars.toString() : null;
     }
-    else if (elemType == mREGEX_LITERAL) {
+    else if (elemType == GroovyTokenTypes.mREGEX_LITERAL) {
       final PsiElement cchild = child.getFirstChild();
       if (cchild == null) return null;
       final PsiElement sibling = cchild.getNextSibling();
@@ -131,7 +127,7 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
       boolean result = GrStringUtil.parseRegexCharacters(text, chars, null, true);
       return result ? chars.toString() : null;
     }
-    else if (elemType == mDOLLAR_SLASH_REGEX_LITERAL) {
+    else if (elemType == GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL) {
       final PsiElement cchild = child.getFirstChild();
       if (cchild == null) return null;
       final PsiElement sibling = cchild.getNextSibling();

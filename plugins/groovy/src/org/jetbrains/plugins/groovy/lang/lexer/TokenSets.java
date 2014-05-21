@@ -26,12 +26,6 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 import java.util.Map;
 
-import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.GROOVY_DOC_TOKENS;
-import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes.GROOVY_DOC_COMMENT;
-import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes.GROOVY_DOC_COMMENT;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kWHILE;
-
 /**
  * Utility classdef, tha contains various useful TokenSets
  *
@@ -41,15 +35,15 @@ public abstract class TokenSets {
 
   public static final TokenSet COMMENTS_TOKEN_SET = TokenSet.create(
     GroovyTokenTypes.mSH_COMMENT,
-    mSL_COMMENT,
-    mML_COMMENT,
-    GROOVY_DOC_COMMENT
+    GroovyTokenTypes.mSL_COMMENT,
+    GroovyTokenTypes.mML_COMMENT,
+    GroovyDocElementTypes.GROOVY_DOC_COMMENT
   );
-  public static final TokenSet ALL_COMMENT_TOKENS = TokenSet.orSet(COMMENTS_TOKEN_SET, GROOVY_DOC_TOKENS);
+  public static final TokenSet ALL_COMMENT_TOKENS = TokenSet.orSet(COMMENTS_TOKEN_SET, GroovyDocTokenTypes.GROOVY_DOC_TOKENS);
 
   public static final TokenSet SEPARATORS = TokenSet.create(
     GroovyTokenTypes.mNLS,
-    mSEMI
+    GroovyTokenTypes.mSEMI
   );
 
 
@@ -58,175 +52,175 @@ public abstract class TokenSets {
   );
 
   public static final TokenSet NUMBERS = TokenSet.create(
-    mNUM_INT,
-    mNUM_BIG_DECIMAL,
-    mNUM_BIG_INT,
-    mNUM_DOUBLE,
-    mNUM_FLOAT,
-    mNUM_LONG);
+    GroovyTokenTypes.mNUM_INT,
+    GroovyTokenTypes.mNUM_BIG_DECIMAL,
+    GroovyTokenTypes.mNUM_BIG_INT,
+    GroovyTokenTypes.mNUM_DOUBLE,
+    GroovyTokenTypes.mNUM_FLOAT,
+    GroovyTokenTypes.mNUM_LONG);
 
 
   public static final TokenSet CONSTANTS = TokenSet.create(
-    mNUM_INT,
-    mNUM_BIG_DECIMAL,
-    mNUM_BIG_INT,
-    mNUM_DOUBLE,
-    mNUM_FLOAT,
-    mNUM_LONG,
-    kTRUE,
-    kFALSE,
-    kNULL,
-    mSTRING_LITERAL,
-    mGSTRING_LITERAL,
-    mREGEX_LITERAL,
-    mDOLLAR_SLASH_REGEX_LITERAL
+    GroovyTokenTypes.mNUM_INT,
+    GroovyTokenTypes.mNUM_BIG_DECIMAL,
+    GroovyTokenTypes.mNUM_BIG_INT,
+    GroovyTokenTypes.mNUM_DOUBLE,
+    GroovyTokenTypes.mNUM_FLOAT,
+    GroovyTokenTypes.mNUM_LONG,
+    GroovyTokenTypes.kTRUE,
+    GroovyTokenTypes.kFALSE,
+    GroovyTokenTypes.kNULL,
+    GroovyTokenTypes.mSTRING_LITERAL,
+    GroovyTokenTypes.mGSTRING_LITERAL,
+    GroovyTokenTypes.mREGEX_LITERAL,
+    GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL
   );
 
   public static final TokenSet BUILT_IN_TYPES = TokenSet.create(
-    kVOID,
-    kBOOLEAN,
-    kBYTE,
-    kCHAR,
-    kSHORT,
-    kINT,
-    kFLOAT,
-    kLONG,
-    kDOUBLE
+    GroovyTokenTypes.kVOID,
+    GroovyTokenTypes.kBOOLEAN,
+    GroovyTokenTypes.kBYTE,
+    GroovyTokenTypes.kCHAR,
+    GroovyTokenTypes.kSHORT,
+    GroovyTokenTypes.kINT,
+    GroovyTokenTypes.kFLOAT,
+    GroovyTokenTypes.kLONG,
+    GroovyTokenTypes.kDOUBLE
   );
 
   public static final TokenSet PROPERTY_NAMES =
-    TokenSet.create(mIDENT, mSTRING_LITERAL, mGSTRING_LITERAL,
-                    mREGEX_LITERAL, mDOLLAR_SLASH_REGEX_LITERAL);
+    TokenSet.create(GroovyTokenTypes.mIDENT, GroovyTokenTypes.mSTRING_LITERAL, GroovyTokenTypes.mGSTRING_LITERAL,
+                    GroovyTokenTypes.mREGEX_LITERAL, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL);
 
-  public static final TokenSet KEYWORDS = TokenSet.create(kABSTRACT, kAS, kASSERT,
-                                                          kBOOLEAN, kBREAK, kBYTE,
-                                                          kCASE, kCATCH, kCHAR,
-                                                          kCLASS,
-                                                          kCONTINUE, kDEF, kDEFAULT,
-                                                          kDO, kDOUBLE, kELSE,
-                                                          kEXTENDS, kENUM, kFALSE,
-                                                          kFINAL,
-                                                          kFLOAT, kFOR, kFINALLY,
-                                                          kIF, kIMPLEMENTS, kIMPORT,
-                                                          kIN, kINSTANCEOF, kINT,
-                                                          kINTERFACE, kLONG, kNATIVE,
-                                                          kNEW, kNULL, kPACKAGE,
-                                                          kPRIVATE, kPROTECTED, kPUBLIC,
-                                                          kRETURN, kSHORT, kSTATIC,
-                                                          kSTRICTFP, kSUPER, kSWITCH,
-                                                          kSYNCHRONIZED, kTHIS,
-                                                          kTHROW, kTHROWS, kTRAIT,
-                                                          kTRANSIENT, kTRUE, kTRY,
-                                                          kVOID, kVOLATILE, kWHILE);
+  public static final TokenSet KEYWORDS = TokenSet.create(GroovyTokenTypes.kABSTRACT, GroovyTokenTypes.kAS, GroovyTokenTypes.kASSERT,
+                                                          GroovyTokenTypes.kBOOLEAN, GroovyTokenTypes.kBREAK, GroovyTokenTypes.kBYTE,
+                                                          GroovyTokenTypes.kCASE, GroovyTokenTypes.kCATCH, GroovyTokenTypes.kCHAR,
+                                                          GroovyTokenTypes.kCLASS,
+                                                          GroovyTokenTypes.kCONTINUE, GroovyTokenTypes.kDEF, GroovyTokenTypes.kDEFAULT,
+                                                          GroovyTokenTypes.kDO, GroovyTokenTypes.kDOUBLE, GroovyTokenTypes.kELSE,
+                                                          GroovyTokenTypes.kEXTENDS, GroovyTokenTypes.kENUM, GroovyTokenTypes.kFALSE,
+                                                          GroovyTokenTypes.kFINAL,
+                                                          GroovyTokenTypes.kFLOAT, GroovyTokenTypes.kFOR, GroovyTokenTypes.kFINALLY,
+                                                          GroovyTokenTypes.kIF, GroovyTokenTypes.kIMPLEMENTS, GroovyTokenTypes.kIMPORT,
+                                                          GroovyTokenTypes.kIN, GroovyTokenTypes.kINSTANCEOF, GroovyTokenTypes.kINT,
+                                                          GroovyTokenTypes.kINTERFACE, GroovyTokenTypes.kLONG, GroovyTokenTypes.kNATIVE,
+                                                          GroovyTokenTypes.kNEW, GroovyTokenTypes.kNULL, GroovyTokenTypes.kPACKAGE,
+                                                          GroovyTokenTypes.kPRIVATE, GroovyTokenTypes.kPROTECTED, GroovyTokenTypes.kPUBLIC,
+                                                          GroovyTokenTypes.kRETURN, GroovyTokenTypes.kSHORT, GroovyTokenTypes.kSTATIC,
+                                                          GroovyTokenTypes.kSTRICTFP, GroovyTokenTypes.kSUPER, GroovyTokenTypes.kSWITCH,
+                                                          GroovyTokenTypes.kSYNCHRONIZED, GroovyTokenTypes.kTHIS,
+                                                          GroovyTokenTypes.kTHROW, GroovyTokenTypes.kTHROWS, GroovyTokenTypes.kTRAIT,
+                                                          GroovyTokenTypes.kTRANSIENT, GroovyTokenTypes.kTRUE, GroovyTokenTypes.kTRY,
+                                                          GroovyTokenTypes.kVOID, GroovyTokenTypes.kVOLATILE, GroovyTokenTypes.kWHILE);
 
   public static final TokenSet REFERENCE_NAMES = TokenSet.orSet(KEYWORDS, PROPERTY_NAMES, NUMBERS);
   public static final TokenSet REFERENCE_NAMES_WITHOUT_NUMBERS = TokenSet.orSet(KEYWORDS, PROPERTY_NAMES);
 
-  public static final TokenSet REFERENCE_NAME_PREFIXES = TokenSet.orSet(NUMBERS, KEYWORDS, TokenSet.create(mIDENT,
-                                                                                                           mSTRING_LITERAL,
-                                                                                                           mGSTRING_LITERAL,
-                                                                                                           mGSTRING_BEGIN,
-                                                                                                           mREGEX_BEGIN,
-                                                                                                           mDOLLAR_SLASH_REGEX_BEGIN,
-                                                                                                           mAT));
+  public static final TokenSet REFERENCE_NAME_PREFIXES = TokenSet.orSet(NUMBERS, KEYWORDS, TokenSet.create(GroovyTokenTypes.mIDENT,
+                                                                                                           GroovyTokenTypes.mSTRING_LITERAL,
+                                                                                                           GroovyTokenTypes.mGSTRING_LITERAL,
+                                                                                                           GroovyTokenTypes.mGSTRING_BEGIN,
+                                                                                                           GroovyTokenTypes.mREGEX_BEGIN,
+                                                                                                           GroovyTokenTypes.mDOLLAR_SLASH_REGEX_BEGIN,
+                                                                                                           GroovyTokenTypes.mAT));
 
 
   public static final TokenSet VISIBILITY_MODIFIERS = TokenSet.create(
-    kPRIVATE,
-    kPROTECTED,
-    kPUBLIC
+    GroovyTokenTypes.kPRIVATE,
+    GroovyTokenTypes.kPROTECTED,
+    GroovyTokenTypes.kPUBLIC
   );
 
   public static final TokenSet MODIFIERS = TokenSet.create(
-    kABSTRACT,
-    kPRIVATE,
-    kPUBLIC,
-    kPROTECTED,
-    kSTATIC,
-    kTRANSIENT,
-    kFINAL,
-    kABSTRACT,
-    kNATIVE,
-    kSYNCHRONIZED,
-    kSTRICTFP,
-    kVOLATILE,
-    kSTRICTFP,
-    kDEF
+    GroovyTokenTypes.kABSTRACT,
+    GroovyTokenTypes.kPRIVATE,
+    GroovyTokenTypes.kPUBLIC,
+    GroovyTokenTypes.kPROTECTED,
+    GroovyTokenTypes.kSTATIC,
+    GroovyTokenTypes.kTRANSIENT,
+    GroovyTokenTypes.kFINAL,
+    GroovyTokenTypes.kABSTRACT,
+    GroovyTokenTypes.kNATIVE,
+    GroovyTokenTypes.kSYNCHRONIZED,
+    GroovyTokenTypes.kSTRICTFP,
+    GroovyTokenTypes.kVOLATILE,
+    GroovyTokenTypes.kSTRICTFP,
+    GroovyTokenTypes.kDEF
   );
 
   public static final TokenSet STRING_LITERALS = TokenSet.create(
-    mSTRING_LITERAL,
-    mGSTRING_LITERAL,
-    mGSTRING_BEGIN,
-    mGSTRING_CONTENT,
-    mGSTRING_END,
-    mREGEX_LITERAL,
-    mREGEX_BEGIN,
-    mREGEX_CONTENT,
-    mREGEX_END,
-    mDOLLAR_SLASH_REGEX_LITERAL,
-    mDOLLAR_SLASH_REGEX_BEGIN,
-    mDOLLAR_SLASH_REGEX_CONTENT,
-    mDOLLAR_SLASH_REGEX_END
+    GroovyTokenTypes.mSTRING_LITERAL,
+    GroovyTokenTypes.mGSTRING_LITERAL,
+    GroovyTokenTypes.mGSTRING_BEGIN,
+    GroovyTokenTypes.mGSTRING_CONTENT,
+    GroovyTokenTypes.mGSTRING_END,
+    GroovyTokenTypes.mREGEX_LITERAL,
+    GroovyTokenTypes.mREGEX_BEGIN,
+    GroovyTokenTypes.mREGEX_CONTENT,
+    GroovyTokenTypes.mREGEX_END,
+    GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL,
+    GroovyTokenTypes.mDOLLAR_SLASH_REGEX_BEGIN,
+    GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT,
+    GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END
   );
 
   public static final TokenSet GSTRING_CONTENT_PARTS = TokenSet.create(GroovyElementTypes.GSTRING_CONTENT,
                                                                        GroovyElementTypes.GSTRING_INJECTION);
 
-  public static final TokenSet FOR_IN_DELIMITERS = TokenSet.create(kIN, mCOLON);
+  public static final TokenSet FOR_IN_DELIMITERS = TokenSet.create(GroovyTokenTypes.kIN, GroovyTokenTypes.mCOLON);
 
   public static final TokenSet RELATIONS = TokenSet.create(
-    mLT,
-    mGT,
-    mLE,
-    mGE,
-    kIN
+    GroovyTokenTypes.mLT,
+    GroovyTokenTypes.mGT,
+    GroovyTokenTypes.mLE,
+    GroovyTokenTypes.mGE,
+    GroovyTokenTypes.kIN
   );
-  public static final TokenSet WHITE_SPACES_SET = TokenSet.create(mNLS, TokenType.WHITE_SPACE);
+  public static final TokenSet WHITE_SPACES_SET = TokenSet.create(GroovyTokenTypes.mNLS, TokenType.WHITE_SPACE);
 
-  public static final TokenSet COMMENT_SET = TokenSet.create(mML_COMMENT, mSH_COMMENT,
-                                                             mSL_COMMENT, GROOVY_DOC_COMMENT);
+  public static final TokenSet COMMENT_SET = TokenSet.create(GroovyTokenTypes.mML_COMMENT, GroovyTokenTypes.mSH_COMMENT,
+                                                             GroovyTokenTypes.mSL_COMMENT, GroovyDocElementTypes.GROOVY_DOC_COMMENT);
 
-  public static final TokenSet STRING_LITERAL_SET = TokenSet.create(mSTRING_LITERAL, mGSTRING_LITERAL,
-                                                                    mREGEX_LITERAL,
-                                                                    mDOLLAR_SLASH_REGEX_LITERAL);
+  public static final TokenSet STRING_LITERAL_SET = TokenSet.create(GroovyTokenTypes.mSTRING_LITERAL, GroovyTokenTypes.mGSTRING_LITERAL,
+                                                                    GroovyTokenTypes.mREGEX_LITERAL,
+                                                                    GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL);
 
-  public static final TokenSet BRACES = TokenSet.create(mLBRACK, mRBRACK, mLPAREN,
-                                                        mRPAREN, mLCURLY, mRCURLY);
+  public static final TokenSet BRACES = TokenSet.create(GroovyTokenTypes.mLBRACK, GroovyTokenTypes.mRBRACK, GroovyTokenTypes.mLPAREN,
+                                                        GroovyTokenTypes.mRPAREN, GroovyTokenTypes.mLCURLY, GroovyTokenTypes.mRCURLY);
 
-  public static final TokenSet ASSIGN_OP_SET = TokenSet.create(mASSIGN, mBAND_ASSIGN,
-                                                               mBOR_ASSIGN, mBSR_ASSIGN,
-                                                               mBXOR_ASSIGN, mDIV_ASSIGN,
-                                                               mMINUS_ASSIGN, mMOD_ASSIGN,
-                                                               mPLUS_ASSIGN, mSL_ASSIGN,
-                                                               mSR_ASSIGN,
-                                                               mSTAR_ASSIGN, mSTAR_STAR_ASSIGN);
+  public static final TokenSet ASSIGN_OP_SET = TokenSet.create(GroovyTokenTypes.mASSIGN, GroovyTokenTypes.mBAND_ASSIGN,
+                                                               GroovyTokenTypes.mBOR_ASSIGN, GroovyTokenTypes.mBSR_ASSIGN,
+                                                               GroovyTokenTypes.mBXOR_ASSIGN, GroovyTokenTypes.mDIV_ASSIGN,
+                                                               GroovyTokenTypes.mMINUS_ASSIGN, GroovyTokenTypes.mMOD_ASSIGN,
+                                                               GroovyTokenTypes.mPLUS_ASSIGN, GroovyTokenTypes.mSL_ASSIGN,
+                                                               GroovyTokenTypes.mSR_ASSIGN,
+                                                               GroovyTokenTypes.mSTAR_ASSIGN, GroovyTokenTypes.mSTAR_STAR_ASSIGN);
 
-  public static final TokenSet UNARY_OP_SET = TokenSet.create(mBNOT, mLNOT, mMINUS,
-                                                              mDEC, mPLUS, mINC);
+  public static final TokenSet UNARY_OP_SET = TokenSet.create(GroovyTokenTypes.mBNOT, GroovyTokenTypes.mLNOT, GroovyTokenTypes.mMINUS,
+                                                              GroovyTokenTypes.mDEC, GroovyTokenTypes.mPLUS, GroovyTokenTypes.mINC);
 
-  public static final TokenSet POSTFIX_UNARY_OP_SET = TokenSet.create(mDEC, mINC);
+  public static final TokenSet POSTFIX_UNARY_OP_SET = TokenSet.create(GroovyTokenTypes.mDEC, GroovyTokenTypes.mINC);
 
-  public static final TokenSet BINARY_OP_SET = TokenSet.create(mBAND, mBOR, mBXOR,
-                                                               mDIV, mEQUAL, mGE,
-                                                               mGT, mLOR, mLT,
-                                                               mLE, mMINUS, kAS,
-                                                               kIN,
-                                                               mMOD, mPLUS, mSTAR,
-                                                               mSTAR_STAR, mNOT_EQUAL,
-                                                               mCOMPARE_TO, mLAND,
-                                                               kINSTANCEOF,
+  public static final TokenSet BINARY_OP_SET = TokenSet.create(GroovyTokenTypes.mBAND, GroovyTokenTypes.mBOR, GroovyTokenTypes.mBXOR,
+                                                               GroovyTokenTypes.mDIV, GroovyTokenTypes.mEQUAL, GroovyTokenTypes.mGE,
+                                                               GroovyTokenTypes.mGT, GroovyTokenTypes.mLOR, GroovyTokenTypes.mLT,
+                                                               GroovyTokenTypes.mLE, GroovyTokenTypes.mMINUS, GroovyTokenTypes.kAS,
+                                                               GroovyTokenTypes.kIN,
+                                                               GroovyTokenTypes.mMOD, GroovyTokenTypes.mPLUS, GroovyTokenTypes.mSTAR,
+                                                               GroovyTokenTypes.mSTAR_STAR, GroovyTokenTypes.mNOT_EQUAL,
+                                                               GroovyTokenTypes.mCOMPARE_TO, GroovyTokenTypes.mLAND,
+                                                               GroovyTokenTypes.kINSTANCEOF,
                                                                GroovyElementTypes.COMPOSITE_LSHIFT_SIGN,
                                                                GroovyElementTypes.COMPOSITE_RSHIFT_SIGN,
                                                                GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN,
-                                                               mREGEX_FIND, mREGEX_MATCH,
-                                                               mRANGE_INCLUSIVE, mRANGE_EXCLUSIVE);
+                                                               GroovyTokenTypes.mREGEX_FIND, GroovyTokenTypes.mREGEX_MATCH,
+                                                               GroovyTokenTypes.mRANGE_INCLUSIVE, GroovyTokenTypes.mRANGE_EXCLUSIVE);
 
-  public static final TokenSet ASSOCIATIVE_BINARY_OP_SET = TokenSet.create(mBAND, mBOR,
-                                                                           mBXOR, mEQUAL,
-                                                                           mLOR, mPLUS,
-                                                                           mSTAR, mNOT_EQUAL,
-                                                                           mLAND);
+  public static final TokenSet ASSOCIATIVE_BINARY_OP_SET = TokenSet.create(GroovyTokenTypes.mBAND, GroovyTokenTypes.mBOR,
+                                                                           GroovyTokenTypes.mBXOR, GroovyTokenTypes.mEQUAL,
+                                                                           GroovyTokenTypes.mLOR, GroovyTokenTypes.mPLUS,
+                                                                           GroovyTokenTypes.mSTAR, GroovyTokenTypes.mNOT_EQUAL,
+                                                                           GroovyTokenTypes.mLAND);
 
 
   public static final TokenSet BINARY_EXPRESSIONS = TokenSet.create(GroovyElementTypes.ADDITIVE_EXPRESSION,
@@ -245,48 +239,48 @@ public abstract class TokenSets {
                                                                     GroovyElementTypes.SHIFT_EXPRESSION,
                                                                     GroovyElementTypes.RANGE_EXPRESSION);
 
-  public static final TokenSet DOTS = TokenSet.create(mSPREAD_DOT, mOPTIONAL_DOT,
-                                                      mMEMBER_POINTER, mDOT);
+  public static final TokenSet DOTS = TokenSet.create(GroovyTokenTypes.mSPREAD_DOT, GroovyTokenTypes.mOPTIONAL_DOT,
+                                                      GroovyTokenTypes.mMEMBER_POINTER, GroovyTokenTypes.mDOT);
 
   public static final TokenSet WHITE_SPACES_OR_COMMENTS = TokenSet.orSet(WHITE_SPACES_SET, COMMENT_SET);
 
   public static final Map<IElementType, IElementType> ASSIGNMENTS_TO_OPERATORS = new HashMap<IElementType, IElementType>();
   static {
-    ASSIGNMENTS_TO_OPERATORS.put(mMINUS_ASSIGN, mMINUS);
-    ASSIGNMENTS_TO_OPERATORS.put(mPLUS_ASSIGN, mPLUS);
-    ASSIGNMENTS_TO_OPERATORS.put(mDIV_ASSIGN, mDIV);
-    ASSIGNMENTS_TO_OPERATORS.put(mSTAR_ASSIGN, mSTAR);
-    ASSIGNMENTS_TO_OPERATORS.put(mMOD_ASSIGN, mMOD);
-    ASSIGNMENTS_TO_OPERATORS.put(mSL_ASSIGN, GroovyElementTypes.COMPOSITE_LSHIFT_SIGN);
-    ASSIGNMENTS_TO_OPERATORS.put(mSR_ASSIGN, GroovyElementTypes.COMPOSITE_RSHIFT_SIGN);
-    ASSIGNMENTS_TO_OPERATORS.put(mBSR_ASSIGN, GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN);
-    ASSIGNMENTS_TO_OPERATORS.put(mBAND_ASSIGN, mBAND);
-    ASSIGNMENTS_TO_OPERATORS.put(mBOR_ASSIGN, mBOR);
-    ASSIGNMENTS_TO_OPERATORS.put(mBXOR_ASSIGN, mBXOR);
-    ASSIGNMENTS_TO_OPERATORS.put(mSTAR_STAR_ASSIGN, mSTAR_STAR);
+    ASSIGNMENTS_TO_OPERATORS.put(GroovyTokenTypes.mMINUS_ASSIGN, GroovyTokenTypes.mMINUS);
+    ASSIGNMENTS_TO_OPERATORS.put(GroovyTokenTypes.mPLUS_ASSIGN, GroovyTokenTypes.mPLUS);
+    ASSIGNMENTS_TO_OPERATORS.put(GroovyTokenTypes.mDIV_ASSIGN, GroovyTokenTypes.mDIV);
+    ASSIGNMENTS_TO_OPERATORS.put(GroovyTokenTypes.mSTAR_ASSIGN, GroovyTokenTypes.mSTAR);
+    ASSIGNMENTS_TO_OPERATORS.put(GroovyTokenTypes.mMOD_ASSIGN, GroovyTokenTypes.mMOD);
+    ASSIGNMENTS_TO_OPERATORS.put(GroovyTokenTypes.mSL_ASSIGN, GroovyElementTypes.COMPOSITE_LSHIFT_SIGN);
+    ASSIGNMENTS_TO_OPERATORS.put(GroovyTokenTypes.mSR_ASSIGN, GroovyElementTypes.COMPOSITE_RSHIFT_SIGN);
+    ASSIGNMENTS_TO_OPERATORS.put(GroovyTokenTypes.mBSR_ASSIGN, GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN);
+    ASSIGNMENTS_TO_OPERATORS.put(GroovyTokenTypes.mBAND_ASSIGN, GroovyTokenTypes.mBAND);
+    ASSIGNMENTS_TO_OPERATORS.put(GroovyTokenTypes.mBOR_ASSIGN, GroovyTokenTypes.mBOR);
+    ASSIGNMENTS_TO_OPERATORS.put(GroovyTokenTypes.mBXOR_ASSIGN, GroovyTokenTypes.mBXOR);
+    ASSIGNMENTS_TO_OPERATORS.put(GroovyTokenTypes.mSTAR_STAR_ASSIGN, GroovyTokenTypes.mSTAR_STAR);
   }
 
   public static final TokenSet ASSIGNMENTS = TokenSet.create(
-    mASSIGN,
-    mPLUS_ASSIGN,
-    mMINUS_ASSIGN,
-    mSTAR_ASSIGN,
-    mDIV_ASSIGN,
-    mMOD_ASSIGN,
-    mSL_ASSIGN,
-    mSR_ASSIGN,
-    mBSR_ASSIGN,
-    mBAND_ASSIGN,
-    mBOR_ASSIGN,
-    mBXOR_ASSIGN,
-    mSTAR_STAR_ASSIGN
+    GroovyTokenTypes.mASSIGN,
+    GroovyTokenTypes.mPLUS_ASSIGN,
+    GroovyTokenTypes.mMINUS_ASSIGN,
+    GroovyTokenTypes.mSTAR_ASSIGN,
+    GroovyTokenTypes.mDIV_ASSIGN,
+    GroovyTokenTypes.mMOD_ASSIGN,
+    GroovyTokenTypes.mSL_ASSIGN,
+    GroovyTokenTypes.mSR_ASSIGN,
+    GroovyTokenTypes.mBSR_ASSIGN,
+    GroovyTokenTypes.mBAND_ASSIGN,
+    GroovyTokenTypes.mBOR_ASSIGN,
+    GroovyTokenTypes.mBXOR_ASSIGN,
+    GroovyTokenTypes.mSTAR_STAR_ASSIGN
   );
 
   public static final TokenSet SHIFT_SIGNS = TokenSet.create(GroovyElementTypes.COMPOSITE_LSHIFT_SIGN,
                                                              GroovyElementTypes.COMPOSITE_RSHIFT_SIGN,
                                                              GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN);
-  public static final TokenSet CODE_REFERENCE_ELEMENT_NAME_TOKENS = TokenSet.create(mIDENT, kDEF,
-                                                                                    kIN, kAS);
+  public static final TokenSet CODE_REFERENCE_ELEMENT_NAME_TOKENS = TokenSet.create(GroovyTokenTypes.mIDENT, GroovyTokenTypes.kDEF,
+                                                                                    GroovyTokenTypes.kIN, GroovyTokenTypes.kAS);
 
   public static final TokenSet BLOCK_SET = TokenSet.create(GroovyElementTypes.CLOSABLE_BLOCK, GroovyElementTypes.BLOCK_STATEMENT,
                                                            GroovyElementTypes.CONSTRUCTOR_BODY, GroovyElementTypes.OPEN_BLOCK,

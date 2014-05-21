@@ -346,7 +346,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
 
         case CLASS: {
           EnumSet<ClassHint.ResolveKind> kinds = kind == ReferenceKind.CLASS
-                                                 ? ResolverProcessor.RESOLVE_KINDS_CLASS : ResolverProcessor.RESOLVE_KINDS_CLASS_PACKAGE;
+                                                 ? ClassHint.RESOLVE_KINDS_CLASS : ClassHint.RESOLVE_KINDS_CLASS_PACKAGE;
           ResolverProcessor processor = new ClassResolverProcessor(refName, ref, kinds);
           GrCodeReferenceElement qualifier = ref.getQualifier();
           if (qualifier != null) {

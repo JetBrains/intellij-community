@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.xdebugger.evaluation.EvaluationMode;
 
 /**
  * @author nik
@@ -23,6 +24,7 @@ import com.intellij.util.xmlb.annotations.Tag;
 @Tag("data-views")
 public class XDebuggerDataViewSettings {
   private boolean mySortValues;
+  private EvaluationMode myEvaluationDialogMode = EvaluationMode.EXPRESSION;
 
   @Tag("sort-values")
   public boolean isSortValues() {
@@ -31,5 +33,14 @@ public class XDebuggerDataViewSettings {
 
   public void setSortValues(boolean sortValues) {
     mySortValues = sortValues;
+  }
+
+  @Tag("evaluation-dialog-mode")
+  public EvaluationMode getEvaluationDialogMode() {
+    return myEvaluationDialogMode;
+  }
+
+  public void setEvaluationDialogMode(EvaluationMode evaluationDialogMode) {
+    myEvaluationDialogMode = evaluationDialogMode;
   }
 }

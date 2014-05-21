@@ -32,8 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-
 /**
  * @author Max Medvedev
  */
@@ -101,7 +99,7 @@ public class RemoveUnnecessaryEscapeCharactersIntention extends Intention {
         final ASTNode node = literal.getNode();
         for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
           final IElementType type = child.getElementType();
-          if (type == mGSTRING_BEGIN || type == mGSTRING_END) continue;
+          if (type == GroovyTokenTypes.mGSTRING_BEGIN || type == GroovyTokenTypes.mGSTRING_END) continue;
           if (type == GroovyElementTypes.GSTRING_INJECTION) {
             buffer.append(child.getText());
           }

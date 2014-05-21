@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
@@ -37,20 +38,21 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.util.*;
 
-public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> implements CopyPastePostProcessor<ReferenceTransferableData> {
+public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> extends CopyPastePostProcessor<ReferenceTransferableData> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.CopyPasteReferenceProcessor");
   
+  @NotNull
   @Override
   public List<ReferenceTransferableData> collectTransferableData(PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets) {
     if (CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE == CodeInsightSettings.NO) {
-      return null;
+      return Collections.emptyList();
     }
 
     if (file instanceof PsiCompiledFile) {
       file = ((PsiCompiledFile) file).getDecompiledPsiFile();
     }
     if (!(file instanceof PsiClassOwner)) {
-      return null;
+      return Collections.emptyList();
     }
 
     final ArrayList<ReferenceData> array = new ArrayList<ReferenceData>();
@@ -62,7 +64,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> imple
     }
 
     if (array.isEmpty()) {
-      return null;
+      return Collections.emptyList();
     }
     
     return Collections.singletonList(new ReferenceTransferableData(array.toArray(new ReferenceData[array.size()])));
@@ -70,8 +72,8 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> imple
 
   protected abstract void addReferenceData(PsiFile file, int startOffset, PsiElement element, ArrayList<ReferenceData> to);
 
+  @NotNull
   @Override
-  @Nullable
   public List<ReferenceTransferableData> extractTransferableData(final Transferable content) {
     ReferenceTransferableData referenceData = null;
     if (CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE != CodeInsightSettings.NO) {
@@ -91,7 +93,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> imple
       return Collections.singletonList(referenceData.clone());
     }
 
-    return null;
+    return Collections.emptyList();
   }
 
   @Override

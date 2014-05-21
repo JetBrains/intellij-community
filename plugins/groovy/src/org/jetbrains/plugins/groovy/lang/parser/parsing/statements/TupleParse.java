@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -41,14 +42,14 @@ public class TupleParse {
   }
 
   public static PsiBuilder.Marker parseTuple(PsiBuilder builder, IElementType componentType, boolean acceptType) {
-    if (builder.getTokenType() != GroovyElementTypes.mLPAREN) return null;
+    if (builder.getTokenType() != GroovyTokenTypes.mLPAREN) return null;
 
     final PsiBuilder.Marker marker = builder.mark();
     builder.advanceLexer();
     int count = 0;
     do {
       //skip unnecessary commas
-      while (ParserUtils.getToken(builder, GroovyElementTypes.mCOMMA)) {
+      while (ParserUtils.getToken(builder, GroovyTokenTypes.mCOMMA)) {
         count++;
         builder.error(GroovyBundle.message("identifier.expected"));
       }
@@ -57,7 +58,7 @@ public class TupleParse {
         //parse modifiers for definitions
         PsiBuilder.Marker typeMarker = builder.mark();
         TypeSpec.parse(builder);
-        if (builder.getTokenType() != GroovyElementTypes.mIDENT) {
+        if (builder.getTokenType() != GroovyTokenTypes.mIDENT) {
           typeMarker.rollbackTo();
         }
         else {
@@ -66,7 +67,7 @@ public class TupleParse {
       }
 
       PsiBuilder.Marker componentMarker = builder.mark();
-      if (!ParserUtils.getToken(builder, GroovyElementTypes.mIDENT)) {
+      if (!ParserUtils.getToken(builder, GroovyTokenTypes.mIDENT)) {
         builder.error(GroovyBundle.message("identifier.expected"));
         componentMarker.drop();
       }
@@ -75,9 +76,9 @@ public class TupleParse {
         count++;
       }
     }
-    while (ParserUtils.getToken(builder, GroovyElementTypes.mCOMMA));
+    while (ParserUtils.getToken(builder, GroovyTokenTypes.mCOMMA));
 
-    if (ParserUtils.getToken(builder, GroovyElementTypes.mRPAREN)) {
+    if (ParserUtils.getToken(builder, GroovyTokenTypes.mRPAREN)) {
       return marker;
     }
     else if (count > 0) {    //accept tuple if there was at least one comma or parsed tuple element inside it

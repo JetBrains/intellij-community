@@ -90,6 +90,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/javaFX/javaFX-jps-plugin/javaFX-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/javaFX/javaFX-jps-plugin/javaFX-jps-plugin.iml" group="plugins/JavaFX" />
       <module fileurl="file://$PROJECT_DIR$/java/compiler/javac2/javac2.iml" filepath="$PROJECT_DIR$/java/compiler/javac2/javac2.iml" group="java/compiler" />
       <module fileurl="file://$PROJECT_DIR$/plugins/cvs/javacvs-src/javacvs-src.iml" filepath="$PROJECT_DIR$/plugins/cvs/javacvs-src/javacvs-src.iml" group="plugins/VCS/cvs" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/groovy/groovy-psi/groovy-psi.iml" filepath="$PROJECT_DIR$/plugins/groovy/groovy-psi/groovy-psi.iml" group="plugins/Groovy" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/jetgroovy.iml" filepath="$PROJECT_DIR$/plugins/groovy/jetgroovy.iml" group="plugins/Groovy" />
       <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tasks-core/jira/jira.iml" filepath="$PROJECT_DIR$/plugins/tasks/tasks-core/jira/jira.iml" group="plugins/tasks" />
       <module fileurl="file://$PROJECT_DIR$/jps/jps-builders/jps-builders.iml" filepath="$PROJECT_DIR$/jps/jps-builders/jps-builders.iml" group="jps" />
@@ -185,6 +186,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-impl/vcs-impl.iml" filepath="$PROJECT_DIR$/platform/vcs-impl/vcs-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-log/api/vcs-log-api.iml" filepath="$PROJECT_DIR$/platform/vcs-log/api/vcs-log-api.iml" group="platform/vcs-log" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-log/graph/vcs-log-graph.iml" filepath="$PROJECT_DIR$/platform/vcs-log/graph/vcs-log-graph.iml" group="platform/vcs-log" />
+      <module fileurl="file://$PROJECT_DIR$/platform/vcs-log/graph-api/vcs-log-graph-api.iml" filepath="$PROJECT_DIR$/platform/vcs-log/graph-api/vcs-log-graph-api.iml" group="platform/vcs-log" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-log/impl/vcs-log-impl.iml" filepath="$PROJECT_DIR$/platform/vcs-log/impl/vcs-log-impl.iml" group="platform/vcs-log" />
       <module fileurl="file://$PROJECT_DIR$/platform/xdebugger-api/xdebugger-api.iml" filepath="$PROJECT_DIR$/platform/xdebugger-api/xdebugger-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/xdebugger-impl/xdebugger-impl.iml" filepath="$PROJECT_DIR$/platform/xdebugger-impl/xdebugger-impl.iml" group="platform" />

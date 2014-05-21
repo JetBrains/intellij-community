@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.refactoring.rename;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.light.LightElement;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 
 import java.util.List;
 
@@ -30,7 +30,7 @@ public class PropertyForRename extends LightElement {
   private final String myPropertyName;
 
   PropertyForRename(List<? extends PsiElement> toRename, String propertyName, PsiManager manager) {
-    super(manager, GroovyFileType.GROOVY_LANGUAGE);
+    super(manager, GroovyLanguage.INSTANCE);
 
     myToRename = toRename;
     myPropertyName = propertyName;

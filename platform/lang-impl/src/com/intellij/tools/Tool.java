@@ -46,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 
 public class Tool implements SchemeElement {
   @NonNls public static final String ACTION_ID_PREFIX = "Tool_";
@@ -202,9 +203,7 @@ public class Tool implements SchemeElement {
   public void setOutputFilters(FilterInfo[] filters) {
     myOutputFilters = new ArrayList<FilterInfo>();
     if (filters != null) {
-      for (int i = 0; i < filters.length; i++) {
-        myOutputFilters.add(filters[i]);
-      }
+      Collections.addAll(myOutputFilters, filters);
     }
   }
 
@@ -232,11 +231,11 @@ public class Tool implements SchemeElement {
   }
 
   public boolean equals(Object obj) {
-    if (!(obj instanceof Tool)) return false;
-    Tool secondTool = (Tool)obj;
+    if (!(obj instanceof Tool)) {
+      return false;
+    }
 
-    Tool source = secondTool;
-
+    Tool source = (Tool)obj;
     return
       Comparing.equal(myName, source.myName) &&
       Comparing.equal(myDescription, source.myDescription) &&
@@ -342,7 +341,7 @@ public class Tool implements SchemeElement {
         commandLine.setExePath(exePath);
       }
     }
-    catch (Macro.ExecutionCancelledException e) {
+    catch (Macro.ExecutionCancelledException ignored) {
       return null;
     }
     return commandLine;

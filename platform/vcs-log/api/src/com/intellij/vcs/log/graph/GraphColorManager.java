@@ -15,17 +15,13 @@
  */
 package com.intellij.vcs.log.graph;
 
-import com.intellij.ui.JBColor;
-import org.jetbrains.annotations.NotNull;
-
-public interface GraphColorManager {
+public interface GraphColorManager<CommitId> {
 
   /**
    * Returns the color which should be used to draw the given branch.
    * @param headCommit branch head commit index.
    */
-  @NotNull
-  JBColor getColorOfBranch(int headCommit);
+  int getColorOfBranch(CommitId headCommit);
 
   /**
    * Returns the color which should be used to draw a not-main fragment of a branch
@@ -35,10 +31,9 @@ public interface GraphColorManager {
    *
    * @param headCommit commit of the branch head which the fragment belongs to.
    * @param magicIndex some magic index identifying the fragment (we don't know which one - it is some Graph internal thing).
-   * @return the color which should be used to draw this fragment.
+   * @return the colorId which should be used to draw this fragment.
    */
-  @NotNull
-  JBColor getColorOfFragment(int headCommit, int magicIndex);
+  int getColorOfFragment(CommitId headCommit, int magicIndex);
 
   /**
    * Returns 1, 0 or -1 if branch identified by commit {@code head1} is "more powerful", "equally powerful" or "less powerful"
@@ -47,6 +42,6 @@ public interface GraphColorManager {
    * If branch1 is more powerful than branch2, it means that its color will be reused by the subgraph below the point when these branches
    * were diverged.
    */
-  int compareHeads(int head1, int head2);
+  int compareHeads(CommitId head1, CommitId head2); // todo drop this
 
 }

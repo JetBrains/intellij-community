@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.codeStyle.arrangement
 
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*
+
 class JavaRearrangerAnonymousClassesTest extends AbstractJavaRearrangerTest {
 
   public void "test rearrangement doesn't brake anon classes alignment"() {
@@ -42,10 +44,56 @@ public class Test {
     )
   }
 
+  public void "test anonymous classes inside method"() {
+    doTest(
+      initial: '''\
+public class Rearranging {
 
+    public void Testing() {
 
+        class Model {
+            private Cat cat = new Cat();
+            private Dog dog = new Dog();
+            class Cat { private String catSound = "MIAU"; }
+            class Dog { private String dogSound = "AUAU"; }
+        }
 
+        class Born { private String date; }
 
+        class Die { private String date; }
 
+    }
 
+    private int value;
+}
+''',
+      expected: '''\
+public class Rearranging {
+
+    private int value;
+
+    public void Testing() {
+
+        class Model {
+            private Cat cat = new Cat();
+            private Dog dog = new Dog();
+            class Cat { private String catSound = "MIAU"; }
+            class Dog { private String dogSound = "AUAU"; }
+        }
+
+        class Born { private String date; }
+
+        class Die { private String date; }
+
+    }
+}
+''',
+      rules: [rule(FIELD),
+              rule(ENUM),
+              rule(INTERFACE),
+              rule(CLASS),
+              rule(CONSTRUCTOR),
+              rule(METHOD)]
+    )
+  }
 }

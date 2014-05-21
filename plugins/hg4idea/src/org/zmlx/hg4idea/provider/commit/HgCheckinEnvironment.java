@@ -303,7 +303,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
       args.add(".");
       args.add("--template");
       args.add("{desc}");
-      HgCommandResult result = commandExecutor.executeInCurrentThread(repo, "log", args, null);
+      HgCommandResult result = commandExecutor.executeInCurrentThread(repo, "log", args);
       return result == null ? "" : result.getRawOutput();
     }
   }
