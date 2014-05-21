@@ -664,7 +664,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   public void handleCommitWithoutPsi(@NotNull Document document) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
     final CharSequence prevText = myLastCommittedTexts.remove(document);
     if (prevText == null) {
       return;
@@ -684,19 +683,25 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       return;
     }
 
-    psiFile.getViewProvider().beforeContentsSynchronized();
-    synchronized (PsiLock.LOCK) {
-      final int oldLength = prevText.length();
-      PsiManagerImpl manager = (PsiManagerImpl)psiFile.getManager();
-      BlockSupportImpl.sendBeforeChildrenChangeEvent(manager, psiFile, true);
-      BlockSupportImpl.sendBeforeChildrenChangeEvent(manager, psiFile, false);
-      if (psiFile instanceof PsiFileImpl) {
-        ((PsiFileImpl)psiFile).onContentReload();
+    // we can end up outside write action here if the document has forUseInNonAWTThread=true
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        psiFile.getViewProvider().beforeContentsSynchronized();
+        synchronized (PsiLock.LOCK) {
+          final int oldLength = prevText.length();
+          PsiManagerImpl manager = (PsiManagerImpl)psiFile.getManager();
+          BlockSupportImpl.sendBeforeChildrenChangeEvent(manager, psiFile, true);
+          BlockSupportImpl.sendBeforeChildrenChangeEvent(manager, psiFile, false);
+          if (psiFile instanceof PsiFileImpl) {
+            ((PsiFileImpl)psiFile).onContentReload();
+          }
+          BlockSupportImpl.sendAfterChildrenChangedEvent(manager, psiFile, oldLength, false);
+          BlockSupportImpl.sendAfterChildrenChangedEvent(manager, psiFile, oldLength, true);
+        }
+        psiFile.getViewProvider().contentsSynchronized();
       }
-      BlockSupportImpl.sendAfterChildrenChangedEvent(manager, psiFile, oldLength, false);
-      BlockSupportImpl.sendAfterChildrenChangedEvent(manager, psiFile, oldLength, true);
-    }
-    psiFile.getViewProvider().contentsSynchronized();
+    });
   }
 
   private boolean isRelevant(@NotNull FileViewProvider viewProvider) {
