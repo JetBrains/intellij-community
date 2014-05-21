@@ -16,7 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions;
 
-import com.intellij.codeInsight.completion.CompletionInitializationContext;
+import com.intellij.codeInsight.completion.CompletionUtilCore;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrReferenceListEleme
  */
 
 public class ReferenceElement {
-  public static final String DUMMY_IDENTIFIER = CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED; //inserted by completion
+  public static final String DUMMY_IDENTIFIER = CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED; //inserted by completion
 
   @NotNull
   public static IElementType parseReferenceList(@NotNull PsiBuilder builder,

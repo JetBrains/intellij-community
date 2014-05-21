@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.Html;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashSet;
@@ -136,21 +137,21 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
 
     @Override
     protected boolean dressDescription(@NotNull final Editor editor) {
-      final List<String> problems = StringUtil.split(UIUtil.getHtmlBody(myText), UIUtil.BORDER_LINE);
+      final List<String> problems = StringUtil.split(UIUtil.getHtmlBody(new Html(myText).setKeepFont(true)), UIUtil.BORDER_LINE);
       String text = "";
       for (String problem : problems) {
         final String ref = getLinkRef(problem);
         if (ref != null) {
           String description = TooltipLinkHandlerEP.getDescription(ref, editor);
           if (description != null) {
-            description = DefaultInspectionToolPresentation.stripUIRefsFromInspectionDescription(UIUtil.getHtmlBody(description));
-            text += UIUtil.getHtmlBody(problem).replace(DaemonBundle.message("inspection.extended.description"),
+            description = DefaultInspectionToolPresentation.stripUIRefsFromInspectionDescription(UIUtil.getHtmlBody(new Html(description).setKeepFont(true)));
+            text += UIUtil.getHtmlBody(new Html(problem).setKeepFont(true)).replace(DaemonBundle.message("inspection.extended.description"),
                                                         DaemonBundle.message("inspection.collapse.description")) +
                     END_MARKER + "<p>" + description + UIUtil.BORDER_LINE;
           }
         }
         else {
-          text += UIUtil.getHtmlBody(problem) + UIUtil.BORDER_LINE;
+          text += UIUtil.getHtmlBody(new Html(problem).setKeepFont(true)) + UIUtil.BORDER_LINE;
         }
       }
       if (!text.isEmpty()) { //otherwise do not change anything
@@ -176,11 +177,11 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
 
     @Override
     protected void stripDescription() {
-      final List<String> problems = StringUtil.split(UIUtil.getHtmlBody(myText), UIUtil.BORDER_LINE);
+      final List<String> problems = StringUtil.split(UIUtil.getHtmlBody(new Html(myText).setKeepFont(true)), UIUtil.BORDER_LINE);
       myText = "";
       for (String problem1 : problems) {
         final String problem = StringUtil.split(problem1, END_MARKER).get(0);
-        myText += UIUtil.getHtmlBody(problem).replace(DaemonBundle.message("inspection.collapse.description"),
+        myText += UIUtil.getHtmlBody(new Html(problem).setKeepFont(true)).replace(DaemonBundle.message("inspection.collapse.description"),
                                                       DaemonBundle.message("inspection.extended.description")) + UIUtil.BORDER_LINE;
       }
       myText = XmlStringUtil.wrapInHtml(StringUtil.trimEnd(myText, UIUtil.BORDER_LINE));

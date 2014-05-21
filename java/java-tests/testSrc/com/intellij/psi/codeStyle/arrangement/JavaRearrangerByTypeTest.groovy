@@ -426,4 +426,48 @@ public enum ErrorResponse {
       ]
     )
   }
+
+  void "test parameterized class"() {
+    doTest(
+      initial: '''\
+public class Seq<T> {
+
+    public Seq(T x) {
+    }
+
+    public Seq() {}
+
+    static <T> Seq<T> nil() {
+        return new Seq<T>();
+    }
+
+    static <V> Seq<V> cons(V x) {
+        return new Seq<V>(x);
+    }
+
+    int filed;
+}
+''',
+      expected: '''\
+public class Seq<T> {
+
+    int filed;
+
+    public Seq(T x) {
+    }
+
+    public Seq() {}
+    static <T> Seq<T> nil() {
+        return new Seq<T>();
+    }
+    static <V> Seq<V> cons(V x) {
+        return new Seq<V>(x);
+    }
+}
+''',
+      rules: [
+        rule(FIELD)
+      ]
+    )
+  }
 }

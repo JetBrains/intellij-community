@@ -109,10 +109,15 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
             }
           }
           if (group.getChildrenCount() > 0) {
-            JBPopupFactory.getInstance()
-              .createActionGroupPopup(null, group, SimpleDataContext.getProjectContext(null),
-                                      JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true)
-              .showInBestPositionFor(editor);
+            editor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
+              @Override
+              public void run() {
+                JBPopupFactory.getInstance()
+                  .createActionGroupPopup(null, group, SimpleDataContext.getProjectContext(null),
+                                          JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true)
+                  .showInBestPositionFor(editor);
+              }
+            });
           }
         }
       }

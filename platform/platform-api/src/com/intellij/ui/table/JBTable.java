@@ -492,27 +492,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       if (isTypeAhead) {
         JTableCellEditorHelper.typeAhead(this, e, row, column);
       }
-      setRowHeight(row, editorComp.getPreferredSize().height);
       return true;
     }
     return false;
-  }
-
-  @NotNull
-  @Override
-  public Rectangle getCellRect(int row, int column, boolean includeSpacing) {
-    Rectangle rect = super.getCellRect(row, column, includeSpacing);
-    if (getRowHeight() != getRowHeight(row) && row < getRowCount() && getEditingRow() == row && row > 0) {
-      rect.y = row * getRowHeight();
-      if (includeSpacing) rect.y += Math.min(getRowMargin(), rect.height);
-    }
-    return rect;
-  }
-
-  @Override
-  public void editingStopped(ChangeEvent e) {
-    setRowHeight(editingRow, getRowHeight());
-    super.editingStopped(e);
   }
 
   private static boolean isTableDecorationSupported() {

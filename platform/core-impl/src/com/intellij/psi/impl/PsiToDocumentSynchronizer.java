@@ -232,12 +232,12 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     }
   }
 
-  public void startTransaction(@NotNull Project project, Document doc, PsiElement scope) {
+  public void startTransaction(@NotNull Project project, @NotNull Document doc, @NotNull PsiElement scope) {
     LOG.assertTrue(!project.isDisposed());
     Pair<DocumentChangeTransaction, Integer> pair = myTransactionsMap.get(doc);
     if (pair == null) {
-      final PsiFile psiFile = scope != null ? scope.getContainingFile() : null;
-      pair = new Pair<DocumentChangeTransaction, Integer>(new DocumentChangeTransaction(doc, scope != null ? psiFile : null), 0);
+      final PsiFile psiFile = scope.getContainingFile();
+      pair = new Pair<DocumentChangeTransaction, Integer>(new DocumentChangeTransaction(doc, psiFile), 0);
       myBus.syncPublisher(PsiDocumentTransactionListener.TOPIC).transactionStarted(doc, psiFile);
     }
     else {
@@ -341,20 +341,22 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     private final Document myDocument;
     private final PsiFile myChangeScope;
 
-    public DocumentChangeTransaction(final Document doc, PsiFile scope) {
+    public DocumentChangeTransaction(@NotNull Document doc, @NotNull PsiFile scope) {
       myDocument = doc;
       myChangeScope = scope;
     }
 
+    @NotNull
     public Set<Pair<MutableTextRange, StringBuffer>> getAffectedFragments() {
       return myAffectedFragments;
     }
 
+    @NotNull
     public PsiFile getChangeScope() {
       return myChangeScope;
     }
 
-    public void replace(int initialStart, int length, String replace) {
+    public void replace(int initialStart, int length, @NotNull String replace) {
       // calculating fragment
       // minimize replace
       int start = 0;
@@ -519,7 +521,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     }
   }
 
-  public static class MutableTextRange{
+  public static class MutableTextRange {
     private final int myLength;
     private int myStartOffset;
 

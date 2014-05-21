@@ -3998,7 +3998,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private void processMouseReleased(@NotNull MouseEvent e) {
     if (checkIgnore(e, true)) return;
 
-    if (e.getSource() == myGutterComponent) {
+    if (e.getSource() == myGutterComponent && !(myMousePressedEvent != null && myMousePressedEvent.isConsumed())) {
       myGutterComponent.mouseReleased(e);
     }
 
@@ -5458,9 +5458,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public void mouseReleased(@NotNull MouseEvent e) {
       myMousePressArea = null;
-      if (myMousePressedEvent == null || !myMousePressedEvent.isConsumed()) {
-        runMouseReleasedCommand(e);
-      }
+      runMouseReleasedCommand(e);
       if (!e.isConsumed() && myMousePressedEvent != null && !myMousePressedEvent.isConsumed() &&
           Math.abs(e.getX() - myMousePressedEvent.getX()) < EditorUtil.getSpaceWidth(Font.PLAIN, EditorImpl.this) &&
           Math.abs(e.getY() - myMousePressedEvent.getY()) < getLineHeight()) {

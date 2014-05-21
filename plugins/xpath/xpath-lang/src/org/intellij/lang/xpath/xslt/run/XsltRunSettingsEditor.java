@@ -182,7 +182,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
 
       myXmlInputFile.getComboBox().setEditable(true);
 
-      myXmlDescriptor = new AnyXMLDescriptor();
+      myXmlDescriptor = new AnyXMLDescriptor(false);
       myXmlInputFile.addBrowseFolderListener("Choose XML File", null, project, myXmlDescriptor, new TextComponentAccessor<JComboBox>() {
         public String getText(JComboBox comboBox) {
           Object item = comboBox.getEditor().getItem();

@@ -93,6 +93,13 @@ public abstract class JavaPostfixTemplatesUtils {
     }
   };
 
+  public static Condition<PsiElement> IS_NUMBER = new Condition<PsiElement>() {
+    @Override
+    public boolean value(PsiElement element) {
+      return element instanceof PsiExpression && isNumber(((PsiExpression)element).getType());
+    }
+  };
+
   public static Condition<PsiElement> IS_BOOLEAN = new Condition<PsiElement>() {
     @Override
     public boolean value(PsiElement element) {

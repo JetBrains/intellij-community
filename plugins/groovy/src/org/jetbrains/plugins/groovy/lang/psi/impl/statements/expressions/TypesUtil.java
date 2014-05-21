@@ -30,7 +30,6 @@ import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -52,19 +51,14 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrImmediateClosureS
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author ven
  */
 public class TypesUtil {
-
-  private static final LightCacheKey<Map<String, PsiClass>> PARENT_CACHE_KEY = LightCacheKey.create();
 
   @NonNls
   public static final Map<String, PsiType> ourQNameToUnboxed = new HashMap<String, PsiType>();
@@ -361,11 +355,7 @@ public class TypesUtil {
       }
     }
 
-    if (TypeConversionUtil.isAssignable(lType, rType)) {
-      return true;
-    }
-
-    return false;
+    return TypeConversionUtil.isAssignable(lType, rType);
   }
 
   private static boolean canMakeClosureRaw(PsiType type) {
@@ -715,7 +705,7 @@ public class TypesUtil {
   }
 
   public static boolean isAnnotatedCheckHierarchyWithCache(@NotNull PsiClass aClass, @NotNull String annotationFQN) {
-    Map<String, PsiClass> classMap = getSuperClassesWithCache(aClass);
+    Map<String, PsiClass> classMap = ClassUtil.getSuperClassesWithCache(aClass);
 
     for (PsiClass psiClass : classMap.values()) {
       PsiModifierList modifierList = psiClass.getModifierList();
@@ -727,24 +717,6 @@ public class TypesUtil {
     }
 
     return false;
-  }
-
-  public static Map<String, PsiClass> getSuperClassesWithCache(@NotNull PsiClass aClass) {
-    Map<String, PsiClass> superClassNames = PARENT_CACHE_KEY.getCachedValue(aClass);
-    if (superClassNames == null) {
-      Set<PsiClass> superClasses = new THashSet<PsiClass>();
-      superClasses.add(aClass);
-      InheritanceUtil.getSuperClasses(aClass, superClasses, true);
-
-      superClassNames = new LinkedHashMap<String, PsiClass>();
-      for (PsiClass superClass : superClasses) {
-        superClassNames.put(superClass.getQualifiedName(), superClass);
-      }
-
-      superClassNames = PARENT_CACHE_KEY.putCachedValue(aClass, superClassNames);
-    }
-
-    return superClassNames;
   }
 
   @Nullable

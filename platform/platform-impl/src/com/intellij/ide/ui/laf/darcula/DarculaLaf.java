@@ -29,10 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import sun.awt.AppContext;
 
 import javax.swing.*;
-import javax.swing.plaf.ColorUIResource;
-import javax.swing.plaf.FontUIResource;
-import javax.swing.plaf.IconUIResource;
-import javax.swing.plaf.InsetsUIResource;
+import javax.swing.plaf.*;
 import javax.swing.plaf.basic.BasicLookAndFeel;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 import javax.swing.plaf.metal.MetalLookAndFeel;
@@ -277,15 +274,18 @@ public class DarculaLaf extends BasicLookAndFeel {
     }
 
     if (key.endsWith("Insets")) {
-      final List<String> numbers = StringUtil.split(value, ",");
-      return new InsetsUIResource(Integer.parseInt(numbers.get(0)),
-                                             Integer.parseInt(numbers.get(1)),
-                                             Integer.parseInt(numbers.get(2)),
-                                             Integer.parseInt(numbers.get(3)));
-    } else if (key.endsWith(".border")) {
+      return parseInsets(value);
+    } else if (key.endsWith("Border") || key.endsWith("border")) {
+
       try {
-        return Class.forName(value).newInstance();
-      } catch (Exception e) {log(e);}
+        if (StringUtil.split(value, ",").size() == 4) {
+          return new BorderUIResource.EmptyBorderUIResource(parseInsets(value));
+        } else {
+          return Class.forName(value).newInstance();
+        }
+      } catch (Exception e) {
+        log(e);
+      }
     } else {
       final Color color = parseColor(value);
       final Integer invVal = getInteger(value);
@@ -305,6 +305,14 @@ public class DarculaLaf extends BasicLookAndFeel {
       }
     }
     return value;
+  }
+
+  private static Insets parseInsets(String value) {
+    final List<String> numbers = StringUtil.split(value, ",");
+    return new InsetsUIResource(Integer.parseInt(numbers.get(0)),
+                                           Integer.parseInt(numbers.get(1)),
+                                           Integer.parseInt(numbers.get(2)),
+                                           Integer.parseInt(numbers.get(3)));
   }
 
   @SuppressWarnings("UseJBColor")

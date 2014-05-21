@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsDetector;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -113,7 +114,7 @@ public class RootDetectionUtil {
         for (boolean isJarDirectory : new boolean[]{false, true}) {
           final String typeName = detector.getRootTypeName(new LibraryRootType(type, isJarDirectory));
           if (typeName != null) {
-            types.put(typeName, Pair.create(type, isJarDirectory));
+            types.put(StringUtil.capitalizeWords(typeName, true), Pair.create(type, isJarDirectory));
           }
         }
       }
