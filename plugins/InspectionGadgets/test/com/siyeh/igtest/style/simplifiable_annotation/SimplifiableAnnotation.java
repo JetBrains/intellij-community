@@ -17,4 +17,9 @@ public class SimplifiableAnnotation {
 <warning descr="Annotation '@ValueAnnotation({&quot;the value&quot;})' may be replaced with '@ValueAnnotation(&quot;the value&quot;)'">@ValueAnnotation({"the value"})</warning>
 <warning descr="Annotation '@ArrayAnnotation(array = {&quot;first&quot;})' may be replaced with '@ArrayAnnotation(array=&quot;first&quot;)'">@ArrayAnnotation(array = {"first"})</warning>
 class MyClass {
+
+  @ <error descr="'value' missing though required">ValueAnnotation</error>
+  int foo(@ArrayAnnotation(array="") String s) {
+    return -1;
+  }
 }

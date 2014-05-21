@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 Bas Leijdekkers
+ * Copyright 2010-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,9 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashSet;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -26,6 +28,9 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 public class SimplifiableAnnotationInspection extends BaseInspection {
 
@@ -98,28 +103,28 @@ public class SimplifiableAnnotationInspection extends BaseInspection {
       }
       final PsiNameValuePair[] attributes = parameterList.getAttributes();
       final PsiElement[] annotationChildren = annotation.getChildren();
-      if (annotationChildren.length >= 2) {
-        final PsiElement child = annotationChildren[1];
-        if (child instanceof PsiWhiteSpace) {
-          final String annotationName = nameReferenceElement.getText();
-          final String replacementText;
-          if (attributes.length > 0) {
-            replacementText = '@' + annotationName + parameterList.getText();
-          }
-          else {
-            replacementText = '@' + annotationName;
-          }
+      if (annotationChildren.length >= 2 && annotationChildren[1] instanceof PsiWhiteSpace) {
+        final String annotationName = nameReferenceElement.getText();
+        final String replacementText;
+        if (attributes.length > 0) {
+          replacementText = '@' + annotationName + parameterList.getText();
+        }
+        else {
+          replacementText = '@' + annotationName;
+        }
+        if (!containsError(annotation)) {
           registerError(annotation, replacementText);
-          return;
         }
       }
-      if (attributes.length == 0) {
+      else if (attributes.length == 0) {
         final PsiElement[] children = parameterList.getChildren();
         if (children.length <= 0) {
           return;
         }
         final String annotationName = nameReferenceElement.getText();
-        registerError(annotation, '@' + annotationName);
+        if (!containsError(annotation)) {
+          registerError(annotation, '@' + annotationName);
+        }
       }
       else if (attributes.length == 1) {
         final PsiNameValuePair attribute = attributes[0];
@@ -149,7 +154,9 @@ public class SimplifiableAnnotationInspection extends BaseInspection {
         }
         final String annotationName = nameReferenceElement.getText();
         final String replacementText = '@' + annotationName + '(' + attributeValueText + ')';
-        registerError(annotation, replacementText);
+        if (!containsError(annotation)) {
+          registerError(annotation, replacementText);
+        }
       }
     }
 
@@ -162,6 +169,86 @@ public class SimplifiableAnnotationInspection extends BaseInspection {
         }
       }
       return value.getText();
+    }
+
+    private static boolean containsError(PsiAnnotation annotation) {
+      final PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
+      if (nameRef == null) {
+        return true;
+      }
+      final PsiClass aClass = (PsiClass)nameRef.resolve();
+      if (aClass == null || !aClass.isAnnotationType()) {
+        return true;
+      }
+      final Set<String> names = new HashSet<String>();
+      for (PsiNameValuePair attribute : annotation.getParameterList().getAttributes()) {
+        final PsiReference ref = attribute.getReference();
+        if (ref == null) {
+          return true;
+        }
+        final PsiMethod method = (PsiMethod)ref.resolve();
+        if (method == null) {
+          return true;
+        }
+        if (!hasCorrectType(attribute.getValue(), method.getReturnType())) {
+          return true;
+        }
+        final String name = attribute.getName();
+        if (!names.add(name != null ? name : PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)) {
+          return true;
+        }
+      }
+
+      for (PsiMethod method : aClass.getMethods()) {
+        if (!(method instanceof PsiAnnotationMethod)) {
+          continue;
+        }
+        final PsiAnnotationMethod annotationMethod = (PsiAnnotationMethod)method;
+        if (annotationMethod.getDefaultValue() == null && !names.contains(annotationMethod.getName())) {
+          return true; // missing a required argument
+        }
+      }
+      return false;
+    }
+
+    private static boolean hasCorrectType(@Nullable PsiAnnotationMemberValue value, PsiType expectedType) {
+      if (value == null) return false;
+
+      if (expectedType instanceof PsiClassType &&
+          expectedType.equalsToText(CommonClassNames.JAVA_LANG_CLASS) &&
+          !(value instanceof PsiClassObjectAccessExpression)) {
+        return false;
+      }
+
+      if (value instanceof PsiAnnotation) {
+        final PsiJavaCodeReferenceElement nameRef = ((PsiAnnotation)value).getNameReferenceElement();
+        if (nameRef == null) return true;
+
+        if (expectedType instanceof PsiClassType) {
+          final PsiClass aClass = ((PsiClassType)expectedType).resolve();
+          if (aClass != null && nameRef.isReferenceTo(aClass)) return true;
+        }
+
+        if (expectedType instanceof PsiArrayType) {
+          final PsiType componentType = ((PsiArrayType)expectedType).getComponentType();
+          if (componentType instanceof PsiClassType) {
+            final PsiClass aClass = ((PsiClassType)componentType).resolve();
+            if (aClass != null && nameRef.isReferenceTo(aClass)) return true;
+          }
+        }
+        return false;
+      }
+      if (value instanceof PsiArrayInitializerMemberValue) {
+        return expectedType instanceof PsiArrayType;
+      }
+      if (value instanceof PsiExpression) {
+        final PsiExpression expression = (PsiExpression)value;
+        return expression.getType() != null && TypeConversionUtil.areTypesAssignmentCompatible(expectedType, expression) ||
+               expectedType instanceof PsiArrayType &&
+               TypeConversionUtil.areTypesAssignmentCompatible(((PsiArrayType)expectedType).getComponentType(), expression);
+      }
+
+      return true;
     }
   }
 }
