@@ -26,6 +26,12 @@ import java.awt.*;
  */
 public class DarculaTableSelectedCellHighlightBorder extends CompoundBorder implements UIResource {
   public DarculaTableSelectedCellHighlightBorder() {
-    super(new LineBorder(new Color(121, 192, 255), 1), new EmptyBorder(0, 3, 0, 3));
+    outsideBorder = new LineBorder(getFocusColor(), 1);
+    insideBorder = new EmptyBorder(0, 3, 0, 3);
+  }
+
+  @SuppressWarnings("UseJBColor")
+  protected Color getFocusColor() {
+    return new Color(121, 192, 255);
   }
 }
