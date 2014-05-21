@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 package standardDsls
-contributor(ctype: hasAnnotation("groovy.lang.Category")) {
-  def annotations = psiClass?.getAnnotations("groovy.lang.Category")
-  for (a in annotations) {
-    delegatesTo a.findAttributeValue("value")?.bind()
+
+contributor(ctype:hasAnnotation("groovy.lang.Singleton")) {
+  if (psiClass?.hasAnnotation("groovy.lang.Singleton")) {
+    property name: "instance",
+             type: psiClass?.getQualifiedName() ?: "java.lang.Object",
+             isStatic: true
   }
 }
-
