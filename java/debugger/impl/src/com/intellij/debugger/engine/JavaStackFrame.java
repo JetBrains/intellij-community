@@ -22,6 +22,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -39,6 +40,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XCompositeNode;
@@ -67,7 +69,7 @@ public class JavaStackFrame extends XStackFrame {
   private final SourcePosition mySourcePosition;
   private final NodeManagerImpl myNodeManager;
   private final StackFrameDescriptorImpl myDescriptor;
-  private final JavaFramesListRenderer myRenderer = new JavaFramesListRenderer();
+  private static final JavaFramesListRenderer FRAME_RENDERER = new JavaFramesListRenderer();
   private JavaDebuggerEvaluator myEvaluator = null;
 
   public JavaStackFrame(@NotNull StackFrameProxyImpl stackFrameProxy, @NotNull DebugProcessImpl debugProcess, MethodsTracker tracker) {
@@ -126,7 +128,18 @@ public class JavaStackFrame extends XStackFrame {
 
   @Override
   public void customizePresentation(@NotNull ColoredTextContainer component) {
-    myRenderer.customizePresentation(myDescriptor, component);
+    StackFrameDescriptorImpl selectedDescriptor = null;
+    DebuggerSession session = myDebugProcess.getSession();
+    if (session != null) {
+      XDebugSession xSession = session.getXDebugSession();
+      if (xSession != null) {
+        XStackFrame frame = xSession.getCurrentStackFrame();
+        if (frame instanceof JavaStackFrame) {
+          selectedDescriptor = ((JavaStackFrame)frame).getDescriptor();
+        }
+      }
+    }
+    FRAME_RENDERER.customizePresentation(myDescriptor, component, selectedDescriptor);
   }
 
   @Override
