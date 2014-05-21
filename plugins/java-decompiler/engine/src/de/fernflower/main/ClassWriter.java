@@ -421,11 +421,11 @@ public class ClassWriter {
 					writer.write(descriptor.fparameters.get(i));
 					
 					List<GenericType> lstBounds = descriptor.fbounds.get(i);
-          if (lstBounds.size() > 1 || !"java/lang/Object".equals(lstBounds.get(0).value)) {
+          int skip = InterpreterUtil.equalObjects(VarType.VARTYPE_OBJECT.value, lstBounds.get(0).value) ? 1 : 0;
+          if(skip<lstBounds.size()) {
             writer.write(" extends ");
-            writer.write(GenericMain.getGenericCastTypeName(lstBounds.get(0)));
-
-            for(int j=1;j<lstBounds.size();j++) {
+            writer.write(GenericMain.getGenericCastTypeName(lstBounds.get(skip)));
+            for(int j=skip+1;j<lstBounds.size();j++) {
               writer.write(" & " + GenericMain.getGenericCastTypeName(lstBounds.get(j)));
             }
           }
@@ -825,11 +825,11 @@ public class ClassWriter {
 					bufstrwriter.write(descriptor.fparameters.get(i));
 					
 					List<GenericType> lstBounds = descriptor.fbounds.get(i);
-          if (lstBounds.size() > 1 || !"java/lang/Object".equals(lstBounds.get(0).value)) {
+          int skip = InterpreterUtil.equalObjects(VarType.VARTYPE_OBJECT.value, lstBounds.get(0).value) ? 1 : 0;
+          if(skip<lstBounds.size()) {
             bufstrwriter.write(" extends ");
-            bufstrwriter.write(GenericMain.getGenericCastTypeName(lstBounds.get(0)));
-
-            for(int j=1;j<lstBounds.size();j++) {
+            bufstrwriter.write(GenericMain.getGenericCastTypeName(lstBounds.get(skip)));
+            for(int j=skip+1;j<lstBounds.size();j++) {
               bufstrwriter.write(" & " + GenericMain.getGenericCastTypeName(lstBounds.get(j)));
             }
           }
