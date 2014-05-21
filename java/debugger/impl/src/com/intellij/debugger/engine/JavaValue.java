@@ -118,7 +118,8 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
             nodeIcon = AllIcons.Debugger.Watch;
           }
           else {
-            nodeIcon = AllIcons.Debugger.Value;
+            Icon icon = myValueDescriptor.getValueIcon();
+            nodeIcon = icon != null ? icon : AllIcons.Debugger.Value;
           }
         }
         final String[] strings = splitValue(myValueDescriptor.getValueLabel());
