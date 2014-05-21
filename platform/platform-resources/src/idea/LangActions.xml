@@ -260,7 +260,7 @@
     </group>
 
     <!-- Refactor -->
-    <group id="RefactoringMenu" popup="true">
+    <group id="RefactoringMenu" class="com.intellij.ide.actions.NonTrivialActionGroup" popup="true">
       <action id="Refactorings.QuickListPopupAction"
               class = "com.intellij.refactoring.actions.RefactoringQuickListPopupAction"
               text = "Refactor This..." description="Context aware popup with list of refactoring actions"/>
