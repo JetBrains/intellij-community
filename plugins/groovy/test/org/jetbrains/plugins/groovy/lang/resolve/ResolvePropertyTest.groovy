@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEn
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
@@ -128,14 +129,14 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     GrReferenceElement ref = (GrReferenceElement)configureByFile("toGetter/A.groovy").element;
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof GrMethod);
-    assertTrue(PropertyUtil.isSimplePropertyGetter((PsiMethod) resolved));
+    assertTrue(PropertyUtil.isSimplePropertyGetter((PsiMethod)resolved));
   }
 
   public void testToSetter() throws Exception {
     GrReferenceElement ref = (GrReferenceElement)configureByFile("toSetter/A.groovy").element;
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof GrMethod);
-    assertTrue(PropertyUtil.isSimplePropertySetter((PsiMethod) resolved));
+    assertTrue(PropertyUtil.isSimplePropertySetter((PsiMethod)resolved));
   }
 
   public void testUndefinedVar1() throws Exception {
@@ -154,7 +155,7 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     PsiReference ref = configureByFile("recursive2/A.groovy");
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof GrMethod);
-    assertEquals(CommonClassNames.JAVA_LANG_OBJECT, ((GrMethod) resolved).returnType.canonicalText);
+    assertEquals(CommonClassNames.JAVA_LANG_OBJECT, ((GrMethod)resolved).returnType.canonicalText);
   }
 
   public void testUndefinedVar2() throws Exception {
@@ -355,7 +356,7 @@ print ba<caret>r
     def ref = findReference()
     def resolved = ref.resolve();
     assertInstanceOf resolved, GrField
-    assertTrue ((resolved as GrField).modifierList.hasExplicitVisibilityModifiers())
+    assertTrue((resolved as GrField).modifierList.hasExplicitVisibilityModifiers())
   }
 
   public void testPropertyAndFieldDeclarationOutsideClass() {
@@ -407,7 +408,7 @@ print new Foo().foo""")
     def ref = findReference()
     def resolved = ref.resolve();
     assertInstanceOf resolved, GrField
-    assertTrue ((resolved as GrField).modifierList.hasExplicitVisibilityModifiers())
+    assertTrue((resolved as GrField).modifierList.hasExplicitVisibilityModifiers())
   }
 
   public void testPropertyAndFieldDeclarationWithSuperClass3() {
@@ -444,7 +445,7 @@ print new Foo().foo""")
     def ref = findReference()
     def resolved = ref.resolve();
     assertInstanceOf resolved, GrField
-    assertTrue (!(resolved as GrField).modifierList.hasExplicitVisibilityModifiers())
+    assertTrue(!(resolved as GrField).modifierList.hasExplicitVisibilityModifiers())
   }
 
   public void testReadAccessToStaticallyImportedProperty() {
@@ -620,7 +621,7 @@ set<caret>Foo(2)
 
   public void testPreferAlias() {
     myFixture.addFileToProject "a/B.groovy", "package a; class B {public static def f1; public static def f2}"
-    assertEquals 'f2', ((GrField) resolve("A.groovy")).name
+    assertEquals 'f2', ((GrField)resolve("A.groovy")).name
   }
 
   public void testF1property() {
@@ -638,7 +639,7 @@ set<caret>Foo(2)
     assertInstanceOf resolved, GrParameter
   }
 
-  public void testDontResolveForVarOutsideOfFor(){
+  public void testDontResolveForVarOutsideOfFor() {
     assertNull resolve("A.groovy")
   }
 
@@ -718,11 +719,11 @@ print map.cla<caret>ss''')
   }
 
   public void testResolveInsideWith1() {
-      def resolved = resolve('a.groovy')
+    def resolved = resolve('a.groovy')
 
-      assertInstanceOf( resolved , GrField)
-      assertEquals(resolved.containingClass.name, 'B')
-    }
+    assertInstanceOf(resolved, GrField)
+    assertEquals(resolved.containingClass.name, 'B')
+  }
 
 
   void testLocalVarVsFieldInWithClosure() {
@@ -1035,7 +1036,6 @@ print Fie<caret>ld1
 ''')
 
     assertNotNull(ref.resolve())
-
   }
 
   void testLocalVarVsClassFieldInAnonymous() {
@@ -1053,8 +1053,8 @@ print Fie<caret>ld1
       }
 ''')
 
-    assertFalse( ref.resolve() instanceof PsiField)
-    assertTrue( ref.resolve() instanceof GrVariable)
+    assertFalse(ref.resolve() instanceof PsiField)
+    assertTrue(ref.resolve() instanceof GrVariable)
   }
 
   void testInterfaceDoesNotResolveWithExpressionQualifier() {
@@ -1418,4 +1418,31 @@ trait T {
 ''', GrField)
   }
 
+  void testTraitPropertyFromAsOperator1() {
+    resolveByText('''
+trait A {
+  def foo = 5
+}
+class B {
+  def bar() {}
+}
+
+def v = new B() as A
+print v.fo<caret>o
+''', GrTraitMethod)
+  }
+
+  void testTraitPropertyFromAsOperator2() {
+    resolveByText('''
+trait A {
+  public foo = 5
+}
+class B {
+  def bar() {}
+}
+
+def v = new B() as A
+print v.A<caret>__foo
+''', GrField)
+  }
 }

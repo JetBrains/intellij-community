@@ -50,6 +50,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrTraitType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -312,6 +313,17 @@ public class CompleteReferenceExpression {
     else if (qualifierType instanceof PsiIntersectionType) {
       for (PsiType conjunct : ((PsiIntersectionType)qualifierType).getConjuncts()) {
         getVariantsFromQualifierType(conjunct, project);
+      }
+    }
+    else if (qualifierType instanceof GrTraitType) {
+      GrTypeDefinition definition = ((GrTraitType)qualifierType).getMockTypeDefinition();
+      if (definition != null) {
+        PsiClassType classType = JavaPsiFacade.getElementFactory(project).createType(definition);
+        getVariantsFromQualifierType(classType, project);
+      }
+      else {
+        getVariantsFromQualifierType(((GrTraitType)qualifierType).getExprType(), project);
+        getVariantsFromQualifierType(((GrTraitType)qualifierType).getTraitType(), project);
       }
     }
     else {
