@@ -92,25 +92,28 @@ public class InjectedLanguageUtil {
     return ((DocumentWindowImpl)myFileViewProvider.getDocument()).getShreds();
   }
 
-  public static void enumerate(@NotNull PsiElement host, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
+  public static boolean enumerate(@NotNull PsiElement host, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
     PsiFile containingFile = host.getContainingFile();
-    enumerate(host, containingFile, true, visitor);
+    return enumerate(host, containingFile, true, visitor);
   }
 
-  public static void enumerate(@NotNull PsiElement host,
+  /**
+   * @return true if enumerated successfully
+   */
+  public static boolean enumerate(@NotNull PsiElement host,
                                @NotNull PsiFile containingFile,
                                boolean probeUp,
                                @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
     //do not inject into nonphysical files except during completion
     if (!containingFile.isPhysical() && containingFile.getOriginalFile() == containingFile) {
       final PsiElement context = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);
-      if (context == null) return;
+      if (context == null) return false;
 
       final PsiFile file = context.getContainingFile();
-      if (file == null || !file.isPhysical() && file.getOriginalFile() == file) return;
+      if (file == null || !file.isPhysical() && file.getOriginalFile() == file) return false;
     }
 
-    if (containingFile.getViewProvider() instanceof InjectedFileViewProvider) return; // no injection inside injection
+    if (containingFile.getViewProvider() instanceof InjectedFileViewProvider) return false; // no injection inside injection
 
     PsiElement inTree = loadTree(host, containingFile);
     if (inTree != host) {
@@ -120,7 +123,8 @@ public class InjectedLanguageUtil {
 
     MultiHostRegistrarImpl registrar = probeElementsUp(host, containingFile, probeUp);
     if (registrar == null) {
-      return;
+      // no injections found
+      return true;
     }
     List<Pair<Place, PsiFile>> places = registrar.getResult();
     for (Pair<Place, PsiFile> pair : places) {
@@ -133,6 +137,7 @@ public class InjectedLanguageUtil {
         visitor.visit(pair.second, pair.first);
       }
     }
+    return true;
   }
 
   public static Editor getEditorForInjectedLanguageNoCommit(@Nullable Editor editor, @Nullable PsiFile file) {

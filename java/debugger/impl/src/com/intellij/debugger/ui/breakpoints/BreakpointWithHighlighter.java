@@ -39,6 +39,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -205,7 +207,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
       buf.append("<html><body>");
       buf.append(getDisplayName());
       if (myInvalidMessage != null && !myInvalidMessage.isEmpty()) {
-        buf.append("<br><font color='red'>");
+        buf.append("<br><font color='#").append(ColorUtil.toHex(JBColor.RED)).append("'>");
         buf.append(DebuggerBundle.message("breakpoint.warning", myInvalidMessage));
         buf.append("</font>");
       }

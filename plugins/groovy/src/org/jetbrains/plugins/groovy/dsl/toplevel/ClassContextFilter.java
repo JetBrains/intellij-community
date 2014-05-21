@@ -22,8 +22,8 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ConcurrentHashMap;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ClassUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.Map;
@@ -41,25 +41,7 @@ public class ClassContextFilter implements ContextFilter {
   @Override
   public boolean isApplicable(GroovyClassDescriptor descriptor, ProcessingContext ctx) {
     final PsiFile place = descriptor.getPlaceFile();
-    return myPattern.value(Pair.create(findPsiType(descriptor, ctx), place));
-  }
-
-  @NotNull
-  public static PsiType findPsiType(GroovyClassDescriptor descriptor, ProcessingContext ctx) {
-    String typeText = descriptor.getTypeText();
-    final String key = getClassKey(typeText);
-    final Object cached = ctx.get(key);
-    if (cached instanceof PsiType) {
-      return (PsiType)cached;
-    }
-
-    final PsiType found = JavaPsiFacade.getElementFactory(descriptor.getProject()).createTypeFromText(typeText, descriptor.getPlaceFile());
-    ctx.put(key, found);
-    return found;
-  }
-
-  public static String getClassKey(String fqName) {
-    return "Class: " + fqName;
+    return myPattern.value(Pair.create(ClassUtil.findPsiType(descriptor, ctx), place));
   }
 
   public static ClassContextFilter fromClassPattern(final ElementPattern pattern) {
@@ -88,7 +70,7 @@ public class ClassContextFilter implements ContextFilter {
       if (psiClass != null) {
         final int i = typeText.indexOf("<");
         String rawName = i > 0 ? typeText.substring(0, i) : typeText;
-        if (!TypesUtil.getSuperClassesWithCache(psiClass).containsKey(rawName)) {
+        if (!ClassUtil.getSuperClassesWithCache(psiClass).containsKey(rawName)) {
           return false;
         }
       }

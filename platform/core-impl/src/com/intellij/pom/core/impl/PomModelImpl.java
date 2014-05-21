@@ -292,19 +292,19 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     }
   }
 
-  private void startTransaction(final PomTransaction transaction) {
+  private void startTransaction(@NotNull PomTransaction transaction) {
     final ProgressIndicator progressIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     if(progressIndicator != null) progressIndicator.startNonCancelableSection();
     final PsiDocumentManagerBase manager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
     final PsiElement changeScope = transaction.getChangeScope();
-    BlockSupportImpl.sendBeforeChildrenChangeEvent((PsiManagerImpl)PsiManager.getInstance(myProject), transaction.getChangeScope(), true);
     LOG.assertTrue(changeScope != null);
+    BlockSupportImpl.sendBeforeChildrenChangeEvent((PsiManagerImpl)PsiManager.getInstance(myProject), changeScope, true);
     final PsiFile containingFileByTree = getContainingFileByTree(changeScope);
 
     Document document = containingFileByTree == null ? null : manager.getCachedDocument(containingFileByTree);
     if(document != null) {
-      synchronizer.startTransaction(myProject, document, transaction.getChangeScope());
+      synchronizer.startTransaction(myProject, document, changeScope);
     }
   }
 

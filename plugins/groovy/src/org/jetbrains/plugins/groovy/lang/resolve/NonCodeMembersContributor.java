@@ -29,7 +29,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ClassUtil;
 
 import java.util.Collection;
 
@@ -88,7 +88,7 @@ public abstract class NonCodeMembersContributor {
     final PsiClass aClass = PsiTypesUtil.getPsiClass(qualifierType);
 
     if (aClass != null) {
-      for (String superClassName : TypesUtil.getSuperClassesWithCache(aClass).keySet()) {
+      for (String superClassName : ClassUtil.getSuperClassesWithCache(aClass).keySet()) {
         for (NonCodeMembersContributor enhancer : ourClassSpecifiedContributors.get(superClassName)) {
           ProgressManager.checkCanceled();
           enhancer.processDynamicElements(qualifierType, aClass, delegatingProcessor, place, state);

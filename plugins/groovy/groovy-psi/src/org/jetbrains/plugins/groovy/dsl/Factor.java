@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,31 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.completion.closureParameters;
+package org.jetbrains.plugins.groovy.dsl;
 
-import org.jetbrains.annotations.Nullable;
-
-/**
- * @author Max Medvedev
- */
-public class ClosureParameterInfo {
-  private final String myName;
-
-  @Nullable
-  private final String myType;
-
-  public ClosureParameterInfo(@Nullable String type, String name) {
-    myName = name;
-    myType = type;
-  }
-
-  public String getName() {
-    return myName;
-  }
-
-
-  @Nullable
-  public String getType() {
-    return myType;
-  }
+enum Factor {
+  qualifierType, placeElement, placeFile
 }

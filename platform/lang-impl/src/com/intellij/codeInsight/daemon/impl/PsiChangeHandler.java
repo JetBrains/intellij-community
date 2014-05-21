@@ -83,11 +83,11 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
 
     connection.subscribe(PsiDocumentTransactionListener.TOPIC, new PsiDocumentTransactionListener() {
       @Override
-      public void transactionStarted(final Document doc, final PsiFile file) {
+      public void transactionStarted(@NotNull final Document doc, @NotNull final PsiFile file) {
       }
 
       @Override
-      public void transactionCompleted(final Document doc, final PsiFile file) {
+      public void transactionCompleted(@NotNull final Document doc, @NotNull final PsiFile file) {
         updateChangesForDocument(doc);
       }
     });
