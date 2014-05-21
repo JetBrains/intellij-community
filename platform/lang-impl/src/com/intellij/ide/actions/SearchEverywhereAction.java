@@ -934,12 +934,15 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     ColoredListCellRenderer myLocation = new ColoredListCellRenderer() {
       @Override
       protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+        setPaintFocusBorder(false);
         append(myLocationString, SimpleTextAttributes.GRAYED_ATTRIBUTES);
         setIcon(myLocationIcon);
       }
     };
     private String myLocationString;
-    private DefaultPsiElementCellRenderer myPsiRenderer = new DefaultPsiElementCellRenderer();
+    private DefaultPsiElementCellRenderer myPsiRenderer = new DefaultPsiElementCellRenderer() {
+      {setFocusBorderEnabled(false);}
+    };
     private Icon myLocationIcon;
     private Project myProject;
     private JPanel myMainPanel = new JPanel(new BorderLayout());
@@ -971,9 +974,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         cmp = new GotoFileCellRenderer(Math.min(800, list.getWidth()))
           .getListCellRendererComponent(list, file == null ? value : file, index, isSelected, cellHasFocus);
       } else if (value instanceof PsiElement) {
-        cmp = myPsiRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        cmp = myPsiRenderer.getListCellRendererComponent(list, value, index, isSelected, isSelected);
       } else {
-        cmp = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        cmp = super.getListCellRendererComponent(list, value, index, isSelected, isSelected);
         final JPanel p = new JPanel(new BorderLayout());
         p.setBackground(UIUtil.getListBackground(isSelected));
         p.add(cmp, BorderLayout.CENTER);
@@ -990,7 +993,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           rightComponent = button;
         }
         else {
-          rightComponent = myLocation.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+          rightComponent = myLocation.getListCellRendererComponent(list, value, index, isSelected, isSelected);
         }
         panel.add(rightComponent, BorderLayout.EAST);
         cmp = panel;
@@ -1019,6 +1022,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     @Override
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      setPaintFocusBorder(false);
       setIcon(EmptyIcon.ICON_16);
       AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
       try {
