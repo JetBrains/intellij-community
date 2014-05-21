@@ -883,7 +883,7 @@ public class IncProjectBuilder {
       message.append(chunk.getPresentableName()).append(": ").append(e.getClass().getName());
       final String exceptionMessage = e.getMessage();
       if (exceptionMessage != null) {
-        message.append(" :").append(exceptionMessage);
+        message.append(": ").append(exceptionMessage);
       }
       throw new ProjectBuildException(message.toString(), e);
     }
