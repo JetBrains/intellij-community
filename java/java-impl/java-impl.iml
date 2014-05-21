@@ -17,7 +17,7 @@
     <content url="file://$MODULE_DIR$/../../plugins/generate-tostring">
       <sourceFolder url="file://$MODULE_DIR$/../../plugins/generate-tostring/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../../plugins/generate-tostring/testSrc" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/../../plugins/generate-tostring/resources" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../plugins/generate-tostring/resources" type="java-resource" />
     </content>
     <orderEntry type="module" module-name="boot" />
     <orderEntry type="inheritedJdk" />
