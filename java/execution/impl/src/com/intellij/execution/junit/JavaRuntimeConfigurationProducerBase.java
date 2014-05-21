@@ -70,7 +70,7 @@ public abstract class JavaRuntimeConfigurationProducerBase extends RuntimeConfig
       else {
         final VirtualFile virtualFile = directory.getVirtualFile();
         //choose default package when selection on content root
-        if (fileIndex.getContentRootForFile(virtualFile) == virtualFile) {
+        if (virtualFile.equals(fileIndex.getContentRootForFile(virtualFile))) {
           final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
           if (module != null) {
             for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {

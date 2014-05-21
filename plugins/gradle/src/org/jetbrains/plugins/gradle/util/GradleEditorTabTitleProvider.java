@@ -34,7 +34,7 @@ public class GradleEditorTabTitleProvider implements EditorTabTitleProvider {
 
         final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
         for (VirtualFile virtualFile : moduleRootManager.getContentRoots()) {
-          if (virtualFile == file.getParent()) return module.getName();
+          if (virtualFile.equals(file.getParent())) return module.getName();
         }
       }
     }

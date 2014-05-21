@@ -905,7 +905,7 @@ public class MavenProjectsTree {
         Module module = fileIndex.getModuleForFile(pomFile);
         if (module == null) continue;
 
-        if (fileIndex.getContentRootForFile(pomFile) != pomFile.getParent()) continue;
+        if (!Comparing.equal(fileIndex.getContentRootForFile(pomFile), pomFile.getParent())) continue;
 
         updateCrc(crc, module.getName());
 

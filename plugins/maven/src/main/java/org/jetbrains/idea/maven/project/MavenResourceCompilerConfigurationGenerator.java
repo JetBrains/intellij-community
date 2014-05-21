@@ -8,6 +8,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -96,7 +97,7 @@ public class MavenResourceCompilerConfigurationGenerator {
       Module module = fileIndex.getModuleForFile(pomXml);
       if (module == null) continue;
 
-      if (mavenProject.getDirectoryFile() != fileIndex.getContentRootForFile(pomXml)) continue;
+      if (!Comparing.equal(mavenProject.getDirectoryFile(), fileIndex.getContentRootForFile(pomXml))) continue;
 
       MavenModuleResourceConfiguration resourceConfig = new MavenModuleResourceConfiguration();
 

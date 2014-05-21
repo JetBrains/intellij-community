@@ -276,7 +276,7 @@ public class RootIndex extends DirectoryIndex {
       }
       DirectoryInfo info = myInfoCache.get(root);
       if (info != null) {
-        if (dir != root) {
+        if (!dir.equals(root)) {
           cacheInfos(dir, root, info);
         }
         return info == NULL_INFO ? null : info;
@@ -490,7 +490,7 @@ public class RootIndex extends DirectoryIndex {
                                      VirtualFile librarySourceRoot) {
       VirtualFile packageRoot = findPackageRootInfo(hierarchy, moduleContentRoot, libraryClassRoot, librarySourceRoot);
       String prefix = packagePrefix.get(packageRoot);
-      if (prefix != null && packageRoot != root) {
+      if (prefix != null && !root.equals(packageRoot)) {
         assert packageRoot != null;
         String relative = VfsUtilCore.getRelativePath(root, packageRoot, '.');
         prefix = StringUtil.isEmpty(prefix) ? relative : prefix + '.' + relative;
@@ -509,10 +509,10 @@ public class RootIndex extends DirectoryIndex {
             librarySourceRoot == null) {
           return root;
         }
-        if (root == libraryClassRoot || root == librarySourceRoot) {
+        if (root.equals(libraryClassRoot) || root.equals(librarySourceRoot)) {
           return root;
         }
-        if (root == moduleContentRoot && !sourceRootOf.containsKey(root) && librarySourceRoot == null && libraryClassRoot == null) {
+        if (root.equals(moduleContentRoot) && !sourceRootOf.containsKey(root) && librarySourceRoot == null && libraryClassRoot == null) {
           return null;
         }
       }
@@ -527,10 +527,10 @@ public class RootIndex extends DirectoryIndex {
                                                              @NotNull MultiMap<VirtualFile, OrderEntry> libSourceRootEntries) {
       LinkedHashSet<OrderEntry> orderEntries = ContainerUtil.newLinkedHashSet();
       for (VirtualFile root : hierarchy) {
-        if (root == libraryClassRoot && !sourceRootOf.containsKey(root)) {
+        if (root.equals(libraryClassRoot) && !sourceRootOf.containsKey(root)) {
           orderEntries.addAll(libClassRootEntries.get(root));
         }
-        if (root == librarySourceRoot && libraryClassRoot == null) {
+        if (root.equals(librarySourceRoot) && libraryClassRoot == null) {
           orderEntries.addAll(libSourceRootEntries.get(root));
         }
         if (libClassRootEntries.containsKey(root) || sourceRootOf.containsKey(root) && librarySourceRoot == null) {
