@@ -56,9 +56,7 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
       }
     }
     else {
-      setBackground(selected ?
-                    hasFocus ? UIUtil.getListSelectionBackground() : UIUtil.getListUnfocusedSelectionBackground() :
-                    UIUtil.getListBackground());
+      setBackground(selected ? list.getSelectionBackground() : null);
     }
 
     setPaintFocusBorder(hasFocus);

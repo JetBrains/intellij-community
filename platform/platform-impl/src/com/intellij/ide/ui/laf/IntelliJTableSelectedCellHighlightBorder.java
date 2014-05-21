@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.browsers;
+package com.intellij.ide.ui.laf;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.ui.laf.darcula.DarculaTableSelectedCellHighlightBorder;
 
-@SuppressWarnings("deprecation")
-public abstract class UrlOpener {
-  public static final ExtensionPointName<UrlOpener> EP_NAME = ExtensionPointName.create("org.jetbrains.urlOpener");
+import java.awt.*;
 
-  public abstract boolean openUrl(@NotNull WebBrowser browser, @NotNull String url, @Nullable Project project);
+/**
+ * @author Konstantin Bulenkov
+ */
+public class IntelliJTableSelectedCellHighlightBorder extends DarculaTableSelectedCellHighlightBorder {
+  @SuppressWarnings("UseJBColor")
+  @Override
+  protected Color getFocusColor() {
+    return Color.black;
+  }
 }
-
