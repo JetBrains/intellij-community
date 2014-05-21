@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,9 +48,9 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.config.GroovyFacetUtil;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType;
-import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -81,7 +81,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
   }
 
   protected static void addGroovyLibrary(final Module to) {
-    File jar = GroovyUtils.getBundledGroovyJar();
+    File jar = GroovyFacetUtil.getBundledGroovyJar();
     PsiTestUtil.addLibrary(to, "groovy", jar.getParent(), jar.getName());
   }
 

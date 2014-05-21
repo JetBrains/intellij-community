@@ -31,9 +31,9 @@ import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
+import org.jetbrains.plugins.groovy.config.GroovyFacetUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import javax.swing.*;
 
@@ -124,7 +124,7 @@ public class GroovyTestFramework extends JavaTestFramework {
 
   @Override
   public String getLibraryPath() {
-    return GroovyUtils.getBundledGroovyJar().getAbsolutePath();
+    return GroovyFacetUtil.getBundledGroovyJar().getAbsolutePath();
   }
 
   @Override

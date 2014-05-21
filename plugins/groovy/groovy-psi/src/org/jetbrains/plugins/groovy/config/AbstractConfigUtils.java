@@ -28,7 +28,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.File;
@@ -100,7 +99,7 @@ public abstract class AbstractConfigUtils {
   @Nullable
   public static String getSDKJarVersion(String jarPath, final Pattern jarPattern, String manifestPath) {
     try {
-      File[] jars = GroovyUtils.getFilesInDirectoryByPattern(jarPath, jarPattern);
+      File[] jars = LibrariesUtil.getFilesInDirectoryByPattern(jarPath, jarPattern);
       if (jars.length != 1) {
         return null;
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.JavaPsiFacade;
@@ -38,9 +38,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * @author ilyas
@@ -113,12 +115,18 @@ public class LibrariesUtil {
   public static VirtualFile findJarWithClass(@NotNull Module module, final String classQName) {
     GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
     for (PsiClass psiClass : JavaPsiFacade.getInstance(module.getProject()).findClasses(classQName, scope)) {
-      final VirtualFile local = JarFileSystem.getInstance().getVirtualFileForJar(psiClass.getContainingFile().getVirtualFile());
+      VirtualFile virtualFile = psiClass.getContainingFile().getVirtualFile();
+      final VirtualFile local = getLocalFor(virtualFile);
       if (local != null) {
         return local;
       }
     }
     return null;
+  }
+
+  private static VirtualFile getLocalFor(VirtualFile virtualFile) {
+    VirtualFileSystem fileSystem = virtualFile == null ? null : virtualFile.getFileSystem();
+    return fileSystem instanceof LocalFileProvider ? ((LocalFileProvider)fileSystem).getLocalVirtualFileFor(virtualFile) : null;
   }
 
 
@@ -198,12 +206,9 @@ public class LibrariesUtil {
 
   @NotNull
   public static VirtualFile getLocalFile(@NotNull VirtualFile libFile) {
-    final VirtualFileSystem system = libFile.getFileSystem();
-    if (system instanceof JarFileSystem) {
-      final VirtualFile local = JarFileSystem.getInstance().getVirtualFileForJar(libFile);
-      if (local != null) {
-        return local;
-      }
+    VirtualFile local = getLocalFor(libFile);
+    if (local != null) {
+      return local;
     }
     return libFile;
   }
@@ -228,4 +233,14 @@ public class LibrariesUtil {
     }
   }
 
+  public static File[] getFilesInDirectoryByPattern(String dirPath, final Pattern pattern) {
+    File distDir = new File(dirPath);
+    File[] files = distDir.listFiles(new FilenameFilter() {
+      @Override
+      public boolean accept(File dir, String name) {
+        return pattern.matcher(name).matches();
+      }
+    });
+    return files != null ? files : new File[0];
+  }
 }
