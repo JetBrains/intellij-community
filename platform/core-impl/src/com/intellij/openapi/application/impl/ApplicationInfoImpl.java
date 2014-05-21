@@ -24,7 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.util.PlatformUtils;
+import com.intellij.util.PlatformUtilsCore;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -189,10 +189,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   private static String getProductPrefix() {
     String prefix = null;
-    if (PlatformUtils.isIdeaCommunity()) {
+    if (PlatformUtilsCore.isCommunity()) {
       prefix = "IC";
     }
-    else if (PlatformUtils.isIdeaUltimate()) {
+    else if (PlatformUtilsCore.isIdea()) {
       prefix = "IU";
     }
     return prefix;
@@ -454,7 +454,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
         ourShadowInstance.readExternal(doc.getRootElement());
       }
       catch (FileNotFoundException e) {
-        LOG.error("Resource is not in classpath or wrong platform prefix: " + System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY), e);
+        LOG.error("Resource is not in classpath or wrong platform prefix: " + System.getProperty(PlatformUtilsCore.PLATFORM_PREFIX_KEY), e);
       }
       catch (Exception e) {
         LOG.error(e);

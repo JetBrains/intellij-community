@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.PlatformUtils;
+import com.intellij.util.PlatformUtilsCore;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -95,7 +95,7 @@ public class ApplicationNamesInfo {
   }
 
   public static String getComponentName() {
-    final String prefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY);
+    final String prefix = System.getProperty(PlatformUtilsCore.PLATFORM_PREFIX_KEY);
     if (prefix != null) {
       return prefix + COMPONENT_NAME;
     }
