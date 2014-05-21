@@ -12,16 +12,17 @@ public abstract class SuspendContextManagerBase<T extends SuspendContextBase, CA
 
   protected final AtomicReference<ActionCallback> suspendCallback = new AtomicReference<ActionCallback>();
 
-  public final void setContext(T newContext) {
+  public final void setContext(@NotNull T newContext) {
     if (!context.compareAndSet(null, newContext)) {
       throw new IllegalStateException("Attempt to set context, but current suspend context is already exists");
     }
   }
 
-  public final void contextDismissed(T context, @NotNull DebugEventListener listener) {
+  public final void contextDismissed(@NotNull T context, @NotNull DebugEventListener listener) {
     if (!this.context.compareAndSet(context, null)) {
       throw new IllegalStateException("Expected " + context + ", but another suspend context exists");
     }
+    context.getValueManager().markObsolete();
     listener.resumed();
   }
 
@@ -50,7 +51,7 @@ public abstract class SuspendContextManagerBase<T extends SuspendContextBase, CA
     }
 
     if (context.get() != null) {
-      return new ActionCallback.Done();
+      return ActionCallback.DONE;
     }
     callback = new ActionCallback();
     doSuspend(callback).notifyWhenRejected(callback);

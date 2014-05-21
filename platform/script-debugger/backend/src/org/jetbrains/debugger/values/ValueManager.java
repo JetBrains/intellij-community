@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public abstract class ValueManager {
   private final AtomicInteger cacheStamp = new AtomicInteger();
+  private volatile boolean obsolete;
 
   public void clearCaches() {
     cacheStamp.incrementAndGet();
@@ -30,5 +31,13 @@ public abstract class ValueManager {
 
   public final int getCacheStamp() {
     return cacheStamp.get();
+  }
+
+  public final boolean isObsolete() {
+    return obsolete;
+  }
+
+  public final void markObsolete() {
+    obsolete = true;
   }
 }
