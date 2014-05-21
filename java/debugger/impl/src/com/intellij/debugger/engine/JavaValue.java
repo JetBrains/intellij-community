@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.engine;
 
+import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.actions.JavaValueModifier;
 import com.intellij.debugger.actions.JumpToObjectAction;
@@ -124,15 +125,25 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
         XValuePresentation presentation = new XRegularValuePresentation(strings[1], strings[0]);
         if (myValueDescriptor.isString()) {
           presentation = new TypedStringValuePresentation(StringUtil.unquoteString(strings[1]), strings[0]);
-          if (strings[1].length() > XValueNode.MAX_VALUE_LENGTH) {
-            node.setFullValueEvaluator(new XFullValueEvaluator() {
-              @Override
-              public void startEvaluation(@NotNull XFullValueEvaluationCallback callback) {
-                final String valueAsString = DebuggerUtilsEx.getValueOrErrorAsString(getEvaluationContext(), myValueDescriptor.getValue());
-                callback.evaluated(valueAsString);
-              }
-            });
-          }
+        }
+        if (strings[1].length() > XValueNode.MAX_VALUE_LENGTH) {
+          node.setFullValueEvaluator(new XFullValueEvaluator() {
+            @Override
+            public void startEvaluation(@NotNull final XFullValueEvaluationCallback callback) {
+              myEvaluationContext.getDebugProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(getDebuggerContext()) {
+                @Override
+                public void threadAction() {
+                  final String valueAsString = DebuggerUtilsEx.getValueOrErrorAsString(myEvaluationContext, myValueDescriptor.getValue());
+                  DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+                    @Override
+                    public void run() {
+                      callback.evaluated(valueAsString);
+                    }
+                  });
+                }
+              });
+            }
+          });
         }
         node.setPresentation(nodeIcon, presentation, myValueDescriptor.isExpandable());
       }
