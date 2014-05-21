@@ -70,7 +70,7 @@ public class VcsLogManager implements Disposable {
     Consumer<DataPack> dataPackUpdateHandler = new Consumer<DataPack>() {
       @Override
       public void consume(final DataPack dataPack) {
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
             if (!Disposer.isDisposed(myUi)) {
