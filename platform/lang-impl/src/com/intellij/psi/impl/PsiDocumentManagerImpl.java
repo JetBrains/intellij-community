@@ -50,6 +50,7 @@ import java.util.List;
 //todo listen & notifyListeners readonly events?
 public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements SettingsSavingComponent {
   private final DocumentCommitThread myDocumentCommitThread;
+  private final boolean myUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
   public PsiDocumentManagerImpl(@NotNull final Project project,
                                 @NotNull PsiManager psiManager,
@@ -96,7 +97,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
   @Override
   public PsiFile getPsiFile(@NotNull Document document) {
     final PsiFile psiFile = super.getPsiFile(document);
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (myUnitTestMode) {
       final VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
       if (virtualFile != null && virtualFile.isValid()) {
         Collection<Project> projects = ProjectLocator.getInstance().getProjectsForFile(virtualFile);
@@ -115,7 +116,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
     super.documentChanged(event);
     // avoid documents piling up during batch processing
     if (FileDocumentManagerImpl.areTooManyDocumentsInTheQueue(myUncommittedDocuments)) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (myUnitTestMode) {
         try {
           LOG.error("Too many uncommitted documents for " + myProject + ":\n" + myUncommittedDocuments);
         }
