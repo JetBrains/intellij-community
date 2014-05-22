@@ -15,6 +15,7 @@ public class MethodCanBeVariableArityMethodInspectionTest extends LightInspectio
     inspection.ignoreByteAndShortArrayParameters = true;
     inspection.ignoreOverridingMethods = true;
     inspection.onlyReportPublicMethods = true;
+    inspection.ignoreMultipleArrayParameters = true;
     return inspection;
   }
 }

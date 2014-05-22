@@ -33,3 +33,6 @@ class Annotated {
 interface X {
   void <warning descr="'m()' can be converted to variable arity method">m</warning>(String[] ss);
 }
+class Yes {
+  void m(int[] is, int[] js) {}
+}
