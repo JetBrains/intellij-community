@@ -24,18 +24,21 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 
-public class CopyPasteFoldingProcessor implements CopyPastePostProcessor<FoldingTransferableData> {
+public class CopyPasteFoldingProcessor extends CopyPastePostProcessor<FoldingTransferableData> {
+  @NotNull
   @Override
-  public FoldingTransferableData collectTransferableData(final PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets) {
+  public List<FoldingTransferableData> collectTransferableData(final PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets) {
     // might be slow
     //CodeFoldingManager.getInstance(file.getManager().getProject()).updateFoldRegions(editor);
 
@@ -56,12 +59,12 @@ public class CopyPasteFoldingProcessor implements CopyPastePostProcessor<Folding
       }
     }
 
-    return new FoldingTransferableData(list.toArray(new FoldingData[list.size()]));
+    return Collections.singletonList(new FoldingTransferableData(list.toArray(new FoldingData[list.size()])));
   }
 
+  @NotNull
   @Override
-  @Nullable
-  public FoldingTransferableData extractTransferableData(final Transferable content) {
+  public List<FoldingTransferableData> extractTransferableData(final Transferable content) {
     FoldingTransferableData foldingData = null;
     try {
       final DataFlavor flavor = FoldingData.getDataFlavor();
@@ -77,9 +80,9 @@ public class CopyPasteFoldingProcessor implements CopyPastePostProcessor<Folding
     }
 
     if (foldingData != null) { // copy to prevent changing of original by convertLineSeparators
-      return foldingData.clone();
+      return Collections.singletonList(foldingData.clone());
     }
-    return null;
+    return Collections.emptyList();
   }
 
   @Override
@@ -88,7 +91,9 @@ public class CopyPasteFoldingProcessor implements CopyPastePostProcessor<Folding
                                       final RangeMarker bounds,
                                       int caretOffset,
                                       Ref<Boolean> indented,
-                                      final FoldingTransferableData value) {
+                                      final List<FoldingTransferableData> values) {
+    assert values.size() == 1;
+    final FoldingTransferableData value = values.get(0);
     if (value.getData().length == 0) return;
 
     final CodeFoldingManagerImpl foldingManager = (CodeFoldingManagerImpl)CodeFoldingManager.getInstance(project);

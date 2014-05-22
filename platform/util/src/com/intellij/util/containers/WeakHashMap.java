@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,13 +40,14 @@ public final class WeakHashMap<K, V> extends RefHashMap<K, V> {
     super(t);
   }
 
+  @NotNull
   @Override
   protected <T> Key<T> createKey(@NotNull T k, @NotNull ReferenceQueue<? super T> q) {
     return new WeakKey<T>(k, q);
   }
 
   private static class WeakKey<T> extends WeakReference<T> implements Key<T> {
-    private final int myHash;	/* Hashcode of key, stored here since the key may be tossed by the GC */
+    private final int myHash; // Hashcode of key, stored here since the key may be tossed by the GC
 
     private WeakKey(@NotNull T k, @NotNull ReferenceQueue<? super T> q) {
       super(k, q);
@@ -58,7 +59,7 @@ public final class WeakHashMap<K, V> extends RefHashMap<K, V> {
       if (!(o instanceof Key)) return false;
       Object t = get();
       Object u = ((Key)o).get();
-      return myHash == o.hashCode() && (t == u || Comparing.equal(t, u));
+      return myHash == o.hashCode() && Comparing.equal(t, u);
     }
 
     public int hashCode() {

@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ClassUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
@@ -72,7 +72,7 @@ public class GebPageMemberContributor extends NonCodeMembersContributor {
   public static boolean processPageFields(PsiScopeProcessor processor,
                                           @NotNull PsiClass pageClass,
                                           ResolveState state) {
-    Map<String, PsiClass> supers = TypesUtil.getSuperClassesWithCache(pageClass);
+    Map<String, PsiClass> supers = ClassUtil.getSuperClassesWithCache(pageClass);
     String nameHint = ResolveUtil.getNameHint(processor);
 
     for (PsiClass psiClass : supers.values()) {

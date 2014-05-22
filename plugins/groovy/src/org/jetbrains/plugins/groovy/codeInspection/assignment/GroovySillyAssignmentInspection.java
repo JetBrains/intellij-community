@@ -30,28 +30,33 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 
 public class GroovySillyAssignmentInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return ASSIGNMENT_ISSUES;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Silly assignment";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Silly assignment #loc";
 
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   @NotNull
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
@@ -59,6 +64,7 @@ public class GroovySillyAssignmentInspection extends BaseInspection {
 
   private static class Visitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitAssignmentExpression(@NotNull GrAssignmentExpression assignment) {
       super.visitAssignmentExpression(assignment);
 

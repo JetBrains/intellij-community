@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
@@ -26,8 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMMA;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -38,6 +37,7 @@ public class GrAnnotationArrayInitializerImpl extends GroovyPsiElementImpl imple
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitAnnotationArrayInitializer(this);
   }
@@ -46,6 +46,7 @@ public class GrAnnotationArrayInitializerImpl extends GroovyPsiElementImpl imple
     return "Annotation array initializer";
   }
 
+  @Override
   @NotNull
   public GrAnnotationMemberValue[] getInitializers() {
     List<GrAnnotationMemberValue> result = new ArrayList<GrAnnotationMemberValue>();
@@ -62,7 +63,7 @@ public class GrAnnotationArrayInitializerImpl extends GroovyPsiElementImpl imple
       return super.addInternal(first, last, getNode().getFirstChildNode(), false);
     }
     final ASTNode lastChild = getNode().getLastChildNode();
-    getNode().addLeaf(mCOMMA, ",", lastChild);
+    getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", lastChild);
     return super.addInternal(first, last, lastChild.getTreePrev(), false);
   }
 }

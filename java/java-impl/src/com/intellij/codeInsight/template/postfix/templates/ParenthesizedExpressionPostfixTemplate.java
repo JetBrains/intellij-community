@@ -15,25 +15,21 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.openapi.util.Condition;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-public class ParenthesizedExpressionPostfixTemplate extends ExpressionPostfixTemplateWithChooser {
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_NON_VOID;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
+
+public class ParenthesizedExpressionPostfixTemplate extends ParenthesizedPostfixTemplate {
   public ParenthesizedExpressionPostfixTemplate() {
-    super("par", "(expression)");
+    super(JAVA_PSI_INFO);
   }
 
+  @NotNull
   @Override
-  protected void doIt(@NotNull Editor editor, @NotNull PsiExpression expression) {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
-    PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)factory.createExpressionFromText("(expr)", expression.getParent());
-    PsiExpression operand = parenthesizedExpression.getExpression();
-    assert operand != null;
-    operand.replace(expression);
-    expression.replace(parenthesizedExpression);
+  protected Condition<PsiElement> getTypeCondition() {
+    return IS_NON_VOID;
   }
 }

@@ -29,6 +29,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.channel.socket.oio.OioSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
@@ -39,6 +40,8 @@ import java.net.Socket;
 import java.util.Random;
 
 public final class NettyUtil {
+  public static final int MAX_CONTENT_LENGTH = 100 * 1024 * 1024;
+
   public static final int DEFAULT_CONNECT_ATTEMPT_COUNT = 20;
   public static final int MIN_START_TIME = 100;
 
@@ -49,7 +52,7 @@ public final class NettyUtil {
       System.setProperty("io.netty.processId", Integer.toString(new Random().nextInt(65535)));
     }
   }
-  
+
   public static void log(Throwable throwable, Logger log) {
     if (isAsWarning(throwable)) {
       log.warn(throwable);
@@ -109,7 +112,7 @@ public final class NettyUtil {
   }
 
   // applicable only in case of ClientBootstrap&OioClientSocketChannelFactory
-  public static void closeAndReleaseFactory(Channel channel) {
+  public static void closeAndReleaseFactory(@NotNull Channel channel) {
     EventLoop channelFactory = channel.eventLoop();
     try {
       channel.close().awaitUninterruptibly();
@@ -140,6 +143,6 @@ public final class NettyUtil {
   }
 
   public static void addHttpServerCodec(ChannelPipeline pipeline) {
-    pipeline.addLast(new HttpServerCodec(), new HttpObjectAggregator(1048576 * 10));
+    pipeline.addLast(new HttpServerCodec(), new HttpObjectAggregator(MAX_CONTENT_LENGTH));
   }
 }

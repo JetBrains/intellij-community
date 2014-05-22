@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
-import com.intellij.psi.OriginInfoAwareElement;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
@@ -35,7 +34,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -75,12 +74,12 @@ public class GrLightMethodBuilder  extends LightElement implements GrMethod, Ori
   private String myOriginInfo;
 
   public GrLightMethodBuilder(PsiManager manager, String name) {
-    super(manager, GroovyFileType.GROOVY_LANGUAGE);
+    super(manager, GroovyLanguage.INSTANCE);
     myName = name;
-    myParameterList = new GrLightParameterListBuilder(manager, GroovyFileType.GROOVY_LANGUAGE);
+    myParameterList = new GrLightParameterListBuilder(manager, GroovyLanguage.INSTANCE);
     myModifierList = new GrLightModifierList(this);
     myConstructor = false;
-    myThrowsList = new LightReferenceListBuilder(manager, GroovyFileType.GROOVY_LANGUAGE, PsiReferenceList.Role.THROWS_LIST);
+    myThrowsList = new LightReferenceListBuilder(manager, GroovyLanguage.INSTANCE, PsiReferenceList.Role.THROWS_LIST);
   }
 
   public GrLightMethodBuilder setNamedParameters(@NotNull Map<String, NamedArgumentDescriptor> namedParameters) {

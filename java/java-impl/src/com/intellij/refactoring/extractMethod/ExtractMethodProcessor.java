@@ -800,15 +800,17 @@ public class ExtractMethodProcessor implements MatchProvider {
     int i = 0;
     for (VariableData data : myVariableDatum) {
       if (!data.passAsParameter) continue;
-      final PsiVariable variable = data.variable;
       final PsiParameter psiParameter = newMethod.getParameterList().getParameters()[i++];
-      if (!TypeConversionUtil.isAssignable(variable.getType(), psiParameter.getType())) {
-        for (PsiReference reference : ReferencesSearch.search(psiParameter, new LocalSearchScope(body))){
-          final PsiElement element = reference.getElement();
-          if (element != null) {
-            final PsiElement parent = element.getParent();
-            if (parent instanceof PsiTypeCastExpression) {
-              RedundantCastUtil.removeCast((PsiTypeCastExpression)parent);
+      final PsiType paramType = psiParameter.getType();
+      for (PsiReference reference : ReferencesSearch.search(psiParameter, new LocalSearchScope(body))){
+        final PsiElement element = reference.getElement();
+        if (element != null) {
+          final PsiElement parent = element.getParent();
+          if (parent instanceof PsiTypeCastExpression) {
+            final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)parent;
+            final PsiTypeElement castType = typeCastExpression.getCastType();
+            if (castType != null && Comparing.equal(castType.getType(), paramType)) {
+              RedundantCastUtil.removeCast(typeCastExpression);
             }
           }
         }

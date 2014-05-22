@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 Bas Leijdekkers
+ * Copyright 2010-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -53,13 +52,20 @@ public class ExpandToNormalAnnotationIntention extends MutablyNamedIntention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element) {
     final PsiNameValuePair attribute = (PsiNameValuePair)element;
     final int textOffset = attribute.getTextOffset();
     final Project project = attribute.getProject();
     final String text = buildReplacementText(attribute);
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     final PsiAnnotation newAnnotation = factory.createAnnotationFromText("@A(" + text +" )", attribute);
+    final PsiAnnotationParameterList parent = (PsiAnnotationParameterList)attribute.getParent();
+    for (PsiElement child = parent.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (child instanceof PsiErrorElement) {
+        child.delete();
+        break;
+      }
+    }
     attribute.replace(newAnnotation.getParameterList().getAttributes()[0]);
     final FileEditorManager editorManager = FileEditorManager.getInstance(project);
     final Editor editor = editorManager.getSelectedTextEditor();

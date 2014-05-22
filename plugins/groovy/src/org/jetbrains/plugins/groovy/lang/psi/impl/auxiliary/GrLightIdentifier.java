@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
@@ -31,7 +31,7 @@ public class GrLightIdentifier extends LightElement {
   private final String myText;
 
   public GrLightIdentifier(PsiManager manager, String text) {
-    super(manager, GroovyFileType.GROOVY_LANGUAGE);
+    super(manager, GroovyLanguage.INSTANCE);
     myText = text;
   }
 
@@ -39,10 +39,12 @@ public class GrLightIdentifier extends LightElement {
     return GroovyTokenTypes.mIDENT;
   }
 
+  @Override
   public String getText() {
     return myText;
   }
 
+  @Override
   public PsiElement copy() {
     return new GrLightIdentifier(getManager(), myText);
   }

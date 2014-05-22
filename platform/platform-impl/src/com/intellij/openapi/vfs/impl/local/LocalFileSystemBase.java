@@ -193,6 +193,11 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   @Override
+  public boolean isReadOnly() {
+    return false;
+  }
+
+  @Override
   @Nullable
   protected String normalize(@NotNull String path) {
     if (path.isEmpty()) {

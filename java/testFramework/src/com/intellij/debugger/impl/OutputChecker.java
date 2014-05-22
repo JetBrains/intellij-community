@@ -38,13 +38,13 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Arrays;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class OutputChecker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.OutputChecker");
+  private static final String JDK_HOME_STR = "!JDK_HOME!";
 
   protected final String myAppPath;
 
@@ -195,8 +195,8 @@ public class OutputChecker {
         result = StringUtil.replace(result, InetAddress.getLocalHost().getHostName(), "!HOST_NAME!", shouldIgnoreCase);
         result = StringUtil.replace(result, "127.0.0.1", "!HOST_NAME!", shouldIgnoreCase);
         result = StringUtil.replace(result, JavaSdkUtil.getIdeaRtJarPath().replace('/', File.separatorChar), "!RT_JAR!", shouldIgnoreCase);
-        result = StringUtil.replace(result, internalJdkHome.replace('/', File.separatorChar), "!JDK_HOME!", shouldIgnoreCase);
-        result = StringUtil.replace(result, internalJdkHome, "!JDK_HOME!", shouldIgnoreCase);
+        result = StringUtil.replace(result, internalJdkHome.replace('/', File.separatorChar), JDK_HOME_STR, shouldIgnoreCase);
+        result = StringUtil.replace(result, internalJdkHome, JDK_HOME_STR, shouldIgnoreCase);
         result = StringUtil.replace(result, PathManager.getHomePath(), "!IDEA_HOME!", shouldIgnoreCase);
         result = StringUtil.replace(result, "Process finished with exit code 255", "Process finished with exit code -1");
 
@@ -212,7 +212,7 @@ public class OutputChecker {
         result = result.replaceAll("-Dfile.encoding=[\\w\\d-]*", "-Dfile.encoding=!FILE_ENCODING!");
         result = result.replaceAll("\\((.*)\\:\\d+\\)", "($1:!LINE_NUMBER!)");
 
-        int commandLineStart = result.indexOf("!JDK_HOME!");
+        int commandLineStart = result.indexOf(JDK_HOME_STR);
         while (commandLineStart != -1) {
           final StringBuilder builder = new StringBuilder(result);
           int i = commandLineStart + 1;
@@ -223,7 +223,7 @@ public class OutputChecker {
             i++;
           }
           result = builder.toString();
-          commandLineStart = result.indexOf("!JDK_HOME!", commandLineStart + 1);
+          commandLineStart = result.indexOf(JDK_HOME_STR, commandLineStart + 1);
         }
 
         result = stripQuotesAroundClasspath(result);
@@ -232,10 +232,27 @@ public class OutputChecker {
         while (matcher.find()) {
           final String classPath = matcher.group(1);
           final String[] classPathElements = classPath.split(File.pathSeparator);
-          if (sortClassPath) {
-            Arrays.sort(classPathElements);
+
+          // Combine all JDK jars into one marker
+          List<String> classpathRes = new ArrayList<String>();
+          boolean hasJdkJars = false;
+          for (String element : classPathElements) {
+            if (!element.startsWith(JDK_HOME_STR)) {
+              classpathRes.add(element);
+            }
+            else {
+              hasJdkJars = true;
+            }
           }
-          final String sortedPath = StringUtil.join(classPathElements, ";");
+          if (hasJdkJars) {
+            classpathRes.add("!JDK_JARS!");
+          }
+
+          if (sortClassPath) {
+            Collections.sort(classpathRes);
+          }
+
+          final String sortedPath = StringUtil.join(classpathRes, ";");
           result = StringUtil.replace(result, classPath, sortedPath);
         }
 

@@ -17,7 +17,7 @@
 package com.intellij.compiler.ant.taskdefs;
 
 import com.intellij.compiler.ant.Tag;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 
 /**
  * @author Eugene Zhuravlev
@@ -27,6 +27,6 @@ import com.intellij.openapi.util.Pair;
 public class AntCall extends Tag{
 
   public AntCall(final String target) {
-    super("antcall", new Pair[] {Pair.create("target", target)});
+    super("antcall", Couple.newOne("target", target));
   }
 }

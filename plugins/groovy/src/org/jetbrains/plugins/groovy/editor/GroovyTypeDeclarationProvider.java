@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
  * @author Sergey Evdokimov
  */
 public class GroovyTypeDeclarationProvider implements TypeDeclarationProvider {
+  @Override
   @Nullable
   public PsiElement[] getSymbolTypeDeclarations(@NotNull final PsiElement targetElement) {
     PsiType type;

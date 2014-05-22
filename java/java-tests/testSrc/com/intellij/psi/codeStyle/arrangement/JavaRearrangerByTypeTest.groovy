@@ -388,4 +388,86 @@ class Test {
 }'''
     )
   }
+
+  void "test IDEA-124077 Enum code reformat destroys enum"() {
+    doTest(
+      initial: '''
+public enum ErrorResponse {
+
+    UNHANDLED_EXCEPTION,
+    UNHANDLED_BUSINESS,
+    ACCOUNT_NOT_VALID,
+    ACCOUNT_LATE_CREATION;
+
+    public void test() {}
+    public int t;
+
+    public long l;
+    private void q() {}
+}
+''',
+      expected: '''
+public enum ErrorResponse {
+
+    UNHANDLED_EXCEPTION,
+    UNHANDLED_BUSINESS,
+    ACCOUNT_NOT_VALID,
+    ACCOUNT_LATE_CREATION;
+
+    public void test() {}
+    private void q() {}
+    public int t;
+    public long l;
+}
+''',
+      rules: [
+        rule(METHOD),
+        rule(FIELD)
+      ]
+    )
+  }
+
+  void "test parameterized class"() {
+    doTest(
+      initial: '''\
+public class Seq<T> {
+
+    public Seq(T x) {
+    }
+
+    public Seq() {}
+
+    static <T> Seq<T> nil() {
+        return new Seq<T>();
+    }
+
+    static <V> Seq<V> cons(V x) {
+        return new Seq<V>(x);
+    }
+
+    int filed;
+}
+''',
+      expected: '''\
+public class Seq<T> {
+
+    int filed;
+
+    public Seq(T x) {
+    }
+
+    public Seq() {}
+    static <T> Seq<T> nil() {
+        return new Seq<T>();
+    }
+    static <V> Seq<V> cons(V x) {
+        return new Seq<V>(x);
+    }
+}
+''',
+      rules: [
+        rule(FIELD)
+      ]
+    )
+  }
 }

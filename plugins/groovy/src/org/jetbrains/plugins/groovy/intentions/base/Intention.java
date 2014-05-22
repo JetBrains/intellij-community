@@ -25,10 +25,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
-import org.jetbrains.plugins.groovy.intentions.utils.BoolUtils;
+import org.jetbrains.plugins.groovy.lang.psi.impl.utils.BoolUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
@@ -45,6 +45,7 @@ public abstract class Intention implements IntentionAction {
     predicate = getElementPredicate();
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!QuickfixUtil.ensureFileWritable(project, file)) {
       return;
@@ -84,7 +85,7 @@ public abstract class Intention implements IntentionAction {
 
   @Nullable
   PsiElement findMatchingElement(PsiFile file, Editor editor) {
-    if (!file.getViewProvider().getLanguages().contains(GroovyFileType.GROOVY_LANGUAGE)) {
+    if (!file.getViewProvider().getLanguages().contains(GroovyLanguage.INSTANCE)) {
       return null;
     }
 
@@ -125,10 +126,12 @@ public abstract class Intention implements IntentionAction {
     return element instanceof PsiFile;
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return findMatchingElement(file, editor) != null;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }
@@ -151,11 +154,13 @@ public abstract class Intention implements IntentionAction {
     return buffer.toString();
   }
 
+  @Override
   @NotNull
   public String getText() {
     return GroovyIntentionsBundle.message(getPrefix() + ".name");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return GroovyIntentionsBundle.message(getPrefix() + ".family.name");

@@ -464,7 +464,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       final SdkModificator sdkModificator = myModificators.get(sdk);
 
       PythonPathDialog dialog = new PythonPathDialog(myProject, pathEditor);
-      pathEditor.reload(sdk != null ? sdkModificator : null);
+      pathEditor.reset(sdk != null ? sdkModificator : null);
       dialog.show();
 
       if (dialog.isOK()) {

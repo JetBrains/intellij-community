@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,11 +43,13 @@ public abstract class SdkHomeConfigurable implements SearchableConfigurable {
     myFrameworkName = frameworkName;
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return myFrameworkName;
   }
 
+  @Override
   public JComponent createComponent() {
     myPanel = new JPanel(new BorderLayout(10, 5));
     final JPanel contentPanel = new JPanel(new BorderLayout(4, 0));
@@ -67,10 +69,12 @@ public abstract class SdkHomeConfigurable implements SearchableConfigurable {
 
   protected abstract boolean isSdkHome(VirtualFile file);
 
+  @Override
   public boolean isModified() {
     return !myPathField.getText().equals(getStateText());
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     final SdkHomeBean state = new SdkHomeBean();
     state.SDK_HOME = FileUtil.toSystemIndependentName(myPathField.getText());
@@ -79,6 +83,7 @@ public abstract class SdkHomeConfigurable implements SearchableConfigurable {
 
   protected abstract SdkHomeSettings getFrameworkSettings();
 
+  @Override
   public void reset() {
     myPathField.setText(getStateText());
   }
@@ -89,6 +94,7 @@ public abstract class SdkHomeConfigurable implements SearchableConfigurable {
     return FileUtil.toSystemDependentName(StringUtil.notNullize(stateText));
   }
 
+  @Override
   public void disposeUIResources() {
     myPathField = null;
     myPanel = null;
@@ -98,10 +104,12 @@ public abstract class SdkHomeConfigurable implements SearchableConfigurable {
     public String SDK_HOME;
   }
 
+  @Override
   public Runnable enableSearch(String option) {
     return null;
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();

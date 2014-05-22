@@ -32,8 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrAnnotati
 import java.util.ArrayList;
 import java.util.Set;
 
-import static org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil.createLookupElements;
-
 /**
  * Created by Max Medvedev on 14/05/14
  */
@@ -61,7 +59,8 @@ public class AnnotationAttributeCompletionResultProcessor {
           if (resolvedAliased instanceof PsiClass && ((PsiClass)resolvedAliased).isAnnotationType()) {
             for (PsiMethod method : ((PsiClass)resolvedAliased).getMethods()) {
               if (usedNames.add(method.getName())) {
-                for (LookupElement element : createLookupElements(new GroovyResolveResultImpl(method, true), false, matcher, null)) {
+                for (LookupElement element : GroovyCompletionUtil
+                  .createLookupElements(new GroovyResolveResultImpl(method, true), false, matcher, null)) {
                   consumer.consume(element);
                 }
               }
@@ -71,7 +70,8 @@ public class AnnotationAttributeCompletionResultProcessor {
       }
       else if (((PsiClass)resolved).isAnnotationType()) {
         for (PsiMethod method : ((PsiClass)resolved).getMethods()) {
-          for (LookupElement element : createLookupElements(new GroovyResolveResultImpl(method, true), false, matcher, null)) {
+          for (LookupElement element : GroovyCompletionUtil
+            .createLookupElements(new GroovyResolveResultImpl(method, true), false, matcher, null)) {
             consumer.consume(element);
           }
         }

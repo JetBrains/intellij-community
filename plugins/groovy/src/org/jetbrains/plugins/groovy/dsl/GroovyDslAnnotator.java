@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
  */
 public class GroovyDslAnnotator implements Annotator, DumbAware {
 
+  @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     if (psiElement instanceof GroovyFile) {
       final VirtualFile vfile = ((GroovyFile)psiElement).getVirtualFile();
@@ -108,26 +109,31 @@ public class GroovyDslAnnotator implements Annotator, DumbAware {
       myVfile = vfile;
     }
 
+    @Override
     @NotNull
     public String getText() {
       return "Activate back";
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return "Activate DSL descriptor";
     }
 
+    @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
       return true;
     }
 
+    @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
       FileDocumentManager.getInstance().saveAllDocuments();
       GroovyDslFileIndex.activateUntilModification(myVfile);
       DaemonCodeAnalyzer.getInstance(project).restart();
     }
 
+    @Override
     public boolean startInWriteAction() {
       return false;
     }

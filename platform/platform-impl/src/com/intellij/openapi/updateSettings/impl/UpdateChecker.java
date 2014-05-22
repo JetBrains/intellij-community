@@ -72,6 +72,8 @@ import java.util.concurrent.TimeoutException;
 public final class UpdateChecker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker");
 
+  private static final Map<String, String> ourUpdatedPlugins = new HashMap<String, String>();
+
   public enum DownloadPatchResult {
     SUCCESS, FAILED, CANCELED
   }
@@ -243,10 +245,13 @@ public final class UpdateChecker {
           final IdeaPluginDescriptor installedPlugin = toUpdate.get(idString);
           if (installedPlugin == null) {
             prepareToInstall(downloaded, loadedPlugin, indicator, buildNumber);
-          } else if (StringUtil.compareVersionNumbers(loadedPlugin.getVersion(), installedPlugin.getVersion()) > 0) {
-            updateSettings.myOutdatedPlugins.add(idString);
-            if (!disabledPlugins.contains(idString)) {
-              prepareToInstall(downloaded, loadedPlugin, indicator, buildNumber);
+          } else {
+            final String newVersion = loadedPlugin.getVersion();
+            if (StringUtil.compareVersionNumbers(newVersion, installedPlugin.getVersion()) > 0) {
+              updateSettings.myOutdatedPlugins.add(idString);
+              if (isReadyToUpdate(idString, newVersion) && !disabledPlugins.contains(idString)) {
+                prepareToInstall(downloaded, loadedPlugin, indicator, buildNumber);
+              }
             }
           }
         }
@@ -264,6 +269,11 @@ public final class UpdateChecker {
     }
 
     return downloaded.isEmpty() ? null : downloaded.values();
+  }
+
+  private static boolean isReadyToUpdate(String idString, String newVersion) {
+    final String oldVersion = ourUpdatedPlugins.put(idString, newVersion);
+    return oldVersion == null || StringUtil.compareVersionNumbers(newVersion, oldVersion) > 0;
   }
 
   private static void prepareToInstall(Map<PluginId, PluginDownloader> downloaded,
@@ -386,8 +396,12 @@ public final class UpdateChecker {
                 progressIndicator.setText2(finalPluginUrl);
               }
               final PluginDownloader downloader = new PluginDownloader(pluginId, finalPluginUrl, pluginVersion);
-              if (downloader.prepareToInstall(progressIndicator, buildNumber)) {
-                downloaded.put(PluginId.getId(pluginId), downloader);
+              final IdeaPluginDescriptor loadedPlugin = PluginManager.getPlugin(PluginId.getId(pluginId));
+              if (loadedPlugin == null || pluginVersion == null ||
+                  StringUtil.compareVersionNumbers(pluginVersion, loadedPlugin.getVersion()) > 0) {
+                if (isReadyToUpdate(pluginId, pluginVersion) && downloader.prepareToInstall(progressIndicator, buildNumber)) {
+                  downloaded.put(PluginId.getId(pluginId), downloader);
+                }
               }
             }
             catch (IOException e) {

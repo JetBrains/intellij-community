@@ -109,14 +109,16 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
   }
 
   @Override
-  public void apply(PsiSubstitutor substitutor) {
+  public void apply(PsiSubstitutor substitutor, boolean cache) {
     setT(substitutor.substitute(getT()));
-    Map<PsiElement, PsiType> map = LambdaUtil.ourFunctionTypes.get();
-    if (map == null) {
-      map = new HashMap<PsiElement, PsiType>();
-      LambdaUtil.ourFunctionTypes.set(map);
+    if (cache) {
+      Map<PsiElement, PsiType> map = LambdaUtil.ourFunctionTypes.get();
+      if (map == null) {
+        map = new HashMap<PsiElement, PsiType>();
+        LambdaUtil.ourFunctionTypes.set(map);
+      }
+      map.put(getExpression(), getT());
     }
-    map.put(getExpression(), getT());
   }
 
   @Override

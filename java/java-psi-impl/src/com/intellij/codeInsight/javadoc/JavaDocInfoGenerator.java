@@ -250,6 +250,20 @@ public class JavaDocInfoGenerator {
     return true;
   }
 
+  public static String generateSignature(PsiElement element) {
+    StringBuilder buf = new StringBuilder();
+    if (element instanceof PsiClass) {
+      if (generateClassSignature(buf, (PsiClass)element)) return null;
+    } 
+    else if (element instanceof PsiField) {
+      generateFieldSignature(buf, (PsiField)element);
+    }
+    else if (element instanceof PsiMethod) {
+      generateMethodSignature(buf, (PsiMethod)element);
+    }
+    return buf.toString();
+  }
+
   @Nullable
   public String generateDocInfo(List<String> docURLs) {
     StringBuilder buffer = new StringBuilder();
@@ -293,6 +307,21 @@ public class JavaDocInfoGenerator {
     }
 
     buffer.append("<PRE>");
+    if (generateClassSignature(buffer, aClass)) return;
+    buffer.append("</PRE>");
+    //buffer.append("<br>");
+
+    PsiDocComment comment = getDocComment(aClass);
+    if (comment != null) {
+      generateCommonSection(buffer, comment);
+      generateTypeParametersSection(buffer, aClass);
+    }
+
+    if (generatePrologueAndEpilogue)
+      generateEpilogue(buffer);
+  }
+
+  private static boolean generateClassSignature(StringBuilder buffer, PsiClass aClass) {
     generateAnnotations(buffer, aClass);
     String modifiers = PsiFormatUtil.formatModifiers(aClass, PsiFormatUtilBase.JAVADOC_MODIFIERS_ONLY);
     if (!modifiers.isEmpty()) {
@@ -301,12 +330,12 @@ public class JavaDocInfoGenerator {
     }
     buffer.append(aClass.isInterface() ? LangBundle.message("java.terms.interface") : LangBundle.message("java.terms.class"));
     buffer.append(" ");
-    String refText = JavaDocUtil.getReferenceText(myProject, aClass);
+    String refText = JavaDocUtil.getReferenceText(aClass.getProject(), aClass);
     if (refText == null) {
       buffer.setLength(0);
-      return;
+      return true;
     }
-    String labelText = JavaDocUtil.getLabelText(myProject, manager, refText, aClass);
+    String labelText = JavaDocUtil.getLabelText(aClass.getProject(), aClass.getManager(), refText, aClass);
     buffer.append("<b>");
     buffer.append(labelText);
     buffer.append("</b>");
@@ -350,17 +379,7 @@ public class JavaDocInfoGenerator {
     if (buffer.charAt(buffer.length() - 1) == '\n') {
       buffer.setLength(buffer.length() - 1);
     }
-    buffer.append("</PRE>");
-    //buffer.append("<br>");
-
-    PsiDocComment comment = getDocComment(aClass);
-    if (comment != null) {
-      generateCommonSection(buffer, comment);
-      generateTypeParametersSection(buffer, aClass);
-    }
-
-    if (generatePrologueAndEpilogue)
-      generateEpilogue(buffer);
+    return false;
   }
 
   private void generateTypeParametersSection(final StringBuilder buffer, final PsiClass aClass) {
@@ -453,18 +472,7 @@ public class JavaDocInfoGenerator {
     }
 
     buffer.append("<PRE>");
-    generateAnnotations(buffer, field);
-    String modifiers = PsiFormatUtil.formatModifiers(field, PsiFormatUtilBase.JAVADOC_MODIFIERS_ONLY);
-    if (!modifiers.isEmpty()) {
-      buffer.append(modifiers);
-      buffer.append(" ");
-    }
-    generateType(buffer, field.getType(), field);
-    buffer.append(" ");
-    buffer.append("<b>");
-    buffer.append(field.getName());
-    appendInitializer(buffer, field);
-    buffer.append("</b>");
+    generateFieldSignature(buffer, field);
     buffer.append("</PRE>");
     //buffer.append("<br>");
 
@@ -477,6 +485,21 @@ public class JavaDocInfoGenerator {
 
     if (generatePrologueAndEpilogue)
       generateEpilogue(buffer);
+  }
+
+  private static void generateFieldSignature(StringBuilder buffer, PsiField field) {
+    generateAnnotations(buffer, field);
+    String modifiers = PsiFormatUtil.formatModifiers(field, PsiFormatUtilBase.JAVADOC_MODIFIERS_ONLY);
+    if (!modifiers.isEmpty()) {
+      buffer.append(modifiers);
+      buffer.append(" ");
+    }
+    generateType(buffer, field.getType(), field);
+    buffer.append(" ");
+    buffer.append("<b>");
+    buffer.append(field.getName());
+    appendInitializer(buffer, field);
+    buffer.append("</b>");
   }
 
   public static void enumConstantOrdinal(StringBuilder buffer, PsiField field, PsiClass parentClass, final String newLine) {
@@ -778,6 +801,37 @@ public class JavaDocInfoGenerator {
     }
 
     buffer.append("<PRE>");
+    generateMethodSignature(buffer, method);
+
+    buffer.append("</PRE>");
+    //buffer.append("<br>");
+
+    PsiDocComment comment = getMethodDocComment(method);
+
+    generateMethodDescription(buffer, method, comment);
+
+    generateSuperMethodsSection(buffer, method, false);
+    generateSuperMethodsSection(buffer, method, true);
+
+    if (comment != null) {
+      generateDeprecatedSection(buffer, comment);
+    }
+
+    generateParametersSection(buffer, method, comment);
+    generateTypeParametersSection(buffer, method);
+    generateReturnsSection(buffer, method, comment);
+    generateThrowsSection(buffer, method, comment);
+
+    if (comment != null) {
+      generateSinceSection(buffer, comment);
+      generateSeeAlsoSection(buffer, comment);
+    }
+
+    if (generatePrologueAndEpilogue)
+      generateEpilogue(buffer);
+  }
+
+  private static void generateMethodSignature(StringBuilder buffer, PsiMethod method) {
     generateAnnotations(buffer, method);
     String modifiers = PsiFormatUtil.formatModifiers(method, PsiFormatUtilBase.JAVADOC_MODIFIERS_ONLY);
     int indent = 0;
@@ -846,33 +900,6 @@ public class JavaDocInfoGenerator {
         }
       }
     }
-
-    buffer.append("</PRE>");
-    //buffer.append("<br>");
-
-    PsiDocComment comment = getMethodDocComment(method);
-
-    generateMethodDescription(buffer, method, comment);
-
-    generateSuperMethodsSection(buffer, method, false);
-    generateSuperMethodsSection(buffer, method, true);
-
-    if (comment != null) {
-      generateDeprecatedSection(buffer, comment);
-    }
-
-    generateParametersSection(buffer, method, comment);
-    generateTypeParametersSection(buffer, method);
-    generateReturnsSection(buffer, method, comment);
-    generateThrowsSection(buffer, method, comment);
-
-    if (comment != null) {
-      generateSinceSection(buffer, comment);
-      generateSeeAlsoSection(buffer, comment);
-    }
-
-    if (generatePrologueAndEpilogue)
-      generateEpilogue(buffer);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

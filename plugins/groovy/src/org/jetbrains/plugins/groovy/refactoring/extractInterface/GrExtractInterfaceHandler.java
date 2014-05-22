@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ import javax.swing.*;
  * @author Max Medvedev
  */
 public class GrExtractInterfaceHandler implements RefactoringActionHandler, ElementsHandler {
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     int offset = editor.getCaretModel().getOffset();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -65,6 +66,7 @@ public class GrExtractInterfaceHandler implements RefactoringActionHandler, Elem
     }
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (elements.length != 1) return;
 
@@ -149,6 +151,7 @@ public class GrExtractInterfaceHandler implements RefactoringActionHandler, Elem
     return RefactoringBundle.message("extract.interface.command.name", myInterfaceName, DescriptiveNameUtil.getDescriptiveName(myClass));
   }
 
+  @Override
   public boolean isEnabledOnElements(PsiElement[] elements) {
     return elements.length == 1 && elements[0] instanceof PsiClass;
   }

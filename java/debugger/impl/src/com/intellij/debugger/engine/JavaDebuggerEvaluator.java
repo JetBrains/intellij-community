@@ -73,7 +73,7 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator {
         descriptor.updateRepresentation(evalContext, DescriptorLabelListener.DUMMY_LISTENER);
         JavaDebugProcess process = myDebugProcess.getXdebugProcess();
         if (process != null) {
-          callback.evaluated(new JavaValue(descriptor, evalContext, process.getNodeManager()));
+          callback.evaluated(JavaValue.create(descriptor, evalContext, process.getNodeManager()));
         }
       }
     });

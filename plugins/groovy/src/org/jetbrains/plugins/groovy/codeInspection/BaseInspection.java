@@ -46,6 +46,7 @@ public abstract class BaseInspection extends GroovySuppressableInspectionTool {
     return new String[]{"Groovy", getGroupDisplayName()};
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return m_shortName;
@@ -80,6 +81,7 @@ public abstract class BaseInspection extends GroovySuppressableInspectionTool {
     return null;
   }
 
+  @Override
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile psiFile, @NotNull InspectionManager inspectionManager, boolean isOnTheFly) {
     if (!(psiFile instanceof GroovyFileBase)) {

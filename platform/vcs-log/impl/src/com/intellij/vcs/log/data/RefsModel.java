@@ -1,6 +1,7 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -11,19 +12,22 @@ import com.intellij.vcs.log.VcsRef;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 
 public class RefsModel implements VcsLogRefs {
+
+  @NotNull private final Map<VirtualFile, Collection<VcsRef>> myRefs;
+  @NotNull private final NotNullFunction<Hash, Integer> myIndexGetter;
 
   @NotNull private final Collection<VcsRef> myBranches;
   @NotNull private final MultiMap<Hash, VcsRef> myRefsToHashes;
   @NotNull private final TIntObjectHashMap<SmartList<VcsRef>> myRefsToIndices;
-  @NotNull private final NotNullFunction<Hash, Integer> myIndexGetter;
 
-  public RefsModel(@NotNull Collection<VcsRef> allRefs, @NotNull NotNullFunction<Hash, Integer> indexGetter) {
+  public RefsModel(@NotNull Map<VirtualFile, Collection<VcsRef>> refsByRoot, @NotNull NotNullFunction<Hash, Integer> indexGetter) {
+    myRefs = refsByRoot;
     myIndexGetter = indexGetter;
+
+    List<VcsRef> allRefs = ContainerUtil.concat(refsByRoot.values());
     myBranches = ContainerUtil.filter(allRefs, new Condition<VcsRef>() {
       @Override
       public boolean value(VcsRef ref) {
@@ -56,15 +60,6 @@ public class RefsModel implements VcsLogRefs {
     return map;
   }
 
-  public boolean isBranchRef(int hash) {
-    for (VcsRef ref : refsToCommit(hash)) {
-      if (ref.getType().isBranch()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   @NotNull
   public Collection<VcsRef> refsToCommit(@NotNull Hash hash) {
     if (myRefsToHashes.containsKey(hash)) {
@@ -87,6 +82,11 @@ public class RefsModel implements VcsLogRefs {
   @NotNull
   public Collection<VcsRef> getAllRefs() {
     return new ArrayList<VcsRef>(myRefsToHashes.values());
+  }
+
+  @NotNull
+  public Map<VirtualFile, Collection<VcsRef>> getAllRefsByRoot() {
+    return myRefs;
   }
 
 }

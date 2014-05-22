@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,10 @@ package com.intellij.pom.tree;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.tree.events.TreeChangeEvent;
+import org.jetbrains.annotations.NotNull;
 
 public class TreeAspectEvent extends PomModelEvent {
-  public TreeAspectEvent(PomModel model, TreeChangeEvent reparseAccumulatedEvent) {
+  public TreeAspectEvent(@NotNull PomModel model, TreeChangeEvent reparseAccumulatedEvent) {
     super(model);
     registerChangeSet(model.getModelAspect(TreeAspect.class), reparseAccumulatedEvent);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.EditableModel;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 
 import javax.swing.*;

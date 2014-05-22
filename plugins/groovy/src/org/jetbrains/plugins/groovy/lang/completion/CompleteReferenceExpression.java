@@ -33,7 +33,7 @@ import com.intellij.util.containers.hash.HashSet;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
@@ -58,15 +58,15 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrRefer
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.SubstitutorComputer;
 
 import java.util.*;
-
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.*;
 
 /**
  * @author ven
@@ -109,7 +109,7 @@ public class CompleteReferenceExpression {
       GroovyCompletionUtil.getCompletionVariants(candidates,
                                                  JavaClassNameCompletionContributor.AFTER_NEW.accepts(myRefExpr), myMatcher, myRefExpr);
 
-    if (myProcessor.isEmpty() && results.size() == 0) {
+    if (myProcessor.isEmpty() && results.isEmpty()) {
       results = GroovyCompletionUtil.getCompletionVariants(myProcessor.getInapplicableResults(),
                                                            JavaClassNameCompletionContributor.AFTER_NEW.accepts(myRefExpr), myMatcher,
                                                            myRefExpr);
@@ -158,7 +158,7 @@ public class CompleteReferenceExpression {
 
       for (PsiElement e = myRefExpr.getParent(); e != null; e = e.getParent()) {
         if (e instanceof GrClosableBlock) {
-          ResolveState state = ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, e);
+          ResolveState state = ResolveState.initial().put(ClassHint.RESOLVE_CONTEXT, e);
           for (ClosureMissingMethodContributor contributor : ClosureMissingMethodContributor.EP_NAME.getExtensions()) {
             contributor.processMembers((GrClosableBlock)e, myProcessor, myRefExpr, state);
           }
@@ -242,12 +242,12 @@ public class CompleteReferenceExpression {
                                                                  @Nullable PrefixMatcher matcher) {
     String propName;
     PsiType propType;
-    final boolean getter = isSimplePropertyGetter(accessor, null);
+    final boolean getter = GroovyPropertyUtils.isSimplePropertyGetter(accessor, null);
     if (getter) {
-      propName = getPropertyNameByGetter(accessor);
+      propName = GroovyPropertyUtils.getPropertyNameByGetter(accessor);
     }
-    else if (isSimplePropertySetter(accessor, null)) {
-      propName = getPropertyNameBySetter(accessor);
+    else if (GroovyPropertyUtils.isSimplePropertySetter(accessor, null)) {
+      propName = GroovyPropertyUtils.getPropertyNameBySetter(accessor);
     }
     else {
       return null;
@@ -396,7 +396,7 @@ public class CompleteReferenceExpression {
 
     private final SubstitutorComputer mySubstitutorComputer;
 
-    private Collection<String> myPreferredFieldNames; //Reference is inside classes with such fields so don't suggest properties with such names.
+    private final Collection<String> myPreferredFieldNames; //Reference is inside classes with such fields so don't suggest properties with such names.
     private final Set<String> myPropertyNames = new HashSet<String>();
     private final Set<String> myLocalVars = new HashSet<String>();
     private final Set<GrMethod> myProcessedMethodWithOptionalParams = new HashSet<GrMethod>();
@@ -436,7 +436,7 @@ public class CompleteReferenceExpression {
       }
 
       PsiElement parent = myRefExpr.getParent();
-      return parent == null || parent.getLanguage().isKindOf(GroovyFileType.GROOVY_LANGUAGE); //don't skip in Play!
+      return parent == null || parent.getLanguage().isKindOf(GroovyLanguage.INSTANCE); //don't skip in Play!
     }
 
     @Override
@@ -462,6 +462,7 @@ public class CompleteReferenceExpression {
       return true;
     }
 
+    @Override
     public void consume(Object o) {
       if (!(o instanceof GroovyResolveResult)) {
         LOG.error(o);

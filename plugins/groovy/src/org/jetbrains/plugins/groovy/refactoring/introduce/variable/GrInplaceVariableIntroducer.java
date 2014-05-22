@@ -174,6 +174,7 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
     builder.replaceElement(element, "Variable_type", typeExpression, true, true);
   }
 
+  @Override
   protected GroovyIntroduceVariableSettings getSettings() {
     return new GroovyIntroduceVariableSettings() {
       @Override

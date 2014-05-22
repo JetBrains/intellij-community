@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.gradle.config;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.externalSystem.psi.search.ExternalModuleBuildGlobalSearchScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,6 +25,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import java.util.List;
 
@@ -35,7 +37,7 @@ public class GradleClassFinder extends NonClasspathClassFinder {
   @NotNull private final GradleBuildClasspathManager myBuildClasspathManager;
 
   public GradleClassFinder(Project project, @NotNull GradleBuildClasspathManager buildClasspathManager) {
-    super(project, true);
+    super(project, JavaFileType.DEFAULT_EXTENSION, GroovyFileType.DEFAULT_EXTENSION);
     myBuildClasspathManager = buildClasspathManager;
   }
 

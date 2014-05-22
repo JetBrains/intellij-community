@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.completion;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
@@ -37,24 +38,22 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
-import static com.intellij.patterns.PlatformPatterns.psiElement;
-import static org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor.Priority;
 
 /**
  * @author peter
  */
 class MapArgumentCompletionProvider extends CompletionProvider<CompletionParameters> {
 
-  public static final ElementPattern<PsiElement> IN_ARGUMENT_LIST_OF_CALL = psiElement().withParent(psiElement(GrReferenceExpression.class).withParent(
-    StandardPatterns.or(psiElement(GrArgumentList.class), psiElement(GrListOrMap.class)))
+  public static final ElementPattern<PsiElement> IN_ARGUMENT_LIST_OF_CALL = PlatformPatterns
+    .psiElement().withParent(PlatformPatterns.psiElement(GrReferenceExpression.class).withParent(
+    StandardPatterns.or(PlatformPatterns.psiElement(GrArgumentList.class), PlatformPatterns.psiElement(GrListOrMap.class)))
   );
-  public static final ElementPattern<PsiElement> IN_LABEL = psiElement(GroovyTokenTypes.mIDENT).withParent(GrArgumentLabel.class);
+  public static final ElementPattern<PsiElement> IN_LABEL = PlatformPatterns.psiElement(GroovyTokenTypes.mIDENT).withParent(GrArgumentLabel.class);
 
   private MapArgumentCompletionProvider() {
   }
@@ -97,7 +96,7 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
         .withInsertHandler(NamedArgumentInsertHandler.INSTANCE)
         .withTailText(":");
 
-      if (entry.getValue().getPriority() == Priority.UNLIKELY) {
+      if (entry.getValue().getPriority() == NamedArgumentDescriptor.Priority.UNLIKELY) {
         lookup.withItemTextForeground(DefaultHighlighter.MAP_KEY_COLOR);
       }
       else {

@@ -217,7 +217,7 @@ public class IncProjectBuilder {
         }
         else {
           final String causeMessage = cause != null ? cause.getMessage() : "";
-          msg = new CompilerMessage("", BuildMessage.Kind.ERROR, StringUtil.isEmptyOrSpaces(causeMessage) || errMessage.equals(causeMessage)
+          msg = new CompilerMessage("", BuildMessage.Kind.ERROR, StringUtil.isEmptyOrSpaces(causeMessage) || errMessage.trim().endsWith(causeMessage)
                                                                  ? errMessage
                                                                  : errMessage + ": " + causeMessage);
         }
@@ -879,8 +879,14 @@ public class IncProjectBuilder {
     catch (ProjectBuildException e) {
       throw e;
     }
-    catch (Exception e) {
-      throw new ProjectBuildException(e);
+    catch (Throwable e) {
+      final StringBuilder message = new StringBuilder();
+      message.append(chunk.getPresentableName()).append(": ").append(e.getClass().getName());
+      final String exceptionMessage = e.getMessage();
+      if (exceptionMessage != null) {
+        message.append(": ").append(exceptionMessage);
+      }
+      throw new ProjectBuildException(message.toString(), e);
     }
     finally {
       for (BuildRootDescriptor rd : context.getProjectDescriptor().getBuildRootIndex().clearTempRoots(context)) {

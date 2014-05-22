@@ -61,6 +61,18 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
   private Factory<PersistentHashMap<Integer, Collection<Key>>> myInputsIndexFactory;
 
+  private final LowMemoryWatcher myLowMemoryFlusher = LowMemoryWatcher.register(new Runnable() {
+    @Override
+    public void run() {
+      try {
+        flush();
+      } catch (StorageException e) {
+        LOG.info(e);
+        FileBasedIndex.getInstance().requestRebuild(myIndexId);
+      }
+    }
+  });
+
   public MapReduceIndex(@Nullable final ID<Key, Value> indexId,
                         DataIndexer<Key, Value, Input> indexer,
                         @NotNull IndexStorage<Key, Value> storage) throws IOException {
@@ -194,6 +206,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
   @Override
   public void dispose() {
+    myLowMemoryFlusher.stop();
     final Lock lock = getWriteLock();
     try {
       lock.lock();
@@ -298,15 +311,20 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     Map<Key, Value> data = null;
     boolean havePersistentData = false;
     Integer hashId = null;
+    boolean skippedReadingPersistentDataButMayHaveIt = false;
 
     if (myContents != null && weProcessPhysicalContent && content != null) {
       try {
         hashId = getHashOfContent((FileContent)content);
         if (doReadSavedPersistentData) {
-          ByteSequence bytes = myContents.get(hashId);
-          if (bytes != null) {
-            data = deserializeSavedPersistentData(bytes);
-            havePersistentData = true;
+          if (!myContents.isBusyReading()) {
+            ByteSequence bytes = myContents.get(hashId);
+            if (bytes != null) {
+              data = deserializeSavedPersistentData(bytes);
+              havePersistentData = true;
+            }
+          } else {
+            skippedReadingPersistentDataButMayHaveIt = true;
           }
         } else {
           havePersistentData = myContents.containsMapping(hashId);
@@ -320,7 +338,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     if (data == null) data = content != null ? myIndexer.map(content) : Collections.<Key, Value>emptyMap();
 
     if (hashId != null && !havePersistentData) {
-      savePersistentData(data, hashId);
+      savePersistentData(data, hashId, skippedReadingPersistentDataButMayHaveIt);
     }
     ProgressManager.checkCanceled();
 
@@ -435,8 +453,9 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
   private static final ThreadLocalCachedByteArray ourSpareByteArray = new ThreadLocalCachedByteArray();
 
-  private void savePersistentData(Map<Key, Value> data, int id) {
+  private void savePersistentData(Map<Key, Value> data, int id, boolean delayedReading) {
     try {
+      if (delayedReading && myContents.containsMapping(id)) return;
       BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(ourSpareByteArray.getBuffer(4 * data.size()));
       DataOutputStream stream = new DataOutputStream(out);
       int size = data.size();

@@ -20,36 +20,41 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.intentions.utils.BoolUtils;
+import org.jetbrains.plugins.groovy.lang.psi.impl.utils.BoolUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 public class GroovyNegatedIfInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return CONFUSING_CODE_CONSTRUCTS;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Negated if condition expression";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Negated if condition expression #loc";
 
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitIfStatement(GrIfStatement grIfStatement) {
       super.visitIfStatement(grIfStatement);
       final GrExpression condition = grIfStatement.getCondition();

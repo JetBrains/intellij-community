@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,15 +35,18 @@ public class AfterCallInstruction extends InstructionImpl {
     return super.toString() + "AFTER CALL " + myCall.num();
   }
 
+  @Override
   public Iterable<? extends Instruction> allPredecessors() {
     return Collections.singletonList(myReturnInstruction);
   }
 
+  @Override
   public Iterable<? extends Instruction> predecessors(CallEnvironment environment) {
     environment.callStack(myReturnInstruction).push(myCall);
     return Collections.singletonList(myReturnInstruction);
   }
 
+  @Override
   protected String getElementPresentation() {
     return "";
   }

@@ -45,3 +45,9 @@ class Local {
 
   }
 }
+
+class Local$ {
+  public static class Sub {
+
+  }
+}

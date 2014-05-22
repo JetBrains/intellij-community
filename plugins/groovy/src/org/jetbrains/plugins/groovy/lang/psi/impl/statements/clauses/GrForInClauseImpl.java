@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ public class GrForInClauseImpl extends GroovyPsiElementImpl implements GrForInCl
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitForInClause(this);
   }
@@ -48,15 +49,18 @@ public class GrForInClauseImpl extends GroovyPsiElementImpl implements GrForInCl
     return "In clause";
   }
 
+  @Override
   public GrParameter getDeclaredVariable() {
     return findChildByClass(GrParameter.class);
   }
 
+  @Override
   public GrParameter[] getParameters() {
     final GrParameter declaredVariable = getDeclaredVariable();
     return declaredVariable == null ? GrParameter.EMPTY_ARRAY : new GrParameter[]{declaredVariable};
   }
 
+  @Override
   public GrParameterList getParameterList() {
     return null;
   }
@@ -66,6 +70,7 @@ public class GrForInClauseImpl extends GroovyPsiElementImpl implements GrForInCl
     throw new IncorrectOperationException("For in clause cannot have varargs");
   }
 
+  @Override
   @Nullable
   public GrExpression getIteratedExpression() {
     return findExpressionChild(this);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ public class GrCaseSectionImpl extends GroovyPsiElementImpl implements GrCaseSec
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitCaseSection(this);
   }
@@ -54,14 +55,17 @@ public class GrCaseSectionImpl extends GroovyPsiElementImpl implements GrCaseSec
     return "Case section";
   }
 
+  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     return ResolveUtil.processChildren(this, processor, state, lastParent, place);
   }
 
+  @Override
   public void removeVariable(GrVariable variable) {
     PsiImplUtil.removeVariable(variable);
   }
 
+  @Override
   public GrVariableDeclaration addVariableDeclarationBefore(GrVariableDeclaration declaration, GrStatement anchor) throws IncorrectOperationException {
     GrStatement statement = addStatementBefore(declaration, anchor);
     assert statement instanceof GrVariableDeclaration;
@@ -84,11 +88,13 @@ public class GrCaseSectionImpl extends GroovyPsiElementImpl implements GrCaseSec
     return false;
   }
 
+  @Override
   @NotNull
   public GrStatement[] getStatements() {
     return PsiImplUtil.getStatements(this);
   }
 
+  @Override
   @NotNull
   public GrStatement addStatementBefore(@NotNull GrStatement element, @Nullable GrStatement anchor) throws IncorrectOperationException {
     ASTNode elemNode = element.copy().getNode();

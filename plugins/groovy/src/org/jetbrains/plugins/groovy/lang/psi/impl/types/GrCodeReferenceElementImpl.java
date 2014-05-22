@@ -56,8 +56,6 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.lang.psi.impl.types.GrCodeReferenceElementImpl.ReferenceKind.*;
-
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
@@ -90,6 +88,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     return qualifiedRef;
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitCodeReferenceElement(this);
   }
@@ -98,6 +97,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     return "Reference element";
   }
 
+  @Override
   public GrCodeReferenceElement getQualifier() {
     return (GrCodeReferenceElement)findChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
   }
@@ -117,6 +117,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     CLASS_IN_QUALIFIED_NEW
   }
 
+  @Override
   @Nullable
   public PsiElement resolve() {
     ResolveResult[] results = TypeInferenceHelper.getCurrentContext().multiResolve(this, false, RESOLVER);
@@ -125,45 +126,46 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
 
   public ReferenceKind getKind(boolean forCompletion) {
     if (isClassReferenceForNew()) {
-      return CLASS_OR_PACKAGE;
+      return ReferenceKind.CLASS_OR_PACKAGE;
     }
 
     PsiElement parent = getParent();
     if (parent instanceof GrCodeReferenceElementImpl) {
       ReferenceKind parentKind = ((GrCodeReferenceElementImpl)parent).getKind(forCompletion);
-      if (parentKind == CLASS) {
-        return CLASS_OR_PACKAGE;
+      if (parentKind == ReferenceKind.CLASS) {
+        return ReferenceKind.CLASS_OR_PACKAGE;
       }
-      else if (parentKind == STATIC_MEMBER_FQ) {
-        return isQualified() ? CLASS_FQ : CLASS;
+      else if (parentKind == ReferenceKind.STATIC_MEMBER_FQ) {
+        return isQualified() ? ReferenceKind.CLASS_FQ : ReferenceKind.CLASS;
       }
-      else if (parentKind == CLASS_FQ) return CLASS_OR_PACKAGE_FQ;
+      else if (parentKind == ReferenceKind.CLASS_FQ) return ReferenceKind.CLASS_OR_PACKAGE_FQ;
       return parentKind;
     }
     else if (parent instanceof GrPackageDefinition) {
-      return PACKAGE_FQ;
+      return ReferenceKind.PACKAGE_FQ;
     }
     else if (parent instanceof GrDocReferenceElement) {
-      return CLASS_OR_PACKAGE;
+      return ReferenceKind.CLASS_OR_PACKAGE;
     }
     else if (parent instanceof GrImportStatement) {
       final GrImportStatement importStatement = (GrImportStatement)parent;
       if (importStatement.isStatic()) {
-        return importStatement.isOnDemand() ? CLASS : STATIC_MEMBER_FQ;
+        return importStatement.isOnDemand() ? ReferenceKind.CLASS : ReferenceKind.STATIC_MEMBER_FQ;
       }
       else {
-        return forCompletion || importStatement.isOnDemand() ? CLASS_OR_PACKAGE_FQ : CLASS_FQ;
+        return forCompletion || importStatement.isOnDemand() ? ReferenceKind.CLASS_OR_PACKAGE_FQ : ReferenceKind.CLASS_FQ;
       }
     }
     else if (parent instanceof GrNewExpression || parent instanceof GrAnonymousClassDefinition) {
       PsiElement newExpr = parent instanceof GrAnonymousClassDefinition ? parent.getParent() : parent;
       assert newExpr instanceof GrNewExpression;
-      if (((GrNewExpression)newExpr).getQualifier() != null) return CLASS_IN_QUALIFIED_NEW;
+      if (((GrNewExpression)newExpr).getQualifier() != null) return ReferenceKind.CLASS_IN_QUALIFIED_NEW;
     }
 
-    return CLASS;
+    return ReferenceKind.CLASS;
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     final ReferenceKind kind = getKind(false);
@@ -211,6 +213,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     }
   }
 
+  @Override
   protected boolean bindsCorrectly(PsiElement element) {
     if (super.bindsCorrectly(element)) return true;
     if (element instanceof PsiClass) {
@@ -242,6 +245,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     return qualifier != null && ((GrCodeReferenceElementImpl)qualifier).isFullyQualified();
   }
 
+  @Override
   public boolean isReferenceTo(PsiElement element) {
     final PsiManager manager = getManager();
     if (element instanceof PsiNamedElement && getParent() instanceof GrImportStatement) {
@@ -253,6 +257,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     return manager.areElementsEquivalent(element, resolve());
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
@@ -264,12 +269,14 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     return parent instanceof GrNewExpression;
   }
 
+  @Override
   public boolean isSoft() {
     return false;
   }
 
   private static class OurResolver implements ResolveCache.PolyVariantResolver<GrCodeReferenceElementImpl> {
 
+    @Override
     @NotNull
     public GroovyResolveResult[] resolve(@NotNull GrCodeReferenceElementImpl reference, boolean incompleteCode) {
       if (reference.getReferenceName() == null) return GroovyResolveResult.EMPTY_ARRAY;
@@ -317,9 +324,9 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
           LOG.assertTrue(qName != null, ref.getText());
 
           JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
-          if (kind == CLASS_OR_PACKAGE_FQ || kind == CLASS_FQ) {
+          if (kind == ReferenceKind.CLASS_OR_PACKAGE_FQ || kind == ReferenceKind.CLASS_FQ) {
             final PsiFile file = ref.getContainingFile();
-            if (qName.indexOf('.') > 0 || file instanceof GroovyFile && ((GroovyFile)file).getPackageName().length() == 0) {
+            if (qName.indexOf('.') > 0 || file instanceof GroovyFile && ((GroovyFile)file).getPackageName().isEmpty()) {
               PsiClass aClass = facade.findClass(qName, ref.getResolveScope());
               if (aClass != null) {
                 boolean isAccessible = PsiUtil.isAccessible(ref, aClass);
@@ -328,7 +335,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
             }
           }
 
-          if (kind == CLASS_OR_PACKAGE_FQ || kind == PACKAGE_FQ) {
+          if (kind == ReferenceKind.CLASS_OR_PACKAGE_FQ || kind == ReferenceKind.PACKAGE_FQ) {
             PsiPackage aPackage = facade.findPackage(qName);
             if (aPackage != null) {
               return new GroovyResolveResult[]{new GroovyResolveResultImpl(aPackage, true)};
@@ -338,7 +345,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
           break;
 
         case CLASS: {
-          EnumSet<ClassHint.ResolveKind> kinds = kind == CLASS ? ResolverProcessor.RESOLVE_KINDS_CLASS : ResolverProcessor.RESOLVE_KINDS_CLASS_PACKAGE;
+          EnumSet<ClassHint.ResolveKind> kinds = kind == ReferenceKind.CLASS
+                                                 ? ClassHint.RESOLVE_KINDS_CLASS : ClassHint.RESOLVE_KINDS_CLASS_PACKAGE;
           ResolverProcessor processor = new ClassResolverProcessor(refName, ref, kinds);
           GrCodeReferenceElement qualifier = ref.getQualifier();
           if (qualifier != null) {
@@ -358,7 +366,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
               if (candidates.length > 0) return candidates;
             }
 
-            if (kind == CLASS_OR_PACKAGE) {
+            if (kind == ReferenceKind.CLASS_OR_PACKAGE) {
               PsiPackage pkg = JavaPsiFacade.getInstance(ref.getProject()).findPackage(refName);
               if (pkg != null) {
                 return new GroovyResolveResult[]{new GroovyResolveResultImpl(pkg, true)};
@@ -370,16 +378,16 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
         }
 
         case CLASS_OR_PACKAGE: {
-          GroovyResolveResult[] classResult = _resolve(ref, manager, CLASS);
+          GroovyResolveResult[] classResult = _resolve(ref, manager, ReferenceKind.CLASS);
 
           if (classResult.length == 1 && !classResult[0].isAccessible()) {
-            GroovyResolveResult[] packageResult = _resolve(ref, manager, PACKAGE_FQ);
+            GroovyResolveResult[] packageResult = _resolve(ref, manager, ReferenceKind.PACKAGE_FQ);
             if (packageResult.length != 0) {
               return packageResult;
             }
           }
           else if (classResult.length == 0) {
-            return _resolve(ref, manager, PACKAGE_FQ);
+            return _resolve(ref, manager, ReferenceKind.PACKAGE_FQ);
           }
           
           return classResult;
@@ -502,11 +510,13 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
 
   private static final OurResolver RESOLVER = new OurResolver();
 
+  @Override
   public GroovyResolveResult advancedResolve() {
     ResolveResult[] results = TypeInferenceHelper.getCurrentContext().multiResolve(this, false, RESOLVER);
     return results.length == 1 ? (GroovyResolveResult)results[0] : GroovyResolveResult.EMPTY_RESULT;
   }
 
+  @Override
   @NotNull
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
     final ResolveResult[] results = TypeInferenceHelper.getCurrentContext().multiResolve(this, incompleteCode, RESOLVER);

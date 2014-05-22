@@ -14,10 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.values.Value;
 import org.jetbrains.debugger.values.ValueType;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public final class Variables {
@@ -41,7 +38,7 @@ public final class Variables {
       @Override
       public void consume(List<Variable> variables, XCompositeNode node) {
         MemberFilter memberFilter = context.createMemberFilter();
-        List<Variable> additionalVariables = memberFilter.getAdditionalVariables();
+        Collection<Variable> additionalVariables = memberFilter.getAdditionalVariables();
         List<Variable> properties = new ArrayList<Variable>(variables.size() + additionalVariables.size());
         List<Variable> functions = new SmartList<Variable>();
         for (Variable variable : variables) {
@@ -119,7 +116,7 @@ public final class Variables {
     }
 
     MemberFilter memberFilter = context.createMemberFilter();
-    List<Variable> additionalVariables = memberFilter.getAdditionalVariables();
+    Collection<Variable> additionalVariables = memberFilter.getAdditionalVariables();
     List<Variable> result = new ArrayList<Variable>(variables.size() + additionalVariables.size());
     for (Variable variable : variables) {
       if (memberFilter.isMemberVisible(variable, filterFunctions)) {

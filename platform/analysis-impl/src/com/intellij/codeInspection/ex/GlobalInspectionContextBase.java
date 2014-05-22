@@ -96,6 +96,10 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     }
   }
 
+  public AnalysisScope getCurrentScope() {
+    return myCurrentScope;
+  }
+
   @Override
   @NotNull
   public Project getProject() {

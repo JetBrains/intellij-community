@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.editor.richcopy.view;
 
-import com.intellij.codeInsight.editorActions.TextBlockTransferableData;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.richcopy.model.SyntaxInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -34,7 +33,7 @@ import java.io.UnsupportedEncodingException;
  * @author Denis Zhdanov
  * @since 3/28/13 1:20 PM
  */
-public abstract class AbstractSyntaxAwareInputStreamTransferableData extends InputStream implements TextBlockTransferableData, RawTextHolder
+public abstract class AbstractSyntaxAwareInputStreamTransferableData extends InputStream implements RawTextWithMarkup
 {
 
   private static final Logger LOG = Logger.getInstance("#" + AbstractSyntaxAwareInputStreamTransferableData.class.getName());

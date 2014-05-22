@@ -81,7 +81,6 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.List;
 
@@ -814,13 +813,13 @@ public class PyUtil {
    * It saves coder from "instanceof / cast" chains.
    *
    * @param expression expression to check
-   * @param clazz class to cast
-   * @param <T> class to cast
+   * @param clazz      class to cast
+   * @param <T>        class to cast
    * @return expression casted to appropriate type (if could be casted). Null otherwise.
    */
   @Nullable
   @SuppressWarnings("unchecked")
-  public static <T>T as(@Nullable final Object expression, @NotNull final Class<T> clazz) {
+  public static <T> T as(@Nullable final Object expression, @NotNull final Class<T> clazz) {
     if (expression == null) {
       return null;
     }
@@ -828,7 +827,50 @@ public class PyUtil {
       return (T)expression;
     }
     return null;
+  }
 
+  // TODO: Move to PsiElement?
+
+  /**
+   * Searches for references injected to element with certain type
+   *
+   * @param element       element to search injected references for
+   * @param expectedClass expected type of element reference resolved to
+   * @param <T>           expected type of element reference resolved to
+   * @return resolved element if found or null if not found
+   */
+  @Nullable
+  public static <T extends PsiElement> T findReference(@NotNull final PsiElement element, @NotNull final Class<T> expectedClass) {
+    for (final PsiReference reference : element.getReferences()) {
+      final T result = as(reference.resolve(), expectedClass);
+      if (result != null) {
+        return result;
+      }
+    }
+    return null;
+  }
+
+
+  /**
+   * Converts collection to list of certain type
+   * @param expression expression of collection type
+   * @param elementClass expected element type
+   * @param <T>  expected element type
+   * @return list of elements of expected element type
+   */
+  @NotNull
+  public static <T> List<T> asList(@Nullable final Collection<?> expression, @NotNull final Class<T> elementClass) {
+    if ((expression == null) || expression.isEmpty()) {
+      return Collections.emptyList();
+    }
+    final List<T> result = new ArrayList<T>();
+    for (final Object element : expression) {
+      final T toAdd = as(element, elementClass);
+      if (toAdd != null) {
+        result.add(toAdd);
+      }
+    }
+    return result;
   }
 
   public static class KnownDecoratorProviderHolder {

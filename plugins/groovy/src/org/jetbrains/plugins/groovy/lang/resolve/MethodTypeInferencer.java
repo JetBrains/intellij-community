@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,10 +38,11 @@ public class MethodTypeInferencer implements Computable<PsiType> {
     myBlock = block;
   }
 
+  @Override
   @Nullable
   public PsiType compute() {
     List<GrStatement> returns = ControlFlowUtils.collectReturns(myBlock);
-    if (returns.size() == 0) return PsiType.VOID;
+    if (returns.isEmpty()) return PsiType.VOID;
 
     PsiType result = null;
     PsiManager manager = myBlock.getManager();

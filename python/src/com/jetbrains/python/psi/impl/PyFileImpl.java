@@ -87,7 +87,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       final List<PyExceptPart> exceptParts = new ArrayList<PyExceptPart>();
       for (PsiElement child : children) {
         if (child instanceof PyExceptPart) {
-          exceptParts.add((PyExceptPart) child);
+          exceptParts.add((PyExceptPart)child);
         }
         else {
           addDeclaration(child, myLocalDeclarations, myLocalAmbiguousDeclarations, myNameDefiners);
@@ -103,7 +103,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       }
     }
 
-    private void addDeclaration(PsiElement child, 
+    private void addDeclaration(PsiElement child,
                                 Map<String, PsiElement> localDeclarations,
                                 MultiMap<String, PsiElement> ambiguousDeclarations,
                                 List<PsiElement> nameDefiners) {
@@ -173,7 +173,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
                                     final MultiMap<String, PsiElement> ambiguousDeclarations) {
       if (ambiguousDeclarations.containsKey(name)) {
         final List<PsiElement> localAmbiguous = new ArrayList<PsiElement>(myLocalAmbiguousDeclarations.get(name));
-        for (int i = localAmbiguous.size()-1; i >= 0; i--) {
+        for (int i = localAmbiguous.size() - 1; i >= 0; i--) {
           PsiElement ambiguous = localAmbiguous.get(i);
           final PsiElement result = resolveDeclaration(name, ambiguous, true);
           if (result != null) {
@@ -199,7 +199,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
         return findNameInImportElement(name, importElement, resolveImportElement);
       }
       else if (result instanceof PyFromImportStatement) {
-        return ((PyFromImportStatement) result).resolveImportSource();
+        return ((PyFromImportStatement)result).resolveImportSource();
       }
       return result;
     }
@@ -289,7 +289,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Override
   public LanguageLevel getLanguageLevel() {
     if (myOriginalFile != null) {
-      return ((PyFileImpl) myOriginalFile).getLanguageLevel();
+      return ((PyFileImpl)myOriginalFile).getLanguageLevel();
     }
     VirtualFile virtualFile = getVirtualFile();
 
@@ -323,8 +323,9 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     for (Language lang : getViewProvider().getLanguages()) {
       final List<PythonVisitorFilter> filters = PythonVisitorFilter.INSTANCE.allForLanguage(lang);
       for (PythonVisitorFilter filter : filters) {
-        if (!filter.isSupported(visitorClass, this))
+        if (!filter.isSupported(visitorClass, this)) {
           return false;
+        }
       }
     }
     return true;
@@ -344,7 +345,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
         if (!processor.execute(element, state)) return false;
         if (remainingDunderAll != null && element instanceof PyElement) {
-          remainingDunderAll.remove(((PyElement) element).getName());
+          remainingDunderAll.remove(((PyElement)element).getName());
         }
         return true;
       }
@@ -367,31 +368,31 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     }
     if (pyFiles.contains(this)) return true;
     pyFiles.add(this);
-    for(PyClass c: getTopLevelClasses()) {
+    for (PyClass c : getTopLevelClasses()) {
       if (c == lastParent) continue;
       if (!wrapper.execute(c, resolveState)) return false;
     }
-    for(PyFunction f: getTopLevelFunctions()) {
+    for (PyFunction f : getTopLevelFunctions()) {
       if (f == lastParent) continue;
       if (!wrapper.execute(f, resolveState)) return false;
     }
-    for(PyTargetExpression e: getTopLevelAttributes()) {
+    for (PyTargetExpression e : getTopLevelAttributes()) {
       if (e == lastParent) continue;
       if (!wrapper.execute(e, resolveState)) return false;
     }
 
-    for(PyImportElement e: getImportTargets()) {
+    for (PyImportElement e : getImportTargets()) {
       if (e == lastParent) continue;
       if (!wrapper.execute(e, resolveState)) return false;
     }
 
-    for(PyFromImportStatement e: getFromImports()) {
+    for (PyFromImportStatement e : getFromImports()) {
       if (e == lastParent) continue;
       if (!e.processDeclarations(wrapper, resolveState, null, this)) return false;
     }
 
     if (remainingDunderAll != null) {
-      for (String s: remainingDunderAll) {
+      for (String s : remainingDunderAll) {
         if (!PyNames.isIdentifier(s)) {
           continue;
         }
@@ -503,8 +504,9 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     final QualifiedName qName = importElement.getImportedQName();
     // http://stackoverflow.com/questions/6048786/from-module-import-in-init-py-makes-module-name-visible
     if (qName != null && qName.getComponentCount() > 1 && name.equals(qName.getLastComponent()) && PyNames.INIT_DOT_PY.equals(getName())) {
-      final List<? extends RatedResolveResult> elements = ResolveImportUtil.resolveNameInImportStatement(importElement, qName.removeLastComponent());
-      for (RatedResolveResult element: elements) {
+      final List<? extends RatedResolveResult> elements =
+        ResolveImportUtil.resolveNameInImportStatement(importElement, qName.removeLastComponent());
+      for (RatedResolveResult element : elements) {
         if (PyUtil.turnDirIntoInit(element.getElement()) == this) {
           return importElement;
         }
@@ -539,7 +541,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       protected void addElement(String name, PsiElement element) {
         element = PyUtil.turnDirIntoInit(element);
         if (element instanceof PyElement) {
-          result.add((PyElement) element);
+          result.add((PyElement)element);
         }
       }
     };
@@ -557,8 +559,9 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @NotNull
   public List<PyImportElement> getImportTargets() {
     List<PyImportElement> ret = new ArrayList<PyImportElement>();
-    List<PyImportStatement> imports = PyPsiUtils.collectStubChildren(this, this.getStub(), PyElementTypes.IMPORT_STATEMENT, PyImportStatement.class);
-    for (PyImportStatement one: imports) {
+    List<PyImportStatement> imports =
+      PyPsiUtils.collectStubChildren(this, this.getStub(), PyElementTypes.IMPORT_STATEMENT, PyImportStatement.class);
+    for (PyImportStatement one : imports) {
       ContainerUtil.addAll(ret, one.getImportElements());
     }
     return ret;
@@ -574,7 +577,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   public List<String> getDunderAll() {
     final StubElement stubElement = getStub();
     if (stubElement instanceof PyFileStub) {
-      return ((PyFileStub) stubElement).getDunderAll();
+      return ((PyFileStub)stubElement).getDunderAll();
     }
     if (!myDunderAllCalculated) {
       final List<String> dunderAll = calculateDunderAll();
@@ -598,6 +601,13 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
     // hashlib builds __all__ by concatenating multiple lists of strings, and we want to understand this
     private final Map<String, List<String>> myDunderLike = new HashMap<String, List<String>>();
+
+    @Override
+    public void visitPyFile(PyFile node) {
+      if (node.getText().contains(PyNames.ALL)) {
+        super.visitPyFile(node);
+      }
+    }
 
     @Override
     public void visitPyTargetExpression(PyTargetExpression node) {
@@ -674,7 +684,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   public boolean hasImportFromFuture(FutureFeature feature) {
     final StubElement stub = getStub();
     if (stub instanceof PyFileStub) {
-      return ((PyFileStub) stub).getFutureFeatures().get(feature.ordinal());
+      return ((PyFileStub)stub).getFutureFeatures().get(feature.ordinal());
     }
     Boolean enabled = myFutureFeatures.get(feature);
     if (enabled == null) {
@@ -689,7 +699,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   public String getDeprecationMessage() {
     final StubElement stub = getStub();
     if (stub instanceof PyFileStub) {
-      return ((PyFileStub) stub).getDeprecationMessage();
+      return ((PyFileStub)stub).getDeprecationMessage();
     }
     return extractDeprecationMessage();
   }
@@ -698,13 +708,13 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   public List<PyImportStatementBase> getImportBlock() {
     List<PyImportStatementBase> result = new ArrayList<PyImportStatementBase>();
     ASTNode firstImport = getNode().getFirstChildNode();
-    while(firstImport != null && !isImport(firstImport, false)) {
+    while (firstImport != null && !isImport(firstImport, false)) {
       firstImport = firstImport.getTreeNext();
     }
     if (firstImport != null) {
       result.add(firstImport.getPsi(PyImportStatementBase.class));
       ASTNode lastImport = firstImport.getTreeNext();
-      while(lastImport != null && isImport(lastImport.getTreeNext(), true)) {
+      while (lastImport != null && isImport(lastImport.getTreeNext(), true)) {
         if (isImport(lastImport, false)) {
           result.add(lastImport.getPsi(PyImportStatementBase.class));
         }
@@ -715,18 +725,28 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   public String extractDeprecationMessage() {
-    return PyFunctionImpl.extractDeprecationMessage(getStatements());
+    if (canHaveDeprecationMessage(getText())) {
+      return PyFunctionImpl.extractDeprecationMessage(getStatements());
+    } else {
+      return null;
+    }
+  }
+
+  private static boolean canHaveDeprecationMessage(String text) {
+    return text.contains(PyNames.DEPRECATION_WARNING) || text.contains(PyNames.PENDING_DEPRECATION_WARNING);
   }
 
   public boolean calculateImportFromFuture(FutureFeature feature) {
-    final List<PyFromImportStatement> fromImports = getFromImports();
-    for (PyFromImportStatement fromImport : fromImports) {
-      if (fromImport.isFromFuture()) {
-        final PyImportElement[] pyImportElements = fromImport.getImportElements();
-        for (PyImportElement element : pyImportElements) {
-          final QualifiedName qName = element.getImportedQName();
-          if (qName != null && qName.matches(feature.toString())) {
-            return true;
+    if (getText().contains(feature.toString())) {
+      final List<PyFromImportStatement> fromImports = getFromImports();
+      for (PyFromImportStatement fromImport : fromImports) {
+        if (fromImport.isFromFuture()) {
+          final PyImportElement[] pyImportElements = fromImport.getImportElements();
+          for (PyImportElement element : pyImportElements) {
+            final QualifiedName qName = element.getImportedQName();
+            if (qName != null && qName.matches(feature.toString())) {
+              return true;
+            }
           }
         }
       }

@@ -72,6 +72,4 @@ public interface MarkupModelEx extends MarkupModel {
 
   // runs change attributes action and fires highlighterChanged event if there were changes
   void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter, @NotNull Consumer<RangeHighlighterEx> changeAttributesAction);
-
-  boolean sweep(int start, int end, @NotNull final SweepProcessor<RangeHighlighterEx> sweepProcessor);
 }

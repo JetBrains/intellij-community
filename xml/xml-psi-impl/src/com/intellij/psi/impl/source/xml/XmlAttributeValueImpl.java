@@ -96,7 +96,7 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
     if (cachedReferences != null && myModCount == curModCount) {
       return cachedReferences;
     }
-    cachedReferences = ReferenceProvidersRegistry.getReferencesFromProviders(this, XmlAttributeValue.class);
+    cachedReferences = ReferenceProvidersRegistry.getReferencesFromProviders(this);
     myCachedReferences = cachedReferences;
     myModCount = curModCount;
     return cachedReferences;

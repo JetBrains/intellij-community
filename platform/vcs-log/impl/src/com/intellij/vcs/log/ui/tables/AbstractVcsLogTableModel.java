@@ -95,11 +95,11 @@ public abstract class AbstractVcsLogTableModel<CommitColumnClass> extends Abstra
           return data.getAuthor().getName();
         }
       case DATE_COLUMN:
-        if (data == null || data.getTime() < 0) {
+        if (data == null || data.getTimestamp() < 0) {
           return "";
         }
         else {
-          return DateFormatUtil.formatDateTime(data.getTime());
+          return DateFormatUtil.formatDateTime(data.getTimestamp());
         }
       default:
         throw new IllegalArgumentException("columnIndex is " + columnIndex + " > " + (COLUMN_COUNT - 1));

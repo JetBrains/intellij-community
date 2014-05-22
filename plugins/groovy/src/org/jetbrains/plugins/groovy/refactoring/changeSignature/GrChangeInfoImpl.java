@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
@@ -48,19 +48,19 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
   private boolean myIsNameChanged = false;
   private boolean myIsVisibilityChanged = false;
   private boolean myIsReturnTypeChanged = false;
-  private boolean myIsRetainVarargs;
-  private boolean myIsArrayToVarargs;
-  private boolean myIsObtainVarargs;
-  private boolean myWasVarargs;
-  private String myOldName;
+  private final boolean myIsRetainVarargs;
+  private final boolean myIsArrayToVarargs;
+  private final boolean myIsObtainVarargs;
+  private final boolean myWasVarargs;
+  private final String myOldName;
   private PsiIdentifier myNewNameIdentifier;
-  private PsiExpression[] defaultValues;
-  private boolean myDelegate;
-  private ThrownExceptionInfo[] myThrownExceptions;
+  private final PsiExpression[] defaultValues;
+  private final boolean myDelegate;
+  private final ThrownExceptionInfo[] myThrownExceptions;
   private boolean myExceptionSetChanged;
   private boolean myExceptionSetOrOrderChanged;
-  private String[] myOldParameterNames;
-  private String[] myOldParameterTypes;
+  private final String[] myOldParameterNames;
+  private final String[] myOldParameterTypes;
 
   public GrChangeInfoImpl(GrMethod method,
                           @Nullable String visibilityModifier,
@@ -135,7 +135,7 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
     }
 
     myWasVarargs = method.isVarArgs();
-    if (parameters.size() == 0) {
+    if (parameters.isEmpty()) {
       myIsObtainVarargs = false;
       myIsRetainVarargs = false;
       myIsArrayToVarargs = false;
@@ -205,114 +205,141 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
     }
   }
 
+  @Override
   @NotNull
   public JavaParameterInfo[] getNewParameters() {
     return parameters.toArray(new GrParameterInfo[parameters.size()]);
   }
 
+  @Override
   public String getNewVisibility() {
     return visibilityModifier;
   }
 
+  @Override
   public boolean isParameterSetOrOrderChanged() {
     return changeParameters;
   }
 
+  @Override
   public boolean isParameterTypesChanged() {
     return myIsParameterTypesChanged;
   }
 
+  @Override
   public boolean isParameterNamesChanged() {
     return myIsParameterNamesChanged;
   }
 
+  @Override
   public boolean isGenerateDelegate() {
     return myDelegate;
   }
 
+  @Override
   public boolean isNameChanged() {
     return myIsNameChanged;
   }
 
+  @Override
   public boolean isVisibilityChanged() {
     return myIsVisibilityChanged;
   }
 
+  @Override
   public boolean isExceptionSetChanged() {
     return myExceptionSetChanged;
   }
 
+  @Override
   public boolean isExceptionSetOrOrderChanged() {
     return myExceptionSetOrOrderChanged;
   }
 
+  @Override
   public GrMethod getMethod() {
     return method;
   }
 
+  @Override
   public boolean isReturnTypeChanged() {
     return myIsReturnTypeChanged;
   }
 
+  @Override
   public CanonicalTypes.Type getNewReturnType() {
     return returnType;
   }
 
+  @Override
   public String getNewName() {
     return newName;
   }
 
+  @Override
   public Language getLanguage() {
-    return GroovyFileType.GROOVY_LANGUAGE;
+    return GroovyLanguage.INSTANCE;
   }
 
+  @Override
   @NotNull
   public String[] getOldParameterNames() {
     return myOldParameterNames;
   }
 
+  @Override
   @NotNull
   public String[] getOldParameterTypes() {
     return myOldParameterTypes;
   }
 
+  @Override
   public ThrownExceptionInfo[] getNewExceptions() {
     return myThrownExceptions;
   }
 
+  @Override
   public boolean isRetainsVarargs() {
     return myIsRetainVarargs;
   }
 
+  @Override
   public boolean isObtainsVarags() {
     return myIsObtainVarargs;
   }
 
+  @Override
   public boolean isArrayToVarargs() {
     return myIsArrayToVarargs;
   }
 
+  @Override
   public PsiIdentifier getNewNameIdentifier() {
     return myNewNameIdentifier;
   }
 
+  @Override
   public String getOldName() {
     return myOldName;
   }
 
+  @Override
   public boolean wasVararg() {
     return myWasVarargs;
   }
 
+  @Override
   public boolean[] toRemoveParm() {
     return new boolean[0];  //To change body of implemented methods use File | Settings | File Templates.
   }
 
+  @Override
   public PsiExpression getValue(int i, PsiCallExpression callExpression) {
     if (defaultValues[i] != null) return defaultValues[i];
     return parameters.get(i).getValue(callExpression);
   }
 
+  @Override
   public void updateMethod(PsiMethod psiMethod) {
     if (psiMethod instanceof GrMethod) {
       method = (GrMethod)psiMethod;

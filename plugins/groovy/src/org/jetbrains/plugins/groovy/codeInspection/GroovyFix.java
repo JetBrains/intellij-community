@@ -39,11 +39,13 @@ public abstract class GroovyFix implements LocalQuickFix {
   public static final GroovyFix[] EMPTY_ARRAY = new GroovyFix[0];
 
   //to appear in "Apply Fix" statement when multiple Quick Fixes exist
+  @Override
   @NotNull
   public String getFamilyName() {
     return "";
   }
 
+  @Override
   public void applyFix(@NotNull Project project,
                        @NotNull ProblemDescriptor descriptor) {
     final PsiElement problemElement = descriptor.getPsiElement();

@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
@@ -32,6 +33,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.TIntStack;
 import org.jetbrains.annotations.Contract;
@@ -39,7 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
-import org.jetbrains.plugins.groovy.intentions.base.ErrorUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -226,6 +227,8 @@ public class PsiUtil {
 
   @Nullable
   public static GrArgumentList getArgumentsList(@Nullable PsiElement methodRef) {
+    if (methodRef == null) return null;
+
     if (methodRef instanceof GrEnumConstant) return ((GrEnumConstant)methodRef).getArgumentList();
     PsiElement parent = methodRef.getParent();
     if (parent instanceof GrCall) {
@@ -391,6 +394,7 @@ public class PsiUtil {
     if (viewProvider instanceof MultiplePsiFilesPerDocumentFileViewProvider) {
       MultiplePsiFilesPerDocumentFileViewProvider multiProvider = (MultiplePsiFilesPerDocumentFileViewProvider)viewProvider;
       file = multiProvider.getPsi(multiProvider.getBaseLanguage());
+      LOG.assertTrue(file != null, element + " " + multiProvider.getBaseLanguage());
     }
 
     try {
@@ -556,7 +560,6 @@ public class PsiUtil {
     }
     if (element instanceof PsiVariable) {
       GrExpression expression = call.getInvokedExpression();
-      assert expression != null;
       final PsiType type = expression.getType();
       if (type instanceof GrClosureType) {
         return isRawClosureCall(call, result, (GrClosureType)type);
@@ -966,7 +969,7 @@ public class PsiUtil {
   }
 
 
-  private static String[] visibilityModifiers = new String[]{PsiModifier.PRIVATE, PsiModifier.PROTECTED, PsiModifier.PUBLIC};
+  private static final String[] visibilityModifiers = new String[]{PsiModifier.PRIVATE, PsiModifier.PROTECTED, PsiModifier.PUBLIC};
 
   public static void escalateVisibility(PsiMember owner, PsiElement place) {
     PsiModifierList modifierList = owner.getModifierList();
@@ -1217,7 +1220,7 @@ public class PsiUtil {
   public static boolean isProperty(@NotNull GrField field) {
     final PsiClass clazz = field.getContainingClass();
     if (clazz == null) return false;
-    if (clazz.isInterface() && !PsiImplUtil.isTrait(clazz)) return false;
+    if (clazz.isInterface() && !GrTraitUtil.isTrait(clazz)) return false;
     final GrModifierList modifierList = field.getModifierList();
     return modifierList == null || !modifierList.hasExplicitVisibilityModifiers();
   }
@@ -1282,8 +1285,22 @@ public class PsiUtil {
     }
     else {
       PsiElement resolved = ref.resolve();
-      return resolved instanceof PsiClass && hasEnclosingInstanceInScope(((PsiClass)resolved), ref, superClassAccepted);
+      if (resolved instanceof PsiClass) {
+        if (hasEnclosingInstanceInScope(((PsiClass)resolved), ref, superClassAccepted)) return true;
+        if (superClassAccepted && GrTraitUtil.isTrait((PsiClass)resolved) && scopeClassImplementsTrait(((PsiClass)resolved), ref)) return true;
+      }
+      return false;
     }
+  }
+
+  public static boolean scopeClassImplementsTrait(@NotNull final PsiClass trait, @NotNull final PsiElement place) {
+    GrTypeDefinition scopeClass = PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class, true);
+    return scopeClass != null && ContainerUtil.find(scopeClass.getSuperTypes(), new Condition<PsiClassType>() {
+      @Override
+      public boolean value(PsiClassType type) {
+        return place.getManager().areElementsEquivalent(type.resolve(), trait);
+      }
+    }) != null;
   }
 
   public static boolean isThisOrSuperRef(@Nullable PsiElement qualifier) {
@@ -1350,12 +1367,18 @@ public class PsiUtil {
   }
 
   public static boolean isVoidMethod(@NotNull PsiMethod method) {
-    return PsiType.VOID.equals(method.getReturnType()) ||
+    if (PsiType.VOID.equals(method.getReturnType())) {
+      return true;
+    }
 
-           method instanceof GrMethod &&
-           ((GrMethod)method).getReturnTypeElementGroovy() == null &&
-           ((GrMethod)method).getBlock() != null &&
-           isBlockReturnVoid(((GrMethod)method).getBlock());
+    if (method instanceof GrMethod && ((GrMethod)method).getReturnTypeElementGroovy() == null) {
+      GrOpenBlock block = ((GrMethod)method).getBlock();
+      if (block != null && isBlockReturnVoid(block)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   public static boolean isBlockReturnVoid(@NotNull final GrCodeBlock block) {
@@ -1371,5 +1394,28 @@ public class PsiUtil {
         }), PsiModificationTracker.MODIFICATION_COUNT);
       }
     });
+  }
+
+  public static boolean checkPsiElementsAreEqual(PsiElement l, PsiElement r) {
+    if (!l.getText().equals(r.getText())) return false;
+    if (l.getNode().getElementType() != r.getNode().getElementType()) return false;
+
+    final PsiElement[] lChildren = l.getChildren();
+    final PsiElement[] rChildren = r.getChildren();
+
+    if (lChildren.length != rChildren.length) return false;
+
+    for (int i = 0; i < rChildren.length; i++) {
+      if (!checkPsiElementsAreEqual(lChildren[i], rChildren[i])) return false;
+    }
+    return true;
+  }
+
+  public static boolean isCall(GrReferenceExpression referenceExpression) {
+    return referenceExpression.getParent() instanceof GrCall;
+  }
+
+  public static boolean isLocalVariable(@Nullable PsiElement variable) {
+    return variable instanceof GrVariable && !(variable instanceof GrField || variable instanceof GrParameter);
   }
 }

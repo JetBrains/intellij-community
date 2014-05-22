@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,10 @@ public class GroovyElementPattern<T extends GroovyPsiElement,Self extends Groovy
     super(condition);
   }
 
+  @Override
   public Self methodCallParameter(final int index, final ElementPattern<? extends PsiMethod> methodPattern) {
     return with(new PatternCondition<T>("methodCallParameter") {
+      @Override
       public boolean accepts(@NotNull final T literal, final ProcessingContext context) {
         final PsiElement parent = literal.getParent();
         if (parent instanceof GrArgumentList) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,14 +107,17 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     return "NEW expression";
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitNewExpression(this);
   }
 
+  @Override
   public PsiType getType() {
     return TypeInferenceHelper.getCurrentContext().getExpressionType(this, MY_TYPE_CALCULATOR);
   }
 
+  @Override
   public GrNamedArgument addNamedArgument(final GrNamedArgument namedArgument) throws IncorrectOperationException {
     final GrArgumentList list = getArgumentList();
     if (list == null) { //so it is not anonymous class declaration
@@ -140,6 +143,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     return super.getArgumentList();
   }
 
+  @Override
   @Nullable
   public GrExpression getQualifier() {
     final PsiElement[] children = getChildren();
@@ -150,12 +154,14 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     return null;
   }
 
+  @Override
   public GrCodeReferenceElement getReferenceElement() {
     final GrAnonymousClassDefinition anonymous = getAnonymousClassDefinition();
     if (anonymous != null) return anonymous.getBaseClassReferenceGroovy();
     return findChildByClass(GrCodeReferenceElement.class);
   }
 
+  @Override
   public GroovyResolveResult[] multiResolveClass() {
     final GrCodeReferenceElement referenceElement = getReferenceElement();
     if (referenceElement != null) {
@@ -164,12 +170,14 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     return GroovyResolveResult.EMPTY_ARRAY;
   }
 
+  @Override
   public int getArrayCount() {
     final GrArrayDeclaration arrayDeclaration = getArrayDeclaration();
     if (arrayDeclaration == null) return 0;
     return arrayDeclaration.getArrayCount();
   }
 
+  @Override
   public GrAnonymousClassDefinition getAnonymousClassDefinition() {
     return findChildByClass(GrAnonymousClassDefinition.class);
   }
@@ -186,6 +194,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     return findChildByClass(GrTypeArgumentList.class);
   }
 
+  @Override
   @Nullable
   public PsiMethod resolveMethod() {
     return PsiImplUtil.extractUniqueElement(multiResolve(false));
@@ -197,6 +206,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     return PsiImplUtil.extractUniqueResult(multiResolve(false));
   }
 
+  @Override
   @NotNull
   public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument) {
     final GrCodeReferenceElement referenceElement = getReferenceElement();

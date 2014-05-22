@@ -238,7 +238,7 @@ public class VfsImplUtil {
                 if (root != null) {
                   root.markDirtyRecursively();
                   if (rootsToRefresh == null) rootsToRefresh = ContainerUtil.newHashMap();
-                  rootsToRefresh.put((FileUtil.toSystemDependentName(localPath)), root);
+                  rootsToRefresh.put(localPath, root);
                 }
                 rootPaths[i] = null;
               }

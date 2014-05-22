@@ -79,7 +79,6 @@ import com.jetbrains.python.console.completion.PydevConsoleElement;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.debugger.PyDebugRunner;
-import com.jetbrains.python.debugger.PyLocalPositionConverter;
 import com.jetbrains.python.debugger.PySourcePosition;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PyRemoteSdkCredentials;
@@ -88,7 +87,6 @@ import com.jetbrains.python.run.ProcessRunner;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.sdk.PySdkUtil;
-import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.PythonIcons;
 import org.apache.xmlrpc.XmlRpcException;
@@ -367,7 +365,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       remoteProcess.addRemoteTunnel(remotePorts.second, "localhost", myPorts[1]);
 
 
-      myPydevConsoleCommunication = new PydevConsoleCommunication(getProject(), myPorts[0], remoteProcess, myPorts[1]);
+      myPydevConsoleCommunication = new PydevRemoteConsoleCommunication(getProject(), myPorts[0], remoteProcess, myPorts[1]);
       return remoteProcess;
     }
     catch (Exception e) {
@@ -422,8 +420,29 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
   @Override
   protected PyConsoleProcessHandler createProcessHandler(final Process process) {
-    myProcessHandler = new PyConsoleProcessHandler(process, getConsoleView(), myPydevConsoleCommunication, myCommandLine,
-                                                   CharsetToolkit.UTF8_CHARSET);
+    if (PySdkUtil.isRemote(mySdk)) {
+      PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
+      if (manager != null) {
+        PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();
+        assert data != null;
+        try {
+          myProcessHandler =
+            manager.createConsoleProcessHandler(process, data.getRemoteSdkCredentials(), getConsoleView(), myPydevConsoleCommunication,
+                                                myCommandLine, CharsetToolkit.UTF8_CHARSET,
+                                                manager.setupMappings(getProject(), data, null));
+        }
+        catch (InterruptedException e) {
+          LOG.error("Error getting remote credentials");
+        }
+      }
+      else {
+        LOG.error("Can't create remote console process handler");
+      }
+    }
+    else {
+      myProcessHandler = new PyConsoleProcessHandler(process, getConsoleView(), myPydevConsoleCommunication, myCommandLine,
+                                                     CharsetToolkit.UTF8_CHARSET);
+    }
     return myProcessHandler;
   }
 
@@ -810,7 +829,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     public void update(AnActionEvent e) {
       if (mySession != null) {
         e.getPresentation().setEnabled(false);
-      } else {
+      }
+      else {
         e.getPresentation().setEnabled(true);
       }
     }
@@ -843,18 +863,18 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
         public XDebugProcess start(@NotNull final XDebugSession session) {
           PythonDebugLanguageConsoleView debugConsoleView = new PythonDebugLanguageConsoleView(getProject(), mySdk);
 
-          PyConsoleDebugProcessHandler consoleDebugProcessHandler = new PyConsoleDebugProcessHandler(myProcessHandler, myPydevConsoleCommunication);
+          PyConsoleDebugProcessHandler consoleDebugProcessHandler =
+            new PyConsoleDebugProcessHandler(myProcessHandler);
 
           PyConsoleDebugProcess consoleDebugProcess =
             new PyConsoleDebugProcess(session, serverSocket, debugConsoleView,
                                       consoleDebugProcessHandler);
 
-          PythonDebugConsoleCommunication communication = PyDebugRunner.initDebugConsoleView(getProject(), consoleDebugProcess, debugConsoleView, consoleDebugProcessHandler);
+          PythonDebugConsoleCommunication communication =
+            PyDebugRunner.initDebugConsoleView(getProject(), consoleDebugProcess, debugConsoleView, consoleDebugProcessHandler);
 
           myPydevConsoleCommunication.setDebugCommunication(communication);
           debugConsoleView.attachToProcess(consoleDebugProcessHandler);
-
-          consoleDebugProcess.setPositionConverter(new PyLocalPositionConverter());
 
           consoleDebugProcess.waitForNextConnection();
 

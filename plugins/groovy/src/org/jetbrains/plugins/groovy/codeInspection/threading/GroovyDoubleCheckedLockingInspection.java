@@ -44,22 +44,26 @@ public class GroovyDoubleCheckedLockingInspection extends BaseInspection {
    */
   public boolean ignoreOnVolatileVariables = false;
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return THREADING_ISSUES;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Double-checked locking";
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return "Double-checked locking #loc";
   }
 
+  @Override
   @Nullable
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel("Ignore double-checked locking on volatile fields", this,
@@ -67,6 +71,7 @@ public class GroovyDoubleCheckedLockingInspection extends BaseInspection {
     );
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new DoubleCheckedLockingVisitor();
   }
@@ -74,6 +79,7 @@ public class GroovyDoubleCheckedLockingInspection extends BaseInspection {
   private class DoubleCheckedLockingVisitor
       extends BaseInspectionVisitor {
 
+    @Override
     public void visitIfStatement(@NotNull GrIfStatement statement) {
       super.visitIfStatement(statement);
       final GrExpression outerCondition = statement.getCondition();

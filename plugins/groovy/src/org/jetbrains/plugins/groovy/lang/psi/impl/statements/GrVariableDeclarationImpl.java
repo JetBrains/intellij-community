@@ -82,6 +82,7 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> impl
     GroovyPsiElementImpl.removeStatement(this);
   }
 
+  @Override
   @NotNull
   public GrModifierList getModifierList() {
     return getRequiredStubOrPsiChild(GroovyElementTypes.MODIFIERS);
@@ -92,6 +93,7 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> impl
     return getModifierList().hasModifierProperty(name);
   }
 
+  @Override
   public void setType(@Nullable PsiType type) {
     final GrTypeElement typeElement = getTypeElementGroovy();
     if (type == null) {
@@ -160,12 +162,14 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> impl
     }
   }
 
+  @Override
   @Nullable
   public GrTypeElement getTypeElementGroovy() {
     if (isTuple()) return null;
     return findChildByClass(GrTypeElement.class);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitVariableDeclaration(this);
   }
@@ -174,6 +178,7 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> impl
     return "Variable definitions";
   }
 
+  @Override
   public GrMember[] getMembers() {
     List<GrMember> result = new ArrayList<GrMember>();
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
@@ -182,11 +187,13 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> impl
     return result.toArray(new GrMember[result.size()]);
   }
 
+  @Override
   @NotNull
   public GrVariable[] getVariables() {
     return getStubOrPsiChildren(TokenSets.VARIABLES, GrVariable.ARRAY_FACTORY);
   }
 
+  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                      @NotNull ResolveState state,
                                      @Nullable PsiElement lastParent,

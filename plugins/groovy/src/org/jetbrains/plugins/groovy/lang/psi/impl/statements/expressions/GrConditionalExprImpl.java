@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,11 +60,13 @@ public class GrConditionalExprImpl extends GrExpressionImpl implements GrConditi
     return "Conditional expression";
   }
 
+  @Override
   @NotNull
   public GrExpression getCondition() {
     return findNotNullChildByClass(GrExpression.class);
   }
 
+  @Override
   @Nullable
   public GrExpression getThenBranch() {
     final PsiElement question = findChildByType(GroovyTokenTypes.mQUESTION);
@@ -76,6 +78,7 @@ public class GrConditionalExprImpl extends GrExpressionImpl implements GrConditi
     return null;
   }
 
+  @Override
   @Nullable
   public GrExpression getElseBranch() {
     final PsiElement colon = findChildByType(GroovyTokenTypes.mCOLON);
@@ -87,10 +90,12 @@ public class GrConditionalExprImpl extends GrExpressionImpl implements GrConditi
     return null;
   }
 
+  @Override
   public PsiType getType() {
     return TypeInferenceHelper.getCurrentContext().getExpressionType(this, TYPE_CALCULATOR);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitConditionalExpression(this);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,10 +144,10 @@ public abstract class AbstractVcsHelper {
   }
 
   public abstract void showFileHistory(VcsHistoryProvider vcsHistoryProvider, FilePath path, final AbstractVcs vcs,
-                                       final String repositoryPath);
+                                       final RepositoryLocation repositoryLocation);
 
   public abstract void showFileHistory(VcsHistoryProvider vcsHistoryProvider, AnnotationProvider annotationProvider, FilePath path,
-                                       final String repositoryPath, final AbstractVcs vcs);
+                                       final RepositoryLocation repositoryLocation, final AbstractVcs vcs);
 
   /**
    * Shows the "Rollback Changes" dialog with the specified list of changes.

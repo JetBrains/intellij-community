@@ -47,7 +47,7 @@ import com.intellij.util.containers.MultiMap;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -86,11 +86,11 @@ import java.util.List;
 public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(GrIntroduceClosureParameterProcessor.class);
 
-  private GrIntroduceParameterSettings mySettings;
-  private GrClosableBlock toReplaceIn;
-  private PsiElement toSearchFor;
-  private GrExpressionWrapper myParameterInitializer;
-  private GroovyPsiElementFactory myFactory = GroovyPsiElementFactory.getInstance(myProject);
+  private final GrIntroduceParameterSettings mySettings;
+  private final GrClosableBlock toReplaceIn;
+  private final PsiElement toSearchFor;
+  private final GrExpressionWrapper myParameterInitializer;
+  private final GroovyPsiElementFactory myFactory = GroovyPsiElementFactory.getInstance(myProject);
 
   public GrIntroduceClosureParameterProcessor(@NotNull GrIntroduceParameterSettings settings) {
     super(settings.getProject(), null);
@@ -106,6 +106,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     myParameterInitializer = new GrExpressionWrapper(expression);
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(final UsageInfo[] usages) {
     return new UsageViewDescriptorAdapter() {
@@ -337,6 +338,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
 
     final GrParameter[] parameters = block.getParameters();
     settings.parametersToRemove().forEachDescending(new TIntProcedure() {
+      @Override
       public boolean execute(final int paramNum) {
         try {
           PsiParameter param = parameters[paramNum];
@@ -424,7 +426,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
       argList.addAfter(factory.createExpressionFromText(settings.getName()), anchor);
     }
     else {
-      PsiElement initializer = ExpressionConverter.getExpression(expression, GroovyFileType.GROOVY_LANGUAGE, settings.getProject());
+      PsiElement initializer = ExpressionConverter.getExpression(expression, GroovyLanguage.INSTANCE, settings.getProject());
       LOG.assertTrue(initializer instanceof GrExpression);
 
       GrExpression newArg = GroovyIntroduceParameterUtil.addClosureToCall(initializer, argList);

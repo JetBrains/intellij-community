@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,6 +75,7 @@ public class GroovyCreateClassDialog extends DialogWrapper {
     init();
 
     myPackageChooseButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent event) {
         PackageChooserDialog chooser = new PackageChooserDialog(GroovyInspectionBundle.message("dialog.create.class.package.chooser.title"), myProject);
         chooser.selectPackage(myPackageTextField.getText());
@@ -92,6 +93,7 @@ public class GroovyCreateClassDialog extends DialogWrapper {
     myPackageChooseButton = new FixedSizeButton(myPackageTextField);
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     myPackageTextField.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -104,6 +106,7 @@ public class GroovyCreateClassDialog extends DialogWrapper {
     });
 
     new AnAction() {
+      @Override
       public void actionPerformed(AnActionEvent e) {
         myPackageChooseButton.doClick();
       }
@@ -112,6 +115,7 @@ public class GroovyCreateClassDialog extends DialogWrapper {
     return myContentPane;
   }
 
+  @Override
   public JComponent getContentPane() {
     return myContentPane;
   }
@@ -120,11 +124,13 @@ public class GroovyCreateClassDialog extends DialogWrapper {
     return myTargetDirectory;
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myPackageTextField;
   }
@@ -134,11 +140,13 @@ public class GroovyCreateClassDialog extends DialogWrapper {
     return name != null ? name.trim() : "";
   }
 
+  @Override
   protected void doOKAction() {
     final String packageName = getPackageName();
 
     final Ref<String> errorStringRef = new Ref<String>();
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      @Override
       public void run() {
         try {
           final PsiDirectory baseDir = myModule == null ? null : PackageUtil.findPossiblePackageDirectoryInModule(myModule, packageName);
@@ -157,7 +165,7 @@ public class GroovyCreateClassDialog extends DialogWrapper {
     }, GroovyInspectionBundle.message("create.directory.command"), null);
 
     if (errorStringRef.get() != null) {
-      if (errorStringRef.get().length() > 0) {
+      if (!errorStringRef.get().isEmpty()) {
         Messages.showMessageDialog(myProject, errorStringRef.get(), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       }
       return;

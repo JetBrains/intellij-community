@@ -76,6 +76,7 @@ public class GroovyMethodCallPattern extends GroovyExpressionPattern<GrCallExpre
 
   public GroovyMethodCallPattern withMethod(final ElementPattern<? extends PsiMethod> methodPattern) {
     return with(new PatternCondition<GrCallExpression>("methodCall") {
+      @Override
       public boolean accepts(@NotNull GrCallExpression callExpression, ProcessingContext context) {
         for (GroovyResolveResult result : callExpression.getCallVariants(null)) {
           if (methodPattern.getCondition().accepts(result.getElement(), context)) {

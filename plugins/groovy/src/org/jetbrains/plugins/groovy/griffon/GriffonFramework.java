@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,6 +74,7 @@ public class GriffonFramework extends MvcFramework {
   private GriffonFramework() {
   }
 
+  @Override
   public boolean hasSupport(@NotNull Module module) {
     return findAppRoot(module) != null && !isAuxModule(module) && getSdkRoot(module) != null;
   }
@@ -110,7 +111,7 @@ public class GriffonFramework extends MvcFramework {
   }
 
   @Override
-  public void updateProjectStructure(final @NotNull Module module) {
+  public void updateProjectStructure(@NotNull final Module module) {
     if (!MvcModuleStructureUtil.isEnabledStructureUpdate()) return;
 
     final VirtualFile root = findAppRoot(module);
@@ -164,7 +165,7 @@ public class GriffonFramework extends MvcFramework {
         return pluginAndVersion.substring(0, separatorIndexes.get(0));
       }
 
-      if (separatorIndexes.size() > 0) {
+      if (!separatorIndexes.isEmpty()) {
         String json;
         try {
           json = VfsUtil.loadText(pluginJson);
@@ -359,6 +360,7 @@ public class GriffonFramework extends MvcFramework {
     return GLOBAL_PLUGINS_MODULE_NAME;
   }
 
+  @Override
   @Nullable
   public File getDefaultSdkWorkDir(@NotNull Module module) {
     final String version = GriffonLibraryPresentationProvider.getGriffonVersion(module);
@@ -423,11 +425,13 @@ public class GriffonFramework extends MvcFramework {
       super(module, auxModule, getUserHomeGriffon(), GriffonFramework.getInstance().getSdkWorkDir(module));
     }
 
+    @Override
     @NotNull
     public String getUserLibraryName() {
       return GRIFFON_USER_LIBRARY;
     }
 
+    @Override
     public MultiMap<JpsModuleSourceRootType<?>, String> getSourceFolders() {
       MultiMap<JpsModuleSourceRootType<?>, String> res = new MultiMap<JpsModuleSourceRootType<?>, String>();
 
@@ -475,6 +479,7 @@ public class GriffonFramework extends MvcFramework {
       return res;
     }
 
+    @Override
     public String[] getInvalidSourceFolders() {
       return new String[]{"src"};
     }

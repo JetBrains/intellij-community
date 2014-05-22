@@ -17,28 +17,30 @@ package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.PsiJavaPatterns;
+import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ProcessingContext;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
 import java.util.Set;
-
-import static com.intellij.patterns.PlatformPatterns.psiElement;
-import static com.intellij.patterns.PsiJavaPatterns.elementType;
-import static com.intellij.patterns.StandardPatterns.alwaysFalse;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * @author ilyas
  */
 public class GroovyCompletionContributor extends CompletionContributor {
 
-  private static final ElementPattern<PsiElement> AFTER_NUMBER_LITERAL = psiElement().afterLeafSkipping(
-    alwaysFalse(),
-    psiElement().withElementType(elementType().oneOf(mNUM_DOUBLE, mNUM_INT, mNUM_LONG, mNUM_FLOAT, mNUM_BIG_INT, mNUM_BIG_DECIMAL)));
+  private static final ElementPattern<PsiElement> AFTER_NUMBER_LITERAL = PlatformPatterns.psiElement().afterLeafSkipping(
+    StandardPatterns.alwaysFalse(),
+    PlatformPatterns.psiElement().withElementType(PsiJavaPatterns
+                                                    .elementType().oneOf(GroovyTokenTypes.mNUM_DOUBLE, GroovyTokenTypes.mNUM_INT,
+                                                                         GroovyTokenTypes.mNUM_LONG, GroovyTokenTypes.mNUM_FLOAT,
+                                                                         GroovyTokenTypes.mNUM_BIG_INT, GroovyTokenTypes.mNUM_BIG_DECIMAL)));
 
 
   public GroovyCompletionContributor() {
@@ -51,7 +53,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
     GrMainCompletionProvider.register(this);
     GrAnnotationAttributeCompletionProvider.register(this);
 
-    extend(CompletionType.BASIC, psiElement().withParent(GrLiteral.class), new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.BASIC, PlatformPatterns.psiElement().withParent(GrLiteral.class), new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     ProcessingContext context,
@@ -87,7 +89,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
     //don't eat $ from gstrings when completing previous injection ref. see IDEA-110369
     PsiElement position = context.getFile().findElementAt(context.getStartOffset());
-    if (position!= null && position.getNode().getElementType() == mDOLLAR) {
+    if (position!= null && position.getNode().getElementType() == GroovyTokenTypes.mDOLLAR) {
       context.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, context.getStartOffset());
     }
   }

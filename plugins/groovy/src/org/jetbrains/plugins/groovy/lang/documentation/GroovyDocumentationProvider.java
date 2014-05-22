@@ -89,6 +89,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   }
 
 
+  @Override
   @Nullable
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (element instanceof GrVariable || element instanceof GrImplicitVariable) {
@@ -223,7 +224,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   private static void generateModifiers(StringBuilder buffer, PsiElement element) {
     String modifiers = PsiFormatUtil.formatModifiers(element, PsiFormatUtilBase.JAVADOC_MODIFIERS_ONLY);
 
-    if (modifiers.length() > 0) {
+    if (!modifiers.isEmpty()) {
       buffer.append(modifiers);
       buffer.append(" ");
     }
@@ -239,7 +240,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     GroovyFile file = (GroovyFile)aClass.getContainingFile();
 
     String packageName = file.getPackageName();
-    if (packageName.length() > 0) {
+    if (!packageName.isEmpty()) {
       buffer.append(packageName).append("\n");
     }
 
@@ -311,6 +312,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     }
   }
 
+  @Override
   @Nullable
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     List<String> result = new ArrayList<String>();
@@ -325,6 +327,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     return result.isEmpty() ? null : result;
   }
 
+  @Override
   @Nullable
   public String generateDoc(PsiElement element, PsiElement originalElement) {
     if (element instanceof CustomMembersGenerator.GdslNamedParameter) {
@@ -421,6 +424,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     return element;
   }
 
+  @Override
   public String fetchExternalDocumentation(final Project project, PsiElement element, final List<String> docUrls) {
     return JavaDocumentationProvider.fetchExternalJavadoc(element, project, docUrls);
   }
@@ -469,6 +473,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     sb.append("<br>");
   }
 
+  @Override
   @Nullable
   public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
     if (object instanceof GroovyResolveResult) {
@@ -480,11 +485,13 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     return null;
   }
 
+  @Override
   @Nullable
   public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
     return JavaDocUtil.findReferenceTarget(psiManager, link, context);
   }
 
+  @Override
   public PsiComment findExistingDocComment(PsiComment contextElement) {
     if (contextElement instanceof GrDocComment) {
       final GrDocCommentOwner owner = GrDocCommentUtil.findDocOwner((GrDocComment)contextElement);
@@ -506,6 +513,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     return null;
   }
 
+  @Override
   public String generateDocumentationContentStub(PsiComment contextComment) {
     if (!(contextComment instanceof GrDocComment)) {
       return null;

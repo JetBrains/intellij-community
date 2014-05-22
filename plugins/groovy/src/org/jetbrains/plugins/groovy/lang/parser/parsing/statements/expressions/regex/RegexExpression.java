@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.BinaryExpression;
@@ -28,11 +29,11 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author ilyas
  */
-public class RegexExpression implements GroovyElementTypes {
+public class RegexExpression {
 
   private static final TokenSet REGEX_DO = TokenSet.create(
-      mREGEX_FIND,
-      mREGEX_MATCH
+    GroovyTokenTypes.mREGEX_FIND,
+    GroovyTokenTypes.mREGEX_MATCH
   );
 
   public static boolean parse(PsiBuilder builder, GroovyParser parser) {
@@ -41,12 +42,14 @@ public class RegexExpression implements GroovyElementTypes {
     if (BinaryExpression.EQUALITY.parseBinary(builder, parser)) {
       IElementType type = builder.getTokenType();
       if (ParserUtils.getToken(builder, REGEX_DO)) {
-        ParserUtils.getToken(builder, mNLS);
+        ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
         if (!BinaryExpression.EQUALITY.parseBinary(builder, parser)) {
           builder.error(GroovyBundle.message("expression.expected"));
         }
         PsiBuilder.Marker newMarker = marker.precede();
-        marker.done(type == mREGEX_FIND ? REGEX_FIND_EXPRESSION : REGEX_MATCH_EXPRESSION);
+        marker.done(type == GroovyTokenTypes.mREGEX_FIND
+                    ? GroovyElementTypes.REGEX_FIND_EXPRESSION
+                    : GroovyElementTypes.REGEX_MATCH_EXPRESSION);
         if (REGEX_DO.contains(builder.getTokenType())) {
           subParse(builder, newMarker, parser);
         } else {
@@ -65,12 +68,12 @@ public class RegexExpression implements GroovyElementTypes {
   private static void subParse(PsiBuilder builder, PsiBuilder.Marker marker, GroovyParser parser) {
     IElementType type = builder.getTokenType();
     ParserUtils.getToken(builder, REGEX_DO);
-    ParserUtils.getToken(builder, mNLS);
+    ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
     if (!BinaryExpression.EQUALITY.parseBinary(builder, parser)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
     PsiBuilder.Marker newMarker = marker.precede();
-    marker.done(type == mREGEX_FIND ? REGEX_FIND_EXPRESSION : REGEX_MATCH_EXPRESSION);
+    marker.done(type == GroovyTokenTypes.mREGEX_FIND ? GroovyElementTypes.REGEX_FIND_EXPRESSION : GroovyElementTypes.REGEX_MATCH_EXPRESSION);
     if (REGEX_DO.contains(builder.getTokenType())) {
       subParse(builder, newMarker, parser);
     } else {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.ui.UIUtil;
@@ -127,7 +127,7 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
   private boolean doDeleteRemote(@NotNull String branchName, @NotNull Collection<GitRepository> repositories) {
     GitCompoundResult result = new GitCompoundResult(myProject);
     for (GitRepository repository : repositories) {
-      Pair<String, String> pair = splitNameOfRemoteBranch(branchName);
+      Couple<String> pair = splitNameOfRemoteBranch(branchName);
       String remote = pair.getFirst();
       String branch = pair.getSecond();
       GitCommandResult res = pushDeletion(repository, remote, branch);
@@ -145,11 +145,11 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
    * Returns the remote and the "local" name of a remote branch.
    * Expects branch in format "origin/master", i.e. remote/branch
    */
-  private static Pair<String, String> splitNameOfRemoteBranch(String branchName) {
+  private static Couple<String> splitNameOfRemoteBranch(String branchName) {
     int firstSlash = branchName.indexOf('/');
     String remoteName = firstSlash > -1 ? branchName.substring(0, firstSlash) : branchName;
     String remoteBranchName = branchName.substring(firstSlash + 1);
-    return Pair.create(remoteName, remoteBranchName);
+    return Couple.newOne(remoteName, remoteBranchName);
   }
 
   @NotNull

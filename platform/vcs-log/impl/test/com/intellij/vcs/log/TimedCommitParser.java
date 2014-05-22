@@ -17,8 +17,9 @@ package com.intellij.vcs.log;
 
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.graph.parser.CommitParser;
+import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.TimedVcsCommitImpl;
-import com.intellij.vcs.log.parser.CommitParser;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -46,26 +47,31 @@ public class TimedCommitParser {
     catch (NumberFormatException e) {
       throw new IllegalArgumentException("bad timestamp in line: " + line);
     }
-    GraphCommit commit = CommitParser.parseCommitParents(line.substring(firstSeparatorIndex + 2));
+    com.intellij.vcs.log.graph.GraphCommit<Integer> commit = CommitParser.parseCommitParentsAsInteger(line.substring(firstSeparatorIndex + 2));
     List<Hash> parents = ContainerUtil.newArrayList();
-    for (int p : commit.getParentIndices()) {
+    for (int p : commit.getParents()) {
       parents.add(intToHash(p));
     }
-    return new TimedVcsCommitImpl(intToHash(commit.getIndex()), parents, timestamp);
+    return new TimedVcsCommitImpl(intToHash(commit.getId()), parents, timestamp);
   }
 
   private static Hash intToHash(int index) {
-    return new SimpleHash(Integer.toHexString(index));
+    return HashImpl.build(Integer.toHexString(index));
   }
 
   @NotNull
-  public static List<TimedVcsCommit> log(@NotNull String... commits) {
-    return ContainerUtil.map(Arrays.asList(commits), new Function<String, TimedVcsCommit>() {
+  public static List<TimedVcsCommit> log(@NotNull List<String> commits) {
+    return ContainerUtil.map(commits, new Function<String, TimedVcsCommit>() {
       @Override
       public TimedVcsCommit fun(String commit) {
         return parseTimestampParentHashes(commit);
       }
     });
+  }
+
+  @NotNull
+  public static List<TimedVcsCommit> log(@NotNull String... commits) {
+    return log(Arrays.asList(commits));
   }
 
 }

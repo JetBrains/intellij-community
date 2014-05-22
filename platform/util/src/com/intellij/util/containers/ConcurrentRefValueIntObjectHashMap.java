@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,16 @@
 package com.intellij.util.containers;
 
 
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+/**
+ * Base class for concurrent int key -> (weak/soft) value:V map
+ * Null values are NOT allowed
+ */
 abstract class ConcurrentRefValueIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
   private final StripedLockIntObjectConcurrentHashMap<IntReference<V>> myMap = new StripedLockIntObjectConcurrentHashMap<IntReference<V>>();
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
@@ -163,7 +166,7 @@ abstract class ConcurrentRefValueIntObjectHashMap<V> implements ConcurrentIntObj
 
           @Override
           public void remove() {
-            throw new IncorrectOperationException("not implemented");
+            throw new UnsupportedOperationException();
           }
         };
       }

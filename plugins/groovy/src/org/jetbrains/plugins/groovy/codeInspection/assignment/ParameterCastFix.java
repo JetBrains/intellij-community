@@ -33,7 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 public class ParameterCastFix extends GroovyFix {
   private final GrExpression myArgument;
   private final PsiType myType;
-  private String myName;
+  private final String myName;
 
   public ParameterCastFix(int param, @NotNull PsiType type, @NotNull GrExpression argument) {
     myArgument = argument;

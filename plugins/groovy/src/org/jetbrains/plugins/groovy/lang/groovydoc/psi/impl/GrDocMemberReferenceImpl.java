@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,15 +36,18 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
     super(node);
   }
 
+  @Override
   @Nullable
   public GrDocReferenceElement getReferenceHolder() {
     return findChildByClass(GrDocReferenceElement.class);
   }
 
+  @Override
   public boolean isReferenceTo(PsiElement element) {
     return getManager().areElementsEquivalent(element, resolve());
   }
 
+  @Override
   @Nullable
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     if (isReferenceTo(element)) return this;
@@ -89,6 +92,7 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
     return null;
   }
 
+  @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     PsiElement nameElement = getReferenceNameElement();
     ASTNode node = nameElement.getNode();
@@ -98,6 +102,7 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
     return this;
   }
 
+  @Override
   @NotNull
   public GrDocTagValueToken getReferenceNameElement() {
     GrDocTagValueToken token = findChildByClass(GrDocTagValueToken.class);
@@ -105,40 +110,48 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
     return token;
   }
 
+  @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @Override
   public PsiReference getReference() {
     return this;
   }
 
+  @Override
   public TextRange getRangeInElement() {
     final PsiElement refNameElement = getReferenceNameElement();
     final int offsetInParent = refNameElement.getStartOffsetInParent();
     return new TextRange(offsetInParent, offsetInParent + refNameElement.getTextLength());
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     return getRangeInElement().substring(getElement().getText());
   }
 
+  @Override
   public boolean isSoft() {
     return false;
   }
 
+  @Override
   @Nullable
   public PsiElement getQualifier() {
     return getReferenceHolder();
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getReferenceName() {
     return getReferenceNameElement().getText();
   }
 
+  @Override
   @Nullable
   public PsiElement resolve() {
     ResolveResult[] results = multiResolve(false);
@@ -148,11 +161,13 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
     return null;
   }
 
+  @Override
   @NotNull
   public ResolveResult[] multiResolve(boolean incompleteCode) {
     return multiResolveImpl();
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     return PsiElement.EMPTY_ARRAY;

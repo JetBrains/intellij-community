@@ -196,6 +196,7 @@ public class ZipFileCache {
 
     synchronized (ourLock) {
       for (String path : paths) {
+        path = FileUtil.toCanonicalPath(path);
         CacheRecord record = ourPathCache.remove(path);
         if (record != null) {
           ourFileCache.remove(record.file);

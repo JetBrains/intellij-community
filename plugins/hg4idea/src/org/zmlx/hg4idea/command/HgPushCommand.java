@@ -18,9 +18,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgCommandResultHandler;
+import org.zmlx.hg4idea.execution.HgRemoteCommandExecutor;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -85,7 +85,7 @@ public class HgPushCommand {
     }
     arguments.add(myDestination);
 
-    final HgCommandExecutor executor = new HgCommandExecutor(myProject, myDestination);
+    final HgRemoteCommandExecutor executor = new HgRemoteCommandExecutor(myProject, myDestination);
     executor.setShowOutput(true);
     executor.execute(myRepo, "push", arguments, new HgCommandResultHandler() {
       @Override

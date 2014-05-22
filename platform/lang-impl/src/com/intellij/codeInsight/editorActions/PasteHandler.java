@@ -52,7 +52,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
-import java.util.Map;
+import java.util.*;
 
 public class PasteHandler extends EditorActionHandler implements EditorTextInsertHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.PasteHandler");
@@ -65,7 +65,8 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
   }
 
   @Override
-  public void execute(final Editor editor, final DataContext dataContext) {
+  public void doExecute(final Editor editor, Caret caret, final DataContext dataContext) {
+    assert caret == null : "Invocation of 'paste' operation for specific caret is not supported";
     execute(editor, dataContext, null);
   }
 
@@ -92,7 +93,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     if (project == null || editor.isColumnMode() || editor.getSelectionModel().hasBlockSelection()
         || editor.getCaretModel().getCaretCount() > 1) {
       if (myOriginalHandler != null) {
-        myOriginalHandler.execute(editor, context);
+        myOriginalHandler.execute(editor, null, context);
       }
       return;
     }
@@ -100,7 +101,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) {
       if (myOriginalHandler != null) {
-        myOriginalHandler.execute(editor, context);
+        myOriginalHandler.execute(editor, null, context);
       }
       return;
     }
@@ -155,15 +156,17 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
 
       final CodeInsightSettings settings = CodeInsightSettings.getInstance();
 
-      final Map<CopyPastePostProcessor, TextBlockTransferableData> extraData = new HashMap<CopyPastePostProcessor, TextBlockTransferableData>();
-      for (CopyPastePostProcessor processor : Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
-        TextBlockTransferableData data = processor.extractTransferableData(content);
-        if (data != null) {
+      final Map<CopyPastePostProcessor, List<? extends TextBlockTransferableData>> extraData = new HashMap<CopyPastePostProcessor, List<? extends TextBlockTransferableData>>();
+      Collection<TextBlockTransferableData> allValues = new ArrayList<TextBlockTransferableData>();
+      for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
+        List<? extends TextBlockTransferableData> data = processor.extractTransferableData(content);
+        if (!data.isEmpty()) {
           extraData.put(processor, data);
+          allValues.addAll(data);
         }
       }
 
-      text = TextBlockTransferable.convertLineSeparators(text, "\n", extraData.values());
+      text = TextBlockTransferable.convertLineSeparators(text, "\n", allValues);
 
       final CaretModel caretModel = editor.getCaretModel();
       final SelectionModel selectionModel = editor.getSelectionModel();
@@ -218,7 +221,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       selectionModel.removeSelection();
 
       final Ref<Boolean> indented = new Ref<Boolean>(Boolean.FALSE);
-      for (Map.Entry<CopyPastePostProcessor, TextBlockTransferableData> e : extraData.entrySet()) {
+      for (Map.Entry<CopyPastePostProcessor, List<? extends TextBlockTransferableData>> e : extraData.entrySet()) {
         //noinspection unchecked
         e.getKey().processTransferableData(project, editor, bounds, caretOffset, indented, e.getValue());
       }

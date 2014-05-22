@@ -25,7 +25,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 
 import javax.swing.*;
 
@@ -41,7 +41,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
   @NotNull
   @Override
   public Language getLanguage() {
-    return GroovyFileType.GROOVY_LANGUAGE;
+    return GroovyLanguage.INSTANCE;
   }
 
   @Override
@@ -261,7 +261,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
 
   @Override
   public CommonCodeStyleSettings getDefaultCommonSettings() {
-    CommonCodeStyleSettings defaultSettings = new CommonCodeStyleSettings(GroovyFileType.GROOVY_LANGUAGE);
+    CommonCodeStyleSettings defaultSettings = new CommonCodeStyleSettings(GroovyLanguage.INSTANCE);
     defaultSettings.initIndentOptions();
     defaultSettings.SPACE_WITHIN_BRACES = true;
     defaultSettings.KEEP_SIMPLE_CLASSES_IN_ONE_LINE = true;
@@ -292,6 +292,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
       private JComboBox myLabelIndentStyle;
       private JBLabel myStyleLabel;
 
+      @Override
       protected void addComponents() {
         super.addComponents();
 
@@ -304,6 +305,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
         add(myStyleLabel, myLabelIndentStyle);
       }
 
+      @Override
       public boolean isModified(final CodeStyleSettings settings, final CommonCodeStyleSettings.IndentOptions options) {
         boolean isModified = super.isModified(settings, options);
 
@@ -324,6 +326,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
         }
       }
 
+      @Override
       public void apply(final CodeStyleSettings settings, final CommonCodeStyleSettings.IndentOptions options) {
         super.apply(settings, options);
         options.LABEL_INDENT_SIZE = getFieldValue(myLabelIndent, Integer.MIN_VALUE, options.LABEL_INDENT_SIZE);
@@ -331,6 +334,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
         settings.getCustomSettings(GroovyCodeStyleSettings.class).INDENT_LABEL_BLOCKS = RELATIVE.equals(myLabelIndentStyle.getSelectedItem());
       }
 
+      @Override
       public void reset(@NotNull final CodeStyleSettings settings, @NotNull final CommonCodeStyleSettings.IndentOptions options) {
         super.reset(settings, options);
         myLabelIndent.setText(Integer.toString(options.LABEL_INDENT_SIZE));
@@ -345,6 +349,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
         }
       }
 
+      @Override
       public void setEnabled(final boolean enabled) {
         super.setEnabled(enabled);
         myLabelIndent.setEnabled(enabled);
@@ -357,7 +362,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
 
 
 
-  private final static String INDENT_OPTIONS_SAMPLE =
+  private static final String INDENT_OPTIONS_SAMPLE =
     /*
     "topLevelLabel:\n" +
     "foo(42)\n" +
@@ -387,7 +392,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
     "  }\n" +
     "}\n";
   
-  private final static String SPACING_SAMPLE =
+  private static final String SPACING_SAMPLE =
     "class Foo {\n" +
     "  @Annotation(param=\"foo\")\n"+
     "  @Ann([1, 2])\n" +

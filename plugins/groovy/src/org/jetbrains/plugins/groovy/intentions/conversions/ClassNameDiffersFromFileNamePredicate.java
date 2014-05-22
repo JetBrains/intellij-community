@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ class ClassNameDiffersFromFileNamePredicate implements PsiElementPredicate {
     if (((GrTypeDefinition)parent).getNameIdentifierGroovy() != element) return false;
 
     final String name = ((GrTypeDefinition)parent).getName();
-    if (name == null || name.length() == 0) return false;
+    if (name == null || name.isEmpty()) return false;
     if (myClassConsumer != null) myClassConsumer.consume(((GrTypeDefinition)parent));
     final PsiFile file = element.getContainingFile();
     if (!(file instanceof GroovyFile)) return false;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
@@ -30,13 +31,24 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author ilyas
  */
-public class ArgumentList implements GroovyElementTypes {
-  private static final TokenSet CONTROL_KEYWORDS = TokenSet.create(kASSERT, kBREAK, kCASE, kCLASS,
-                                                          kCONTINUE, kDEF, kDEFAULT, kDO, kELSE, kENUM, kFINAL,
-                                                          kFOR, kFINALLY, kIF, kIMPLEMENTS, kIMPORT,
-                                                          kINTERFACE, kNATIVE, kPACKAGE, kPRIVATE, kPROTECTED, kPUBLIC,
-                                                          kRETURN, kSTATIC, kSTRICTFP, kSWITCH, kSYNCHRONIZED,
-                                                          kTHROW, kTHROWS, kTRAIT, kTRANSIENT, kTRY, kVOLATILE, kWHILE);
+public class ArgumentList {
+  private static final TokenSet CONTROL_KEYWORDS = TokenSet.create(GroovyTokenTypes.kASSERT, GroovyTokenTypes.kBREAK,
+                                                                   GroovyTokenTypes.kCASE, GroovyTokenTypes.kCLASS,
+                                                                   GroovyTokenTypes.kCONTINUE, GroovyTokenTypes.kDEF,
+                                                                   GroovyTokenTypes.kDEFAULT, GroovyTokenTypes.kDO, GroovyTokenTypes.kELSE,
+                                                                   GroovyTokenTypes.kENUM, GroovyTokenTypes.kFINAL,
+                                                                   GroovyTokenTypes.kFOR, GroovyTokenTypes.kFINALLY, GroovyTokenTypes.kIF,
+                                                                   GroovyTokenTypes.kIMPLEMENTS, GroovyTokenTypes.kIMPORT,
+                                                                   GroovyTokenTypes.kINTERFACE, GroovyTokenTypes.kNATIVE,
+                                                                   GroovyTokenTypes.kPACKAGE, GroovyTokenTypes.kPRIVATE,
+                                                                   GroovyTokenTypes.kPROTECTED, GroovyTokenTypes.kPUBLIC,
+                                                                   GroovyTokenTypes.kRETURN, GroovyTokenTypes.kSTATIC,
+                                                                   GroovyTokenTypes.kSTRICTFP, GroovyTokenTypes.kSWITCH,
+                                                                   GroovyTokenTypes.kSYNCHRONIZED,
+                                                                   GroovyTokenTypes.kTHROW, GroovyTokenTypes.kTHROWS,
+                                                                   GroovyTokenTypes.kTRAIT, GroovyTokenTypes.kTRANSIENT,
+                                                                   GroovyTokenTypes.kTRY, GroovyTokenTypes.kVOLATILE,
+                                                                   GroovyTokenTypes.kWHILE);
 
 
   public static void parseArgumentList(PsiBuilder builder, IElementType closingBrace, GroovyParser parser) {
@@ -45,22 +57,22 @@ public class ArgumentList implements GroovyElementTypes {
       if (!closingBrace.equals(builder.getTokenType())) {
         builder.error(GroovyBundle.message("expression.expected"));
       }
-      if (mRCURLY.equals(builder.getTokenType())) return;
+      if (GroovyTokenTypes.mRCURLY.equals(builder.getTokenType())) return;
 
-      if (!mCOMMA.equals(builder.getTokenType()) &&
+      if (!GroovyTokenTypes.mCOMMA.equals(builder.getTokenType()) &&
               !closingBrace.equals(builder.getTokenType())) {
         builder.advanceLexer();
       }
     }
 
-    ParserUtils.getToken(builder, mNLS);
+    ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
     boolean hasErrors = false;
     while (!builder.eof() && !closingBrace.equals(builder.getTokenType())) {
-      if (!ParserUtils.getToken(builder, mCOMMA) && hasFirstArg) {
+      if (!ParserUtils.getToken(builder, GroovyTokenTypes.mCOMMA) && hasFirstArg) {
         builder.error("',' or '" + closingBrace + "' expected");
         hasErrors = true;
       }
-      ParserUtils.getToken(builder, mNLS);
+      ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
       if (hasErrors && CONTROL_KEYWORDS.contains(builder.getTokenType())) {
         return;
       }
@@ -69,17 +81,17 @@ public class ArgumentList implements GroovyElementTypes {
           builder.error(GroovyBundle.message("expression.expected"));
           hasErrors = true;
         }
-        if (mRCURLY.equals(builder.getTokenType())) return;
+        if (GroovyTokenTypes.mRCURLY.equals(builder.getTokenType())) return;
 
-        if (!mCOMMA.equals(builder.getTokenType()) &&
+        if (!GroovyTokenTypes.mCOMMA.equals(builder.getTokenType()) &&
                 !closingBrace.equals(builder.getTokenType())) {
           builder.advanceLexer();
         }
       }
-      ParserUtils.getToken(builder, mNLS);
+      ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
     }
 
-    ParserUtils.getToken(builder, mNLS);
+    ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
   }
 
   /**
@@ -92,21 +104,21 @@ public class ArgumentList implements GroovyElementTypes {
     PsiBuilder.Marker argMarker = builder.mark();
 
     if (argumentLabelStartCheck(builder, parser)) {
-      ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"));
+      ParserUtils.getToken(builder, GroovyTokenTypes.mCOLON, GroovyBundle.message("colon.expected"));
       if (!AssignmentExpression.parse(builder, parser)) {
         builder.error(GroovyBundle.message("expression.expected"));
       }
-      argMarker.done(NAMED_ARGUMENT);
+      argMarker.done(GroovyElementTypes.NAMED_ARGUMENT);
       return true;
     }
 
-    if (ParserUtils.getToken(builder, mSTAR)) {
+    if (ParserUtils.getToken(builder, GroovyTokenTypes.mSTAR)) {
       if (AssignmentExpression.parse(builder, parser)) {
-        argMarker.done(SPREAD_ARGUMENT);
+        argMarker.done(GroovyElementTypes.SPREAD_ARGUMENT);
       }
       else {
         builder.error(GroovyBundle.message("colon.expected"));
-        argMarker.done(NAMED_ARGUMENT);
+        argMarker.done(GroovyElementTypes.NAMED_ARGUMENT);
       }
       return true;
     }
@@ -124,20 +136,20 @@ public class ArgumentList implements GroovyElementTypes {
    */
   public static boolean argumentLabelStartCheck(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
-    if (ParserUtils.lookAhead(builder, mSTAR, mCOLON)) {
+    if (ParserUtils.lookAhead(builder, GroovyTokenTypes.mSTAR, GroovyTokenTypes.mCOLON)) {
       builder.advanceLexer();
-      marker.done(ARGUMENT_LABEL);
+      marker.done(GroovyElementTypes.ARGUMENT_LABEL);
       return true;
     }
 
     final IElementType type = builder.getTokenType();
-    if (ParserUtils.lookAhead(builder, mIDENT, mCOLON) ||
+    if (ParserUtils.lookAhead(builder, GroovyTokenTypes.mIDENT, GroovyTokenTypes.mCOLON) ||
         TokenSets.KEYWORDS.contains(type) ||
-        mSTRING_LITERAL.equals(type) ||
-        mGSTRING_LITERAL.equals(type)) {
+        GroovyTokenTypes.mSTRING_LITERAL.equals(type) ||
+        GroovyTokenTypes.mGSTRING_LITERAL.equals(type)) {
       builder.advanceLexer();
-      if (mCOLON.equals(builder.getTokenType())) {
-        marker.done(ARGUMENT_LABEL);
+      if (GroovyTokenTypes.mCOLON.equals(builder.getTokenType())) {
+        marker.done(GroovyElementTypes.ARGUMENT_LABEL);
         return true;
       }
       else {
@@ -146,16 +158,16 @@ public class ArgumentList implements GroovyElementTypes {
       }
     }
 
-    if (mGSTRING_BEGIN.equals(type) ||
-        mREGEX_BEGIN.equals(type) ||
-        mDOLLAR_SLASH_REGEX_BEGIN.equals(type) ||
+    if (GroovyTokenTypes.mGSTRING_BEGIN.equals(type) ||
+        GroovyTokenTypes.mREGEX_BEGIN.equals(type) ||
+        GroovyTokenTypes.mDOLLAR_SLASH_REGEX_BEGIN.equals(type) ||
         TokenSets.NUMBERS.contains(type) ||
-        mLBRACK.equals(type) ||
-        mLPAREN.equals(type) ||
-        mLCURLY.equals(type)) {
+        GroovyTokenTypes.mLBRACK.equals(type) ||
+        GroovyTokenTypes.mLPAREN.equals(type) ||
+        GroovyTokenTypes.mLCURLY.equals(type)) {
       PrimaryExpression.parsePrimaryExpression(builder, parser);
-      if (mCOLON.equals(builder.getTokenType())) {
-        marker.done(ARGUMENT_LABEL);
+      if (GroovyTokenTypes.mCOLON.equals(builder.getTokenType())) {
+        marker.done(GroovyElementTypes.ARGUMENT_LABEL);
         return true;
       }
       else {

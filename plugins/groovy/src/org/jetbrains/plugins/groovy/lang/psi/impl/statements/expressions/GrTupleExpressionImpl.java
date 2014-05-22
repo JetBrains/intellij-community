@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ public class GrTupleExpressionImpl extends GrExpressionImpl implements GrTupleEx
     super(node);
   }
 
+  @Override
   public PsiType getType() {
     return getTypeByFQName(CommonClassNames.JAVA_UTIL_LIST);
   }
@@ -50,6 +51,7 @@ public class GrTupleExpressionImpl extends GrExpressionImpl implements GrTupleEx
     return ArrayUtilRt.find(children, element);
   }
 
+  @Override
   @NotNull
   public GrExpression[] getExpressions() {
     return findChildrenByClass(GrExpression.class);

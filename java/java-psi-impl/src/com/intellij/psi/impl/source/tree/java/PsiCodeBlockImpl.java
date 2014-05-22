@@ -18,7 +18,7 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -92,7 +92,7 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
 
   // return Pair(classes, locals) or null if there was conflict
   @Nullable
-  private Pair<Set<String>, Set<String>> buildMaps() {
+  private Couple<Set<String>> buildMaps() {
     Set<String> set1 = myClassesSet;
     Set<String> set2 = myVariablesSet;
     boolean wasConflict = myConflict;
@@ -129,7 +129,7 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
       myVariablesSet = set2 = localsSet.isEmpty() ? Collections.<String>emptySet() : localsSet;
       myConflict = wasConflict = conflict.get();
     }
-    return wasConflict ? null : Pair.create(set1, set2);
+    return wasConflict ? null : Couple.newOne(set1, set2);
   }
 
   @Override
@@ -218,7 +218,7 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
       // Parent element should not see our vars
       return true;
     }
-    Pair<Set<String>, Set<String>> pair = buildMaps();
+    Couple<Set<String>> pair = buildMaps();
     boolean conflict = pair == null;
     final Set<String> classesSet = conflict ? null : pair.getFirst();
     final Set<String> variablesSet = conflict ? null : pair.getSecond();

@@ -35,27 +35,33 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 
 public class GroovyConditionalCanBeElvisInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Conditional expression can be elvis";
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return CONTROL_FLOW;
   }
 
+  @Override
   public String buildErrorString(Object... args) {
     return "Conditional expression can be elvis #loc";
   }
 
+  @Override
   public GroovyFix buildFix(PsiElement location) {
     return new GroovyFix() {
+      @Override
       @NotNull
       public String getName() {
         return "Convert Conditional to Elvis";
       }
 
+      @Override
       public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
         final GrConditionalExpression expr = (GrConditionalExpression)descriptor.getPsiElement();
 
@@ -187,11 +193,13 @@ public class GroovyConditionalCanBeElvisInspection extends BaseInspection {
     return false;
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
+    @Override
     public void visitConditionalExpression(GrConditionalExpression expression) {
       super.visitConditionalExpression(expression);
       if (checkPsiElement(expression)) {

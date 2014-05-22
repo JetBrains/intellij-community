@@ -31,7 +31,7 @@ public class VcsLogSorterTest {
       if (s.length() != 0) {
         s.append(", ");
       }
-      s.append(commit.getHash().asString());
+      s.append(commit.getId().asString());
     }
     return s.toString();
   }

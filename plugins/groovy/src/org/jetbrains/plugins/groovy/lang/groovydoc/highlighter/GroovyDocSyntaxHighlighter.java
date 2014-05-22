@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,21 +33,21 @@ import java.util.Map;
 /**
  * @author ilyas
  */
-public class GroovyDocSyntaxHighlighter extends SyntaxHighlighterBase implements GroovyDocTokenTypes {
-
+public class GroovyDocSyntaxHighlighter extends SyntaxHighlighterBase {
   private static final Map<IElementType, TextAttributesKey> ATTRIBUTES = new HashMap<IElementType, TextAttributesKey>();
   private static final IElementType mGDOC_COMMENT_CONTENT = new GroovyDocElementTypeImpl("GDOC_COMMENT_CONTENT");
 
+  @Override
   @NotNull
   public Lexer getHighlightingLexer() {
     return new GroovyDocHighlightingLexer();
   }
 
-  static final TokenSet tGDOC_COMMENT_TAGS = TokenSet.create(
-      mGDOC_TAG_NAME
+  private static final TokenSet tGDOC_COMMENT_TAGS = TokenSet.create(
+      GroovyDocTokenTypes.mGDOC_TAG_NAME
   );
 
-  static final TokenSet tGDOC_COMMENT_CONTENT = TokenSet.create(
+  private static final TokenSet tGDOC_COMMENT_CONTENT = TokenSet.create(
       mGDOC_COMMENT_CONTENT
   );
 
@@ -58,14 +58,16 @@ public class GroovyDocSyntaxHighlighter extends SyntaxHighlighterBase implements
   }
 
 
+  @Override
   @NotNull
   public TextAttributesKey[] getTokenHighlights(IElementType type) {
     return pack(ATTRIBUTES.get(type));
   }
 
   private static class GroovyDocHighlightingLexer extends GroovyDocLexer {
+    @Override
     public IElementType getTokenType() {
-      return super.getTokenType() == mGDOC_TAG_NAME ? mGDOC_TAG_NAME : super.getTokenType();
+      return super.getTokenType() == GroovyDocTokenTypes.mGDOC_TAG_NAME ? GroovyDocTokenTypes.mGDOC_TAG_NAME : super.getTokenType();
     }
   }
 }

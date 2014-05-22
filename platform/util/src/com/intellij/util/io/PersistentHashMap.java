@@ -81,6 +81,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   private int myLargeIndexWatermarkId;  // starting with this id we store offset in adjacent file in long format
   private boolean myIntAddressForNewRecord;
   private static final boolean doHardConsistencyChecks = true;
+  private volatile boolean myBusyReading;
 
   private static class AppendStream extends DataOutputStream {
     private AppendStream() {
@@ -445,8 +446,17 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   @Override
   public final Value get(Key key) throws IOException {
     synchronized (myEnumerator) {
-      return doGet(key);
+      myBusyReading = true;
+      try {
+        return doGet(key);
+      } finally {
+        myBusyReading = false;
+      }
     }
+  }
+
+  public boolean isBusyReading() {
+    return myBusyReading;
   }
 
   @Nullable
@@ -523,7 +533,6 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     try {
       myAppendCache.remove(key);
       if (myDirectlyStoreLongFileOffsetMode) {
-        if (myIntMapping) return true;
         return ((PersistentBTreeEnumerator<Key>)myEnumerator).getNonnegativeValue(key) != NULL_ADDR;
       } else {
         final int id = tryEnumerate(key);

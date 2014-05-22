@@ -71,6 +71,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     return new GrControlFlowOwner[]{scope};
   }
 
+  @Override
   protected void checkExpression(@NotNull GrExpression selectedExpr) {
     // Cannot perform refactoring in parameter default values
 
@@ -120,6 +121,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
   /**
    * Inserts new variable declarations and replaces occurrences
    */
+  @Override
   public GrVariable runRefactoring(@NotNull final GrIntroduceContext context, @NotNull final GroovyIntroduceVariableSettings settings) {
     // Generating variable declaration
 
@@ -258,6 +260,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     return HelpID.INTRODUCE_VARIABLE;
   }
 
+  @Override
   @NotNull
   protected GroovyIntroduceVariableDialog getDialog(@NotNull GrIntroduceContext context) {
     final GroovyVariableValidator validator = new GroovyVariableValidator(context);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -351,9 +351,10 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       boolean isDirectory = node.getUserObject() instanceof SVNURL ||
                             (node.getSVNDirEntry() != null && node.getSVNDirEntry().getKind() == SVNNodeKind.DIR);
       String url = node.getURL().toDecodedString();
+      final SvnRepositoryLocation repositoryLocation = new SvnRepositoryLocation(node.getURL().toString());
 
       AbstractVcsHelper.getInstance(myProject)
-        .showFileHistory(myVCS.getVcsHistoryProvider(), VcsUtil.getFilePathOnNonLocal(url, isDirectory), myVCS, url);
+        .showFileHistory(myVCS.getVcsHistoryProvider(), VcsUtil.getFilePathOnNonLocal(url, isDirectory), myVCS, repositoryLocation);
       node.reload(false);
     }
   }

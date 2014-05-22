@@ -31,6 +31,9 @@ import com.intellij.remote.*;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.console.PyConsoleProcessHandler;
+import com.jetbrains.python.console.PydevConsoleCommunication;
+import com.jetbrains.python.console.PythonConsoleView;
 import com.jetbrains.python.sdk.skeletons.PySkeletonGenerator;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.List;
 
@@ -69,7 +73,7 @@ public abstract class PythonRemoteInterpreterManager {
 
   public abstract ProcessOutput runRemoteProcess(@Nullable Project project,
                                                  RemoteSdkCredentials data,
-                                                 @NotNull PathMappingSettings mappings, 
+                                                 @NotNull PathMappingSettings mappings,
                                                  String[] command,
                                                  @Nullable String workingDir,
                                                  boolean askForSudo)
@@ -79,7 +83,7 @@ public abstract class PythonRemoteInterpreterManager {
   public abstract RemoteSshProcess createRemoteProcess(@Nullable Project project,
                                                        @NotNull PyRemoteSdkCredentials data,
                                                        @NotNull PathMappingSettings mappings,
-                                                         @NotNull GeneralCommandLine commandLine, boolean allocatePty)
+                                                       @NotNull GeneralCommandLine commandLine, boolean allocatePty)
     throws RemoteSdkException;
 
   public abstract boolean editSdk(@NotNull Project project, @NotNull SdkModificator sdkModificator, Collection<Sdk> existingSdks);
@@ -142,6 +146,12 @@ public abstract class PythonRemoteInterpreterManager {
   public abstract SdkAdditionalData loadRemoteSdkData(Sdk sdk, Element additional);
 
   public abstract boolean testConnection(RemoteCredentials credentials);
+
+  public abstract PyConsoleProcessHandler createConsoleProcessHandler(Process process,
+                                                                      PyRemoteSdkCredentials data,
+                                                                      PythonConsoleView view,
+                                                                      PydevConsoleCommunication consoleCommunication,
+                                                                      String commandLine, Charset charset, PathMappingSettings settings);
 
   public static class PyRemoteInterpreterExecutionException extends ExecutionException {
 

@@ -52,9 +52,7 @@ public class ProcessBuilder {
     }
 
     String command = myParameters.get(0).toString();
-    boolean winShell = isWindows &&
-                       ("cmd".equalsIgnoreCase(command) || "cmd.exe".equalsIgnoreCase(command)) &&
-                       myParameters.size() > 1 && "/c".equalsIgnoreCase(myParameters.get(0).toString());
+    boolean winShell = isWindows && isWinShell(command);
 
     String[] commandLine = new String[myParameters.size()];
     commandLine[0] = command;
@@ -86,6 +84,14 @@ public class ProcessBuilder {
     }
 
     return Runtime.getRuntime().exec(commandLine, null, myWorkingDir);
+  }
+
+  private boolean isWinShell(String command) {
+    if (command.endsWith(".cmd") || command.endsWith(".bat")) {
+      return true;
+    }
+    return ("cmd".equalsIgnoreCase(command) || "cmd.exe".equalsIgnoreCase(command)) &&
+           myParameters.size() > 1 && "/c".equalsIgnoreCase(myParameters.get(0).toString());
   }
 
   private static boolean containsAnyChar(String value, String chars) {

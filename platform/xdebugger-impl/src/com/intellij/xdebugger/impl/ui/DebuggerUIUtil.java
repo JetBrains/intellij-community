@@ -35,6 +35,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointAdapter;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
 import com.intellij.xdebugger.impl.breakpoints.ui.XLightBreakpointPropertiesPanel;
 import org.jetbrains.annotations.NonNls;
@@ -137,7 +138,9 @@ public class DebuggerUIUtil {
                                                   final boolean showAllOptions,
                                                   final XBreakpoint breakpoint) {
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
-    final XLightBreakpointPropertiesPanel<XBreakpoint<?>> propertiesPanel = new XLightBreakpointPropertiesPanel<XBreakpoint<?>>(project, breakpointManager, breakpoint, showAllOptions);
+    final XLightBreakpointPropertiesPanel<XBreakpointBase<?, ?, ?>> propertiesPanel =
+      new XLightBreakpointPropertiesPanel<XBreakpointBase<?, ?, ?>>(project, breakpointManager, (XBreakpointBase)breakpoint,
+                                                                    showAllOptions);
 
     final Ref<Balloon> balloonRef = Ref.create(null);
     final Ref<Boolean> isLoading = Ref.create(Boolean.FALSE);

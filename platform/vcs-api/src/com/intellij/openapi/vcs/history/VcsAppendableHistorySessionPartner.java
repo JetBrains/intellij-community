@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.vcs.history;
 
+import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
+import org.jetbrains.annotations.Nullable;
 
 public interface VcsAppendableHistorySessionPartner {
   void reportCreatedEmptySession(VcsAbstractHistorySession session);
@@ -24,4 +26,7 @@ public interface VcsAppendableHistorySessionPartner {
   void finished();
   void forceRefresh();
   void beforeRefresh();
+
+  @Nullable
+  RepositoryLocation getRepositoryLocation();
 }

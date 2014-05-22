@@ -92,9 +92,19 @@ NSArray *allVms() {
     NSString *explicit = [[[NSProcessInfo processInfo] environment] objectForKey:@"IDEA_JDK"];
 
     if (explicit != nil) {
-        appendBundle(explicit, jvmBundlePaths);
+        // check if IDEA_JDK value corresponds  with JVMVersion from Info.plist
+        NSLog(@"value of IDEA_JDK: %@", explicit);
+        NSBundle *jdkBundle = [NSBundle bundleWithPath:explicit];
+        NSString *required = requiredJvmVersion();
+        if (jdkBundle != nil && required != NULL) {
+            if (satisfies(jvmVersion(jdkBundle), required)) {
+                appendBundle(explicit, jvmBundlePaths);
+                debugLog(@"User VM:");
+                debugLog([jdkBundle bundlePath]);
+            }
+        }
     }
-    else {
+    if (! jvmBundlePaths.count > 0 ) {
         NSBundle *bundle = [NSBundle mainBundle];
         NSString *appDir = bundle.bundlePath;
 

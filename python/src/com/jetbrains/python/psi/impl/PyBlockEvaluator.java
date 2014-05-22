@@ -26,7 +26,6 @@ import java.util.*;
 
 /**
  *
- * @see {@link com.jetbrains.python.psi.impl.PyExpressionEvaluator} (TODO: merge both classes?)
  * @author yole
  */
 public class PyBlockEvaluator {
@@ -99,7 +98,7 @@ public class PyBlockEvaluator {
           Object currentValue = myNamespace.get(name);
           if (currentValue != null) {
             Object rhs = prepareEvaluator().evaluate(node.getValue());
-            myNamespace.put(name, PyEvaluator.concatenate(currentValue, rhs));
+            myNamespace.put(name, prepareEvaluator().concatenate(currentValue, rhs));
           }
           if (myDeclarationsToTrack.contains(name)) {
             List<PyExpression> declarations = myDeclarations.get(name);
@@ -189,7 +188,7 @@ public class PyBlockEvaluator {
     Object value = myNamespace.get(nameBeingExtended);
     if (value instanceof List) {
       Object argValue = prepareEvaluator().evaluate(arg);
-      myNamespace.put(nameBeingExtended, PyEvaluator.concatenate(value, argValue));
+      myNamespace.put(nameBeingExtended, prepareEvaluator().concatenate(value, argValue));
     }
 
     if (myDeclarationsToTrack.contains(nameBeingExtended)) {

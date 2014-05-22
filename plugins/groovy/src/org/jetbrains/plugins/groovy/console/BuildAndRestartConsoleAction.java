@@ -76,11 +76,11 @@ public class BuildAndRestartConsoleAction extends AnAction implements Disposable
     rerun(myModule, myProject, myContentDescriptor, myShellAction, myExecutor);
   }
 
-  private static void rerun(final @NotNull Module module,
-                            final @NotNull Project project,
-                            final @NotNull RunContentDescriptor contentDescriptor,
-                            final @NotNull GroovyShellActionBase action,
-                            final @NotNull Executor executor) {
+  private static void rerun(@NotNull final Module module,
+                            @NotNull final Project project,
+                            @NotNull final RunContentDescriptor contentDescriptor,
+                            @NotNull final GroovyShellActionBase action,
+                            @NotNull final Executor executor) {
     ExecutionManager.getInstance(project).getContentManager().removeRunContent(executor, contentDescriptor);
     if (contentDescriptor.getProcessHandler() != null && contentDescriptor.getProcessHandler().isProcessTerminated()) {
       CompilerManager.getInstance(project).compile(module, new CompileStatusNotification() {

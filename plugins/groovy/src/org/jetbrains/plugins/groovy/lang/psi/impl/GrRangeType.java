@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
-import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.boxPrimitiveType;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.getLeastUpperBoundNullable;
-
 /**
  * @author Maxim.Medvedev
  */
@@ -49,7 +46,8 @@ public class GrRangeType extends GrLiteralClassType {
     super(languageLevel, scope, facade);
     myLeft = left;
     myRight = right;
-    myIterationType = boxPrimitiveType(getLeastUpperBoundNullable(myLeft, myRight, getPsiManager()), getPsiManager(), scope);
+    myIterationType = TypesUtil
+      .boxPrimitiveType(TypesUtil.getLeastUpperBoundNullable(myLeft, myRight, getPsiManager()), getPsiManager(), scope);
     if (TypesUtil.unboxPrimitiveTypeWrapper(myIterationType) == PsiType.INT) {
       myQualifiedName = GroovyCommonClassNames.GROOVY_LANG_INT_RANGE;
     }

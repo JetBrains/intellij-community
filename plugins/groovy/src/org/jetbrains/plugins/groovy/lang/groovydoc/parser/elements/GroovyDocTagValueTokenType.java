@@ -36,11 +36,6 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitio
 import java.util.Arrays;
 import java.util.Set;
 
-import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_SHARP_TOKEN;
-import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN;
-import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.elements.GroovyDocTagValueTokenType.TagValueTokenType.REFERENCE_ELEMENT;
-import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.elements.GroovyDocTagValueTokenType.TagValueTokenType.VALUE_TOKEN;
-
 /**
  * @author ilyas
  */
@@ -64,9 +59,10 @@ public class GroovyDocTagValueTokenType extends GroovyDocChameleonElementType im
   }
 
   public static TagValueTokenType getValueType(@NotNull ASTNode node) {
-    return isReferenceElement(node.getTreeParent(), node) ? REFERENCE_ELEMENT : VALUE_TOKEN;
+    return isReferenceElement(node.getTreeParent(), node) ? TagValueTokenType.REFERENCE_ELEMENT : TagValueTokenType.VALUE_TOKEN;
   }
 
+  @Override
   public ASTNode parseContents(ASTNode chameleon) {
     ASTNode parent = chameleon.getTreeParent();
     if (isReferenceElement(parent, chameleon)) {
@@ -83,16 +79,16 @@ public class GroovyDocTagValueTokenType extends GroovyDocChameleonElementType im
         String name = ((GrDocTag) parentPsi).getName();
         if (TAGS_WITH_REFERENCES.contains(name) && !(parentPsi instanceof GrDocInlinedTag) ||
                 INLINED_TAGS_WITH_REFERENCES.contains(name) && parentPsi instanceof GrDocInlinedTag) {
-          return parent.findChildByType(mGDOC_TAG_VALUE_TOKEN) == child;
+          return parent.findChildByType(GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN) == child;
         }
       }
       if (parentPsi instanceof GrDocMethodParameter &&
-              parent.findChildByType(mGDOC_TAG_VALUE_TOKEN) == child) return true;
+              parent.findChildByType(GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN) == child) return true;
 
       if (parentPsi instanceof GrDocMemberReference) {
         ASTNode prev = child.getTreePrev();
-        if (prev != null && prev.getElementType() == mGDOC_TAG_VALUE_SHARP_TOKEN) return false;
-        return parent.findChildByType(mGDOC_TAG_VALUE_TOKEN) == child;
+        if (prev != null && prev.getElementType() == GroovyDocTokenTypes.mGDOC_TAG_VALUE_SHARP_TOKEN) return false;
+        return parent.findChildByType(GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN) == child;
       }
     }
     return false;

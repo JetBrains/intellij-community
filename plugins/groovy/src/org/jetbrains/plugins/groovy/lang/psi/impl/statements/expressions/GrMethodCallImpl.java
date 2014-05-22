@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrCallExpressionTypeC
  */
 public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements GrMethodCall {
   private static final Function<GrMethodCall, PsiType> METHOD_CALL_TYPES_CALCULATOR = new Function<GrMethodCall, PsiType>() {
+    @Override
     @Nullable
     public PsiType fun(GrMethodCall callExpression) {
       GroovyResolveResult[] resolveResults;
@@ -65,6 +66,7 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
     super(node);
   }
 
+  @Override
   @NotNull
   public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument) {
     final GrExpression invoked = getInvokedExpression();
@@ -73,6 +75,7 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
     return ((GrReferenceExpressionImpl)invoked).getCallVariants(upToArgument);
   }
 
+  @Override
   @NotNull
   public GrExpression getInvokedExpression() {
     for (PsiElement cur = this.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
@@ -81,6 +84,7 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
     throw new IncorrectOperationException("invoked expression must not be null");
   }
 
+  @Override
   public PsiMethod resolveMethod() {
     final GrExpression methodExpr = getInvokedExpression();
     if (methodExpr instanceof GrReferenceExpression) {
@@ -102,6 +106,7 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
     return GroovyResolveResult.EMPTY_RESULT;
   }
 
+  @Override
   public PsiType getType() {
     return TypeInferenceHelper.getCurrentContext().getExpressionType(this, METHOD_CALL_TYPES_CALCULATOR);
   }

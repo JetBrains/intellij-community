@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,24 +37,29 @@ public class GroovyScriptRunConfigurationType implements ConfigurationType {
     myConfigurationFactory = new GroovyFactory(this);
   }
 
+  @Override
   public String getDisplayName() {
     return "Groovy";
   }
 
+  @Override
   public String getConfigurationTypeDescription() {
     return "Groovy Class or Script";
   }
 
+  @Override
   public Icon getIcon() {
     return JetgroovyIcons.Groovy.Groovy_16x16;
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getId() {
     return "GroovyScriptRunConfiguration";
   }
 
+  @Override
   public ConfigurationFactory[] getConfigurationFactories() {
     return new ConfigurationFactory[]{myConfigurationFactory};
   }
@@ -73,6 +78,7 @@ public class GroovyScriptRunConfigurationType implements ConfigurationType {
       return FileTypeIndex.containsFileOfType(GroovyFileType.GROOVY_FILE_TYPE, GlobalSearchScope.allScope(project));
     }
 
+    @Override
     public RunConfiguration createTemplateConfiguration(Project project) {
       return new GroovyScriptRunConfiguration("Groovy Script", project, this);
     }

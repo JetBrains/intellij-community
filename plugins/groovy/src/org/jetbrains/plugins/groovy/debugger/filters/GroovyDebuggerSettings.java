@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,15 +43,18 @@ public class GroovyDebuggerSettings extends XDebuggerSettings<GroovyDebuggerSett
     super("groovy_debugger");
   }
 
+  @Override
   @NotNull
   public Configurable createConfigurable() {
     return new GroovyDebuggerSettingsConfigurable(this);
   }
 
+  @Override
   public GroovyDebuggerSettings getState() {
     return this;
   }
 
+  @Override
   public void loadState(final GroovyDebuggerSettings state) {
     XmlSerializerUtil.copyBean(state, this);
   }

@@ -77,6 +77,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -401,7 +402,7 @@ public class DaemonListeners implements Disposable {
     AbstractVcs activeVcs = myProjectLevelVcsManager.getVcsFor(virtualFile);
     if (activeVcs == null) return Result.NOT_SURE;
 
-    FilePath path = new FilePathImpl(virtualFile);
+    FilePath path = VcsUtil.getFilePath(virtualFile);
     boolean vcsIsThinking = !myVcsDirtyScopeManager.whatFilesDirty(Arrays.asList(path)).isEmpty();
     if (vcsIsThinking) return Result.NOT_SURE; // do not modify file which is in the process of updating
 

@@ -13,7 +13,7 @@ public interface BrowserConnection {
 
   void addListener(@NotNull SocketConnectionListener listener, @NotNull Disposable parentDisposable);
 
-  void executeOnStart(@NotNull Runnable Runnable);
+  void executeOnStart(@NotNull Runnable runnable);
 
   @Nullable
   WebBrowser getBrowser();

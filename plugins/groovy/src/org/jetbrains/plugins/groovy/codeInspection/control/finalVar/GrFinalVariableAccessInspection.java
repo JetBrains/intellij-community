@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,8 +48,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
 
-import static com.intellij.psi.PsiModifier.FINAL;
-
 /**
  * @author Max Medvedev
  */
@@ -90,7 +88,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
           processLocalVars(initializer);
         }
 
-        if (field.hasModifierProperty(FINAL)) {
+        if (field.hasModifierProperty(PsiModifier.FINAL)) {
           if (!isFieldInitialized(field)) {
             registerError(field.getNameIdentifierGroovy(),
                           GroovyBundle.message("variable.0.might.not.have.been.initialized", field.getName()), LocalQuickFix.EMPTY_ARRAY,
@@ -104,7 +102,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
         super.visitReferenceExpression(ref);
 
         final PsiElement resolved = ref.resolve();
-        if (resolved instanceof GrField && ((GrField)resolved).hasModifierProperty(FINAL)) {
+        if (resolved instanceof GrField && ((GrField)resolved).hasModifierProperty(PsiModifier.FINAL)) {
           final GrField field = (GrField)resolved;
           final PsiClass containingClass = field.getContainingClass();
 
@@ -123,7 +121,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
         }
         else if (resolved instanceof GrParameter &&
                  ((GrParameter)resolved).getDeclarationScope() instanceof GrMethod &&
-                 ((GrParameter)resolved).hasModifierProperty(FINAL) &&
+                 ((GrParameter)resolved).hasModifierProperty(PsiModifier.FINAL) &&
                  PsiUtil.isUsedInIncOrDec(ref)) {
           registerError(ref, GroovyBundle.message("cannot.assign.a.value.to.final.parameter.0", ((GrParameter)resolved).getName()),
                         LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
@@ -237,7 +235,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
       @Override
       public boolean value(GrField field) {
         final GrModifierList list = field.getModifierList();
-        return list != null && list.hasModifierProperty(FINAL);
+        return list != null && list.hasModifierProperty(PsiModifier.FINAL);
       }
     });
   }
@@ -418,7 +416,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
       @Override
       public void visitVariable(GrVariable variable) {
         super.visitVariable(variable);
-        if (!(variable instanceof PsiField) && variable.hasModifierProperty(FINAL)) {
+        if (!(variable instanceof PsiField) && variable.hasModifierProperty(PsiModifier.FINAL)) {
           final PsiElement varScope = findScope(variable);
           if (varScope != null) {
             scopes.putValue(varScope, variable);

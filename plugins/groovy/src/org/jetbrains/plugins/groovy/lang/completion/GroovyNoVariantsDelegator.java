@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.Consumer;
@@ -36,8 +37,6 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import static com.intellij.patterns.PsiJavaPatterns.psiElement;
-
 /**
  * @author peter
  */
@@ -45,7 +44,7 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
 
   private static boolean suggestMetaAnnotations(CompletionParameters parameters) {
     PsiElement position = parameters.getPosition();
-    return psiElement().withParents(GrCodeReferenceElement.class, GrAnnotation.class, GrModifierList.class, GrAnnotationTypeDefinition.class).accepts(position);
+    return PsiJavaPatterns.psiElement().withParents(GrCodeReferenceElement.class, GrAnnotation.class, GrModifierList.class, GrAnnotationTypeDefinition.class).accepts(position);
   }
 
   @Override

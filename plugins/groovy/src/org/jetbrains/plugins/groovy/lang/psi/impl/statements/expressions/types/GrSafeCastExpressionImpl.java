@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -39,9 +40,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpre
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.HashMap;
-
-import static com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTION;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kAS;
 
 /**
  * @author ven
@@ -77,7 +75,7 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
    */
   private static boolean isCastToRawCollectionFromArray(PsiType opType, PsiType castType) {
     return castType instanceof PsiClassType &&
-           InheritanceUtil.isInheritor(castType, JAVA_UTIL_COLLECTION) &&
+           InheritanceUtil.isInheritor(castType, CommonClassNames.JAVA_UTIL_COLLECTION) &&
            PsiUtil.extractIterableTypeParameter(castType, false) == null &&
            ((PsiClassType)castType).resolve().getTypeParameters().length == 1 &&
            TypesUtil.getItemType(opType) != null;
@@ -97,7 +95,7 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
       final GrTypeElement typeElement = cast.getCastTypeElement();
       final PsiType toCast = typeElement == null ? null : typeElement.getType();
       final PsiType classType = TypesUtil.createJavaLangClassType(toCast, cast.getProject(), cast.getResolveScope());
-      return TypesUtil.getOverloadedOperatorCandidates(type, kAS, operand, new PsiType[]{classType});
+      return TypesUtil.getOverloadedOperatorCandidates(type, GroovyTokenTypes.kAS, operand, new PsiType[]{classType});
     }
   }
 
@@ -107,6 +105,7 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitSafeCastExpression(this);
   }
@@ -115,15 +114,18 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
     return "Safe cast expression";
   }
 
+  @Override
   public PsiType getType() {
     return TypeInferenceHelper.getCurrentContext().getExpressionType(this, TYPE_CALCULATOR);
   }
 
+  @Override
   @Nullable
   public GrTypeElement getCastTypeElement() {
     return findChildByClass(GrTypeElement.class);
   }
 
+  @Override
   @NotNull
   public GrExpression getOperand() {
     return findNotNullChildByClass(GrExpression.class);
@@ -141,7 +143,7 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
 
   @Override
   public TextRange getRangeInElement() {
-    final PsiElement as = findNotNullChildByType(kAS);
+    final PsiElement as = findNotNullChildByType(GroovyTokenTypes.kAS);
     final int offset = as.getStartOffsetInParent();
     return new TextRange(offset, offset + 2);
   }

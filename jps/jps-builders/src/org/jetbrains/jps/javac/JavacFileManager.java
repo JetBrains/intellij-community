@@ -39,6 +39,8 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
   private final Context myContext;
   private final Collection<JavaSourceTransformer> mySourceTransformers;
   private Map<File, Set<File>> myOutputsMap = Collections.emptyMap();
+  @Nullable
+  private String myEncodingName;
 
   interface Context {
     boolean isCanceled();
@@ -62,6 +64,38 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
       setLocation(StandardLocation.CLASS_OUTPUT, Collections.singleton(outputDir));
     }
     myOutputsMap = outputDirToSrcRoots;
+  }
+
+  @Override
+  public boolean handleOption(String current, final Iterator<String> remaining) {
+    if ("-encoding".equalsIgnoreCase(current) && remaining.hasNext()) {
+      final String encoding = remaining.next();
+      myEncodingName = encoding;
+      return super.handleOption(current, new Iterator<String>() {
+        private boolean encodingConsumed = false; 
+        @Override
+        public boolean hasNext() {
+          return !encodingConsumed || remaining.hasNext();
+        }
+
+        @Override
+        public String next() {
+          if (!encodingConsumed) {
+            encodingConsumed = true;
+            return encoding;
+          }
+          return remaining.next();
+        }
+
+        @Override
+        public void remove() {
+          if (encodingConsumed) {
+            remaining.remove();
+          }
+        }
+      });
+    }
+    return super.handleOption(current, remaining);
   }
 
   @Override
@@ -194,7 +228,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
       }
     }
     final File file = (dir == null? new File(fileName).getAbsoluteFile() : new File(dir, fileName));
-    return new OutputFileObject(myContext, dir, fileName, file, kind, className, src != null? src.toUri() : null);
+    return new OutputFileObject(myContext, dir, fileName, file, kind, className, src != null? src.toUri() : null, myEncodingName);
   }
 
   @Override

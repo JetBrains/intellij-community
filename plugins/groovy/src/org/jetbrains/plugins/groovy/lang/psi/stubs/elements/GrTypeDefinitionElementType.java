@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
     super(debugName);
   }
 
+  @Override
   public GrTypeDefinitionStub createStub(@NotNull TypeDef psi, StubElement parentStub) {
     String[] superClassNames = psi.getSuperClassNames();
     final byte flags = GrTypeDefinitionStub.buildFlags(psi);
@@ -50,6 +51,7 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
                                         flags);
   }
 
+  @Override
   public void serialize(@NotNull GrTypeDefinitionStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     dataStream.writeName(stub.getQualifiedName());
@@ -65,6 +67,7 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
     }
   }
 
+  @Override
   @NotNull
   public GrTypeDefinitionStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     String name = StringRef.toString(dataStream.readName());
@@ -84,6 +87,7 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
     return superClasses;
   }
 
+  @Override
   public void indexStub(@NotNull GrTypeDefinitionStub stub, @NotNull IndexSink sink) {
     if (stub.isAnonymous()) {
       final String[] classNames = stub.getSuperClassNames();

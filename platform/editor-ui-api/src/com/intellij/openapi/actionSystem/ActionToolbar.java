@@ -71,7 +71,7 @@ public interface ActionToolbar extends SwitchProvider, QuickActionProvider {
   void setLayoutPolicy(int layoutPolicy);
 
   /**
-   * If the valus is <code>true</code> then the all button on toolbar are
+   * If the value is <code>true</code> then the all button on toolbar are
    * the same size. It very useful when you create "Outlook" like toolbar.
    * Currently this method can be considered as hot fix.
    */
@@ -101,7 +101,7 @@ public interface ActionToolbar extends SwitchProvider, QuickActionProvider {
   int getMaxButtonHeight();
 
   /**
-   * Forces update of the all actions in the toolbars. Actions, however, normally updated automatially every 500msec.
+   * Forces update of the all actions in the toolbars. Actions, however, normally updated automatically every 500 ms.
    */
   void updateActionsImmediately();
 

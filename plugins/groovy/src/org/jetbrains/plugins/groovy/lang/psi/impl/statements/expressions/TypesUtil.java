@@ -30,12 +30,12 @@ import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -51,25 +51,14 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrImmediateClosureS
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
-
-import static com.intellij.psi.CommonClassNames.*;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.COMPOSITE_LSHIFT_SIGN;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.COMPOSITE_RSHIFT_SIGN;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.*;
 
 /**
  * @author ven
  */
 public class TypesUtil {
-
-  private static final LightCacheKey<Map<String, PsiClass>> PARENT_CACHE_KEY = LightCacheKey.create();
 
   @NonNls
   public static final Map<String, PsiType> ourQNameToUnboxed = new HashMap<String, PsiType>();
@@ -117,101 +106,101 @@ public class TypesUtil {
   private static final String NULL = "null";
 
   static {
-    ourPrimitiveTypesToClassNames.put(mSTRING_LITERAL, JAVA_LANG_STRING);
-    ourPrimitiveTypesToClassNames.put(mGSTRING_LITERAL, JAVA_LANG_STRING);
-    ourPrimitiveTypesToClassNames.put(mREGEX_LITERAL, JAVA_LANG_STRING);
-    ourPrimitiveTypesToClassNames.put(mDOLLAR_SLASH_REGEX_LITERAL, JAVA_LANG_STRING);
-    ourPrimitiveTypesToClassNames.put(mNUM_INT, JAVA_LANG_INTEGER);
-    ourPrimitiveTypesToClassNames.put(mNUM_LONG, JAVA_LANG_LONG);
-    ourPrimitiveTypesToClassNames.put(mNUM_FLOAT, JAVA_LANG_FLOAT);
-    ourPrimitiveTypesToClassNames.put(mNUM_DOUBLE, JAVA_LANG_DOUBLE);
-    ourPrimitiveTypesToClassNames.put(mNUM_BIG_INT, JAVA_MATH_BIG_INTEGER);
-    ourPrimitiveTypesToClassNames.put(mNUM_BIG_DECIMAL, JAVA_MATH_BIG_DECIMAL);
-    ourPrimitiveTypesToClassNames.put(kFALSE, JAVA_LANG_BOOLEAN);
-    ourPrimitiveTypesToClassNames.put(kTRUE, JAVA_LANG_BOOLEAN);
-    ourPrimitiveTypesToClassNames.put(kNULL, NULL);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.mSTRING_LITERAL, CommonClassNames.JAVA_LANG_STRING);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.mGSTRING_LITERAL, CommonClassNames.JAVA_LANG_STRING);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.mREGEX_LITERAL, CommonClassNames.JAVA_LANG_STRING);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL, CommonClassNames.JAVA_LANG_STRING);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.mNUM_INT, CommonClassNames.JAVA_LANG_INTEGER);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.mNUM_LONG, CommonClassNames.JAVA_LANG_LONG);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.mNUM_FLOAT, CommonClassNames.JAVA_LANG_FLOAT);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.mNUM_DOUBLE, CommonClassNames.JAVA_LANG_DOUBLE);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.mNUM_BIG_INT, GroovyCommonClassNames.JAVA_MATH_BIG_INTEGER);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.mNUM_BIG_DECIMAL, GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kFALSE, CommonClassNames.JAVA_LANG_BOOLEAN);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kTRUE, CommonClassNames.JAVA_LANG_BOOLEAN);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kNULL, NULL);
 
-    ourPrimitiveTypesToClassNames.put(kINT, JAVA_LANG_INTEGER);
-    ourPrimitiveTypesToClassNames.put(kLONG, JAVA_LANG_LONG);
-    ourPrimitiveTypesToClassNames.put(kFLOAT, JAVA_LANG_FLOAT);
-    ourPrimitiveTypesToClassNames.put(kDOUBLE, JAVA_LANG_DOUBLE);
-    ourPrimitiveTypesToClassNames.put(kBOOLEAN, JAVA_LANG_BOOLEAN);
-    ourPrimitiveTypesToClassNames.put(kCHAR, JAVA_LANG_CHARACTER);
-    ourPrimitiveTypesToClassNames.put(kBYTE, JAVA_LANG_BYTE);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kINT, CommonClassNames.JAVA_LANG_INTEGER);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kLONG, CommonClassNames.JAVA_LANG_LONG);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kFLOAT, CommonClassNames.JAVA_LANG_FLOAT);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kDOUBLE, CommonClassNames.JAVA_LANG_DOUBLE);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kBOOLEAN, CommonClassNames.JAVA_LANG_BOOLEAN);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kCHAR, CommonClassNames.JAVA_LANG_CHARACTER);
+    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kBYTE, CommonClassNames.JAVA_LANG_BYTE);
   }
 
   private static final Map<IElementType, String> ourOperationsToOperatorNames = new HashMap<IElementType, String>();
   private static final Map<IElementType, String> ourUnaryOperationsToOperatorNames = new HashMap<IElementType, String>();
 
   static {
-    ourOperationsToOperatorNames.put(mPLUS, "plus");
-    ourOperationsToOperatorNames.put(mMINUS, "minus");
-    ourOperationsToOperatorNames.put(mBAND, "and");
-    ourOperationsToOperatorNames.put(mBOR, "or");
-    ourOperationsToOperatorNames.put(mBXOR, "xor");
-    ourOperationsToOperatorNames.put(mDIV, "div");
-    ourOperationsToOperatorNames.put(mMOD, "mod");
-    ourOperationsToOperatorNames.put(mSTAR, "multiply");
-    ourOperationsToOperatorNames.put(kAS, "asType");
-    ourOperationsToOperatorNames.put(mCOMPARE_TO, "compareTo");
-    ourOperationsToOperatorNames.put(mGT, "compareTo");
-    ourOperationsToOperatorNames.put(mGE, "compareTo");
-    ourOperationsToOperatorNames.put(mLT, "compareTo");
-    ourOperationsToOperatorNames.put(mLE, "compareTo");
-    ourOperationsToOperatorNames.put(mSTAR_STAR, "power");
-    ourOperationsToOperatorNames.put(COMPOSITE_LSHIFT_SIGN, "leftShift");
-    ourOperationsToOperatorNames.put(COMPOSITE_RSHIFT_SIGN, "rightShift");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mPLUS, "plus");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mMINUS, "minus");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mBAND, "and");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mBOR, "or");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mBXOR, "xor");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mDIV, "div");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mMOD, "mod");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mSTAR, "multiply");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.kAS, "asType");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mCOMPARE_TO, "compareTo");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mGT, "compareTo");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mGE, "compareTo");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mLT, "compareTo");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mLE, "compareTo");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mSTAR_STAR, "power");
+    ourOperationsToOperatorNames.put(GroovyElementTypes.COMPOSITE_LSHIFT_SIGN, "leftShift");
+    ourOperationsToOperatorNames.put(GroovyElementTypes.COMPOSITE_RSHIFT_SIGN, "rightShift");
     ourOperationsToOperatorNames.put(GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN, "rightShiftUnsigned");
-    ourOperationsToOperatorNames.put(mEQUAL, "equals");
-    ourOperationsToOperatorNames.put(mNOT_EQUAL, "equals");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mEQUAL, "equals");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mNOT_EQUAL, "equals");
 
-    ourUnaryOperationsToOperatorNames.put(mLNOT, "asBoolean");
-    ourUnaryOperationsToOperatorNames.put(mPLUS, "positive");
-    ourUnaryOperationsToOperatorNames.put(mMINUS, "negative");
-    ourUnaryOperationsToOperatorNames.put(mDEC, "previous");
-    ourUnaryOperationsToOperatorNames.put(mINC, "next");
-    ourUnaryOperationsToOperatorNames.put(mBNOT, "bitwiseNegate");
+    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mLNOT, "asBoolean");
+    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mPLUS, "positive");
+    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mMINUS, "negative");
+    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mDEC, "previous");
+    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mINC, "next");
+    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mBNOT, "bitwiseNegate");
   }
 
   private static final TObjectIntHashMap<String> TYPE_TO_RANK = new TObjectIntHashMap<String>();
 
   static {
-    TYPE_TO_RANK.put(JAVA_LANG_BYTE, 1);
-    TYPE_TO_RANK.put(JAVA_LANG_SHORT, 2);
-    TYPE_TO_RANK.put(JAVA_LANG_CHARACTER, 2);
-    TYPE_TO_RANK.put(JAVA_LANG_INTEGER, 3);
-    TYPE_TO_RANK.put(JAVA_LANG_LONG, 4);
-    TYPE_TO_RANK.put(JAVA_MATH_BIG_INTEGER, 5);
-    TYPE_TO_RANK.put(JAVA_MATH_BIG_DECIMAL, 6);
-    TYPE_TO_RANK.put(JAVA_LANG_FLOAT, 7);
-    TYPE_TO_RANK.put(JAVA_LANG_DOUBLE, 8);
-    TYPE_TO_RANK.put(JAVA_LANG_NUMBER, 9);
+    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_BYTE, 1);
+    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_SHORT, 2);
+    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_CHARACTER, 2);
+    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_INTEGER, 3);
+    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_LONG, 4);
+    TYPE_TO_RANK.put(GroovyCommonClassNames.JAVA_MATH_BIG_INTEGER, 5);
+    TYPE_TO_RANK.put(GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL, 6);
+    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_FLOAT, 7);
+    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_DOUBLE, 8);
+    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_NUMBER, 9);
   }
 
   static {
-    ourQNameToUnboxed.put(JAVA_LANG_BOOLEAN, PsiType.BOOLEAN);
-    ourQNameToUnboxed.put(JAVA_LANG_BYTE, PsiType.BYTE);
-    ourQNameToUnboxed.put(JAVA_LANG_CHARACTER, PsiType.CHAR);
-    ourQNameToUnboxed.put(JAVA_LANG_SHORT, PsiType.SHORT);
-    ourQNameToUnboxed.put(JAVA_LANG_INTEGER, PsiType.INT);
-    ourQNameToUnboxed.put(JAVA_LANG_LONG, PsiType.LONG);
-    ourQNameToUnboxed.put(JAVA_LANG_FLOAT, PsiType.FLOAT);
-    ourQNameToUnboxed.put(JAVA_LANG_DOUBLE, PsiType.DOUBLE);
+    ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_BOOLEAN, PsiType.BOOLEAN);
+    ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_BYTE, PsiType.BYTE);
+    ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_CHARACTER, PsiType.CHAR);
+    ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_SHORT, PsiType.SHORT);
+    ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_INTEGER, PsiType.INT);
+    ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_LONG, PsiType.LONG);
+    ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_FLOAT, PsiType.FLOAT);
+    ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_DOUBLE, PsiType.DOUBLE);
   }
 
 
   private static final TIntObjectHashMap<String> RANK_TO_TYPE = new TIntObjectHashMap<String>();
 
   static {
-    RANK_TO_TYPE.put(1, JAVA_LANG_INTEGER);
-    RANK_TO_TYPE.put(2, JAVA_LANG_INTEGER);
-    RANK_TO_TYPE.put(3, JAVA_LANG_INTEGER);
-    RANK_TO_TYPE.put(4, JAVA_LANG_LONG);
-    RANK_TO_TYPE.put(5, JAVA_MATH_BIG_INTEGER);
-    RANK_TO_TYPE.put(6, JAVA_MATH_BIG_DECIMAL);
-    RANK_TO_TYPE.put(7, JAVA_LANG_DOUBLE);
-    RANK_TO_TYPE.put(8, JAVA_LANG_DOUBLE);
-    RANK_TO_TYPE.put(9, JAVA_LANG_NUMBER);
+    RANK_TO_TYPE.put(1, CommonClassNames.JAVA_LANG_INTEGER);
+    RANK_TO_TYPE.put(2, CommonClassNames.JAVA_LANG_INTEGER);
+    RANK_TO_TYPE.put(3, CommonClassNames.JAVA_LANG_INTEGER);
+    RANK_TO_TYPE.put(4, CommonClassNames.JAVA_LANG_LONG);
+    RANK_TO_TYPE.put(5, GroovyCommonClassNames.JAVA_MATH_BIG_INTEGER);
+    RANK_TO_TYPE.put(6, GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL);
+    RANK_TO_TYPE.put(7, CommonClassNames.JAVA_LANG_DOUBLE);
+    RANK_TO_TYPE.put(8, CommonClassNames.JAVA_LANG_DOUBLE);
+    RANK_TO_TYPE.put(9, CommonClassNames.JAVA_LANG_NUMBER);
   }
 
   public static boolean isAssignable(@Nullable PsiType lType, @Nullable PsiType rType, @NotNull PsiElement context) {
@@ -334,21 +323,21 @@ public class TypesUtil {
 
     if (rType instanceof GrTupleType && ((GrTupleType)rType).getComponentTypes().length == 0) {
       if (lType instanceof PsiArrayType ||
-          InheritanceUtil.isInheritor(lType, JAVA_UTIL_LIST) ||
-          InheritanceUtil.isInheritor(lType, JAVA_UTIL_SET)) {
+          InheritanceUtil.isInheritor(lType, CommonClassNames.JAVA_UTIL_LIST) ||
+          InheritanceUtil.isInheritor(lType, CommonClassNames.JAVA_UTIL_SET)) {
         return true;
       }
     }
 
-    if (isClassType(rType, GROOVY_LANG_GSTRING) && lType.equalsToText(JAVA_LANG_STRING)) {
+    if (isClassType(rType, GroovyCommonClassNames.GROOVY_LANG_GSTRING) && lType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
       return true;
     }
 
     if (isNumericType(lType) && isNumericType(rType)) {
       lType = unboxPrimitiveTypeWrapper(lType);
-      if (isClassType(lType, JAVA_MATH_BIG_DECIMAL)) lType = PsiType.DOUBLE;
+      if (isClassType(lType, GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL)) lType = PsiType.DOUBLE;
       rType = unboxPrimitiveTypeWrapper(rType);
-      if (isClassType(rType, JAVA_MATH_BIG_DECIMAL)) rType = PsiType.DOUBLE;
+      if (isClassType(rType, GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL)) rType = PsiType.DOUBLE;
     }
     else {
       rType = boxPrimitiveType(rType, manager, scope);
@@ -366,11 +355,7 @@ public class TypesUtil {
       }
     }
 
-    if (TypeConversionUtil.isAssignable(lType, rType)) {
-      return true;
-    }
-
-    return false;
+    return TypeConversionUtil.isAssignable(lType, rType);
   }
 
   private static boolean canMakeClosureRaw(PsiType type) {
@@ -476,7 +461,7 @@ public class TypesUtil {
 
   @NotNull
   public static PsiClassType getJavaLangObject(@NotNull PsiElement context) {
-    return LazyFqnClassType.getLazyType(JAVA_LANG_OBJECT, context);
+    return LazyFqnClassType.getLazyType(CommonClassNames.JAVA_LANG_OBJECT, context);
   }
 
   @Nullable
@@ -568,40 +553,40 @@ public class TypesUtil {
   private static boolean checkEmptyListAndList(PsiType type1, PsiType type2) {
     if (type1 instanceof GrTupleType) {
       PsiType[] types = ((GrTupleType)type1).getComponentTypes();
-      if (types.length == 0 && InheritanceUtil.isInheritor(type2, JAVA_UTIL_LIST)) return true;
+      if (types.length == 0 && InheritanceUtil.isInheritor(type2, CommonClassNames.JAVA_UTIL_LIST)) return true;
     }
 
     return false;
   }
 
   private static PsiType genNewListBy(PsiType genericOwner, PsiManager manager) {
-    PsiClass list = JavaPsiFacade.getInstance(manager.getProject()).findClass(JAVA_UTIL_LIST, genericOwner.getResolveScope());
+    PsiClass list = JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_UTIL_LIST, genericOwner.getResolveScope());
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
-    if (list == null) return factory.createTypeFromText(JAVA_UTIL_LIST, null);
+    if (list == null) return factory.createTypeFromText(CommonClassNames.JAVA_UTIL_LIST, null);
     return factory.createType(list, PsiUtil.extractIterableTypeParameter(genericOwner, false));
   }
 
   private static boolean checkEmptyMapAndMap(PsiType type1, PsiType type2) {
     if (type1 instanceof GrMapType) {
-      if (((GrMapType)type1).isEmpty() && InheritanceUtil.isInheritor(type2, JAVA_UTIL_MAP)) return true;
+      if (((GrMapType)type1).isEmpty() && InheritanceUtil.isInheritor(type2, CommonClassNames.JAVA_UTIL_MAP)) return true;
     }
 
     return false;
   }
 
   private static PsiType genNewMapBy(PsiType genericOwner, PsiManager manager) {
-    PsiClass map = JavaPsiFacade.getInstance(manager.getProject()).findClass(JAVA_UTIL_MAP, genericOwner.getResolveScope());
+    PsiClass map = JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_UTIL_MAP, genericOwner.getResolveScope());
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
-    if (map == null) return factory.createTypeFromText(JAVA_UTIL_MAP, null);
+    if (map == null) return factory.createTypeFromText(CommonClassNames.JAVA_UTIL_MAP, null);
 
-    final PsiType key = PsiUtil.substituteTypeParameter(genericOwner, JAVA_UTIL_MAP, 0, false);
-    final PsiType value = PsiUtil.substituteTypeParameter(genericOwner, JAVA_UTIL_MAP, 1, false);
+    final PsiType key = PsiUtil.substituteTypeParameter(genericOwner, CommonClassNames.JAVA_UTIL_MAP, 0, false);
+    final PsiType value = PsiUtil.substituteTypeParameter(genericOwner, CommonClassNames.JAVA_UTIL_MAP, 1, false);
     return factory.createType(map, key, value);
   }
 
   @Nullable
   public static PsiType getPsiType(PsiElement context, IElementType elemType) {
-    if (elemType == kNULL) {
+    if (elemType == GroovyTokenTypes.kNULL) {
       return PsiType.NULL;
     }
     final String typeName = getBoxedTypeName(elemType);
@@ -620,7 +605,7 @@ public class TypesUtil {
   public static PsiType getLeastUpperBound(PsiClass[] classes, PsiManager manager) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
 
-    if (classes.length == 0) return factory.createTypeByFQClassName(JAVA_LANG_OBJECT);
+    if (classes.length == 0) return factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT);
 
     PsiType type = factory.createType(classes[0]);
 
@@ -668,7 +653,7 @@ public class TypesUtil {
                                                 GlobalSearchScope resolveScope) {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     PsiType result = null;
-    PsiClass javaLangClass = facade.findClass(JAVA_LANG_CLASS, resolveScope);
+    PsiClass javaLangClass = facade.findClass(CommonClassNames.JAVA_LANG_CLASS, resolveScope);
     if (javaLangClass != null) {
       PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
       final PsiTypeParameter[] typeParameters = javaLangClass.getTypeParameters();
@@ -699,9 +684,9 @@ public class TypesUtil {
   public static PsiClassType createListType(@NotNull PsiClass elements) {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(elements.getProject());
     GlobalSearchScope resolveScope = elements.getResolveScope();
-    PsiClass listClass = facade.findClass(JAVA_UTIL_LIST, resolveScope);
+    PsiClass listClass = facade.findClass(CommonClassNames.JAVA_UTIL_LIST, resolveScope);
     if (listClass == null) {
-      return facade.getElementFactory().createTypeByFQClassName(JAVA_UTIL_LIST, resolveScope);
+      return facade.getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_UTIL_LIST, resolveScope);
     }
     return facade.getElementFactory().createType(listClass, facade.getElementFactory().createType(elements));
   }
@@ -711,16 +696,16 @@ public class TypesUtil {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(context.getProject());
     GlobalSearchScope resolveScope = context.getResolveScope();
 
-    PsiClass setClass = facade.findClass(JAVA_UTIL_SET, resolveScope);
+    PsiClass setClass = facade.findClass(CommonClassNames.JAVA_UTIL_SET, resolveScope);
     if (setClass != null && setClass.getTypeParameters().length == 1) {
       return facade.getElementFactory().createType(setClass, type);
     }
 
-    return facade.getElementFactory().createTypeByFQClassName(JAVA_UTIL_SET, resolveScope);
+    return facade.getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_UTIL_SET, resolveScope);
   }
 
   public static boolean isAnnotatedCheckHierarchyWithCache(@NotNull PsiClass aClass, @NotNull String annotationFQN) {
-    Map<String, PsiClass> classMap = getSuperClassesWithCache(aClass);
+    Map<String, PsiClass> classMap = ClassUtil.getSuperClassesWithCache(aClass);
 
     for (PsiClass psiClass : classMap.values()) {
       PsiModifierList modifierList = psiClass.getModifierList();
@@ -732,24 +717,6 @@ public class TypesUtil {
     }
 
     return false;
-  }
-
-  public static Map<String, PsiClass> getSuperClassesWithCache(@NotNull PsiClass aClass) {
-    Map<String, PsiClass> superClassNames = PARENT_CACHE_KEY.getCachedValue(aClass);
-    if (superClassNames == null) {
-      Set<PsiClass> superClasses = new THashSet<PsiClass>();
-      superClasses.add(aClass);
-      InheritanceUtil.getSuperClasses(aClass, superClasses, true);
-
-      superClassNames = new LinkedHashMap<String, PsiClass>();
-      for (PsiClass superClass : superClasses) {
-        superClassNames.put(superClass.getQualifiedName(), superClass);
-      }
-
-      superClassNames = PARENT_CACHE_KEY.putCachedValue(aClass, superClassNames);
-    }
-
-    return superClassNames;
   }
 
   @Nullable
@@ -773,49 +740,6 @@ public class TypesUtil {
 
     if (containerType instanceof PsiArrayType) return ((PsiArrayType)containerType).getComponentType();
     return PsiUtil.extractIterableTypeParameter(containerType, false);
-  }
-
-  @Nullable
-  public static PsiClassType createSimilarCollection(@Nullable PsiType collection, Project project, PsiType... itemType) {
-    if (InheritanceUtil.isInheritor(collection, "java.util.SortedSet")) {
-      return createCollection(project, "java.util.SortedSet", itemType);
-    }
-    if (InheritanceUtil.isInheritor(collection, "java.util.LinkedHashSet")) {
-      return createCollection(project, "java.util.LinkedHashSet", itemType);
-    }
-    if (InheritanceUtil.isInheritor(collection, CommonClassNames.JAVA_UTIL_SET)) {
-      return createCollection(project, "java.util.HashSet", itemType);
-    }
-    if (InheritanceUtil.isInheritor(collection, "java.util.LinkedList")) {
-      return createCollection(project, "java.util.LInkedList", itemType);
-    }
-    if (InheritanceUtil.isInheritor(collection, "java.util.Stack")) {
-      return createCollection(project, "java.util.Stack", itemType);
-    }
-    if (InheritanceUtil.isInheritor(collection, "java.util.Vector")) {
-      return createCollection(project, "java.util.Vector", itemType);
-    }
-    if (InheritanceUtil.isInheritor(collection, CommonClassNames.JAVA_UTIL_LIST)) {
-      return createCollection(project, "java.util.ArrayList", itemType);
-    }
-    if (InheritanceUtil.isInheritor(collection, "java.util.Queue")) {
-      return createCollection(project, "java.util.LinkedList", itemType);
-    }
-
-    return createCollection(project, "java.util.ArrayList", itemType);
-  }
-
-  @Nullable
-  private static PsiClassType createCollection(Project project, String collectionName, PsiType... item) {
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    PsiClass collection =
-      JavaPsiFacade.getInstance(project).findClass(collectionName, GlobalSearchScope.allScope(project));
-    if (collection == null) return null;
-
-    PsiTypeParameter[] parameters = collection.getTypeParameters();
-    if (parameters.length != 1) return null;
-
-    return factory.createType(collection, item);
   }
 
   @Nullable
@@ -925,6 +849,6 @@ public class TypesUtil {
     final PsiClass psiClass = ((PsiClassType)type).resolve();
     if (psiClass == null) return false;
 
-    return GROOVY_LANG_CLOSURE.equals(psiClass.getQualifiedName());
+    return GroovyCommonClassNames.GROOVY_LANG_CLOSURE.equals(psiClass.getQualifiedName());
   }
 }

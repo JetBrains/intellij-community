@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.introduceParameter.ChangedMethodCallInfo;
-import com.intellij.refactoring.introduceParameter.ExternalUsageInfo;
-import com.intellij.refactoring.introduceParameter.InternalUsageInfo;
-import com.intellij.refactoring.introduceParameter.IntroduceParameterData;
+import com.intellij.refactoring.introduceParameter.*;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageInfo;
@@ -40,7 +37,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
@@ -52,15 +49,12 @@ import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.FieldConflictsResolver;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrExpressionWrapper;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterSettings;
+import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GroovyIntroduceParameterUtil;
 import org.jetbrains.plugins.groovy.refactoring.util.AnySupers;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
-import static com.intellij.refactoring.introduceParameter.IntroduceParameterUtil.changeMethodSignatureAndResolveFieldConflicts;
-import static com.intellij.refactoring.introduceParameter.IntroduceParameterUtil.processUsages;
-import static org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GroovyIntroduceParameterUtil.*;
 
 /**
  * @author Max Medvedev
@@ -84,7 +78,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
     final GrStatement[] statements = myHelper.getStatements();
 
     for (GrStatement statement : statements) {
-      detectAccessibilityConflicts(statement, usagesIn, conflicts, false, myProject);
+      GroovyIntroduceParameterUtil.detectAccessibilityConflicts(statement, usagesIn, conflicts, false, myProject);
     }
 
     for (UsageInfo info : usagesIn) {
@@ -139,7 +133,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
 
     for (PsiReference ref1 : MethodReferencesSearch.search(toSearchFor, GlobalSearchScope.projectScope(myProject), true)) {
       PsiElement ref = ref1.getElement();
-      if (ref.getLanguage() != GroovyFileType.GROOVY_LANGUAGE) {
+      if (ref.getLanguage() != GroovyLanguage.INSTANCE) {
         result.add(new OtherLanguageUsageInfo(ref1));
         continue;
       }
@@ -175,15 +169,15 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
   protected void performRefactoring(UsageInfo[] usages) {
     final IntroduceParameterData data = new IntroduceParameterDataAdapter();
 
-    processUsages(usages, data);
+    IntroduceParameterUtil.processUsages(usages, data);
 
     final PsiMethod toSearchFor = (PsiMethod)myHelper.getToSearchFor();
 
     final boolean methodsToProcessAreDifferent = myMethod != toSearchFor;
     if (myHelper.generateDelegate()) {
-      generateDelegate(myMethod, data.getParameterInitializer(), myProject);
+      GroovyIntroduceParameterUtil.generateDelegate(myMethod, data.getParameterInitializer(), myProject);
       if (methodsToProcessAreDifferent) {
-        final GrMethod method = generateDelegate(toSearchFor, data.getParameterInitializer(), myProject);
+        final GrMethod method = GroovyIntroduceParameterUtil.generateDelegate(toSearchFor, data.getParameterInitializer(), myProject);
         final PsiClass containingClass = method.getContainingClass();
         if (containingClass != null && containingClass.isInterface()) {
           final GrOpenBlock block = method.getBlock();
@@ -197,9 +191,9 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
     // Changing signature of initial method
     // (signature of myMethodToReplaceIn will be either changed now or have already been changed)
     final FieldConflictsResolver fieldConflictsResolver = new FieldConflictsResolver(myHelper.getName(), myMethod.getBlock());
-    changeMethodSignatureAndResolveFieldConflicts(new UsageInfo(myMethod), usages, data);
+    IntroduceParameterUtil.changeMethodSignatureAndResolveFieldConflicts(new UsageInfo(myMethod), usages, data);
     if (methodsToProcessAreDifferent) {
-      changeMethodSignatureAndResolveFieldConflicts(new UsageInfo(toSearchFor), usages, data);
+      IntroduceParameterUtil.changeMethodSignatureAndResolveFieldConflicts(new UsageInfo(toSearchFor), usages, data);
     }
 
     // Replacing expression occurrences
@@ -207,7 +201,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
       if (usage instanceof ChangedMethodCallInfo) {
         PsiElement element = usage.getElement();
 
-        processChangedMethodCall(element, myHelper, myProject);
+        GroovyIntroduceParameterUtil.processChangedMethodCall(element, myHelper, myProject);
       }
     }
 

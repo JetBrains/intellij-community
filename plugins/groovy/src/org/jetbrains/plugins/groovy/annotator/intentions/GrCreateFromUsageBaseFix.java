@@ -31,14 +31,13 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil.isPropertyAccessInStaticMethod;
 
 /**
  * @author Max Medvedev
@@ -50,6 +49,7 @@ public abstract class GrCreateFromUsageBaseFix extends Intention {
     myRefExpression = SmartPointerManager.getInstance(refExpression.getProject()).createSmartPsiElementPointer(refExpression);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return GroovyBundle.message("create.from.usage.family.name");
@@ -59,6 +59,7 @@ public abstract class GrCreateFromUsageBaseFix extends Intention {
     return myRefExpression.getElement();
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final GrReferenceExpression element = myRefExpression.getElement();
     if (element == null || !element.isValid()) {
@@ -69,6 +70,7 @@ public abstract class GrCreateFromUsageBaseFix extends Intention {
     return !targetClasses.isEmpty();
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }
@@ -137,7 +139,7 @@ public abstract class GrCreateFromUsageBaseFix extends Intention {
 
   private List<PsiClass> getTargetClasses() {
     final GrReferenceExpression ref = getRefExpr();
-    final boolean compileStatic = PsiUtil.isCompileStatic(ref) || isPropertyAccessInStaticMethod(ref);
+    final boolean compileStatic = PsiUtil.isCompileStatic(ref) || GrReferenceResolveUtil.isPropertyAccessInStaticMethod(ref);
     final PsiClass targetClass = QuickfixUtil.findTargetClass(ref, compileStatic);
     if (targetClass == null || !canBeTargetClass(targetClass)) return Collections.emptyList();
 

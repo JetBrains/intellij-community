@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.lang.overriding
+
 import com.intellij.codeInsight.generation.OverrideImplementUtil
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.JavaPsiFacade

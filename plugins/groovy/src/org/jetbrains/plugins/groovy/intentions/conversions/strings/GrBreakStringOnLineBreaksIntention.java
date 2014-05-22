@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +24,13 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
-
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil.getStartQuote;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil.removeQuotes;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 /**
  * @author Max Medvedev
@@ -57,12 +56,12 @@ public class GrBreakStringOnLineBreaksIntention extends Intention {
 
   private static String invokeImpl(PsiElement element) {
     final String text = element.getText();
-    final String quote = getStartQuote(text);
+    final String quote = GrStringUtil.getStartQuote(text);
 
     if (!("'".equals(quote) || "\"".equals(quote))) return text;
     if (!text.contains("\\n")) return text;
 
-    String value = removeQuotes(text);
+    String value = GrStringUtil.removeQuotes(text);
 
     StringBuilder buffer = new StringBuilder();
     if (element instanceof GrString) {
@@ -83,8 +82,8 @@ public class GrBreakStringOnLineBreaksIntention extends Intention {
 
     for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
       final IElementType type = child.getElementType();
-      if (type == mGSTRING_BEGIN || type == mGSTRING_END) continue;
-      if (type == GSTRING_INJECTION) {
+      if (type == GroovyTokenTypes.mGSTRING_BEGIN || type == GroovyTokenTypes.mGSTRING_END) continue;
+      if (type == GroovyElementTypes.GSTRING_INJECTION) {
         buffer.append(child.getText());
       }
       else {
@@ -110,7 +109,7 @@ public class GrBreakStringOnLineBreaksIntention extends Intention {
   }
 
   private static boolean isInjection(ASTNode next) {
-    return next != null && next.getElementType() == GSTRING_INJECTION;
+    return next != null && next.getElementType() == GroovyElementTypes.GSTRING_INJECTION;
   }
 
   private static void processSimpleString(String quote, String value, StringBuilder buffer) {

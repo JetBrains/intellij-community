@@ -29,30 +29,35 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 
 public class GroovyNestedSynchronizedStatementInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return THREADING_ISSUES;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Nested 'synchronized' statement";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Nested '#ref' statement #loc";
 
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitSynchronizedStatement(GrSynchronizedStatement synchronizedStatement) {
       super.visitSynchronizedStatement(synchronizedStatement);
       final GrStatement parent = PsiTreeUtil.getParentOfType(synchronizedStatement, GrSynchronizedStatement.class, GrClosableBlock.class);

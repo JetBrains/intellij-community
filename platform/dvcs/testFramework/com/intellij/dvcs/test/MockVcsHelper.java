@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,7 +145,7 @@ public class MockVcsHelper extends AbstractVcsHelper {
   }
 
   @Override
-  public void showFileHistory(VcsHistoryProvider vcsHistoryProvider, FilePath path, AbstractVcs vcs, String repositoryPath) {
+  public void showFileHistory(VcsHistoryProvider vcsHistoryProvider, FilePath path, AbstractVcs vcs, RepositoryLocation repositoryLocation) {
     throw new UnsupportedOperationException();
   }
 
@@ -153,7 +153,7 @@ public class MockVcsHelper extends AbstractVcsHelper {
   public void showFileHistory(VcsHistoryProvider vcsHistoryProvider,
                               AnnotationProvider annotationProvider,
                               FilePath path,
-                              String repositoryPath,
+                              RepositoryLocation repositoryLocation,
                               AbstractVcs vcs) {
     throw new UnsupportedOperationException();
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,7 @@ public class GroovyPatterns extends PsiJavaPatterns {
 
   public static GroovyElementPattern.Capture<GrLiteral> groovyLiteralExpression(@Nullable final ElementPattern value) {
     return new GroovyElementPattern.Capture<GrLiteral>(new InitialPatternCondition<GrLiteral>(GrLiteral.class) {
+      @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return o instanceof GrLiteral && (value == null || value.accepts(((GrLiteral)o).getValue(), context));
       }
@@ -91,6 +92,7 @@ public class GroovyPatterns extends PsiJavaPatterns {
 
   public static GroovyElementPattern.Capture<GrLiteralImpl> stringLiteral() {
     return new GroovyElementPattern.Capture<GrLiteralImpl>(new InitialPatternCondition<GrLiteralImpl>(GrLiteralImpl.class) {
+      @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         if (!(o instanceof GrLiteralImpl)) return false;
         return ((GrLiteralImpl)o).isStringLiteral();
@@ -108,6 +110,7 @@ public class GroovyPatterns extends PsiJavaPatterns {
 
   public static GroovyElementPattern.Capture<GrArgumentLabel> namedArgumentLabel(@Nullable final ElementPattern<? extends String> namePattern) {
     return new GroovyElementPattern.Capture<GrArgumentLabel>(new InitialPatternCondition<GrArgumentLabel>(GrArgumentLabel.class) {
+      @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         if (o instanceof GrArgumentLabel) {
           PsiElement nameElement = ((GrArgumentLabel)o).getNameElement();

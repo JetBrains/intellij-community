@@ -80,6 +80,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     return getParentByStub();
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitField(this);
   }
@@ -108,6 +109,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     return org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.getOrCreatePisExpression(getInitializerGroovy());
   }
 
+  @Override
   public void setInitializer(@Nullable PsiExpression psiExpression) throws IncorrectOperationException {
     GrExpression oldInitializer = getInitializerGroovy();
     if (psiExpression == null) {
@@ -132,6 +134,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     }
   }
 
+  @Override
   public boolean isDeprecated() {
     final GrFieldStub stub = getStub();
     if (stub != null) {
@@ -163,6 +166,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     return super.getTypeGroovy();
   }
 
+  @Override
   public PsiClass getContainingClass() {
     PsiElement parent = getParent().getParent();
     if (parent instanceof GrTypeDefinitionBody) {
@@ -180,6 +184,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     return null;
   }
 
+  @Override
   public boolean isProperty() {
     final GrFieldStub stub = getStub();
     if (stub != null) {
@@ -188,6 +193,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     return PsiUtil.isProperty(this);
   }
 
+  @Override
   public GrAccessorMethod getSetter() {
     return CachedValuesManager.getCachedValue(this, new CachedValueProvider<GrAccessorMethod>() {
       @Nullable
@@ -198,6 +204,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     });
   }
 
+  @Override
   @NotNull
   public GrAccessorMethod[] getGetters() {
     return CachedValuesManager.getCachedValue(this, new CachedValueProvider<GrAccessorMethod[]>() {
@@ -209,6 +216,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     });
   }
 
+  @Override
   @NotNull
   public SearchScope getUseScope() {
     if (isProperty()) {
@@ -232,6 +240,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     return JavaPresentationUtil.getFieldPresentation(this);
   }
 
+  @Override
   public PsiElement getOriginalElement() {
     final PsiClass containingClass = getContainingClass();
     if (containingClass == null) return this;
@@ -251,6 +260,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     return rowIcon;
   }
 
+  @Override
   @NotNull
   public Map<String, NamedArgumentDescriptor> getNamedParameters() {
     final GrFieldStub stub = getStub();
@@ -268,6 +278,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     return GrNamedArgumentSearchVisitor.find(this);
   }
 
+  @Override
   public GrDocComment getDocComment() {
     return GrDocCommentUtil.findDocComment(this);
   }

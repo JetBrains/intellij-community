@@ -34,6 +34,7 @@ import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
+import git4idea.commands.GitHandler;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -131,7 +132,9 @@ public abstract class GitPlatformTest extends UsefulTestCase {
   }
 
   private void enableDebugLogging() {
-    TestLoggerFactory.enableDebugLogging(myTestRootDisposable, "#" + Executor.class.getName());
+    TestLoggerFactory.enableDebugLogging(myTestRootDisposable, "#" + Executor.class.getName(),
+                                         "#" + GitHandler.class.getName(),
+                                         GitHandler.class.getName());
     myTestStartedIndicator = createTestStartedIndicator();
     LOG.info(myTestStartedIndicator);
   }

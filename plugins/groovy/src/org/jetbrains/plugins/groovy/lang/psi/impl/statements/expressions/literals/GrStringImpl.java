@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.LiteralTextEscaper;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -30,11 +27,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringContent;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.List;
-
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_GSTRING;
 
 /**
  * @author ilyas
@@ -49,10 +44,13 @@ public class GrStringImpl extends GrAbstractLiteral implements GrString {
     return "Compound Gstring";
   }
 
+  @Override
   public PsiType getType() {
-    return getTypeByFQName(findChildByClass(GrStringInjection.class) != null ? GROOVY_LANG_GSTRING : JAVA_LANG_STRING);
+    return getTypeByFQName(findChildByClass(GrStringInjection.class) != null ? GroovyCommonClassNames.GROOVY_LANG_GSTRING
+                                                                             : CommonClassNames.JAVA_LANG_STRING);
   }
 
+  @Override
   public boolean isPlainString() {
     return !getText().startsWith("\"\"\"");
   }
@@ -86,10 +84,12 @@ public class GrStringImpl extends GrAbstractLiteral implements GrString {
     return result.toArray(new GroovyPsiElement[result.size()]);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitGStringExpression(this);
   }
 
+  @Override
   public Object getValue() {
     if (findChildByClass(GrStringInjection.class) != null) return null;
 

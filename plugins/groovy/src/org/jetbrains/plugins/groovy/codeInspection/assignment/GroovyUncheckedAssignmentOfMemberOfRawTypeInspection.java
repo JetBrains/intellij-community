@@ -39,13 +39,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-
-import static org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil.isSpreadAssignment;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 /**
  * @author Maxim.Medvedev
  */
 public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseInspection {
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
@@ -64,11 +64,13 @@ public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseIn
     return true;
   }
 
+  @Override
   @NotNull
   protected BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
@@ -136,6 +138,7 @@ public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseIn
 
     }
 
+    @Override
     public void visitAssignmentExpression(@NotNull GrAssignmentExpression assignment) {
       super.visitAssignmentExpression(assignment);
 
@@ -152,7 +155,7 @@ public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseIn
       PsiType rType = rValue.getType();
 
       // For assignments with spread dot
-      if (isSpreadAssignment(lValue) && lType != null && lType instanceof PsiClassType) {
+      if (GroovyRefactoringUtil.isSpreadAssignment(lValue) && lType != null && lType instanceof PsiClassType) {
         final PsiClassType pct = (PsiClassType)lType;
         final PsiClass clazz = pct.resolve();
         if (clazz != null && CommonClassNames.JAVA_UTIL_LIST.equals(clazz.getQualifiedName())) {

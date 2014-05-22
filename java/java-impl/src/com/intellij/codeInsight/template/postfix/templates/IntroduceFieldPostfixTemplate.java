@@ -23,19 +23,20 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class IntroduceFieldPostfixTemplate extends ExpressionPostfixTemplateWithChooser {
+public class IntroduceFieldPostfixTemplate extends JavaPostfixTemplateWithChooser {
   public IntroduceFieldPostfixTemplate() {
     super("field", "myField = expr;");
   }
 
   @Override
-  protected void doIt(@NotNull Editor editor, @NotNull PsiExpression expression) {
-    IntroduceFieldHandler handler = ApplicationManager.getApplication().isUnitTestMode() ? getMockHandler(expression) : new IntroduceFieldHandler();
+  protected void doIt(@NotNull Editor editor, @NotNull PsiElement expression) {
+    IntroduceFieldHandler handler =
+      ApplicationManager.getApplication().isUnitTestMode() ? getMockHandler(expression) : new IntroduceFieldHandler();
     handler.invoke(expression.getProject(), new PsiElement[]{expression}, null);
   }
 
   @NotNull
-  private static IntroduceFieldHandler getMockHandler(@NotNull final PsiExpression expression) {
+  private static IntroduceFieldHandler getMockHandler(@NotNull final PsiElement expression) {
     final PsiClass containingClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
     assert containingClass != null;
 
@@ -46,7 +47,7 @@ public class IntroduceFieldPostfixTemplate extends ExpressionPostfixTemplateWith
                                                PsiExpression expr, PsiType type, PsiExpression[] occurrences,
                                                PsiElement anchorElement, PsiElement anchorElementIfAll) {
         return new Settings(
-          "foo", expression, PsiExpression.EMPTY_ARRAY, false, false, false,
+          "foo", (PsiExpression)expression, PsiExpression.EMPTY_ARRAY, false, false, false,
           InitializationPlace.IN_CURRENT_METHOD, PsiModifier.PRIVATE, null,
           null, false, containingClass, false, false);
       }

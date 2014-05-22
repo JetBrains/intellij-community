@@ -25,25 +25,30 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 
 public class GroovyOctalIntegerInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return CONFUSING_CODE_CONSTRUCTS;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Octal integer";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Octal integer #ref #loc";
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
+      @Override
       public void visitLiteralExpression(GrLiteral literal) {
         super.visitLiteralExpression(literal);
         @NonNls final String text = literal.getText();

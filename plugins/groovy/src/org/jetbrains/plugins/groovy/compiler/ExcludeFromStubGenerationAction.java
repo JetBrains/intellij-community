@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,16 +26,17 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 
 /**
  * @author peter
  */
 public class ExcludeFromStubGenerationAction extends AnAction implements DumbAware {
+  @Override
   public void actionPerformed(final AnActionEvent e) {
     final PsiFile file = e.getData(DataKeys.PSI_FILE);
 
-    assert file != null && file.getLanguage() == GroovyFileType.GROOVY_LANGUAGE;
+    assert file != null && file.getLanguage() == GroovyLanguage.INSTANCE;
 
     doExcludeFromStubGeneration(file);
   }
@@ -47,12 +48,14 @@ public class ExcludeFromStubGenerationAction extends AnAction implements DumbAwa
 
     final GroovyCompilerConfigurable configurable = new GroovyCompilerConfigurable(project);
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
+      @Override
       public void run() {
         configurable.getExcludes().addEntry(new ExcludeEntryDescription(virtualFile, false, true, project));
       }
     });
   }
 
+  @Override
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
 
@@ -63,7 +66,7 @@ public class ExcludeFromStubGenerationAction extends AnAction implements DumbAwa
 
   private static boolean isEnabled(AnActionEvent e) {
     PsiFile file = e.getData(DataKeys.PSI_FILE);
-    if (file == null || file.getLanguage() != GroovyFileType.GROOVY_LANGUAGE) {
+    if (file == null || file.getLanguage() != GroovyLanguage.INSTANCE) {
       return false;
     }
 

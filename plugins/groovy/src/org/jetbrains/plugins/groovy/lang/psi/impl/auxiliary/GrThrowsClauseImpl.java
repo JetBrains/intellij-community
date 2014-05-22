@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ public class GrThrowsClauseImpl extends GroovyPsiElementImpl implements GrThrows
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitThrowsClause(this);
   }
@@ -55,6 +56,7 @@ public class GrThrowsClauseImpl extends GroovyPsiElementImpl implements GrThrows
     return "Throw clause";
   }
 
+  @Override
   @NotNull
   public PsiJavaCodeReferenceElement[] getReferenceElements() {
     PsiClassType[] types = getReferencedTypes();
@@ -73,13 +75,14 @@ public class GrThrowsClauseImpl extends GroovyPsiElementImpl implements GrThrows
     return result.toArray(new PsiJavaCodeReferenceElement[result.size()]);
   }
 
+  @Override
   @NotNull
   public PsiClassType[] getReferencedTypes() {
     List<GrCodeReferenceElement> refs = new ArrayList<GrCodeReferenceElement>();
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (cur instanceof GrCodeReferenceElement) refs.add((GrCodeReferenceElement)cur);
     }
-    if (refs.size() == 0) return PsiClassType.EMPTY_ARRAY;
+    if (refs.isEmpty()) return PsiClassType.EMPTY_ARRAY;
 
     PsiClassType[] result = new PsiClassType[refs.size()];
     for (int i = 0; i < result.length; i++) {
@@ -89,6 +92,7 @@ public class GrThrowsClauseImpl extends GroovyPsiElementImpl implements GrThrows
     return result;
   }
 
+  @Override
   public Role getRole() {
     return Role.THROWS_LIST;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -43,6 +43,7 @@ public class NamedArgumentInsertHandler implements InsertHandler<LookupElement> 
 
   private NamedArgumentInsertHandler() {}
 
+  @Override
   public void handleInsert(InsertionContext context, LookupElement item) {
     int tailOffset = context.getTailOffset();
 
@@ -56,7 +57,7 @@ public class NamedArgumentInsertHandler implements InsertHandler<LookupElement> 
     if (argumentList != null) {
       CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(context.getProject()).getCurrentSettings();
       GroovyCodeStyleSettings codeStyleSettings = settings.getCustomSettings(GroovyCodeStyleSettings.class);
-      CommonCodeStyleSettings commonCodeStyleSettings = settings.getCommonSettings(GroovyFileType.GROOVY_LANGUAGE);
+      CommonCodeStyleSettings commonCodeStyleSettings = settings.getCommonSettings(GroovyLanguage.INSTANCE);
 
       boolean insertSpace = codeStyleSettings.SPACE_IN_NAMED_ARGUMENT;
 
@@ -69,7 +70,7 @@ public class NamedArgumentInsertHandler implements InsertHandler<LookupElement> 
       String s = argumentListText.substring(tailOffset - argumentList.getTextOffset());
       s = StringUtil.trimEnd(s, ")");
 
-      if (s.trim().length() == 0) {
+      if (s.trim().isEmpty()) {
         String toInsert = insertSpace ? ": " : ":";
         editor.getDocument().insertString(tailOffset, toInsert);
         editor.getCaretModel().moveToOffset(tailOffset + toInsert.length());

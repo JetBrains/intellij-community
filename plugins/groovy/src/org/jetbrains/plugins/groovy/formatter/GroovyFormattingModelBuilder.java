@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.formatter.blocks.GroovyBlock;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -46,15 +46,16 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
  * @author ilyas
  */
 public class GroovyFormattingModelBuilder implements FormattingModelBuilder {
+  @Override
   @NotNull
   public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
     ASTNode node = element.getNode();
     assert node != null;
-    PsiFile containingFile = element.getContainingFile().getViewProvider().getPsi(GroovyFileType.GROOVY_LANGUAGE);
+    PsiFile containingFile = element.getContainingFile().getViewProvider().getPsi(GroovyLanguage.INSTANCE);
     assert containingFile != null : element.getContainingFile();
     ASTNode astNode = containingFile.getNode();
     assert astNode != null;
-    CommonCodeStyleSettings groovySettings = settings.getCommonSettings(GroovyFileType.GROOVY_LANGUAGE);
+    CommonCodeStyleSettings groovySettings = settings.getCommonSettings(GroovyLanguage.INSTANCE);
     GroovyCodeStyleSettings customSettings = settings.getCustomSettings(GroovyCodeStyleSettings.class);
 
     final AlignmentProvider alignments = new AlignmentProvider();
@@ -75,6 +76,7 @@ public class GroovyFormattingModelBuilder implements FormattingModelBuilder {
     return new GroovyFormattingModel(containingFile, block, FormattingDocumentModelImpl.createOn(containingFile));
   }
 
+  @Override
   @Nullable
   public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
     return null;

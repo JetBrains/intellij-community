@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,12 @@ import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.stubs.EmptyStub;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
-
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMMA;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -51,6 +50,7 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub> implements
     return getParentByStub();
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitParameterList(this);
   }
@@ -59,20 +59,24 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub> implements
     return "Parameter list";
   }
 
+  @Override
   @NotNull
   public GrParameter[] getParameters() {
     return getStubOrPsiChildren(GroovyElementTypes.PARAMETER, GrParameter.ARRAY_FACTORY);
   }
 
+  @Override
   public int getParameterIndex(PsiParameter parameter) {
     LOG.assertTrue(parameter.getParent() == this);
     return PsiImplUtil.getParameterIndex(parameter, this);
   }
 
+  @Override
   public int getParametersCount() {
     return getParameters().length;
   }
 
+  @Override
   public int getParameterNumber(final GrParameter parameter) {
     GrParameter[] parameters = getParameters();
     for (int i = 0; i < parameters.length; i++) {
@@ -136,16 +140,16 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub> implements
     ASTNode result = super.addInternal(first, last, anchor, before);
     if (first == last && first.getPsi() instanceof GrParameter && params.length > 0) {
       if (before.booleanValue() && anchor != null) {
-        getNode().addLeaf(mCOMMA, ",", anchor);
+        getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", anchor);
       }
       else if (before.booleanValue() && anchor == null) {
-        getNode().addLeaf(mCOMMA, ",", result);
+        getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", result);
       }
       else if (!before.booleanValue() && anchor != null) {
-        getNode().addLeaf(mCOMMA, ",", result);
+        getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", result);
       }
       else if (!before.booleanValue() && anchor == null) {
-        getNode().addLeaf(mCOMMA, ",", result.getTreeNext());
+        getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", result.getTreeNext());
       }
     }
     return result;

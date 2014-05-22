@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 
 /**
@@ -35,12 +36,12 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
   public FileHistoryRefresher(final VcsHistoryProvider vcsHistoryProvider,
                               final AnnotationProvider annotationProvider,
                               final FilePath path,
-                              final String repositoryPath,
+                              final RepositoryLocation repositoryLocation,
                               final AbstractVcs vcs) {
     myVcsHistoryProvider = vcsHistoryProvider;
     myPath = path;
     myVcs = vcs;
-    mySessionPartner = new FileHistorySessionPartner(vcsHistoryProvider, annotationProvider, path, repositoryPath, vcs, this);
+    mySessionPartner = new FileHistorySessionPartner(vcsHistoryProvider, annotationProvider, path, repositoryLocation, vcs, this);
     myCanUseCache = true;
   }
 

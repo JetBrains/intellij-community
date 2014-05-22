@@ -17,7 +17,7 @@
 package com.intellij.compiler.ant.taskdefs;
 
 import com.intellij.compiler.ant.Tag;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -27,6 +27,6 @@ import org.jetbrains.annotations.NonNls;
 public class Dirname extends Tag{
   public Dirname(@NonNls String property, @NonNls String file) {
     //noinspection HardCodedStringLiteral
-    super("dirname", new Pair[] {Pair.create("property", property), Pair.create("file", file)});
+    super("dirname", Couple.newOne("property", property), Couple.newOne("file", file));
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,33 +24,31 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.elements.GroovyDocTagValueTokenType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.*;
 
-import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.elements.GroovyDocTagValueTokenType.TagValueTokenType.REFERENCE_ELEMENT;
-
 /**
  * @author ilyas
  */
-public class GroovyDocPsiCreator implements GroovyDocElementTypes {
+public class GroovyDocPsiCreator {
 
   public static PsiElement createElement(ASTNode node) {
     IElementType type = node.getElementType();
 
     if (type instanceof GroovyDocTagValueTokenType) {
       GroovyDocTagValueTokenType value = (GroovyDocTagValueTokenType) type;
-      GroovyDocTagValueTokenType.TagValueTokenType valueType = value.getValueType(node);
-      if (valueType == REFERENCE_ELEMENT) return new GrDocReferenceElementImpl(node);
+      GroovyDocTagValueTokenType.TagValueTokenType valueType = GroovyDocTagValueTokenType.getValueType(node);
+      if (valueType == GroovyDocTagValueTokenType.TagValueTokenType.REFERENCE_ELEMENT) return new GrDocReferenceElementImpl(node);
 
       return new GrDocTagValueTokenImpl(node);
     }
 
 
-    if (type == GDOC_TAG) return new GrDocTagImpl(node);
-    if (type == GDOC_INLINED_TAG) return new GrDocInlinedTagImpl(node);
+    if (type == GroovyDocElementTypes.GDOC_TAG) return new GrDocTagImpl(node);
+    if (type == GroovyDocElementTypes.GDOC_INLINED_TAG) return new GrDocInlinedTagImpl(node);
 
-    if (type == GDOC_METHOD_REF) return new GrDocMethodReferenceImpl(node);
-    if (type == GDOC_FIELD_REF) return new GrDocFieldReferenceImpl(node);
-    if (type == GDOC_PARAM_REF) return new GrDocParameterReferenceImpl(node);
-    if (type == GDOC_METHOD_PARAMS) return new GrDocMethodParamsImpl(node);
-    if (type == GDOC_METHOD_PARAMETER) return new GrDocMethodParameterImpl(node);
+    if (type == GroovyDocElementTypes.GDOC_METHOD_REF) return new GrDocMethodReferenceImpl(node);
+    if (type == GroovyDocElementTypes.GDOC_FIELD_REF) return new GrDocFieldReferenceImpl(node);
+    if (type == GroovyDocElementTypes.GDOC_PARAM_REF) return new GrDocParameterReferenceImpl(node);
+    if (type == GroovyDocElementTypes.GDOC_METHOD_PARAMS) return new GrDocMethodParamsImpl(node);
+    if (type == GroovyDocElementTypes.GDOC_METHOD_PARAMETER) return new GrDocMethodParameterImpl(node);
 
     return new ASTWrapperPsiElement(node);
   }

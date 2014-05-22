@@ -805,7 +805,7 @@ public class UIUtil {
   }
 
   public static Color getListUnfocusedSelectionBackground() {
-    return isUnderDarcula() ? Gray._52 : UNFOCUSED_SELECTION_COLOR;
+    return new JBColor(UNFOCUSED_SELECTION_COLOR, new Color(13, 41, 62));
   }
 
   public static Color getTreeSelectionBackground(boolean focused) {

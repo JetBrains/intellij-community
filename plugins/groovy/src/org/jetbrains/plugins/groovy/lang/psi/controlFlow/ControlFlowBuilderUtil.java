@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ public class ControlFlowBuilderUtil {
     int[] invpostorder = invPostorder(postorder);
 
     findReadsBeforeWrites(flow, definitelyAssigned, result, namesIndex, postorder, invpostorder, onlyFirstRead);
-    if (result.size() == 0) return ReadWriteVariableInstruction.EMPTY_ARRAY;
+    if (result.isEmpty()) return ReadWriteVariableInstruction.EMPTY_ARRAY;
     return result.toArray(new ReadWriteVariableInstruction[result.size()]);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -46,11 +46,13 @@ public class CreateMethodFromUsageFix extends GrCreateFromUsageBaseFix implement
     super(refExpression);
   }
 
+  @Override
   @NotNull
   public String getText() {
     return GroovyBundle.message("create.method.from.usage", getMethodName());
   }
 
+  @Override
   protected void invokeImpl(Project project, @NotNull PsiClass targetClass) {
     final JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), targetClass.getProject());
     assert factory != null;
@@ -124,7 +126,7 @@ public class CreateMethodFromUsageFix extends GrCreateFromUsageBaseFix implement
       final PsiParameter p = factory.createParameter("o", argType);
       parameterList.add(p);
       TypeConstraint[] constraints = {SupertypeConstraint.create(argType)};
-      boolean isGroovy = method.getLanguage() == GroovyFileType.GROOVY_LANGUAGE;
+      boolean isGroovy = method.getLanguage() == GroovyLanguage.INSTANCE;
       paramTypesExpressions[i] = new ChooseTypeExpression(constraints, method.getManager(), method.getResolveScope(), isGroovy);
     }
     return paramTypesExpressions;

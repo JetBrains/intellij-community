@@ -20,10 +20,8 @@ import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
-import com.intellij.debugger.impl.DebuggerContextUtil;
-import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.impl.DebuggerStateManager;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
+import com.intellij.debugger.impl.*;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
@@ -41,6 +39,7 @@ import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -80,7 +79,7 @@ public class JavaDebugProcess extends XDebugProcess {
     super(session);
     myJavaSession = javaSession;
     myEditorsProvider = new JavaDebuggerEditorsProvider();
-    DebugProcessImpl process = javaSession.getProcess();
+    final DebugProcessImpl process = javaSession.getProcess();
 
     List<XBreakpointHandler> handlers = new ArrayList<XBreakpointHandler>();
     handlers.add(new JavaBreakpointHandler.JavaLineBreakpointHandler(process));
@@ -95,22 +94,32 @@ public class JavaDebugProcess extends XDebugProcess {
 
     myBreakpointHandlers = handlers.toArray(new XBreakpointHandler[handlers.size()]);
 
-    process.addDebugProcessListener(new DebugProcessAdapter() {
+    myJavaSession.getContextManager().addListener(new DebuggerContextListener() {
       @Override
-      public void paused(final SuspendContext suspendContext) {
-        SuspendContextImpl context = (SuspendContextImpl)suspendContext;
-        context.initExecutionStacks();
+      public void changeEvent(final DebuggerContextImpl newContext, int event) {
+        if (event == DebuggerSession.EVENT_PAUSE && myJavaSession.isPaused()) {
+          process.getManagerThread().schedule(new DebuggerContextCommandImpl(newContext) {
+            @Override
+            public void threadAction() {
+              SuspendContextImpl context = newContext.getSuspendContext();
+              if (context != null) {
+                context.initExecutionStacks(newContext.getThreadProxy());
 
-        List<Pair<Breakpoint, Event>> descriptors = DebuggerUtilsEx.getEventDescriptors(context);
-        if (!descriptors.isEmpty()) {
-          Breakpoint breakpoint = descriptors.get(0).getFirst();
-          XBreakpoint xBreakpoint = breakpoint.getXBreakpoint();
-          if (xBreakpoint != null) {
-            getSession().breakpointReached(xBreakpoint, null, context);
-            return;
-          }
+                List<Pair<Breakpoint, Event>> descriptors =
+                  DebuggerUtilsEx.getEventDescriptors(context);
+                if (!descriptors.isEmpty()) {
+                  Breakpoint breakpoint = descriptors.get(0).getFirst();
+                  XBreakpoint xBreakpoint = breakpoint.getXBreakpoint();
+                  if (xBreakpoint != null) {
+                    getSession().breakpointReached(xBreakpoint, null, context);
+                    return;
+                  }
+                }
+                getSession().positionReached(context);
+              }
+            }
+          });
         }
-        getSession().positionReached(context);
       }
     });
 
@@ -148,6 +157,18 @@ public class JavaDebugProcess extends XDebugProcess {
         XStackFrame frame = session.getCurrentStackFrame();
         if (frame instanceof JavaStackFrame) {
           DebuggerContextUtil.setStackFrame(javaSession.getContextManager(), ((JavaStackFrame)frame).getStackFrameProxy());
+        }
+      }
+
+      @Override
+      public void sessionStopped() {
+        if (DebuggerSettings.getInstance().UNMUTE_ON_STOP) {
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
+            public void run() {
+              session.setBreakpointMuted(false);
+            }
+          });
         }
       }
     });
@@ -228,7 +249,9 @@ public class JavaDebugProcess extends XDebugProcess {
   @NotNull
   @Override
   public ExecutionConsole createConsole() {
-    return myJavaSession.getProcess().getExecutionResult().getExecutionConsole();
+    ExecutionConsole console = myJavaSession.getProcess().getExecutionResult().getExecutionConsole();
+    if (console != null) return console;
+    return super.createConsole();
   }
 
   @NotNull

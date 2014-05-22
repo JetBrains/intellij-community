@@ -34,8 +34,7 @@ import com.intellij.util.containers.ContainerUtil;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.editor.GroovyImportHelper;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -56,13 +55,11 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFileStub;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrPackageDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.PackageSkippingProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import javax.swing.*;
 import java.util.concurrent.ConcurrentMap;
-
-import static org.jetbrains.plugins.groovy.editor.GroovyImportHelper.processImplicitImports;
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.*;
 
 /**
  * Implements all abstractions related to Groovy file
@@ -91,7 +88,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   private PsiElement myContext;
 
   public GroovyFileImpl(FileViewProvider viewProvider) {
-    super(viewProvider, GroovyFileType.GROOVY_LANGUAGE);
+    super(viewProvider, GroovyLanguage.INSTANCE);
   }
 
   @Override
@@ -142,13 +139,13 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     ClassHint classHint = processor.getHint(ClassHint.KEY);
 
     if (myContext != null) {
-      if (shouldProcessProperties(classHint)) {
+      if (ResolveUtil.shouldProcessProperties(classHint)) {
         if (!processChildrenScopes(processor, state, lastParent, place)) return false;
       }
       return true;
     }
 
-    boolean processClasses = shouldProcessClasses(classHint);
+    boolean processClasses = ResolveUtil.shouldProcessClasses(classHint);
 
     GroovyScriptClass scriptClass = getScriptClass();
     if (scriptClass != null && scriptClass.getName() != null) {
@@ -158,17 +155,17 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       }
 
       if (processClasses) {
-        if (!processElement(processor, scriptClass, state)) return false;
+        if (!ResolveUtil.processElement(processor, scriptClass, state)) return false;
       }
     }
 
     if (processClasses) {
       for (GrTypeDefinition definition : getTypeDefinitions()) {
-        if (!processElement(processor, definition, state)) return false;
+        if (!ResolveUtil.processElement(processor, definition, state)) return false;
       }
     }
 
-    if (shouldProcessProperties(classHint)) {
+    if (ResolveUtil.shouldProcessProperties(classHint)) {
       if (!processChildrenScopes(processor, state, lastParent, place)) return false;
     }
 
@@ -176,9 +173,9 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     if (!processImports(processor, state, lastParent, place, importStatements, false)) return false;
     if (!processDeclarationsInPackage(processor, state, lastParent, place)) return false;
     if (!processImports(processor, state, lastParent, place, importStatements, true)) return false;
-    if  (!processImplicitImports(processor, state, lastParent, place, this)) return false;
+    if  (!GroovyImportHelper.processImplicitImports(processor, state, lastParent, place, this)) return false;
 
-    if (shouldProcessPackages(classHint)) {
+    if (ResolveUtil.shouldProcessPackages(classHint)) {
 
       NameHint nameHint = processor.getHint(NameHint.KEY);
       String expectedName = nameHint != null ? nameHint.getName(state) : null;
@@ -194,15 +191,15 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
         PsiPackage defaultPackage = facade.findPackage("");
         if (defaultPackage != null) {
           for (PsiPackage subPackage : defaultPackage.getSubPackages(getResolveScope())) {
-            if (!processElement(processor, subPackage, state)) return false;
+            if (!ResolveUtil.processElement(processor, subPackage, state)) return false;
           }
         }
       }
     }
 
-    if (shouldProcessProperties(classHint)) {
+    if (ResolveUtil.shouldProcessProperties(classHint)) {
       if (lastParent != null && !(lastParent instanceof GrTypeDefinition) && scriptClass != null) {
-        if (!processElement(processor, getSyntheticArgsParameter(), state)) return false;
+        if (!ResolveUtil.processElement(processor, getSyntheticArgsParameter(), state)) return false;
       }
 
       if (isInScriptBody(lastParent, place)) {
@@ -269,7 +266,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
                                                @NotNull ResolveState state,
                                                @Nullable PsiElement lastParent,
                                                @NotNull PsiElement place) {
-    if (shouldProcessClasses(processor.getHint(ClassHint.KEY))) {
+    if (ResolveUtil.shouldProcessClasses(processor.getHint(ClassHint.KEY))) {
       PsiPackage aPackage = JavaPsiFacade.getInstance(getProject()).findPackage(getPackageName());
       if (aPackage != null) {
         return aPackage.processDeclarations(new PackageSkippingProcessor(processor), state, lastParent, place);

@@ -39,29 +39,34 @@ public class GroovyThreadStopSuspendResumeInspection extends BaseInspection {
     METHOD_NAMES.add("resume");
   }
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return THREADING_ISSUES;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Call to Thread.stop(), Thread.suspend(), or Thread.resume()";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Call to Thread.'#ref' #loc";
 
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
+    @Override
     public void visitMethodCallExpression(GrMethodCallExpression grMethodCallExpression) {
       super.visitMethodCallExpression(grMethodCallExpression);
       final GrExpression methodExpression = grMethodCallExpression.getInvokedExpression();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,24 +22,23 @@ import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
-
-import static com.intellij.psi.util.PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT;
 
 /**
  * @author ven
  */
 public class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
-  private static Key<CachedValue<GrGdkMethodImpl>> CACHED_STATIC = Key.create("Cached static gdk method");
-  private static Key<CachedValue<GrGdkMethodImpl>> CACHED_NON_STATIC = Key.create("Cached instance gdk method");
+  private static final Key<CachedValue<GrGdkMethodImpl>> CACHED_STATIC = Key.create("Cached static gdk method");
+  private static final Key<CachedValue<GrGdkMethodImpl>> CACHED_NON_STATIC = Key.create("Cached instance gdk method");
   private final PsiMethod myMethod;
 
   private GrGdkMethodImpl(PsiMethod method, boolean isStatic, @Nullable String originInfo) {
-    super(method.getManager(), GroovyFileType.GROOVY_LANGUAGE, method.getName());
+    super(method.getManager(), GroovyLanguage.INSTANCE, method.getName());
     myMethod = method;
 
     addModifier(PsiModifier.PUBLIC);
@@ -61,20 +60,24 @@ public class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
     }
   }
 
+  @Override
   @NotNull
   public PsiMethod getStaticMethod() {
     return myMethod;
   }
 
+  @Override
   public boolean hasTypeParameters() {
     return myMethod.hasTypeParameters();
   }
 
+  @Override
   @NotNull
   public PsiTypeParameter[] getTypeParameters() {
     return myMethod.getTypeParameters();
   }
 
+  @Override
   public PsiTypeParameterList getTypeParameterList() {
     return myMethod.getTypeParameterList();
   }
@@ -107,7 +110,8 @@ public class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
       cachedValue = CachedValuesManager.getManager(original.getProject()).createCachedValue(new CachedValueProvider<GrGdkMethodImpl>() {
         @Override
         public Result<GrGdkMethodImpl> compute() {
-          return Result.create(new GrGdkMethodImpl(original, isStatic, originInfo), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+          return Result.create(new GrGdkMethodImpl(original, isStatic, originInfo),
+                               PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
         }
       });
       original.putUserData(cachedValueKey, cachedValue);

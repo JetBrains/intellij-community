@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,70 +26,72 @@ import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.*;
-
 /**
  * @author ilyas
  */
-public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements GroovyTokenTypes {
+public class GroovySyntaxHighlighter extends SyntaxHighlighterBase {
 
   private static final Map<IElementType, TextAttributesKey> ATTRIBUTES = new HashMap<IElementType, TextAttributesKey>();
   private static final Map<IElementType, TextAttributesKey> POWER_SAVE_MODE_ATTRIBUTES = new HashMap<IElementType, TextAttributesKey>();
 
 
   static final TokenSet tBLOCK_COMMENTS = TokenSet.create(
-      mML_COMMENT, GROOVY_DOC_COMMENT
+    GroovyTokenTypes.mML_COMMENT, GroovyDocElementTypes.GROOVY_DOC_COMMENT
   );
 
   static final TokenSet tLINE_COMMENTS = TokenSet.create(
-      mSL_COMMENT,
-      mSH_COMMENT
+    GroovyTokenTypes.mSL_COMMENT,
+    GroovyTokenTypes.mSH_COMMENT
   );
 
   static final TokenSet tBAD_CHARACTERS = TokenSet.create(
-      mWRONG
+    GroovyTokenTypes.mWRONG
   );
 
   static final TokenSet tGSTRINGS = TokenSet.create(
-      mGSTRING_BEGIN,
-      mGSTRING_CONTENT,
-      mGSTRING_END,
-      mGSTRING_LITERAL
+    GroovyTokenTypes.mGSTRING_BEGIN,
+    GroovyTokenTypes.mGSTRING_CONTENT,
+    GroovyTokenTypes.mGSTRING_END,
+    GroovyTokenTypes.mGSTRING_LITERAL
   );
 
   static final TokenSet tSTRINGS = TokenSet.create(
-      mSTRING_LITERAL
+    GroovyTokenTypes.mSTRING_LITERAL
   );
 
   static final TokenSet tBRACES = TokenSet.create(
-    mLCURLY,
-    mRCURLY
+    GroovyTokenTypes.mLCURLY,
+    GroovyTokenTypes.mRCURLY
   );
   static final TokenSet tPARENTHESES = TokenSet.create(
-    mLPAREN,
-    mRPAREN
+    GroovyTokenTypes.mLPAREN,
+    GroovyTokenTypes.mRPAREN
   );
   static final TokenSet tBRACKETS = TokenSet.create(
-    mLBRACK,
-    mRBRACK
+    GroovyTokenTypes.mLBRACK,
+    GroovyTokenTypes.mRBRACK
   );
 
-  static final TokenSet tOperators = TokenSet.orSet(BINARY_OP_SET, UNARY_OP_SET, ASSIGN_OP_SET);
+  static final TokenSet tOperators = TokenSet.orSet(TokenSets.BINARY_OP_SET, TokenSets.UNARY_OP_SET, TokenSets.ASSIGN_OP_SET);
 
   static {
     fillMap(ATTRIBUTES, tLINE_COMMENTS, DefaultHighlighter.LINE_COMMENT);
     fillMap(ATTRIBUTES, tBLOCK_COMMENTS, DefaultHighlighter.BLOCK_COMMENT);
     fillMap(ATTRIBUTES, tBAD_CHARACTERS, DefaultHighlighter.BAD_CHARACTER);
-    fillMap(ATTRIBUTES, NUMBERS, DefaultHighlighter.NUMBER);
+    fillMap(ATTRIBUTES, TokenSets.NUMBERS, DefaultHighlighter.NUMBER);
     fillMap(ATTRIBUTES, tGSTRINGS, DefaultHighlighter.GSTRING);
     fillMap(ATTRIBUTES, tSTRINGS, DefaultHighlighter.STRING);
-    fillMap(ATTRIBUTES, DefaultHighlighter.STRING, mREGEX_BEGIN, mREGEX_CONTENT, mREGEX_END, mDOLLAR_SLASH_REGEX_BEGIN, mDOLLAR_SLASH_REGEX_CONTENT, mDOLLAR_SLASH_REGEX_END);
+    fillMap(ATTRIBUTES, DefaultHighlighter.STRING, GroovyTokenTypes.mREGEX_BEGIN, GroovyTokenTypes.mREGEX_CONTENT,
+            GroovyTokenTypes.mREGEX_END, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_BEGIN, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT,
+            GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END);
     fillMap(ATTRIBUTES, tBRACES, DefaultHighlighter.BRACES);
     fillMap(ATTRIBUTES, tBRACKETS, DefaultHighlighter.BRACKETS);
     fillMap(ATTRIBUTES, tPARENTHESES, DefaultHighlighter.PARENTHESES);
@@ -103,20 +105,22 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
     fillMap(POWER_SAVE_MODE_ATTRIBUTES, tLINE_COMMENTS, DefaultHighlighter.LINE_COMMENT);
     fillMap(POWER_SAVE_MODE_ATTRIBUTES, tBLOCK_COMMENTS, DefaultHighlighter.BLOCK_COMMENT);
     fillMap(POWER_SAVE_MODE_ATTRIBUTES, tBAD_CHARACTERS, DefaultHighlighter.BAD_CHARACTER);
-    fillMap(POWER_SAVE_MODE_ATTRIBUTES, NUMBERS, DefaultHighlighter.NUMBER);
+    fillMap(POWER_SAVE_MODE_ATTRIBUTES, TokenSets.NUMBERS, DefaultHighlighter.NUMBER);
     fillMap(POWER_SAVE_MODE_ATTRIBUTES, tGSTRINGS, DefaultHighlighter.GSTRING);
     fillMap(POWER_SAVE_MODE_ATTRIBUTES, tSTRINGS, DefaultHighlighter.STRING);
-    fillMap(POWER_SAVE_MODE_ATTRIBUTES, DefaultHighlighter.STRING, mREGEX_BEGIN, mREGEX_CONTENT, mREGEX_END, mDOLLAR_SLASH_REGEX_BEGIN,
-            mDOLLAR_SLASH_REGEX_CONTENT, mDOLLAR_SLASH_REGEX_END);
+    fillMap(POWER_SAVE_MODE_ATTRIBUTES, DefaultHighlighter.STRING, GroovyTokenTypes.mREGEX_BEGIN, GroovyTokenTypes.mREGEX_CONTENT,
+            GroovyTokenTypes.mREGEX_END, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_BEGIN,
+            GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END);
     fillMap(POWER_SAVE_MODE_ATTRIBUTES, tBRACES, DefaultHighlighter.BRACES);
     fillMap(POWER_SAVE_MODE_ATTRIBUTES, tBRACKETS, DefaultHighlighter.BRACKETS);
     fillMap(POWER_SAVE_MODE_ATTRIBUTES, tPARENTHESES, DefaultHighlighter.PARENTHESES);
     fillMap(POWER_SAVE_MODE_ATTRIBUTES, DefaultHighlighter.VALID_STRING_ESCAPE, StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN);
     fillMap(POWER_SAVE_MODE_ATTRIBUTES, DefaultHighlighter.INVALID_STRING_ESCAPE, StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN);
     fillMap(POWER_SAVE_MODE_ATTRIBUTES, DefaultHighlighter.INVALID_STRING_ESCAPE, StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN);
-    fillMap(POWER_SAVE_MODE_ATTRIBUTES, KEYWORDS, DefaultHighlighter.KEYWORD);
+    fillMap(POWER_SAVE_MODE_ATTRIBUTES, TokenSets.KEYWORDS, DefaultHighlighter.KEYWORD);
   }
 
+  @Override
   @NotNull
   public Lexer getHighlightingLexer() {
     return new GroovyHighlightingLexer();
@@ -136,6 +140,7 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
     }
   }
 
+  @Override
   @NotNull
   public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
     return pack(PowerSaveMode.isEnabled() ? POWER_SAVE_MODE_ATTRIBUTES.get(tokenType) : ATTRIBUTES.get(tokenType));

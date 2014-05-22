@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -54,8 +55,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.Set;
-
-import static org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter.*;
 
 /**
  * @author Max Medvedev
@@ -124,11 +123,11 @@ public class GrHighlightUtil {
 
     if (resolved instanceof PsiField || resolved instanceof GrVariable && ResolveUtil.isScriptField((GrVariable)resolved)) {
       boolean isStatic = ((PsiVariable)resolved).hasModifierProperty(PsiModifier.STATIC);
-      return isStatic ? STATIC_FIELD : INSTANCE_FIELD;
+      return isStatic ? DefaultHighlighter.STATIC_FIELD : DefaultHighlighter.INSTANCE_FIELD;
     }
     else if (resolved instanceof GrAccessorMethod) {
       boolean isStatic = ((GrAccessorMethod)resolved).hasModifierProperty(PsiModifier.STATIC);
-      return isStatic ? STATIC_PROPERTY_REFERENCE : INSTANCE_PROPERTY_REFERENCE;
+      return isStatic ? DefaultHighlighter.STATIC_PROPERTY_REFERENCE : DefaultHighlighter.INSTANCE_PROPERTY_REFERENCE;
     }
     else if (resolved instanceof PsiMethod) {
 
@@ -141,49 +140,49 @@ public class GrHighlightUtil {
             return null;
           }
           else {
-            return CONSTRUCTOR_CALL;
+            return DefaultHighlighter.CONSTRUCTOR_CALL;
           }
         }
         else {
-          return CONSTRUCTOR_DECLARATION;
+          return DefaultHighlighter.CONSTRUCTOR_DECLARATION;
         }
       }
       else {
         boolean isStatic = ((PsiMethod)resolved).hasModifierProperty(PsiModifier.STATIC);
         if (GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)resolved)) {
-          return isStatic ? STATIC_PROPERTY_REFERENCE : INSTANCE_PROPERTY_REFERENCE;
+          return isStatic ? DefaultHighlighter.STATIC_PROPERTY_REFERENCE : DefaultHighlighter.INSTANCE_PROPERTY_REFERENCE;
         }
         else {
           if (refElement != null) {
-            return isStatic ? STATIC_METHOD_ACCESS : METHOD_CALL;
+            return isStatic ? DefaultHighlighter.STATIC_METHOD_ACCESS : DefaultHighlighter.METHOD_CALL;
           }
           else {
-            return METHOD_DECLARATION;
+            return DefaultHighlighter.METHOD_DECLARATION;
           }
         }
       }
     }
     else if (resolved instanceof PsiTypeParameter) {
-      return TYPE_PARAMETER;
+      return DefaultHighlighter.TYPE_PARAMETER;
     }
     else if (resolved instanceof PsiClass) {
       if (((PsiClass)resolved).isAnnotationType()) {
-        return ANNOTATION;
+        return DefaultHighlighter.ANNOTATION;
       }
       else {
-        return CLASS_REFERENCE;
+        return DefaultHighlighter.CLASS_REFERENCE;
       }
     }
     else if (resolved instanceof GrParameter) {
       boolean reassigned = isReassigned((GrParameter)resolved);
-      return reassigned ? REASSIGNED_PARAMETER : PARAMETER;
+      return reassigned ? DefaultHighlighter.REASSIGNED_PARAMETER : DefaultHighlighter.PARAMETER;
     }
     else if (resolved instanceof GrVariable) {
       boolean reassigned = isReassigned((GrVariable)resolved);
-      return reassigned ? REASSIGNED_LOCAL_VARIABLE : LOCAL_VARIABLE;
+      return reassigned ? DefaultHighlighter.REASSIGNED_LOCAL_VARIABLE : DefaultHighlighter.LOCAL_VARIABLE;
     }
     else if (resolved instanceof GrLabeledStatement) {
-      return LABEL;
+      return DefaultHighlighter.LABEL;
     }
     return null;
   }

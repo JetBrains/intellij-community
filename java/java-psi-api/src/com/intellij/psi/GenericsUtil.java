@@ -18,6 +18,7 @@ package com.intellij.psi;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
@@ -51,11 +52,11 @@ public class GenericsUtil {
     if (TypeConversionUtil.isNullType(type1)) return type2;
     if (TypeConversionUtil.isNullType(type2)) return type1;
     if (Comparing.equal(type1, type2)) return type1;
-    return getLeastUpperBound(type1, type2, new LinkedHashSet<Pair<PsiType, PsiType>>(), manager);
+    return getLeastUpperBound(type1, type2, new LinkedHashSet<Couple<PsiType>>(), manager);
   }
 
   @NotNull
-  private static PsiType getLeastUpperBound(PsiType type1, PsiType type2, Set<Pair<PsiType, PsiType>> compared, PsiManager manager) {
+  private static PsiType getLeastUpperBound(PsiType type1, PsiType type2, Set<Couple<PsiType>> compared, PsiManager manager) {
     if (type1 instanceof PsiCapturedWildcardType) {
       return getLeastUpperBound(((PsiCapturedWildcardType)type1).getUpperBound(), type2, compared, manager);
     }
@@ -150,11 +151,11 @@ public class GenericsUtil {
 
   private static PsiType getLeastContainingTypeArgument(PsiType type1,
                                                         PsiType type2,
-                                                        Set<Pair<PsiType, PsiType>> compared,
+                                                        Set<Couple<PsiType>> compared,
                                                         PsiManager manager,
                                                         PsiClass nestedLayer, 
                                                         PsiTypeParameter parameter) {
-    Pair<PsiType, PsiType> types = Pair.create(type1, type2);
+    Couple<PsiType> types = Couple.newOne(type1, type2);
     if (compared.contains(types)) {
       if (nestedLayer != null) {
         PsiSubstitutor subst = PsiSubstitutor.EMPTY;

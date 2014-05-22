@@ -36,20 +36,19 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyImportHelper;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.*;
-
-import static org.jetbrains.plugins.groovy.editor.GroovyImportHelper.isImplicitlyImported;
-import static org.jetbrains.plugins.groovy.editor.GroovyImportHelper.processImports;
 
 /**
  * @author ven
  */
 public class GroovyImportOptimizer implements ImportOptimizer {
 
+  @Override
   @NotNull
   public Runnable processFile(PsiFile file) {
     return new MyProcessor(file, false);
@@ -61,6 +60,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
     return usedImports;
   }
 
+  @Override
   public boolean supports(PsiFile file) {
     return file instanceof GroovyFile;
   }
@@ -110,7 +110,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
             if (usedImports != null && isImportUsed(refElement, resolved)) {
               usedImports.add(importStatement);
             }
-            if (isImplicitlyImported(resolved, refName, (GroovyFile)file)) {
+            if (GroovyImportHelper.isImplicitlyImported(resolved, refName, (GroovyFile)file)) {
               addImplicitClass(resolved);
             }
 
@@ -192,10 +192,11 @@ public class GroovyImportOptimizer implements ImportOptimizer {
        * checks if import for implicitly imported class is needed
        */
       private boolean isImportUsed(GrReferenceElement refElement, PsiElement resolved) {
-        if (isImplicitlyImported(resolved, refElement.getReferenceName(), (GroovyFile)file)) {
+        if (GroovyImportHelper.isImplicitlyImported(resolved, refElement.getReferenceName(), (GroovyFile)file)) {
           final ClassResolverProcessor processor =
-            new ClassResolverProcessor(refElement.getReferenceName(), refElement, ResolverProcessor.RESOLVE_KINDS_CLASS);
-          processImports(ResolveState.initial(), null, refElement, processor, ((GroovyFile)file).getImportStatements(), true);
+            new ClassResolverProcessor(refElement.getReferenceName(), refElement, ClassHint.RESOLVE_KINDS_CLASS);
+          GroovyImportHelper
+            .processImports(ResolveState.initial(), null, refElement, processor, ((GroovyFile)file).getImportStatements(), true);
           if (!processor.hasCandidates()) {
             return false;
           }
@@ -285,6 +286,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       myRemoveUnusedOnly = removeUnusedOnly;
     }
 
+    @Override
     public void run() {
       if (!(myFile instanceof GroovyFile)) return;
 
@@ -331,7 +333,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         tempFile.addImport(newImport);
       }
 
-      if (oldImports.size() > 0) {
+      if (!oldImports.isEmpty()) {
         final int startOffset = oldImports.get(0).getTextRange().getStartOffset();
         final int endOffset = oldImports.get(oldImports.size() - 1).getTextRange().getEndOffset();
         String oldText = oldImports.isEmpty() ? "" : myFile.getText().substring(startOffset, endOffset);
@@ -394,6 +396,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       final List<GrImportStatement> result = new ArrayList<GrImportStatement>();
 
       packageCountMap.forEachEntry(new TObjectIntProcedure<String>() {
+        @Override
         public boolean execute(String s, int i) {
           if (i >= settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND || settings.PACKAGES_TO_USE_IMPORT_ON_DEMAND.contains(s)) {
             final GrImportStatement imp = factory.createImportStatementFromText(s, false, true, null);
@@ -414,6 +417,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       });
 
       classCountMap.forEachEntry(new TObjectIntProcedure<String>() {
+        @Override
         public boolean execute(String s, int i) {
           if (i >= settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND) {
             final GrImportStatement imp = factory.createImportStatementFromText(s, true, true, null);
@@ -507,6 +511,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
 
   public static Comparator<GrImportStatement> getComparator(final GroovyCodeStyleSettings settings) {
     return new Comparator<GrImportStatement>() {
+      @Override
       public int compare(GrImportStatement statement1, GrImportStatement statement2) {
         if (settings.LAYOUT_STATIC_IMPORTS_SEPARATELY) {
           if (statement1.isStatic() && !statement2.isStatic()) return 1;

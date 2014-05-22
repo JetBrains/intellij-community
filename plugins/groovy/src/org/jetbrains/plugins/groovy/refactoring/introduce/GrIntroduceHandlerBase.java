@@ -76,8 +76,6 @@ import org.jetbrains.plugins.groovy.refactoring.NameValidator;
 
 import java.util.*;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses;
-
 /**
  * Created by Max Medvedev on 10/29/13
  */
@@ -95,7 +93,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     PsiType ltype = findLValueType(initializer);
     PsiType rtype = initializer.getType();
 
-    GrExpression rawExpr = (GrExpression)skipParentheses(initializer, false);
+    GrExpression rawExpr = (GrExpression)PsiUtil.skipParentheses(initializer, false);
 
     if (ltype == null || TypesUtil.isAssignableWithoutConversions(ltype, rtype, initializer) || !TypesUtil.isAssignable(ltype, rtype, initializer)) {
       return rawExpr;
@@ -272,7 +270,8 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     return null;
   }
 
-  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file, final @Nullable DataContext dataContext) {
+  @Override
+  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, @Nullable final DataContext dataContext) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (!selectionModel.hasSelection()) {
       final int offset = editor.getCaretModel().getOffset();
@@ -287,6 +286,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       }
       else {
         IntroduceTargetChooser.showChooser(editor, expressions, new Pass<GrExpression>() {
+          @Override
           public void pass(final GrExpression selectedValue) {
             invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(), selectedValue.getTextRange().getEndOffset());
           }
@@ -520,7 +520,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
   @NotNull
   protected PsiElement[] findOccurrences(@NotNull GrExpression expression, @NotNull PsiElement scope) {
-    final PsiElement[] occurrences = GroovyRefactoringUtil.getExpressionOccurrences(skipParentheses(expression, false), scope);
+    final PsiElement[] occurrences = GroovyRefactoringUtil.getExpressionOccurrences(PsiUtil.skipParentheses(expression, false), scope);
     if (occurrences == null || occurrences.length == 0) {
       throw new GrRefactoringError(GroovyRefactoringBundle.message("no.occurrences.found"));
     }
@@ -773,7 +773,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       final GrReferenceExpression ref = (GrReferenceExpression)expression;
 
       final PsiElement resolved = ref.resolve();
-      if (GroovyRefactoringUtil.isLocalVariable(resolved)) {
+      if (PsiUtil.isLocalVariable(resolved)) {
         return (GrVariable)resolved;
       }
       return null;

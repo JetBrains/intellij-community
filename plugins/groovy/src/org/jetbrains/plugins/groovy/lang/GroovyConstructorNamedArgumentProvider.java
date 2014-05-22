@@ -38,14 +38,10 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor.Priority;
-import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind.*;
 
 /**
  * @author Sergey Evdokimov
@@ -118,12 +114,13 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
         }
       };
 
-      processor.setResolveTargetKinds(ResolverProcessor.RESOLVE_KINDS_METHOD_PROPERTY);
+      processor.setResolveTargetKinds(ClassHint.RESOLVE_KINDS_METHOD_PROPERTY);
 
       ResolveUtil.processAllDeclarations(type, processor, ResolveState.initial(), call);
 
       for (Map.Entry<String, Trinity<PsiType, PsiElement, PsiSubstitutor>> entry : map.entrySet()) {
-        result.put(entry.getKey(), new NamedArgumentDescriptor.TypeCondition(entry.getValue().first, entry.getValue().getSecond(), entry.getValue().getThird()).setPriority(Priority.AS_LOCAL_VARIABLE));
+        result.put(entry.getKey(), new NamedArgumentDescriptor.TypeCondition(entry.getValue().first, entry.getValue().getSecond(), entry.getValue().getThird()).setPriority(
+          NamedArgumentDescriptor.Priority.AS_LOCAL_VARIABLE));
       }
     }
     else {
@@ -131,16 +128,17 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
         @Override
         protected void addNamedArgument(String propertyName, PsiType type, PsiElement element, PsiSubstitutor substitutor) {
           if (result.containsKey(propertyName)) return;
-          result.put(propertyName, new NamedArgumentDescriptor.TypeCondition(type, element, substitutor).setPriority(Priority.AS_LOCAL_VARIABLE));
+          result.put(propertyName, new NamedArgumentDescriptor.TypeCondition(type, element, substitutor).setPriority(
+            NamedArgumentDescriptor.Priority.AS_LOCAL_VARIABLE));
         }
       };
 
-      processor.setResolveTargetKinds(ResolverProcessor.RESOLVE_KINDS_METHOD);
+      processor.setResolveTargetKinds(ClassHint.RESOLVE_KINDS_METHOD);
       processor.setNameHint(GroovyPropertyUtils.getSetterName(argumentName));
 
       ResolveUtil.processAllDeclarations(type, processor, ResolveState.initial(), call);
 
-      processor.setResolveTargetKinds(ResolverProcessor.RESOLVE_KINDS_PROPERTY);
+      processor.setResolveTargetKinds(ClassHint.RESOLVE_KINDS_PROPERTY);
       processor.setNameHint(argumentName);
 
       ResolveUtil.processAllDeclarations(type, processor, ResolveState.initial(), call);
@@ -180,7 +178,7 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
         PsiType type;
 
         if (element instanceof PsiMethod) {
-          if (!myResolveTargetKinds.contains(METHOD)) return true;
+          if (!myResolveTargetKinds.contains(ResolveKind.METHOD)) return true;
 
           PsiMethod method = (PsiMethod)element;
           if (!GroovyPropertyUtils.isSimplePropertySetter(method)) return true;
@@ -191,7 +189,7 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
           type = method.getParameterList().getParameters()[0].getType();
         }
         else {
-          if (!myResolveTargetKinds.contains(PROPERTY)) return true;
+          if (!myResolveTargetKinds.contains(ResolveKind.PROPERTY)) return true;
 
           type = ((PsiField)element).getType();
           propertyName = ((PsiField)element).getName();
@@ -238,18 +236,18 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
     public boolean shouldProcess(DeclarationKind kind) {
       switch (kind) {
         case CLASS:
-          return shouldProcess(CLASS);
+          return shouldProcess(ResolveKind.CLASS);
 
         case ENUM_CONST:
         case VARIABLE:
         case FIELD:
-          return shouldProcess(PROPERTY);
+          return shouldProcess(ResolveKind.PROPERTY);
 
         case METHOD:
-          return shouldProcess(METHOD);
+          return shouldProcess(ResolveKind.METHOD);
 
         case PACKAGE:
-          return shouldProcess(PACKAGE);
+          return shouldProcess(ResolveKind.PACKAGE);
 
         default:
           return false;

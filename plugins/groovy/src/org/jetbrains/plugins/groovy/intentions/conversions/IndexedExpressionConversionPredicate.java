@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package org.jetbrains.plugins.groovy.intentions.conversions;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.plugins.groovy.intentions.base.ErrorUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.ErrorUtil;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrI
 
 
 class IndexedExpressionConversionPredicate implements PsiElementPredicate {
+    @Override
     public boolean satisfiedBy(PsiElement element) {
         if (!(element instanceof GrIndexProperty)) return false;
 

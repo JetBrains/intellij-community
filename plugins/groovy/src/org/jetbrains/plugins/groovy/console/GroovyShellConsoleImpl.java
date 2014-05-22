@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -44,7 +44,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
  */
 public class GroovyShellConsoleImpl extends LanguageConsoleImpl {
   public GroovyShellConsoleImpl(Project project, String name) {
-    super(project, name, GroovyFileType.GROOVY_LANGUAGE);
+    super(project, name, GroovyLanguage.INSTANCE);
   }
 
   @NotNull
@@ -105,6 +105,7 @@ public class GroovyShellConsoleImpl extends LanguageConsoleImpl {
     }
   }
 
+  @Override
   @NotNull
   public GroovyShellCodeFragment getFile() {
     return (GroovyShellCodeFragment)myFile;

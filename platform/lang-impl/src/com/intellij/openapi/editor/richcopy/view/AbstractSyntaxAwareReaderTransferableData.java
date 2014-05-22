@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.editor.richcopy.view;
 
-import com.intellij.codeInsight.editorActions.TextBlockTransferableData;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.richcopy.model.SyntaxInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -33,7 +32,7 @@ import java.io.StringReader;
  * @author Denis Zhdanov
  * @since 3/28/13 7:09 PM
  */
-public abstract class AbstractSyntaxAwareReaderTransferableData extends Reader implements TextBlockTransferableData, RawTextHolder
+public abstract class AbstractSyntaxAwareReaderTransferableData extends Reader implements RawTextWithMarkup
 {
 
   private static final Logger LOG = Logger.getInstance("#" + AbstractSyntaxAwareReaderTransferableData.class.getName());

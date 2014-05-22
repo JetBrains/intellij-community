@@ -26,7 +26,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -44,8 +44,6 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 
 import java.util.ArrayList;
-
-import static org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase.deleteLocalVar;
 
 /**
  * @author Max Medvedev
@@ -75,7 +73,7 @@ public class GrIntroduceConstantProcessor {
     GrVariable localVar = GrIntroduceHandlerBase.resolveLocalVar(context);
     if (localVar != null) {
       assert localVar.getInitializerGroovy() != null : "initializer should exist: " + localVar.getText();
-      deleteLocalVar(localVar);
+      GrIntroduceHandlerBase.deleteLocalVar(localVar);
 
       if (settings.replaceAllOccurrences()) {
         processOccurrences(field);
@@ -153,7 +151,7 @@ public class GrIntroduceConstantProcessor {
 
   @Nullable
   private  String check(@NotNull PsiClass targetClass, @Nullable final String fieldName) {
-    if (!GroovyFileType.GROOVY_LANGUAGE.equals(targetClass.getLanguage())) {
+    if (!GroovyLanguage.INSTANCE.equals(targetClass.getLanguage())) {
       return GroovyRefactoringBundle.message("class.language.is.not.groovy");
     }
 

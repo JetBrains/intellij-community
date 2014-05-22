@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Pass;
@@ -49,7 +48,7 @@ public class DumpGroovyControlFlowAction extends AnAction implements DumbAware {
     int offset = editor.getCaretModel().getOffset();
 
     final List<GrControlFlowOwner> controlFlowOwners = collectControlFlowOwners(psiFile, editor, offset);
-    if (controlFlowOwners.size() == 0) return;
+    if (controlFlowOwners.isEmpty()) return;
     if (controlFlowOwners.size() == 1) {
       passInner(controlFlowOwners.get(0));
     }

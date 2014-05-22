@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,9 +39,9 @@ public class DFAType {
   private static class Mixin {
     private final int ID;
 
-    private PsiType myType;
-    private ConditionInstruction myCondition;
-    private boolean myNegated;
+    private final PsiType myType;
+    private final ConditionInstruction myCondition;
+    private final boolean myNegated;
 
     private Mixin(PsiType type, ConditionInstruction condition, boolean negated) {
       this(-1, type, condition, negated);

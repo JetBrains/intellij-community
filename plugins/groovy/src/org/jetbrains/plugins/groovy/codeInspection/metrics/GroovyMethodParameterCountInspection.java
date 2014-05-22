@@ -23,33 +23,40 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 
 public class GroovyMethodParameterCountInspection extends GroovyMethodMetricInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Method with too many parameters";
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return METHOD_METRICS;
   }
 
+  @Override
   protected int getDefaultLimit() {
     return 5;
   }
 
+  @Override
   protected String getConfigurationLabel() {
     return "Maximum number of parameters:";
   }
 
+  @Override
   public String buildErrorString(Object... args) {
     return "Method '#ref' contains too many parameters (" + args[0] + '>' + args[1] + ')';
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private class Visitor extends BaseInspectionVisitor {
+    @Override
     public void visitMethod(GrMethod grMethod) {
       super.visitMethod(grMethod);
       final GrParameter[] parameters = grMethod.getParameters();

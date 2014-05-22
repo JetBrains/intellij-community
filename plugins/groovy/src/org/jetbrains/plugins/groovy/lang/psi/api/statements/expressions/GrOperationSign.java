@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
-import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.UserDataHolderEx;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 
 /**
  * @author ilyas

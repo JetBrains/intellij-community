@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl.jar;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -118,7 +118,7 @@ public class CoreJarVirtualFile extends VirtualFile {
   @NotNull
   @Override
   public byte[] contentsToByteArray() throws IOException {
-    Pair<String, String> pair = ((CoreJarFileSystem)getFileSystem()).splitPath(getPath());
+    Couple<String> pair = ((CoreJarFileSystem)getFileSystem()).splitPath(getPath());
     return myHandler.contentsToByteArray(pair.second);
   }
 

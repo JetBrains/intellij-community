@@ -563,6 +563,7 @@ class IntToIntBtree {
           if (key != HASH_FREE) {
             int value = buffer.getInt(offset);
 
+            if (keyNumber == keys.length) throw new IllegalStateException("Index corrupted");
             keys[keyNumber++] = key;
             values.put(key, value);
           }

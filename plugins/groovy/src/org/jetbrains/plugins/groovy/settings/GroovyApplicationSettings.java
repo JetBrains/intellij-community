@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,10 +40,12 @@ public class GroovyApplicationSettings implements PersistentStateComponent<Groov
   public Boolean CONVERT_PARAM_SPECIFY_MAP_TYPE = null;
   public Boolean CONVERT_PARAM_CREATE_NEW_PARAM = null;
 
+  @Override
   public GroovyApplicationSettings getState() {
     return this;
   }
 
+  @Override
   public void loadState(GroovyApplicationSettings groovyApplicationSettings) {
     XmlSerializerUtil.copyBean(groovyApplicationSettings, this);
   }

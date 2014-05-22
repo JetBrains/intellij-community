@@ -38,11 +38,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
@@ -73,7 +73,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrI
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
@@ -94,12 +93,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.RELATIONS;
-import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.SHIFT_SIGNS;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_IMMUTABLE;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_IMMUTABLE;
 
 public class PsiImplUtil {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil");
@@ -127,7 +120,7 @@ public class PsiImplUtil {
 
   private static boolean isAfterIdentifier(PsiElement el) {
     final PsiElement prev = GeeseUtil.getPreviousNonWhitespaceToken(el);
-    return prev != null && prev.getNode().getElementType() == mIDENT;
+    return prev != null && prev.getNode().getElementType() == GroovyTokenTypes.mIDENT;
   }
 
   @Nullable
@@ -330,7 +323,7 @@ public class PsiImplUtil {
 
       // remove redundant semicolons
       //noinspection ConstantConditions
-      while (next != null && next.getNode() != null && next.getNode().getElementType() == mSEMI) {
+      while (next != null && next.getNode() != null && next.getNode().getElementType() == GroovyTokenTypes.mSEMI) {
         PsiElement tmpNext = next.getNextSibling();
         //noinspection ConstantConditions
         next.delete();
@@ -365,19 +358,19 @@ public class PsiImplUtil {
     else if (expr instanceof GrBinaryExpression) {
       final IElementType opToken = ((GrBinaryExpression)expr).getOperationTokenType();
 
-      if (opToken == mSTAR_STAR) priority = 7;
-      else if (opToken == mSTAR || opToken == mDIV) priority = 8;
-      else if (opToken == mPLUS || opToken == mMINUS) priority = 9;
-      else if (SHIFT_SIGNS.contains(opToken)) priority = 10;
-      else if (opToken == mRANGE_EXCLUSIVE || opToken == mRANGE_INCLUSIVE) priority = 11;
-      else if (RELATIONS.contains(opToken)) priority = 12;
-      else if (opToken == mEQUAL || opToken == mNOT_EQUAL || opToken == mCOMPARE_TO) priority = 13;
-      else if (opToken == mREGEX_FIND || opToken == mREGEX_MATCH) priority = 14;
-      else if (opToken == mBAND) priority = 15;
-      else if (opToken == mBXOR) priority = 16;
-      else if (opToken == mBOR) priority = 17;
-      else if (opToken == mLAND) priority = 18;
-      else if (opToken == mLOR) priority = 19;
+      if (opToken == GroovyTokenTypes.mSTAR_STAR) priority = 7;
+      else if (opToken == GroovyTokenTypes.mSTAR || opToken == GroovyTokenTypes.mDIV) priority = 8;
+      else if (opToken == GroovyTokenTypes.mPLUS || opToken == GroovyTokenTypes.mMINUS) priority = 9;
+      else if (TokenSets.SHIFT_SIGNS.contains(opToken)) priority = 10;
+      else if (opToken == GroovyTokenTypes.mRANGE_EXCLUSIVE || opToken == GroovyTokenTypes.mRANGE_INCLUSIVE) priority = 11;
+      else if (TokenSets.RELATIONS.contains(opToken)) priority = 12;
+      else if (opToken == GroovyTokenTypes.mEQUAL || opToken == GroovyTokenTypes.mNOT_EQUAL || opToken == GroovyTokenTypes.mCOMPARE_TO) priority = 13;
+      else if (opToken == GroovyTokenTypes.mREGEX_FIND || opToken == GroovyTokenTypes.mREGEX_MATCH) priority = 14;
+      else if (opToken == GroovyTokenTypes.mBAND) priority = 15;
+      else if (opToken == GroovyTokenTypes.mBXOR) priority = 16;
+      else if (opToken == GroovyTokenTypes.mBOR) priority = 17;
+      else if (opToken == GroovyTokenTypes.mLAND) priority = 18;
+      else if (opToken == GroovyTokenTypes.mLOR) priority = 19;
       else {
         assert false :"unknown operation:"+opToken;
         priority = 0;
@@ -472,11 +465,11 @@ public class PsiImplUtil {
     ASTNode node = nameElement.getNode();
     LOG.assertTrue(node != null);
 
-    if (node.getElementType() == mIDENT) {
+    if (node.getElementType() == GroovyTokenTypes.mIDENT) {
       return nameElement.getText();
     }
 
-    if (node.getElementType() == mSTRING_LITERAL || node.getElementType() == mGSTRING_LITERAL) {
+    if (node.getElementType() == GroovyTokenTypes.mSTRING_LITERAL || node.getElementType() == GroovyTokenTypes.mGSTRING_LITERAL) {
       final Object value = GrLiteralImpl.getLiteralValue(nameElement);
       if (value instanceof String) {
         return (String)value;
@@ -492,7 +485,7 @@ public class PsiImplUtil {
   public static void removeNewLineAfter(@NotNull GrStatement statement) {
     ASTNode parentNode = statement.getParent().getNode();
     ASTNode next = statement.getNode().getTreeNext();
-    if (parentNode != null && next != null && mNLS == next.getElementType()) {
+    if (parentNode != null && next != null && GroovyTokenTypes.mNLS == next.getElementType()) {
       parentNode.removeChild(next);
     }
   }
@@ -526,12 +519,12 @@ public class PsiImplUtil {
     while (next != null) {
       final ASTNode node = next.getNode();
       final IElementType type = node.getElementType();
-      if (type == mSEMI) {
+      if (type == GroovyTokenTypes.mSEMI) {
         final PsiElement nnext = next.getNextSibling();
         container.deleteChildRange(next, next);
         next = nnext;
       }
-      else if (type == mNLS || type == TokenType.WHITE_SPACE && next.getText().contains("\n")) {
+      else if (type == GroovyTokenTypes.mNLS || type == TokenType.WHITE_SPACE && next.getText().contains("\n")) {
         final String text = next.getText();
         final int first = text.indexOf("\n");
         final int second = text.indexOf("\n", first + 1);
@@ -561,7 +554,7 @@ public class PsiImplUtil {
     } else {
       if (oldQualifier == null) {
         if (refNameElement != null) {
-          node.addLeaf(mDOT, ".", refNameElement.getNode());
+          node.addLeaf(GroovyTokenTypes.mDOT, ".", refNameElement.getNode());
           ref.addBefore(newQualifier, refNameElement.getPrevSibling());
         }
       }
@@ -631,7 +624,7 @@ public class PsiImplUtil {
       throw new IncorrectOperationException();
     }
     ASTNode oldBodyNode = body.getNode();
-    if (oldBodyNode.getTreePrev() != null && mNLS.equals(oldBodyNode.getTreePrev().getElementType())) {
+    if (oldBodyNode.getTreePrev() != null && GroovyTokenTypes.mNLS.equals(oldBodyNode.getTreePrev().getElementType())) {
       ASTNode whiteNode = GroovyPsiElementFactory.getInstance(project).createWhiteSpace().getNode();
       node.replaceChild(oldBodyNode.getTreePrev(), whiteNode);
     }
@@ -799,7 +792,7 @@ public class PsiImplUtil {
 
   public static PsiElement findTailingSemicolon(@NotNull GrStatement statement) {
     final PsiElement nextNonSpace = PsiUtil.skipWhitespaces(statement.getNextSibling(), true);
-    if (nextNonSpace != null && nextNonSpace.getNode().getElementType() == mSEMI) {
+    if (nextNonSpace != null && nextNonSpace.getNode().getElementType() == GroovyTokenTypes.mSEMI) {
       return nextNonSpace;
     }
 
@@ -845,8 +838,8 @@ public class PsiImplUtil {
   }
 
   public static boolean hasImmutableAnnotation(PsiModifierList modifierList) {
-    return modifierList.findAnnotation(GROOVY_LANG_IMMUTABLE) != null ||
-           modifierList.findAnnotation(GROOVY_TRANSFORM_IMMUTABLE) != null;
+    return modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_LANG_IMMUTABLE) != null ||
+           modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_IMMUTABLE) != null;
   }
 
   public static boolean isWhiteSpaceOrNls(@Nullable PsiElement sibling) {
@@ -863,9 +856,9 @@ public class PsiImplUtil {
       modifierList.setModifierProperty(GrModifier.DEF, false);
 
       if (modifierList.getModifiers().length > 0) {
-        modifierList.getNode().addLeaf(mNLS, newLineAfterModifierList.getText(), null);
+        modifierList.getNode().addLeaf(GroovyTokenTypes.mNLS, newLineAfterModifierList.getText(), null);
       }
-      modifierList.getNode().addLeaf(kDEF, "def", null);
+      modifierList.getNode().addLeaf(GroovyTokenTypes.kDEF, "def", null);
       final PsiElement newLineUpdated = findNewLineAfterElement(modifierList);
       if (newLineUpdated != null) newLineUpdated.delete();
       if (!isWhiteSpaceOrNls(modifierList.getNextSibling())) {
@@ -887,11 +880,6 @@ public class PsiImplUtil {
       sibling = sibling.getNextSibling();
     }
     return null;
-  }
-
-  @Contract("null->false")
-  public static boolean isTrait(@Nullable PsiClass aClass) {
-    return aClass instanceof GrTypeDefinition && ((GrTypeDefinition)aClass).isTrait();
   }
 
   @Nullable

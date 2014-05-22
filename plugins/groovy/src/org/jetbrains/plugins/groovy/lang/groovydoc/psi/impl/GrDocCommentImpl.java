@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
@@ -37,23 +38,26 @@ import java.util.ArrayList;
 /**
  * @author ilyas
  */
-public class GrDocCommentImpl extends LazyParseablePsiElement implements GroovyDocElementTypes, GrDocComment {
+public class GrDocCommentImpl extends LazyParseablePsiElement implements GrDocComment {
   public GrDocCommentImpl(CharSequence text) {
-    super(GROOVY_DOC_COMMENT, text);
+    super(GroovyDocElementTypes.GROOVY_DOC_COMMENT, text);
   }
 
   public String toString() {
     return "GrDocComment";
   }
 
+  @Override
   public IElementType getTokenType() {
     return getElementType();
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitDocComment(this);
   }
 
+  @Override
   public void acceptChildren(GroovyElementVisitor visitor) {
     PsiElement child = getFirstChild();
     while (child != null) {
@@ -65,16 +69,19 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GroovyD
     }
   }
 
+  @Override
   public GrDocCommentOwner getOwner() {
     return GrDocCommentUtil.findDocOwner(this);
   }
 
+  @Override
   @NotNull
   public GrDocTag[] getTags() {
     final GrDocTag[] tags = PsiTreeUtil.getChildrenOfType(this, GrDocTag.class);
     return tags == null ? GrDocTag.EMPTY_ARRAY : tags;
   }
 
+  @Override
   @Nullable
   public GrDocTag findTagByName(@NonNls String name) {
     if (!getText().contains(name)) return null;
@@ -86,6 +93,7 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GroovyD
     return null;
   }
 
+  @Override
   @NotNull
   public GrDocTag[] findTagsByName(@NonNls String name) {
     if (!getText().contains(name)) return GrDocTag.EMPTY_ARRAY;
@@ -98,6 +106,7 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GroovyD
     return list.toArray(new GrDocTag[list.size()]);
   }
 
+  @Override
   @NotNull
   public PsiElement[] getDescriptionElements() {
     ArrayList<PsiElement> array = new ArrayList<PsiElement>();
@@ -105,8 +114,8 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GroovyD
       final ASTNode node = child.getNode();
       if (node == null) continue;
       final IElementType i = node.getElementType();
-      if (i == GDOC_TAG) break;
-      if (i != mGDOC_COMMENT_START && i != mGDOC_COMMENT_END && i != mGDOC_ASTERISKS) {
+      if (i == GroovyDocElementTypes.GDOC_TAG) break;
+      if (i != GroovyDocTokenTypes.mGDOC_COMMENT_START && i != GroovyDocTokenTypes.mGDOC_COMMENT_END && i != GroovyDocTokenTypes.mGDOC_ASTERISKS) {
         array.add(child);
       }
     }

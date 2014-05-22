@@ -25,31 +25,36 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
-import org.jetbrains.plugins.groovy.intentions.base.ErrorUtil;
-import org.jetbrains.plugins.groovy.intentions.utils.BoolUtils;
+import org.jetbrains.plugins.groovy.lang.psi.util.ErrorUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.utils.BoolUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 public class GroovyTrivialConditionalInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Redundant conditional expression";
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return CONTROL_FLOW;
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new UnnecessaryConditionalExpressionVisitor();
   }
 
+  @Override
   public String buildErrorString(Object... args) {
     final GrConditionalExpression exp = (GrConditionalExpression) args[0];
     return "'" + exp.getText() + "' can be simplified to '" + calculateReplacementExpression(exp) + "'  #loc";
@@ -67,17 +72,20 @@ public class GroovyTrivialConditionalInspection extends BaseInspection {
     }
   }
 
+  @Override
   public GroovyFix buildFix(PsiElement location) {
     return new TrivialConditionalFix();
   }
 
   private static class TrivialConditionalFix extends GroovyFix {
 
+    @Override
     @NotNull
     public String getName() {
       return "Simplify";
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
         throws IncorrectOperationException {
       final GrConditionalExpression expression = (GrConditionalExpression) descriptor.getPsiElement();
@@ -89,6 +97,7 @@ public class GroovyTrivialConditionalInspection extends BaseInspection {
   private static class UnnecessaryConditionalExpressionVisitor
       extends BaseInspectionVisitor {
 
+    @Override
     public void visitConditionalExpression(GrConditionalExpression exp) {
       super.visitConditionalExpression(exp);
       final GrExpression condition = exp.getCondition();

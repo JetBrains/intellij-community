@@ -87,16 +87,19 @@ public class GrabDependencies implements IntentionAction {
   public static final String GRAB_RESOLVER_ANNO = "groovy.lang.GrabResolver";
   private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Grape", NotificationDisplayType.BALLOON, true);
 
+  @Override
   @NotNull
   public String getText() {
     return "Grab the artifacts";
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return "Grab";
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!isCorrectModule(file)) return false;
 
@@ -167,6 +170,7 @@ public class GrabDependencies implements IntentionAction {
     return file.getOriginalFile().getVirtualFile() != null && sdk.getSdkType() instanceof JavaSdkType;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     assert module != null;
@@ -210,6 +214,7 @@ public class GrabDependencies implements IntentionAction {
 
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Processing @Grab annotations") {
 
+      @Override
       public void run(@NotNull ProgressIndicator indicator) {
         int jarCount = 0;
         String messages = "";
@@ -269,6 +274,7 @@ public class GrabDependencies implements IntentionAction {
     return result;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }
@@ -354,6 +360,7 @@ public class GrabDependencies implements IntentionAction {
           }
         }
         new WriteAction() {
+          @Override
           protected void run(Result result) throws Throwable {
             jarCount = jars.size();
             messages = jarCount + " jar";

@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
  */
 public interface GrAnnotationMethod extends GrMethod, PsiAnnotationMethod {
 
+  @Override
   @Nullable
   GrAnnotationMemberValue getDefaultValue();
 }

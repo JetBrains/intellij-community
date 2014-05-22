@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ public class DefinitionMap {
 
   public void merge(DefinitionMap map2) {
     map2.myMap.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
+      @Override
       public boolean execute(int num, TIntHashSet defs) {
         TIntHashSet defs2 = myMap.get(num);
         if (defs2 == null) {
@@ -59,6 +60,7 @@ public class DefinitionMap {
     if (myMap.size() != m2.myMap.size()) return false;
 
     return myMap.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
+      @Override
       public boolean execute(int num, TIntHashSet defs1) {
         final TIntHashSet defs2 = m2.myMap.get(num);
         return defs2 != null && defs2.equals(defs1);

@@ -50,9 +50,7 @@ public class CommandLineUtil {
     commandLine.add(FileUtilRt.toSystemDependentName(command, platform.fileSeparator));
 
     boolean isWindows = platform == Platform.WINDOWS;
-    boolean winShell = isWindows &&
-                       ("cmd".equalsIgnoreCase(command) || "cmd.exe".equalsIgnoreCase(command)) &&
-                       parameters.size() > 1 && "/c".equalsIgnoreCase(parameters.get(0));
+    boolean winShell = isWindows && isWinShell(command, parameters);
 
     for (String parameter : parameters) {
       if (isWindows) {
@@ -76,6 +74,14 @@ public class CommandLineUtil {
     }
 
     return commandLine;
+  }
+
+  private static boolean isWinShell(@NotNull String command, @NotNull List<String> parameters) {
+    if (command.endsWith(".cmd") || command.endsWith(".bat")) {
+      return true;
+    }
+    return ("cmd".equalsIgnoreCase(command) || "cmd.exe".equalsIgnoreCase(command)) &&
+           parameters.size() > 1 && "/c".equalsIgnoreCase(parameters.get(0));
   }
 
   private static String quote(String s, char ch) {

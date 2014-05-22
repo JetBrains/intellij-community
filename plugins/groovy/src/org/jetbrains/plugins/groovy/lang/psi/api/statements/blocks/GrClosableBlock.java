@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ public interface GrClosableBlock extends GrExpression, GrCodeBlock, GrParameters
   String OWNER_NAME = "owner";
   String IT_PARAMETER_NAME = "it";
 
+  @Override
   @NotNull
   GrParameterList getParameterList();
 
@@ -51,11 +52,12 @@ public interface GrClosableBlock extends GrExpression, GrCodeBlock, GrParameters
   @Nullable
   PsiElement getArrow();
 
+  @Override
   boolean isVarArgs();
 
-  boolean processClosureDeclarations(final @NotNull PsiScopeProcessor placeProcessor,
-                                     final @NotNull PsiScopeProcessor nonCodeProcessor,
-                                     final @NotNull ResolveState _state,
-                                     final @Nullable PsiElement lastParent,
-                                     final @NotNull PsiElement place);
+  boolean processClosureDeclarations(@NotNull final PsiScopeProcessor placeProcessor,
+                                     @NotNull final PsiScopeProcessor nonCodeProcessor,
+                                     @NotNull final ResolveState _state,
+                                     @Nullable final PsiElement lastParent,
+                                     @NotNull final PsiElement place);
 }

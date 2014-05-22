@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import java.util.Set;
  * @author Maxim.Medvedev
  */
 public class StubClassNameProvider implements ClassNameProvider {
-  private Set<VirtualFile> myAllToCompile;
+  private final Set<VirtualFile> myAllToCompile;
 
   public StubClassNameProvider(Set<VirtualFile> allToCompile) {
     myAllToCompile = allToCompile;

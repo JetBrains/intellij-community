@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
+import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocInlinedTag;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocParameterReference;
@@ -32,22 +34,20 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_COMMENT_DATA;
-import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN;
-import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes.*;
-
 /**
  * @author ilyas
  */
 public class GrDocInlinedTagImpl extends GroovyDocPsiElementImpl implements GrDocInlinedTag {
   private static final TokenSet VALUE_BIT_SET = TokenSet
-    .create(mGDOC_TAG_VALUE_TOKEN, GDOC_METHOD_REF, GDOC_FIELD_REF, GDOC_PARAM_REF, GDOC_REFERENCE_ELEMENT, mGDOC_COMMENT_DATA,
-            GDOC_INLINED_TAG);
+    .create(GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN, GroovyDocElementTypes.GDOC_METHOD_REF, GroovyDocElementTypes.GDOC_FIELD_REF,
+            GroovyDocElementTypes.GDOC_PARAM_REF, GroovyDocElementTypes.GDOC_REFERENCE_ELEMENT, GroovyDocTokenTypes.mGDOC_COMMENT_DATA,
+            GroovyDocElementTypes.GDOC_INLINED_TAG);
 
   public GrDocInlinedTagImpl(@NotNull ASTNode node) {
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitDocTag(this);
   }
@@ -56,18 +56,21 @@ public class GrDocInlinedTagImpl extends GroovyDocPsiElementImpl implements GrDo
     return "GrDocInlinedTag";
   }
 
+  @Override
   @NotNull
   public String getName() {
     return getNameElement().getText().substring(1);
   }
 
+  @Override
   @NotNull
   public PsiElement getNameElement() {
-    PsiElement element = findChildByType(mGDOC_TAG_NAME);
+    PsiElement element = findChildByType(GroovyDocTokenTypes.mGDOC_TAG_NAME);
     assert element != null;
     return element;
   }
 
+  @Override
   public GrDocComment getContainingComment() {
     return (GrDocComment)getParent();
   }
@@ -77,15 +80,18 @@ public class GrDocInlinedTagImpl extends GroovyDocPsiElementImpl implements GrDo
     return null;
   }
 
+  @Override
   public GrDocTagValueToken getValueElement() {
     return findChildByClass(GrDocTagValueToken.class);
   }
 
+  @Override
   public PsiElement[] getDataElements() {
     final List<PsiElement> list = findChildrenByType(VALUE_BIT_SET);
     return PsiUtilCore.toPsiElementArray(list);
   }
 
+  @Override
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
     final PsiElement nameElement = getNameElement();
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());

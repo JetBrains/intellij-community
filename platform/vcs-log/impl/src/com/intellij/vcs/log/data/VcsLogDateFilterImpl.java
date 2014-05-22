@@ -35,7 +35,7 @@ public class VcsLogDateFilterImpl implements VcsLogDateFilter, VcsLogDetailsFilt
 
   @Override
   public boolean matches(@NotNull VcsCommitMetadata details) {
-    Date date = new Date(details.getTime());  // Git itself also filters by commit time, not author time
+    Date date = new Date(details.getTimestamp());  // Git itself also filters by commit time, not author time
     boolean matches = true;
     if (myAfter != null) {
       matches &= date.after(myAfter);

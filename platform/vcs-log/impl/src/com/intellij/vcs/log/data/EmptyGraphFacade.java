@@ -57,7 +57,7 @@ class EmptyGraphFacade implements GraphFacade {
 
   @NotNull
   @Override
-  public List<Integer> getAllCommits() {
+  public List<GraphCommit<Integer>> getAllCommits() {
     return Collections.emptyList();
   }
 
@@ -77,6 +77,10 @@ class EmptyGraphFacade implements GraphFacade {
 
   @Override
   public void setFilter(@Nullable Condition<Integer> visibilityPredicate) {
+  }
+
+  @Override
+  public void setSortType(@NotNull PermanentGraph.SortType sortType) {
   }
 
   @NotNull

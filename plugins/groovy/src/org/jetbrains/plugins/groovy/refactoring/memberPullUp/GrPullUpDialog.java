@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import com.intellij.refactoring.util.classMembers.InterfaceContainmentVerifier;
 import com.intellij.refactoring.util.classMembers.UsesAndInterfacesDependencyMemberInfoModel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.refactoring.classMembers.GrMemberInfo;
 import org.jetbrains.plugins.groovy.refactoring.classMembers.GrMemberInfoStorage;
@@ -56,6 +56,7 @@ class GrPullUpDialog extends PullUpDialogBase<GrMemberInfoStorage, GrMemberInfo,
   private DocCommentPanel myJavaDocPanel;
 
   private final InterfaceContainmentVerifier myInterfaceContainmentVerifier = new InterfaceContainmentVerifier() {
+    @Override
     public boolean checkedInterfacesContain(PsiMethod psiMethod) {
       return PullUpProcessor.checkedInterfacesContain(myMemberInfos, psiMethod);
     }
@@ -83,6 +84,7 @@ class GrPullUpDialog extends PullUpDialogBase<GrMemberInfoStorage, GrMemberInfo,
     return myJavaDocPanel.getPolicy();
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.refactoring.memberPullUp.PullUpDialog";
   }
@@ -94,7 +96,7 @@ class GrPullUpDialog extends PullUpDialogBase<GrMemberInfoStorage, GrMemberInfo,
   @Override
   protected void updateMemberInfo() {
     super.updateMemberInfo();
-    getRefactorAction().setEnabled(GroovyFileType.GROOVY_LANGUAGE.equals(getSuperClass().getLanguage()));
+    getRefactorAction().setEnabled(GroovyLanguage.INSTANCE.equals(getSuperClass().getLanguage()));
     if (myMemberSelectionPanel != null) {
       ((MyMemberInfoModel)myMemberInfoModel).setSuperClass(getSuperClass());
       myMemberSelectionPanel.getTable().setMemberInfos(myMemberInfos);
@@ -107,6 +109,7 @@ class GrPullUpDialog extends PullUpDialogBase<GrMemberInfoStorage, GrMemberInfo,
     classCombo.setRenderer(new ClassCellRenderer(classCombo.getRenderer()));
   }
 
+  @Override
   protected PsiClass getPreselection() {
     PsiClass preselection = RefactoringHierarchyUtil.getNearestBaseClass(myClass, false);
 
@@ -128,10 +131,12 @@ class GrPullUpDialog extends PullUpDialogBase<GrMemberInfoStorage, GrMemberInfo,
     return preselection;
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.MEMBERS_PULL_UP);
   }
 
+  @Override
   protected void doAction() {
     if (!myCallback.checkConflicts(this)) return;
     JavaRefactoringSettings.getInstance().PULL_UP_MEMBERS_JAVADOC = myJavaDocPanel.getPolicy();

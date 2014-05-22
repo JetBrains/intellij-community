@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -36,8 +37,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 
 import java.util.Map;
-
-import static com.intellij.util.containers.ContainerUtil.newHashMap;
 
 /**
  * @author peter
@@ -90,7 +89,7 @@ public interface InferenceContext {
 
   class PartialContext implements InferenceContext {
     private final Map<String, PsiType> myTypes;
-    private final Map<PsiElement, Map<Object, Object>> myCache = newHashMap();
+    private final Map<PsiElement, Map<Object, Object>> myCache = ContainerUtil.newHashMap();
 
     public PartialContext(@NotNull Map<String, PsiType> types) {
       myTypes = types;
@@ -110,7 +109,7 @@ public interface InferenceContext {
     private <T> T _getCachedValue(@Nullable PsiElement element, @NotNull Computable<T> computable, @NotNull Object key) {
       Map<Object, Object> map = myCache.get(element);
       if (map == null) {
-        myCache.put(element, map = newHashMap());
+        myCache.put(element, map = ContainerUtil.newHashMap());
       }
       if (map.containsKey(key)) {
         //noinspection unchecked

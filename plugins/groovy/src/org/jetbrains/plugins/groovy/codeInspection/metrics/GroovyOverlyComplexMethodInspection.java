@@ -22,33 +22,40 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 
 public class GroovyOverlyComplexMethodInspection extends GroovyMethodMetricInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Overly complex method";
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return METHOD_METRICS;
   }
 
+  @Override
   protected int getDefaultLimit() {
     return 10;
   }
 
+  @Override
   protected String getConfigurationLabel() {
     return "Method complexity limit:";
   }
 
+  @Override
   public String buildErrorString(Object... args) {
     return "Method '#ref' is overly complex ( cyclomatic complexity =" + args[0] + '>' + args[1] + ')';
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private class Visitor extends BaseInspectionVisitor {
+    @Override
     public void visitMethod(GrMethod grMethod) {
       super.visitMethod(grMethod);
       final int limit = getLimit();

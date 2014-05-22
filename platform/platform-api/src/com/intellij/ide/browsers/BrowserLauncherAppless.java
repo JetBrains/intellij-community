@@ -31,13 +31,15 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
@@ -134,7 +136,7 @@ public class BrowserLauncherAppless extends BrowserLauncher {
 
       List<String> command = getDefaultBrowserCommand();
       if (command != null) {
-        doLaunch(uri.toString(), command, null, null, ArrayUtil.EMPTY_STRING_ARRAY);
+        doLaunch(uri.toString(), command, null, null, ArrayUtil.EMPTY_STRING_ARRAY, null);
         return;
       }
     }
@@ -160,6 +162,11 @@ public class BrowserLauncherAppless extends BrowserLauncher {
     else {
       File file = new File(url);
       if (!browse && isDesktopActionSupported(Desktop.Action.OPEN)) {
+        if (!file.exists()) {
+          doShowError(IdeBundle.message("error.file.does.not.exist", file.getPath()), null, null, null, null);
+          return;
+        }
+
         try {
           Desktop.getDesktop().open(file);
           return;
@@ -174,7 +181,7 @@ public class BrowserLauncherAppless extends BrowserLauncher {
     }
 
     if (uri == null) {
-      doShowError(IdeBundle.message("error.malformed.url", url), null, null, null);
+      doShowError(IdeBundle.message("error.malformed.url", url), null, null, null, null);
     }
     else {
       browse(uri);
@@ -191,7 +198,7 @@ public class BrowserLauncherAppless extends BrowserLauncher {
         url = url.substring(0, sharpPos);
       }
 
-      Pair<String, String> pair = URLUtil.splitJarUrl(url);
+      Couple<String> pair = URLUtil.splitJarUrl(url);
       if (pair == null) return null;
 
       File jarFile = new File(FileUtil.toSystemDependentName(pair.first));
@@ -385,37 +392,45 @@ public class BrowserLauncherAppless extends BrowserLauncher {
   }
 
   @Override
-  public boolean browseUsingPath(@Nullable String url,
+  public boolean browseUsingPath(@Nullable final String url,
                                  @Nullable String browserPath,
-                                 @Nullable WebBrowser browser,
-                                 @Nullable Project project,
-                                 @NotNull String[] additionalParameters) {
+                                 @Nullable final WebBrowser browser,
+                                 @Nullable final Project project,
+                                 @NotNull final String[] additionalParameters) {
+    Runnable launchTask = null;
     if (browserPath == null && browser != null) {
       browserPath = PathUtil.toSystemDependentName(browser.getPath());
+      launchTask = new Runnable() {
+        @Override
+        public void run() {
+          browseUsingPath(url, null, browser, project, additionalParameters);
+        }
+      };
     }
-    return doLaunch(url, browserPath, browser, project, additionalParameters);
+    return doLaunch(url, browserPath, browser, project, additionalParameters, launchTask);
   }
 
   private boolean doLaunch(@Nullable String url,
                            @Nullable String browserPath,
                            @Nullable WebBrowser browser,
                            @Nullable Project project,
-                           @NotNull String[] additionalParameters) {
-    if (!checkPath(browserPath, browser, project)) {
+                           @NotNull String[] additionalParameters,
+                           @Nullable Runnable launchTask) {
+    if (!checkPath(browserPath, browser, project, launchTask)) {
       return false;
     }
-    return doLaunch(url, BrowserUtil.getOpenBrowserCommand(browserPath, false), browser, project, additionalParameters);
+    return doLaunch(url, BrowserUtil.getOpenBrowserCommand(browserPath, false), browser, project, additionalParameters, launchTask);
   }
 
-  @Contract("null, _, _ -> false")
-  public boolean checkPath(@Nullable String browserPath, @Nullable WebBrowser browser, @Nullable Project project) {
+  @Contract("null, _, _, _ -> false")
+  public boolean checkPath(@Nullable String browserPath, @Nullable WebBrowser browser, @Nullable Project project, @Nullable Runnable launchTask) {
     if (!StringUtil.isEmptyOrSpaces(browserPath)) {
       return true;
     }
 
     String message = browser != null ? browser.getBrowserNotFoundMessage() :
                      IdeBundle.message("error.please.specify.path.to.web.browser", CommonBundle.settingsActionPath());
-    doShowError(message, browser, project, IdeBundle.message("title.browser.not.found"));
+    doShowError(message, browser, project, IdeBundle.message("title.browser.not.found"), launchTask);
     return false;
   }
 
@@ -423,7 +438,8 @@ public class BrowserLauncherAppless extends BrowserLauncher {
                            @NotNull List<String> command,
                            @Nullable final WebBrowser browser,
                            @Nullable final Project project,
-                           String[] additionalParameters) {
+                           @NotNull String[] additionalParameters,
+                           @Nullable Runnable launchTask) {
     GeneralCommandLine commandLine = new GeneralCommandLine(command);
 
     if (url != null && url.startsWith("jar:")) {
@@ -439,22 +455,25 @@ public class BrowserLauncherAppless extends BrowserLauncher {
     }
 
     addArgs(commandLine, browser == null ? null : browser.getSpecificSettings(), additionalParameters);
-
     try {
       Process process = commandLine.createProcess();
-      checkCreatedProcess(browser, project, commandLine, process);
+      checkCreatedProcess(browser, project, commandLine, process, launchTask);
       return true;
     }
     catch (ExecutionException e) {
-      doShowError(e.getMessage(), browser, project, null);
+      doShowError(e.getMessage(), browser, project, null, null);
       return false;
     }
   }
 
-  protected void checkCreatedProcess(final WebBrowser browser, final Project project, GeneralCommandLine commandLine, final Process process) {
+  protected void checkCreatedProcess(@Nullable WebBrowser browser,
+                                     @Nullable Project project,
+                                     @NotNull GeneralCommandLine commandLine,
+                                     @NotNull Process process,
+                                     @Nullable Runnable launchTask) {
   }
 
-  protected void doShowError(final String error, final WebBrowser browser, final Project project, final String title) {
+  protected void doShowError(@Nullable String error, @Nullable WebBrowser browser, @Nullable Project project, String title, @Nullable Runnable launchTask) {
     // Not started yet. Not able to show message up. (Could happen in License panel under Linux).
     LOG.warn(error);
   }

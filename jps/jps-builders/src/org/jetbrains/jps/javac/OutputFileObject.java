@@ -15,12 +15,14 @@
  */
 package org.jetbrains.jps.javac;
 
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.incremental.Utils;
 
-import javax.tools.*;
+import javax.tools.JavaFileObject;
+import javax.tools.SimpleJavaFileObject;
 import java.io.*;
 import java.net.URI;
 
@@ -40,12 +42,28 @@ public final class OutputFileObject extends SimpleJavaFileObject {
   @Nullable private final URI mySourceUri;
   private volatile BinaryContent myContent;
   private final File mySourceFile;
+  private final String myEncodingName;
 
-  public OutputFileObject(@NotNull JavacFileManager.Context context, @Nullable File outputRoot, String relativePath, @NotNull File file, @NotNull Kind kind, @Nullable String className, @Nullable final URI sourceUri) {
-    this(context, outputRoot, relativePath, file, kind, className, sourceUri, null);
+  public OutputFileObject(@NotNull JavacFileManager.Context context,
+                          @Nullable File outputRoot,
+                          String relativePath,
+                          @NotNull File file,
+                          @NotNull Kind kind,
+                          @Nullable String className,
+                          @Nullable final URI sourceUri,
+                          @Nullable final String encodingName) {
+    this(context, outputRoot, relativePath, file, kind, className, sourceUri, encodingName, null);
   }
 
-  public OutputFileObject(@Nullable JavacFileManager.Context context, @Nullable File outputRoot, String relativePath, @NotNull File file, @NotNull Kind kind, @Nullable String className, @Nullable final URI srcUri, @Nullable BinaryContent content) {
+  public OutputFileObject(@Nullable JavacFileManager.Context context,
+                          @Nullable File outputRoot,
+                          String relativePath,
+                          @NotNull File file,
+                          @NotNull Kind kind,
+                          @Nullable String className,
+                          @Nullable final URI srcUri,
+                          @Nullable final String encodingName, 
+                          @Nullable BinaryContent content) {
     super(Utils.toURI(file.getPath()), kind);
     myContext = context;
     mySourceUri = srcUri;
@@ -55,6 +73,7 @@ public final class OutputFileObject extends SimpleJavaFileObject {
     myFile = file;
     myClassName = className != null? className.replace('/', '.') : null;
     mySourceFile = srcUri != null? Utils.convertToFile(srcUri) : null;
+    myEncodingName = encodingName;
   }
 
   @Nullable
@@ -116,10 +135,10 @@ public final class OutputFileObject extends SimpleJavaFileObject {
   @Override
   public CharSequence getCharContent(boolean ignoreEncodingErrors) throws IOException {
     final BinaryContent content = myContent;
-    if (content == null) {
-      throw new FileNotFoundException(toUri().getPath());
+    if (content != null) {
+      return new String(content.getBuffer(), content.getOffset(), content.getLength());
     }
-    return new String(content.getBuffer(), content.getOffset(), content.getLength());
+    return FileUtilRt.loadFile(myFile, myEncodingName, false);
   }
 
   @Nullable

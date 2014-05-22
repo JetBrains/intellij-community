@@ -88,9 +88,19 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate implements XmlTok
           // check for template language like JSP
           if (provider instanceof MultiplePsiFilesPerDocumentFileViewProvider) {
             PsiElement element1 = SingleRootFileViewProvider.findElementAt(file, offset - 1);
-            XmlTag tag1 = PsiTreeUtil.getParentOfType(element1, XmlTag.class);
-            if (tag1 != null && tag1 != tag && tag1.getTextOffset() > tag.getTextOffset() && element1.getText().startsWith("</")) {
-              tag = tag1;
+            if (element1 != null && element1.getText().startsWith("</")) {
+              // case of top-level jsp tag
+              XmlTag tag1 = PsiTreeUtil.getParentOfType(element1, XmlTag.class);
+              if (tag1 != null && tag1 != tag && tag1.getTextOffset() > tag.getTextOffset()) {
+                tag = tag1;
+              }
+              else {
+                // if we have enclosing jsp tag, actual tag to be completed will be previous sibling
+                tag1 = PsiTreeUtil.getPrevSiblingOfType(element1.getParent(), XmlTag.class);
+                if (tag1 != null && tag1 != tag && tag1.getTextOffset() > tag.getTextOffset()) {
+                  tag = tag1;
+                }
+              }
             }
           }
           EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(editor, tag.getName() + ">", false);

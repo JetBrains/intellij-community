@@ -201,7 +201,7 @@ public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWith
 
   @Override
   public boolean canRepresent(final Object element) {
-    return super.canRepresent(element) || getValue() != null && getValue().getVirtualFile() == element;
+    return super.canRepresent(element) || getValue() != null && element != null && element.equals(getValue().getVirtualFile());
   }
 
   @Override

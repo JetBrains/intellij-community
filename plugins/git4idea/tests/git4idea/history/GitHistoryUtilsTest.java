@@ -29,7 +29,6 @@ import com.intellij.util.Function;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
-import git4idea.history.browser.GitHeavyCommit;
 import git4idea.history.browser.SHAHash;
 import git4idea.test.GitSingleRepoTest;
 import org.jetbrains.annotations.NotNull;
@@ -74,7 +73,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     myRevisionsAfterRename = new ArrayList<GitTestRevision>(4);
 
     // 1. create a file
-    // 2. simple edit with a simple comimt message
+    // 2. simple edit with a simple commit message
     // 3. move & rename
     // 4. make 4 edits with commit messages of different complexity
     // (note: after rename, because some GitHistoryUtils methods don't follow renames).
@@ -355,10 +354,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
   @Test
   public void testHistory() throws Exception {
     List<VcsFileRevision> revisions = GitHistoryUtils.history(myProject, toFilePath(bfile));
-    assertEquals(revisions.size(), myRevisions.size());
-    for (int i = 0; i < revisions.size(); i++) {
-      assertEqualRevisions((GitFileRevision) revisions.get(i), myRevisions.get(i));
-    }
+    assertHistory(revisions);
   }
 
   @Test
@@ -377,21 +373,25 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
       }
     };
     GitHistoryUtils.history(myProject, toFilePath(bfile), null, consumer, exceptionConsumer);
-    assertEquals(revisions.size(), myRevisions.size());
-    for (int i = 0; i < revisions.size(); i++) {
-      assertEqualRevisions(revisions.get(i), myRevisions.get(i));
-    }
+    assertHistory(revisions);
   }
 
   @Test
   public void testOnlyHashesHistory() throws Exception {
     final List<Pair<SHAHash,Date>> history = GitHistoryUtils.onlyHashesHistory(myProject, toFilePath(bfile), myProjectRoot);
     assertEquals(history.size(), myRevisionsAfterRename.size());
-    for (Iterator hit = history.iterator(), myIt = myRevisionsAfterRename.iterator(); hit.hasNext(); ) {
-      Pair<SHAHash,Date> pair = (Pair<SHAHash, Date>) hit.next();
-      GitTestRevision revision = (GitTestRevision)myIt.next();
+    Iterator<GitTestRevision> itAfterRename = myRevisionsAfterRename.iterator();
+    for (Pair<SHAHash, Date> pair : history) {
+      GitTestRevision revision = itAfterRename.next();
       assertEquals(pair.first.toString(), revision.myHash);
       assertEquals(pair.second, revision.myDate);
+    }
+  }
+
+  private void assertHistory(@NotNull List<? extends VcsFileRevision> actualRevisions) throws IOException, VcsException {
+    assertEquals("Incorrect number of commits in history", myRevisions.size(), actualRevisions.size());
+    for (int i = 0; i < actualRevisions.size(); i++) {
+      assertEqualRevisions((GitFileRevision) actualRevisions.get(i), myRevisions.get(i));
     }
   }
 
@@ -406,24 +406,6 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     assertEquals(expected.myBranchName, actual.getBranchName());
     assertNotNull("No content in revision " + actualRev, actual.getContent());
     assertEquals(new String(expected.myContent), new String(actual.getContent()));
-  }
-
-  private static void assertCommitEqualToTestRevision(GitHeavyCommit commit, GitTestRevision expected) throws IOException {
-    assertEquals(commit.getHash().toString(), expected.myHash);
-    assertEquals(commit.getAuthor(), expected.myAuthorName);
-    assertEquals(commit.getAuthorEmail(), expected.myAuthorEmail);
-    assertEquals(commit.getCommitter(), expected.myCommitterName);
-    assertEquals(commit.getCommitterEmail(), expected.myCommitterEmail);
-    assertEquals(commit.getDate(), expected.myDate);
-    assertEquals(convertWhitespacesToSpacesAndRemoveDoubles(commit.getDescription()), convertWhitespacesToSpacesAndRemoveDoubles(expected.myCommitMessage));
-    assertEqualHashes(commit.getParentsHashes(), Arrays.asList(expected.myParents));
-  }
-
-  private static void assertEqualHashes(Collection<String> actualParents, Collection<String> expectedParents) {
-    assertEquals(actualParents.size(), expectedParents.size());
-    for (Iterator<String> ait = actualParents.iterator(), eit = expectedParents.iterator(); ait.hasNext(); ) {
-      assertTrue(eit.next().startsWith(ait.next()));
-    }
   }
 
   private static String convertWhitespacesToSpacesAndRemoveDoubles(String s) {

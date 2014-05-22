@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,16 +31,19 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
  */
 public class SecondUnsafeCallQuickFix implements LocalQuickFix {
 
+  @Override
   @NotNull
   public String getName() {
     return GroovyInspectionBundle.message("second.unsafe.call");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return GroovyInspectionBundle.message("second.unsafe.call");
   }
 
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
     if (!(element instanceof GrReferenceExpression)) return;

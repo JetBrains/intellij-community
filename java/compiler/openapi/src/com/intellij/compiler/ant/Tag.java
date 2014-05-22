@@ -16,6 +16,7 @@
 
 package com.intellij.compiler.ant;
 
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
@@ -78,10 +79,10 @@ public class Tag extends CompositeGenerator {
   }
 
   @Nullable
-  protected static Pair<String, String> pair(@NonNls String v1, @Nullable @NonNls String v2) {
+  protected static Couple<String> pair(@NonNls String v1, @Nullable @NonNls String v2) {
     if (v2 == null) {
       return null;
     }
-    return Pair.create(v1, v2);
+    return Couple.newOne(v1, v2);
   }
 }

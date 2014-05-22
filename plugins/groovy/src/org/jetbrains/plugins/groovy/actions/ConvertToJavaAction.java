@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.refactoring.convertToJava.ConvertToJavaHandler;
 
@@ -49,7 +49,7 @@ public class ConvertToJavaAction extends BaseRefactoringAction {
 
   @Override
   protected boolean isAvailableForLanguage(Language language) {
-    return GroovyFileType.GROOVY_LANGUAGE == language;
+    return GroovyLanguage.INSTANCE == language;
   }
 
   @Override

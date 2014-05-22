@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 /**
@@ -148,7 +149,7 @@ public class GrSplitDeclarationIntention extends Intention {
         if (element instanceof GrVariableDeclaration) {
           GrVariableDeclaration decl = (GrVariableDeclaration)element;
           GrVariable[] variables = decl.getVariables();
-          if (variables.length > 1 && GroovyRefactoringUtil.isLocalVariable(variables[0])) {
+          if (variables.length > 1 && PsiUtil.isLocalVariable(variables[0])) {
             if (!decl.isTuple() || decl.getTupleInitializer() instanceof GrListOrMap) {
               myText = GroovyIntentionsBundle.message("split.into.separate.declaration");
             }
@@ -158,7 +159,7 @@ public class GrSplitDeclarationIntention extends Intention {
             return true;
           }
           else if (variables.length == 1 &&
-                   GroovyRefactoringUtil.isLocalVariable(variables[0]) &&
+                   PsiUtil.isLocalVariable(variables[0]) &&
                    variables[0].getInitializerGroovy() != null) {
             myText = GroovyIntentionsBundle.message("split.into.declaration.and.assignment");
             return true;

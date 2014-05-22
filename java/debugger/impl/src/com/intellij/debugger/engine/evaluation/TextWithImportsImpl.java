@@ -40,7 +40,7 @@ public final class TextWithImportsImpl implements TextWithImports{
   private final FileType myFileType;
   private final String myImports;
 
-  public TextWithImportsImpl (PsiExpression expression) {
+  public TextWithImportsImpl(@NotNull PsiExpression expression) {
     myKind = CodeFragmentKind.EXPRESSION;
     final String text = expression.getText();
     PsiFile containingFile = expression.getContainingFile();
@@ -136,8 +136,8 @@ public final class TextWithImportsImpl implements TextWithImports{
   }
 
   @Nullable
-  public static XExpression toXExpression(TextWithImports text) {
-    if (!text.getText().isEmpty()) {
+  public static XExpression toXExpression(@Nullable TextWithImports text) {
+    if (text != null && !text.getText().isEmpty()) {
       return new XExpressionImpl(text.getText(),
                                  XDebuggerEditorBase.getFileTypeLanguage(text.getFileType()),
                                  StringUtil.nullize(text.getImports()),

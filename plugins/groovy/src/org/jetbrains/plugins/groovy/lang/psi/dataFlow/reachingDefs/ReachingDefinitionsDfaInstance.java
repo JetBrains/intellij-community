@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ public class ReachingDefinitionsDfaInstance implements DfaInstance<DefinitionMap
   }
 
 
+  @Override
   public void fun(DefinitionMap m, Instruction instruction) {
     if (instruction instanceof ReadWriteVariableInstruction) {
       final ReadWriteVariableInstruction varInsn = (ReadWriteVariableInstruction) instruction;
@@ -60,11 +61,13 @@ public class ReachingDefinitionsDfaInstance implements DfaInstance<DefinitionMap
     }
   }
 
+  @Override
   @NotNull
   public DefinitionMap initial() {
     return new DefinitionMap();
   }
 
+  @Override
   public boolean isForward() {
     return true;
   }

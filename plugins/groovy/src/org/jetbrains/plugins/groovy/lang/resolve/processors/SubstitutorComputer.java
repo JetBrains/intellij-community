@@ -60,7 +60,7 @@ public class SubstitutorComputer {
 
   private final GrControlFlowOwner myFlowOwner;
   private final PsiElement myPlaceToInferContext;
-  private PsiResolveHelper myHelper;
+  private final PsiResolveHelper myHelper;
 
 
   public SubstitutorComputer(PsiType thisType,
@@ -125,7 +125,7 @@ public class SubstitutorComputer {
 
     if (myArgumentTypes != null && method.hasTypeParameters()) {
       PsiType[] argTypes = myArgumentTypes;
-      final PsiElement resolveContext = state.get(ResolverProcessor.RESOLVE_CONTEXT);
+      final PsiElement resolveContext = state.get(ClassHint.RESOLVE_CONTEXT);
       if (method instanceof GrGdkMethod) {
         //type inference should be performed from static method
         PsiType[] newArgTypes = PsiType.createArray(argTypes.length + 1);

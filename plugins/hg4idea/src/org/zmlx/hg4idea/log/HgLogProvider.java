@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package org.zmlx.hg4idea.log;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -60,8 +60,7 @@ public class HgLogProvider implements VcsLogProvider {
   @Override
   public List<? extends VcsCommitMetadata> readFirstBlock(@NotNull VirtualFile root,
                                                           @NotNull Requirements requirements) throws VcsException {
-    return HgHistoryUtil.loadMetadata(myProject, root, requirements.getCommitCount(),
-                                      requirements.isOrdered() ? Collections.<String>emptyList() : Arrays.asList("-r", "0:tip"));
+    return HgHistoryUtil.loadMetadata(myProject, root, requirements.getCommitCount(), Collections.<String>emptyList());
   }
 
   @NotNull
@@ -238,7 +237,7 @@ public class HgLogProvider implements VcsLogProvider {
         }
       }
     }
-    Pair<String, String> userArgs = HgUtil.parseUserNameAndEmail(userName);
+    Couple<String> userArgs = HgUtil.parseUserNameAndEmail(userName);
     return myVcsObjectsFactory.createUser(userArgs.getFirst(), userArgs.getSecond());
   }
 

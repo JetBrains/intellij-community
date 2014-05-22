@@ -17,12 +17,11 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations;
 
 import com.intellij.lang.PsiBuilder;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
-
-import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.FAIL;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -34,32 +33,32 @@ import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDe
 */
 
 
-public class Annotation implements GroovyElementTypes {
+public class Annotation {
   public static boolean parse(PsiBuilder builder, GroovyParser parser) {
-    if (builder.getTokenType() != mAT) {
+    if (builder.getTokenType() != GroovyTokenTypes.mAT) {
       return false;
     }
 
     PsiBuilder.Marker annMarker = builder.mark();
     builder.advanceLexer();
 
-    if (builder.getTokenType() == kINTERFACE) {
+    if (builder.getTokenType() == GroovyTokenTypes.kINTERFACE) {
       annMarker.rollbackTo();
       return false;
     }
 
-    if (ReferenceElement.parse(builder, false, true, true, false, false) == FAIL) {
+    if (ReferenceElement.parse(builder, false, true, true, false, false) == ReferenceElement.ReferenceElementResult.FAIL) {
       builder.error("Annotation name expected");
       annMarker.drop();
       return false;
     }
 
-    if (ParserUtils.lookAhead(builder, mNLS, mLPAREN)) {
-      ParserUtils.getToken(builder, mNLS);
+    if (ParserUtils.lookAhead(builder, GroovyTokenTypes.mNLS, GroovyTokenTypes.mLPAREN)) {
+      ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
     }
     AnnotationArguments.parse(builder, parser);
 
-    annMarker.done(ANNOTATION);
+    annMarker.done(GroovyElementTypes.ANNOTATION);
     return true;
   }
 
@@ -68,12 +67,12 @@ public class Annotation implements GroovyElementTypes {
 
     boolean hasAnnotations = false;
     while (parse(builder, parser)) {
-      ParserUtils.getToken(builder, mNLS);
+      ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
       hasAnnotations = true;
     }
 
     if (hasAnnotations) {
-      annOptMarker.done(MODIFIERS);
+      annOptMarker.done(GroovyElementTypes.MODIFIERS);
     } else {
       annOptMarker.rollbackTo();
     }

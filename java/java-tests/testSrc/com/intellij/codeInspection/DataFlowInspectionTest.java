@@ -322,6 +322,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testNullableBoolean() { doTest(); }
 
   public void testSameComparisonTwice() { doTest(); }
+  public void testRootThrowableCause() { doTest(); }
 
   public void testParametersAreNonnullByDefault() {
     myFixture.addClass("package javax.annotation; public @interface ParametersAreNonnullByDefault {}");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
@@ -32,7 +33,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author ilyas
  */
-public class CompoundStringExpression implements GroovyElementTypes {
+public class CompoundStringExpression {
   private static final Logger LOG = Logger.getInstance(CompoundStringExpression.class);
   private final PsiBuilder myBuilder;
   private final GroovyParser myParser;
@@ -80,8 +81,8 @@ public class CompoundStringExpression implements GroovyElementTypes {
     if (myBuilder.getTokenType() == myContent) {
       final PsiBuilder.Marker contentMarker = myBuilder.mark();
       myBuilder.advanceLexer();
-      if (myBuilder.getTokenType() == mDOLLAR || mySimpleLiteral == null) {
-        contentMarker.done(GSTRING_CONTENT);
+      if (myBuilder.getTokenType() == GroovyTokenTypes.mDOLLAR || mySimpleLiteral == null) {
+        contentMarker.done(GroovyElementTypes.GSTRING_CONTENT);
       }
       else {
         contentMarker.drop();
@@ -91,8 +92,8 @@ public class CompoundStringExpression implements GroovyElementTypes {
       processContent();
     }
 
-    boolean hasInjection = myBuilder.getTokenType() == mDOLLAR;
-    while (myBuilder.getTokenType() == mDOLLAR) {
+    boolean hasInjection = myBuilder.getTokenType() == GroovyTokenTypes.mDOLLAR;
+    while (myBuilder.getTokenType() == GroovyTokenTypes.mDOLLAR) {
       parseInjection();
       processContent();
     }
@@ -119,7 +120,7 @@ public class CompoundStringExpression implements GroovyElementTypes {
     else {
       myBuilder.mark().done(myContent);
     }
-    marker.done(GSTRING_CONTENT);
+    marker.done(GroovyElementTypes.GSTRING_CONTENT);
   }
 
   private void finishSimpleLiteral(PsiBuilder.Marker marker, PsiBuilder.Marker marker2) {
@@ -128,7 +129,7 @@ public class CompoundStringExpression implements GroovyElementTypes {
       marker.drop();
     }
     else {
-      marker.done(LITERAL);
+      marker.done(GroovyElementTypes.LITERAL);
     }
   }
 
@@ -138,22 +139,22 @@ public class CompoundStringExpression implements GroovyElementTypes {
    * @return nothing
    */
   private boolean parseInjection() {
-    if (myBuilder.getTokenType() != mDOLLAR) return false;
+    if (myBuilder.getTokenType() != GroovyTokenTypes.mDOLLAR) return false;
 
     final PsiBuilder.Marker injection = myBuilder.mark();
-    ParserUtils.getToken(myBuilder, mDOLLAR);
+    ParserUtils.getToken(myBuilder, GroovyTokenTypes.mDOLLAR);
 
-    if (myBuilder.getTokenType() == mIDENT || myBuilder.getTokenType() == kTHIS) {
+    if (myBuilder.getTokenType() == GroovyTokenTypes.mIDENT || myBuilder.getTokenType() == GroovyTokenTypes.kTHIS) {
       PathExpression.parse(myBuilder, myParser);
     }
-    else if (myBuilder.getTokenType() == mLCURLY) {
+    else if (myBuilder.getTokenType() == GroovyTokenTypes.mLCURLY) {
       OpenOrClosableBlock.parseClosableBlock(myBuilder, myParser);
     }
     else {
       ParserUtils.wrapError(myBuilder, GroovyBundle.message("identifier.or.block.expected"));
     }
 
-    injection.done(GSTRING_INJECTION);
+    injection.done(GroovyElementTypes.GSTRING_INJECTION);
     return true;
   }
 

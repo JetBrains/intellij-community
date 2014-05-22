@@ -27,33 +27,39 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 
 public class GroovyUnreachableStatementInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return VALIDITY_ISSUES;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Unreachable Statement";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Unreachable statement #loc";
 
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
+    @Override
     public void visitClosure(GrClosableBlock closure) {
       super.visitClosure(closure);
       GrStatement[] statements = closure.getStatements();
@@ -62,6 +68,7 @@ public class GroovyUnreachableStatementInspection extends BaseInspection {
       }
     }
 
+    @Override
     public void visitOpenBlock(GrOpenBlock block) {
       super.visitOpenBlock(block);
       GrStatement[] statements = block.getStatements();

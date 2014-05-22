@@ -29,7 +29,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -89,11 +88,11 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
   }
 
   @Nullable
-  private Pair<String, String> invokeAction(@NotNull final Project project,
-                                            @NotNull PsiFile file,
-                                            @NotNull PsiElement psiElement,
-                                            @Nullable final String suggestedKey,
-                                            @Nullable final List<PropertiesFile> propertiesFiles) {
+  private Couple<String> invokeAction(@NotNull final Project project,
+                                      @NotNull PsiFile file,
+                                      @NotNull PsiElement psiElement,
+                                      @Nullable final String suggestedKey,
+                                      @Nullable final List<PropertiesFile> propertiesFiles) {
     final I18nizeQuickFixModel model;
     final I18nizeQuickFixDialog.DialogCustomization dialogCustomization = createDefaultCustomization(suggestedKey, propertiesFiles);
 

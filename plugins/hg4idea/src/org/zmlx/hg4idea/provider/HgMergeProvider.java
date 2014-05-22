@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package org.zmlx.hg4idea.provider;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
@@ -34,8 +34,8 @@ import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgResolveCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
-import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgPromptCommandExecutor;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
@@ -78,7 +78,7 @@ public class HgMergeProvider implements MergeProvider {
           // i.e if you update to 17 revision and then merge it woth 23, so 17 is your local and 17->parent is your base revision.
           // This may produce misunderstanding when you update your project with merging (your update firstly to next revisions  and then
           // merge with previous). see http://hgbook.red-bean.com/read/managing-releases-and-branchy-development.html
-          final Pair<HgRevisionNumber, HgRevisionNumber> parents = command.parents(repo, file);
+          final Couple<HgRevisionNumber> parents = command.parents(repo, file);
           serverRevisionNumber = parents.second;
           localRevisionNumber = parents.first;
           final HgContentRevision local = new HgContentRevision(myProject, hgFile, localRevisionNumber);
@@ -92,7 +92,7 @@ public class HgMergeProvider implements MergeProvider {
           String serverChangeset = serverRevisionNumber.getChangeset();
           arguments.add(StringUtil.isEmptyOrSpaces(localChangeset) ? localRevisionNumber.getRevision() : localChangeset);
           arguments.add(StringUtil.isEmptyOrSpaces(serverChangeset) ? serverRevisionNumber.getRevision() : serverChangeset);
-          HgCommandResult result = new HgCommandExecutor(myProject).executeInCurrentThread(repo, "debugancestor", arguments);
+          HgCommandResult result = new HgPromptCommandExecutor(myProject).executeInCurrentThread(repo, "debugancestor", arguments);
           if (result != null) {
             String output = result.getRawOutput();
             final List<String> parts = StringUtil.split(output, ":");
@@ -165,7 +165,7 @@ public class HgMergeProvider implements MergeProvider {
    */
   private boolean wasFileCheckedIn(VirtualFile repo, VirtualFile file) {
     // in the case of merge if the file was checked in, it will have 2 parents after hg pull. If it wasn't, it would have only one parent
-    final Pair<HgRevisionNumber, HgRevisionNumber> parents = new HgWorkingCopyRevisionsCommand(myProject).parents(repo, file);
+    final Couple<HgRevisionNumber> parents = new HgWorkingCopyRevisionsCommand(myProject).parents(repo, file);
     return parents.second != null;
   }
 

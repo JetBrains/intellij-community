@@ -35,38 +35,45 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 public class GroovyDoubleNegationInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return CONFUSING_CODE_CONSTRUCTS;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Double negation";
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return "Double negation #ref #loc";
   }
 
+  @Override
   @Nullable
   protected GroovyFix buildFix(PsiElement location) {
     return new DoubleNegationFix();
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
   private static class DoubleNegationFix extends GroovyFix {
 
+    @Override
     @NotNull
     public String getName() {
       return "Remove double negation";
     }
 
+    @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)
         throws IncorrectOperationException {
       final GrUnaryExpression expression =
@@ -98,12 +105,14 @@ public class GroovyDoubleNegationInspection extends BaseInspection {
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new DoubleNegationVisitor();
   }
 
   private static class DoubleNegationVisitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitUnaryExpression(GrUnaryExpression expression) {
       super.visitUnaryExpression(expression);
       final IElementType tokenType = expression.getOperationTokenType();
@@ -113,6 +122,7 @@ public class GroovyDoubleNegationInspection extends BaseInspection {
       checkParent(expression);
     }
 
+    @Override
     public void visitBinaryExpression(GrBinaryExpression expression) {
       super.visitBinaryExpression(expression);
       final IElementType tokenType = expression.getOperationTokenType();

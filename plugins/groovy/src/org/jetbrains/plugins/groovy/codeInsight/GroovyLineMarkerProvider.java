@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrRe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableDeclarationImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 import javax.swing.*;
@@ -66,8 +67,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-
-import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.isTrait;
 
 /**
  * @author ilyas
@@ -98,8 +97,7 @@ public class GroovyLineMarkerProvider implements LineMarkerProvider, DumbAware {
           if (superSignature != null) {
             PsiMethod superMethod = superSignature.getMethod();
             boolean overrides = method.hasModifierProperty(PsiModifier.ABSTRACT) == superMethod.hasModifierProperty(PsiModifier.ABSTRACT) ||
-                                superMethod.getBody() != null && isTrait(
-                                  superMethod.getContainingClass());
+                                superMethod.getBody() != null && GrTraitUtil.isTrait(superMethod.getContainingClass());
             final Icon icon = overrides ? AllIcons.Gutter.OverridingMethod : AllIcons.Gutter.ImplementingMethod;
             final MarkerType type = GroovyMarkerTypes.OVERRIDING_PROPERTY_TYPE;
             return new LineMarkerInfo<PsiElement>(element, element.getTextRange(), icon, Pass.UPDATE_ALL, type.getTooltip(), type.getNavigationHandler(),
@@ -188,7 +186,8 @@ public class GroovyLineMarkerProvider implements LineMarkerProvider, DumbAware {
     if (element instanceof GrField || element instanceof GrTypeParameter) return 1;
     if (element instanceof GrTypeDefinition || element instanceof GrClassInitializer) return 2;
     if (element instanceof GrMethod) {
-      if (((GrMethod)element).hasModifierProperty(PsiModifier.ABSTRACT) && !(((GrMethod)element).getBlock() != null && isTrait(((GrMethod)element).getContainingClass()))) {
+      if (((GrMethod)element).hasModifierProperty(PsiModifier.ABSTRACT) && !(((GrMethod)element).getBlock() != null &&
+                                                                             GrTraitUtil.isTrait(((GrMethod)element).getContainingClass()))) {
         return 1;
       }
       TextRange textRange = element.getTextRange();

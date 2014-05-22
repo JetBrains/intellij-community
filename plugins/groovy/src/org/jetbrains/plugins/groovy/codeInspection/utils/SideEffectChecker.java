@@ -42,12 +42,14 @@ public class SideEffectChecker {
 
     private boolean mayHaveSideEffects = false;
 
+    @Override
     public void visitElement(@NotNull GroovyPsiElement element) {
       if (!mayHaveSideEffects) {
         super.visitElement(element);
       }
     }
 
+    @Override
     public void visitAssignmentExpression(
         @NotNull GrAssignmentExpression expression) {
       if (mayHaveSideEffects) {
@@ -57,6 +59,7 @@ public class SideEffectChecker {
       mayHaveSideEffects = true;
     }
 
+    @Override
     public void visitMethodCallExpression(
         @NotNull GrMethodCallExpression expression) {
       if (mayHaveSideEffects) {
@@ -66,6 +69,7 @@ public class SideEffectChecker {
       mayHaveSideEffects = true;
     }
 
+    @Override
     public void visitNewExpression(@NotNull GrNewExpression expression) {
       if (mayHaveSideEffects) {
         return;
@@ -74,6 +78,7 @@ public class SideEffectChecker {
       mayHaveSideEffects = true;
     }
 
+    @Override
     public void visitUnaryExpression(
         @NotNull GrUnaryExpression expression) {
       if (mayHaveSideEffects) {

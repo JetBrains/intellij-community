@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.intentions.base.ErrorUtil;
+import org.jetbrains.plugins.groovy.codeInspection.utils.JavaStylePropertiesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.ErrorUtil;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
-
-import static org.jetbrains.plugins.groovy.codeInspection.utils.JavaStylePropertiesUtil.fixJavaStyleProperty;
-import static org.jetbrains.plugins.groovy.codeInspection.utils.JavaStylePropertiesUtil.isPropertyAccessor;
 
 /**
  * @author ilyas
@@ -39,17 +37,20 @@ public class JavaStylePropertiesInvocationIntention extends Intention {
     return element instanceof GrClosableBlock || super.isStopElement(element);
   }
 
+  @Override
   protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
     if (element instanceof GrMethodCall) {
-      fixJavaStyleProperty(((GrMethodCall)element));
+      JavaStylePropertiesUtil.fixJavaStyleProperty(((GrMethodCall)element));
     }
   }
 
+  @Override
   @NotNull
   protected PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
+      @Override
       public boolean satisfiedBy(PsiElement element) {
-        return element instanceof GrMethodCall && isPropertyAccessor((GrMethodCall)element) && !ErrorUtil.containsError(element);
+        return element instanceof GrMethodCall && JavaStylePropertiesUtil.isPropertyAccessor((GrMethodCall)element) && !ErrorUtil.containsError(element);
       }
     };
   }

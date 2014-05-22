@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.util.containers.Convertor;
@@ -99,7 +99,7 @@ public class SvnNativeCallsTranslator {
   }
 
   private static class LinuxParser {
-    private final static Map<Integer, Pair<String, String>> gnomeMessages = new HashMap<Integer, Pair<String, String>>();
+    private final static Map<Integer, Couple<String>> gnomeMessages = new HashMap<Integer, Couple<String>>();
 
     public static String translate(NativeLogReader.CallInfo callInfo) {
       if (! callInfo.getFunctionName().contains("ISVNGnomeKeyringLibrary")) return null;
@@ -113,7 +113,7 @@ public class SvnNativeCallsTranslator {
       }
       if (! ("" + callInfo.getResultCode()).equals(callInfo.getStrResultCode())) return null;
       if (callInfo.getResultCode() == 0) return null;
-      final Pair<String, String> pair = gnomeMessages.get(callInfo.getResultCode());
+      final Couple<String> pair = gnomeMessages.get(callInfo.getResultCode());
       if (pair == null) return null;
       return MessageFormat.format(ourGenericAdvice, callInfo.getFunctionName(),
                                   new StringBuilder().append(callInfo.getResultCode()).append(" ( ").append(pair.getFirst())
@@ -121,17 +121,27 @@ public class SvnNativeCallsTranslator {
     }
 
     static {
-      gnomeMessages.put(ISVNGnomeKeyringLibrary.GNOME_KEYRING_RESULT_OK, Pair.create("GNOME_KEYRING_RESULT_OK", "The operation completed successfully."));
-      gnomeMessages.put(ISVNGnomeKeyringLibrary.GNOME_KEYRING_RESULT_DENIED, Pair.create("GNOME_KEYRING_RESULT_DENIED", "Either the user or daemon denied access."));
-      gnomeMessages.put(ISVNGnomeKeyringLibrary.GNOME_KEYRING_RESULT_NO_KEYRING_DAEMON, Pair.create("GNOME_KEYRING_RESULT_NO_KEYRING_DAEMON", "Keyring daemon is not available."));
-      gnomeMessages.put(ISVNGnomeKeyringLibrary.GNOME_KEYRING_RESULT_ALREADY_UNLOCKED, Pair.create("GNOME_KEYRING_RESULT_ALREADY_UNLOCKED", "Keyring was already unlocked."));
-      gnomeMessages.put(ISVNGnomeKeyringLibrary.GNOME_KEYRING_RESULT_NO_SUCH_KEYRING, Pair.create("GNOME_KEYRING_RESULT_NO_SUCH_KEYRING", "No such keyring exists."));
+      gnomeMessages.put(ISVNGnomeKeyringLibrary.GNOME_KEYRING_RESULT_OK,
+                        Couple.newOne("GNOME_KEYRING_RESULT_OK", "The operation completed successfully."));
+      gnomeMessages.put(ISVNGnomeKeyringLibrary.GNOME_KEYRING_RESULT_DENIED,
+                        Couple.newOne("GNOME_KEYRING_RESULT_DENIED", "Either the user or daemon denied access."));
+      gnomeMessages.put(ISVNGnomeKeyringLibrary.GNOME_KEYRING_RESULT_NO_KEYRING_DAEMON,
+                        Couple.newOne("GNOME_KEYRING_RESULT_NO_KEYRING_DAEMON", "Keyring daemon is not available."));
+      gnomeMessages.put(ISVNGnomeKeyringLibrary.GNOME_KEYRING_RESULT_ALREADY_UNLOCKED,
+                        Couple.newOne("GNOME_KEYRING_RESULT_ALREADY_UNLOCKED", "Keyring was already unlocked."));
+      gnomeMessages.put(ISVNGnomeKeyringLibrary.GNOME_KEYRING_RESULT_NO_SUCH_KEYRING,
+                        Couple.newOne("GNOME_KEYRING_RESULT_NO_SUCH_KEYRING", "No such keyring exists."));
 
-      gnomeMessages.put(ISVNGnomeKeyringLibrary.GNOME_KEYRING_RESULT_BAD_ARGUMENTS, Pair.create("GNOME_KEYRING_RESULT_BAD_ARGUMENTS", "Bad arguments to function."));
-      gnomeMessages.put(ISVNGnomeKeyringLibrary.GNOME_KEYRING_RESULT_IO_ERROR, Pair.create("GNOME_KEYRING_RESULT_IO_ERROR", "Problem communicating with daemon."));
-      gnomeMessages.put(ISVNGnomeKeyringLibrary.GNOME_KEYRING_RESULT_CANCELLED, Pair.create("GNOME_KEYRING_RESULT_CANCELLED", "Operation was cancelled."));
-      gnomeMessages.put(ISVNGnomeKeyringLibrary.GNOME_KEYRING_RESULT_KEYRING_ALREADY_EXISTS, Pair.create("GNOME_KEYRING_RESULT_KEYRING_ALREADY_EXISTS", "The keyring already exists."));
-      gnomeMessages.put(ISVNGnomeKeyringLibrary.GNOME_KEYRING_RESULT_NO_MATCH, Pair.create("GNOME_KEYRING_RESULT_NO_MATCH", "No such match found."));
+      gnomeMessages.put(ISVNGnomeKeyringLibrary.GNOME_KEYRING_RESULT_BAD_ARGUMENTS,
+                        Couple.newOne("GNOME_KEYRING_RESULT_BAD_ARGUMENTS", "Bad arguments to function."));
+      gnomeMessages.put(ISVNGnomeKeyringLibrary.GNOME_KEYRING_RESULT_IO_ERROR,
+                        Couple.newOne("GNOME_KEYRING_RESULT_IO_ERROR", "Problem communicating with daemon."));
+      gnomeMessages.put(ISVNGnomeKeyringLibrary.GNOME_KEYRING_RESULT_CANCELLED,
+                        Couple.newOne("GNOME_KEYRING_RESULT_CANCELLED", "Operation was cancelled."));
+      gnomeMessages.put(ISVNGnomeKeyringLibrary.GNOME_KEYRING_RESULT_KEYRING_ALREADY_EXISTS,
+                        Couple.newOne("GNOME_KEYRING_RESULT_KEYRING_ALREADY_EXISTS", "The keyring already exists."));
+      gnomeMessages.put(ISVNGnomeKeyringLibrary.GNOME_KEYRING_RESULT_NO_MATCH,
+                        Couple.newOne("GNOME_KEYRING_RESULT_NO_MATCH", "No such match found."));
     }
   }
 

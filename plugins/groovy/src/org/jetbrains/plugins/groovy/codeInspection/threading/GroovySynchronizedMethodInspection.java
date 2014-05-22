@@ -25,29 +25,34 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 
 public class GroovySynchronizedMethodInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return THREADING_ISSUES;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Synchronized method";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Synchronized method '#ref' #loc";
 
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
+    @Override
     public void visitMethod(GrMethod grMethod) {
       super.visitMethod(grMethod);
       if (!grMethod.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {

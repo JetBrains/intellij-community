@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.customize;
 
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -27,7 +26,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -159,11 +157,6 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
   protected void doOKAction() {
     for (AbstractCustomizeWizardStep step : mySteps) {
       if (!step.beforeOkAction()) return;
-    }
-    try {
-      PluginManager.saveDisabledPlugins(PluginGroups.getInstance().getDisabledPluginIds(), false);
-    }
-    catch (IOException ignored) {
     }
     super.doOKAction();
   }

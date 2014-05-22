@@ -24,7 +24,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -685,7 +685,7 @@ public abstract class HgUtil {
   }
 
   @NotNull
-  public static Pair<String, String> parseUserNameAndEmail(@NotNull String authorString) {
+  public static Couple<String> parseUserNameAndEmail(@NotNull String authorString) {
     //special characters should be retained for properly filtering by username. For Mercurial "a.b" username is not equal to "a b"
     // Vasya Pupkin <vasya.pupkin@jetbrains.com> -> Vasya Pupkin , vasya.pupkin@jetbrains.com
     int startEmailIndex = authorString.indexOf('<');
@@ -707,6 +707,6 @@ public abstract class HgUtil {
       userName = authorString.trim();
       email = "";
     }
-    return Pair.create(userName, email);
+    return Couple.newOne(userName, email);
   }
 }

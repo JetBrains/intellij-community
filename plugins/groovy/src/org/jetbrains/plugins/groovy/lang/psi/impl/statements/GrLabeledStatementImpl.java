@@ -41,6 +41,7 @@ public class GrLabeledStatementImpl extends GroovyPsiElementImpl implements GrLa
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitLabeledStatement(this);
   }
@@ -54,6 +55,7 @@ public class GrLabeledStatementImpl extends GroovyPsiElementImpl implements GrLa
     return getName();
   }
 
+  @Override
   @NotNull
   public PsiElement getLabel() {
     final PsiElement label = findChildByType(GroovyTokenTypes.mIDENT);
@@ -61,11 +63,13 @@ public class GrLabeledStatementImpl extends GroovyPsiElementImpl implements GrLa
     return label;
   }
 
+  @Override
   @Nullable
   public GrStatement getStatement() {
     return findChildByClass(GrStatement.class);
   }
 
+  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                      @NotNull ResolveState state,
                                      @Nullable PsiElement lastParent,
@@ -80,6 +84,7 @@ public class GrLabeledStatementImpl extends GroovyPsiElementImpl implements GrLa
     return new LocalSearchScope(this);
   }
 
+  @Override
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
     final PsiElement labelElement = getLabel();
     final PsiElement newLabel = GroovyPsiElementFactory.getInstance(getProject()).createReferenceNameFromText(name);

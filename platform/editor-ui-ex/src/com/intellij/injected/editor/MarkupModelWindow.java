@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DisposableIterator;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
-import com.intellij.openapi.editor.ex.SweepProcessor;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -149,12 +148,6 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
   public DisposableIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
     // todo convert
     return myHostModel.overlappingIterator(startOffset, endOffset);
-  }
-
-  @Override
-  public boolean sweep(int start, int end, @NotNull SweepProcessor<RangeHighlighterEx> sweepProcessor) {
-    // todo convert
-    return myHostModel.sweep(start, end, sweepProcessor);
   }
 
   @Override

@@ -103,7 +103,7 @@ public class BraceHighlightingHandler {
   static void lookForInjectedAndMatchBracesInOtherThread(@NotNull final Editor editor,
                                                          @NotNull final Alarm alarm,
                                                          @NotNull final Processor<BraceHighlightingHandler> processor) {
-    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread();
+    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(editor.getComponent());
     final Project project = editor.getProject();
     if (project == null || project.isDisposed()) return;
     if (!PROCESSED_EDITORS.add(editor)) {

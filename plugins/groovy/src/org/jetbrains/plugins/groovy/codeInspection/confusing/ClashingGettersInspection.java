@@ -40,18 +40,21 @@ import java.util.Map;
  * @author Max Medvedev
  */
 public class ClashingGettersInspection extends BaseInspection {
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return CONFUSING_CODE_CONSTRUCTS;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Clashing getters";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return GroovyInspectionBundle.message("getter.0.clashes.with.getter.1", args);

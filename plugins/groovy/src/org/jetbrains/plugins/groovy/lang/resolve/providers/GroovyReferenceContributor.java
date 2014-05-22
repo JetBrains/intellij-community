@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve.providers;
 
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiReferenceContributor;
 import com.intellij.psi.PsiReferenceRegistrar;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
@@ -22,14 +23,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns;
 import org.jetbrains.plugins.groovy.spock.SpockUnrollReferenceProvider;
 
-import static com.intellij.patterns.PlatformPatterns.psiElement;
-
 /**
  * @author Dmitry.Krasilschikov
  */
 public class GroovyReferenceContributor extends PsiReferenceContributor {
+  @Override
   public void registerReferenceProviders(final PsiReferenceRegistrar registrar) {
-    registrar.registerReferenceProvider(psiElement(GrLiteral.class), new PropertiesReferenceProvider());
+    registrar.registerReferenceProvider(PlatformPatterns.psiElement(GrLiteral.class), new PropertiesReferenceProvider());
 
     registrar.registerReferenceProvider(GroovyPatterns.stringLiteral().withParent(GrAnnotationNameValuePair.class),
                                         new SpockUnrollReferenceProvider());

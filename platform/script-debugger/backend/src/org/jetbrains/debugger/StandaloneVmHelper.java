@@ -11,7 +11,7 @@ import org.jetbrains.jsonProtocol.Request;
 import org.jetbrains.rpc.MessageHandler;
 import org.jetbrains.rpc.MessageWriter;
 
-public final class StandaloneVmHelper extends MessageWriter {
+public class StandaloneVmHelper extends MessageWriter {
   private volatile Channel channel;
 
   private final VmEx vm;
@@ -61,10 +61,11 @@ public final class StandaloneVmHelper extends MessageWriter {
     return channel != null;
   }
 
+  @NotNull
   public ActionCallback detach() {
     final Channel currentChannel = channel;
     if (currentChannel == null) {
-      return new ActionCallback.Done();
+      return ActionCallback.DONE;
     }
 
     vm.getCommandProcessor().cancelWaitingRequests();
@@ -73,8 +74,7 @@ public final class StandaloneVmHelper extends MessageWriter {
     if (disconnectRequest == null) {
       vm.getCommandProcessor().closed();
       channel = null;
-      NettyUtil.closeAndReleaseFactory(currentChannel);
-      return ActionCallback.DONE;
+      return closeChannel(currentChannel);
     }
 
     ActionCallback callback = vm.getCommandProcessor().send(disconnectRequest);
@@ -94,5 +94,11 @@ public final class StandaloneVmHelper extends MessageWriter {
       }
     });
     return subCallback;
+  }
+
+  @NotNull
+  protected ActionCallback closeChannel(@NotNull Channel channel) {
+    NettyUtil.closeAndReleaseFactory(channel);
+    return ActionCallback.DONE;
   }
 }

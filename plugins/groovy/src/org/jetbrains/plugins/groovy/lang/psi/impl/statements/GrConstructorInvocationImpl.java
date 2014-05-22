@@ -43,6 +43,7 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitConstructorInvocation(this);
   }
@@ -51,10 +52,12 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
     return "Constructor invocation";
   }
 
+  @Override
   public boolean isSuperCall() {
     return getKeywordType() == GroovyTokenTypes.kSUPER;
   }
 
+  @Override
   public boolean isThisCall() {
     return getKeywordType() == GroovyTokenTypes.kTHIS;
   }
@@ -69,11 +72,13 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
   }
 
 
+  @Override
   @NotNull
   public GrReferenceExpression getInvokedExpression() {
     return findNotNullChildByClass(GrReferenceExpression.class);
   }
 
+  @Override
   @NotNull
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
     PsiClass clazz = getDelegatedClass();
@@ -101,6 +106,7 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
     return GroovyResolveResult.EMPTY_ARRAY;
   }
 
+  @Override
   public GroovyResolveResult[] multiResolveClass() {
     PsiClass aClass = getDelegatedClass();
     if (aClass == null) return GroovyResolveResult.EMPTY_ARRAY;
@@ -108,6 +114,7 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
     return new GroovyResolveResult[]{new GroovyResolveResultImpl(aClass, this, null, PsiSubstitutor.EMPTY, true, true)};
   }
 
+  @Override
   public PsiMethod resolveMethod() {
     return PsiImplUtil.extractUniqueElement(multiResolve(false));
   }
@@ -118,6 +125,7 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
     return PsiImplUtil.extractUniqueResult(multiResolve(false));
   }
 
+  @Override
   @Nullable
   public PsiClass getDelegatedClass() {
     PsiClass typeDefinition = PsiUtil.getContextClass(this);

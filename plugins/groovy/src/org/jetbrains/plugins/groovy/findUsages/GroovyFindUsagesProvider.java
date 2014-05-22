@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,22 +37,26 @@ public class GroovyFindUsagesProvider implements FindUsagesProvider {
     public GroovyFindUsagesProvider() {
     }
 
+    @Override
     @Nullable
     public WordsScanner getWordsScanner() {
         return new GroovyWordsScanner();
     }
 
+    @Override
     public boolean canFindUsagesFor(@NotNull PsiElement psiElement) {
         return psiElement instanceof PsiClass ||
                 psiElement instanceof PsiMethod ||
                 psiElement instanceof GrVariable;
     }
 
+    @Override
     @Nullable
     public String getHelpId(@NotNull PsiElement psiElement) {
         return null;
     }
 
+    @Override
     @NotNull
     public String getType(@NotNull PsiElement element) {
         if (element instanceof PsiClass) return "class";
@@ -67,6 +71,7 @@ public class GroovyFindUsagesProvider implements FindUsagesProvider {
         return "";
     }
 
+    @Override
     @NotNull
     public String getDescriptiveName(@NotNull PsiElement element) {
         if (element instanceof PsiClass) {
@@ -100,6 +105,7 @@ public class GroovyFindUsagesProvider implements FindUsagesProvider {
         return "";
     }
 
+    @Override
     @NotNull
     public String getNodeText(@NotNull PsiElement element, boolean useFullName) {
         if (element instanceof PsiClass) {

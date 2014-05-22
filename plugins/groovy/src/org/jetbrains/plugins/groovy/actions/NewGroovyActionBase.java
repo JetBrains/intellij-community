@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ public abstract class NewGroovyActionBase extends CreateElementActionBase {
     super(text, description, icon);
   }
 
+  @Override
   @NotNull
   protected final PsiElement[] invokeDialog(final Project project, final PsiDirectory directory) {
     MyInputValidator validator = new MyInputValidator(project, directory);
@@ -63,6 +64,7 @@ public abstract class NewGroovyActionBase extends CreateElementActionBase {
     return GroovyUtils.isSuitableModule(module) && LibrariesUtil.hasGroovySdk(module);
   }
 
+  @Override
   @NotNull
   protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
     return doCreate(newName, directory);
@@ -72,6 +74,7 @@ public abstract class NewGroovyActionBase extends CreateElementActionBase {
   protected abstract PsiElement[] doCreate(String newName, PsiDirectory directory) throws Exception;
 
 
+  @Override
   protected String getErrorTitle() {
     return CommonBundle.getErrorTitle();
   }

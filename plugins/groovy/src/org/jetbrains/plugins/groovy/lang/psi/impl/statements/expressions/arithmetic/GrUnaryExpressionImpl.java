@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,10 +114,12 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
     return "Unary expression";
   }
 
+  @Override
   public PsiType getType() {
     return TypeInferenceHelper.getCurrentContext().getExpressionType(this, TYPE_CALCULATOR);
   }
 
+  @Override
   @NotNull
   public IElementType getOperationTokenType() {
     PsiElement opElement = getOperationToken();
@@ -126,6 +128,7 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
     return node.getElementType();
   }
 
+  @Override
   @NotNull
   public PsiElement getOperationToken() {
     PsiElement opElement = findChildByType(TokenSets.UNARY_OP_SET);
@@ -133,10 +136,12 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
     return opElement;
   }
 
+  @Override
   public GrExpression getOperand() {
     return findExpressionChild(this);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitUnaryExpression(this);
   }

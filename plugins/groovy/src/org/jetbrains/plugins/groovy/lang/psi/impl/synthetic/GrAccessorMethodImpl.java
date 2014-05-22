@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,13 @@ import com.intellij.psi.impl.light.LightParameterListBuilder;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -44,8 +44,8 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
   private final boolean myIsSetter;
 
   public GrAccessorMethodImpl(@NotNull GrField property, boolean isSetter, String name) {
-    super(property.getManager(), GroovyFileType.GROOVY_LANGUAGE, name,
-          new LightParameterListBuilder(property.getManager(), GroovyFileType.GROOVY_LANGUAGE),
+    super(property.getManager(), GroovyLanguage.INSTANCE, name,
+          new LightParameterListBuilder(property.getManager(), GroovyLanguage.INSTANCE),
           new LightModifierList(property.getManager()) {
             @Override
             public String getText() {
@@ -77,7 +77,7 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
       addModifier(PsiModifier.FINAL);
     }
 
-    if (PsiImplUtil.isTrait(property.getContainingClass())) {
+    if (GrTraitUtil.isTrait(property.getContainingClass())) {
       addModifier(PsiModifier.ABSTRACT);
     }
 
@@ -89,6 +89,7 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
     setOriginInfo("synthetic accessor for '"+myProperty.getName()+"'");
   }
 
+  @Override
   @Nullable
   public PsiType getInferredReturnType() {
     if (myIsSetter) return PsiType.VOID;
@@ -101,6 +102,7 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
   }
 
 
+  @Override
   public PsiElement copy() {
     //return new GrAccessorMethodImpl(myProperty, myIsSetter, getName());
     //rename refactoring may create a copy using this method, add it to a class to check for conflicts, and then remove this copy.
@@ -115,6 +117,7 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
     return GroovyPsiElementFactory.getInstance(getProject()).createMethodFromText(modifiers+" "+getName()+params+"{}");
   }
 
+  @Override
   @NotNull
   public GrField getProperty() {
     return myProperty;

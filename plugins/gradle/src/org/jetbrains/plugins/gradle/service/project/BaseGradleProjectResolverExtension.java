@@ -52,6 +52,7 @@ import org.gradle.tooling.model.GradleTask;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.gradle.tooling.model.idea.*;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -259,7 +260,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
         ideModule.createChild(ProjectKeys.MODULE_DEPENDENCY, d);
       }
       else if (dependency instanceof IdeaSingleEntryLibraryDependency) {
-        LibraryDependencyData d = buildDependency(ideModule, (IdeaSingleEntryLibraryDependency)dependency, ideProject);
+        LibraryDependencyData d = buildDependency(gradleModule, ideModule, (IdeaSingleEntryLibraryDependency)dependency, ideProject);
         d.setExported(dependency.getExported());
         if (scope != null) {
           d.setScope(scope);
@@ -503,10 +504,11 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   }
 
   @NotNull
-  private static LibraryDependencyData buildDependency(@NotNull DataNode<ModuleData> ownerModule,
-                                                       @NotNull IdeaSingleEntryLibraryDependency dependency,
-                                                       @NotNull DataNode<ProjectData> ideProject)
-    throws IllegalStateException {
+  private LibraryDependencyData buildDependency(@NotNull IdeaModule gradleModule,
+                                                @NotNull DataNode<ModuleData> ownerModule,
+                                                @NotNull IdeaSingleEntryLibraryDependency dependency,
+                                                @NotNull DataNode<ProjectData> ideProject)
+  throws IllegalStateException {
     File binaryPath = dependency.getFile();
     if (binaryPath == null) {
       throw new IllegalStateException(String.format(
@@ -553,6 +555,10 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       library.addPath(LibraryPathType.SOURCE, sourcePath.getAbsolutePath());
     }
 
+    if (!unresolved && sourcePath == null) {
+      attachGradleSdkSources(gradleModule, libraryName, binaryPath, library);
+    }
+
     File javadocPath = dependency.getJavadoc();
     if (!unresolved && javadocPath != null) {
       library.addPath(LibraryPathType.DOC, javadocPath.getAbsolutePath());
@@ -570,6 +576,43 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     }
 
     return new LibraryDependencyData(ownerModule.getData(), libraryData.getData(), LibraryLevel.PROJECT);
+  }
+
+  private void attachGradleSdkSources(@NotNull IdeaModule gradleModule,
+                                      @NotNull final String libName,
+                                      @Nullable final File libFile,
+                                      LibraryData library) {
+    if (libFile == null || !libName.startsWith("gradle-")) return;
+
+    final BuildScriptClasspathModel buildScriptClasspathModel =
+      resolverCtx.getExtraProject(gradleModule, BuildScriptClasspathModel.class);
+    if (buildScriptClasspathModel == null) return;
+    final File gradleHomeDir = buildScriptClasspathModel.getGradleHomeDir();
+    if (gradleHomeDir == null) return;
+
+    if (!FileUtil.isAncestor(gradleHomeDir, libFile, true)) return;
+
+    File libOrPluginsFile = libFile.getParentFile();
+    if (libOrPluginsFile != null && ("plugins".equals(libOrPluginsFile.getName()))) {
+      libOrPluginsFile = libOrPluginsFile.getParentFile();
+    }
+
+    if (libOrPluginsFile != null && "lib".equals(libOrPluginsFile.getName()) && libOrPluginsFile.getParentFile() != null) {
+      File srcDir = new File(libOrPluginsFile.getParentFile(), "src");
+
+      GradleVersion current = GradleVersion.version(buildScriptClasspathModel.getGradleVersion());
+      if (current.compareTo(GradleVersion.version("1.9")) >= 0) {
+        int endIndex = libName.indexOf(current.getVersion());
+        if (endIndex != -1) {
+          String srcDirChild = libName.substring("gradle-".length(), endIndex - 1);
+          srcDir = new File(srcDir, srcDirChild);
+        }
+      }
+
+      if (srcDir.isDirectory()) {
+        library.addPath(LibraryPathType.SOURCE, srcDir.getAbsolutePath());
+      }
+    }
   }
 
   private static boolean isIdeaTask(final String taskName) {

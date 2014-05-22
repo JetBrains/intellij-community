@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ public class GrClassTypeElementImpl extends GroovyPsiElementImpl implements GrCl
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitClassTypeElement(this);
   }
@@ -42,11 +43,13 @@ public class GrClassTypeElementImpl extends GroovyPsiElementImpl implements GrCl
     return "Type element";
   }
 
+  @Override
   @NotNull
   public GrCodeReferenceElement getReferenceElement() {
     return (GrCodeReferenceElement)findNotNullChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
   }
 
+  @Override
   @NotNull
   public PsiType getType() {
     return new GrClassReferenceType(getReferenceElement());

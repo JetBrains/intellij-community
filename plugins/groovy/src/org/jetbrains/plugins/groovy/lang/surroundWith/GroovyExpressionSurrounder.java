@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ public abstract class GroovyExpressionSurrounder implements Surrounder {
     return element instanceof GrExpression;
   }
 
+  @Override
   @Nullable
   public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement[] elements) throws IncorrectOperationException {
     if (elements.length != 1) return null;
@@ -45,6 +46,7 @@ public abstract class GroovyExpressionSurrounder implements Surrounder {
 
   protected abstract TextRange surroundExpression(GrExpression expression, PsiElement context);
 
+  @Override
   public boolean isApplicable(@NotNull PsiElement[] elements) {
     return elements.length == 1 &&  isApplicable(elements[0]);
   }

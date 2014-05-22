@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.light.LightElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
@@ -30,7 +30,7 @@ public class GrLightTypeElement extends LightElement implements GrTypeElement {
   @NotNull private final PsiType myType;
 
   public GrLightTypeElement(@NotNull PsiType type, PsiManager manager) {
-    super(manager, GroovyFileType.GROOVY_LANGUAGE);
+    super(manager, GroovyLanguage.INSTANCE);
     myType = type;
   }
 

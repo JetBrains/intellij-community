@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -132,6 +131,7 @@ public class CollectClassMembersUtil {
 
   private static CachedValue<ClassMembers> buildCache(@NotNull final PsiClass aClass, final boolean includeSynthetic) {
     return CachedValuesManager.getManager(aClass.getProject()).createCachedValue(new CachedValueProvider<ClassMembers>() {
+      @Override
       public Result<ClassMembers> compute() {
         Map<String, CandidateInfo> allFields = new HashMap<String, CandidateInfo>();
         Map<String, List<CandidateInfo>> allMethods = new HashMap<String, List<CandidateInfo>>();
@@ -155,11 +155,8 @@ public class CollectClassMembersUtil {
 
     if (!visitedClasses.add(aClass)) return;
 
-    String fieldPrefix = PsiImplUtil.isTrait(aClass) ? getTraitFieldPrefix(aClass) : null;
-
     for (PsiField field : getFields(aClass, includeSynthetic)) {
-      String originalName = field.getName();
-      String name = field.hasModifierProperty(PsiModifier.PUBLIC) && fieldPrefix != null ? fieldPrefix + originalName : originalName;
+      String name = field.getName();
 
       if (!allFields.containsKey(name)) {
         allFields.put(name, new CandidateInfo(field, substitutor));
@@ -195,22 +192,6 @@ public class CollectClassMembersUtil {
         processClass(superClass, allFields, allMethods, allInnerClasses, visitedClasses, superSubstitutor, includeSynthetic);
       }
     }
-  }
-
-  @NotNull
-  public static String getTraitFieldPrefix(@NotNull PsiClass aClass) {
-    String qname = aClass.getQualifiedName();
-    LOG.assertTrue(qname != null, aClass.getClass());
-
-    String[] idents = qname.split("\\.");
-
-    StringBuilder buffer = new StringBuilder();
-    for (String ident : idents) {
-      buffer.append(ident).append("_");
-    }
-
-    buffer.append("_");
-    return buffer.toString();
   }
 
   public static PsiField[] getFields(@NotNull PsiClass aClass, boolean includeSynthetic) {

@@ -22,6 +22,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
+import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.utils.EquivalenceChecker;
 import org.jetbrains.plugins.groovy.codeInspection.utils.SideEffectChecker;
@@ -34,39 +35,43 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import static org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil.*;
-
 public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Conditional expression can be conditional call";
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return CONTROL_FLOW;
   }
 
+  @Override
   public String buildErrorString(Object... args) {
     return "Conditional expression can be call #loc";
   }
 
-  public GroovyFix buildFix(PsiElement location) {
+  @Override
+  public GroovyFix buildFix(@NotNull PsiElement location) {
     return new CollapseConditionalFix();
   }
 
   private static class CollapseConditionalFix extends GroovyFix {
+    @Override
     @NotNull
     public String getName() {
       return "Replace with conditional call";
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final GrConditionalExpression expression = (GrConditionalExpression) descriptor.getPsiElement();
       final GrBinaryExpression binaryCondition = (GrBinaryExpression)PsiUtil.skipParentheses(expression.getCondition(), false);
       final GrMethodCallExpression call;
-      if (isInequality(binaryCondition)) {
+      if (GrInspectionUtil.isInequality(binaryCondition)) {
         call = (GrMethodCallExpression) expression.getThenBranch();
       } else {
         call = (GrMethodCallExpression) expression.getElseBranch();
@@ -82,12 +87,15 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
     }
   }
 
+  @NotNull
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitConditionalExpression(GrConditionalExpression expression) {
       super.visitConditionalExpression(expression);
       GrExpression condition = expression.getCondition();
@@ -106,16 +114,16 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
       final GrBinaryExpression binaryCondition = (GrBinaryExpression) condition;
       final GrExpression lhs = binaryCondition.getLeftOperand();
       final GrExpression rhs = binaryCondition.getRightOperand();
-      if (isInequality(binaryCondition) && isNull(elseBranch)) {
-        if (isNull(lhs) && isCallTargeting(thenBranch, rhs) ||
-            isNull(rhs) && isCallTargeting(thenBranch, lhs)) {
+      if (GrInspectionUtil.isInequality(binaryCondition) && GrInspectionUtil.isNull(elseBranch)) {
+        if (GrInspectionUtil.isNull(lhs) && isCallTargeting(thenBranch, rhs) ||
+            GrInspectionUtil.isNull(rhs) && isCallTargeting(thenBranch, lhs)) {
           registerError(expression);
         }
       }
 
-      if (isEquality(binaryCondition) && isNull(thenBranch)) {
-        if (isNull(lhs) && isCallTargeting(elseBranch, rhs) ||
-            isNull(rhs) && isCallTargeting(elseBranch, lhs)) {
+      if (GrInspectionUtil.isEquality(binaryCondition) && GrInspectionUtil.isNull(thenBranch)) {
+        if (GrInspectionUtil.isNull(lhs) && isCallTargeting(elseBranch, rhs) ||
+            GrInspectionUtil.isNull(rhs) && isCallTargeting(elseBranch, lhs)) {
           registerError(expression);
         }
       }

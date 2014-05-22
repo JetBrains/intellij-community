@@ -66,21 +66,20 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GrScopeProcessorWithHints;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil.*;
 
 /**
  * Created by Max Medvedev on 21/03/14
@@ -148,7 +147,7 @@ public class GrUnresolvedAccessChecker {
 
     if (refElement.getParent() instanceof GrNewExpression) {
 
-      boolean inStaticContext = isInStaticContext(refElement);
+      boolean inStaticContext = GrReferenceResolveUtil.isInStaticContext(refElement);
 
       if (!inStaticContext && GrUnresolvedAccessInspection.isSuppressed(refElement)) return null;
 
@@ -195,7 +194,7 @@ public class GrUnresolvedAccessChecker {
     PsiElement refNameElement = ref.getReferenceNameElement();
     if (refNameElement == null) return null;
 
-    boolean inStaticContext = PsiUtil.isCompileStatic(ref) || isPropertyAccessInStaticMethod(ref);
+    boolean inStaticContext = PsiUtil.isCompileStatic(ref) || GrReferenceResolveUtil.isPropertyAccessInStaticMethod(ref);
     GroovyResolveResult resolveResult = getBestResolveResult(ref);
 
     if (resolveResult.getElement() != null) {
@@ -209,7 +208,7 @@ public class GrUnresolvedAccessChecker {
       return null;
     }
 
-    if (ResolveUtil.isKeyOfMap(ref) || isClassReference(ref)) {
+    if (ResolveUtil.isKeyOfMap(ref) || GrReferenceResolveUtil.isClassReference(ref)) {
       return null;
     }
 
@@ -247,7 +246,7 @@ public class GrUnresolvedAccessChecker {
   }
 
   private static boolean areMissingMethodsDeclared(GrReferenceExpression ref) {
-    PsiType qualifierType = getQualifierType(ref);
+    PsiType qualifierType = GrReferenceResolveUtil.getQualifierType(ref);
     if (!(qualifierType instanceof PsiClassType)) return false;
 
     PsiClass resolved = ((PsiClassType)qualifierType).resolve();
@@ -309,7 +308,7 @@ public class GrUnresolvedAccessChecker {
 
   private static boolean doCheckContainer(final PsiMethod patternMethod, PsiElement container, final String name) {
     final Ref<Boolean> result = new Ref<Boolean>(false);
-    PsiScopeProcessor processor = new GrScopeProcessorWithHints(name, ResolverProcessor.RESOLVE_KINDS_METHOD) {
+    PsiScopeProcessor processor = new GrScopeProcessorWithHints(name, ClassHint.RESOLVE_KINDS_METHOD) {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
         if (element instanceof PsiMethod &&
@@ -327,7 +326,7 @@ public class GrUnresolvedAccessChecker {
   }
 
   private static boolean checkGroovyObjectMethodsByQualifier(GrReferenceExpression ref, PsiMethod patternMethod) {
-    PsiType qualifierType = getQualifierType(ref);
+    PsiType qualifierType = GrReferenceResolveUtil.getQualifierType(ref);
     if (!(qualifierType instanceof PsiClassType)) return false;
 
     PsiClass resolved = ((PsiClassType)qualifierType).resolve();
@@ -499,7 +498,7 @@ public class GrUnresolvedAccessChecker {
       return;
     }
 
-    if (QuickfixUtil.isCall(referenceExpression)) {
+    if (PsiUtil.isCall(referenceExpression)) {
       PsiType[] argumentTypes = PsiUtil.getArgumentTypes(referenceExpression, false);
       if (argumentTypes != null) {
         QuickFixAction.registerQuickFixAction(info, referenceExpression.getTextRange(),

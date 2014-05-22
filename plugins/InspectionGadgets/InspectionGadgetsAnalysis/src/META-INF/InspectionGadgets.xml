@@ -2394,19 +2394,19 @@
     <localInspection language="JAVA" shortName="UnqualifiedFieldAccess" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="unqualified.field.access.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.style.UnqualifiedFieldAccessInspection"/>
+                     implementationClass="com.siyeh.ig.style.UnqualifiedFieldAccessInspection" cleanupTool="true"/>
     <localInspection language="JAVA" shortName="UnqualifiedMethodAccess" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="unqualified.method.access.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.style.UnqualifiedMethodAccessInspection"/>
+                     implementationClass="com.siyeh.ig.style.UnqualifiedMethodAccessInspection" cleanupTool="true"/>
     <localInspection language="JAVA" shortName="UnqualifiedInnerClassAccess" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="unqualified.inner.class.access.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.style.UnqualifiedInnerClassAccessInspection"/>
+                     implementationClass="com.siyeh.ig.style.UnqualifiedInnerClassAccessInspection" cleanupTool="true"/>
     <localInspection language="JAVA" shortName="UnqualifiedStaticUsage" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="unqualified.static.usage.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.style.UnqualifiedStaticUsageInspection"/>
+                     implementationClass="com.siyeh.ig.style.UnqualifiedStaticUsageInspection" cleanupTool="true"/>
     <localInspection language="JAVA" shortName="UnclearBinaryExpression" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="unclear.binary.expression.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"

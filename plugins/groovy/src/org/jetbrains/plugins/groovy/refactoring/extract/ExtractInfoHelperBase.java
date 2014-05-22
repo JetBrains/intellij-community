@@ -120,6 +120,7 @@ public abstract class ExtractInfoHelperBase implements ExtractInfoHelper {
     return myInitialInfo.getVar();
   }
 
+  @Override
   public boolean hasReturnValue() {
     return myInitialInfo.hasReturnValue();
   }

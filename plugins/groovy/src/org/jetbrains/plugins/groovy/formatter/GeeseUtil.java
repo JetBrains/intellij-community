@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,15 +22,14 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mRCURLY;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.CLOSABLE_BLOCK;
 
 /**
  * @author Max Medvedev
@@ -44,7 +43,7 @@ public class GeeseUtil {
   @Nullable
   public static ASTNode getClosureRBraceAtTheEnd(ASTNode node) {
     IElementType elementType = node.getElementType();
-    if (elementType == CLOSABLE_BLOCK) {
+    if (elementType == GroovyElementTypes.CLOSABLE_BLOCK) {
       PsiElement rBrace = ((GrClosableBlock)node.getPsi()).getRBrace();
       return rBrace != null ? rBrace.getNode() : null;
     }
@@ -59,7 +58,7 @@ public class GeeseUtil {
   }
 
   public static boolean isClosureRBrace(PsiElement e) {
-    return e != null && e.getNode().getElementType() == mRCURLY &&
+    return e != null && e.getNode().getElementType() == GroovyTokenTypes.mRCURLY &&
            e.getParent() instanceof GrClosableBlock &&
            ((GrClosableBlock)e.getParent()).getRBrace() == e;
   }

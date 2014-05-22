@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author Max Medvedev
@@ -48,7 +48,7 @@ public class FieldAnnotationChecker extends CustomAnnotationChecker {
     PsiElement annoParent = annotation.getParent();
     PsiElement ownerToUse = annoParent instanceof PsiModifierList ? annoParent.getParent() : annoParent;
     if (!(ownerToUse instanceof GrVariableDeclaration) ||
-        !GroovyRefactoringUtil.isLocalVariable(((GrVariableDeclaration)ownerToUse).getVariables()[0])) {
+        !PsiUtil.isLocalVariable(((GrVariableDeclaration)ownerToUse).getVariables()[0])) {
       return false;
     }
 

@@ -17,14 +17,24 @@ package org.jetbrains.plugins.groovy.overrideImplement;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.codeInsight.generation.PsiMethodMember;
+import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.featureStatistics.ProductivityFeatureNames;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
+import com.intellij.ide.util.MemberChooser;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,9 +48,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyChangeContextUtil;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -158,6 +172,61 @@ public class GroovyOverrideImplementUtil {
     catch (IOException e) {
       LOG.error(e);
     }
+  }
+
+  public static void chooseAndOverrideMethods(@NotNull Project project,
+                                              @NotNull Editor editor,
+                                              @NotNull GrTypeDefinition aClass){
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(ProductivityFeatureNames.CODEASSISTS_OVERRIDE_IMPLEMENT);
+    chooseAndOverrideOrImplementMethods(project, editor, aClass, false);
+  }
+
+  public static void chooseAndImplementMethods(@NotNull Project project,
+                                               @NotNull Editor editor,
+                                               @NotNull GrTypeDefinition aClass){
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(ProductivityFeatureNames.CODEASSISTS_OVERRIDE_IMPLEMENT);
+    chooseAndOverrideOrImplementMethods(project, editor, aClass, true);
+  }
+
+  public static void chooseAndOverrideOrImplementMethods(@NotNull Project project,
+                                                         @NotNull final Editor editor,
+                                                         @NotNull final GrTypeDefinition aClass,
+                                                         boolean toImplement) {
+    LOG.assertTrue(aClass.isValid());
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+
+    Collection<CandidateInfo> candidates = GroovyOverrideImplementExploreUtil.getMethodsToOverrideImplement(aClass, toImplement);
+    Collection<CandidateInfo> secondary = toImplement || aClass.isInterface() ? ContainerUtil.<CandidateInfo>newArrayList()
+                                                                              : GroovyOverrideImplementExploreUtil.getMethodsToOverrideImplement(aClass, true);
+
+    if (toImplement) {
+      for (Iterator<CandidateInfo> iterator = candidates.iterator(); iterator.hasNext(); ) {
+        CandidateInfo candidate = iterator.next();
+        PsiElement element = candidate.getElement();
+        if (element instanceof GrMethod) {
+          GrMethod method = (GrMethod)element;
+          if (GrTraitUtil.isTrait(method.getContainingClass()) && !GrTraitUtil.isMethodAbstract(method)) {
+            iterator.remove();
+            secondary.add(candidate);
+          }
+        }
+      }
+    }
+
+    final MemberChooser<PsiMethodMember> chooser = OverrideImplementUtil.showOverrideImplementChooser(editor, aClass, toImplement, candidates, secondary);
+    if (chooser == null) return;
+
+    final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
+    if (selectedElements == null || selectedElements.isEmpty()) return;
+
+    LOG.assertTrue(aClass.isValid());
+    new WriteCommandAction(project, aClass.getContainingFile()) {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(),
+                                                                     chooser.isInsertOverrideAnnotation());
+      }
+    }.execute();
   }
 
   @NotNull

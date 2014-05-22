@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,15 +20,14 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-
-import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes.GROOVY_DOC_COMMENT;
-import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.WHITE_SPACES_OR_COMMENTS;
 
 /**
  * @author Maxim.Medvedev
@@ -65,8 +64,8 @@ public abstract class GrDocCommentUtil {
       if (element == null) break;
       final ASTNode node = element.getNode();
       if (node == null) break;
-      if (GROOVY_DOC_COMMENT.equals(node.getElementType()) ||
-          !WHITE_SPACES_OR_COMMENTS.contains(node.getElementType())) {
+      if (GroovyDocElementTypes.GROOVY_DOC_COMMENT.equals(node.getElementType()) ||
+          !TokenSets.WHITE_SPACES_OR_COMMENTS.contains(node.getElementType())) {
         break;
       }
     }

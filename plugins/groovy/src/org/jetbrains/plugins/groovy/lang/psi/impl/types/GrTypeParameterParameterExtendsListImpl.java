@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,11 +39,13 @@ public class GrTypeParameterParameterExtendsListImpl extends GroovyPsiElementImp
     return "Type extends bounds list";
   }
 
+  @Override
   @NotNull
   public PsiJavaCodeReferenceElement[] getReferenceElements() {
     return PsiJavaCodeReferenceElement.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiClassType[] getReferencedTypes() {
     final GrCodeReferenceElement[] refs = findChildrenByClass(GrCodeReferenceElement.class);
@@ -54,6 +56,7 @@ public class GrTypeParameterParameterExtendsListImpl extends GroovyPsiElementImp
     return result;
   }
 
+  @Override
   public Role getRole() {
     return Role.EXTENDS_BOUNDS_LIST;
   }

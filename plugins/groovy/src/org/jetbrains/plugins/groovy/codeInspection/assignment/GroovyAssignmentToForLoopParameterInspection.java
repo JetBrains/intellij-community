@@ -32,30 +32,35 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
 public class GroovyAssignmentToForLoopParameterInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return ASSIGNMENT_ISSUES;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Assignment to for-loop parameter";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Assignment to for-loop parameter '#ref' #loc";
 
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
     
+    @Override
     public void visitAssignmentExpression(GrAssignmentExpression grAssignmentExpression) {
       super.visitAssignmentExpression(grAssignmentExpression);
       final GrExpression lhs = grAssignmentExpression.getLValue();

@@ -33,11 +33,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyCodeStyleManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 import java.util.Comparator;
-
-import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.hasElementType;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.isWhiteSpaceOrNls;
 
 public class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
   @NotNull
@@ -139,11 +137,11 @@ public class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
     final PackageEntry[] entries = layoutTable.getEntries();
 
     PsiElement prev = result.getPrevSibling();
-    while (isWhiteSpaceOrNls(prev)) {
+    while (PsiImplUtil.isWhiteSpaceOrNls(prev)) {
       prev = prev.getPrevSibling();
     }
-    if (hasElementType(prev, GroovyTokenTypes.mSEMI)) prev = prev.getPrevSibling();
-    if (isWhiteSpaceOrNls(prev)) prev = prev.getPrevSibling();
+    if (PsiImplUtil.hasElementType(prev, GroovyTokenTypes.mSEMI)) prev = prev.getPrevSibling();
+    if (PsiImplUtil.isWhiteSpaceOrNls(prev)) prev = prev.getPrevSibling();
 
     if (prev instanceof GrImportStatement) {
       final int idx_before = getPackageEntryIdx(entries, (GrImportStatement)prev);
@@ -151,9 +149,10 @@ public class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
       final int spaceCount = getMaxSpaceCount(entries, idx_before, idx);
 
       //skip space and semicolon after import
-      if (isWhiteSpaceOrNls(prev.getNextSibling()) && hasElementType(prev.getNextSibling().getNextSibling(), GroovyTokenTypes.mSEMI)) prev = prev.getNextSibling().getNextSibling();
+      if (PsiImplUtil.isWhiteSpaceOrNls(prev.getNextSibling()) && PsiImplUtil
+        .hasElementType(prev.getNextSibling().getNextSibling(), GroovyTokenTypes.mSEMI)) prev = prev.getNextSibling().getNextSibling();
       ASTNode node = psiFile.getNode();
-      while (isWhiteSpaceOrNls(prev.getNextSibling())) {
+      while (PsiImplUtil.isWhiteSpaceOrNls(prev.getNextSibling())) {
         node.removeChild(prev.getNextSibling().getNode());
       }
       node.addLeaf(GroovyTokenTypes.mNLS, StringUtil.repeat("\n", spaceCount + 1), result.getNode());
@@ -166,9 +165,9 @@ public class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
     final PackageEntry[] entries = layoutTable.getEntries();
 
     PsiElement next = result.getNextSibling();
-    if (isWhiteSpaceOrNls(next)) next = next.getNextSibling();
-    if (hasElementType(next, GroovyTokenTypes.mSEMI)) next = next.getNextSibling();
-    while (isWhiteSpaceOrNls(next)) {
+    if (PsiImplUtil.isWhiteSpaceOrNls(next)) next = next.getNextSibling();
+    if (PsiImplUtil.hasElementType(next, GroovyTokenTypes.mSEMI)) next = next.getNextSibling();
+    while (PsiImplUtil.isWhiteSpaceOrNls(next)) {
       next = next.getNextSibling();
     }
     if (next instanceof GrImportStatement) {
@@ -178,7 +177,7 @@ public class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
 
 
       ASTNode node = psiFile.getNode();
-      while (isWhiteSpaceOrNls(next.getPrevSibling())) {
+      while (PsiImplUtil.isWhiteSpaceOrNls(next.getPrevSibling())) {
         node.removeChild(next.getPrevSibling().getNode());
       }
       node.addLeaf(GroovyTokenTypes.mNLS, StringUtil.repeat("\n", spaceCount + 1), next.getNode());
@@ -211,17 +210,17 @@ public class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
   public void removeImport(@NotNull GroovyFileBase psiFile, @NotNull GrImportStatement importStatement) throws IncorrectOperationException {
     PsiElement psiElement = psiFile;
     PsiElement before = importStatement;
-    while (isWhiteSpaceOrNls(before.getPrevSibling())) {
+    while (PsiImplUtil.isWhiteSpaceOrNls(before.getPrevSibling())) {
       before = before.getPrevSibling();
     }
 
-    if (hasElementType(before.getPrevSibling(), GroovyTokenTypes.mSEMI)) before = before.getPrevSibling();
-    if (isWhiteSpaceOrNls(before.getPrevSibling())) before = before.getPrevSibling();
+    if (PsiImplUtil.hasElementType(before.getPrevSibling(), GroovyTokenTypes.mSEMI)) before = before.getPrevSibling();
+    if (PsiImplUtil.isWhiteSpaceOrNls(before.getPrevSibling())) before = before.getPrevSibling();
 
     PsiElement after = importStatement;
-    if (isWhiteSpaceOrNls(after.getNextSibling())) after = after.getNextSibling();
-    if (hasElementType(after.getNextSibling(), GroovyTokenTypes.mSEMI)) after = after.getNextSibling();
-    while (isWhiteSpaceOrNls(after.getNextSibling())) after = after.getNextSibling();
+    if (PsiImplUtil.isWhiteSpaceOrNls(after.getNextSibling())) after = after.getNextSibling();
+    if (PsiImplUtil.hasElementType(after.getNextSibling(), GroovyTokenTypes.mSEMI)) after = after.getNextSibling();
+    while (PsiImplUtil.isWhiteSpaceOrNls(after.getNextSibling())) after = after.getNextSibling();
 
 
     if (before == null) before = importStatement;

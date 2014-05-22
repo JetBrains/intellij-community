@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,16 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.types;
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
-
-import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.FAIL;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 28.03.2007
  */
-public class TypeArguments implements GroovyElementTypes {
+public class TypeArguments {
   public static boolean parseTypeArguments(PsiBuilder builder, boolean expressionPossible) {
     return parseTypeArguments(builder, expressionPossible, false);
   }
@@ -35,22 +35,22 @@ public class TypeArguments implements GroovyElementTypes {
   public static boolean parseTypeArguments(PsiBuilder builder, boolean expressionPossible, boolean allowDiamond) {
     PsiBuilder.Marker marker = builder.mark();
 
-    if (!ParserUtils.getToken(builder, mLT)) {
+    if (!ParserUtils.getToken(builder, GroovyTokenTypes.mLT)) {
       marker.rollbackTo();
       return false;
     }
 
-    ParserUtils.getToken(builder, mNLS);
+    ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
 
-    if (allowDiamond && ParserUtils.getToken(builder, mGT)) {
-      marker.done(TYPE_ARGUMENTS);
+    if (allowDiamond && ParserUtils.getToken(builder, GroovyTokenTypes.mGT)) {
+      marker.done(GroovyElementTypes.TYPE_ARGUMENTS);
       return true;
     }
 
     if (!parseArgument(builder)) {
       builder.error(GroovyBundle.message("type.argument.expected"));
-      if (ParserUtils.getToken(builder, mGT)) {
-        marker.done(TYPE_ARGUMENTS);
+      if (ParserUtils.getToken(builder, GroovyTokenTypes.mGT)) {
+        marker.done(GroovyElementTypes.TYPE_ARGUMENTS);
         return true;
       }
       else {
@@ -59,9 +59,9 @@ public class TypeArguments implements GroovyElementTypes {
       }
     }
 
-    boolean hasComma = ParserUtils.lookAhead(builder, mCOMMA);
-    while (ParserUtils.getToken(builder, mCOMMA)) {
-      ParserUtils.getToken(builder, mNLS);
+    boolean hasComma = ParserUtils.lookAhead(builder, GroovyTokenTypes.mCOMMA);
+    while (ParserUtils.getToken(builder, GroovyTokenTypes.mCOMMA)) {
+      ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
 
       if (!parseArgument(builder)) {
         builder.error("type.argument.expected");
@@ -69,9 +69,9 @@ public class TypeArguments implements GroovyElementTypes {
     }
 
     PsiBuilder.Marker rb = builder.mark();
-    ParserUtils.getToken(builder, mNLS);
+    ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
 
-    if (ParserUtils.getToken(builder, mGT)) {
+    if (ParserUtils.getToken(builder, GroovyTokenTypes.mGT)) {
       rb.drop();
     }
     else if (hasComma) {
@@ -89,25 +89,25 @@ public class TypeArguments implements GroovyElementTypes {
       }
     }
 
-    marker.done(TYPE_ARGUMENTS);
+    marker.done(GroovyElementTypes.TYPE_ARGUMENTS);
     return true;
   }
 
   private static boolean parseArgument(PsiBuilder builder) {
-    if (builder.getTokenType() == mQUESTION) {
+    if (builder.getTokenType() == GroovyTokenTypes.mQUESTION) {
       //wildcard
       PsiBuilder.Marker taMarker = builder.mark();
-      ParserUtils.getToken(builder, mQUESTION);
-      if (ParserUtils.getToken(builder, kSUPER) || ParserUtils.getToken(builder, kEXTENDS)) {
-        ParserUtils.getToken(builder, mNLS);
+      ParserUtils.getToken(builder, GroovyTokenTypes.mQUESTION);
+      if (ParserUtils.getToken(builder, GroovyTokenTypes.kSUPER) || ParserUtils.getToken(builder, GroovyTokenTypes.kEXTENDS)) {
+        ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
         TypeSpec.parse(builder, false, false);
-        ParserUtils.getToken(builder, mNLS);
+        ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
       }
 
-      taMarker.done(TYPE_ARGUMENT);
+      taMarker.done(GroovyElementTypes.TYPE_ARGUMENT);
       return true;
     }
 
-    return TypeSpec.parse(builder, false, false) != FAIL;
+    return TypeSpec.parse(builder, false, false) != ReferenceElement.ReferenceElementResult.FAIL;
   }
 }

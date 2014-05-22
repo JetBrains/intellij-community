@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.*;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
@@ -152,6 +153,14 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
     myCondition = condition;
   }
 
+  public boolean isLogExpressionEnabled() {
+    return myLogExpression == null || !myLogExpression.myDisabled;
+  }
+
+  public boolean isConditionEnabled() {
+    return myCondition == null || !myCondition.myDisabled;
+  }
+
   @Property(surroundWithTag = false)
   public XBreakpointDependencyState getDependencyState() {
     return myDependencyState;
@@ -182,8 +191,16 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
     public Condition() {
     }
 
-    public Condition(XExpression expression) {
-      super(expression.getExpression(), expression.getLanguage() != null ? expression.getLanguage().getID() : null, expression.getCustomInfo());
+    private Condition(boolean disabled, XExpression expression) {
+      super(disabled, expression.getExpression(), expression.getLanguage() != null ? expression.getLanguage().getID() : null, expression.getCustomInfo());
+    }
+
+    @Nullable
+    public static Condition create(boolean disabled, XExpression expression) {
+      if (expression == null || StringUtil.isEmpty(expression.getExpression())) {
+        return null;
+      }
+      return new Condition(disabled, expression);
     }
   }
 
@@ -192,12 +209,23 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
     public LogExpression() {
     }
 
-    public LogExpression(XExpression expression) {
-      super(expression.getExpression(), expression.getLanguage() != null ? expression.getLanguage().getID() : null, expression.getCustomInfo());
+    private LogExpression(boolean disabled, XExpression expression) {
+      super(disabled, expression.getExpression(), expression.getLanguage() != null ? expression.getLanguage().getID() : null, expression.getCustomInfo());
+    }
+
+    @Nullable
+    public static LogExpression create(boolean disabled, XExpression expression) {
+      if (expression == null || StringUtil.isEmpty(expression.getExpression())) {
+        return null;
+      }
+      return new LogExpression(disabled, expression);
     }
   }
 
   private static class XExpressionState {
+    @Attribute("disabled")
+    public boolean myDisabled;
+
     @Attribute("expression")
     public String myExpression;
 
@@ -213,7 +241,8 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
     public XExpressionState() {
     }
 
-    public XExpressionState(@NotNull String expression, String language, String customInfo) {
+    public XExpressionState(boolean disabled, @NotNull String expression, String language, String customInfo) {
+      myDisabled = disabled;
       myExpression = expression;
       myLanguage = language;
       myCustomInfo = customInfo;

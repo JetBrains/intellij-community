@@ -8,7 +8,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.JBColor;
+import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TableScrollingUtil;
 import com.intellij.ui.table.JBTable;
@@ -20,12 +20,11 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogHighlighter;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.graph.ClickGraphAction;
-import com.intellij.vcs.log.graph.MouseOverAction;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
-import com.intellij.vcs.log.newgraph.render.PositionUtil;
+import com.intellij.vcs.log.printer.idea.PositionUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRender;
 import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +33,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.*;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
@@ -101,8 +103,8 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   @Override
   public void setModel(@NotNull TableModel model) {
     super.setModel(model);
-    // initialize sizes once, when the real model is set (not from the constructor).
-    if (!myColumnsSizeInitialized && !(model instanceof DefaultTableModel)) {
+    // initialize sizes once, when the real non-empty model is set
+    if (!myColumnsSizeInitialized && model.getRowCount() > 0) {
       myColumnsSizeInitialized = true;
       setColumnPreferredSize();
       setAutoCreateColumnsFromModel(false); // otherwise sizes are recalculated after each TableColumn re-initialization
@@ -381,14 +383,15 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     }
   }
 
-  private class StringCellRenderer extends DefaultTableCellRenderer {
+  private class StringCellRenderer extends ColoredTableCellRenderer {
     @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      Component rendererComponent = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      setBackground(isSelected ? table.getSelectionBackground() : JBColor.WHITE);
+    protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+      if (value == null) {
+        return;
+      }
+      append(value.toString());
+      applyHighlighters(this, row, selected);
       setBorder(null);
-      applyHighlighters(rendererComponent, row, isSelected);
-      return rendererComponent;
     }
 
   }

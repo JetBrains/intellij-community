@@ -159,7 +159,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     final MessageBusConnection connection = bus.connect();
     connection.subscribe(PsiDocumentTransactionListener.TOPIC, new PsiDocumentTransactionListener() {
       @Override
-      public void transactionStarted(final Document doc, final PsiFile file) {
+      public void transactionStarted(@NotNull final Document doc, @NotNull final PsiFile file) {
         if (file != null) {
           myTransactionMap = myTransactionMap.plus(doc, file);
           myUpToDateIndicesForUnsavedOrTransactedDocuments.clear();
@@ -167,7 +167,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
 
       @Override
-      public void transactionCompleted(final Document doc, final PsiFile file) {
+      public void transactionCompleted(@NotNull final Document doc, @NotNull final PsiFile file) {
         myTransactionMap = myTransactionMap.minus(doc);
       }
     });
@@ -1217,96 +1217,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                                         @NotNull final Set<K> dataKeys,
                                         @NotNull Processor<VirtualFile> processor,
                                         @NotNull GlobalSearchScope filter) {
-    try {
-      final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
-      if (index == null) {
-        return true;
-      }
-      final Project project = filter.getProject();
-      //assert project != null : "GlobalSearchScope#getProject() should be not-null for all index queries";
-      ensureUpToDate(indexId, project, filter);
-
-      try {
-        index.getReadLock().lock();
-        final List<TIntHashSet> locals = new ArrayList<TIntHashSet>();
-        for (K dataKey : dataKeys) {
-          TIntHashSet local = new TIntHashSet();
-          locals.add(local);
-          final ValueContainer<V> container = index.getData(dataKey);
-
-          for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
-            final V value = valueIt.next();
-            for (final ValueContainer.IntIterator inputIdsIterator = container.getInputIdsIterator(value); inputIdsIterator.hasNext(); ) {
-              final int id = inputIdsIterator.next();
-              local.add(id);
-            }
-          }
-        }
-
-        if (locals.isEmpty()) {
-          return true;
-        }
-
-        Collections.sort(locals, new Comparator<TIntHashSet>() {
-          @Override
-          public int compare(TIntHashSet o1, TIntHashSet o2) {
-            return o1.size() - o2.size();
-          }
-        });
-
-        final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
-        TIntIterator ids = join(locals).iterator();
-        ProjectIndexableFilesFilter projectIndexableFilesFilter = projectIndexableFiles(project);
-        while (ids.hasNext()) {
-          int id = ids.next();
-          if (projectIndexableFilesFilter != null && !projectIndexableFilesFilter.containsFileId(id)) continue;
-          //VirtualFile file = IndexInfrastructure.findFileById(fs, id);
-          VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
-          if (file != null && filter.accept(file)) {
-            if (!processor.process(file)) {
-              return false;
-            }
-          }
-        }
-      }
-      finally {
-        index.getReadLock().unlock();
-      }
-    }
-    catch (StorageException e) {
-      scheduleRebuild(indexId, e);
-    }
-    catch (RuntimeException e) {
-      final Throwable cause = e.getCause();
-      if (cause instanceof StorageException || cause instanceof IOException) {
-        scheduleRebuild(indexId, cause);
-      }
-      else {
-        throw e;
-      }
-    } catch (AssertionError ae) {
-      scheduleRebuild(indexId, ae);
-    }
-    return true;
-  }
-
-  @NotNull
-  private static TIntHashSet join(@NotNull List<TIntHashSet> locals) {
-    TIntHashSet result = locals.get(0);
-    if (locals.size() > 1) {
-      TIntIterator it = result.iterator();
-
-      while (it.hasNext()) {
-        int id = it.next();
-        for (int i = 1; i < locals.size(); i++) {
-          if (!locals.get(i).contains(id)) {
-            it.remove();
-            break;
-          }
-        }
-      }
-    }
-    return result;
+    return processFilesContainingAllKeys(indexId, dataKeys, filter, null, processor);
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import java.util.ArrayList;
 public class GroovyReferenceCopyPasteProcessor extends CopyPasteReferenceProcessor<GrReferenceElement> {
   private static final Logger LOG = Logger.getInstance(GroovyReferenceCopyPasteProcessor.class);
 
+  @Override
   protected void addReferenceData(PsiFile file, int startOffset, PsiElement element, ArrayList<ReferenceData> to) {
     if (element instanceof GrReferenceElement) {
       if (((GrReferenceElement)element).getQualifier() == null) {
@@ -66,6 +67,7 @@ public class GroovyReferenceCopyPasteProcessor extends CopyPasteReferenceProcess
   }
 
 
+  @Override
   protected GrReferenceElement[] findReferencesToRestore(PsiFile file,
                                                          RangeMarker bounds,
                                                          ReferenceData[] referenceData) {
@@ -111,6 +113,7 @@ public class GroovyReferenceCopyPasteProcessor extends CopyPasteReferenceProcess
     return refs;
   }
 
+  @Override
   protected void restoreReferences(ReferenceData[] referenceData,
                                    GrReferenceElement[] refs) {
     for (int i = 0; i < refs.length; i++) {

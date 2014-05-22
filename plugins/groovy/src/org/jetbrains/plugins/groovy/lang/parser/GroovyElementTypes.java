@@ -18,13 +18,10 @@ package org.jetbrains.plugins.groovy.lang.parser;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.stubs.*;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -61,31 +58,35 @@ import java.io.IOException;
  *
  * @author Dmitry.Krasilschikov, ilyas
  */
-public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTypes {
+public interface GroovyElementTypes {
 
   /*
   Stub elements
    */
   GrStubElementType<GrTypeDefinitionStub, GrClassDefinition> CLASS_DEFINITION =
     new GrTypeDefinitionElementType<GrClassDefinition>("class definition") {
+      @Override
       public GrClassDefinition createPsi(@NotNull GrTypeDefinitionStub stub) {
         return new GrClassDefinitionImpl(stub);
       }
     };
   GrStubElementType<GrTypeDefinitionStub, GrInterfaceDefinition> INTERFACE_DEFINITION =
     new GrTypeDefinitionElementType<GrInterfaceDefinition>("interface definition") {
+      @Override
       public GrInterfaceDefinition createPsi(@NotNull GrTypeDefinitionStub stub) {
         return new GrInterfaceDefinitionImpl(stub);
       }
     };
   GrStubElementType<GrTypeDefinitionStub, GrEnumTypeDefinition> ENUM_DEFINITION =
     new GrTypeDefinitionElementType<GrEnumTypeDefinition>("enumeration definition") {
+      @Override
       public GrEnumTypeDefinition createPsi(@NotNull GrTypeDefinitionStub stub) {
         return new GrEnumTypeDefinitionImpl(stub);
       }
     };
   GrStubElementType<GrTypeDefinitionStub, GrAnnotationTypeDefinition> ANNOTATION_DEFINITION =
     new GrTypeDefinitionElementType<GrAnnotationTypeDefinition>("annotation definition") {
+      @Override
       public GrAnnotationTypeDefinition createPsi(@NotNull GrTypeDefinitionStub stub) {
         return new GrAnnotationTypeDefinitionImpl(stub);
       }
@@ -113,12 +114,11 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
       }
     };
 
-  TokenSet TYPE_DEFINITION_TYPES = TokenSet.create(CLASS_DEFINITION, INTERFACE_DEFINITION, ENUM_DEFINITION, ANNOTATION_DEFINITION);
-
   GrStubElementType<GrFieldStub, GrEnumConstant> ENUM_CONSTANT = new GrEnumConstantElementType();
   GrStubElementType<GrFieldStub, GrField> FIELD = new GrFieldElementType();
   GrMethodElementType METHOD_DEFINITION = new GrMethodElementType("method definition") {
 
+    @Override
     public GrMethod createPsi(@NotNull GrMethodStub stub) {
       return new GrMethodImpl(stub);
     }
@@ -138,11 +138,13 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   };
 
   GrReferenceListElementType<GrImplementsClause> IMPLEMENTS_CLAUSE = new GrReferenceListElementType<GrImplementsClause>("implements clause") {
+    @Override
     public GrImplementsClause createPsi(@NotNull GrReferenceListStub stub) {
       return new GrImplementsClauseImpl(stub);
     }
   };
   GrReferenceListElementType<GrExtendsClause> EXTENDS_CLAUSE = new GrReferenceListElementType<GrExtendsClause>("super class clause") {
+    @Override
     public GrExtendsClause createPsi(@NotNull GrReferenceListStub stub) {
       return new GrExtendsClauseImpl(stub);
     }
@@ -181,7 +183,8 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
 
   GroovyElementType BLOCK_STATEMENT = new GroovyElementType("Block statement");
 
-  EmptyStubElementType<GrEnumConstantList> ENUM_CONSTANTS = new EmptyStubElementType<GrEnumConstantList>("Enumeration constants", GroovyFileType.GROOVY_LANGUAGE) {
+  EmptyStubElementType<GrEnumConstantList> ENUM_CONSTANTS = new EmptyStubElementType<GrEnumConstantList>("Enumeration constants",
+                                                                                                         GroovyLanguage.INSTANCE) {
     @Override
     public GrEnumConstantList createPsi(@NotNull EmptyStub stub) {
       return new GrEnumConstantListImpl(stub);
@@ -265,7 +268,8 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
 
   GroovyElementType TYPE_ARGUMENTS = new GroovyElementType("type arguments", true);
   GroovyElementType TYPE_ARGUMENT = new GroovyElementType("type argument");
-  EmptyStubElementType<GrTypeParameterList> TYPE_PARAMETER_LIST = new EmptyStubElementType<GrTypeParameterList>("type parameter list", GroovyFileType.GROOVY_LANGUAGE) {
+  EmptyStubElementType<GrTypeParameterList> TYPE_PARAMETER_LIST = new EmptyStubElementType<GrTypeParameterList>("type parameter list",
+                                                                                                                GroovyLanguage.INSTANCE) {
     @Override
     public GrTypeParameterList createPsi(@NotNull EmptyStub stub) {
       return new GrTypeParameterListImpl(stub);
@@ -316,7 +320,8 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
 
   GrStubElementType<GrAnnotationStub, GrAnnotation> ANNOTATION = new GrAnnotationElementType("annotation");
   //parameters
-  EmptyStubElementType<GrParameterList> PARAMETERS_LIST = new EmptyStubElementType<GrParameterList>("parameters list", GroovyFileType.GROOVY_LANGUAGE) {
+  EmptyStubElementType<GrParameterList> PARAMETERS_LIST = new EmptyStubElementType<GrParameterList>("parameters list",
+                                                                                                    GroovyLanguage.INSTANCE) {
     @Override
     public GrParameterList createPsi(@NotNull EmptyStub stub) {
       return new GrParameterListImpl(stub);
@@ -352,14 +357,16 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
     }
   };
 
-  EmptyStubElementType<GrTypeDefinitionBody> CLASS_BODY = new EmptyStubElementType<GrTypeDefinitionBody>("class block", GroovyFileType.GROOVY_LANGUAGE) {
+  EmptyStubElementType<GrTypeDefinitionBody> CLASS_BODY = new EmptyStubElementType<GrTypeDefinitionBody>("class block",
+                                                                                                         GroovyLanguage.INSTANCE) {
       @Override
       public GrTypeDefinitionBody createPsi(@NotNull EmptyStub stub) {
         return new GrTypeDefinitionBodyBase.GrClassBody(stub);
       }
     };
 
-  EmptyStubElementType<GrEnumDefinitionBody> ENUM_BODY = new EmptyStubElementType<GrEnumDefinitionBody>("enum block", GroovyFileType.GROOVY_LANGUAGE) {
+  EmptyStubElementType<GrEnumDefinitionBody> ENUM_BODY = new EmptyStubElementType<GrEnumDefinitionBody>("enum block",
+                                                                                                        GroovyLanguage.INSTANCE) {
     @Override
     public GrEnumDefinitionBody createPsi(@NotNull EmptyStub stub) {
       return new GrTypeDefinitionBodyBase.GrEnumBody(stub);
@@ -385,7 +392,8 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType SYNCHRONIZED_STATEMENT = new GroovyElementType("synchronized block statement");
   GroovyElementType CLASS_INITIALIZER = new GroovyElementType("static compound statement");
 
-  EmptyStubElementType<GrVariableDeclaration> VARIABLE_DEFINITION_ERROR = new EmptyStubElementType<GrVariableDeclaration>("variable definitions with errors", GroovyFileType.GROOVY_LANGUAGE) {
+  EmptyStubElementType<GrVariableDeclaration> VARIABLE_DEFINITION_ERROR = new EmptyStubElementType<GrVariableDeclaration>("variable definitions with errors",
+                                                                                                                          GroovyLanguage.INSTANCE) {
     @Override
     public boolean shouldCreateStub(ASTNode node) {
       return false;
@@ -397,7 +405,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
     }
   };
   EmptyStubElementType<GrVariableDeclaration> VARIABLE_DEFINITION =
-    new EmptyStubElementType<GrVariableDeclaration>("variable definitions", GroovyFileType.GROOVY_LANGUAGE) {
+    new EmptyStubElementType<GrVariableDeclaration>("variable definitions", GroovyLanguage.INSTANCE) {
       @Override
       public GrVariableDeclaration createPsi(@NotNull EmptyStub stub) {
         return new GrVariableDeclarationImpl(stub);

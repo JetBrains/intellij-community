@@ -64,10 +64,9 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   private final ResumeActionHandler myResumeActionHandler = new ResumeActionHandler();
   private final PauseActionHandler myPauseActionHandler = new PauseActionHandler();
   private final ShowExecutionPointActionHandler myShowExecutionPointActionHandler = new ShowExecutionPointActionHandler();
-  private final EvaluateActionHandler myEvaluateActionHandler = new EvaluateActionHandler();
+  //private final EvaluateActionHandler myEvaluateActionHandler = new EvaluateActionHandler();
   private final QuickEvaluateActionHandler myQuickEvaluateHandler = new QuickEvaluateActionHandler();
   private final JavaDebuggerSettingsPanelProvider myDebuggerSettingsPanelProvider = new JavaDebuggerSettingsPanelProvider();
-  private final MuteBreakpointsActionHandler myMuteBreakpointsHandler = new MuteBreakpointsActionHandler();
   private final DebuggerActionHandler mySmartStepIntoHandler = new JvmSmartStepIntoActionHandler();
   private final DebuggerActionHandler myAddToWatchedActionHandler = new AddToWatchActionHandler();
   private final JavaMarkObjectActionHandler myMarkObjectActionHandler = new JavaMarkObjectActionHandler();
@@ -159,7 +158,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   @Override
   @NotNull
   public DebuggerActionHandler getEvaluateHandler() {
-    return myEvaluateActionHandler;
+    return DISABLED;
   }
 
   @Override
@@ -174,10 +173,27 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     return myAddToWatchedActionHandler;
   }
 
+
+  private static final DebuggerToggleActionHandler DISABLED_TOGGLE_HANDLER = new DebuggerToggleActionHandler() {
+    @Override
+    public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
+      return false;
+    }
+
+    @Override
+    public boolean isSelected(@NotNull Project project, AnActionEvent event) {
+      return false;
+    }
+
+    @Override
+    public void setSelected(@NotNull Project project, AnActionEvent event, boolean state) {
+    }
+  };
+
   @Override
   @NotNull
   public DebuggerToggleActionHandler getMuteBreakpointsHandler() {
-    return myMuteBreakpointsHandler;
+    return DISABLED_TOGGLE_HANDLER;
   }
 
   @NotNull

@@ -47,6 +47,7 @@ public class GrConcatenation2InjectorAdapter extends JavaConcatenationInjectorMa
     return LITERALS;
   }
 
+  @Override
   protected Pair<PsiElement,PsiElement[]> computeAnchorAndOperands(@NotNull PsiElement context) {
     PsiElement element = context;
     PsiElement parent = context.getParent();

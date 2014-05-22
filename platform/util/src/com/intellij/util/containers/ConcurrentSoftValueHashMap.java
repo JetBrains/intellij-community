@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,11 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.util.Map;
 
+/**
+ * Concurrent strong key:K -> soft value:V map
+ * Null keys are NOT allowed
+ * Null values are NOT allowed
+ */
 public final class ConcurrentSoftValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,V> {
   public ConcurrentSoftValueHashMap(@NotNull Map<K, V> map) {
     super(map);
@@ -41,7 +46,7 @@ public final class ConcurrentSoftValueHashMap<K,V> extends ConcurrentRefValueHas
     super(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 
-  private static class MySoftReference<K,T> extends SoftReference<T> implements MyValueReference<K,T> {
+  private static class MySoftReference<K,T> extends SoftReference<T> implements ValueReference<K,T> {
     private final K key;
     private MySoftReference(@NotNull K key, @NotNull T referent, @NotNull ReferenceQueue<T> q) {
       super(referent, q);
@@ -59,7 +64,7 @@ public final class ConcurrentSoftValueHashMap<K,V> extends ConcurrentRefValueHas
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      final MyValueReference that = (MyValueReference)o;
+      final ValueReference that = (ValueReference)o;
 
       return key.equals(that.getKey()) && Comparing.equal(get(), that.get());
     }
@@ -70,7 +75,7 @@ public final class ConcurrentSoftValueHashMap<K,V> extends ConcurrentRefValueHas
   }
 
   @Override
-  protected MyValueReference<K, V> createRef(@NotNull K key, @NotNull V value) {
+  protected ValueReference<K, V> createValueReference(@NotNull K key, @NotNull V value) {
     return new MySoftReference<K,V>(key, value, myQueue);
   }
 }

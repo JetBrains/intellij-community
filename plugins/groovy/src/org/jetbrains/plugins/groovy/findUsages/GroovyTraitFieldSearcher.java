@@ -18,18 +18,16 @@ package org.jetbrains.plugins.groovy.findUsages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.util.Computable;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
+import com.intellij.psi.search.RequestResultProcessor;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitField;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 
 /**
  * Created by Max Medvedev on 15/04/14
@@ -42,27 +40,48 @@ public class GroovyTraitFieldSearcher extends QueryExecutorBase<PsiReference, Re
     String traitFieldName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       @Override
       public String compute() {
-        return getTraitFieldNameOrNull(target);
+        if (target instanceof GrField && !(target instanceof GrTraitField)) {
+          PsiClass aClass = ((GrField)target).getContainingClass();
+          if (GrTraitUtil.isTrait(aClass)) {
+            return GrTraitUtil.getTraitFieldPrefix(aClass) + ((GrField)target).getName();
+          }
+        }
+
+        return null;
       }
     });
+
     if (traitFieldName != null) {
-      p.getOptimizer().searchWord(traitFieldName, p.getEffectiveSearchScope(), UsageSearchContext.IN_CODE, true, target);
+      p.getOptimizer().searchWord(traitFieldName, p.getEffectiveSearchScope(), UsageSearchContext.IN_CODE, true, target, new MyProcessor(target));
     }
   }
 
+  private static class MyProcessor extends RequestResultProcessor {
+    private final PsiElement myTarget;
+    private final PsiManager myManager;
 
-  @Nullable
-  private static String getTraitFieldNameOrNull(@NotNull PsiElement target) {
-
-    if (target instanceof GrField && ((GrField)target).hasModifierProperty(PsiModifier.PUBLIC)) {
-      PsiClass aClass = ((GrField)target).getContainingClass();
-      if (PsiImplUtil.isTrait(aClass)) {
-        String prefix = CollectClassMembersUtil.getTraitFieldPrefix(aClass);
-
-        return prefix + ((GrField)target).getName();
-      }
+    public MyProcessor(PsiElement target) {
+      myTarget = target;
+      myManager = myTarget.getManager();
     }
 
-    return null;
+    @Override
+    public boolean processTextOccurrence(@NotNull PsiElement element,
+                                         int offsetInElement,
+                                         @NotNull Processor<PsiReference> consumer) {
+      PsiElement parent = element.getParent();
+      if (parent instanceof GrReferenceExpression && element == ((GrReferenceExpression)parent).getReferenceNameElement()) {
+        PsiElement resolved = ((GrReferenceExpression)parent).resolve();
+        if (resolved instanceof GrTraitField) {
+          PsiField prototype = ((GrTraitField)resolved).getPrototype();
+          if (myManager.areElementsEquivalent(prototype, resolved)) {
+            if (!consumer.process((PsiReference)parent)) {
+              return false;
+            }
+          }
+        }
+      }
+      return true;
+    }
   }
 }

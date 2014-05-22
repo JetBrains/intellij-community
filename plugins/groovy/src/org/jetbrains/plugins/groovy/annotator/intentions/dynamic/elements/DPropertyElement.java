@@ -39,10 +39,12 @@ public class DPropertyElement extends DItemElement {
     super(isStatic, name, type);
   }
 
+  @Override
   public void clearCache() {
     myPsi = null;
   }
 
+  @Override
   @NotNull
   public PsiVariable getPsi(PsiManager manager, final String containingClassName) {
     if (myPsi != null) return myPsi;
@@ -50,7 +52,7 @@ public class DPropertyElement extends DItemElement {
     Boolean isStatic = isStatic();
 
     String type = getType();
-    if (type == null || type.trim().length() == 0) {
+    if (type == null || type.trim().isEmpty()) {
       type = CommonClassNames.JAVA_LANG_OBJECT;
     }
     myPsi = new GrDynamicImplicitProperty(manager, getName(), type, containingClassName);

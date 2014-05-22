@@ -22,12 +22,10 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
-import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -45,10 +43,7 @@ import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author mike
@@ -1089,5 +1084,16 @@ public class RangeMarkerTest extends LightPlatformTestCase {
         }
       }
     }).assertTiming();
+  }
+
+  public void testRangeHighlighterIteratorOrder() throws Exception {
+    Document document = EditorFactory.getInstance().createDocument("1234567890");
+
+    final MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, ourProject, true);
+    RangeHighlighter exact = markupModel.addRangeHighlighter(3, 6, 0, null, HighlighterTargetArea.EXACT_RANGE);
+    RangeHighlighter line = markupModel.addRangeHighlighter(4, 5, 0, null, HighlighterTargetArea.LINES_IN_RANGE);
+    List<RangeHighlighter> list = new ArrayList<RangeHighlighter>();
+    markupModel.processRangeHighlightersOverlappingWith(2, 9, new CommonProcessors.CollectProcessor<RangeHighlighter>(list));
+    assertEquals(Arrays.asList(line,exact), list);
   }
 }

@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.svn.rollback;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
@@ -107,8 +107,8 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
 
     moveGroup(exceptions, fromToModified, properties);
 
-    final List<Pair<File, File>> toBeDeleted = collector.getToBeDeleted();
-    for (Pair<File, File> pair : toBeDeleted) {
+    final List<Couple<File>> toBeDeleted = collector.getToBeDeleted();
+    for (Couple<File> pair : toBeDeleted) {
       if (pair.getFirst().exists()) {
         FileUtil.delete(pair.getSecond());
       }
@@ -338,7 +338,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
   }
 
   private static class UnversionedAndNotTouchedFilesGroupCollector extends EmptyChangelistBuilder {
-    private final List<Pair<File, File>> myToBeDeleted;
+    private final List<Couple<File>> myToBeDeleted;
     private final Map<File, ThroughRenameInfo> myFromTo;
     // created by changes
     private TreeMap<String, File> myRenames;
@@ -346,7 +346,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
 
     private UnversionedAndNotTouchedFilesGroupCollector() {
       myFromTo = new HashMap<File, ThroughRenameInfo>();
-      myToBeDeleted = new ArrayList<Pair<File, File>>();
+      myToBeDeleted = new ArrayList<Couple<File>>();
     }
 
     @Override
@@ -355,7 +355,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     }
 
     private void markRename(@NotNull final File beforeFile, @NotNull final File afterFile) {
-      myToBeDeleted.add(Pair.create(beforeFile, afterFile));
+      myToBeDeleted.add(Couple.newOne(beforeFile, afterFile));
     }
 
     public ThroughRenameInfo findToFile(@NotNull final FilePath file, @Nullable final File firstTo) {
@@ -415,7 +415,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
       toFromTo(file);
     }
 
-    public List<Pair<File, File>> getToBeDeleted() {
+    public List<Couple<File>> getToBeDeleted() {
       return myToBeDeleted;
     }
 

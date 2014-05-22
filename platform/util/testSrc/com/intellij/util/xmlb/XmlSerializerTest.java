@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.intellij.util.xmlb;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.*;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
@@ -401,7 +402,7 @@ public class XmlSerializerTest extends TestCase {
                      "</BeanWithCustomizedOption>", bean);
   }
 
-  public static class BeanWithProperty {                                
+  public static class BeanWithProperty {
     private String name = "James";
 
     public BeanWithProperty() {
@@ -1207,6 +1208,41 @@ public class XmlSerializerTest extends TestCase {
     assertEquals(message, expectedText, actualString);
 
     return element;
+  }
+
+  public static class BeanWithMapWithSetValue {
+    @MapAnnotation(entryTagName = "entry-tag", keyAttributeName = "key-attr", surroundWithTag = false)
+    public Map<String, Set<String>> myValues = new HashMap<String, Set<String>>();
+  }
+
+  public void testBeanWithMapWithSetValue() {
+    BeanWithMapWithSetValue bean = new BeanWithMapWithSetValue();
+
+    bean.myValues.put("a", ContainerUtil.newHashSet("first1", "second1"));
+    bean.myValues.put("b", ContainerUtil.newHashSet("first2", "second2"));
+
+    doSerializerTest(
+      "<BeanWithMapWithSetValue>\n" +
+      "  <option name=\"myValues\">\n" +
+      "    <entry-tag key-attr=\"a\">\n" +
+      "      <value>\n" +
+      "        <set>\n" +
+      "          <option value=\"first1\" />\n" +
+      "          <option value=\"second1\" />\n" +
+      "        </set>\n" +
+      "      </value>\n" +
+      "    </entry-tag>\n" +
+      "    <entry-tag key-attr=\"b\">\n" +
+      "      <value>\n" +
+      "        <set>\n" +
+      "          <option value=\"first2\" />\n" +
+      "          <option value=\"second2\" />\n" +
+      "        </set>\n" +
+      "      </value>\n" +
+      "    </entry-tag>\n" +
+      "  </option>\n" +
+      "</BeanWithMapWithSetValue>",
+      bean);
   }
 
   private static Element serialize(Object bean, SerializationFilter filter) {

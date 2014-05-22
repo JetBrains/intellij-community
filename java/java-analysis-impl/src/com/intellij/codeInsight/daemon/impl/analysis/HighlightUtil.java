@@ -434,22 +434,23 @@ public class HighlightUtil extends HighlightUtilBase {
     if (highlightInfo == null) {
       return null;
     }
-    registerChangeVariableTypeFixes(lExpr, rType, highlightInfo);
+    registerChangeVariableTypeFixes(lExpr, rType, rExpr, highlightInfo);
     if (lType != null) {
-      registerChangeVariableTypeFixes(rExpr, lType, highlightInfo);
+      registerChangeVariableTypeFixes(rExpr, lType, lExpr, highlightInfo);
     }
     return highlightInfo;
   }
 
   private static void registerChangeVariableTypeFixes(@NotNull PsiExpression expression,
                                                       @NotNull PsiType type,
+                                                      @Nullable PsiExpression lExpr, 
                                                       @Nullable HighlightInfo highlightInfo) {
     if (highlightInfo == null || !(expression instanceof  PsiReferenceExpression)) return;
 
     final PsiElement element = ((PsiReferenceExpression)expression).resolve();
     if (element == null || !(element instanceof PsiVariable)) return;
 
-    registerChangeVariableTypeFixes((PsiVariable)element, type, highlightInfo);
+    registerChangeVariableTypeFixes((PsiVariable)element, type, lExpr, highlightInfo);
   }
 
   private static boolean isCastIntentionApplicable(@NotNull PsiExpression expression, @Nullable PsiType toType) {
@@ -478,7 +479,7 @@ public class HighlightUtil extends HighlightUtilBase {
     int end = variable.getTextRange().getEndOffset();
     HighlightInfo highlightInfo = checkAssignability(lType, rType, initializer, new TextRange(start, end), 0);
     if (highlightInfo != null) {
-      registerChangeVariableTypeFixes(variable, rType, highlightInfo);
+      registerChangeVariableTypeFixes(variable, rType, variable.getInitializer(), highlightInfo);
     }
     return highlightInfo;
   }
@@ -2660,9 +2661,23 @@ public class HighlightUtil extends HighlightUtilBase {
     return info;
   }
 
-  public static void registerChangeVariableTypeFixes(@NotNull PsiVariable parameter, PsiType itemType, @NotNull HighlightInfo highlightInfo) {
+  public static void registerChangeVariableTypeFixes(@NotNull PsiVariable parameter,
+                                                     PsiType itemType,
+                                                     @Nullable PsiExpression expr,
+                                                     @NotNull HighlightInfo highlightInfo) {
     for (IntentionAction action : getChangeVariableTypeFixes(parameter, itemType)) {
       QuickFixAction.registerQuickFixAction(highlightInfo, action);
+    }
+    if (expr instanceof PsiMethodCallExpression) {
+      final PsiMethod method = ((PsiMethodCallExpression)expr).resolveMethod();
+      if (method != null) {
+        QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createMethodReturnFix(method, parameter.getType(), true));
+      }
+    } else if (expr instanceof PsiReferenceExpression) {
+      final PsiElement resolve = ((PsiReferenceExpression)expr).resolve();
+      if (resolve instanceof PsiVariable) {
+        registerChangeVariableTypeFixes((PsiVariable)resolve, parameter.getType(), null, highlightInfo);
+      }
     }
   }
 

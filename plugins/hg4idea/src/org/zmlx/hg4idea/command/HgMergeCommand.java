@@ -18,9 +18,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
-import org.zmlx.hg4idea.execution.HgDeleteModifyPromptHandler;
+import org.zmlx.hg4idea.execution.HgPromptCommandExecutor;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -43,7 +42,7 @@ public class HgMergeCommand {
 
   @Nullable
   public HgCommandResult execute() {
-    HgCommandExecutor commandExecutor = new HgCommandExecutor(project);
+    HgPromptCommandExecutor commandExecutor = new HgPromptCommandExecutor(project);
     commandExecutor.setShowOutput(true);
     List<String> arguments = new LinkedList<String>();
     if (!StringUtil.isEmptyOrSpaces(revision)) {
@@ -51,7 +50,7 @@ public class HgMergeCommand {
       arguments.add(revision);
     }
     final HgCommandResult result =
-      commandExecutor.executeInCurrentThread(repo, "merge", arguments, new HgDeleteModifyPromptHandler());
+      commandExecutor.executeInCurrentThread(repo, "merge", arguments);
     project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
     return result;
   }

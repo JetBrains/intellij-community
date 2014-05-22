@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
@@ -174,14 +174,14 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       assert vcs != null;
 
       Collection<VirtualFile> notDefined = new ArrayList<VirtualFile>();
-      Map<VirtualFile, Pair<String, String>> defined = new HashMap<VirtualFile, Pair<String, String>>();
+      Map<VirtualFile, Couple<String>> defined = new HashMap<VirtualFile, Couple<String>>();
       Collection<VirtualFile> allRoots = new ArrayList<VirtualFile>(Arrays.asList(
         ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs)));
 
       Collection<VirtualFile> affectedRoots = getSelectedRoots();
       for (VirtualFile root : affectedRoots) {
         try {
-          Pair<String, String> nameAndEmail = getUserNameAndEmailFromGitConfig(project, root);
+          Couple<String> nameAndEmail = getUserNameAndEmailFromGitConfig(project, root);
           String name = nameAndEmail.getFirst();
           String email = nameAndEmail.getSecond();
           if (name == null || email == null) {
@@ -216,7 +216,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
         allRoots.removeAll(affectedRoots);
         for (VirtualFile root : allRoots) {
           try {
-            Pair<String, String> nameAndEmail = getUserNameAndEmailFromGitConfig(project, root);
+            Couple<String> nameAndEmail = getUserNameAndEmailFromGitConfig(project, root);
             String name = nameAndEmail.getFirst();
             String email = nameAndEmail.getSecond();
             if (name != null && email != null) {
@@ -258,10 +258,10 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     }
 
     @NotNull
-    private Pair<String, String> getUserNameAndEmailFromGitConfig(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
+    private Couple<String> getUserNameAndEmailFromGitConfig(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
       String name = GitConfigUtil.getValue(project, root, GitConfigUtil.USER_NAME);
       String email = GitConfigUtil.getValue(project, root, GitConfigUtil.USER_EMAIL);
-      return Pair.create(name, email);
+      return Couple.newOne(name, email);
     }
 
     private boolean emptyCommitMessage() {

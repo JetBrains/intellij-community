@@ -208,7 +208,7 @@ public class UpdateHighlightersUtil {
       }
     }, new SweepProcessor<HighlightInfo>() {
       @Override
-      public boolean process(int offset, HighlightInfo info, boolean atStart, @NotNull Collection<HighlightInfo> overlappingIntervals) {
+      public boolean process(int offset, @NotNull HighlightInfo info, boolean atStart, @NotNull Collection<HighlightInfo> overlappingIntervals) {
         if (!atStart) return true;
         if (!info.isFromInjection() && info.getEndOffset() < document.getTextLength() && (info.getEndOffset() <= startOffset || info.getStartOffset()>=endOffset)) return true; // injections are oblivious to restricting range
 
@@ -281,7 +281,7 @@ public class UpdateHighlightersUtil {
       }
     }, new SweepProcessor<HighlightInfo>() {
       @Override
-      public boolean process(int offset, HighlightInfo info, boolean atStart, @NotNull Collection<HighlightInfo> overlappingIntervals) {
+      public boolean process(int offset, @NotNull HighlightInfo info, boolean atStart, @NotNull Collection<HighlightInfo> overlappingIntervals) {
         if (!atStart) {
           return true;
         }

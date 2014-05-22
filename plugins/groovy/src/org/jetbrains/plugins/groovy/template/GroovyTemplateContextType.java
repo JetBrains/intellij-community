@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
@@ -49,8 +49,9 @@ public abstract class GroovyTemplateContextType extends TemplateContextType {
     super(id, presentableName, baseContextType);
   }
 
+  @Override
   public boolean isInContext(@NotNull final PsiFile file, final int offset) {
-    if (PsiUtilCore.getLanguageAtOffset(file, offset).isKindOf(GroovyFileType.GROOVY_LANGUAGE)) {
+    if (PsiUtilCore.getLanguageAtOffset(file, offset).isKindOf(GroovyLanguage.INSTANCE)) {
       PsiElement element = file.findElementAt(offset);
       if (element instanceof PsiWhiteSpace) {
         return false;

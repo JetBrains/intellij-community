@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,6 @@ import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
-import static org.jetbrains.plugins.groovy.findUsages.MissingMethodAndPropertyUtil.isMethodMissing;
-import static org.jetbrains.plugins.groovy.findUsages.MissingMethodAndPropertyUtil.isPropertyMissing;
-
 /**
  * @author Max Medvedev
  */
@@ -35,14 +32,15 @@ public class GrImplicitUsageProvider implements ImplicitUsageProvider {
 
       if (GroovyCompletionUtil.OPERATOR_METHOD_NAMES.contains(method.getName())) return true;
 
-      if (isPropertyMissing(method)) return true;
-      if (isMethodMissing(method)) return true;
+      if (MissingMethodAndPropertyUtil.isPropertyMissing(method)) return true;
+      if (MissingMethodAndPropertyUtil.isMethodMissing(method)) return true;
     }
     else if (element instanceof GrParameter) {
       final GrParameter parameter = (GrParameter)element;
 
       final PsiElement scope = parameter.getDeclarationScope();
-      if (scope instanceof GrMethod && (isMethodMissing((GrMethod)scope) || isPropertyMissing((GrMethod)scope))) return true;
+      if (scope instanceof GrMethod && (MissingMethodAndPropertyUtil.isMethodMissing((GrMethod)scope) || MissingMethodAndPropertyUtil
+        .isPropertyMissing((GrMethod)scope))) return true;
     }
 
     return false;

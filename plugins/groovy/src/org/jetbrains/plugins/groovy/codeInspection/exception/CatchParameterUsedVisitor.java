@@ -32,12 +32,14 @@ class CatchParameterUsedVisitor extends GroovyRecursiveElementVisitor {
     parameter = variable;
   }
 
+  @Override
   public void visitElement(@NotNull GroovyPsiElement element) {
     if (!used) {
       super.visitElement(element);
     }
   }
 
+  @Override
   public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
     if (used) {
       return;

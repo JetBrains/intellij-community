@@ -34,31 +34,37 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 
 public class GroovyUnnecessaryReturnInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return CONTROL_FLOW;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Unnecessary 'return' statement";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "#ref is unnecessary as the last statement in a method with no return value #loc";
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
+  @Override
   @Nullable
   protected GroovyFix buildFix(PsiElement location) {
     return new UnnecessaryReturnFix();
@@ -66,11 +72,13 @@ public class GroovyUnnecessaryReturnInspection extends BaseInspection {
   }
 
   private static class UnnecessaryReturnFix extends GroovyFix {
+    @Override
     @NotNull
     public String getName() {
       return "Remove unnecessary return";
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement returnKeywordElement = descriptor.getPsiElement();
       final GrReturnStatement returnStatement = (GrReturnStatement) returnKeywordElement.getParent();
@@ -81,6 +89,7 @@ public class GroovyUnnecessaryReturnInspection extends BaseInspection {
 
   private static class Visitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitReturnStatement(GrReturnStatement returnStatement) {
       super.visitReturnStatement(returnStatement);
 

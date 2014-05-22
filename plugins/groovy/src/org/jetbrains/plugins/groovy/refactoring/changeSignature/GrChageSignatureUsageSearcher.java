@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTagValueToken;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
@@ -101,7 +101,7 @@ class GrChageSignatureUsageSearcher {
   */
 
   private void detectLocalsCollisionsInMethod(final GrMethod method, final ArrayList<UsageInfo> result, boolean isOriginal) {
-    if (!GroovyFileType.GROOVY_LANGUAGE.equals(method.getLanguage())) return;
+    if (!GroovyLanguage.INSTANCE.equals(method.getLanguage())) return;
 
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     final Set<PsiParameter> deletedOrRenamedParameters = new HashSet<PsiParameter>();
@@ -126,6 +126,7 @@ class GrChageSignatureUsageSearcher {
           if (!newName.equals(parameter.getName())) {
             final GrUnresolvableLocalCollisionDetector.CollidingVariableVisitor collidingVariableVisitor =
               new GrUnresolvableLocalCollisionDetector.CollidingVariableVisitor() {
+                @Override
                 public void visitCollidingVariable(final PsiVariable collidingVariable) {
                   if (!deletedOrRenamedParameters.contains(collidingVariable)) {
                     result.add(new RenamedParameterCollidesWithLocalUsageInfo(parameter, collidingVariable, method));
@@ -141,6 +142,7 @@ class GrChageSignatureUsageSearcher {
       else {
         final GrUnresolvableLocalCollisionDetector.CollidingVariableVisitor variableVisitor =
           new GrUnresolvableLocalCollisionDetector.CollidingVariableVisitor() {
+            @Override
             public void visitCollidingVariable(PsiVariable collidingVariable) {
               if (!deletedOrRenamedParameters.contains(collidingVariable)) {
                 result.add(new NewParameterCollidesWithLocalUsageInfo(collidingVariable, collidingVariable, method));
@@ -155,7 +157,7 @@ class GrChageSignatureUsageSearcher {
   }
 
   private void findParametersUsage(final PsiMethod method, ArrayList<UsageInfo> result, PsiMethod[] overriders) {
-    if (!GroovyFileType.GROOVY_LANGUAGE.equals(method.getLanguage())) return;
+    if (!GroovyLanguage.INSTANCE.equals(method.getLanguage())) return;
 
     PsiParameter[] parameters = method.getParameterList().getParameters();
     for (ParameterInfo info : myChangeInfo.getNewParameters()) {
@@ -165,7 +167,7 @@ class GrChageSignatureUsageSearcher {
           addParameterUsages(parameter, result, info);
 
           for (PsiMethod overrider : overriders) {
-            if (!GroovyFileType.GROOVY_LANGUAGE.equals(overrider.getLanguage())) continue;
+            if (!GroovyLanguage.INSTANCE.equals(overrider.getLanguage())) continue;
             PsiParameter parameter1 = overrider.getParameterList().getParameters()[info.getOldIndex()];
             if (parameter.getName().equals(parameter1.getName())) {
               addParameterUsages(parameter1, result, info);
@@ -186,7 +188,7 @@ class GrChageSignatureUsageSearcher {
     PsiMethod[] overridingMethods = OverridingMethodsSearch.search(method, true).toArray(PsiMethod.EMPTY_ARRAY);
 
     for (PsiMethod overridingMethod : overridingMethods) {
-      if (GroovyFileType.GROOVY_LANGUAGE.equals(overridingMethod.getLanguage())) {
+      if (GroovyLanguage.INSTANCE.equals(overridingMethod.getLanguage())) {
         result.add(new OverriderUsageInfo(overridingMethod, method, isOriginal, isToModifyArgs, isToThrowExceptions));
       }
     }
@@ -201,7 +203,7 @@ class GrChageSignatureUsageSearcher {
       for (PsiReference ref : refs) {
         PsiElement element = ref.getElement();
 
-        if (!GroovyFileType.GROOVY_LANGUAGE.equals(element.getLanguage())) continue;
+        if (!GroovyLanguage.INSTANCE.equals(element.getLanguage())) continue;
 
         boolean isToCatchExceptions = isToThrowExceptions && needToCatchExceptions(RefactoringUtil.getEnclosingMethod(element));
         if (PsiUtil.isMethodUsage(element)) {
@@ -296,6 +298,7 @@ class GrChageSignatureUsageSearcher {
       myMethod = method;
     }
 
+    @Override
     public String getDescription() {
       return RefactoringBundle.message("there.is.already.a.0.in.the.1.it.will.conflict.with.the.renamed.parameter",
                                        RefactoringUIUtil.getDescription(myCollidingElement, true),

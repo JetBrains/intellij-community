@@ -82,6 +82,7 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
     return GROOVY_ALL_JAR_PATTERN.matcher(name).matches() && !name.contains("src") && !name.contains("doc");
   }
 
+  @Override
   @NotNull
   public String getSDKVersion(@NotNull final String path) {
     String groovyJarVersion = getSDKJarVersion(path + "/lib", GROOVY_JAR_PATTERN, MANIFEST_PATH);
@@ -97,6 +98,7 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
     return groovyJarVersion == null ? UNDEFINED_VERSION : groovyJarVersion;
   }
 
+  @Override
   public boolean isSDKLibrary(Library library) {
     if (library == null) return false;
     return LibrariesUtil.getGroovyLibraryHome(library.getFiles(OrderRootType.CLASSES)) != null;
@@ -108,8 +110,7 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
       @Override
       public Result<String> compute() {
         final String path = LibrariesUtil.getGroovyHomePath(module);
-        if (path == null) return Result.create(null, ProjectRootManager.getInstance(module.getProject()));
-        return Result.create(getSDKVersion(path), ProjectRootManager.getInstance(module.getProject()));
+        return Result.create(path == null ? null : getSDKVersion(path), ProjectRootManager.getInstance(module.getProject()));
       }
     });
   }
@@ -183,6 +184,7 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
 
   public Collection<String> getSDKVersions(Library[] libraries) {
     return ContainerUtil.map2List(libraries, new Function<Library, String>() {
+      @Override
       public String fun(Library library) {
         return getSDKLibVersion(library);
       }

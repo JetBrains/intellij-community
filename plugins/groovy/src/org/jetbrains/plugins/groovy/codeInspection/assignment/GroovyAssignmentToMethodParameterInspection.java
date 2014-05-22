@@ -33,24 +33,28 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
 public class GroovyAssignmentToMethodParameterInspection extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return ASSIGNMENT_ISSUES;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Assignment to method parameter";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Assignment to method parameter '#ref' #loc";
 
   }
 
+  @Override
   @NotNull
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
@@ -58,6 +62,7 @@ public class GroovyAssignmentToMethodParameterInspection extends BaseInspection 
 
   private static class Visitor extends BaseInspectionVisitor {
     
+    @Override
     public void visitAssignmentExpression(GrAssignmentExpression expr) {
       super.visitAssignmentExpression(expr);
 

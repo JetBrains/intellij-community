@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,80 +19,79 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.types;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
-import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.FAIL;
-
 /**
  * @autor: ilyas
  */
-public class TypeParameters implements GroovyElementTypes {
+public class TypeParameters {
 
   public static IElementType parse(PsiBuilder builder) {
-    if (mLT == builder.getTokenType()) {
+    if (GroovyTokenTypes.mLT == builder.getTokenType()) {
       PsiBuilder.Marker marker = builder.mark();
-      ParserUtils.getToken(builder, mLT);
-      ParserUtils.getToken(builder, mNLS);
-      while (parseTypeParameter(builder) != WRONGWAY) {
-        if (!ParserUtils.getToken(builder, mCOMMA)) {
+      ParserUtils.getToken(builder, GroovyTokenTypes.mLT);
+      ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
+      while (parseTypeParameter(builder) != GroovyElementTypes.WRONGWAY) {
+        if (!ParserUtils.getToken(builder, GroovyTokenTypes.mCOMMA)) {
           break;
         }
-        ParserUtils.getToken(builder, mNLS);
+        ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
         eatCommas(builder);
       }
       eatCommas(builder);
-      if (!ParserUtils.getToken(builder, mGT)) {
+      if (!ParserUtils.getToken(builder, GroovyTokenTypes.mGT)) {
         builder.error(GroovyBundle.message("gt.expected"));
       }
-      marker.done(TYPE_PARAMETER_LIST);
-      return TYPE_PARAMETER_LIST;
+      marker.done(GroovyElementTypes.TYPE_PARAMETER_LIST);
+      return GroovyElementTypes.TYPE_PARAMETER_LIST;
     }
 
-    return WRONGWAY;
+    return GroovyElementTypes.WRONGWAY;
   }
 
   private static void eatCommas(PsiBuilder builder) {
-    while (mCOMMA == builder.getTokenType()) {
+    while (GroovyTokenTypes.mCOMMA == builder.getTokenType()) {
       builder.error(GroovyBundle.message("type.parameter.expected"));
-      ParserUtils.getToken(builder, mCOMMA);
-      ParserUtils.getToken(builder, mNLS);
+      ParserUtils.getToken(builder, GroovyTokenTypes.mCOMMA);
+      ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
     }
   }
 
 
   private static IElementType parseTypeParameter(PsiBuilder builder) {
-    if (mIDENT == builder.getTokenType()) {
+    if (GroovyTokenTypes.mIDENT == builder.getTokenType()) {
       PsiBuilder.Marker marker = builder.mark();
-      ParserUtils.getToken(builder, mIDENT);
-      if (kEXTENDS == builder.getTokenType()) {
+      ParserUtils.getToken(builder, GroovyTokenTypes.mIDENT);
+      if (GroovyTokenTypes.kEXTENDS == builder.getTokenType()) {
         parseExtendsBoundList(builder);
       } else {
-        builder.mark().done(TYPE_PARAMETER_EXTENDS_BOUND_LIST);
+        builder.mark().done(GroovyElementTypes.TYPE_PARAMETER_EXTENDS_BOUND_LIST);
       }
-      marker.done(TYPE_PARAMETER);
-      return TYPE_PARAMETER;
+      marker.done(GroovyElementTypes.TYPE_PARAMETER);
+      return GroovyElementTypes.TYPE_PARAMETER;
     }
-    return WRONGWAY;
+    return GroovyElementTypes.WRONGWAY;
   }
 
 
   private static IElementType parseExtendsBoundList(PsiBuilder builder) {
     PsiBuilder.Marker marker = builder.mark();
-    ParserUtils.getToken(builder, kEXTENDS);
-    ParserUtils.getToken(builder, mNLS);
-    if (ReferenceElement.parseReferenceElement(builder) == FAIL) {
+    ParserUtils.getToken(builder, GroovyTokenTypes.kEXTENDS);
+    ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
+    if (ReferenceElement.parseReferenceElement(builder) == ReferenceElement.ReferenceElementResult.FAIL) {
       builder.error(GroovyBundle.message("identifier.expected"));
     } else {
-      while (ParserUtils.getToken(builder, mBAND)) {
-        ParserUtils.getToken(builder, mNLS);
-        if (ReferenceElement.parseReferenceElement(builder) == FAIL) {
+      while (ParserUtils.getToken(builder, GroovyTokenTypes.mBAND)) {
+        ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
+        if (ReferenceElement.parseReferenceElement(builder) == ReferenceElement.ReferenceElementResult.FAIL) {
           builder.error(GroovyBundle.message("type.expected"));
         }
       }
     }
-    marker.done(TYPE_PARAMETER_EXTENDS_BOUND_LIST);
-    return TYPE_PARAMETER_EXTENDS_BOUND_LIST;
+    marker.done(GroovyElementTypes.TYPE_PARAMETER_EXTENDS_BOUND_LIST);
+    return GroovyElementTypes.TYPE_PARAMETER_EXTENDS_BOUND_LIST;
   }
 }

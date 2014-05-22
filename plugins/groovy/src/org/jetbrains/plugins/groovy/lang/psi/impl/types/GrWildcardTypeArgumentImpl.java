@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ public class GrWildcardTypeArgumentImpl extends GroovyPsiElementImpl implements 
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitWildcardTypeArgument(this);
   }
@@ -46,6 +47,7 @@ public class GrWildcardTypeArgumentImpl extends GroovyPsiElementImpl implements 
     return "Type argument";
   }
 
+  @Override
   @NotNull
   public PsiType getType() {
     final GrTypeElement boundTypeElement = getBoundTypeElement();
@@ -57,14 +59,17 @@ public class GrWildcardTypeArgumentImpl extends GroovyPsiElementImpl implements 
     return null;
   }
 
+  @Override
   public GrTypeElement getBoundTypeElement() {
     return findChildByClass(GrTypeElement.class);
   }
 
+  @Override
   public boolean isExtends() {
     return findChildByType(GroovyTokenTypes.kEXTENDS) != null;
   }
 
+  @Override
   public boolean isSuper() {
     return findChildByType(GroovyTokenTypes.kSUPER) != null;
   }

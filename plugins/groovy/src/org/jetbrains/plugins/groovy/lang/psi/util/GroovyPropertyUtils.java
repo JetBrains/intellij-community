@@ -331,7 +331,7 @@ public class GroovyPropertyUtils {
   }
 
   public static String getAccessorName(String prefix, String name) {
-    if (name.length() == 0) return prefix;
+    if (name.isEmpty()) return prefix;
 
     StringBuilder sb = new StringBuilder();
     sb.append(prefix);
@@ -356,7 +356,7 @@ public class GroovyPropertyUtils {
   }
 
   public static boolean isPropertyName(String name) {
-    if (name.length() == 0) return false;
+    if (name.isEmpty()) return false;
     if (Character.isUpperCase(name.charAt(0)) && (name.length() == 1 || !Character.isUpperCase(name.charAt(1)))) return false;
     return true;
   }
@@ -398,7 +398,7 @@ public class GroovyPropertyUtils {
   }*/
 
   public static String capitalize(String s) {
-    if (s.length() == 0) return s;
+    if (s.isEmpty()) return s;
     if (s.length() == 1) return s.toUpperCase();
     if (Character.isUpperCase(s.charAt(1))) return s;
     final char[] chars = s.toCharArray();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,6 +66,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
     return getParentByStub();
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitParameter(this);
   }
@@ -74,6 +75,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
     return "Parameter";
   }
 
+  @Override
   @Nullable
   public PsiType getTypeGroovy() {
     final PsiType declaredType = getDeclaredType();
@@ -114,6 +116,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
     return type;
   }
 
+  @Override
   @NotNull
   public PsiType getType() {
     PsiType type = super.getType();
@@ -135,6 +138,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
     return PsiImplUtil.isMainMethod(method);
   }
 
+  @Override
   public void setType(@Nullable PsiType type) {
     final GrTypeElement typeElement = getTypeElementGroovy();
     if (type == null) {
@@ -162,6 +166,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
     JavaCodeStyleManager.getInstance(getProject()).shortenClassReferences(newTypeElement);
   }
 
+  @Override
   @Nullable
   public GrTypeElement getTypeElementGroovy() {
     final GrParameterStub stub = getStub();
@@ -177,6 +182,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
     return findChildByClass(GrTypeElement.class);
   }
 
+  @Override
   public boolean isOptional() {
     return getInitializerGroovy() != null;
   }
@@ -187,6 +193,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
     return findChildByType(GroovyTokenTypes.mTRIPLE_DOT);
   }
 
+  @Override
   @NotNull
   public SearchScope getUseScope() {
     if (!isPhysical()) {
@@ -218,11 +225,13 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
     return super.getName();
   }
 
+  @Override
   @NotNull
   public GrModifierList getModifierList() {
     return getStubOrPsiChild(GroovyElementTypes.MODIFIERS);
   }
 
+  @Override
   @NotNull
   public PsiElement getDeclarationScope() {
     final GrParametersOwner owner = PsiTreeUtil.getParentOfType(this, GrParametersOwner.class);
@@ -231,6 +240,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
     return owner;
   }
 
+  @Override
   public boolean isVarArgs() {
     PsiElement dots = getEllipsisDots();
     return dots != null;

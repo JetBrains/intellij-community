@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary;
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -26,10 +26,10 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 /**
  * @author: ilyas
  */
-public class VariableInitializer implements GroovyElementTypes {
+public class VariableInitializer {
   public static void parse(PsiBuilder builder, GroovyParser parser) {
-    if (ParserUtils.getToken(builder, mASSIGN)) {
-      ParserUtils.getToken(builder, mNLS);
+    if (ParserUtils.getToken(builder, GroovyTokenTypes.mASSIGN)) {
+      ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
       if (!AssignmentExpression.parse(builder, parser, true)) {
         builder.error(GroovyBundle.message("expression.expected"));
       }

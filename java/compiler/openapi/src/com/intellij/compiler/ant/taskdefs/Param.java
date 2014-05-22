@@ -17,7 +17,7 @@
 package com.intellij.compiler.ant.taskdefs;
 
 import com.intellij.compiler.ant.Tag;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -27,10 +27,7 @@ import org.jetbrains.annotations.NonNls;
 public class Param extends Tag {
   public Param(@NonNls final String name, final String value) {
     //noinspection HardCodedStringLiteral
-    super("param", new Pair[] {
-      Pair.create("name", name),
-      Pair.create("value", value)
-    });
+    super("param", Couple.newOne("name", name), Couple.newOne("value", value));
   }
 
 }

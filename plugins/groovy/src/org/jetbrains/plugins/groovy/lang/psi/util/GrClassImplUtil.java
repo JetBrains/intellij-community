@@ -36,7 +36,7 @@ import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -57,11 +57,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrTypeDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrScriptField;
 import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import java.util.*;
-
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.*;
 
 /**
  * @author Maxim.Medvedev
@@ -70,6 +69,7 @@ public class GrClassImplUtil {
   private static final Logger LOG = Logger.getInstance(GrClassImplUtil.class);
 
   private static final Condition<PsiClassType> IS_GROOVY_OBJECT = new Condition<PsiClassType>() {
+    @Override
     public boolean value(PsiClassType psiClassType) {
       return TypesUtil.isClassType(psiClassType, GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME);
     }
@@ -296,7 +296,7 @@ public class GrClassImplUtil {
     }
 
     for (final PsiTypeParameter typeParameter : grType.getTypeParameters()) {
-      if (!processElement(processor, typeParameter, state)) return false;
+      if (!ResolveUtil.processElement(processor, typeParameter, state)) return false;
     }
 
     NameHint nameHint = processor.getHint(NameHint.KEY);
@@ -305,10 +305,10 @@ public class GrClassImplUtil {
     final PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(place.getProject());
 
-    boolean processInstanceMethods = (shouldProcessMethods(classHint) || shouldProcessProperties(classHint)) && shouldProcessInstanceMembers(grType, lastParent);
+    boolean processInstanceMethods = (ResolveUtil.shouldProcessMethods(classHint) || ResolveUtil.shouldProcessProperties(classHint)) && shouldProcessInstanceMembers(grType, lastParent);
 
     LanguageLevel level = PsiUtil.getLanguageLevel(place);
-    if (shouldProcessProperties(classHint)) {
+    if (ResolveUtil.shouldProcessProperties(classHint)) {
       Map<String, CandidateInfo> fieldsMap = CollectClassMembersUtil.getAllFields(grType);
       if (name != null) {
         CandidateInfo fieldInfo = fieldsMap.get(name);
@@ -344,9 +344,9 @@ public class GrClassImplUtil {
       }
     }
 
-    if (shouldProcessMethods(classHint)) {
+    if (ResolveUtil.shouldProcessMethods(classHint)) {
       Map<String, List<CandidateInfo>> methodsMap = CollectClassMembersUtil.getAllMethods(grType, true);
-      boolean isPlaceGroovy = place.getLanguage() == GroovyFileType.GROOVY_LANGUAGE;
+      boolean isPlaceGroovy = place.getLanguage() == GroovyLanguage.INSTANCE;
       if (name == null) {
         for (List<CandidateInfo> list : methodsMap.values()) {
           for (CandidateInfo info : list) {
@@ -370,7 +370,7 @@ public class GrClassImplUtil {
 
     final GrTypeDefinitionBody body = grType.getBody();
     if (body != null) {
-      if (shouldProcessClasses(classHint)) {
+      if (ResolveUtil.shouldProcessClasses(classHint)) {
         for (PsiClass innerClass : getInnerClassesForResolve(grType, lastParent, place)) {
           final String innerClassName = innerClass.getName();
           if (nameHint != null && !innerClassName.equals(nameHint.getName(state))) {
@@ -629,6 +629,7 @@ public class GrClassImplUtil {
   public static PsiField[] getAllFields(GrTypeDefinition grType) {
     Map<String, CandidateInfo> fieldsMap = CollectClassMembersUtil.getAllFields(grType);
     return ContainerUtil.map2Array(fieldsMap.values(), PsiField.class, new Function<CandidateInfo, PsiField>() {
+      @Override
       public PsiField fun(CandidateInfo entry) {
         return (PsiField)entry.getElement();
       }

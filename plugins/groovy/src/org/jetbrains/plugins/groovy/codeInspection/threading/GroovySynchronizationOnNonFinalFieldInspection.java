@@ -34,29 +34,34 @@ public class GroovySynchronizationOnNonFinalFieldInspection extends BaseInspecti
     return true;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return THREADING_ISSUES;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Synchronization on non-final field";
   }
 
+  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Synchronization on non-final field '#ref' #loc";
 
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
+    @Override
     public void visitSynchronizedStatement(GrSynchronizedStatement synchronizedStatement) {
       super.visitSynchronizedStatement(synchronizedStatement);
       final GrExpression lock = synchronizedStatement.getMonitor();

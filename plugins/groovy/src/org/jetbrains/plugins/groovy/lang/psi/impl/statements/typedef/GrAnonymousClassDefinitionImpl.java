@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
     super(stub, nodeType);
   }
 
+  @Override
   @NotNull
   public GrCodeReferenceElement getBaseClassReferenceGroovy() {
     //noinspection ConstantConditions
@@ -70,12 +71,14 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
     return PsiModifier.FINAL.equals(name);
   }
 
+  @Override
   @Nullable
   public GrArgumentList getArgumentListGroovy() {
     //noinspection ConstantConditions
     return findChildByClass(GrArgumentList.class); //not null because of definition
   }
 
+  @Override
   public boolean isInQualifiedNew() {
     final GrTypeDefinitionStub stub = getStub();
     if (stub != null) {
@@ -86,6 +89,7 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
     return parent instanceof GrNewExpression && ((GrNewExpression)parent).getQualifier() != null;
   }
 
+  @Override
   @NotNull
   public PsiJavaCodeReferenceElement getBaseClassReference() {
     final GrCodeReferenceElement ref = getBaseClassReferenceGroovy();
@@ -100,6 +104,7 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
     return JavaPsiFacade.getElementFactory(project).createReferenceElementByFQClassName(qName, GlobalSearchScope.allScope(project));
   }
 
+  @Override
   @NotNull
   public PsiClassType getBaseClassType() {
     if (isInQualifiedNew()) {
@@ -114,6 +119,7 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
     return type;
   }
 
+  @Override
   @Nullable
   public PsiExpressionList getArgumentList() {
     return null;

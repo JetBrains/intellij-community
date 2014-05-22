@@ -33,7 +33,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.formatter.AlignmentProvider;
 import org.jetbrains.plugins.groovy.formatter.FormattingContext;
 import org.jetbrains.plugins.groovy.formatter.processors.GroovyIndentProcessor;
@@ -75,13 +75,13 @@ import java.util.List;
  *
  * @author ilyas
  */
-public class GroovyBlockGenerator implements GroovyElementTypes {
+public class GroovyBlockGenerator {
 
   private static final TokenSet NESTED = TokenSet.create(
-    REFERENCE_EXPRESSION,
-    PATH_INDEX_PROPERTY,
-    PATH_METHOD_CALL,
-    PATH_PROPERTY_REFERENCE
+    GroovyElementTypes.REFERENCE_EXPRESSION,
+    GroovyElementTypes.PATH_INDEX_PROPERTY,
+    GroovyElementTypes.PATH_METHOD_CALL,
+    GroovyElementTypes.PATH_PROPERTY_REFERENCE
   );
 
   private static final Logger LOG = Logger.getInstance(GroovyBlockGenerator.class);
@@ -131,7 +131,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     }
 
     //For multiline strings
-    if ((elementType == mSTRING_LITERAL || elementType == mGSTRING_LITERAL) && myBlock.getTextRange().equals(myNode.getTextRange())) {
+    if ((elementType == GroovyTokenTypes.mSTRING_LITERAL || elementType == GroovyTokenTypes.mGSTRING_LITERAL) && myBlock.getTextRange().equals(myNode.getTextRange())) {
       String text = myNode.getText();
       if (text.length() > 6) {
         if (text.substring(0, 3).equals("'''") && text.substring(text.length() - 3).equals("'''") ||
@@ -142,7 +142,9 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     }
 
     //for gstrings
-    if (elementType == GSTRING || elementType == REGEX || elementType == mREGEX_LITERAL || elementType == mDOLLAR_SLASH_REGEX_LITERAL) {
+    if (elementType == GroovyElementTypes.GSTRING || elementType == GroovyElementTypes.REGEX || elementType ==
+                                                                                                GroovyTokenTypes.mREGEX_LITERAL || elementType ==
+                                                                                                                                   GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL) {
       final FormattingContext context =
         myNode.getPsi() instanceof GrString && ((GrString)myNode.getPsi()).isPlainString() ? myContext.createContext(true) : myContext;
 
@@ -251,10 +253,10 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       final ArrayList<Block> subBlocks = new ArrayList<Block>();
 
       for (ASTNode childNode : getGroovyChildren(myNode)) {
-        if (childNode.getElementType() == mLPAREN) continue;
-        if (childNode.getElementType() == mRPAREN) continue;
+        if (childNode.getElementType() == GroovyTokenTypes.mLPAREN) continue;
+        if (childNode.getElementType() == GroovyTokenTypes.mRPAREN) continue;
 
-        if (childNode.getElementType() == PARAMETERS_LIST) {
+        if (childNode.getElementType() == GroovyElementTypes.PARAMETERS_LIST) {
           subBlocks.add(new ParameterListBlock(((GrMethod)blockPsi), Indent.getNoneIndent(), Wrap.createWrap(WrapType.NONE, false), myContext));
         }
         else if (canBeCorrectBlock(childNode)) {
@@ -342,14 +344,14 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       calculateAlignments(flattenChildren, classLevel);
       for (int i = 0; i < flattenChildren.size(); i++) {
         ASTNode childNode = flattenChildren.get(i);
-        if (childNode.getElementType() == LABELED_STATEMENT) {
+        if (childNode.getElementType() == GroovyElementTypes.LABELED_STATEMENT) {
           int start = i;
           do {
             i++;
           }
           while (i < flattenChildren.size() &&
-                 flattenChildren.get(i).getElementType() != LABELED_STATEMENT &&
-                 flattenChildren.get(i).getElementType() != mRCURLY);
+                 flattenChildren.get(i).getElementType() != GroovyElementTypes.LABELED_STATEMENT &&
+                 flattenChildren.get(i).getElementType() != GroovyTokenTypes.mRCURLY);
           subBlocks.add(new GrLabelBlock(childNode, flattenChildren.subList(start + 1, i), classLevel, getIndent(childNode), getChildWrap(childNode), myContext));
           i--;
         }
@@ -370,9 +372,9 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
 
   private boolean isCodeBlock() {
     IElementType type = myNode.getElementType();
-    return type == OPEN_BLOCK ||
-           type == CLOSABLE_BLOCK ||
-           type == CONSTRUCTOR_BODY ||
+    return type == GroovyElementTypes.OPEN_BLOCK ||
+           type == GroovyElementTypes.CLOSABLE_BLOCK ||
+           type == GroovyElementTypes.CONSTRUCTOR_BODY ||
            type == GroovyParserDefinition.GROOVY_FILE;
   }
 
@@ -386,7 +388,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
 
   private static void processNodeFlattening(ArrayList<ASTNode> result, ASTNode child) {
     result.add(child);
-    if (child.getElementType() == LABELED_STATEMENT) {
+    if (child.getElementType() == GroovyElementTypes.LABELED_STATEMENT) {
       for (ASTNode node : visibleChildren(child)) {
         processNodeFlattening(result, node);
       }
@@ -437,7 +439,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
   private boolean shouldSkip(boolean classLevel, PsiElement psi) {
     if (psi instanceof PsiComment) {
       PsiElement prev = psi.getPrevSibling();
-      if (prev != null && prev.getNode().getElementType() != mNLS || classLevel && !fieldGroupEnded(psi)) {
+      if (prev != null && prev.getNode().getElementType() != GroovyTokenTypes.mNLS || classLevel && !fieldGroupEnded(psi)) {
         return true;
       }
     }
@@ -521,7 +523,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
   }
 
   private static boolean isTablePart(PsiElement psi) {
-    return psi instanceof GrBinaryExpression && (mBOR == ((GrBinaryExpression)psi).getOperationTokenType() || mLOR == ((GrBinaryExpression)psi).getOperationTokenType());
+    return psi instanceof GrBinaryExpression && (GroovyTokenTypes.mBOR == ((GrBinaryExpression)psi).getOperationTokenType() || GroovyTokenTypes.mLOR == ((GrBinaryExpression)psi).getOperationTokenType());
   }
 
   public static List<ASTNode> visibleChildren(ASTNode node) {
@@ -548,9 +550,10 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     //     })
     if (blockPsi instanceof GrArgumentList && myContext.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS) {
       return !(children.size() == 3 &&
-               children.get(0).getElementType() == mLPAREN &&
-               (children.get(1).getElementType() == CLOSABLE_BLOCK || children.get(1).getElementType() == LIST_OR_MAP) &&
-               children.get(2).getElementType() == mRPAREN);
+               children.get(0).getElementType() == GroovyTokenTypes.mLPAREN &&
+               (children.get(1).getElementType() == GroovyElementTypes.CLOSABLE_BLOCK || children.get(1).getElementType() ==
+                                                                                         GroovyElementTypes.LIST_OR_MAP) &&
+               children.get(2).getElementType() == GroovyTokenTypes.mRPAREN);
     }
 
     if (blockPsi instanceof GrAssignmentExpression && ((GrAssignmentExpression)blockPsi).getRValue() instanceof GrAssignmentExpression) {
@@ -596,7 +599,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
    * @return true, if the current node can be myBlock node, else otherwise
    */
   private static boolean canBeCorrectBlock(final ASTNode node) {
-    return node.getText().trim().length() > 0;
+    return !node.getText().trim().isEmpty();
   }
 
 
@@ -605,7 +608,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     if (psi instanceof OuterLanguageElement) {
       TextRange range = node.getTextRange();
       ArrayList<ASTNode> childList = new ArrayList<ASTNode>();
-      PsiFile groovyFile = psi.getContainingFile().getViewProvider().getPsi(GroovyFileType.GROOVY_LANGUAGE);
+      PsiFile groovyFile = psi.getContainingFile().getViewProvider().getPsi(GroovyLanguage.INSTANCE);
       if (groovyFile instanceof GroovyFileBase) {
         addChildNodes(groovyFile, childList, range);
       }
@@ -748,7 +751,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       ASTNode childNode = children.get(i);
       if (canBeCorrectBlock(childNode)) {
         IElementType type = childNode.getElementType();
-        Indent indent = topLevel || NESTED.contains(type) || type == mIDENT || TokenSets.DOTS.contains(type) && !isAfterMultiLineClosure(
+        Indent indent = topLevel || NESTED.contains(type) || type == GroovyTokenTypes.mIDENT || TokenSets.DOTS.contains(type) && !isAfterMultiLineClosure(
           childNode) ?
                         Indent.getContinuationWithoutFirstIndent() :
                         Indent.getNoneIndent();

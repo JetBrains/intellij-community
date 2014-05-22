@@ -21,9 +21,8 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
-import org.zmlx.hg4idea.execution.HgDeleteModifyPromptHandler;
+import org.zmlx.hg4idea.execution.HgPromptCommandExecutor;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -40,7 +39,7 @@ public class HgUpdateCommand {
   private String revision;
   private boolean clean;
 
-  public HgUpdateCommand(Project project, @NotNull VirtualFile repo) {
+  public HgUpdateCommand(@NotNull Project project, @NotNull VirtualFile repo) {
     this.project = project;
     this.repo = repo;
   }
@@ -72,10 +71,10 @@ public class HgUpdateCommand {
       arguments.add(branch);
     }
 
-    final HgCommandExecutor executor = new HgCommandExecutor(project);
+    final HgPromptCommandExecutor executor = new HgPromptCommandExecutor(project);
     executor.setShowOutput(true);
     HgCommandResult result =
-      executor.executeInCurrentThread(repo, "update", arguments, new HgDeleteModifyPromptHandler());
+      executor.executeInCurrentThread(repo, "update", arguments);
     if (!clean && hasUncommittedChangesConflict(result)) {
       final String message = "<html>Your uncommitted changes couldn't be merged into the requested changeset.<br>" +
                              "Would you like to perform force update and discard them?";

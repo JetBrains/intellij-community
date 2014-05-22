@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,18 @@ import java.util.Map;
 import java.util.Set;
 
 public class ConcurrentMapsTest extends TestCase {
+  public static final TObjectHashingStrategy<String> CUSTOM_STRATEGY = new TObjectHashingStrategy<String>() {
+    @Override
+    public int computeHashCode(String object) {
+      return Character.toLowerCase(object.charAt(object.length() - 1));
+    }
+
+    @Override
+    public boolean equals(String o1, String o2) {
+      return StringUtil.equalsIgnoreCase(o1, o2);
+    }
+  };
+
   public void testKeysRemovedWhenIdentityStrategyIsUsed() {
     ConcurrentWeakHashMap<Object, Object> map = new ConcurrentWeakHashMap<Object, Object>(TObjectHashingStrategy.IDENTITY);
     map.put(new Object(), new Object());
@@ -123,20 +135,32 @@ public class ConcurrentMapsTest extends TestCase {
     assertEquals(1, map.underlyingMapSize());
   }
 
-  public void testStrategy() {
-    SoftHashMap<String, String> map = new SoftHashMap<String, String>(new TObjectHashingStrategy<String>() {
-      @Override
-      public int computeHashCode(String object) {
-        return Character.toLowerCase(object.charAt(object.length() - 1));
-      }
-
-      @Override
-      public boolean equals(String o1, String o2) {
-        return StringUtil.equalsIgnoreCase(o1, o2);
-      }
-    });
+  public void testCustomStrategy() {
+    SoftHashMap<String, String> map = new SoftHashMap<String, String>(CUSTOM_STRATEGY);
 
     map.put("ab", "ab");
+    assertTrue(map.containsKey("AB"));
+    String removed = map.remove("aB");
+    assertEquals("ab", removed);
+    assertTrue(map.isEmpty());
+  }
+
+  public void testCustomStrategyForConcurrentSoft() {
+    ConcurrentSoftHashMap<String, String> map = new ConcurrentSoftHashMap<String, String>(CUSTOM_STRATEGY);
+
+    map.put("ab", "ab");
+    assertEquals(1, map.size());
+    assertTrue(map.containsKey("AB"));
+    String removed = map.remove("aB");
+    assertEquals("ab", removed);
+    assertTrue(map.isEmpty());
+  }
+
+  public void testCustomStrategyForConcurrentWeakSoft() {
+    ConcurrentWeakKeySoftValueHashMap<String, String> map = new ConcurrentWeakKeySoftValueHashMap<String, String>(1,1,1,CUSTOM_STRATEGY);
+
+    map.put("ab", "ab");
+    assertEquals(1, map.size());
     assertTrue(map.containsKey("AB"));
     String removed = map.remove("aB");
     assertEquals("ab", removed);

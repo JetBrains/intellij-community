@@ -60,7 +60,7 @@ public interface Rearranger<E extends ArrangementEntry> {
                                 @Nullable Document document,
                                 @NotNull Collection<TextRange> ranges,
                                 @NotNull PsiElement element,
-                                @Nullable ArrangementSettings settings);
+                                @NotNull ArrangementSettings settings);
   
   /**
    * Allows to build rearranger-interested data for the given element.
@@ -77,7 +77,7 @@ public interface Rearranger<E extends ArrangementEntry> {
   List<E> parse(@NotNull PsiElement root,
                 @Nullable Document document,
                 @NotNull Collection<TextRange> ranges,
-                @Nullable ArrangementSettings settings);
+                @NotNull ArrangementSettings settings);
 
   /**
    * Allows to answer how many blank lines should be inserted before the target arrangement entry which position is changed.

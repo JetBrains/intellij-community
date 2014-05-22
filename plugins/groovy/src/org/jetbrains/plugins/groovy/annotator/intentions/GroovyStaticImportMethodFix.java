@@ -62,6 +62,7 @@ public class GroovyStaticImportMethodFix extends Intention {
     myMethodCall = SmartPointerManager.getInstance(methodCallExpression.getProject()).createSmartPsiElementPointer(methodCallExpression);
   }
 
+  @Override
   @NotNull
   public String getText() {
     String text = "Static Import Method";
@@ -75,6 +76,7 @@ public class GroovyStaticImportMethodFix extends Intention {
     return text;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
@@ -86,6 +88,7 @@ public class GroovyStaticImportMethodFix extends Intention {
     return result instanceof GrReferenceExpression ? (GrReferenceExpression)result : null;
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     myCandidates = null;
     return myMethodCall.getElement() != null &&
@@ -119,7 +122,7 @@ public class GroovyStaticImportMethodFix extends Intention {
       PsiFile file = method.getContainingFile();
       if (file instanceof PsiClassOwner
           //do not show methods from default package
-          && ((PsiClassOwner)file).getPackageName().length() != 0 && PsiUtil.isAccessible(element, method)) {
+          && !((PsiClassOwner)file).getPackageName().isEmpty() && PsiUtil.isAccessible(element, method)) {
         list.add(method);
         if (PsiUtil.isApplicable(PsiUtil.getArgumentTypes(element, true), method, PsiSubstitutor.EMPTY, element, false)) {
           applicableList.add(method);
@@ -157,6 +160,7 @@ public class GroovyStaticImportMethodFix extends Intention {
 
   private void doImport(final PsiMethod toImport) {
     CommandProcessor.getInstance().executeCommand(toImport.getProject(), new Runnable() {
+      @Override
       public void run() {
         AccessToken accessToken = WriteAction.start();
 
@@ -186,6 +190,7 @@ public class GroovyStaticImportMethodFix extends Intention {
       setTitle(QuickFixBundle.message("static.import.method.choose.method.to.import")).
       setMovable(true).
       setItemChoosenCallback(new Runnable() {
+        @Override
         public void run() {
           PsiMethod selectedValue = (PsiMethod)list.getSelectedValue();
           if (selectedValue == null) return;
@@ -196,6 +201,7 @@ public class GroovyStaticImportMethodFix extends Intention {
       showInBestPositionFor(editor);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }
