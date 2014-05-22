@@ -37,8 +37,8 @@ def send( client, data ):
     if data is None:
         sendInt(client, 0)
     else:
-        sendInt(client, len(data))
-        client.sendall( data )
+        # we need to send data length and data together because it may produce read problems, see org.zmlx.hg4idea.execution.SocketServer
+        client.sendall(struct.pack('>L', len(data)) + data)
     
 def receiveIntWithMessage(client, message):
     requiredLength = struct.calcsize('>L')
