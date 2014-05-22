@@ -16,11 +16,6 @@ def run(working_dir):
   if not manage_file:
     manage_file = 'manage'
 
-  def execute_manager(settings_mod, argv = None):
-      management.setup_environ(settings_mod)
-
-  management.execute_manager = execute_manager
-
   def execute_from_command_line(argv=None):
     pass
 
