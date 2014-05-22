@@ -802,11 +802,12 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       return ((PluginException)t).getPluginId();
     }
 
+    Set<String> visitedClassNames = ContainerUtil.newHashSet();
     for (StackTraceElement element : t.getStackTrace()) {
       if (element != null) {
         String className = element.getClassName();
-        if (PluginManager.isPluginClass(className)) {
-          return PluginManager.getPluginByClassName(className);
+        if (visitedClassNames.add(className) && PluginManagerCore.isPluginClass(className)) {
+          return PluginManagerCore.getPluginByClassName(className);
         }
       }
     }

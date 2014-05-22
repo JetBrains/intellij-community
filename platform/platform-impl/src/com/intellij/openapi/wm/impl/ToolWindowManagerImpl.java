@@ -2072,12 +2072,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private final class EditorComponentFocusWatcher extends FocusWatcher {
     @Override
     protected void focusedComponentChanged(final Component component, final AWTEvent cause) {
-      final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-      final Component owner = mgr.getFocusOwner();
-
-      if (myWindowManager.getCommandProcessor().getCommandCount() > 0 || component == null || component == owner) {
+      if (myWindowManager.getCommandProcessor().getCommandCount() > 0 || component == null) {
         return;
       }
+      final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+      final Component owner = mgr.getFocusOwner();
 
       IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(myProject) {
         @Override
