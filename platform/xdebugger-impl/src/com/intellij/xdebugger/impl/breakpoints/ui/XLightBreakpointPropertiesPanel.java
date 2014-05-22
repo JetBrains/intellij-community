@@ -20,6 +20,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.popup.util.DetailView;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
@@ -32,8 +33,6 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.plaf.basic.BasicRadioButtonUI;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -125,9 +124,7 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpointBase<?,?,?>> i
     if (debuggerEditorsProvider != null) {
       myConditionEnabledCheckbox = new JBCheckBox(XDebuggerBundle.message("xbreakpoints.condition.checkbox"));
       JBLabel conditionEnabledLabel = new JBLabel(XDebuggerBundle.message("xbreakpoints.condition.checkbox"));
-      conditionEnabledLabel.setBorder(new EmptyBorder(0, ((BasicRadioButtonUI)myConditionEnabledCheckbox.getUI()).getDefaultIcon().getIconWidth() +
-                                                         myConditionEnabledCheckbox.getIconTextGap() +
-                                                         myConditionEnabledCheckbox.getBorder().getBorderInsets(myConditionEnabledCheckbox).left, 0, 0));
+      conditionEnabledLabel.setBorder(UIUtil.getTextAlignBorder(myConditionEnabledCheckbox));
       myConditionEnabledPanel.add(myConditionEnabledCheckbox, CONDITION_ENABLED_CHECKBOX);
       myConditionEnabledPanel.add(conditionEnabledLabel, CONDITION_ENABLED_LABEL);
       myConditionComboBox = new XDebuggerExpressionComboBox(project, debuggerEditorsProvider, CONDITION_HISTORY_ID, myBreakpoint.getSourcePosition());

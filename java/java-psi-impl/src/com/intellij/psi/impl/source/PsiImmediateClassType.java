@@ -184,6 +184,9 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
       ClassResolveResult baseResolveResult = ((PsiAnonymousClass)aClass).getBaseClassType().resolveGenerics();
       PsiClass baseClass = baseResolveResult.getElement();
       if (baseClass != null) {
+        if (textType == TextType.INT_CANONICAL) {
+          buffer.append("anonymous ");
+        }
         buildText(baseClass, baseResolveResult.getSubstitutor(), buffer, textType, false);
       }
       return;

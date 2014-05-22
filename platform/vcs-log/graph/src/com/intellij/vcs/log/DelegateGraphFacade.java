@@ -36,6 +36,21 @@ import java.util.List;
 import java.util.Set;
 
 public class DelegateGraphFacade implements GraphFacade {
+  @NotNull
+  public static final GraphAnswer JUMP_TO_0_GRAPH_ANSWER = new GraphAnswer() {
+    @Nullable
+    @Override
+    public GraphChange getGraphChange() {
+      return new GraphChange() {
+      };
+    }
+
+    @Nullable
+    @Override
+    public GraphActionRequest getActionRequest() {
+      return new JumpToRowActionRequest(0);
+    }
+  };
 
   @NotNull
   private final PermanentGraph<Integer> myPermanentGraph;
@@ -124,19 +139,13 @@ public class DelegateGraphFacade implements GraphFacade {
     if (action instanceof LinearBranchesExpansionAction) {
       boolean shouldExpand = ((LinearBranchesExpansionAction)action).shouldExpand();
       actionController.setLinearBranchesExpansion(!shouldExpand);
-      return new GraphAnswer() {
-        @Nullable
-        @Override
-        public GraphChange getGraphChange() {
-          return new GraphChange() {};
-        }
+      return JUMP_TO_0_GRAPH_ANSWER;
+    }
 
-        @Nullable
-        @Override
-        public GraphActionRequest getActionRequest() {
-          return new JumpToRowActionRequest(0);
-        }
-      };
+    if (action instanceof BekGraphAction) {
+      mySortType = ((BekGraphAction)action).getSortType();
+      updateVisibleGraph();
+      return JUMP_TO_0_GRAPH_ANSWER;
     }
 
     return null;
@@ -190,24 +199,25 @@ public class DelegateGraphFacade implements GraphFacade {
 
   @Override
   public void setVisibleBranches(@Nullable Collection<Integer> heads) {
-    if (heads == null)
+    boolean needUpdate;
+    if (heads == null) {
+      needUpdate = myHeads != null;
       myHeads = null;
-    else
+    } else {
+      needUpdate = true;
       myHeads = new HashSet<Integer>(heads);
-
-    updateVisibleGraph();
+    }
+    if (needUpdate)
+      updateVisibleGraph();
   }
 
   @Override
   public void setFilter(@Nullable Condition<Integer> visibilityPredicate) {
-    myVisibilityPredicate = visibilityPredicate;
-    updateVisibleGraph();
-  }
+    boolean needUpdate = !(visibilityPredicate == myVisibilityPredicate);
 
-  @Override
-  public void setSortType(@NotNull PermanentGraph.SortType sortType) {
-    mySortType = sortType;
-    updateVisibleGraph();
+    myVisibilityPredicate = visibilityPredicate;
+    if (needUpdate)
+      updateVisibleGraph();
   }
 
   @NotNull

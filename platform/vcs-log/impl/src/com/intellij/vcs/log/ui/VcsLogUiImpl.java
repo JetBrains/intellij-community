@@ -134,7 +134,6 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
           @Override
           public void run() {
             handleAnswer(answer);
-            jumpToRow(0);
           }
         });
       }
@@ -150,7 +149,6 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
           @Override
           public void run() {
             handleAnswer(answer);
-            jumpToRow(0);
           }
         });
       }
@@ -164,6 +162,27 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
   public boolean areLongEdgesHidden() {
     return myDataPack.getGraphFacade().getInfoProvider().areLongEdgesHidden();
+  }
+
+  public void setBek(boolean bek) {
+    myUiProperties.setBek(bek);
+    final BekGraphAction bekGraphAction = new BekGraphAction(bek ? PermanentGraph.SortType.Bek : PermanentGraph.SortType.Normal);
+    runUnderModalProgress("Apply sort type...", new Runnable() {
+      @Override
+      public void run() {
+        final GraphAnswer answer = myDataPack.getGraphFacade().performAction(bekGraphAction);
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            handleAnswer(answer);
+          }
+        });
+      }
+    });
+  }
+
+  public boolean isBek() {
+    return myUiProperties.isBek();
   }
 
   public void click(int rowIndex) {
@@ -300,6 +319,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
             setModel(newModel, myDataPack, previouslySelected);
             myMainFrame.updateDataPack(myDataPack);
             setLongEdgeVisibility(myUiProperties.areLongEdgesVisible());
+            setBek(myUiProperties.isBek());
             fireFilterChangeEvent();
             repaintUI();
 

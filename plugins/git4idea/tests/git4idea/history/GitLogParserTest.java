@@ -21,7 +21,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
@@ -184,7 +183,7 @@ public class GitLogParserTest extends GitPlatformTest {
     String expectedAuthorAndCommitter = GitUtil.adjustAuthorName(
                                                 String.format("%s <%s>", expected.getAuthorName(), expected.getAuthorEmail()),
                                                 String.format("%s <%s>", expected.getCommitterName(), expected.getCommitterEmail()));
-    assertEquals(expectedAuthorAndCommitter, actual.getAuthorAndCommitter());
+    assertEquals(expectedAuthorAndCommitter, getAuthorAndCommitter(actual));
 
 
     assertEquals(expected.getSubject(), actual.getSubject());
@@ -199,6 +198,13 @@ public class GitLogParserTest extends GitPlatformTest {
       assertPaths(actual.getFilePaths(myRoot), expected.paths());
       assertChanges(actual.parseChanges(myProject, myRoot), expected.changes());
     }
+  }
+
+  @NotNull
+  String getAuthorAndCommitter(@NotNull GitLogRecord actual) {
+    String author = String.format("%s <%s>", actual.getAuthorName(), actual.getAuthorEmail());
+    String committer = String.format("%s <%s>", actual.getCommitterName(), actual.getCommitterEmail());
+    return GitUtil.adjustAuthorName(author, committer);
   }
 
   private void assertPaths(List<FilePath> actualPaths, List<String> expectedPaths) {

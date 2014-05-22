@@ -38,7 +38,7 @@ public class VcsLogColorManagerImpl implements VcsLogColorManager {
     });
     myRoots2Colors = ContainerUtil.newHashMap();
     int i = 0;
-    for (VirtualFile root : roots) {
+    for (VirtualFile root : myRoots) {
       Color color;
       if (i >= ROOT_COLORS.length) {
         color = getDefaultRootColor();

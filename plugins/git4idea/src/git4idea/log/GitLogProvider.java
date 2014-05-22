@@ -163,7 +163,9 @@ public class GitLogProvider implements VcsLogProvider {
 
     List<String> parameters = new ArrayList<String>(GitHistoryUtils.LOG_ALL);
     parameters.add("--sparse");
-    return GitHistoryUtils.readCommits(myProject, root, userRegistry, parameters);
+
+    List<TimedVcsCommit> timedVcsCommits = GitHistoryUtils.readCommits(myProject, root, userRegistry, parameters);
+    return new GitBekParentFixer(root, this, timedVcsCommits).getCorrectCommits();
   }
 
   @NotNull
