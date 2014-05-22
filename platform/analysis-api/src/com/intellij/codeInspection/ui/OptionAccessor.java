@@ -16,8 +16,8 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-
-import java.lang.reflect.Field;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ReflectionUtil;
 
 /**
  * @author Dmitry Batkovich
@@ -29,6 +29,7 @@ public interface OptionAccessor {
   void setOption(String optionName, boolean optionValue);
 
   class Default implements OptionAccessor {
+    private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ui.OptionAccessor");
     private final InspectionProfileEntry myInspection;
 
     public Default(final InspectionProfileEntry inspection) {
@@ -37,29 +38,20 @@ public interface OptionAccessor {
 
     @Override
     public boolean getOption(final String optionName) {
-      try {
-        final Class<? extends InspectionProfileEntry> aClass = myInspection.getClass();
-        final Field field = aClass.getField(optionName);
-        return field.getBoolean(myInspection);
-      } catch (IllegalAccessException ignored) {
-        return false;
-      } catch (NoSuchFieldException ignored) {
-        return false;
-      }
+      return ReflectionUtil.getField(myInspection.getClass(), myInspection, boolean.class, optionName);
     }
 
     @Override
     public void setOption(final String optionName, boolean optionValue) {
       try {
-        final Class<? extends InspectionProfileEntry> aClass = myInspection.getClass();
-        final Field field = aClass.getField(optionName);
-        field.setBoolean(myInspection, optionValue);
-      } catch (IllegalAccessException ignored) {
-        // nothing
-      } catch (NoSuchFieldException ignored) {
-        // nothing
+        ReflectionUtil.findField(myInspection.getClass(), boolean.class, optionName).setBoolean(myInspection, optionValue);
+      }
+      catch (IllegalAccessException e) {
+        LOG.warn(e);
+      }
+      catch (NoSuchFieldException e) {
+        LOG.warn(e);
       }
     }
   }
-
 }
