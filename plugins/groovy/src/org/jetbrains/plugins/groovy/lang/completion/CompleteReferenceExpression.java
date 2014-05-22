@@ -323,7 +323,9 @@ public class CompleteReferenceExpression {
       }
       else {
         getVariantsFromQualifierType(((GrTraitType)qualifierType).getExprType(), project);
-        getVariantsFromQualifierType(((GrTraitType)qualifierType).getTraitType(), project);
+        for (PsiClassType traitType : ((GrTraitType)qualifierType).getTraitTypes()) {
+          getVariantsFromQualifierType(traitType, project);
+        }
       }
     }
     else {

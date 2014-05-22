@@ -51,6 +51,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.List;
+import java.util.ListIterator;
 
 /**
  * @author Medvedev Max
@@ -238,10 +239,14 @@ public class GrReferenceResolveUtil {
     }
     else {
       PsiClassType exprType = traitType.getExprType();
-      PsiClassType innerTraitType = traitType.getTraitType();
 
       if (!processQualifierType(processor, exprType, state, place)) return false;
-      if (!processQualifierType(processor, innerTraitType, state, place)) return false;
+
+      List<PsiClassType> traitTypes = traitType.getTraitTypes();
+      for (ListIterator<PsiClassType> iterator = traitTypes.listIterator(); iterator.hasPrevious(); ) {
+        PsiClassType type = iterator.previous();
+        if (!processQualifierType(processor, type, state, place)) return false;
+      }
     }
 
     return true;

@@ -16,25 +16,34 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeVisitor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Created by Max Medvedev on 20/05/14
@@ -46,24 +55,29 @@ public class GrTraitType extends PsiType {
   private final GrExpression myOriginal;
   private final GlobalSearchScope myResolveScope;
   private final PsiClassType myExprType;
-  private final PsiClassType myTraitType;
+  private final List<PsiClassType> myTraitTypes;
 
 
   public GrTraitType(@NotNull GrExpression original,
                      @NotNull PsiClassType exprType,
-                     @NotNull PsiClassType traitType,
+                     @NotNull List<PsiClassType> traitTypes,
                      @NotNull GlobalSearchScope resolveScope) {
     super(PsiAnnotation.EMPTY_ARRAY);
     myOriginal = original;
     myResolveScope = resolveScope;
     myExprType = exprType;
-    myTraitType = traitType;
+    myTraitTypes = ContainerUtil.newArrayList(traitTypes);
   }
 
   @NotNull
   @Override
   public String getPresentableText() {
-    return myExprType.getPresentableText() + " as " + myTraitType.getPresentableText();
+    return myExprType.getPresentableText() + " as " + StringUtil.join(ContainerUtil.map(myTraitTypes, new Function<PsiClassType, String>() {
+      @Override
+      public String fun(PsiClassType type) {
+        return type.getPresentableText();
+      }
+    }), ", ");
   }
 
   @NotNull
@@ -75,12 +89,22 @@ public class GrTraitType extends PsiType {
   @NotNull
   @Override
   public String getInternalCanonicalText() {
-    return myExprType.getCanonicalText() + " as " + myTraitType.getCanonicalText();
+    return myExprType.getCanonicalText() + " as " + StringUtil.join(ContainerUtil.map(myTraitTypes, new Function<PsiClassType, String>() {
+      @Override
+      public String fun(PsiClassType type) {
+        return type.getCanonicalText();
+      }
+    }), ", ");
   }
 
   @Override
   public boolean isValid() {
-    return myExprType.isValid() && myTraitType.isValid();
+    return myExprType.isValid() && ContainerUtil.find(myTraitTypes, new Condition<PsiClassType>() {
+      @Override
+      public boolean value(PsiClassType type) {
+        return !type.isValid();
+      }
+    }) == null;
   }
 
   @Override
@@ -96,7 +120,10 @@ public class GrTraitType extends PsiType {
   @NotNull
   @Override
   public PsiType[] getSuperTypes() {
-    return new PsiType[]{myExprType, myTraitType};
+    PsiType[] result = new PsiType[myTraitTypes.size() + 1];
+    result[0] = myExprType;
+    ArrayUtil.copy(myTraitTypes, result, 1);
+    return result;
   }
 
   @NotNull
@@ -120,21 +147,29 @@ public class GrTraitType extends PsiType {
     return myExprType;
   }
 
-  public PsiClassType getTraitType() {
-    return myTraitType;
+  public List<PsiClassType> getTraitTypes() {
+    return Collections.unmodifiableList(myTraitTypes);
   }
 
   @Nullable
   private GrTypeDefinition buildMockTypeDefinition() {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myOriginal.getProject());
     try {
-      GrTypeDefinition definition = factory.createTypeDefinition("class ___________Temp______ extends Super implements Trait {}");
+      GrTypeDefinition definition = factory.createTypeDefinition("class ___________Temp______ <T> extends Super implements Trait {}");
       replaceReferenceWith(factory, definition.getExtendsClause(), myExprType);
-      replaceReferenceWith(factory, definition.getImplementsClause(), myTraitType);
+      addReferencesWith(factory, definition.getImplementsClause(), myTraitTypes);
       return definition;
     }
     catch (IncorrectOperationException e) {
       return null;
+    }
+  }
+
+  private static void addReferencesWith(GroovyPsiElementFactory factory, GrImplementsClause clause, List<PsiClassType> traitTypes) {
+    clause.getReferenceElementsGroovy()[0].delete();
+    for (PsiClassType type : traitTypes) {
+      GrCodeReferenceElement ref = ((GrClassTypeElement)factory.createTypeElement(type)).getReferenceElement();
+      clause.add(ref);
     }
   }
 
@@ -149,6 +184,17 @@ public class GrTraitType extends PsiType {
     mockSuperReference.replace(superReference);
   }
 
+  public GrTraitType erasure() {
+    PsiClassType exprType = (PsiClassType)TypeConversionUtil.erasure(myExprType);
+    List<PsiClassType> traitTypes = ContainerUtil.map(myTraitTypes, new Function<PsiClassType, PsiClassType>() {
+      @Override
+      public PsiClassType fun(PsiClassType type) {
+        return (PsiClassType)TypeConversionUtil.erasure(type);
+      }
+    });
+    return new GrTraitType(myOriginal, exprType, traitTypes, myResolveScope);
+  }
+
   @Nullable
   public static GrTraitType createTraitClassType(@NotNull GrSafeCastExpression safeCastExpression) {
     GrExpression operand = safeCastExpression.getOperand();
@@ -160,13 +206,15 @@ public class GrTraitType extends PsiType {
     PsiType type = typeElement.getType();
     if (!GrTraitUtil.isTrait(PsiTypesUtil.getPsiClass(type))) return null;
 
-    return new GrTraitType(safeCastExpression, ((PsiClassType)exprType), ((PsiClassType)type), safeCastExpression.getResolveScope());
+    return new GrTraitType(safeCastExpression, ((PsiClassType)exprType), Collections.singletonList((PsiClassType)type), safeCastExpression.getResolveScope());
   }
 
-  public GrTraitType erasure() {
-    PsiClassType exprType = (PsiClassType)TypeConversionUtil.erasure(myExprType);
-    PsiClassType traitType = (PsiClassType)TypeConversionUtil.erasure(myTraitType);
-    return new GrTraitType(myOriginal, exprType, traitType, myResolveScope);
-  }
 
+  @NotNull
+  public static GrTraitType createTraitClassType(@NotNull GrExpression context,
+                                                 @NotNull PsiClassType exprType,
+                                                 @NotNull List<PsiClassType> traitTypes,
+                                                 @NotNull GlobalSearchScope resolveScope) {
+    return new GrTraitType(context, exprType, traitTypes, resolveScope);
+  }
 }
