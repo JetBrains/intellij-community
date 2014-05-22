@@ -55,7 +55,10 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Ge
  * @author Denis Zhdanov
  * @since 7/20/12 2:31 PM
  */
-public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, ArrangementStandardSettingsAware, ArrangementColorsAware {
+public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
+                                       ArrangementSectionRuleAwareSettings,
+                                       ArrangementStandardSettingsAware,
+                                       ArrangementColorsAware {
 
   // Type
   @NotNull private static final Set<ArrangementSettingsToken>                                SUPPORTED_TYPES     =
@@ -215,12 +218,11 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     @NotNull PsiElement element,
     @NotNull ArrangementSettings settings)
   {
-    Set<ArrangementSettingsToken> groupingRules = getGroupingRules(settings);
     JavaArrangementParseInfo existingEntriesInfo = new JavaArrangementParseInfo();
-    root.accept(new JavaArrangementVisitor(existingEntriesInfo, document, ranges, groupingRules));
+    root.accept(new JavaArrangementVisitor(existingEntriesInfo, document, ranges, settings));
 
     JavaArrangementParseInfo newEntryInfo = new JavaArrangementParseInfo();
-    element.accept(new JavaArrangementVisitor(newEntryInfo, document, Collections.singleton(element.getTextRange()), groupingRules));
+    element.accept(new JavaArrangementVisitor(newEntryInfo, document, Collections.singleton(element.getTextRange()), settings));
     if (newEntryInfo.getEntries().size() != 1) {
       return null;
     }
@@ -236,7 +238,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
   {
     // Following entries are subject to arrangement: class, interface, field, method.
     JavaArrangementParseInfo parseInfo = new JavaArrangementParseInfo();
-    root.accept(new JavaArrangementVisitor(parseInfo, document, ranges, getGroupingRules(settings)));
+    root.accept(new JavaArrangementVisitor(parseInfo, document, ranges, settings));
     for (ArrangementGroupingRule rule : settings.getGroupings()) {
       if (GETTERS_AND_SETTERS.equals(rule.getGroupingType())) {
         setupGettersAndSetters(parseInfo);
@@ -299,17 +301,6 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
   }
 
   @NotNull
-  private static Set<ArrangementSettingsToken> getGroupingRules(@Nullable ArrangementSettings settings) {
-    Set<ArrangementSettingsToken> groupingRules = ContainerUtilRt.newHashSet();
-    if (settings != null) {
-      for (ArrangementGroupingRule rule : settings.getGroupings()) {
-        groupingRules.add(rule.getGroupingType());
-      }
-    }
-    return groupingRules;
-  }
-
-  @NotNull
   @Override
   public ArrangementSettingsSerializer getSerializer() {
     return SETTINGS_SERIALIZER;
@@ -341,7 +332,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
       new CompositeArrangementSettingsToken(ORDER, KEEP, BY_NAME)
     );
   }
-  
+
   @Override
   public boolean isEnabled(@NotNull ArrangementSettingsToken token, @Nullable ArrangementMatchCondition current) {
     if (SUPPORTED_TYPES.contains(token) || SUPPORTED_ORDERS.contains(token) || StdArrangementTokens.Regexp.NAME.equals(token)) {
@@ -411,11 +402,11 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
       if (attributes == null) {
         continue;
       }
-      
+
       if (result == null) {
         result = attributes;
       }
-      
+
       Color currentForegroundColor = result.getForegroundColor();
       if (currentForegroundColor == null) {
         result.setForegroundColor(attributes.getForegroundColor());
@@ -434,7 +425,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     if (result != null && result.getForegroundColor() == null) {
       return null;
     }
-    
+
     if (result != null && result.getBackgroundColor() == null) {
       result.setBackgroundColor(scheme.getDefaultBackground());
     }

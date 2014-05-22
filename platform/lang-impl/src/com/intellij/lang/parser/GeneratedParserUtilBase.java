@@ -112,9 +112,9 @@ public class GeneratedParserUtilBase {
     return TokenSet.create(tokenTypes_);
   }
 
-  public static boolean consumeTokens(PsiBuilder builder_, int pin_, IElementType... tokens_) {
+  private static boolean consumeTokens(PsiBuilder builder_, boolean smart, int pin_, IElementType... tokens_) {
     ErrorState state = ErrorState.get(builder_);
-    if (state.completionState != null && state.predicateSign) {
+    if (state.completionState != null && state.predicateCount == 0) {
       addCompletionVariant(builder_, state.completionState, tokens_);
     }
     // suppress single token completion
@@ -124,13 +124,26 @@ public class GeneratedParserUtilBase {
     boolean pinned_ = false;
     for (int i = 0, tokensLength = tokens_.length; i < tokensLength; i++) {
       if (pin_ > 0 && i == pin_) pinned_ = result_;
-      if ((result_ || pinned_) && !consumeToken(builder_, tokens_[i])) {
+      if ((result_ || pinned_) && !consumeInner(builder_, smart, i, tokens_)) {
         result_ = false;
         if (pin_ < 0 || pinned_) report_error_(builder_, state, false);
       }
     }
     state.completionState = completionState;
     return pinned_ || result_;
+  }
+
+  private static boolean consumeInner(PsiBuilder builder_, boolean smart, int i, IElementType[] tokens_) {
+    if (smart) return i == 0 ? consumeTokenFast(builder_, tokens_[i]) : consumeToken(builder_, tokens_[i]);
+    return consumeToken(builder_, tokens_[i]);
+  }
+
+  public static boolean consumeTokens(PsiBuilder builder_, int pin_, IElementType... tokens_) {
+    return consumeTokens(builder_, false, pin_, tokens_);
+  }
+
+  public static boolean consumeTokensSmart(PsiBuilder builder_, int pin_, IElementType... tokens_) {
+    return consumeTokens(builder_, true, pin_, tokens_);
   }
 
   public static boolean parseTokens(PsiBuilder builder_, int pin_, IElementType... tokens_) {
@@ -143,6 +156,20 @@ public class GeneratedParserUtilBase {
       marker_.drop();
     }
     return result_;
+  }
+
+  public static boolean consumeTokenSmart(PsiBuilder builder_, IElementType token) {
+    builder_.eof(); // skip whitespaces
+    ErrorState state = ErrorState.get(builder_);
+    CompletionState completionState = state.completionState;
+    if (completionState != null && state.predicateCount == 0) {
+      addCompletionVariant(builder_, completionState, token);
+    }
+    return consumeTokenFast(builder_, token);
+  }
+
+  public static boolean consumeTokenSmart(PsiBuilder builder_, String token) {
+    return consumeTokenFast(builder_, token);
   }
 
   public static boolean consumeToken(PsiBuilder builder_, IElementType token) {

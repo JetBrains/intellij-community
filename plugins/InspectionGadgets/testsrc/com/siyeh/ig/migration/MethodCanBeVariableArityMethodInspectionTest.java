@@ -1,14 +1,21 @@
 package com.siyeh.ig.migration;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
 
-public class MethodCanBeVariableArityMethodInspectionTest extends IGInspectionTestCase {
+public class MethodCanBeVariableArityMethodInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    final MethodCanBeVariableArityMethodInspection tool = new MethodCanBeVariableArityMethodInspection();
-    tool.ignoreByteAndShortArrayParameters = true;
-    tool.ignoreOverridingMethods = true;
-    tool.onlyReportPublicMethods = true;
-    doTest("com/siyeh/igtest/migration/method_can_be_variable_arity_method", tool);
+  public void testMethodCanBeVariableArity() {
+    doTest();
+  }
+
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    final MethodCanBeVariableArityMethodInspection inspection = new MethodCanBeVariableArityMethodInspection();
+    inspection.ignoreByteAndShortArrayParameters = true;
+    inspection.ignoreOverridingMethods = true;
+    inspection.onlyReportPublicMethods = true;
+    inspection.ignoreMultipleArrayParameters = true;
+    return inspection;
   }
 }

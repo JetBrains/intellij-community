@@ -168,7 +168,9 @@ public class AllIcons {
     
     public static class Mac {
       public static final Icon AddNewSectionRule = IconLoader.getIcon("/codeStyle/mac/AddNewSectionRule.png"); // 16x16
+
     }
+
   }
   
   public static class Css {
