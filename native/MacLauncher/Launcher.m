@@ -11,6 +11,8 @@
 #import "utils.h"
 #import <dlfcn.h>
 
+#define kOldStyleSwitchPolicyValue (2) // log out before switching
+#define kNewStyleSwitchPolicyValue (0) // dynamic switching
 typedef jint (JNICALL *fun_ptr_t_CreateJavaVM)(JavaVM **pvm, void **env, void *args);
 
 
@@ -419,9 +421,9 @@ BOOL setMuxState(io_connect_t connect, muxState state, uint64_t arg){
                                            NULL,         // array of scalar (64-bit) output values.
                                            0);           // pointer to the number of scalar output values.
 
-    if (kernResult == KERN_SUCCESS)
-        NSLog(@"setMuxState was successful.");
-    else
+    if (kernResult != KERN_SUCCESS)
+//        NSLog(@"setMuxState was successful.");
+//    else
         NSLog(@"setMuxState returned 0x%08x.", kernResult);
 
     return kernResult == KERN_SUCCESS;
@@ -439,9 +441,9 @@ BOOL getMuxState(io_connect_t connect, uint64_t input, uint64_t *output){
                                            output,        // array of scalar (64-bit) output values.
                                            &outputCount); // pointer to the number of scalar output values.
 
-    if (kernResult == KERN_SUCCESS)
-        NSLog(@"getMuxState was successful (count=%d, value=0x%08llx).", outputCount, *output);
-    else
+    if (kernResult != KERN_SUCCESS)
+//        NSLog(@"getMuxState was successful (count=%d, value=0x%08llx).", outputCount, *output);
+//    else
         NSLog(@"getMuxState returned 0x%08x.", kernResult);
 
     return kernResult == KERN_SUCCESS;
@@ -449,6 +451,14 @@ BOOL getMuxState(io_connect_t connect, uint64_t input, uint64_t *output){
 
 
 BOOL isUsingIntegratedGPU(){
+    uint64_t output;
+    if (_switcherConnect == IO_OBJECT_NULL) return NO;
+    // 7 - returns active graphics card
+    getMuxState(_switcherConnect, 7, &output);
+    return output != 0;
+}
+
+BOOL switcherOpen(){
     kern_return_t kernResult = IOServiceGetMatchingServices(kIOMasterPortDefault, IOServiceMatching("AppleGraphicsControl"), &iterator);
     if (kernResult != KERN_SUCCESS) {
         NSLog(@"IOServiceGetMatchingServices returned 0x%08x.", kernResult);
@@ -474,12 +484,7 @@ BOOL isUsingIntegratedGPU(){
     else
         NSLog(@"Driver connection opened.");
 
-
-    uint64_t output;
-    if (_switcherConnect == IO_OBJECT_NULL) return NO;
-    // 7 - returns active graphics card
-    getMuxState(_switcherConnect, 7, &output);
-    return output != 0;
+    return kernResult == KERN_SUCCESS;
 }
 
 
@@ -548,38 +553,30 @@ NSString *integratedGPUNames() {
     NSBundle *vm = findMatchingVm();
     NSLog(@"--- launch");
 
-//    if (! switcherOpen()) {
-//        NSLog(@"Can't open connection to AppleGraphicsControl. This probably isn't a gfxCardStatus-compatible machine.");
-//    } else {
-
+    if (! switcherOpen()) {
+        NSLog(@"Can't open connection to AppleGraphicsControl. There is no a possibility to switch GPU.");
+    } else {
         NSString *intCard = integratedGPUNames();
         if (intCard != nil) {
           NSLog(@"Integrated GPU name: %@", intCard);
           if (isUsingIntegratedGPU()){
             NSLog(@"Integrated GPU is used.");
-            uint64_t output;
-            getMuxState(_switcherConnect, muxGpuSelect, &output);
-            if ( output != 0 ) {
-              NSLog(@"Dynamic mode is using.");
-              setMuxState(_switcherConnect, muxGpuSelect, 0);
-              setMuxState(_switcherConnect, muxDisableFeature, 0);
-              NSLog(@"Dynamic mode switch of.");
-              getMuxState(_switcherConnect, muxGpuSelect, &output);
-              if ( output != 0 ) {
-                NSLog(@"Dynamic mode is using.");
-                setMuxState(_switcherConnect, muxGpuSelect, 0);
-                setMuxState(_switcherConnect, muxDisableFeature, 0);
-              } else{
-                NSLog(@"Integrated mode is using.");
-              }
-              getMuxState(_switcherConnect, muxSwitchPolicy, &output);
-              if ( output != 0 ) {
-                NSLog(@"OldStyleSwitchPolicy is Using");
-                setMuxState(_switcherConnect, muxSwitchPolicy, 2);
-              } else{
-                NSLog(@"NewStyleSwitchPolicy is Using");
-                setMuxState(_switcherConnect, muxSwitchPolicy, 0);
-              }
+
+            // Disable dynamic switching
+            setMuxState(_switcherConnect, muxGpuSelect, 0);
+            NSLog(@"Dynamic mode is switching OFF.");
+            setMuxState(_switcherConnect, muxDisableFeature, 1<<Policy);
+            setMuxState(_switcherConnect, muxSwitchPolicy, kOldStyleSwitchPolicyValue);
+
+            NSLog(@"After disable dynamic mode 5 sec wait");
+            sleep(1);
+
+            if (isUsingIntegratedGPU()){
+              NSLog(@"Integrated GPU is used.");
+            } else{
+              NSLog(@"Discrete GPU is used.");
+              setMuxState(_switcherConnect, muxForceSwitch, 0);
+              NSLog(@"Try to switch to integrate card.");
             }
           } else{
             NSLog(@"Discrete GPU is used.");
@@ -589,7 +586,7 @@ NSString *integratedGPUNames() {
         } else {
           NSLog(@"There is no Integrated GPU present.");
         }
-
+    }
     debugLog([vm bundlePath]);
     NSLog(@"vm == %@", vm);
     if (vm == nil) {
