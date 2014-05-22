@@ -181,6 +181,9 @@
     <projectService serviceInterface="com.intellij.codeInsight.ExternalAnnotationsManager"
                     serviceImplementation="com.intellij.codeInsight.ExternalAnnotationsManagerImpl"/>
 
+    <projectService serviceInterface="com.intellij.codeInsight.InferredAnnotationsManager"
+                    serviceImplementation="com.intellij.codeInsight.InferredAnnotationsManagerImpl"/>
+
     <projectService serviceInterface="com.intellij.openapi.compiler.CompilerManager"
                     serviceImplementation="com.intellij.compiler.CompilerManagerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.roots.CompilerProjectExtension"

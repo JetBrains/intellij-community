@@ -113,9 +113,17 @@ public class AnnotationUtil {
       }
     }
     if (!skipExternal) {
-      final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(listOwner.getProject());
+      final Project project = listOwner.getProject();
+      final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
       for (String annotationName : annotationNames) {
         final PsiAnnotation annotation = annotationsManager.findExternalAnnotation(listOwner, annotationName);
+        if (annotation != null) {
+          return annotation;
+        }
+      }
+      final InferredAnnotationsManager inferredAnnotationsManager = InferredAnnotationsManager.getInstance(project);
+      for (String annotationName : annotationNames) {
+        final PsiAnnotation annotation = inferredAnnotationsManager.findInferredAnnotation(listOwner, annotationName);
         if (annotation != null) {
           return annotation;
         }
@@ -269,8 +277,12 @@ public class AnnotationUtil {
     if (modifierList == null) return false;
     PsiAnnotation annotation = modifierList.findAnnotation(annotationFQN);
     if (annotation != null) return true;
-    if (!skipExternal && ExternalAnnotationsManager.getInstance(listOwner.getProject()).findExternalAnnotation(listOwner, annotationFQN) != null) {
-      return true;
+    if (!skipExternal) {
+      final Project project = listOwner.getProject();
+      if (ExternalAnnotationsManager.getInstance(project).findExternalAnnotation(listOwner, annotationFQN) != null ||
+          InferredAnnotationsManager.getInstance(project).findInferredAnnotation(listOwner, annotationFQN) != null) {
+        return true;
+      }
     }
     if (checkHierarchy) {
       if (listOwner instanceof PsiMethod) {
@@ -372,9 +384,14 @@ public class AnnotationUtil {
       annotations = list.getAnnotations();
     }
 
-    final PsiAnnotation[] externalAnnotations = ExternalAnnotationsManager.getInstance(owner.getProject()).findExternalAnnotations(owner);
+    final Project project = owner.getProject();
+    final PsiAnnotation[] externalAnnotations = ExternalAnnotationsManager.getInstance(project).findExternalAnnotations(owner);
     if (externalAnnotations != null) {
       annotations = ArrayUtil.mergeArrays(annotations, externalAnnotations, PsiAnnotation.ARRAY_FACTORY);
+    }
+    final PsiAnnotation[] inferredAnnotations = InferredAnnotationsManager.getInstance(project).findInferredAnnotations(owner);
+    if (inferredAnnotations != null) {
+      annotations = ArrayUtil.mergeArrays(annotations, inferredAnnotations, PsiAnnotation.ARRAY_FACTORY);
     }
 
     if (inHierarchy) {
