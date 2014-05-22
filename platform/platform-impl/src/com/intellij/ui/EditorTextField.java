@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -603,13 +603,19 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     }
   }
 
+  @Override
+  public Color getBackground() {
+    final Color color = getBackgroundColor(isEnabled(), EditorColorsManager.getInstance().getGlobalScheme());
+    return color != null ? color : super.getBackground();
+  }
+
   private Color getBackgroundColor(boolean enabled, final EditorColorsScheme colorsScheme){
     if (myEnforcedBgColor != null) return myEnforcedBgColor;
-    if (UIUtil.getParentOfType(CellRendererPane.class, this) != null && UIUtil.isUnderDarcula()) {
+    if (UIUtil.getParentOfType(CellRendererPane.class, this) != null && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
       return getParent().getBackground();
     }
 
-    if (UIUtil.isUnderDarcula()) return UIUtil.getTextFieldBackground();
+    if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) return UIUtil.getTextFieldBackground();
 
     return enabled
            ? colorsScheme.getDefaultBackground()

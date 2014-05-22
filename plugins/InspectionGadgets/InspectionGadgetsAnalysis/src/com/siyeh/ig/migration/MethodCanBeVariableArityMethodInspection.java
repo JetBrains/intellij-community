@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2013 Bas Leijdekkers
+ * Copyright 2011-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,9 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean onlyReportPublicMethods = false;
 
+  @SuppressWarnings("PublicField")
+  public boolean ignoreMultipleArrayParameters = false;
+
   @Nls
   @NotNull
   @Override
@@ -62,6 +65,8 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
                       "ignoreByteAndShortArrayParameters");
     panel.addCheckbox(InspectionGadgetsBundle.message("ignore.methods.overriding.super.method"), "ignoreOverridingMethods");
     panel.addCheckbox(InspectionGadgetsBundle.message("only.report.public.methods.option"), "onlyReportPublicMethods");
+    panel.addCheckbox(InspectionGadgetsBundle.message("method.can.be.variable.arity.method.ignore.multiple.arrays.option"),
+                      "ignoreMultipleArrayParameters");
     return panel;
   }
 
@@ -115,6 +120,14 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
       }
       if (ignoreOverridingMethods && MethodUtils.hasSuper(method)) {
         return;
+      }
+      if (ignoreMultipleArrayParameters) {
+        for (int i = 0, length = parameters.length - 1; i < length; i++) {
+          final PsiParameter parameter = parameters[i];
+          if (parameter.getType() instanceof PsiArrayType) {
+            return;
+          }
+        }
       }
       registerMethodError(method);
     }

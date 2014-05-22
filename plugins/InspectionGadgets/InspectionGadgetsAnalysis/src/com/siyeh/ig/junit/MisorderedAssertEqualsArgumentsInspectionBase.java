@@ -181,22 +181,30 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
       if (expectedArgument == null || actualArgument == null) {
         return;
       }
-      if (ExpressionUtils.computeConstantExpression(expectedArgument) != null) {
+      if (looksLikeExpectedArgument(expectedArgument) || !looksLikeExpectedArgument(actualArgument)) {
         return;
       }
-      if (ExpressionUtils.computeConstantExpression(actualArgument) == null) {
-        if (actualArgument instanceof PsiReferenceExpression) {
-          final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)actualArgument;
-          final PsiElement target = referenceExpression.resolve();
-          if (!(target instanceof PsiEnumConstant)) {
-            return;
+      registerMethodCallError(expression);
+    }
+
+    private boolean looksLikeExpectedArgument(PsiExpression expression) {
+      if (ExpressionUtils.computeConstantExpression(expression) != null) {
+        return true;
+      }
+      if (expression instanceof PsiReferenceExpression) {
+        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
+        final PsiElement target = referenceExpression.resolve();
+        if (target instanceof PsiEnumConstant) {
+          return true;
+        }
+        if ((target instanceof PsiField)) {
+          final PsiField field = (PsiField)target;
+          if (field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL)) {
+            return true;
           }
         }
-        else {
-          return;
-        }
       }
-      registerMethodCallError(expression);
+      return false;
     }
   }
 }

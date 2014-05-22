@@ -85,8 +85,8 @@ public abstract class SingleTaskController<Request, Result> {
    * The result is immediately passed to the result handler specified in the constructor.
    */
   protected final void taskCompleted(@NotNull Result result) {
+    myResultHandler.consume(result);
     synchronized (LOCK) {
-      myResultHandler.consume(result);
       if (myAwaitingRequests.isEmpty()) {
         myActive = false;
       }

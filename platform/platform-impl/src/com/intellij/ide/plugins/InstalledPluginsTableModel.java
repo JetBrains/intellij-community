@@ -15,9 +15,6 @@
  */
 package com.intellij.ide.plugins;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -30,15 +27,11 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.ui.BooleanTableCellEditor;
 import com.intellij.ui.BooleanTableCellRenderer;
-import com.intellij.ui.JBColor;
 import com.intellij.util.Function;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -159,7 +152,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     for (String host : pluginHosts) {
       try {
         final Map<PluginId, PluginDownloader> downloaded = new HashMap<PluginId, PluginDownloader>();
-        UpdateChecker.checkPluginsHost(host, downloaded, false, null, null);
+        UpdateChecker.checkPluginsHost(host, downloaded, false, null);
         for (PluginId pluginId : downloaded.keySet()) {
           myPlugin2host.put(pluginId.getIdString(), host);
         }

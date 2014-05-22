@@ -145,12 +145,12 @@ public class PluginDownloader {
         return false; //was not updated
       }
 
+      setDescriptor(actualDescriptor);
+
       if (PluginManagerCore.isIncompatible(actualDescriptor, forBuildNumber)) {
         LOG.info("Plugin " + myPluginId + " is incompatible with current installation (since: " + actualDescriptor.getSinceBuild() + ", until: " + actualDescriptor.getUntilBuild()+ ")");
-        return false; //shouldn't happen
+        return false; //host outdated plugins, no compatible plugin for new version
       }
-
-      setDescriptor(actualDescriptor);
     }
     return true;
   }

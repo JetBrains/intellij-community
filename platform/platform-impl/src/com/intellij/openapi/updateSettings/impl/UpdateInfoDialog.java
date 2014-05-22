@@ -17,13 +17,16 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,7 +46,10 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   private final PatchInfo myPatch;
   private final boolean myWriteProtected;
 
-  protected UpdateInfoDialog(@NotNull UpdateChannel channel, boolean enableLink, Collection<PluginDownloader> updatedPlugins) {
+  protected UpdateInfoDialog(@NotNull UpdateChannel channel,
+                             boolean enableLink,
+                             Collection<PluginDownloader> updatedPlugins,
+                             Collection<IdeaPluginDescriptor> incompatiblePlugins) {
     super(enableLink);
     myUpdatedChannel = channel;
     myUpdatedPlugins = updatedPlugins;
@@ -52,6 +58,20 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     myWriteProtected = myPatch != null && !new File(PathManager.getHomePath()).canWrite();
     getCancelAction().putValue(DEFAULT_ACTION, Boolean.TRUE);
     init();
+
+    if (incompatiblePlugins != null && !incompatiblePlugins.isEmpty()) {
+      final boolean onePluginFound = incompatiblePlugins.size() == 1;
+      String incompatibilityError = "Incompatible with new version plugin";
+      incompatibilityError += (onePluginFound ? " is" : "s are") + " detected: ";
+      incompatibilityError += onePluginFound ? "" : "<br>";
+      incompatibilityError += StringUtil.join(incompatiblePlugins, new Function<IdeaPluginDescriptor, String>() {
+        @Override
+        public String fun(IdeaPluginDescriptor downloader) {
+          return downloader.getName();
+        }
+      }, "<br/>");
+      setErrorText(incompatibilityError);
+    }
   }
 
   @Override
