@@ -118,12 +118,6 @@ class GitLogRecord {
     }
   }
 
-  String getAuthorAndCommitter() {
-    String author = String.format("%s <%s>", myOptions.get(AUTHOR_NAME), myOptions.get(AUTHOR_EMAIL));
-    String committer = String.format("%s <%s>", myOptions.get(COMMITTER_NAME), myOptions.get(COMMITTER_EMAIL));
-    return GitUtil.adjustAuthorName(author, committer);
-  }
-
   String getFullMessage() {
     return mySupportsRawBody ? getRawBody().trim() : ((getSubject() + "\n\n" + getBody()).trim());
   }
