@@ -32,7 +32,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceParameter.ChangedMethodCallInfo;
-import com.intellij.refactoring.introduceParameter.ExpressionConverter;
+import com.intellij.psi.impl.ExpressionConverter;
 import com.intellij.refactoring.introduceParameter.ExternalUsageInfo;
 import com.intellij.refactoring.introduceParameter.InternalUsageInfo;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
