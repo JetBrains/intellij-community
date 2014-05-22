@@ -717,7 +717,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       else {
         credentials = "";
       }
-      return credentials + String.format("%s:%d", settings.PROXY_HOST, settings.PROXY_PORT);
+      return "http://" + credentials + String.format("%s:%d", settings.PROXY_HOST, settings.PROXY_PORT);
     }
     return null;
   }
