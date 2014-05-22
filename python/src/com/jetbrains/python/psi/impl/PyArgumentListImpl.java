@@ -24,10 +24,10 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.NotNullPredicate;
+import com.jetbrains.python.FunctionParameter;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.FunctionParameter;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
@@ -344,11 +344,13 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     }
 
     final PyExpression[] arguments = getArguments();
-    if (arguments.length > parameter.getPosition()) {
-      final PyExpression result = arguments[parameter.getPosition()];
+    final int position = parameter.getPosition();
+    if ((position != FunctionParameter.POSITION_NOT_SUPPORTED) && (arguments.length > position)) {
+      final PyExpression result = arguments[position];
       if (result instanceof PyKeywordArgument) {
         ((PyKeywordArgument)result).getValueExpression();
-      } else {
+      }
+      else {
         return result;
       }
     }

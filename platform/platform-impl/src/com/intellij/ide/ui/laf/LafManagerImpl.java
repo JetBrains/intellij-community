@@ -45,6 +45,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.mac.MacPopupMenuUI;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -416,7 +417,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         return;
       }
     }
-    myCurrentLaf = lookAndFeelInfo;
+    myCurrentLaf = ObjectUtils.chooseNotNull(findLaf(lookAndFeelInfo.getClassName()), lookAndFeelInfo);
 
     checkLookAndFeel(lookAndFeelInfo, false);
   }
