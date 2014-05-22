@@ -20,18 +20,22 @@
  */
 package com.intellij.ide.util.scopeChooser;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFunctionalExpression;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
@@ -42,10 +46,12 @@ import java.util.List;
 public class ClassHierarchyScopeDescriptor extends ScopeDescriptor {
   private SearchScope myCachedScope;
   private final Project myProject;
+  private final PsiClass myRootClass;
 
   public ClassHierarchyScopeDescriptor(final Project project) {
     super(null);
     myProject = project;
+    myRootClass = PsiTreeUtil.getParentOfType(CommonDataKeys.PSI_ELEMENT.getData(DataManager.getInstance().getDataContext()), PsiClass.class, false);
   }
 
   public String getDisplay() {
@@ -56,6 +62,9 @@ public class ClassHierarchyScopeDescriptor extends ScopeDescriptor {
   public SearchScope getScope() {
     if (myCachedScope == null) {
       TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createAllProjectScopeChooser(IdeBundle.message("prompt.choose.base.class.of.the.hierarchy"));
+      if (myRootClass != null) {
+        chooser.select(myRootClass);
+      }
 
       chooser.showDialog();
 
