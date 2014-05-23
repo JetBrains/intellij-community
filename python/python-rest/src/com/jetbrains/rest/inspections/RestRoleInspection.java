@@ -21,8 +21,6 @@ import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,7 +32,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.ReSTService;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.rest.*;
+import com.jetbrains.rest.RestBundle;
+import com.jetbrains.rest.RestFile;
+import com.jetbrains.rest.RestTokenTypes;
+import com.jetbrains.rest.RestUtil;
 import com.jetbrains.rest.psi.RestDirectiveBlock;
 import com.jetbrains.rest.psi.RestRole;
 import com.jetbrains.rest.quickfixes.AddIgnoredRoleFix;
@@ -96,17 +97,15 @@ public class RestRoleInspection extends RestInspection {
         for (PyFunction function : functions) {
           if (!"setup".equals(function.getName())) continue;
           PyStatementList stList = function.getStatementList();
-          if (stList != null) {
-            PyStatement[] statements = stList.getStatements();
-            for (PyElement statement : statements) {
-              if (statement instanceof PyExpressionStatement)
-                statement = ((PyExpressionStatement)statement).getExpression();
-              if (statement instanceof PyCallExpression) {
-                if (((PyCallExpression)statement).isCalleeText("add_role")) {
-                  PyExpression arg = ((PyCallExpression)statement).getArguments()[0];
-                  if (arg instanceof PyStringLiteralExpression)
-                    mySphinxRoles.add(((PyStringLiteralExpression)arg).getStringValue());
-                }
+          PyStatement[] statements = stList.getStatements();
+          for (PyElement statement : statements) {
+            if (statement instanceof PyExpressionStatement)
+              statement = ((PyExpressionStatement)statement).getExpression();
+            if (statement instanceof PyCallExpression) {
+              if (((PyCallExpression)statement).isCalleeText("add_role")) {
+                PyExpression arg = ((PyCallExpression)statement).getArguments()[0];
+                if (arg instanceof PyStringLiteralExpression)
+                  mySphinxRoles.add(((PyStringLiteralExpression)arg).getStringValue());
               }
             }
           }
@@ -124,14 +123,8 @@ public class RestRoleInspection extends RestInspection {
       if (RestUtil.PREDEFINED_ROLES.contains(node.getText()) || myIgnoredRoles.contains(node.getRoleName()))
         return;
 
-      Sdk sdk = ProjectRootManager.getInstance(node.getProject()).getProjectSdk();
-      if (sdk != null) {
-        String sphinx = RestPythonUtil.findQuickStart(sdk);
-        if (sphinx != null) {
-          if (RestUtil.SPHINX_ROLES.contains(node.getText()) || RestUtil.SPHINX_ROLES.contains(":py"+node.getText())
-             || mySphinxRoles.contains(node.getRoleName())) return;
-        }
-      }
+      if (RestUtil.SPHINX_ROLES.contains(node.getText()) || RestUtil.SPHINX_ROLES.contains(":py"+node.getText())
+          || mySphinxRoles.contains(node.getRoleName())) return;
 
       Set<String> definedRoles = new HashSet<String>();
 
