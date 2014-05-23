@@ -32,7 +32,7 @@ public interface Filter {
 
   class Result extends ResultItem {
     protected NextAction myNextAction = NextAction.EXIT;
-    protected List<ResultItem> myResultItems;
+    protected final List<ResultItem> myResultItems;
 
     public Result(final int highlightStartOffset, final int highlightEndOffset, final HyperlinkInfo hyperlinkInfo) {
       this(highlightStartOffset, highlightEndOffset, hyperlinkInfo, null);
@@ -40,6 +40,7 @@ public interface Filter {
 
     public Result(final int highlightStartOffset, final int highlightEndOffset, final HyperlinkInfo hyperlinkInfo, final TextAttributes highlightAttributes) {
       super(highlightStartOffset, highlightEndOffset, hyperlinkInfo, highlightAttributes);
+      myResultItems = null;
     }
     
     public Result(@NotNull List<ResultItem> resultItems) {

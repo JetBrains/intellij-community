@@ -182,6 +182,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
 
   public void testMethodCallFlushesField() { doTest(); }
   public void testUnknownFloatMayBeNaN() { doTest(); }
+  public void testFloatEquality() { doTest(); }
   public void testLastConstantConditionInAnd() { doTest(); }
 
   public void testTransientFinalField() { doTest(); }
