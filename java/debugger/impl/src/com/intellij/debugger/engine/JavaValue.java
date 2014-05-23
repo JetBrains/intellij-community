@@ -186,11 +186,6 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
       public void contextAction() throws Exception {
         final XValueChildrenList children = new XValueChildrenList();
         final NodeRenderer renderer = myValueDescriptor.getRenderer(myEvaluationContext.getDebugProcess());
-        if (renderer instanceof ArrayRenderer) {
-          ((ArrayRenderer)renderer).START_INDEX = currentStart;
-          ((ArrayRenderer)renderer).END_INDEX = currentStart + XCompositeNode.MAX_CHILDREN_TO_SHOW - 1;
-          currentStart += XCompositeNode.MAX_CHILDREN_TO_SHOW;
-        }
         final Ref<Integer> remainingNum = new Ref<Integer>(0);
         renderer.buildChildren(myValueDescriptor.getValue(), new ChildrenBuilder() {
           @Override
@@ -211,6 +206,13 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
           @Override
           public void setRemaining(int remaining) {
             remainingNum.set(remaining);
+          }
+
+          @Override
+          public void initChildrenArrayRenderer(ArrayRenderer renderer) {
+            renderer.START_INDEX = currentStart;
+            renderer.END_INDEX = currentStart + XCompositeNode.MAX_CHILDREN_TO_SHOW - 1;
+            currentStart += XCompositeNode.MAX_CHILDREN_TO_SHOW;
           }
 
           @Override

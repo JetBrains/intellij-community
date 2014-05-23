@@ -29,4 +29,6 @@ public interface ChildrenBuilder {
   void setChildren(List<DebuggerTreeNode> children);
 
   void setRemaining(int remaining);
+
+  void initChildrenArrayRenderer(ArrayRenderer renderer);
 }
