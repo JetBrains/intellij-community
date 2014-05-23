@@ -81,10 +81,6 @@ import java.util.*;
 public class GrabDependencies implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.grape.GrabDependencies");
 
-  public static final String GRAB_ANNO = "groovy.lang.Grab";
-  public static final String GRAPES_ANNO = "groovy.lang.Grapes";
-  public static final String GRAB_EXCLUDE_ANNO = "groovy.lang.GrabExclude";
-  public static final String GRAB_RESOLVER_ANNO = "groovy.lang.GrabResolver";
   private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Grape", NotificationDisplayType.BALLOON, true);
 
   @Override
@@ -124,7 +120,7 @@ public class GrabDependencies implements IntentionAction {
       @Nullable
       @Override
       public Result<PsiAnnotation> compute() {
-        PsiClass grab = JavaPsiFacade.getInstance(file.getProject()).findClass(GRAB_ANNO, file.getResolveScope());
+        PsiClass grab = JavaPsiFacade.getInstance(file.getProject()).findClass(GrabAnnos.GRAB_ANNO, file.getResolveScope());
         final Ref<PsiAnnotation> result = Ref.create();
         if (grab != null) {
           ReferencesSearch.search(grab, new LocalSearchScope(file)).forEach(new Processor<PsiReference>() {
@@ -153,7 +149,7 @@ public class GrabDependencies implements IntentionAction {
 
   private static boolean isGrabAnnotation(@NotNull GrAnnotation anno) {
     final String qname = anno.getQualifiedName();
-    return qname != null && (qname.startsWith(GRAB_ANNO) || GRAPES_ANNO.equals(qname));
+    return qname != null && (qname.startsWith(GrabAnnos.GRAB_ANNO) || GrabAnnos.GRAPES_ANNO.equals(qname));
   }
 
   private static boolean isCorrectModule(PsiFile file) {
@@ -251,9 +247,9 @@ public class GrabDependencies implements IntentionAction {
         if (element instanceof GrAnnotation) {
           GrAnnotation anno = (GrAnnotation)element;
           String qname = anno.getQualifiedName();
-          if (GRAB_ANNO.equals(qname)) grabs.add(anno);
-          else if (GRAB_EXCLUDE_ANNO.equals(qname)) excludes.add(anno);
-          else if (GRAB_RESOLVER_ANNO.equals(qname)) resolvers.add(anno);
+          if (GrabAnnos.GRAB_ANNO.equals(qname)) grabs.add(anno);
+          else if (GrabAnnos.GRAB_EXCLUDE_ANNO.equals(qname)) excludes.add(anno);
+          else if (GrabAnnos.GRAB_RESOLVER_ANNO.equals(qname)) resolvers.add(anno);
         }
         super.visitElement(element);
       }

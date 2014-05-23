@@ -22,7 +22,6 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -33,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.runner.GroovyScriptUtil;
 
 /**
  * @author peter
@@ -78,7 +78,7 @@ public class GantMemberContributor extends NonCodeMembersContributor {
     // ------- gant-specific
 
     PsiFile file = place.getContainingFile();
-    if (file == null || !GroovyScriptTypeDetector.isSpecificScriptFile(file, GantScriptType.INSTANCE)) {
+    if (file == null || !GroovyScriptUtil.isSpecificScriptFile(file, GantScriptType.INSTANCE)) {
       return;
     }
 

@@ -28,10 +28,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
-import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 public class GroovyConditionalCanBeElvisInspection extends BaseInspection {
 
@@ -78,7 +78,7 @@ public class GroovyConditionalCanBeElvisInspection extends BaseInspection {
         else {
           newExpression = thenExpression.getText() + " ?: " + elseExpression.getText();
         }
-        IntentionUtils.replaceExpression(newExpression, expr);
+        PsiImplUtil.replaceExpression(newExpression, expr);
       }
     };
   }

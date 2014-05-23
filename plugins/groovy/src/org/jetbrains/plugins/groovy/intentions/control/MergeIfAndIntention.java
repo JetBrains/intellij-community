@@ -22,8 +22,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
-import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ConditionalUtils;
 import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
@@ -70,6 +70,6 @@ public class MergeIfAndIntention extends Intention {
     @NonNls final String statement =
         "if(" + parentConditionText + "&&" + childConditionText + ')' +
             childThenBranch.getText();
-    IntentionUtils.replaceStatement(statement, parentStatement);
+    PsiImplUtil.replaceStatement(statement, parentStatement);
   }
 }

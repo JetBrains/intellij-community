@@ -49,7 +49,6 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
@@ -80,13 +79,14 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrCodeReferenceElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.util.*;
+import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author ilyas
@@ -554,11 +554,6 @@ public class GroovyCompletionUtil {
     return TailType.insertChar(editor, offset, ')');
   }
 
-  public static final Set<String> OPERATOR_METHOD_NAMES = ContainerUtil.newHashSet(
-    "plus", "minus", "multiply", "power", "div", "mod", "or", "and", "xor", "next", "previous", "getAt", "putAt", "leftShift", "rightShift",
-    "isCase", "bitwiseNegate", "negative", "positive", "call"
-  );
-
   public static boolean skipDefGroovyMethod(GrGdkMethod gdkMethod, PsiSubstitutor substitutor, @Nullable PsiType type) {
     if (type == null) return false;
     String name = gdkMethod.getStaticMethod().getName();
@@ -583,12 +578,12 @@ public class GroovyCompletionUtil {
   we are here:  foo(List<? <caret> ...
    */
   public static boolean isWildcardCompletion(PsiElement position) {
-    PsiElement prev = GeeseUtil.getPreviousNonWhitespaceToken(position);
-    if (prev instanceof PsiErrorElement) prev = GeeseUtil.getPreviousNonWhitespaceToken(prev);
+    PsiElement prev = PsiUtil.getPreviousNonWhitespaceToken(position);
+    if (prev instanceof PsiErrorElement) prev = PsiUtil.getPreviousNonWhitespaceToken(prev);
 
     if (prev == null || prev.getNode().getElementType() != GroovyTokenTypes.mQUESTION) return false;
 
-    final PsiElement pprev = GeeseUtil.getPreviousNonWhitespaceToken(prev);
+    final PsiElement pprev = PsiUtil.getPreviousNonWhitespaceToken(prev);
     if (pprev == null) return false;
 
     final IElementType t = pprev.getNode().getElementType();
