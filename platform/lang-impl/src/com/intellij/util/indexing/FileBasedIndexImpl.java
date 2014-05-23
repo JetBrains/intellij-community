@@ -160,10 +160,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     connection.subscribe(PsiDocumentTransactionListener.TOPIC, new PsiDocumentTransactionListener() {
       @Override
       public void transactionStarted(@NotNull final Document doc, @NotNull final PsiFile file) {
-        if (file != null) {
-          myTransactionMap = myTransactionMap.plus(doc, file);
-          myUpToDateIndicesForUnsavedOrTransactedDocuments.clear();
-        }
+        myTransactionMap = myTransactionMap.plus(doc, file);
+        myUpToDateIndicesForUnsavedOrTransactedDocuments.clear();
       }
 
       @Override
@@ -1336,7 +1334,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
     if (!documents.isEmpty()) {
       // now index unsaved data
-      final StorageGuard.Holder guard = setDataBufferingEnabled(true);
+      final StorageGuard.StorageModeExitHandler guard = setDataBufferingEnabled(true);
       try {
         final Semaphore semaphore = myUnsavedDataIndexingSemaphores.get(indexId);
 
@@ -1515,20 +1513,26 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   private final StorageGuard myStorageLock = new StorageGuard();
+  private volatile boolean myPreviousDataBufferingState;
+  private final Object myBufferingStateUpdateLock = new Object();
 
   @NotNull
-  private StorageGuard.Holder setDataBufferingEnabled(final boolean enabled) {
-    final StorageGuard.Holder holder = myStorageLock.enter(enabled);
-    for (ID<?, ?> indexId : myIndices.keySet()) {
-      final MapReduceIndex index = (MapReduceIndex)getIndex(indexId);
-      assert index != null;
-      MemoryIndexStorage storage = (MemoryIndexStorage)index.getStorage();
-      if (storage.isBufferingEnabled() == enabled) {
-        break; // already set it
+  private StorageGuard.StorageModeExitHandler setDataBufferingEnabled(final boolean enabled) {
+    StorageGuard.StorageModeExitHandler storageModeExitHandler = myStorageLock.enter(enabled);
+
+    if (myPreviousDataBufferingState != enabled) {
+      synchronized (myBufferingStateUpdateLock) {
+        if (myPreviousDataBufferingState != enabled) {
+          for (ID<?, ?> indexId : myIndices.keySet()) {
+            final MapReduceIndex index = (MapReduceIndex)getIndex(indexId);
+            assert index != null;
+            ((MemoryIndexStorage)index.getStorage()).setBufferingEnabled(enabled);
+          }
+          myPreviousDataBufferingState = enabled;
+        }
       }
-      storage.setBufferingEnabled(enabled);
     }
-    return holder;
+    return storageModeExitHandler;
   }
 
   private void cleanupMemoryStorage() {
@@ -1770,7 +1774,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       @Override
       public Boolean compute() {
         Boolean result;
-        final StorageGuard.Holder lock = setDataBufferingEnabled(false);
+        final StorageGuard.StorageModeExitHandler lock = setDataBufferingEnabled(false);
         try {
           result = update.compute();
         }
@@ -1855,11 +1859,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     @Override
     public void fileCreated(@NotNull final VirtualFileEvent event) {
       markDirty(event, false);
-    }
-
-    @Override
-    public void fileDeleted(@NotNull final VirtualFileEvent event) {
-      myFilesToUpdate.remove(event.getFile()); // no need to update it anymore
     }
 
     @Override
@@ -2023,6 +2022,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             }
           }
         }
+        myFilesToUpdate.remove(file); // no need to update it anymore
       }
 
       Collection<ID<?, ?>> fileIndexedStatesToUpdate = ContainerUtil.intersection(nontrivialFileIndexedStates, myRequiringContentIndices);
@@ -2577,17 +2577,17 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     private int myHolds = 0;
     private int myWaiters = 0;
 
-    public interface Holder {
+    public interface StorageModeExitHandler {
       void leave();
     }
 
-    private final Holder myTrueHolder = new Holder() {
+    private final StorageModeExitHandler myTrueStorageModeExitHandler = new StorageModeExitHandler() {
       @Override
       public void leave() {
         StorageGuard.this.leave(true);
       }
     };
-    private final Holder myFalseHolder = new Holder() {
+    private final StorageModeExitHandler myFalseStorageModeExitHandler = new StorageModeExitHandler() {
       @Override
       public void leave() {
         StorageGuard.this.leave(false);
@@ -2595,20 +2595,20 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     };
 
     @NotNull
-    public synchronized Holder enter(boolean mode) {
+    private synchronized StorageModeExitHandler enter(boolean mode) {
       if (mode) {
         while (myHolds < 0) {
           doWait();
         }
         myHolds++;
-        return myTrueHolder;
+        return myTrueStorageModeExitHandler;
       }
       else {
         while (myHolds > 0) {
           doWait();
         }
         myHolds--;
-        return myFalseHolder;
+        return myFalseStorageModeExitHandler;
       }
     }
 

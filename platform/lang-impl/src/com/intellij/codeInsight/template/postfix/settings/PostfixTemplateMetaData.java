@@ -35,7 +35,7 @@ public final class PostfixTemplateMetaData extends BeforeAfterActionMetaData {
 
   public static final String KEY = "$key";
 
-  private static final PostfixTemplateMetaData EMPTY_METADATA = new PostfixTemplateMetaData();
+  public static final PostfixTemplateMetaData EMPTY_METADATA = new PostfixTemplateMetaData();
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.postfix.settings.PostfixTemplateMetaData");
   private static final String DESCRIPTION_FOLDER = "postfixTemplates";
 
