@@ -21,25 +21,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyImportHelper;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyImportUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
 
 import java.util.*;
 
@@ -48,233 +41,35 @@ import java.util.*;
  */
 public class GroovyImportOptimizer implements ImportOptimizer {
 
+  public static Comparator<GrImportStatement> getComparator(final GroovyCodeStyleSettings settings) {
+    return new Comparator<GrImportStatement>() {
+      @Override
+      public int compare(GrImportStatement statement1, GrImportStatement statement2) {
+        if (settings.LAYOUT_STATIC_IMPORTS_SEPARATELY) {
+          if (statement1.isStatic() && !statement2.isStatic()) return 1;
+          if (statement2.isStatic() && !statement1.isStatic()) return -1;
+        }
+
+        final GrCodeReferenceElement ref1 = statement1.getImportReference();
+        final GrCodeReferenceElement ref2 = statement2.getImportReference();
+        String name1 = ref1 != null ? PsiUtil.getQualifiedReferenceText(ref1) : null;
+        String name2 = ref2 != null ? PsiUtil.getQualifiedReferenceText(ref2) : null;
+        if (name1 == null) return name2 == null ? 0 : -1;
+        if (name2 == null) return 1;
+        return name1.compareTo(name2);
+      }
+    };
+  }
+
   @Override
   @NotNull
   public Runnable processFile(PsiFile file) {
     return new MyProcessor(file, false);
   }
 
-  public static Set<GrImportStatement> findUsedImports(GroovyFile file) {
-    Set<GrImportStatement> usedImports = new HashSet<GrImportStatement>();
-    processFile(file, null, null, usedImports, null, null, null, null, null);
-    return usedImports;
-  }
-
   @Override
   public boolean supports(PsiFile file) {
     return file instanceof GroovyFile;
-  }
-
-  private static void processFile(@Nullable final PsiFile file,
-                                  @Nullable final Set<String> importedClasses,
-                                  @Nullable final Set<String> staticallyImportedMembers,
-                                  @Nullable final Set<GrImportStatement> usedImports,
-                                  @Nullable final Set<GrImportStatement> unresolvedOnDemandImports,
-                                  @Nullable final Set<String> implicitlyImported,
-                                  @Nullable final Set<String> innerClasses,
-                                  @Nullable final Map<String, String> aliased,
-                                  @Nullable final Map<String, String> annotations) {
-    if (!(file instanceof GroovyFile)) return;
-
-    final Set<String> unresolvedReferenceNames = ContainerUtil.newLinkedHashSet();
-
-    file.accept(new PsiRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitElement(PsiElement element) {
-        super.visitElement(element);
-        if (element instanceof GrReferenceElement) {
-          visitRefElement((GrReferenceElement)element);
-        }
-      }
-
-      private void visitRefElement(GrReferenceElement refElement) {
-        final String refName = refElement.getReferenceName();
-
-        if ("super".equals(refName)) return;
-
-        final GroovyResolveResult[] resolveResults = refElement.multiResolve(false);
-        if (resolveResults.length == 0 && refName != null) {
-          if (PsiTreeUtil.getParentOfType(refElement, GrImportStatement.class) == null) {
-            unresolvedReferenceNames.add(refName);
-          }
-        }
-
-        for (GroovyResolveResult resolveResult : resolveResults) {
-          final PsiElement context = resolveResult.getCurrentFileResolveContext();
-          final PsiElement resolved = resolveResult.getElement();
-          if (resolved == null) return;
-
-          if (context instanceof GrImportStatement) {
-            final GrImportStatement importStatement = (GrImportStatement)context;
-
-            if (usedImports != null && isImportUsed(refElement, resolved)) {
-              usedImports.add(importStatement);
-            }
-            if (GroovyImportHelper.isImplicitlyImported(resolved, refName, (GroovyFile)file)) {
-              addImplicitClass(resolved);
-            }
-
-            if (!importStatement.isAliasedImport() && !isAnnotatedImport(importStatement)) {
-              String importedName = null;
-              if (importStatement.isOnDemand()) {
-
-                if (importStatement.isStatic()) {
-                  if (resolved instanceof PsiMember) {
-                    final PsiMember member = (PsiMember)resolved;
-                    final PsiClass clazz = member.getContainingClass();
-                    if (clazz != null) {
-                      final String classQName = clazz.getQualifiedName();
-                      if (classQName != null) {
-                        final String name = member.getName();
-                        if (name != null) {
-                          importedName = classQName + "." + name;
-                        }
-                      }
-                    }
-                  }
-                }
-                else {
-                  importedName = getTargetQualifiedName(resolved);
-                }
-              }
-              else {
-                final GrCodeReferenceElement importReference = importStatement.getImportReference();
-                if (importReference != null) {
-                  importedName = PsiUtil.getQualifiedReferenceText(importReference);
-                }
-              }
-
-              if (importedName == null) return;
-
-              final String importRef = getImportReferenceText(importStatement);
-
-              if (importStatement.isAliasedImport()) {
-                if (aliased != null) {
-                  aliased.put(importRef, importedName);
-                }
-                return;
-              }
-
-              if (importStatement.isStatic()) {
-                if (staticallyImportedMembers != null) {
-                  staticallyImportedMembers.add(importedName);
-                }
-              }
-              else {
-                if (importedClasses != null) {
-                  importedClasses.add(importedName);
-                }
-                if (resolved instanceof PsiClass && ((PsiClass)resolved).getContainingClass() != null && innerClasses != null) {
-                  innerClasses.add(importedName);
-                }
-              }
-            }
-          }
-          else if (context == null && !(refElement.getParent() instanceof GrImportStatement) && refElement.getQualifier() == null) {
-            addImplicitClass(resolved);
-          }
-        }
-      }
-
-      private void addImplicitClass(PsiElement element) {
-        final String qname = getTargetQualifiedName(element);
-        if (qname != null) {
-          if (implicitlyImported != null) {
-            implicitlyImported.add(qname);
-          }
-          if (importedClasses != null) {
-            importedClasses.add(qname);
-          }
-        }
-      }
-
-      /**
-       * checks if import for implicitly imported class is needed
-       */
-      private boolean isImportUsed(GrReferenceElement refElement, PsiElement resolved) {
-        if (GroovyImportHelper.isImplicitlyImported(resolved, refElement.getReferenceName(), (GroovyFile)file)) {
-          final ClassResolverProcessor processor =
-            new ClassResolverProcessor(refElement.getReferenceName(), refElement, ClassHint.RESOLVE_KINDS_CLASS);
-          GroovyImportHelper
-            .processImports(ResolveState.initial(), null, refElement, processor, ((GroovyFile)file).getImportStatements(), true);
-          if (!processor.hasCandidates()) {
-            return false;
-          }
-        }
-        return true;
-      }
-    });
-
-    final Set<GrImportStatement> importsToCheck = ContainerUtil.newLinkedHashSet(PsiUtil.getValidImportStatements((GroovyFile)file));
-    for (GrImportStatement anImport : importsToCheck) {
-      if (usedImports != null && usedImports.contains(anImport)) continue;
-
-      final GrCodeReferenceElement ref = anImport.getImportReference();
-      assert ref != null : "invalid import!";
-
-      if (ref.resolve() == null) {
-        if (anImport.isOnDemand()) {
-          if (usedImports != null) {
-            usedImports.add(anImport);
-          }
-          if (unresolvedOnDemandImports != null) {
-            unresolvedOnDemandImports.add(anImport);
-          }
-        }
-        else {
-          String importedName = anImport.getImportedName();
-          if (importedName != null && unresolvedReferenceNames.contains(importedName)) {
-            if (usedImports != null) {
-              usedImports.add(anImport);
-            }
-
-            final String symbolName = getImportReferenceText(anImport);
-
-            if (anImport.isAliasedImport()) {
-              if (aliased != null) {
-                aliased.put(symbolName, importedName);
-              }
-            }
-            else {
-              if (anImport.isStatic()) {
-                if (staticallyImportedMembers != null) {
-                  staticallyImportedMembers.add(symbolName);
-                }
-              }
-              else {
-                if (importedClasses != null) {
-                  importedClasses.add(symbolName);
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    if (annotations != null) {
-      ((GroovyFile)file).acceptChildren(new GroovyElementVisitor() {
-        @Override
-        public void visitImportStatement(GrImportStatement importStatement) {
-          final String annotationText = importStatement.getAnnotationList().getText();
-          if (!StringUtil.isEmptyOrSpaces(annotationText)) {
-            final String importRef = getImportReferenceText(importStatement);
-            annotations.put(importRef, annotationText);
-          }
-        }
-      });
-    }
-  }
-
-  @Nullable
-  private static String getTargetQualifiedName(PsiElement element) {
-    if (element instanceof PsiClass) {
-      return ((PsiClass)element).getQualifiedName();
-    }
-    if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) {
-      return ((PsiMethod)element).getContainingClass().getQualifiedName();
-    }
-    return null;
   }
 
   private class MyProcessor implements Runnable {
@@ -305,8 +100,9 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       Map<String, String> aliasImported = ContainerUtil.newHashMap();
       Map<String, String> annotatedImports = ContainerUtil.newHashMap();
 
-      processFile(myFile, simplyImportedClasses, staticallyImportedMembers, usedImports, unresolvedOnDemandImports ,implicitlyImportedClasses, innerClasses,
-                  aliasImported, annotatedImports);
+      GroovyImportUtil.processFile(myFile, simplyImportedClasses, staticallyImportedMembers, usedImports, unresolvedOnDemandImports,
+                                   implicitlyImportedClasses, innerClasses,
+                                   aliasImported, annotatedImports);
       final List<GrImportStatement> oldImports = PsiUtil.getValidImportStatements(file);
       if (myRemoveUnusedOnly) {
         for (GrImportStatement oldImport : oldImports) {
@@ -462,9 +258,9 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       }
 
       for (GrImportStatement anImport : usedImports) {
-        if (anImport.isAliasedImport() || isAnnotatedImport(anImport)) {
-          if (isAnnotatedImport(anImport)) {
-            annotations.remove(getImportReferenceText(anImport));
+        if (anImport.isAliasedImport() || GroovyImportUtil.isAnnotatedImport(anImport)) {
+          if (GroovyImportUtil.isAnnotatedImport(anImport)) {
+            annotations.remove(GroovyImportUtil.getImportReferenceText(anImport));
           }
 
           if (anImport.isStatic()) {
@@ -503,38 +299,5 @@ public class GroovyImportOptimizer implements ImportOptimizer {
 
       return explicated.toArray(new GrImportStatement[explicated.size()]);
     }
-  }
-
-  private static boolean isAnnotatedImport(GrImportStatement anImport) {
-    return !StringUtil.isEmptyOrSpaces(anImport.getAnnotationList().getText());
-  }
-
-  public static Comparator<GrImportStatement> getComparator(final GroovyCodeStyleSettings settings) {
-    return new Comparator<GrImportStatement>() {
-      @Override
-      public int compare(GrImportStatement statement1, GrImportStatement statement2) {
-        if (settings.LAYOUT_STATIC_IMPORTS_SEPARATELY) {
-          if (statement1.isStatic() && !statement2.isStatic()) return 1;
-          if (statement2.isStatic() && !statement1.isStatic()) return -1;
-        }
-
-        final GrCodeReferenceElement ref1 = statement1.getImportReference();
-        final GrCodeReferenceElement ref2 = statement2.getImportReference();
-        String name1 = ref1 != null ? PsiUtil.getQualifiedReferenceText(ref1) : null;
-        String name2 = ref2 != null ? PsiUtil.getQualifiedReferenceText(ref2) : null;
-        if (name1 == null) return name2 == null ? 0 : -1;
-        if (name2 == null) return 1;
-        return name1.compareTo(name2);
-      }
-    };
-  }
-
-  @Nullable
-  private static String getImportReferenceText(GrImportStatement statement) {
-    GrCodeReferenceElement importReference = statement.getImportReference();
-    if (importReference != null) {
-      return importReference.getClassNameText();
-    }
-    return null;
   }
 }

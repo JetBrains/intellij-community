@@ -39,4 +39,6 @@ public abstract class GroovyCodeStyleSettingsFacade {
   public abstract int innerClassesOrderWeight();
 
   public abstract int constructorsOrderWeight();
+
+  public abstract boolean insertInnerClassImports();
 }

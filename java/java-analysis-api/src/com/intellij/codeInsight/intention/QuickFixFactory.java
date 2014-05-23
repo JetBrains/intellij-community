@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.openapi.components.ServiceManager;
@@ -146,8 +147,8 @@ public abstract class QuickFixFactory {
 
   @NotNull public abstract IntentionAction createRenameFileFix(@NotNull String newName);
 
-  @NotNull public abstract IntentionAction createRenameElementFix(@NotNull PsiNamedElement element);
-  @NotNull public abstract IntentionAction createRenameElementFix(@NotNull PsiNamedElement element, @NotNull String newName);
+  @NotNull public abstract LocalQuickFixAndIntentionActionOnPsiElement createRenameElementFix(@NotNull PsiNamedElement element);
+  @NotNull public abstract LocalQuickFixAndIntentionActionOnPsiElement createRenameElementFix(@NotNull PsiNamedElement element, @NotNull String newName);
 
   @NotNull public abstract IntentionAction createChangeExtendsToImplementsFix(@NotNull PsiClass aClass, @NotNull PsiClassType classToExtendFrom);
 
@@ -246,4 +247,8 @@ public abstract class QuickFixFactory {
 
   @NotNull
   public abstract IntentionAction createSafeDeleteFix(@NotNull PsiElement element);
+
+  @Nullable
+  public abstract List<LocalQuickFix> registerOrderEntryFixes(@NotNull QuickFixActionRegistrar registrar,
+                                                                                          @NotNull PsiReference reference);
 }

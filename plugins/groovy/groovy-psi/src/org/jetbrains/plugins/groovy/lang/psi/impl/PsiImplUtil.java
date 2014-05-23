@@ -975,4 +975,17 @@ public class PsiImplUtil {
     final GrStatement newCall = (GrStatement)factory.createTopElementFromText(newStatement);
     return statement.replaceWithStatement(newCall);
   }
+
+  public static boolean seemsToBeQualifiedClassName(@Nullable GrExpression expr) {
+    if (expr == null) return false;
+    while (expr instanceof GrReferenceExpression) {
+      final PsiElement nameElement = ((GrReferenceExpression)expr).getReferenceNameElement();
+      if (((GrReferenceExpression)expr).getTypeArguments().length > 0) return false;
+      if (nameElement == null || nameElement.getNode().getElementType() != GroovyTokenTypes.mIDENT) return false;
+      IElementType dotType = ((GrReferenceExpression)expr).getDotTokenType();
+      if (dotType != null && dotType != GroovyTokenTypes.mDOT) return false;
+      expr = ((GrReferenceExpression)expr).getQualifierExpression();
+    }
+    return expr == null;
+  }
 }
