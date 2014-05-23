@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author Max Medvedev
@@ -68,9 +69,9 @@ public class ConvertToGeeseBracesIntention extends Intention {
 
   @Nullable
   private static PsiElement getPrev(PsiElement element) {
-    PsiElement prev = GeeseUtil.getPreviousNonWhitespaceToken(element);
+    PsiElement prev = PsiUtil.getPreviousNonWhitespaceToken(element);
     if (prev != null && prev.getNode().getElementType() == GroovyTokenTypes.mNLS) {
-      prev = GeeseUtil.getPreviousNonWhitespaceToken(prev);
+      prev = PsiUtil.getPreviousNonWhitespaceToken(prev);
     }
     return prev;
   }

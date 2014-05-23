@@ -48,6 +48,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GrAllVarsInitializ
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.FragmentVariableInfos;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsCollector;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
@@ -223,7 +224,7 @@ public class GroovyExtractChooser {
   }
 
   private static PsiElement[] getElementsInOffset(PsiFile file, int startOffset, int endOffset, boolean forceStatements) {
-    GrExpression expr = GroovyRefactoringUtil.findElementInRange(file, startOffset, endOffset, GrExpression.class);
+    GrExpression expr = PsiImplUtil.findElementInRange(file, startOffset, endOffset, GrExpression.class);
     if (!forceStatements && expr != null) return new PsiElement[]{expr};
 
     if (expr == null) {

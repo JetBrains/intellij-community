@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyRunnerPsiUtil;
@@ -68,7 +67,7 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
       if (settings != null) {
         mySourceElement = element;
         final GroovyScriptRunConfiguration configuration = (GroovyScriptRunConfiguration)settings.getConfiguration();
-        GroovyScriptTypeDetector.getScriptType(groovyFile).tuneConfiguration(groovyFile, configuration, location);
+        GroovyScriptUtil.getScriptType(groovyFile).tuneConfiguration(groovyFile, configuration, location);
         return settings;
       }
     }
@@ -103,7 +102,7 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
           final VirtualFile vfile = file.getVirtualFile();
           if (vfile != null && FileUtil.toSystemIndependentName(path).equals(vfile.getPath())) {
             if (!((GroovyFile)file).isScript() ||
-                GroovyScriptTypeDetector.getScriptType((GroovyFile)file).isConfigurationByLocation(existing, location)) {
+                GroovyScriptUtil.getScriptType((GroovyFile)file).isConfigurationByLocation(existing, location)) {
               return existingConfiguration;
             }
           }
