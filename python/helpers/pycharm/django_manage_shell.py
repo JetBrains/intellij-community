@@ -16,6 +16,7 @@ def run(working_dir):
   if not manage_file:
     manage_file = 'manage'
 
+  #Lines from here to fixGetPass() for maintain django < 1.4
   def execute_manager(settings_mod, argv = None):
       management.setup_environ(settings_mod)
 

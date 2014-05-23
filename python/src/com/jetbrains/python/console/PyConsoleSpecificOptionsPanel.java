@@ -64,19 +64,19 @@ public class PyConsoleSpecificOptionsPanel {
   }
 
   public void apply() {
-    myConsoleSettings.myCustomStartScript = myEditorTextField.getText();
+    myConsoleSettings.myMergedCustomStartScript = myEditorTextField.getText();
     myConsoleSettings.apply(myCommonOptionsForm);
   }
 
   public boolean isModified() {
-    return !myEditorTextField.getText().equals(myConsoleSettings.myCustomStartScript) || myConsoleSettings.isModified(myCommonOptionsForm);
+    return !myEditorTextField.getText().equals(myConsoleSettings.myMergedCustomStartScript) || myConsoleSettings.isModified(myCommonOptionsForm);
   }
 
   public void reset() {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        myEditorTextField.setText(myConsoleSettings.myCustomStartScript);
+        myEditorTextField.setText(myConsoleSettings.myMergedCustomStartScript);
       }
     });
 
@@ -103,8 +103,15 @@ public class PyConsoleSpecificOptionsPanel {
   }
 
   private void configureStartingScriptPanel(final PyConsoleOptions.PyConsoleSettings optionsProvider) {
+
+    String oldCustomScript = optionsProvider.myCustomStartScript;
+    if(oldCustomScript != null && oldCustomScript.trim().length() > 0){
+      optionsProvider.setMergedCustomStartScript(optionsProvider.getMergedCustomStartScript() + "\n" + oldCustomScript);
+      optionsProvider.setCustomStartScript("");
+    }
+
     myEditorTextField =
-      new EditorTextField(createDocument(myProject, optionsProvider.myCustomStartScript), myProject, PythonFileType.INSTANCE) {
+      new EditorTextField(createDocument(myProject, optionsProvider.myMergedCustomStartScript), myProject, PythonFileType.INSTANCE) {
         @Override
         protected EditorEx createEditor() {
           final EditorEx editor = super.createEditor();
