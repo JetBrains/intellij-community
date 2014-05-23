@@ -52,7 +52,7 @@ public class RootIndex extends DirectoryIndex {
   };
 
   private final Set<VirtualFile> myProjectExcludedRoots = ContainerUtil.newHashSet();
-  private final Set<VirtualFile> myModuleExcludedRoots;
+  private final Set<VirtualFile> myModuleExcludedRoots = ContainerUtil.newHashSet();
   private final MultiMap<String, VirtualFile> myPackagePrefixRoots = new MultiMap<String, VirtualFile>() {
     @Override
     protected Collection<VirtualFile> createCollection() {
@@ -69,9 +69,19 @@ public class RootIndex extends DirectoryIndex {
 
   // made public for Upsource
   public RootIndex(@NotNull Project project, InfoCache cache) {
+    this(project, cache, true);
+  }
+
+  public RootIndex(@NotNull Project project, InfoCache cache, boolean initializeImmediately) {
     myProject = project;
     myInfoCache = cache;
-    final RootInfo info = buildRootInfo(project);
+    if (initializeImmediately) {
+      initialize();
+    }
+  }
+
+  public void initialize() {
+    final RootInfo info = buildRootInfo(myProject);
 
     Set<VirtualFile> allRoots = info.getAllRoots();
     for (VirtualFile root : allRoots) {
@@ -84,7 +94,8 @@ public class RootIndex extends DirectoryIndex {
       }
     }
 
-    myModuleExcludedRoots = info.excludedFromModule.keySet();
+    myModuleExcludedRoots.clear();
+    myModuleExcludedRoots.addAll(info.excludedFromModule.keySet());
   }
 
   @NotNull
