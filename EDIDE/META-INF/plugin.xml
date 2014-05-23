@@ -41,6 +41,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <!-- Add your extensions here -->
+    <fileEditorProvider implementation="ru.compscicenter.edide.StudyFileEditorProvider"/>
     <directoryProjectGenerator implementation="ru.compscicenter.edide.StudyDirectoryProjectGenerator"/>
     <toolWindow id="Task Text" icon="/general/add.png" anchor="right" factoryClass="ru.compscicenter.edide.TaskToolWindowFactory"
             conditionClass="ru.compscicenter.edide.TaskToolWindowCondition" secondary="false"/>

@@ -118,7 +118,7 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
                     }
                 }
         );
-        makeRunConfiguration(project, baseDir);
+        //makeRunConfiguration(project, baseDir);
 
     }
 
