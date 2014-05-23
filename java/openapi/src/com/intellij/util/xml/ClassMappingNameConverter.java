@@ -18,8 +18,8 @@ package com.intellij.util.xml;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -55,16 +55,19 @@ public class ClassMappingNameConverter extends ResolvingConverter.StringConverte
     if (classElement == null) return Collections.emptyList();
     Object value = ((GenericDomValue)classElement).getValue();
     if (value == null) return Collections.emptyList();
-    if (!(value instanceof PsiClass)) {
-      LOG.error(classElement.getGenericInfo() + " should have PsiClass type, but was " + value + "\n" +
-                "element: " + classElement.getXmlElement());
+    PsiType type;
+    if (value instanceof PsiType) {
+      type = (PsiType)value;
+    }
+    else if (value instanceof PsiClass) {
+      type = PsiTypesUtil.getClassType((PsiClass)value);
+    }
+    else {
+      LOG.error("wrong type: " + value.getClass());
       return Collections.emptyList();
     }
-
-    PsiClass psiClass = (PsiClass)value;
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(context.getProject());
-    PsiClassType classType = PsiTypesUtil.getClassType(psiClass);
-    SuggestedNameInfo info = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, classType);
+    SuggestedNameInfo info = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, type);
     return Arrays.asList(info.names);
   }
 
