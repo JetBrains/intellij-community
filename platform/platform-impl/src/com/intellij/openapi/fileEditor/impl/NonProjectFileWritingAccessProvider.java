@@ -19,6 +19,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -96,7 +97,12 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
       if (statuses.get(each) == AccessStatus.ALLOWED) continue;
 
       if (!(each.getFileSystem() instanceof LocalFileSystem)) continue; // do not block e.g., HttpFileSystem, LightFileSystem etc.  
-      if (isProjectFile(each)) continue;
+      if (isProjectFile(each)) {
+        if (statuses.remove(each) != null) {
+          EditorNotifications.getInstance(myProject).updateNotifications(each);
+        }
+        continue;
+      }
 
       statuses.put(each, AccessStatus.REQUESTED);
       deniedFiles.add(each);
@@ -122,6 +128,10 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
       for (Module each : ModuleManager.getInstance(myProject).getModules()) {
         if (file.equals(each.getModuleFile())) return true;
       }
+    }
+
+    for (NonProjectFileWritingAccessExtension each : Extensions.getExtensions(NonProjectFileWritingAccessExtension.EP_NAME, myProject)) {
+      if(each.isWritable(file)) return true;
     }
 
     return false;
