@@ -380,7 +380,7 @@ public class VfsUtilTest extends PlatformLangTestCase {
       public void run() throws Throwable {
         for (int i = 0; i < 1000000; i++) {
           VirtualFile child = vDir.findChild("5111.txt");
-          assertSame(theChild, child);
+          assertEquals(theChild, child);
         }
       }
     }).assertTiming();
