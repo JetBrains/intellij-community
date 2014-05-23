@@ -9,7 +9,13 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface FunctionParameter {
   /**
-   * @return parameter position
+   * Position value if argument is keyword-only
+   */
+  int POSITION_NOT_SUPPORTED = -1;
+
+  /**
+   * @return parameter position. Be sure to check position is supported (!= {@link #POSITION_NOT_SUPPORTED} )
+   * @see #POSITION_NOT_SUPPORTED
    */
   int getPosition();
 

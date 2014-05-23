@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.customize;
 
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -33,6 +34,7 @@ import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -222,6 +224,16 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
   @Override
   public String getHTMLFooter() {
     return null;
+  }
+
+  @Override
+  public boolean beforeOkAction() {
+    try {
+      PluginManager.saveDisabledPlugins(PluginGroups.getInstance().getDisabledPluginIds(), false);
+    }
+    catch (IOException ignored) {
+    }
+    return true;
   }
 
   private class IdSetPanel extends JPanel implements LinkListener<String> {

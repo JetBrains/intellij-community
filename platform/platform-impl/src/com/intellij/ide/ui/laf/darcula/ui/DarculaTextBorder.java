@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ public class DarculaTextBorder implements Border, UIResource {
       DarculaUIUtil.paintFocusRing(g, 2, 2, width-4, height-4);
     } else {
       boolean editable = !(c instanceof JTextComponent) || (((JTextComponent)c).isEditable());
-      g.setColor(c.isEnabled() && editable ? Gray._100 : new Color(0x535353));
+      g.setColor(c.isEnabled() && editable ? Gray._100 : Gray._83);
       g.drawRect(1, 1, width - 2, height - 2);
     }
     g.translate(-x, -y);

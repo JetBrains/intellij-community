@@ -50,6 +50,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ConcurrentMultiMap;
@@ -369,10 +370,18 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
             return;
           }
 
-          Set<File> scriptFolders = new LinkedHashSet<File>();
+          Set<Class> classes = ContainerUtil.map2Set(extensions, new Function<GroovyFrameworkConfigNotification, Class>() {
+            @Override
+            public Class fun(GroovyFrameworkConfigNotification notification) {
+              return notification.getClass();
+            }
+          });
+          classes.add(GroovyFrameworkConfigNotification.class); // for default extension
+
           // perhaps a separate extension for that?
-          for (GroovyFrameworkConfigNotification extension : extensions) {
-            File jarPath = new File(PathUtil.getJarPathForClass(extension.getClass()));
+          Set<File> scriptFolders = new LinkedHashSet<File>();
+          for (Class aClass : classes) {
+            File jarPath = new File(PathUtil.getJarPathForClass(aClass));
             if (jarPath.isFile()) {
               jarPath = jarPath.getParentFile();
             }

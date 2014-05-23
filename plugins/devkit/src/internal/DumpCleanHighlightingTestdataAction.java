@@ -67,7 +67,7 @@ public class DumpCleanHighlightingTestdataAction extends AnAction implements Dum
       targetDescriptor.setTitle("Choose Directory");
       targetDescriptor.setDescription("Directory where highlighting-markup-free copies would be placed");
       final VirtualFile destinationFolder = FileChooser.chooseFile(targetDescriptor, project, null);
-      if (destinationFolder == dirToProcess) {
+      if (dirToProcess.equals(destinationFolder)) {
         Messages.showErrorDialog(project, "Source and destination roots should differ", "Reject to Proceed");
         return;
       }

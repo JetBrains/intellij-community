@@ -85,11 +85,6 @@ public class GeneratedParserUtilBase {
     return true;
   }
 
-  @Deprecated
-  public static void empty_element_parsed_guard_(PsiBuilder builder_, int offset_, String funcName_) {
-    builder_.error("Empty element parsed in '" + funcName_ + "' at offset " + offset_);
-  }
-
   public static boolean empty_element_parsed_guard_(PsiBuilder builder_, String funcName_, int prev_position_) {
     if (prev_position_ == current_position_(builder_)) {
       builder_.error("Empty element parsed in '" + funcName_ + "' at offset " + builder_.getCurrentOffset());
@@ -112,30 +107,49 @@ public class GeneratedParserUtilBase {
     return TokenSet.create(tokenTypes_);
   }
 
-  public static boolean consumeTokens(PsiBuilder builder_, int pin_, IElementType... tokens_) {
+  private static boolean consumeTokens(PsiBuilder builder_, boolean smart, int pin, IElementType... tokens) {
     ErrorState state = ErrorState.get(builder_);
-    if (state.completionState != null && state.predicateSign) {
-      addCompletionVariant(builder_, state.completionState, tokens_);
+    if (state.completionState != null && state.predicateCount == 0) {
+      addCompletionVariant(builder_, state.completionState, tokens);
     }
     // suppress single token completion
     CompletionState completionState = state.completionState;
     state.completionState = null;
     boolean result_ = true;
     boolean pinned_ = false;
-    for (int i = 0, tokensLength = tokens_.length; i < tokensLength; i++) {
-      if (pin_ > 0 && i == pin_) pinned_ = result_;
-      if ((result_ || pinned_) && !consumeToken(builder_, tokens_[i])) {
-        result_ = false;
-        if (pin_ < 0 || pinned_) report_error_(builder_, state, false);
+    for (int i = 0, tokensLength = tokens.length; i < tokensLength; i++) {
+      if (pin > 0 && i == pin) pinned_ = result_;
+      if (result_ || pinned_) {
+        boolean fast = smart && i == 0;
+        if (!(fast ? consumeTokenFast(builder_, tokens[i]) : consumeToken(builder_, tokens[i]))) {
+          result_ = false;
+          if (pin < 0 || pinned_) report_error_(builder_, state, false);
+        }
       }
     }
     state.completionState = completionState;
     return pinned_ || result_;
   }
 
-  public static boolean parseTokens(PsiBuilder builder_, int pin_, IElementType... tokens_) {
+  public static boolean consumeTokens(PsiBuilder builder_, int pin_, IElementType... token) {
+    return consumeTokens(builder_, false, pin_, token);
+  }
+
+  public static boolean consumeTokensSmart(PsiBuilder builder_, int pin_, IElementType... token) {
+    return consumeTokens(builder_, true, pin_, token);
+  }
+
+  public static boolean parseTokens(PsiBuilder builder_, int pin_, IElementType... tokens) {
+    return parseTokens(builder_, false, pin_, tokens);
+  }
+
+  public static boolean parseTokensSmart(PsiBuilder builder_, int pin_, IElementType... tokens) {
+    return parseTokens(builder_, true, pin_, tokens);
+  }
+
+  public static boolean parseTokens(PsiBuilder builder_, boolean smart, int pin_, IElementType... tokens) {
     PsiBuilder.Marker marker_ = builder_.mark();
-    boolean result_ = consumeTokens(builder_, pin_, tokens_);
+    boolean result_ = consumeTokens(builder_, smart, pin_, tokens);
     if (!result_) {
       marker_.rollbackTo();
     }
@@ -145,8 +159,19 @@ public class GeneratedParserUtilBase {
     return result_;
   }
 
+  public static boolean consumeTokenSmart(PsiBuilder builder_, IElementType token) {
+    addCompletionVariantSmart(builder_, token);
+    return consumeTokenFast(builder_, token);
+  }
+
+  public static boolean consumeTokenSmart(PsiBuilder builder_, String token) {
+    addCompletionVariantSmart(builder_, token);
+    return consumeTokenFast(builder_, token);
+  }
+
   public static boolean consumeToken(PsiBuilder builder_, IElementType token) {
-    if (nextTokenIsInner(builder_, token, true)) {
+    addVariantSmart(builder_, token, true);
+    if (nextTokenIsFast(builder_, token)) {
       builder_.advanceLexer();
       return true;
     }
@@ -154,16 +179,31 @@ public class GeneratedParserUtilBase {
   }
 
   public static boolean consumeTokenFast(PsiBuilder builder_, IElementType token) {
-    if (builder_.getTokenType() == token) {
+    if (nextTokenIsFast(builder_, token)) {
       builder_.advanceLexer();
       return true;
     }
     return false;
   }
 
+  public static boolean consumeToken(PsiBuilder builder_, String text) {
+    return consumeToken(builder_, text, ErrorState.get(builder_).caseSensitive);
+  }
+
+  public static boolean consumeToken(PsiBuilder builder_, String text, boolean caseSensitive) {
+    addVariantSmart(builder_, text, true);
+    int count = nextTokenIsFast(builder_, text, caseSensitive);
+    if (count > 0) {
+      while (count-- > 0) builder_.advanceLexer();
+      return true;
+    }
+    return false;
+  }
+
   public static boolean consumeTokenFast(PsiBuilder builder_, String text) {
-    if (Comparing.strEqual(builder_.getTokenText(), text, ErrorState.get(builder_).caseSensitive)) {
-      builder_.advanceLexer();
+    int count = nextTokenIsFast(builder_, text, ErrorState.get(builder_).caseSensitive);
+    if (count > 0) {
+      while (count-- > 0) builder_.advanceLexer();
       return true;
     }
     return false;
@@ -203,25 +243,55 @@ public class GeneratedParserUtilBase {
   }
 
   public static boolean nextTokenIs(PsiBuilder builder_, IElementType token) {
-    return nextTokenIsInner(builder_, token, false);
+    if (!addVariantSmart(builder_, token, false)) return true;
+    return nextTokenIsFast(builder_, token);
   }
 
-  public static boolean nextTokenIsInner(PsiBuilder builder_, IElementType token, boolean force) {
+  public static boolean nextTokenIs(PsiBuilder builder_, String tokenText) {
+    if (!addVariantSmart(builder_, tokenText, false)) return true;
+    return nextTokenIsFast(builder_, tokenText, ErrorState.get(builder_).caseSensitive) > 0;
+  }
+
+  public static boolean nextTokenIsFast(PsiBuilder builder_, String tokenText) {
+    return nextTokenIsFast(builder_, tokenText, ErrorState.get(builder_).caseSensitive) > 0;
+  }
+
+  public static int nextTokenIsFast(PsiBuilder builder_, String tokenText, boolean caseSensitive) {
+    CharSequence sequence = builder_.getOriginalText();
+    int offset = builder_.getCurrentOffset();
+    int endOffset = offset + tokenText.length();
+    CharSequence subSequence = sequence.subSequence(offset, Math.min(endOffset, sequence.length()));
+
+    if (!Comparing.equal(subSequence, tokenText, caseSensitive)) return 0;
+
+    int count = 0;
+    while (true) {
+      int nextOffset = builder_.rawTokenTypeStart(++count);
+      if (nextOffset > endOffset) {
+        return -count;
+      }
+      else if (nextOffset == endOffset) {
+        break;
+      }
+    }
+    return count;
+  }
+
+  private static void addCompletionVariantSmart(PsiBuilder builder_, Object token) {
     ErrorState state = ErrorState.get(builder_);
-    if (state.completionState != null && !force) return true;
-    IElementType tokenType = builder_.getTokenType();
+    CompletionState completionState = state.completionState;
+    if (completionState != null && state.predicateCount == 0) {
+      addCompletionVariant(builder_, completionState, token);
+    }
+  }
+
+  private static boolean addVariantSmart(PsiBuilder builder_, Object token, boolean force) {
+    ErrorState state = ErrorState.get(builder_);
+    // skip FIRST check in completion mode
+    if (state.completionState != null && !force) return false;
+    builder_.eof();
     if (!state.suppressErrors && state.predicateCount < 2) {
       addVariant(builder_, state, token);
-    }
-    return token == tokenType;
-  }
-
-  @Deprecated
-  public static boolean replaceVariants(PsiBuilder builder_, int variantCount, String frameName) {
-    ErrorState state = ErrorState.get(builder_);
-    if (!state.suppressErrors && state.predicateCount < 2 && state.predicateSign) {
-      state.clearVariants(true, state.variants.size() - variantCount);
-      addVariantInner(state, builder_.rawTokenIndex(), frameName);
     }
     return true;
   }
@@ -251,37 +321,6 @@ public class GeneratedParserUtilBase {
     else {
       state.unexpected.add(variant);
     }
-  }
-
-  public static boolean consumeToken(PsiBuilder builder_, String text) {
-    ErrorState state = ErrorState.get(builder_);
-    if (!state.suppressErrors && state.predicateCount < 2) {
-      addVariant(builder_, state, text);
-    }
-    return consumeTokenInner(builder_, text, state.caseSensitive);
-  }
-
-  public static boolean consumeTokenInner(PsiBuilder builder_, String text, boolean caseSensitive) {
-    final CharSequence sequence = builder_.getOriginalText();
-    final int offset = builder_.getCurrentOffset();
-    final int endOffset = offset + text.length();
-    CharSequence tokenText = sequence.subSequence(offset, Math.min(endOffset, sequence.length()));
-
-    if (Comparing.equal(text, tokenText, caseSensitive)) {
-      int count = 0;
-      while (true) {
-        final int nextOffset = builder_.rawTokenTypeStart(++ count);
-        if (nextOffset > endOffset) {
-          return false;
-        }
-        else if (nextOffset == endOffset) {
-          break;
-        }
-      }
-      while (count-- > 0) builder_.advanceLexer();
-      return true;
-    }
-    return false;
   }
 
   private static void addCompletionVariant(@NotNull PsiBuilder builder_, @NotNull CompletionState completionState, Object o) {
@@ -323,32 +362,6 @@ public class GeneratedParserUtilBase {
     if (add) {
       completionState.items.add(text);
     }
-  }
-
-  // keep the old section API for compatibility
-  public static final String _SECTION_NOT_ = "_SECTION_NOT_";
-  public static final String _SECTION_AND_ = "_SECTION_AND_";
-  public static final String _SECTION_RECOVER_ = "_SECTION_RECOVER_";
-  public static final String _SECTION_GENERAL_ = "_SECTION_GENERAL_";
-
-  @SuppressWarnings("StringEquality")
-  @Deprecated
-  public static void enterErrorRecordingSection(PsiBuilder builder_, int level, @NotNull String sectionType, @Nullable String frameName) {
-    int modifiers = sectionType == _SECTION_GENERAL_ ? _NONE_ :
-                    sectionType == _SECTION_NOT_ ? _NOT_ :
-                    sectionType == _SECTION_AND_ ? _AND_ : _NONE_;
-    enter_section_impl_(builder_, level, modifiers, frameName);
-  }
-
-  @Deprecated
-  public static boolean exitErrorRecordingSection(PsiBuilder builder_,
-                                                  int level,
-                                                  boolean result,
-                                                  boolean pinned,
-                                                  @NotNull String sectionType,
-                                                  @Nullable Parser eatMore) {
-    exit_section_(builder_, level, null, null, result, pinned, eatMore);
-    return result;
   }
 
   // here's the new section API for compact parsers & less IntelliJ platform API exposure

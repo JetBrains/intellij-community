@@ -33,11 +33,11 @@ class JavaFramesListRenderer /*extends ColoredListCellRenderer*/ {
     myColorScheme = EditorColorsManager.getInstance().getGlobalScheme();
   }
 
-  public void customizePresentation(StackFrameDescriptorImpl descriptor, @NotNull ColoredTextContainer component) {
+  public void customizePresentation(StackFrameDescriptorImpl descriptor, @NotNull ColoredTextContainer component, StackFrameDescriptorImpl selectedDescriptor) {
     component.setIcon(descriptor.getIcon());
       //final Object selectedValue = list.getSelectedValue();
-      //final boolean shouldHighlightAsRecursive = (selectedValue instanceof StackFrameDescriptorImpl) &&
-      //                                           isOccurrenceOfSelectedFrame((StackFrameDescriptorImpl)selectedValue, descriptor);
+
+      final boolean shouldHighlightAsRecursive = isOccurrenceOfSelectedFrame(selectedDescriptor, descriptor);
 
       final ValueMarkup markup = descriptor.getValueMarkup();
       if (markup != null) {
@@ -85,9 +85,9 @@ class JavaFramesListRenderer /*extends ColoredListCellRenderer*/ {
         component.append(" (" + label.substring(openingBrace + 1, closingBrace) + ")", SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
 
         component.append(label.substring(closingBrace + 1, label.length()), attributes);
-        //if (shouldHighlightAsRecursive && descriptor.isRecursiveCall()) {
-        //  component.append(" [" + descriptor.getOccurrenceIndex() + "]", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-        //}
+        if (shouldHighlightAsRecursive && descriptor.isRecursiveCall()) {
+          component.append(" [" + descriptor.getOccurrenceIndex() + "]", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        }
     }
   }
 

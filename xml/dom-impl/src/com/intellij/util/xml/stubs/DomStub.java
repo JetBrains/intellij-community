@@ -132,11 +132,5 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
     return false;
   }
 
-  @Override
-  public boolean equals(Object obj) {
-    if (obj == this) return true;
-    return super.equals(obj);
-  }
-
   public abstract int getIndex();
 }

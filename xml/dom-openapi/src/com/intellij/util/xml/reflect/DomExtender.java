@@ -24,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
  *   domClass - the DOM element class for which this extender will be called. Should be equal to T.
  *   extenderClass - this class qualified name.
  *
+ * For registering extenders, use "com.intellij.dom.extender" extension point.
+ *
  * @author peter
  */
 public abstract class DomExtender<T extends DomElement> {

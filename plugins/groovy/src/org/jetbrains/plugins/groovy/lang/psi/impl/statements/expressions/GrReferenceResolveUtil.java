@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrTraitType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -50,6 +51,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.List;
+import java.util.ListIterator;
 
 /**
  * @author Medvedev Max
@@ -190,6 +192,13 @@ public class GrReferenceResolveUtil {
       return true;
     }
 
+    if (qualifierType instanceof GrTraitType) {
+      if (!processTraitType((GrTraitType)qualifierType, processor, state, place)) {
+        return false;
+      }
+      return true;
+    }
+
     if (qualifierType instanceof PsiClassType) {
       PsiClassType.ClassResolveResult qualifierResult = ((PsiClassType)qualifierType).resolveGenerics();
       PsiClass qualifierClass = qualifierResult.getElement();
@@ -215,6 +224,31 @@ public class GrReferenceResolveUtil {
 
     if (!ResolveUtil.processCategoryMembers(place, processor, state)) return false;
     if (!ResolveUtil.processNonCodeMembers(qualifierType, processor, place, state)) return false;
+    return true;
+  }
+
+  private static boolean processTraitType(@NotNull GrTraitType traitType,
+                                          @NotNull PsiScopeProcessor processor,
+                                          @NotNull ResolveState state,
+                                          @NotNull GrReferenceExpression place) {
+    GrTypeDefinition mockDefinition = traitType.getMockTypeDefinition();
+    if (mockDefinition != null) {
+      if (!mockDefinition.processDeclarations(processor, state, null, place)) {
+        return false;
+      }
+    }
+    else {
+      PsiClassType exprType = traitType.getExprType();
+
+      if (!processQualifierType(processor, exprType, state, place)) return false;
+
+      List<PsiClassType> traitTypes = traitType.getTraitTypes();
+      for (ListIterator<PsiClassType> iterator = traitTypes.listIterator(); iterator.hasPrevious(); ) {
+        PsiClassType type = iterator.previous();
+        if (!processQualifierType(processor, type, state, place)) return false;
+      }
+    }
+
     return true;
   }
 

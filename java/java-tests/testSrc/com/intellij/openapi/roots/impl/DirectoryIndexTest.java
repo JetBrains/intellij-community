@@ -730,7 +730,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
     assertIteratedContent(fileIndex, null, Arrays.asList(fileRoot, fileSourceRoot, fileTestSourceRoot));
 
     ContentEntry contentEntry = PsiTestUtil.addContentRoot(myModule, fileRoot);
-    assertSame(fileRoot, contentEntry.getFile());
+    assertEquals(fileRoot, contentEntry.getFile());
     checkInfo(fileRoot, myModule, false, false, "", null);
     assertTrue(fileIndex.isInContent(fileRoot));
     assertFalse(fileIndex.isInSource(fileRoot));

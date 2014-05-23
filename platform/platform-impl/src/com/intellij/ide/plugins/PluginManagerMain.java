@@ -319,7 +319,7 @@ public abstract class PluginManagerMain implements Disposable {
           if (!acceptHost(host)) continue;
           final Map<PluginId, PluginDownloader> downloaded = new HashMap<PluginId, PluginDownloader>();
           try {
-            UpdateChecker.checkPluginsHost(host, downloaded, false, null, null);
+            UpdateChecker.checkPluginsHost(host, downloaded, false, null);
             for (PluginDownloader downloader : downloaded.values()) {
               final PluginNode pluginNode = PluginDownloader.createPluginNode(host, downloader);
               if (pluginNode != null) {

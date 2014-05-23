@@ -48,7 +48,9 @@ public class StubParentStrategy implements DomParentStrategy {
           }
           XmlTag tag = parentHandler.getXmlTag();
           if (tag == null) {
-            LOG.error("can't find tag for " + parentHandler);
+            LOG.error("can't find tag for " + parentHandler + "\n" +
+                      "parent stub: " + myStub.getParentStub() + "\n" +
+                      "parent's children: " + myStub.getParentStub().getChildrenStubs());
             return null;
           }
           return tag.getAttribute(myStub.getName());

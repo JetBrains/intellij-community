@@ -17,7 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.hash.HashSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -35,7 +35,7 @@ import java.util.Set;
  * @author Max Medvedev
  */
 public class GrDGMTypeCalculator extends GrCallExpressionTypeCalculator {
-  private static final Set<String> mySet = new HashSet<String>();
+  private static final Set<String> mySet = ContainerUtil.newLinkedHashSet();
 
   static {
     mySet.add("unique");

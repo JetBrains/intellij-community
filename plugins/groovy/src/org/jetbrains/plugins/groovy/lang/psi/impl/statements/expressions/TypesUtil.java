@@ -329,6 +329,14 @@ public class TypesUtil {
       }
     }
 
+    if (rType instanceof GrTraitType) {
+      if (isAssignableWithoutConversions(lType, ((GrTraitType)rType).getExprType(), context)) return true;
+      for (PsiClassType trait : ((GrTraitType)rType).getTraitTypes()) {
+        if (isAssignableWithoutConversions(lType, trait, context)) return true;
+      }
+      return false;
+    }
+
     if (isClassType(rType, GroovyCommonClassNames.GROOVY_LANG_GSTRING) && lType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
       return true;
     }

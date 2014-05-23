@@ -15,10 +15,11 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -37,9 +38,11 @@ import java.util.List;
  */
 public class ClassMappingNameConverter extends ResolvingConverter.StringConverter {
 
+  private final static Logger LOG = Logger.getInstance(ClassMappingNameConverter.class);
+
   @NotNull
   @Override
-  public Collection<? extends String> getVariants(ConvertContext context) {
+  public Collection<String> getVariants(ConvertContext context) {
     DomElement parent = context.getInvocationElement().getParent();
     assert parent != null;
     List<DomElement> children = DomUtil.getDefinedChildren(parent, true, true);
@@ -52,12 +55,19 @@ public class ClassMappingNameConverter extends ResolvingConverter.StringConverte
     if (classElement == null) return Collections.emptyList();
     Object value = ((GenericDomValue)classElement).getValue();
     if (value == null) return Collections.emptyList();
-    assert value instanceof PsiClass : classElement + " should have PsiClass type, but was " + value;
-    PsiClass psiClass = (PsiClass)value;
-
+    PsiType type;
+    if (value instanceof PsiType) {
+      type = (PsiType)value;
+    }
+    else if (value instanceof PsiClass) {
+      type = PsiTypesUtil.getClassType((PsiClass)value);
+    }
+    else {
+      LOG.error("wrong type: " + value.getClass());
+      return Collections.emptyList();
+    }
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(context.getProject());
-    PsiClassType classType = PsiTypesUtil.getClassType(psiClass);
-    SuggestedNameInfo info = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, classType);
+    SuggestedNameInfo info = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, type);
     return Arrays.asList(info.names);
   }
 

@@ -108,7 +108,13 @@ public class JavaExecutionStack extends XExecutionStack {
               !(status == ThreadReference.THREAD_STATUS_ZOMBIE)) {
             try {
               int framesToSkip = firstFrameIndex;
+              boolean first = true;
               for (StackFrameProxyImpl stackFrame : myThreadProxy.frames()) {
+                if (first && framesToSkip > 0) {
+                  framesToSkip--;
+                  first = false;
+                  continue;
+                }
                 JavaStackFrame frame = new JavaStackFrame(stackFrame, myDebugProcess, myTracker);
                 if (showLibraryStackframes || (!frame.getDescriptor().isSynthetic() && !frame.getDescriptor().isInLibraryContent())) {
                   if (framesToSkip > 0) {

@@ -107,7 +107,14 @@ public class PsiQuery {
    */
   @NotNull
   public PsiQuery parents(@NotNull final Class<? extends PsiElement> clazz) {
-    throw new RuntimeException("Not impl");
+    final List<PsiElement> result = new ArrayList<PsiElement>();
+    for (final PsiElement element : myPsiElements) {
+      final PsiElement parent = PsiTreeUtil.getParentOfType(element, clazz);
+      if (parent != null) {
+        result.add(parent);
+      }
+    }
+    return new PsiQuery(result);
   }
 
 

@@ -87,7 +87,7 @@ class e {
 
 class ccc {
     static Comparable<? super ccc> f() {
-        return <warning descr="Unchecked assignment: 'java.lang.Comparable' to 'java.lang.Comparable<? super ccc>'">new Comparable () {
+        return <warning descr="Unchecked assignment: 'anonymous java.lang.Comparable' to 'java.lang.Comparable<? super ccc>'">new Comparable () {
             public int compareTo(final Object o) {
                 return 0;
             }

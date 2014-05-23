@@ -182,6 +182,13 @@ public class AsyncResult<T> extends ActionCallback {
   }
 
   @NotNull
+  public static <R> AsyncResult<R> rejected(@NotNull String errorMessage) {
+    AsyncResult<R> result = new AsyncResult<R>();
+    result.reject(errorMessage);
+    return result;
+  }
+
+  @NotNull
   public static <R> AsyncResult<R> done(@Nullable R result) {
     return new AsyncResult<R>().setDone(result);
   }

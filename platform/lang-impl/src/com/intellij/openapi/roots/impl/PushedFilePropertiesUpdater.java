@@ -143,6 +143,7 @@ public class PushedFilePropertiesUpdater {
   private void schedulePushRecursively(final VirtualFile dir, final FilePropertyPusher... pushers) {
     if (pushers.length == 0) return;
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    if (!fileIndex.isInContent(dir)) return;
     queueTask(new DumbModeTask() {
       @Override
       public void performInDumbMode(@NotNull final ProgressIndicator indicator) {

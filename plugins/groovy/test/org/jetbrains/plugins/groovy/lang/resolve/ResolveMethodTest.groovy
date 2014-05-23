@@ -2187,4 +2187,33 @@ class C implements A, B {
     assertTrue(method instanceof GrTraitMethod)
     assertEquals("B", method.prototype.containingClass.name)
   }
+
+  void testTraitMethodFromAsOperator1() {
+    resolveByText('''
+trait A {
+  def foo(){}
+}
+class B {
+  def bar() {}
+}
+
+def v = new B() as A
+v.fo<caret>o()
+''', PsiMethod)
+  }
+
+  void testTraitMethodFromAsOperator2() {
+    resolveByText('''
+trait A {
+  def foo(){}
+}
+class B {
+  def bar() {}
+}
+
+def v = new B() as A
+v.ba<caret>r()
+''', PsiMethod)
+  }
+
 }

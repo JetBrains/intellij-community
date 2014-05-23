@@ -173,12 +173,13 @@ public final class UpdateChecker {
         buildNumber = latestBuild.getNumber();
       }
     }
-    final Collection<PluginDownloader> updatedPlugins = platformUpdate ? null : updatePlugins(manualCheck, hostsConfigurable, indicator, buildNumber);
+    final Collection<IdeaPluginDescriptor> incompatiblePlugins = buildNumber != null ? new HashSet<IdeaPluginDescriptor>() : null;
+    final Collection<PluginDownloader> updatedPlugins = platformUpdate ? null : updatePlugins(manualCheck, incompatiblePlugins, hostsConfigurable, indicator, buildNumber);
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        showUpdateResult(project, result, updatedPlugins, enableLink, manualCheck);
+        showUpdateResult(project, result, updatedPlugins, incompatiblePlugins, enableLink, manualCheck);
         if (callback != null) {
           callback.setDone();
         }
@@ -187,6 +188,7 @@ public final class UpdateChecker {
   }
 
   public static Collection<PluginDownloader> updatePlugins(boolean manualCheck,
+                                                           @Nullable Collection<IdeaPluginDescriptor> incompatiblePlugins,
                                                            @Nullable PluginHostsConfigurable hostsConfigurable,
                                                            @Nullable ProgressIndicator indicator,
                                                            @Nullable BuildNumber buildNumber) {
@@ -194,7 +196,7 @@ public final class UpdateChecker {
     final Set<String> failed = new HashSet<String>();
     for (String host : getPluginHosts(hostsConfigurable)) {
       try {
-        checkPluginsHost(host, downloaded, true, indicator, buildNumber);
+        checkPluginsHost(host, downloaded, incompatiblePlugins, true, indicator, buildNumber);
       }
       catch (ProcessCanceledException e) {
         return null;
@@ -240,7 +242,8 @@ public final class UpdateChecker {
         final List<IdeaPluginDescriptor> process = RepositoryHelper.loadPluginsFromRepository(indicator);
         final List<String> disabledPlugins = PluginManagerCore.getDisabledPlugins();
         for (IdeaPluginDescriptor loadedPlugin : process) {
-          final String idString = loadedPlugin.getPluginId().getIdString();
+          final PluginId pluginId = loadedPlugin.getPluginId();
+          final String idString = pluginId.getIdString();
           if (!toUpdate.containsKey(idString)) continue;
           final IdeaPluginDescriptor installedPlugin = toUpdate.get(idString);
           if (installedPlugin == null) {
@@ -252,6 +255,9 @@ public final class UpdateChecker {
               if (isReadyToUpdate(idString, newVersion) && !disabledPlugins.contains(idString)) {
                 prepareToInstall(downloaded, loadedPlugin, indicator, buildNumber);
               }
+            }
+            if (!downloaded.containsKey(pluginId)) {
+              collectIncompatible(incompatiblePlugins, buildNumber, installedPlugin);
             }
           }
         }
@@ -290,6 +296,14 @@ public final class UpdateChecker {
     }
   }
 
+  private static void collectIncompatible(Collection<IdeaPluginDescriptor> incompatiblePlugins,
+                                          BuildNumber buildNumber,
+                                          IdeaPluginDescriptor descriptor) {
+    if (incompatiblePlugins != null && descriptor != null && descriptor.isEnabled() && PluginManagerCore.isIncompatible(descriptor, buildNumber)) {
+      incompatiblePlugins.add(descriptor);
+    }
+  }
+
   private static void showErrorMessage(boolean showDialog, final String message) {
     if (showDialog) {
       UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -321,7 +335,7 @@ public final class UpdateChecker {
 
   public static boolean checkPluginsHost(final String host, final Map<PluginId, PluginDownloader> downloaded) throws Exception {
     try {
-      return checkPluginsHost(host, downloaded, true, null, null);
+      return checkPluginsHost(host, downloaded, null, true, null, null);
     }
     catch (ProcessCanceledException e) {
       return false;
@@ -330,9 +344,17 @@ public final class UpdateChecker {
 
   public static boolean checkPluginsHost(final String host,
                                          final Map<PluginId, PluginDownloader> downloaded,
-                                         final boolean collectToUpdate, 
-                                         @Nullable ProgressIndicator indicator, 
-                                         final BuildNumber buildNumber) throws Exception {
+                                         final boolean collectToUpdate,
+                                         @Nullable ProgressIndicator indicator) throws Exception {
+    return checkPluginsHost(host, downloaded, null, collectToUpdate, indicator, null);
+  }
+
+  private static boolean checkPluginsHost(final String host,
+                                          final Map<PluginId, PluginDownloader> downloaded,
+                                          final @Nullable Collection<IdeaPluginDescriptor> incompatiblePlugins,
+                                          final boolean collectToUpdate,
+                                          @Nullable ProgressIndicator indicator,
+                                          final BuildNumber buildNumber) throws Exception {
     InputStream inputStream = loadVersionInfo(host);
     if (inputStream == null) return false;
     final Document document;
@@ -402,6 +424,9 @@ public final class UpdateChecker {
                 if (isReadyToUpdate(pluginId, pluginVersion) && downloader.prepareToInstall(progressIndicator, buildNumber)) {
                   downloaded.put(PluginId.getId(pluginId), downloader);
                 }
+              }
+              if (loadedPlugin != null && !downloaded.containsKey(loadedPlugin.getPluginId())) {
+                collectIncompatible(incompatiblePlugins, buildNumber, loadedPlugin);
               }
             }
             catch (IOException e) {
@@ -476,6 +501,7 @@ public final class UpdateChecker {
   private static void showUpdateResult(@Nullable final Project project,
                                        final CheckForUpdateResult checkForUpdateResult,
                                        final Collection<PluginDownloader> updatedPlugins,
+                                       final Collection<IdeaPluginDescriptor> incompatiblePlugins, 
                                        final boolean enableLink,
                                        final boolean alwaysShowResults) {
     final UpdateChannel channelToPropose = checkForUpdateResult.getChannelToPropose();
@@ -500,7 +526,7 @@ public final class UpdateChecker {
       Runnable runnable = new Runnable() {
         @Override
         public void run() {
-          new UpdateInfoDialog(updatedChannel, enableLink, updatedPlugins).show();
+          new UpdateInfoDialog(updatedChannel, enableLink, updatedPlugins, incompatiblePlugins).show();
         }
       };
 

@@ -61,15 +61,16 @@ public class RootIndex extends DirectoryIndex {
   };
 
   private final Map<String, List<VirtualFile>> myDirectoriesByPackageNameCache = ContainerUtil.newConcurrentMap();
-  private final Map<VirtualFile, DirectoryInfo> myInfoCache = ContainerUtil.newConcurrentMap();
+  private final InfoCache myInfoCache;
   private final List<JpsModuleSourceRootType<?>> myRootTypes = ContainerUtil.newArrayList();
   private final TObjectIntHashMap<JpsModuleSourceRootType<?>> myRootTypeId = new TObjectIntHashMap<JpsModuleSourceRootType<?>>();
   @NotNull private final Project myProject;
   private volatile Map<VirtualFile, OrderEntry[]> myOrderEntries;
 
   // made public for Upsource
-  public RootIndex(@NotNull Project project) {
+  public RootIndex(@NotNull Project project, InfoCache cache) {
     myProject = project;
+    myInfoCache = cache;
     final RootInfo info = buildRootInfo(project);
 
     Set<VirtualFile> allRoots = info.getAllRoots();
@@ -265,7 +266,7 @@ public class RootIndex extends DirectoryIndex {
       return null;
     }
     if (!dir.isDirectory()) {
-      DirectoryInfo info = myInfoCache.get(dir);
+      DirectoryInfo info = myInfoCache.getCachedInfo(dir);
       return info == NULL_INFO ? null : info;
     }
 
@@ -274,9 +275,9 @@ public class RootIndex extends DirectoryIndex {
       if (++count > 1000) {
         throw new IllegalStateException("Possible loop in tree, started at " + dir.getName());
       }
-      DirectoryInfo info = myInfoCache.get(root);
+      DirectoryInfo info = myInfoCache.getCachedInfo(root);
       if (info != null) {
-        if (dir != root) {
+        if (!dir.equals(root)) {
           cacheInfos(dir, root, info);
         }
         return info == NULL_INFO ? null : info;
@@ -293,7 +294,7 @@ public class RootIndex extends DirectoryIndex {
   @Nullable
   private DirectoryInfo cacheInfos(VirtualFile dir, @Nullable VirtualFile stopAt, @Nullable DirectoryInfo info) {
     while (dir != null) {
-      myInfoCache.put(dir, info == null ? NULL_INFO : info);
+      myInfoCache.cacheInfo(dir, info == null ? NULL_INFO : info);
       if (dir.equals(stopAt)) {
         break;
       }
@@ -490,7 +491,7 @@ public class RootIndex extends DirectoryIndex {
                                      VirtualFile librarySourceRoot) {
       VirtualFile packageRoot = findPackageRootInfo(hierarchy, moduleContentRoot, libraryClassRoot, librarySourceRoot);
       String prefix = packagePrefix.get(packageRoot);
-      if (prefix != null && packageRoot != root) {
+      if (prefix != null && !root.equals(packageRoot)) {
         assert packageRoot != null;
         String relative = VfsUtilCore.getRelativePath(root, packageRoot, '.');
         prefix = StringUtil.isEmpty(prefix) ? relative : prefix + '.' + relative;
@@ -509,10 +510,10 @@ public class RootIndex extends DirectoryIndex {
             librarySourceRoot == null) {
           return root;
         }
-        if (root == libraryClassRoot || root == librarySourceRoot) {
+        if (root.equals(libraryClassRoot) || root.equals(librarySourceRoot)) {
           return root;
         }
-        if (root == moduleContentRoot && !sourceRootOf.containsKey(root) && librarySourceRoot == null && libraryClassRoot == null) {
+        if (root.equals(moduleContentRoot) && !sourceRootOf.containsKey(root) && librarySourceRoot == null && libraryClassRoot == null) {
           return null;
         }
       }
@@ -527,10 +528,10 @@ public class RootIndex extends DirectoryIndex {
                                                              @NotNull MultiMap<VirtualFile, OrderEntry> libSourceRootEntries) {
       LinkedHashSet<OrderEntry> orderEntries = ContainerUtil.newLinkedHashSet();
       for (VirtualFile root : hierarchy) {
-        if (root == libraryClassRoot && !sourceRootOf.containsKey(root)) {
+        if (root.equals(libraryClassRoot) && !sourceRootOf.containsKey(root)) {
           orderEntries.addAll(libClassRootEntries.get(root));
         }
-        if (root == librarySourceRoot && libraryClassRoot == null) {
+        if (root.equals(librarySourceRoot) && libraryClassRoot == null) {
           orderEntries.addAll(libSourceRootEntries.get(root));
         }
         if (libClassRootEntries.containsKey(root) || sourceRootOf.containsKey(root) && librarySourceRoot == null) {
@@ -589,5 +590,10 @@ public class RootIndex extends DirectoryIndex {
     String packagePrefix = info.calcPackagePrefix(root, hierarchy, moduleContentRoot, libraryClassRoot, librarySourceRoot);
 
     return Pair.create(directoryInfo, packagePrefix);
+  }
+  
+  public interface InfoCache {
+    @Nullable DirectoryInfo getCachedInfo(@NotNull VirtualFile dir);
+   void cacheInfo(@NotNull VirtualFile dir, @NotNull DirectoryInfo info);
   }
 }

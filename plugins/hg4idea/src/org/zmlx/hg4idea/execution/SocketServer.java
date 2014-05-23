@@ -111,6 +111,7 @@ public class SocketServer {
       return data;
     }
 
+    //if mercurial already sent number of bytes, but there was no data yet, this method read '\u0000' len times instead of data bytes.
     private static void readAsMuchAsAvailable(DataInputStream inputStream, byte[] data, int maxLength) throws IOException {
       int offset = 0;
       int available;

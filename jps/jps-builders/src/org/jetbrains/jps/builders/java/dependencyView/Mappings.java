@@ -2074,7 +2074,7 @@ public class Mappings {
             @Override
             public boolean execute(final int superClass) {
               final TIntHashSet added = addedSuperClasses.get(superClass);
-              final TIntHashSet removed = removedSuperClasses.get(superClass);
+              TIntHashSet removed = removedSuperClasses.get(superClass);
 
               final TIntHashSet old = myClassToSubclasses.get(superClass);
 
@@ -2085,12 +2085,20 @@ public class Mappings {
               }
               else {
                 boolean changed = false;
-                if (removed != null) {
-                  changed |= old.removeAll(removed.toArray());
+                final int[] addedAsArray = added != null && !added.isEmpty()? added.toArray() : null;
+                if (removed != null && !removed.isEmpty()) {
+                  if (addedAsArray != null) {
+                    // optimization: avoid unnecessary changes in the set
+                    removed = (TIntHashSet)removed.clone();
+                    removed.removeAll(addedAsArray);
+                  }
+                  if (!removed.isEmpty()) {
+                    changed = old.removeAll(removed.toArray());
+                  }
                 }
 
-                if (added != null) {
-                  changed |= old.addAll(added.toArray());
+                if (addedAsArray != null) {
+                  changed |= old.addAll(addedAsArray);
                 }
 
                 if (changed) {
