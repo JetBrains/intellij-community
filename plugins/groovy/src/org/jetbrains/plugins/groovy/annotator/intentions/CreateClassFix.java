@@ -96,7 +96,7 @@ public abstract class CreateClassFix {
         }
         else {
           bindRef(targetClass, myRefElement);
-          putCursor(project, targetClass.getContainingFile(), targetClass);
+          IntentionUtils.positionCursor(project, targetClass.getContainingFile(), targetClass);
         }
       }
     };
@@ -195,7 +195,7 @@ public abstract class CreateClassFix {
           if (modifierList != null) {
             modifierList.setModifierProperty(PsiModifier.STATIC, true);
           }
-          putCursor(project, added.getContainingFile(), added);
+          IntentionUtils.positionCursor(project, added.getContainingFile(), added);
         }
         finally {
           lock.finish();
@@ -253,7 +253,7 @@ public abstract class CreateClassFix {
         if (targetClass == null) return;
 
         bindRef(targetClass, myRefElement);
-        putCursor(project, targetClass.getContainingFile(), targetClass);
+        IntentionUtils.positionCursor(project, targetClass.getContainingFile(), targetClass);
       }
 
       @NotNull

@@ -73,8 +73,8 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyFacetUtil;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
-import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.runner.GroovyScriptUtil;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -405,7 +405,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       try {
         PsiFile psiFile = manager.findFile(file);
         if (psiFile instanceof GroovyFile && ((GroovyFile)psiFile).isScript()) {
-          final GroovyScriptType scriptType = GroovyScriptTypeDetector.getScriptType((GroovyFile)psiFile);
+          final GroovyScriptType scriptType = GroovyScriptUtil.getScriptType((GroovyFile)psiFile);
           return scriptType.shouldBeCompiled((GroovyFile)psiFile);
         }
         return true;

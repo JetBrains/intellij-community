@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ParenthesizedPostfixTemplate extends ExpressionPostfixTemplateWithChooser {
   public ParenthesizedPostfixTemplate(PostfixTemplatePsiInfoBase psiInfo) {
-    super("par", "(expression)", psiInfo);
+    super("par", "(expr)", psiInfo);
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,8 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -142,7 +142,7 @@ public class GrAliasImportIntention extends Intention {
     templateBuilder.replaceElement(aliasNameElement, new MyLookupExpression(resolved.getName(), names, (PsiNamedElement)resolved, resolved, true, null));
     Template built = templateBuilder.buildTemplate();
 
-    final Editor newEditor = QuickfixUtil.positionCursor(project, file, templateImport);
+    final Editor newEditor = IntentionUtils.positionCursor(project, file, templateImport);
     final Document document = newEditor.getDocument();
 
     final RangeMarker contextImportPointer = document.createRangeMarker(context.getTextRange());

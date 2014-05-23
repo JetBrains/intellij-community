@@ -21,13 +21,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.ReferenceAdjuster;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -36,6 +34,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyCodeStyleSettingsFacade;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -45,19 +45,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 public class GrReferenceAdjuster implements ReferenceAdjuster {
 
   public GrReferenceAdjuster() {
-  }
-
-  public static boolean seemsToBeQualifiedClassName(@Nullable GrExpression expr) {
-    if (expr == null) return false;
-    while (expr instanceof GrReferenceExpression) {
-      final PsiElement nameElement = ((GrReferenceExpression)expr).getReferenceNameElement();
-      if (((GrReferenceExpression)expr).getTypeArguments().length > 0) return false;
-      if (nameElement == null || nameElement.getNode().getElementType() != GroovyTokenTypes.mIDENT) return false;
-      IElementType dotType = ((GrReferenceExpression)expr).getDotTokenType();
-      if (dotType != null && dotType != GroovyTokenTypes.mDOT) return false;
-      expr = ((GrReferenceExpression)expr).getQualifierExpression();
-    }
-    return expr == null;
   }
 
   public static void shortenAllReferencesIn(@Nullable GroovyPsiElement newTypeElement) {
@@ -192,7 +179,7 @@ public class GrReferenceAdjuster implements ReferenceAdjuster {
     final PsiClass containingClass = resolved.getContainingClass();
     return containingClass == null ||
            PsiTreeUtil.isAncestor(containingClass, ref, true) ||
-           CodeStyleSettingsManager.getSettings(resolved.getProject()).getCustomSettings(GroovyCodeStyleSettings.class).INSERT_INNER_CLASS_IMPORTS;
+           GroovyCodeStyleSettingsFacade.getInstance(containingClass.getProject()).insertInnerClassImports();
   }
 
   @Nullable
@@ -242,7 +229,7 @@ public class GrReferenceAdjuster implements ReferenceAdjuster {
     if (qualifier instanceof GrExpression) {
       if (qualifier instanceof GrReferenceExpression && PsiUtil.isThisReference(qualifier)) return true;
       if (qualifier instanceof GrReferenceExpression &&
-          seemsToBeQualifiedClassName((GrExpression)qualifier)) {
+          PsiImplUtil.seemsToBeQualifiedClassName((GrExpression)qualifier)) {
         final PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
         if (resolved instanceof PsiClass || resolved instanceof PsiPackage) return true;
       }

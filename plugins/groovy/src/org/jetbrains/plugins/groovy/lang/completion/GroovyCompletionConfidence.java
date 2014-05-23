@@ -27,7 +27,6 @@ import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.console.GroovyShellAction;
 import org.jetbrains.plugins.groovy.console.GroovyShellActionBase;
-import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -38,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.runner.GroovyScriptUtil;
 
 /**
  * @author peter
@@ -60,7 +60,7 @@ public class GroovyCompletionConfidence extends CompletionConfidence {
     final PsiElement position = parameters.getPosition();
 
     PsiFile file = position.getContainingFile();
-    if (file instanceof GroovyFile && GroovyScriptTypeDetector.getScriptType((GroovyFile)file) != GroovyScriptTypeDetector.DEFAULT_TYPE) {
+    if (file instanceof GroovyFile && GroovyScriptUtil.getScriptType((GroovyFile)file) != GroovyScriptUtil.DEFAULT_TYPE) {
       return ThreeState.NO;
     }
 
