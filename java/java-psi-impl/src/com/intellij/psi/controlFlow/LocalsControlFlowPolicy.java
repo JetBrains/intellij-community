@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,18 @@
 package com.intellij.psi.controlFlow;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class LocalsControlFlowPolicy implements ControlFlowPolicy {
   private final PsiElement myCodeFragment;
 
-  public LocalsControlFlowPolicy(PsiElement codeFragment) {
+  public LocalsControlFlowPolicy(@NotNull PsiElement codeFragment) {
     myCodeFragment = codeFragment;
   }
 
   @Override
-  public PsiVariable getUsedVariable(PsiReferenceExpression refExpr) {
+  public PsiVariable getUsedVariable(@NotNull PsiReferenceExpression refExpr) {
     if (refExpr.isQualified()) return null;
 
     PsiElement refElement = refExpr.resolve();
@@ -34,8 +35,8 @@ public class LocalsControlFlowPolicy implements ControlFlowPolicy {
   }
 
   @Nullable
-  private PsiVariable checkCodeFragment(PsiElement refElement) {
-    PsiElement codeFragment = ControlFlowUtil.findCodeFragment(refElement);
+  private PsiVariable checkCodeFragment(@NotNull PsiElement refElement) {
+    PsiElement codeFragment;
     if (refElement instanceof PsiParameter) {
       final PsiElement declarationScope = ((PsiParameter)refElement).getDeclarationScope();
       if (declarationScope instanceof PsiMethod) {
@@ -44,6 +45,12 @@ public class LocalsControlFlowPolicy implements ControlFlowPolicy {
       else if (declarationScope instanceof PsiLambdaExpression) {
         codeFragment = ((PsiLambdaExpression)declarationScope).getBody();
       }
+      else {
+        codeFragment = ControlFlowUtil.findCodeFragment(refElement);
+      }
+    }
+    else {
+      codeFragment = ControlFlowUtil.findCodeFragment(refElement);
     }
     if (codeFragment == null) return null;
     if (myCodeFragment.getContainingFile() == codeFragment.getContainingFile() &&  // in order for jsp includes to work
@@ -54,12 +61,27 @@ public class LocalsControlFlowPolicy implements ControlFlowPolicy {
   }
 
   @Override
-  public boolean isParameterAccepted(PsiParameter psiParameter) {
+  public boolean isParameterAccepted(@NotNull PsiParameter psiParameter) {
     return checkCodeFragment(psiParameter) != null;
   }
 
   @Override
-  public boolean isLocalVariableAccepted(PsiLocalVariable psiVariable) {
+  public boolean isLocalVariableAccepted(@NotNull PsiLocalVariable psiVariable) {
     return checkCodeFragment(psiVariable) != null;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    LocalsControlFlowPolicy policy = (LocalsControlFlowPolicy)o;
+
+    return myCodeFragment.equals(policy.myCodeFragment);
+  }
+
+  @Override
+  public int hashCode() {
+    return myCodeFragment.hashCode();
   }
 }
