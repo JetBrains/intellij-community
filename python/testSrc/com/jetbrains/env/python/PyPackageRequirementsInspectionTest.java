@@ -47,7 +47,7 @@ public class PyPackageRequirementsInspectionTest extends PyEnvTestCase {
       @Override
       public void runTestOn(String sdkHome) throws Exception {
         myFixture.enableInspections(PyPackageRequirementsInspection.class);
-        final Sdk sdk = PythonSkeletonsTest.createTempSdk(sdkHome);
+        final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_ONLY);
         final String perSdkDir = Integer.toHexString(System.identityHashCode(sdk));
         final VirtualFile root = myFixture.copyDirectoryToProject(dir, perSdkDir);
         assertNotNull(root);

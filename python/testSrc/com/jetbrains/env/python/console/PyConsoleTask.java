@@ -126,7 +126,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   public void runTestOn(final String sdkHome) throws Exception {
     final Project project = getProject();
 
-    final Sdk sdk = getSdk(sdkHome);
+    final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK);
 
     setProcessCanTerminate(false);
 

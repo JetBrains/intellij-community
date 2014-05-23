@@ -1,22 +1,12 @@
 package com.jetbrains.env.python;
 
 import com.google.common.collect.ImmutableSet;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
 import com.jetbrains.env.python.debug.PyExecutionFixtureTestTask;
 import com.jetbrains.env.python.debug.PyTestTask;
@@ -29,7 +19,6 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker;
@@ -37,8 +26,6 @@ import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -171,67 +158,9 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
     });
   }
 
-  private void generateTempSkeletons(CodeInsightTestFixture fixture, final @NotNull Sdk sdk) throws InvalidSdkException, IOException {
-    final Project project = fixture.getProject();
-    ModuleRootModificationUtil.setModuleSdk(fixture.getModule(), sdk);
-
-    edt(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            ProjectRootManager.getInstance(project).setProjectSdk(sdk);
-          }
-        });
-      }
-    });
-
-
-    final SdkModificator modificator = sdk.getSdkModificator();
-    modificator.removeRoots(OrderRootType.CLASSES);
-    for (String path : PythonSdkType.getSysPathsFromScript(sdk.getHomePath())) {
-      PythonSdkType.addSdkRoot(modificator, path);
-    }
-    final File tempDir = FileUtil.createTempDirectory(getTestName(false), null);
-    final File skeletonsDir = new File(tempDir, PythonSdkType.SKELETON_DIR_NAME);
-    FileUtil.createDirectory(skeletonsDir);
-    final String skeletonsPath = skeletonsDir.toString();
-    PythonSdkType.addSdkRoot(modificator, skeletonsPath);
-
-    edt(new Runnable() {
-      @Override
-      public void run() {
-        modificator.commitChanges();
-      }
-    });
-
-    final SkeletonVersionChecker checker = new SkeletonVersionChecker(0);
-    final PySkeletonRefresher refresher = new PySkeletonRefresher(project, null, sdk, skeletonsPath, null, null);
-    final List<String> errors = refresher.regenerateSkeletons(checker, null);
-    assertEmpty(errors);
-  }
 
   private void runTest(@NotNull PyTestTask task) {
     runPythonTest(task);
-  }
-
-  @NotNull
-  public static Sdk createTempSdk(@NotNull String sdkHome) {
-    final VirtualFile binary = LocalFileSystem.getInstance().findFileByPath(sdkHome);
-    assertNotNull("Interpreter file not found: " + sdkHome, binary);
-    final Ref<Sdk> ref = Ref.create();
-    edt(new Runnable() {
-
-      @Override
-      public void run() {
-        final Sdk sdk = SdkConfigurationUtil.setupSdk(new Sdk[0], binary, PythonSdkType.getInstance(), true, null, null);
-        assertNotNull(sdk);
-        ref.set(sdk);
-      }
-    });
-
-    return ref.get();
   }
 
 
@@ -243,8 +172,7 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
 
     @Override
     public void runTestOn(String sdkHome) throws Exception {
-      final Sdk sdk = createTempSdk(sdkHome);
-      generateTempSkeletons(myFixture, sdk);
+      final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_AND_SKELETONS);
       runTestOn(sdk);
     }
 

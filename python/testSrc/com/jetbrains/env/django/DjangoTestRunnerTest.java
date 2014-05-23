@@ -4,7 +4,6 @@ import com.google.common.collect.Lists;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.django.facet.DjangoFacet;
 import com.jetbrains.django.facet.DjangoFacetConfiguration;

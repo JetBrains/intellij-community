@@ -18,11 +18,8 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerTestUtil;
@@ -35,7 +32,7 @@ import com.jetbrains.env.python.debug.PyExecutionFixtureTestTask;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.PythonTracebackFilter;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.templateLanguages.TemplatesService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,28 +99,13 @@ public abstract class DjangoManageTestTask extends PyExecutionFixtureTestTask {
     });
   }
 
-  private void createTempSdk(@NotNull final String sdkHome) {
-
-    mySdk = PythonSdkType.findSdkByPath(sdkHome);
-
-    if (mySdk == null) {
-      final VirtualFile binary = LocalFileSystem.getInstance().findFileByPath(sdkHome);
-      if (binary != null) {
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-          public void run() {
-            mySdk = SdkConfigurationUtil.createAndAddSDK(sdkHome, PythonSdkType.getInstance());
-          }
-        });
-      }
-    }
-  }
 
   @Nullable
   public abstract ConfigurationFactory getFactory();
 
   @Override
   public void runTestOn(final String sdkHome) throws Exception {
-    createTempSdk(sdkHome);
+    mySdk = createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_ONLY);
     before();
 
     final Semaphore s = new Semaphore();
@@ -148,7 +130,7 @@ public abstract class DjangoManageTestTask extends PyExecutionFixtureTestTask {
     }
   }
 
-  private void runProcess(final String sdkHome, final Semaphore s) throws ExecutionException, IOException {
+  private void runProcess(final String sdkHome, final Semaphore s) throws ExecutionException, IOException, InvalidSdkException {
     final ConfigurationFactory factory = getFactory();
 
     if (factory == null) {     // PythonTask (there is no run configuration)

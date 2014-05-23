@@ -39,7 +39,7 @@ public class PyPackagingTest extends PyEnvTestCase {
     runPythonTest(new PyPackagingTestTask() {
       @Override
       public void runTestOn(String sdkHome) throws Exception {
-        final Sdk sdk = PythonSkeletonsTest.createTempSdk(sdkHome);
+        final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK);
         List<PyPackage> packages = null;
         try {
           packages = ((PyPackageManagerImpl)PyPackageManager.getInstance(sdk)).getPackages();
@@ -64,7 +64,7 @@ public class PyPackagingTest extends PyEnvTestCase {
     runPythonTest(new PyPackagingTestTask() {
       @Override
       public void runTestOn(String sdkHome) throws Exception {
-        final Sdk sdk = PythonSkeletonsTest.createTempSdk(sdkHome);
+        final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK);
         try {
           final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
           // virtualenv >= 0.10 supports Python >= 2.6
@@ -75,7 +75,7 @@ public class PyPackagingTest extends PyEnvTestCase {
           final File venvDir = new File(tempDir, "venv");
           final String venvSdkHome = ((PyPackageManagerImpl)PyPackageManagerImpl.getInstance(sdk)).createVirtualEnv(venvDir.toString(),
                                                                                                                     false);
-          final Sdk venvSdk = PythonSkeletonsTest.createTempSdk(venvSdkHome);
+          final Sdk venvSdk = createTempSdk(venvSdkHome, SdkCreationType.EMPTY_SDK);
           assertNotNull(venvSdk);
           assertTrue(PythonSdkType.isVirtualEnv(venvSdk));
           assertInstanceOf(PythonSdkFlavor.getPlatformIndependentFlavor(venvSdk.getHomePath()), VirtualEnvSdkFlavor.class);
@@ -104,12 +104,12 @@ public class PyPackagingTest extends PyEnvTestCase {
 
       @Override
       public void runTestOn(String sdkHome) throws Exception {
-        final Sdk sdk = PythonSkeletonsTest.createTempSdk(sdkHome);
+        final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK);
         try {
           final File tempDir = FileUtil.createTempDirectory(getTestName(false), null);
           final File venvDir = new File(tempDir, "venv");
           final String venvSdkHome = ((PyPackageManagerImpl)PyPackageManager.getInstance(sdk)).createVirtualEnv(venvDir.getPath(), false);
-          final Sdk venvSdk = PythonSkeletonsTest.createTempSdk(venvSdkHome);
+          final Sdk venvSdk = createTempSdk(venvSdkHome, SdkCreationType.EMPTY_SDK);
           assertNotNull(venvSdk);
           final PyPackageManagerImpl manager = (PyPackageManagerImpl)PyPackageManager.getInstance(venvSdk);
           final List<PyPackage> packages1 = manager.getPackages();

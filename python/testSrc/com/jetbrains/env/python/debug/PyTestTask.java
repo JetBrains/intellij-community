@@ -31,6 +31,12 @@ public abstract class PyTestTask {
   public void tearDown() throws Exception {
   }
 
+  /**
+   * Run test on certain SDK path.
+   * To create SDK from path, use {@link com.jetbrains.env.python.debug.PyExecutionFixtureTestTask#createTempSdk(String, com.jetbrains.env.python.debug.PyExecutionFixtureTestTask.SdkCreationType)}
+   *
+   * @param sdkHome sdk path
+   */
   public abstract void runTestOn(String sdkHome) throws Exception;
 
   public void before() throws Exception {

@@ -12,6 +12,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,10 +70,9 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
 
 
   @Override
-  public void runTestOn(@NotNull final String sdkHome) throws IOException {
-    final Sdk sdk = getSdk(sdkHome);
-    ModuleRootModificationUtil.setModuleSdk(myFixture.getModule(), sdk);
-    final File skeletonsPath = new File(PythonSdkType.getSkeletonsPath(PathManager.getSystemPath(), sdkHome));
+  public void runTestOn(@NotNull final String sdkHome) throws IOException, InvalidSdkException {
+    final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_ONLY);
+    final File skeletonsPath = new File(PythonSdkType.getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath()));
     File skeletonFileOrDirectory = new File(skeletonsPath, myModuleNameToBeGenerated); // File with module skeleton
 
     // Module may be stored in "moduleName.py" or "moduleName/__init__.py"
