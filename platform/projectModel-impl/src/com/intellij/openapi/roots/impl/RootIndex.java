@@ -100,8 +100,10 @@ public class RootIndex extends DirectoryIndex {
       }
 
       for (ContentEntry contentEntry : moduleRootManager.getContentEntries()) {
-        for (VirtualFile excludeRoot : contentEntry.getExcludeFolderFiles()) {
-          info.excludedFromModule.put(excludeRoot, module);
+        if (!(contentEntry instanceof ContentEntryImpl) || !((ContentEntryImpl)contentEntry).isDisposed()) {
+          for (VirtualFile excludeRoot : contentEntry.getExcludeFolderFiles()) {
+            info.excludedFromModule.put(excludeRoot, module);
+          }
         }
 
         // Init module sources
