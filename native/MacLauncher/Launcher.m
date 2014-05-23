@@ -580,8 +580,8 @@ NSString *integratedGPUNames() {
             }
           } else{
             NSLog(@"Discrete GPU is used.");
-            setMuxState(_switcherConnect, muxForceSwitch, 0);
-            NSLog(@"Try to switch to integrate card.");
+//            setMuxState(_switcherConnect, muxForceSwitch, 0);
+//            NSLog(@"Try to switch to integrate card.");
           }
         } else {
           NSLog(@"There is no Integrated GPU present.");
