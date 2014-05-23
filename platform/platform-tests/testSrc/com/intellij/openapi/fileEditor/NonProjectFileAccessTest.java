@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileNotificationPanel;
+import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.module.EmptyModuleType;
@@ -281,6 +282,33 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     assertNotNull(NonProjectFileWritingAccessProvider.getAccessStatus(getProject(), nonProjectFile2));
   }
 
+  public void testCheckingExtensions() throws Exception {
+    VirtualFile nonProjectFile1 = createNonProjectFile();
+    VirtualFile nonProjectFile2 = createNonProjectFile();
+
+    typeAndCheck(nonProjectFile1, false);
+    typeAndCheck(nonProjectFile2, false);
+    
+    List<VirtualFile> allowed = new ArrayList<VirtualFile>();
+    registerAccessCheckExtension(allowed);
+
+    typeAndCheck(nonProjectFile1, false);
+    typeAndCheck(nonProjectFile2, false);
+
+    allowed.add(nonProjectFile1);
+    typeAndCheck(nonProjectFile1, true);
+    typeAndCheck(nonProjectFile2, false);
+
+    allowed.clear();
+    allowed.add(nonProjectFile2);
+    typeAndCheck(nonProjectFile1, false);
+    typeAndCheck(nonProjectFile2, true);
+
+    allowed.clear();
+    typeAndCheck(nonProjectFile1, false);
+    typeAndCheck(nonProjectFile2, false);
+  }
+
   private List<VirtualFile> registerWriteAccessProvider(final VirtualFile... filesToDeny) {
     final List<VirtualFile> requested = new ArrayList<VirtualFile>();
     PlatformTestUtil.registerExtension(Extensions.getArea(getProject()), WritingAccessProvider.EP_NAME, new WritingAccessProvider() {
@@ -299,6 +327,17 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
       }
     }, myTestRootDisposable);
     return requested;
+  }
+
+  private void registerAccessCheckExtension(final Collection<VirtualFile> filesToAllow) {
+    PlatformTestUtil.registerExtension(Extensions.getArea(getProject()), NonProjectFileWritingAccessExtension.EP_NAME,
+                                       new NonProjectFileWritingAccessExtension() {
+                                         @Override
+                                         public boolean isWritable(@NotNull VirtualFile file) {
+                                           return filesToAllow.contains(file);
+                                         }
+                                       },
+                                       myTestRootDisposable);
   }
 
   @NotNull
