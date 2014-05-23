@@ -401,16 +401,16 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     if (decorator != null && PsiTreeUtil.isAncestor(decorator.getCallee(), element, false)) {
       return false;
     }
+    final PyComprehensionElement comprehension = PsiTreeUtil.getParentOfType(element, PyComprehensionElement.class, true);
+    if (comprehension != null) {
+      return false;
+    }
     return PsiTreeUtil.getParentOfType(element, PyParameterList.class) == null;
   }
 
   private static boolean isValidIntroduceVariant(PsiElement element) {
     final PyCallExpression call = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
     if (call != null && PsiTreeUtil.isAncestor(call.getCallee(), element, false)) {
-      return false;
-    }
-    final PyComprehensionElement comprehension = PsiTreeUtil.getParentOfType(element, PyComprehensionElement.class, true);
-    if (comprehension != null) {
       return false;
     }
     return true;
