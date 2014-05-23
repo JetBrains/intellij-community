@@ -299,7 +299,6 @@ public class DomImplUtil {
     }
     assert handler != null;
     XmlTag tag = handler.getXmlTag();
-    assert tag != null;
     while (true) {
       final PsiElement parentTag = PhysicalDomParentStrategy.getParentTagCandidate(tag);
       if (!(parentTag instanceof XmlTag)) {
