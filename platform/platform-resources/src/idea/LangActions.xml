@@ -706,11 +706,12 @@
 
     <group id="XDebugger.ValueGroup" popup="false">
       <reference ref="XDebugger.Inspect"/>
+      <reference ref="Debugger.MarkObject"/>
       <reference ref="XDebugger.SetValue"/>
       <reference ref="XDebugger.CopyValue"/>
       <reference ref="XDebugger.CompareValueWithClipboard"/>
       <reference ref="XDebugger.CopyName"/>
-      <reference ref="Debugger.MarkObject"/>
+      <separator/>
       <reference ref="EvaluateExpression"/>
     </group>
 
@@ -726,10 +727,12 @@
 
     <group id="XDebugger.Variables.Tree.Popup">
       <reference ref="XDebugger.ValueGroup"/>
+      <reference ref="Debugger.Tree.EvaluateInConsole"/>
+      <reference ref="Debugger.Tree.AddToWatches"/>
+      <separator/>
       <reference ref="XDebugger.JumpToSource"/>
       <reference ref="XDebugger.JumpToTypeSource"/>
-      <reference ref="Debugger.Tree.AddToWatches"/>
-      <reference ref="Debugger.Tree.EvaluateInConsole"/>
+      <separator/>
     </group>
 
     <group id="XDebugger.Variables.Tree.Toolbar">
@@ -740,6 +743,7 @@
       <reference ref="XDebugger.RemoveWatch"/>
       <reference ref="XDebugger.RemoveAllWatches"/>
       <reference ref="XDebugger.EditWatch"/>
+      <separator/>
       <reference ref="XDebugger.ValueGroup"/>
     </group>
 
@@ -750,8 +754,8 @@
 
     <group id="XDebugger.Inspect.Tree.Popup">
       <reference ref="XDebugger.ValueGroup"/>
-      <reference ref="Debugger.Tree.AddToWatches"/>
       <reference ref="Debugger.Tree.EvaluateInConsole"/>
+      <reference ref="Debugger.Tree.AddToWatches"/>
     </group>
 
     <group id="XDebugger.Settings" icon="AllIcons.General.SecondaryGroup" popup="true">
