@@ -16,6 +16,8 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 
 /**
@@ -30,7 +32,8 @@ public class ReturnAnnotator extends PyAnnotator {
   }
 
   public void visitPyYieldExpression(final PyYieldExpression node) {
-    if (PsiTreeUtil.getParentOfType(node, PyFunction.class, false, PyClass.class) == null) {
+    final ScopeOwner owner = ScopeUtil.getScopeOwner(node);
+    if (!(owner instanceof PyFunction)) {
       getHolder().createErrorAnnotation(node, "'yield' outside of function");
     }
   }
