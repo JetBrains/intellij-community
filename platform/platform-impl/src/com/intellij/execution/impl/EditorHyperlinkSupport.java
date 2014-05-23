@@ -239,7 +239,10 @@ public class EditorHyperlinkSupport {
     return getHyperlinkInfoByLineAndCol(pos.line, pos.column);
   }
 
-  public void highlightHyperlinks(final Filter customFilter, final Filter predefinedMessageFilter, final int line1, final int endLine) {
+  public void highlightHyperlinks(@NotNull final Filter filter1,
+                                  @Nullable final Filter filter2,
+                                  final int line1,
+                                  final int endLine) {
     final Document document = myEditor.getDocument();
 
     final int startLine = Math.max(0, line1);
@@ -250,9 +253,9 @@ public class EditorHyperlinkSupport {
         endOffset++; // add '\n'
       }
       final String text = getLineText(document, line, true);
-      Filter.Result result = customFilter.applyFilter(text, endOffset);
-      if (result == null) {
-        result = predefinedMessageFilter.applyFilter(text, endOffset);
+      Filter.Result result = filter1.applyFilter(text, endOffset);
+      if (result == null && filter2 != null) {
+        result = filter2.applyFilter(text, endOffset);
       }
       if (result != null) {
         for (Filter.ResultItem resultItem : result.getResultItems()) {
