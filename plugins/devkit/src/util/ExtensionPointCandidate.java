@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.devkit.inspections.quickfix;
+package org.jetbrains.idea.devkit.util;
 
 /**
-* @author yole
-*/
-class ExtensionPointCandidate {
+ * @author yole
+ */
+public class ExtensionPointCandidate {
   public final String epName;
   public final String attributeName;
   public final String tagName;
   public final String beanClassName;
 
-  ExtensionPointCandidate(String epName, String attributeName, String tagName, String beanClassName) {
+  public ExtensionPointCandidate(String epName, String attributeName, String tagName, String beanClassName) {
     this.epName = epName;
     this.attributeName = attributeName;
     this.tagName = tagName;
     this.beanClassName = beanClassName;
   }
 
-  ExtensionPointCandidate(String epName) {
+  public ExtensionPointCandidate(String epName) {
     this.epName = epName;
     this.attributeName = "implementation";
     this.tagName = null;
