@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,14 +72,14 @@ abstract public class GroovyCompletionTestBase extends LightCodeInsightFixtureTe
     final actual = myFixture.lookupElementStrings
     switch (testType) {
       case CompletionResult.contain:
-        assertTrue(myFixture.lookupElementStrings as String, actual.containsAll(variants))
+        assertTrue(actual as String, actual.containsAll(variants))
         break
       case CompletionResult.equal:
         assertOrderedEquals(actual, variants)
         break
       case CompletionResult.notContain:
         variants.each {
-          assertFalse(myFixture.lookupElementStrings as String, actual.contains(it))
+          assertFalse(actual as String, actual.contains(it))
         }
     }
   }
