@@ -201,7 +201,15 @@ public class XDebuggerManagerImpl extends XDebuggerManager
     if (oldSessionData == null) {
       oldSessionData = new XDebugSessionData();
     }
+
+    // Perform custom configuration of session data for XDebugProcessConfiguratorStarter classes
+    if (processStarter instanceof XDebugProcessConfiguratorStarter) {
+      session.activateSession();
+      ((XDebugProcessConfiguratorStarter)processStarter).configure(oldSessionData);
+    }
+
     session.init(process, oldSessionData);
+
     mySessions.put(session.getDebugProcess().getProcessHandler(), session);
 
     return session;
