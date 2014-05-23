@@ -44,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator;
 import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
+import org.jetbrains.plugins.groovy.lang.completion.GrPropertyForCompletion;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
@@ -59,8 +60,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrTraitType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.completion.GrPropertyForCompletion;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrImplicitVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -234,7 +235,6 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     buffer.append(LINE_SEPARATOR);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static String generateClassInfo(PsiClass aClass) {
     StringBuilder buffer = new StringBuilder();
     GroovyFile file = (GroovyFile)aClass.getContainingFile();
@@ -303,13 +303,28 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   }
 
 
-  public static void appendTypeString(StringBuilder buffer, final PsiType type, PsiElement context) {
-    if (type != null) {
+  public static void appendTypeString(@NotNull StringBuilder buffer, @Nullable PsiType type, PsiElement context) {
+    if (type instanceof GrTraitType) {
+      generateTraitType(buffer, ((GrTraitType)type), context);
+    }
+    else if (type != null) {
       JavaDocInfoGenerator.generateType(buffer, type, context);
     }
     else {
       buffer.append(GrModifier.DEF);
     }
+  }
+
+  private static void generateTraitType(@NotNull StringBuilder buffer, @NotNull GrTraitType type, PsiElement context) {
+    PsiClassType exprType = type.getExprType();
+    List<PsiClassType> traitTypes = type.getTraitTypes();
+    appendTypeString(buffer, exprType, context);
+    buffer.append(" as ");
+    for (PsiClassType traitType : traitTypes) {
+      appendTypeString(buffer, traitType, context);
+      buffer.append(", ");
+    }
+    buffer.delete(buffer.length() - 2, buffer.length());
   }
 
   @Override
