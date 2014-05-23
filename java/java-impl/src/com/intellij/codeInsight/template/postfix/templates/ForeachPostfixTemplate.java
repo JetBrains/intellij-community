@@ -24,6 +24,7 @@ import com.intellij.codeInsight.template.macro.IterableComponentTypeMacro;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
 
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_ITERABLE_OR_ARRAY;
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
@@ -35,7 +36,9 @@ public class ForeachPostfixTemplate extends StringBasedPostfixTemplate {
 
   @Override
   public void expandWithTemplateManager(TemplateManager manager, PsiElement expression, Editor editor) {
-    Template template = manager.createTemplate("", "", "for ($type$ $name$ : $variable$) {\n    $END$\n}");
+
+    String finalPart = JavaCodeStyleSettingsFacade.getInstance(expression.getProject()).isGenerateFinalLocals() ? "final " : "";
+    Template template = manager.createTemplate("", "", "for (" + finalPart + "$type$ $name$ : $variable$) {\n    $END$\n}");
     MacroCallNode type = new MacroCallNode(new IterableComponentTypeMacro());
     MacroCallNode name = new MacroCallNode(new SuggestVariableNameMacro());
     String variable = "variable";
