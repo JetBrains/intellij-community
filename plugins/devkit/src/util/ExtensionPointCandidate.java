@@ -15,23 +15,33 @@
  */
 package org.jetbrains.idea.devkit.util;
 
+import com.intellij.psi.SmartPsiElementPointer;
+
 /**
  * @author yole
  */
 public class ExtensionPointCandidate {
+  public final SmartPsiElementPointer pointer;
   public final String epName;
   public final String attributeName;
   public final String tagName;
   public final String beanClassName;
 
-  public ExtensionPointCandidate(String epName, String attributeName, String tagName, String beanClassName) {
+  public ExtensionPointCandidate(SmartPsiElementPointer pointer,
+                                 String epName,
+                                 String attributeName,
+                                 String tagName,
+                                 String beanClassName) {
+    this.pointer = pointer;
     this.epName = epName;
     this.attributeName = attributeName;
     this.tagName = tagName;
     this.beanClassName = beanClassName;
   }
 
-  public ExtensionPointCandidate(String epName) {
+  public ExtensionPointCandidate(SmartPsiElementPointer pointer,
+                                 String epName) {
+    this.pointer = pointer;
     this.epName = epName;
     this.attributeName = "implementation";
     this.tagName = null;

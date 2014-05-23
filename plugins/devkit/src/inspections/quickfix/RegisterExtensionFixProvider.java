@@ -53,7 +53,7 @@ public class RegisterExtensionFixProvider implements UnusedDeclarationFixProvide
     }
 
     ExtensionPointLocator extensionPointLocator = new ExtensionPointLocator(psiClass);
-    List<ExtensionPointCandidate> candidateList = extensionPointLocator.collectAll();
+    List<ExtensionPointCandidate> candidateList = extensionPointLocator.findSuperCandidates();
     if (!candidateList.isEmpty()) {
       return new IntentionAction[]{new RegisterExtensionFix(psiClass, candidateList)};
     }

@@ -15,23 +15,23 @@
  */
 package org.jetbrains.idea.devkit.util;
 
-import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.SmartList;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomService;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
+import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
@@ -43,7 +43,13 @@ public class ExtensionPointLocator {
     myPsiClass = psiClass;
   }
 
-  public List<ExtensionPointCandidate> collectAll() {
+  public List<ExtensionPointCandidate> findDirectCandidates() {
+    final List<ExtensionPointCandidate> candidates = new SmartList<ExtensionPointCandidate>();
+    findExtensionPointCandidates(myPsiClass, candidates);
+    return candidates;
+  }
+
+  public List<ExtensionPointCandidate> findSuperCandidates() {
     final List<ExtensionPointCandidate> candidates = new SmartList<ExtensionPointCandidate>();
     findExtensionPointCandidatesInHierarchy(myPsiClass, candidates, new HashSet<PsiClass>());
     return candidates;
@@ -67,9 +73,11 @@ public class ExtensionPointLocator {
     if (name == null) {
       return;
     }
-    GlobalSearchScope scope =
-      GlobalSearchScope.getScopeRestrictedByFileTypes(ProjectScope.getAllScope(psiClass.getProject()), XmlFileType.INSTANCE);
-    PsiSearchHelper.SERVICE.getInstance(psiClass.getProject()).processUsagesInNonJavaFiles(name, new PsiNonJavaFileReferenceProcessor() {
+
+    final Project project = psiClass.getProject();
+    final Collection<VirtualFile> candidates = DomService.getInstance().getDomFileCandidates(IdeaPlugin.class, project);
+    GlobalSearchScope scope = GlobalSearchScope.filesScope(project, candidates);
+    PsiSearchHelper.SERVICE.getInstance(project).processUsagesInNonJavaFiles(name, new PsiNonJavaFileReferenceProcessor() {
       @Override
       public boolean process(PsiFile file, int startOffset, int endOffset) {
         PsiElement element = file.findElementAt(startOffset);
@@ -85,7 +93,7 @@ public class ExtensionPointLocator {
     if ("extensionPoint".equals(tag.getName())) {
       String epName = getEPName(tag);
       if (epName != null) {
-        list.add(new ExtensionPointCandidate(epName));
+        list.add(new ExtensionPointCandidate(createPointer(tag), epName));
       }
     }
     else if ("with".equals(tag.getName())) {
@@ -97,8 +105,12 @@ public class ExtensionPointLocator {
       String epName = getEPName(extensionPointTag);
       String beanClassName = extensionPointTag.getAttributeValue("beanClass");
       if ((attrName == null && tagName == null) || epName == null) return;
-      list.add(new ExtensionPointCandidate(epName, attrName, tagName, beanClassName));
+      list.add(new ExtensionPointCandidate(createPointer(extensionPointTag), epName, attrName, tagName, beanClassName));
     }
+  }
+
+  private static SmartPsiElementPointer createPointer(XmlTag extensionPointTag) {
+    return SmartPointerManager.getInstance(extensionPointTag.getProject()).createSmartPsiElementPointer(extensionPointTag);
   }
 
   @Nullable
