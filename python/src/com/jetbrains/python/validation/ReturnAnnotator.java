@@ -33,7 +33,7 @@ public class ReturnAnnotator extends PyAnnotator {
 
   public void visitPyYieldExpression(final PyYieldExpression node) {
     final ScopeOwner owner = ScopeUtil.getScopeOwner(node);
-    if (!(owner instanceof PyFunction)) {
+    if (!(owner instanceof PyFunction || owner instanceof PyLambdaExpression)) {
       getHolder().createErrorAnnotation(node, "'yield' outside of function");
     }
   }
