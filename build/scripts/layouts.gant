@@ -471,7 +471,7 @@ public def layoutCommunityPlugins(String home) {
         }
 
 
-        fileset(dir: "$home/plugins/groovy/resources/conf")
+        fileset(dir: "$home/plugins/groovy/groovy-psi/resources/conf")
       }
     }
 
