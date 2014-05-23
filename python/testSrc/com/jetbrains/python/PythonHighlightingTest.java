@@ -114,6 +114,11 @@ public class PythonHighlightingTest extends PyTestCase {
   public void testYieldInDefaultValue() {
     doTest(LanguageLevel.PYTHON34, true, false);
   }
+
+  // PY-11663
+  public void testYieldInLambda() {
+    doTest();
+  }
   
   public void testImportStarAtTopLevel() {
     doTest(true, false);
