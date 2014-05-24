@@ -87,10 +87,7 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
     final Collection<PsiClass> classes = JavaFullClassNameIndex.getInstance().get(qName.hashCode(), myManager.getProject(), scope);
     if (classes.isEmpty()) return PsiClass.EMPTY_ARRAY;
     List<PsiClass> result = new ArrayList<PsiClass>(classes.size());
-    int count = 0;
-    PsiClass aClass = null;
-    for (PsiClass found : classes) {
-      aClass = found;
+    for (PsiClass aClass : classes) {
       final String qualifiedName = aClass.getQualifiedName();
       if (qualifiedName == null || !qualifiedName.equals(qName)) continue;
 
@@ -104,11 +101,11 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
       if (!hasAcceptablePackage(vFile)) continue;
 
       result.add(aClass);
-      count++;
     }
 
+    int count = result.size();
     if (count == 0) return PsiClass.EMPTY_ARRAY;
-    if (count == 1) return new PsiClass[] {aClass};
+    if (count == 1) return new PsiClass[] {result.get(0)};
 
     ContainerUtil.quickSort(result, new Comparator<PsiClass>() {
       @Override

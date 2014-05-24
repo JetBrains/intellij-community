@@ -16,6 +16,7 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -210,7 +211,13 @@ public class JavaDebugProcess extends XDebugProcess {
 
   @Override
   public void stop() {
-    myJavaSession.getProcess().dispose();
+    DebuggerInvocationUtil.invokeLater(myJavaSession.getProject(), new Runnable() {
+      @Override
+      public void run() {
+        myJavaSession.dispose();
+      }
+    });
+    myNodeManager.dispose();
   }
 
   @Override
