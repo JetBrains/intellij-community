@@ -408,6 +408,12 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     if (SYNTHETIC_CLASS_INIT_METHOD.equals(name)) return null;
 
+    // skip semi-synthetic enum methods
+    if (myResult.isEnum()) {
+      if ("values".equals(name) && desc.startsWith("()")) return null;
+      if ("valueOf".equals(name) && desc.startsWith("(Ljava/lang/String;)")) return null;
+    }
+
     boolean isDeprecated = (access & Opcodes.ACC_DEPRECATED) != 0;
     boolean isConstructor = SYNTHETIC_INIT_METHOD.equals(name);
     boolean isVarargs = (access & Opcodes.ACC_VARARGS) != 0;

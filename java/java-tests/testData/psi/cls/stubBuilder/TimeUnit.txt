@@ -18,18 +18,6 @@ PsiJavaFileStub [java.util.concurrent]
       PsiModifierListStub[mask=26]
     PsiFieldStub[overflows:long[]]
       PsiModifierListStub[mask=26]
-    PsiMethodStub[values:java.util.concurrent.TimeUnit[]]
-      PsiModifierListStub[mask=25]
-      PsiTypeParameterListStub
-      PsiParameterListStub
-      PsiRefListStub[THROWS_LIST:]
-    PsiMethodStub[valueOf:java.util.concurrent.TimeUnit]
-      PsiModifierListStub[mask=9]
-      PsiTypeParameterListStub
-      PsiParameterListStub
-        PsiParameterStub[p1:java.lang.String]
-          PsiModifierListStub[mask=0]
-      PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[cons TimeUnit:void]
       PsiModifierListStub[mask=2]
       PsiTypeParameterListStub
