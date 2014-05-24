@@ -163,7 +163,7 @@ public class NewExprent extends Exprent {
 	}
 	
 	public String toJava(int indent) {
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		
 		if(anonymous) {
 			
@@ -189,9 +189,13 @@ public class NewExprent extends Exprent {
 						}
 					}
 				}
-				
+
 				boolean firstpar = true;
-				for(int i=0;i<invsuper.getLstParameters().size();i++) {
+        int start = 0, end = invsuper.getLstParameters().size();
+        if(enumconst) {
+          start += 2; end -= 1;
+        }
+        for(int i=start;i<end;i++) {
 					if(sigFields == null || sigFields.get(i) == null) {
 						if(!firstpar) {
 							buf.append(", ");
@@ -239,7 +243,11 @@ public class NewExprent extends Exprent {
 			}
 			
 			buf.append(")");
-			
+
+      if(enumconst && buf.length() == 2) {
+        buf.setLength(0);
+      }
+
 			StringWriter strwriter = new StringWriter();
 			BufferedWriter bufstrwriter = new BufferedWriter(strwriter);
 			
@@ -297,26 +305,29 @@ public class NewExprent extends Exprent {
 							}
 						}
 					}
-					
-					buf.append("(");
-					
-					boolean firstpar = true;
-					for(int i=0;i<lstParameters.size();i++) {
-						if(sigFields == null || sigFields.get(i) == null) {
-							if(!firstpar) {
-								buf.append(", ");
-							}
-							
-							StringBuilder buff = new StringBuilder();
-							ExprProcessor.getCastedExprent(lstParameters.get(i), constructor.getDescriptor().params[i], buff, indent, true);
-							
-							buf.append(buff);
-							firstpar = false;
-						}
-					}
-					buf.append(")");
-				}
-				
+
+          int start = enumconst ? 2 : 0;
+          if(start < lstParameters.size()) {
+            buf.append("(");
+
+            boolean firstpar = true;
+            for(int i=start;i<lstParameters.size();i++) {
+              if(sigFields == null || sigFields.get(i) == null) {
+                if(!firstpar) {
+                  buf.append(", ");
+                }
+
+                StringBuilder buff = new StringBuilder();
+                ExprProcessor.getCastedExprent(lstParameters.get(i), constructor.getDescriptor().params[i], buff, indent, true);
+
+                buf.append(buff);
+                firstpar = false;
+              }
+            }
+            buf.append(")");
+          }
+        }
+
 				if(!enumconst) {
 					String enclosing = null;
 					if(constructor != null) {
@@ -341,11 +352,11 @@ public class NewExprent extends Exprent {
 				}
 				
 			} else {
-				buf.append("new "+ExprProcessor.getTypeName(newtype));
+				buf.append("new ").append(ExprProcessor.getTypeName(newtype));
 
 				if(lstArrayElements.isEmpty()) {
 	 				for(int i=0;i<newtype.arraydim;i++) {
-						buf.append("["+(i<lstDims.size()?lstDims.get(i).toJava(indent):"")+"]");
+						buf.append("[").append(i < lstDims.size() ? lstDims.get(i).toJava(indent) : "").append("]");
 					}
 				} else {
 	 				for(int i=0;i<newtype.arraydim;i++) {

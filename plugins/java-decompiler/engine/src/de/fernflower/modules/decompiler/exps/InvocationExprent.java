@@ -14,19 +14,12 @@
 
 package de.fernflower.modules.decompiler.exps;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import de.fernflower.code.CodeConstants;
-import de.fernflower.main.ClassWriter;
-import de.fernflower.main.DecompilerContext;
 import de.fernflower.main.ClassesProcessor.ClassNode;
+import de.fernflower.main.DecompilerContext;
+import de.fernflower.main.extern.IFernflowerPreferences;
 import de.fernflower.main.rels.MethodWrapper;
 import de.fernflower.modules.decompiler.ExprProcessor;
 import de.fernflower.modules.decompiler.vars.CheckTypesResult;
@@ -316,6 +309,7 @@ public class InvocationExprent extends Exprent {
 		}
 		
 		List<VarVersionPaar> sigFields = null;
+    boolean isEnum = false;
 		if(functype == TYP_INIT) {
 			ClassNode newnode = DecompilerContext.getClassprocessor().getMapRootClasses().get(classname); 
 			
@@ -328,13 +322,16 @@ public class InvocationExprent extends Exprent {
 						sigFields.set(0, new VarVersionPaar(-1, 0));
 					}
 				}
+        isEnum = (newnode.classStruct.access_flags & CodeConstants.ACC_ENUM) != 0 &&
+            DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
 			}
 		}
 		
 		Set<Integer> setAmbiguousParameters = getAmbiguousParameters();
 		
 		boolean firstpar = true;
-		for(int i=0;i<lstParameters.size();i++) {
+    int start = isEnum ? 2 : 0;
+		for(int i=start;i<lstParameters.size();i++) {
 			if(sigFields == null || sigFields.get(i) == null) {
 				if(!firstpar) {
 					buf.append(", ");

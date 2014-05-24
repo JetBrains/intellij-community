@@ -698,7 +698,7 @@ public class ClassWriter {
 		
 		boolean isInterface = (cl.access_flags & CodeConstants.ACC_INTERFACE) != 0;
 		boolean isAnnotation = (cl.access_flags & CodeConstants.ACC_ANNOTATION) != 0;
-
+    boolean isEnum = (cl.access_flags & CodeConstants.ACC_ENUM) != 0 && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
 		boolean isDeprecated = mt.getAttributes().containsKey("Deprecated");
 		
 		String indstr = InterpreterUtil.getIndentString(indent);
@@ -861,10 +861,11 @@ public class ClassWriter {
 					lastparam_index = i;
 				}
 			}
-			
+
 			boolean firstpar = true;
-			int index = thisvar?1:0;
-			for(int i=0;i<md.params.length;i++) {
+      int index = isEnum && init ? 3 : thisvar ? 1 : 0;
+      int start = isEnum && init ? 2 : 0;
+      for(int i=start;i<md.params.length;i++) {
 				if(signFields == null || signFields.get(i) == null) {
 					
 					if(!firstpar) {
