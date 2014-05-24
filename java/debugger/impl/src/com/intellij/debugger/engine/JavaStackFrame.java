@@ -366,6 +366,6 @@ public class JavaStackFrame extends XStackFrame {
   @Nullable
   @Override
   public Object getEqualityObject() {
-    return getStackFrameProxy();
+    return getStackFrameProxy().hashCode();
   }
 }
