@@ -25,35 +25,30 @@ import java.beans.PropertyChangeListener;
  */
 public class StudyEditor implements FileEditor {
     private FileEditor defaultEditor;
+    final JComponent comp;
+
+    private String getTextForTask(VirtualFile file) {
+        int taskNum = TaskManager.getInstance().getTaskNumForFile(file.getName());
+        return TaskManager.getInstance().getTaskText(taskNum);
+    }
+
     public StudyEditor(Project project, VirtualFile file) {
         defaultEditor = TextEditorProvider.getInstance().createEditor(project, file);
+        comp = defaultEditor.getComponent();
+        JLabel taskText = new JLabel("<html>" + getTextForTask(file) + "<br>" + "some text </html>");
+        taskText.setFont(new Font("Arial", Font.PLAIN, 16));
+        comp.add(taskText, BorderLayout.NORTH);
     }
     @NotNull
     @Override
     public JComponent getComponent() {
-
-        final JComponent comp = defaultEditor.getComponent();
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                    @Override
-                    public void run() {
-                        comp.add(new JBLabel("task_text"));
-                    }
-                });
-            }
-        });
-
-        comp.add(new JBLabel("task_text"), BorderLayout.NORTH);
-        //comp.add(new JBLabel("task_text"));
         return comp;
     }
 
     @Nullable
     @Override
     public JComponent getPreferredFocusedComponent() {
-        return defaultEditor.getPreferredFocusedComponent();
+        return comp;
     }
 
     @NotNull

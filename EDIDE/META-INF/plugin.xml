@@ -36,7 +36,10 @@
   </project-components>
 
   <actions>
-    <!-- Add your actions here -->
+      <action id="ru.compscicenter.edide.CheckAction" class="ru.compscicenter.edide.CheckAction" text="Check task"
+              description="Runnes tests for current tasks" icon="/ru/compscicenter/edide/icon.jpg">
+          <add-to-group group-id="MainToolBar" anchor="last"/>
+      </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -45,5 +48,6 @@
     <directoryProjectGenerator implementation="ru.compscicenter.edide.StudyDirectoryProjectGenerator"/>
     <toolWindow id="Task Text" icon="/general/add.png" anchor="right" factoryClass="ru.compscicenter.edide.TaskToolWindowFactory"
             conditionClass="ru.compscicenter.edide.TaskToolWindowCondition" secondary="false"/>
+    <documentationProvider implementation="ru.compscicenter.edide.StudyDocumentationProvider"/>
   </extensions>
 </idea-plugin>
