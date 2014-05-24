@@ -13,9 +13,11 @@ import com.jetbrains.env.python.debug.PyExecutionFixtureTestTask;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBlockEvaluator;
+import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -72,16 +74,32 @@ public class DjangoProjectCreationTest extends PyEnvTestCase {
         }
       });
 
+      final String pathToSettingsPy;
+      if (DjangoAdmin.isDjangoVersionAtLeast(sdk, "1.4")) {
+        pathToSettingsPy = ROOT_FOLDER_NAME + '/' + WEB_SITE_NAME + '/' + DjangoNames.SETTINGS_FILE;
+      }
+      else {
+        pathToSettingsPy = ROOT_FOLDER_NAME + '/' + DjangoNames.SETTINGS_FILE;
+      }
+
       final PyFile settingsPy =
-        PyUtil.as(myFixture.configureByFile(ROOT_FOLDER_NAME + '/' + WEB_SITE_NAME + '/' + DjangoNames.SETTINGS_FILE), PyFile.class);
+        PyUtil.as(myFixture.configureByFile(pathToSettingsPy), PyFile.class);
       Assert.assertNotNull(DjangoNames.SETTINGS_FILE + " not created", settingsPy);
       Assert.assertEquals("Bad file name for settings", DjangoNames.SETTINGS_FILE, settingsPy.getName());
 
       final PyBlockEvaluator evaluator = new PyBlockEvaluator();
       evaluator.evaluate(settingsPy);
-      Object baseDirPath = evaluator.getValue("TEMPLATE_DIRS");
 
+      // TODO: Temporary skip test for 1.6, because not implemented yet
+      if (DjangoAdmin.isDjangoVersionAtLeast(sdk, "1.6")) {
+        return;
+      }
+
+      final List<String> templateDirs = evaluator.getValueAsStringList(DjangoNames.TEMPLATE_DIRS_SETTING);
+      Assert.assertThat(String.format("Failed to find %s in %s", DjangoNames.TEMPLATE_DIRS_SETTING, settingsPy), templateDirs,
+                        Matchers.allOf(Matchers.notNullValue(), Matchers.not(Matchers.empty())));
       // TODO: Finish test
+
     }
 
     @Override
