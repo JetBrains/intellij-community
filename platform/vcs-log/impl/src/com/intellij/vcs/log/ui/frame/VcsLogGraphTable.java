@@ -21,7 +21,6 @@ import com.intellij.vcs.log.VcsLogHighlighter;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.*;
-import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.printer.idea.PositionUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
@@ -33,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
@@ -169,9 +167,11 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   }
 
   public void jumpToRow(int rowIndex) {
-    scrollRectToVisible(getCellRect(rowIndex, 0, false));
-    setRowSelectionInterval(rowIndex, rowIndex);
-    scrollRectToVisible(getCellRect(rowIndex, 0, false));
+    if (rowIndex >= 0 && rowIndex <= getRowCount() - 1) {
+      scrollRectToVisible(getCellRect(rowIndex, 0, false));
+      setRowSelectionInterval(rowIndex, rowIndex);
+      scrollRectToVisible(getCellRect(rowIndex, 0, false));
+    }
   }
 
   @Override
