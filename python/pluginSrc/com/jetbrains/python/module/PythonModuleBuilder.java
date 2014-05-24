@@ -50,7 +50,7 @@ public class PythonModuleBuilder extends PythonModuleBuilderBase implements Sour
     mySourcePaths.add(sourcePathInfo);
   }
 
-  @Override
+  //@Override
   public ModuleWizardStep modifyProjectTypeStep(@NotNull SettingsStep settingsStep) {
     return new SdkSettingsStep(settingsStep, this, new Condition<SdkTypeId>() {
       @Override
