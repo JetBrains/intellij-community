@@ -113,7 +113,9 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
 
   @Override
   public void refresh(@NotNull Collection<VirtualFile> rootsToRefresh) {
-    mySingleTaskController.request(new RefreshRequest(rootsToRefresh));
+    if (!rootsToRefresh.isEmpty()) {
+      mySingleTaskController.request(new RefreshRequest(rootsToRefresh));
+    }
   }
 
   @NotNull
