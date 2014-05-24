@@ -95,7 +95,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       shortName = PsiNameHelper.getShortClassName(fqn);
     }
 
-    int flags = myAccess == 0 ? access : myAccess;
+    int flags = myAccess | access;
     boolean isDeprecated = (flags & Opcodes.ACC_DEPRECATED) != 0;
     boolean isInterface = (flags & Opcodes.ACC_INTERFACE) != 0;
     boolean isEnum = (flags & Opcodes.ACC_ENUM) != 0;
