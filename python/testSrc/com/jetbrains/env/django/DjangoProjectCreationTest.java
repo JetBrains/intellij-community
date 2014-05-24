@@ -1,5 +1,6 @@
 package com.jetbrains.env.django;
 
+import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -15,6 +16,8 @@ import com.jetbrains.python.psi.impl.PyBlockEvaluator;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
+import java.util.Set;
+
 /**
  * Tests projection creation for Django
  *
@@ -24,9 +27,10 @@ public class DjangoProjectCreationTest extends PyEnvTestCase {
 
   private static final String ROOT_FOLDER_NAME = "content_root";
   private static final String WEB_SITE_NAME = "myWebSite";
+  private static final String DJANGO_TAG = "django";
 
   public DjangoProjectCreationTest() {
-    super("django");
+    super(DJANGO_TAG);
   }
 
 
@@ -78,6 +82,11 @@ public class DjangoProjectCreationTest extends PyEnvTestCase {
       Object baseDirPath = evaluator.getValue("TEMPLATE_DIRS");
 
       // TODO: Finish test
+    }
+
+    @Override
+    public Set<String> getTags() {
+      return Sets.newHashSet(DJANGO_TAG);
     }
   }
 }
