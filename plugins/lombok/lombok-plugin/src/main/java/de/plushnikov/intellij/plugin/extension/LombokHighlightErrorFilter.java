@@ -16,6 +16,7 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
 
   private static final String UNHANDLED_EXCEPTION_PREFIX_TEXT = "Unhandled exception:";
   private static final String UNHANDLED_EXCEPTIONS_PREFIX_TEXT = "Unhandled exceptions:";
+  private static final String UNHANDLED_AUTOCLOSABLE_EXCEPTIONS_PREFIX_TEXT = "Unhandled exception from auto-closeable resource:";
 
   @Override
   public boolean accept(@NotNull HighlightInfo highlightInfo, @Nullable PsiFile file) {
@@ -23,7 +24,9 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
       final String description = StringUtil.notNullize(highlightInfo.getDescription());
 
       if (HighlightInfoType.UNHANDLED_EXCEPTION.equals(highlightInfo.type) &&
-          (StringUtil.startsWith(description, UNHANDLED_EXCEPTION_PREFIX_TEXT) || StringUtil.startsWith(description, UNHANDLED_EXCEPTIONS_PREFIX_TEXT))) {
+          (StringUtil.startsWith(description, UNHANDLED_EXCEPTION_PREFIX_TEXT) ||
+              StringUtil.startsWith(description, UNHANDLED_EXCEPTIONS_PREFIX_TEXT) ||
+              StringUtil.startsWith(description, UNHANDLED_AUTOCLOSABLE_EXCEPTIONS_PREFIX_TEXT))) {
         final String unhandledExceptions = description.substring(description.indexOf(':') + 1).trim();
         final String[] exceptionFQNs = unhandledExceptions.split(",");
         if (exceptionFQNs.length > 0) {

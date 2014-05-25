@@ -55,4 +55,9 @@ public class InspectionTest extends InspectionTestCase {
   public void testSneakyThrowsMultiple() throws Exception {
     doTest();
   }
+
+  //TODO make this test work
+  public void testSneakyThrowsTryWithResource() throws Exception {
+    doTest();
+  }
 }

@@ -172,7 +172,7 @@
 		<ul>
 		<li>0.8.7
 				<ol>
-				    <li>...</li>
+				    <li>Fixed #50 : @SneakyThrows does not work for try-with-resource statements</li>
 				</ol>
 			</li>
 		<li>0.8.6
