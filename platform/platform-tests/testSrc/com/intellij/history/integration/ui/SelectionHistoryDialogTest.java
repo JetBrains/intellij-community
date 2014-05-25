@@ -110,6 +110,7 @@ public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
     f.delete(this);
 
     f = createFile(f.getName(), new String(bytes));
+    loadContent(f);
 
     initModelOnSecondLineAndSelectRevisions(3, 3);
 
