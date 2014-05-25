@@ -97,7 +97,7 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
   }
 
   private ImmutableText ensureChunked() {
-    if (length() >= BLOCK_SIZE && myNode instanceof LeafNode) {
+    if (length() > BLOCK_SIZE && myNode instanceof LeafNode) {
       return new ImmutableText(nodeOf(((LeafNode)myNode)._data, 0, length()));
     }
     return this;
@@ -402,6 +402,9 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
 
     @Override
     Node subNode(int start, int end) {
+      if (start == 0 && end == nodeLength()) {
+        return this;
+      }
       int length = end - start;
       char[] chars = new char[length];
       System.arraycopy(_data, start, chars, 0, length);
@@ -467,6 +470,8 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
         return _head.subNode(start, end);
       if (start >= cesure)
         return _tail.subNode(start - cesure, end - cesure);
+      if ((start == 0) && (end == _count))
+        return this;
       // Overlaps head and tail.
       return _head.subNode(start, cesure).concatNodes(_tail.subNode(0, end - cesure));
     }
