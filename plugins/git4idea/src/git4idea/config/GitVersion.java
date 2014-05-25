@@ -45,7 +45,7 @@ public final class GitVersion implements Comparable<GitVersion> {
    * Type indicates the type of this git distribution: is it native (unix) or msys or cygwin.
    * Type UNDEFINED means that the type doesn't matter in certain condition.
    */
-  public static enum Type {
+  public enum Type {
     UNIX,
     MSYS,
     CYGWIN,

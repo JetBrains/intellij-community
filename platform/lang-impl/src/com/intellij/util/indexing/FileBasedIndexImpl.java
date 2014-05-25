@@ -2516,12 +2516,12 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
       for (VirtualFile root : IndexableSetContributor.getRootsToIndex(provider)) {
         if (visitedRoots.add(root)) {
-          iterateRecursively(root, processor, indicator);
+          iterateRecursively(root, processor, indicator, visitedRoots);
         }
       }
       for (VirtualFile root : IndexableSetContributor.getProjectRootsToIndex(provider, project)) {
         if (visitedRoots.add(root)) {
-          iterateRecursively(root, processor, indicator);
+          iterateRecursively(root, processor, indicator, visitedRoots);
         }
       }
     }
@@ -2544,7 +2544,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             for (VirtualFile[] roots : new VirtualFile[][]{libSources, libClasses}) {
               for (VirtualFile root : roots) {
                 if (visitedRoots.add(root)) {
-                  iterateRecursively(root, processor, indicator);
+                  iterateRecursively(root, processor, indicator, null);
                 }
               }
             }
@@ -2556,7 +2556,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   private static void iterateRecursively(@Nullable final VirtualFile root,
                                          @NotNull final ContentIterator processor,
-                                         @Nullable final ProgressIndicator indicator) {
+                                         @Nullable final ProgressIndicator indicator,
+                                         @Nullable final Set<VirtualFile> visitedRoots
+                                         ) {
     if (root == null) {
       return;
     }
@@ -2564,6 +2566,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
+        if (visitedRoots != null && root != file && file.isDirectory() && !visitedRoots.add(file)) {
+          return false; // avoid visiting files more than once, e.g. additional indexed roots intersect sometimes
+        }
         if (indicator != null) indicator.checkCanceled();
 
         processor.processFile(file);
