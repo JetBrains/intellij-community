@@ -26,11 +26,8 @@ import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
-import com.intellij.openapi.fileEditor.impl.NonProjectFileNotificationPanel;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -47,9 +44,10 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.EditorNotificationsImpl;
+import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 
 public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
@@ -64,6 +62,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
 
   @Override
   protected void tearDown() throws Exception {
+    NonProjectFileWritingAccessProvider.setCustomUnlocker(null);
     NonProjectFileWritingAccessProvider.enableChecksInTests(getProject(), false);
     super.tearDown();
   }
@@ -80,15 +79,10 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
 
     VirtualFile nonProjectFile = createNonProjectFile();
     typeAndCheck(nonProjectFile, false);
-    NonProjectFileNotificationPanel panel = typeAndCheck(nonProjectFile, false);// still not allowed
+    typeAndCheck(nonProjectFile, false);// still not allowed
 
-    panel.getUnlockAction().doClick();
-    assertNull(getNotificationPanel(projectFile));
-    assertNull(getNotificationPanel(nonProjectFile));
-
-    typeAndCheck(nonProjectFile, true);
-    assertNull(getNotificationPanel(projectFile));
-    assertNull(getNotificationPanel(nonProjectFile));
+    typeAndCheck(nonProjectFile, NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK, true);
+    typeAndCheck(nonProjectFile, null, true); // still allowed after previous Unlock
   }
 
   public void testAccessToProjectSystemFiles() throws Exception {
@@ -158,77 +152,59 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     VirtualFile nonProjectFile1 = createNonProjectFile();
     VirtualFile nonProjectFile2 = createNonProjectFile();
 
-    NonProjectFileNotificationPanel panel1 = typeAndCheck(nonProjectFile1, false);
-    NonProjectFileNotificationPanel panel2 = typeAndCheck(nonProjectFile2, false);
+    typeAndCheck(nonProjectFile1, NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK, true);
+    typeAndCheck(nonProjectFile2, null, false);
 
-    panel1.getUnlockAction().doClick();
-    assertNull(getNotificationPanel(nonProjectFile1));
-    assertNotNull(getNotificationPanel(nonProjectFile2));
+    typeAndCheck(nonProjectFile1, null, true);
+    typeAndCheck(nonProjectFile2, NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK, true);
 
-    typeAndCheck(nonProjectFile1, true);
-    typeAndCheck(nonProjectFile2, false);
-
-    panel2.getUnlockAction().doClick();
-    assertNull(getNotificationPanel(nonProjectFile1));
-    assertNull(getNotificationPanel(nonProjectFile2));
-
-    typeAndCheck(nonProjectFile1, true);
-    typeAndCheck(nonProjectFile2, true);
+    // let's check both files one more time to make sure unlock option doesn't have eny unexpected effect
+    typeAndCheck(nonProjectFile1, null, true);
+    typeAndCheck(nonProjectFile2, null, true);
   }
 
   public void testAllowEditingInAllFiles() throws Exception {
     VirtualFile nonProjectFile1 = createNonProjectFile();
     VirtualFile nonProjectFile2 = createNonProjectFile();
+    VirtualFile nonProjectFile3 = createNonProjectFile();
 
-    NonProjectFileNotificationPanel panel1 = typeAndCheck(nonProjectFile1, false);
+    typeAndCheck(nonProjectFile1, false);
     typeAndCheck(nonProjectFile2, false);
+    typeAndCheck(nonProjectFile3, false);
 
-    assertNotNull(getNotificationPanel(nonProjectFile1));
-    assertNotNull(getNotificationPanel(nonProjectFile2));
-
-    panel1.getUnlockAllLabel().doClick();
-    assertNull(getNotificationPanel(nonProjectFile1));
-    assertNull(getNotificationPanel(nonProjectFile2));
-
-    typeAndCheck(nonProjectFile1, true);
+    typeAndCheck(nonProjectFile1, NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK_ALL, true);
+    // affects other files
     typeAndCheck(nonProjectFile2, true);
+    typeAndCheck(nonProjectFile3, true);
   }
 
   public void testCheckingOtherWriteAccessProvidersOnUnlock() throws Exception {
     final VirtualFile nonProjectFile1 = createNonProjectFile();
     final VirtualFile nonProjectFile2 = createNonProjectFile();
 
-    final List<VirtualFile> requested = registerWriteAccessProvider(nonProjectFile1);
+    final Set<VirtualFile> requested = registerWriteAccessProvider(nonProjectFile1);
 
-    NonProjectFileNotificationPanel panel1 = typeAndCheck(nonProjectFile1, false);
-    panel1.getUnlockAction().doClick();
+    typeAndCheck(nonProjectFile1, false);
+    assertSameElements(requested); // not called since non-project file access is denied
+
+    typeAndCheck(nonProjectFile1, NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK, false);
     assertSameElements(requested, nonProjectFile1);
+    
     typeAndCheck(nonProjectFile1, false); // leave file locked if other provides denied access 
-
     requested.clear();
 
-    NonProjectFileNotificationPanel panel2 = typeAndCheck(nonProjectFile2, false);
-    panel2.getUnlockAction().doClick();
+    typeAndCheck(nonProjectFile2, NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK, true);
     assertSameElements(requested, nonProjectFile2);
-    typeAndCheck(nonProjectFile2, true);
   }
 
   public void testCheckingOtherWriteAccessProvidersOnUnlockAll() throws Exception {
     final VirtualFile nonProjectFile1 = createNonProjectFile();
     final VirtualFile nonProjectFile2 = createNonProjectFile();
 
-    final List<VirtualFile> requested = registerWriteAccessProvider(nonProjectFile1);
+    registerWriteAccessProvider(nonProjectFile1);
 
-    NonProjectFileNotificationPanel panel = typeAndCheck(nonProjectFile1, false);
-    typeAndCheck(nonProjectFile2, false);
-
-    assertNotNull(getNotificationPanel(nonProjectFile1));
-    assertNotNull(getNotificationPanel(nonProjectFile2));
-
-    panel.getUnlockAllLabel().doClick();
-    assertSameElements(requested, nonProjectFile1);
-
-    typeAndCheck(nonProjectFile1, false, false); // can't write, but access panel is not shown 
+    typeAndCheck(nonProjectFile1, NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK_ALL, 
+                 false); // can't write since denied by another write-access provider  
     typeAndCheck(nonProjectFile2, true);
   }
 
@@ -260,8 +236,8 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     typeAndCheck(nonProjectFile1, false);
     typeAndCheck(nonProjectFile2, false);
 
-    assertNotNull(getNotificationPanel(nonProjectFile1));
-    assertNotNull(getNotificationPanel(nonProjectFile2));
+    assertNotNull(NonProjectFileWritingAccessProvider.getAccessStatus(getProject(), nonProjectFile1));
+    assertNotNull(NonProjectFileWritingAccessProvider.getAccessStatus(getProject(), nonProjectFile2));
 
     ContentEntry contextRoot = PsiTestUtil.addContentRoot(myModule, nonProjectFile2.getParent());
     
@@ -309,8 +285,8 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     typeAndCheck(nonProjectFile2, false);
   }
 
-  private List<VirtualFile> registerWriteAccessProvider(final VirtualFile... filesToDeny) {
-    final List<VirtualFile> requested = new ArrayList<VirtualFile>();
+  private Set<VirtualFile> registerWriteAccessProvider(final VirtualFile... filesToDeny) {
+    final Set<VirtualFile> requested = new LinkedHashSet<VirtualFile>();
     PlatformTestUtil.registerExtension(Extensions.getArea(getProject()), WritingAccessProvider.EP_NAME, new WritingAccessProvider() {
       @NotNull
       @Override
@@ -361,41 +337,34 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     }.execute().getResultObject();
   }
 
-  private NonProjectFileNotificationPanel typeAndCheck(VirtualFile file, boolean fileHasBeenChanged) {
-    return typeAndCheck(file, fileHasBeenChanged, !fileHasBeenChanged);
+  private void typeAndCheck(VirtualFile file, boolean fileHasBeenChanged) {
+    typeAndCheck(file, null, fileHasBeenChanged);
   }
 
-  private NonProjectFileNotificationPanel typeAndCheck(VirtualFile file, boolean changed, boolean hasWarningPanel) {
+  private void typeAndCheck(VirtualFile file,
+                            @Nullable final NonProjectFileWritingAccessProvider.UnlockOption option,
+                            boolean fileHasBeenChanged) {
     Editor editor = getEditor(file);
+
+    NullableFunction<List<VirtualFile>, NonProjectFileWritingAccessProvider.UnlockOption> unlocker =
+      new NullableFunction<List<VirtualFile>, NonProjectFileWritingAccessProvider.UnlockOption>() {
+        @Nullable
+        @Override
+        public NonProjectFileWritingAccessProvider.UnlockOption fun(List<VirtualFile> files) {
+          return option;
+        }
+      };
+    NonProjectFileWritingAccessProvider.setCustomUnlocker(unlocker);
 
     String before = editor.getDocument().getText();
     typeInChar(editor, 'a');
 
-    NonProjectFileNotificationPanel panel = getNotificationPanel(file);
-    if (changed) {
+    if (fileHasBeenChanged) {
       assertEquals("Text should be changed", 'a' + before, editor.getDocument().getText());
     }
     else {
       assertEquals("Text should not be changed", before, editor.getDocument().getText());
     }
-    assertEquals(hasWarningPanel, panel != null);
-    return panel;
-  }
-
-  private NonProjectFileNotificationPanel getNotificationPanel(VirtualFile file) {
-    Editor editor = getEditor(file);
-
-    FileEditorManagerImpl manager = (FileEditorManagerImpl)FileEditorManager.getInstance(getProject());
-    List<JComponent> topComponents = manager.getTopComponents(getFileEditor(editor));
-    if (topComponents.isEmpty()) return null;
-
-    JComponent panel = topComponents.get(0);
-    assertTrue(panel instanceof NonProjectFileNotificationPanel);
-    return (NonProjectFileNotificationPanel)panel;
-  }
-
-  protected FileEditor getFileEditor(Editor e) {
-    return e == null ? null : TextEditorProvider.getInstance().getTextEditor(e);
   }
 
   private Editor getEditor(VirtualFile file) {
