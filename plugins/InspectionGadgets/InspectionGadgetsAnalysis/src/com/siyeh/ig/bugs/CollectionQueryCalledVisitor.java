@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,18 +48,7 @@ class CollectionQueryCalledVisitor extends JavaRecursiveElementVisitor {
     }
     super.visitForeachStatement(statement);
     final PsiExpression qualifier = statement.getIteratedValue();
-    if (!(qualifier instanceof PsiReferenceExpression)) {
-      return;
-    }
-    final PsiReference referenceExpression = (PsiReference)qualifier;
-    final PsiElement referent = referenceExpression.resolve();
-    if (referent == null) {
-      return;
-    }
-    if (!referent.equals(variable)) {
-      return;
-    }
-    queried = true;
+    checkExpression(qualifier);
   }
 
   @Override
@@ -93,7 +82,7 @@ class CollectionQueryCalledVisitor extends JavaRecursiveElementVisitor {
     }
     final PsiExpression qualifier =
       methodExpression.getQualifierExpression();
-    checkQualifier(qualifier);
+    checkExpression(qualifier);
   }
 
 
@@ -104,10 +93,10 @@ class CollectionQueryCalledVisitor extends JavaRecursiveElementVisitor {
     if (methodName == null) {
       return;
     }
-    checkQualifier(expression.getQualifierExpression());
+    checkExpression(expression.getQualifierExpression());
   }
 
-  private void checkQualifier(PsiExpression expression) {
+  private void checkExpression(PsiExpression expression) {
     if (queried) {
       return;
     }
@@ -125,17 +114,17 @@ class CollectionQueryCalledVisitor extends JavaRecursiveElementVisitor {
     else if (expression instanceof PsiParenthesizedExpression) {
       final PsiParenthesizedExpression parenthesizedExpression =
         (PsiParenthesizedExpression)expression;
-      checkQualifier(parenthesizedExpression.getExpression());
+      checkExpression(parenthesizedExpression.getExpression());
     }
     else if (expression instanceof PsiConditionalExpression) {
       final PsiConditionalExpression conditionalExpression =
         (PsiConditionalExpression)expression;
       final PsiExpression thenExpression =
         conditionalExpression.getThenExpression();
-      checkQualifier(thenExpression);
+      checkExpression(thenExpression);
       final PsiExpression elseExpression =
         conditionalExpression.getElseExpression();
-      checkQualifier(elseExpression);
+      checkExpression(elseExpression);
     }
   }
 
