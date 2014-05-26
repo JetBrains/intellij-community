@@ -13,16 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.fileEditor.impl;
+package com.intellij.codeInsight;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-public interface NonProjectFileWritingAccessExtension {
-  ExtensionPointName<NonProjectFileWritingAccessExtension> EP_NAME =
-    ExtensionPointName.create("com.intellij.nonProjectFileWritingAccessExtension");
+public class ExternalAnnotationsNonProjectFileWritingAccessExtension implements NonProjectFileWritingAccessExtension {
 
-  boolean isWritable(@NotNull VirtualFile file);
+  private ReadableExternalAnnotationsManager myManager;
+
+  public ExternalAnnotationsNonProjectFileWritingAccessExtension(Project project) {
+    myManager = (ReadableExternalAnnotationsManager)ExternalAnnotationsManager.getInstance(project);
+  }
+
+  @Override
+  public boolean isWritable(@NotNull VirtualFile file) {
+    return myManager.isUnderAnnotationRoot(file);
+  }
 }
