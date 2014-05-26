@@ -86,12 +86,13 @@ public class ProcessBuilder {
     return Runtime.getRuntime().exec(commandLine, null, myWorkingDir);
   }
 
-  private boolean isWinShell(String command) {
-    if (command.endsWith(".cmd") || command.endsWith(".bat")) {
-      return true;
-    }
-    return ("cmd".equalsIgnoreCase(command) || "cmd.exe".equalsIgnoreCase(command)) &&
-           myParameters.size() > 1 && "/c".equalsIgnoreCase(myParameters.get(0).toString());
+  private static boolean isWinShell(String command) {
+    return endsWithIgnoreCase(command, ".cmd") || endsWithIgnoreCase(command, ".bat") ||
+           "cmd".equalsIgnoreCase(command) || "cmd.exe".equalsIgnoreCase(command);
+  }
+
+  private static boolean endsWithIgnoreCase(String str, String suffix) {
+    return str.regionMatches(true, str.length() - suffix.length(), suffix, 0, suffix.length());
   }
 
   private static boolean containsAnyChar(String value, String chars) {
