@@ -127,8 +127,8 @@ public class GenericMain {
 			List<GenericType> lstBounds = new ArrayList<GenericType>();
 			
 			for(;;) {
-				if(value.charAt(0) == ':') { // empty superclass
-					lstBounds.add(new GenericType(CodeConstants.TYPE_OBJECT, 0, "java/lang/Object"));
+				if(value.charAt(0) == ':') {
+				  // empty superclass, skip
 					value = value.substring(1);
 				} 
 				
