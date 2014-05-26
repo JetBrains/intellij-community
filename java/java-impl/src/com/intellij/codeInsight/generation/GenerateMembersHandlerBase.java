@@ -22,8 +22,6 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,7 +37,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.util.IncorrectOperationException;
@@ -129,8 +126,6 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
       return;
     } 
     else {
-      final InspectionManager managerEx = InspectionManager.getInstance(project);
-      final GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)managerEx.createNewGlobalContext(false);
       final List<PsiElement> elements = new ArrayList<PsiElement>();
       for (GenerationInfo member : newMembers) {
         if (!(member instanceof TemplateGenerationInfo)) {
@@ -141,8 +136,8 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
         }
       }
 
-      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
-      globalContext.codeCleanup(project, new AnalysisScope(new LocalSearchScope(elements.toArray(new PsiElement[elements.size()])), project), profile, null);
+      AnalysisScope scope = new AnalysisScope(new LocalSearchScope(elements.toArray(new PsiElement[elements.size()])), project);
+      GlobalInspectionContextBase.codeCleanup(project, scope, null);
     }
 
     final ArrayList<TemplateGenerationInfo> templates = new ArrayList<TemplateGenerationInfo>();

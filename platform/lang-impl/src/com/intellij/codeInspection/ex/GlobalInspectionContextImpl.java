@@ -610,8 +610,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   @Override
   public void codeCleanup(final Project project,
                           final AnalysisScope scope,
-                          final InspectionProfile profile, 
-                          final String commandName) {
+                          final InspectionProfile profile,
+                          final String commandName,
+                          final Runnable postRunnable) {
     final List<LocalInspectionToolWrapper> lTools = new ArrayList<LocalInspectionToolWrapper>();
 
     final LinkedHashMap<PsiFile, List<HighlightInfo>> results = new LinkedHashMap<PsiFile, List<HighlightInfo>>();
@@ -647,28 +648,34 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
             }
           }
         });
-      }
 
-      @Override
-      public void onSuccess() {
-        if (!FileModificationService.getInstance().preparePsiElementsForWrite(results.keySet())) return;
-
-        final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, "Code Cleanup", true);
-        progressTask.setMinIterationTime(200);
-        progressTask.setTask(new SequentialCleanupTask(project, results, progressTask));
-        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            if (!FileModificationService.getInstance().preparePsiElementsForWrite(results.keySet())) return;
+
+            final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, "Code Cleanup", true);
+            progressTask.setMinIterationTime(200);
+            progressTask.setTask(new SequentialCleanupTask(project, results, progressTask));
+            CommandProcessor.getInstance().executeCommand(project, new Runnable() {
               @Override
               public void run() {
-                ProgressManager.getInstance().run(progressTask);
+                CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
+                ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                  @Override
+                  public void run() {
+                    ProgressManager.getInstance().run(progressTask);
+                  }
+                });
+                if (postRunnable != null) {
+                  ApplicationManager.getApplication().invokeLater(postRunnable);
+                }
               }
-            });
+            }, commandName, null);
           }
-        }, commandName, null);
+        });
       }
+
     });
   }
 }
