@@ -90,7 +90,6 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
 
   @Override
   public void invoke(final @NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
     final Module srcModule = ModuleUtilCore.findModuleForPsiElement(element);
     final PsiClass srcClass = getContainingClass(element);
 
