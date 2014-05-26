@@ -431,19 +431,17 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     final PsiModifierListStub modList = new PsiModifierListStubImpl(stub, packMethodFlags(access, myResult.isInterface()));
 
+    String returnType = null;
     boolean parsedViaGenericSignature = false;
-    String returnType;
-    if (signature == null) {
-      returnType = parseMethodViaDescription(desc, stub, args);
-    }
-    else {
+    if (signature != null) {
       try {
         returnType = parseMethodViaGenericSignature(signature, stub, args, throwables);
         parsedViaGenericSignature = true;
       }
-      catch (ClsFormatException e) {
-        returnType = parseMethodViaDescription(desc, stub, args);
-      }
+      catch (ClsFormatException ignored) { }
+    }
+    if (returnType == null) {
+      returnType = parseMethodViaDescription(desc, stub, args);
     }
 
     stub.setReturnType(TypeInfo.fromString(returnType));
@@ -511,8 +509,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   private static String parseMethodViaGenericSignature(final String signature,
                                                        final PsiMethodStubImpl stub,
                                                        final List<String> args,
-                                                       final List<String> throwables)
-    throws ClsFormatException {
+                                                       final List<String> throwables) throws ClsFormatException {
     StringCharacterIterator iterator = new StringCharacterIterator(signature);
     SignatureParsing.parseTypeParametersDeclaration(iterator, stub);
 
