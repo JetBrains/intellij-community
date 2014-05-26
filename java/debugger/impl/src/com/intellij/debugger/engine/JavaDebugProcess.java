@@ -211,12 +211,7 @@ public class JavaDebugProcess extends XDebugProcess {
 
   @Override
   public void stop() {
-    DebuggerInvocationUtil.invokeLater(myJavaSession.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        myJavaSession.dispose();
-      }
-    });
+    myJavaSession.dispose();
     myNodeManager.dispose();
   }
 

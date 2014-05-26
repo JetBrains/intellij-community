@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.lowLevel;
+package org.jetbrains.idea.svn.svnkit.lowLevel;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -36,7 +36,7 @@ import java.lang.reflect.Method;
  *
  */
 public class SVNStoppableInputStream extends InputStream {
-  private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.lowLevel.SVNStoppableInputStream");
+  private final static Logger LOG = Logger.getInstance(SVNStoppableInputStream.class);
   private final static String ourCheckAvalilable = "svn.check.available";
   private final InputStream myOriginalIs;
   private final InputStream myIn;

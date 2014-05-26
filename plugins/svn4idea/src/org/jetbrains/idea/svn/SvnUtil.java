@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
@@ -55,13 +54,12 @@ import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
-import org.tmatesoft.svn.core.io.SVNCapability;
-import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
+import java.net.URI;
 import java.nio.channels.NonWritableChannelException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -73,7 +71,6 @@ public class SvnUtil {
   @NonNls public static final String SVN_ADMIN_DIR_NAME = SVNFileUtil.getAdminDirectoryName();
   @NonNls public static final String ENTRIES_FILE_NAME = "entries";
   @NonNls public static final String WC_DB_FILE_NAME = "wc.db";
-  @NonNls public static final String DIR_PROPS_FILE_NAME = "dir-props";
   @NonNls public static final String PATH_TO_LOCK_FILE = SVN_ADMIN_DIR_NAME + "/lock";
   public static final int DEFAULT_PORT_INDICATOR = -1;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnUtil");
@@ -305,23 +302,6 @@ public class SvnUtil {
     }
   }
 
-  public static String formatRepresentation(final WorkingCopyFormat format) {
-    if (WorkingCopyFormat.ONE_DOT_EIGHT.equals(format)) {
-      return SvnBundle.message("dialog.show.svn.map.table.version18.text");
-    } else if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(format)) {
-      return SvnBundle.message("dialog.show.svn.map.table.version17.text");
-    } else if (WorkingCopyFormat.ONE_DOT_SIX.equals(format)) {
-      return SvnBundle.message("dialog.show.svn.map.table.version16.text");
-    } else if (WorkingCopyFormat.ONE_DOT_FIVE.equals(format)) {
-      return SvnBundle.message("dialog.show.svn.map.table.version15.text");
-    } else if (WorkingCopyFormat.ONE_DOT_FOUR.equals(format)) {
-      return SvnBundle.message("dialog.show.svn.map.table.version14.text");
-    } else if (WorkingCopyFormat.ONE_DOT_THREE.equals(format)) {
-      return SvnBundle.message("dialog.show.svn.map.table.version13.text");
-    }
-    return "";
-  }
-
   public static Collection<List<Change>> splitChangesIntoWc(final SvnVcs vcs, final List<Change> changes) {
     return splitIntoRepositories(vcs, changes, new Convertor<Change, File>() {
       @Override
@@ -329,10 +309,6 @@ public class SvnUtil {
         return ChangesUtil.getFilePath(o).getIOFile();
       }
     });
-  }
-
-  public static Collection<List<File>> splitFilesIntoRepositories(final SvnVcs vcs, final List<File> committables) {
-    return splitIntoRepositories(vcs, committables, Convertor.SELF);
   }
 
   public static <T> Collection<List<T>> splitIntoRepositories(final SvnVcs vcs, final List<T> committables,
@@ -539,27 +515,21 @@ public class SvnUtil {
     return file;
   }
 
-  public static boolean checkRepositoryVersion15(final SvnVcs vcs, final String url) {
+  public static boolean checkRepositoryVersion15(@NotNull SvnVcs vcs, @NotNull String url) {
     // Merge info tracking is supported in repositories since svn 1.5 (June 2008) - see http://subversion.apache.org/docs/release-notes/.
-    // So by default we assume repository supports merge info tracking.
-    if (!Registry.is("svn.check.repository.supports.merge.info")) {
-      return true;
+    // But still some users use 1.4 repositories and currently we need to know if repository supports merge info for some code flows.
+
+    boolean result = false;
+
+    try {
+      result = vcs.getFactory().createRepositoryFeaturesClient().supportsMergeTracking(createUrl(url));
+    }
+    catch (VcsException e) {
+      LOG.info(e);
+      // TODO: Exception is thrown when url just not exist (was deleted, for instance) => and false is returned which seems not to be correct.
     }
 
-    SVNRepository repository = null;
-    try {
-      repository = vcs.createRepository(url);
-      return repository.hasCapability(SVNCapability.MERGE_INFO);
-    }
-    catch (SVNException e) {
-      // TODO: Exception is thrown when url just not exist (was deleted, for instance) => and false is returned which seems not to be correct.
-      return false;
-    }
-    finally {
-      if (repository != null) {
-        repository.closeSession();
-      }
-    }
+    return result;
   }
 
   @Nullable
@@ -606,12 +576,6 @@ public class SvnUtil {
     return false;
   }
 
-  public static SVNURL getCommittedURL(final SvnVcs vcs, final File file) {
-    final File root = getWorkingCopyRootNew(file);
-
-    return root == null ? null : getUrl(vcs, root);
-  }
-
   @Nullable
   public static SVNURL getUrl(final SvnVcs vcs, final File file) {
     // todo for moved items?
@@ -620,25 +584,19 @@ public class SvnUtil {
     return info == null ? null : info.getURL();
   }
 
-  public static boolean remoteFolderIsEmpty(final SvnVcs vcs, final String url) throws SVNException {
-    // TODO: Implement with command line client
-    SVNRepository repository = null;
-    try {
-      repository = vcs.createRepository(url);
-      final Ref<Boolean> result = new Ref<Boolean>(true);
-      repository.getDir("", -1, null, new ISVNDirEntryHandler() {
-        public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
-          if (dirEntry != null) {
-            result.set(false);
-          }
+  public static boolean remoteFolderIsEmpty(final SvnVcs vcs, final String url) throws VcsException {
+    SvnTarget target = SvnTarget.fromURL(createUrl(url));
+    final Ref<Boolean> result = new Ref<Boolean>(true);
+    ISVNDirEntryHandler handler = new ISVNDirEntryHandler() {
+      public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
+        if (dirEntry != null) {
+          result.set(false);
         }
-      });
-      return result.get();
-    } finally {
-      if (repository != null) {
-        repository.closeSession();
       }
-    }
+    };
+
+    vcs.getFactory(target).createBrowseClient().list(target, null, SVNDepth.IMMEDIATES, handler);
+    return result.get();
   }
 
   public static File getWcDb(final File file) {
@@ -699,15 +657,6 @@ public class SvnUtil {
     return current;
   }
 
-  public static boolean is17CopyPart(final File file) {
-    try {
-      return SvnWcGeneration.V17.equals(SvnOperationFactory.detectWcGeneration(file, true));
-    }
-    catch (SVNException e) {
-      return false;
-    }
-  }
-
   public static String getRelativeUrl(@NotNull String parentUrl, @NotNull String childUrl) {
     return FileUtilRt.getRelativePath(parentUrl, childUrl, '/', true);
   }
@@ -743,6 +692,20 @@ public class SvnUtil {
       result = result.appendPath(part, false);
     }
     return result;
+  }
+
+  @NotNull
+  public static SVNRevision getHeadRevision(@NotNull SvnVcs vcs, @NotNull SVNURL url) throws SVNException {
+    SVNInfo info = vcs.getInfo(url, SVNRevision.HEAD);
+
+    if (info == null) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Could not get info for " + url));
+    }
+    if (info.getRevision() == null) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Could not get revision for " + url));
+    }
+
+    return info.getRevision();
   }
 
   public static byte[] getFileContents(@NotNull final SvnVcs vcs,
@@ -820,6 +783,54 @@ public class SvnUtil {
            SVNErrorCode.WC_NOT_WORKING_COPY.equals(code) ||
            // thrown when getting info from repository for non-existent item - like HEAD revision for deleted file
            SVNErrorCode.ILLEGAL_TARGET.equals(code);
+  }
+
+  // TODO: Create custom Target class and implement append there
+  @NotNull
+  public static SvnTarget append(@NotNull SvnTarget target, @NotNull String path) throws SvnBindException {
+    return append(target, path, false);
+  }
+
+  @NotNull
+  public static SvnTarget append(@NotNull SvnTarget target, @NotNull String path, boolean checkAbsolute) throws SvnBindException {
+    SvnTarget result;
+
+    if (target.isFile()) {
+      result = SvnTarget.fromFile(resolvePath(target.getFile(), path));
+    }
+    else {
+      try {
+        result = SvnTarget
+          .fromURL(checkAbsolute && URI.create(path).isAbsolute() ? SVNURL.parseURIEncoded(path) : target.getURL().appendPath(path, false));
+      }
+      catch (SVNException e) {
+        throw new SvnBindException(e);
+      }
+    }
+
+    return result;
+  }
+
+  @NotNull
+  public static File resolvePath(@NotNull File base, @NotNull String path) {
+    File result = new File(path);
+
+    if (!result.isAbsolute()) {
+      result = ".".equals(path) ? base : new File(base, path);
+    }
+
+    return result;
+  }
+
+  /**
+   * {@code SvnTarget.getPathOrUrlDecodedString} does not correctly work for URL targets - {@code SVNURL.toString} instead of
+   * {@code SVNURL.toDecodedString} is used.
+   * <p/>
+   * Current utility method fixes this case.
+   */
+  @NotNull
+  public static String toDecodedString(@NotNull SvnTarget target) {
+    return target.isFile() ? target.getFile().getPath() : target.getURL().toDecodedString();
   }
 
   private static class WorkingCopyFormatOperation implements FileUtilRt.RepeatableIOOperation<WorkingCopyFormat, RuntimeException> {

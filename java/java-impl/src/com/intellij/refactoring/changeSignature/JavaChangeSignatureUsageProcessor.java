@@ -840,6 +840,11 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         final int idx = Arrays.binarySearch(oldParameterNames, oldParamName);
         return idx >= 0 && idx == method.getParameterList().getParameterIndex(parameter) && changeInfo.getNewParameters()[idx].getOldIndex() == idx;
       }
+    }, new Condition<String>() {
+      @Override
+      public boolean value(String paramName) {
+        return Arrays.binarySearch(oldParameterNames, paramName) >= 0;
+      }
     });
   }
 

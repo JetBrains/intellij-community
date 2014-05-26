@@ -199,7 +199,7 @@ public class ShareProjectAction extends BasicAction {
                                         final SvnVcs activeVcs,
                                         final String parent,
                                         ProgressManager progressManager) throws VcsException {
-    final SVNException[] exc = new SVNException[1];
+    final VcsException[] exc = new VcsException[1];
     final boolean[] folderEmpty = new boolean[1];
 
     progressManager.runProcessWithProgressSynchronously(new Runnable() {
@@ -208,13 +208,13 @@ public class ShareProjectAction extends BasicAction {
         try {
           folderEmpty[0] = SvnUtil.remoteFolderIsEmpty(activeVcs, parent);
         }
-        catch (SVNException e) {
+        catch (VcsException e) {
           exc[0] = e;
         }
       }
     }, "Check remote folder contents", false, project);
     if (exc[0] != null) {
-      throw new VcsException(exc[0]);
+      throw exc[0];
     }
     return folderEmpty[0];
   }

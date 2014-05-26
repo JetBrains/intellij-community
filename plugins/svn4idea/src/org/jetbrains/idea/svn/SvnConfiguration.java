@@ -20,12 +20,16 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
-import org.jetbrains.idea.svn.config.SvnServerFileKeys;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationProvider;
 import org.jetbrains.idea.svn.auth.SvnInteractiveAuthenticationProvider;
+import org.jetbrains.idea.svn.config.SvnServerFileKeys;
 import org.jetbrains.idea.svn.update.MergeRootInfo;
 import org.jetbrains.idea.svn.update.UpdateRootInfo;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -44,6 +48,7 @@ import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeSet;
 
 @State(
   name = "SvnConfiguration",
@@ -430,22 +435,48 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   // TODO: Rewrite AutoStorage to use MemoryPasswordSafe at least
   public static class AuthStorage implements ISVNAuthenticationStorage {
 
-    private final Map<String, Object> myStorage = Collections.synchronizedMap(new HashMap<String, Object>());
+    private final TreeSet<String> myKeys = ContainerUtil.newTreeSet();
+    private final Map<String, Object> myStorage = ContainerUtil.newHashMap();
 
-    public void clear() {
-      myStorage.clear();
+    @NotNull
+    public static String getKey(@NotNull String type, @NotNull String realm) {
+      return type + "$" + realm;
     }
 
-    public void putData(String kind, String realm, Object data) {
+    public synchronized void clear() {
+      myStorage.clear();
+      myKeys.clear();
+    }
+
+    public synchronized void putData(String kind, String realm, Object data) {
+      String key = getKey(kind, realm);
+
       if (data == null) {
-        myStorage.remove(kind + "$" + realm);
+        myStorage.remove(key);
+        myKeys.remove(key);
       } else {
-        myStorage.put(kind + "$" + realm, data);
+        myStorage.put(key, data);
+        myKeys.add(key);
       }
     }
 
-    public Object getData(String kind, String realm) {
-      return myStorage.get(kind + "$" + realm);
+    public synchronized Object getData(String kind, String realm) {
+      return myStorage.get(getKey(kind, realm));
+    }
+
+    public synchronized Object getDataWithLowerCheck(String kind, String realm) {
+      String key = getKey(kind, realm);
+      Object result = myStorage.get(key);
+
+      if (result == null) {
+        String lowerKey = myKeys.lower(key);
+
+        if (lowerKey != null && key.startsWith(lowerKey)) {
+          result = myStorage.get(lowerKey);
+        }
+      }
+
+      return result;
     }
   }
 

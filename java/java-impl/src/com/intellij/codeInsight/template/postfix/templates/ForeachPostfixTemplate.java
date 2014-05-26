@@ -31,7 +31,7 @@ import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplate
 
 public class ForeachPostfixTemplate extends StringBasedPostfixTemplate {
   public ForeachPostfixTemplate() {
-    super("for", "for (T item : collection)", JAVA_PSI_INFO, IS_ITERABLE_OR_ARRAY);
+    super("for", "for (T item : expr)", JAVA_PSI_INFO, IS_ITERABLE_OR_ARRAY);
   }
 
   @Override

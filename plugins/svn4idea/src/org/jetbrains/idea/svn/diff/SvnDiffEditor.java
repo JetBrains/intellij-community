@@ -20,7 +20,7 @@
  * Date: 20.07.2006
  * Time: 19:09:29
  */
-package org.jetbrains.idea.svn.status;
+package org.jetbrains.idea.svn.diff;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -28,7 +28,6 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNCommitInfo;
@@ -43,7 +42,7 @@ import java.io.OutputStream;
 import java.util.Map;
 
 public class SvnDiffEditor implements ISVNEditor {
-  private VirtualFile mySourceRoot;
+  private File mySourceRoot;
   private SVNRepository mySource;
   private final SVNRepository myTarget;
   private final long myTargetRevision;
@@ -59,7 +58,7 @@ public class SvnDiffEditor implements ISVNEditor {
     myReverse = reverse;
   }
 
-  public SvnDiffEditor(@NotNull final VirtualFile sourceRoot, final SVNRepository target, long targetRevision,
+  public SvnDiffEditor(@NotNull final File sourceRoot, final SVNRepository target, long targetRevision,
                        boolean reverse) {
     mySourceRoot = sourceRoot;
     myTarget = target;
@@ -77,14 +76,14 @@ public class SvnDiffEditor implements ISVNEditor {
       return new DiffContentRevision(path, mySource, -1);
     }
     // 'path' includes the first component of the root local path
-    File f = new File(mySourceRoot.getPath(), path);
+    File f = new File(mySourceRoot, path);
     FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(f);
     return CurrentContentRevision.create(filePath);
   }
 
   private DiffContentRevision createAfterRevision(final String path) {
     if (mySourceRoot != null) {
-      File f = new File(mySourceRoot.getPath(), path);
+      File f = new File(mySourceRoot, path);
       FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(f);
       return new DiffContentRevision(path, myTarget, myTargetRevision, filePath);
     }

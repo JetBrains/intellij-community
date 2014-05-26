@@ -28,7 +28,7 @@ public class SvnKitAddClient extends BaseSvnClient implements AddClient {
                   boolean force,
                   @Nullable ISVNEventHandler handler) throws VcsException {
     try {
-      SVNWCClient client = myVcs.createWCClient();
+      SVNWCClient client = myVcs.getSvnKitManager().createWCClient();
 
       client.setEventHandler(handler);
       client.doAdd(file, force,

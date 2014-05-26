@@ -13,24 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.lowLevel;
+package org.jetbrains.idea.svn.svnkit.lowLevel;
 
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.io.svn.ISVNConnector;
-import org.tmatesoft.svn.core.io.ISVNTunnelProvider;
+import org.tmatesoft.svn.core.SVNException;
 
 /**
  * Created with IntelliJ IDEA.
  * User: Irina.Chernushina
- * Date: 8/15/12
- * Time: 3:16 PM
+ * Date: 8/2/12
+ * Time: 12:11 PM
  */
-public class QuicklyDisposableISVNTunnelProvider extends QuicklyDisposableProxy<ISVNTunnelProvider> implements ISVNTunnelProvider {
-  public QuicklyDisposableISVNTunnelProvider(ISVNTunnelProvider provider) {
-    super(provider);
-  }
+public interface ApplicationLevelNumberConnectionsGuard {
+  void waitForTotalNumberOfConnectionsOk() throws SVNException;
+  boolean shouldKeepConnectionLocally();
 
-  public ISVNConnector createTunnelConnector(SVNURL location) {
-    return getRef().createTunnelConnector(location);
-  }
+  void connectionCreated();
+
+  void connectionDestroyed(int number);
 }

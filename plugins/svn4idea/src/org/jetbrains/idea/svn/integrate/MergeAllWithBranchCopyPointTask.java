@@ -85,7 +85,7 @@ public class MergeAllWithBranchCopyPointTask extends BaseMergeTask
                                                   final SvnBranchPointsCalculator.WrapperInvertor invertor) {
     return new MergerFactory() {
       public IMerger createMerger(SvnVcs vcs, File target, UpdateEventHandler handler, SVNURL currentBranchUrl, String branchName) {
-        return new BranchMerger(vcs, currentBranchUrl, myMergeContext.getWcInfo().getUrl(), myMergeContext.getWcInfo().getPath(), handler,
+        return new BranchMerger(vcs, currentBranchUrl, myMergeContext.getWcInfo().getPath(), handler,
                                 reintegrate, myMergeContext.getBranchName(),
                                 reintegrate ? invertor.getWrapped().getTargetRevision() : invertor.getWrapped().getSourceRevision());
       }

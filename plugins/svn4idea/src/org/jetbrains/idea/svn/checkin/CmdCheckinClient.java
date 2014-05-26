@@ -27,6 +27,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.commandLine.*;
 import org.jetbrains.idea.svn.status.StatusClient;
@@ -269,7 +270,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
 
     @NotNull
     private File toFile(@NotNull String path) {
-      return CommandUtil.resolvePath(myBase, path);
+      return SvnUtil.resolvePath(myBase, path);
     }
   }
 

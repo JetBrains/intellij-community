@@ -56,7 +56,7 @@ public class SvnIgnoreTest extends Svn16TestCase {
   public void testOneFileCreatedDeep() throws Exception {
     final VirtualFile versionedParent = createDirInCommand(myWorkingCopyDir, "versionedParent");
     final String name = "ign123";
-    myVcs.createWCClient().doSetProperty(new File(versionedParent.getPath()), SvnPropertyKeys.SVN_IGNORE,
+    myVcs.getSvnKitManager().createWCClient().doSetProperty(new File(versionedParent.getPath()), SvnPropertyKeys.SVN_IGNORE,
                                          SVNPropertyValue.create(name + "\n"), true, SVNDepth.EMPTY, null, null);
     checkin();
     update();
@@ -86,7 +86,7 @@ public class SvnIgnoreTest extends Svn16TestCase {
     final VirtualFile versionedParent = createDirInCommand(myWorkingCopyDir, "versionedParent");
     final String name = "ign123";
     final String name2 = "ign321";
-    myVcs.createWCClient().doSetProperty(new File(versionedParent.getPath()), SvnPropertyKeys.SVN_IGNORE,
+    myVcs.getSvnKitManager().createWCClient().doSetProperty(new File(versionedParent.getPath()), SvnPropertyKeys.SVN_IGNORE,
                                          SVNPropertyValue.create(name + "\n" + name2 + "\n"), true, SVNDepth.EMPTY, null, null);
     checkin();
     update();

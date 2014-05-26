@@ -351,7 +351,7 @@ public class SvnMergeInfoTest extends Svn17TestCase {
   private void assertMergeInfo(@NotNull File file, @NotNull String... values) throws SVNException {
     // TODO: Replace with ClientFactory model
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    final SVNWCClient wcClient = vcs.createWCClient();
+    final SVNWCClient wcClient = vcs.getSvnKitManager().createWCClient();
     final SVNPropertyData data = wcClient.doGetProperty(file, "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
     assert data != null && data.getValue() != null;
 
