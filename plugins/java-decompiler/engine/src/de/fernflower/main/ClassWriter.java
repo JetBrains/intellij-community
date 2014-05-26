@@ -344,25 +344,15 @@ public class ClassWriter {
 					writer.newLine();
 				}
 			}
-			
-			// class annotations
-      boolean hasDeprecatedAnno = false;
-      List<AnnotationExprent> lstAnn = getAllAnnotations(cl.getAttributes());
-      for(AnnotationExprent annexpr : lstAnn) {
-        if("java/lang/Deprecated".equals(annexpr.getClassname())) {
-          hasDeprecatedAnno = true;
-        }
-      }
-      if ((isDeprecated || hasDeprecatedAnno) && DecompilerContext.getOption(IFernflowerPreferences.DEPRECATED_COMMENT)) {
+
+      if(isDeprecated) {
         writer.write(indstr);
         writer.write("/** @deprecated */");
         writer.newLine();
       }
-      if(isDeprecated && !hasDeprecatedAnno) {
-        writer.write(indstr);
-        writer.write("@Deprecated");
-        writer.newLine();
-      }
+
+			// class annotations
+      List<AnnotationExprent> lstAnn = getAllAnnotations(cl.getAttributes());
       for(AnnotationExprent annexpr : lstAnn) {
         writer.write(annexpr.toJava(indent));
         writer.newLine();
@@ -490,25 +480,15 @@ public class ClassWriter {
 		}
 		
 		boolean isDeprecated = fd.getAttributes().containsKey("Deprecated");
-		
-		// field annotations
-    boolean hasDeprecatedAnno = false;
-    List<AnnotationExprent> lstAnn = getAllAnnotations(fd.getAttributes());
-    for(AnnotationExprent annexpr : lstAnn) {
-      if("java/lang/Deprecated".equals(annexpr.getClassname())) {
-        hasDeprecatedAnno = true;
-      }
-    }
-    if ((isDeprecated || hasDeprecatedAnno) && DecompilerContext.getOption(IFernflowerPreferences.DEPRECATED_COMMENT)) {
+
+    if(isDeprecated) {
       writer.write(indstr);
       writer.write("/** @deprecated */");
       writer.newLine();
     }
-    if(isDeprecated && !hasDeprecatedAnno) {
-      writer.write(indstr);
-      writer.write("@Deprecated");
-      writer.newLine();
-    }
+
+		// field annotations
+    List<AnnotationExprent> lstAnn = getAllAnnotations(fd.getAttributes());
     for(AnnotationExprent annexpr : lstAnn) {
       writer.write(annexpr.toJava(indent));
       writer.newLine();
@@ -729,24 +709,14 @@ public class ClassWriter {
 			}
 		}
 
-    // method annotations
-    boolean hasDeprecatedAnno = false;
-    List<AnnotationExprent> lstAnn = getAllAnnotations(mt.getAttributes());
-    for(AnnotationExprent annexpr : lstAnn) {
-      if("java/lang/Deprecated".equals(annexpr.getClassname())) {
-        hasDeprecatedAnno = true;
-      }
-    }
-    if ((isDeprecated || hasDeprecatedAnno) && DecompilerContext.getOption(IFernflowerPreferences.DEPRECATED_COMMENT)) {
+    if(isDeprecated) {
       writer.write(indstr);
       writer.write("/** @deprecated */");
       writer.newLine();
     }
-    if(isDeprecated && !hasDeprecatedAnno) {
-      bufstrwriter.write(indstr);
-      bufstrwriter.write("@Deprecated");
-      bufstrwriter.newLine();
-    }
+
+    // method annotations
+    List<AnnotationExprent> lstAnn = getAllAnnotations(mt.getAttributes());
     for(AnnotationExprent annexpr : lstAnn) {
       bufstrwriter.write(annexpr.toJava(indent));
       bufstrwriter.newLine();
