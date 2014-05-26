@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2011 Bas Leijdekkers
+ * Copyright 2007-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,10 +44,17 @@ public abstract class SerializableInspectionUtil {
     constraints.fill = GridBagConstraints.BOTH;
     panel.add(chooserList, constraints);
 
-    constraints.fill = GridBagConstraints.BOTH;
     final JComponent[] additionalOptions = inspection.createAdditionalOptions();
     for (JComponent additionalOption : additionalOptions) {
       constraints.gridy++;
+      if (additionalOption instanceof JPanel) {
+        constraints.fill = GridBagConstraints.BOTH;
+        constraints.weighty = 1.0;
+      }
+      else {
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        constraints.weighty = 0.0;
+      }
       panel.add(additionalOption, constraints);
     }
 

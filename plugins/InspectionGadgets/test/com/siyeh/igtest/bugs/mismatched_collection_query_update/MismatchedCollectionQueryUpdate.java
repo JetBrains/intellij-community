@@ -207,4 +207,14 @@ class MethReference<E> {
         map.put(1, true);
         I<Integer> mapper = map::get;
     }
+
+  void foo(int a,Collection b) {
+    final ArrayList x = new ArrayList();
+    x.add("1");
+
+    for (Object o : a>0? b : x)
+    {
+      System.out.println(o);
+    }
+  }
 }

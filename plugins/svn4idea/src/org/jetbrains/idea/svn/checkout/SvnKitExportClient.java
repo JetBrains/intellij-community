@@ -28,7 +28,7 @@ public class SvnKitExportClient extends BaseSvnClient implements ExportClient {
                      boolean force,
                      boolean ignoreExternals,
                      @Nullable ISVNEventHandler handler) throws VcsException {
-    SVNUpdateClient client = myVcs.createUpdateClient();
+    SVNUpdateClient client = myVcs.getSvnKitManager().createUpdateClient();
 
     client.setEventHandler(handler);
     client.setIgnoreExternals(ignoreExternals);

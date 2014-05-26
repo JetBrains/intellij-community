@@ -40,7 +40,7 @@ public class SvnKitPropertyClient extends BaseSvnClient implements PropertyClien
 
   @NotNull
   private SVNWCClient createClient() {
-    SVNWCClient client = myVcs.createWCClient();
+    SVNWCClient client = myVcs.getSvnKitManager().createWCClient();
     client.setOptions(LF_SEPARATOR_OPTIONS);
 
     return client;

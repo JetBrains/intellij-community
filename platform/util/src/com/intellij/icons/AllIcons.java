@@ -608,6 +608,7 @@ public class AllIcons {
     }
     public static final Icon NoNotifications13 = IconLoader.getIcon("/ide/noNotifications13.png"); // 13x13
     public static final Icon Notifications = IconLoader.getIcon("/ide/notifications.png"); // 16x16
+    public static final Icon OutgoingChangesOn = IconLoader.getIcon("/ide/outgoingChangesOn.png"); // 16x16
     public static final Icon Pipette = IconLoader.getIcon("/ide/pipette.png"); // 16x16
     public static final Icon Pipette_rollover = IconLoader.getIcon("/ide/pipette_rollover.png"); // 16x16
     public static final Icon Rating = IconLoader.getIcon("/ide/rating.png"); // 11x11

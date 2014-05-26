@@ -20,8 +20,6 @@ package org.jetbrains.idea.svn;
 import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.FrameStateManager;
 import com.intellij.idea.RareLogger;
-import com.intellij.notification.*;
-import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,12 +30,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.*;
@@ -55,7 +49,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Consumer;
-import com.intellij.util.Processor;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -83,54 +76,24 @@ import org.jetbrains.idea.svn.history.LoadedRevisionsCache;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
-import org.jetbrains.idea.svn.lowLevel.PrimitivePool;
-import org.jetbrains.idea.svn.networking.SSLProtocolExceptionParser;
 import org.jetbrains.idea.svn.properties.PropertyClient;
 import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
+import org.jetbrains.idea.svn.svnkit.SvnKitManager;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
-import org.tmatesoft.sqljet.core.SqlJetErrorCode;
-import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
-import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
-import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
-import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
-import org.tmatesoft.svn.core.internal.util.jna.SVNJNAUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea14;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
-import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
-import org.tmatesoft.svn.util.SVNDebugLog;
-import org.tmatesoft.svn.util.SVNDebugLogAdapter;
-import org.tmatesoft.svn.util.SVNLogType;
 
-import javax.net.ssl.SSLHandshakeException;
-import javax.net.ssl.SSLProtocolException;
 import java.io.File;
-import java.io.UnsupportedEncodingException;
-import java.security.cert.CertificateException;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 
 @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
 public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private static final String DO_NOT_LISTEN_TO_WC_DB = "svn.do.not.listen.to.wc.db";
-  private static final String KEEP_CONNECTIONS_KEY = "svn.keep.connections";
   private static final Logger REFRESH_LOG = Logger.getInstance("#svn_refresh");
-  public static boolean ourListenToWcDb = true;
-
-  private static final int ourLogUsualInterval = 20 * 1000;
-  private static final int ourLogRareInterval = 30 * 1000;
-
-  private static final Set<SVNErrorCode> ourLogRarely = new HashSet<SVNErrorCode>(
-    Arrays.asList(new SVNErrorCode[]{SVNErrorCode.WC_UNSUPPORTED_FORMAT, SVNErrorCode.WC_CORRUPT, SVNErrorCode.WC_CORRUPT_TEXT_BASE,
-      SVNErrorCode.WC_NOT_FILE, SVNErrorCode.WC_NOT_DIRECTORY, SVNErrorCode.WC_PATH_NOT_FOUND}));
+  public static boolean ourListenToWcDb = !Boolean.getBoolean(DO_NOT_LISTEN_TO_WC_DB);
 
   private static final Logger LOG = wrapLogger(Logger.getInstance("org.jetbrains.idea.svn.SvnVcs"));
   @NonNls public static final String VCS_NAME = "svn";
@@ -148,7 +111,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private RollbackEnvironment myRollbackEnvironment;
   private UpdateEnvironment mySvnUpdateEnvironment;
   private UpdateEnvironment mySvnIntegrateEnvironment;
-  private VcsHistoryProvider mySvnHistoryProvider;
   private AnnotationProvider myAnnotationProvider;
   private DiffProvider mySvnDiffProvider;
   private final VcsShowConfirmationOption myAddConfirmation;
@@ -161,10 +123,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private MergeProvider myMergeProvider;
   private final WorkingCopiesContent myWorkingCopiesContent;
 
-  @NonNls public static final String LOG_PARAMETER_NAME = "javasvn.log";
-  @NonNls public static final String TRACE_NATIVE_CALLS = "javasvn.log.native";
-  public static final String pathToEntries = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.ENTRIES_FILE_NAME;
-  public static final String pathToDirProps = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.DIR_PROPS_FILE_NAME;
   private final SvnChangelistListener myChangeListListener;
 
   private SvnCopiesRefreshManager myCopiesRefreshManager;
@@ -179,94 +137,29 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   private final RootsToWorkingCopies myRootsToWorkingCopies;
   private final SvnAuthenticationNotifier myAuthNotifier;
-  private static RareLogger.LogFilter[] ourLogFilters;
   private final SvnLoadedBrachesStorage myLoadedBranchesStorage;
 
-  public static final String SVNKIT_HTTP_SSL_PROTOCOLS = "svnkit.http.sslProtocols";
-  private static boolean ourSSLProtocolsExplicitlySet = false;
   private final SvnExecutableChecker myChecker;
 
-  public static final Processor<Exception> ourBusyExceptionProcessor = new Processor<Exception>() {
-    @Override
-    public boolean process(Exception e) {
-      if (e instanceof SVNException) {
-        final SVNErrorCode errorCode = ((SVNException)e).getErrorMessage().getErrorCode();
-        if (SVNErrorCode.WC_LOCKED.equals(errorCode)) {
-          return true;
-        } else if (SVNErrorCode.SQLITE_ERROR.equals(errorCode)) {
-          Throwable cause = ((SVNException)e).getErrorMessage().getCause();
-          if (cause instanceof SqlJetException) {
-            return SqlJetErrorCode.BUSY.equals(((SqlJetException)cause).getErrorCode());
-          }
-        }
-      }
-      return false;
-    }
-  };
   private SvnCheckoutProvider myCheckoutProvider;
 
   @NotNull private final ClientFactory cmdClientFactory;
   @NotNull private final ClientFactory svnKitClientFactory;
+  @NotNull private final SvnKitManager svnKitManager;
 
   private final boolean myLogExceptions;
 
-  static {
-    System.setProperty("svnkit.log.native.calls", "true");
-    if (Boolean.getBoolean(DO_NOT_LISTEN_TO_WC_DB)) {
-      ourListenToWcDb = false;
-    }
-    final JavaSVNDebugLogger logger = new JavaSVNDebugLogger(Boolean.getBoolean(LOG_PARAMETER_NAME), Boolean.getBoolean(TRACE_NATIVE_CALLS), LOG);
-    SVNDebugLog.setDefaultLog(logger);
-
-    SVNJNAUtil.setJNAEnabled(true);
-    SvnHttpAuthMethodsDefaultChecker.check();
-
-    SVNAdminAreaFactory.setSelector(new SvnFormatSelector());
-
-    DAVRepositoryFactory.setup();
-    SVNRepositoryFactoryImpl.setup();
-    FSRepositoryFactory.setup();
-
-    // non-optimized writing is fast enough on Linux/MacOS, and somewhat more reliable
-    if (SystemInfo.isWindows) {
-      SVNAdminArea14.setOptimizedWritingEnabled(true);
-    }
-
-    if (!SVNJNAUtil.isJNAPresent()) {
-      LOG.warn("JNA is not found by svnkit library");
-    }
-    initLogFilters();
-
-    ourSSLProtocolsExplicitlySet = System.getProperty(SVNKIT_HTTP_SSL_PROTOCOLS) != null;
-  }
-
-  public static boolean isSSLProtocolExplicitlySet() {
-    return ourSSLProtocolsExplicitlySet;
-  }
-
   public SvnVcs(final Project project, MessageBus bus, SvnConfiguration svnConfiguration, final SvnLoadedBrachesStorage storage) {
     super(project, VCS_NAME);
-
-    cmdClientFactory = new CmdClientFactory(this);
-    svnKitClientFactory = new SvnKitClientFactory(this);
 
     myLoadedBranchesStorage = storage;
     myRootsToWorkingCopies = new RootsToWorkingCopies(this);
     myConfiguration = svnConfiguration;
     myAuthNotifier = new SvnAuthenticationNotifier(this);
 
-    dumpFileStatus(FileStatus.ADDED);
-    dumpFileStatus(FileStatus.DELETED);
-    dumpFileStatus(FileStatus.MERGE);
-    dumpFileStatus(FileStatus.MODIFIED);
-    dumpFileStatus(FileStatus.NOT_CHANGED);
-    dumpFileStatus(FileStatus.UNKNOWN);
-
-    dumpFileStatus(SvnFileStatus.REPLACED);
-    dumpFileStatus(SvnFileStatus.EXTERNAL);
-    dumpFileStatus(SvnFileStatus.OBSTRUCTED);
-
-    refreshSSLProperty();
+    cmdClientFactory = new CmdClientFactory(this);
+    svnKitClientFactory = new SvnKitClientFactory(this);
+    svnKitManager = new SvnKitManager(this);
 
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     myAddConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, this);
@@ -295,28 +188,16 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
                                                                                  VcsDirtyScopeManager.getInstance(project));
     myWorkingCopiesContent = new WorkingCopiesContent(this);
 
-    // remove used some time before old notification group ids
-    correctNotificationIds();
     myChecker = new SvnExecutableChecker(myProject);
 
     Application app = ApplicationManager.getApplication();
     myLogExceptions = app != null && (app.isInternal() || app.isUnitTestMode());
   }
 
-  private void correctNotificationIds() {
-    boolean notEmpty = NotificationsConfigurationImpl.getNotificationsConfigurationImpl().isRegistered("SVN_NO_JNA") ||
-                       NotificationsConfigurationImpl.getNotificationsConfigurationImpl().isRegistered("SVN_NO_CRYPT32") ||
-                       NotificationsConfigurationImpl.getNotificationsConfigurationImpl().isRegistered("SubversionId");
-    if (notEmpty) {
-      NotificationsConfigurationImpl.remove("SVN_NO_JNA", "SVN_NO_CRYPT32", "SubversionId");
-      NotificationsConfiguration.getNotificationsConfiguration().register(getDisplayName(), NotificationDisplayType.BALLOON);
-    }
-  }
-
   public void postStartup() {
     if (myProject.isDefault()) return;
-    myCopiesRefreshManager = new SvnCopiesRefreshManager((SvnFileUrlMappingImpl) getSvnFileUrlMapping());
-    if (! myConfiguration.isCleanupRun()) {
+    myCopiesRefreshManager = new SvnCopiesRefreshManager((SvnFileUrlMappingImpl)getSvnFileUrlMapping());
+    if (!myConfiguration.isCleanupRun()) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
@@ -324,7 +205,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
           myConfiguration.setCleanupRun(true);
         }
       }, ModalityState.NON_MODAL, myProject.getDisposed());
-    } else {
+    }
+    else {
       invokeRefreshSvnRoots();
     }
 
@@ -346,7 +228,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
                 final VirtualFile file = lfs.refreshAndFindFileByIoFile(new File(info.getPath()));
                 if (file == null) {
                   LOG.info("Wasn't able to find virtual file for wc root: " + info.getPath());
-                } else {
+                }
+                else {
                   roots.add(file);
                 }
               }
@@ -463,10 +346,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public void activate() {
-    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (!myProject.isDefault()) {
       ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
-      vcsManager.addVcsListener(myVcsListener);
+      myProject.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myVcsListener);
     }
 
     SvnApplicationSettings.getInstance().svnActivated();
@@ -481,19 +363,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     mySvnBranchPointsCalculator = new SvnBranchPointsCalculator(myProject);
     mySvnBranchPointsCalculator.activate();
 
-    if (SystemInfo.isWindows) {
-      if (!SVNJNAUtil.isJNAPresent()) {
-        Notifications.Bus.notify(new Notification(getDisplayName(), "Subversion plugin: no JNA",
-                                                  "A problem with JNA initialization for SVNKit library. Encryption is not available.",
-                                                  NotificationType.WARNING), myProject);
-      }
-      else if (!SVNJNAUtil.isWinCryptEnabled()) {
-        Notifications.Bus.notify(new Notification(getDisplayName(), "Subversion plugin: no encryption",
-                                                  "A problem with encryption module (Crypt32.dll) initialization for SVNKit library. " +
-                                                  "Encryption is not available.",
-                                                  NotificationType.WARNING), myProject);
-      }
-    }
+    svnKitManager.activate();
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       checkCommandLineVersion();
@@ -520,61 +390,13 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       }
     });
 
-    vcsManager.addVcsListener(myRootsToWorkingCopies);
+    myProject.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myRootsToWorkingCopies);
 
     myLoadedBranchesStorage.activate();
   }
 
-  private static void initLogFilters() {
-    if (ourLogFilters != null) return;
-    ourLogFilters = new RareLogger.LogFilter[]{new RareLogger.LogFilter() {
-      @Override
-      public Object getKey(@NotNull org.apache.log4j.Level level,
-                           @NonNls String message,
-                           @Nullable Throwable t,
-                           @NonNls String... details) {
-        SVNException svnExc = null;
-        if (t instanceof SVNException) {
-          svnExc = (SVNException)t;
-        }
-        else if (t instanceof VcsException && t.getCause() instanceof SVNException) {
-          svnExc = (SVNException)t.getCause();
-        }
-        if (svnExc != null) {
-          // only filter a few cases
-          if (ourLogRarely.contains(svnExc.getErrorMessage().getErrorCode())) {
-            return svnExc.getErrorMessage().getErrorCode();
-          }
-        }
-        return null;
-      }
-
-      @Override
-      @NotNull
-      public Integer getAllowedLoggingInterval(org.apache.log4j.Level level, String message, Throwable t, String[] details) {
-        SVNException svnExc = null;
-        if (t instanceof SVNException) {
-          svnExc = (SVNException)t;
-        }
-        else if (t instanceof VcsException && t.getCause() instanceof SVNException) {
-          svnExc = (SVNException)t.getCause();
-        }
-        if (svnExc != null) {
-          if (ourLogRarely.contains(svnExc.getErrorMessage().getErrorCode())) {
-            return ourLogRareInterval;
-          }
-          else {
-            return ourLogUsualInterval;
-          }
-        }
-        return 0;
-      }
-    }};
-  }
-
   public static Logger wrapLogger(final Logger logger) {
-    initLogFilters();
-    return RareLogger.wrap(logger, Boolean.getBoolean("svn.logger.fairsynch"), ourLogFilters);
+    return RareLogger.wrap(logger, Boolean.getBoolean("svn.logger.fairsynch"), new SvnExceptionLogFilter());
   }
 
   public RootsToWorkingCopies getRootsToWorkingCopies() {
@@ -589,11 +411,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   public void deactivate() {
     FrameStateManager.getInstance().removeListener(myFrameStateListener);
 
-    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    if (myVcsListener != null) {
-      vcsManager.removeVcsListener(myVcsListener);
-    }
-
     if (myEntriesFileListener != null) {
       VirtualFileManager.getInstance().removeVirtualFileListener(myEntriesFileListener);
     }
@@ -604,7 +421,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     if (myChangeListListener != null && !myProject.isDefault()) {
       ChangeListManager.getInstance(myProject).removeChangeListListener(myChangeListListener);
     }
-    vcsManager.removeVcsListener(myRootsToWorkingCopies);
     myRootsToWorkingCopies.clear();
 
     myAuthNotifier.stop();
@@ -645,120 +461,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return myChangeProvider;
   }
 
-  public SVNRepository createRepository(String url) throws SVNException {
-    SVNRepository repos = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(url));
-    repos.setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
-    repos.setTunnelProvider(myConfiguration.getOptions(myProject));
-    return repos;
-  }
-
-  public SVNRepository createRepository(SVNURL url) throws SVNException {
-    SVNRepository repos = SVNRepositoryFactory.create(url);
-    repos.setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
-    repos.setTunnelProvider(myConfiguration.getOptions(myProject));
-    return repos;
-  }
-
-  @NotNull
-  private ISVNRepositoryPool getPool() {
-    return getPool(myConfiguration.getAuthenticationManager(this));
-  }
-
-  @NotNull
-  private ISVNRepositoryPool getPool(ISVNAuthenticationManager manager) {
-    if (myProject.isDisposed()) {
-      throw new ProcessCanceledException();
-    }
-    return new PrimitivePool(manager, myConfiguration.getOptions(myProject));
-  }
-
-  public SVNUpdateClient createUpdateClient() {
-    final SVNUpdateClient client = new SVNUpdateClient(getPool(), myConfiguration.getOptions(myProject));
-    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
-    return client;
-  }
-
-  public SVNUpdateClient createUpdateClient(@NotNull ISVNAuthenticationManager manager) {
-    final SVNUpdateClient client = new SVNUpdateClient(getPool(manager), myConfiguration.getOptions(myProject));
-    client.getOperationsFactory().setAuthenticationManager(manager);
-    return client;
-  }
-
-  public SVNStatusClient createStatusClient() {
-    SVNStatusClient client = new SVNStatusClient(getPool(), myConfiguration.getOptions(myProject));
-    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
-    client.setIgnoreExternals(false);
-    return client;
-  }
-
-  public SVNWCClient createWCClient() {
-    final SVNWCClient client = new SVNWCClient(getPool(), myConfiguration.getOptions(myProject));
-    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
-    return client;
-  }
-
-  public SVNWCClient createWCClient(@NotNull ISVNAuthenticationManager manager) {
-    final SVNWCClient client = new SVNWCClient(getPool(manager), myConfiguration.getOptions(myProject));
-    client.getOperationsFactory().setAuthenticationManager(manager);
-    return client;
-  }
-
-  public SVNCopyClient createCopyClient() {
-    final SVNCopyClient client = new SVNCopyClient(getPool(), myConfiguration.getOptions(myProject));
-    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
-    return client;
-  }
-
-  public SVNMoveClient createMoveClient() {
-    final SVNMoveClient client = new SVNMoveClient(getPool(), myConfiguration.getOptions(myProject));
-    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
-    return client;
-  }
-
-  public SVNLogClient createLogClient() {
-    final SVNLogClient client = new SVNLogClient(getPool(), myConfiguration.getOptions(myProject));
-    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
-    return client;
-  }
-
-  public SVNLogClient createLogClient(@NotNull ISVNAuthenticationManager manager) {
-    final SVNLogClient client = new SVNLogClient(getPool(manager), myConfiguration.getOptions(myProject));
-    client.getOperationsFactory().setAuthenticationManager(manager);
-    return client;
-  }
-
-  public SVNCommitClient createCommitClient() {
-    final SVNCommitClient client = new SVNCommitClient(getPool(), myConfiguration.getOptions(myProject));
-    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
-    return client;
-  }
-
-  public SVNDiffClient createDiffClient() {
-    final SVNDiffClient client = new SVNDiffClient(getPool(), myConfiguration.getOptions(myProject));
-    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
-    return client;
-  }
-
-  public SVNChangelistClient createChangelistClient() {
-    final SVNChangelistClient client = new SVNChangelistClient(getPool(), myConfiguration.getOptions(myProject));
-    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
-    return client;
-  }
-
-  public ISVNOptions getSvnOptions() {
-    return myConfiguration.getOptions(myProject);
-  }
-
-  public ISVNAuthenticationManager getSvnAuthenticationManager() {
-    return myConfiguration.getAuthenticationManager(this);
-  }
-
-  void dumpFileStatus(FileStatus fs) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("FileStatus:" + fs.getText() + " " + fs.getColor() + " " + " " + fs.getClass().getName());
-    }
-  }
-
   @Override
   public UpdateEnvironment getIntegrateEnvironment() {
     if (mySvnIntegrateEnvironment == null) {
@@ -777,13 +479,11 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public String getDisplayName() {
-    LOG.debug("getDisplayName");
     return VCS_DISPLAY_NAME;
   }
 
   @Override
   public Configurable getConfigurable() {
-    LOG.debug("createConfigurable");
     return new SvnConfigurable(myProject);
   }
 
@@ -922,14 +622,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return !SvnStatusUtil.isIgnoredInAnySense(clManager, file) && !clManager.isUnversioned(file);
   }
 
-  private static File getEntriesFile(File file) {
-    return file.isDirectory() ? new File(file, pathToEntries) : new File(file.getParentFile(), pathToEntries);
-  }
-
-  private static File getDirPropsFile(File file) {
-    return new File(file, pathToDirProps);
-  }
-
   @Nullable
   public SVNInfo getInfo(@NotNull SVNURL url,
                          SVNRevision pegRevision,
@@ -1030,17 +722,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return WorkingCopyFormat.UNKNOWN.equals(format) ? SvnFormatSelector.findRootAndGetFormat(ioFile) : format;
   }
 
-  public void refreshSSLProperty() {
-    if (ourSSLProtocolsExplicitlySet) return;
-    if (SvnConfiguration.SSLProtocols.all.equals(myConfiguration.getSslProtocols())) {
-      System.clearProperty(SVNKIT_HTTP_SSL_PROTOCOLS);
-    } else if (SvnConfiguration.SSLProtocols.sslv3.equals(myConfiguration.getSslProtocols())) {
-      System.setProperty(SVNKIT_HTTP_SSL_PROTOCOLS, "SSLv3");
-    } else if (SvnConfiguration.SSLProtocols.tlsv1.equals(myConfiguration.getSslProtocols())) {
-      System.setProperty(SVNKIT_HTTP_SSL_PROTOCOLS, "TLSv1");
-    }
-  }
-
   public boolean isWcRoot(FilePath filePath) {
     boolean isWcRoot = false;
     WorkingCopy wcRoot = myRootsToWorkingCopies.getWcRoot(filePath.getVirtualFile());
@@ -1048,102 +729,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       isWcRoot = wcRoot.getFile().getAbsolutePath().equals(filePath.getIOFile().getAbsolutePath());
     }
     return isWcRoot;
-  }
-
-  private static class JavaSVNDebugLogger extends SVNDebugLogAdapter {
-    private final boolean myLoggingEnabled;
-    private final boolean myLogNative;
-    private final Logger myLog;
-    private final static long ourErrorNotificationInterval = TimeUnit.MINUTES.toMillis(2);
-    private long myPreviousTime = 0;
-
-    public JavaSVNDebugLogger(boolean loggingEnabled, boolean logNative, Logger log) {
-      myLoggingEnabled = loggingEnabled;
-      myLogNative = logNative;
-      myLog = log;
-    }
-
-    private boolean shouldLog(final SVNLogType logType) {
-      return myLoggingEnabled || myLogNative && SVNLogType.NATIVE_CALL.equals(logType);
-    }
-
-    @Override
-    public void log(final SVNLogType logType, final Throwable th, final Level logLevel) {
-      handleSpecificSSLExceptions(th);
-      if (shouldLog(logType)) {
-        myLog.info(th);
-      }
-    }
-
-    private void handleSpecificSSLExceptions(Throwable th) {
-      final long time = System.currentTimeMillis();
-      if ((time - myPreviousTime) <= ourErrorNotificationInterval) {
-        return;
-      }
-      if (th instanceof SSLHandshakeException) {
-        // not trusted certificate exception is not the problem, just part of normal behaviour
-        if (th.getCause() instanceof SVNSSLUtil.CertificateNotTrustedException) {
-          LOG.info(th);
-          return;
-        }
-
-        myPreviousTime = time;
-        String info = SSLExceptionsHelper.getAddInfo();
-        info = info == null ? "" : " (" + info + ") ";
-        if (th.getCause() instanceof CertificateException) {
-          PopupUtil.showBalloonForActiveFrame("Subversion: " + info + th.getCause().getMessage(), MessageType.ERROR);
-        } else {
-          final String postMessage = "\nPlease check Subversion SSL settings (Settings | Version Control | Subversion | Network)\n" +
-                                     "Maybe you should specify SSL protocol manually - SSLv3 or TLSv1";
-          PopupUtil.showBalloonForActiveFrame("Subversion: " + info + th.getMessage() + postMessage, MessageType.ERROR);
-        }
-      } else if (th instanceof SSLProtocolException) {
-        final String message = th.getMessage();
-        if (! StringUtil.isEmptyOrSpaces(message)) {
-          myPreviousTime = time;
-          String info = SSLExceptionsHelper.getAddInfo();
-          info = info == null ? "" : " (" + info + ") ";
-          final SSLProtocolExceptionParser parser = new SSLProtocolExceptionParser(message);
-          parser.parse();
-          final String errMessage = "Subversion: " + info + parser.getParsedMessage();
-          PopupUtil.showBalloonForActiveFrame(errMessage, MessageType.ERROR);
-        }
-      }
-    }
-
-    @Override
-    public void log(final SVNLogType logType, final String message, final Level logLevel) {
-      if (SVNLogType.NATIVE_CALL.equals(logType)) {
-        logNative(message);
-      }
-      if (shouldLog(logType)) {
-        myLog.info(message);
-      }
-    }
-
-    private static void logNative(String message) {
-      if (message == null) return;
-      final NativeLogReader.CallInfo callInfo = SvnNativeLogParser.parse(message);
-      if (callInfo == null) return;
-      NativeLogReader.putInfo(callInfo);
-    }
-
-    @Override
-    public void log(final SVNLogType logType, final String message, final byte[] data) {
-      if (shouldLog(logType)) {
-        if (data != null) {
-          try {
-            myLog.info(message + "\n" + new String(data, "UTF-8"));
-          }
-          catch (UnsupportedEncodingException e) {
-            myLog.info(message + "\n" + new String(data));
-          }
-        }
-        else {
-          myLog.info(message);
-        }
-      }
-    }
   }
 
   @Override
@@ -1358,6 +943,11 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return myCheckoutProvider;
   }
 
+  @NotNull
+  public SvnKitManager getSvnKitManager() {
+    return svnKitManager;
+  }
+
   public boolean isProject18() {
     return WorkingCopyFormat.ONE_DOT_EIGHT.equals(getProjectRootFormat());
   }
@@ -1389,10 +979,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   @NotNull
   public ClientFactory getFactory(@NotNull WorkingCopyFormat format) {
     return getFactory(format, false);
-  }
-
-  public ClientFactory getSvnKitFactory() {
-    return svnKitClientFactory;
   }
 
   @NotNull
@@ -1439,5 +1025,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   @NotNull
   public ClientFactory getCommandLineFactory() {
     return cmdClientFactory;
+  }
+
+  @NotNull
+  public ClientFactory getSvnKitFactory() {
+    return svnKitClientFactory;
   }
 }

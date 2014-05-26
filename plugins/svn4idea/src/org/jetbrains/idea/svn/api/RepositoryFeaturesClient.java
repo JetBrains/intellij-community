@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.lowLevel;
+package org.jetbrains.idea.svn.api;
 
-import org.tmatesoft.svn.core.SVNException;
+import com.intellij.openapi.vcs.VcsException;
+import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.SVNURL;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/2/12
- * Time: 12:11 PM
+ * @author Konstantin Kolosovsky.
  */
-public interface ApplicationLevelNumberConnectionsGuard {
-  void waitForTotalNumberOfConnectionsOk() throws SVNException;
-  boolean shouldKeepConnectionLocally();
+public interface RepositoryFeaturesClient extends SvnClient {
 
-  void connectionCreated();
-
-  void connectionDestroyed(int number);
+  boolean supportsMergeTracking(@NotNull SVNURL url) throws VcsException;
 }

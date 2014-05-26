@@ -20,7 +20,7 @@ public class SvnKitDeleteClient extends BaseSvnClient implements DeleteClient {
 
   @Override
   public void delete(@NotNull File path, boolean force, boolean dryRun, @Nullable ISVNEventHandler handler) throws VcsException {
-    SVNWCClient client = myVcs.createWCClient();
+    SVNWCClient client = myVcs.getSvnKitManager().createWCClient();
     client.setEventHandler(handler);
 
     try {
@@ -34,7 +34,7 @@ public class SvnKitDeleteClient extends BaseSvnClient implements DeleteClient {
   @Override
   public long delete(@NotNull SVNURL url, @NotNull String message) throws VcsException {
     try {
-      SVNCommitInfo commitInfo = myVcs.createCommitClient().doDelete(new SVNURL[]{url}, message);
+      SVNCommitInfo commitInfo = myVcs.getSvnKitManager().createCommitClient().doDelete(new SVNURL[]{url}, message);
 
       return commitInfo.getNewRevision();
     }

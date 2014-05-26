@@ -18,7 +18,8 @@ public class SvnKitChangeListClient extends BaseSvnClient implements ChangeListC
   @Override
   public void add(@NotNull String changeList, @NotNull File path, @Nullable String[] changeListsToOperate) throws VcsException {
     try {
-      myVcs.createChangelistClient().doAddToChangelist(new File[]{path}, SVNDepth.EMPTY, changeList, changeListsToOperate);
+      myVcs.getSvnKitManager().createChangelistClient()
+        .doAddToChangelist(new File[]{path}, SVNDepth.EMPTY, changeList, changeListsToOperate);
     }
     catch (SVNException e) {
       throw new SvnBindException(e);
@@ -28,7 +29,7 @@ public class SvnKitChangeListClient extends BaseSvnClient implements ChangeListC
   @Override
   public void remove(@NotNull File path) throws VcsException {
     try {
-      myVcs.createChangelistClient().doRemoveFromChangelist(new File[] {path}, SVNDepth.EMPTY, null);
+      myVcs.getSvnKitManager().createChangelistClient().doRemoveFromChangelist(new File[]{path}, SVNDepth.EMPTY, null);
     }
     catch (SVNException e) {
       throw new SvnBindException(e);

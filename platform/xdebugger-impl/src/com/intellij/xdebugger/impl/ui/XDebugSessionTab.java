@@ -177,9 +177,14 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       List<AnAction> additionalRestartActions = session.getRestartActions();
       leftToolbar.addAll(additionalRestartActions);
       if (!additionalRestartActions.isEmpty()) leftToolbar.addSeparator();
+      leftToolbar.addAll(session.getExtraActions());
     }
 
     leftToolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_LEFT_TOOLBAR_GROUP));
+
+    for (AnAction action : session.getExtraStopActions()) {
+      leftToolbar.add(action, new Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM));
+    }
 
     //group.addSeparator();
     //addAction(group, DebuggerActions.EXPORT_THREADS);

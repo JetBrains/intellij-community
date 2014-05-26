@@ -41,7 +41,7 @@ public abstract class PatternDialectProvider {
     for (PatternDialectProvider provider : Extensions.getExtensions(EP_NAME)) {
       if (Comparing.strEqual(provider.getShortName(), shortName)) return provider;
     }
-    return null; //todo replace with File
+    return ProjectPatternProvider.FILE.equals(shortName) ? null : getInstance(ProjectPatternProvider.FILE);
   }
 
   public abstract TreeModel createTreeModel(Project project, Marker marker);

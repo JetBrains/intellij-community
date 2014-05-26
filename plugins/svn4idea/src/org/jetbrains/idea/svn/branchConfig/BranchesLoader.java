@@ -49,7 +49,7 @@ public class BranchesLoader {
       vcs.getFactory(target).createBrowseClient().list(target, SVNRevision.HEAD, SVNDepth.IMMEDIATES, handler);
     }
     else {
-      SVNLogClient client = vcs.createLogClient(configuration.getPassiveAuthenticationManager(project));
+      SVNLogClient client = vcs.getSvnKitManager().createLogClient(configuration.getPassiveAuthenticationManager(project));
       client
         .doList(target.getURL(), target.getPegRevision(), SVNRevision.HEAD, false, SVNDepth.IMMEDIATES, SVNDirEntry.DIRENT_ALL, handler);
     }

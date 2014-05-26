@@ -83,6 +83,11 @@ public class CompositeFilter implements Filter, FilterMixin {
     if (resultItems == null) {
       return null;
     }
+    if (resultItems.size() == 1) {
+      ResultItem resultItem = resultItems.get(0);
+      return new Result(resultItem.highlightStartOffset, resultItem.highlightEndOffset, resultItem.hyperlinkInfo,
+                        resultItem.highlightAttributes);
+    }
     return new Result(resultItems);
   }
 

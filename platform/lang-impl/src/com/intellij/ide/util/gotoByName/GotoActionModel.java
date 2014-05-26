@@ -19,6 +19,7 @@ package com.intellij.ide.util.gotoByName;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ApplyIntentionAction;
+import com.intellij.ide.ui.search.ActionFromOptionDescriptorProvider;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
@@ -29,8 +30,13 @@ import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.IdeConfigurablesGroup;
+import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.IdeBorderFactory;
@@ -38,6 +44,7 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.apache.oro.text.regex.*;
@@ -75,6 +82,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   });
 
   protected final Map<String, ApplyIntentionAction> myIntentions = new TreeMap<String, ApplyIntentionAction>();
+  private final Map<String, String> myConfigurablesNames = ContainerUtil.newTroveMap();
 
   public GotoActionModel(@Nullable Project project, final Component component) {
     this(project, component, null, null);
@@ -94,6 +102,18 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
       }
     }
     myIndex = SearchableOptionsRegistrar.getInstance();
+    fillConfigurablesNames(new IdeConfigurablesGroup().getConfigurables());
+    if (project != null) {
+      fillConfigurablesNames(new ProjectConfigurablesGroup(project).getConfigurables());
+    }
+  }
+
+  private void fillConfigurablesNames(Configurable[] configurables) {
+    for (Configurable configurable : configurables) {
+      if (configurable instanceof SearchableConfigurable) {
+        myConfigurablesNames.put(((SearchableConfigurable)configurable).getId(), configurable.getDisplayName());
+      }
+    }
   }
 
   @Override
@@ -190,8 +210,8 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
             hit = ((OptionDescription)value).getOption();
           }
           hit = StringUtil.unescapeXml(hit);
-          if (hit.length() > 60) {
-            hit = hit.substring(0, 60) + "...";
+          if (hit.length() > 50) {
+            hit = hit.substring(0, 50) + "...";
           }
           hit = hit.replace("  ", " "); //avoid extra spaces from mnemonics and xml conversion
 
@@ -201,7 +221,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
           label.setForeground(fg);
           label.setBackground(bg);
           panel.add(label, BorderLayout.WEST);
-          final JLabel settingsLabel = new JLabel("Settings");
+          final JLabel settingsLabel = new JLabel(getGroupName((OptionDescription)value));
           settingsLabel.setForeground(fg);
           settingsLabel.setBackground(bg);
           panel.add(settingsLabel, BorderLayout.EAST);
@@ -254,7 +274,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
       return 1;
     }
     if (o2 instanceof OptionDescription && !(o1 instanceof OptionDescription)) {
-      return 1;
+      return -1;
     }
 
     if (o1 instanceof OptionDescription) {
@@ -375,10 +395,28 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
             iterator.remove();
           }
         }
-        objects.addAll(optionDescriptions);
+        for (OptionDescription description : optionDescriptions) {
+          for (ActionFromOptionDescriptorProvider converter : ActionFromOptionDescriptorProvider.EP.getExtensions()) {
+            AnAction action = converter.provide(description);
+            if (action != null) {
+              String title = getGroupName(description);
+              objects.add(new ActionWrapper(action, title, MatchMode.NAME));
+            }
+            objects.add(description);
+          }
+        }
       }
     }
     return objects.toArray(new Object[objects.size()]);
+  }
+
+  @NotNull
+  private String getGroupName(@NotNull OptionDescription description) {
+    String id = description.getConfigurableId();
+    String name = myConfigurablesNames.get(id);
+    String settings = SystemInfo.isMac ? "Preferences" : "Settings";
+    if (name == null) return settings;
+    return settings + " > " + name;
   }
 
   private void collectActions(Map<AnAction, String> result, ActionGroup group, final String containingGroupName) {

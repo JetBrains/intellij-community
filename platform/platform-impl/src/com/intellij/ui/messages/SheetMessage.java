@@ -32,6 +32,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -53,6 +54,8 @@ public class SheetMessage {
   private int imageHeight;
   private boolean restoreFullscreenButton;
 
+  private final WeakReference<Component> beforeShowFocusOwner;
+
   public SheetMessage(final Window owner,
                       final String title,
                       final String message,
@@ -62,6 +65,10 @@ public class SheetMessage {
                       final String defaultButton,
                       final String focusedButton)
   {
+    beforeShowFocusOwner = new WeakReference<Component>(
+      KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow().getMostRecentFocusOwner()
+    );
+
     myWindow = new JDialog(owner, "This should not be shown", Dialog.ModalityType.APPLICATION_MODAL);
     myWindow.getRootPane().putClientProperty("apple.awt.draggableWindowBackground", Boolean.FALSE);
 
@@ -109,6 +116,7 @@ public class SheetMessage {
     LaterInvocator.enterModal(myWindow);
     myWindow.setVisible(true);
     LaterInvocator.leaveModal(myWindow);
+    beforeShowFocusOwner.get().requestFocus();
   }
 
   private void setWindowOpacity(float opacity) {

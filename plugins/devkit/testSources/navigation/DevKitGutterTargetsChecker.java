@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.devkit.navigation;
 
-import com.intellij.codeInsight.daemon.DefaultGutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
@@ -52,16 +51,9 @@ public class DevKitGutterTargetsChecker {
       if (handler instanceof NavigationGutterIconRenderer) {
         targetElements = ((NavigationGutterIconRenderer)handler).getTargetElements();
       }
-      else if (handler instanceof DefaultGutterIconNavigationHandler) {
-        //noinspection unchecked
-        targetElements = ((DefaultGutterIconNavigationHandler)handler).getReferences();
-      }
       else {
         throw new IllegalArgumentException(handler + ": handler not supported");
       }
-    }
-    else if (gutterMark instanceof NavigationGutterIconRenderer) {
-      targetElements = ((NavigationGutterIconRenderer)gutterMark).getTargetElements();
     }
     else {
       throw new IllegalArgumentException(gutterMark.getClass() + ": gutter not supported");

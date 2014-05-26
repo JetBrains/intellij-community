@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.lowLevel;
+package com.intellij.xdebugger.impl;
 
-import com.intellij.openapi.Disposable;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.io.SVNRepository;
+import com.intellij.xdebugger.XDebugProcessStarter;
+import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 7/30/12
- * Time: 3:18 PM
+ * Created by avu on 22/05/14.
  */
-public interface SvnRepositoryPool extends Disposable {
-  SVNRepository getRepo(SVNURL url, boolean mayReuse) throws SVNException;
-  void returnRepo(SVNRepository repo);
+public abstract class XDebugProcessConfiguratorStarter extends XDebugProcessStarter {
+  public abstract void configure(XDebugSessionData data);
 }

@@ -20,7 +20,6 @@ import java.util.List;
 
 public final class HgCommandResult {
 
-  public static final HgCommandResult EMPTY = new HgCommandResult(new StringWriter(), new StringWriter(), 0);
   public static final HgCommandResult CANCELLED = new HgCommandResult(new StringWriter(), new StringWriter(), 1);
 
   private final StringWriter out;
@@ -29,7 +28,6 @@ public final class HgCommandResult {
 
   private List<String> outLines;
   private List<String> errLines;
-  private String warnings;
 
   public HgCommandResult(StringWriter out, StringWriter err, int exitValue) {
     this.out = out;
@@ -54,20 +52,12 @@ public final class HgCommandResult {
   public String getRawOutput() {
     return out.toString();
   }
-  
+
   public String getRawError() {
     return err.toString();
   }
 
   public int getExitValue() {
     return exitValue;
-  }
-
-  void setWarnings(String warnings) {
-    this.warnings = warnings;
-  }
-
-  public String getWarnings() {
-    return warnings;
   }
 }
