@@ -55,3 +55,28 @@ public class UnnecessaryBoxing {
         return null;
     }
 }
+class IntIntegerTest {
+  public IntIntegerTest(Integer val) {
+    System.out.println("behavoiur 1");
+  }
+
+  public IntIntegerTest(int val) {
+    System.out.println("behavoiur 2");
+  }
+
+  public static void f(Integer val) {
+    System.out.println("behavoiur 1");
+  }
+
+  public static void f(int val) {
+    System.out.println("behavoiur 2");
+  }
+
+  public IntIntegerTest() {
+  }
+
+  public void test() {
+    new IntIntegerTest(new Integer(1)); // <-- incorrectly triggered
+    f(new Integer(1)); // <-- not triggered
+  }
+}
