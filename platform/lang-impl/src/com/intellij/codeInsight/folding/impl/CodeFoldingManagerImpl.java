@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -183,7 +183,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
   @Override
   public void releaseFoldings(@NotNull Editor editor) {
-    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(editor.getComponent());
+    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread();
     final Project project = editor.getProject();
     if (project != null && (!project.equals(myProject) || !project.isOpen())) return;
 
@@ -201,7 +201,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
   @Override
   public void buildInitialFoldings(@NotNull final Editor editor) {
-    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(editor.getComponent());
+    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread();
     final Project project = editor.getProject();
     if (project == null || !project.equals(myProject)) return;
 

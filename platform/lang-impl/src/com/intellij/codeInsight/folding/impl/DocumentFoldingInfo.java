@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
   }
 
   void loadFromEditor(@NotNull Editor editor) {
-    assertDispatchThread(editor);
+    assertDispatchThread();
     LOG.assertTrue(!editor.isDisposed());
     clear();
 
@@ -95,12 +95,12 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
     }
   }
 
-  private static void assertDispatchThread(@NotNull Editor editor) {
-    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(editor.getComponent());
+  private static void assertDispatchThread() {
+    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread();
   }
 
   void setToEditor(@NotNull final Editor editor) {
-    assertDispatchThread(editor);
+    assertDispatchThread();
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     if (psiManager.isDisposed()) return;
 
