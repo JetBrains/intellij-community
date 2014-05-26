@@ -215,6 +215,7 @@
     <!-- Plugins -->
     <applicationConfigurable instance="com.intellij.ide.plugins.PluginManagerConfigurable" id="preferences.pluginManager"
                              displayName="Plugins"/>
+    <actionFromOptionDescriptorProvider implementation="com.intellij.ide.plugins.InstalledPluginsManagerMain$PluginsActionFromOptionDescriptorProvider"/>
     <applicationConfigurable instance="com.intellij.util.net.HTTPProxySettingsPanel" id="http.proxy" displayName="HTTP Proxy" />
     <applicationConfigurable instance="com.intellij.util.net.ssl.CertificateConfigurable"/>
     <applicationConfigurable instance="com.intellij.openapi.diff.impl.external.DiffOptionsForm" id="diff" displayName="External Diff Tools" />
