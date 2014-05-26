@@ -18,6 +18,7 @@ package com.intellij.codeInsight.javadoc;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
+import com.intellij.codeInsight.InferredAnnotationsManager;
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LangBundle;
@@ -699,10 +700,15 @@ public class JavaDocInfoGenerator {
     final PsiModifierList ownerModifierList = owner.getModifierList();
     if (ownerModifierList == null) return;
     generateAnnotations(buffer, owner, ownerModifierList.getAnnotations(), false, generateLink);
-    final PsiAnnotation[] externalAnnotations = ExternalAnnotationsManager.getInstance(owner.getProject()).findExternalAnnotations(owner);
-    if (externalAnnotations != null) {
-      generateAnnotations(buffer, owner, externalAnnotations, true, generateLink);
+    PsiAnnotation[] externalAnnotations = ExternalAnnotationsManager.getInstance(owner.getProject()).findExternalAnnotations(owner);
+    if (externalAnnotations == null) {
+      externalAnnotations = new PsiAnnotation[]{};
     }
+    PsiAnnotation[] inferredAnnotations = InferredAnnotationsManager.getInstance(owner.getProject()).findInferredAnnotations(owner);
+    if (inferredAnnotations != null) {
+      externalAnnotations = ArrayUtil.mergeArrays(externalAnnotations, inferredAnnotations, PsiAnnotation.ARRAY_FACTORY);
+    }
+    generateAnnotations(buffer, owner, externalAnnotations, true, generateLink);
   }
 
   private static void generateAnnotations(StringBuilder buffer,
