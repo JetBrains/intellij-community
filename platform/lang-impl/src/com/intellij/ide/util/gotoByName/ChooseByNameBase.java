@@ -1323,12 +1323,19 @@ public abstract class ChooseByNameBase {
         }
         return;
       }
+      int position = myTextField.getCaretPosition();
+      int code = keyStroke.getKeyCode();
       try {
         super.processKeyEvent(e);
       }
       catch (NullPointerException e1) {
         if (!Patches.SUN_BUG_ID_6322854) {
           throw e1;
+        }
+      }
+      finally {
+        if (code == KeyEvent.VK_UP || code == KeyEvent.VK_DOWN) {
+          myTextField.setCaretPosition(position);
         }
       }
     }

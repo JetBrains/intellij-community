@@ -70,4 +70,9 @@ public class GroovyCodeStyleSettingsFacadeImpl extends GroovyCodeStyleSettingsFa
   public int constructorsOrderWeight() {
     return CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().CONSTRUCTORS_ORDER_WEIGHT;
   }
+
+  @Override
+  public boolean insertInnerClassImports() {
+    return getSettings().INSERT_INNER_CLASS_IMPORTS;
+  }
 }

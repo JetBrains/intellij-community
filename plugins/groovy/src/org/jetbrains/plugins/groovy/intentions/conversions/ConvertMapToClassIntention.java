@@ -39,6 +39,7 @@ import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -135,7 +136,7 @@ public class ConvertMapToClassIntention extends Intention {
 
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(replacedNewExpression);
 
-    CreateClassActionBase.putCursor(project, generatedClass.getContainingFile(), generatedClass);
+    IntentionUtils.positionCursor(project, generatedClass.getContainingFile(), generatedClass);
   }
 
   public static boolean checkForReturnFromMethod(GrExpression replacedNewExpression) {

@@ -57,7 +57,7 @@ public class PersistentFsTest extends PlatformLangTestCase {
     assertNotNull(vFile);
 
     int id = ((VirtualFileWithId)vFile).getId();
-    assertSame(vFile, myFs.findFileById(id));
+    assertEquals(vFile, myFs.findFileById(id));
 
     vFile.delete(this);
     assertNull(myFs.findFileById(id));

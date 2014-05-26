@@ -81,7 +81,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
         super.visitAnonymousClass(aClass);
         if (PsiUtil.getLanguageLevel(aClass).isAtLeast(LanguageLevel.JDK_1_8)) {
           final PsiClassType baseClassType = aClass.getBaseClassType();
-          if (LambdaUtil.isFunctionalType(baseClassType)) {
+          if (LambdaHighlightingUtil.checkInterfaceFunctional(baseClassType) == null) {
             final PsiElement lambdaContext = aClass.getParent().getParent();
             if (LambdaUtil.isValidLambdaContext(lambdaContext) || !(lambdaContext instanceof PsiExpressionStatement)) {
               final PsiMethod[] methods = aClass.getMethods();

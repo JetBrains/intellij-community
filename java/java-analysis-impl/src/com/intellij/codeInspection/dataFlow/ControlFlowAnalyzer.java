@@ -1612,26 +1612,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         }
       }
 
-      ConditionChecker checker = ConditionCheckManager.findConditionChecker(resolved);
-      if (checker != null) {
-        ValueConstraint[] constraints = getAnyArgConstraints(params);
-        int checkedParam = checker.getCheckedParameterIndex();
-        if (checkedParam >= constraints.length) {
-          return Collections.emptyList();
-        }
-
-        ConditionChecker.Type type = checker.getConditionCheckType();
-        if (type == ASSERT_IS_NULL_METHOD || type == ASSERT_IS_NOT_NULL_METHOD) {
-          constraints[checkedParam] = type == ASSERT_IS_NOT_NULL_METHOD ? ValueConstraint.NULL_VALUE : ValueConstraint.NOT_NULL_VALUE;
-          return Collections.singletonList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
-        } else if (type == IS_NOT_NULL_METHOD || type == IS_NULL_METHOD) {
-          constraints[checkedParam] = ValueConstraint.NULL_VALUE;
-          return Collections.singletonList(new MethodContract(constraints, type == IS_NULL_METHOD ? ValueConstraint.TRUE_VALUE : ValueConstraint.FALSE_VALUE));
-        } else { //assertTrue or assertFalse
-          constraints[checkedParam] = type == ASSERT_FALSE_METHOD ? ValueConstraint.TRUE_VALUE : ValueConstraint.FALSE_VALUE;
-          return Collections.singletonList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
-        }
-      }
     }
 
     return Collections.emptyList();

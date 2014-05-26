@@ -16,17 +16,10 @@
 package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.ConditionCheckManager;
-import com.intellij.codeInsight.ConditionChecker;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.IOException;
 
 /**
  * @author peter
@@ -189,6 +182,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
 
   public void testMethodCallFlushesField() { doTest(); }
   public void testUnknownFloatMayBeNaN() { doTest(); }
+  public void testFloatEquality() { doTest(); }
   public void testLastConstantConditionInAnd() { doTest(); }
 
   public void testTransientFinalField() { doTest(); }
@@ -204,65 +198,6 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testEqualsHasNoSideEffects() { doTest(); }
 
   public void testHonorGetterAnnotation() { doTest(); }
-
-  public void testIsNullCheck() throws Exception {
-    ConditionCheckManager.getInstance(myModule.getProject()).getIsNullCheckMethods().add(
-      buildConditionChecker("Value", "isNull", ConditionChecker.Type.IS_NULL_METHOD,
-                            "public class Value { public static boolean isNull(Value o) {if (o == null) return true; else return false;} }"));
-    doTest();
-  }
-
-  public void testIsNotNullCheck() throws Exception {
-    ConditionCheckManager.getInstance(myModule.getProject()).getIsNotNullCheckMethods().add(
-      buildConditionChecker("Value", "isNotNull", ConditionChecker.Type.IS_NOT_NULL_METHOD,
-                            "public class Value { public static boolean isNotNull(Value o) {if (o == null) return false; else return true;} }"));
-    doTest();
-  }
-
-  public void testAssertTrue() throws Exception {
-    ConditionCheckManager.getInstance(myModule.getProject()).getAssertTrueMethods().add(
-      buildConditionChecker("Assertions", "assertTrue", ConditionChecker.Type.ASSERT_TRUE_METHOD,
-                            "public class Assertions { public static boolean assertTrue(boolean b) {if(!b) throw new Exception();} }"));
-    doTest();
-  }
-
-  public void testAssertFalse() throws Exception {
-    ConditionCheckManager.getInstance(myModule.getProject()).getAssertFalseMethods().add(
-      buildConditionChecker("Assertions", "assertFalse", ConditionChecker.Type.ASSERT_FALSE_METHOD,
-                            "public class Assertions { public static boolean assertFalse(boolean b) {if(b) throw new Exception();} }"));
-    doTest();
-  }
-
-  public void testAssertIsNull() throws Exception {
-    ConditionCheckManager.getInstance(myModule.getProject()).getAssertIsNullMethods().add(
-      buildConditionChecker("Assertions", "assertIsNull", ConditionChecker.Type.ASSERT_IS_NULL_METHOD,
-                            "public class Assertions { public static boolean assertIsNull(Object o) {if(o != null) throw new Exception();} }"));
-    doTest();
-  }
-
-  public void testAssertIsNotNull() throws Exception {
-    ConditionCheckManager.getInstance(myModule.getProject()).getAssertIsNotNullMethods().add(
-      buildConditionChecker("Assertions", "assertIsNotNull", ConditionChecker.Type.ASSERT_IS_NOT_NULL_METHOD,
-                            "public class Assertions { public static boolean assertIsNotNull(Object o) {if(o == null) throw new Exception();} }"));
-    doTest();
-  }
-
-  @Nullable
-  private ConditionChecker buildConditionChecker(String className, String methodName, ConditionChecker.Type type, String classText)
-    throws IOException {
-    myFixture.addClass(classText);
-    PsiClass psiClass = myFixture.findClass(className);
-    PsiMethod psiMethod = null;
-    PsiMethod[] methods = psiClass.getMethods();
-    for (PsiMethod tempPsiMethod : methods) {
-      if (tempPsiMethod.getName().equals(methodName)) {
-        psiMethod = tempPsiMethod;
-        break;
-      }
-    }
-    assert psiMethod != null;
-    return new ConditionChecker.FromPsiBuilder(psiMethod, psiMethod.getParameterList().getParameters()[0], type).build();
-  }
 
   public void testIgnoreAssertions() {
     final DataFlowInspection inspection = new DataFlowInspection();

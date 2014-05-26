@@ -44,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator;
 import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
+import org.jetbrains.plugins.groovy.lang.completion.GrPropertyForCompletion;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
@@ -59,8 +60,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrTraitType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.completion.GrPropertyForCompletion;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrImplicitVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -126,7 +127,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       PsiSubstitutor substitutor = calcSubstitutor(originalElement);
       if (!method.isConstructor()) {
         final PsiType substituted = substitutor.substitute(PsiUtil.getSmartReturnType(method));
-        appendTypeString(buffer, substituted, originalElement);
+        PsiImplUtil.appendTypeString(buffer, substituted, originalElement);
         buffer.append(" ");
       }
       buffer.append(method.getName()).append(" ");
@@ -140,7 +141,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
         }
         else {
           PsiType type = parameter.getType();
-          appendTypeString(buffer, substitutor.substitute(type), originalElement);
+          PsiImplUtil.appendTypeString(buffer, substitutor.substitute(type), originalElement);
           buffer.append(" ");
           buffer.append(parameter.getName());
         }
@@ -150,7 +151,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       if (referencedTypes.length > 0) {
         buffer.append("\nthrows ");
         for (PsiClassType referencedType : referencedTypes) {
-          appendTypeString(buffer, referencedType, originalElement);
+          PsiImplUtil.appendTypeString(buffer, referencedType, originalElement);
           buffer.append(", ");
         }
         buffer.delete(buffer.length() - 2, buffer.length());
@@ -174,7 +175,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       generateModifiers(buffer, variable);
     }
     final PsiType type = variable instanceof GrVariable ? ((GrVariable)variable).getDeclaredType() : variable.getType();
-    appendTypeString(buffer, calcSubstitutor(originalElement).substitute(type), originalElement);
+    PsiImplUtil.appendTypeString(buffer, calcSubstitutor(originalElement).substitute(type), originalElement);
     buffer.append(" ");
     buffer.append(variable.getName());
 
@@ -214,7 +215,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
 
     if (inferredType != null) {
       buffer.append("[inferred type] ");
-      appendTypeString(buffer, inferredType, originalElement);
+      PsiImplUtil.appendTypeString(buffer, inferredType, originalElement);
     }
     else {
       buffer.append("[cannot infer type]");
@@ -234,7 +235,6 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     buffer.append(LINE_SEPARATOR);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static String generateClassInfo(PsiClass aClass) {
     StringBuilder buffer = new StringBuilder();
     GroovyFile file = (GroovyFile)aClass.getContainingFile();
@@ -267,7 +267,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
 
           for (int j = 0; j < refs.length; j++) {
             if (j > 0) buffer.append(" & ");
-            appendTypeString(buffer, refs[j], aClass);
+            PsiImplUtil.appendTypeString(buffer, refs[j], aClass);
           }
         }
       }
@@ -284,7 +284,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       else {
         for (int i = 0; i < refs.length; i++) {
           if (i > 0) buffer.append(", ");
-          appendTypeString(buffer, refs[i], aClass);
+          PsiImplUtil.appendTypeString(buffer, refs[i], aClass);
         }
       }
     }
@@ -294,7 +294,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       buffer.append("\nimplements ");
       for (int i = 0; i < refs.length; i++) {
         if (i > 0) buffer.append(", ");
-        appendTypeString(buffer, refs[i], aClass);
+        PsiImplUtil.appendTypeString(buffer, refs[i], aClass);
 
       }
     }
@@ -303,13 +303,28 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   }
 
 
-  public static void appendTypeString(StringBuilder buffer, final PsiType type, PsiElement context) {
-    if (type != null) {
+  public static void appendTypeString(@NotNull StringBuilder buffer, @Nullable PsiType type, PsiElement context) {
+    if (type instanceof GrTraitType) {
+      generateTraitType(buffer, ((GrTraitType)type), context);
+    }
+    else if (type != null) {
       JavaDocInfoGenerator.generateType(buffer, type, context);
     }
     else {
       buffer.append(GrModifier.DEF);
     }
+  }
+
+  private static void generateTraitType(@NotNull StringBuilder buffer, @NotNull GrTraitType type, PsiElement context) {
+    PsiClassType exprType = type.getExprType();
+    List<PsiClassType> traitTypes = type.getTraitTypes();
+    appendTypeString(buffer, exprType, context);
+    buffer.append(" as ");
+    for (PsiClassType traitType : traitTypes) {
+      appendTypeString(buffer, traitType, context);
+      buffer.append(", ");
+    }
+    buffer.delete(buffer.length() - 2, buffer.length());
   }
 
   @Override

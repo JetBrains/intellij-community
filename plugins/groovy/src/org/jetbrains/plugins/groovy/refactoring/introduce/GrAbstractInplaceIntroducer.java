@@ -37,7 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 import java.util.List;
 
@@ -178,7 +178,7 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
     List<PsiElement> result = ContainerUtil.map(getOccurrenceMarkers(), new Function<RangeMarker, PsiElement>() {
       @Override
       public PsiElement fun(RangeMarker marker) {
-        return GroovyRefactoringUtil.findElementInRange(myFile, marker.getStartOffset(), marker.getEndOffset(), GrExpression.class);
+        return PsiImplUtil.findElementInRange(myFile, marker.getStartOffset(), marker.getEndOffset(), GrExpression.class);
       }
     });
     return PsiUtilCore.toPsiElementArray(result);

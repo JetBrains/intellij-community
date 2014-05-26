@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="structure-view-impl" />
+    <orderEntry type="module" module-name="structure-view-impl" exported="" />
     <orderEntry type="module" module-name="java-psi-impl" />
   </component>
 </module>

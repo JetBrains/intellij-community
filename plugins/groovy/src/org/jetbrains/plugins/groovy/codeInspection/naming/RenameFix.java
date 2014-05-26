@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 
-class RenameFix extends GroovyFix {
+public class RenameFix extends GroovyFix {
 
   private final String targetName;
 

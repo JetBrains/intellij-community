@@ -17,6 +17,7 @@
 package com.intellij.psi.impl.meta;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.Disposer;
@@ -47,6 +48,8 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public class MetaRegistry extends MetaDataRegistrar {
+
+  private static final Logger LOG = Logger.getInstance(MetaRegistry.class);
   private static final List<MyBinding> ourBindings = ContainerUtil.createLockFreeCopyOnWriteList();
   private static volatile boolean ourContributorsLoaded = false;
 
@@ -90,7 +93,13 @@ public class MetaRegistry extends MetaDataRegistrar {
                   throw new RuntimeException("failed to instantiate " + binding.myDataClass, e);
                 }
                 data.init(element);
-                return new Result<PsiMetaData>(data, ArrayUtil.append(data.getDependences(), element));
+                Object[] dependences = data.getDependences();
+                for (Object dependence : dependences) {
+                  if (dependence == null) {
+                    LOG.error(data + "(" + binding.myDataClass + ") provided null dependency");
+                  }
+                }
+                return new Result<PsiMetaData>(data, ArrayUtil.append(dependences, element));
               }
             }
             return new Result<PsiMetaData>(null, element);

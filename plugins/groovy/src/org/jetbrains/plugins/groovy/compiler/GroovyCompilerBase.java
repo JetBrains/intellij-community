@@ -38,7 +38,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -72,10 +71,10 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.plugins.groovy.config.GroovyFacetUtil;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
-import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.util.GroovyUtils;
+import org.jetbrains.plugins.groovy.runner.GroovyScriptUtil;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -375,7 +374,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       final CompilerConfiguration configuration = CompilerConfiguration.getInstance(myProject);
       final PsiManager psiManager = PsiManager.getInstance(myProject);
 
-      if (GroovyUtils.isAcceptableModuleType(ModuleType.get(module))) {
+      if (GroovyFacetUtil.isSuitableModule(module)) {
         for (final VirtualFile file : moduleFiles) {
           if (shouldCompile(file, configuration, psiManager)) {
             (index.isInTestSourceContent(file) ? toCompileTests : toCompile).add(file);
@@ -406,7 +405,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       try {
         PsiFile psiFile = manager.findFile(file);
         if (psiFile instanceof GroovyFile && ((GroovyFile)psiFile).isScript()) {
-          final GroovyScriptType scriptType = GroovyScriptTypeDetector.getScriptType((GroovyFile)psiFile);
+          final GroovyScriptType scriptType = GroovyScriptUtil.getScriptType((GroovyFile)psiFile);
           return scriptType.shouldBeCompiled((GroovyFile)psiFile);
         }
         return true;

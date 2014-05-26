@@ -22,12 +22,12 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
-import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 public class ExpandBooleanIntention extends Intention {
 
@@ -49,14 +49,14 @@ public class ExpandBooleanIntention extends Intention {
       final GrExpression lhs = assignmentExpression.getLValue();
       final String lhsText = lhs.getText();
       @NonNls final String statement = "if(" + rhsText + "){\n" + lhsText + " = true\n}else{\n" + lhsText + " = false\n}";
-      IntentionUtils.replaceStatement(statement, containingStatement);
+      PsiImplUtil.replaceStatement(statement, containingStatement);
     }
     else if (ExpandBooleanPredicate.isBooleanReturn(containingStatement)) {
       final GrReturnStatement returnStatement = (GrReturnStatement)containingStatement;
       final GrExpression returnValue = returnStatement.getReturnValue();
       final String valueText = returnValue.getText();
       @NonNls final String statement = "if(" + valueText + "){\nreturn true\n}else{\nreturn false\n}";
-      IntentionUtils.replaceStatement(statement, containingStatement);
+      PsiImplUtil.replaceStatement(statement, containingStatement);
     }
   }
 }

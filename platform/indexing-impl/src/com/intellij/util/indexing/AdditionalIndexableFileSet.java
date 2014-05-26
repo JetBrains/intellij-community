@@ -75,12 +75,7 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
 
   @Override
   public boolean isInSet(@NotNull VirtualFile file) {
-    for (final VirtualFile root : getDirectories()) {
-      if (VfsUtilCore.isAncestor(root, file, false)) {
-        return true;
-      }
-    }
-    return cachedFiles.contains(file);
+    return VfsUtilCore.isUnder(file, getDirectories()) || cachedFiles.contains(file);
   }
 
   @Override

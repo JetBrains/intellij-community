@@ -61,15 +61,16 @@ public class RootIndex extends DirectoryIndex {
   };
 
   private final Map<String, List<VirtualFile>> myDirectoriesByPackageNameCache = ContainerUtil.newConcurrentMap();
-  private final Map<VirtualFile, DirectoryInfo> myInfoCache = ContainerUtil.newConcurrentMap();
+  private final InfoCache myInfoCache;
   private final List<JpsModuleSourceRootType<?>> myRootTypes = ContainerUtil.newArrayList();
   private final TObjectIntHashMap<JpsModuleSourceRootType<?>> myRootTypeId = new TObjectIntHashMap<JpsModuleSourceRootType<?>>();
   @NotNull private final Project myProject;
   private volatile Map<VirtualFile, OrderEntry[]> myOrderEntries;
 
   // made public for Upsource
-  public RootIndex(@NotNull Project project) {
+  public RootIndex(@NotNull Project project, InfoCache cache) {
     myProject = project;
+    myInfoCache = cache;
     final RootInfo info = buildRootInfo(project);
 
     Set<VirtualFile> allRoots = info.getAllRoots();
@@ -99,8 +100,10 @@ public class RootIndex extends DirectoryIndex {
       }
 
       for (ContentEntry contentEntry : moduleRootManager.getContentEntries()) {
-        for (VirtualFile excludeRoot : contentEntry.getExcludeFolderFiles()) {
-          info.excludedFromModule.put(excludeRoot, module);
+        if (!(contentEntry instanceof ContentEntryImpl) || !((ContentEntryImpl)contentEntry).isDisposed()) {
+          for (VirtualFile excludeRoot : contentEntry.getExcludeFolderFiles()) {
+            info.excludedFromModule.put(excludeRoot, module);
+          }
         }
 
         // Init module sources
@@ -265,7 +268,7 @@ public class RootIndex extends DirectoryIndex {
       return null;
     }
     if (!dir.isDirectory()) {
-      DirectoryInfo info = myInfoCache.get(dir);
+      DirectoryInfo info = myInfoCache.getCachedInfo(dir);
       return info == NULL_INFO ? null : info;
     }
 
@@ -274,7 +277,7 @@ public class RootIndex extends DirectoryIndex {
       if (++count > 1000) {
         throw new IllegalStateException("Possible loop in tree, started at " + dir.getName());
       }
-      DirectoryInfo info = myInfoCache.get(root);
+      DirectoryInfo info = myInfoCache.getCachedInfo(root);
       if (info != null) {
         if (!dir.equals(root)) {
           cacheInfos(dir, root, info);
@@ -293,7 +296,7 @@ public class RootIndex extends DirectoryIndex {
   @Nullable
   private DirectoryInfo cacheInfos(VirtualFile dir, @Nullable VirtualFile stopAt, @Nullable DirectoryInfo info) {
     while (dir != null) {
-      myInfoCache.put(dir, info == null ? NULL_INFO : info);
+      myInfoCache.cacheInfo(dir, info == null ? NULL_INFO : info);
       if (dir.equals(stopAt)) {
         break;
       }
@@ -589,5 +592,10 @@ public class RootIndex extends DirectoryIndex {
     String packagePrefix = info.calcPackagePrefix(root, hierarchy, moduleContentRoot, libraryClassRoot, librarySourceRoot);
 
     return Pair.create(directoryInfo, packagePrefix);
+  }
+  
+  public interface InfoCache {
+    @Nullable DirectoryInfo getCachedInfo(@NotNull VirtualFile dir);
+   void cacheInfo(@NotNull VirtualFile dir, @NotNull DirectoryInfo info);
   }
 }

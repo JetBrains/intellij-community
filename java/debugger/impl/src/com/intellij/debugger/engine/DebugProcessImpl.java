@@ -865,6 +865,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   public void dispose() {
     NodeRendererSettings.getInstance().removeListener(mySettingsListener);
     Disposer.dispose(myDisposable);
+    myRequestManager.setFilterThread(null);
   }
 
   @Override

@@ -122,6 +122,8 @@ public class JBScrollPane extends JScrollPane {
   }
 
   private void transferToLayeredPane(Component old, Component c, String key) {
+    if (!ButtonlessScrollBarUI.isMacOverlayScrollbarSupported()) return;
+    
     JLayeredPane pane = getLayoutPane();
     LayoutManager layout = getLayout();
 
@@ -152,7 +154,9 @@ public class JBScrollPane extends JScrollPane {
   }
   
   private void init(boolean setupCorners) {
-    add(getLayoutPane());
+    if (ButtonlessScrollBarUI.isMacOverlayScrollbarSupported()) {
+      add(getLayoutPane());
+    }
     setLayout(new ScrollPaneLayout());
  
     if (setupCorners) {
@@ -201,7 +205,9 @@ public class JBScrollPane extends JScrollPane {
   @Override
   public void layout() {
     super.layout();
-  
+
+    if (!ButtonlessScrollBarUI.isMacOverlayScrollbarSupported()) return;
+    
     LayoutManager layout = getLayout();
     if (layout instanceof ScrollPaneLayout && myLayeredPane != null) {
       relayoutScrollbars(this, (ScrollPaneLayout)layout, myLayeredPane);

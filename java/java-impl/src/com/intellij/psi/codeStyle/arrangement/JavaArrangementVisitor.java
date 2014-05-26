@@ -57,6 +57,9 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     MODIFIERS.put(PsiModifier.ABSTRACT, ABSTRACT);
   }
 
+  private static final ArrangementSettingsToken ANON_CLASS_PARAMETER_LIST = new ArrangementSettingsToken("Dummy", "not matchable anon class argument list");
+  private static final ArrangementSettingsToken ANONYMOUS_CLASS_BODY = new ArrangementSettingsToken("Dummy", "not matchable anonymous class body");
+
   @NotNull private final Stack<JavaElementArrangementEntry>           myStack   = new Stack<JavaElementArrangementEntry>();
   @NotNull private final Map<PsiElement, JavaElementArrangementEntry> myEntries = new HashMap<PsiElement, JavaElementArrangementEntry>();
 
@@ -109,6 +112,36 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     return groupingRules;
   }
 
+  public void createAndProcessAnonymousClassBodyEntry(@NotNull PsiAnonymousClass aClass) {
+    final PsiElement lBrace = aClass.getLBrace();
+    final PsiElement rBrace = aClass.getRBrace();
+
+    if (lBrace == null || rBrace == null) {
+      return;
+    }
+
+    TextRange codeBlockRange = new TextRange(lBrace.getTextRange().getStartOffset(), rBrace.getTextRange().getEndOffset());
+    JavaElementArrangementEntry entry = createNewEntry(aClass.getLBrace(), codeBlockRange, ANONYMOUS_CLASS_BODY, aClass.getName(), true);
+
+    if (entry == null) {
+      return;
+    }
+
+    processChildrenWithinEntryScope(entry, new Runnable() {
+      @Override
+      public void run() {
+        PsiElement current = lBrace;
+        while (current != rBrace) {
+          current = current.getNextSibling();
+          if (current == null) {
+            break;
+          }
+          current.accept(JavaArrangementVisitor.this);
+        }
+      }
+    });
+  }
+
   @Override
   public void visitClass(PsiClass aClass) {
     boolean isSectionCommentsDetected = registerSectionComments(aClass);
@@ -130,11 +163,22 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitAnonymousClass(PsiAnonymousClass aClass) {
-    JavaElementArrangementEntry entry = createNewEntry(
-      aClass, aClass.getTextRange(), ANONYMOUS_CLASS, aClass.getName(), false
-    );
-    processEntry(entry, null, aClass);
+  public void visitAnonymousClass(final PsiAnonymousClass aClass) {
+    JavaElementArrangementEntry entry = createNewEntry(aClass, aClass.getTextRange(), ANONYMOUS_CLASS, aClass.getName(), true);
+    if (entry == null) {
+      return;
+    }
+    processChildrenWithinEntryScope(entry, new Runnable() {
+      @Override
+      public void run() {
+        PsiExpressionList list = aClass.getArgumentList();
+        if (list != null) {
+          JavaElementArrangementEntry listEntry = createNewEntry(list, list.getTextRange(), ANON_CLASS_PARAMETER_LIST, aClass.getName(), true);
+          processEntry(listEntry, null, list);
+        }
+        createAndProcessAnonymousClassBodyEntry(aClass);
+      }
+    });
   }
 
   @Override
@@ -434,7 +478,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
 
   private void processEntry(@Nullable JavaElementArrangementEntry entry,
                             @Nullable PsiModifierListOwner modifier,
-                            @Nullable PsiElement nextPsiRoot)
+                            @Nullable final PsiElement nextPsiRoot)
   {
     if (entry == null) {
       return;
@@ -445,9 +489,18 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     if (nextPsiRoot == null) {
       return;
     }
+    processChildrenWithinEntryScope(entry, new Runnable() {
+      @Override
+      public void run() {
+        nextPsiRoot.acceptChildren(JavaArrangementVisitor.this);
+      }
+    });
+  }
+
+  private void processChildrenWithinEntryScope(@NotNull JavaElementArrangementEntry entry, @NotNull Runnable childrenProcessing) {
     myStack.push(entry);
     try {
-      nextPsiRoot.acceptChildren(this);
+      childrenProcessing.run();
     }
     finally {
       myStack.pop();

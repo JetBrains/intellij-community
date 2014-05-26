@@ -372,7 +372,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
 
     // operator methods
     if (object instanceof PsiMethod &&
-        GroovyCompletionUtil.OPERATOR_METHOD_NAMES.contains(((PsiMethod)object).getName()) && !checkForIterator((PsiMethod)object)) {
+        PsiUtil.OPERATOR_METHOD_NAMES.contains(((PsiMethod)object).getName()) && !checkForIterator((PsiMethod)object)) {
       return -3;
     }
 

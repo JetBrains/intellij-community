@@ -15,10 +15,7 @@
  */
 package com.siyeh.ig.assignment;
 
-import com.intellij.psi.PsiAssignmentExpression;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpressionListStatement;
-import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -57,6 +54,7 @@ public class NestedAssignmentInspection extends BaseInspection {
       }
       final PsiElement grandparent = parent.getParent();
       if (parent instanceof PsiExpressionStatement ||
+          parent instanceof PsiLambdaExpression ||
           grandparent instanceof PsiExpressionListStatement) {
         return;
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,10 @@ import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.config.AbstractConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.plugins.groovy.config.GroovyFacetUtil;
 import org.jetbrains.plugins.groovy.runner.DefaultGroovyScriptRunner;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
-import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 /**
@@ -71,7 +71,7 @@ public class GroovyConsoleRunner extends GroovyShellRunner {
   public String getTitle(@NotNull Module module) {
     String moduleGroovyHomePath = LibrariesUtil.getGroovyHomePath(module);
     boolean bundled = moduleGroovyHomePath == null || !hasGroovyAll(module);
-    String homePathToUse = bundled ? GroovyUtils.getBundledGroovyJar().getParentFile().getParent() : moduleGroovyHomePath;
+    String homePathToUse = bundled ? GroovyFacetUtil.getBundledGroovyJar().getParentFile().getParent() : moduleGroovyHomePath;
 
     String version = GroovyConfigUtils.getInstance().getSDKVersion(homePathToUse);
     return version == AbstractConfigUtils.UNDEFINED_VERSION ? "" : " (" + (bundled ? "Bundled " : "") + "Groovy " + version + ")";

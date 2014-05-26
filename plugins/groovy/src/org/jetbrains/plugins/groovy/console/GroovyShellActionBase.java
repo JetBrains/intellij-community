@@ -49,8 +49,8 @@ import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.config.GroovyFacetUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
-import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import java.util.*;
 
@@ -78,7 +78,7 @@ public abstract class GroovyShellActionBase extends DumbAwareAction {
   }
 
   protected boolean isSuitableModule(Module module) {
-    return GroovyUtils.isSuitableModule(module);
+    return GroovyFacetUtil.isSuitableModule(module);
   }
 
   @Override

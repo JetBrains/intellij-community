@@ -381,13 +381,13 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createRenameElementFix(@NotNull PsiNamedElement element) {
+  public LocalQuickFixAndIntentionActionOnPsiElement createRenameElementFix(@NotNull PsiNamedElement element) {
     return new RenameElementFix(element);
   }
 
   @NotNull
   @Override
-  public IntentionAction createRenameElementFix(@NotNull PsiNamedElement element, @NotNull String newName) {
+  public LocalQuickFixAndIntentionActionOnPsiElement createRenameElementFix(@NotNull PsiNamedElement element, @NotNull String newName) {
     return new RenameElementFix(element, newName);
   }
 
@@ -707,6 +707,12 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return new SafeDeleteFix(element);
   }
 
+  @Nullable
+  @Override
+  public List<LocalQuickFix> registerOrderEntryFixes(@NotNull QuickFixActionRegistrar registrar, @NotNull PsiReference reference) {
+    return OrderEntryFix.registerFixes(registrar, reference);
+  }
+
   public static void invokeOnTheFlyImportOptimizer(@NotNull final Runnable runnable,
                                                    @NotNull final PsiFile file,
                                                    @NotNull final Editor editor) {
@@ -739,7 +745,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(file.getProject());
     // dont optimize out imports in JSP since it can be included in other JSP
-    if (file == null || !codeAnalyzer.isHighlightingAvailable(file) || !(file instanceof PsiJavaFile) || file instanceof ServerPageFile) return false;
+    if (!codeAnalyzer.isHighlightingAvailable(file) || !(file instanceof PsiJavaFile) || file instanceof ServerPageFile) return false;
 
     if (!codeAnalyzer.isErrorAnalyzingFinished(file)) return false;
     boolean errors = containsErrorsPreventingOptimize(file);

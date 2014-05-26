@@ -21,13 +21,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
-import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 public class MakeClosureCallImplicitIntention extends Intention {
 
@@ -55,6 +55,6 @@ public class MakeClosureCallImplicitIntention extends Intention {
         for (GrClosableBlock closureArg : closureArgs) {
             newExpression.append(closureArg.getText());
         }
-        IntentionUtils.replaceExpression(newExpression.toString(), expression);
+        PsiImplUtil.replaceExpression(newExpression.toString(), expression);
     }
 }

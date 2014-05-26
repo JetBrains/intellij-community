@@ -23,14 +23,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -143,19 +140,6 @@ public abstract class CreateClassActionBase extends Intention {
     }
     finally {
       accessToken.finish();
-    }
-  }
-
-  @Nullable
-  public static Editor putCursor(Project project, @NotNull PsiFile targetFile, PsiElement element) {
-    int textOffset = element.getTextOffset();
-    VirtualFile virtualFile = targetFile.getVirtualFile();
-    if (virtualFile != null) {
-      OpenFileDescriptor descriptor = new OpenFileDescriptor(project, virtualFile, textOffset);
-      return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-    }
-    else {
-      return null;
     }
   }
 

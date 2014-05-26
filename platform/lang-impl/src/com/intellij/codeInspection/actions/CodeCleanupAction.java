@@ -20,8 +20,6 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
-import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -39,7 +37,7 @@ public class CodeCleanupAction extends CodeInspectionAction {
     final InspectionProfile profile = myExternalProfile != null ? myExternalProfile : InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
     final InspectionManager managerEx = InspectionManager.getInstance(project);
     final GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)managerEx.createNewGlobalContext(false);
-    globalContext.codeCleanup(project, scope, profile, getTemplatePresentation().getText());
+    globalContext.codeCleanup(project, scope, profile, getTemplatePresentation().getText(), null);
   }
 
   @Override

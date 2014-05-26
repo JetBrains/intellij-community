@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
@@ -22,7 +23,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,13 +112,19 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
       PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting(context.getFile().getViewProvider());
 
       final Editor editor = context.getEditor();
+      final Document document = editor.getDocument();
       final int offset = context.getTailOffset();
-      editor.getDocument().insertString(offset, " {}");
+
+      document.insertString(offset, " {}");
       editor.getCaretModel().moveToOffset(offset + 2);
+
+      final PsiFile file = context.getFile();
+      PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
+      reformatEnclosingExpressionListAtOffset(file, offset);
 
       if (fillTypeArgs && JavaCompletionUtil.promptTypeArgs(context, context.getOffset(insideRef))) return;
 
-      context.setLaterRunnable(generateAnonymousBody(editor, context.getFile()));
+      context.setLaterRunnable(generateAnonymousBody(editor, file));
     }
     else {
       PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
@@ -134,6 +141,28 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
       }
       if (fillTypeArgs && JavaCompletionUtil.promptTypeArgs(context, context.getOffset(insideRef))) return;
     }
+  }
+
+  private static void reformatEnclosingExpressionListAtOffset(@NotNull PsiFile file, int offset) {
+    final PsiElement elementAtOffset = PsiUtilCore.getElementAtOffset(file, offset);
+    PsiExpressionList listToReformat = getEnclosingExpressionList(elementAtOffset.getParent());
+    if (listToReformat != null) {
+      CodeStyleManager.getInstance(file.getProject()).reformat(listToReformat);
+    }
+  }
+
+  @Nullable
+  private static PsiExpressionList getEnclosingExpressionList(@NotNull PsiElement element) {
+    if (!(element instanceof PsiAnonymousClass)) {
+      return null;
+    }
+
+    PsiElement e = element.getParent();
+    if (e instanceof PsiNewExpression && e.getParent() instanceof PsiExpressionList) {
+      return (PsiExpressionList)e.getParent();
+    }
+
+    return null;
   }
 
   static boolean isRawTypeExpected(InsertionContext context, PsiTypeLookupItem delegate) {

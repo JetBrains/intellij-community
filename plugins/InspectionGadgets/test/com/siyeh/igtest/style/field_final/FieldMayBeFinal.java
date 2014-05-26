@@ -1,5 +1,5 @@
 package com.siyeh.igtest.style.field_final;
-import java.awt.*; import java.awt.event.KeyEvent;import java.io.File;import java.io.IOException; import java.util.*;
+import java.awt.*; import java.io.File;import java.io.IOException; import java.util.*;
 public class FieldMayBeFinal {
 
     private static String string;
@@ -12,7 +12,7 @@ public class FieldMayBeFinal {
         string = null;
     }
 
-    private String other;
+    private String <warning descr="Field 'other' may be 'final'">other</warning>;
     {
         other = null;
     }
@@ -24,7 +24,7 @@ public class FieldMayBeFinal {
         ss = "";
     }
 
-    private int number;
+    private int <warning descr="Field 'number' may be 'final'">number</warning>;
     private String s;
     public FieldMayBeFinal() {
         s = "";
@@ -73,8 +73,8 @@ public class FieldMayBeFinal {
     }
 
     private static boolean flag = true;
-
-    private static final KeyEventPostProcessor processor = new KeyEventPostProcessor() {
+    class KeyEvent { boolean isAltDown() { return false; }}
+    private static final Object processor = new Object() {
         public boolean postProcessKeyEvent(KeyEvent event) {
             flag = event.isAltDown();
             return false;
@@ -93,7 +93,7 @@ public class FieldMayBeFinal {
         private static class Inner
         {
             private boolean val = true;
-            private boolean pleaseTellMeIt = true;
+            private boolean <warning descr="Field 'pleaseTellMeIt' may be 'final'">pleaseTellMeIt</warning> = true;
         }
     }
 
@@ -109,7 +109,7 @@ public class FieldMayBeFinal {
     }
 
     static class Test4 {
-        private static String hostName;
+        private static String <warning descr="Field 'hostName' may be 'final'">hostName</warning>;
         static {
             try {
                 hostName = java.net.InetAddress.getLocalHost().getHostName();
@@ -207,9 +207,9 @@ class XX {
     }
 }
 class Y {
-    private int x; // can be final
-    private int y; // can be final
-    private int z = y = 1; // can be final
+    private int <warning descr="Field 'x' may be 'final'">x</warning>; // can be final
+    private int <warning descr="Field 'y' may be 'final'">y</warning>; // can be final
+    private int <warning descr="Field 'z' may be 'final'">z</warning> = y = 1; // can be final
 
     Y() {
         x = 1;
@@ -353,13 +353,13 @@ class M {
     }
 }
 class N {
-    private int n;
+    private int <warning descr="Field 'n' may be 'final'">n</warning>;
     N() {
         if (true && (n = 1) == 1) {}
     }
 }
 class O {
-    private int o;
+    private int <warning descr="Field 'o' may be 'final'">o</warning>;
     O() {
         if (false || (o = 1) == 1) {}
     }
@@ -417,7 +417,7 @@ class R {
   }
 }
 class T1 {
-  private int i; // may be final, but red when it is
+  private int <warning descr="Field 'i' may be 'final'">i</warning>; // may be final, but red when it is
   {
     if (true) {
       (i) = 2;
@@ -428,7 +428,7 @@ class T1 {
   }
 }
 class T2 {
-  private int i ; // may be final
+  private int <warning descr="Field 'i' may be 'final'">i</warning> ; // may be final
   {
     if ((i = 1) == 1) {
       System.out.println(i);
@@ -437,7 +437,7 @@ class T2 {
   }
 }
 class T3 {
-  private boolean b; // may be final, but red when it is
+  private boolean <warning descr="Field 'b' may be 'final'">b</warning>; // may be final, but red when it is
   {
     assert false : "" + (b = true);
     b = true; // red, but valid code
@@ -452,20 +452,20 @@ class T4 {
   }
 }
 class T5 {
-  private boolean d; // may be final
+  private boolean <warning descr="Field 'd' may be 'final'">d</warning>; // may be final
   {
     assert true : d = true;
     d = true;
   }
 }
 class T6 {
-  private int i; // may be final
+  private int <warning descr="Field 'i' may be 'final'">i</warning>; // may be final
   {
     switch (i = 5) {}
   }
 }
 class T7 {
-  private int i; // may be final
+  private int <warning descr="Field 'i' may be 'final'">i</warning>; // may be final
   {
     switch (5) {
       default:
@@ -489,16 +489,16 @@ class T8 {
   T8(String s) {
     i = 2;
   }
-  private int i; // may be final
+  private int <warning descr="Field 'i' may be 'final'">i</warning>; // may be final
 }
 class T9 {
-  private int i = 1; // may be final
+  private int <warning descr="Field 'i' may be 'final'">i</warning> = 1; // may be final
 }
 class T10 {
   private int i = i = 1; // may not be final
 }
 class T11 {
-  private int i; // may be final
+  private int <warning descr="Field 'i' may be 'final'">i</warning>; // may be final
   T11() {
     i = 2;
   }
@@ -508,7 +508,7 @@ class T12 {
   void m() { i = 1;}
 }
 class T13 {
-  private int i; // may be final
+  private int <warning descr="Field 'i' may be 'final'">i</warning>; // may be final
   {
     int j = i = 2;
   }
@@ -520,7 +520,7 @@ class T14 {
   }}
 }
 class T15 {
-  private int i; // may be final
+  private int <warning descr="Field 'i' may be 'final'">i</warning>; // may be final
   {
     class X {{
       System.out.println(i);
@@ -571,7 +571,7 @@ class T20 {
   }
 }
 class T21 {
-  private int i; // may be final
+  private int <warning descr="Field 'i' may be 'final'">i</warning>; // may be final
   {
     final Object[] objects = new Object[]{1, 2, i=3};
   }
@@ -586,7 +586,7 @@ class T22 {
   }
 }
 class T23 {
-  private int i; // may be final
+  private int <warning descr="Field 'i' may be 'final'">i</warning>; // may be final
   {
     new Object() {
       public String toString() {
@@ -599,14 +599,14 @@ class T23 {
 }
 class T24 {
   private int i; // may not be final
-  private int j; // may be final
+  private int <warning descr="Field 'j' may be 'final'">j</warning>; // may be final
   {
     i = j = 1;
     i = 2;
   }
 }
 class T25 {
-  private int i; // may be final
+  private int <warning descr="Field 'i' may be 'final'">i</warning>; // may be final
   {
     if (1 == 1) {
       i = 2;
@@ -614,26 +614,26 @@ class T25 {
   }
 }
 class T26 {
-  private int i; // may be final
+  private int <warning descr="Field 'i' may be 'final'">i</warning>; // may be final
   {
     if (true && (i = 32) == 30) {}
   }
 }
 class T27 {
-  private int i; // may be final
+  private int <warning descr="Field 'i' may be 'final'">i</warning>; // may be final
   {
     if ((i = 32) == 30 && false) {}
   }
 }
 class T28 {
-  private int i; // may be final
+  private int <warning descr="Field 'i' may be 'final'">i</warning>; // may be final
   {
     do {
     } while(((i = 32) == 30) && false);
   }
 }
 class T29 {
-  private int j; // may be final, but code is red when it is
+  private int <warning descr="Field 'j' may be 'final'">j</warning>; // may be final, but code is red when it is
   T29 (int b) {
     do {
       j = 34; // red here
@@ -648,13 +648,13 @@ class T30 {
   }
 }
 class T31 {
-  private int i; // may be final
+  private int <warning descr="Field 'i' may be 'final'">i</warning>; // may be final
   {
     if (false || (i = 3) == 4) {}
   }
 }
 class T32 {
-  private int i; // may be final
+  private int <warning descr="Field 'i' may be 'final'">i</warning>; // may be final
   {
     try {
     } catch (RuntimeException e) {
@@ -676,11 +676,11 @@ class T33 {
 }
 class T34 {
   public static class X {
-    private int i = 1; // may be final
+    private int <warning descr="Field 'i' may be 'final'">i</warning> = 1; // may be final
   }
 }
 class T35 {
-  private int i; // may be final
+  private int <warning descr="Field 'i' may be 'final'">i</warning>; // may be final
   private final int j = 3;
   {
     bas: {
@@ -702,7 +702,7 @@ class T36 {
   }
 }
 class T37 {
-  private int i; // may be final
+  private int <warning descr="Field 'i' may be 'final'">i</warning>; // may be final
   {
     outer: while (true) {
       while (true) {
@@ -732,7 +732,7 @@ class T39 {
   }
 }
 class T40 {
-  private int i; // may be final
+  private int <warning descr="Field 'i' may be 'final'">i</warning>; // may be final
   {
     for (;;) {
       i = 1;
@@ -759,7 +759,7 @@ class T42 {
   }
 }
 class T43 {
-  private int i; // may be final!
+  private int <warning descr="Field 'i' may be 'final'">i</warning>; // may be final!
   {
     for (int j = 0; (i = 1) == 1 && j < 9; j++) {
       break;
@@ -791,19 +791,19 @@ class T46 {
   }
 }
 class T47 {
-  private Object o; // may be final
+  private Object <warning descr="Field 'o' may be 'final'">o</warning>; // may be final
   {
     boolean b = (o = new Object()) instanceof String;
   }
 }
 class T48 {
-  private String s; // may be final
+  private String <warning descr="Field 's' may be 'final'">s</warning>; // may be final
   {
     Object o = (Object) (s = "");
   }
 }
 class T49 {
-  private int i; // may be final
+  private int <warning descr="Field 'i' may be 'final'">i</warning>; // may be final
   {
     for (String s : g(i = 1)) {
       break;
@@ -825,14 +825,14 @@ class T50 {
   }
 }
 class T51 {
-  private boolean b; // may be final
+  private boolean <warning descr="Field 'b' may be 'final'">b</warning>; // may be final
   {
     if (true && (b = true)) {
     }
   }
 }
 class T52 {
-  private boolean z; // may be final
+  private boolean <warning descr="Field 'z' may be 'final'">z</warning>; // may be final
   {
     boolean y = false;
     if ( true ? (z = y) : false ) {}
@@ -848,7 +848,7 @@ class T53 {
   }
 }
 class T54 {
-  private boolean b; // may be final
+  private boolean <warning descr="Field 'b' may be 'final'">b</warning>; // may be final
   {
     boolean r = false;
     boolean f = false;
@@ -860,7 +860,7 @@ class T54 {
   }
 }
 class T55 {
-  private int i; // may be final, but red when it is
+  private int <warning descr="Field 'i' may be 'final'">i</warning>; // may be final, but red when it is
   {
     boolean [] a = new boolean [10];
     a[i = 1] = i > 0;
@@ -880,9 +880,43 @@ class T57 {
   }
 }
 class T58 {
-  private static int x;
+  private static int <warning descr="Field 'x' may be 'final'">x</warning>;
   static {
     System.out.println("x = " + T58.x);
     x = 3;
+  }
+}
+class Foo {
+
+  public interface Accessor<T> {
+
+    T get();
+
+    void set(T value);
+
+  }
+
+  private double myValue; // no warning expected here
+
+  private final Accessor<Double> myValueAccessor;
+
+  public Foo() {
+    myValue = 0;
+
+    myValueAccessor = new Accessor<Double>() {
+      @Override
+      public Double get() {
+        return myValue;
+      }
+
+      @Override
+      public void set(Double value) {
+        myValue = value; // assignment
+      }
+    };
+  }
+
+  public Accessor<Double> getValueAccessor() {
+    return myValueAccessor;
   }
 }

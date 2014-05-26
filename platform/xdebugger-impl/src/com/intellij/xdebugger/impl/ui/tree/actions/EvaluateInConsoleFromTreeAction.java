@@ -14,6 +14,17 @@ class EvaluateInConsoleFromTreeAction extends XAddToWatchesAction {
     return super.isEnabled(node, e) && getConsoleExecuteAction(e) != null;
   }
 
+  @Override
+  public void update(AnActionEvent e) {
+    if (getConsoleExecuteAction(e) != null) {
+      e.getPresentation().setVisible(true);
+      super.update(e);
+    }
+    else {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
+  }
+
   @Nullable
   private static ConsoleExecuteAction getConsoleExecuteAction(@NotNull AnActionEvent e) {
     return XEvaluateInConsoleFromEditorActionHandler.getConsoleExecuteAction(e.getData(LangDataKeys.CONSOLE_VIEW));

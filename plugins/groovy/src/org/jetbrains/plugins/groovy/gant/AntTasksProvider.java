@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,10 +37,10 @@ import com.intellij.util.containers.SoftValueHashMap;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.runner.GroovyScriptUtil;
 
 import java.net.URL;
 import java.util.*;
@@ -117,7 +117,7 @@ public class AntTasksProvider {
       ContainerUtil.addAll(jars, OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots());
     }
 
-    if (groovyFile.isScript() && GroovyScriptTypeDetector.getScriptType(groovyFile) instanceof GantScriptType) {
+    if (groovyFile.isScript() && GroovyScriptUtil.getScriptType(groovyFile) instanceof GantScriptType) {
       jars.addAll(GantScriptType.additionalScopeFiles(groovyFile));
     }
 

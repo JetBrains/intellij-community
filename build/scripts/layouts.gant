@@ -447,10 +447,10 @@ public def layoutCommunityPlugins(String home) {
     pluginDir("Groovy") {
       dir("lib") {
         jar("Groovy.jar") {
-          module("jetgroovy") {
+          module("jetgroovy")
+          module("groovy-psi") {
             exclude(name: "standardDsls/**")
           }
-          module("groovy-psi")
         }
         //layout of groovy jars must be consistent with GroovyBuilder.getGroovyRtRoot method
         jar("groovy-jps-plugin.jar") {
@@ -462,7 +462,7 @@ public def layoutCommunityPlugins(String home) {
           module("groovy-rt-constants")
         }
         dir("standardDsls") {
-          fileset(dir: "$home/plugins/groovy/resources/standardDsls")
+          fileset(dir: "$home/plugins/groovy/groovy-psi/resources/standardDsls")
         }
         dir("agent") {
           fileset(dir: "${home}/plugins/groovy/hotswap") {
@@ -471,7 +471,7 @@ public def layoutCommunityPlugins(String home) {
         }
 
 
-        fileset(dir: "$home/plugins/groovy/resources/conf")
+        fileset(dir: "$home/plugins/groovy/groovy-psi/resources/conf")
       }
     }
 
