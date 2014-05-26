@@ -72,14 +72,14 @@ abstract public class GroovyCompletionTestBase extends LightCodeInsightFixtureTe
     final actual = myFixture.lookupElementStrings
     switch (testType) {
       case CompletionResult.contain:
-        assertTrue(actual as String, actual.containsAll(variants))
+        assertTrue(myFixture.lookupElementStrings as String, actual.containsAll(variants))
         break
       case CompletionResult.equal:
         assertOrderedEquals(actual, variants)
         break
       case CompletionResult.notContain:
         variants.each {
-          assertFalse(actual as String, actual.contains(it))
+          assertFalse(myFixture.lookupElementStrings as String, actual.contains(it))
         }
     }
   }
