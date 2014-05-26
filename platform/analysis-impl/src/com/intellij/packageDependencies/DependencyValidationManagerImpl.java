@@ -47,7 +47,13 @@ import java.util.*;
 )
 public class DependencyValidationManagerImpl extends DependencyValidationManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.packageDependencies.DependencyValidationManagerImpl");
-  public static final Icon SHARED_SCOPE_ICON = new LayeredIcon(AllIcons.Ide.LocalScope, AllIcons.Nodes.Shared);
+  private static final NotNullLazyValue<Icon> ourSharedScopeIcon = new NotNullLazyValue<Icon>() {
+    @NotNull
+    @Override
+    protected Icon compute() {
+      return new LayeredIcon(AllIcons.Ide.LocalScope, AllIcons.Nodes.Shared);
+    }
+  };
 
   private final List<DependencyRule> myRules = new ArrayList<DependencyRule>();
   private final NamedScopeManager myNamedScopeManager;
@@ -196,7 +202,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
 
   @Override
   public Icon getIcon() {
-    return SHARED_SCOPE_ICON;
+    return ourSharedScopeIcon.getValue();
   }
 
   @Override
