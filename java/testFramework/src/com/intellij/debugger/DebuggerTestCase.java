@@ -90,7 +90,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       getDebugProcess().getExecutionResult().getProcessHandler().startNotify();
       waitProcess(getDebugProcess().getExecutionResult().getProcessHandler());
       waitForCompleted();
-      disposeSession(myDebuggerSession);
+      //disposeSession(myDebuggerSession);
       assertNull(DebuggerManagerEx.getInstanceEx(myProject).getDebugProcess(getDebugProcess().getExecutionResult().getProcessHandler()));
       myDebuggerSession = null;
     }
