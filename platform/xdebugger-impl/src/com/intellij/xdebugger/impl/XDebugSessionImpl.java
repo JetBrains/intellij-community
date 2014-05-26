@@ -178,7 +178,9 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   public void addRestartActions(AnAction... restartActions) {
-    Collections.addAll(myRestartActions, restartActions);
+    if (restartActions != null) {
+      Collections.addAll(myRestartActions, restartActions);
+    }
   }
 
   public List<AnAction> getExtraActions() {
@@ -186,7 +188,9 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   public void addExtraActions(AnAction... extraActions) {
-    Collections.addAll(myExtraActions, extraActions);
+    if (extraActions != null) {
+      Collections.addAll(myExtraActions, extraActions);
+    }
   }
 
   public List<AnAction> getExtraStopActions() {
@@ -194,7 +198,9 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   public void addExtraStopActions(AnAction... extraStopActions) {
-    Collections.addAll(myExtraStopActions, extraStopActions);
+    if (extraStopActions != null) {
+      Collections.addAll(myExtraStopActions, extraStopActions);
+    }
   }
 
   @Override
