@@ -21,6 +21,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.module.*;
 
@@ -98,21 +99,8 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
 
   @Override
   public void processModules(@NotNull final Consumer<JpsModule> consumer) {
-    processDependencies(new Processor<JpsDependencyElement>() {
-      @Override
-      public boolean process(JpsDependencyElement dependencyElement) {
-        if (myRecursively && dependencyElement instanceof JpsModuleSourceDependency) {
-          consumer.consume(dependencyElement.getContainingModule());
-        }
-        else if ((!myRecursively || !shouldProcessDependenciesRecursively())&& dependencyElement instanceof JpsModuleDependency) {
-          JpsModule module = ((JpsModuleDependency)dependencyElement).getModule();
-          if (module != null) {
-            consumer.consume(module);
-          }
-        }
-        return true;
-      }
-    });
+    //noinspection unchecked
+    processModuleAndLibraries(consumer, Consumer.EMPTY_CONSUMER);
   }
 
   protected boolean shouldProcessDependenciesRecursively() {
@@ -183,14 +171,32 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
     return libraries;
   }
 
-  public void processLibraries(final Consumer<JpsLibrary> consumer) {
+  @Override
+  public void processLibraries(@NotNull final Consumer<JpsLibrary> consumer) {
+    //noinspection unchecked
+    processModuleAndLibraries(Consumer.EMPTY_CONSUMER, consumer);
+  }
+
+  @Override
+  public void processModuleAndLibraries(@Nullable final Consumer<JpsModule> moduleConsumer, @Nullable final Consumer<JpsLibrary> libraryConsumer) {
     processDependencies(new Processor<JpsDependencyElement>() {
       @Override
       public boolean process(JpsDependencyElement dependencyElement) {
-        if (dependencyElement instanceof JpsLibraryDependency) {
+        if (moduleConsumer != null) {
+          if (myRecursively && dependencyElement instanceof JpsModuleSourceDependency) {
+            moduleConsumer.consume(dependencyElement.getContainingModule());
+          }
+          else if ((!myRecursively || !shouldProcessDependenciesRecursively()) && dependencyElement instanceof JpsModuleDependency) {
+            JpsModule module = ((JpsModuleDependency)dependencyElement).getModule();
+            if (module != null) {
+              moduleConsumer.consume(module);
+            }
+          }
+        }
+        if (libraryConsumer != null && dependencyElement instanceof JpsLibraryDependency) {
           JpsLibrary library = ((JpsLibraryDependency)dependencyElement).getLibrary();
           if (library != null) {
-            consumer.consume(library);
+            libraryConsumer.consume(library);
           }
         }
         return true;
