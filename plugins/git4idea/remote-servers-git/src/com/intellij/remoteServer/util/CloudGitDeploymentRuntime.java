@@ -144,13 +144,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
   }
 
   public void downloadExistingApplication() throws ServerRuntimeException {
-    CloudGitApplication application = findApplication();
-    if (application == null) {
-      throw new ServerRuntimeException("Can't find the application: " + getApplicationName());
-    }
-
-    new CloneJobWithRemote().cloneToModule(application.getGitUrl());
-
+    new CloneJobWithRemote().cloneToModule(getApplication().getGitUrl());
     getRepository().update();
     refreshContentRoot();
   }
@@ -232,8 +226,13 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
   }
 
   protected void pushApplication(@NotNull CloudGitApplication application) throws ServerRuntimeException {
+    push(application, getRepository(), getRemoteName());
+  }
+
+  protected void push(@NotNull CloudGitApplication application, @NotNull GitRepository repository, @NotNull String remote)
+    throws ServerRuntimeException {
     GitCommandResult gitPushResult
-      = getGit().push(getRepository(), getRemoteName(), application.getGitUrl(), "master:master", createGitLineHandlerListener());
+      = getGit().push(repository, remote, application.getGitUrl(), "master:master", createGitLineHandlerListener());
     checkGitResult(gitPushResult);
   }
 
@@ -250,6 +249,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
     final VirtualFile contentRoot = getRepositoryRoot();
     GitRepository repository = getRepository();
     final GitLineHandler fetchHandler = new GitLineHandler(getProject(), contentRoot, GitCommand.FETCH);
+    fetchHandler.setUrl(getApplication().getGitUrl());
     fetchHandler.setSilent(false);
     fetchHandler.addParameters(getRemoteName());
     fetchHandler.addLineListener(createGitLineHandlerListener());
@@ -333,6 +333,11 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
     });
   }
 
+  public void fetchAndRefresh() throws ServerRuntimeException {
+    fetch();
+    refreshContentRoot();
+  }
+
   private String getRemoteName() {
     if (myRemoteName == null) {
       myRemoteName = myDefaultRemoteName;
@@ -352,6 +357,14 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
         return getDeployment().findApplication();
       }
     });
+  }
+
+  protected CloudGitApplication getApplication() throws ServerRuntimeException {
+    CloudGitApplication application = findApplication();
+    if (application == null) {
+      throw new ServerRuntimeException("Can't find the application: " + getApplicationName());
+    }
+    return application;
   }
 
   protected CloudGitApplication createApplication() throws ServerRuntimeException {
