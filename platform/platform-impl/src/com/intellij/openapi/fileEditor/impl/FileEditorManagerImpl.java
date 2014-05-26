@@ -802,7 +802,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           editor.addPropertyChangeListener(myEditorPropertyChangeListener);
           editor.putUserData(DUMB_AWARE, DumbService.isDumbAware(provider));
 
-          if (current && editor instanceof TextEditorImpl) {
+          if (editor instanceof TextEditorImpl) {
             ((TextEditorImpl)editor).initFolding();
           }
         }
