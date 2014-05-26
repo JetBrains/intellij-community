@@ -278,7 +278,6 @@ public class ExpectedHighlightingData {
     }
     if (descr != null) {
       descr = descr.replaceAll("\\\\\\\\\"", "\"");  // replace: \\" to ", doesn't check symbol before sequence \\"
-      descr = StringUtil.replace(descr, "&quot;", "\"");
     }
 
     HighlightInfoType type = WHATEVER;
@@ -564,7 +563,7 @@ public class ExpectedHighlightingData {
         endPos = result.second;
       }
       sb.insert(0, text.substring(info.startOffset, endPos));
-      sb.insert(0, "<" + severity + " descr=\"" + StringUtil.replace(info.getDescription(), "\"", "&quot;") + "\">");
+      sb.insert(0, "<" + severity + " descr=\"" + info.getDescription() + "\">");
 
       endPos = info.startOffset;
       i++;
