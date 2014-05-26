@@ -649,7 +649,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
           }
         });
 
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        Runnable runnable = new Runnable() {
           @Override
           public void run() {
             if (!FileModificationService.getInstance().preparePsiElementsForWrite(results.keySet())) return;
@@ -673,7 +673,12 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
               }
             }, commandName, null);
           }
-        });
+        };
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          runnable.run();
+        } else {
+          ApplicationManager.getApplication().invokeLater(runnable);
+        }
       }
 
     });
