@@ -33,13 +33,15 @@ public class ModuleExtendedModelImpl implements ModuleExtendedModel {
   private final String myName;
   private final String myGroup;
   private final String myVersion;
+  private final File myBuildDir;
   private List<File> myArtifacts;
   private Set<ExtIdeaContentRoot> myContentRoots;
 
-  public ModuleExtendedModelImpl(String name, String group, String version) {
+  public ModuleExtendedModelImpl(String name, String group, String version, File buildDir) {
     myName = name;
     myGroup = group;
     myVersion = version;
+    myBuildDir = buildDir;
     myArtifacts = Collections.emptyList();
     myContentRoots = Collections.emptySet();
   }
@@ -71,6 +73,11 @@ public class ModuleExtendedModelImpl implements ModuleExtendedModel {
   @Override
   public DomainObjectSet<? extends ExtIdeaContentRoot> getContentRoots() {
     return ImmutableDomainObjectSet.of(myContentRoots);
+  }
+
+  @Override
+  public File getBuildDir() {
+    return myBuildDir;
   }
 
   public void setContentRoots(Set<ExtIdeaContentRoot> contentRoots) {
