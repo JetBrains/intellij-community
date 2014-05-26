@@ -60,4 +60,11 @@ public interface ModuleExtendedModel extends Serializable {
    * @return content roots
    */
   DomainObjectSet<? extends ExtIdeaContentRoot> getContentRoots();
+
+  /**
+   * The build directory.
+   *
+   * @return the build directory.
+   */
+  File getBuildDir();
 }

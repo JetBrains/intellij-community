@@ -57,8 +57,9 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
     final String moduleName = project.getName();
     final String moduleGroup = project.getGroup().toString();
     final String moduleVersion = project.getVersion().toString();
+    final File buildDir = project.getBuildDir();
 
-    final ModuleExtendedModelImpl moduleVersionModel = new ModuleExtendedModelImpl(moduleName, moduleGroup, moduleVersion);
+    final ModuleExtendedModelImpl moduleVersionModel = new ModuleExtendedModelImpl(moduleName, moduleGroup, moduleVersion, buildDir);
 
     final List<File> artifacts = new ArrayList<File>();
     for (Task task : project.getTasks()) {
