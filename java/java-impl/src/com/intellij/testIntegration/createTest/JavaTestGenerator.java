@@ -17,6 +17,7 @@ package com.intellij.testIntegration.createTest;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
@@ -59,6 +60,9 @@ public class JavaTestGenerator implements TestGenerator {
               IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
               PsiClass targetClass = createTestClass(d);
+              if (targetClass == null) {
+                return null;
+              }
               addSuperClass(targetClass, project, d.getSuperClassName());
 
               Editor editor = CodeInsightUtil.positionCursor(project, targetClass.getContainingFile(), targetClass.getLBrace());
@@ -80,6 +84,7 @@ public class JavaTestGenerator implements TestGenerator {
     });
   }
 
+  @Nullable
   private static PsiClass createTestClass(CreateTestDialog d) {
     final TestFramework testFrameworkDescriptor = d.getSelectedTestFrameworkDescriptor();
     final FileTemplateDescriptor fileTemplateDescriptor = TestIntegrationUtils.MethodKind.TEST_CLASS.getFileTemplateDescriptor(testFrameworkDescriptor);
@@ -90,6 +95,9 @@ public class JavaTestGenerator implements TestGenerator {
       final GlobalSearchScope scope = GlobalSearchScopesCore.directoryScope(targetDirectory, false);
       final PsiClass[] classes = aPackage.findClassByShortName(d.getClassName(), scope);
       if (classes.length > 0) {
+        if (!FileModificationService.getInstance().preparePsiElementForWrite(classes[0])) {
+          return null;
+        }
         return classes[0];
       }
     }
