@@ -67,6 +67,7 @@ public class SvnKitClientFactory extends ClientFactory {
     myCheckinClient = new SvnKitCheckinClient();
     statusClient = new SvnKitStatusClient();
     infoClient = new SvnKitInfoClient();
+    myRepositoryFeaturesClient = new SvnKitRepositoryFeaturesClient();
   }
 
   @NotNull

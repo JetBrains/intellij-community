@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
@@ -55,8 +54,6 @@ import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
-import org.tmatesoft.svn.core.io.SVNCapability;
-import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -518,27 +515,21 @@ public class SvnUtil {
     return file;
   }
 
-  public static boolean checkRepositoryVersion15(final SvnVcs vcs, final String url) {
+  public static boolean checkRepositoryVersion15(@NotNull SvnVcs vcs, @NotNull String url) {
     // Merge info tracking is supported in repositories since svn 1.5 (June 2008) - see http://subversion.apache.org/docs/release-notes/.
-    // So by default we assume repository supports merge info tracking.
-    if (!Registry.is("svn.check.repository.supports.merge.info")) {
-      return true;
+    // But still some users use 1.4 repositories and currently we need to know if repository supports merge info for some code flows.
+
+    boolean result = false;
+
+    try {
+      result = vcs.getFactory().createRepositoryFeaturesClient().supportsMergeTracking(createUrl(url));
+    }
+    catch (VcsException e) {
+      LOG.info(e);
+      // TODO: Exception is thrown when url just not exist (was deleted, for instance) => and false is returned which seems not to be correct.
     }
 
-    SVNRepository repository = null;
-    try {
-      repository = vcs.getSvnKitManager().createRepository(url);
-      return repository.hasCapability(SVNCapability.MERGE_INFO);
-    }
-    catch (SVNException e) {
-      // TODO: Exception is thrown when url just not exist (was deleted, for instance) => and false is returned which seems not to be correct.
-      return false;
-    }
-    finally {
-      if (repository != null) {
-        repository.closeSession();
-      }
-    }
+    return result;
   }
 
   @Nullable
