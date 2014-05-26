@@ -886,3 +886,37 @@ class T58 {
     x = 3;
   }
 }
+class Foo {
+
+  public interface Accessor<T> {
+
+    T get();
+
+    void set(T value);
+
+  }
+
+  private double myValue; // no warning expected here
+
+  private final Accessor<Double> myValueAccessor;
+
+  public Foo() {
+    myValue = 0;
+
+    myValueAccessor = new Accessor<Double>() {
+      @Override
+      public Double get() {
+        return myValue;
+      }
+
+      @Override
+      public void set(Double value) {
+        myValue = value; // assignment
+      }
+    };
+  }
+
+  public Accessor<Double> getValueAccessor() {
+    return myValueAccessor;
+  }
+}
