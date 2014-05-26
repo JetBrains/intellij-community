@@ -215,9 +215,9 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     }
   }
 
-  private static boolean containsLetters(CharSequence seq, int start, int end) {
+  private static boolean containsLettersOrDigits(CharSequence seq, int start, int end) {
     for (int i = start; i < end; i++) {
-      if (Character.isLetter(seq.charAt(i))) {
+      if (Character.isLetterOrDigit(seq.charAt(i))) {
         return true;
       }
     }
@@ -320,7 +320,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
         int wordEnd = wordStart;
         while (wordEnd < end && isWordPart(chars.charAt(wordEnd))) wordEnd++;
 
-        if (wordEnd > wordStart && containsLetters(chars, wordStart, wordEnd) && !processor.processToken(wordStart, wordEnd)) {
+        if (wordEnd > wordStart && containsLettersOrDigits(chars, wordStart, wordEnd) && !processor.processToken(wordStart, wordEnd)) {
           return;
         }
         start = wordEnd + 1;
