@@ -45,6 +45,7 @@ public class StructGeneralAttribute {
 	public static final String ATTRIBUTE_CONSTANT_VALUE = "ConstantValue";
 	public static final String ATTRIBUTE_BOOTSTRAP_METHODS = "BootstrapMethods";
   public static final String ATTRIBUTE_SYNTHETIC = "Synthetic";
+  public static final String ATTRIBUTE_DEPRECATED = "Deprecated";
 
 
 	// *****************************************************************************
@@ -102,7 +103,7 @@ public class StructGeneralAttribute {
 			attr = new StructLocalVariableTableAttribute();
 		} else if(ATTRIBUTE_BOOTSTRAP_METHODS.equals(attrname)) {
 			attr = new StructBootstrapMethodsAttribute();
-		} else if(ATTRIBUTE_SYNTHETIC.equals(attrname)) {
+		} else if(ATTRIBUTE_SYNTHETIC.equals(attrname) || ATTRIBUTE_DEPRECATED.equals(attrname)) {
 			attr = new StructGeneralAttribute();
 		} else {
 			// unsupported attribute
