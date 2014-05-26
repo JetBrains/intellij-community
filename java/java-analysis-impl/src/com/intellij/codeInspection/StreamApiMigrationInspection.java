@@ -15,10 +15,12 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -27,6 +29,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -160,7 +163,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           if (args.length == 1) {
             if (args[0] instanceof PsiCallExpression) {
               final PsiMethod method = ((PsiCallExpression)args[0]).resolveMethod();
-              return method != null && !method.hasTypeParameters();
+              return method != null && !method.hasTypeParameters() && !isThrowsCompatible(method);
             }
             return true;
           }
@@ -222,7 +225,23 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       return false;
     }
     //method reference 
-    return LambdaCanBeMethodReferenceInspection.canBeMethodReferenceProblem(body instanceof PsiBlockStatement ? ((PsiBlockStatement)body).getCodeBlock() : body, new PsiParameter[] {parameter}, null) == null;
+    final PsiCallExpression callExpression = LambdaCanBeMethodReferenceInspection
+      .canBeMethodReferenceProblem(body instanceof PsiBlockStatement ? ((PsiBlockStatement)body).getCodeBlock() : body,
+                                   new PsiParameter[]{parameter}, null);
+    if (callExpression == null) {
+      return true;
+    }
+    final PsiMethod method = callExpression.resolveMethod();
+    return method != null && isThrowsCompatible(method);
+  }
+
+  private static boolean isThrowsCompatible(PsiMethod method) {
+    return ContainerUtil.find(method.getThrowsList().getReferencedTypes(), new Condition<PsiClassType>() {
+      @Override
+      public boolean value(PsiClassType type) {
+        return !ExceptionUtil.isUncheckedException(type);
+      }
+    }) != null;
   }
 
   private static class ReplaceWithForeachCallFix implements LocalQuickFix {
