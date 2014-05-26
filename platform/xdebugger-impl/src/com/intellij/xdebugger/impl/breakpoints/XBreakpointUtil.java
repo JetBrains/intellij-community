@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
@@ -48,7 +49,7 @@ public class XBreakpointUtil {
   }
 
   public static <B extends XBreakpoint<?>> String getShortText(B breakpoint) {
-    return getType(breakpoint).getShortText(breakpoint);
+    return StringUtil.shortenTextWithEllipsis(StringUtil.notNullize(getType(breakpoint).getShortText(breakpoint)), 70, 5);
   }
 
   public static <B extends XBreakpoint<?>> String getDisplayText(@NotNull B breakpoint) {
