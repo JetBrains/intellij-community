@@ -110,6 +110,8 @@ public class XDebugSessionImpl implements XDebugSession {
   private boolean myPauseActionSupported;
   private boolean myShowTabOnSuspend;
   private final List<AnAction> myRestartActions = new SmartList<AnAction>();
+  private final List<AnAction> myExtraStopActions = new SmartList<AnAction>();
+  private final List<AnAction> myExtraActions = new SmartList<AnAction>();
   private ConsoleView myConsoleView;
   private final Icon myIcon;
 
@@ -177,6 +179,22 @@ public class XDebugSessionImpl implements XDebugSession {
 
   public void addRestartActions(AnAction... restartActions) {
     Collections.addAll(myRestartActions, restartActions);
+  }
+
+  public List<AnAction> getExtraActions() {
+    return myExtraActions;
+  }
+
+  public void addExtraActions(AnAction... extraActions) {
+    Collections.addAll(myExtraActions, extraActions);
+  }
+
+  public List<AnAction> getExtraStopActions() {
+    return myExtraStopActions;
+  }
+
+  public void addExtraStopActions(AnAction... extraStopActions) {
+    Collections.addAll(myExtraStopActions, extraStopActions);
   }
 
   @Override
