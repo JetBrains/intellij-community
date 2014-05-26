@@ -17,6 +17,7 @@ package com.intellij.testIntegration.createTest;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.template.Template;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -27,13 +28,17 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.testIntegration.TestIntegrationUtils;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -79,6 +84,16 @@ public class JavaTestGenerator implements TestGenerator {
     final TestFramework testFrameworkDescriptor = d.getSelectedTestFrameworkDescriptor();
     final FileTemplateDescriptor fileTemplateDescriptor = TestIntegrationUtils.MethodKind.TEST_CLASS.getFileTemplateDescriptor(testFrameworkDescriptor);
     final PsiDirectory targetDirectory = d.getTargetDirectory();
+
+    final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(targetDirectory);
+    if (aPackage != null) {
+      final GlobalSearchScope scope = GlobalSearchScopesCore.directoryScope(targetDirectory, false);
+      final PsiClass[] classes = aPackage.findClassByShortName(d.getClassName(), scope);
+      if (classes.length > 0) {
+        return classes[0];
+      }
+    }
+
     if (fileTemplateDescriptor != null) {
       final PsiClass classFromTemplate = createTestClassFromCodeTemplate(d, fileTemplateDescriptor, targetDirectory);
       if (classFromTemplate != null) {
@@ -135,17 +150,28 @@ public class JavaTestGenerator implements TestGenerator {
 
   private static void addTestMethods(Editor editor,
                                      PsiClass targetClass,
-                                     TestFramework descriptor,
+                                     final TestFramework descriptor,
                                      Collection<MemberInfo> methods,
                                      boolean generateBefore,
                                      boolean generateAfter) throws IncorrectOperationException {
     final Set<String> existingNames = new HashSet<String>();
-    if (generateBefore) {
+    if (generateBefore && descriptor.findSetUpMethod(targetClass) == null) {
       generateMethod(TestIntegrationUtils.MethodKind.SET_UP, descriptor, targetClass, editor, null, existingNames);
     }
-    if (generateAfter) {
+    if (generateAfter && descriptor.findTearDownMethod(targetClass) == null) {
       generateMethod(TestIntegrationUtils.MethodKind.TEAR_DOWN, descriptor, targetClass, editor, null, existingNames);
     }
+
+    final Template template = TestIntegrationUtils .createTestMethodTemplate(TestIntegrationUtils.MethodKind.TEST, descriptor, targetClass,
+                                                                             null, true, existingNames);
+    final String prefix = JavaPsiFacade.getElementFactory(targetClass.getProject()).createMethodFromText(template.getTemplateText(), targetClass).getName();
+    existingNames.addAll(ContainerUtil.map(targetClass.getMethods(), new Function<PsiMethod, String>() {
+      @Override
+      public String fun(PsiMethod method) {
+        return StringUtil.decapitalize(StringUtil.trimStart(method.getName(), prefix));
+      }
+    }));
+
     for (MemberInfo m : methods) {
       generateMethod(TestIntegrationUtils.MethodKind.TEST, descriptor, targetClass, editor, m.getMember().getName(), existingNames);
     }

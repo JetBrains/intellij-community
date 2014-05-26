@@ -184,12 +184,12 @@ public class TestIntegrationUtils {
     TemplateManager.getInstance(project).startTemplate(editor, template, adapter);
   }
 
-  private static Template createTestMethodTemplate(MethodKind methodKind,
-                                                   TestFramework descriptor,
-                                                   PsiClass targetClass,
-                                                   @Nullable String name,
-                                                   boolean automatic, 
-                                                   Set<String> existingNames) {
+  public static Template createTestMethodTemplate(MethodKind methodKind,
+                                                  TestFramework descriptor,
+                                                  PsiClass targetClass,
+                                                  @Nullable String name,
+                                                  boolean automatic,
+                                                  Set<String> existingNames) {
     FileTemplateDescriptor templateDesc = methodKind.getFileTemplateDescriptor(descriptor);
     String templateName = templateDesc.getFileName();
     FileTemplate fileTemplate = FileTemplateManager.getInstance().getCodeTemplate(templateName);
