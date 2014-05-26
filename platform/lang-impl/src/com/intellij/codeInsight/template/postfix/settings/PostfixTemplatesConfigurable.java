@@ -91,6 +91,10 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
     for (LanguageExtensionPoint extension : extensions) {
       List<PostfixTemplate> postfixTemplates =
         ContainerUtil.newArrayList(((PostfixTemplateProvider)extension.getInstance()).getTemplates());
+      if (postfixTemplates.isEmpty()) {
+        continue;
+      }
+
       ContainerUtil.sort(postfixTemplates, TEMPLATE_COMPARATOR);
 
       templateMultiMap.putValues(extension.getKey(), postfixTemplates);
