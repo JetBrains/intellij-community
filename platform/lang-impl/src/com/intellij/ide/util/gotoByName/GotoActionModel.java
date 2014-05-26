@@ -538,7 +538,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     NONE, INTENTION, NAME, DESCRIPTION, GROUP, NON_MENU
   }
 
-  private String convertPattern(String pattern) {
+  private static String convertPattern(String pattern) {
     final int eol = pattern.indexOf('\n');
     if (eol != -1) {
       pattern = pattern.substring(0, eol);
@@ -666,7 +666,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     }
 
     @Override
-    public int compareTo(ActionWrapper o) {
+    public int compareTo(@NotNull ActionWrapper o) {
       final int compared = myMode.compareTo(o.getMode());
       return compared != 0
              ? compared
