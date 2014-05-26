@@ -22,7 +22,6 @@ import de.fernflower.main.ClassesProcessor.ClassNode;
 import de.fernflower.main.collectors.CounterContainer;
 import de.fernflower.main.extern.IBytecodeProvider;
 import de.fernflower.main.extern.IDecompilatSaver;
-import de.fernflower.main.extern.IFernflowerLogger;
 import de.fernflower.main.extern.IFernflowerPreferences;
 import de.fernflower.modules.renamer.IdentifierConverter;
 import de.fernflower.struct.IDecompiledData;
@@ -98,8 +97,7 @@ public class Fernflower implements IDecompiledData {
 		} catch(ThreadDeath ex) {
 			throw ex;
 		} catch(Throwable ex) {
-			ex.printStackTrace();
-			DecompilerContext.getLogger().writeMessage("Class "+cl.qualifiedName+" couldn't be fully decompiled." , IFernflowerLogger.ERROR);
+			DecompilerContext.getLogger().writeMessage("Class "+cl.qualifiedName+" couldn't be fully decompiled.", ex);
 		}
 		
 		return res;

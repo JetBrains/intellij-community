@@ -35,15 +35,16 @@ public class PrintStreamLogger implements IFernflowerLogger {
 	
 	
 	public void writeMessage(String message, int severity) {
-		writeMessage(message, severity, indent);
+    if(severity >= this.severity) {
+      stream.println(InterpreterUtil.getIndentString(indent)+names[severity]+": "+message);
+    }
 	}
 
-	public void writeMessage(String message, int severity, int indent) {
-		if(severity >= this.severity) {
-			stream.println(InterpreterUtil.getIndentString(indent)+names[severity]+": "+message);
-		}
-	}
-	
+  public void writeMessage(String message, Throwable t) {
+    t.printStackTrace(stream);
+    writeMessage(message, ERROR);
+  }
+
 	public void startClass(String classname) {
 		stream.println(InterpreterUtil.getIndentString(indent++)+"Processing class "+classname+" ...");
 	}
@@ -78,9 +79,5 @@ public class PrintStreamLogger implements IFernflowerLogger {
 
 	public void setSeverity(int severity) {
 		this.severity = severity;
-	}
-
-	public boolean getShowStacktrace() {
-		return true;
 	}
 }

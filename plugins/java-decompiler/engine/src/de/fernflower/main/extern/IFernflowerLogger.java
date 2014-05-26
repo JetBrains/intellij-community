@@ -36,7 +36,7 @@ public interface IFernflowerLogger {
 	
 	public void writeMessage(String message, int severity);
 
-	public void writeMessage(String message, int severity, int indent);
+	public void writeMessage(String message, Throwable t);
 	
 	public void startClass(String classname);
 
@@ -53,7 +53,4 @@ public interface IFernflowerLogger {
 	public int getSeverity();
 
 	public void setSeverity(int severity);
-	
-	public boolean getShowStacktrace();
-	
 }

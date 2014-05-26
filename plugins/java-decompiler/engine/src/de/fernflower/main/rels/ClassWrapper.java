@@ -110,7 +110,7 @@ public class ClassWrapper {
 
 							if(maxsec > 0 && ++sec > maxsec) {
 								DecompilerContext.getLogger().writeMessage("Processing time limit ("+maxsec+" sec.) for method " +
-										mt.getName()+" "+mt.getDescriptor()+ " exceeded, execution interrupted.", IFernflowerLogger.ERROR, 0);
+										mt.getName()+" "+mt.getDescriptor()+ " exceeded, execution interrupted.", IFernflowerLogger.ERROR);
 								mtthread.stop();
 								isError = true;
 								break;
@@ -158,17 +158,11 @@ public class ClassWrapper {
 					if(mtthread != null) {
 						mtthread.stop();
 					}
-				} catch(Throwable e) {
-					;
-				}
+				} catch(Throwable ignored) { }
 				
 				throw ex;
 			} catch(Throwable ex) {
-				if(DecompilerContext.getLogger().getShowStacktrace()) {
-					ex.printStackTrace();
-				}
-				
-				DecompilerContext.getLogger().writeMessage("Method "+mt.getName()+" "+mt.getDescriptor()+" couldn't be decompiled.", IFernflowerLogger.ERROR);
+				DecompilerContext.getLogger().writeMessage("Method "+mt.getName()+" "+mt.getDescriptor()+" couldn't be decompiled.", ex);
 				isError = true;
 			}
 			
