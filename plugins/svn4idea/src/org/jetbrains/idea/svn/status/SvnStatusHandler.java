@@ -23,7 +23,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.commandLine.CommandUtil;
+import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.info.SVNLockWrapper;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
@@ -740,7 +740,7 @@ public class SvnStatusHandler extends DefaultHandler {
     protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) throws SAXException {
       final String path = attributes.getValue("path");
       assertSAX(path != null);
-      final File file = CommandUtil.resolvePath(myBase, path);
+      final File file = SvnUtil.resolvePath(myBase, path);
       status.setFile(file);
       final boolean exists = file.exists();
       if (exists) {

@@ -237,8 +237,12 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
         // get really latest revision
         // TODO: Algorithm seems not to be correct in all cases - for instance, when some subtree was deleted and replaced by other
         // TODO: with same names. pegRevision should be used somehow but this complicates the algorithm
-        final LatestExistentSearcher searcher = new LatestExistentSearcher(myVcs, svnStatus.getURL());
-        revision = searcher.getDeletionRevision();
+        if (svnStatus.getRepositoryRootURL() != null) {
+          revision = new LatestExistentSearcher(myVcs, svnStatus.getURL(), svnStatus.getRepositoryRootURL()).getDeletionRevision();
+        }
+        else {
+          LOG.info("Could not find repository url for file " + file);
+        }
       }
 
       return createResult(SVNRevision.create(revision), exists, false);

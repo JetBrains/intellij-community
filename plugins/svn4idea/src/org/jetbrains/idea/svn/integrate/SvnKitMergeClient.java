@@ -81,7 +81,7 @@ public class SvnKitMergeClient extends BaseSvnClient implements MergeClient {
 
   @NotNull
   private SVNDiffClient createClient(@Nullable SVNDiffOptions diffOptions, @Nullable ISVNEventHandler handler) {
-    SVNDiffClient client = myVcs.createDiffClient();
+    SVNDiffClient client = myVcs.getSvnKitManager().createDiffClient();
 
     client.setMergeOptions(diffOptions);
     client.setEventHandler(handler);
