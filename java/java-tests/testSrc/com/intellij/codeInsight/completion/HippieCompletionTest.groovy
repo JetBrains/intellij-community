@@ -192,6 +192,16 @@ class Xoo {
 
   }
 
+  public void "test numbers"() {
+    myFixture.configureByText "a.c", '''246<caret>
+24601
+'''
+    complete()
+    myFixture.checkResult '''24601<caret>
+24601
+'''
+  }
+
   private void complete() {
     myFixture.performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION)
   }
