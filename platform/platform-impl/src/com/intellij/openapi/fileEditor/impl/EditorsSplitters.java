@@ -32,7 +32,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
@@ -235,8 +234,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   public void openFiles() {
     if (mySplittersElement != null) {
-      Ref<EditorWindow> currentWindow = new Ref<EditorWindow>();
-      final JPanel comp = readExternalPanel(mySplittersElement, getTopPanel(), currentWindow);
+      final JPanel comp = readExternalPanel(mySplittersElement, getTopPanel());
       if (comp != null) {
         removeAll();
         add(comp, BorderLayout.CENTER);
@@ -250,9 +248,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
           }
         }
       }
-      if (!currentWindow.isNull()) {
-        setCurrentWindow(currentWindow.get(), true);
-      }
     }
   }
 
@@ -262,10 +257,10 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   @Nullable
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private JPanel readExternalPanel(final Element element, @Nullable JPanel panel, Ref<EditorWindow> currentWindow) {
+  private JPanel readExternalPanel(final Element element, @Nullable JPanel panel) {
     final Element splitterElement = element.getChild("splitter");
     if (splitterElement != null) {
-      return readSplitter(panel, splitterElement, currentWindow);
+      return readSplitter(panel, splitterElement);
     }
 
     final Element leaf = element.getChild("leaf");
@@ -317,7 +312,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return window.myPanel;
   }
 
-  private JPanel readSplitter(JPanel panel, Element splitterElement, Ref<EditorWindow> currentWindow) {
+  private JPanel readSplitter(JPanel panel, Element splitterElement) {
     final boolean orientation = "vertical".equals(splitterElement.getAttributeValue("split-orientation"));
     final float proportion = Float.valueOf(splitterElement.getAttributeValue("split-proportion")).floatValue();
     final Element first = splitterElement.getChild("split-first");
@@ -329,17 +324,17 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       panel.setOpaque(false);
       splitter = new Splitter(orientation, proportion, 0.1f, 0.9f);
       panel.add(splitter, BorderLayout.CENTER);
-      splitter.setFirstComponent(readExternalPanel(first, null, currentWindow));
-      splitter.setSecondComponent(readExternalPanel(second, null, currentWindow));
+      splitter.setFirstComponent(readExternalPanel(first, null));
+      splitter.setSecondComponent(readExternalPanel(second, null));
     }
     else if (panel.getComponent(0) instanceof Splitter) {
       splitter = (Splitter)panel.getComponent(0);
-      readExternalPanel(first, (JPanel)splitter.getFirstComponent(), currentWindow);
-      readExternalPanel(second, (JPanel)splitter.getSecondComponent(), currentWindow);
+      readExternalPanel(first, (JPanel)splitter.getFirstComponent());
+      readExternalPanel(second, (JPanel)splitter.getSecondComponent());
     }
     else {
-      readExternalPanel(first, panel, currentWindow);
-      readExternalPanel(second, panel, currentWindow);
+      readExternalPanel(first, panel);
+      readExternalPanel(second, panel);
     }
     return panel;
   }
