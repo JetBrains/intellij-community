@@ -489,10 +489,8 @@ public def layoutCommunityPlugins(String home) {
     }
 
     layoutPlugin("devkit") {
-      dir("jps") {
-        jar("devkit-jps-plugin.jar") {
-          module("devkit-jps-plugin")
-        }
+      jar("devkit-jps-plugin.jar") {
+        module("devkit-jps-plugin")
       }
       fileset(dir: "${home}/plugins/devkit/lib") {
         include(name: "**/*.jar")
