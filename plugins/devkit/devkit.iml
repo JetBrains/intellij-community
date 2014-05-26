@@ -44,6 +44,7 @@
     <orderEntry type="module" module-name="properties-psi-api" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="testFramework" />
+    <orderEntry type="module" module-name="dom-impl" />
   </component>
 </module>
 
