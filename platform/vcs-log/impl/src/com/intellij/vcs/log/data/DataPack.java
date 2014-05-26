@@ -26,20 +26,10 @@ public class DataPack implements VcsLogDataPack {
   private boolean myFull;
 
   @NotNull
-  static DataPack build(@NotNull List<? extends GraphCommit<Integer>> commits,
-                               @NotNull RefsModel refsModel,
-                               @NotNull NotNullFunction<Hash, Integer> indexGetter,
-                               @NotNull NotNullFunction<Integer, Hash> hashGetter, 
-                               @NotNull Map<VirtualFile, VcsLogProvider> providers,
-                               boolean full) {
-    PermanentGraph<Integer> permanentGraph;
-    if (!commits.isEmpty()) {
-      permanentGraph = buildPermanentGraph(commits, refsModel, indexGetter, hashGetter, providers);
-    }
-    else {
-      permanentGraph = EmptyPermanentGraph.getInstance();
-    }
-    return build(permanentGraph, providers, refsModel, full);
+  static DataPack build(@NotNull List<? extends GraphCommit<Integer>> commits, @NotNull RefsModel refsModel,
+                        @NotNull NotNullFunction<Hash, Integer> indexGetter, @NotNull NotNullFunction<Integer, Hash> hashGetter,
+                        @NotNull Map<VirtualFile, VcsLogProvider> providers, boolean full) {
+    return build(buildPermanentGraph(commits, refsModel, indexGetter, hashGetter, providers), providers, refsModel, full);
   }
 
   @NotNull
@@ -72,6 +62,9 @@ public class DataPack implements VcsLogDataPack {
                                                      @NotNull NotNullFunction<Hash, Integer> indexGetter,
                                                      @NotNull NotNullFunction<Integer, Hash> hashGetter,
                                                      @NotNull Map<VirtualFile, VcsLogProvider> providers) {
+    if (commits.isEmpty()) {
+      return EmptyPermanentGraph.getInstance();
+    }
     GraphColorManagerImpl colorManager = new GraphColorManagerImpl(refsModel, hashGetter, getRefManagerMap(providers));
     Set<Integer> branches = getBranchCommitHashIndexes(refsModel.getAllRefs(), indexGetter);
     StopWatch sw = StopWatch.start("building graph");
