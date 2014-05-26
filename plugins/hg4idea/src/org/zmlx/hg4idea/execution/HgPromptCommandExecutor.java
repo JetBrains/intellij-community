@@ -18,6 +18,7 @@ package org.zmlx.hg4idea.execution;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +28,6 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
-import java.util.LinkedList;
 import java.util.List;
 
 public class HgPromptCommandExecutor extends HgCommandExecutor {
@@ -41,61 +41,32 @@ public class HgPromptCommandExecutor extends HgCommandExecutor {
   public HgCommandResult executeInCurrentThread(@Nullable final VirtualFile repo,
                                                 @NotNull final String operation,
                                                 @Nullable final List<String> arguments) {
-
-    final List<String> cmdLine = new LinkedList<String>();
-    WarningReceiver warningReceiver = new WarningReceiver();
     SocketServer promptServer = new SocketServer(new PromptReceiver(new HgDeleteModifyPromptHandler()));
-    SocketServer warningServer = new SocketServer(warningReceiver);
-
-
     try {
       int promptPort = promptServer.start();
-      int warningPort = warningServer.start();
-      cmdLine.add("--config");
-      cmdLine.add("extensions.hg4ideapromptextension=" + myVcs.getPromptHooksExtensionFile().getAbsolutePath());
-      cmdLine.add("--config");
-      cmdLine.add("hg4ideaprompt.port=" + promptPort);
-      cmdLine.add("--config");
-      cmdLine.add("hg4ideawarn.port=" + warningPort);
+      return super.executeInCurrentThread(repo, operation, prepareArguments(arguments, promptPort));
     }
     catch (IOException e) {
       showError(e);
       LOG.info("IOException during preparing command", e);
-      promptServer.stop();
-      warningServer.stop();
       return null;
     }
-
-    if (arguments != null && arguments.size() != 0) {
-      cmdLine.addAll(arguments);
+    finally {
+      promptServer.stop();
     }
-
-    HgCommandResult result = super.executeInCurrentThread(repo, operation, cmdLine);
-    promptServer.stop();
-    warningServer.stop();
-    String warnings = warningReceiver.getWarnings();
-    result.setWarnings(warnings);
-    return result;
   }
 
-  private static class WarningReceiver extends SocketServer.Protocol {
-    private StringBuffer warnings = new StringBuffer();
+  private List<String> prepareArguments(List<String> arguments, int port) {
+    List<String> cmdArguments = ContainerUtil.newArrayList();
+    cmdArguments.add("--config");
+    cmdArguments.add("extensions.hg4ideapromptextension=" + myVcs.getPromptHooksExtensionFile().getAbsolutePath());
+    cmdArguments.add("--config");
+    cmdArguments.add("hg4ideaprompt.port=" + port);
 
-    public boolean handleConnection(Socket socket) throws IOException {
-      //noinspection IOResourceOpenedButNotSafelyClosed
-      DataInputStream dataInput = new DataInputStream(socket.getInputStream());
-
-      int numOfWarnings = dataInput.readInt();
-      for (int i = 0; i < numOfWarnings; i++) {
-        warnings.append(new String(readDataBlock(dataInput)));
-      }
-      return true;
+    if (arguments != null && arguments.size() != 0) {
+      cmdArguments.addAll(arguments);
     }
-
-
-    public String getWarnings() {
-      return warnings.toString();
-    }
+    return cmdArguments;
   }
 
   private static class PromptReceiver extends SocketServer.Protocol {
@@ -132,7 +103,7 @@ public class HgPromptCommandExecutor extends HgCommandExecutor {
               choicePresentationArray[i] = choices[i].toString();
             }
             index[0] = Messages
-              .showDialog(message, "Hg4idea",
+              .showDialog(message, "Mercurial Prompt Message",
                           choicePresentationArray,
                           defaultChoice.getChosenIndex(), Messages.getQuestionIcon());
           }

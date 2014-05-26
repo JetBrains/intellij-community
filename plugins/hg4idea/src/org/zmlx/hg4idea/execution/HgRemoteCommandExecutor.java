@@ -15,6 +15,7 @@ package org.zmlx.hg4idea.execution;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
@@ -24,16 +25,11 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.LinkedList;
 import java.util.List;
 
 public class HgRemoteCommandExecutor extends HgCommandExecutor {
 
   @Nullable private ModalityState myState;
-
-  public HgRemoteCommandExecutor(@NotNull Project project) {
-    this(project, null);
-  }
 
   public HgRemoteCommandExecutor(@NotNull Project project, @Nullable String destination) {
     this(project, destination, null);
@@ -65,43 +61,49 @@ public class HgRemoteCommandExecutor extends HgCommandExecutor {
   }
 
   @Nullable
-  public HgCommandResult executeInCurrentThread(@Nullable final VirtualFile repo,
+  private HgCommandResult executeInCurrentThread(@Nullable final VirtualFile repo,
                                                 @NotNull final String operation,
                                                 @Nullable final List<String> arguments,
                                                 boolean forceAuthorization) {
 
-    final List<String> cmdLine = new LinkedList<String>();
     PassReceiver passReceiver = new PassReceiver(myProject, forceAuthorization, myState);
     SocketServer passServer = new SocketServer(passReceiver);
-
     try {
       int passPort = passServer.start();
-      cmdLine.add("--config");
-      cmdLine.add("extensions.hg4ideapromptextension=" + myVcs.getPromptHooksExtensionFile().getAbsolutePath());
-
-      cmdLine.add("--config");
-      cmdLine.add("hg4ideapass.port=" + passPort);
+      HgCommandResult result = super.executeInCurrentThread(repo, operation, prepareArguments(arguments, passPort));
+      if (!HgErrorUtil.isAuthorizationError(result)) {
+        passReceiver.saveCredentials();
+      }
+      return result;
     }
     catch (IOException e) {
       showError(e);
       LOG.info("IOException during preparing command", e);
-      passServer.stop();
       return null;
     }
-    if (arguments != null && arguments.size() != 0) {
-      cmdLine.addAll(arguments);
+    finally {
+      passServer.stop();
     }
-
-    HgCommandResult result;
-
-    result = super.executeInCurrentThread(repo, operation, cmdLine);
-    if (!HgErrorUtil.isAuthorizationError(result)) {
-      passReceiver.saveCredentials();
-    }
-    passServer.stop();
-    return result;
   }
 
+  private List<String> prepareArguments(List<String> arguments, int port) {
+    List<String> cmdArguments = ContainerUtil.newArrayList();
+    cmdArguments.add("--config");
+    cmdArguments.add("extensions.hg4ideapromptextension=" + myVcs.getPromptHooksExtensionFile().getAbsolutePath());
+    cmdArguments.add("--config");
+    cmdArguments.add("hg4ideapass.port=" + port);
+
+    if (arguments != null && arguments.size() != 0) {
+      cmdArguments.addAll(arguments);
+    }
+    return cmdArguments;
+  }
+
+  @Override
+  protected void logCommand(@NotNull String operation, @Nullable List<String> arguments) {
+    //do not log arguments for remote command because of internal password port info etc
+    super.logCommand(operation, null);
+  }
 
   private static class PassReceiver extends SocketServer.Protocol {
     private final Project myProject;
