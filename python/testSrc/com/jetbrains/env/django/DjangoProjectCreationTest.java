@@ -49,8 +49,8 @@ public class DjangoProjectCreationTest extends PyEnvTestCase {
       assert djangoPath != null : "No django found under " + sdkHome;
 
       final VirtualFile contentRoot = myFixture.getTempDirFixture().findOrCreateDir(ROOT_FOLDER_NAME);
-      final String templatesDir = myFixture.getTempDirFixture().findOrCreateDir(ROOT_FOLDER_NAME + "/templates").getCanonicalPath();
-      assert templatesDir != null : "Failed to create template dirs";
+      final String templateDir = myFixture.getTempDirFixture().findOrCreateDir(ROOT_FOLDER_NAME + "/templates_dir").getCanonicalPath();
+      assert templateDir != null : "Failed to create template dirs";
 
       UsefulTestCase.edt(new Runnable() {
         @Override
@@ -62,7 +62,7 @@ public class DjangoProjectCreationTest extends PyEnvTestCase {
               contentRoot,
               WEB_SITE_NAME,
               "myMainApp",
-              templatesDir,
+              templateDir,
               djangoPath,
               false,
               false
@@ -90,15 +90,11 @@ public class DjangoProjectCreationTest extends PyEnvTestCase {
       final PyBlockEvaluator evaluator = new PyBlockEvaluator();
       evaluator.evaluate(settingsPy);
 
-      // TODO: Temporary skip test for 1.6, because not implemented yet
-      if (DjangoAdmin.isDjangoVersionAtLeast(sdk, "1.6")) {
-        return;
-      }
-
-      final List<String> templateDirs = evaluator.getValueAsStringList(DjangoNames.TEMPLATE_DIRS_SETTING);
-      Assert.assertThat(String.format("Failed to find %s in %s", DjangoNames.TEMPLATE_DIRS_SETTING, settingsPy), templateDirs,
+      final List<String> templateDirsFromConfig = evaluator.getValueAsStringList(DjangoNames.TEMPLATE_DIRS_SETTING);
+      Assert.assertThat(String.format("Failed to find %s in %s", DjangoNames.TEMPLATE_DIRS_SETTING, settingsPy), templateDirsFromConfig,
                         Matchers.allOf(Matchers.notNullValue(), Matchers.not(Matchers.empty())));
-      // TODO: Finish test
+
+      Assert.assertThat("Wrong template dirs in config", templateDirsFromConfig, Matchers.contains(templateDir));
 
     }
 
