@@ -665,6 +665,31 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testNewAnonymousFunction() throws Throwable { doTest(); }
 
+  public void testNewRunnableInsideMethod() throws Throwable {
+    CommonCodeStyleSettings settings = getCodeStyleSettings();
+    boolean lParenOnNextLine = settings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE;
+    try {
+      settings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+      doTest();
+    } finally {
+      settings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = lParenOnNextLine;
+    }
+  }
+
+  public void testNewRunnableInsideMethodMultiParams() throws Throwable {
+    CommonCodeStyleSettings settings = getCodeStyleSettings();
+    boolean lParenOnNextLine = settings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE;
+    boolean rParenOnNextLine = settings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE;
+    try {
+      settings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+      settings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
+      doTest();
+    } finally {
+      settings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = lParenOnNextLine;
+      settings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = rParenOnNextLine;
+    }
+  }
+
   public void testUseIntConstantsFromTargetClass() throws Throwable { doTest(); }
   public void testUseIntConstantsFromTargetClassReturnValue() throws Throwable { doTest(); }
   public void testUseIntConstantsFromConstructedClass() throws Throwable { doTest(); }
