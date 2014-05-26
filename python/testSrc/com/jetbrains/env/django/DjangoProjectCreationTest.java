@@ -1,5 +1,7 @@
 package com.jetbrains.env.django;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -17,6 +19,8 @@ import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
@@ -30,6 +34,7 @@ public class DjangoProjectCreationTest extends PyEnvTestCase {
   private static final String ROOT_FOLDER_NAME = "content_root";
   private static final String WEB_SITE_NAME = "myWebSite";
   private static final String DJANGO_TAG = "django";
+  private static final MyDjangoProjectCreationTest.Canonicator CANONICATOR = new MyDjangoProjectCreationTest.Canonicator();
 
   public DjangoProjectCreationTest() {
     super(DJANGO_TAG);
@@ -94,13 +99,28 @@ public class DjangoProjectCreationTest extends PyEnvTestCase {
       Assert.assertThat(String.format("Failed to find %s in %s", DjangoNames.TEMPLATE_DIRS_SETTING, settingsPy), templateDirsFromConfig,
                         Matchers.allOf(Matchers.notNullValue(), Matchers.not(Matchers.empty())));
 
-      Assert.assertThat("Wrong template dirs in config", templateDirsFromConfig, Matchers.contains(templateDir));
-
+      // Canoncial path is used to prevent ".."
+      Assert.assertThat("Wrong template dirs in config", Collections2.transform(templateDirsFromConfig, CANONICATOR),
+                        Matchers.contains(CANONICATOR.apply(templateDir)));
     }
 
     @Override
     public Set<String> getTags() {
       return Sets.newHashSet(DJANGO_TAG);
+    }
+
+    // Makes canoncial path from any path
+    private static class Canonicator implements Function<String, String> {
+
+      @Override
+      public String apply(final String input) {
+        try {
+          return new File(input).getCanonicalPath();
+        }
+        catch (final IOException e) {
+          throw new AssertionError("Errror with file " + input + " : " + e);
+        }
+      }
     }
   }
 }
