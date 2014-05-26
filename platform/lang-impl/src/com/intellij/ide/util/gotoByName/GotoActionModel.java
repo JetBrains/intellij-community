@@ -110,7 +110,9 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
   private void fillConfigurablesNames(Configurable[] configurables) {
     for (Configurable configurable : configurables) {
-      myConfigurablesNames.put(((SearchableConfigurable)configurable).getId(), configurable.getDisplayName());
+      if (configurable instanceof SearchableConfigurable) {
+        myConfigurablesNames.put(((SearchableConfigurable)configurable).getId(), configurable.getDisplayName());
+      }
     }
   }
 
