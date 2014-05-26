@@ -1,7 +1,7 @@
-// "Add static import for 'test.Bar.Foo'" "true"
+// "Add import for 'test.Bar.Foo'" "true"
 package test;
 
-import static test.Bar.Foo;
+import test.Bar.Foo;
 
 class Bar {
     public static @interface Foo {}
