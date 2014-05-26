@@ -795,7 +795,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           LOG.assertTrue(provider != null, "Provider for file "+file+" is null. All providers: "+Arrays.asList(providers));
           LOG.assertTrue(provider.accept(myProject, file), "Provider " + provider + " doesn't accept file " + file);
           final FileEditor editor = provider.createEditor(myProject, file);
-          LOG.assertTrue(editor != null);
           LOG.assertTrue(editor.isValid());
           editors[i] = editor;
           // Register PropertyChangeListener into editor
@@ -823,7 +822,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       }
     }
 
-    window.setEditor(newSelectedComposite, focusEditor);
+    window.setEditor(newSelectedComposite, current, focusEditor);
 
     final EditorHistoryManager editorHistoryManager = EditorHistoryManager.getInstance(myProject);
     for (int i = 0; i < editors.length; i++) {

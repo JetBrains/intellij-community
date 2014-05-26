@@ -69,6 +69,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 public class EditorsSplitters extends IdePanePanel implements UISettingsListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorsSplitters");
   private static final String PINNED = "pinned";
+  private static final String CURRENT_IN_TAB = "current-in-tab";
 
   private final static EditorEmptyTextPainter ourPainter = ServiceManager.getService(EditorEmptyTextPainter.class);
 
@@ -227,8 +228,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     final HistoryEntry entry = composite.currentStateAsHistoryEntry();
     entry.writeExternal(fileElement, getManager().getProject());
     fileElement.setAttribute(PINNED,         Boolean.toString(pinned));
-    fileElement.setAttribute("current",        Boolean.toString(composite.equals (getManager ().getLastSelected ())));
-    fileElement.setAttribute("current-in-tab", Boolean.toString(composite.equals (selectedEditor)));
+    fileElement.setAttribute(CURRENT_IN_TAB, Boolean.toString(composite.equals(selectedEditor)));
     res.addContent(fileElement);
   }
 
@@ -281,19 +281,15 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       }
     }
 
-    VirtualFile currentFile = null;
     for (int i = 0; i < children.size(); i++) {
       final Element file = children.get(i);
       try {
         final FileEditorManagerImpl fileEditorManager = getManager();
         final HistoryEntry entry = new HistoryEntry(fileEditorManager.getProject(), file.getChild(HistoryEntry.TAG), true);
-        final boolean isCurrent = Boolean.valueOf(file.getAttributeValue("current")).booleanValue();
-        fileEditorManager.openFileImpl4(window, entry.myFile, false, entry, isCurrent, i);
+        final boolean isCurrentInTab = Boolean.valueOf(file.getAttributeValue(CURRENT_IN_TAB)).booleanValue();
+        fileEditorManager.openFileImpl4(window, entry.myFile, isCurrentInTab, entry, isCurrentInTab, i);
         if (fileEditorManager.isFileOpen(entry.myFile)) {
           window.setFilePinned(entry.myFile, Boolean.valueOf(file.getAttributeValue(PINNED)).booleanValue());
-          if (Boolean.valueOf(file.getAttributeValue("current-in-tab")).booleanValue()) {
-            currentFile = entry.myFile;
-          }
         }
 
       }
@@ -301,12 +297,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           LOG.error(e);
         }
-      }
-    }
-    if (currentFile != null) {
-      final EditorComposite editor = window.findFileComposite(currentFile);
-      if (editor != null) {
-        window.setSelectedEditor(editor, true);
       }
     }
     return window.myPanel;

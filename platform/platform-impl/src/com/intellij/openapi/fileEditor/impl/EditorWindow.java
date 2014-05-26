@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -644,6 +644,10 @@ public class EditorWindow {
   }
 
   public void setEditor(@Nullable final EditorWithProviderComposite editor, final boolean focusEditor) {
+    setEditor(editor, true, focusEditor);
+  }
+
+  public void setEditor(@Nullable final EditorWithProviderComposite editor, final boolean selectEditor, final boolean focusEditor) {
     if (editor != null) {
       if (myTabbedPane == null) {
         myPanel.removeAll ();
@@ -654,7 +658,9 @@ public class EditorWindow {
 
       final int index = findEditorIndex(editor);
       if (index != -1) {
-        setSelectedEditor(editor, focusEditor);
+        if (selectEditor) {
+          setSelectedEditor(editor, focusEditor);
+        }
       }
       else {
         Integer initialIndex = editor.getFile().getUserData(INITIAL_INDEX_KEY);
@@ -672,7 +678,9 @@ public class EditorWindow {
         final Icon template = AllIcons.FileTypes.Text;
         myTabbedPane.insertTab(file, new EmptyIcon(template.getIconWidth(), template.getIconHeight()), new TComp(this, editor), null, indexToInsert);
         trimToSize(UISettings.getInstance().EDITOR_TAB_LIMIT, file, false);
-        setSelectedEditor(editor, focusEditor);
+        if (selectEditor) {
+          setSelectedEditor(editor, focusEditor);
+        }
         myOwner.updateFileIcon(file);
         myOwner.updateFileColor(file);
       }
