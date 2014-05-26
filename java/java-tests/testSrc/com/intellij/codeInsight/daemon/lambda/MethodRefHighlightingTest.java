@@ -102,6 +102,9 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testQualifiersInStaticContext() throws Exception {
     doTest();
   }
+  public void testInvalidFunctionalTypeInReturnStmt() throws Exception {
+    doTest();
+  }
 
   private void doTest() {
     doTest(false);

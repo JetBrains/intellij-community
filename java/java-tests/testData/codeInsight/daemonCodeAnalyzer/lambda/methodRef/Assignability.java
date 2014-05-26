@@ -38,5 +38,5 @@ class Test2 {
 
     void foo(Integer i) {}
 
-    <error descr="Incompatible types. Found: '<method reference>', required: 'java.lang.Object'">Object o = Test2::foo;</error>
+    Object o = <error descr="Object is not a functional interface">Test2::foo</error>;
 }
