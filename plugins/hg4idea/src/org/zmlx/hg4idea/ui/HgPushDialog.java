@@ -12,7 +12,6 @@
 // limitations under the License.
 package org.zmlx.hg4idea.ui;
 
-import com.intellij.dvcs.DvcsRememberedInputs;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -20,10 +19,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.EditorComboBox;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgRememberedInputs;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
@@ -88,8 +85,6 @@ public class HgPushDialog extends DialogWrapper {
 
   public void createUIComponents() {
     myRepositoryURL = new EditorComboBox("");
-    final DvcsRememberedInputs rememberedInputs = HgRememberedInputs.getInstance();
-    myRepositoryURL.setHistory(ArrayUtil.toObjectArray(rememberedInputs.getVisitedUrls(), String.class));
     myRepositoryURL.addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
@@ -190,11 +185,6 @@ public class HgPushDialog extends DialogWrapper {
   @Override
   protected String getDimensionServiceKey() {
     return HgPushDialog.class.getName();
-  }
-
-  public void rememberSettings() {
-    final DvcsRememberedInputs rememberedInputs = HgRememberedInputs.getInstance();
-    rememberedInputs.addUrl(HgUtil.removePasswordIfNeeded(myRepositoryURL.getText()));
   }
 
   /**
