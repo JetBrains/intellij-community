@@ -24,9 +24,11 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
-import com.intellij.ui.*;
+import com.intellij.ui.BalloonImpl;
+import com.intellij.ui.HintHint;
+import com.intellij.ui.HintListener;
+import com.intellij.ui.LightweightHint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.OpaquePanel;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +41,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
 import java.util.EventListener;
 import java.util.EventObject;
 
@@ -161,7 +162,7 @@ public class PatchedLightweightHint extends LightweightHint {
           }
         }.setToCenterIfSmall(hintHint.isMayCenterTooltip())
           .setPreferredPosition(hintHint.getPreferredPosition())
-          .setHighlighterType(hintHint.isHightlighterType())
+          .setHighlighterType(hintHint.isHighlighterType())
           .setTextForeground(hintHint.getTextForeground())
           .setTextBackground(hintHint.getTextBackground())
           .setBorderColor(hintHint.getBorderColor())

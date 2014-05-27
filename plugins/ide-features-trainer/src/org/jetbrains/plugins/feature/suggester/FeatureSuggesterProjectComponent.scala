@@ -1,29 +1,24 @@
 package org.jetbrains.plugins.feature.suggester
 
-import com.intellij.openapi.components.ProjectComponent
-import com.intellij.openapi.project.Project
-import scala.collection.mutable.ListBuffer
-import org.jetbrains.plugins.feature.suggester.changes._
-import com.intellij.psi.{PsiTreeChangeAdapter, PsiTreeChangeEvent, PsiManager}
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.codeInsight.hint.{HintManagerImpl, HintUtil, HintManager}
-import com.intellij.ui.LightweightHint
 import java.awt.Point
-import com.intellij.ide.IdeTooltipManager
+
+import com.intellij.codeInsight.hint.{HintManager, HintManagerImpl, HintUtil}
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
+import com.intellij.ide.IdeTooltipManager
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem._
 import com.intellij.openapi.actionSystem.ex.AnActionListener
-import org.jetbrains.plugins.feature.suggester.changes.ChildRemovedAction
-import org.jetbrains.plugins.feature.suggester.changes.ChildReplacedAction
-import org.jetbrains.plugins.feature.suggester.changes.ChildAddedAction
-import org.jetbrains.plugins.feature.suggester.changes.ChildrenChangedAction
-import org.jetbrains.plugins.feature.suggester.changes.ChildMovedAction
-import org.jetbrains.plugins.feature.suggester.changes.PropertyChangedAction
-import com.intellij.refactoring.actions.SafeDeleteAction
-import com.intellij.openapi.editor.actions.{DeleteAction, BackspaceAction}
+import com.intellij.openapi.components.ProjectComponent
+import com.intellij.openapi.editor.actions.{BackspaceAction, DeleteAction}
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.Project
+import com.intellij.psi.{PsiManager, PsiTreeChangeAdapter, PsiTreeChangeEvent}
+import com.intellij.ui.LightweightHint
+import org.jetbrains.plugins.feature.suggester.changes._
 import org.jetbrains.plugins.feature.suggester.settings.FeatureSuggesterSettings
+
+import scala.collection.mutable.ListBuffer
 
 /**
  * @author Alefas
@@ -119,13 +114,13 @@ class FeatureSuggesterProjectComponent(project: Project) extends ProjectComponen
       def beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
         action match {
           case b: BackspaceAction =>
-            val editor = PlatformDataKeys.EDITOR.getData(dataContext)
+            val editor = CommonDataKeys.EDITOR.getData(dataContext)
             if (editor != null) {
               val selectedText = Option(editor.getSelectionModel.getSelectedText).getOrElse("")
               addAnAction(new changes.BackspaceAction(selectedText, System.currentTimeMillis()))
             }
           case d: DeleteAction =>
-            val editor = PlatformDataKeys.EDITOR.getData(dataContext)
+            val editor = CommonDataKeys.EDITOR.getData(dataContext)
             if (editor != null) {
               val selectedText = Option(editor.getSelectionModel.getSelectedText).getOrElse("")
               addAnAction(new changes.BackspaceAction(selectedText, System.currentTimeMillis()))
