@@ -110,8 +110,9 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
 
   public String getName(PsiElement context) {
 
+    String name = getName();
     if (context == null) {
-      return getName();
+      return name;
     }
     final String form = myTag.getAttributeValue("form");
     boolean isQualifiedAttr = QUALIFIED_ATTR_VALUE.equals(form);
@@ -119,13 +120,13 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
     final XmlTag rootTag = (((XmlFile) myTag.getContainingFile())).getRootTag();
     assert rootTag != null;
     String targetNs = rootTag.getAttributeValue("targetNamespace");
-    XmlTag contextTag = (XmlTag)context;
-    String name = getName();
+    if (targetNs == null) return name;
 
+    XmlTag contextTag = (XmlTag)context;
     boolean attributeShouldBeQualified = false;
 
     String contextNs = contextTag.getNamespace();
-    if (targetNs != null && !contextNs.equals(targetNs)) {
+    if (!contextNs.equals(targetNs)) {
       final XmlElementDescriptor xmlElementDescriptor = contextTag.getDescriptor();
 
       if (xmlElementDescriptor instanceof XmlElementDescriptorImpl) {
@@ -143,12 +144,9 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
       }
     }
 
-    if (targetNs != null &&
-        ( isQualifiedAttr ||
-          QUALIFIED_ATTR_VALUE.equals(rootTag.getAttributeValue("attributeFormDefault")) ||
-          attributeShouldBeQualified
-        )
-      ) {
+    if (isQualifiedAttr ||
+        QUALIFIED_ATTR_VALUE.equals(rootTag.getAttributeValue("attributeFormDefault")) ||
+        attributeShouldBeQualified) {
       final String prefixByNamespace = contextTag.getPrefixByNamespace(targetNs);
       if (prefixByNamespace!= null && prefixByNamespace.length() > 0) {
         name = prefixByNamespace + ":" + name;
