@@ -49,7 +49,7 @@ class HgCommandAuthenticator {
   public void saveCredentials() {
     if (myRunnable == null) return;
 
-    // if checkbox is selected, remember on disk. Otherwise in memory. Don't read password safe settings.
+    // if checkbox is selected, save on disk. Otherwise in memory. Don't read password safe settings.
 
     final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
     final String url = VirtualFileManager.extractPath(myRunnable.getURL());
