@@ -94,15 +94,15 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
     final int stacktraceLength = stacktrace.length();
     final String[] lines = StringUtil.splitByLines(stacktrace);
     for (String line : lines) {
-      final Filter.Result result;
+      Filter.Result result;
       try {
         result = myCustomFilter.applyFilter(line, stacktraceLength);
       }
       catch (Throwable t) {
-        throw new RuntimeException("Error while applying " + myCustomFilter + " to '"+line+"'", t);
+        throw new RuntimeException("Error while applying " + myCustomFilter + " to '" + line + "'", t);
       }
-      if (result != null) {
-        final HyperlinkInfo info = result.hyperlinkInfo;
+      final HyperlinkInfo info = result != null ? result.getFirstHyperlinkInfo() : null;
+      if (info != null) {
 
         // covers 99% use existing cases
         if (info instanceof FileHyperlinkInfo) {
@@ -113,7 +113,7 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
         return new Navigatable() {
           @Override
           public void navigate(boolean requestFocus) {
-            result.hyperlinkInfo.navigate(project);
+            info.navigate(project);
           }
 
           @Override
