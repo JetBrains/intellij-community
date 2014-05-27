@@ -1550,7 +1550,6 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     );
   }
 
-  @HighlightingFlags(HighlightingFlag.SkipExternalValidation)
   public void testDocBook5() throws Exception {
     doTestWithLocations(
       new String[][] {
