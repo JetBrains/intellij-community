@@ -20,9 +20,11 @@ import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,10 +43,15 @@ public class PythonTemplateContextType extends FileTypeBasedContextType {
     if (super.isInContext(file, offset)) {
       final PsiElement element = file.findElementAt(offset);
       if (element != null) {
-        return !(isAfterDot(element) || element instanceof PsiComment || element instanceof PyStringLiteralExpression);
+        return !(isAfterDot(element) || element instanceof PsiComment || element instanceof PyStringLiteralExpression ||
+                 isInsideParameterList(element));
       }
     }
     return false;
+  }
+
+  private static boolean isInsideParameterList(@NotNull PsiElement element) {
+    return PsiTreeUtil.getParentOfType(element, PyParameterList.class) != null;
   }
 
   private static boolean isAfterDot(@NotNull PsiElement element) {
