@@ -49,7 +49,7 @@ public class PyDynamicallyEvaluatedType extends PyUnionType {
 
   @Override
   public String getName() {
-    PyType res = excludeNull();
+    PyType res = excludeNull(TypeEvalContext.codeInsightFallback());
     return res != null ? res.getName() : PyNames.UNKNOWN_TYPE;
   }
 }

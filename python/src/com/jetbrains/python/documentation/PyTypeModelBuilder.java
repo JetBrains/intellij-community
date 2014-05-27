@@ -195,7 +195,7 @@ public class PyTypeModelBuilder {
     }
     else if (type instanceof PyUnionType && allowUnions) {
       if (type instanceof PyDynamicallyEvaluatedType || PyTypeChecker.isUnknown(type)) {
-        result = new UnknownType(build(((PyUnionType)type).excludeNull(), true));
+        result = new UnknownType(build(((PyUnionType)type).excludeNull(myContext), true));
       }
       else {
         result = new OneOf(
