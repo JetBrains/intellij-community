@@ -27,4 +27,14 @@ public class ThrowStatementPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testSimple() {
     doTest();
   }
+
+  public void testNotThrowable() {
+    doTest();
+  }
+  public void testBeforeAssignment() {
+    doTest();
+  }
+  public void testSimpleWithSemicolon() {
+    doTest();
+  }
 }
