@@ -55,9 +55,8 @@ public class PythonTemplateContextType extends FileTypeBasedContextType {
   }
 
   private static boolean isAfterDot(@NotNull PsiElement element) {
-    ProcessingContext context = new ProcessingContext();
     final PsiElementPattern.Capture<PsiElement> capture = psiElement().afterLeafSkipping(psiElement().whitespace(),
                                                                                          psiElement().withElementType(PyTokenTypes.DOT));
-    return capture.accepts(element, context);
+    return capture.accepts(element, new ProcessingContext());
   }
 }
