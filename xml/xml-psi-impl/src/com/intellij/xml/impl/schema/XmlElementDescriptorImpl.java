@@ -377,11 +377,6 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
       final ComplexTypeDescriptor.CanContainAttributeType containAttributeType = descriptor.canContainAttribute(namespace, qName);
 
       if (containAttributeType != ComplexTypeDescriptor.CanContainAttributeType.CanNotContain) {
-        for (XmlAttributeDescriptor attributeDescriptor : descriptors) {
-          if (attributeDescriptor.getName().equals(attributeName)) {
-            return attributeDescriptor;
-          }
-        }
         return new AnyXmlAttributeDescriptor(attributeName, containAttributeType);
       }
     }

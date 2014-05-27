@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor implements PsiWritableMetaData, XmlAttributeDescriptor {
   private XmlTag myTag;
   String myUse;
+  String myReferenceName;
 
   @NonNls
   public static final String REQUIRED_ATTR_VALUE = "required";
@@ -114,8 +115,6 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
     if (context == null) {
       return name;
     }
-    final String form = myTag.getAttributeValue("form");
-    boolean isQualifiedAttr = QUALIFIED_ATTR_VALUE.equals(form);
 
     final XmlTag rootTag = (((XmlFile) myTag.getContainingFile())).getRootTag();
     assert rootTag != null;
@@ -123,6 +122,19 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
     if (targetNs == null) return name;
 
     XmlTag contextTag = (XmlTag)context;
+    if (QUALIFIED_ATTR_VALUE.equals(myTag.getAttributeValue("form")) ||
+        QUALIFIED_ATTR_VALUE.equals(rootTag.getAttributeValue("attributeFormDefault")) ||
+        shouldBeQualified(targetNs, contextTag)) {
+      final String prefixByNamespace = contextTag.getPrefixByNamespace(targetNs);
+      if (prefixByNamespace!= null && prefixByNamespace.length() > 0) {
+        name = prefixByNamespace + ":" + name;
+      }
+    }
+
+    return name;
+  }
+
+  private boolean shouldBeQualified(String targetNs, XmlTag contextTag) {
     boolean attributeShouldBeQualified = false;
 
     String contextNs = contextTag.getNamespace();
@@ -135,6 +147,10 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
 
         if (type instanceof ComplexTypeDescriptor) {
           final ComplexTypeDescriptor typeDescriptor = (ComplexTypeDescriptor)type;
+          XmlAttributeDescriptor[] attributes = ((ComplexTypeDescriptor)type).getAttributes(contextTag);
+          if ((myReferenceName == null || myReferenceName.indexOf(':') == -1) && ArrayUtil.contains(this, attributes)) {
+            return false;
+          }
           attributeShouldBeQualified = typeDescriptor.canContainAttribute(targetNs, null) != ComplexTypeDescriptor.CanContainAttributeType.CanNotContain;
         }
 
@@ -143,17 +159,7 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
         }
       }
     }
-
-    if (isQualifiedAttr ||
-        QUALIFIED_ATTR_VALUE.equals(rootTag.getAttributeValue("attributeFormDefault")) ||
-        attributeShouldBeQualified) {
-      final String prefixByNamespace = contextTag.getPrefixByNamespace(targetNs);
-      if (prefixByNamespace!= null && prefixByNamespace.length() > 0) {
-        name = prefixByNamespace + ":" + name;
-      }
-    }
-
-    return name;
+    return attributeShouldBeQualified;
   }
 
   public void setName(String name) throws IncorrectOperationException {

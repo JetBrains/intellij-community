@@ -17,6 +17,7 @@ import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -67,7 +68,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
   protected void runTest() throws Throwable {
     new WriteCommandAction(getProject()) {
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         XmlCompletionTest.super.runTest();
       }
     }.execute();
@@ -685,6 +686,16 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.configureByFile("tagValue/enumerated.xsd");
     myFixture.testCompletionVariants("tagValue/completeEnum.xml", "none", "standard");
     myFixture.testCompletionVariants("tagValue/completeBoolean.xml", "false", "true");
+  }
+
+  public void testInheritedAttribute() throws Exception {
+    myFixture.configureByFiles("InheritedAttr/test.xsd", "InheritedAttr/library.xsd");
+    myFixture.testCompletionVariants("InheritedAttr/test.xml", "buz",
+    "library:boo",
+    "xml:base",
+    "xml:id",
+    "xml:lang",
+    "xml:space");
   }
 }
 

@@ -233,6 +233,9 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
           else {
             XmlAttributeDescriptorImpl descriptor = myDocumentDescriptor.createAttributeDescriptor(tag);
             descriptor.myUse = use;
+            if (ref != null) {
+              descriptor.myReferenceName = ref.getAttributeValue(REF_ATTR_NAME);
+            }
             addAttributeDescriptor(result, descriptor);
           }
         }
