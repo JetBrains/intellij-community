@@ -215,6 +215,17 @@ public class PyTypeChecker {
     return false;
   }
 
+  @Nullable
+  public static PyType toNonWeakType(@Nullable PyType type, @NotNull TypeEvalContext context) {
+    if (type instanceof PyUnionType) {
+      final PyUnionType unionType = (PyUnionType)type;
+      if (unionType.isWeak()) {
+        return unionType.excludeNull(context);
+      }
+    }
+    return type;
+  }
+
   public static boolean hasGenerics(@Nullable PyType type, @NotNull TypeEvalContext context) {
     final Set<PyGenericType> collected = new HashSet<PyGenericType>();
     collectGenerics(type, context, collected, new HashSet<PyType>());
