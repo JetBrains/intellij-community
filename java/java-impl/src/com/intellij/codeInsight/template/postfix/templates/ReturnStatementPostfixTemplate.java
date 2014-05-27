@@ -22,7 +22,7 @@ import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplate
 
 public class ReturnStatementPostfixTemplate extends JavaStatementWrapPostfixTemplate {
   public ReturnStatementPostfixTemplate() {
-    super("return", "return expr;", JAVA_PSI_INFO, IS_NON_VOID);
+    super("return", "return expr", JAVA_PSI_INFO, IS_NON_VOID);
   }
 
   @NotNull

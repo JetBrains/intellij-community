@@ -22,7 +22,7 @@ import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplate
 
 public class SoutPostfixTemplate extends JavaStatementWrapPostfixTemplate {
   public SoutPostfixTemplate() {
-    super("sout", "System.out.println(expr);", JAVA_PSI_INFO, IS_NON_VOID);
+    super("sout", "System.out.println(expr)", JAVA_PSI_INFO, IS_NON_VOID);
   }
 
   @NotNull

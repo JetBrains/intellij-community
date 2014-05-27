@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ThrowExceptionPostfixTemplate extends JavaStatementWrapPostfixTemplate {
   public ThrowExceptionPostfixTemplate() {
-    super("throw", "throw expr;", JavaPostfixTemplatesUtils.JAVA_PSI_INFO, JavaPostfixTemplatesUtils.IS_THROWABLE);
+    super("throw", "throw expr", JavaPostfixTemplatesUtils.JAVA_PSI_INFO, JavaPostfixTemplatesUtils.IS_THROWABLE);
   }
 
   @NotNull

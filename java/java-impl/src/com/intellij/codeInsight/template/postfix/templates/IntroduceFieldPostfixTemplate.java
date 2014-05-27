@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class IntroduceFieldPostfixTemplate extends JavaPostfixTemplateWithChooser {
   public IntroduceFieldPostfixTemplate() {
-    super("field", "myField = expr;");
+    super("field", "myField = expr");
   }
 
   @Override

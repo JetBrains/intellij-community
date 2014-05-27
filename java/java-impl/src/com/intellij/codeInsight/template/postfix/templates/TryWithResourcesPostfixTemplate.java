@@ -38,7 +38,7 @@ import java.util.Collections;
 
 public class TryWithResourcesPostfixTemplate extends PostfixTemplate {
   protected TryWithResourcesPostfixTemplate() {
-    super("twr", "try(Type f = new Type()) {} catch (Ex e) {}");
+    super("twr", "try(Type f = new Type()) catch (Exception e)");
   }
 
   @Override
