@@ -7,14 +7,17 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packaging.impl.elements.ManifestFileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Document;
@@ -23,12 +26,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenResource;
+import org.jetbrains.idea.maven.utils.ManifestBuilder;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.jps.maven.model.impl.*;
 
 import java.io.*;
 import java.util.*;
+import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -146,6 +151,8 @@ public class MavenResourceCompilerConfigurationGenerator {
       }
 
       projectConfig.moduleConfigurations.put(module.getName(), resourceConfig);
+
+      generateManifest(mavenProject, module);
     }
 
     addNonMavenResources(projectConfig);
@@ -173,6 +180,35 @@ public class MavenResourceCompilerConfigurationGenerator {
         }
       }
     });
+  }
+
+  private static void generateManifest(@NotNull MavenProject mavenProject, @NotNull Module module) {
+    try {
+      String jdkVersion = null;
+      Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+      if (sdk != null && (jdkVersion = sdk.getVersionString()) != null) {
+        final int quoteIndex = jdkVersion.indexOf('"');
+        if (quoteIndex != -1) {
+          jdkVersion = jdkVersion.substring(quoteIndex + 1, jdkVersion.length() - 1);
+        }
+      }
+      Manifest manifest = new ManifestBuilder(mavenProject).withJdkVersion(jdkVersion).build();
+      File manifestFile = new File(mavenProject.getBuildDirectory(), ManifestFileUtil.MANIFEST_FILE_NAME);
+      FileUtil.createIfDoesntExist(manifestFile);
+      OutputStream outputStream = new FileOutputStream(manifestFile);
+      try {
+        manifest.write(outputStream);
+      }
+      finally {
+        StreamUtil.closeStream(outputStream);
+      }
+    }
+    catch (ManifestBuilder.ManifestBuilderException e) {
+      LOG.error("Unable to generate artifact manifest", e);
+    }
+    catch (IOException e) {
+      LOG.error("Unable to save generated artifact manifest", e);
+    }
   }
 
   private Properties getFilteringProperties(MavenProject mavenProject) {
