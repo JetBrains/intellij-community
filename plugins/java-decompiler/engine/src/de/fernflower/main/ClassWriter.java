@@ -838,8 +838,8 @@ public class ClassWriter {
 						bufstrwriter.write(", ");
 					}
 					
-					if(lstParAnn.size() > i) {
-						List<AnnotationExprent> annotations = lstParAnn.get(i); 
+					if(lstParAnn.size() > param_count_explicit) {
+						List<AnnotationExprent> annotations = lstParAnn.get(param_count_explicit);
 						for(int j=0;j<annotations.size();j++) {
 							AnnotationExprent annexpr = annotations.get(j);
 							if(annexpr.getAnnotationType() == AnnotationExprent.ANNOTATION_NORMAL) {
