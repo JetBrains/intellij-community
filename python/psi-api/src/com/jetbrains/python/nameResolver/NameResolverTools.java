@@ -1,14 +1,16 @@
 package com.jetbrains.python.nameResolver;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyQualifiedNameOwner;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Ilya.Kazakevich
@@ -75,4 +77,38 @@ public final class NameResolverTools {
     return false;
   }
 
+  /**
+   * Looks for parent call of certain function
+   * @param anchor element to look parent for
+   * @param functionName function to find
+   * @return parent call or null if not found
+   */
+  @Nullable
+  public static PyCallExpression findCallExpParent(@NotNull final PsiElement anchor, @NotNull final FQNamesProvider functionName) {
+    final PsiElement parent = PsiTreeUtil.findFirstParent(anchor, new MyFunctionCondition(functionName));
+    if (parent instanceof PyCallExpression) {
+      return (PyCallExpression)parent;
+    }
+    return null;
+  }
+
+  /**
+   * Looks for call of some function
+   */
+  private static class MyFunctionCondition implements Condition<PsiElement> {
+    @NotNull
+    private final FQNamesProvider myNameToSearch;
+
+    MyFunctionCondition(@NotNull final FQNamesProvider name) {
+      myNameToSearch = name;
+    }
+
+    @Override
+    public boolean value(final PsiElement element) {
+      if (element instanceof PyCallExpression) {
+        return ((PyCallExpression)element).isCallee(myNameToSearch);
+      }
+      return false;
+    }
+  }
 }
