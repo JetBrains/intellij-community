@@ -124,4 +124,8 @@ public abstract class JavaTestFramework implements TestFramework {
   public void setupLibrary(Module module) {
     OrderEntryFix.addJarToRoots(getLibraryPath(), module, null);
   }
+
+  public boolean isSingleConfig() {
+    return false;
+  }
 }

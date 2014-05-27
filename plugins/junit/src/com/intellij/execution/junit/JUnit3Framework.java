@@ -43,6 +43,11 @@ public class JUnit3Framework extends JavaTestFramework {
     return new FileTemplateDescriptor("JUnit3 Test Class.java");
   }
 
+  @Override
+  public boolean isSingleConfig() {
+    return true;
+  }
+
   @NotNull
   @Override
   public Icon getIcon() {

@@ -24,6 +24,7 @@ import com.intellij.codeInsight.generation.actions.BaseGenerateAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable;
+import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -199,6 +200,26 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
 
 
     private void doGenerate(final Editor editor, final PsiFile file, final PsiClass targetClass, final TestFramework framework) {
+      if (framework instanceof JavaTestFramework && ((JavaTestFramework)framework).isSingleConfig()) {
+        PsiElement alreadyExist = null;
+        switch (myMethodKind) {
+          case SET_UP:
+            alreadyExist = framework.findSetUpMethod(targetClass);
+            break;
+          case TEAR_DOWN:
+            alreadyExist = framework.findTearDownMethod(targetClass);
+            break;
+          default:
+            break;
+        }
+
+        if (alreadyExist instanceof PsiMethod) {
+          editor.getCaretModel().moveToOffset(alreadyExist.getNavigationElement().getTextOffset());
+          HintManager.getInstance().showErrorHint(editor, "Method " + ((PsiMethod)alreadyExist).getName() + " already exists");
+          return;
+        }
+      }
+
       if (!CommonRefactoringUtil.checkReadOnlyStatus(file)) return;
 
       WriteCommandAction.runWriteCommandAction(file.getProject(), new Runnable() {
