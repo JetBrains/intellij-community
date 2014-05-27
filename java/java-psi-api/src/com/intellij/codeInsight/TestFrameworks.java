@@ -16,8 +16,10 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.testIntegration.TestFramework;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -46,5 +48,15 @@ public abstract class TestFrameworks {
 
   public boolean isTestOrConfig(PsiClass psiClass) {
     return isTestClass(psiClass) || hasConfigMethods(psiClass);
+  }
+  
+  @Nullable
+  public static TestFramework detectFramework(PsiClass psiClass) {
+    for (TestFramework framework : Extensions.getExtensions(TestFramework.EXTENSION_NAME)) {
+      if (framework.isTestClass(psiClass)) {
+        return framework;
+      }
+    }
+    return null;
   }
 }

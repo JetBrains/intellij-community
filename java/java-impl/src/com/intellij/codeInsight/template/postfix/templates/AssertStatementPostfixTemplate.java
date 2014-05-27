@@ -23,7 +23,7 @@ import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplate
 public class AssertStatementPostfixTemplate extends JavaStatementWrapPostfixTemplate {
 
   public AssertStatementPostfixTemplate() {
-    super("assert", "assert expr;", JAVA_PSI_INFO, IS_BOOLEAN);
+    super("assert", "assert expr", JAVA_PSI_INFO, IS_BOOLEAN);
   }
 
   @NotNull

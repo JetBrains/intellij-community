@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 // todo: support for int[].var (parses as .class access!)
 public class IntroduceVariablePostfixTemplate extends JavaPostfixTemplateWithChooser {
   public IntroduceVariablePostfixTemplate() {
-    super("var", "T name = expr;");
+    super("var", "T name = expr");
   }
 
   @Override

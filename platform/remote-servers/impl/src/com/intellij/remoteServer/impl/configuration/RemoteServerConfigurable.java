@@ -34,6 +34,8 @@ public class RemoteServerConfigurable extends NamedConfigurable<RemoteServer<?>>
 
   private static final Logger LOG = Logger.getInstance("#" + RemoteServerConfigurable.class.getName());
 
+  private static final String HELP_TOPIC_ID = "reference.settings.clouds";
+
   private static final int CHANGES_CHECK_TIME = 500;
   private static final int CONNECTION_CHECK_TIME = 2000;
   private static final int NO_CHANGES = -1;
@@ -150,7 +152,7 @@ public class RemoteServerConfigurable extends NamedConfigurable<RemoteServer<?>>
   @Nullable
   @Override
   public String getHelpTopic() {
-    return null;
+    return HELP_TOPIC_ID;
   }
 
   @Override

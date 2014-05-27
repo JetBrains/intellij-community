@@ -39,7 +39,7 @@ public class FormatPostfixTemplate extends JavaStatementWrapPostfixTemplate {
 
 
   public FormatPostfixTemplate() {
-    super("format", "String.format(expr);", JAVA_PSI_INFO, IS_STRING);
+    super("format", "String.format(expr)", JAVA_PSI_INFO, IS_STRING);
   }
 
   @Override

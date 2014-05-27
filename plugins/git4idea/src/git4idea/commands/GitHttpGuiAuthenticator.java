@@ -64,7 +64,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @Nullable private String myPasswordKey;
   @Nullable private String myUrl;
   @Nullable private String myLogin;
-  private boolean myRememberOnDisk;
+  private boolean mySaveOnDisk;
   @Nullable private GitHttpAuthDataProvider myDataProvider;
   private boolean myWasCancelled;
 
@@ -143,7 +143,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     myPassword = dialog.getPassword();
     myLogin = dialog.getUsername();
     myUrl = url;
-    myRememberOnDisk = dialog.isRememberPassword();
+    mySaveOnDisk = dialog.isRememberPassword();
     myPasswordKey = makeKey(myUrl, myLogin);
 
     return myLogin;
@@ -161,7 +161,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
       try {
         passwordSafe.getMemoryProvider().storePassword(myProject, PASS_REQUESTER, myPasswordKey, myPassword);
-        if (myRememberOnDisk) {
+        if (mySaveOnDisk) {
           passwordSafe.getMasterKeyProvider().storePassword(myProject, PASS_REQUESTER, myPasswordKey, myPassword);
         }
       }
