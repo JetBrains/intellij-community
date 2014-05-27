@@ -145,8 +145,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   private ValidationResult getValidationResult() {
     if (!myValidationResultValid) {
       myLastValidationResult = null;
+      RunnerAndConfigurationSettings snapshot = null;
       try {
-        RunnerAndConfigurationSettings snapshot = getSnapshot();
+        snapshot = getSnapshot();
         if (snapshot != null) {
           snapshot.setName(getNameText());
           snapshot.checkSettings(myExecutor);
@@ -161,8 +162,23 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         }
       }
       catch (RuntimeConfigurationException exception) {
-        myLastValidationResult =
-            exception != null ? new ValidationResult(exception.getLocalizedMessage(), exception.getTitle(), exception.getQuickFix()) : null;
+        final Runnable quickFix = exception.getQuickFix();
+        Runnable resultQuickFix;
+        if (quickFix != null && snapshot != null) {
+          final RunnerAndConfigurationSettings fixedSettings = snapshot;
+          resultQuickFix = new Runnable() {
+
+            @Override
+            public void run() {
+              quickFix.run();
+              getEditor().resetFrom(fixedSettings);
+            }
+          };
+        }
+        else {
+          resultQuickFix = quickFix;
+        }
+        myLastValidationResult = new ValidationResult(exception.getLocalizedMessage(), exception.getTitle(), resultQuickFix);
       }
       catch (ConfigurationException e) {
         myLastValidationResult = new ValidationResult(e.getLocalizedMessage(), ExecutionBundle.message("invalid.data.dialog.title"), null);

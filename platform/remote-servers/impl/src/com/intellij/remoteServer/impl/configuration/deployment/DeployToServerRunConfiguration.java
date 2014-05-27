@@ -32,7 +32,10 @@ import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
-import com.intellij.remoteServer.configuration.deployment.*;
+import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
+import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurator;
+import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
+import com.intellij.remoteServer.configuration.deployment.DeploymentSourceType;
 import com.intellij.remoteServer.impl.runtime.DeployToServerState;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -91,7 +94,7 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
       throw new ExecutionException("Server is not specified");
     }
 
-    RemoteServer<S> server = RemoteServersManager.getInstance().findByName(serverName, myServerType);
+    RemoteServer<S> server = findServer();
     if (server == null) {
       throw new ExecutionException("Server '" + serverName + " not found");
     }
@@ -105,6 +108,25 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
+    RemoteServer<S> server = findServer();
+    if (server == null) {
+      return;
+    }
+
+    if (myDeploymentSource == null) {
+      return;
+    }
+
+    myDeploymentConfiguration.checkConfiguration(server, myDeploymentSource);
+  }
+
+  private RemoteServer<S> findServer() {
+    String serverName = getServerName();
+    if (serverName == null) {
+      return null;
+    }
+
+    return RemoteServersManager.getInstance().findByName(serverName, myServerType);
   }
 
   public void setServerName(String serverName) {
