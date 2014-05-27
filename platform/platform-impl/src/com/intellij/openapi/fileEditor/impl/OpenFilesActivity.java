@@ -19,7 +19,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -32,14 +31,9 @@ public class OpenFilesActivity implements StartupActivity, DumbAware {
   public void runActivity(@NotNull Project project) {
     final FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
     if (fileEditorManager instanceof FileEditorManagerImpl) {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          FileEditorManagerImpl manager = (FileEditorManagerImpl)fileEditorManager;
-          manager.getMainSplitters().openFiles();
-          manager.initDockableContentFactory();
-        }
-      });
+      final FileEditorManagerImpl manager = (FileEditorManagerImpl)fileEditorManager;
+      manager.getMainSplitters().openFiles();
+      manager.initDockableContentFactory();
     }
   }
 }
