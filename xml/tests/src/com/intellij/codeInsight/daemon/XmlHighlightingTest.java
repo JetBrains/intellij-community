@@ -2050,6 +2050,11 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     assertTrue(resolve instanceof XmlTag);
   }
 
+  public void testQualifiedAttributeReference() throws Exception {
+    configureByFiles(null, BASE_PATH + "qualified.xml", BASE_PATH + "qualified.xsd");
+    doDoTest(true, false);
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
