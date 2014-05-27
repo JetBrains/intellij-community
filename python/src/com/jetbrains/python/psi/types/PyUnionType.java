@@ -184,7 +184,7 @@ public class PyUnionType implements PyType {
    * @return union with excluded types
    */
   @Nullable
-  public PyType exclude(PyType type, TypeEvalContext context) {
+  public PyType exclude(@Nullable PyType type, @NotNull TypeEvalContext context) {
     final List<PyType> members = new ArrayList<PyType>();
     for (PyType m : getMembers()) {
       if (type == null) {
@@ -202,8 +202,8 @@ public class PyUnionType implements PyType {
   }
 
   @Nullable
-  public PyType excludeNull() {
-    return exclude(null, null);
+  public PyType excludeNull(@NotNull TypeEvalContext context) {
+    return exclude(null, context);
   }
 
   private static PyType unit(@Nullable PyType type) {

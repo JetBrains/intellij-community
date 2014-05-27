@@ -208,7 +208,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
           final PyAssignmentStatement assignment = (PyAssignmentStatement)nextParent;
           final PyExpression value = assignment.getAssignedValue();
           if (value != null) {
-            final PyType assignedType = context.getType(value);
+            final PyType assignedType = PyTypeChecker.toNonWeakType(context.getType(value), context);
             if (assignedType instanceof PyTupleType) {
               final PyType t = getTypeFromTupleAssignment((PyTupleExpression)parent, (PyTupleType)assignedType);
               if (t != null) {
@@ -385,6 +385,14 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
           }
         }
       }
+    }
+    else if (iterableType instanceof PyTupleType) {
+      final PyTupleType tupleType = (PyTupleType)iterableType;
+      final List<PyType> memberTypes = new ArrayList<PyType>();
+      for (int i = 0; i < tupleType.getElementCount(); i++) {
+        memberTypes.add(tupleType.getElementType(i));
+      }
+      return PyUnionType.union(memberTypes);
     }
     else if (iterableType instanceof PyUnionType) {
       final Collection<PyType> members = ((PyUnionType)iterableType).getMembers();
