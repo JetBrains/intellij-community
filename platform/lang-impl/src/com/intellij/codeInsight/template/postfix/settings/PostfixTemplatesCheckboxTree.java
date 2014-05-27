@@ -17,6 +17,7 @@ package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.ide.util.treeView.TreeState;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.JBColor;
@@ -80,13 +81,17 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree {
       public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
         if (!(value instanceof CheckedTreeNode)) return;
         CheckedTreeNode node = (CheckedTreeNode)value;
-        SimpleTextAttributes attributes = node instanceof PostfixTemplateCheckedTreeNode
-                                          ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
-        final String text = value.toString();
-        final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
 
-        if (text != null) {
-          getTextRenderer().append(text, new SimpleTextAttributes(background, attributes.getFgColor(), JBColor.RED, attributes.getStyle()));
+        final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+        boolean isPostfixTemplate = node instanceof PostfixTemplateCheckedTreeNode;
+        SimpleTextAttributes attributes = isPostfixTemplate
+                                          ? SimpleTextAttributes.REGULAR_ATTRIBUTES
+                                          : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
+        getTextRenderer().append(StringUtil.notNullize(value.toString()),
+                                 new SimpleTextAttributes(background, attributes.getFgColor(), JBColor.RED, attributes.getStyle()));
+        if (isPostfixTemplate) {
+          getTextRenderer()
+            .append(" (" + ((PostfixTemplateCheckedTreeNode)node).getTemplate().getExample() + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
         }
       }
     }, new CheckedTreeNode(null));
