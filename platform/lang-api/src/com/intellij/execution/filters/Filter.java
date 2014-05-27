@@ -60,7 +60,7 @@ public interface Filter {
     }
 
     /**
-     * @deprecated Result may be constructed using ResultItems, in that case this method will return incorrect value. Use {@link #getResultItems()} instead.
+     * @deprecated This method will be removed. Result may be constructed using ResultItems, in that case this method will return incorrect value. Use {@link #getResultItems()} instead.
      */
     @Deprecated
     @Override
@@ -69,7 +69,7 @@ public interface Filter {
     }
 
     /**
-     * @deprecated Result may be constructed using ResultItems, in that case this method will return incorrect value. Use {@link #getResultItems()} instead.
+     * @deprecated This method will be removed. Result may be constructed using ResultItems, in that case this method will return incorrect value. Use {@link #getResultItems()} instead.
      */
     @Deprecated
     @Override
@@ -78,7 +78,7 @@ public interface Filter {
     }
 
     /**
-     * @deprecated Result may be constructed using ResultItems, in that case this method will return incorrect value. Use {@link #getResultItems()} instead.
+     * @deprecated This method will be removed. Result may be constructed using ResultItems, in that case this method will return incorrect value. Use {@link #getResultItems()} instead.
      */
     @Deprecated
     @Nullable
@@ -88,7 +88,7 @@ public interface Filter {
     }
 
     /**
-     * @deprecated Result may be constructed using ResultItems, in that case this method will return incorrect value. Use {@link #getResultItems()} or {@link #getFirstHyperlinkInfo()} instead.
+     * @deprecated This method will be removed. Result may be constructed using ResultItems, in that case this method will return incorrect value. Use {@link #getResultItems()} or {@link #getFirstHyperlinkInfo()} instead.
      */
     @Deprecated
     @Nullable
