@@ -156,12 +156,12 @@ public class JavaTestGenerator implements TestGenerator {
     return JavaPsiFacade.getInstance(project).findClass(fqName, scope);
   }
 
-  private static void addTestMethods(Editor editor,
-                                     PsiClass targetClass,
-                                     final TestFramework descriptor,
-                                     Collection<MemberInfo> methods,
-                                     boolean generateBefore,
-                                     boolean generateAfter) throws IncorrectOperationException {
+  public static void addTestMethods(Editor editor,
+                                    PsiClass targetClass,
+                                    final TestFramework descriptor,
+                                    Collection<MemberInfo> methods,
+                                    boolean generateBefore,
+                                    boolean generateAfter) throws IncorrectOperationException {
     final Set<String> existingNames = new HashSet<String>();
     if (generateBefore && descriptor.findSetUpMethod(targetClass) == null) {
       generateMethod(TestIntegrationUtils.MethodKind.SET_UP, descriptor, targetClass, editor, null, existingNames);
@@ -170,8 +170,7 @@ public class JavaTestGenerator implements TestGenerator {
       generateMethod(TestIntegrationUtils.MethodKind.TEAR_DOWN, descriptor, targetClass, editor, null, existingNames);
     }
 
-    final Template template = TestIntegrationUtils .createTestMethodTemplate(TestIntegrationUtils.MethodKind.TEST, descriptor, targetClass,
-                                                                             null, true, existingNames);
+    final Template template = TestIntegrationUtils.createTestMethodTemplate(TestIntegrationUtils.MethodKind.TEST, descriptor, targetClass, null, true, existingNames);
     final String prefix = JavaPsiFacade.getElementFactory(targetClass.getProject()).createMethodFromText(template.getTemplateText(), targetClass).getName();
     existingNames.addAll(ContainerUtil.map(targetClass.getMethods(), new Function<PsiMethod, String>() {
       @Override

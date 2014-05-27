@@ -146,7 +146,14 @@ public class TestIntegrationUtils {
                                            final PsiMethod method,
                                            @Nullable String name,
                                            boolean automatic, Set<String> existingNames) {
-    Template template = createTestMethodTemplate(methodKind, framework, targetClass, name, automatic, existingNames);
+    runTestMethodTemplate(editor, targetClass, method, automatic,
+                          createTestMethodTemplate(methodKind, framework, targetClass, name, automatic, existingNames));
+  }
+
+  public static void runTestMethodTemplate(final Editor editor,
+                                           final PsiClass targetClass,
+                                           final PsiMethod method,
+                                           boolean automatic, final Template template) {
 
     final TextRange range = method.getTextRange();
     editor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), "");
