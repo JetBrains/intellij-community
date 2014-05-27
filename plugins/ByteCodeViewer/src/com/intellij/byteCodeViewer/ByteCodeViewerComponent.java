@@ -57,7 +57,7 @@ public class ByteCodeViewerComponent extends JPanel implements Disposable {
     final SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(StdFileTypes.JAVA, project, null);
     ((EditorEx)myEditor).setHighlighter(editorHighlighterFactory.createEditorHighlighter(syntaxHighlighter, EditorColorsManager.getInstance().getGlobalScheme()));
     ((EditorEx)myEditor).setBackgroundColor(EditorFragmentComponent.getBackgroundColor(myEditor));
-    myEditor.getColorsScheme().setColor(EditorColors.CARET_ROW_COLOR, new JBColor(Gray.xF5, Gray.x39));
+    myEditor.getColorsScheme().setColor(EditorColors.CARET_ROW_COLOR, new JBColor(Gray.xF5, Gray.x50));
     ((EditorEx)myEditor).setCaretVisible(true);
 
     final EditorSettings settings = myEditor.getSettings();
