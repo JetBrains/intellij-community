@@ -386,6 +386,14 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
         }
       }
     }
+    else if (iterableType instanceof PyTupleType) {
+      final PyTupleType tupleType = (PyTupleType)iterableType;
+      final List<PyType> memberTypes = new ArrayList<PyType>();
+      for (int i = 0; i < tupleType.getElementCount(); i++) {
+        memberTypes.add(tupleType.getElementType(i));
+      }
+      return PyUnionType.union(memberTypes);
+    }
     else if (iterableType instanceof PyUnionType) {
       final Collection<PyType> members = ((PyUnionType)iterableType).getMembers();
       final List<PyType> iterationTypes = new ArrayList<PyType>();
