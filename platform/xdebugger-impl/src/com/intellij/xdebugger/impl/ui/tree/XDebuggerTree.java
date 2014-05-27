@@ -153,8 +153,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent e) {
-        expandIfEllipsis();
-        return true;
+        return expandIfEllipsis();
       }
     }.installOn(this);
 
@@ -188,7 +187,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     setTransferHandler(DEFAULT_TRANSFER_HANDLER);
   }
 
-  private void expandIfEllipsis() {
+  private boolean expandIfEllipsis() {
     MessageTreeNode[] treeNodes = getSelectedNodes(MessageTreeNode.class, null);
     if (treeNodes.length == 1) {
       MessageTreeNode node = treeNodes[0];
@@ -196,9 +195,11 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
         TreeNode parent = node.getParent();
         if (parent instanceof XValueContainerNode) {
           ((XValueContainerNode)parent).startComputingChildren();
+          return true;
         }
       }
     }
+    return false;
   }
 
   public void addTreeListener(@NotNull XDebuggerTreeListener listener) {

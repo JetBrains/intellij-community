@@ -297,6 +297,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         }
       }
     }
+    myFilters.setForceUseAllFilters(true);
     myHeavyUpdateTicket = 0;
     myHeavyAlarm = myFilters.isAnyHeavy() ? new Alarm(Alarm.ThreadToUse.SHARED_THREAD, this) : null;
 

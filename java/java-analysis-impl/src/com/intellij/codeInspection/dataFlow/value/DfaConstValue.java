@@ -34,10 +34,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 public class DfaConstValue extends DfaValue {
+  private static final Throwable ourThrowable = new Throwable();
   public static class Factory {
     private final DfaConstValue dfaNull;
     private final DfaConstValue dfaFalse;
     private final DfaConstValue dfaTrue;
+    private final DfaConstValue dfaFail;
     private final DfaValueFactory myFactory;
     private final Map<Object, DfaConstValue> myValues = ContainerUtil.newHashMap();
 
@@ -46,6 +48,7 @@ public class DfaConstValue extends DfaValue {
       dfaNull = new DfaConstValue(null, factory, null);
       dfaFalse = new DfaConstValue(Boolean.FALSE, factory, null);
       dfaTrue = new DfaConstValue(Boolean.TRUE, factory, null);
+      dfaFail = new DfaConstValue(ourThrowable, factory, null);
     }
 
     @Nullable
@@ -101,6 +104,10 @@ public class DfaConstValue extends DfaValue {
       }
 
       return instance;
+    }
+
+    public DfaConstValue getContractFail() {
+      return dfaFail;
     }
 
     public DfaConstValue getFalse() {

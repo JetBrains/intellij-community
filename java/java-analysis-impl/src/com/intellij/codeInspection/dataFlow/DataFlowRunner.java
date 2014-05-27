@@ -114,11 +114,14 @@ public class DataFlowRunner {
       myNestedClosures.clear();
       
       Set<Instruction> joinInstructions = ContainerUtil.newHashSet();
-      for (Instruction instruction : myInstructions) {
+      for (int index = 0; index < myInstructions.length; index++) {
+        Instruction instruction = myInstructions[index];
         if (instruction instanceof GotoInstruction) {
           joinInstructions.add(myInstructions[((GotoInstruction)instruction).getOffset()]);
         } else if (instruction instanceof ConditionalGotoInstruction) {
           joinInstructions.add(myInstructions[((ConditionalGotoInstruction)instruction).getOffset()]);
+        } else if (instruction instanceof MethodCallInstruction) {
+          joinInstructions.add(myInstructions[index + 1]);
         }
       }
 

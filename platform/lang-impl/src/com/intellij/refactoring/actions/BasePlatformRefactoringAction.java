@@ -113,12 +113,10 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
   protected RefactoringActionHandler getHandler(@NotNull Language language, PsiElement element) {
     List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.INSTANCE.allForLanguage(language);
     if (providers.isEmpty()) return null;
-    if (element == null && !providers.isEmpty()) return getRefactoringHandler(providers.get(0));
-    if (element != null) {
-      for (RefactoringSupportProvider provider : providers) {
-        if (provider.isAvailable(element)) {
-          return getRefactoringHandler(provider, element);
-        }
+    if (element == null) return getRefactoringHandler(providers.get(0));
+    for (RefactoringSupportProvider provider : providers) {
+      if (provider.isAvailable(element)) {
+        return getRefactoringHandler(provider, element);
       }
     }
     return null;

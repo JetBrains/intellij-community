@@ -18,20 +18,19 @@ package com.intellij.refactoring.actions;
 
 import com.intellij.ide.TitledHandler;
 import com.intellij.lang.Language;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.lang.LanguageExtractInclude;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
  */
-public class ExtractIncludeAction extends BaseRefactoringAction {
+public class ExtractIncludeAction extends BasePlatformRefactoringAction {
   @Override
   public boolean isAvailableInEditorOnly() {
     return true;
@@ -65,9 +64,15 @@ public class ExtractIncludeAction extends BaseRefactoringAction {
     return LanguageExtractInclude.INSTANCE.forLanguage(baseLanguage) != null;
   }
 
+  @Nullable
   @Override
-  public RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
-    PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
+  protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider) {
+    return null;
+  }
+
+  @Nullable
+  protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider, PsiElement element) {
+    PsiFile file = element.getContainingFile();
     if (file == null) return null;
     return LanguageExtractInclude.INSTANCE.forLanguage(file.getViewProvider().getBaseLanguage());
   }

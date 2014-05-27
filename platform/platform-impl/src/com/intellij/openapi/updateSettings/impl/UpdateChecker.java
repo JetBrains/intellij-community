@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
+import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.reporter.ConnectionException;
@@ -25,6 +26,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -838,6 +840,18 @@ public final class UpdateChecker {
     }
     catch (IOException e) {
       LOG.error(e);
+    }
+  }
+
+  private static boolean ourHasFailedPlugins = false;
+  public static void checkForUpdate(IdeaLoggingEvent event) {
+    if (!ourHasFailedPlugins && UpdateSettings.getInstance().CHECK_NEEDED) {
+      final Throwable throwable = event.getThrowable();
+      final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(IdeErrorsDialog.findPluginId(throwable));
+      if (pluginDescriptor != null && !pluginDescriptor.isBundled()) {
+        ourHasFailedPlugins = true;
+        updateAndShowResult();
+      }
     }
   }
 }

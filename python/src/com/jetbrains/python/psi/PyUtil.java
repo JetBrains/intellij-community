@@ -1521,7 +1521,7 @@ public class PyUtil {
   public static List<PyParameter> getParameters(@NotNull Callable callable, @NotNull TypeEvalContext context) {
     PyType type = context.getType(callable);
     if (type instanceof PyUnionType) {
-      type = ((PyUnionType)type).excludeNull();
+      type = ((PyUnionType)type).excludeNull(context);
     }
     if (type instanceof PyCallableType) {
       final PyCallableType callableType = (PyCallableType)type;
