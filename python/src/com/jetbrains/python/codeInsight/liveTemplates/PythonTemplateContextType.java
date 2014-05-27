@@ -23,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -40,7 +41,7 @@ public class PythonTemplateContextType extends FileTypeBasedContextType {
     if (super.isInContext(file, offset)) {
       final PsiElement element = file.findElementAt(offset);
       if (element != null) {
-        return !(isAfterDot(element) || element instanceof PsiComment);
+        return !(isAfterDot(element) || element instanceof PsiComment || element instanceof PyStringLiteralExpression);
       }
     }
     return false;
