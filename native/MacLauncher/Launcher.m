@@ -10,6 +10,7 @@
 #import "PropertyFileReader.h"
 #import "utils.h"
 #import <dlfcn.h>
+#include <IOKit/ps/IOPowerSources.h>
 
 #define kOldStyleSwitchPolicyValue (2) // log out before switching
 #define kNewStyleSwitchPolicyValue (0) // dynamic switching
@@ -547,44 +548,58 @@ NSString *integratedGPUNames() {
  return _cachedIntegratedGPUName;
 }
 
+
 - (void)launch {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
     JVMOptions = getJavaKey();
     NSBundle *vm = findMatchingVm();
     NSLog(@"--- launch");
-
+    // check if the macbook is working on battery
+    CFTypeRef cRef = IOPSCopyPowerSourcesInfo();
+    CFArrayRef cfArray = IOPSCopyPowerSourcesList(cRef);
+    if (cfArray == NULL) {
+        NSLog(@"Battery is used. ");
+    } else {
+        NSLog(@"The power cable is switch ON. Battery is NOT used. ");
+    }
     if (! switcherOpen()) {
         NSLog(@"Can't open connection to AppleGraphicsControl. There is no a possibility to switch GPU.");
     } else {
-        NSString *intCard = integratedGPUNames();
-        if (intCard != nil) {
-          NSLog(@"Integrated GPU name: %@", intCard);
-          if (isUsingIntegratedGPU()){
-            NSLog(@"Integrated GPU is used.");
-
-            // Disable dynamic switching
-            setMuxState(_switcherConnect, muxGpuSelect, 0);
-            NSLog(@"Dynamic mode is switching OFF.");
-            setMuxState(_switcherConnect, muxDisableFeature, 1<<Policy);
-            setMuxState(_switcherConnect, muxSwitchPolicy, kOldStyleSwitchPolicyValue);
-
-            NSLog(@"After disable dynamic mode 5 sec wait");
-            sleep(1);
-
-            if (isUsingIntegratedGPU()){
-              NSLog(@"Integrated GPU is used.");
-            } else{
-              NSLog(@"Discrete GPU is used.");
-              setMuxState(_switcherConnect, muxForceSwitch, 0);
-              NSLog(@"Try to switch to integrate card.");
+        // check if the macbook is working on battery
+        if (cfArray == NULL) {
+           NSLog(@"Battery is used. ");
+            NSString *intCard = integratedGPUNames();
+            if (intCard != nil) {
+                NSLog(@"Integrated GPU name: %@", intCard);
+                if (isUsingIntegratedGPU()){
+                    NSLog(@"Integrated GPU is used.");
+                    
+                    // Disable dynamic switching
+                    setMuxState(_switcherConnect, muxGpuSelect, 0);
+                    NSLog(@"Dynamic mode is switching OFF.");
+                    setMuxState(_switcherConnect, muxDisableFeature, 1<<Policy);
+                    setMuxState(_switcherConnect, muxSwitchPolicy, kOldStyleSwitchPolicyValue);
+                    
+                    NSLog(@"After disable dynamic mode 5 sec wait");
+                    sleep(1);
+                    
+                    if (isUsingIntegratedGPU()){
+                        NSLog(@"Integrated GPU is used.");
+                    } else{
+                        NSLog(@"Discrete GPU is used.");
+                        setMuxState(_switcherConnect, muxForceSwitch, 0);
+                        NSLog(@"Try to switch to integrate card.");
+                    }
+                } else{
+                    NSLog(@"Discrete GPU is used.");
+                    //            setMuxState(_switcherConnect, muxForceSwitch, 0);
+                    //            NSLog(@"Try to switch to integrate card.");
+                }
+            } else {
+                NSLog(@"There is no Integrated GPU present.");
             }
-          } else{
-            NSLog(@"Discrete GPU is used.");
-//            setMuxState(_switcherConnect, muxForceSwitch, 0);
-//            NSLog(@"Try to switch to integrate card.");
-          }
         } else {
-          NSLog(@"There is no Integrated GPU present.");
+          NSLog(@"The power cable is switch ON. Battery is NOT used. ");
         }
     }
     debugLog([vm bundlePath]);
