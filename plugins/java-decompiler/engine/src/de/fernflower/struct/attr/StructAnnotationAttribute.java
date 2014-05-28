@@ -96,17 +96,34 @@ public class StructAnnotationAttribute extends StructGeneralAttribute {
 					value = type.value;
 					break;
 				case CodeConstants.TYPE_BYTE:
+          value = byte.class.getName();
+          break;
 				case CodeConstants.TYPE_CHAR:
+          value = char.class.getName();
+          break;
 				case CodeConstants.TYPE_DOUBLE:
+          value = double.class.getName();
+          break;
 				case CodeConstants.TYPE_FLOAT:
+          value = float.class.getName();
+          break;
 				case CodeConstants.TYPE_INT:
+          value = int.class.getName();
+          break;
 				case CodeConstants.TYPE_LONG:
+          value = long.class.getName();
+          break;
 				case CodeConstants.TYPE_SHORT:
+          value = short.class.getName();
+          break;
 				case CodeConstants.TYPE_BOOLEAN:
+          value = boolean.class.getName();
+          break;
 				case CodeConstants.TYPE_VOID:
-					// FIXME: other classes if applicable, see attribute description
+          value = void.class.getName();
+          break;
 				default:
-					throw new RuntimeException("invalid class type!");
+					throw new RuntimeException("invalid class type: " + type.type);
 				}
 				return new ConstExprent(VarType.VARTYPE_CLASS, value);
 			case '[': // array
