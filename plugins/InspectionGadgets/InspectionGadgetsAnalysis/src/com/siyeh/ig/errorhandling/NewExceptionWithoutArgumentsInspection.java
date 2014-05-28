@@ -29,7 +29,7 @@ import javax.swing.*;
 public class NewExceptionWithoutArgumentsInspection extends BaseInspection {
 
   @Deprecated
-  @SuppressWarnings("PublicField")
+  @SuppressWarnings({"PublicField", "UnusedDeclaration"})
   public boolean ignoreWithoutParameters = false;
 
   @Nls
