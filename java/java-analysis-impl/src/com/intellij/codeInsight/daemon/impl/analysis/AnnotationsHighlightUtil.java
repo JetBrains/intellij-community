@@ -294,7 +294,11 @@ public class AnnotationsHighlightUtil {
         }
 
         String description = JavaErrorMessages.message("annotation.missing.attribute", buff);
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(nameRef).descriptionAndTooltip(description).create();
+        HighlightInfo info =
+          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(nameRef).descriptionAndTooltip(description).create();
+        QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createAddMissingRequiredAnnotationParametersFix(
+          annotation, annotationMethods, missed));
+        return info;
       }
     }
 

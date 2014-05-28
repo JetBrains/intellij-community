@@ -61,6 +61,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -738,6 +739,14 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
         }
       }
     });
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createAddMissingRequiredAnnotationParametersFix(@NotNull final PsiAnnotation annotation,
+                                                                         @NotNull final PsiMethod[] annotationMethods,
+                                                                         @NotNull final Collection<String> missedElements) {
+    return new AddMissingRequiredAnnotationParametersFix(annotation, annotationMethods, missedElements);
   }
 
   private static boolean timeToOptimizeImports(@NotNull PsiFile file) {

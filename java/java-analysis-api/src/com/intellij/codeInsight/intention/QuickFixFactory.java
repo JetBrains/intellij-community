@@ -28,6 +28,7 @@ import com.intellij.psi.util.PropertyMemberType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -251,4 +252,9 @@ public abstract class QuickFixFactory {
   @Nullable
   public abstract List<LocalQuickFix> registerOrderEntryFixes(@NotNull QuickFixActionRegistrar registrar,
                                                                                           @NotNull PsiReference reference);
+
+  @NotNull
+  public abstract IntentionAction createAddMissingRequiredAnnotationParametersFix(@NotNull PsiAnnotation annotation,
+                                                                                  @NotNull PsiMethod[] annotationMethods,
+                                                                                  @NotNull Collection<String> missedElements);
 }
