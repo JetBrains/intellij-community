@@ -205,7 +205,7 @@ public class ClassesProcessor {
 									
 									if(interfaces.length > 0) {
 										if(interfaces.length > 1) {
-											throw new RuntimeException("Inconsistent anonymous class definition: "+cl.qualifiedName);
+											DecompilerContext.getLogger().writeMessage("Inconsistent anonymous class definition: "+cl.qualifiedName, IFernflowerLogger.WARNING);
 										}
 										nestednode.anonimousClassType = new VarType(cl.getInterface(0), true);
 									} else {
