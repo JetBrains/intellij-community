@@ -15,27 +15,17 @@
  */
 package com.intellij.lang.properties.editor;
 
-import com.intellij.lang.properties.PropertiesBundle;
-import com.intellij.openapi.fileTypes.ex.FakeFileType;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.lang.properties.PropertiesHighlighter;
+import com.intellij.lexer.Lexer;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author cdr
+ * @author max
  */
-class ResourceBundleFileType extends FakeFileType {
-  @NotNull
-  public String getName() {
-    return "ResourceBundle";
-  }
+public class PropertiesValueHighlighter extends PropertiesHighlighter {
 
   @NotNull
-  public String getDescription() {
-    return PropertiesBundle.message("resourcebundle.fake.file.type.description");
+  public Lexer getHighlightingLexer() {
+    return new PropertiesValueHighlightingLexer();
   }
-
-  public boolean isMyFileType(VirtualFile file) {
-    return file instanceof ResourceBundleAsVirtualFile;
-  }
-
 }

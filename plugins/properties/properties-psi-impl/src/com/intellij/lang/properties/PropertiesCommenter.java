@@ -13,29 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.lang.properties.editor;
+package com.intellij.lang.properties;
 
-import com.intellij.lang.properties.PropertiesBundle;
-import com.intellij.openapi.fileTypes.ex.FakeFileType;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.lang.Commenter;
 
 /**
- * @author cdr
+ * @author max
  */
-class ResourceBundleFileType extends FakeFileType {
-  @NotNull
-  public String getName() {
-    return "ResourceBundle";
+public class PropertiesCommenter implements Commenter {
+  public String getLineCommentPrefix() {
+    return "#";
   }
 
-  @NotNull
-  public String getDescription() {
-    return PropertiesBundle.message("resourcebundle.fake.file.type.description");
+  public String getBlockCommentPrefix() {
+    return null;
   }
 
-  public boolean isMyFileType(VirtualFile file) {
-    return file instanceof ResourceBundleAsVirtualFile;
+  public String getBlockCommentSuffix() {
+    return "";
   }
 
+  public String getCommentedBlockCommentPrefix() {
+    return null;
+  }
+
+  public String getCommentedBlockCommentSuffix() {
+    return null;
+  }
 }

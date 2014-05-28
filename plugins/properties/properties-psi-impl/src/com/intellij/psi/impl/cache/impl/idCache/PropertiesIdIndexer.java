@@ -13,29 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.lang.properties.editor;
+package com.intellij.psi.impl.cache.impl.idCache;
 
-import com.intellij.lang.properties.PropertiesBundle;
-import com.intellij.openapi.fileTypes.ex.FakeFileType;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.lang.properties.parsing.PropertiesLexer;
+import com.intellij.lexer.Lexer;
+import com.intellij.psi.impl.cache.impl.OccurrenceConsumer;
+import com.intellij.psi.impl.cache.impl.id.LexerBasedIdIndexer;
 
 /**
- * @author cdr
+ * @author Maxim.Mossienko
  */
-class ResourceBundleFileType extends FakeFileType {
-  @NotNull
-  public String getName() {
-    return "ResourceBundle";
+public class PropertiesIdIndexer extends LexerBasedIdIndexer {
+  public Lexer createLexer(final OccurrenceConsumer consumer) {
+    return createIndexingLexer(consumer);
   }
 
-  @NotNull
-  public String getDescription() {
-    return PropertiesBundle.message("resourcebundle.fake.file.type.description");
+  static Lexer createIndexingLexer(OccurrenceConsumer consumer) {
+    return new PropertiesFilterLexer(new PropertiesLexer(), consumer);
   }
-
-  public boolean isMyFileType(VirtualFile file) {
-    return file instanceof ResourceBundleAsVirtualFile;
-  }
-
 }

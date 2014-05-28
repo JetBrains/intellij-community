@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,9 +78,5 @@ public class PropertiesFilesManager extends AbstractProjectComponent {
   @NotNull
   public String getComponentName() {
     return "PropertiesFileManager";
-  }
-
-  public boolean processAllPropertiesFiles(final PropertiesFileProcessor processor) {
-    return PropertiesReferenceManager.getInstance(myProject).processAllPropertiesFiles(processor);
   }
 }

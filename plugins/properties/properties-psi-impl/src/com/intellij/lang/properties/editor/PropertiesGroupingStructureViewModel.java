@@ -15,27 +15,13 @@
  */
 package com.intellij.lang.properties.editor;
 
-import com.intellij.lang.properties.PropertiesBundle;
-import com.intellij.openapi.fileTypes.ex.FakeFileType;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ide.structureView.StructureViewModel;
 
 /**
- * @author cdr
+ * @author max
  */
-class ResourceBundleFileType extends FakeFileType {
-  @NotNull
-  public String getName() {
-    return "ResourceBundle";
-  }
+public interface PropertiesGroupingStructureViewModel extends StructureViewModel.ElementInfoProvider {
+  void setSeparator(String separator);
 
-  @NotNull
-  public String getDescription() {
-    return PropertiesBundle.message("resourcebundle.fake.file.type.description");
-  }
-
-  public boolean isMyFileType(VirtualFile file) {
-    return file instanceof ResourceBundleAsVirtualFile;
-  }
-
+  String getSeparator();
 }
