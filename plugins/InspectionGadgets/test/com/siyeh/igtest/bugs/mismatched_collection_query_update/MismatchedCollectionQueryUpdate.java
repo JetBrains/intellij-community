@@ -197,9 +197,17 @@ class MethReference<E> {
         return list.toString();
     }
 
+  void copyStuff(List other) {
+    List <warning descr="Contents of collection 'list' are updated, but never queried">list</warning> = new ArrayList();
+    J j = list::add;
+  }
+
     private void forEach(I<E> ei) {}
     interface I<E> {
         boolean _(E e);
+    }
+    interface J<E> {
+      void m(E e);
     }
 
     void qTest() {

@@ -16,9 +16,11 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Set;
 
 class CollectionQueryCalledVisitor extends JavaRecursiveElementVisitor {
@@ -60,40 +62,63 @@ class CollectionQueryCalledVisitor extends JavaRecursiveElementVisitor {
     super.visitMethodCallExpression(call);
     final PsiReferenceExpression methodExpression =
       call.getMethodExpression();
-    final boolean isStatement =
-      call.getParent() instanceof PsiExpressionStatement;
-    if (isStatement) {
-      final String methodName = methodExpression.getReferenceName();
-      if (methodName == null) {
-        return;
-      }
-      if (!queryNames.contains(methodName)) {
-        boolean found = false;
-        for (String queryName : queryNames) {
-          if (methodName.startsWith(queryName)) {
-            found = true;
-            break;
-          }
-        }
-        if (!found) {
-          return;
-        }
-      }
+    final boolean isStatement = call.getParent() instanceof PsiExpressionStatement;
+    if (isStatement && !isQueryMethodName(methodExpression.getReferenceName())) {
+      return;
     }
-    final PsiExpression qualifier =
-      methodExpression.getQualifierExpression();
+    final PsiExpression qualifier = methodExpression.getQualifierExpression();
     checkExpression(qualifier);
   }
-
 
   @Override
   public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
     if (queried) return;
     final String methodName = expression.getReferenceName();
-    if (methodName == null) {
-      return;
+    if (!isQueryMethodName(methodName)) {
+      final PsiElement target = expression.resolve();
+      if (!(target instanceof PsiMethod)) {
+        return;
+      }
+      final PsiMethod method = (PsiMethod)target;
+      final PsiType returnType = method.getReturnType();
+      if (PsiType.VOID.equals(returnType)) {
+        return;
+      }
+      final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false);
+      if (!(expectedType instanceof PsiClassType)) {
+        return;
+      }
+      final PsiClassType classType = (PsiClassType)expectedType;
+      final PsiClass aClass = classType.resolve();
+      if (aClass == null || LambdaHighlightingUtil.checkInterfaceFunctional(aClass) != null) {
+        return;
+      }
+      final List<HierarchicalMethodSignature> candidates = LambdaUtil.findFunctionCandidates(aClass);
+      if (candidates == null || candidates.size() != 1) {
+        return;
+      }
+      final HierarchicalMethodSignature signature = candidates.get(0);
+      final PsiMethod functionalMethod = signature.getMethod();
+      if (PsiType.VOID.equals(functionalMethod.getReturnType())) {
+        return;
+      }
     }
     checkExpression(expression.getQualifierExpression());
+  }
+
+  private boolean isQueryMethodName(String methodName) {
+    if (methodName == null) {
+      return false;
+    }
+    if (queryNames.contains(methodName)) {
+      return true;
+    }
+    for (String queryName : queryNames) {
+      if (methodName.startsWith(queryName)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void checkExpression(PsiExpression expression) {
