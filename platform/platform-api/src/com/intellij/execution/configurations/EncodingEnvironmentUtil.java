@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
+import java.util.Locale;
 import java.util.Map;
 
 public class EncodingEnvironmentUtil {
@@ -74,10 +75,21 @@ public class EncodingEnvironmentUtil {
   }
 
   private static void setLocaleEnvironment(@NotNull Map<String, String> env, @NotNull Charset charset) {
-    env.put(LC_CTYPE, charset.name());
+    env.put(LC_CTYPE, formatLocaleValue(charset));
     if (LOG.isDebugEnabled()) {
       LOG.debug("Fixed mac locale: " + charset.name());
     }
+  }
+
+  @NotNull
+  private static String formatLocaleValue(@NotNull Charset charset) {
+    Locale locale = Locale.getDefault();
+    String language = locale.getLanguage();
+    String country = locale.getCountry();
+    if (language.isEmpty() || country.isEmpty()) {
+      return "en_US." + charset.name();
+    }
+    return language + "_" + country + "." + charset.name();
   }
 
   /**
