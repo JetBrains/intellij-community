@@ -17,6 +17,7 @@ package org.jetbrains.plugins.gradle.tooling.builder;
 
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.ResolutionStrategy;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.Dependency;
 import org.gradle.plugins.ide.idea.model.ModuleLibrary;
@@ -30,6 +31,7 @@ import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 import org.jetbrains.plugins.gradle.tooling.internal.BuildScriptClasspathModelImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.ClasspathEntryModelImpl;
+import org.jetbrains.plugins.gradle.tooling.internal.ConfigurationDelegate;
 
 import java.io.File;
 import java.util.*;
@@ -72,7 +74,15 @@ public class ModelBuildScriptClasspathBuilderImpl implements ModelBuilderService
       }
       Configuration configuration = project.getBuildscript().getConfigurations().findByName("classpath");
       if (configuration == null) return null;
-      configuration = configuration.copy();
+
+      final ResolutionStrategy resolutionStrategy = configuration.getResolutionStrategy();
+      configuration = new ConfigurationDelegate(configuration.copy()) {
+        @Override
+        public ResolutionStrategy getResolutionStrategy() {
+          return resolutionStrategy;
+        }
+      };
+
       Collection<Configuration> plusConfigurations = Collections.singletonList(configuration);
 
       final Map<String, Map<String, Collection<Configuration>>> scopes =
@@ -111,7 +121,7 @@ public class ModelBuildScriptClasspathBuilderImpl implements ModelBuilderService
   public ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
     return ErrorMessageBuilder.create(
       project, e, "Project build classpath resolve errors"
-    ).withDescription("Some codeInsight features may not work for gradle build script");
+    ).withDescription("Unable to resolve additional buildscript classpath dependencies");
   }
 
   private static Set<String> convert(Set<Path> paths) {
