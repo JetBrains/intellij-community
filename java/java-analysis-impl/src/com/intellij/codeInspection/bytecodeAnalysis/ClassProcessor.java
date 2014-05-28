@@ -34,7 +34,6 @@ public class ClassProcessor extends VirtualFileVisitor {
   final static ELattice<Value> valueLattice = new ELattice<Value>(Value.Bot, Value.Top);
   final Solver<Key, Value> solver = new Solver<Key, Value>(valueLattice);
   final IntIdSolver myIntIdSolver = new IntIdSolver();
-  final Map<Method, MethodExtra> extras = new HashMap<Method, MethodExtra>();
 
   @NotNull
   final ProgressIndicator myProgressIndicator;
@@ -81,7 +80,6 @@ public class ClassProcessor extends VirtualFileVisitor {
 
   void processMethod(String className, MethodNode methodNode) {
     Method method = new Method(className, methodNode.name, methodNode.desc);
-    extras.put(method, new MethodExtra(methodNode.signature, methodNode.access));
 
     ControlFlowGraph graph = cfg.buildControlFlowGraph(className, methodNode);
     boolean added = false;
@@ -161,11 +159,11 @@ public class ClassProcessor extends VirtualFileVisitor {
 
   void addEquation(Equation<Key, Value> equation) {
     try {
+      solver.addEquation(equation);
       myIntIdSolver.addEquation(enumerate(equation));
     }
     catch (IOException e) {
       e.printStackTrace();
-      //solver.addEquation(equation);
     }
   }
 
@@ -198,6 +196,6 @@ public class ClassProcessor extends VirtualFileVisitor {
 
   MostlySingularMultiMap<String, AnnotationData> annotations() {
     Map<Key, Value> solutions = solver.solve();
-    return Util.makeAnnotations(solutions, extras);
+    return Util.makeAnnotations(solutions);
   }
 }

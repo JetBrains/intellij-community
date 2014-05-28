@@ -170,7 +170,12 @@ public class BytecodeAnalysisHandler extends AbstractProjectComponent {
 
   @Nullable
   protected static String getExternalName(@NotNull PsiModifierListOwner listOwner) {
-    return PsiFormatUtil.getExternalName(listOwner, false, Integer.MAX_VALUE);
+    String rawExternalName = PsiFormatUtil.getRawExternalName(listOwner, false, Integer.MAX_VALUE);
+    if (rawExternalName != null) {
+      // TODO - varargs hack
+      rawExternalName = rawExternalName.replace("...)", "[])");
+    }
+    return rawExternalName;
   }
 
   // interner for storing annotation FQN
@@ -293,9 +298,9 @@ class BytecodeAnalysisTask extends DumbModeTask {
       ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       OrderEntry[] entries = moduleRootManager.getOrderEntries();
       for (OrderEntry entry : entries) {
-        //if (!(entry instanceof JdkOrderEntry)) {
+        if (!(entry instanceof JdkOrderEntry)) {
           Collections.addAll(classRoots, entry.getFiles(OrderRootType.CLASSES));
-        //}
+        }
       }
     }
 
