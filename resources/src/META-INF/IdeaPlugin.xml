@@ -661,7 +661,7 @@
     <localInspection language="JAVA" shortName="BlockMarkerComments"
                      groupBundle="messages.InspectionsBundle"
                      groupName="Code style issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.defUse.DefUseInspection"
+                     implementationClass="com.intellij.codeInspection.BlockMarkerCommentsInspection"
                      displayName="Block marker comment"/>
 
     <intentionAction>
