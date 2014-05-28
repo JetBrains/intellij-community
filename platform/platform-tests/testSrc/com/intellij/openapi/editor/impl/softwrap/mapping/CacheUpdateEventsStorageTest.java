@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.util.text.CharArrayUtil;
@@ -40,6 +41,7 @@ public class CacheUpdateEventsStorageTest {
   private CacheUpdateEventsStorage myStorage;
   private Document myDocument;
   private FoldingModelEx myFoldingModel;
+  private Editor myEditor;
   private Mockery myMockery;
   private String myText;
     
@@ -59,6 +61,7 @@ public class CacheUpdateEventsStorageTest {
     }};
     myDocument = myMockery.mock(Document.class);
     myFoldingModel = myMockery.mock(FoldingModelEx.class);
+    myEditor = myMockery.mock(Editor.class);
     myMockery.checking(new Expectations() {{
       allowing(myDocument).getTextLength(); will(new CustomAction("getTextLength()") {
         @Override
@@ -89,6 +92,9 @@ public class CacheUpdateEventsStorageTest {
       });
 
       allowing(myFoldingModel).getCollapsedRegionAtOffset(with(any(int.class))); will(returnValue(null));
+
+      allowing(myEditor).getDocument(); will(returnValue(myDocument));
+      allowing(myEditor).getFoldingModel(); will(returnValue(myFoldingModel));
     }});
 
     myStorage = new CacheUpdateEventsStorage();
@@ -228,6 +234,6 @@ public class CacheUpdateEventsStorageTest {
   private void change(int offset, String newText) {
     DocumentEventImpl event 
       = new DocumentEventImpl(myDocument, offset, myText.substring(offset, offset + newText.length()), newText, 1, false);
-    myStorage.add(myDocument, new IncrementalCacheUpdateEvent(event, myFoldingModel));
+    myStorage.add(myDocument, new IncrementalCacheUpdateEvent(event, myEditor));
   }
 }

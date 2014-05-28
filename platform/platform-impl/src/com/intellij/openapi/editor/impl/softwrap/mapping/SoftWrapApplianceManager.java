@@ -210,7 +210,7 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
   }
 
   private void recalculateSoftWraps(IncrementalCacheUpdateEvent event) {
-    event.updateNewOffsetsIfNecessary(myEditor.getDocument(), myEditor.getFoldingModel());
+    event.updateNewOffsetsIfNecessary(myEditor);
     
     //CachingSoftWrapDataMapper.log("xxxxxxxxxxxxxx Processing soft wraps for " + event + ". Document length: " + myEditor.getDocument().getTextLength() 
     //                              + ", document: " + System.identityHashCode(myEditor.getDocument()));
@@ -984,7 +984,7 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
   public void onFoldRegionStateChange(int startOffset, int endOffset) {
     assert ApplicationManagerEx.getApplicationEx().isDispatchThread();
 
-    myEventsStorage.add(myEditor.getDocument(), new IncrementalCacheUpdateEvent(myEditor.getDocument(), startOffset, endOffset, myEditor.getFoldingModel()));
+    myEventsStorage.add(myEditor.getDocument(), new IncrementalCacheUpdateEvent(myEditor, startOffset, endOffset));
   }
 
   public void onFoldProcessingEnd() {
@@ -994,7 +994,7 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
 
   @Override
   public void beforeDocumentChange(DocumentEvent event) {
-    myEventsStorage.add(event.getDocument(), new IncrementalCacheUpdateEvent(event, myEditor.getFoldingModel()));
+    myEventsStorage.add(event.getDocument(), new IncrementalCacheUpdateEvent(event, myEditor));
   }
 
   @Override
